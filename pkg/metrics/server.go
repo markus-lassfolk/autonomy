@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/markus-lassfolk/autonomy/pkg"
 	"github.com/markus-lassfolk/autonomy/pkg/controller"
 	"github.com/markus-lassfolk/autonomy/pkg/decision"
 	"github.com/markus-lassfolk/autonomy/pkg/logx"
 	"github.com/markus-lassfolk/autonomy/pkg/telem"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // Server provides Prometheus metrics for autonomyd

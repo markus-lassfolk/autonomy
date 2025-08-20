@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/markus-lassfolk/autonomy/pkg/logx"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // LocalCellDatabase manages local storage of GPS + cell tower data

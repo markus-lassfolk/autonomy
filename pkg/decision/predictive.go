@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sajari/regression"
 	"github.com/markus-lassfolk/autonomy/pkg"
 	"github.com/markus-lassfolk/autonomy/pkg/logx"
+	"github.com/sajari/regression"
 )
 
 // PredictiveEngine implements advanced predictive failover algorithms
