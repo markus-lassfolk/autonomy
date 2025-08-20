@@ -1,0 +1,460 @@
+#!/bin/sh
+set -eu
+
+# autonomy Watchdog & Failsafe System
+# Independent sidecar process for daemon health monitoring and recovery
+
+# Configuration
+CONF=/etc/autonomy/watch.conf
+[ -f "$CONF" ] && . "$CONF"
+
+# File paths
+HB=/tmp/autonomyd.health
+Q=/tmp/starwatch.queue
+RESTARTS=/tmp/autonomyd.restarts
+DIAG_DIR=/tmp/autonomy_diagnostics
+mkdir -p "$Q" "$DIAG_DIR"
+
+# Default values if not configured
+: ${HEARTBEAT_STALE_SEC:=60}
+: ${CRASH_LOOP_THRESHOLD:=3}
+: ${CRASH_LOOP_WINDOW_SEC:=600}
+: ${COOLDOWN_MINUTES:=30}
+: ${DISK_WARN_PERCENT:=95}
+: ${DISK_CRIT_PERCENT:=98}
+: ${MIN_MEM_MB:=32}
+: ${LOAD_CRIT_PER_CORE:=3.0}
+: ${SLOW_UBUS_MS:=1500}
+: ${NOTIFY_COOLDOWN_MIN:=15}
+: ${REBOOT_ON_HARD_HANG:=0}
+: ${HANG_MINUTES_BEFORE_REBOOT:=20}
+: ${DEVICE_ID:=$(hostname 2>/dev/null || echo "autonomy-device")}
+
+# Privacy & Opt-in defaults (all disabled by default)
+: ${REPORTING_ENABLED:=0}
+: ${ANONYMIZE_DEVICE_ID:=1}
+: ${PRIVACY_LEVEL:=standard}
+: ${INCLUDE_DIAGNOSTICS:=0}
+: ${AUTO_UPDATE_ENABLED:=0}
+: ${UPDATE_CHANNEL:=stable}
+
+# Logging function
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') starwatch: $*" | logger -t starwatch
+}
+
+# Privacy and sanitization functions
+anonymize_device_id() {
+    local device_id="$1"
+    local secret="${WATCH_SECRET:-salt}"
+    
+    if [ "${ANONYMIZE_DEVICE_ID:-1}" = "1" ]; then
+        # Hash device ID with secret and truncate to 12 chars
+        printf "%s" "$device_id" | openssl dgst -sha256 -hmac "$secret" -binary | xxd -p -c 256 | cut -c1-12 2>/dev/null || echo "anon-device"
+    else
+        echo "$device_id"
+    fi
+}
+
+sanitize_note() {
+    local note="$1"
+    
+    # Mask IP addresses
+    note=$(echo "$note" | sed -E 's/([0-9]{1,3}\.){3}[0-9]{1,3}/[ip]/g')
+    
+    # Mask MAC addresses
+    note=$(echo "$note" | sed -E 's/([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}/[mac]/g')
+    
+    # Mask SSIDs and tokens
+    note=$(echo "$note" | sed -E 's/(ssid|psk|token|password|secret)=[^ ]+/[redacted]/gi')
+    
+    # Mask phone numbers
+    note=$(echo "$note" | sed -E 's/(\+?[0-9]{1,4}[-\s]?)?[0-9]{3,}[-\s]?[0-9]{3,}[-\s]?[0-9]{3,}/[phone]/g')
+    
+    # Collapse paths and usernames (privacy level dependent)
+    if [ "${PRIVACY_LEVEL:-standard}" = "strict" ]; then
+        note=$(echo "$note" | sed -E 's|/[^/]+/[^/]+/.*|/[path]/...|g')
+        note=$(echo "$note" | sed -E 's/\b[a-zA-Z][a-zA-Z0-9_-]{2,}\b/[user]/g')
+    fi
+    
+    echo "$note"
+}
+
+# Probe helpers (timeouts)
+probe_ubus() {
+    timeout 3 ubus -S call system board '{}' >/dev/null 2>&1
+}
+
+lat_ubus() {
+    t0=$(date +%s%3N)
+    ubus -S call system board '{}' >/dev/null 2>&1
+    t1=$(date +%s%3N)
+    echo $((t1-t0))
+}
+
+# Get system metrics
+get_system_metrics() {
+    # Disk usage
+    overlay_pct=$(df -P /overlay 2>/dev/null | awk 'NR==2{gsub("%","",$5);print $5}' || echo "0")
+    
+    # Memory available
+    mem_avail_mb=$(awk '/MemAvailable:/ {print int($2/1024)}' /proc/meminfo 2>/dev/null || echo "0")
+    
+    # Load average
+    load1=$(awk '{print $1}' /proc/loadavg 2>/dev/null || echo "0")
+    load5=$(awk '{print $2}' /proc/loadavg 2>/dev/null || echo "0")
+    load15=$(awk '{print $3}' /proc/loadavg 2>/dev/null || echo "0")
+    
+    # CPU cores
+    cpu_cores=$(nproc 2>/dev/null || echo "1")
+    
+    # ubus latency
+    ubus_latency=$(lat_ubus 2>/dev/null || echo "9999")
+    
+    echo "overlay_pct=$overlay_pct"
+    echo "mem_avail_mb=$mem_avail_mb"
+    echo "load1=$load1"
+    echo "load5=$load5"
+    echo "load15=$load15"
+    echo "cpu_cores=$cpu_cores"
+    echo "ubus_latency=$ubus_latency"
+}
+
+# Check if daemon is healthy
+check_daemon_health() {
+    daemon_ok=true
+    
+    # Check if process exists
+    if ! pidof autonomyd >/dev/null 2>&1; then
+        daemon_ok=false
+        log "Daemon process not found"
+    fi
+    
+    # Check heartbeat file
+    if [ ! -f "$HB" ]; then
+        daemon_ok=false
+        log "Heartbeat file not found: $HB"
+    else
+        # Check heartbeat age
+        heartbeat_age=$(( $(date +%s) - $(date -r "$HB" +%s 2>/dev/null || echo 0) ))
+        if [ $heartbeat_age -gt $HEARTBEAT_STALE_SEC ]; then
+            daemon_ok=false
+            log "Heartbeat stale: ${heartbeat_age}s old (threshold: ${HEARTBEAT_STALE_SEC}s)"
+        fi
+    fi
+    
+    echo "$daemon_ok"
+}
+
+# Check crash loop
+check_crash_loop() {
+    if [ ! -f "$RESTARTS" ]; then
+        echo "false"
+        return
+    fi
+    
+    # Count restarts in the last window
+    now=$(date +%s)
+    recent_restarts=0
+    
+    while IFS= read -r timestamp; do
+        if [ $((now - timestamp)) -le $CRASH_LOOP_WINDOW_SEC ]; then
+            recent_restarts=$((recent_restarts + 1))
+        fi
+    done < "$RESTARTS"
+    
+    if [ $recent_restarts -ge $CRASH_LOOP_THRESHOLD ]; then
+        log "Crash loop detected: $recent_restarts restarts in ${CRASH_LOOP_WINDOW_SEC}s"
+        echo "true"
+    else
+        echo "false"
+    fi
+}
+
+# Record restart
+record_restart() {
+    echo "$(date +%s)" >> "$RESTARTS"
+    
+    # Clean old entries
+    now=$(date +%s)
+    temp_file=$(mktemp)
+    while IFS= read -r timestamp; do
+        if [ $((now - timestamp)) -le $CRASH_LOOP_WINDOW_SEC ]; then
+            echo "$timestamp" >> "$temp_file"
+        fi
+    done < "$RESTARTS"
+    mv "$temp_file" "$RESTARTS" 2>/dev/null || true
+}
+
+# Create diagnostic bundle
+create_diagnostic_bundle() {
+    timestamp=$(date +%Y%m%d_%H%M%S)
+    bundle_file="$DIAG_DIR/autonomy_diag_${timestamp}.tgz"
+    
+    log "Creating diagnostic bundle: $bundle_file"
+    
+    # Create temporary directory for diagnostics
+    temp_dir=$(mktemp -d)
+    
+    # Collect system information
+    {
+        echo "=== System Information ==="
+        uname -a
+        echo
+        echo "=== Memory Information ==="
+        cat /proc/meminfo
+        echo
+        echo "=== Load Average ==="
+        cat /proc/loadavg
+        echo
+        echo "=== Disk Usage ==="
+        df -h
+        echo
+        echo "=== Process List ==="
+        ps aux
+        echo
+        echo "=== Network Interfaces ==="
+        ip addr show
+        echo
+        echo "=== Routing Table ==="
+        ip route show
+        echo
+        echo "=== MWAN3 Status ==="
+        ubus call mwan3 status 2>/dev/null || echo "mwan3 not available"
+        echo
+        echo "=== Recent Logs ==="
+        logread -l 100 2>/dev/null || dmesg | tail -100
+        echo
+        echo "=== autonomy Heartbeat ==="
+        cat "$HB" 2>/dev/null || echo "Heartbeat file not found"
+        echo
+        echo "=== autonomy Restarts ==="
+        cat "$RESTARTS" 2>/dev/null || echo "Restarts file not found"
+        echo
+        echo "=== Configuration ==="
+        cat /etc/config/autonomy 2>/dev/null || echo "Configuration not found"
+        echo
+        echo "=== Watchdog Configuration ==="
+        cat "$CONF" 2>/dev/null || echo "Watchdog configuration not found"
+    } > "$temp_dir/system_info.txt"
+    
+    # Create tar.gz bundle
+    (cd "$temp_dir" && tar -czf "$bundle_file" .) 2>/dev/null || true
+    
+    # Clean up temp directory
+    rm -rf "$temp_dir"
+    
+    # Prune old bundles (keep last 7 days)
+    find "$DIAG_DIR" -name "autonomy_diag_*.tgz" -mtime +7 -delete 2>/dev/null || true
+    
+    # Limit total size to 10MB
+    total_size=$(du -sb "$DIAG_DIR" 2>/dev/null | cut -f1 || echo "0")
+    if [ $total_size -gt 10485760 ]; then  # 10MB in bytes
+        log "Diagnostic directory too large, removing oldest files"
+        find "$DIAG_DIR" -name "autonomy_diag_*.tgz" -printf '%T@ %p\n' | sort -n | head -n 5 | while read timestamp file; do
+            rm -f "$file" 2>/dev/null || true
+        done
+    fi
+    
+    echo "$bundle_file"
+}
+
+# Webhook notification with HMAC signing and privacy controls
+send_webhook() {
+    local severity="$1"
+    local scenario="$2"
+    local note="$3"
+    local actions="$4"
+    
+    # Check if reporting is enabled
+    if [ "${REPORTING_ENABLED:-0}" != "1" ]; then
+        log "Reporting disabled, skipping webhook"
+        return 0
+    fi
+    
+    [ -z "${WEBHOOK_URL:-}" ] && return 0
+    
+    # Get system metrics
+    eval $(get_system_metrics)
+    
+    # Anonymize device ID
+    device_public=$(anonymize_device_id "$DEVICE_ID")
+    
+    # Sanitize note
+    san_note=$(sanitize_note "$note")
+    
+    # Create payload
+    payload=$(cat <<EOF
+{
+  "device_id": "$device_public",
+  "fw": "$(cat /etc/version 2>/dev/null || echo 'unknown')",
+  "severity": "$severity",
+  "scenario": "$scenario",
+  "overlay_pct": $overlay_pct,
+  "mem_avail_mb": $mem_avail_mb,
+  "load1": $load1,
+  "ubus_ok": $(probe_ubus && echo "true" || echo "false"),
+  "actions": [$actions],
+  "note": "$san_note",
+  "ts": $(date +%s)
+}
+EOF
+)
+    
+    # Create HMAC signature
+    sig=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "${WATCH_SECRET:-nosig}" -binary | xxd -p -c 256 2>/dev/null || echo "nosig")
+    
+    # Send webhook
+    if curl -sS --max-time 8 -H "Content-Type: application/json" -H "X-Starwatch-Signature: sha256=$sig" -d "$payload" "$WEBHOOK_URL" >/dev/null 2>&1; then
+        log "Webhook sent successfully: $scenario"
+        
+        # Flush queued notifications on success
+        for queued_file in "$Q"/*.json 2>/dev/null; do
+            [ -f "$queued_file" ] || continue
+            queued_payload=$(cat "$queued_file")
+            queued_sig=$(printf '%s' "$queued_payload" | openssl dgst -sha256 -hmac "${WATCH_SECRET:-nosig}" -binary | xxd -p -c 256 2>/dev/null || echo "nosig")
+            if curl -sS --max-time 8 -H "Content-Type: application/json" -H "X-Starwatch-Signature: sha256=$queued_sig" -d "$queued_payload" "$WEBHOOK_URL" >/dev/null 2>&1; then
+                rm -f "$queued_file"
+                log "Queued notification sent and removed"
+            fi
+        done
+    else
+        # Queue for later delivery
+        echo "$payload" > "$Q/$(date +%s).json"
+        log "Webhook failed, queued for later delivery"
+    fi
+}
+
+# Check cooldown for notifications
+check_notification_cooldown() {
+    local key="$1"
+    local cooldown_file="/tmp/starwatch_cooldown_$key"
+    
+    if [ -f "$cooldown_file" ]; then
+        cooldown_time=$(cat "$cooldown_file")
+        now=$(date +%s)
+        if [ $((now - cooldown_time)) -lt $((NOTIFY_COOLDOWN_MIN * 60)) ]; then
+            return 0  # Still in cooldown
+        fi
+    fi
+    
+    # Update cooldown
+    echo "$(date +%s)" > "$cooldown_file"
+    return 1  # Not in cooldown
+}
+
+# Main health check
+main() {
+    log "Starting health check"
+    
+    # Get system metrics
+    eval $(get_system_metrics)
+    
+    # Check daemon health
+    daemon_healthy=$(check_daemon_health)
+    crash_loop=$(check_crash_loop)
+    
+    # Scenario 1: Daemon down or stale heartbeat
+    if [ "$daemon_healthy" = "false" ]; then
+        log "Daemon unhealthy - attempting restart"
+        record_restart
+        
+        # Check if we should hold down due to crash loop
+        if [ "$crash_loop" = "true" ]; then
+            log "Crash loop detected - engaging hold-down for ${COOLDOWN_MINUTES} minutes"
+            if ! check_notification_cooldown "crash_loop"; then
+                bundle_file=$(create_diagnostic_bundle)
+                send_webhook "critical" "crash_loop" "Daemon in crash loop, hold-down engaged" "\"hold_down\", \"restart\""
+            fi
+            
+            # Stop daemon for cooldown period
+            /etc/init.d/autonomy stop 2>/dev/null || true
+            sleep $((COOLDOWN_MINUTES * 60))
+        fi
+        
+        # Restart daemon
+        /etc/init.d/autonomy restart 2>/dev/null || true
+        
+        if ! check_notification_cooldown "daemon_restart"; then
+            send_webhook "warn" "daemon_restart" "Daemon restarted due to health check failure" "\"restart\""
+        fi
+    fi
+    
+    # Scenario 2: System degraded (disk, memory, load)
+    if [ $overlay_pct -ge $DISK_CRIT_PERCENT ]; then
+        log "Critical disk usage: ${overlay_pct}%"
+        if ! check_notification_cooldown "disk_critical"; then
+            send_webhook "critical" "system_degraded" "Critical disk usage: ${overlay_pct}%" "\"log_prune\""
+        fi
+        
+        # Prune logs
+        find /var/log -name "*.log" -mtime +7 -delete 2>/dev/null || true
+        find /tmp -name "autonomy_*" -mtime +1 -delete 2>/dev/null || true
+    elif [ $overlay_pct -ge $DISK_WARN_PERCENT ]; then
+        log "High disk usage: ${overlay_pct}%"
+        if ! check_notification_cooldown "disk_warning"; then
+            send_webhook "warn" "system_degraded" "High disk usage: ${overlay_pct}%" "\"log_prune\""
+        fi
+    fi
+    
+    if [ $mem_avail_mb -lt $MIN_MEM_MB ]; then
+        log "Low memory: ${mem_avail_mb}MB available"
+        if ! check_notification_cooldown "memory_low"; then
+            send_webhook "warn" "system_degraded" "Low memory: ${mem_avail_mb}MB available" "[]"
+        fi
+    fi
+    
+    load_per_core=$(echo "scale=2; $load1 / $cpu_cores" | bc 2>/dev/null || echo "0")
+    if [ $(echo "$load_per_core > $LOAD_CRIT_PER_CORE" | bc 2>/dev/null || echo "0") -eq 1 ]; then
+        log "High load: ${load1} (${load_per_core} per core)"
+        if ! check_notification_cooldown "load_high"; then
+            send_webhook "warn" "system_degraded" "High load: ${load1} (${load_per_core} per core)" "[]"
+        fi
+    fi
+    
+    # Scenario 3: ubus/rpcd issues
+    if ! probe_ubus; then
+        log "ubus/rpcd not responding - attempting restart"
+        /etc/init.d/ubus restart 2>/dev/null || true
+        /etc/init.d/rpcd restart 2>/dev/null || true
+        
+        if ! check_notification_cooldown "ubus_restart"; then
+            send_webhook "warn" "system_degraded" "ubus/rpcd restarted due to unresponsiveness" "\"restart\""
+        fi
+    elif [ $ubus_latency -gt $SLOW_UBUS_MS ]; then
+        log "Slow ubus response: ${ubus_latency}ms"
+        if ! check_notification_cooldown "ubus_slow"; then
+            send_webhook "warn" "slow" "Slow ubus response: ${ubus_latency}ms" "[]"
+        fi
+    fi
+    
+    # Scenario 4: Deep hang detection (optional reboot)
+    if [ "$REBOOT_ON_HARD_HANG" = "1" ]; then
+        # Check for persistent high load and low memory
+        if [ $(echo "$load_per_core > $LOAD_CRIT_PER_CORE" | bc 2>/dev/null || echo "0") -eq 1 ] && [ $mem_avail_mb -lt $((MIN_MEM_MB / 2)) ]; then
+            hang_file="/tmp/starwatch_hang_detected"
+            if [ ! -f "$hang_file" ]; then
+                echo "$(date +%s)" > "$hang_file"
+                log "Deep hang condition detected - starting timer"
+            else
+                hang_start=$(cat "$hang_file")
+                hang_duration=$(( $(date +%s) - hang_start ))
+                if [ $hang_duration -gt $((HANG_MINUTES_BEFORE_REBOOT * 60)) ]; then
+                    log "Deep hang condition persisted for ${HANG_MINUTES_BEFORE_REBOOT} minutes - initiating reboot"
+                    if ! check_notification_cooldown "reboot"; then
+                        send_webhook "critical" "post_reboot" "System rebooted due to deep hang condition" "\"reboot\""
+                    fi
+                    rm -f "$hang_file"
+                    reboot
+                fi
+            fi
+        else
+            rm -f "/tmp/starwatch_hang_detected" 2>/dev/null || true
+        fi
+    fi
+    
+    log "Health check completed"
+}
+
+# Run main function
+main "$@"

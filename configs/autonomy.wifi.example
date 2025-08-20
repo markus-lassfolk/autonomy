@@ -1,0 +1,230 @@
+# autonomy Configuration Example - Advanced WiFi Configuration
+# Copy this file to /etc/config/autonomy and modify as needed
+#
+# 🎯 PURPOSE: Mobile deployments with intelligent WiFi optimization
+# 📱 BEST FOR: RVs, boats, mobile offices, campgrounds, frequent travelers
+#
+# 🚀 KEY FEATURES:
+# • GPS-aware WiFi optimization with movement detection
+# • Automatic channel selection and interference mitigation  
+# • Scheduled optimization (nightly/weekly) during low-usage periods
+# • Enhanced metered mode signaling for cost-aware device behavior
+# • Advanced weight system for intelligent connection prioritization
+# • Comprehensive monitoring and performance metrics
+#
+# 💡 WHEN TO USE:
+# ✅ You're mobile (RV, boat, digital nomad)
+# ✅ You experience WiFi performance issues due to interference
+# ✅ You want automatic optimization based on location changes
+# ✅ You need data usage management with cellular backup
+# ✅ You're in crowded WiFi environments (campgrounds, marinas)
+#
+# 📚 For detailed documentation, see: configs/README.md
+
+# =============================================================================
+# CORE SYSTEM CONFIGURATION
+# =============================================================================
+config autonomy 'main'
+    # Basic daemon control
+    option enable '1'
+    option use_mwan3 '1'
+    option log_level 'info'
+    option log_file ''
+
+    # Timing and intervals
+    option poll_interval_ms '1500'
+    option history_window_s '600'
+    option min_uptime_s '20'
+    option cooldown_s '20'
+
+    # Memory and storage
+    option retention_hours '24'
+    option max_ram_mb '16'
+
+    # Decision making
+    option predictive '1'
+    option switch_margin '10'
+    option data_cap_mode 'balanced'
+
+    # Service endpoints
+    option metrics_listener '0'
+    option health_listener '1'
+
+    # Performance and Security
+    option performance_profiling '0'
+    option security_auditing '1'
+    option profiling_enabled '0'
+    option auditing_enabled '1'
+    option max_failed_attempts '5'
+    option block_duration '300'
+
+# =============================================================================
+# NETWORK THRESHOLDS
+# =============================================================================
+config thresholds 'failover'
+    option loss '5'
+    option latency '1200'
+    option min_duration_s '10'
+
+config thresholds 'restore'
+    option loss '1'
+    option latency '800'
+    option min_duration_s '30'
+
+config thresholds 'weights'
+    # Hybrid weight system for intelligent failover
+    option respect_user_weights '1'
+    option dynamic_adjustment '1'
+    option emergency_override '1'
+    option only_emergency_override '0'
+    option restore_timeout_s '300'
+    option minimal_adjustment_points '5'
+    option temporary_boost_points '20'
+    option temporary_adjustment_duration_s '600'
+    option emergency_adjustment_duration_s '1800'
+
+config thresholds 'intelligence'
+    # Intelligent adjustment thresholds
+    option starlink_obstruction_threshold '10.0'
+    option cellular_signal_threshold '-85.0'
+    option latency_degradation_threshold '2.0'
+    option loss_threshold '5.0'
+
+# =============================================================================
+# STARLINK API CONFIGURATION
+# =============================================================================
+config starlink 'api'
+    option host '192.168.100.1'
+    option port '9200'
+    option timeout_s '10'
+    option grpc_first '1'
+    option http_first '0'
+
+# =============================================================================
+# MACHINE LEARNING
+# =============================================================================
+config ml 'settings'
+    option enabled '1'
+    option model_path '/etc/autonomy/models.json'
+    option training '1'
+    option prediction '1'
+
+# =============================================================================
+# MONITORING ENDPOINTS
+# =============================================================================
+config monitoring 'mqtt'
+    option broker ''
+    option topic 'autonomy/status'
+
+# =============================================================================
+# NOTIFICATIONS
+# =============================================================================
+config notifications 'pushover'
+    option enabled '0'
+    option token ''
+    option user ''
+    option device ''
+
+config notifications 'settings'
+    option threshold 'warning'
+    option acknowledgment_tracking '1'
+    option location_enabled '1'
+    option rich_context_enabled '1'
+    option cooldown_s '300'
+    option max_per_hour '20'
+
+config notifications 'events'
+    option failover '1'
+    option failback '1'
+    option member_down '1'
+    option member_up '0'
+    option predictive '1'
+    option critical '1'
+    option recovery '1'
+
+config notifications 'priorities'
+    option failover '1'
+    option failback '0'
+    option member_down '1'
+    option member_up '-1'
+    option predictive '0'
+    option critical '2'
+    option recovery '0'
+
+# =============================================================================
+# WIFI OPTIMIZATION
+# =============================================================================
+config wifi 'optimization'
+    # Core WiFi optimization settings
+    option enabled '1'                    # Enable WiFi optimization
+    option movement_threshold '100.0'     # GPS movement threshold (meters)
+    option stationary_time '300'          # Time to be stationary before optimization (seconds)
+    option min_improvement '3'            # Minimum dBm improvement required
+    option dwell_time '30'                # Time to test each channel (seconds)
+    option noise_default '-95'            # Default noise floor (dBm)
+    option vht80_threshold '25'           # Minimum signal for 80MHz channels (dBm)
+    option vht40_threshold '20'           # Minimum signal for 40MHz channels (dBm)
+    option use_dfs '0'                    # Use DFS channels (radar detection)
+    option cooldown '3600'                # Cooldown between optimizations (seconds)
+    option gps_accuracy_threshold '50.0'  # GPS accuracy threshold (meters)
+    option location_logging '1'           # Log GPS coordinates
+    option timezone 'UTC'                 # Timezone for scheduling
+
+config wifi 'scheduler'
+    # Scheduled optimization settings
+    option nightly_enabled '1'            # Enable nightly optimization
+    option nightly_time '02:00'           # Time for nightly optimization
+    option nightly_window '60'            # Window for nightly optimization (minutes)
+    option weekly_enabled '1'             # Enable weekly deep optimization
+    option weekly_days 'sunday'           # Days for weekly optimization
+    option weekly_time '03:00'            # Time for weekly optimization
+    option weekly_window '120'            # Window for weekly optimization (minutes)
+    option check_interval '300'           # Scheduler check interval (seconds)
+    option skip_if_recent '1'             # Skip if recent optimization
+    option recent_threshold '1800'        # Recent optimization threshold (seconds)
+
+# =============================================================================
+# METERED MODE INTEGRATION
+# =============================================================================
+config metered 'settings'
+    option enabled '1'                    # Enable metered mode signaling
+    option warning_threshold '80'         # Warning threshold percentage
+    option critical_threshold '95'        # Critical threshold percentage
+    option hysteresis_margin '5'          # Hysteresis margin to prevent flapping
+    option stability_delay '300'          # Stability delay in seconds
+    option reconnect_method 'gentle'      # Client reconnection method
+    option debug '0'                      # Enable debug logging
+
+# =============================================================================
+# MEMBER CONFIGURATIONS
+# =============================================================================
+
+config member 'starlink_any'
+    option detect 'auto'
+    option class 'starlink'
+    option weight '100'
+    option min_uptime_s '30'
+    option cooldown_s '20'
+
+config member 'cellular_any'
+    option detect 'auto'
+    option class 'cellular'
+    option weight '80'
+    option prefer_roaming '0'
+    option metered '1'
+    option min_uptime_s '20'
+    option cooldown_s '20'
+
+config member 'wifi_any'
+    option detect 'auto'
+    option class 'wifi'
+    option weight '60'
+    option min_uptime_s '15'
+    option cooldown_s '15'
+
+config member 'lan_any'
+    option detect 'auto'
+    option class 'lan'
+    option weight '40'
+    option min_uptime_s '10'
+    option cooldown_s '10'

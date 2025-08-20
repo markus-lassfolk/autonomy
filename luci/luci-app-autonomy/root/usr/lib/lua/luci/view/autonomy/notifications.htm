@@ -1,0 +1,325 @@
+<%+header%>
+
+<h2><%:autonomy Notifications Management%></h2>
+
+<div class="cbi-section">
+    <div class="cbi-section-descr"><%:Manage and monitor notification channels, send test messages, and view notification history.%></div>
+    
+    <!-- Notification Status -->
+    <div class="cbi-section">
+        <h3><%:Notification Status%></h3>
+        <div id="notification-status">
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-label"><%:System Status%>:</span>
+                    <span id="system-status" class="status-value">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label"><%:Enabled Channels%>:</span>
+                    <span id="enabled-channels" class="status-value">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label"><%:Total Sent%>:</span>
+                    <span id="total-sent" class="status-value">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label"><%:Total Failed%>:</span>
+                    <span id="total-failed" class="status-value">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Send Notification -->
+    <div class="cbi-section">
+        <h3><%:Send Notification%></h3>
+        <div class="cbi-section-descr"><%:Send a custom notification to test channels.%></div>
+        <div class="cbi-section-node">
+            <div class="form-group">
+                <label for="notification-title"><%:Title%>:</label>
+                <input type="text" id="notification-title" class="form-control" placeholder="<%:Enter notification title%>" />
+            </div>
+            <div class="form-group">
+                <label for="notification-message"><%:Message%>:</label>
+                <textarea id="notification-message" class="form-control" rows="3" placeholder="<%:Enter notification message%>"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="notification-priority"><%:Priority%>:</label>
+                <select id="notification-priority" class="form-control">
+                    <option value="0"><%:Normal%></option>
+                    <option value="1"><%:High%></option>
+                    <option value="2"><%:Emergency%></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="notification-channel"><%:Channel%>:</label>
+                <select id="notification-channel" class="form-control">
+                    <option value="pushover">Pushover</option>
+                    <option value="email">Email</option>
+                    <option value="slack">Slack</option>
+                    <option value="discord">Discord</option>
+                    <option value="telegram">Telegram</option>
+                    <option value="webhook">Webhook</option>
+                    <option value="sms">SMS</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button id="btn-send-notification" class="btn cbi-button cbi-button-apply"><%:Send Notification%></button>
+                <button id="btn-test-notification" class="btn cbi-button cbi-button-apply"><%:Send Test%></button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Statistics -->
+    <div class="cbi-section">
+        <h3><%:Statistics%></h3>
+        <div id="notification-stats">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label"><%:Success Rate%>:</span>
+                    <span id="success-rate" class="stat-value">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label"><%:Rate Limited%>:</span>
+                    <span id="rate-limited" class="stat-value">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label"><%:Last Sent%>:</span>
+                    <span id="last-sent" class="stat-value">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label"><%:Last Failure%>:</span>
+                    <span id="last-failure" class="stat-value">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification History -->
+    <div class="cbi-section">
+        <h3><%:Recent History%></h3>
+        <div id="notification-history">
+            <div class="history-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th><%:Time%></th>
+                            <th><%:Channel%></th>
+                            <th><%:Title%></th>
+                            <th><%:Status%></th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-tbody">
+                        <tr><td colspan="4"><%:Loading...%></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.status-grid, .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.status-item, .stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    border-left: 4px solid #007cba;
+}
+
+.status-label, .stat-label {
+    font-weight: bold;
+    color: #666;
+}
+
+.status-value, .stat-value {
+    color: #333;
+    font-weight: 500;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.history-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+.status-success {
+    color: #4CAF50;
+}
+
+.status-failed {
+    color: #f44336;
+}
+
+.status-pending {
+    color: #ff9800;
+}
+</style>
+
+<script type="text/javascript">
+// Load notification data
+function loadNotificationData() {
+    XHR.get('<%=luci.dispatcher.build_url("admin", "network", "autonomy", "notifications_data")%>', null, function(xhr) {
+        if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            updateNotificationDisplay(data);
+        }
+    });
+}
+
+// Update notification display
+function updateNotificationDisplay(data) {
+    // Update status
+    if (data.status) {
+        document.getElementById('system-status').textContent = data.status.enabled ? 'Enabled' : 'Disabled';
+        document.getElementById('enabled-channels').textContent = data.status.channels ? data.status.channels.length : 0;
+    }
+    
+    // Update statistics
+    if (data.stats) {
+        const totalSent = data.stats.total_sent || 0;
+        const totalFailed = data.stats.total_failed || 0;
+        const total = totalSent + totalFailed;
+        const successRate = total > 0 ? Math.round((totalSent / total) * 100) : 0;
+        
+        document.getElementById('total-sent').textContent = totalSent;
+        document.getElementById('total-failed').textContent = totalFailed;
+        document.getElementById('success-rate').textContent = successRate + '%';
+        document.getElementById('rate-limited').textContent = data.stats.rate_limited || 0;
+        document.getElementById('last-sent').textContent = data.stats.last_sent_time || 'Never';
+        document.getElementById('last-failure').textContent = data.stats.last_failure_time || 'Never';
+    }
+    
+    // Update history
+    if (data.history) {
+        updateHistoryTable(data.history);
+    }
+}
+
+// Update history table
+function updateHistoryTable(history) {
+    const tbody = document.getElementById('history-tbody');
+    tbody.innerHTML = '';
+    
+    if (history.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4"><%:No notifications sent yet%></td></tr>';
+        return;
+    }
+    
+    history.forEach(function(item) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${item.timestamp || '-'}</td>
+            <td>${item.channel || '-'}</td>
+            <td>${item.title || '-'}</td>
+            <td><span class="status-${item.status || 'pending'}">${item.status || 'Pending'}</span></td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Send notification
+function sendNotification() {
+    const title = document.getElementById('notification-title').value;
+    const message = document.getElementById('notification-message').value;
+    const priority = document.getElementById('notification-priority').value;
+    const channel = document.getElementById('notification-channel').value;
+    
+    if (!title || !message) {
+        alert('<%:Please enter both title and message%>');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('message', message);
+    formData.append('priority', priority);
+    formData.append('channel', channel);
+    
+    XHR.post('<%=luci.dispatcher.build_url("admin", "network", "autonomy", "send_notification")%>', formData, function(xhr) {
+        if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            if (response.success) {
+                alert('<%:Notification sent successfully%>');
+                loadNotificationData();
+            } else {
+                alert('<%:Failed to send notification%>: ' + response.message);
+            }
+        }
+    });
+}
+
+// Test notification
+function testNotification() {
+    const channel = document.getElementById('notification-channel').value;
+    
+    const formData = new FormData();
+    formData.append('channel', channel);
+    
+    XHR.post('<%=luci.dispatcher.build_url("admin", "network", "autonomy", "test_notification")%>', formData, function(xhr) {
+        if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            if (response.success) {
+                alert('<%:Test notification sent successfully%>');
+                loadNotificationData();
+            } else {
+                alert('<%:Failed to send test notification%>: ' + response.message);
+            }
+        }
+    });
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadNotificationData();
+    
+    document.getElementById('btn-send-notification').addEventListener('click', sendNotification);
+    document.getElementById('btn-test-notification').addEventListener('click', testNotification);
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadNotificationData, 30000);
+});
+</script>
+
+<%+footer%>

@@ -1,0 +1,115 @@
+name: Documentation Validation & Auto-Fix
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+      - 'README.md'
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to validate'
+        required: false
+        type: number
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  doc-validation:
+    runs-on: ubuntu-latest
+    name: Documentation Validation & Auto-Fix
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.COPILOT_TOKEN }}
+          fetch-depth: 0
+          
+      - name: Setup Documentation Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc aspell aspell-en
+          npm install -g markdownlint-cli markdown-link-check
+          
+      - name: Get Changed Files
+        id: changed-files
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin main:main
+            CHANGED_DOCS=$(git diff --name-only main..HEAD | grep -E '\.(md|rst)$' || echo "")
+          else
+            CHANGED_DOCS=$(find . -name "*.md" | head -10)
+          fi
+          
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_DOCS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+      - name: Validate Documentation
+        id: validation
+        run: |
+          echo "� Validating documentation files..."
+          
+          ISSUES_FOUND=0
+          REPORT="# Documentation Validation Report\n\n"
+          
+          if [ -z "${{ steps.changed-files.outputs.files }}" ]; then
+            echo "No documentation files to validate"
+            exit 0
+          fi
+          
+          echo "${{ steps.changed-files.outputs.files }}" | while IFS= read -r file; do
+            if [ -n "$file" ] && [ -f "$file" ]; then
+              echo "Validating: $file"
+              
+              # Markdown syntax check
+              if [[ "$file" == *.md ]]; then
+                if ! markdownlint "$file"; then
+                  ISSUES_FOUND=$((ISSUES_FOUND + 1))
+                fi
+              fi
+              
+              # Link check
+              if command -v markdown-link-check >/dev/null 2>&1; then
+                markdown-link-check "$file" || ISSUES_FOUND=$((ISSUES_FOUND + 1))
+              fi
+            fi
+          done
+          
+          echo "issues-found=$ISSUES_FOUND" >> $GITHUB_OUTPUT
+          
+      - name: Auto-Fix Documentation
+        if: steps.validation.outputs.issues-found != '0'
+        run: |
+          echo "🔧 Auto-fixing documentation issues..."
+          
+          echo "${{ steps.changed-files.outputs.files }}" | while IFS= read -r file; do
+            if [ -n "$file" ] && [ -f "$file" ] && [[ "$file" == *.md ]]; then
+              echo "Auto-fixing: $file"
+              markdownlint --fix "$file" || true
+              
+              # Fix common issues
+              sed -i 's/[[:space:]]*$//' "$file"
+              sed -i '/^$/N;/^\n$/d' "$file"
+              sed -i -e '$a\' "$file"
+            fi
+          done
+          
+      - name: Commit Fixes
+        run: |
+          git config --local user.email "copilot@github.com"
+          git config --local user.name "Documentation Auto-Fix"
+          
+          if ! git diff --quiet; then
+            git add .
+            git commit -m "📚 Auto-fix documentation issues [skip ci]"
+            git push origin HEAD
+            echo "✅ Documentation fixes committed"
+          else
+            echo "ℹ️ No changes to commit"
+          fi

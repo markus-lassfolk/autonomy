@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "WEBHOOK_SECRET": "your-webhook-secret-here",
+    "GITHUB_TOKEN": "your-github-token-here",
+    "SUPPORTED_VERSIONS": "RUTX_R_00.07.17,RUTX_R_00.07.18,RUTX_R_00.08.00",
+    "MIN_SEVERITY": "warn",
+    "COPILOT_ENABLED": "true",
+    "AUTO_ASSIGN": "true"
+  }
+}

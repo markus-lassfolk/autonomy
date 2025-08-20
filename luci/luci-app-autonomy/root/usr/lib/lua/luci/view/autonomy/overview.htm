@@ -1,0 +1,133 @@
+<%+header%>
+
+<h2><%:autonomy Multi-Interface Failover - Overview%></h2>
+
+<div class="cbi-section">
+    <div class="cbi-section-descr"><%:Real-time status and control of the autonomy failover daemon.%></div>
+    
+    <!-- Status Overview -->
+    <div class="cbi-section">
+        <h3><%:System Status%></h3>
+        <div id="status-container">
+            <div class="status-item">
+                <span class="status-label"><%:Daemon Status%>:</span>
+                <span id="daemon-status" class="status-value">-</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label"><%:Current Member%>:</span>
+                <span id="current-member" class="status-value">-</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label"><%:Total Members%>:</span>
+                <span id="total-members" class="status-value">-</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Control Buttons -->
+    <div class="cbi-section">
+        <h3><%:Control%></h3>
+        <div class="cbi-section-descr"><%:Control the autonomy daemon.%></div>
+        <div class="cbi-section-node">
+            <input type="button" id="btn-start" class="btn cbi-button cbi-button-apply" value="<%:Start%>" />
+            <input type="button" id="btn-stop" class="btn cbi-button cbi-button-reset" value="<%:Stop%>" />
+            <input type="button" id="btn-restart" class="btn cbi-button cbi-button-apply" value="<%:Restart%>" />
+            <input type="button" id="btn-reload" class="btn cbi-button cbi-button-apply" value="<%:Reload Config%>" />
+        </div>
+    </div>
+</div>
+
+<style>
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.status-label {
+    font-weight: bold;
+    color: #666;
+}
+
+.status-value {
+    color: #333;
+}
+
+.status-value.running {
+    color: #4CAF50;
+}
+
+.status-value.stopped {
+    color: #f44336;
+}
+</style>
+
+<script type="text/javascript">
+// Load system status
+function loadStatus() {
+    XHR.get('<%=luci.dispatcher.build_url("admin", "network", "autonomy", "status")%>', null, function(xhr) {
+        if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            updateStatusDisplay(data);
+        }
+    });
+}
+
+// Update status display
+function updateStatusDisplay(data) {
+    const daemonStatus = document.getElementById('daemon-status');
+    const currentMember = document.getElementById('current-member');
+    const totalMembers = document.getElementById('total-members');
+    
+    daemonStatus.textContent = data.daemon_running ? 'Running' : 'Stopped';
+    daemonStatus.className = 'status-value ' + (data.daemon_running ? 'running' : 'stopped');
+    currentMember.textContent = data.current_member || 'None';
+    totalMembers.textContent = data.total_members || 0;
+}
+
+// Setup control buttons
+function setupControlButtons() {
+    document.getElementById('btn-start').addEventListener('click', function() {
+        executeControl('start');
+    });
+    
+    document.getElementById('btn-stop').addEventListener('click', function() {
+        executeControl('stop');
+    });
+    
+    document.getElementById('btn-restart').addEventListener('click', function() {
+        executeControl('restart');
+    });
+    
+    document.getElementById('btn-reload').addEventListener('click', function() {
+        executeControl('reload');
+    });
+}
+
+// Execute control action
+function executeControl(action) {
+    const formData = new FormData();
+    formData.append('action', action);
+    
+    XHR.post('<%=luci.dispatcher.build_url("admin", "network", "autonomy", "control")%>', formData, function(xhr) {
+        if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            if (response.success) {
+                setTimeout(loadStatus, 1000);
+            } else {
+                alert('Action failed: ' + response.message);
+            }
+        }
+    });
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadStatus();
+    setupControlButtons();
+    setInterval(loadStatus, 5000);
+});
+</script>
+
+<%+footer%>

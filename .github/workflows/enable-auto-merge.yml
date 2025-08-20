@@ -1,0 +1,178 @@
+name: Auto-Enable PR Auto-Merge
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, labeled]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to enable auto-merge for'
+        type: number
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  enable-auto-merge:
+    runs-on: ubuntu-latest
+    name: Enable Auto-Merge for Eligible PRs
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.COPILOT_TOKEN }}
+          
+      - name: Setup GitHub CLI
+        run: |
+          gh --version
+          gh auth status
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+          
+      - name: Determine Target PRs
+        id: target
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "target-prs=${{ github.event.number }}" >> $GITHUB_OUTPUT
+            echo "Processing PR from event: ${{ github.event.number }}"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.pr_number }}" ]; then
+            echo "target-prs=${{ inputs.pr_number }}" >> $GITHUB_OUTPUT
+            echo "Processing PR from input: ${{ inputs.pr_number }}"
+          else
+            # Find all eligible Copilot PRs without auto-merge enabled
+            ELIGIBLE_PRS=$(gh pr list --state open --author app/copilot-swe-agent --json number,autoMergeRequest,labels --jq '.[] | select(.autoMergeRequest == null) | select(.labels[] | .name == "ready-for-merge") | .number' | tr '\n' ' ')
+            if [ -z "$ELIGIBLE_PRS" ]; then
+              echo "No eligible PRs found"
+              echo "target-prs=" >> $GITHUB_OUTPUT
+            else
+              echo "target-prs=$ELIGIBLE_PRS" >> $GITHUB_OUTPUT
+              echo "Found eligible PRs: $ELIGIBLE_PRS"
+            fi
+          fi
+          
+      - name: Enable Auto-Merge
+        if: steps.target.outputs.target-prs != ''
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+        run: |
+          TARGET_PRS="${{ steps.target.outputs.target-prs }}"
+          ENABLED_COUNT=0
+          SKIPPED_COUNT=0
+          
+          for PR_NUMBER in $TARGET_PRS; do
+            echo ""
+            echo "🔍 Evaluating PR #$PR_NUMBER for auto-merge enablement..."
+            
+            # Get PR details
+            PR_DATA=$(gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER" --jq '{
+              user: .user.login,
+              title: .title,
+              draft: .draft,
+              mergeable: .mergeable,
+              auto_merge: .auto_merge,
+              labels: [.labels[].name]
+            }')
+            
+            AUTHOR=$(echo "$PR_DATA" | jq -r '.user')
+            TITLE=$(echo "$PR_DATA" | jq -r '.title')
+            DRAFT=$(echo "$PR_DATA" | jq -r '.draft')
+            MERGEABLE=$(echo "$PR_DATA" | jq -r '.mergeable')
+            AUTO_MERGE=$(echo "$PR_DATA" | jq -r '.auto_merge')
+            LABELS=$(echo "$PR_DATA" | jq -r '.labels[]' | tr '\n' ' ')
+            
+            echo "   Author: $AUTHOR"
+            echo "   Title: $TITLE"
+            echo "   Draft: $DRAFT"
+            echo "   Mergeable: $MERGEABLE"
+            echo "   Auto-merge enabled: $AUTO_MERGE"
+            echo "   Labels: $LABELS"
+            
+            # Safety checks
+            ELIGIBLE=true
+            REASONS=""
+            
+            # Must be from Copilot
+            if [ "$AUTHOR" != "app/copilot-swe-agent" ]; then
+              ELIGIBLE=false
+              REASONS="$REASONS NotCopilotAuthor"
+            fi
+            
+            # Must not be draft
+            if [ "$DRAFT" = "true" ]; then
+              ELIGIBLE=false
+              REASONS="$REASONS IsDraft"
+            fi
+            
+            # Must have ready-for-merge label
+            if ! echo "$LABELS" | grep -q "ready-for-merge"; then
+              ELIGIBLE=false
+              REASONS="$REASONS MissingReadyLabel"
+            fi
+            
+            # Must have validation-passed label
+            if ! echo "$LABELS" | grep -q "validation-passed"; then
+              ELIGIBLE=false
+              REASONS="$REASONS MissingValidationLabel"
+            fi
+            
+            # Must have safe title
+            if ! echo "$TITLE" | grep -qE "(Fix.*RUTOS.*compatibility|Fix:.*version.*information|Add.*version.*information|\[MINOR\].*version)"; then
+              ELIGIBLE=false
+              REASONS="$REASONS UnsafeTitle"
+            fi
+            
+            # Auto-merge not already enabled
+            if [ "$AUTO_MERGE" != "null" ]; then
+              ELIGIBLE=false
+              REASONS="$REASONS AutoMergeAlreadyEnabled"
+            fi
+            
+            if [ "$ELIGIBLE" != "true" ]; then
+              echo "   ⚠️  Skipping PR #$PR_NUMBER:$REASONS"
+              SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+              continue
+            fi
+            
+            # Enable auto-merge
+            echo "   ✅ Enabling auto-merge for PR #$PR_NUMBER"
+            
+            if gh pr merge "$PR_NUMBER" --auto --squash --delete-branch; then
+              echo "   🎉 Auto-merge enabled for PR #$PR_NUMBER"
+              ENABLED_COUNT=$((ENABLED_COUNT + 1))
+              
+              # Add informational comment
+              gh pr comment "$PR_NUMBER" --body "🤖 **Auto-Merge Enabled**
+
+          Auto-merge has been enabled for this PR with the following settings:
+          - ✅ Merge method: Squash and merge
+          - ✅ Delete head branch after merge
+          - ✅ Will merge automatically when all checks pass
+
+          The PR will be merged automatically once all required status checks complete successfully." || true
+              
+            else
+              echo "   ❌ Failed to enable auto-merge for PR #$PR_NUMBER"
+              SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+            fi
+            
+            sleep 1  # Rate limiting
+          done
+          
+          echo ""
+          echo "📊 Auto-Merge Enablement Summary:"
+          echo "   PRs Processed: $(echo $TARGET_PRS | wc -w)"
+          echo "   Auto-merge Enabled: $ENABLED_COUNT"
+          echo "   Skipped: $SKIPPED_COUNT"
+          
+      - name: Check Current Auto-Merge Status
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+        run: |
+          echo "🔍 Current auto-merge status across all open PRs:"
+          gh pr list --state open --json number,title,autoMergeRequest,author --jq '.[] | select(.author.login | test("copilot")) | "PR #\(.number): \(.title) - Auto-merge: \(if .autoMergeRequest then "✅ Enabled" else "❌ Disabled" end)"'

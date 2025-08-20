@@ -1,0 +1,43 @@
+# autonomy Watchdog & Failsafe Configuration
+# Copy this file to /etc/autonomy/watch.conf and customize as needed
+
+# Webhook Configuration (required for external notifications)
+WEBHOOK_URL="https://your.server/webhook/starwatch"
+WATCH_SECRET="your-secure-watchdog-secret-here"
+
+# Device Identification
+DEVICE_ID="rutx50-van-01"
+
+# Privacy & Opt-in Settings (all disabled by default for privacy)
+REPORTING_ENABLED=0                 # Enable automatic bug reporting (0=disabled, 1=enabled)
+ANONYMIZE_DEVICE_ID=1               # Anonymize device ID in reports (0=disabled, 1=enabled)
+PRIVACY_LEVEL="standard"            # Privacy level: standard|strict
+INCLUDE_DIAGNOSTICS=0               # Include diagnostic bundles in reports (0=disabled, 1=enabled)
+AUTO_UPDATE_ENABLED=0               # Enable automatic updates (0=disabled, 1=enabled)
+UPDATE_CHANNEL="stable"             # Update channel: stable|beta
+
+# Heartbeat Monitoring
+HEARTBEAT_STALE_SEC=60              # Seconds before heartbeat is considered stale
+CRASH_LOOP_THRESHOLD=3              # Number of restarts to trigger crash loop detection
+CRASH_LOOP_WINDOW_SEC=600           # Time window for crash loop detection (10 minutes)
+COOLDOWN_MINUTES=30                 # Minutes to hold down after crash loop
+
+# System Health Thresholds
+DISK_WARN_PERCENT=95                # Warning threshold for overlay disk usage
+DISK_CRIT_PERCENT=98                # Critical threshold for overlay disk usage
+MIN_MEM_MB=32                       # Minimum available memory in MB
+LOAD_CRIT_PER_CORE=3.0             # Critical load average per CPU core
+SLOW_UBUS_MS=1500                   # Slow ubus response threshold in milliseconds
+
+# Notification Settings
+NOTIFY_COOLDOWN_MIN=15              # Minutes between notifications for same issue
+
+# Deep Hang Detection (optional reboot)
+REBOOT_ON_HARD_HANG=0               # Enable automatic reboot on deep hang (0=disabled, 1=enabled)
+HANG_MINUTES_BEFORE_REBOOT=20       # Minutes of persistent hang before reboot
+
+# Optional Direct Notifications (fallback if webhook fails)
+# PUSHOVER_TOKEN="your_pushover_token"
+# PUSHOVER_USER="your_pushover_user"
+# TELEGRAM_TOKEN="your_telegram_bot_token"
+# TELEGRAM_CHAT_ID="your_telegram_chat_id"

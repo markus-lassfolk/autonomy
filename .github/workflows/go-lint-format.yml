@@ -1,0 +1,234 @@
+name: Go Lint & Format
+
+on:
+  push:
+    branches: [ '*' ]
+    paths:
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+  pull_request:
+    branches: [ '*' ]
+    paths:
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  lint-format:
+    runs-on: ubuntu-latest
+    name: Go Lint & Format
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'
+          cache: true
+      
+      - name: Install formatting tools
+        run: |
+          go install golang.org/x/tools/cmd/goimports@latest
+          go install mvdan.cc/gofumpt@latest
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      
+      - name: Auto-format Go code
+        if: github.event_name == 'push'
+        run: |
+          echo "🎨 Auto-formatting Go files..."
+          
+          # Run goimports to organize imports
+          find . -name "*.go" -not -path "./vendor/*" -exec goimports -w {} \;
+          
+          # Run gofumpt for additional formatting
+          find . -name "*.go" -not -path "./vendor/*" -exec gofumpt -w {} \;
+          
+          # Run go fmt
+          go fmt ./...
+          
+          echo "✅ Go files formatted successfully"
+      
+      - name: Commit formatting changes
+        if: github.event_name == 'push'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "🎨 Auto-format Go code [skip ci]"
+            git push
+            echo "✅ Committed Go formatting changes"
+          else
+            echo "✅ No Go formatting changes needed"
+          fi
+      
+      - name: Check Go formatting
+        run: |
+          echo "🔍 Checking Go code formatting..."
+          
+          # Check goimports
+          unformatted=$(goimports -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::The following files need import formatting:"
+            echo "$unformatted"
+            exit 1
+          fi
+          
+          # Check gofumpt
+          unformatted=$(gofumpt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::The following files need formatting:"
+            echo "$unformatted"
+            exit 1
+          fi
+          
+          # Check go fmt
+          unformatted=$(go fmt ./...)
+          if [ -n "$unformatted" ]; then
+            echo "::error::The following files need formatting:"
+            echo "$unformatted"
+            exit 1
+          fi
+          
+          echo "✅ All Go files are properly formatted"
+      
+      - name: Run golangci-lint
+        run: |
+          echo "🔍 Running golangci-lint..."
+          
+          # Create golangci-lint config if it doesn't exist
+          if [ ! -f .golangci.yml ]; then
+            cat > .golangci.yml << 'EOF'
+            linters:
+              enable:
+                - gofmt
+                - goimports
+                - govet
+                - errcheck
+                - staticcheck
+                - gosimple
+                - ineffassign
+                - unused
+                - misspell
+                - gosec
+                - gocyclo
+                - dupl
+                - goconst
+                - gocritic
+                - godot
+                - goheader
+                - gomnd
+                - goprintffuncname
+                - gosec
+                - gosimple
+                - govet
+                - ineffassign
+                - lll
+                - misspell
+                - nakedret
+                - noctx
+                - nolintlint
+                - rowserrcheck
+                - staticcheck
+                - structcheck
+                - stylecheck
+                - typecheck
+                - unconvert
+                - unparam
+                - unused
+                - varcheck
+                - whitespace
+                - wrapcheck
+                - wsl
+            
+            linters-settings:
+              gocyclo:
+                min-complexity: 15
+              dupl:
+                threshold: 100
+              lll:
+                line-length: 140
+              goconst:
+                min-len: 3
+                min-occurrences: 3
+              gomnd:
+                checks: argument,case,condition,operation,return,assign
+              gocritic:
+                enabled-tags:
+                  - diagnostic
+                  - experimental
+                  - opinionated
+                  - performance
+                  - style
+            
+            issues:
+              exclude-rules:
+                - path: _test\.go
+                  linters:
+                    - gomnd
+                    - goconst
+                    - dupl
+                    - gocyclo
+                    - lll
+                    - goprintffuncname
+                    - gosec
+                    - goconst
+                    - gomnd
+                    - gocritic
+                    - gosimple
+                    - govet
+                    - ineffassign
+                    - lll
+                    - misspell
+                    - nakedret
+                    - noctx
+                    - nolintlint
+                    - rowserrcheck
+                    - staticcheck
+                    - structcheck
+                    - stylecheck
+                    - typecheck
+                    - unconvert
+                    - unparam
+                    - unused
+                    - varcheck
+                    - whitespace
+                    - wrapcheck
+                    - wsl
+            
+            run:
+              timeout: 5m
+              go: "1.22"
+              modules-download-mode: readonly
+            EOF
+          fi
+          
+          golangci-lint run --timeout=5m
+      
+      - name: Check for common Go issues
+        run: |
+          echo "🔍 Checking for common Go issues..."
+          
+          # Check for unused imports
+          if go vet ./... 2>&1 | grep -q "unused"; then
+            echo "::warning::Found unused imports"
+          fi
+          
+          # Check for shadowed variables
+          if go vet ./... 2>&1 | grep -q "shadow"; then
+            echo "::warning::Found shadowed variables"
+          fi
+          
+          # Check for error handling
+          if find . -name "*.go" -exec grep -l "err.*=" {} \; | xargs grep -L "if err" | head -5; then
+            echo "::warning::Found potential unhandled errors"
+          fi
+          
+          echo "✅ Common Go issues check completed"

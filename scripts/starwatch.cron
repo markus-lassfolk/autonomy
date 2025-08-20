@@ -1,0 +1,5 @@
+# autonomy Watchdog Cron Job
+# Runs every 6 minutes to monitor daemon health and system status
+
+# Every 6 minutes
+*/6 * * * * /usr/sbin/starwatch

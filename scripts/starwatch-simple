@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# Simple ubus/rpcd health check for RUTOS
+# Ash-compatible version
+
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') starwatch: $*" | logger -t starwatch
+}
+
+# Test ubus connectivity
+test_ubus() {
+    timeout 3 ubus -S call system board '{}' >/dev/null 2>&1
+    return $?
+}
+
+# Main function
+main() {
+    log "Starting ubus health check"
+    
+    if test_ubus; then
+        log "ubus is responding normally"
+    else
+        log "ubus not responding - restarting ubus and rpcd"
+        /etc/init.d/ubus restart 2>/dev/null || true
+        /etc/init.d/rpcd restart 2>/dev/null || true
+        log "ubus/rpcd restart completed"
+        
+        # Wait a moment and test again
+        sleep 5
+        if test_ubus; then
+            log "ubus is now responding after restart"
+        else
+            log "ubus still not responding after restart"
+        fi
+    fi
+    
+    log "Health check completed"
+}
+
+# Run the check
+main "$@"

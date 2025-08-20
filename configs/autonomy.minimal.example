@@ -1,0 +1,27 @@
+# Minimal autonomy Configuration for Testing
+config autonomy 'main'
+    option enable '1'
+    option use_mwan3 '1'
+    option log_level 'info'
+    option poll_interval_ms '1500'
+    option predictive '1'
+
+config thresholds 'failover'
+    option loss '5'
+    option latency '1200'
+    option min_duration_s '10'
+
+config thresholds 'restore'
+    option loss '1'
+    option latency '800'
+    option min_duration_s '30'
+
+config member 'starlink_any'
+    option detect 'auto'
+    option class 'starlink'
+    option weight '100'
+
+config member 'cellular_any'
+    option detect 'auto'
+    option class 'cellular'
+    option weight '80'

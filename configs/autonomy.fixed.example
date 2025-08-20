@@ -1,0 +1,167 @@
+# autonomy Configuration - Fixed UCI Format
+# This is a corrected version that fixes UCI parsing errors
+
+# =============================================================================
+# CORE SYSTEM CONFIGURATION
+# =============================================================================
+config autonomy 'main'
+    # Basic daemon control
+    option enable '1'
+    option use_mwan3 '1'
+    option log_level 'info'
+    option log_file ''
+
+    # Timing and intervals
+    option poll_interval_ms '1500'
+    option history_window_s '600'
+    option min_uptime_s '20'
+    option cooldown_s '20'
+
+    # Memory and storage
+    option retention_hours '24'
+    option max_ram_mb '16'
+
+    # Decision making
+    option predictive '1'
+    option switch_margin '10'
+    option data_cap_mode 'balanced'
+
+    # Service endpoints
+    option metrics_listener '0'
+    option health_listener '1'
+
+    # Performance and Security (system-wide settings)
+    option performance_profiling '0'
+    option security_auditing '1'
+    option profiling_enabled '0'
+    option auditing_enabled '1'
+    option max_failed_attempts '5'
+    option block_duration '300'
+
+# =============================================================================
+# NETWORK THRESHOLDS
+# =============================================================================
+config thresholds 'failover'
+    # When to trigger failover
+    option loss '5'            # Packet loss percentage
+    option latency '1200'      # Latency in milliseconds
+    option min_duration_s '10' # Minimum duration before failover
+
+config thresholds 'restore'
+    # When to restore/failback
+    option loss '1'            # Packet loss percentage
+    option latency '800'       # Latency in milliseconds
+    option min_duration_s '30' # Minimum duration before restore
+
+# =============================================================================
+# STARLINK API CONFIGURATION
+# =============================================================================
+config starlink 'api'
+    option host '192.168.100.1'
+    option port '9200'
+    option timeout_s '10'
+    option grpc_first '1'
+    option http_first '0'
+
+# =============================================================================
+# MACHINE LEARNING
+# =============================================================================
+config ml 'settings'
+    option enabled '1'
+    option model_path '/etc/autonomy/models.json'
+    option training '1'
+    option prediction '1'
+
+# =============================================================================
+# MONITORING ENDPOINTS
+# =============================================================================
+config monitoring 'mqtt'
+    option broker ''
+    option topic 'autonomy/status'
+
+# =============================================================================
+# NOTIFICATIONS - CONSOLIDATED
+# =============================================================================
+config notifications 'settings'
+    # Pushover service credentials
+    option pushover_enabled '0'
+    option pushover_token ''
+    option pushover_user ''
+    option pushover_device ''
+    
+    # Notification behavior
+    option threshold 'warning'
+    option acknowledgment_tracking '1'
+    option location_enabled '1'
+    option rich_context_enabled '1'
+    option cooldown_s '300'
+    option max_per_hour '20'
+    
+    # Which events to notify about
+    option event_failover '1'
+    option event_failback '1'
+    option event_member_down '1'
+    option event_member_up '0'
+    option event_predictive '1'
+    option event_critical '1'
+    option event_recovery '1'
+    
+    # Pushover priority levels (-2 to 2)
+    option priority_failover '1'
+    option priority_failback '0'
+    option priority_member_down '1'
+    option priority_member_up '-1'
+    option priority_predictive '0'
+    option priority_critical '2'
+    option priority_recovery '0'
+
+# =============================================================================
+# METERED MODE INTEGRATION
+# =============================================================================
+config metered 'settings'
+    # Metered connection management
+    option enabled '0'
+    option warning_threshold '80'
+    option critical_threshold '95'
+    option hysteresis_margin '5'
+    option stability_delay '300'
+    option reconnect_method 'gentle'
+    option debug '0'
+
+# =============================================================================
+# MEMBER CONFIGURATIONS
+# =============================================================================
+
+# Starlink member configuration
+config member 'starlink_any'
+    option detect 'auto'
+    option class 'starlink'
+    option weight '100'
+    option min_uptime_s '30'
+    option cooldown_s '20'
+
+# Cellular member configuration
+config member 'cellular_any'
+    option detect 'auto'
+    option class 'cellular'
+    option weight '80'
+    option prefer_roaming '0'
+    option metered '1'
+    option min_uptime_s '20'
+    option cooldown_s '20'
+
+# WiFi member configuration
+config member 'wifi_any'
+    option detect 'auto'
+    option class 'wifi'
+    option weight '60'
+    option min_uptime_s '15'
+    option cooldown_s '15'
+
+# LAN member configuration
+config member 'lan_any'
+    option detect 'auto'
+    option class 'lan'
+    option weight '40'
+    option min_uptime_s '10'
+    option cooldown_s '10'
