@@ -41,7 +41,7 @@ jobs:
       with:
         base: ${{ github.event.before }}
         head: ${{ github.event.after }}
-        extra_args: --only-verified --no-update
+        extra_args: --only-verified
         path: ./
         version: latest
       env:
@@ -121,11 +121,11 @@ jobs:
         fi
         
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "📊 **Full reports available in Security tab**" >> $GITHUB_STEP_SUMMARY
+        echo "📊 **Security scan completed successfully**" >> $GITHUB_STEP_SUMMARY
 
     - name: Block on Critical Issues
       if: failure()
       run: |
-        echo "🚨 Critical security issues found!"
-        echo "Please review and fix security vulnerabilities before merging."
+        echo "🚨 Security scan completed with issues"
+        echo "Please review security findings in the Security tab"
         exit 1
