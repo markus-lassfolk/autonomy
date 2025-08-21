@@ -48,8 +48,6 @@ jobs:
         push: false
         tags: rutos-test:latest
         platforms: linux/amd64
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
         
     - name: Run RUTOS Tests
       run: |
