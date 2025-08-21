@@ -1,7 +1,7 @@
 package gps
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"crypto/rand"
 	"encoding/binary"
 	"fmt"
@@ -249,7 +249,7 @@ func (esm *EnhancedSubmissionManager) generateSubmissionFingerprint(observation 
 		esm.generateCellKey(observation.ServingCell),
 		gridLat, gridLon, hourBucket)
 
-	return fmt.Sprintf("%x", md5.Sum([]byte(data)))[:16] // 16-char fingerprint
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(data)))[:16] // 16-char fingerprint
 }
 
 // generateCellKey creates consistent cell identifier

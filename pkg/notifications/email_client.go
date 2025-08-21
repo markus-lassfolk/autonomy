@@ -88,7 +88,7 @@ func (ec *EmailClient) sendEmail(ctx context.Context, to, subject, body string) 
 // sendEmailTLS sends email using TLS connection
 func (ec *EmailClient) sendEmailTLS(addr string, auth smtp.Auth, from string, to []string, msg []byte) error {
 	// Create TLS connection
-	tlsConfig := &tls.Config{
+	tlsConfig := &tls.Config{ MinVersion: tls.VersionTLS13,
 		ServerName: ec.config.SMTPHost,
 	}
 
@@ -147,7 +147,7 @@ func (ec *EmailClient) sendEmailStartTLS(addr string, auth smtp.Auth, from strin
 
 	// Start TLS if supported
 	if ok, _ := client.Extension("STARTTLS"); ok {
-		tlsConfig := &tls.Config{
+		tlsConfig := &tls.Config{ MinVersion: tls.VersionTLS13,
 			ServerName: ec.config.SMTPHost,
 		}
 		if err := client.StartTLS(tlsConfig); err != nil {

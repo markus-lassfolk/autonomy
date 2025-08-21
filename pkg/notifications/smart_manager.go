@@ -2,7 +2,7 @@ package notifications
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 	"sort"
 	"strings"
@@ -279,7 +279,7 @@ func (snm *SmartNotificationManager) SendNotification(ctx context.Context, notif
 func (snm *SmartNotificationManager) generateFingerprint(notification *Notification) string {
 	// Create a hash based on type, title, and key message content
 	content := fmt.Sprintf("%s|%s|%s", notification.Type, notification.Title, notification.Message)
-	hash := md5.Sum([]byte(content))
+	hash := sha256.Sum256([]byte(content))
 	return fmt.Sprintf("%x", hash)
 }
 

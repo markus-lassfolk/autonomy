@@ -1,6 +1,7 @@
 package gps
 
 import (
+t"strings"
 	"database/sql"
 	"fmt"
 	"os"
@@ -347,7 +348,7 @@ func (lcd *LocalCellDatabase) MarkAsContributed(observationIDs []int) error {
 	UPDATE cell_observations 
 	SET contributed = TRUE, contributed_at = CURRENT_TIMESTAMP 
 	WHERE id IN (%s)
-	`, fmt.Sprintf("%s", placeholders))
+	`, strings.Join(placeholders, ","))
 
 	_, err := lcd.db.Exec(query, args...)
 	if err != nil {
