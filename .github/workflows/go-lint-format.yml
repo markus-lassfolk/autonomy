@@ -90,3 +90,19 @@ jobs:
           echo "❌ Formatting issues detected. Please run formatting tools locally."
           exit 1
         fi
+
+    - name: Create quality report
+      run: |
+        echo "## 🔍 Code Quality Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Count Go files
+        GO_FILES=$(find . -name "*.go" | grep -v vendor | wc -l)
+        echo "**Go Files**: $GO_FILES" >> $GITHUB_STEP_SUMMARY
+        
+        # Count lines of code
+        LOC=$(find . -name "*.go" | grep -v vendor | xargs wc -l | tail -1 | awk '{print $1}')
+        echo "**Lines of Go Code**: $LOC" >> $GITHUB_STEP_SUMMARY
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **All quality checks passed**" >> $GITHUB_STEP_SUMMARY
