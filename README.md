@@ -64,13 +64,13 @@ Get up and running in minutes with our comprehensive [Quick Start Guide](docs/QU
 ### Development & API
 - **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation with CLI interface
 - **[Development Guide](docs/DEVELOPMENT.md)** - Building, testing, and contributing
-- **[Architecture Guide](../ARCHITECTURE.md)** - System design and components
+- **[Architecture Guide](ARCHITECTURE.md)** - System design and components
 
 ### Project Management
-- **[Project Status](../STATUS.md)** - Current implementation status and progress
-- **[Development Roadmap](../ROADMAP.md)** - Future plans and development phases
-- **[Current Tasks](../TODO.md)** - Immediate priorities and bug fixes
-- **[Engineering Specification](../PROJECT_INSTRUCTION.md)** - Detailed technical requirements
+- **[Project Status](STATUS.md)** - Current implementation status and progress
+- **[Development Roadmap](ROADMAP.md)** - Future plans and development phases
+- **[Current Tasks](TODO.md)** - Immediate priorities and bug fixes
+- **[Engineering Specification](PROJECT_INSTRUCTION.md)** - Detailed technical requirements
 
 ### Advanced Topics
 - **[GPS Integration](docs/GPS_SYSTEM_COMPLETE.md)** - Multi-source GPS with enhanced OpenCellID geolocation

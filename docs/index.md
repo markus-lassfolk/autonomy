@@ -27,7 +27,7 @@ autonomy is a production-ready, autonomous, and resource-efficient multi-interfa
 ### For Developers
 - **[API Reference](API_REFERENCE.md)** - Complete API documentation with CLI interface
 - **[Development Guide](DEVELOPMENT.md)** - Building, testing, and contributing
-- **[Architecture Guide](../ARCHITECTURE.md)** - System design and components
+- **[Architecture Guide](../../ARCHITECTURE.md)** - System design and components
 
 ## 📚 Documentation Structure
 
@@ -71,7 +71,7 @@ docs/
 |----------|---------|----------|
 | [API Reference](API_REFERENCE.md) | Programmatic access | Developers |
 | [Development Guide](DEVELOPMENT.md) | Building and testing | Contributors |
-| [Architecture Guide](../ARCHITECTURE.md) | System design | Architects |
+| [Architecture Guide](../../ARCHITECTURE.md) | System design | Architects |
 
 ### Advanced Features
 | Document | Purpose | Audience |
