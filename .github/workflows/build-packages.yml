@@ -145,7 +145,7 @@ jobs:
         draft: false
         prerelease: false
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
 
   notify-completion:
     runs-on: ubuntu-latest

@@ -7,7 +7,7 @@ Write-Host "====================================" -ForegroundColor Green
 # Required Secrets
 $requiredSecrets = @{
     "WEBHOOK_SECRET" = "HMAC secret key for webhook validation (32+ characters recommended)"
-    "GITHUB_TOKEN" = "Personal Access Token with repo, workflow, and packages permissions"
+    "AUTONOMY_GH_TOKEN" = "Personal Access Token with repo, workflow, and packages permissions"
     "COPILOT_TOKEN" = "GitHub Copilot API token or PAT with Copilot access"
     "DOCKERHUB_USERNAME" = "Docker Hub username for publishing images"
     "DOCKERHUB_TOKEN" = "Docker Hub access token for publishing"

@@ -31,7 +31,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.AUTONOMY_GH_TOKEN }}
         
     - name: Setup Go
       uses: actions/setup-go@v4
@@ -129,7 +129,7 @@ jobs:
     - name: Create pull request
       if: steps.check-deps.outputs.outdated-count != '0'
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
       run: |
         echo "📝 Creating pull request for dependency updates..."
         

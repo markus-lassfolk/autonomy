@@ -65,7 +65,7 @@ jobs:
           echo "SHELL_FILES=$(grep -E '\.sh$' changed_files.txt | wc -l || echo 0)" >> $GITHUB_OUTPUT
           echo "MD_FILES=$(grep -E '\.md$' changed_files.txt | wc -l || echo 0)" >> $GITHUB_OUTPUT
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
           
       - name: Run RUTOS Validation
         id: validation
@@ -181,7 +181,7 @@ jobs:
       - name: Post Validation Comment
         if: always()
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
         run: |
           PR_NUMBER="${{ github.event.number || inputs.pr_number }}"
           
@@ -196,7 +196,7 @@ jobs:
       - name: Set Check Status
         if: always()
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
         run: |
           PR_NUMBER="${{ github.event.number || inputs.pr_number }}"
           STATUS="${{ steps.validation.outputs.status }}"
@@ -247,7 +247,7 @@ jobs:
     steps:
       - name: Block Auto-Merge
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
         run: |
           PR_NUMBER="${{ github.event.number || inputs.pr_number }}"
           
@@ -274,7 +274,7 @@ jobs:
         
       - name: Trigger Autonomous Response
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
         run: |
           STATUS="${{ needs.rutos-validation.outputs.validation-status }}"
           ISSUES="${{ needs.rutos-validation.outputs.issues-found }}"

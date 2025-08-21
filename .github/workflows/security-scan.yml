@@ -28,7 +28,7 @@ jobs:
     - name: Run TruffleHog (Secret Scanner)
       uses: trufflesecurity/trufflehog@main
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
       with:
         base: ${{ github.event.before }}
         head: ${{ github.event.after }}
@@ -37,11 +37,11 @@ jobs:
     - name: Run Gitleaks (Advanced Secret Detection)
       uses: gitleaks/gitleaks-action@v2
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
         GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
         GITLEAKS_ENABLE_SUMMARY: true
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ secrets.AUTONOMY_GH_TOKEN }}
         report-format: sarif
         report-path: gitleaks-report.sarif
         redact: true

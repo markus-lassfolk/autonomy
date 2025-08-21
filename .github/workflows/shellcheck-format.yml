@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.AUTONOMY_GH_TOKEN }}
       - name: Install shellcheck, shfmt, and GitHub CLI
         run: |
           sudo apt-get update
@@ -119,7 +119,7 @@ jobs:
             find . -type f \( -name '*.sh' -o -name '99-pushover_notify*' \) -exec shellcheck --exclude=SC1090,SC1091 {} +
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
       - name: Verify shell script formatting (shfmt)
         run: |
           echo "🎨 Checking shell script formatting..."
@@ -164,7 +164,7 @@ jobs:
             find . -type f \( -name '*.sh' -o -name '99-pushover_notify*' \) ! -name '*-rutos.sh' -exec shfmt -d -i 4 -ci {} +
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
       - name: Check for RUTOS-specific best practices
         run: |
           echo "Checking RUTOS-specific best practices..."

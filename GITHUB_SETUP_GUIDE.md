@@ -7,7 +7,7 @@ This guide will help you configure all required secrets and variables for the au
 Your verification script found these issues that need immediate attention:
 
 1. ❌ **GitHub Actions are DISABLED** - This is blocking all workflows
-2. ❌ **GITHUB_TOKEN secret is missing** - Required for workflow operations
+2. ❌ **AUTONOMY_GH_TOKEN secret is missing** - Required for workflow operations
 3. ⚠️ **13 workflows are failing** - Likely due to the above issues
 
 ## 🔧 **Step-by-Step Fix Instructions**
@@ -26,7 +26,7 @@ Your verification script found these issues that need immediate attention:
    - ✅ **"Allow GitHub Actions to create and approve pull requests"**
 6. Click **"Save"**
 
-### **Step 2: Add Missing GITHUB_TOKEN Secret**
+### **Step 2: Add Missing AUTONOMY_GH_TOKEN Secret**
 
 1. **Create Personal Access Token:**
    - Go to: https://github.com/settings/tokens
@@ -44,8 +44,8 @@ Your verification script found these issues that need immediate attention:
 2. **Add Token as Secret:**
    - Go to: https://github.com/markus-lassfolk/autonomy/settings/secrets/actions
    - Click **"New repository secret"**
-   - **Name**: `GITHUB_TOKEN`
-   - **Value**: [paste your token]
+       - **Name**: `AUTONOMY_GH_TOKEN`
+    - **Value**: [paste your token]
    - Click **"Add secret"**
 
 ### **Step 3: Verify Configuration**
@@ -83,7 +83,7 @@ Then run the quick test:
 
 | Type | Name | Status | Action Required |
 |------|------|--------|-----------------|
-| Secret | `GITHUB_TOKEN` | ❌ Missing | **Add this secret (Step 2 above)** |
+| Secret | `AUTONOMY_GH_TOKEN` | ❌ Missing | **Add this secret (Step 2 above)** |
 | Setting | GitHub Actions | ❌ Disabled | **Enable in repository settings (Step 1 above)** |
 
 ## 🚀 **What Happens After Setup**
@@ -136,7 +136,7 @@ Check all workflow runs at: https://github.com/markus-lassfolk/autonomy/actions
 
 2. **Verify all secrets are present:**
    - Repository Settings → Secrets and variables → Actions
-   - Should see: GITHUB_TOKEN, WEBHOOK_SECRET, COPILOT_TOKEN, DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
+       - Should see: AUTONOMY_GH_TOKEN, WEBHOOK_SECRET, COPILOT_TOKEN, DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
 
 3. **Check for specific error messages:**
    - Go to Actions tab → Click on failed workflow → View logs
@@ -144,7 +144,7 @@ Check all workflow runs at: https://github.com/markus-lassfolk/autonomy/actions
 ### Common Issues:
 
 - **"Resource not accessible by integration"** → Check workflow permissions
-- **"Bad credentials"** → Regenerate GITHUB_TOKEN with correct scopes
+- **"Bad credentials"** → Regenerate AUTONOMY_GH_TOKEN with correct scopes
 - **"Actions are disabled"** → Enable Actions in repository settings
 
 ## 📞 **Support**

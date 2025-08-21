@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.AUTONOMY_GH_TOKEN }}
           fetch-depth: 0
       
       - name: Get changed files
@@ -40,7 +40,7 @@ jobs:
 
       - name: Run file permission and secret checks with auto-fix
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
         run: |
           echo "🔧 Running security checks on changed files..."
           echo "Changed files:"

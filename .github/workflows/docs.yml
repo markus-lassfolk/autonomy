@@ -53,7 +53,7 @@ jobs:
     - name: Deploy to GitHub Pages (Preview)
       uses: peaceiris/actions-gh-pages@v1
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.AUTONOMY_GH_TOKEN }}
         publish_dir: ./_site
         destination_dir: preview/${{ github.event.number }}
         
@@ -83,7 +83,7 @@ jobs:
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v1
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.AUTONOMY_GH_TOKEN }}
         publish_dir: ./_site
         
     - name: Notify deployment

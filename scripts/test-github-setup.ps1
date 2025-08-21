@@ -17,17 +17,17 @@ try {
     Write-Host "❌ Cannot check Actions status" -ForegroundColor Red
 }
 
-# Test 2: Verify GITHUB_TOKEN secret
-Write-Host "`n2️⃣ Testing GITHUB_TOKEN Secret..." -ForegroundColor Cyan
+# Test 2: Verify AUTONOMY_GH_TOKEN secret
+Write-Host "`n2️⃣ Testing AUTONOMY_GH_TOKEN Secret..." -ForegroundColor Cyan
 try {
-    $secretInfo = gh api "repos/$env:GITHUB_REPOSITORY/actions/secrets/GITHUB_TOKEN" 2>$null
+    $secretInfo = gh api "repos/$env:GITHUB_REPOSITORY/actions/secrets/AUTONOMY_GH_TOKEN" 2>$null
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "✅ GITHUB_TOKEN secret is configured" -ForegroundColor Green
+        Write-Host "✅ AUTONOMY_GH_TOKEN secret is configured" -ForegroundColor Green
     } else {
-        Write-Host "❌ GITHUB_TOKEN secret is missing" -ForegroundColor Red
+        Write-Host "❌ AUTONOMY_GH_TOKEN secret is missing" -ForegroundColor Red
     }
 } catch {
-    Write-Host "❌ Cannot verify GITHUB_TOKEN secret" -ForegroundColor Red
+    Write-Host "❌ Cannot verify AUTONOMY_GH_TOKEN secret" -ForegroundColor Red
 }
 
 # Test 3: Trigger a simple workflow to test
