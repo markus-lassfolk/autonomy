@@ -18,6 +18,8 @@ jobs:
   config-validation:
     runs-on: ubuntu-latest
     name: Validate Configuration Files
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:

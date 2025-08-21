@@ -8,6 +8,8 @@ jobs:
   generate-release-notes:
     name: Generate Release Notes
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout code
@@ -131,6 +133,8 @@ jobs:
     name: Create OPKG Feed
     runs-on: ubuntu-latest
     needs: generate-release-notes
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout code
@@ -179,6 +183,7 @@ jobs:
     name: Notify Users
     runs-on: ubuntu-latest
     needs: [generate-release-notes, create-opkg-feed]
+    permissions: {}
     
     steps:
     - name: Notify via GitHub Discussions

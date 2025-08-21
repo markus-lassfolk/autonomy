@@ -11,6 +11,8 @@ on:
 jobs:
   build-docs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout repository
@@ -42,6 +44,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     needs: build-docs
+    permissions: {}
     
     steps:
     - name: Download build artifacts
@@ -72,6 +75,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: build-docs
+    permissions: {}
     
     steps:
     - name: Download build artifacts

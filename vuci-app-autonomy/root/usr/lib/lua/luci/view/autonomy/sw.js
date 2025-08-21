@@ -66,8 +66,8 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
   
-  // Only handle requests to our domain
-  if (url.origin !== location.origin && !url.href.includes('cdn.jsdelivr.net')) {
+  // Only handle requests to our domain or trusted CDN
+  if (url.origin !== location.origin && url.hostname !== 'cdn.jsdelivr.net') {
     return;
   }
   

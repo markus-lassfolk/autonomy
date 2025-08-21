@@ -16,6 +16,8 @@ jobs:
   bicep-validation:
     runs-on: ubuntu-latest
     name: Validate Bicep Templates
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       

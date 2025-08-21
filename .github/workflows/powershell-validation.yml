@@ -14,6 +14,8 @@ jobs:
   powershell-validation:
     runs-on: windows-latest
     name: Validate PowerShell Scripts
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       

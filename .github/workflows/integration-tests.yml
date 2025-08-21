@@ -22,6 +22,8 @@ jobs:
   go-integration:
     runs-on: ubuntu-latest
     name: Go Integration Tests
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       

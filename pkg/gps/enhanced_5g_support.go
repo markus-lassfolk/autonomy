@@ -240,7 +240,10 @@ func (e5g *Enhanced5GCollector) parseServingNRCell(response string) *Enhanced5GC
 
 				// Parse NCI (New Radio Cell Identity)
 				if nci, err := strconv.ParseInt(strings.TrimSpace(parts[6]), 16, 64); err == nil {
-					cell.NCI = int(nci)
+					// Check bounds before converting to int
+					if nci >= 0 && nci <= int64(^uint(0)>>1) {
+						cell.NCI = int(nci)
+					}
 				}
 
 				// Parse GSCN
@@ -288,7 +291,10 @@ func (e5g *Enhanced5GCollector) parseNeighborNRCells(response string) []Enhanced
 
 				// Parse NCI
 				if nci, err := strconv.ParseInt(strings.TrimSpace(parts[3]), 16, 64); err == nil {
-					cell.NCI = int(nci)
+					// Check bounds before converting to int
+					if nci >= 0 && nci <= int64(^uint(0)>>1) {
+						cell.NCI = int(nci)
+					}
 				}
 
 				// Parse RSRP

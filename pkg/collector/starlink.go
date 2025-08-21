@@ -437,8 +437,10 @@ func (sc *StarlinkCollector) extractMetricsFromAPIResponseDetailed(apiResp *Star
 	}
 
 	// System uptime and boot count
-	uptime := int64(apiResp.Status.DeviceState.UptimeS)
-	metrics.UptimeS = &uptime
+	if apiResp.Status.DeviceState.UptimeS <= uint64(^int64(0)>>1) {
+		uptime := int64(apiResp.Status.DeviceState.UptimeS)
+		metrics.UptimeS = &uptime
+	}
 
 	if apiResp.Status.DeviceInfo.BootCount > 0 {
 		metrics.BootCount = &apiResp.Status.DeviceInfo.BootCount

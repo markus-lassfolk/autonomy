@@ -31,6 +31,31 @@ const colors = {
     cyan: '\x1b[36m'
 };
 
+// Function to sanitize sensitive data for logging
+function sanitizeForLogging(data) {
+    if (!data || typeof data !== 'object') {
+        return data;
+    }
+    
+    const sensitiveKeys = ['secret', 'password', 'token', 'key', 'auth', 'credential', 'cert'];
+    const sanitized = {};
+    
+    for (const [key, value] of Object.entries(data)) {
+        const lowerKey = key.toLowerCase();
+        const isSensitive = sensitiveKeys.some(sensitive => lowerKey.includes(sensitive));
+        
+        if (isSensitive && typeof value === 'string' && value.length > 0) {
+            sanitized[key] = value.substring(0, Math.min(4, value.length)) + '***';
+        } else if (typeof value === 'object' && value !== null) {
+            sanitized[key] = sanitizeForLogging(value);
+        } else {
+            sanitized[key] = value;
+        }
+    }
+    
+    return sanitized;
+}
+
 // Logging functions
 function log(level, message, data = null) {
     const timestamp = new Date().toISOString();
@@ -45,7 +70,9 @@ function log(level, message, data = null) {
     console.log(`${color}[${timestamp}] [${level.toUpperCase()}]${colors.reset} ${message}`);
     
     if (data && config.logLevel === 'debug') {
-        console.log(JSON.stringify(data, null, 2));
+        // Filter out sensitive data before logging
+        const sanitizedData = sanitizeForLogging(data);
+        console.log(JSON.stringify(sanitizedData, null, 2));
     }
 }
 

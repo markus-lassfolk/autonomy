@@ -357,6 +357,11 @@ func (gs *GoogleLocationSource) parseServingCell(line string) *GoogleCellTower {
 		return nil
 	}
 
+	// Check bounds before converting to int
+	if cellId < 0 || cellId > int64(^uint(0)>>1) {
+		return nil
+	}
+
 	lac, err := strconv.Atoi(strings.Trim(parts[7], "\""))
 	if err != nil {
 		return nil

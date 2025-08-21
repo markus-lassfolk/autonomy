@@ -16,6 +16,8 @@ jobs:
   markdown-check:
     runs-on: ubuntu-latest
     name: Markdown Link Check
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v4
       with:
