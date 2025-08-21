@@ -1,192 +1,102 @@
-name: ShellCheck & Formatting (Legacy Scripts)
+name: ShellCheck & Formatting
 
 on:
   push:
-    branches: [ '*' ]
+    branches: [main, main-dev]
     paths:
-      - 'archive/**/*.sh'
-      - 'scripts/**/*.sh'
-      - 'Starlink-RUTOS-Failover/**/*.sh'
-      - '**/99-pushover_notify*'
+      - 'scripts/**'
+      - '*.sh'
+      - '*.bash'
   pull_request:
-    branches: [ '*' ]
+    branches: [main, main-dev]
     paths:
-      - 'archive/**/*.sh'
-      - 'scripts/**/*.sh'
-      - 'Starlink-RUTOS-Failover/**/*.sh'
-      - '**/99-pushover_notify*'
+      - 'scripts/**'
+      - '*.sh'
+      - '*.bash'
+  workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: read
+  contents: read
 
 jobs:
-  lint:
+  shellcheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.AUTONOMY_GH_TOKEN }}
-      - name: Install shellcheck, shfmt, and GitHub CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck
-          curl -sSLo /usr/local/bin/shfmt https://github.com/mvdan/sh/releases/download/v3.7.0/shfmt_v3.7.0_linux_amd64
-          chmod +x /usr/local/bin/shfmt
-          # Install GitHub CLI
-          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-          sudo apt-get update
-          sudo apt-get install -y gh
-      
-      - name: Auto-format shell scripts with shfmt
-        if: github.event_name == 'push'
-        run: |
-          if find . -type f \( -name '*.sh' -o -name '99-pushover_notify*' \) | head -1 > /dev/null; then
-            echo "🎨 Auto-formatting shell scripts with shfmt..."
-            # Format bash scripts with bash-specific options (non-RUTOS only)
-            find . -type f -name '*.sh' ! -name '*-rutos.sh' -exec shfmt -w -i 4 -ci {} +
-            # DISABLED: Format RUTOS scripts - temporarily disabled for compatibility testing
-            # find . -type f -name '*-rutos.sh' -exec shfmt -w -i 4 -ci -ln posix {} +
-            echo "⚠️  RUTOS script auto-formatting DISABLED for compatibility testing"
-            # Format other shell files (pushover notify scripts) - but skip RUTOS variants
-            find . -type f -name '99-pushover_notify*' ! -name '*-rutos.sh' -exec shfmt -w -i 4 -ci {} +
-            echo "✅ Shell scripts formatted successfully (RUTOS scripts excluded)"
-          else
-            echo "No shell scripts found to format"
-          fi
-      
-      - name: Commit formatting changes
-        if: github.event_name == 'push'
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add -A
-          if ! git diff --cached --quiet; then
-            git commit -m "🎨 Auto-format shell scripts with shfmt [skip ci]"
-            git push
-            echo "✅ Committed shell formatting changes"
-          else
-            echo "✅ No shell formatting changes needed"
-          fi
-      
-      - name: Enforce script and config file permissions
-        run: |
-          # Config files should be 600
-          find config -type f -name '*.sh' -exec chmod 600 {} + 2>/dev/null || true
-          # Scripts should be 755
-          find scripts -type f -name '*.sh' -exec chmod 755 {} + 2>/dev/null || true
-          find Starlink-RUTOS-Failover -type f -name '*-rutos.sh' -exec chmod 755 {} +
-          # Legacy/compatibility: notify scripts
-          find Starlink-RUTOS-Failover -type f -name '99-pushover_notify*' -exec chmod 755 {} + 2>/dev/null || true
-      - name: Run ShellCheck on changed shell scripts
-        run: |
-          echo "🔍 Checking for changed shell files..."
-          
-          # For PR events, check only changed files
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "📋 PR mode: Checking only changed files"
-            
-            # Get list of changed files from the PR
-            changed_files=$(gh pr view ${{ github.event.pull_request.number }} --json files --jq '.files[].path' || true)
-            
-            if [ -z "$changed_files" ]; then
-              echo "⚠️  Could not get changed files from PR, falling back to git diff"
-              changed_files=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
-            fi
-            
-            # Filter for shell files
-            shell_files=""
-            for file in $changed_files; do
-              if [ -f "$file" ]; then
-                case "$(basename "$file")" in
-                  *.sh|99-pushover_notify*)
-                    shell_files="$shell_files $file"
-                    ;;
-                esac
-              fi
-            done
-            
-            if [ -n "$shell_files" ]; then
-              echo "🔧 Running ShellCheck on changed shell files:"
-              echo "$shell_files"
-              shellcheck --exclude=SC1090,SC1091 $shell_files
-            else
-              echo "✅ No shell files changed in this PR"
-            fi
-          else
-            echo "📋 Push mode: Checking all shell files"
-            find . -type f \( -name '*.sh' -o -name '99-pushover_notify*' \) -exec shellcheck --exclude=SC1090,SC1091 {} +
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
-      - name: Verify shell script formatting (shfmt)
-        run: |
-          echo "🎨 Checking shell script formatting..."
-          echo "⚠️  RUTOS scripts excluded from format validation for compatibility testing"
-          
-          # For PR events, check only changed files
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "📋 PR mode: Checking formatting of changed files only"
-            
-            # Get list of changed files from the PR
-            changed_files=$(gh pr view ${{ github.event.pull_request.number }} --json files --jq '.files[].path' || true)
-            
-            if [ -z "$changed_files" ]; then
-              echo "⚠️  Could not get changed files from PR, falling back to git diff"
-              changed_files=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
-            fi
-            
-            # Filter for shell files (exclude RUTOS scripts)
-            shell_files=""
-            for file in $changed_files; do
-              if [ -f "$file" ]; then
-                case "$(basename "$file")" in
-                  *-rutos.sh)
-                    echo "⚠️  Skipping RUTOS script format check: $file"
-                    ;;
-                  *.sh|99-pushover_notify*)
-                    shell_files="$shell_files $file"
-                    ;;
-                esac
-              fi
-            done
-            
-            if [ -n "$shell_files" ]; then
-              echo "🔧 Checking formatting on changed shell files:"
-              echo "$shell_files"
-              shfmt -d -i 4 -ci $shell_files
-            else
-              echo "✅ No non-RUTOS shell files changed in this PR"
-            fi
-          else
-            echo "📋 Push mode: Checking formatting of all shell files (excluding RUTOS)"
-            find . -type f \( -name '*.sh' -o -name '99-pushover_notify*' \) ! -name '*-rutos.sh' -exec shfmt -d -i 4 -ci {} +
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
-      - name: Check for RUTOS-specific best practices
-        run: |
-          echo "Checking RUTOS-specific best practices..."
-          
-          # Check for UCI usage best practices
-          if grep -r "uci get" --include="*.sh" . | grep -v "2>/dev/null"; then
-            echo "::warning::Found uci commands without error handling. Consider adding '2>/dev/null || echo default'"
-          fi
-          
-          # Check for proper logging
-          if grep -r "echo.*\[" --include="*.sh" . | head -5; then
-            echo "::info::Consider using logger command for system logging instead of echo"
-          fi
-          
-          # Check for hardcoded paths that should be configurable
-          if grep -r "/overlay/messages" --include="*.sh" . | grep -v "uci get\|LOG_FILE\|DEFAULT"; then
-            echo "::warning::Found hardcoded paths. Consider using UCI configuration"
-          fi
-          
-          # Check for proper error handling in scripts
-          missing_set_e=$(find . -name "*.sh" -exec grep -L "set -e" {} \; | head -5)
-          if [ -n "$missing_set_e" ]; then
-            echo "::info::Consider adding 'set -e' for better error handling in:"
-            echo "$missing_set_e"
-          fi
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.AUTONOMY_GH_TOKEN }}
+
+    - name: Install ShellCheck
+      run: |
+        echo "🔧 Installing ShellCheck..."
+        sudo apt-get update
+        sudo apt-get install -y shellcheck
+
+    - name: Install shfmt
+      run: |
+        echo "🔧 Installing shfmt..."
+        go install mvdan.cc/sh/v3/cmd/shfmt@latest
+
+    - name: Find shell scripts
+      run: |
+        echo "🔍 Finding shell scripts..."
+        find . -name "*.sh" -o -name "*.bash" | grep -v node_modules | grep -v .git > shell_scripts.txt
+        echo "Found shell scripts:"
+        cat shell_scripts.txt || echo "No shell scripts found"
+
+    - name: Run ShellCheck on shell scripts
+      run: |
+        echo "🔍 Running ShellCheck..."
+        if [ -s shell_scripts.txt ]; then
+          while IFS= read -r script; do
+            echo "Checking: $script"
+            shellcheck "$script" || echo "ShellCheck found issues in $script"
+          done < shell_scripts.txt
+        else
+          echo "No shell scripts found to check"
+        fi
+
+    - name: Verify shell script formatting (shfmt)
+      run: |
+        echo "🔍 Checking shell script formatting..."
+        if [ -s shell_scripts.txt ]; then
+          while IFS= read -r script; do
+            echo "Checking formatting: $script"
+            shfmt -d "$script" || echo "Formatting issues found in $script"
+          done < shell_scripts.txt
+        else
+          echo "No shell scripts found to format check"
+        fi
+
+    - name: Check for shell script syntax
+      run: |
+        echo "🔍 Checking shell script syntax..."
+        if [ -s shell_scripts.txt ]; then
+          while IFS= read -r script; do
+            echo "Checking syntax: $script"
+            bash -n "$script" || echo "Syntax error in $script"
+          done < shell_scripts.txt
+        else
+          echo "No shell scripts found for syntax check"
+        fi
+
+    - name: Create summary
+      run: |
+        echo "## 🐚 Shell Script Analysis Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -s shell_scripts.txt ]; then
+          SCRIPT_COUNT=$(wc -l < shell_scripts.txt)
+          echo "**Shell Scripts Analyzed**: $SCRIPT_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Scripts checked**:">> $GITHUB_STEP_SUMMARY
+          while IFS= read -r script; do
+            echo "- \`$script\`" >> $GITHUB_STEP_SUMMARY
+          done < shell_scripts.txt
+        else
+          echo "**No shell scripts found**" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Shell script analysis completed" >> $GITHUB_STEP_SUMMARY
