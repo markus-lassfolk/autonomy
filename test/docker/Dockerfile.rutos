@@ -1,65 +1,41 @@
 # RUTOS Test Environment Dockerfile
-FROM ubuntu:22.04
+# Based on official OpenWrt Docker: https://github.com/openwrt/docker
+# Uses the official OpenWrt SDK container for building packages
+FROM openwrt/sdk:arm_cortex-a7_neon-vfpv4
 
-# Install required packages for testing
-RUN apt-get update && \
-    apt-get install -y \
+# Set environment variables
+ENV GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+WORKDIR /workdir
+
+# Install Go (matching your go.mod version)
+RUN wget -O go.tar.gz https://go.dev/dl/go1.23.0.linux-amd64.tar.gz \
+    && tar -C /usr/local -xzf go.tar.gz \
+    && rm go.tar.gz
+
+# Set Go environment
+ENV PATH=$PATH:/usr/local/go/bin
+ENV GOPATH=/go
+ENV GOCACHE=/go/cache
+ENV CGO_ENABLED=0
+
+# Create Go workspace
+RUN mkdir -p /go/src /go/bin /go/cache
+
+# Install additional tools for testing
+RUN opkg update && opkg install \
     curl \
-    wget \
     jq \
     procps \
     iputils-ping \
     net-tools \
-    systemd \
-    systemd-sysv \
-    dbus \
-    git \
-    make \
-    gcc \
-    build-essential \
-    ubus \
-    ubus-utils \
-    uci \
-    mwan3 \
-    iwinfo \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/opkg-lists/*
 
-# Install Go
-RUN wget https://go.dev/dl/go1.23.0.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.23.0.linux-amd64.tar.gz && \
-    rm go1.23.0.linux-amd64.tar.gz
-ENV PATH=$PATH:/usr/local/go/bin
+# Create test user
+RUN useradd -m -s /bin/bash testuser && \
+    chown -R testuser:testuser /go /workdir
 
-# Set up RUTOS-like environment
-WORKDIR /root
-COPY . /autonomy/
-
-# Create RUTOS-specific directories
-RUN mkdir -p /etc/config /var/log /tmp/autonomy /etc/init.d
-
-# Set up basic RUTOS configuration
-RUN echo "config system" > /etc/config/system && \
-    echo "    option hostname 'rutos-test'" >> /etc/config/system && \
-    echo "    option timezone 'UTC'" >> /etc/config/system
-
-# Create basic init script
-RUN echo '#!/bin/sh' > /etc/init.d/autonomy && \
-    echo 'case "$1" in' >> /etc/init.d/autonomy && \
-    echo '    start)' >> /etc/init.d/autonomy && \
-    echo '        echo "Starting autonomy..."' >> /etc/init.d/autonomy && \
-    echo '        ;;' >> /etc/init.d/autonomy && \
-    echo '    stop)' >> /etc/init.d/autonomy && \
-    echo '        echo "Stopping autonomy..."' >> /etc/init.d/autonomy && \
-    echo '        ;;' >> /etc/init.d/autonomy && \
-    echo '    *)' >> /etc/init.d/autonomy && \
-    echo '        echo "Usage: $0 {start|stop}"' >> /etc/init.d/autonomy && \
-    echo '        exit 1' >> /etc/init.d/autonomy && \
-    echo '        ;;' >> /etc/init.d/autonomy && \
-    echo 'esac' >> /etc/init.d/autonomy && \
-    chmod +x /etc/init.d/autonomy
-
-# Expose ports for testing
-EXPOSE 80 443 8080
+# Switch to test user
+USER testuser
 
 # Default command
 CMD ["/bin/bash"]

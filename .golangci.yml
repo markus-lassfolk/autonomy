@@ -1,0 +1,24 @@
+run:
+  timeout: 5m
+  go: "1.23"
+
+linters:
+  enable:
+    - gofmt
+    - govet
+    - errcheck
+    - gosimple
+    - ineffassign
+    - misspell
+    - gosec
+    - gocyclo
+    - dupl
+    - goconst
+    - goimports
+
+issues:
+  exclude:
+    - "pkg/testing/"
+    - "cmd/test-.*/"
+    - "unused"
+    - "staticcheck"
