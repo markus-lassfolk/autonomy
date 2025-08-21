@@ -68,6 +68,8 @@ jobs:
 
     - name: Create PR to main
       if: env.infrastructure_changed == 'true'
+      env:
+        GH_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
       run: |
         echo "🔄 Creating PR to sync infrastructure changes to main..."
         
@@ -137,6 +139,8 @@ jobs:
 
     - name: Create PR to main-dev
       if: env.project_changed == 'true'
+      env:
+        GH_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
       run: |
         echo "🔄 Creating PR to sync project changes to main-dev..."
         
