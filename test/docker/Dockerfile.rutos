@@ -7,8 +7,8 @@ FROM openwrt/sdk:arm_cortex-a7_neon-vfpv4
 ENV GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 WORKDIR /workdir
 
-# Install Go (matching your go.mod version)
-RUN wget -O go.tar.gz https://go.dev/dl/go1.23.0.linux-amd64.tar.gz \
+# Install Go (matching your go.mod version) - ARM version
+RUN wget -O go.tar.gz https://go.dev/dl/go1.23.0.linux-armv6l.tar.gz \
     && tar -C /usr/local -xzf go.tar.gz \
     && rm go.tar.gz
 
@@ -18,24 +18,22 @@ ENV GOPATH=/go
 ENV GOCACHE=/go/cache
 ENV CGO_ENABLED=0
 
-# Create Go workspace
-RUN mkdir -p /go/src /go/bin /go/cache
+# Create Go workspace with proper permissions
+RUN mkdir -p /go/src /go/bin /go/cache && chmod 755 /go
 
 # Install additional tools for testing
 RUN opkg update && opkg install \
     curl \
-    jq \
-    procps \
-    iputils-ping \
-    net-tools \
-    && rm -rf /var/opkg-lists/*
+    git \
+    make \
+    gcc \
+    || echo "Some packages may not be available in this OpenWrt version"
 
-# Create test user
-RUN useradd -m -s /bin/bash testuser && \
-    chown -R testuser:testuser /go /workdir
+# Copy source code
+COPY . /workdir/
 
-# Switch to test user
-USER testuser
+# Set proper permissions
+RUN chmod -R 755 /workdir
 
 # Default command
-CMD ["/bin/bash"]
+CMD ["/bin/sh"]
