@@ -30,9 +30,9 @@ jobs:
       run: go mod download
       
     - name: Install golangci-lint
-      uses: golangci/golangci-lint-action@v4
-      with:
-        version: latest
+      run: |
+        echo "🔧 Installing golangci-lint..."
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
         
     - name: Run linter
       run: |
