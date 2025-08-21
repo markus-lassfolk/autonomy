@@ -1,0 +1,54 @@
+# RUTOS Test Environment Dockerfile
+FROM ubuntu:22.04
+
+# Install required packages for RUTOS-like environment
+RUN apt-get update && \
+    apt-get install -y \
+    ubus \
+    uci \
+    mwan3 \
+    iwinfo \
+    wget \
+    curl \
+    jq \
+    procps \
+    iputils-ping \
+    net-tools \
+    systemd \
+    systemd-sysv \
+    dbus \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up RUTOS-like environment
+WORKDIR /root
+COPY . /autonomy/
+
+# Create RUTOS-specific directories
+RUN mkdir -p /etc/config /var/log /tmp/autonomy /etc/init.d
+
+# Set up basic RUTOS configuration
+RUN echo "config system" > /etc/config/system && \
+    echo "    option hostname 'rutos-test'" >> /etc/config/system && \
+    echo "    option timezone 'UTC'" >> /etc/config/system
+
+# Create basic init script
+RUN echo '#!/bin/sh' > /etc/init.d/autonomy && \
+    echo 'case "$1" in' >> /etc/init.d/autonomy && \
+    echo '    start)' >> /etc/init.d/autonomy && \
+    echo '        echo "Starting autonomy..."' >> /etc/init.d/autonomy && \
+    echo '        ;;' >> /etc/init.d/autonomy && \
+    echo '    stop)' >> /etc/init.d/autonomy && \
+    echo '        echo "Stopping autonomy..."' >> /etc/init.d/autonomy && \
+    echo '        ;;' >> /etc/init.d/autonomy && \
+    echo '    *)' >> /etc/init.d/autonomy && \
+    echo '        echo "Usage: $0 {start|stop}"' >> /etc/init.d/autonomy && \
+    echo '        exit 1' >> /etc/init.d/autonomy && \
+    echo '        ;;' >> /etc/init.d/autonomy && \
+    echo 'esac' >> /etc/init.d/autonomy && \
+    chmod +x /etc/init.d/autonomy
+
+# Expose ports for testing
+EXPOSE 80 443 8080
+
+# Default command
+CMD ["/bin/bash"]

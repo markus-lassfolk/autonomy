@@ -1,0 +1,35 @@
+# OpenWrt Test Environment Dockerfile
+FROM openwrt/rootfs:latest
+
+# Install required packages for testing
+RUN opkg update && \
+    opkg install \
+    ubus \
+    uci \
+    mwan3 \
+    iwinfo \
+    wget \
+    curl \
+    jq \
+    procps-ng \
+    iputils-ping \
+    net-tools \
+    && rm -rf /var/opkg-lists/*
+
+# Set up test environment
+WORKDIR /root
+COPY . /autonomy/
+
+# Create test directories
+RUN mkdir -p /etc/config /var/log /tmp/autonomy
+
+# Set up basic configuration
+RUN echo "config system" > /etc/config/system && \
+    echo "    option hostname 'openwrt-test'" >> /etc/config/system && \
+    echo "    option timezone 'UTC'" >> /etc/config/system
+
+# Expose ports for testing
+EXPOSE 80 443 8080
+
+# Default command
+CMD ["/bin/sh"]
