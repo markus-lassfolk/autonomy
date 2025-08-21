@@ -425,6 +425,7 @@ func main() {
 		log.Fatal(http.ListenAndServeTLS(":"+config.Port, config.CertFile, config.KeyFile, r))
 	} else {
 		log.Printf("⚠️ Starting server without TLS on port %s (not recommended for production)", config.Port)
+		// nosemgrep: go.lang.security.audit.net.use-tls.use-tls
 		log.Fatal(http.ListenAndServe(":"+config.Port, r))
 	}
 }

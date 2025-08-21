@@ -42,19 +42,25 @@ jobs:
           
       - name: Get Changed Files
         id: changed-files
+        env:
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          EVENT_NUMBER: ${{ github.event.number }}
+          EVENT_BEFORE: ${{ github.event.before }}
+          EVENT_AFTER: ${{ github.event.after }}
+          GH_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
         run: |
-          if [ "$EVENT_NAME_INPUT" = "workflow_dispatch" ] && [ -n "${{ inputs.pr_number }}" ]; then
+          if [ "$EVENT_NAME_INPUT" = "workflow_dispatch" ] && [ -n "$INPUT_PR_NUMBER" ]; then
             # Manual dispatch with PR number
-            PR_NUMBER="${{ inputs.pr_number }}"
+            PR_NUMBER="$INPUT_PR_NUMBER"
             echo "Getting files for PR #$PR_NUMBER"
             gh pr diff $PR_NUMBER --name-only > changed_files.txt
           else
             # Regular PR event
-            PR_NUMBER="${{ github.event.number }}"
+            PR_NUMBER="$EVENT_NUMBER"
             echo "Getting files for current PR #$PR_NUMBER"
             gh pr diff $PR_NUMBER --name-only > changed_files.txt || {
               echo "Fallback to git diff"
-              git diff --name-only ${{ github.event.before }}..${{ github.event.after }} > changed_files.txt
+              git diff --name-only $EVENT_BEFORE..$EVENT_AFTER > changed_files.txt
             }
           fi
           
@@ -64,8 +70,6 @@ jobs:
           echo "FILES_CHANGED=$(cat changed_files.txt | wc -l)" >> $GITHUB_OUTPUT
           echo "SHELL_FILES=$(grep -E '\.sh$' changed_files.txt | wc -l || echo 0)" >> $GITHUB_OUTPUT
           echo "MD_FILES=$(grep -E '\.md$' changed_files.txt | wc -l || echo 0)" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
           
       - name: Run RUTOS Validation
         id: validation

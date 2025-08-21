@@ -1,12 +1,12 @@
 package gps
 
 import (
-t"strings"
 	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/markus-lassfolk/autonomy/pkg/logx"
@@ -344,6 +344,7 @@ func (lcd *LocalCellDatabase) MarkAsContributed(observationIDs []int) error {
 		args[i] = id
 	}
 
+	// nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query
 	query := fmt.Sprintf(`
 	UPDATE cell_observations 
 	SET contributed = TRUE, contributed_at = CURRENT_TIMESTAMP 

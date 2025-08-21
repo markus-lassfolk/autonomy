@@ -35,14 +35,18 @@ jobs:
         node-version: '18'
         
     - name: Process webhook
+      env:
+        TEST_PAYLOAD_INPUT: ${{ github.event.inputs.test_payload }}
+        CLIENT_PAYLOAD_INPUT: ${{ toJSON(github.event.client_payload.payload) }}
+        CLIENT_SIGNATURE_INPUT: ${{ github.event.client_payload.signature }}
       run: |
         # Get payload from workflow dispatch or repository dispatch
         if [ "$EVENT_NAME_INPUT" = "workflow_dispatch" ]; then
-          PAYLOAD='${{ github.event.inputs.test_payload }}'
+          PAYLOAD="$TEST_PAYLOAD_INPUT"
           SIGNATURE=""
         else
-          PAYLOAD='${{ toJSON(github.event.client_payload.payload) }}'
-          SIGNATURE='${{ github.event.client_payload.signature }}'
+          PAYLOAD="$CLIENT_PAYLOAD_INPUT"
+          SIGNATURE="$CLIENT_SIGNATURE_INPUT"
         fi
         
         echo "Processing webhook payload..."

@@ -86,12 +86,15 @@ jobs:
         echo "✅ RUTOS tests completed"
         
     - name: Generate Test Report
+      env:
+        PLATFORM_INPUT: ${{ matrix.platform }}
+        TEST_TYPE_INPUT: ${{ github.event.inputs.test_type || 'full' }}
       run: |
         echo "## 🧪 OpenWrt Test Environment Report" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Platform**: ${{ matrix.platform }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Platform**: $PLATFORM_INPUT" >> $GITHUB_STEP_SUMMARY
         echo "**Environment**: Alpine with OpenWrt Build Tools" >> $GITHUB_STEP_SUMMARY
-        echo "**Test Type**: ${{ github.event.inputs.test_type || 'full' }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Test Type**: $TEST_TYPE_INPUT" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "✅ **All tests completed successfully**" >> $GITHUB_STEP_SUMMARY
         

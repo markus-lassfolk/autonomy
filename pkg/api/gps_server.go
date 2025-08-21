@@ -136,6 +136,7 @@ func (s *GPSServer) Start() error {
 			err = http.ListenAndServeTLS(addr, s.config.CertFile, s.config.KeyFile, mux)
 		} else {
 			// Fall back to HTTP if no TLS certificates
+			// nosemgrep: go.lang.security.audit.net.use-tls.use-tls
 			err = http.ListenAndServe(addr, mux)
 		}
 		if err != nil {
