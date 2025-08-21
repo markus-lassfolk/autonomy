@@ -1,56 +1,50 @@
 # RUTOS Test Environment Dockerfile
 # Based on official OpenWrt Docker: https://github.com/openwrt/docker
-# Uses the official OpenWrt SDK container for building packages
-FROM openwrt/sdk:arm_cortex-a7_neon-vfpv4
+# Uses Alpine with OpenWrt build tools for testing
+FROM alpine:latest
 
 # Set environment variables
 ENV GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 WORKDIR /workdir
 
-# Install Go (matching your go.mod version) - Use AMD64 for x86_64 platform
-RUN wget -O go.tar.gz https://go.dev/dl/go1.23.0.linux-amd64.tar.gz \
-    && tar -C /usr/local -xzf go.tar.gz \
-    && rm go.tar.gz
-
-# Set Go environment
-ENV PATH=$PATH:/usr/local/go/bin
-ENV GOPATH=/go
-ENV GOCACHE=/go/cache
-ENV CGO_ENABLED=0
-
-# Create Go workspace with proper permissions
-RUN mkdir -p /go/src /go/bin /go/cache && chmod 755 /go
-
-# Install additional tools for testing
-RUN opkg update && opkg install \
+# Install OpenWrt build dependencies and basic tools
+RUN apk add --no-cache \
+    bash \
     curl \
-    wget \
     git \
     make \
     gcc \
-    || echo "Some packages may not be available in this OpenWrt version"
+    g++ \
+    musl-dev \
+    linux-headers \
+    pkgconfig \
+    cmake \
+    python3 \
+    py3-pip \
+    wget \
+    tar \
+    gzip \
+    bzip2 \
+    xz \
+    patch \
+    diffutils \
+    findutils \
+    grep \
+    sed \
+    awk \
+    jq \
+    && rm -rf /var/cache/apk/*
 
-# Copy source code
-COPY . /workdir/
+# Create test directories
+RUN mkdir -p /workdir/test /workdir/build /workdir/results
 
-# Set up Go modules
-RUN go mod download
+# Set up environment for testing
+ENV PATH="/workdir/bin:$PATH"
+ENV CGO_ENABLED=0
 
-# Build and test
-RUN go build -o bin/autonomyd ./cmd/autonomyd || echo "Build failed - expected in test environment"
-RUN go build -o bin/autonomysysmgmt ./cmd/autonomysysmgmt || echo "Build failed - expected in test environment"
-
-# Run tests
-RUN go test ./pkg/... -v || echo "Some tests may fail in OpenWrt environment"
-
-# Create test results directory
-RUN mkdir -p test/results/build
-
-# Generate test report
-RUN echo "OpenWrt Test Environment Report" > test/results/build/test-report.txt
-RUN echo "Platform: $(uname -m)" >> test/results/build/test-report.txt
-RUN echo "Go version: $(go version)" >> test/results/build/test-report.txt
-RUN echo "Build completed: $(date)" >> test/results/build/test-report.txt
+# Copy test scripts
+COPY test/docker/test-scripts/ /workdir/test-scripts/
+RUN chmod +x /workdir/test-scripts/*.sh
 
 # Default command
-CMD ["/bin/sh"]
+CMD ["/bin/bash"]
