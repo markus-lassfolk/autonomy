@@ -5,7 +5,7 @@
 
 # Variables
 PROJECT_NAME := autonomyd
-MAIN_PACKAGE := ./cmd/autonomyd
+MAIN_PACKAGE := ./cmd/autonomysysmgmt
 BUILD_DIR := build
 COVERAGE_DIR := coverage
 TEST_TIMEOUT := 60s

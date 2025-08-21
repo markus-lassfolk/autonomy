@@ -1,0 +1,177 @@
+name: Build and Publish Packages
+
+on:
+  push:
+    branches: [main, main-dev]
+    paths:
+      - 'pkg/**'
+      - 'cmd/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Makefile'
+  pull_request:
+    branches: [main, main-dev]
+    paths:
+      - 'pkg/**'
+      - 'cmd/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Makefile'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Type of build'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - binary
+          - package
+          - docker
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-binary:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'binary'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+
+    - name: Build binary
+      run: |
+        go build -o bin/autonomyd cmd/autonomysysmgmt/main.go
+        chmod +x bin/autonomyd
+
+    - name: Upload binary artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: autonomy-binary
+        path: bin/autonomyd
+
+  build-package:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'package'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+
+    - name: Build package
+      run: |
+        make package
+
+    - name: Upload package artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: autonomy-packages
+        path: |
+          package/autonomy/*.ipk
+          package/autonomy/*.tar.gz
+
+  build-docker:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'docker'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build RUTOS image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./test/docker
+        file: ./test/docker/Dockerfile.rutos
+        push: false
+        tags: autonomy:rutos-test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build OpenWrt image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./test/docker
+        file: ./test/docker/Dockerfile.openwrt
+        push: false
+        tags: autonomy:openwrt-test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  publish-release:
+    runs-on: ubuntu-latest
+    needs: [build-binary, build-package]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: autonomy-binary
+
+    - name: Download packages
+      uses: actions/download-artifact@v4
+      with:
+        name: autonomy-packages
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          autonomyd
+          *.ipk
+          *.tar.gz
+        tag_name: v${{ github.run_number }}
+        name: Release v${{ github.run_number }}
+        body: |
+          Automated build from main branch
+          
+          ## Changes
+          - Automated build and package creation
+          - Binary and package artifacts included
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-completion:
+    runs-on: ubuntu-latest
+    needs: [build-binary, build-package, build-docker]
+    if: always()
+    steps:
+    - name: Notify build completion
+      run: |
+        echo "Build completed for commit: ${{ github.sha }}"
+        echo "Branch: ${{ github.ref }}"
+        echo "Workflow: ${{ github.workflow }}"
+        
+        if [ "${{ needs.build-binary.result }}" == "success" ]; then
+          echo "✅ Binary build: SUCCESS"
+        else
+          echo "❌ Binary build: FAILED"
+        fi
+        
+        if [ "${{ needs.build-package.result }}" == "success" ]; then
+          echo "✅ Package build: SUCCESS"
+        else
+          echo "❌ Package build: FAILED"
+        fi
+        
+        if [ "${{ needs.build-docker.result }}" == "success" ]; then
+          echo "✅ Docker build: SUCCESS"
+        else
+          echo "❌ Docker build: FAILED"
+        fi
