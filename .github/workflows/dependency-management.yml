@@ -78,10 +78,12 @@ jobs:
         
     - name: Update dependencies
       if: steps.check-deps.outputs.outdated-count != '0'
+      env:
+        UPDATE_TYPE: ${{ github.event.inputs.update_type || 'all' }}
       run: |
         echo "🔄 Updating dependencies..."
         
-        UPDATE_TYPE="${{ github.event.inputs.update_type || 'all' }}"
+        echo "Update type: $UPDATE_TYPE"
         
         case $UPDATE_TYPE in
           "security")
@@ -130,6 +132,9 @@ jobs:
       if: steps.check-deps.outputs.outdated-count != '0'
       env:
         GH_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
+        OUTDATED_COUNT: ${{ steps.check-deps.outputs.outdated-count }}
+        UPDATE_TYPE: ${{ github.event.inputs.update_type || 'all' }}
+        EVENT_NAME: ${{ github.event_name }}
       run: |
         echo "📝 Creating pull request for dependency updates..."
         
@@ -143,8 +148,8 @@ jobs:
           git add .
           git commit -m "📦 Update dependencies
           
-          - Updated ${{ steps.check-deps.outputs.outdated-count }} dependencies
-          - Type: ${{ github.event.inputs.update_type || 'all' }}
+          - Updated $OUTDATED_COUNT dependencies
+          - Type: $UPDATE_TYPE
           - Automated by GitHub Actions
           
           This PR updates outdated dependencies to their latest versions.
@@ -155,14 +160,14 @@ jobs:
           
           # Create pull request
           gh pr create \
-            --title "📦 Update dependencies (${{ github.event.inputs.update_type || 'all' }})" \
+            --title "📦 Update dependencies ($UPDATE_TYPE)" \
             --body "## Dependency Updates
             
-            This PR updates ${{ steps.check-deps.outputs.outdated-count }} outdated dependencies.
+            This PR updates $OUTDATED_COUNT outdated dependencies.
             
             ### Update Type
-            - **Type**: ${{ github.event.inputs.update_type || 'all' }}
-            - **Triggered**: ${{ github.event_name }}
+            - **Type**: $UPDATE_TYPE
+            - **Triggered**: $EVENT_NAME
             - **Date**: $(date -u +"%Y-%m-%d %H:%M UTC")
             
             ### Changes
@@ -196,15 +201,19 @@ jobs:
         
     - name: Create summary
       if: always()
+      env:
+        OUTDATED_COUNT: ${{ steps.check-deps.outputs.outdated-count }}
+        UPDATE_TYPE: ${{ github.event.inputs.update_type || 'all' }}
+        EVENT_NAME: ${{ github.event_name }}
       run: |
         echo "## 📦 Dependency Management Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Outdated Dependencies**: ${{ steps.check-deps.outputs.outdated-count }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Update Type**: ${{ github.event.inputs.update_type || 'all' }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Triggered By**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Outdated Dependencies**: $OUTDATED_COUNT" >> $GITHUB_STEP_SUMMARY
+        echo "**Update Type**: $UPDATE_TYPE" >> $GITHUB_STEP_SUMMARY
+        echo "**Triggered By**: $EVENT_NAME" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        if [ "${{ steps.check-deps.outputs.outdated-count }}" != "0" ]; then
+        if [ "$OUTDATED_COUNT" != "0" ]; then
           echo "✅ **Pull request created for dependency updates**" >> $GITHUB_STEP_SUMMARY
         else
           echo "✅ **All dependencies are up to date**" >> $GITHUB_STEP_SUMMARY

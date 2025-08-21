@@ -35,13 +35,17 @@ jobs:
         
     - name: Determine target issues
       id: target-issues
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        ISSUE_NUMBER: ${{ inputs.issue_number }}
+        EVENT_ISSUE_NUMBER: ${{ github.event.issue.number }}
       run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.issue_number }}" ]; then
-          echo "target-issues=${{ inputs.issue_number }}" >> $GITHUB_OUTPUT
-          echo "Processing manually triggered issue: ${{ inputs.issue_number }}"
-        elif [ "${{ github.event_name }}" = "issues" ]; then
-          echo "target-issues=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
-          echo "Processing issue from event: ${{ github.event.issue.number }}"
+        if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "$ISSUE_NUMBER" ]; then
+          echo "target-issues=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+          echo "Processing manually triggered issue: $ISSUE_NUMBER"
+        elif [ "$EVENT_NAME" = "issues" ]; then
+          echo "target-issues=$EVENT_ISSUE_NUMBER" >> $GITHUB_OUTPUT
+          echo "Processing issue from event: $EVENT_ISSUE_NUMBER"
         else
           # Find issues that Copilot can handle
           echo "Finding issues for Copilot to process..."
@@ -67,7 +71,7 @@ jobs:
           echo "🤖 Analyzing issue #$ISSUE_NUMBER with Copilot..."
           
           # Get issue details
-          ISSUE_DATA=$(gh api "repos/${{ github.repository }}/issues/$ISSUE_NUMBER" --jq '{
+          ISSUE_DATA=$(gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER" --jq '{
             title: .title,
             body: .body,
             labels: [.labels[].name],
@@ -124,7 +128,7 @@ jobs:
           echo "🔧 Generating fix for issue #$ISSUE_NUMBER..."
           
           # Run the fix generation script
-          ./scripts/copilot-generate-fix.sh "$ISSUE_NUMBER" "${{ github.repository }}"
+          ./scripts/copilot-generate-fix.sh "$ISSUE_NUMBER" "$GITHUB_REPOSITORY"
           
           if [ $? -eq 0 ]; then
             echo "   ✅ Fix generated successfully"
