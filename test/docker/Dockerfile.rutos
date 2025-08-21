@@ -38,13 +38,5 @@ RUN apk add --no-cache \
 # Create test directories
 RUN mkdir -p /workdir/test /workdir/build /workdir/results
 
-# Set up environment for testing
-ENV PATH="/workdir/bin:$PATH"
-ENV CGO_ENABLED=0
-
-# Copy test scripts
-COPY test/docker/test-scripts/ /workdir/test-scripts/
-RUN chmod +x /workdir/test-scripts/*.sh
-
-# Default command
+# Set default command
 CMD ["/bin/bash"]
