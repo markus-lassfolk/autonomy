@@ -1,3 +1,4 @@
+// Comprehensive workflow test trigger - Updated $(Get-Date)
 package testing
 
 import (
