@@ -170,6 +170,8 @@ jobs:
         token: ${{ secrets.AUTONOMY_GH_TOKEN }}
 
     - name: Auto-merge sync PRs
+      env:
+        GH_TOKEN: ${{ secrets.AUTONOMY_GH_TOKEN }}
       run: |
         echo "🤖 Attempting to auto-merge sync PRs..."
         
