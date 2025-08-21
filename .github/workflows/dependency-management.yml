@@ -1,0 +1,211 @@
+name: Dependency Management
+
+on:
+  schedule:
+    # Run weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Type of update to perform'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - security
+          - minor
+          - major
+
+permissions:
+  contents: write
+  pull-requests: write
+  security-events: write
+
+jobs:
+  dependency-update:
+    runs-on: ubuntu-latest
+    name: Update Dependencies
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+        cache: true
+        
+    - name: Install dependency tools
+      run: |
+        go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+        
+    - name: Check for security vulnerabilities
+      run: |
+        echo "🔒 Checking for security vulnerabilities..."
+        
+        # Check for known vulnerabilities
+        govulncheck ./...
+        
+        # Run security scan
+        gosec ./...
+        
+        echo "✅ Security check completed"
+        
+    - name: Check for outdated dependencies
+      id: check-deps
+      run: |
+        echo "📦 Checking for outdated dependencies..."
+        
+        # Check for outdated modules
+        go list -u -m all > outdated.txt
+        
+        # Count outdated dependencies
+        OUTDATED_COUNT=$(grep -c "\[" outdated.txt || echo "0")
+        echo "outdated-count=$OUTDATED_COUNT" >> $GITHUB_OUTPUT
+        
+        if [ "$OUTDATED_COUNT" -gt 0 ]; then
+          echo "Found $OUTDATED_COUNT outdated dependencies"
+          cat outdated.txt
+        else
+          echo "✅ All dependencies are up to date"
+        fi
+        
+    - name: Update dependencies
+      if: steps.check-deps.outputs.outdated-count != '0'
+      run: |
+        echo "🔄 Updating dependencies..."
+        
+        UPDATE_TYPE="${{ github.event.inputs.update_type || 'all' }}"
+        
+        case $UPDATE_TYPE in
+          "security")
+            echo "Updating security-related dependencies only..."
+            # Update only security-related dependencies
+            go get -u -t ./...
+            ;;
+          "minor")
+            echo "Updating minor versions only..."
+            # Update minor versions
+            go get -u=patch ./...
+            ;;
+          "major")
+            echo "Updating all dependencies including major versions..."
+            # Update all dependencies
+            go get -u ./...
+            ;;
+          *)
+            echo "Updating all dependencies..."
+            go get -u ./...
+            ;;
+        esac
+        
+        # Tidy up the module
+        go mod tidy
+        
+        # Verify the module
+        go mod verify
+        
+        echo "✅ Dependencies updated"
+        
+    - name: Run tests after update
+      if: steps.check-deps.outputs.outdated-count != '0'
+      run: |
+        echo "🧪 Running tests after dependency update..."
+        
+        # Run unit tests
+        go test ./pkg/... -v -race -timeout 5m
+        
+        # Run integration tests
+        go test ./test/integration/... -v -timeout 10m
+        
+        echo "✅ Tests passed"
+        
+    - name: Create pull request
+      if: steps.check-deps.outputs.outdated-count != '0'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "📝 Creating pull request for dependency updates..."
+        
+        # Check if there are changes
+        if [ -n "$(git status --porcelain)" ]; then
+          # Create branch
+          BRANCH_NAME="deps/update-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH_NAME"
+          
+          # Commit changes
+          git add .
+          git commit -m "📦 Update dependencies
+          
+          - Updated ${{ steps.check-deps.outputs.outdated-count }} dependencies
+          - Type: ${{ github.event.inputs.update_type || 'all' }}
+          - Automated by GitHub Actions
+          
+          This PR updates outdated dependencies to their latest versions.
+          All tests have been run and passed."
+          
+          # Push branch
+          git push origin "$BRANCH_NAME"
+          
+          # Create pull request
+          gh pr create \
+            --title "📦 Update dependencies (${{ github.event.inputs.update_type || 'all' }})" \
+            --body "## Dependency Updates
+            
+            This PR updates ${{ steps.check-deps.outputs.outdated-count }} outdated dependencies.
+            
+            ### Update Type
+            - **Type**: ${{ github.event.inputs.update_type || 'all' }}
+            - **Triggered**: ${{ github.event_name }}
+            - **Date**: $(date -u +"%Y-%m-%d %H:%M UTC")
+            
+            ### Changes
+            - Updated dependencies to latest versions
+            - Ran comprehensive test suite
+            - Verified module integrity
+            
+            ### Testing
+            - [x] Unit tests pass
+            - [x] Integration tests pass
+            - [x] Security scan passes
+            - [x] Module verification passes
+            
+            ### Notes
+            - This is an automated update
+            - Please review the changes carefully
+            - Test thoroughly before merging
+            
+            ---
+            *Auto-generated by Dependency Management workflow*" \
+            --base main \
+            --head "$BRANCH_NAME" \
+            --label "dependencies" \
+            --label "automated" \
+            --label "security"
+            
+          echo "✅ Pull request created"
+        else
+          echo "ℹ️ No changes to commit"
+        fi
+        
+    - name: Create summary
+      if: always()
+      run: |
+        echo "## 📦 Dependency Management Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Outdated Dependencies**: ${{ steps.check-deps.outputs.outdated-count }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Update Type**: ${{ github.event.inputs.update_type || 'all' }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Triggered By**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ steps.check-deps.outputs.outdated-count }}" != "0" ]; then
+          echo "✅ **Pull request created for dependency updates**" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✅ **All dependencies are up to date**" >> $GITHUB_STEP_SUMMARY
+        fi

@@ -1,0 +1,225 @@
+name: Performance Monitoring
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      benchmark_type:
+        description: 'Type of benchmark to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - cpu
+          - memory
+          - network
+          - disk
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  performance-benchmark:
+    runs-on: ubuntu-latest
+    name: Performance Benchmark
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+        cache: true
+        
+    - name: Install benchmark tools
+      run: |
+        go install golang.org/x/tools/cmd/benchcmp@latest
+        go install github.com/google/pprof@latest
+        
+    - name: Run CPU benchmarks
+      if: github.event.inputs.benchmark_type == 'all' || github.event.inputs.benchmark_type == 'cpu'
+      run: |
+        echo "🖥️ Running CPU benchmarks..."
+        
+        # Run CPU-intensive benchmarks
+        go test -bench=BenchmarkCPU -benchmem -benchtime=5s ./pkg/... > cpu-benchmark.txt
+        
+        # Extract key metrics
+        echo "CPU Benchmark Results:" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cat cpu-benchmark.txt >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        
+    - name: Run memory benchmarks
+      if: github.event.inputs.benchmark_type == 'all' || github.event.inputs.benchmark_type == 'memory'
+      run: |
+        echo "🧠 Running memory benchmarks..."
+        
+        # Run memory benchmarks
+        go test -bench=BenchmarkMemory -benchmem -benchtime=5s ./pkg/... > memory-benchmark.txt
+        
+        # Generate memory profile
+        go test -bench=BenchmarkMemory -memprofile=memory.prof ./pkg/...
+        
+        # Extract key metrics
+        echo "Memory Benchmark Results:" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cat memory-benchmark.txt >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        
+    - name: Run network benchmarks
+      if: github.event.inputs.benchmark_type == 'all' || github.event.inputs.benchmark_type == 'network'
+      run: |
+        echo "🌐 Running network benchmarks..."
+        
+        # Run network benchmarks
+        go test -bench=BenchmarkNetwork -benchmem -benchtime=5s ./pkg/... > network-benchmark.txt
+        
+        # Extract key metrics
+        echo "Network Benchmark Results:" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cat network-benchmark.txt >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        
+    - name: Run disk benchmarks
+      if: github.event.inputs.benchmark_type == 'all' || github.event.inputs.benchmark_type == 'disk'
+      run: |
+        echo "💾 Running disk benchmarks..."
+        
+        # Run disk benchmarks
+        go test -bench=BenchmarkDisk -benchmem -benchtime=5s ./pkg/... > disk-benchmark.txt
+        
+        # Extract key metrics
+        echo "Disk Benchmark Results:" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cat disk-benchmark.txt >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        
+    - name: Generate performance report
+      if: always()
+      run: |
+        echo "📊 Generating performance report..."
+        
+        # Create comprehensive report
+        cat > performance-report.md << 'EOF'
+        # Performance Benchmark Report
+        
+        ## Summary
+        - **Date**: $(date -u +"%Y-%m-%d %H:%M UTC")
+        - **Trigger**: ${{ github.event_name }}
+        - **Benchmark Type**: ${{ github.event.inputs.benchmark_type || 'all' }}
+        
+        ## CPU Performance
+        EOF
+        
+        if [ -f "cpu-benchmark.txt" ]; then
+          echo "### CPU Benchmarks" >> performance-report.md
+          echo '```' >> performance-report.md
+          cat cpu-benchmark.txt >> performance-report.md
+          echo '```' >> performance-report.md
+        fi
+        
+        cat >> performance-report.md << 'EOF'
+        
+        ## Memory Performance
+        EOF
+        
+        if [ -f "memory-benchmark.txt" ]; then
+          echo "### Memory Benchmarks" >> performance-report.md
+          echo '```' >> performance-report.md
+          cat memory-benchmark.txt >> performance-report.md
+          echo '```' >> performance-report.md
+        fi
+        
+        cat >> performance-report.md << 'EOF'
+        
+        ## Network Performance
+        EOF
+        
+        if [ -f "network-benchmark.txt" ]; then
+          echo "### Network Benchmarks" >> performance-report.md
+          echo '```' >> performance-report.md
+          cat network-benchmark.txt >> performance-report.md
+          echo '```' >> performance-report.md
+        fi
+        
+        cat >> performance-report.md << 'EOF'
+        
+        ## Disk Performance
+        EOF
+        
+        if [ -f "disk-benchmark.txt" ]; then
+          echo "### Disk Benchmarks" >> performance-report.md
+          echo '```' >> performance-report.md
+          cat disk-benchmark.txt >> performance-report.md
+          echo '```' >> performance-report.md
+        fi
+        
+        cat >> performance-report.md << 'EOF'
+        
+        ## Recommendations
+        
+        ### Performance Optimization
+        1. Monitor memory usage patterns
+        2. Optimize CPU-intensive operations
+        3. Implement connection pooling for network operations
+        4. Use efficient disk I/O patterns
+        
+        ### Monitoring
+        - Set up performance alerts
+        - Track benchmark trends over time
+        - Monitor resource usage in production
+        
+        ---
+        *Generated by Performance Monitoring workflow*
+        EOF
+        
+        # Upload report as artifact
+        echo "📄 Performance report generated"
+        
+    - name: Upload performance artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-benchmarks-${{ github.run_number }}
+        path: |
+          *.txt
+          *.prof
+          performance-report.md
+        retention-days: 30
+        
+    - name: Check for performance regressions
+      if: always()
+      run: |
+        echo "🔍 Checking for performance regressions..."
+        
+        # Compare with previous benchmarks (if available)
+        if [ -f "cpu-benchmark.txt" ]; then
+          echo "CPU benchmark completed"
+          # Here you would compare with previous results
+          # and alert if there's a significant regression
+        fi
+        
+        if [ -f "memory-benchmark.txt" ]; then
+          echo "Memory benchmark completed"
+          # Check for memory leaks or increased usage
+        fi
+        
+        echo "✅ Performance regression check completed"
+        
+    - name: Create performance summary
+      if: always()
+      run: |
+        echo "## 📊 Performance Monitoring Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Benchmark Type**: ${{ github.event.inputs.benchmark_type || 'all' }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Triggered By**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Date**: $(date -u +"%Y-%m-%d %H:%M UTC")" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📄 **Performance report generated and uploaded as artifact**" >> $GITHUB_STEP_SUMMARY

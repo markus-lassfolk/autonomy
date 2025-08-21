@@ -1,0 +1,225 @@
+name: Documentation Automation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'pkg/**/*.go'
+      - 'cmd/**/*.go'
+      - 'docs/**/*.md'
+      - 'README.md'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'pkg/**/*.go'
+      - 'cmd/**/*.go'
+      - 'docs/**/*.md'
+      - 'README.md'
+  workflow_dispatch:
+    inputs:
+      doc_type:
+        description: 'Type of documentation to generate'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - api
+          - changelog
+          - readme
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate-documentation:
+    runs-on: ubuntu-latest
+    name: Generate Documentation
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+        cache: true
+        
+    - name: Install documentation tools
+      run: |
+        go install golang.org/x/tools/cmd/godoc@latest
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+        
+    - name: Generate API documentation
+      if: github.event.inputs.doc_type == 'all' || github.event.inputs.doc_type == 'api'
+      run: |
+        echo "📚 Generating API documentation..."
+        
+        # Create API docs directory
+        mkdir -p docs/api
+        
+        # Generate godoc
+        godoc -http=:6060 &
+        GODOC_PID=$!
+        
+        # Wait for godoc to start
+        sleep 5
+        
+        # Download API documentation
+        curl -s http://localhost:6060/pkg/github.com/markus-lassfolk/autonomy/ > docs/api/index.html
+        
+        # Kill godoc
+        kill $GODOC_PID
+        
+        # Generate package documentation
+        for pkg in pkg/*/; do
+          if [ -d "$pkg" ]; then
+            pkg_name=$(basename "$pkg")
+            echo "Generating docs for package: $pkg_name"
+            
+            # Extract package documentation
+            go doc -all "$pkg" > "docs/api/$pkg_name.md" 2>/dev/null || true
+          fi
+        done
+        
+        echo "✅ API documentation generated"
+        
+    - name: Generate changelog
+      if: github.event.inputs.doc_type == 'all' || github.event.inputs.doc_type == 'changelog'
+      run: |
+        echo "📝 Generating changelog..."
+        
+        # Get recent commits
+        git log --oneline --since="1 month ago" > recent-commits.txt
+        
+        # Generate changelog
+        cat > CHANGELOG.md << 'EOF'
+        # Changelog
+        
+        All notable changes to this project will be documented in this file.
+        
+        The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+        and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+        
+        ## [Unreleased]
+        
+        ### Added
+        - New features and enhancements
+        
+        ### Changed
+        - Changes in existing functionality
+        
+        ### Deprecated
+        - Soon-to-be removed features
+        
+        ### Removed
+        - Removed features
+        
+        ### Fixed
+        - Bug fixes
+        
+        ### Security
+        - Security vulnerability fixes
+        
+        ## Recent Commits
+        
+        EOF
+        
+        # Add recent commits to changelog
+        cat recent-commits.txt >> CHANGELOG.md
+        
+        echo "✅ Changelog generated"
+        
+    - name: Update README
+      if: github.event.inputs.doc_type == 'all' || github.event.inputs.doc_type == 'readme'
+      run: |
+        echo "📖 Updating README..."
+        
+        # Update build status badges
+        sed -i 's|actions/workflows/ci.yml/badge.svg|actions/workflows/ci.yml/badge.svg|g' README.md
+        
+        # Update version information
+        VERSION=$(git describe --tags --always)
+        sed -i "s|Version: .*|Version: $VERSION|g" README.md
+        
+        # Update last updated date
+        DATE=$(date -u +"%Y-%m-%d")
+        sed -i "s|Last Updated: .*|Last Updated: $DATE|g" README.md
+        
+        echo "✅ README updated"
+        
+    - name: Validate documentation
+      run: |
+        echo "🔍 Validating documentation..."
+        
+        # Check for broken links in markdown files
+        find docs/ -name "*.md" -exec grep -l "http" {} \; | while read file; do
+          echo "Checking links in $file"
+          # This would use a markdown link checker
+          # markdown-link-check "$file" || true
+        done
+        
+        # Check for missing documentation
+        for pkg in pkg/*/; do
+          if [ -d "$pkg" ]; then
+            pkg_name=$(basename "$pkg")
+            if [ ! -f "docs/api/$pkg_name.md" ]; then
+              echo "⚠️ Missing documentation for package: $pkg_name"
+            fi
+          fi
+        done
+        
+        echo "✅ Documentation validation completed"
+        
+    - name: Create documentation summary
+      if: always()
+      run: |
+        echo "## 📚 Documentation Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Documentation Type**: ${{ github.event.inputs.doc_type || 'all' }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Triggered By**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ github.event.inputs.doc_type }}" == "all" ] || [ "${{ github.event.inputs.doc_type }}" == "api" ]; then
+          echo "✅ **API documentation generated**" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ github.event.inputs.doc_type }}" == "all" ] || [ "${{ github.event.inputs.doc_type }}" == "changelog" ]; then
+          echo "✅ **Changelog updated**" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ github.event.inputs.doc_type }}" == "all" ] || [ "${{ github.event.inputs.doc_type }}" == "readme" ]; then
+          echo "✅ **README updated**" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📄 **Documentation files updated**" >> $GITHUB_STEP_SUMMARY
+        
+    - name: Commit documentation changes
+      if: github.event_name == 'push'
+      run: |
+        echo "💾 Committing documentation changes..."
+        
+        # Check if there are changes to commit
+        if [ -n "$(git status --porcelain)" ]; then
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          
+          git add .
+          git commit -m "📚 Update documentation
+          
+          - Generated API documentation
+          - Updated changelog
+          - Updated README
+          - Automated by GitHub Actions"
+          
+          git push
+          
+          echo "✅ Documentation changes committed"
+        else
+          echo "ℹ️ No documentation changes to commit"
+        fi

@@ -1,413 +1,715 @@
 #!/bin/bash
 
-# Copilot Fix Generation Script
-# This script generates fixes for autonomy issues based on issue analysis
+# Copilot Autonomous Fix Generator
+# Analyzes GitHub issues and generates automated fixes
 
 set -e
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Configuration
+ISSUE_NUMBER="$1"
+REPOSITORY="$2"
 
-# Function to print colored output
-print_status() {
-    local status=$1
-    local message=$2
-    case $status in
-        "INFO") echo -e "${BLUE}ℹ️  $message${NC}" ;;
-        "SUCCESS") echo -e "${GREEN}✅ $message${NC}" ;;
-        "WARNING") echo -e "${YELLOW}⚠️  $message${NC}" ;;
-        "ERROR") echo -e "${RED}❌ $message${NC}" ;;
-    esac
-}
-
-# Check if required arguments are provided
-if [ $# -lt 3 ]; then
-    print_status "ERROR" "Usage: $0 <issue_number> <title> <body>"
+if [ -z "$ISSUE_NUMBER" ] || [ -z "$REPOSITORY" ]; then
+    echo "Usage: $0 <issue_number> <repository>"
     exit 1
 fi
 
-ISSUE_NUMBER=$1
-TITLE=$2
-BODY=$3
+# Create fixes directory
+mkdir -p fixes
 
-print_status "INFO" "Generating fix for issue #$ISSUE_NUMBER"
-print_status "INFO" "Title: $TITLE"
+echo "🤖 Copilot: Analyzing issue #$ISSUE_NUMBER..."
 
-# Function to detect issue type
-detect_issue_type() {
-    local title="$1"
-    local body="$2"
-    
-    # System-level issues
-    if echo "$title $body" | grep -qE "(daemon_down|daemon_hung|crash_loop)"; then
-        echo "daemon_issue"
-    elif echo "$title $body" | grep -qE "(system_degraded|performance_issue|memory_leak)"; then
-        echo "performance_issue"
-    elif echo "$title $body" | grep -qE "(ubus_error|uci_error)"; then
-        echo "system_integration_issue"
-    elif echo "$title $body" | grep -qE "(notification_failure|webhook_error|mqtt_error)"; then
-        echo "notification_issue"
-    elif echo "$title $body" | grep -qE "(starlink_api|cellular_monitoring|gps_integration)"; then
-        echo "monitoring_issue"
-    elif echo "$title $body" | grep -qE "(build_error|compilation_error|test_failure)"; then
-        echo "build_issue"
-    else
-        echo "unknown"
-    fi
-}
+# Get issue details
+ISSUE_DATA=$(gh api "repos/$REPOSITORY/issues/$ISSUE_NUMBER" --jq '{
+    title: .title,
+    body: .body,
+    labels: [.labels[].name],
+    assignees: [.assignees[].login],
+    state: .state
+}')
 
-# Function to generate daemon fix
+TITLE=$(echo "$ISSUE_DATA" | jq -r '.title')
+BODY=$(echo "$ISSUE_DATA" | jq -r '.body')
+LABELS=$(echo "$ISSUE_DATA" | jq -r '.labels[]' | tr '\n' ' ')
+
+echo "   Title: $TITLE"
+echo "   Labels: $LABELS"
+
+# Analyze issue type and generate appropriate fix
+FIX_GENERATED=false
+
+# Check for daemon issues
+if echo "$TITLE $BODY" | grep -qE "(daemon_down|daemon_hung|crash_loop)"; then
+    echo "   🔧 Generating daemon stability fix..."
+    generate_daemon_fix
+    FIX_GENERATED=true
+fi
+
+# Check for memory issues
+if echo "$TITLE $BODY" | grep -qE "(memory_leak|out_of_memory|high_memory_usage)"; then
+    echo "   🔧 Generating memory optimization fix..."
+    generate_memory_fix
+    FIX_GENERATED=true
+fi
+
+# Check for performance issues
+if echo "$TITLE $BODY" | grep -qE "(performance_issue|slow_response|high_cpu_usage)"; then
+    echo "   🔧 Generating performance optimization fix..."
+    generate_performance_fix
+    FIX_GENERATED=true
+fi
+
+# Check for security issues
+if echo "$TITLE $BODY" | grep -qE "(security_vulnerability|secret_leak|privacy_issue)"; then
+    echo "   🔧 Generating security fix..."
+    generate_security_fix
+    FIX_GENERATED=true
+fi
+
+# Check for notification issues
+if echo "$TITLE $BODY" | grep -qE "(notification_failure|webhook_error|mqtt_error)"; then
+    echo "   🔧 Generating notification fix..."
+    generate_notification_fix
+    FIX_GENERATED=true
+fi
+
+# Check for monitoring issues
+if echo "$TITLE $BODY" | grep -qE "(starlink_api|cellular_monitoring|gps_integration)"; then
+    echo "   🔧 Generating monitoring fix..."
+    generate_monitoring_fix
+    FIX_GENERATED=true
+fi
+
+# Check for build issues
+if echo "$TITLE $BODY" | grep -qE "(build_error|compilation_error|test_failure)"; then
+    echo "   🔧 Generating build fix..."
+    generate_build_fix
+    FIX_GENERATED=true
+fi
+
+if [ "$FIX_GENERATED" = "true" ]; then
+    echo "   ✅ Fix generated successfully"
+    exit 0
+else
+    echo "   ❌ No specific fix pattern matched"
+    exit 1
+fi
+
+# Fix generation functions
 generate_daemon_fix() {
-    print_status "INFO" "Generating daemon fix..."
-    
-    # Check if daemon is crashing or hanging
-    if echo "$TITLE $BODY" | grep -q "daemon_down"; then
-        # Add watchdog improvements
-        cat >> pkg/sysmgmt/watchdog.go << 'EOF'
-
-// Enhanced watchdog monitoring
-func (w *Watchdog) enhancedHealthCheck() error {
-    // Add more comprehensive health checks
-    if err := w.checkProcessHealth(); err != nil {
-        return fmt.Errorf("process health check failed: %w", err)
-    }
-    
-    if err := w.checkMemoryUsage(); err != nil {
-        return fmt.Errorf("memory usage check failed: %w", err)
-    }
-    
-    if err := w.checkSystemResources(); err != nil {
-        return fmt.Errorf("system resources check failed: %w", err)
-    }
-    
-    return nil
-}
-
-func (w *Watchdog) checkProcessHealth() error {
-    // Implement process health monitoring
-    return nil
-}
-
-func (w *Watchdog) checkMemoryUsage() error {
-    // Implement memory usage monitoring
-    return nil
-}
-
-func (w *Watchdog) checkSystemResources() error {
-    // Implement system resources monitoring
-    return nil
-}
+    cat > "fixes/issue-$ISSUE_NUMBER.patch" << 'EOF'
+diff --git a/pkg/sysmgmt/daemon.go b/pkg/sysmgmt/daemon.go
+index 1234567..abcdefg 100644
+--- a/pkg/sysmgmt/daemon.go
++++ b/pkg/sysmgmt/daemon.go
+@@ -50,6 +50,12 @@ func (d *Daemon) Start(ctx context.Context) error {
+ 	// Add graceful shutdown handling
+ 	go d.handleGracefulShutdown(ctx)
+ 
++	// Add health check monitoring
++	go d.monitorHealth(ctx)
++
++	// Add automatic recovery mechanisms
++	go d.autoRecovery(ctx)
++
+ 	return nil
+ }
+ 
+@@ -80,6 +86,45 @@ func (d *Daemon) handleGracefulShutdown(ctx context.Context) {
+ 	}
+ }
+ 
++// monitorHealth continuously monitors daemon health
++func (d *Daemon) monitorHealth(ctx context.Context) {
++	ticker := time.NewTicker(30 * time.Second)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++			if err := d.checkHealth(); err != nil {
++				d.logger.WithError(err).Warn("Health check failed")
++				d.triggerRecovery()
++			}
++		}
++	}
++}
++
++// autoRecovery handles automatic recovery from failures
++func (d *Daemon) autoRecovery(ctx context.Context) {
++	ticker := time.NewTicker(60 * time.Second)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++			if d.needsRecovery() {
++				d.logger.Info("Triggering automatic recovery")
++				d.performRecovery()
++			}
++		}
++	}
++}
++
++func (d *Daemon) checkHealth() error {
++	// Implement health check logic
++	return nil
++}
++
++func (d *Daemon) triggerRecovery() {
++	// Implement recovery trigger logic
++}
++
++func (d *Daemon) needsRecovery() bool {
++	// Implement recovery need detection
++	return false
++}
++
++func (d *Daemon) performRecovery() {
++	// Implement recovery logic
++}
 EOF
-    fi
-    
-    if echo "$TITLE $BODY" | grep -q "daemon_hung"; then
-        # Add timeout handling
-        cat >> pkg/controller/controller.go << 'EOF'
-
-// Enhanced timeout handling
-func (c *Controller) withTimeout(ctx context.Context, timeout time.Duration, fn func() error) error {
-    ctx, cancel := context.WithTimeout(ctx, timeout)
-    defer cancel()
-    
-    done := make(chan error, 1)
-    go func() {
-        done <- fn()
-    }()
-    
-    select {
-    case err := <-done:
-        return err
-    case <-ctx.Done():
-        return fmt.Errorf("operation timed out after %v", timeout)
-    }
 }
+
+generate_memory_fix() {
+    cat > "fixes/issue-$ISSUE_NUMBER.patch" << 'EOF'
+diff --git a/pkg/sysmgmt/memory.go b/pkg/sysmgmt/memory.go
+index 1234567..abcdefg 100644
+--- a/pkg/sysmgmt/memory.go
++++ b/pkg/sysmgmt/memory.go
+@@ -0,0 +1,85 @@
++package sysmgmt
++
++import (
++	"context"
++	"runtime"
++	"time"
++
++	"github.com/sirupsen/logrus"
++)
++
++// MemoryManager handles memory optimization and monitoring
++type MemoryManager struct {
++	logger *logrus.Logger
++	config *Config
++}
++
++// NewMemoryManager creates a new memory manager
++func NewMemoryManager(logger *logrus.Logger, config *Config) *MemoryManager {
++	return &MemoryManager{
++		logger: logger,
++		config: config,
++	}
++}
++
++// Start begins memory monitoring
++func (m *MemoryManager) Start(ctx context.Context) {
++	go m.monitorMemory(ctx)
++	go m.optimizeMemory(ctx)
++}
++
++// monitorMemory continuously monitors memory usage
++func (m *MemoryManager) monitorMemory(ctx context.Context) {
++	ticker := time.NewTicker(30 * time.Second)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++			m.checkMemoryUsage()
++		}
++	}
++}
++
++// optimizeMemory performs memory optimization
++func (m *MemoryManager) optimizeMemory(ctx context.Context) {
++	ticker := time.NewTicker(5 * time.Minute)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++			m.performOptimization()
++		}
++	}
++}
++
++func (m *MemoryManager) checkMemoryUsage() {
++	var m runtime.MemStats
++	runtime.ReadMemStats(&m)
++
++	// Log memory usage
++	m.logger.WithFields(logrus.Fields{
++		"alloc_mb":     bToMb(m.Alloc),
++		"total_alloc_mb": bToMb(m.TotalAlloc),
++		"sys_mb":       bToMb(m.Sys),
++		"num_gc":       m.NumGC,
++	}).Debug("Memory usage")
++
++	// Trigger GC if memory usage is high
++	if m.Alloc > 50*1024*1024 { // 50MB threshold
++		runtime.GC()
++		m.logger.Info("Triggered garbage collection")
++	}
++}
++
++func (m *MemoryManager) performOptimization() {
++	// Force garbage collection
++	runtime.GC()
++
++	// Clear any caches if needed
++	// This would be implemented based on specific cache usage
++
++	m.logger.Info("Memory optimization completed")
++}
++
++func bToMb(b uint64) uint64 {
++	return b / 1024 / 1024
++}
 EOF
-    fi
 }
 
-# Function to generate performance fix
 generate_performance_fix() {
-    print_status "INFO" "Generating performance fix..."
-    
-    # Add performance monitoring
-    cat >> pkg/performance/monitor.go << 'EOF'
-
-// Enhanced performance monitoring
-type PerformanceMonitor struct {
-    logger *logx.Logger
-    metrics map[string]float64
-}
-
-func NewPerformanceMonitor(logger *logx.Logger) *PerformanceMonitor {
-    return &PerformanceMonitor{
-        logger: logger,
-        metrics: make(map[string]float64),
-    }
-}
-
-func (pm *PerformanceMonitor) MonitorMemory() {
-    // Monitor memory usage
-    var m runtime.MemStats
-    runtime.ReadMemStats(&m)
-    
-    pm.metrics["memory_alloc"] = float64(m.Alloc)
-    pm.metrics["memory_sys"] = float64(m.Sys)
-    pm.metrics["memory_heap"] = float64(m.HeapAlloc)
-    
-    // Log if memory usage is high
-    if m.Alloc > 50*1024*1024 { // 50MB
-        pm.logger.Warn("High memory usage detected", "alloc", m.Alloc, "sys", m.Sys)
-    }
-}
-
-func (pm *PerformanceMonitor) MonitorCPU() {
-    // Monitor CPU usage
-    // Implementation depends on platform
-}
-
-func (pm *PerformanceMonitor) GetMetrics() map[string]float64 {
-    return pm.metrics
-}
+    cat > "fixes/issue-$ISSUE_NUMBER.patch" << 'EOF'
+diff --git a/pkg/performance/optimizer.go b/pkg/performance/optimizer.go
+index 1234567..abcdefg 100644
+--- a/pkg/performance/optimizer.go
++++ b/pkg/performance/optimizer.go
+@@ -0,0 +1,120 @@
++package performance
++
++import (
++	"context"
++	"runtime"
++	"time"
++
++	"github.com/sirupsen/logrus"
++)
++
++// Optimizer handles performance optimization
++type Optimizer struct {
++	logger *logrus.Logger
++}
++
++// NewOptimizer creates a new performance optimizer
++func NewOptimizer(logger *logrus.Logger) *Optimizer {
++	return &Optimizer{
++		logger: logger,
++	}
++}
++
++// Start begins performance monitoring and optimization
++func (o *Optimizer) Start(ctx context.Context) {
++	go o.monitorPerformance(ctx)
++	go o.optimizePerformance(ctx)
++}
++
++// monitorPerformance continuously monitors system performance
++func (o *Optimizer) monitorPerformance(ctx context.Context) {
++	ticker := time.NewTicker(30 * time.Second)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++			o.checkPerformance()
++		}
++	}
++}
++
++// optimizePerformance performs performance optimizations
++func (o *Optimizer) optimizePerformance(ctx context.Context) {
++	ticker := time.NewTicker(2 * time.Minute)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++			o.performOptimization()
++		}
++	}
++}
++
++func (o *Optimizer) checkPerformance() {
++	var m runtime.MemStats
++	runtime.ReadMemStats(&m)
++
++	// Check CPU usage (simplified)
++	numCPU := runtime.NumCPU()
++	numGoroutines := runtime.NumGoroutine()
++
++	o.logger.WithFields(logrus.Fields{
++		"cpu_count":     numCPU,
++		"goroutines":    numGoroutines,
++		"memory_alloc":  bToMb(m.Alloc),
++		"memory_sys":    bToMb(m.Sys),
++	}).Debug("Performance metrics")
++
++	// Alert if performance is degrading
++	if numGoroutines > numCPU*100 {
++		o.logger.Warn("High number of goroutines detected")
++	}
++
++	if m.Alloc > 100*1024*1024 { // 100MB threshold
++		o.logger.Warn("High memory usage detected")
++	}
++}
++
++func (o *Optimizer) performOptimization() {
++	// Optimize goroutine usage
++	if runtime.NumGoroutine() > 1000 {
++		o.logger.Info("Performing goroutine optimization")
++		// This would implement specific goroutine cleanup
++	}
++
++	// Optimize memory usage
++	runtime.GC()
++
++	// Optimize CPU usage
++	// This would implement CPU-specific optimizations
++
++	o.logger.Info("Performance optimization completed")
++}
++
++func bToMb(b uint64) uint64 {
++	return b / 1024 / 1024
++}
 EOF
 }
 
-# Function to generate system integration fix
-generate_system_integration_fix() {
-    print_status "INFO" "Generating system integration fix..."
-    
-    # Add UCI error handling
-    cat >> pkg/uci/config.go << 'EOF'
-
-// Enhanced UCI error handling
-func (c *Config) loadWithRetry(maxRetries int) error {
-    var lastErr error
-    
-    for i := 0; i < maxRetries; i++ {
-        if err := c.load(); err != nil {
-            lastErr = err
-            c.logger.Warn("UCI config load failed, retrying", "attempt", i+1, "error", err)
-            time.Sleep(time.Duration(i+1) * time.Second)
-            continue
-        }
-        return nil
-    }
-    
-    return fmt.Errorf("failed to load UCI config after %d attempts: %w", maxRetries, lastErr)
-}
-
-func (c *Config) validateConfig() error {
-    // Add config validation
-    if c.LogLevel == "" {
-        c.LogLevel = "info"
-    }
-    
-    if c.DecisionIntervalMS <= 0 {
-        c.DecisionIntervalMS = 5000
-    }
-    
-    return nil
-}
+generate_security_fix() {
+    cat > "fixes/issue-$ISSUE_NUMBER.patch" << 'EOF'
+diff --git a/pkg/security/auditor.go b/pkg/security/auditor.go
+index 1234567..abcdefg 100644
+--- a/pkg/security/auditor.go
++++ b/pkg/security/auditor.go
+@@ -0,0 +1,95 @@
++package security
++
++import (
++	"context"
++	"crypto/rand"
++	"encoding/hex"
++	"time"
++
++	"github.com/sirupsen/logrus"
++)
++
++// Auditor handles security auditing and fixes
++type Auditor struct {
++	logger *logrus.Logger
++}
++
++// NewAuditor creates a new security auditor
++func NewAuditor(logger *logrus.Logger) *Auditor {
++	return &Auditor{
++		logger: logger,
++	}
++}
++
++// Start begins security monitoring
++func (a *Auditor) Start(ctx context.Context) {
++	go a.monitorSecurity(ctx)
++	go a.scanVulnerabilities(ctx)
++}
++
++// monitorSecurity continuously monitors security
++func (a *Auditor) monitorSecurity(ctx context.Context) {
++	ticker := time.NewTicker(5 * time.Minute)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++			a.checkSecurity()
++		}
++	}
++}
++
++// scanVulnerabilities scans for security vulnerabilities
++func (a *Auditor) scanVulnerabilities(ctx context.Context) {
++	ticker := time.NewTicker(1 * time.Hour)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++			a.performVulnerabilityScan()
++		}
++	}
++}
++
++func (a *Auditor) checkSecurity() {
++	// Check for common security issues
++	a.checkSecretLeaks()
++	a.checkPrivilegeEscalation()
++	a.checkNetworkSecurity()
++}
++
++func (a *Auditor) checkSecretLeaks() {
++	// Implement secret leak detection
++	a.logger.Debug("Checking for secret leaks")
++}
++
++func (a *Auditor) checkPrivilegeEscalation() {
++	// Implement privilege escalation checks
++	a.logger.Debug("Checking for privilege escalation")
++}
++
++func (a *Auditor) checkNetworkSecurity() {
++	// Implement network security checks
++	a.logger.Debug("Checking network security")
++}
++
++func (a *Auditor) performVulnerabilityScan() {
++	// Implement vulnerability scanning
++	a.logger.Info("Performing vulnerability scan")
++}
++
++// generateSecureToken generates a cryptographically secure token
++func (a *Auditor) generateSecureToken() string {
++	bytes := make([]byte, 32)
++	rand.Read(bytes)
++	return hex.EncodeToString(bytes)
++}
 EOF
 }
 
-# Function to generate notification fix
 generate_notification_fix() {
-    print_status "INFO" "Generating notification fix..."
-    
-    # Add notification retry logic
-    cat >> pkg/notifications/client.go << 'EOF'
-
-// Enhanced notification retry logic
-func (c *Client) sendWithRetry(notification *Notification, maxRetries int) error {
-    var lastErr error
-    
-    for i := 0; i < maxRetries; i++ {
-        if err := c.send(notification); err != nil {
-            lastErr = err
-            c.logger.Warn("Notification send failed, retrying", "attempt", i+1, "error", err)
-            time.Sleep(time.Duration(i+1) * time.Second)
-            continue
-        }
-        return nil
-    }
-    
-    return fmt.Errorf("failed to send notification after %d attempts: %w", maxRetries, lastErr)
-}
-
-func (c *Client) validateNotification(notification *Notification) error {
-    if notification.Title == "" {
-        return fmt.Errorf("notification title is required")
-    }
-    
-    if notification.Message == "" {
-        return fmt.Errorf("notification message is required")
-    }
-    
-    return nil
-}
+    cat > "fixes/issue-$ISSUE_NUMBER.patch" << 'EOF'
+diff --git a/pkg/notifications/manager.go b/pkg/notifications/manager.go
+index 1234567..abcdefg 100644
+--- a/pkg/notifications/manager.go
++++ b/pkg/notifications/manager.go
+@@ -50,6 +50,12 @@ func (m *Manager) Start(ctx context.Context) error {
+ 	// Start notification processing
+ 	go m.processNotifications(ctx)
+ 
++	// Add retry mechanism
++	go m.retryFailedNotifications(ctx)
++
++	// Add health monitoring
++	go m.monitorNotificationHealth(ctx)
++
+ 	return nil
+ }
+ 
+@@ -80,6 +86,45 @@ func (m *Manager) processNotifications(ctx context.Context) {
+ 	}
+ }
+ 
++// retryFailedNotifications retries failed notifications
++func (m *Manager) retryFailedNotifications(ctx context.Context) {
++	ticker := time.NewTicker(2 * time.Minute)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++			m.retryNotifications()
++		}
++	}
++}
++
++// monitorNotificationHealth monitors notification system health
++func (m *Manager) monitorNotificationHealth(ctx context.Context) {
++	ticker := time.NewTicker(1 * time.Minute)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++			m.checkHealth()
++		}
++	}
++}
++
++func (m *Manager) retryNotifications() {
++	// Implement retry logic for failed notifications
++	m.logger.Debug("Retrying failed notifications")
++}
++
++func (m *Manager) checkHealth() {
++	// Implement health check for notification system
++	m.logger.Debug("Checking notification system health")
++}
++
+ func (m *Manager) sendNotification(notification *Notification) error {
+ 	// Add timeout and retry logic
+ 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+@@ -90,6 +135,12 @@ func (m *Manager) sendNotification(notification *Notification) error {
+ 	// Implement actual notification sending
+ 	// This would integrate with webhook, MQTT, etc.
+ 
++	// Add error handling and logging
++	if err != nil {
++		m.logger.WithError(err).Error("Failed to send notification")
++		return err
++	}
++
+ 	return nil
+ }
 EOF
 }
 
-# Function to generate monitoring fix
 generate_monitoring_fix() {
-    print_status "INFO" "Generating monitoring fix..."
-    
-    # Add monitoring error handling
-    cat >> pkg/collector/starlink.go << 'EOF'
-
-// Enhanced Starlink API error handling
-func (c *StarlinkCollector) collectWithFallback() (*StarlinkData, error) {
-    // Try gRPC first
-    if data, err := c.collectGRPC(); err == nil {
-        return data, nil
-    }
-    
-    // Fallback to HTTP
-    if data, err := c.collectHTTP(); err == nil {
-        return data, nil
-    }
-    
-    // Return cached data if available
-    if c.cachedData != nil {
-        c.logger.Warn("Using cached Starlink data due to API failures")
-        return c.cachedData, nil
-    }
-    
-    return nil, fmt.Errorf("all Starlink API methods failed")
-}
-
-func (c *StarlinkCollector) validateData(data *StarlinkData) error {
-    if data == nil {
-        return fmt.Errorf("starlink data is nil")
-    }
-    
-    // Add validation logic
-    return nil
-}
+    cat > "fixes/issue-$ISSUE_NUMBER.patch" << 'EOF'
+diff --git a/pkg/collector/base.go b/pkg/collector/base.go
+index 1234567..abcdefg 100644
+--- a/pkg/collector/base.go
++++ b/pkg/collector/base.go
+@@ -50,6 +50,12 @@ func (c *BaseCollector) Start(ctx context.Context) error {
+ 	// Start data collection
+ 	go c.collectData(ctx)
+ 
++	// Add error recovery
++	go c.handleErrors(ctx)
++
++	// Add data validation
++	go c.validateData(ctx)
++
+ 	return nil
+ }
+ 
+@@ -80,6 +86,45 @@ func (c *BaseCollector) collectData(ctx context.Context) {
+ 	}
+ }
+ 
++// handleErrors handles collection errors
++func (c *BaseCollector) handleErrors(ctx context.Context) {
++	ticker := time.NewTicker(30 * time.Second)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++			c.recoverFromErrors()
++		}
++	}
++}
++
++// validateData validates collected data
++func (c *BaseCollector) validateData(ctx context.Context) {
++	ticker := time.NewTicker(1 * time.Minute)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++			c.validateCollectedData()
++		}
++	}
++}
++
++func (c *BaseCollector) recoverFromErrors() {
++	// Implement error recovery logic
++	c.logger.Debug("Recovering from collection errors")
++}
++
++func (c *BaseCollector) validateCollectedData() {
++	// Implement data validation logic
++	c.logger.Debug("Validating collected data")
++}
++
+ func (c *BaseCollector) collect() error {
+ 	// Add timeout and retry logic
+ 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+@@ -90,6 +135,12 @@ func (c *BaseCollector) collect() error {
+ 	// Implement actual data collection
+ 	// This would collect from Starlink, cellular, GPS, etc.
+ 
++	// Add error handling and logging
++	if err != nil {
++		c.logger.WithError(err).Error("Data collection failed")
++		return err
++	}
++
+ 	return nil
+ }
 EOF
 }
 
-# Function to generate build fix
 generate_build_fix() {
-    print_status "INFO" "Generating build fix..."
-    
-    # Add build validation
-    cat >> Makefile << 'EOF'
-
-# Enhanced build validation
-validate-build:
-	@echo "🔍 Validating build..."
-	@go vet ./...
-	@go mod verify
-	@go mod tidy
-	@echo "✅ Build validation passed"
-
-build-with-validation: validate-build build
-	@echo "✅ Build with validation complete"
+    cat > "fixes/issue-$ISSUE_NUMBER.patch" << 'EOF'
+diff --git a/Makefile b/Makefile
+index 1234567..abcdefg 100644
+--- a/Makefile
++++ b/Makefile
+@@ -50,6 +50,12 @@ test: test-unit test-integration
+ 	@echo "$(GREEN)✓ All tests passed$(NC)"
+ 
+ # Enhanced test targets
++test-with-coverage:
++	@echo "$(YELLOW)Running tests with coverage...$(NC)"
++	@mkdir -p $(COVERAGE_DIR)
++	@$(GO) test -race -timeout $(TEST_TIMEOUT) -coverprofile=$(COVERAGE_DIR)/coverage.out ./...
++	@$(GO) tool cover -html=$(COVERAGE_DIR)/coverage.out -o $(COVERAGE_DIR)/coverage.html
++	@echo "$(GREEN)✓ Coverage report generated: $(COVERAGE_DIR)/coverage.html$(NC)"
+ 
+ test-unit:
+ 	@echo "$(YELLOW)Running unit tests...$(NC)"
+@@ -80,6 +86,12 @@ test-integration:
+ 	@echo "$(GREEN)✓ Integration tests passed$(NC)"
+ 
+ # Enhanced build targets
++build-debug:
++	@echo "$(YELLOW)Building debug version...$(NC)"
++	@mkdir -p $(BUILD_DIR)
++	@$(GO) build -gcflags="all=-N -l" -o $(BUILD_DIR)/$(PROJECT_NAME)-debug $(MAIN_PACKAGE)
++	@echo "$(GREEN)✓ Debug build complete: $(BUILD_DIR)/$(PROJECT_NAME)-debug$(NC)"
++
+ build-race:
+ 	@echo "$(YELLOW)Building with race detection...$(NC)"
+ 	@mkdir -p $(BUILD_DIR)
+@@ -90,6 +102,12 @@ build-race:
+ 	@echo "$(GREEN)✓ Race build complete: $(BUILD_DIR)/$(PROJECT_NAME)-race$(NC)"
+ 
+ # Enhanced linting targets
++lint-fix:
++	@echo "$(YELLOW)Fixing linting issues...$(NC)"
++	@goimports -w .
++	@gofmt -s -w .
++	@echo "$(GREEN)✓ Linting issues fixed$(NC)"
++
+ lint-strict:
+ 	@echo "$(YELLOW)Running strict linting...$(NC)"
+ 	@if command -v $(STATICCHECK) >/dev/null 2>&1; then \
+@@ -100,6 +118,12 @@ lint-strict:
+ 		echo "$(YELLOW)⚠ staticcheck not installed (run 'make install-deps')$(NC)"; \
+ 	fi
+ 
++# Enhanced dependency management
++deps-update:
++	@echo "$(YELLOW)Updating dependencies...$(NC)"
++	@$(GO) get -u ./...
++	@$(GO) mod tidy
++	@echo "$(GREEN)✓ Dependencies updated$(NC)"
+ 
+ # Cross-compilation targets
+ cross-compile: cross-compile-linux cross-compile-windows cross-compile-darwin
 EOF
 }
-
-# Function to generate test fix
-generate_test_fix() {
-    print_status "INFO" "Generating test fix..."
-    
-    # Add test improvements
-    cat >> test/integration/autonomy_test.go << 'EOF'
-
-// Enhanced integration tests
-func TestAutonomySystemIntegration(t *testing.T) {
-    // Add comprehensive system integration tests
-    t.Run("DaemonStartup", testDaemonStartup)
-    t.Run("ConfigurationLoading", testConfigurationLoading)
-    t.Run("NetworkDiscovery", testNetworkDiscovery)
-    t.Run("FailoverLogic", testFailoverLogic)
-}
-
-func testDaemonStartup(t *testing.T) {
-    // Test daemon startup
-    t.Skip("TODO: Implement daemon startup test")
-}
-
-func testConfigurationLoading(t *testing.T) {
-    // Test configuration loading
-    t.Skip("TODO: Implement configuration loading test")
-}
-
-func testNetworkDiscovery(t *testing.T) {
-    // Test network discovery
-    t.Skip("TODO: Implement network discovery test")
-}
-
-func testFailoverLogic(t *testing.T) {
-    // Test failover logic
-    t.Skip("TODO: Implement failover logic test")
-}
-EOF
-}
-
-# Main fix generation logic
-main() {
-    print_status "INFO" "Starting fix generation for issue #$ISSUE_NUMBER"
-    
-    # Detect issue type
-    ISSUE_TYPE=$(detect_issue_type "$TITLE" "$BODY")
-    print_status "INFO" "Detected issue type: $ISSUE_TYPE"
-    
-    # Generate appropriate fix based on issue type
-    case $ISSUE_TYPE in
-        "daemon_issue")
-            generate_daemon_fix
-            ;;
-        "performance_issue")
-            generate_performance_fix
-            ;;
-        "system_integration_issue")
-            generate_system_integration_fix
-            ;;
-        "notification_issue")
-            generate_notification_fix
-            ;;
-        "monitoring_issue")
-            generate_monitoring_fix
-            ;;
-        "build_issue")
-            generate_build_fix
-            ;;
-        "unknown")
-            # Generate generic improvements
-            generate_test_fix
-            ;;
-    esac
-    
-    # Add documentation update
-    cat >> docs/TROUBLESHOOTING.md << EOF
-
-## Issue #$ISSUE_NUMBER - $TITLE
-
-**Issue Type**: $ISSUE_TYPE
-**Resolution**: Auto-generated fix applied
-
-### Problem
-$BODY
-
-### Solution
-Automated fix generated by GitHub Copilot addressing $ISSUE_TYPE.
-
-### Prevention
-- Enhanced monitoring and error handling
-- Improved validation and retry logic
-- Better resource management
-
----
-EOF
-    
-    print_status "SUCCESS" "Fix generation completed for issue #$ISSUE_NUMBER"
-    print_status "INFO" "Generated fixes for: $ISSUE_TYPE"
-}
-
-# Run main function
-main "$@"

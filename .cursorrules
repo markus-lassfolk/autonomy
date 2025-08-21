@@ -1,0 +1,234 @@
+# Cursor Rules for Autonomy Project
+
+## Project Overview
+This is an autonomous networking system written in Go, designed for router management with Starlink integration, cellular failover, GPS tracking, and intelligent monitoring. The system runs on RUTOS/OpenWrt routers and provides comprehensive network failover management.
+
+## Core Architecture Understanding
+
+### System Components
+- **Main Daemon**: `cmd/autonomysysmgmt/main.go` - Entry point with signal handling and graceful shutdown
+- **System Management**: `pkg/sysmgmt/` - Orchestrates health checks, overlays, services, networking
+- **Decision Engine**: `pkg/decision/` - Advanced scoring, predictive failover, ML integration
+- **Collectors**: `pkg/collector/` - Starlink, cellular, WiFi, GPS data collection
+- **Controller**: `pkg/controller/` - mwan3/netifd integration for network control
+- **UCI Integration**: `pkg/uci/` - Configuration management with validation and migration
+- **ubus API**: `pkg/ubus/` - RPC interface for system control and monitoring
+- **Telemetry**: `pkg/telem/` - RAM-based ring buffer storage with cleanup
+- **Logging**: `pkg/logx/` - Structured JSON logging with performance monitoring
+
+### Key Technologies
+- **Go 1.23+** with context.Context for cancellation and timeouts
+- **UCI** for OpenWrt configuration management
+- **ubus** for RPC communication
+- **mwan3** for multi-WAN failover control
+- **gRPC** for Starlink API integration
+- **MQTT** for telemetry publishing
+- **Prometheus** for metrics collection
+
+## Coding Standards
+
+### Go Code Patterns
+- Follow Go best practices and idioms from the existing codebase
+- Use meaningful variable and function names (snake_case for files, camelCase for functions)
+- Add comprehensive error handling with wrapped errors: `fmt.Errorf("failed to connect: %w", err)`
+- Include unit tests for all new functionality with table-driven tests
+- Use `context.Context` for cancellation and timeouts throughout
+- Prefer composition over inheritance with interfaces for dependency injection
+- Use sync.RWMutex for thread-safe operations
+- Implement proper resource cleanup and defer statements
+
+### Error Handling Patterns
+- Always check and handle errors explicitly
+- Use wrapped errors with context: `fmt.Errorf("failed to load config: %w", err)`
+- Log errors with appropriate log levels using structured logging
+- Return meaningful error messages with actionable information
+- Implement graceful degradation when external services fail
+- Use fallback mechanisms for critical operations
+
+### Logging Standards
+- Use structured JSON logging with `pkg/logx/Logger`
+- Include relevant context in log messages with fields
+- Use appropriate log levels: debug, info, warn, error, trace
+- Avoid logging sensitive information (tokens, passwords)
+- Use performance logging for timing-critical operations
+- Implement component-specific logging with context fields
+
+### Configuration Management
+- Use UCI for OpenWrt configuration management via `pkg/uci/`
+- Provide clear configuration examples in `configs/`
+- Validate configuration on startup with comprehensive validation
+- Support both file-based and UCI-based config loading
+- Implement configuration migration for version upgrades
+- Use structured configuration sections for organization
+
+### Testing Requirements
+- Write unit tests for all new functionality in `pkg/*/`
+- Use table-driven tests where appropriate
+- Mock external dependencies (ubus, UCI, network calls)
+- Test error conditions and edge cases
+- Use the testing framework in `pkg/testing/`
+- Implement integration tests in `test/integration/`
+- Test with real hardware when possible
+
+## Project-Specific Rules
+
+### Starlink Integration
+- Handle API rate limits gracefully with exponential backoff
+- Implement proper error recovery and fallback mechanisms
+- Cache data appropriately to reduce API calls
+- Monitor for obstructions and outages with predictive analysis
+- Use gRPC client with proper timeout handling
+- Implement health checks for Starlink API availability
+
+### Cellular Failover
+- Implement proper health checks with RSRP/RSRQ/SINR metrics
+- Use predictive failover when possible with trend analysis
+- Monitor data usage and limits from UCI quota_limit
+- Handle connection quality metrics and roaming detection
+- Support multiple SIM cards and carrier aggregation
+- Implement fallback to sysfs when ubus unavailable
+
+### GPS and Location
+- Cache location data to reduce API calls with TTL
+- Handle GPS signal loss gracefully with cell tower fallback
+- Use cell tower fallback when GPS unavailable
+- Implement location clustering for efficiency
+- Support multiple GPS sources (RUTOS, Starlink, Google, OpenCellID)
+- Implement location fusion algorithms for accuracy
+
+### Monitoring and Metrics
+- Collect comprehensive metrics with Prometheus integration
+- Implement adaptive monitoring with configurable thresholds
+- Use proper timeouts and retries for all operations
+- Handle metric storage efficiently with ring buffers
+- Implement performance profiling and resource monitoring
+- Use structured logging for operational insights
+
+### Security
+- Validate all inputs with comprehensive validation
+- Use secure communication protocols (HTTPS, TLS)
+- Implement proper authentication for API endpoints
+- Follow security best practices for embedded systems
+- Implement security auditing with `pkg/security/`
+- Never log sensitive information or credentials
+
+### Performance
+- Use goroutines for concurrent operations with proper synchronization
+- Implement proper resource cleanup and memory management
+- Monitor memory usage with garbage collection optimization
+- Use connection pooling where appropriate
+- Implement caching with TTL for expensive operations
+- Target <25MB RAM usage and <5% CPU on low-end ARM
+
+## File Organization
+
+### Package Structure
+- Keep related functionality in the same package under `pkg/`
+- Use descriptive package names that indicate purpose
+- Follow the existing directory structure and naming conventions
+- Place configuration examples in `configs/`
+- Keep documentation in `docs/`
+- Use `scripts/` for build and deployment tools
+
+### File Naming Conventions
+- Use snake_case for Go files (e.g., `enhanced_cellular_stability.go`)
+- Use descriptive names that indicate purpose and functionality
+- Group related functionality in the same file
+- Use consistent naming across packages
+- Follow existing patterns in the codebase
+
+### Import Organization
+- Group imports: standard library, third-party, internal
+- Use absolute imports for internal packages
+- Keep imports clean and minimal
+- Use `goimports` for automatic formatting
+
+## Comments and Documentation
+
+### Code Comments
+- Add comments for complex logic and algorithms
+- Document exported functions and types with godoc
+- Include usage examples in comments for public APIs
+- Keep comments up to date with code changes
+- Use TODO comments sparingly and with context
+
+### Documentation Standards
+- Update relevant documentation when adding features
+- Include usage examples and configuration samples
+- Document configuration options with validation rules
+- Keep README files current with build and deployment instructions
+- Document API endpoints and response formats
+- Provide troubleshooting guides for common issues
+
+## Integration Patterns
+
+### UCI Configuration
+- Use structured configuration sections for organization
+- Implement comprehensive validation with 200+ rules
+- Support configuration migration for version upgrades
+- Provide backward compatibility for existing configurations
+- Use native UCI client with caching for performance
+
+### ubus Integration
+- Implement complete socket protocol or reliable CLI wrapper
+- Handle all RPC methods with proper error responses
+- Validate all inputs and return meaningful responses
+- Handle connection errors gracefully
+- Support both ubus and HTTP API endpoints
+
+### System Integration
+- Integrate with mwan3 for failover control
+- Support netifd fallback when mwan3 unavailable
+- Implement proper init script integration with procd
+- Handle system signals for graceful shutdown
+- Integrate with RUTOS logging and monitoring systems
+
+## Quality Assurance
+
+### Code Review Checklist
+- No TODO comments remain without implementation
+- No placeholder return values or "would do X" logging
+- All error paths are handled with proper logging
+- All system calls are implemented with timeouts
+- Components are properly connected with interfaces
+- Data flows through the system correctly
+- Performance meets targets for embedded systems
+
+### Testing Requirements
+- Test with real hardware (RUTX50/RUTX11) when possible
+- Test all error conditions and failure modes
+- Test system integration points (UCI, ubus, mwan3)
+- Test performance under load and resource constraints
+- Test recovery from failures and edge cases
+- Validate configuration handling and migration
+
+### Performance Requirements
+- Binary size ≤ 12 MB stripped
+- Memory usage ≤ 25 MB steady state
+- CPU usage ≤ 5% on low-end ARM when healthy
+- Complete failover in <5 seconds
+- Respond to ubus calls in <1 second
+- Handle 10+ concurrent network interfaces
+
+## Deployment and Operations
+
+### Build and Deployment
+- Support cross-compilation for ARM targets
+- Use proper init scripts for service management
+- Implement package management with IPK creation
+- Support both manual and automated deployment
+- Provide rollback mechanisms for failed deployments
+
+### Monitoring and Observability
+- Implement comprehensive health checks
+- Provide structured logging for operational insights
+- Support metrics collection and alerting
+- Implement performance monitoring and profiling
+- Provide debugging tools and diagnostic endpoints
+
+### Maintenance and Updates
+- Support configuration migration for version upgrades
+- Implement automatic recovery from common failures
+- Provide backup and restore capabilities
+- Support rolling updates without service interruption
+- Implement proper cleanup and resource management
