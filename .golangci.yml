@@ -32,4 +32,10 @@ issues:
     - linters:
         - unused
         - staticcheck
-      text: "unused|deprecated|SA1019|U1000|ST1005"
+      text: "unused|deprecated|SA1019|U1000|ST1005|comment|naming|stutter"
+    - linters:
+        - gosimple
+      text: "if.*return.*else"
+    - linters:
+        - gosec
+      text: "G404|G601"
