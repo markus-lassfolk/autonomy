@@ -31,7 +31,6 @@ RUN apk add --no-cache \
     findutils \
     grep \
     sed \
-    awk \
     jq \
     && rm -rf /var/cache/apk/*
 
