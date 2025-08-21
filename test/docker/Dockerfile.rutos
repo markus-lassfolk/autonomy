@@ -4,10 +4,6 @@ FROM ubuntu:22.04
 # Install required packages for RUTOS-like environment
 RUN apt-get update && \
     apt-get install -y \
-    ubus \
-    uci \
-    mwan3 \
-    iwinfo \
     wget \
     curl \
     jq \
@@ -17,6 +13,10 @@ RUN apt-get update && \
     systemd \
     systemd-sysv \
     dbus \
+    git \
+    make \
+    gcc \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up RUTOS-like environment

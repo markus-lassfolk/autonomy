@@ -1,20 +1,21 @@
 # OpenWrt Test Environment Dockerfile
-FROM openwrt/rootfs:latest
+FROM alpine:latest
 
 # Install required packages for testing
-RUN opkg update && \
-    opkg install \
-    ubus \
-    uci \
-    mwan3 \
-    iwinfo \
-    wget \
+RUN apk update && \
+    apk add --no-cache \
+    bash \
     curl \
+    wget \
     jq \
-    procps-ng \
-    iputils-ping \
+    procps \
+    iputils \
     net-tools \
-    && rm -rf /var/opkg-lists/*
+    git \
+    make \
+    gcc \
+    musl-dev \
+    && rm -rf /var/cache/apk/*
 
 # Set up test environment
 WORKDIR /root
