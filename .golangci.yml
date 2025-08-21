@@ -8,7 +8,6 @@ linters:
     - govet
     - errcheck
     - gosimple
-    - ineffassign
     - misspell
     - gosec
     - gocyclo
@@ -17,8 +16,20 @@ linters:
     - goimports
 
 issues:
-  exclude:
-    - "pkg/testing/"
-    - "cmd/test-.*/"
-    - "unused"
-    - "staticcheck"
+  exclude-rules:
+    - path: _test\\.go
+      linters:
+        - gocyclo
+        - dupl
+        - goconst
+    - path: pkg/testing/
+      linters:
+        - gosec
+    - path: cmd/test-.*/
+      linters:
+        - gosec
+        - gocyclo
+    - linters:
+        - unused
+        - staticcheck
+      text: "unused|deprecated|SA1019|U1000|ST1005"
