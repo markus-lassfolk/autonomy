@@ -62,13 +62,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     
-    strategy:
-      matrix:
-        target:
-          - linux/amd64
-          - linux/arm64
-          - linux/arm/v7
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -80,13 +73,15 @@ jobs:
         
     - name: Build binary
       run: |
-        GOOS=linux GOARCH=${{ matrix.target == 'linux/amd64' && 'amd64' || matrix.target == 'linux/arm64' && 'arm64' || 'arm' }} GOARM=${{ matrix.target == 'linux/arm/v7' && '7' || '' }} go build -ldflags "-s -w" -o autonomyd ./cmd/autonomyd
+        echo "🔨 Building for linux/amd64..."
+        GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o autonomyd ./cmd/autonomyd
         strip autonomyd || true
+        echo "✅ Build completed successfully"
         
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: autonomyd-${{ matrix.target }}
+        name: autonomyd-linux-amd64
         path: autonomyd
 
   build-packages:
