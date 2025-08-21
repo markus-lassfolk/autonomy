@@ -1,0 +1,44 @@
+{
+  "name": "Autonomy Monitor",
+  "short_name": "Autonomy",
+  "description": "Multi-interface failover monitoring and control",
+  "start_url": "/cgi-bin/luci/admin/network/autonomy/status",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "portrait-primary",
+  "scope": "/cgi-bin/luci/admin/network/autonomy/",
+  "icons": [
+    {
+      "src": "/luci-static/resources/icons/autonomy-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/luci-static/resources/icons/autonomy-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "screenshots": [
+    {
+      "src": "/luci-static/resources/screenshots/autonomy-status.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/luci-static/resources/screenshots/autonomy-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+}

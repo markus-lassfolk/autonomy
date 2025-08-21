@@ -1,0 +1,3 @@
+# Autonomy metrics collection cron job
+# Runs every minute to collect system performance metrics
+* * * * * /usr/libexec/autonomy-metrics.sh >/dev/null 2>&1

@@ -1,0 +1,75 @@
+FROM ubuntu:22.04
+
+# Install OpenWrt build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    ccache \
+    ecj \
+    fastjar \
+    file \
+    g++ \
+    gawk \
+    gettext \
+    git \
+    java-propose-classpath \
+    libelf-dev \
+    libncurses5-dev \
+    libncursesw5-dev \
+    libssl-dev \
+    python3 \
+    python3-yaml \
+    unzip \
+    wget \
+    python3-distutils \
+    python3-setuptools \
+    python3-dev \
+    rsync \
+    subversion \
+    swig \
+    time \
+    xsltproc \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Go
+RUN wget https://go.dev/dl/go1.23.0.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.23.0.linux-amd64.tar.gz && \
+    rm go1.23.0.linux-amd64.tar.gz
+
+ENV PATH=$PATH:/usr/local/go/bin
+ENV GOPATH=/go
+ENV GOCACHE=/go/cache
+
+# Install OpenWrt SDK
+RUN mkdir -p /opt/openwrt && \
+    cd /opt/openwrt && \
+    wget https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz && \
+    tar -xf openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz && \
+    rm openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+
+# Install UCI and ubus
+RUN apt-get update && apt-get install -y \
+    libubox-dev \
+    libubus-dev \
+    libuci-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create test directories
+RUN mkdir -p /etc/config /var/run /tmp/autonomy
+
+# Copy test configuration
+COPY configs/autonomy.example /etc/config/autonomy
+
+# Set up test environment
+WORKDIR /test
+
+# Create test script
+RUN echo '#!/bin/sh\n\
+echo "OpenWrt test environment ready"\n\
+echo "UCI config: $(uci show autonomy 2>/dev/null || echo "No UCI config")"\n\
+echo "ubus status: $(ubus list 2>/dev/null || echo "ubus not available")"\n\
+exec "$@"' > /usr/local/bin/test-entrypoint && \
+    chmod +x /usr/local/bin/test-entrypoint
+
+ENTRYPOINT ["/usr/local/bin/test-entrypoint"]
+CMD ["/bin/sh"]

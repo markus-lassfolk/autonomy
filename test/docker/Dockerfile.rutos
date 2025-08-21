@@ -1,0 +1,85 @@
+FROM ubuntu:22.04
+
+# Install RUTOS build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    ccache \
+    ecj \
+    fastjar \
+    file \
+    g++ \
+    gawk \
+    gettext \
+    git \
+    java-propose-classpath \
+    libelf-dev \
+    libncurses5-dev \
+    libncursesw5-dev \
+    libssl-dev \
+    python3 \
+    python3-yaml \
+    unzip \
+    wget \
+    python3-distutils \
+    python3-setuptools \
+    python3-dev \
+    rsync \
+    subversion \
+    swig \
+    time \
+    xsltproc \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Go
+RUN wget https://go.dev/dl/go1.23.0.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.23.0.linux-amd64.tar.gz && \
+    rm go1.23.0.linux-amd64.tar.gz
+
+ENV PATH=$PATH:/usr/local/go/bin
+ENV GOPATH=/go
+ENV GOCACHE=/go/cache
+
+# Install RUTOS-specific dependencies
+RUN apt-get update && apt-get install -y \
+    libubox-dev \
+    libubus-dev \
+    libuci-dev \
+    libjson-c-dev \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libpcre3-dev \
+    libxml2-dev \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create RUTOS-like directory structure
+RUN mkdir -p /etc/config /var/run /tmp/autonomy /usr/lib/lua/luci /usr/sbin
+
+# Copy RUTOS-specific configuration
+COPY configs/autonomy.rutos.example /etc/config/autonomy
+
+# Set up RUTOS environment variables
+ENV RUTOS_VERSION="RUTX_R_00.07.17"
+ENV RUTOS_ARCH="arm_cortex-a7_neon-vfpv4"
+ENV RUTOS_TARGET="arm_cortex-a7_neon-vfpv4"
+
+# Create test directories
+RUN mkdir -p /etc/autonomy /var/log/autonomy /tmp/autonomy
+
+# Set up test environment
+WORKDIR /test
+
+# Create RUTOS-specific test script
+RUN echo '#!/bin/sh\n\
+echo "RUTOS test environment ready"\n\
+echo "RUTOS Version: $RUTOS_VERSION"\n\
+echo "RUTOS Arch: $RUTOS_ARCH"\n\
+echo "UCI config: $(uci show autonomy 2>/dev/null || echo "No UCI config")"\n\
+echo "ubus status: $(ubus list 2>/dev/null || echo "ubus not available")"\n\
+echo "Network interfaces: $(ip link show 2>/dev/null || echo "No network interfaces")"\n\
+exec "$@"' > /usr/local/bin/test-entrypoint && \
+    chmod +x /usr/local/bin/test-entrypoint
+
+ENTRYPOINT ["/usr/local/bin/test-entrypoint"]
+CMD ["/bin/sh"]
