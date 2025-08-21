@@ -153,17 +153,17 @@ jobs:
         sha256sum build/autonomyctl-${{ matrix.suffix }} > build/autonomyctl-${{ matrix.suffix }}.sha256
         
     - name: Upload binaries
-      uses: actions/upload-artifact@v3
-      with:
-        name: binaries-${{ matrix.suffix }}
-        path: |
-          build/autonomyd-${{ matrix.suffix }}
-          build/autonomyd-${{ matrix.suffix }}.sha256
-          build/autonomysysmgmt-${{ matrix.suffix }}
-          build/autonomysysmgmt-${{ matrix.suffix }}.sha256
-          build/autonomyctl-${{ matrix.suffix }}
-          build/autonomyctl-${{ matrix.suffix }}.sha256
-        retention-days: 30
+       uses: actions/upload-artifact@v4
+       with:
+         name: binaries-${{ matrix.suffix }}
+         path: |
+           build/autonomyd-${{ matrix.suffix }}
+           build/autonomyd-${{ matrix.suffix }}.sha256
+           build/autonomysysmgmt-${{ matrix.suffix }}
+           build/autonomysysmgmt-${{ matrix.suffix }}.sha256
+           build/autonomyctl-${{ matrix.suffix }}
+           build/autonomyctl-${{ matrix.suffix }}.sha256
+         retention-days: 30
 
   build-packages:
     runs-on: ubuntu-latest
@@ -175,7 +175,7 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Download all binaries
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         path: build/
         
@@ -387,8 +387,8 @@ jobs:
         # Save Docker image
         docker save autonomy:$VERSION | gzip > build/autonomy-docker-$VERSION.tar.gz
         
-    - name: Upload packages
-      uses: actions/upload-artifact@v3
+         - name: Upload packages
+       uses: actions/upload-artifact@v4
       with:
         name: packages-$VERSION
         path: |
@@ -406,8 +406,8 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Download all artifacts
-      uses: actions/download-artifact@v3
+         - name: Download all artifacts
+       uses: actions/download-artifact@v4
       with:
         path: artifacts/
         

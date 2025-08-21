@@ -73,8 +73,8 @@ jobs:
         GOOS=linux GOARCH=${{ matrix.target == 'linux/amd64' && 'amd64' || matrix.target == 'linux/arm64' && 'arm64' || 'arm' }} GOARM=${{ matrix.target == 'linux/arm/v7' && '7' || '' }} go build -ldflags "-s -w" -o autonomyd ./cmd/autonomyd
         strip autonomyd || true
         
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
+         - name: Upload artifact
+       uses: actions/upload-artifact@v4
       with:
         name: autonomyd-${{ matrix.target }}
         path: autonomyd
@@ -126,8 +126,8 @@ jobs:
         echo "2.0" > debian-binary
         ar r autonomy_1.0.0_arm_cortex-a7_neon-vfpv4.ipk debian-binary control.tar.gz data.tar.gz
         
-    - name: Upload package
-      uses: actions/upload-artifact@v3
+         - name: Upload package
+       uses: actions/upload-artifact@v4
       with:
         name: autonomy-package
         path: autonomy_1.0.0_arm_cortex-a7_neon-vfpv4.ipk

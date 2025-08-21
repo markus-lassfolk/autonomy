@@ -162,8 +162,8 @@ jobs:
           cp Packages* feed/beta/
         fi
         
-    - name: Upload OPKG feed
-      uses: actions/upload-artifact@v3
+         - name: Upload OPKG feed
+       uses: actions/upload-artifact@v4
       with:
         name: opkg-feed
         path: feed/
