@@ -74,7 +74,7 @@ jobs:
         strip autonomyd || true
         
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: autonomyd-${{ matrix.target }}
         path: autonomyd
@@ -127,7 +127,7 @@ jobs:
         ar r autonomy_1.0.0_arm_cortex-a7_neon-vfpv4.ipk debian-binary control.tar.gz data.tar.gz
         
     - name: Upload package
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: autonomy-package
         path: autonomy_1.0.0_arm_cortex-a7_neon-vfpv4.ipk
