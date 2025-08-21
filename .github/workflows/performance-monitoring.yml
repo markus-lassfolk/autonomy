@@ -112,7 +112,7 @@ jobs:
         
         ## Summary
         - **Date**: $(date -u +"%Y-%m-%d %H:%M UTC")
-        - **Trigger**: ${{ github.event_name }}
+        - **Trigger**: $EVENT_NAME_INPUT
         - **Benchmark Type**: ${{ github.event.inputs.benchmark_type || 'all' }}
         
         ## CPU Performance
@@ -219,7 +219,7 @@ jobs:
         echo "## 📊 Performance Monitoring Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Benchmark Type**: ${{ github.event.inputs.benchmark_type || 'all' }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Triggered By**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Triggered By**: $EVENT_NAME_INPUT" >> $GITHUB_STEP_SUMMARY
         echo "**Date**: $(date -u +"%Y-%m-%d %H:%M UTC")" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "📄 **Performance report generated and uploaded as artifact**" >> $GITHUB_STEP_SUMMARY

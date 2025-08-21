@@ -37,7 +37,7 @@ jobs:
     - name: Process webhook
       run: |
         # Get payload from workflow dispatch or repository dispatch
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+        if [ "$EVENT_NAME_INPUT" = "workflow_dispatch" ]; then
           PAYLOAD='${{ github.event.inputs.test_payload }}'
           SIGNATURE=""
         else

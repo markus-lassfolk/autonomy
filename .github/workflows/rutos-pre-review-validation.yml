@@ -43,7 +43,7 @@ jobs:
       - name: Get Changed Files
         id: changed-files
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.pr_number }}" ]; then
+          if [ "$EVENT_NAME_INPUT" = "workflow_dispatch" ] && [ -n "${{ inputs.pr_number }}" ]; then
             # Manual dispatch with PR number
             PR_NUMBER="${{ inputs.pr_number }}"
             echo "Getting files for PR #$PR_NUMBER"

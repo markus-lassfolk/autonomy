@@ -81,8 +81,8 @@ jobs:
     - name: Get version
       id: version
       env:
-        EVENT_NAME_INPUT: ${{ github.event_name }}
-        INPUT_VERSION_INPUT: ${{ inputs.version }}
+        EVENT_NAME_INPUT: $EVENT_NAME_INPUT
+        INPUT_VERSION_INPUT: $INPUT_VERSION_INPUT
       run: |
         if [ "$EVENT_NAME_INPUT" = "workflow_dispatch" ] && [ -n "$INPUT_VERSION_INPUT" ]; then
           VERSION="$INPUT_VERSION_INPUT"
@@ -185,8 +185,8 @@ jobs:
     - name: Get version
       id: version
       run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
-          VERSION="${{ inputs.version }}"
+        if [ "$EVENT_NAME_INPUT" = "workflow_dispatch" ] && [ -n "$INPUT_VERSION_INPUT" ]; then
+          VERSION="$INPUT_VERSION_INPUT"
         else
           VERSION="${GITHUB_REF#refs/tags/}"
         fi
@@ -417,8 +417,8 @@ jobs:
     - name: Get version
       id: version
       run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
-          VERSION="${{ inputs.version }}"
+        if [ "$EVENT_NAME_INPUT" = "workflow_dispatch" ] && [ -n "$INPUT_VERSION_INPUT" ]; then
+          VERSION="$INPUT_VERSION_INPUT"
         else
           VERSION="${GITHUB_REF#refs/tags/}"
         fi
@@ -548,7 +548,7 @@ jobs:
         echo "## 📦 Release Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Version**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Release**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Release**: $EVENT_NAME_INPUT" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Assets Created" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ Binaries for 5 platforms" >> $GITHUB_STEP_SUMMARY

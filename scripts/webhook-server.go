@@ -43,6 +43,8 @@ type Config struct {
 	GitHubOwner   string
 	RateLimit     int
 	LogLevel      string
+	CertFile      string // TLS certificate file path
+	KeyFile       string // TLS private key file path
 }
 
 var config Config
@@ -57,6 +59,8 @@ func init() {
 		GitHubOwner:   getEnv("GITHUB_OWNER", ""),
 		RateLimit:     100, // requests per minute
 		LogLevel:      getEnv("LOG_LEVEL", "info"),
+		CertFile:      getEnv("TLS_CERT_FILE", ""),
+		KeyFile:       getEnv("TLS_KEY_FILE", ""),
 	}
 
 	// Validate required configuration
@@ -415,5 +419,12 @@ func main() {
 
 	// Start server
 	log.Printf("✅ Server ready to receive webhooks")
-	log.Fatal(http.ListenAndServe(":"+config.Port, r))
+	// Use TLS if certificate files are provided, otherwise use HTTP
+	if config.CertFile != "" && config.KeyFile != "" {
+		log.Printf("🔒 Starting server with TLS on port %s", config.Port)
+		log.Fatal(http.ListenAndServeTLS(":"+config.Port, config.CertFile, config.KeyFile, r))
+	} else {
+		log.Printf("⚠️ Starting server without TLS on port %s (not recommended for production)", config.Port)
+		log.Fatal(http.ListenAndServe(":"+config.Port, r))
+	}
 }
