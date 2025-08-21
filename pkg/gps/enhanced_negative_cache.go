@@ -1,7 +1,8 @@
 package gps
 
 import (
-	"math/rand"
+	"crypto/rand"
+	"encoding/binary"
 	"sync"
 	"time"
 
@@ -67,7 +68,7 @@ func (enc *EnhancedNegativeCache) CacheNegativeResult(cellKey, reason string) {
 
 	// Calculate jittered expiry time (PM #4)
 	jitterRange := enc.jitterMax - enc.jitterMin
-	jitter := time.Duration(rand.Int63n(int64(jitterRange)))
+	jitter := time.Duration(secureRandomInt64(int64(jitterRange)))
 	expiresAt := now.Add(enc.jitterMin + jitter)
 
 	// Update or create entry
@@ -94,7 +95,7 @@ func (enc *EnhancedNegativeCache) CacheNegativeResult(cellKey, reason string) {
 	)
 
 	// Periodic cleanup (1% chance)
-	if rand.Float32() < 0.01 {
+	if secureRandomFloat32() < 0.01 {
 		enc.cleanupExpiredEntries()
 	}
 }
@@ -237,4 +238,34 @@ func (enc *EnhancedNegativeCache) ForceCleanup() int {
 	)
 
 	return expiredCount
+}
+
+// secureRandomInt64 generates a cryptographically secure random int64 in range [0, max)
+func secureRandomInt64(max int64) int64 {
+	if max <= 0 {
+		return 0
+	}
+	
+	var buf [8]byte
+	_, err := rand.Read(buf[:])
+	if err != nil {
+		// Fallback to time-based seed if crypto/rand fails
+		return time.Now().UnixNano() % max
+	}
+	
+	val := binary.BigEndian.Uint64(buf[:])
+	return int64(val % uint64(max))
+}
+
+// secureRandomFloat32 generates a cryptographically secure random float32 in range [0, 1)
+func secureRandomFloat32() float32 {
+	var buf [4]byte
+	_, err := rand.Read(buf[:])
+	if err != nil {
+		// Fallback to time-based value if crypto/rand fails
+		return float32(time.Now().UnixNano()%1000) / 1000.0
+	}
+	
+	val := binary.BigEndian.Uint32(buf[:])
+	return float32(val) / float32(^uint32(0))
 }

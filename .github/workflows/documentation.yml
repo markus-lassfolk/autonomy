@@ -49,9 +49,12 @@ jobs:
         go-version: '1.23'
 
     - name: Set environment variables
+      env:
+        DOC_TYPE_INPUT: ${{ github.event.inputs.doc_type || 'all' }}
+        EVENT_NAME_INPUT: ${{ github.event_name }}
       run: |
-        echo "DOC_TYPE=${{ github.event.inputs.doc_type || 'all' }}" >> $GITHUB_ENV
-        echo "EVENT_NAME=${{ github.event_name }}" >> $GITHUB_ENV
+        echo "DOC_TYPE=$DOC_TYPE_INPUT" >> $GITHUB_ENV
+        echo "EVENT_NAME=$EVENT_NAME_INPUT" >> $GITHUB_ENV
 
     - name: Generate API documentation
       if: env.DOC_TYPE == 'all' || env.DOC_TYPE == 'api'

@@ -64,10 +64,12 @@ func (s *GPSServer) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 // GPSServerConfig holds API server configuration
 type GPSServerConfig struct {
-	Enabled bool   `json:"enabled" default:"false"`
-	Port    int    `json:"port" default:"8081"`
-	Host    string `json:"host" default:"localhost"`
-	AuthKey string `json:"auth_key"` // Optional authentication key
+	Enabled  bool   `json:"enabled" default:"false"`
+	Port     int    `json:"port" default:"8081"`
+	Host     string `json:"host" default:"localhost"`
+	AuthKey  string `json:"auth_key"` // Optional authentication key
+	CertFile string `json:"cert_file"` // TLS certificate file path
+	KeyFile  string `json:"key_file"`  // TLS private key file path
 }
 
 // NewGPSServer creates a new GPS API server instance
@@ -128,7 +130,15 @@ func (s *GPSServer) Start() error {
 	s.logger.Info("Starting GPS API server", "address", addr)
 
 	go func() {
-		if err := http.ListenAndServe(addr, mux); err != nil {
+		var err error
+		if s.config.CertFile != "" && s.config.KeyFile != "" {
+			// Use TLS if certificate files are provided
+			err = http.ListenAndServeTLS(addr, s.config.CertFile, s.config.KeyFile, mux)
+		} else {
+			// Fall back to HTTP if no TLS certificates
+			err = http.ListenAndServe(addr, mux)
+		}
+		if err != nil {
 			s.logger.Error("GPS API server failed", "error", err)
 		}
 	}()

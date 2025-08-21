@@ -2,9 +2,10 @@ package gps
 
 import (
 	"crypto/md5"
+	"crypto/rand"
+	"encoding/binary"
 	"fmt"
 	"math"
-	"math/rand"
 	"sync"
 	"time"
 
@@ -311,7 +312,7 @@ func (esm *EnhancedSubmissionManager) recordSubmission(observation CellObservati
 	}
 
 	// Cleanup old fingerprints periodically
-	if rand.Float32() < 0.01 { // 1% chance
+	if secureRandomFloat32() < 0.01 { // 1% chance
 		esm.cleanupOldFingerprints()
 	}
 }
@@ -363,7 +364,7 @@ func (esm *EnhancedSubmissionManager) SelectNeighborsWithBiasAvoidance(neighbors
 
 		// Random selection from next tier
 		for i := 0; i < randomCount; i++ {
-			randomIdx := topCount + rand.Intn(len(sortedNeighbors)-topCount-i)
+			randomIdx := topCount + secureRandomInt(len(sortedNeighbors)-topCount-i)
 			selected = append(selected, sortedNeighbors[randomIdx])
 			// Remove selected item
 			sortedNeighbors[randomIdx] = sortedNeighbors[len(sortedNeighbors)-1-i]
@@ -437,3 +438,22 @@ func (esm *EnhancedSubmissionManager) GetStats() SubmissionStats {
 
 	return *esm.stats
 }
+
+// secureRandomInt generates a cryptographically secure random int in range [0, max)
+func secureRandomInt(max int) int {
+	if max <= 0 {
+		return 0
+	}
+	
+	var buf [8]byte
+	_, err := rand.Read(buf[:])
+	if err != nil {
+		// Fallback to time-based seed if crypto/rand fails
+		return int(time.Now().UnixNano() % int64(max))
+	}
+	
+	val := binary.BigEndian.Uint64(buf[:])
+	return int(val % uint64(max))
+}
+
+

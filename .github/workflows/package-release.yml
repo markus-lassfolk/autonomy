@@ -80,9 +80,12 @@ jobs:
         
     - name: Get version
       id: version
+      env:
+        EVENT_NAME_INPUT: ${{ github.event_name }}
+        INPUT_VERSION_INPUT: ${{ inputs.version }}
       run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
-          VERSION="${{ inputs.version }}"
+        if [ "$EVENT_NAME_INPUT" = "workflow_dispatch" ] && [ -n "$INPUT_VERSION_INPUT" ]; then
+          VERSION="$INPUT_VERSION_INPUT"
         else
           VERSION="${GITHUB_REF#refs/tags/}"
         fi
