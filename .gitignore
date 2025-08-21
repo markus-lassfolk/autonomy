@@ -1,0 +1,80 @@
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+autonomyd
+autonomyd-*
+autonomyctl
+test-*
+!test-*.go
+!test-*.sh
+
+# Build directories
+build/
+dist/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.pid
+*.swp
+*.swo
+*~
+
+# Configuration files with sensitive data
+*.key
+*.pem
+*.crt
+config.local.*
+*.env
+.env.*
+
+# SSH keys and certificates
+id_rsa*
+id_ed25519*
+*.ppk
+ssh_key*
+private_key*
+
+# API keys and tokens
+*api_key*
+*token*
+*secret*
+*password*
+
+# Personal configuration
+configs/autonomy.local
+configs/autonomy.production
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Go specific
+vendor/
+*.test
+*.prof
+coverage.out
+
+# Local development files
+*.local
+.env
+.env.local
+
+# Backup files
+*.bak
+*.backup
+*_backup
+
+# Test data and results
+test_results/
+test_data/
+*.json.bak

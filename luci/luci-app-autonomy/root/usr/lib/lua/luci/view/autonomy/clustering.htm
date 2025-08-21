@@ -1,0 +1,698 @@
+<%+header%>
+
+<h2><%:autonomy Location Clustering Management%></h2>
+
+<div class="cbi-section">
+    <div class="cbi-section-descr"><%:Monitor and manage location clusters for better failover decision making and pattern recognition.%></div>
+    
+    <!-- Clustering Status -->
+    <div class="cbi-section">
+        <h3><%:System Status%></h3>
+        <div id="clustering-status">
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-label"><%:Total Clusters%>:</span>
+                    <span id="total-clusters" class="status-value">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label"><%:Total Points%>:</span>
+                    <span id="total-points" class="status-value">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label"><%:Total Visits%>:</span>
+                    <span id="total-visits" class="status-value">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label"><%:Average Radius%>:</span>
+                    <span id="avg-radius" class="status-value">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Point -->
+    <div class="cbi-section">
+        <h3><%:Add Location Point%></h3>
+        <div class="cbi-section-descr"><%:Add a new GPS location point to the clustering system.%></div>
+        <div class="cbi-section-node">
+            <div class="form-group">
+                <label for="point-latitude"><%:Latitude%>:</label>
+                <input type="number" id="point-latitude" class="form-control" step="0.000001" placeholder="<%:Enter latitude%>" />
+            </div>
+            <div class="form-group">
+                <label for="point-longitude"><%:Longitude%>:</label>
+                <input type="number" id="point-longitude" class="form-control" step="0.000001" placeholder="<%:Enter longitude%>" />
+            </div>
+            <div class="form-group">
+                <label for="point-signal"><%:Signal Strength%>:</label>
+                <input type="number" id="point-signal" class="form-control" step="0.1" placeholder="<%:Enter signal strength%>" />
+            </div>
+            <div class="form-group">
+                <label for="point-speed"><%:Speed (m/s)%>:</label>
+                <input type="number" id="point-speed" class="form-control" step="0.1" placeholder="<%:Enter speed%>" />
+            </div>
+            <div class="form-group">
+                <label for="point-member"><%:Member%>:</label>
+                <input type="text" id="point-member" class="form-control" placeholder="<%:Enter member name%>" />
+            </div>
+            <div class="form-group">
+                <label for="point-tags"><%:Tags (comma-separated)%>:</label>
+                <input type="text" id="point-tags" class="form-control" placeholder="<%:Enter tags%>" />
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="point-obstruction" />
+                    <%:Obstruction Detected%>
+                </label>
+            </div>
+            <div class="form-group">
+                <button id="btn-add-point" class="btn cbi-button cbi-button-apply"><%:Add Point%></button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Clusters List -->
+    <div class="cbi-section">
+        <h3><%:Location Clusters%></h3>
+        <div id="clusters-list">
+            <div class="clusters-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th><%:ID%></th>
+                            <th><%:Center%></th>
+                            <th><%:Radius%></th>
+                            <th><%:Points%></th>
+                            <th><%:Visits%></th>
+                            <th><%:Avg Signal%></th>
+                            <th><%:Tags%></th>
+                            <th><%:Actions%></th>
+                        </tr>
+                    </thead>
+                    <tbody id="clusters-tbody">
+                        <tr><td colspan="8"><%:Loading...%></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cluster Details Modal -->
+    <div id="cluster-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title"><%:Cluster Details%></h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="cluster-details">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label"><%:Center%>:</span>
+                            <span id="modal-center" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><%:Radius%>:</span>
+                            <span id="modal-radius" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><%:Points%>:</span>
+                            <span id="modal-points" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><%:Visits%>:</span>
+                            <span id="modal-visits" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><%:Total Time%>:</span>
+                            <span id="modal-time" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><%:Avg Signal%>:</span>
+                            <span id="modal-signal" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><%:Avg Speed%>:</span>
+                            <span id="modal-speed" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><%:Created%>:</span>
+                            <span id="modal-created" class="detail-value">-</span>
+                        </div>
+                    </div>
+                    
+                    <h4><%:Tags%></h4>
+                    <div id="modal-tags" class="tags-container">
+                        <!-- Tags will be populated here -->
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="new-tag"><%:Add Tag%>:</label>
+                        <input type="text" id="new-tag" class="form-control" placeholder="<%:Enter new tag%>" />
+                        <button id="btn-add-tag" class="btn cbi-button cbi-button-apply"><%:Add%></button>
+                    </div>
+                    
+                    <h4><%:Points in Cluster%></h4>
+                    <div class="points-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th><%:Time%></th>
+                                    <th><%:Location%></th>
+                                    <th><%:Signal%></th>
+                                    <th><%:Speed%></th>
+                                    <th><%:Member%></th>
+                                    <th><%:Obstruction%></th>
+                                </tr>
+                            </thead>
+                            <tbody id="modal-points-tbody">
+                                <!-- Points will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Find Nearest Cluster -->
+    <div class="cbi-section">
+        <h3><%:Find Nearest Cluster%></h3>
+        <div class="cbi-section-descr"><%:Find the nearest cluster to a given location.%></div>
+        <div class="cbi-section-node">
+            <div class="form-group">
+                <label for="find-latitude"><%:Latitude%>:</label>
+                <input type="number" id="find-latitude" class="form-control" step="0.000001" placeholder="<%:Enter latitude%>" />
+            </div>
+            <div class="form-group">
+                <label for="find-longitude"><%:Longitude%>:</label>
+                <input type="number" id="find-longitude" class="form-control" step="0.000001" placeholder="<%:Enter longitude%>" />
+            </div>
+            <div class="form-group">
+                <button id="btn-find-cluster" class="btn cbi-button cbi-button-apply"><%:Find Cluster%></button>
+            </div>
+            <div id="find-result" class="find-result" style="display: none;">
+                <h4><%:Nearest Cluster%></h4>
+                <div id="nearest-cluster-info">
+                    <!-- Result will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter by Tag -->
+    <div class="cbi-section">
+        <h3><%:Filter by Tag%></h3>
+        <div class="cbi-section-descr"><%:View clusters that have a specific tag.%></div>
+        <div class="cbi-section-node">
+            <div class="form-group">
+                <label for="filter-tag"><%:Tag%>:</label>
+                <input type="text" id="filter-tag" class="form-control" placeholder="<%:Enter tag to filter by%>" />
+            </div>
+            <div class="form-group">
+                <button id="btn-filter-tag" class="btn cbi-button cbi-button-apply"><%:Filter%></button>
+                <button id="btn-clear-filter" class="btn cbi-button cbi-button-reset"><%:Clear Filter%></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.status-grid, .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.status-item, .detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    border-left: 4px solid #007cba;
+}
+
+.status-label, .detail-label {
+    font-weight: bold;
+    color: #666;
+}
+
+.status-value, .detail-value {
+    color: #333;
+    font-weight: 500;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.clusters-container, .points-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 10px 0;
+}
+
+.tag {
+    background: #007cba;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.tag-remove {
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.find-result {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    border-left: 4px solid #4CAF50;
+}
+
+/* Modal styles */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 0;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 800px;
+    border-radius: 4px;
+}
+
+.modal-header {
+    padding: 15px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.modal-body {
+    padding: 15px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+</style>
+
+<script type="text/javascript">
+let currentClusterID = null;
+
+// Load clustering data
+function loadClusteringData() {
+    XHR.get('<%=luci.dispatcher.build_url("admin", "network", "autonomy", "clustering_data")%>', null, function(xhr) {
+        if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            updateClusteringDisplay(data);
+        }
+    });
+}
+
+// Update clustering display
+function updateClusteringDisplay(data) {
+    // Update statistics
+    if (data.statistics) {
+        document.getElementById('total-clusters').textContent = data.statistics.total_clusters || 0;
+        document.getElementById('total-points').textContent = data.statistics.total_points || 0;
+        document.getElementById('total-visits').textContent = data.statistics.total_visits || 0;
+        document.getElementById('avg-radius').textContent = Math.round(data.statistics.average_radius || 0) + 'm';
+    }
+    
+    // Update clusters list
+    if (data.clusters) {
+        updateClustersTable(data.clusters);
+    }
+}
+
+// Update clusters table
+function updateClustersTable(clusters) {
+    const tbody = document.getElementById('clusters-tbody');
+    tbody.innerHTML = '';
+    
+    if (clusters.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8"><%:No clusters found%></td></tr>';
+        return;
+    }
+    
+    clusters.forEach(function(cluster) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${cluster.id || '-'}</td>
+            <td>${formatCoordinate(cluster.center.latitude, cluster.center.longitude)}</td>
+            <td>${Math.round(cluster.radius || 0)}m</td>
+            <td>${cluster.points_count || 0}</td>
+            <td>${cluster.visit_count || 0}</td>
+            <td>${Math.round(cluster.avg_signal || 0)}</td>
+            <td>${formatTags(cluster.tags)}</td>
+            <td>
+                <button class="btn cbi-button cbi-button-apply" onclick="viewCluster('${cluster.id}')"><%:View%></button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Format coordinate for display
+function formatCoordinate(lat, lon) {
+    if (lat === undefined || lon === undefined) return '-';
+    return `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+}
+
+// Format tags for display
+function formatTags(tags) {
+    if (!tags || tags.length === 0) return '-';
+    return tags.join(', ');
+}
+
+// Add point
+function addPoint() {
+    const latitude = parseFloat(document.getElementById('point-latitude').value);
+    const longitude = parseFloat(document.getElementById('point-longitude').value);
+    const signal = parseFloat(document.getElementById('point-signal').value) || 0;
+    const speed = parseFloat(document.getElementById('point-speed').value) || 0;
+    const member = document.getElementById('point-member').value;
+    const tags = document.getElementById('point-tags').value.split(',').map(t => t.trim()).filter(t => t);
+    const obstruction = document.getElementById('point-obstruction').checked;
+    
+    if (isNaN(latitude) || isNaN(longitude)) {
+        alert('<%:Please enter valid latitude and longitude%>');
+        return;
+    }
+    
+    const pointData = {
+        latitude: latitude,
+        longitude: longitude,
+        signal: signal,
+        speed: speed,
+        member: member,
+        tags: tags,
+        obstruction: obstruction
+    };
+    
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(pointData));
+    
+    XHR.post('<%=luci.dispatcher.build_url("admin", "network", "autonomy", "add_point")%>', formData, function(xhr) {
+        if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            if (response.success) {
+                alert('<%:Point added successfully%>');
+                loadClusteringData();
+                // Clear form
+                document.getElementById('point-latitude').value = '';
+                document.getElementById('point-longitude').value = '';
+                document.getElementById('point-signal').value = '';
+                document.getElementById('point-speed').value = '';
+                document.getElementById('point-member').value = '';
+                document.getElementById('point-tags').value = '';
+                document.getElementById('point-obstruction').checked = false;
+            } else {
+                alert('<%:Failed to add point%>: ' + response.message);
+            }
+        }
+    });
+}
+
+// View cluster details
+function viewCluster(clusterID) {
+    currentClusterID = clusterID;
+    
+    XHR.get('<%=luci.dispatcher.build_url("admin", "network", "autonomy", "cluster_details")%>', { id: clusterID }, function(xhr) {
+        if (xhr.status === 200) {
+            const cluster = JSON.parse(xhr.responseText);
+            populateClusterModal(cluster);
+            document.getElementById('cluster-modal').style.display = 'block';
+        }
+    });
+}
+
+// Populate cluster modal
+function populateClusterModal(cluster) {
+    document.getElementById('modal-title').textContent = 'Cluster: ' + cluster.id;
+    document.getElementById('modal-center').textContent = formatCoordinate(cluster.center.latitude, cluster.center.longitude);
+    document.getElementById('modal-radius').textContent = Math.round(cluster.radius) + 'm';
+    document.getElementById('modal-points').textContent = cluster.points ? cluster.points.length : 0;
+    document.getElementById('modal-visits').textContent = cluster.visit_count;
+    document.getElementById('modal-time').textContent = formatDuration(cluster.total_time);
+    document.getElementById('modal-signal').textContent = Math.round(cluster.avg_signal);
+    document.getElementById('modal-speed').textContent = Math.round(cluster.avg_speed) + ' m/s';
+    document.getElementById('modal-created').textContent = new Date(cluster.created_at).toLocaleString();
+    
+    // Populate tags
+    const tagsContainer = document.getElementById('modal-tags');
+    tagsContainer.innerHTML = '';
+    if (cluster.tags && cluster.tags.length > 0) {
+        cluster.tags.forEach(function(tag) {
+            const tagElement = document.createElement('span');
+            tagElement.className = 'tag';
+            tagElement.innerHTML = `
+                ${tag}
+                <span class="tag-remove" onclick="removeTag('${tag}')">&times;</span>
+            `;
+            tagsContainer.appendChild(tagElement);
+        });
+    }
+    
+    // Populate points
+    const pointsTbody = document.getElementById('modal-points-tbody');
+    pointsTbody.innerHTML = '';
+    if (cluster.points && cluster.points.length > 0) {
+        cluster.points.forEach(function(point) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${new Date(point.timestamp).toLocaleString()}</td>
+                <td>${formatCoordinate(point.latitude, point.longitude)}</td>
+                <td>${Math.round(point.signal)}</td>
+                <td>${Math.round(point.speed)} m/s</td>
+                <td>${point.member || '-'}</td>
+                <td>${point.obstruction ? 'Yes' : 'No'}</td>
+            `;
+            pointsTbody.appendChild(row);
+        });
+    } else {
+        pointsTbody.innerHTML = '<tr><td colspan="6"><%:No points in cluster%></td></tr>';
+    }
+}
+
+// Add tag to cluster
+function addTagToCluster() {
+    const tag = document.getElementById('new-tag').value.trim();
+    if (!tag) {
+        alert('<%:Please enter a tag%>');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('cluster_id', currentClusterID);
+    formData.append('tag', tag);
+    
+    XHR.post('<%=luci.dispatcher.build_url("admin", "network", "autonomy", "add_tag")%>', formData, function(xhr) {
+        if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            if (response.success) {
+                document.getElementById('new-tag').value = '';
+                viewCluster(currentClusterID); // Refresh modal
+                loadClusteringData(); // Refresh main list
+            } else {
+                alert('<%:Failed to add tag%>: ' + response.message);
+            }
+        }
+    });
+}
+
+// Remove tag from cluster
+function removeTag(tag) {
+    if (!confirm('<%:Are you sure you want to remove this tag?%>')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('cluster_id', currentClusterID);
+    formData.append('tag', tag);
+    
+    XHR.post('<%=luci.dispatcher.build_url("admin", "network", "autonomy", "remove_tag")%>', formData, function(xhr) {
+        if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            if (response.success) {
+                viewCluster(currentClusterID); // Refresh modal
+                loadClusteringData(); // Refresh main list
+            } else {
+                alert('<%:Failed to remove tag%>: ' + response.message);
+            }
+        }
+    });
+}
+
+// Find nearest cluster
+function findNearestCluster() {
+    const latitude = parseFloat(document.getElementById('find-latitude').value);
+    const longitude = parseFloat(document.getElementById('find-longitude').value);
+    
+    if (isNaN(latitude) || isNaN(longitude)) {
+        alert('<%:Please enter valid latitude and longitude%>');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('latitude', latitude);
+    formData.append('longitude', longitude);
+    
+    XHR.post('<%=luci.dispatcher.build_url("admin", "network", "autonomy", "find_cluster")%>', formData, function(xhr) {
+        if (xhr.status === 200) {
+            const result = JSON.parse(xhr.responseText);
+            const resultDiv = document.getElementById('find-result');
+            const infoDiv = document.getElementById('nearest-cluster-info');
+            
+            if (result.cluster) {
+                infoDiv.innerHTML = `
+                    <p><strong><%:Cluster ID%>:</strong> ${result.cluster.id}</p>
+                    <p><strong><%:Center%>:</strong> ${formatCoordinate(result.cluster.center.latitude, result.cluster.center.longitude)}</p>
+                    <p><strong><%:Distance%>:</strong> ${Math.round(result.distance)}m</p>
+                    <p><strong><%:Radius%>:</strong> ${Math.round(result.cluster.radius)}m</p>
+                    <p><strong><%:Visits%>:</strong> ${result.cluster.visit_count}</p>
+                    <p><strong><%:Avg Signal%>:</strong> ${Math.round(result.cluster.avg_signal)}</p>
+                `;
+            } else {
+                infoDiv.innerHTML = '<p><%:No clusters found nearby%></p>';
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+    });
+}
+
+// Filter by tag
+function filterByTag() {
+    const tag = document.getElementById('filter-tag').value.trim();
+    if (!tag) {
+        alert('<%:Please enter a tag to filter by%>');
+        return;
+    }
+    
+    XHR.get('<%=luci.dispatcher.build_url("admin", "network", "autonomy", "clusters_by_tag")%>', { tag: tag }, function(xhr) {
+        if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            updateClustersTable(data.clusters);
+        }
+    });
+}
+
+// Clear filter
+function clearFilter() {
+    document.getElementById('filter-tag').value = '';
+    loadClusteringData();
+}
+
+// Format duration
+function formatDuration(seconds) {
+    if (!seconds) return '-';
+    
+    if (seconds < 60) {
+        return Math.round(seconds) + 's';
+    } else if (seconds < 3600) {
+        return Math.round(seconds / 60) + 'm';
+    } else {
+        return Math.round(seconds / 3600) + 'h';
+    }
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadClusteringData();
+    
+    // Setup event listeners
+    document.getElementById('btn-add-point').addEventListener('click', addPoint);
+    document.getElementById('btn-find-cluster').addEventListener('click', findNearestCluster);
+    document.getElementById('btn-filter-tag').addEventListener('click', filterByTag);
+    document.getElementById('btn-clear-filter').addEventListener('click', clearFilter);
+    document.getElementById('btn-add-tag').addEventListener('click', addTagToCluster);
+    
+    // Modal close functionality
+    document.querySelector('.close').addEventListener('click', function() {
+        document.getElementById('cluster-modal').style.display = 'none';
+    });
+    
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('cluster-modal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadClusteringData, 30000);
+});
+</script>
+
+<%+footer%>

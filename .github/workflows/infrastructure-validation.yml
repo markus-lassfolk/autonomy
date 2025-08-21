@@ -1,0 +1,54 @@
+name: Infrastructure Validation
+
+on:
+  push:
+    branches: [ '*' ]
+    paths:
+      - '**/*.bicep'
+      - '**/main.parameters.json'
+  pull_request:
+    branches: [ '*' ]
+    paths:
+      - '**/*.bicep'
+      - '**/main.parameters.json'
+
+jobs:
+  bicep-validation:
+    runs-on: ubuntu-latest
+    name: Validate Bicep Templates
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+      
+      - name: Install Bicep CLI
+        run: |
+          az bicep install
+      
+      - name: Validate Bicep syntax
+        run: |
+          find . -name "*.bicep" -exec az bicep build --file {} \;
+      
+      - name: Lint Bicep files
+        run: |
+          find . -name "*.bicep" -exec az bicep lint --file {} \;
+      
+      - name: Check for Bicep best practices
+        run: |
+          echo "Checking Bicep best practices..."
+          # Check for hardcoded values
+          if grep -r "location.*=.*'[a-zA-Z]" --include="*.bicep" .; then
+            echo "::warning::Found hardcoded locations in Bicep files"
+          fi
+          
+          # Check for proper parameter usage
+          if ! grep -q "@description" **/*.bicep; then
+            echo "::warning::Consider adding @description decorators to parameters"
+          fi
+          
+          # Check for output definitions
+          if ! grep -q "^output" **/*.bicep; then
+            echo "::warning::Consider adding outputs for important resource properties"
+          fi

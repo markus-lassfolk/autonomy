@@ -1,0 +1,103 @@
+# Jekyll configuration for autonomy documentation website
+title: autonomy Documentation
+description: Intelligent Multi-Interface Failover System for RutOS and OpenWrt
+baseurl: ""
+url: "https://your-org.github.io/autonomy"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+permalink: pretty
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /docs/:path/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "page"
+      sidebar: "docs"
+
+# Plugins
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-feed
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+
+# Include
+include:
+  - _pages
+  - _posts
+  - _drafts
+
+# Navigation
+navigation:
+  - title: Home
+    url: /
+  - title: Quick Start
+    url: /docs/quick-start.html
+  - title: Configuration
+    url: /docs/configuration.html
+  - title: Development
+    url: /docs/development.html
+  - title: API Reference
+    url: /docs/api-reference.html
+  - title: Architecture
+    url: /docs/architecture.html
+
+# Sidebar
+sidebar:
+  - title: Getting Started
+    children:
+      - title: Quick Start
+        url: /docs/quick-start.html
+      - title: Installation
+        url: /docs/installation.html
+      - title: Configuration
+        url: /docs/configuration.html
+      - title: Deployment
+        url: /docs/deployment.html
+  - title: Development
+    children:
+      - title: Development Guide
+        url: /docs/development.html
+      - title: API Reference
+        url: /docs/api-reference.html
+      - title: Architecture
+        url: /docs/architecture.html
+      - title: Testing
+        url: /docs/testing.html
+  - title: Advanced Topics
+    children:
+      - title: GPS Integration
+        url: /docs/gps-system-complete.html
+      - title: Notifications
+        url: /docs/notification-configuration.html
+      - title: Starlink API
+        url: /docs/starlink-api-reference.html
+      - title: Cellular Monitoring
+        url: /docs/cellular-stability-monitoring-complete.html
+      - title: WiFi Optimization
+        url: /docs/wifi-optimization-complete.html
+  - title: Troubleshooting
+    children:
+      - title: Common Issues
+        url: /docs/troubleshooting.html
+      - title: Debug Guide
+        url: /docs/debug-guide.html

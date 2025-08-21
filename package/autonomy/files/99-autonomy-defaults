@@ -1,0 +1,139 @@
+#!/bin/sh
+# UCI defaults for autonomy package
+# This script sets up default configuration values
+
+# Check if autonomy config already exists
+if [ -f /etc/config/autonomy ]; then
+    # Config exists, check if it has the main section
+    if ! uci -q get autonomy.main >/dev/null 2>&1; then
+        # Add main section if it doesn't exist
+        uci add autonomy autonomy
+        uci rename autonomy.@autonomy[-1]=main
+        uci set autonomy.main.enable='1'
+        uci set autonomy.main.use_mwan3='1'
+        uci set autonomy.main.log_level='info'
+        uci set autonomy.main.poll_interval_ms='2000'
+        uci set autonomy.main.history_window_s='600'
+        uci set autonomy.main.min_uptime_s='30'
+        uci set autonomy.main.cooldown_s='30'
+        uci set autonomy.main.retention_hours='24'
+        uci set autonomy.main.max_ram_mb='16'
+        uci set autonomy.main.predictive='1'
+        uci set autonomy.main.switch_margin='15'
+        uci set autonomy.main.data_cap_mode='balanced'
+        uci set autonomy.main.metrics_listener='0'
+        uci set autonomy.main.health_listener='1'
+        uci set autonomy.main.performance_profiling='0'
+        uci set autonomy.main.security_auditing='1'
+        uci set autonomy.main.profiling_enabled='0'
+        uci set autonomy.main.auditing_enabled='1'
+        uci set autonomy.main.max_failed_attempts='5'
+        uci set autonomy.main.block_duration='300'
+    fi
+    
+    # Add thresholds sections if they don't exist
+    if ! uci -q get autonomy.failover >/dev/null 2>&1; then
+        uci add autonomy thresholds
+        uci rename autonomy.@thresholds[-1]=failover
+        uci set autonomy.failover.loss='8'
+        uci set autonomy.failover.latency='1500'
+        uci set autonomy.failover.min_duration_s='15'
+    fi
+    
+    if ! uci -q get autonomy.restore >/dev/null 2>&1; then
+        uci add autonomy thresholds
+        uci rename autonomy.@thresholds[-1]=restore
+        uci set autonomy.restore.loss='2'
+        uci set autonomy.restore.latency='1000'
+        uci set autonomy.restore.min_duration_s='45'
+    fi
+    
+    # Add starlink API section if it doesn't exist
+    if ! uci -q get autonomy.api >/dev/null 2>&1; then
+        uci add autonomy starlink
+        uci rename autonomy.@starlink[-1]=api
+        uci set autonomy.api.host='192.168.100.1'
+        uci set autonomy.api.port='9200'
+        uci set autonomy.api.timeout_s='10'
+        uci set autonomy.api.grpc_first='1'
+        uci set autonomy.api.http_first='0'
+    fi
+    
+    # Add ML settings if they don't exist
+    if ! uci -q get autonomy.settings >/dev/null 2>&1; then
+        uci add autonomy ml
+        uci rename autonomy.@ml[-1]=settings
+        uci set autonomy.settings.enabled='1'
+        uci set autonomy.settings.model_path='/etc/autonomy/models.json'
+        uci set autonomy.settings.training='1'
+        uci set autonomy.settings.prediction='1'
+    fi
+    
+    # Add monitoring MQTT section if it doesn't exist
+    if ! uci -q get autonomy.mqtt >/dev/null 2>&1; then
+        uci add autonomy monitoring
+        uci rename autonomy.@monitoring[-1]=mqtt
+        uci set autonomy.mqtt.broker=''
+        uci set autonomy.mqtt.topic='autonomy/status'
+        uci set autonomy.mqtt.username=''
+        uci set autonomy.mqtt.password=''
+        uci set autonomy.mqtt.tls='0'
+    fi
+    
+    # Add notifications section if it doesn't exist
+    if ! uci -q get autonomy.pushover >/dev/null 2>&1; then
+        uci add autonomy notifications
+        uci rename autonomy.@notifications[-1]=pushover
+        uci set autonomy.pushover.enabled='0'
+        uci set autonomy.pushover.token=''
+        uci set autonomy.pushover.user=''
+        uci set autonomy.pushover.priority='0'
+    fi
+    
+    # Add interface configurations if they don't exist
+    if ! uci -q get autonomy.starlink >/dev/null 2>&1; then
+        uci add autonomy interface
+        uci rename autonomy.@interface[-1]=starlink
+        uci set autonomy.starlink.name='wan'
+        uci set autonomy.starlink.type='starlink'
+        uci set autonomy.starlink.priority='1'
+        uci set autonomy.starlink.enabled='1'
+        uci set autonomy.starlink.metered='0'
+    fi
+    
+    if ! uci -q get autonomy.cellular >/dev/null 2>&1; then
+        uci add autonomy interface
+        uci rename autonomy.@interface[-1]=cellular
+        uci set autonomy.cellular.name='wwan'
+        uci set autonomy.cellular.type='cellular'
+        uci set autonomy.cellular.priority='2'
+        uci set autonomy.cellular.enabled='1'
+        uci set autonomy.cellular.metered='1'
+    fi
+    
+    if ! uci -q get autonomy.wifi >/dev/null 2>&1; then
+        uci add autonomy interface
+        uci rename autonomy.@interface[-1]=wifi
+        uci set autonomy.wifi.name='wlan'
+        uci set autonomy.wifi.type='wifi'
+        uci set autonomy.wifi.priority='3'
+        uci set autonomy.wifi.enabled='1'
+        uci set autonomy.wifi.metered='0'
+    fi
+    
+    if ! uci -q get autonomy.lan >/dev/null 2>&1; then
+        uci add autonomy interface
+        uci rename autonomy.@interface[-1]=lan
+        uci set autonomy.lan.name='lan'
+        uci set autonomy.lan.type='lan'
+        uci set autonomy.lan.priority='4'
+        uci set autonomy.lan.enabled='1'
+        uci set autonomy.lan.metered='0'
+    fi
+    
+    # Commit changes
+    uci commit autonomy
+fi
+
+exit 0
+

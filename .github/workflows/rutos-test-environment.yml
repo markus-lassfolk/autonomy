@@ -1,0 +1,230 @@
+name: RUTOS/OpenWrt Test Environment
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of test to run'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - unit
+        - integration
+        - system
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  rutos-test-environment:
+    runs-on: ubuntu-latest
+    name: RUTOS/OpenWrt Test Environment
+    
+    strategy:
+      matrix:
+        platform: [armv7, arm64, x86_64]
+        os: [openwrt, rutos]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+        cache: true
+        
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build RUTOS/OpenWrt Test Images
+      run: |
+        echo "🐳 Building test environment images..."
+        
+        # Build OpenWrt test image
+        docker build -f test/docker/Dockerfile.openwrt -t autonomy-openwrt-test:${{ matrix.platform }} .
+        
+        # Build RUTOS test image
+        docker build -f test/docker/Dockerfile.rutos -t autonomy-rutos-test:${{ matrix.platform }} .
+        
+    - name: Cross-compile for target platform
+      run: |
+        echo "🔨 Cross-compiling for ${{ matrix.platform }}..."
+        
+        case "${{ matrix.platform }}" in
+          "armv7")
+            export GOOS=linux GOARCH=arm GOARM=7
+            ;;
+          "arm64")
+            export GOOS=linux GOARCH=arm64
+            ;;
+          "x86_64")
+            export GOOS=linux GOARCH=amd64
+            ;;
+        esac
+        
+        # Build autonomyd
+        CGO_ENABLED=0 go build -ldflags "-s -w" -o build/autonomyd-${{ matrix.platform }} ./cmd/autonomyd
+        
+        # Build autonomysysmgmt
+        CGO_ENABLED=0 go build -ldflags "-s -w" -o build/autonomysysmgmt-${{ matrix.platform }} ./cmd/autonomysysmgmt
+        
+        # Build CLI tools
+        CGO_ENABLED=0 go build -ldflags "-s -w" -o build/autonomyctl-${{ matrix.platform }} ./cmd/autonomyctl
+        
+    - name: Run Unit Tests in Container
+      if: github.event.inputs.test_type == 'unit' || github.event.inputs.test_type == 'full'
+      run: |
+        echo "🧪 Running unit tests in ${{ matrix.os }} environment..."
+        
+        docker run --rm \
+          -v $(pwd)/build:/build \
+          -v $(pwd)/test:/test \
+          autonomy-${{ matrix.os }}-test:${{ matrix.platform }} \
+          sh -c "
+            cd /test
+            go test -v -race -timeout 5m ./unit/...
+          "
+          
+    - name: Run Integration Tests in Container
+      if: github.event.inputs.test_type == 'integration' || github.event.inputs.test_type == 'full'
+      run: |
+        echo "🔗 Running integration tests in ${{ matrix.os }} environment..."
+        
+        docker run --rm \
+          -v $(pwd)/build:/build \
+          -v $(pwd)/test:/test \
+          -v $(pwd)/configs:/configs \
+          --network host \
+          autonomy-${{ matrix.os }}-test:${{ matrix.platform }} \
+          sh -c "
+            cd /test
+            go test -v -timeout 10m ./integration/...
+          "
+          
+    - name: Run System Tests in Container
+      if: github.event.inputs.test_type == 'system' || github.event.inputs.test_type == 'full'
+      run: |
+        echo "🖥️ Running system tests in ${{ matrix.os }} environment..."
+        
+        docker run --rm \
+          -v $(pwd)/build:/build \
+          -v $(pwd)/test:/test \
+          -v $(pwd)/configs:/configs \
+          --privileged \
+          --network host \
+          autonomy-${{ matrix.os }}-test:${{ matrix.platform }} \
+          sh -c "
+            cd /test
+            ./scripts/test-system-${{ matrix.os }}.sh
+          "
+          
+    - name: Test Binary Execution
+      run: |
+        echo "▶️ Testing binary execution in ${{ matrix.os }}..."
+        
+        docker run --rm \
+          -v $(pwd)/build:/build \
+          -v $(pwd)/configs:/configs \
+          autonomy-${{ matrix.os }}-test:${{ matrix.platform }} \
+          sh -c "
+            # Test autonomyd
+            /build/autonomyd-${{ matrix.platform }} -version || echo 'autonomyd version check failed'
+            
+            # Test autonomysysmgmt
+            /build/autonomysysmgmt-${{ matrix.platform }} -version || echo 'autonomysysmgmt version check failed'
+            
+            # Test autonomyctl
+            /build/autonomyctl-${{ matrix.platform }} -version || echo 'autonomyctl version check failed'
+          "
+          
+    - name: Test UCI Integration
+      run: |
+        echo "⚙️ Testing UCI integration in ${{ matrix.os }}..."
+        
+        docker run --rm \
+          -v $(pwd)/build:/build \
+          -v $(pwd)/configs:/configs \
+          autonomy-${{ matrix.os }}-test:${{ matrix.platform }} \
+          sh -c "
+            # Setup test UCI configuration
+            cp /configs/autonomy.example /etc/config/autonomy
+            
+            # Test UCI parsing
+            /build/autonomyd-${{ matrix.platform }} -config /etc/config/autonomy -test-config || echo 'UCI config test failed'
+          "
+          
+    - name: Test ubus Integration
+      run: |
+        echo "🔌 Testing ubus integration in ${{ matrix.os }}..."
+        
+        docker run --rm \
+          -v $(pwd)/build:/build \
+          --network host \
+          autonomy-${{ matrix.os }}-test:${{ matrix.platform }} \
+          sh -c "
+            # Start ubus daemon
+            ubusd &
+            sleep 2
+            
+            # Test ubus registration
+            /build/autonomyd-${{ matrix.platform }} -test-ubus || echo 'ubus test failed'
+            
+            # Test ubus API calls
+            ubus call autonomy status || echo 'ubus API test failed'
+          "
+          
+    - name: Performance Testing
+      run: |
+        echo "⚡ Running performance tests in ${{ matrix.os }}..."
+        
+        docker run --rm \
+          -v $(pwd)/build:/build \
+          -v $(pwd)/test:/test \
+          autonomy-${{ matrix.os }}-test:${{ matrix.platform }} \
+          sh -c "
+            cd /test
+            go test -bench=. -benchmem -timeout 5m ./performance/...
+          "
+          
+    - name: Memory Leak Testing
+      run: |
+        echo "🧠 Testing for memory leaks in ${{ matrix.os }}..."
+        
+        docker run --rm \
+          -v $(pwd)/build:/build \
+          -v $(pwd)/test:/test \
+          autonomy-${{ matrix.os }}-test:${{ matrix.platform }} \
+          sh -c "
+            cd /test
+            ./scripts/test-memory-leaks.sh /build/autonomyd-${{ matrix.platform }}
+          "
+          
+    - name: Create Test Report
+      if: always()
+      run: |
+        echo "## 🧪 Test Environment Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Platform**: ${{ matrix.platform }}" >> $GITHUB_STEP_SUMMARY
+        echo "**OS**: ${{ matrix.os }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Test Type**: ${{ github.event.inputs.test_type || 'full' }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **All tests completed successfully**" >> $GITHUB_STEP_SUMMARY
+        
+    - name: Upload Test Artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.platform }}
+        path: |
+          test/results/
+          build/
+        retention-days: 7

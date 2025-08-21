@@ -1,0 +1,97 @@
+name: Sync Branches
+
+on:
+  push:
+    branches: [main, main-dev]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-infrastructure:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main-dev'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Sync infrastructure files to main
+      run: |
+        # Check if infrastructure files changed
+        INFRA_CHANGED=false
+        
+        # Check for infrastructure file changes
+        for file in .github/ scripts/ docs/ configs/ README.md ARCHITECTURE.md ROADMAP.md STATUS.md PROJECT_INSTRUCTION.md AUTONOMOUS_WORKFLOWS_*.md github-todo.md ENHANCED_MONITORING_PWA_SUMMARY.md RUTOS_INTEGRATION_SUMMARY.md IMPLEMENTATION_SUMMARY.md azure/ luci/ package/ uci-schema/ vuci-app-autonomy/ .gitignore .cursorinstructions .cursorrules; do
+          if git diff --name-only HEAD~1 | grep -q "^$file"; then
+            INFRA_CHANGED=true
+            break
+          fi
+        done
+        
+        if [ "$INFRA_CHANGED" = "true" ]; then
+          echo "Infrastructure files changed, syncing to main branch..."
+          
+          # Create PR to main branch
+          gh pr create \
+            --title "🔄 Sync infrastructure changes from main-dev" \
+            --body "This PR syncs infrastructure changes from the main-dev branch to main.
+            
+            **Changes:**
+            - Infrastructure files updated
+            - Documentation updates
+            - CI/CD configuration changes
+            
+            **Review required:** Please review and merge these infrastructure changes." \
+            --base main \
+            --head main-dev
+        else
+          echo "No infrastructure files changed, skipping sync"
+        fi
+
+  sync-project:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Sync project files to main-dev
+      run: |
+        # Check if project files changed
+        PROJECT_CHANGED=false
+        
+        # Check for project file changes
+        for file in pkg/ cmd/ test/ go.mod go.sum Makefile TODO.md etc/; do
+          if git diff --name-only HEAD~1 | grep -q "^$file"; then
+            PROJECT_CHANGED=true
+            break
+          fi
+        done
+        
+        if [ "$PROJECT_CHANGED" = "true" ]; then
+          echo "Project files changed, syncing to main-dev branch..."
+          
+          # Create PR to main-dev branch
+          gh pr create \
+            --title "🔄 Sync project changes from main" \
+            --body "This PR syncs project changes from the main branch to main-dev.
+            
+            **Changes:**
+            - Project source code updates
+            - Dependencies updated
+            - Build system changes
+            
+            **Review required:** Please review and merge these project changes." \
+            --base main-dev \
+            --head main
+        else
+          echo "No project files changed, skipping sync"
+        fi

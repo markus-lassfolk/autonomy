@@ -1,0 +1,72 @@
+name: Documentation Check
+
+on:
+  push:
+    branches: [ '*' ]
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+  pull_request:
+    branches: [ '*' ]
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+
+jobs:
+  markdown-check:
+    runs-on: ubuntu-latest
+    name: Markdown Link Check
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Get changed files
+      id: changed-files
+      run: |
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          echo "Getting markdown files changed in PR #${{ github.event.number }}"
+          # Get files changed in this PR, filter for markdown files
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+          changed_files=$(git diff --name-only ${{ github.base_ref }}..HEAD | grep -E '\.(md)$' || echo "")
+          echo "Changed markdown files: $changed_files"
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$changed_files" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        else
+          echo "Push event - checking all markdown files"
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          find . -name "*.md" | grep -v .git | head -20 >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Check markdown links
+      if: steps.changed-files.outputs.files != ''
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        use-quiet-mode: 'yes'
+        use-verbose-mode: 'yes'
+        config-file: '.github/workflows/markdown-link-check-config.json'
+        file-path: ${{ steps.changed-files.outputs.files }}
+        
+    - name: Check for TODO/FIXME comments in changed files
+      run: |
+        echo "Checking for TODO/FIXME comments in changed files..."
+        if [ -z "${{ steps.changed-files.outputs.files }}" ]; then
+          echo "No files to check"
+          exit 0
+        fi
+        
+        found_todos=false
+        echo "${{ steps.changed-files.outputs.files }}" | while IFS= read -r file; do
+          if [ -z "$file" ] || [ ! -f "$file" ]; then continue; fi
+          
+          if grep -n -i "todo\|fixme\|hack" "$file"; then
+            echo "::warning file=$file::Found TODO/FIXME comments that should be addressed"
+            found_todos=true
+          fi
+        done
+        
+        if [ "$found_todos" = false ]; then
+          echo "✅ No TODO/FIXME comments found in changed files"
+        fi

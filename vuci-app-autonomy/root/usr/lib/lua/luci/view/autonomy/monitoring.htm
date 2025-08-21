@@ -1,0 +1,563 @@
+<%+header%>
+
+<script type="text/javascript" src="<%=resource%>/cbi.js"></script>
+<script type="text/javascript" src="<%=resource%>/autonomy.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="cbi-map">
+    <div class="cbi-map-descr">
+        <h2><%:Autonomy Monitoring%></h2>
+        <p><%:Historical data, performance metrics, and system alerts for the autonomy daemon.%></p>
+    </div>
+
+    <!-- Alert Summary -->
+    <div class="cbi-section">
+        <h3><%:Active Alerts%></h3>
+        <div class="cbi-section-node">
+            <div id="alerts-container" class="alerts-grid">
+                <!-- Alerts will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Charts -->
+    <div class="cbi-section">
+        <h3><%:System Performance%></h3>
+        <div class="cbi-section-node">
+            <div class="chart-container">
+                <canvas id="cpu-chart" width="400" height="200"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="memory-chart" width="400" height="200"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="disk-chart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Network Interface Charts -->
+    <div class="cbi-section">
+        <h3><%:Network Performance%></h3>
+        <div class="cbi-section-node">
+            <div class="chart-container">
+                <canvas id="network-traffic-chart" width="400" height="200"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="interface-errors-chart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historical Data Table -->
+    <div class="cbi-section">
+        <h3><%:Historical Data%></h3>
+        <div class="cbi-section-node">
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%:Time Range%></label>
+                <div class="cbi-value-field">
+                    <select id="time-range" class="cbi-input-select">
+                        <option value="1h">Last Hour</option>
+                        <option value="6h">Last 6 Hours</option>
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                    </select>
+                </div>
+            </div>
+            <div id="historical-table-container">
+                <!-- Historical data table will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.alerts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.alert-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #f8f9fa;
+}
+
+.alert-card.critical {
+    border-color: #dc3545;
+    background-color: #f8d7da;
+}
+
+.alert-card.warning {
+    border-color: #ffc107;
+    background-color: #fff3cd;
+}
+
+.alert-card.info {
+    border-color: #17a2b8;
+    background-color: #d1ecf1;
+}
+
+.alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.alert-level {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.alert-level.critical {
+    background-color: #dc3545;
+    color: white;
+}
+
+.alert-level.warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.alert-level.info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.alert-time {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.alert-message {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.chart-container {
+    margin: 20px 0;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background-color: white;
+}
+
+.chart-container canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+.historical-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.historical-table th,
+.historical-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.historical-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.historical-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.metric-value {
+    font-weight: bold;
+}
+
+.metric-value.high {
+    color: #dc3545;
+}
+
+.metric-value.medium {
+    color: #ffc107;
+}
+
+.metric-value.low {
+    color: #28a745;
+}
+
+.cbi-input-select {
+    padding: 6px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+}
+
+.no-data {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+    font-style: italic;
+}
+</style>
+
+<script type="text/javascript">
+// Global variables
+let charts = {};
+let updateInterval;
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    loadMonitoringData();
+    initializeCharts();
+    startAutoRefresh();
+    
+    // Add event listener for time range changes
+    document.getElementById('time-range').addEventListener('change', function() {
+        loadHistoricalData();
+    });
+});
+
+// Load all monitoring data
+function loadMonitoringData() {
+    loadAlerts();
+    loadHistoricalData();
+}
+
+// Load alerts
+function loadAlerts() {
+    fetch('<%=luci.dispatcher.build_url("admin/network/autonomy/api/alerts")%>')
+        .then(response => response.json())
+        .then(data => updateAlerts(data))
+        .catch(error => console.error('Error loading alerts:', error));
+}
+
+// Update alerts display
+function updateAlerts(data) {
+    const container = document.getElementById('alerts-container');
+    container.innerHTML = '';
+    
+    if (data.error) {
+        container.innerHTML = '<div class="no-data">Error loading alerts: ' + data.error + '</div>';
+        return;
+    }
+    
+    if (!data.active || data.active.length === 0) {
+        container.innerHTML = '<div class="no-data">No active alerts</div>';
+        return;
+    }
+    
+    data.active.forEach(alert => {
+        const card = createAlertCard(alert);
+        container.appendChild(card);
+    });
+}
+
+// Create alert card
+function createAlertCard(alert) {
+    const card = document.createElement('div');
+    card.className = `alert-card ${alert.level.toLowerCase()}`;
+    
+    const timeAgo = formatTimeAgo(alert.time_ago);
+    
+    card.innerHTML = `
+        <div class="alert-header">
+            <span class="alert-level ${alert.level.toLowerCase()}">${alert.level}</span>
+            <span class="alert-time">${timeAgo}</span>
+        </div>
+        <div class="alert-message">${alert.message}</div>
+    `;
+    
+    return card;
+}
+
+// Load historical data
+function loadHistoricalData() {
+    const timeRange = document.getElementById('time-range').value;
+    
+    fetch('<%=luci.dispatcher.build_url("admin/network/autonomy/api/historical_data")%>')
+        .then(response => response.json())
+        .then(data => {
+            updateCharts(data);
+            updateHistoricalTable(data);
+        })
+        .catch(error => console.error('Error loading historical data:', error));
+}
+
+// Initialize charts
+function initializeCharts() {
+    // CPU Chart
+    const cpuCtx = document.getElementById('cpu-chart').getContext('2d');
+    charts.cpu = new Chart(cpuCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'CPU Usage (%)',
+                data: [],
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+    
+    // Memory Chart
+    const memCtx = document.getElementById('memory-chart').getContext('2d');
+    charts.memory = new Chart(memCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Memory Usage (%)',
+                data: [],
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+    
+    // Disk Chart
+    const diskCtx = document.getElementById('disk-chart').getContext('2d');
+    charts.disk = new Chart(diskCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Disk Usage (%)',
+                data: [],
+                borderColor: '#ffc107',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+    
+    // Network Traffic Chart
+    const netCtx = document.getElementById('network-traffic-chart').getContext('2d');
+    charts.network = new Chart(netCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: []
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Update charts with new data
+function updateCharts(data) {
+    if (data.error) {
+        console.error('Historical data error:', data.error);
+        return;
+    }
+    
+    // Update CPU chart
+    if (data.cpu && data.cpu.length > 0) {
+        const labels = data.cpu.map(point => formatTimestamp(point.timestamp));
+        const values = data.cpu.map(point => point.value);
+        
+        charts.cpu.data.labels = labels;
+        charts.cpu.data.datasets[0].data = values;
+        charts.cpu.update();
+    }
+    
+    // Update Memory chart
+    if (data.memory && data.memory.length > 0) {
+        const labels = data.memory.map(point => formatTimestamp(point.timestamp));
+        const values = data.memory.map(point => point.value);
+        
+        charts.memory.data.labels = labels;
+        charts.memory.data.datasets[0].data = values;
+        charts.memory.update();
+    }
+    
+    // Update Disk chart
+    if (data.disk && data.disk.length > 0) {
+        const labels = data.disk.map(point => formatTimestamp(point.timestamp));
+        const values = data.disk.map(point => point.value);
+        
+        charts.disk.data.labels = labels;
+        charts.disk.data.datasets[0].data = values;
+        charts.disk.update();
+    }
+    
+    // Update Network chart
+    if (data.interfaces) {
+        const datasets = [];
+        const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1'];
+        let colorIndex = 0;
+        
+        for (const [iface, stats] of Object.entries(data.interfaces)) {
+            if (stats.rx_bytes && stats.rx_bytes.length > 0) {
+                const labels = stats.rx_bytes.map(point => formatTimestamp(point.timestamp));
+                const values = stats.rx_bytes.map(point => point.value);
+                
+                datasets.push({
+                    label: `${iface} RX (MB)`,
+                    data: values.map(v => (v / 1024 / 1024).toFixed(2)),
+                    borderColor: colors[colorIndex % colors.length],
+                    backgroundColor: 'transparent',
+                    tension: 0.4
+                });
+                
+                colorIndex++;
+            }
+        }
+        
+        if (datasets.length > 0) {
+            charts.network.data.labels = datasets[0].data.map((_, i) => formatTimestamp(data.interfaces[Object.keys(data.interfaces)[0]].rx_bytes[i].timestamp));
+            charts.network.data.datasets = datasets;
+            charts.network.update();
+        }
+    }
+}
+
+// Update historical data table
+function updateHistoricalTable(data) {
+    const container = document.getElementById('historical-table-container');
+    
+    if (data.error) {
+        container.innerHTML = '<div class="no-data">Error loading historical data: ' + data.error + '</div>';
+        return;
+    }
+    
+    // Create table with latest data points
+    let tableHTML = `
+        <table class="historical-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>CPU (%)</th>
+                    <th>Memory (%)</th>
+                    <th>Disk (%)</th>
+                    <th>Network Interfaces</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    // Get the latest data points
+    const latestCPU = data.cpu && data.cpu.length > 0 ? data.cpu[data.cpu.length - 1] : null;
+    const latestMemory = data.memory && data.memory.length > 0 ? data.memory[data.memory.length - 1] : null;
+    const latestDisk = data.disk && data.disk.length > 0 ? data.disk[data.disk.length - 1] : null;
+    
+    if (latestCPU || latestMemory || latestDisk) {
+        const timestamp = latestCPU ? latestCPU.timestamp : (latestMemory ? latestMemory.timestamp : latestDisk.timestamp);
+        
+        tableHTML += `
+            <tr>
+                <td>${formatTimestamp(timestamp)}</td>
+                <td class="metric-value ${getMetricClass(latestCPU ? latestCPU.value : 0)}">${latestCPU ? latestCPU.value.toFixed(1) : 'N/A'}</td>
+                <td class="metric-value ${getMetricClass(latestMemory ? latestMemory.value : 0)}">${latestMemory ? latestMemory.value.toFixed(1) : 'N/A'}</td>
+                <td class="metric-value ${getMetricClass(latestDisk ? latestDisk.value : 0)}">${latestDisk ? latestDisk.value.toFixed(1) : 'N/A'}</td>
+                <td>${formatInterfaces(data.interfaces)}</td>
+            </tr>
+        `;
+    }
+    
+    tableHTML += '</tbody></table>';
+    container.innerHTML = tableHTML;
+}
+
+// Helper functions
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleTimeString();
+}
+
+function formatTimeAgo(seconds) {
+    if (seconds < 60) return seconds + 's ago';
+    if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+    return Math.floor(seconds / 3600) + 'h ago';
+}
+
+function getMetricClass(value) {
+    if (value > 80) return 'high';
+    if (value > 60) return 'medium';
+    return 'low';
+}
+
+function formatInterfaces(interfaces) {
+    if (!interfaces) return 'N/A';
+    
+    const ifaceList = [];
+    for (const [name, stats] of Object.entries(interfaces)) {
+        if (stats.rx_bytes && stats.rx_bytes.length > 0) {
+            const latest = stats.rx_bytes[stats.rx_bytes.length - 1];
+            const mb = (latest.value / 1024 / 1024).toFixed(1);
+            ifaceList.push(`${name}: ${mb}MB`);
+        }
+    }
+    
+    return ifaceList.join(', ') || 'N/A';
+}
+
+// Auto-refresh
+function startAutoRefresh() {
+    updateInterval = setInterval(loadMonitoringData, 30000); // Update every 30 seconds
+}
+
+function stopAutoRefresh() {
+    if (updateInterval) {
+        clearInterval(updateInterval);
+    }
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', stopAutoRefresh);
+</script>
+
+<%+footer%>

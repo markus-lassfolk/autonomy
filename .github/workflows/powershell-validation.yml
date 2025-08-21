@@ -1,0 +1,60 @@
+name: PowerShell Validation
+
+on:
+  push:
+    branches: [ '*' ]
+    paths:
+      - '**/*.ps1'
+  pull_request:
+    branches: [ '*' ]
+    paths:
+      - '**/*.ps1'
+
+jobs:
+  powershell-validation:
+    runs-on: windows-latest
+    name: Validate PowerShell Scripts
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install PSScriptAnalyzer
+        shell: powershell
+        run: |
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+      
+      - name: Run PSScriptAnalyzer
+        shell: powershell
+        run: |
+          $results = @()
+          Get-ChildItem -Path . -Recurse -Filter "*.ps1" | ForEach-Object {
+            Write-Host "Analyzing: $($_.Name)"
+            $analysis = Invoke-ScriptAnalyzer -Path $_.FullName -Severity Error,Warning
+            if ($analysis) {
+              $results += $analysis
+              $analysis | ForEach-Object {
+                Write-Host "::warning file=$($_.ScriptName),line=$($_.Line)::$($_.RuleName): $($_.Message)"
+              }
+            }
+          }
+          
+          if ($results | Where-Object { $_.Severity -eq 'Error' }) {
+            Write-Host "::error::PowerShell script analysis found errors"
+            exit 1
+          }
+      
+      - name: Test PowerShell syntax
+        shell: powershell
+        run: |
+          Get-ChildItem -Path . -Recurse -Filter "*.ps1" | ForEach-Object {
+            Write-Host "Testing syntax: $($_.Name)"
+            $errors = $null
+            $tokens = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors)
+            
+            if ($errors) {
+              $errors | ForEach-Object {
+                Write-Host "::error file=$($_.Extent.File),line=$($_.Extent.StartLineNumber)::$($_.Message)"
+              }
+              exit 1
+            }
+          }

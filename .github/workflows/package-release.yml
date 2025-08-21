@@ -1,0 +1,557 @@
+name: Package Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release'
+        required: false
+        type: string
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - binaries
+        - packages
+        - docker
+
+permissions:
+  contents: write
+  packages: write
+  actions: read
+
+jobs:
+  build-binaries:
+    runs-on: ubuntu-latest
+    name: Build Binaries
+    
+    strategy:
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+          - linux/arm/v7
+          - linux/mips
+          - linux/mipsle
+        include:
+          - platform: linux/amd64
+            goos: linux
+            goarch: amd64
+            goarm: ""
+            suffix: linux-amd64
+          - platform: linux/arm64
+            goos: linux
+            goarch: arm64
+            goarm: ""
+            suffix: linux-arm64
+          - platform: linux/arm/v7
+            goos: linux
+            goarch: arm
+            goarm: "7"
+            suffix: linux-armv7
+          - platform: linux/mips
+            goos: linux
+            goarch: mips
+            goarm: ""
+            suffix: linux-mips
+          - platform: linux/mipsle
+            goos: linux
+            goarch: mipsle
+            goarm: ""
+            suffix: linux-mipsle
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+        cache: true
+        
+    - name: Get version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
+          VERSION="${{ inputs.version }}"
+        else
+          VERSION="${GITHUB_REF#refs/tags/}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        
+    - name: Build autonomyd
+      run: |
+        echo "Building autonomyd for ${{ matrix.platform }}..."
+        
+        export GOOS=${{ matrix.goos }}
+        export GOARCH=${{ matrix.goarch }}
+        if [ -n "${{ matrix.goarm }}" ]; then
+          export GOARM=${{ matrix.goarm }}
+        fi
+        
+        CGO_ENABLED=0 go build \
+          -ldflags "-s -w -X main.Version=$VERSION -X main.BuildTime=$(date -u '+%Y-%m-%d_%H:%M:%S')" \
+          -o build/autonomyd-${{ matrix.suffix }} \
+          ./cmd/autonomyd
+        
+        # Strip binary
+        strip build/autonomyd-${{ matrix.suffix }} || true
+        
+        # Calculate checksum
+        sha256sum build/autonomyd-${{ matrix.suffix }} > build/autonomyd-${{ matrix.suffix }}.sha256
+        
+    - name: Build autonomysysmgmt
+      run: |
+        echo "Building autonomysysmgmt for ${{ matrix.platform }}..."
+        
+        export GOOS=${{ matrix.goos }}
+        export GOARCH=${{ matrix.goarch }}
+        if [ -n "${{ matrix.goarm }}" ]; then
+          export GOARM=${{ matrix.goarm }}
+        fi
+        
+        CGO_ENABLED=0 go build \
+          -ldflags "-s -w -X main.Version=$VERSION -X main.BuildTime=$(date -u '+%Y-%m-%d_%H:%M:%S')" \
+          -o build/autonomysysmgmt-${{ matrix.suffix }} \
+          ./cmd/autonomysysmgmt
+        
+        # Strip binary
+        strip build/autonomysysmgmt-${{ matrix.suffix }} || true
+        
+        # Calculate checksum
+        sha256sum build/autonomysysmgmt-${{ matrix.suffix }} > build/autonomysysmgmt-${{ matrix.suffix }}.sha256
+        
+    - name: Build autonomyctl
+      run: |
+        echo "Building autonomyctl for ${{ matrix.platform }}..."
+        
+        export GOOS=${{ matrix.goos }}
+        export GOARCH=${{ matrix.goarch }}
+        if [ -n "${{ matrix.goarm }}" ]; then
+          export GOARM=${{ matrix.goarm }}
+        fi
+        
+        CGO_ENABLED=0 go build \
+          -ldflags "-s -w -X main.Version=$VERSION -X main.BuildTime=$(date -u '+%Y-%m-%d_%H:%M:%S')" \
+          -o build/autonomyctl-${{ matrix.suffix }} \
+          ./cmd/autonomyctl
+        
+        # Strip binary
+        strip build/autonomyctl-${{ matrix.suffix }} || true
+        
+        # Calculate checksum
+        sha256sum build/autonomyctl-${{ matrix.suffix }} > build/autonomyctl-${{ matrix.suffix }}.sha256
+        
+    - name: Upload binaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: binaries-${{ matrix.suffix }}
+        path: |
+          build/autonomyd-${{ matrix.suffix }}
+          build/autonomyd-${{ matrix.suffix }}.sha256
+          build/autonomysysmgmt-${{ matrix.suffix }}
+          build/autonomysysmgmt-${{ matrix.suffix }}.sha256
+          build/autonomyctl-${{ matrix.suffix }}
+          build/autonomyctl-${{ matrix.suffix }}.sha256
+        retention-days: 30
+
+  build-packages:
+    runs-on: ubuntu-latest
+    name: Build Packages
+    needs: build-binaries
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all binaries
+      uses: actions/download-artifact@v3
+      with:
+        path: build/
+        
+    - name: Get version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
+          VERSION="${{ inputs.version }}"
+        else
+          VERSION="${GITHUB_REF#refs/tags/}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        
+    - name: Create OpenWrt packages
+      run: |
+        echo "Creating OpenWrt packages..."
+        
+        # Create package directory structure
+        mkdir -p packages/openwrt
+        
+        # Create Makefile for OpenWrt package
+        cat > packages/openwrt/Makefile << 'EOF'
+        include $(TOPDIR)/rules.mk
+
+        PKG_NAME:=autonomy
+        PKG_VERSION:=$VERSION
+        PKG_RELEASE:=1
+
+        PKG_MAINTAINER:=Autonomy Team <autonomy@example.com>
+        PKG_LICENSE:=MIT
+        PKG_LICENSE_FILES:=LICENSE
+
+        PKG_SOURCE_PROTO:=git
+        PKG_SOURCE_URL:=https://github.com/markus-lassfolk/autonomy.git
+        PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+
+        PKG_BUILD_DEPENDS:=golang/host
+        PKG_BUILD_PARALLEL:=1
+        PKG_USE_MIPS16:=0
+
+        GO_PKG:=github.com/markus-lassfolk/autonomy
+        GO_PKG_BUILD_PKG:=./cmd/autonomyd
+
+        include $(INCLUDE_DIR)/package.mk
+        include $(INCLUDE_DIR)/golang.mk
+
+        define Package/autonomy/Default
+          SECTION:=net
+          CATEGORY:=Network
+          TITLE:=Autonomy Multi-Interface Failover
+          URL:=https://github.com/markus-lassfolk/autonomy
+          DEPENDS:=+mwan3 +ubus +ubox +libuci
+        endef
+
+        define Package/autonomy
+          $(call Package/autonomy/Default)
+          TITLE+= (Daemon)
+        endef
+
+        define Package/autonomy/description
+          Intelligent multi-interface failover system for OpenWrt routers
+        endef
+
+        define Package/autonomy/install
+          $(INSTALL_DIR) $(1)/usr/sbin
+          $(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/autonomyd $(1)/usr/sbin/
+          $(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/autonomysysmgmt $(1)/usr/sbin/
+          $(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/autonomyctl $(1)/usr/sbin/
+          
+          $(INSTALL_DIR) $(1)/etc/init.d
+          $(INSTALL_BIN) files/autonomy.init $(1)/etc/init.d/autonomy
+          
+          $(INSTALL_DIR) $(1)/etc/config
+          $(INSTALL_CONF) files/autonomy.config $(1)/etc/config/autonomy
+        endef
+
+        $(eval $(call BuildPackage,autonomy))
+        EOF
+        
+        # Create init script
+        mkdir -p packages/openwrt/files
+        cat > packages/openwrt/files/autonomy.init << 'EOF'
+        #!/bin/sh /etc/rc.common
+
+        START=95
+        STOP=15
+
+        start() {
+            echo "Starting autonomy daemon..."
+            /usr/sbin/autonomyd -config /etc/config/autonomy
+        }
+
+        stop() {
+            echo "Stopping autonomy daemon..."
+            killall autonomyd
+        }
+
+        restart() {
+            stop
+            sleep 2
+            start
+        }
+        EOF
+        
+        # Create default config
+        cat > packages/openwrt/files/autonomy.config << 'EOF'
+        config autonomy
+            option enabled '1'
+            option log_level 'info'
+            option predictive '1'
+            option use_mwan3 '1'
+            option retention_hours '24'
+            option max_ram_mb '100'
+            option performance_profiling '0'
+        EOF
+        
+        # Create package archive
+        cd packages/openwrt
+        tar -czf autonomy-openwrt-$VERSION.tar.gz *
+        cd ../..
+        
+    - name: Create RUTOS packages
+      run: |
+        echo "Creating RUTOS packages..."
+        
+        # Create package directory structure
+        mkdir -p packages/rutos
+        
+        # Create RUTOS package structure
+        cat > packages/rutos/autonomy.rutos.pkg << 'EOF'
+        # RUTOS Package for Autonomy
+        PACKAGE=autonomy
+        VERSION=$VERSION
+        ARCH=arm_cortex-a7_neon-vfpv4
+        
+        # Package files
+        /usr/sbin/autonomyd
+        /usr/sbin/autonomysysmgmt
+        /usr/sbin/autonomyctl
+        /etc/config/autonomy
+        /etc/init.d/autonomy
+        
+        # Dependencies
+        DEPENDS=mwan3,ubus,ubox,libuci
+        
+        # Description
+        DESCRIPTION="Intelligent multi-interface failover system for RUTOS routers"
+        EOF
+        
+        # Create package archive
+        cd packages/rutos
+        tar -czf autonomy-rutos-$VERSION.tar.gz *
+        cd ../..
+        
+    - name: Create Docker images
+      run: |
+        echo "Creating Docker images..."
+        
+        # Create Dockerfile
+        cat > Dockerfile << 'EOF'
+        FROM alpine:3.18
+
+        LABEL maintainer="Autonomy Team <autonomy@example.com>"
+        LABEL description="Autonomy Multi-Interface Failover System"
+
+        # Install dependencies
+        RUN apk add --no-cache \
+            mwan3 \
+            ubus \
+            ubox \
+            libuci \
+            ca-certificates \
+            tzdata
+
+        # Copy binaries
+        COPY build/autonomyd-linux-amd64 /usr/sbin/autonomyd
+        COPY build/autonomysysmgmt-linux-amd64 /usr/sbin/autonomysysmgmt
+        COPY build/autonomyctl-linux-amd64 /usr/sbin/autonomyctl
+
+        # Copy configuration
+        COPY configs/autonomy.example /etc/config/autonomy
+
+        # Create user
+        RUN addgroup -g 1000 autonomy && \
+            adduser -D -s /bin/sh -u 1000 -G autonomy autonomy
+
+        # Set permissions
+        RUN chmod +x /usr/sbin/autonomyd /usr/sbin/autonomysysmgmt /usr/sbin/autonomyctl
+
+        # Switch to non-root user
+        USER autonomy
+
+        # Expose ports
+        EXPOSE 8080 9090
+
+        # Health check
+        HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+            CMD /usr/sbin/autonomyctl health || exit 1
+
+        # Default command
+        CMD ["/usr/sbin/autonomyd", "-config", "/etc/config/autonomy"]
+        EOF
+        
+        # Build Docker image
+        docker build -t autonomy:$VERSION .
+        docker tag autonomy:$VERSION autonomy:latest
+        
+        # Save Docker image
+        docker save autonomy:$VERSION | gzip > build/autonomy-docker-$VERSION.tar.gz
+        
+    - name: Upload packages
+      uses: actions/upload-artifact@v3
+      with:
+        name: packages-$VERSION
+        path: |
+          packages/
+          build/autonomy-docker-$VERSION.tar.gz
+        retention-days: 30
+
+  create-release:
+    runs-on: ubuntu-latest
+    name: Create Release
+    needs: [build-binaries, build-packages]
+    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts/
+        
+    - name: Get version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
+          VERSION="${{ inputs.version }}"
+        else
+          VERSION="${GITHUB_REF#refs/tags/}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        
+    - name: Create release notes
+      id: release-notes
+      run: |
+        echo "Creating release notes..."
+        
+        # Generate changelog
+        CHANGELOG=$(git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD)
+        
+        # Create release notes
+        cat > RELEASE_NOTES.md << EOF
+        # Autonomy v$VERSION
+
+        ## What's New
+
+        This release includes the following improvements:
+
+        $CHANGELOG
+
+        ## Downloads
+
+        ### Binaries
+        - **Linux AMD64**: [autonomyd-linux-amd64](autonomyd-linux-amd64) ([SHA256](autonomyd-linux-amd64.sha256))
+        - **Linux ARM64**: [autonomyd-linux-arm64](autonomyd-linux-arm64) ([SHA256](autonomyd-linux-arm64.sha256))
+        - **Linux ARMv7**: [autonomyd-linux-armv7](autonomyd-linux-armv7) ([SHA256](autonomyd-linux-armv7.sha256))
+        - **Linux MIPS**: [autonomyd-linux-mips](autonomyd-linux-mips) ([SHA256](autonomyd-linux-mips.sha256))
+        - **Linux MIPSLE**: [autonomyd-linux-mipsle](autonomyd-linux-mipsle) ([SHA256](autonomyd-linux-mipsle.sha256))
+
+        ### Packages
+        - **OpenWrt**: [autonomy-openwrt-$VERSION.tar.gz](autonomy-openwrt-$VERSION.tar.gz)
+        - **RUTOS**: [autonomy-rutos-$VERSION.tar.gz](autonomy-rutos-$VERSION.tar.gz)
+        - **Docker**: [autonomy-docker-$VERSION.tar.gz](autonomy-docker-$VERSION.tar.gz)
+
+        ## Installation
+
+        ### OpenWrt
+        \`\`\`bash
+        opkg install autonomy-openwrt-$VERSION.tar.gz
+        \`\`\`
+
+        ### RUTOS
+        \`\`\`bash
+        # Upload package to router and install
+        \`\`\`
+
+        ### Docker
+        \`\`\`bash
+        docker load < autonomy-docker-$VERSION.tar.gz
+        docker run -d --name autonomy autonomy:$VERSION
+        \`\`\`
+
+        ## Documentation
+
+        - [Quick Start Guide](docs/QUICK_START.md)
+        - [Configuration Reference](docs/CONFIGURATION.md)
+        - [API Reference](docs/API_REFERENCE.md)
+
+        ## Support
+
+        - [Issues](https://github.com/markus-lassfolk/autonomy/issues)
+        - [Discussions](https://github.com/markus-lassfolk/autonomy/discussions)
+        EOF
+        
+        echo "release-notes<<EOF" >> $GITHUB_OUTPUT
+        cat RELEASE_NOTES.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        release_name: Autonomy v${{ steps.version.outputs.version }}
+        body: ${{ steps.release-notes.outputs.release-notes }}
+        draft: false
+        prerelease: false
+        
+    - name: Upload release assets
+      run: |
+        echo "Uploading release assets..."
+        
+        # Find all binary files
+        find artifacts/ -name "autonomyd-*" -type f ! -name "*.sha256" | while read file; do
+          echo "Uploading $file..."
+          gh release upload v$VERSION "$file" --clobber
+          
+          # Upload corresponding SHA256 file
+          sha256_file="${file}.sha256"
+          if [ -f "$sha256_file" ]; then
+            gh release upload v$VERSION "$sha256_file" --clobber
+          fi
+        done
+        
+        # Upload packages
+        find artifacts/ -name "*.tar.gz" -type f | while read file; do
+          echo "Uploading $file..."
+          gh release upload v$VERSION "$file" --clobber
+        done
+        
+    - name: Publish to Docker Hub
+      if: github.event_name == 'release'
+      run: |
+        echo "Publishing to Docker Hub..."
+        
+        # Load Docker image
+        docker load < artifacts/build/autonomy-docker-$VERSION.tar.gz
+        
+        # Login to Docker Hub
+        echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+        
+        # Tag and push
+        docker tag autonomy:$VERSION ${{ secrets.DOCKERHUB_USERNAME }}/autonomy:$VERSION
+        docker tag autonomy:$VERSION ${{ secrets.DOCKERHUB_USERNAME }}/autonomy:latest
+        
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/autonomy:$VERSION
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/autonomy:latest
+        
+    - name: Create release summary
+      if: always()
+      run: |
+        echo "## 📦 Release Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Version**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Release**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Assets Created" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Binaries for 5 platforms" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ OpenWrt package" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ RUTOS package" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Docker image" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Release notes" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🎉 **Release v${{ steps.version.outputs.version }} is ready!**" >> $GITHUB_STEP_SUMMARY

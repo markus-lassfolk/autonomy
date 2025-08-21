@@ -1,0 +1,289 @@
+name: Copilot Autonomous Issue Resolution
+
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to process'
+        required: false
+        type: number
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: write
+
+jobs:
+  copilot-analysis:
+    runs-on: ubuntu-latest
+    name: Copilot Issue Analysis
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.COPILOT_TOKEN }}
+        
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+        cache: true
+        
+    - name: Determine target issues
+      id: target-issues
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.issue_number }}" ]; then
+          echo "target-issues=${{ inputs.issue_number }}" >> $GITHUB_OUTPUT
+          echo "Processing manually triggered issue: ${{ inputs.issue_number }}"
+        elif [ "${{ github.event_name }}" = "issues" ]; then
+          echo "target-issues=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+          echo "Processing issue from event: ${{ github.event.issue.number }}"
+        else
+          # Find issues that Copilot can handle
+          echo "Finding issues for Copilot to process..."
+          ISSUES=$(gh issue list --state open --label "copilot-assign" --json number,title,labels --jq '.[] | select(.labels[] | .name == "copilot-assign") | .number' | tr '\n' ' ')
+          if [ -n "$ISSUES" ]; then
+            echo "target-issues=$ISSUES" >> $GITHUB_OUTPUT
+            echo "Found issues for Copilot: $ISSUES"
+          else
+            echo "target-issues=" >> $GITHUB_OUTPUT
+            echo "No issues found for Copilot"
+          fi
+        fi
+        
+    - name: Analyze issues with Copilot
+      if: steps.target-issues.outputs.target-issues != ''
+      env:
+        GH_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+      run: |
+        TARGET_ISSUES="${{ steps.target-issues.outputs.target-issues }}"
+        
+        for ISSUE_NUMBER in $TARGET_ISSUES; do
+          echo ""
+          echo "🤖 Analyzing issue #$ISSUE_NUMBER with Copilot..."
+          
+          # Get issue details
+          ISSUE_DATA=$(gh api "repos/${{ github.repository }}/issues/$ISSUE_NUMBER" --jq '{
+            title: .title,
+            body: .body,
+            labels: [.labels[].name],
+            assignees: [.assignees[].login],
+            state: .state
+          }')
+          
+          TITLE=$(echo "$ISSUE_DATA" | jq -r '.title')
+          BODY=$(echo "$ISSUE_DATA" | jq -r '.body')
+          LABELS=$(echo "$ISSUE_DATA" | jq -r '.labels[]' | tr '\n' ' ')
+          
+          echo "   Title: $TITLE"
+          echo "   Labels: $LABELS"
+          
+          # Check if Copilot can handle this issue
+          CAN_HANDLE=false
+          REASON=""
+          
+          # Check for autonomy-specific patterns
+          if echo "$TITLE $BODY" | grep -qE "(daemon_down|daemon_hung|crash_loop|system_degraded|performance_issue|memory_leak|ubus_error|uci_error)"; then
+            CAN_HANDLE=true
+            REASON="autonomy_system_issue"
+          elif echo "$TITLE $BODY" | grep -qE "(notification_failure|webhook_error|mqtt_error)"; then
+            CAN_HANDLE=true
+            REASON="notification_issue"
+          elif echo "$TITLE $BODY" | grep -qE "(starlink_api|cellular_monitoring|gps_integration)"; then
+            CAN_HANDLE=true
+            REASON="monitoring_issue"
+          elif echo "$TITLE $BODY" | grep -qE "(build_error|compilation_error|test_failure)"; then
+            CAN_HANDLE=true
+            REASON="build_issue"
+          elif echo "$TITLE $BODY" | grep -qE "(security_vulnerability|secret_leak|privacy_issue)"; then
+            CAN_HANDLE=true
+            REASON="security_issue"
+          fi
+          
+          if [ "$CAN_HANDLE" = "true" ]; then
+            echo "   ✅ Copilot can handle this issue ($REASON)"
+            echo "copilot-issues=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+          else
+            echo "   ❌ Copilot cannot handle this issue"
+          fi
+        done
+        
+    - name: Generate fixes for Copilot issues
+      if: steps.target-issues.outputs.target-issues != '' && steps.copilot-analysis.outputs.copilot-issues != ''
+      env:
+        GH_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+      run: |
+        COPILOT_ISSUES="${{ steps.copilot-analysis.outputs.copilot-issues }}"
+        
+        for ISSUE_NUMBER in $COPILOT_ISSUES; do
+          echo ""
+          echo "🔧 Generating fix for issue #$ISSUE_NUMBER..."
+          
+          # Run the fix generation script
+          ./scripts/copilot-generate-fix.sh "$ISSUE_NUMBER" "${{ github.repository }}"
+          
+          if [ $? -eq 0 ]; then
+            echo "   ✅ Fix generated successfully"
+          else
+            echo "   ❌ Fix generation failed"
+          fi
+        done
+
+  create-pull-requests:
+    needs: copilot-analysis
+    runs-on: ubuntu-latest
+    if: needs.copilot-analysis.outputs.copilot-issues != ''
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.COPILOT_TOKEN }}
+        
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+        cache: true
+        
+    - name: Create pull requests for fixes
+      env:
+        GH_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+      run: |
+        COPILOT_ISSUES="${{ needs.copilot-analysis.outputs.copilot-issues }}"
+        
+        for ISSUE_NUMBER in $COPILOT_ISSUES; do
+          echo ""
+          echo "📝 Creating pull request for issue #$ISSUE_NUMBER..."
+          
+          # Check if fix files exist
+          if [ -f "fixes/issue-$ISSUE_NUMBER.patch" ]; then
+            # Apply the patch
+            git apply "fixes/issue-$ISSUE_NUMBER.patch"
+            
+            # Create branch
+            BRANCH_NAME="copilot-fix-$ISSUE_NUMBER"
+            git checkout -b "$BRANCH_NAME"
+            
+            # Commit changes
+            git add .
+            git commit -m "🤖 Copilot: Fix for issue #$ISSUE_NUMBER
+            
+            - Automated fix generated by GitHub Copilot
+            - Addresses: $ISSUE_NUMBER
+            - Type: autonomy system improvement"
+            
+            # Push branch
+            git push origin "$BRANCH_NAME"
+            
+            # Create pull request
+            gh pr create \
+              --title "🤖 Copilot: Fix for issue #$ISSUE_NUMBER" \
+              --body "This pull request contains an automated fix for issue #$ISSUE_NUMBER, generated by GitHub Copilot.
+              
+              ## Changes
+              - Automated fix for the reported issue
+              - Includes comprehensive testing
+              - Follows project coding standards
+              
+              ## Testing
+              - [ ] Unit tests pass
+              - [ ] Integration tests pass
+              - [ ] Security scan passes
+              - [ ] Code quality checks pass
+              
+              Closes #$ISSUE_NUMBER" \
+              --base main \
+              --head "$BRANCH_NAME" \
+              --label "copilot-fix" \
+              --label "automated"
+              
+            echo "   ✅ Pull request created"
+          else
+            echo "   ❌ No fix file found for issue #$ISSUE_NUMBER"
+          fi
+        done
+
+  validate-pull-requests:
+    needs: create-pull-requests
+    runs-on: ubuntu-latest
+    if: needs.copilot-analysis.outputs.copilot-issues != ''
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.COPILOT_TOKEN }}
+        
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+        cache: true
+        
+    - name: Run tests
+      run: |
+        echo "🧪 Running comprehensive test suite..."
+        make test
+        
+    - name: Run security scan
+      run: |
+        echo "🔒 Running security scan..."
+        make security-scan
+        
+    - name: Run code quality checks
+      run: |
+        echo "✨ Running code quality checks..."
+        make lint
+        
+    - name: Validate pull requests
+      env:
+        GH_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+      run: |
+        COPILOT_ISSUES="${{ needs.copilot-analysis.outputs.copilot-issues }}"
+        
+        for ISSUE_NUMBER in $COPILOT_ISSUES; do
+          echo ""
+          echo "✅ Validating pull request for issue #$ISSUE_NUMBER..."
+          
+          # Find the pull request
+          PR_NUMBER=$(gh pr list --head "copilot-fix-$ISSUE_NUMBER" --json number --jq '.[0].number')
+          
+          if [ -n "$PR_NUMBER" ]; then
+            # Check if all checks pass
+            CHECKS_PASSED=true
+            
+            # Wait for checks to complete
+            sleep 30
+            
+            # Check status
+            STATUS=$(gh pr checks "$PR_NUMBER" --json status --jq '.[0].status')
+            
+            if [ "$STATUS" = "completed" ]; then
+              CONCLUSION=$(gh pr checks "$PR_NUMBER" --json conclusion --jq '.[0].conclusion')
+              
+              if [ "$CONCLUSION" = "success" ]; then
+                echo "   ✅ All checks passed, auto-merging..."
+                
+                # Auto-merge the pull request
+                gh pr merge "$PR_NUMBER" --auto --merge
+                
+                # Close the original issue
+                gh issue close "$ISSUE_NUMBER" --reason completed
+                
+                echo "   ✅ Pull request merged and issue closed"
+              else
+                echo "   ❌ Checks failed, manual review required"
+                gh issue comment "$ISSUE_NUMBER" --body "🤖 Copilot: The automated fix failed validation checks. Manual review required."
+              fi
+            else
+              echo "   ⏳ Checks still running..."
+            fi
+          else
+            echo "   ❌ Pull request not found"
+          fi
+        done

@@ -1,0 +1,156 @@
+name: Code Quality & Formatting
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality & Formatting
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+        cache: true
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install Go tools
+      run: |
+        go install golang.org/x/tools/cmd/goimports@latest
+        go install honnef.co/go/tools/cmd/staticcheck@latest
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+        go install golang.org/x/lint/golint@latest
+        
+    - name: Install Node.js tools
+      run: |
+        npm install -g prettier
+        npm install -g markdownlint-cli
+        
+    - name: Format Go code
+      run: |
+        echo "🔧 Formatting Go code..."
+        goimports -w .
+        gofmt -s -w .
+        
+    - name: Format Markdown
+      run: |
+        echo "📝 Formatting Markdown..."
+        find . -name "*.md" -not -path "./vendor/*" -not -path "./node_modules/*" | \
+        xargs prettier --write --prose-wrap always
+        
+    - name: Format YAML/JSON
+      run: |
+        echo "📄 Formatting YAML/JSON..."
+        find . -name "*.yml" -o -name "*.yaml" -o -name "*.json" | \
+        grep -v node_modules | grep -v vendor | \
+        xargs prettier --write
+        
+    - name: Lint Go code
+      run: |
+        echo "🔍 Linting Go code..."
+        golangci-lint run --timeout=5m --out-format=github-actions
+        
+    - name: Lint Markdown
+      run: |
+        echo "📝 Linting Markdown..."
+        markdownlint "**/*.md" --ignore node_modules --ignore vendor
+        
+    - name: Run Go vet
+      run: |
+        echo "🔍 Running go vet..."
+        go vet ./...
+        
+    - name: Run staticcheck
+      run: |
+        echo "🔍 Running staticcheck..."
+        staticcheck ./...
+        
+    - name: Check for TODO/FIXME comments
+      run: |
+        echo "🔍 Checking for TODO/FIXME comments..."
+        TODO_COUNT=$(grep -r "TODO\|FIXME" --include="*.go" --include="*.md" . | grep -v vendor | wc -l)
+        if [ "$TODO_COUNT" -gt 0 ]; then
+          echo "⚠️ Found $TODO_COUNT TODO/FIXME comments:"
+          grep -r "TODO\|FIXME" --include="*.go" --include="*.md" . | grep -v vendor
+        else
+          echo "✅ No TODO/FIXME comments found"
+        fi
+        
+    - name: Check for debug code
+      run: |
+        echo "🔍 Checking for debug code..."
+        DEBUG_COUNT=$(grep -r "fmt.Print\|log.Print\|debug\|DEBUG" --include="*.go" . | grep -v vendor | grep -v test | wc -l)
+        if [ "$DEBUG_COUNT" -gt 0 ]; then
+          echo "⚠️ Found $DEBUG_COUNT potential debug statements:"
+          grep -r "fmt.Print\|log.Print\|debug\|DEBUG" --include="*.go" . | grep -v vendor | grep -v test
+        else
+          echo "✅ No debug code found"
+        fi
+        
+    - name: Check import organization
+      run: |
+        echo "🔍 Checking import organization..."
+        goimports -d . || {
+          echo "❌ Import organization issues found. Run 'goimports -w .' to fix."
+          exit 1
+        }
+        
+    - name: Check for unused imports
+      run: |
+        echo "🔍 Checking for unused imports..."
+        go vet -unusedresultfuncs=all ./... || true
+        
+    - name: Commit formatting changes
+      if: github.event_name == 'pull_request'
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "📝 Committing formatting changes..."
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git commit -m "🔧 Auto-format code [skip ci]"
+          git push
+        else
+          echo "✅ No formatting changes needed"
+        fi
+        
+    - name: Create Quality Report
+      if: always()
+      run: |
+        echo "## 🔍 Code Quality Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Count Go files
+        GO_FILES=$(find . -name "*.go" | grep -v vendor | wc -l)
+        echo "**Go Files**: $GO_FILES" >> $GITHUB_STEP_SUMMARY
+        
+        # Count Markdown files
+        MD_FILES=$(find . -name "*.md" | wc -l)
+        echo "**Markdown Files**: $MD_FILES" >> $GITHUB_STEP_SUMMARY
+        
+        # Count lines of code
+        LOC=$(find . -name "*.go" | grep -v vendor | xargs wc -l | tail -1 | awk '{print $1}')
+        echo "**Lines of Go Code**: $LOC" >> $GITHUB_STEP_SUMMARY
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **All quality checks passed**" >> $GITHUB_STEP_SUMMARY

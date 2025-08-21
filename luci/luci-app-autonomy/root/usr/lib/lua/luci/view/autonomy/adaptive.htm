@@ -1,0 +1,295 @@
+<%+header%>
+
+<h2><%:autonomy Adaptive Sampling Management%></h2>
+
+<div class="cbi-section">
+    <div class="cbi-section-descr"><%:Monitor and configure adaptive sampling rates based on connection type, performance, and data usage.%></div>
+    
+    <!-- Adaptive Sampling Status -->
+    <div class="cbi-section">
+        <h3><%:Current Status%></h3>
+        <div id="adaptive-status">
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-label"><%:System Status%>:</span>
+                    <span id="system-status" class="status-value">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label"><%:Current Mode%>:</span>
+                    <span id="current-mode" class="status-value">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label"><%:Current Interval%>:</span>
+                    <span id="current-interval" class="status-value">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label"><%:Connection Type%>:</span>
+                    <span id="connection-type" class="status-value">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance Metrics -->
+    <div class="cbi-section">
+        <h3><%:Performance Metrics%></h3>
+        <div id="performance-metrics">
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <span class="metric-label"><%:Data Usage%>:</span>
+                    <span id="data-usage" class="metric-value">-</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label"><%:Battery Level%>:</span>
+                    <span id="battery-level" class="metric-value">-</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label"><%:Performance Score%>:</span>
+                    <span id="performance-score" class="metric-value">-</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label"><%:Fall Behind Count%>:</span>
+                    <span id="fall-behind" class="metric-value">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Connection Type Rules -->
+    <div class="cbi-section">
+        <h3><%:Connection Type Rules%></h3>
+        <div class="cbi-section-descr"><%:Configure sampling intervals for different connection types.%></div>
+        <div id="connection-rules">
+            <div class="rules-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th><%:Connection Type%></th>
+                            <th><%:Current Interval%></th>
+                            <th><%:Base Interval%></th>
+                            <th><%:Status%></th>
+                        </tr>
+                    </thead>
+                    <tbody id="rules-tbody">
+                        <tr><td colspan="4"><%:Loading...%></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Adaptation History -->
+    <div class="cbi-section">
+        <h3><%:Recent Adaptations%></h3>
+        <div id="adaptation-history">
+            <div class="history-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th><%:Time%></th>
+                            <th><%:Old Interval%></th>
+                            <th><%:New Interval%></th>
+                            <th><%:Reason%></th>
+                            <th><%:Mode%></th>
+                        </tr>
+                    </thead>
+                    <tbody id="adaptation-tbody">
+                        <tr><td colspan="5"><%:Loading...%></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Configuration -->
+    <div class="cbi-section">
+        <h3><%:Configuration%></h3>
+        <div class="cbi-section-descr"><%:View current adaptive sampling configuration.%></div>
+        <div id="adaptive-config">
+            <div class="config-grid">
+                <div class="config-item">
+                    <span class="config-label"><%:Base Interval%>:</span>
+                    <span id="base-interval" class="config-value">-</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label"><%:Min Interval%>:</span>
+                    <span id="min-interval" class="config-value">-</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label"><%:Max Interval%>:</span>
+                    <span id="max-interval" class="config-value">-</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label"><%:Adaptation Rate%>:</span>
+                    <span id="adaptation-rate" class="config-value">-</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label"><%:Data Limit Threshold%>:</span>
+                    <span id="data-threshold" class="config-value">-</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label"><%:Battery Threshold%>:</span>
+                    <span id="battery-threshold" class="config-value">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.status-grid, .metrics-grid, .config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.status-item, .metric-item, .config-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    border-left: 4px solid #007cba;
+}
+
+.status-label, .metric-label, .config-label {
+    font-weight: bold;
+    color: #666;
+}
+
+.status-value, .metric-value, .config-value {
+    color: #333;
+    font-weight: 500;
+}
+
+.rules-container, .history-container {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+.mode-unlimited {
+    color: #4CAF50;
+}
+
+.mode-metered {
+    color: #ff9800;
+}
+
+.mode-conservative {
+    color: #2196F3;
+}
+
+.mode-aggressive {
+    color: #f44336;
+}
+
+.mode-battery {
+    color: #9C27B0;
+}
+</style>
+
+<script type="text/javascript">
+// Load adaptive sampling data
+function loadAdaptiveData() {
+    XHR.get('<%=luci.dispatcher.build_url("admin", "network", "autonomy", "adaptive_data")%>', null, function(xhr) {
+        if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            updateAdaptiveDisplay(data);
+        }
+    });
+}
+
+// Update adaptive display
+function updateAdaptiveDisplay(data) {
+    // Update status
+    if (data.status) {
+        document.getElementById('system-status').textContent = data.status.enabled ? 'Enabled' : 'Disabled';
+        document.getElementById('current-mode').textContent = data.status.current_mode || '-';
+        document.getElementById('current-interval').textContent = formatDuration(data.status.current_interval);
+        document.getElementById('connection-type').textContent = data.status.connection_type || '-';
+    }
+    
+    // Update performance metrics
+    if (data.status) {
+        document.getElementById('data-usage').textContent = (data.status.data_usage_percent || 0) + '%';
+        document.getElementById('battery-level').textContent = (data.status.battery_level || 0) + '%';
+        document.getElementById('performance-score').textContent = (data.status.performance_score || 0) + '%';
+        document.getElementById('fall-behind').textContent = data.status.fall_behind_count || 0;
+    }
+    
+    // Update configuration
+    if (data.config) {
+        document.getElementById('base-interval').textContent = formatDuration(data.config.base_interval);
+        document.getElementById('min-interval').textContent = formatDuration(data.config.min_interval);
+        document.getElementById('max-interval').textContent = formatDuration(data.config.max_interval);
+        document.getElementById('adaptation-rate').textContent = (data.config.adaptation_rate || 0) + '%';
+        document.getElementById('data-threshold').textContent = (data.config.data_limit_threshold || 0) + '%';
+        document.getElementById('battery-threshold').textContent = (data.config.battery_threshold || 0) + '%';
+    }
+    
+    // Update connection rules
+    if (data.config && data.config.connection_type_rules) {
+        updateConnectionRules(data.config.connection_type_rules);
+    }
+}
+
+// Update connection rules table
+function updateConnectionRules(rules) {
+    const tbody = document.getElementById('rules-tbody');
+    tbody.innerHTML = '';
+    
+    const connectionTypes = ['starlink', 'cellular', 'wifi', 'lan', 'unknown'];
+    
+    connectionTypes.forEach(function(type) {
+        const rule = rules[type];
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${type.charAt(0).toUpperCase() + type.slice(1)}</td>
+            <td>${rule ? formatDuration(rule) : '-'}</td>
+            <td>${rule ? formatDuration(rule) : '-'}</td>
+            <td>${rule ? 'Active' : 'Default'}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Format duration for display
+function formatDuration(seconds) {
+    if (!seconds) return '-';
+    
+    if (seconds < 60) {
+        return seconds + 's';
+    } else if (seconds < 3600) {
+        return Math.round(seconds / 60) + 'm';
+    } else {
+        return Math.round(seconds / 3600) + 'h';
+    }
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadAdaptiveData();
+    
+    // Auto-refresh every 10 seconds
+    setInterval(loadAdaptiveData, 10000);
+});
+</script>
+
+<%+footer%>

@@ -1,0 +1,210 @@
+name: Release Management
+
+on:
+  release:
+    types: [ published ]
+
+jobs:
+  generate-release-notes:
+    name: Generate Release Notes
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Get previous release tag
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+        
+        if [ -z "$PREV_TAG" ]; then
+          # First release, get all commits
+          COMMITS=$(git log --pretty=format:"- %s" --no-merges)
+        else
+          # Get commits since last release
+          COMMITS=$(git log --pretty=format:"- %s" --no-merges $PREV_TAG..HEAD)
+        fi
+        
+        # Get closed issues with autonomy-alert label
+        CLOSED_ISSUES=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/issues?state=closed&labels=autonomy-alert&since=$(date -d '30 days ago' -u +%Y-%m-%dT%H:%M:%SZ)" | \
+          jq -r '.[] | "- #\(.number): \(.title)"' 2>/dev/null || echo "")
+        
+        # Create release notes
+        cat > RELEASE_NOTES.md << EOF
+        # Release Notes for ${{ github.event.release.tag_name }}
+        
+        ## What's New
+        
+        ### Features
+        - Add privacy-safe, opt-in error reporting
+        - Implement issue deduplication to reduce noise
+        - Add automatic updates via opkg feed
+        - Enhance security with GitHub App authentication
+        
+        ### Bug Fixes
+        - Fix memory usage optimization
+        - Improve CPU efficiency with score caching
+        - Optimize network operations with message batching
+        
+        ### Security
+        - Add HMAC validation for webhook security
+        - Implement device ID anonymization
+        - Add PII sanitization in error reports
+        
+        ## Recent Commits
+        $COMMITS
+        
+        ## Closed Issues
+        $CLOSED_ISSUES
+        
+        ## Installation
+        
+        ### Manual Installation
+        Download the appropriate binary for your platform from the release assets.
+        
+        ### Package Installation (RutOS/OpenWrt)
+        \`\`\`bash
+        # Add the package feed
+        echo "src/gz autonomy https://github.com/${{ github.repository }}/releases/latest/download" >> /etc/opkg/customfeeds.conf
+        
+        # Update package list
+        opkg update
+        
+        # Install autonomy
+        opkg install autonomy
+        \`\`\`
+        
+        ## Configuration
+        
+        Copy the example configuration and customize:
+        \`\`\`bash
+        cp /etc/autonomy/autonomy.example /etc/config/autonomy
+        cp /etc/autonomy/watchdog.example /etc/autonomy/watch.conf
+        \`\`\`
+        
+        ## Privacy Settings
+        
+        The new privacy features are disabled by default. To enable:
+        
+        1. Edit \`/etc/autonomy/watch.conf\`
+        2. Set \`REPORTING_ENABLED=1\` to enable error reporting
+        3. Set \`ANONYMIZE_DEVICE_ID=1\` to anonymize device identification
+        4. Set \`AUTO_UPDATE_ENABLED=1\` to enable automatic updates
+        
+        ## Breaking Changes
+        
+        None in this release.
+        
+        ## Support
+        
+        For issues and questions, please visit the [GitHub repository](https://github.com/${{ github.repository }}).
+        EOF
+        
+        # Update release notes
+        echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+        cat RELEASE_NOTES.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+    - name: Update release description
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: release } = await github.rest.repos.getRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            release_id: context.payload.release.id
+          });
+          
+          await github.rest.repos.updateRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            release_id: context.payload.release.id,
+            body: `${{ steps.release_notes.outputs.RELEASE_NOTES }}`
+          });
+
+  create-opkg-feed:
+    name: Create OPKG Feed
+    runs-on: ubuntu-latest
+    needs: generate-release-notes
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download release assets
+      run: |
+        # Download the package from release
+        gh release download ${{ github.event.release.tag_name }} --pattern "*.ipk"
+        
+    - name: Create OPKG feed
+      run: |
+        # Create Packages file
+        opkg-make-index . > Packages
+        
+        # Create Packages.gz
+        gzip -c Packages > Packages.gz
+        
+        # Create feed directory structure
+        mkdir -p feed/stable feed/beta
+        
+        # Copy packages to appropriate channels
+        cp *.ipk feed/stable/
+        cp Packages* feed/stable/
+        
+        # For beta releases, also copy to beta channel
+        if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
+          cp *.ipk feed/beta/
+          cp Packages* feed/beta/
+        fi
+        
+    - name: Upload OPKG feed
+      uses: actions/upload-artifact@v3
+      with:
+        name: opkg-feed
+        path: feed/
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./feed
+        destination_dir: opkg
+
+  notify-users:
+    name: Notify Users
+    runs-on: ubuntu-latest
+    needs: [generate-release-notes, create-opkg-feed]
+    
+    steps:
+    - name: Notify via GitHub Discussions
+      uses: actions/github-script@v6
+      with:
+        script: |
+          await github.rest.discussions.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            category_id: 1, // Announcements category
+            title: `New Release: ${{ github.event.release.tag_name }}`,
+            body: `${{ steps.release_notes.outputs.RELEASE_NOTES }}`
+          });
+          
+    - name: Update release tracking
+      run: |
+        # Update release tracking file
+        echo "## Release History" > RELEASES.md
+        echo "" >> RELEASES.md
+        echo "| Version | Date | Notes |" >> RELEASES.md
+        echo "|---------|------|-------|" >> RELEASES.md
+        echo "| ${{ github.event.release.tag_name }} | $(date +%Y-%m-%d) | [Release Notes](${{ github.event.release.html_url }}) |" >> RELEASES.md
+        
+        # Commit and push
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add RELEASES.md
+        git commit -m "Update release tracking for ${{ github.event.release.tag_name }}" || true
+        git push

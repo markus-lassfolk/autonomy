@@ -1,0 +1,292 @@
+name: RUTOS Pre-Review Validation
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - review_requested
+      - ready_for_review
+    branches: [ '*' ]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to validate'
+        required: false
+        type: number
+
+jobs:
+  rutos-validation:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+      statuses: write
+    
+    outputs:
+      validation-status: ${{ steps.validation.outputs.status }}
+      issues-found: ${{ steps.validation.outputs.issues-found }}
+      critical-issues: ${{ steps.validation.outputs.critical-issues }}
+      
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck shfmt gh
+          
+      - name: Get Changed Files
+        id: changed-files
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.pr_number }}" ]; then
+            # Manual dispatch with PR number
+            PR_NUMBER="${{ inputs.pr_number }}"
+            echo "Getting files for PR #$PR_NUMBER"
+            gh pr diff $PR_NUMBER --name-only > changed_files.txt
+          else
+            # Regular PR event
+            PR_NUMBER="${{ github.event.number }}"
+            echo "Getting files for current PR #$PR_NUMBER"
+            gh pr diff $PR_NUMBER --name-only > changed_files.txt || {
+              echo "Fallback to git diff"
+              git diff --name-only ${{ github.event.before }}..${{ github.event.after }} > changed_files.txt
+            }
+          fi
+          
+          # Filter for shell scripts and markdown files
+          grep -E '\.(sh|md)$' changed_files.txt || echo "No shell/markdown files changed"
+          
+          echo "FILES_CHANGED=$(cat changed_files.txt | wc -l)" >> $GITHUB_OUTPUT
+          echo "SHELL_FILES=$(grep -E '\.sh$' changed_files.txt | wc -l || echo 0)" >> $GITHUB_OUTPUT
+          echo "MD_FILES=$(grep -E '\.md$' changed_files.txt | wc -l || echo 0)" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Run RUTOS Validation
+        id: validation
+        run: |
+          echo "🔍 Running RUTOS compatibility validation..."
+          
+          # Initialize counters
+          TOTAL_ISSUES=0
+          CRITICAL_ISSUES=0
+          MAJOR_ISSUES=0
+          VALIDATION_FAILED=false
+          
+          # Create validation report
+          echo "# 🤖 RUTOS Pre-Review Validation Report" > validation_report.md
+          echo "" >> validation_report.md
+          echo "**Validation Time:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> validation_report.md
+          echo "**PR:** #${{ github.event.number || inputs.pr_number }}" >> validation_report.md
+          echo "" >> validation_report.md
+          
+          # Check if validation script exists
+          if [ ! -f "scripts/pre-commit-validation.sh" ]; then
+            echo "❌ RUTOS validation script not found"
+            echo "## ❌ Validation Script Missing" >> validation_report.md
+            echo "The RUTOS validation script \`scripts/pre-commit-validation.sh\` was not found." >> validation_report.md
+            echo "status=error" >> $GITHUB_OUTPUT
+            echo "issues-found=1" >> $GITHUB_OUTPUT
+            echo "critical-issues=1" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          # Make validation script executable
+          chmod +x scripts/pre-commit-validation.sh
+          
+          # Read changed files
+          if [ ! -f changed_files.txt ]; then
+            echo "No changed files to validate"
+            echo "## ✅ No Files to Validate" >> validation_report.md
+            echo "No shell scripts or markdown files were changed in this PR." >> validation_report.md
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "issues-found=0" >> $GITHUB_OUTPUT
+            echo "critical-issues=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "## 📋 Files Validated" >> validation_report.md
+          echo "" >> validation_report.md
+          
+          # Validate each changed file
+          while IFS= read -r file; do
+            if echo "$file" | grep -E '\.(sh|md)$' >/dev/null && [ -f "$file" ]; then
+              echo "🔍 Validating: $file"
+              echo "- \`$file\`" >> validation_report.md
+              
+              # Run validation on individual file
+              if timeout 60 ./scripts/pre-commit-validation.sh "$file" > "validation_${file//\//_}.log" 2>&1; then
+                echo "  ✅ Passed validation"
+              else
+                echo "  ❌ Failed validation"
+                VALIDATION_FAILED=true
+                
+                # Parse validation output for issues
+                if [ -f "validation_${file//\//_}.log" ]; then
+                  # Count different types of issues
+                  CRITICAL_COUNT=$(grep -c "^\[CRITICAL\]" "validation_${file//\//_}.log" || echo 0)
+                  MAJOR_COUNT=$(grep -c "^\[MAJOR\]" "validation_${file//\//_}.log" || echo 0)
+                  MINOR_COUNT=$(grep -c "^\[MINOR\]" "validation_${file//\//_}.log" || echo 0)
+                  
+                  TOTAL_ISSUES=$((TOTAL_ISSUES + CRITICAL_COUNT + MAJOR_COUNT + MINOR_COUNT))
+                  CRITICAL_ISSUES=$((CRITICAL_ISSUES + CRITICAL_COUNT))
+                  MAJOR_ISSUES=$((MAJOR_ISSUES + MAJOR_COUNT))
+                  
+                  if [ $CRITICAL_COUNT -gt 0 ] || [ $MAJOR_COUNT -gt 0 ] || [ $MINOR_COUNT -gt 0 ]; then
+                    echo "    🔴 Critical: $CRITICAL_COUNT, 🟡 Major: $MAJOR_COUNT, 🔵 Minor: $MINOR_COUNT"
+                  fi
+                fi
+              fi
+            fi
+          done < changed_files.txt
+          
+          # Add validation summary
+          echo "" >> validation_report.md
+          echo "## 📊 Validation Summary" >> validation_report.md
+          echo "" >> validation_report.md
+          echo "- **Total Issues:** $TOTAL_ISSUES" >> validation_report.md
+          echo "- **Critical Issues:** $CRITICAL_ISSUES" >> validation_report.md
+          echo "- **Major Issues:** $MAJOR_ISSUES" >> validation_report.md
+          echo "- **Files Checked:** $(wc -l < changed_files.txt)" >> validation_report.md
+          
+          # Determine overall status
+          if [ "$VALIDATION_FAILED" = "true" ]; then
+            if [ $CRITICAL_ISSUES -gt 0 ]; then
+              echo "## ❌ Critical Issues Found" >> validation_report.md
+              echo "This PR has **critical RUTOS compatibility issues** that must be fixed before merge." >> validation_report.md
+              echo "status=failure" >> $GITHUB_OUTPUT
+            elif [ $MAJOR_ISSUES -gt 0 ]; then
+              echo "## ⚠️ Major Issues Found" >> validation_report.md
+              echo "This PR has **major RUTOS compatibility issues** that should be addressed." >> validation_report.md
+              echo "status=warning" >> $GITHUB_OUTPUT
+            else
+              echo "## ✅ Minor Issues Only" >> validation_report.md
+              echo "This PR has only minor issues. Ready for review." >> validation_report.md
+              echo "status=success" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "## ✅ All Validations Passed" >> validation_report.md
+            echo "This PR passes all RUTOS compatibility checks. Ready for merge!" >> validation_report.md
+            echo "status=success" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "issues-found=$TOTAL_ISSUES" >> $GITHUB_OUTPUT
+          echo "critical-issues=$CRITICAL_ISSUES" >> $GITHUB_OUTPUT
+          
+      - name: Post Validation Comment
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.number || inputs.pr_number }}"
+          
+          if [ -f validation_report.md ]; then
+            echo "📝 Posting validation report to PR #$PR_NUMBER"
+            gh pr comment $PR_NUMBER --body-file validation_report.md
+          else
+            echo "⚠️ No validation report found"
+            gh pr comment $PR_NUMBER --body "❌ RUTOS validation failed to generate report. Please check workflow logs."
+          fi
+          
+      - name: Set Check Status
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.number || inputs.pr_number }}"
+          STATUS="${{ steps.validation.outputs.status }}"
+          ISSUES="${{ steps.validation.outputs.issues-found }}"
+          CRITICAL="${{ steps.validation.outputs.critical-issues }}"
+          
+          # Set appropriate check status
+          case "$STATUS" in
+            "success")
+              echo "✅ Setting success status"
+              gh api repos/${{ github.repository }}/statuses/${{ github.event.after || github.sha }} \
+                --field state="success" \
+                --field description="RUTOS validation passed" \
+                --field context="rutos-validation"
+              
+              # Clear any previous blocking labels
+              echo "🧹 Clearing previous validation-failed labels"
+              gh pr edit $PR_NUMBER --remove-label "validation-failed,blocked-critical-issues" --repo ${{ github.repository }} 2>/dev/null || echo "No blocking labels to remove"
+              ;;
+            "warning")
+              echo "⚠️ Setting warning status"
+              gh api repos/${{ github.repository }}/statuses/${{ github.event.after || github.sha }} \
+                --field state="success" \
+                --field description="RUTOS validation: $ISSUES issues found" \
+                --field context="rutos-validation"
+              
+              # Clear critical blocking labels but keep warning labels
+              echo "🧹 Clearing critical blocking labels"
+              gh pr edit $PR_NUMBER --remove-label "blocked-critical-issues" --repo ${{ github.repository }} 2>/dev/null || echo "No critical blocking labels to remove"
+              ;;
+            "failure"|"error")
+              echo "❌ Setting failure status"
+              gh api repos/${{ github.repository }}/statuses/${{ github.event.after || github.sha }} \
+                --field state="failure" \
+                --field description="RUTOS validation failed: $CRITICAL critical issues" \
+                --field context="rutos-validation"
+              ;;
+          esac
+
+  # Block auto-merge if critical issues found
+  block-auto-merge:
+    runs-on: ubuntu-latest
+    needs: rutos-validation
+    if: needs.rutos-validation.outputs.critical-issues > 0
+    permissions:
+      pull-requests: write
+    
+    steps:
+      - name: Block Auto-Merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.number || inputs.pr_number }}"
+          
+          echo "🚫 Blocking auto-merge due to critical RUTOS compatibility issues"
+          
+          # Add blocking label
+          gh pr edit $PR_NUMBER --add-label "blocked-critical-issues"
+          
+          # Comment on why auto-merge is blocked
+          gh pr comment $PR_NUMBER --body "🚫 **Auto-merge blocked** due to ${{ needs.rutos-validation.outputs.critical-issues }} critical RUTOS compatibility issues. Please fix all critical issues before this PR can be automatically merged."
+
+  # Notify autonomous system of validation results
+  notify-autonomous-system:
+    runs-on: ubuntu-latest
+    needs: rutos-validation
+    if: always()
+    permissions:
+      contents: read
+      actions: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Trigger Autonomous Response
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STATUS="${{ needs.rutos-validation.outputs.validation-status }}"
+          ISSUES="${{ needs.rutos-validation.outputs.issues-found }}"
+          CRITICAL="${{ needs.rutos-validation.outputs.critical-issues }}"
+          
+          echo "🤖 Notifying autonomous system of validation results"
+          echo "Status: $STATUS, Issues: $ISSUES, Critical: $CRITICAL"
+          
+          # Trigger autonomous copilot workflow with validation context  
+          gh workflow run autonomous-copilot.yml \
+            --field validation_status="$STATUS" \
+            --field issues_found="$ISSUES" \
+            --field critical_issues="$CRITICAL" \
+            --field pr_number="${{ github.event.number || inputs.pr_number }}" \
+            --field action="validation-completed"
