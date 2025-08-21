@@ -1,11 +1,11 @@
 # RUTOS Test Environment Dockerfile
 FROM ubuntu:22.04
 
-# Install required packages for RUTOS-like environment
+# Install required packages for testing
 RUN apt-get update && \
     apt-get install -y \
-    wget \
     curl \
+    wget \
     jq \
     procps \
     iputils-ping \
@@ -17,7 +17,18 @@ RUN apt-get update && \
     make \
     gcc \
     build-essential \
+    ubus \
+    ubus-utils \
+    uci \
+    mwan3 \
+    iwinfo \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Go
+RUN wget https://go.dev/dl/go1.23.0.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.23.0.linux-amd64.tar.gz && \
+    rm go1.23.0.linux-amd64.tar.gz
+ENV PATH=$PATH:/usr/local/go/bin
 
 # Set up RUTOS-like environment
 WORKDIR /root
