@@ -4,7 +4,7 @@ source "https://rubygems.org"
 ruby "~> 3.1.0"
 
 gem "jekyll", "~> 4.4.0"
-gem "github-pages", group: :jekyll_plugins
+gem "github-pages", "~> 228", group: :jekyll_plugins
 
 group :jekyll_plugins do
   gem "jekyll-feed", "~> 0.12"

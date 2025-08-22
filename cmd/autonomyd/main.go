@@ -1065,7 +1065,7 @@ func writeHeartbeat(ctx context.Context, ticker *time.Ticker, startTime time.Tim
 				continue
 			}
 			defer os.Remove(tempFile.Name()) // Clean up temp file
-			
+
 			if err := os.WriteFile(tempFile.Name(), data, 0o644); err != nil {
 				logger.Error("Failed to write heartbeat file", "error", err, "file", tempFile.Name())
 				continue

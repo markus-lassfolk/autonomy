@@ -36,7 +36,7 @@ jobs:
       - name: Install test dependencies
         run: |
           go mod download
-          go install github.com/stretchr/testify@latest
+          go install github.com/stretchr/testify@v1.8.4
           go install github.com/golang/mock/mockgen@latest
 
       - name: Run integration tests
