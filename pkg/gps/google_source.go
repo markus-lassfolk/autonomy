@@ -95,8 +95,6 @@ type GoogleMapsElevationResponse struct {
 	Status string `json:"status"`
 }
 
-
-
 // NewGoogleLocationSource creates a new Google Location API source
 func NewGoogleLocationSource(priority int, apiKey string, useGoogleElevation bool, logger *logx.Logger) *GoogleLocationSource {
 	return &GoogleLocationSource{
