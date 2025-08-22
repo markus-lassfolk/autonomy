@@ -57,7 +57,9 @@ type Enhanced5GConfig struct {
 
 // safeInt64ToInt safely converts int64 to int with bounds checking
 func safeInt64ToInt(value int64) (int, bool) {
-	if value >= 0 && value <= int64(^uint(0)>>1) {
+	// Check if the value is within the range of int
+	const maxInt = int64(^uint(0) >> 1)
+	if value >= 0 && value <= maxInt {
 		return int(value), true
 	}
 	return 0, false
