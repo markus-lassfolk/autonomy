@@ -117,7 +117,10 @@ function processWebhook(payload) {
     try {
         const data = JSON.parse(payload);
         
-        log('info', `Received webhook: ${data.event} from ${data.source}`);
+        // Sanitize user input before logging
+        const sanitizedEvent = sanitizeMessage(data.event || 'unknown');
+        const sanitizedSource = sanitizeMessage(data.source || 'unknown');
+        log('info', `Received webhook: ${sanitizedEvent} from ${sanitizedSource}`);
         
         // Process different event types
         switch (data.event) {
@@ -134,12 +137,14 @@ function processWebhook(payload) {
                 handleSystemAlert(data);
                 break;
             default:
-                log('warn', `Unknown event type: ${data.event}`);
+                const sanitizedUnknownEvent = sanitizeMessage(data.event || 'unknown');
+                log('warn', `Unknown event type: ${sanitizedUnknownEvent}`);
         }
         
         return true;
     } catch (error) {
-        log('error', `Failed to process webhook: ${error.message}`);
+        const sanitizedErrorMessage = sanitizeMessage(error.message || 'unknown error');
+        log('error', `Failed to process webhook: ${sanitizedErrorMessage}`);
         return false;
     }
 }
