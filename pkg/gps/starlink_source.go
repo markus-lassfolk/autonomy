@@ -213,13 +213,13 @@ func (ss *StarlinkGPSSource) mergeLocationData(gps *ComprehensiveStarlinkGPS, da
 func (ss *StarlinkGPSSource) mergeStatusData(gps *ComprehensiveStarlinkGPS, data map[string]interface{}) {
 	if dishGetStatus, ok := data["dishGetStatus"].(map[string]interface{}); ok {
 		if gpsStats, ok := dishGetStatus["gpsStats"].(map[string]interface{}); ok {
-					if gpsValid, ok := gpsStats["gpsValid"].(bool); ok {
-			gps.GPSValid = &gpsValid
-		}
-		if gpsSats, ok := gpsStats["gpsSats"].(float64); ok {
-			gpsSatsInt := int(gpsSats)
-			gps.GPSSatellites = &gpsSatsInt
-		}
+			if gpsValid, ok := gpsStats["gpsValid"].(bool); ok {
+				gps.GPSValid = &gpsValid
+			}
+			if gpsSats, ok := gpsStats["gpsSats"].(float64); ok {
+				gpsSatsInt := int(gpsSats)
+				gps.GPSSatellites = &gpsSatsInt
+			}
 		}
 	}
 }
@@ -228,15 +228,15 @@ func (ss *StarlinkGPSSource) mergeStatusData(gps *ComprehensiveStarlinkGPS, data
 func (ss *StarlinkGPSSource) mergeDiagnosticsData(gps *ComprehensiveStarlinkGPS, data map[string]interface{}) {
 	if dishGetDiagnostics, ok := data["dishGetDiagnostics"].(map[string]interface{}); ok {
 		if location, ok := dishGetDiagnostics["location"].(map[string]interface{}); ok {
-					if enabled, ok := location["enabled"].(bool); ok {
-			gps.LocationEnabled = &enabled
-		}
-		if gpsTimeS, ok := location["gpsTimeS"].(float64); ok {
-			gps.GPSTimeS = &gpsTimeS
-		}
-		if uncertaintyMeters, ok := location["uncertaintyMeters"].(float64); ok {
-			gps.UncertaintyMeters = &uncertaintyMeters
-		}
+			if enabled, ok := location["enabled"].(bool); ok {
+				gps.LocationEnabled = &enabled
+			}
+			if gpsTimeS, ok := location["gpsTimeS"].(float64); ok {
+				gps.GPSTimeS = &gpsTimeS
+			}
+			if uncertaintyMeters, ok := location["uncertaintyMeters"].(float64); ok {
+				gps.UncertaintyMeters = &uncertaintyMeters
+			}
 
 			// Use diagnostics coordinates if primary coordinates are missing
 			if gps.Latitude == 0 && gps.Longitude == 0 {
@@ -324,7 +324,7 @@ func (ss *StarlinkGPSSource) convertToStandardized(comprehensive *ComprehensiveS
 	if comprehensive.GPSSatellites != nil {
 		gpsSats = *comprehensive.GPSSatellites
 	}
-	
+
 	if gpsValid {
 		if gpsSats >= 6 {
 			fixType = 3 // DGPS fix
