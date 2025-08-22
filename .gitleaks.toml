@@ -1,0 +1,37 @@
+# Gitleaks configuration for Autonomy project
+# This file configures secret detection rules
+
+[allowlist]
+description = "Allowlist for Autonomy project"
+paths = [
+    '''\.md$''',
+    '''\.txt$''',
+    '''\.yml$''',
+    '''\.yaml$''',
+    '''\.toml$''',
+    '''\.example$''',
+    '''test.*\.go$''',
+    '''_test\.go$''',
+    '''docs/''',
+    '''configs/''',
+    '''examples/'''
+]
+
+commits = [
+    "allowlisted-commit-hash"
+]
+
+regexes = [
+    '''(?i)(test|example|sample|mock).*'''
+]
+
+[detectors]
+# Enable all detectors
+use-default = true
+
+# Custom rules for Autonomy project
+[[rules]]
+id = "autonomy-custom-rule"
+description = "Custom rule for Autonomy project"
+regex = '''(?i)(autonomy|starlink|cellular).*secret'''
+tags = ["key", "autonomy"]
