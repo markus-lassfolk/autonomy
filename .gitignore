@@ -3,12 +3,22 @@
 *.dll
 *.so
 *.dylib
-autonomyd
-autonomyd-*
-autonomyctl
-test-*
+
+# Ignore binary files in root and build directories, but allow source directories
+/autonomyd
+/autonomyd-*
+/autonomyctl
+/test-*
 !test-*.go
 !test-*.sh
+
+# Ignore binaries in cmd subdirectories
+cmd/*/autonomyd
+cmd/*/autonomyctl
+cmd/*/starfaild
+cmd/*/test-*
+!cmd/*/test-*.go
+!cmd/*/test-*.sh
 
 # Build directories
 build/
