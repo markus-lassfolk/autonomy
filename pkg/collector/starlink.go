@@ -438,7 +438,7 @@ func (sc *StarlinkCollector) extractMetricsFromAPIResponseDetailed(apiResp *Star
 	}
 
 	// System uptime and boot count
-	if apiResp.Status.DeviceState.UptimeS <= uint64(1<<63-1) {
+	if apiResp.Status.DeviceState.UptimeS <= 9223372036854775807 {
 		uptime := int64(apiResp.Status.DeviceState.UptimeS)
 		metrics.UptimeS = &uptime
 	}
