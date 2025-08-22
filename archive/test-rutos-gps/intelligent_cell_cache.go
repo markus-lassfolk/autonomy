@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 	"sort"
 	"strings"
@@ -211,7 +211,7 @@ func (cache *IntelligentCellCache) generateEnvironmentHash(env *CellEnvironment)
 
 	// Create hash
 	data := strings.Join(parts, "|")
-	hash := md5.Sum([]byte(data))
+	hash := sha256.Sum256([]byte(data))
 	return fmt.Sprintf("%x", hash)
 }
 

@@ -610,7 +610,7 @@ func createSSHClient() (*ssh.Client, error) {
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Note: In production, use proper host key verification
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // TODO: Implement proper host key verification for production
 		Timeout:         *timeout,
 	}
 
