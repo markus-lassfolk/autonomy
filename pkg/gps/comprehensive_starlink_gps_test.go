@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/markus-lassfolk/autonomy/pkg/logx"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,14 +26,16 @@ func TestDefaultStarlinkAPICollectorConfig(t *testing.T) {
 }
 
 func TestNewStarlinkAPICollector(t *testing.T) {
+	logger := logx.NewLogger("test", "debug")
+
 	// Test with nil config
-	collector := NewStarlinkAPICollector(nil, nil)
+	collector := NewStarlinkAPICollector(nil, logger)
 	assert.NotNil(t, collector)
 	assert.Equal(t, "192.168.100.1", collector.starlinkHost)
 	assert.Equal(t, 9200, collector.starlinkPort)
 	assert.Equal(t, 10*time.Second, collector.timeout)
 	assert.NotNil(t, collector.starlinkClient)
-	assert.Nil(t, collector.logger)
+	assert.NotNil(t, collector.logger)
 
 	// Test with custom config
 	customConfig := &StarlinkAPICollectorConfig{
@@ -48,12 +51,13 @@ func TestNewStarlinkAPICollector(t *testing.T) {
 		QualityScoreThreshold: 0.7,
 	}
 
-	collector = NewStarlinkAPICollector(customConfig, nil)
+	collector = NewStarlinkAPICollector(customConfig, logger)
 	assert.NotNil(t, collector)
 	assert.Equal(t, "192.168.1.100", collector.starlinkHost)
 	assert.Equal(t, 8080, collector.starlinkPort)
 	assert.Equal(t, 5*time.Second, collector.timeout)
 	assert.NotNil(t, collector.starlinkClient)
+	assert.NotNil(t, collector.logger)
 }
 
 func TestComprehensiveStarlinkGPS_Structure(t *testing.T) {
@@ -110,7 +114,8 @@ func TestComprehensiveStarlinkGPS_Structure(t *testing.T) {
 }
 
 func TestShouldCollectLocation(t *testing.T) {
-	collector := NewStarlinkAPICollector(nil, nil)
+	logger := logx.NewLogger("test", "debug")
+	collector := NewStarlinkAPICollector(nil, logger)
 
 	// Should always return true
 	result := collector.shouldCollectLocation()
@@ -118,7 +123,8 @@ func TestShouldCollectLocation(t *testing.T) {
 }
 
 func TestShouldCollectStatus(t *testing.T) {
-	collector := NewStarlinkAPICollector(nil, nil)
+	logger := logx.NewLogger("test", "debug")
+	collector := NewStarlinkAPICollector(nil, logger)
 
 	// Should always return true
 	result := collector.shouldCollectStatus()
@@ -126,7 +132,8 @@ func TestShouldCollectStatus(t *testing.T) {
 }
 
 func TestShouldCollectDiagnostics(t *testing.T) {
-	collector := NewStarlinkAPICollector(nil, nil)
+	logger := logx.NewLogger("test", "debug")
+	collector := NewStarlinkAPICollector(nil, logger)
 
 	// Should always return true
 	result := collector.shouldCollectDiagnostics()
@@ -134,7 +141,8 @@ func TestShouldCollectDiagnostics(t *testing.T) {
 }
 
 func TestCalculateConfidence(t *testing.T) {
-	collector := NewStarlinkAPICollector(nil, nil)
+	logger := logx.NewLogger("test", "debug")
+	collector := NewStarlinkAPICollector(nil, logger)
 
 	tests := []struct {
 		name     string
@@ -197,7 +205,8 @@ func TestCalculateConfidence(t *testing.T) {
 }
 
 func TestCalculateQualityScore(t *testing.T) {
-	collector := NewStarlinkAPICollector(nil, nil)
+	logger := logx.NewLogger("test", "debug")
+	collector := NewStarlinkAPICollector(nil, logger)
 
 	tests := []struct {
 		name     string
@@ -257,7 +266,8 @@ func TestCalculateQualityScore(t *testing.T) {
 }
 
 func TestMergeLocationData(t *testing.T) {
-	collector := NewStarlinkAPICollector(nil, nil)
+	logger := logx.NewLogger("test", "debug")
+	collector := NewStarlinkAPICollector(nil, logger)
 
 	gps := &ComprehensiveStarlinkGPS{}
 	data := map[string]interface{}{
@@ -282,7 +292,8 @@ func TestMergeLocationData(t *testing.T) {
 }
 
 func TestMergeStatusData(t *testing.T) {
-	collector := NewStarlinkAPICollector(nil, nil)
+	logger := logx.NewLogger("test", "debug")
+	collector := NewStarlinkAPICollector(nil, logger)
 
 	gps := &ComprehensiveStarlinkGPS{}
 	data := map[string]interface{}{
@@ -301,7 +312,8 @@ func TestMergeStatusData(t *testing.T) {
 }
 
 func TestMergeDiagnosticsData(t *testing.T) {
-	collector := NewStarlinkAPICollector(nil, nil)
+	logger := logx.NewLogger("test", "debug")
+	collector := NewStarlinkAPICollector(nil, logger)
 
 	gps := &ComprehensiveStarlinkGPS{}
 	data := map[string]interface{}{
@@ -320,7 +332,8 @@ func TestMergeDiagnosticsData(t *testing.T) {
 }
 
 func TestGetGPSLocation(t *testing.T) {
-	collector := NewStarlinkAPICollector(nil, nil)
+	logger := logx.NewLogger("test", "debug")
+	collector := NewStarlinkAPICollector(nil, logger)
 
 	// This will fail in test environment without real Starlink client
 	// but we can test the error handling
@@ -332,7 +345,8 @@ func TestGetGPSLocation(t *testing.T) {
 }
 
 func TestGetGPSStatus(t *testing.T) {
-	collector := NewStarlinkAPICollector(nil, nil)
+	logger := logx.NewLogger("test", "debug")
+	collector := NewStarlinkAPICollector(nil, logger)
 
 	// This will fail in test environment without real Starlink client
 	// but we can test the error handling
@@ -344,7 +358,8 @@ func TestGetGPSStatus(t *testing.T) {
 }
 
 func TestIsAvailable(t *testing.T) {
-	collector := NewStarlinkAPICollector(nil, nil)
+	logger := logx.NewLogger("test", "debug")
+	collector := NewStarlinkAPICollector(nil, logger)
 
 	// This will fail in test environment without real Starlink client
 	ctx := context.Background()
@@ -354,7 +369,8 @@ func TestIsAvailable(t *testing.T) {
 }
 
 func TestGetComprehensiveGPSMetrics(t *testing.T) {
-	collector := NewStarlinkAPICollector(nil, nil)
+	logger := logx.NewLogger("test", "debug")
+	collector := NewStarlinkAPICollector(nil, logger)
 
 	// This will fail in test environment without real Starlink client
 	// but we can test the error handling
@@ -366,7 +382,8 @@ func TestGetComprehensiveGPSMetrics(t *testing.T) {
 }
 
 func TestStarlinkAPICollector_Integration(t *testing.T) {
-	collector := NewStarlinkAPICollector(nil, nil)
+	logger := logx.NewLogger("test", "debug")
+	collector := NewStarlinkAPICollector(nil, logger)
 
 	// Test collector creation and configuration
 	assert.NotNil(t, collector)
@@ -374,6 +391,7 @@ func TestStarlinkAPICollector_Integration(t *testing.T) {
 	assert.Equal(t, 9200, collector.starlinkPort)
 	assert.Equal(t, 10*time.Second, collector.timeout)
 	assert.NotNil(t, collector.starlinkClient)
+	assert.NotNil(t, collector.logger)
 
 	// Test that the collector has the expected methods
 	// (This is a structural test to ensure the interface is available)
@@ -385,6 +403,8 @@ func TestStarlinkAPICollector_Integration(t *testing.T) {
 }
 
 func TestStarlinkAPICollector_Configuration(t *testing.T) {
+	logger := logx.NewLogger("test", "debug")
+
 	// Test various configuration combinations
 	testCases := []struct {
 		name   string
@@ -431,9 +451,10 @@ func TestStarlinkAPICollector_Configuration(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			collector := NewStarlinkAPICollector(tc.config, nil)
+			collector := NewStarlinkAPICollector(tc.config, logger)
 			assert.NotNil(t, collector)
 			assert.NotNil(t, collector.starlinkClient)
+			assert.NotNil(t, collector.logger)
 
 			if tc.config != nil {
 				assert.Equal(t, tc.config.Host, collector.starlinkHost)
