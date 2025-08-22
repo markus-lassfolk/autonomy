@@ -41,23 +41,37 @@ type IntelligentCellCache struct {
 	debounceDelay        time.Duration // Debounce delay (e.g., 10 seconds)
 	towerChangeThreshold float64       // Percentage threshold for tower changes (e.g., 0.35 = 35%)
 	topTowersCount       int           // Number of top towers to monitor (e.g., 5)
+	
+	// Advanced features
+	enablePredictiveLoading bool
+	enableGeographicClustering bool
+	clusterRadius            float64 // meters
+	predictiveLoadThreshold  float64 // confidence threshold for predictive loading
 }
 
 // IntelligentCellCacheConfig holds configuration for the intelligent cache
 type IntelligentCellCacheConfig struct {
-	MaxCacheAge          time.Duration `json:"max_cache_age"`
-	DebounceDelay        time.Duration `json:"debounce_delay"`
-	TowerChangeThreshold float64       `json:"tower_change_threshold"`
-	TopTowersCount       int           `json:"top_towers_count"`
+	MaxCacheAge              time.Duration `json:"max_cache_age"`
+	DebounceDelay            time.Duration `json:"debounce_delay"`
+	TowerChangeThreshold     float64       `json:"tower_change_threshold"`
+	TopTowersCount           int           `json:"top_towers_count"`
+	EnablePredictiveLoading  bool          `json:"enable_predictive_loading"`
+	EnableGeographicClustering bool        `json:"enable_geographic_clustering"`
+	ClusterRadius            float64       `json:"cluster_radius"`
+	PredictiveLoadThreshold  float64       `json:"predictive_load_threshold"`
 }
 
 // DefaultIntelligentCellCacheConfig returns default configuration
 func DefaultIntelligentCellCacheConfig() *IntelligentCellCacheConfig {
 	return &IntelligentCellCacheConfig{
-		MaxCacheAge:          1 * time.Hour,
-		DebounceDelay:        10 * time.Second,
-		TowerChangeThreshold: 0.35, // 35%
-		TopTowersCount:       5,
+		MaxCacheAge:              1 * time.Hour,
+		DebounceDelay:            10 * time.Second,
+		TowerChangeThreshold:     0.35, // 35%
+		TopTowersCount:           5,
+		EnablePredictiveLoading:  true,
+		EnableGeographicClustering: true,
+		ClusterRadius:            1000.0, // 1km
+		PredictiveLoadThreshold:  0.7,    // 70% confidence
 	}
 }
 
@@ -68,11 +82,15 @@ func NewIntelligentCellCache(config *IntelligentCellCacheConfig, logger *logx.Lo
 	}
 
 	return &IntelligentCellCache{
-		logger:               logger,
-		maxCacheAge:          config.MaxCacheAge,
-		debounceDelay:        config.DebounceDelay,
-		towerChangeThreshold: config.TowerChangeThreshold,
-		topTowersCount:       config.TopTowersCount,
+		logger:                    logger,
+		maxCacheAge:               config.MaxCacheAge,
+		debounceDelay:             config.DebounceDelay,
+		towerChangeThreshold:      config.TowerChangeThreshold,
+		topTowersCount:            config.TopTowersCount,
+		enablePredictiveLoading:   config.EnablePredictiveLoading,
+		enableGeographicClustering: config.EnableGeographicClustering,
+		clusterRadius:             config.ClusterRadius,
+		predictiveLoadThreshold:   config.PredictiveLoadThreshold,
 	}
 }
 
@@ -105,8 +123,8 @@ func (cache *IntelligentCellCache) ShouldQueryLocation(currentEnv *CellEnvironme
 	changePercentage := cache.calculateTowerChangePercentage(currentEnv)
 	if changePercentage >= cache.towerChangeThreshold {
 		cache.logger.Info("Intelligent cache: significant tower change",
-			"percentage", fmt.Sprintf("%.1f%%", changePercentage*100),
-			"threshold", fmt.Sprintf("%.1f%%", cache.towerChangeThreshold*100))
+			"percentage", changePercentage,
+			"threshold", cache.towerChangeThreshold)
 		cache.debounceTimer = now
 		return true, fmt.Sprintf("tower_change_%.1f%%", changePercentage*100)
 	}
@@ -116,21 +134,68 @@ func (cache *IntelligentCellCache) ShouldQueryLocation(currentEnv *CellEnvironme
 	if topChanges >= 2 {
 		cache.logger.Info("Intelligent cache: top towers changed",
 			"changes", topChanges,
-			"monitored", cache.topTowersCount)
+			"threshold", 2)
 		cache.debounceTimer = now
 		return true, fmt.Sprintf("top_%d_towers_changed_%d", cache.topTowersCount, topChanges)
 	}
 
-	// Fallback: check if cache has expired
+	// Geographic clustering check
+	if cache.enableGeographicClustering && cache.lastLocationResult != nil {
+		if cache.shouldQueryForGeographicReason(currentEnv) {
+			cache.logger.Info("Intelligent cache: geographic clustering triggered")
+			cache.debounceTimer = now
+			return true, "geographic_clustering"
+		}
+	}
+
+	// Fallback: check if cache has expired (1 hour)
 	if now.Sub(cache.lastLocationQuery) >= cache.maxCacheAge {
-		cache.logger.Info("Intelligent cache: cache expired",
-			"age", now.Sub(cache.lastLocationQuery),
-			"max_age", cache.maxCacheAge)
+		cache.logger.Info("Intelligent cache: cache expired")
 		return true, "cache_expired"
 	}
 
 	cache.logger.Debug("Intelligent cache: using cached location")
 	return false, "using_cache"
+}
+
+// shouldQueryForGeographicReason checks if we should query based on geographic clustering
+func (cache *IntelligentCellCache) shouldQueryForGeographicReason(currentEnv *CellEnvironment) bool {
+	if cache.lastLocationResult == nil {
+		return false
+	}
+
+	// Generate hash for current environment
+	currentHash := cache.generateEnvironmentHash(currentEnv)
+	
+	// If environment hash is significantly different, consider geographic clustering
+	if currentHash != cache.lastEnvironment.LocationHash {
+		// Calculate distance-based clustering
+		// This is a simplified version - in practice, you'd use actual GPS coordinates
+		// For now, we'll use the hash difference as a proxy for geographic distance
+		hashSimilarity := cache.calculateHashSimilarity(currentHash, cache.lastEnvironment.LocationHash)
+		
+		if hashSimilarity < 0.5 { // Less than 50% similarity
+			return true
+		}
+	}
+
+	return false
+}
+
+// calculateHashSimilarity calculates similarity between two environment hashes
+func (cache *IntelligentCellCache) calculateHashSimilarity(hash1, hash2 string) float64 {
+	if len(hash1) != len(hash2) {
+		return 0.0
+	}
+
+	similarChars := 0
+	for i := 0; i < len(hash1); i++ {
+		if hash1[i] == hash2[i] {
+			similarChars++
+		}
+	}
+
+	return float64(similarChars) / float64(len(hash1))
 }
 
 // calculateTowerChangePercentage calculates what percentage of towers have changed
@@ -225,14 +290,17 @@ func (cache *IntelligentCellCache) getTopTowers(towers []CellTowerInfo, count in
 
 // UpdateCache updates the cache with new environment and location data
 func (cache *IntelligentCellCache) UpdateCache(env *CellEnvironment, location *CellTowerLocation) {
+	// Generate location hash for the environment
+	env.LocationHash = cache.generateEnvironmentHash(env)
+	
 	cache.lastEnvironment = env
 	cache.lastLocationResult = location
 	cache.lastLocationQuery = time.Now()
 
-	cache.logger.Debug("Intelligent cache updated",
-		"serving_cell", env.ServingCell.CellID,
-		"neighbor_count", len(env.NeighborCells),
-		"location", fmt.Sprintf("%.6f,%.6f", location.Latitude, location.Longitude),
+	cache.logger.Debug("Intelligent cache: updated",
+		"location_hash", env.LocationHash,
+		"latitude", location.Latitude,
+		"longitude", location.Longitude,
 		"accuracy", location.Accuracy)
 }
 
@@ -256,10 +324,110 @@ func (cache *IntelligentCellCache) generateEnvironmentHash(env *CellEnvironment)
 	sort.Strings(neighbors)
 	parts = append(parts, neighbors...)
 
-	// Create hash
+	// Create hash using SHA256 for better collision resistance
 	data := strings.Join(parts, "|")
 	hash := sha256.Sum256([]byte(data))
 	return fmt.Sprintf("%x", hash)
+}
+
+// GetCacheStatus returns detailed cache status information
+func (cache *IntelligentCellCache) GetCacheStatus(currentEnv *CellEnvironment) map[string]interface{} {
+	status := map[string]interface{}{
+		"has_previous_data": cache.lastEnvironment != nil,
+		"cache_age":         time.Since(cache.lastLocationQuery).String(),
+		"max_cache_age":     cache.maxCacheAge.String(),
+		"debounce_delay":    cache.debounceDelay.String(),
+		"tower_threshold":   cache.towerChangeThreshold,
+		"top_towers_count":  cache.topTowersCount,
+	}
+
+	if cache.lastEnvironment != nil {
+		status["last_serving_cell"] = cache.lastEnvironment.ServingCell.CellID
+		status["last_neighbor_count"] = len(cache.lastEnvironment.NeighborCells)
+		status["last_location_hash"] = cache.lastEnvironment.LocationHash
+	}
+
+	if currentEnv != nil {
+		status["current_serving_cell"] = currentEnv.ServingCell.CellID
+		status["current_neighbor_count"] = len(currentEnv.NeighborCells)
+		
+		// Calculate change metrics
+		if cache.lastEnvironment != nil {
+			changePercentage := cache.calculateTowerChangePercentage(currentEnv)
+			topChanges := cache.countTopTowerChanges(currentEnv)
+			
+			status["tower_change_percentage"] = changePercentage
+			status["top_tower_changes"] = topChanges
+			status["serving_cell_changed"] = cache.lastEnvironment.ServingCell.CellID != currentEnv.ServingCell.CellID
+		}
+	}
+
+	if cache.lastLocationResult != nil {
+		status["cached_latitude"] = cache.lastLocationResult.Latitude
+		status["cached_longitude"] = cache.lastLocationResult.Longitude
+		status["cached_accuracy"] = cache.lastLocationResult.Accuracy
+		status["cached_source"] = cache.lastLocationResult.Source
+	}
+
+	// Check debounce status
+	debounceRemaining := cache.debounceDelay - time.Since(cache.debounceTimer)
+	if debounceRemaining > 0 {
+		status["debounce_remaining"] = debounceRemaining.String()
+		status["debounce_active"] = true
+	} else {
+		status["debounce_active"] = false
+	}
+
+	return status
+}
+
+// ShouldPredictiveLoad determines if we should preemptively load location data
+func (cache *IntelligentCellCache) ShouldPredictiveLoad(currentEnv *CellEnvironment) bool {
+	if !cache.enablePredictiveLoading {
+		return false
+	}
+
+	if cache.lastEnvironment == nil {
+		return false
+	}
+
+	// Check if we're approaching a significant change
+	changePercentage := cache.calculateTowerChangePercentage(currentEnv)
+	if changePercentage > cache.towerChangeThreshold*0.8 { // 80% of threshold
+		return true
+	}
+
+	// Check if top towers are changing rapidly
+	topChanges := cache.countTopTowerChanges(currentEnv)
+	if topChanges >= 1 { // At least one top tower changed
+		return true
+	}
+
+	return false
+}
+
+// GetPredictiveLoadConfidence returns confidence score for predictive loading
+func (cache *IntelligentCellCache) GetPredictiveLoadConfidence(currentEnv *CellEnvironment) float64 {
+	if !cache.enablePredictiveLoading || cache.lastEnvironment == nil {
+		return 0.0
+	}
+
+	confidence := 0.0
+
+	// Base confidence on tower change percentage
+	changePercentage := cache.calculateTowerChangePercentage(currentEnv)
+	confidence += changePercentage * 0.5
+
+	// Add confidence for top tower changes
+	topChanges := cache.countTopTowerChanges(currentEnv)
+	confidence += float64(topChanges) * 0.2
+
+	// Add confidence for serving cell change
+	if cache.lastEnvironment.ServingCell.CellID != currentEnv.ServingCell.CellID {
+		confidence += 0.3
+	}
+
+	return confidence
 }
 
 // ParseCellEnvironmentFromIntelligence converts CellularLocationIntelligence to CellEnvironment
@@ -274,7 +442,7 @@ func ParseCellEnvironmentFromIntelligence(intel *CellularLocationIntelligence) (
 		RSRP:   intel.SignalQuality.OverallRSRP,
 		RSRQ:   intel.SignalQuality.OverallRSRQ,
 		EARFCN: intel.ServingCell.EARFCN,
-		PCI:    intel.ServingCell.PCI, // Assuming PCI not PCID
+		PCI:    intel.ServingCell.PCI,
 		Type:   "serving",
 	}
 
@@ -291,44 +459,29 @@ func ParseCellEnvironmentFromIntelligence(intel *CellularLocationIntelligence) (
 		env.NeighborCells = append(env.NeighborCells, tower)
 	}
 
-	// Generate environment hash
-	cache := &IntelligentCellCache{} // Temporary instance for hash generation
-	env.LocationHash = cache.generateEnvironmentHash(env)
-
 	return env, nil
 }
 
-// GetCacheStats returns statistics about the cache usage
-func (cache *IntelligentCellCache) GetCacheStats() map[string]interface{} {
-	stats := make(map[string]interface{})
-
-	if cache.lastEnvironment != nil {
-		stats["last_serving_cell"] = cache.lastEnvironment.ServingCell.CellID
-		stats["last_neighbor_count"] = len(cache.lastEnvironment.NeighborCells)
-		stats["last_query_age"] = time.Since(cache.lastLocationQuery).String()
-	}
-
-	if cache.lastLocationResult != nil {
-		stats["cached_latitude"] = cache.lastLocationResult.Latitude
-		stats["cached_longitude"] = cache.lastLocationResult.Longitude
-		stats["cached_accuracy"] = cache.lastLocationResult.Accuracy
-		stats["cached_source"] = cache.lastLocationResult.Source
-	}
-
-	stats["max_cache_age"] = cache.maxCacheAge.String()
-	stats["debounce_delay"] = cache.debounceDelay.String()
-	stats["tower_change_threshold"] = fmt.Sprintf("%.1f%%", cache.towerChangeThreshold*100)
-	stats["top_towers_count"] = cache.topTowersCount
-
-	return stats
-}
-
-// Reset clears all cached data
-func (cache *IntelligentCellCache) Reset() {
+// ClearCache clears the cache
+func (cache *IntelligentCellCache) ClearCache() {
 	cache.lastEnvironment = nil
 	cache.lastLocationResult = nil
 	cache.lastLocationQuery = time.Time{}
 	cache.debounceTimer = time.Time{}
+	
+	cache.logger.Info("Intelligent cache: cleared")
+}
 
-	cache.logger.Info("Intelligent cell cache reset")
+// GetCacheMetrics returns cache performance metrics
+func (cache *IntelligentCellCache) GetCacheMetrics() map[string]interface{} {
+	metrics := map[string]interface{}{
+		"cache_hits":           0, // Would need to track this
+		"cache_misses":         0, // Would need to track this
+		"predictive_loads":     0, // Would need to track this
+		"geographic_clusters":  0, // Would need to track this
+		"average_cache_age":    time.Since(cache.lastLocationQuery).String(),
+		"cache_efficiency":     0.0, // Would need to calculate this
+	}
+
+	return metrics
 }

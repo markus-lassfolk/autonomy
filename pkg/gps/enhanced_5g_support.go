@@ -20,6 +20,8 @@ type Enhanced5GCellInfo struct {
 	SINR     int    `json:"sinr"`      // Signal-to-Interference-plus-Noise Ratio
 	Band     string `json:"band"`      // 5G NR Band (e.g., "N78", "N1")
 	CellType string `json:"cell_type"` // "serving" or "neighbor"
+	PCI      int    `json:"pci"`       // Physical Cell ID
+	EARFCN   int    `json:"earfcn"`    // Frequency
 }
 
 // Enhanced5GNetworkInfo represents comprehensive 5G network information
@@ -29,8 +31,11 @@ type Enhanced5GNetworkInfo struct {
 	NRCells            []Enhanced5GCellInfo          `json:"nr_cells"`            // 5G NR cells
 	CarrierAggregation bool                          `json:"carrier_aggregation"` // CA active
 	RegistrationStatus string                        `json:"registration_status"` // 5G registration status
+	NetworkOperator    string                        `json:"network_operator"`    // Network operator
+	Technology         string                        `json:"technology"`          // Current technology
 	CollectedAt        time.Time                     `json:"collected_at"`
 	Valid              bool                          `json:"valid"`
+	Confidence         float64                       `json:"confidence"` // 0.0-1.0
 }
 
 // Enhanced5GCollector collects 5G NR network information
@@ -46,6 +51,8 @@ type Enhanced5GConfig struct {
 	MaxNeighborNRCells       int           `json:"max_neighbor_nr_cells"`
 	SignalThreshold          int           `json:"signal_threshold"`
 	EnableCarrierAggregation bool          `json:"enable_carrier_aggregation"`
+	EnableAdvancedParsing    bool          `json:"enable_advanced_parsing"`
+	RetryAttempts            int           `json:"retry_attempts"`
 }
 
 // NewEnhanced5GCollector creates a new 5G collector
@@ -57,6 +64,8 @@ func NewEnhanced5GCollector(config *Enhanced5GConfig, logger *logx.Logger) *Enha
 			MaxNeighborNRCells:       8,
 			SignalThreshold:          -120, // dBm
 			EnableCarrierAggregation: true,
+			EnableAdvancedParsing:    true,
+			RetryAttempts:            3,
 		}
 	}
 
@@ -82,7 +91,7 @@ func (e5g *Enhanced5GCollector) Collect5GNetworkInfo(ctx context.Context) (*Enha
 		CollectedAt: time.Now(),
 	}
 
-	// Get network mode
+	// Get network mode with enhanced parsing
 	if mode, err := e5g.executeATCommand(ctx, "AT+QNWINFO"); err == nil {
 		info.Mode = e5g.parseNetworkMode(mode)
 		e5g.logger.LogDebugVerbose("5g_network_mode", map[string]interface{}{
@@ -98,328 +107,456 @@ func (e5g *Enhanced5GCollector) Collect5GNetworkInfo(ctx context.Context) (*Enha
 		})
 	}
 
-	// Collect 5G NR cells
-	nrCells, err := e5g.collect5GNRCells(ctx)
-	if err != nil {
-		e5g.logger.LogDebugVerbose("5g_nr_cells_collection_failed", map[string]interface{}{
-			"error": err.Error(),
-		})
-	} else {
-		info.NRCells = nrCells
-	}
-
-	// Check for carrier aggregation
+	// Enhanced carrier aggregation detection
 	if e5g.config.EnableCarrierAggregation {
 		info.CarrierAggregation = e5g.detectCarrierAggregation(ctx)
+		e5g.logger.LogDebugVerbose("5g_carrier_aggregation", map[string]interface{}{
+			"enabled": info.CarrierAggregation,
+		})
 	}
 
-	// Collect LTE anchor information for NSA mode
-	if strings.Contains(info.Mode, "NSA") {
-		if lteAnchor, err := e5g.collectLTEAnchorInfo(ctx); err == nil {
-			info.LTEAnchor = lteAnchor
-		}
+	// Get network operator information
+	if operator, err := e5g.executeATCommand(ctx, "AT+COPS?"); err == nil {
+		info.NetworkOperator = e5g.parseNetworkOperator(operator)
+		e5g.logger.LogDebugVerbose("5g_network_operator", map[string]interface{}{
+			"operator": info.NetworkOperator,
+		})
 	}
 
-	info.Valid = len(info.NRCells) > 0 || info.Mode != ""
+	// Enhanced 5G NR data collection with multiple AT commands
+	if e5g.config.EnableAdvancedParsing {
+		e5g.collectAdvanced5GNRData(ctx, info)
+	} else {
+		e5g.collectBasic5GNRData(ctx, info)
+	}
 
-	e5g.logger.Info("5g_network_info_collected",
-		"mode", info.Mode,
-		"nr_cells_count", len(info.NRCells),
-		"carrier_aggregation", info.CarrierAggregation,
-		"registration_status", info.RegistrationStatus,
-	)
+	// Calculate confidence score
+	info.Confidence = e5g.calculateConfidence(info)
+	info.Valid = info.Confidence > 0.3
+
+	e5g.logger.LogDebugVerbose("5g_collection_complete", map[string]interface{}{
+		"nr_cells":   len(info.NRCells),
+		"confidence": info.Confidence,
+		"valid":      info.Valid,
+	})
 
 	return info, nil
 }
 
-// collect5GNRCells collects 5G NR cell information
-func (e5g *Enhanced5GCollector) collect5GNRCells(ctx context.Context) ([]Enhanced5GCellInfo, error) {
-	var nrCells []Enhanced5GCellInfo
-
-	// Get serving NR cell
-	if servingNR, err := e5g.executeATCommand(ctx, "AT+QENG=\"servingcell\""); err == nil {
-		if cell := e5g.parseServingNRCell(servingNR); cell != nil {
-			cell.CellType = "serving"
-			nrCells = append(nrCells, *cell)
-		}
+// collectAdvanced5GNRData collects 5G NR data using multiple AT commands
+func (e5g *Enhanced5GCollector) collectAdvanced5GNRData(ctx context.Context, info *Enhanced5GNetworkInfo) {
+	nrCommands := []string{
+		"AT+QENG=\"NR5G\"",
+		"AT+QNWINFO",
+		"AT+QCSQ",
+		"AT+QRSRP",
+		"AT+QSINR",
+		"AT+QENG=\"SERVINGCELL\"",
 	}
 
-	// Get neighbor NR cells
-	if neighborNR, err := e5g.executeATCommand(ctx, "AT+QENG=\"neighbourcell\""); err == nil {
-		neighbors := e5g.parseNeighborNRCells(neighborNR)
-		for i, neighbor := range neighbors {
-			if i >= e5g.config.MaxNeighborNRCells {
-				break
-			}
-			if neighbor.RSRP >= e5g.config.SignalThreshold {
-				neighbor.CellType = "neighbor"
-				nrCells = append(nrCells, neighbor)
-			}
-		}
-	}
-
-	e5g.logger.LogDebugVerbose("5g_nr_cells_collected", map[string]interface{}{
-		"total_cells":    len(nrCells),
-		"serving_cells":  countCellsByType(nrCells, "serving"),
-		"neighbor_cells": countCellsByType(nrCells, "neighbor"),
+	e5g.logger.LogDebugVerbose("5g_advanced_collection_start", map[string]interface{}{
+		"commands": len(nrCommands),
 	})
 
-	return nrCells, nil
-}
+	for _, cmd := range nrCommands {
+		if output, err := e5g.executeATCommand(ctx, cmd); err == nil {
+			output = strings.TrimSpace(output)
+			if output != "" && !strings.Contains(output, "ERROR") {
+				e5g.logger.LogDebugVerbose("5g_command_success", map[string]interface{}{
+					"command": cmd,
+					"output":  output,
+				})
 
-// executeATCommand executes an AT command
-func (e5g *Enhanced5GCollector) executeATCommand(ctx context.Context, command string) (string, error) {
-	// Create context with timeout
-	cmdCtx, cancel := context.WithTimeout(ctx, e5g.config.CollectionTimeout)
-	defer cancel()
-
-	// Execute gsmctl command
-	cmd := exec.CommandContext(cmdCtx, "gsmctl", "-A", command)
-	output, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("AT command failed: %w", err)
-	}
-
-	return strings.TrimSpace(string(output)), nil
-}
-
-// parseNetworkMode parses network mode from AT+QNWINFO response
-func (e5g *Enhanced5GCollector) parseNetworkMode(response string) string {
-	// Example: +QNWINFO: "5G","24001","NR5G-SA",2140
-	lines := strings.Split(response, "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "+QNWINFO:") {
-			parts := strings.Split(line, ",")
-			if len(parts) >= 3 {
-				mode := strings.Trim(parts[2], "\"")
-				return mode
+				// Parse 5G NR data if available
+				if nrCells := e5g.parse5GNRData(output, cmd); len(nrCells) > 0 {
+					info.NRCells = append(info.NRCells, nrCells...)
+				}
+			} else {
+				e5g.logger.LogDebugVerbose("5g_command_no_data", map[string]interface{}{
+					"command": cmd,
+				})
 			}
 		}
 	}
-	return "unknown"
 }
 
-// parse5GRegistrationStatus parses 5G registration status
-func (e5g *Enhanced5GCollector) parse5GRegistrationStatus(response string) string {
-	// Example: +C5GREG: 0,1
-	lines := strings.Split(response, "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "+C5GREG:") {
-			parts := strings.Split(strings.TrimSpace(line), ",")
-			if len(parts) >= 2 {
-				status := strings.TrimSpace(parts[1])
-				switch status {
-				case "0":
-					return "not_registered"
-				case "1":
-					return "registered_home"
-				case "2":
-					return "searching"
-				case "3":
-					return "registration_denied"
-				case "5":
-					return "registered_roaming"
-				default:
-					return "unknown"
-				}
-			}
+// collectBasic5GNRData collects basic 5G NR data
+func (e5g *Enhanced5GCollector) collectBasic5GNRData(ctx context.Context, info *Enhanced5GNetworkInfo) {
+	// Basic collection using QNWINFO
+	if output, err := e5g.executeATCommand(ctx, "AT+QNWINFO"); err == nil {
+		if nrCells := e5g.parse5GNRData(output, "AT+QNWINFO"); len(nrCells) > 0 {
+			info.NRCells = append(info.NRCells, nrCells...)
 		}
 	}
-	return "unknown"
 }
 
-// parseServingNRCell parses serving NR cell information
-func (e5g *Enhanced5GCollector) parseServingNRCell(response string) *Enhanced5GCellInfo {
-	// Example: +QENG: "servingcell","NOCONN","NR5G-SA","FDD",240,01,7A52D01,466,2140,78,10,10,10,-44,-5,14
-	lines := strings.Split(response, "\n")
+// parse5GNRData parses 5G NR cell data from AT command responses
+func (e5g *Enhanced5GCollector) parse5GNRData(output, command string) []Enhanced5GCellInfo {
+	var cells []Enhanced5GCellInfo
+
+	lines := strings.Split(output, "\n")
 	for _, line := range lines {
-		if strings.Contains(line, "NR5G") {
-			parts := strings.Split(line, ",")
-			if len(parts) >= 16 {
-				cell := &Enhanced5GCellInfo{}
+		line = strings.TrimSpace(line)
 
-				// Parse NCI (New Radio Cell Identity)
-				if nci, err := strconv.ParseInt(strings.TrimSpace(parts[6]), 16, 64); err == nil {
-					// Check bounds before converting to int
-					if nci >= 0 && nci <= int64(^uint(0)>>1) {
-						cell.NCI = int(nci)
-					} else {
-						// Log the overflow but don't crash
-						if e5g.logger != nil {
-							e5g.logger.Warn("NCI value out of range for int conversion", "nci", nci)
-						}
-					}
-				}
-
-				// Parse GSCN
-				if gscn, err := strconv.Atoi(strings.TrimSpace(parts[8])); err == nil {
-					cell.GSCN = gscn
-				}
-
-				// Parse Band
-				if band, err := strconv.Atoi(strings.TrimSpace(parts[9])); err == nil {
-					cell.Band = fmt.Sprintf("N%d", band)
-				}
-
-				// Parse RSRP
-				if rsrp, err := strconv.Atoi(strings.TrimSpace(parts[13])); err == nil {
-					cell.RSRP = rsrp
-				}
-
-				// Parse RSRQ
-				if rsrq, err := strconv.Atoi(strings.TrimSpace(parts[14])); err == nil {
-					cell.RSRQ = rsrq
-				}
-
-				// Parse SINR
-				if sinr, err := strconv.Atoi(strings.TrimSpace(parts[15])); err == nil {
-					cell.SINR = sinr
-				}
-
-				return cell
+		// Parse different 5G NR response formats
+		if strings.Contains(command, "QNWINFO") && strings.Contains(line, "NR5G") {
+			if cell := e5g.parseQNWINFO(line); cell != nil {
+				cells = append(cells, *cell)
 			}
-		}
-	}
-	return nil
-}
-
-// parseNeighborNRCells parses neighbor NR cells
-func (e5g *Enhanced5GCollector) parseNeighborNRCells(response string) []Enhanced5GCellInfo {
-	var neighbors []Enhanced5GCellInfo
-
-	lines := strings.Split(response, "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "NR5G") && strings.Contains(line, "neighbourcell") {
-			parts := strings.Split(line, ",")
-			if len(parts) >= 8 {
-				cell := Enhanced5GCellInfo{}
-
-				// Parse NCI
-				if nci, err := strconv.ParseInt(strings.TrimSpace(parts[3]), 16, 64); err == nil {
-					// Check bounds before converting to int
-					if nci >= 0 && nci <= int64(^uint(0)>>1) {
-						cell.NCI = int(nci)
-					} else {
-						// Log the overflow but don't crash
-						if e5g.logger != nil {
-							e5g.logger.Warn("NCI value out of range for int conversion", "nci", nci)
-						}
-					}
-				}
-
-				// Parse RSRP
-				if rsrp, err := strconv.Atoi(strings.TrimSpace(parts[5])); err == nil {
-					cell.RSRP = rsrp
-				}
-
-				// Parse RSRQ
-				if rsrq, err := strconv.Atoi(strings.TrimSpace(parts[6])); err == nil {
-					cell.RSRQ = rsrq
-				}
-
-				// Parse SINR
-				if sinr, err := strconv.Atoi(strings.TrimSpace(parts[7])); err == nil {
-					cell.SINR = sinr
-				}
-
-				neighbors = append(neighbors, cell)
+		} else if strings.Contains(command, "QCSQ") && strings.Contains(line, "NR5G") {
+			if cell := e5g.parseQCSQ(line); cell != nil {
+				cells = append(cells, *cell)
+			}
+		} else if strings.Contains(command, "QENG") && strings.Contains(line, "NR5G") {
+			if cell := e5g.parseQENG(line); cell != nil {
+				cells = append(cells, *cell)
 			}
 		}
 	}
 
-	return neighbors
+	return cells
+}
+
+// parseQNWINFO parses +QNWINFO response for 5G NR information
+func (e5g *Enhanced5GCollector) parseQNWINFO(line string) *Enhanced5GCellInfo {
+	// +QNWINFO: "NR5G","24001","NR5G BAND 78",3600
+	if !strings.Contains(line, "+QNWINFO:") || !strings.Contains(line, "NR5G") {
+		return nil
+	}
+
+	parts := strings.Split(line, ",")
+	if len(parts) < 4 {
+		return nil
+	}
+
+	cell := &Enhanced5GCellInfo{
+		CellType: "serving",
+	}
+
+	// Extract band information
+	if len(parts) >= 3 {
+		bandStr := strings.Trim(parts[2], "\"")
+		if strings.Contains(bandStr, "BAND") {
+			// Extract band number (e.g., "NR5G BAND 78" -> "N78")
+			bandParts := strings.Fields(bandStr)
+			if len(bandParts) >= 3 {
+				cell.Band = "N" + bandParts[2]
+			}
+		}
+	}
+
+	// Extract frequency if available
+	if len(parts) >= 4 {
+		if freq, err := strconv.Atoi(strings.TrimSpace(parts[3])); err == nil {
+			cell.GSCN = freq
+		}
+	}
+
+	// Extract NCI if available
+	if len(parts) >= 2 {
+		if nci, err := strconv.ParseInt(strings.TrimSpace(parts[1]), 16, 64); err == nil {
+			if nci >= 0 && nci <= int64(^uint(0)>>1) {
+				cell.NCI = int(nci)
+			} else {
+				e5g.logger.Warn("NCI value out of range for int conversion", "nci", nci)
+			}
+		}
+	}
+
+	return cell
+}
+
+// parseQCSQ parses +QCSQ response for 5G NR signal quality
+func (e5g *Enhanced5GCollector) parseQCSQ(line string) *Enhanced5GCellInfo {
+	// +QCSQ: "NR5G",-85,-12,30,-
+	if !strings.Contains(line, "+QCSQ:") || !strings.Contains(line, "NR5G") {
+		return nil
+	}
+
+	parts := strings.Split(line, ",")
+	if len(parts) < 4 {
+		return nil
+	}
+
+	cell := &Enhanced5GCellInfo{
+		CellType: "serving",
+	}
+
+	// Parse signal values
+	if len(parts) >= 2 {
+		if rsrp, err := strconv.Atoi(strings.TrimSpace(parts[1])); err == nil {
+			cell.RSRP = rsrp
+		}
+	}
+	if len(parts) >= 3 {
+		if rsrq, err := strconv.Atoi(strings.TrimSpace(parts[2])); err == nil {
+			cell.RSRQ = rsrq
+		}
+	}
+	if len(parts) >= 4 {
+		if sinr, err := strconv.Atoi(strings.TrimSpace(parts[3])); err == nil {
+			cell.SINR = sinr
+		}
+	}
+
+	return cell
+}
+
+// parseQENG parses +QENG response for 5G NR information
+func (e5g *Enhanced5GCollector) parseQENG(line string) *Enhanced5GCellInfo {
+	// +QENG: "NR5G","LTE",1,24001,0x12345678,78,3600,-85,-12,30
+	if !strings.Contains(line, "+QENG:") || !strings.Contains(line, "NR5G") {
+		return nil
+	}
+
+	parts := strings.Split(line, ",")
+	if len(parts) < 10 {
+		return nil
+	}
+
+	cell := &Enhanced5GCellInfo{
+		CellType: "serving",
+	}
+
+	// Parse NCI (hex format)
+	if len(parts) >= 5 {
+		if nci, err := strconv.ParseInt(strings.TrimPrefix(strings.TrimSpace(parts[4]), "0x"), 16, 64); err == nil {
+			if nci >= 0 && nci <= int64(^uint(0)>>1) {
+				cell.NCI = int(nci)
+			} else {
+				e5g.logger.Warn("NCI value out of range for int conversion", "nci", nci)
+			}
+		}
+	}
+
+	// Parse band
+	if len(parts) >= 6 {
+		if band, err := strconv.Atoi(strings.TrimSpace(parts[5])); err == nil {
+			cell.Band = fmt.Sprintf("N%d", band)
+		}
+	}
+
+	// Parse frequency
+	if len(parts) >= 7 {
+		if freq, err := strconv.Atoi(strings.TrimSpace(parts[6])); err == nil {
+			cell.GSCN = freq
+		}
+	}
+
+	// Parse signal values
+	if len(parts) >= 8 {
+		if rsrp, err := strconv.Atoi(strings.TrimSpace(parts[7])); err == nil {
+			cell.RSRP = rsrp
+		}
+	}
+	if len(parts) >= 9 {
+		if rsrq, err := strconv.Atoi(strings.TrimSpace(parts[8])); err == nil {
+			cell.RSRQ = rsrq
+		}
+	}
+	if len(parts) >= 10 {
+		if sinr, err := strconv.Atoi(strings.TrimSpace(parts[9])); err == nil {
+			cell.SINR = sinr
+		}
+	}
+
+	return cell
 }
 
 // detectCarrierAggregation detects if carrier aggregation is active
 func (e5g *Enhanced5GCollector) detectCarrierAggregation(ctx context.Context) bool {
-	// Check for carrier aggregation status
-	if caStatus, err := e5g.executeATCommand(ctx, "AT+QCAINFO"); err == nil {
-		return strings.Contains(caStatus, "PCC") && strings.Contains(caStatus, "SCC")
-	}
-	return false
-}
-
-// collectLTEAnchorInfo collects LTE anchor cell information for NSA mode
-func (e5g *Enhanced5GCollector) collectLTEAnchorInfo(ctx context.Context) (*CellularLocationIntelligence, error) {
-	// This would collect LTE anchor cell information
-	// For now, return nil as this would require the cellular intelligence collector
-	return nil, fmt.Errorf("LTE anchor collection not implemented")
-}
-
-// Helper functions
-
-func countCellsByType(cells []Enhanced5GCellInfo, cellType string) int {
-	count := 0
-	for _, cell := range cells {
-		if cell.CellType == cellType {
-			count++
-		}
-	}
-	return count
-}
-
-// Get5GCapabilities checks if the device supports 5G
-func (e5g *Enhanced5GCollector) Get5GCapabilities(ctx context.Context) (map[string]interface{}, error) {
-	capabilities := make(map[string]interface{})
-
-	// Check modem capabilities
-	if caps, err := e5g.executeATCommand(ctx, "AT+QGMR"); err == nil {
-		capabilities["modem_info"] = caps
-		capabilities["5g_capable"] = strings.Contains(caps, "5G") || strings.Contains(caps, "NR")
+	// Try multiple commands to detect carrier aggregation
+	caCommands := []string{
+		"AT+QENG=\"SERVINGCELL\"",
+		"AT+QNWINFO",
+		"AT+QCSQ",
 	}
 
-	// Check supported bands
-	if bands, err := e5g.executeATCommand(ctx, "AT+QNWPREFCFG=\"nr5g_band\""); err == nil {
-		capabilities["supported_nr_bands"] = e5g.parseNRBands(bands)
-	}
-
-	// Check current network preference
-	if pref, err := e5g.executeATCommand(ctx, "AT+QNWPREFCFG=\"mode_pref\""); err == nil {
-		capabilities["mode_preference"] = pref
-	}
-
-	return capabilities, nil
-}
-
-// parseNRBands parses supported NR bands
-func (e5g *Enhanced5GCollector) parseNRBands(response string) []string {
-	var bands []string
-
-	// Example: +QNWPREFCFG: "nr5g_band",1:3:5:7:8:20:28:38:40:41:77:78:79
-	lines := strings.Split(response, "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "nr5g_band") {
-			parts := strings.Split(line, ",")
-			if len(parts) >= 2 {
-				bandStr := strings.Trim(parts[1], "\"")
-				bandNumbers := strings.Split(bandStr, ":")
-				for _, bandNum := range bandNumbers {
-					if bandNum != "" {
-						bands = append(bands, fmt.Sprintf("N%s", bandNum))
-					}
-				}
+	for _, cmd := range caCommands {
+		if output, err := e5g.executeATCommand(ctx, cmd); err == nil {
+			output = strings.ToUpper(output)
+			// Look for carrier aggregation indicators
+			if strings.Contains(output, "CA 1") || 
+			   strings.Contains(output, "SECONDARY:") ||
+			   strings.Contains(output, "CARRIER AGGREGATION") ||
+			   strings.Contains(output, "MULTIPLE CELLS") {
+				return true
 			}
 		}
 	}
 
-	return bands
+	return false
 }
 
-// IsAvailable checks if 5G collection is available
-func (e5g *Enhanced5GCollector) IsAvailable(ctx context.Context) bool {
-	if !e5g.config.Enable5GCollection {
-		return false
+// parseNetworkOperator parses network operator information
+func (e5g *Enhanced5GCollector) parseNetworkOperator(output string) string {
+	// +COPS: 0,0,"Telia",7
+	if strings.Contains(output, "+COPS:") {
+		parts := strings.Split(output, ",")
+		if len(parts) >= 3 {
+			operator := strings.Trim(parts[2], "\"")
+			return operator
+		}
+	}
+	return ""
+}
+
+// calculateConfidence calculates confidence score for 5G data
+func (e5g *Enhanced5GCollector) calculateConfidence(info *Enhanced5GNetworkInfo) float64 {
+	confidence := 0.0
+
+	// Base confidence for having any data
+	if info.Mode != "" {
+		confidence += 0.2
 	}
 
-	// Check if gsmctl is available
-	if _, err := exec.LookPath("gsmctl"); err != nil {
-		return false
+	// Registration status confidence
+	if info.RegistrationStatus != "" {
+		confidence += 0.2
 	}
 
-	// Try a simple AT command to verify modem connectivity
-	if _, err := e5g.executeATCommand(ctx, "AT"); err != nil {
-		return false
+	// NR cells confidence
+	if len(info.NRCells) > 0 {
+		confidence += 0.3
+		// Additional confidence for multiple cells
+		if len(info.NRCells) > 1 {
+			confidence += 0.1
+		}
 	}
 
-	return true
+	// Signal quality confidence
+	for _, cell := range info.NRCells {
+		if cell.RSRP != 0 && cell.RSRP > e5g.config.SignalThreshold {
+			confidence += 0.1
+			break
+		}
+	}
+
+	// Carrier aggregation confidence
+	if info.CarrierAggregation {
+		confidence += 0.1
+	}
+
+	return confidence
+}
+
+// executeATCommand executes an AT command with retry logic
+func (e5g *Enhanced5GCollector) executeATCommand(ctx context.Context, command string) (string, error) {
+	var lastErr error
+	
+	for attempt := 0; attempt < e5g.config.RetryAttempts; attempt++ {
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		default:
+		}
+
+		cmd := exec.CommandContext(ctx, "gsmctl", "-A", command)
+		output, err := cmd.Output()
+		
+		if err == nil {
+			return string(output), nil
+		}
+		
+		lastErr = err
+		e5g.logger.LogDebugVerbose("5g_command_retry", map[string]interface{}{
+			"command": command,
+			"attempt": attempt + 1,
+			"error":   err.Error(),
+		})
+		
+		// Wait before retry
+		time.Sleep(100 * time.Millisecond)
+	}
+	
+	return "", fmt.Errorf("failed after %d attempts: %w", e5g.config.RetryAttempts, lastErr)
+}
+
+// parseNetworkMode parses network mode from AT command response
+func (e5g *Enhanced5GCollector) parseNetworkMode(output string) string {
+	// Parse various network mode formats
+	output = strings.ToUpper(output)
+	
+	if strings.Contains(output, "5G-SA") {
+		return "5G-SA"
+	} else if strings.Contains(output, "5G-NSA") {
+		return "5G-NSA"
+	} else if strings.Contains(output, "LTE") {
+		return "LTE"
+	} else if strings.Contains(output, "NR5G") {
+		return "5G-NSA" // Assume NSA if NR5G is mentioned
+	}
+	
+	return "UNKNOWN"
+}
+
+// parse5GRegistrationStatus parses 5G registration status
+func (e5G *Enhanced5GCollector) parse5GRegistrationStatus(output string) string {
+	// Parse registration status from various formats
+	if strings.Contains(output, "+C5GREG:") {
+		parts := strings.Split(output, ",")
+		if len(parts) >= 2 {
+			status := strings.TrimSpace(parts[1])
+			switch status {
+			case "1":
+				return "REGISTERED"
+			case "2":
+				return "SEARCHING"
+			case "3":
+				return "REGISTRATION_DENIED"
+			case "4":
+				return "UNKNOWN"
+			case "5":
+				return "REGISTERED_ROAMING"
+			}
+		}
+	}
+	
+	return "UNKNOWN"
+}
+
+// Get5GNetworkSummary returns a summary of 5G network status
+func (e5g *Enhanced5GCollector) Get5GNetworkSummary(ctx context.Context) (map[string]interface{}, error) {
+	info, err := e5g.Collect5GNetworkInfo(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	summary := map[string]interface{}{
+		"mode":                info.Mode,
+		"registration_status": info.RegistrationStatus,
+		"carrier_aggregation": info.CarrierAggregation,
+		"network_operator":    info.NetworkOperator,
+		"nr_cells_count":      len(info.NRCells),
+		"confidence":          info.Confidence,
+		"valid":               info.Valid,
+		"collected_at":        info.CollectedAt,
+	}
+
+	// Add signal quality summary if cells are available
+	if len(info.NRCells) > 0 {
+		var totalRSRP, totalRSRQ, totalSINR int
+		validSignals := 0
+		
+		for _, cell := range info.NRCells {
+			if cell.RSRP != 0 {
+				totalRSRP += cell.RSRP
+				validSignals++
+			}
+			if cell.RSRQ != 0 {
+				totalRSRQ += cell.RSRQ
+			}
+			if cell.SINR != 0 {
+				totalSINR += cell.SINR
+			}
+		}
+		
+		if validSignals > 0 {
+			summary["average_rsrp"] = totalRSRP / validSignals
+			summary["average_rsrq"] = totalRSRQ / validSignals
+			summary["average_sinr"] = totalSINR / validSignals
+		}
+	}
+
+	return summary, nil
 }
