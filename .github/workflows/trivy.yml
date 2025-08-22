@@ -14,33 +14,36 @@ on:
   schedule:
     - cron: '37 21 * * 3'
 
+env:
+  # Enable debug logging
+  ACTIONS_STEP_DEBUG: true
+  ACTIONS_RUNNER_DEBUG: true
+
 permissions:
   contents: read
 
 jobs:
-  build:
+  scan:
     permissions:
       contents: read # for actions/checkout to fetch code
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
-    name: Build
+    name: Security Scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build an image from Dockerfile
+      - name: Install Trivy
         run: |
-          docker build -t docker.io/my-organization/my-app:${{ github.sha }} .
+          echo "🔧 Installing Trivy..."
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.29.1
+          trivy --version
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
-        with:
-          image-ref: 'docker.io/my-organization/my-app:${{ github.sha }}'
-          format: 'template'
-          template: '@/contrib/sarif.tpl'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
+      - name: Run Trivy vulnerability scanner on Go code
+        run: |
+          echo "🔍 Running Trivy filesystem scan..."
+          trivy fs --format sarif --output trivy-results.sarif --severity CRITICAL,HIGH --ignore-unfixed .
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
