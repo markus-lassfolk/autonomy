@@ -91,14 +91,14 @@ jobs:
     - name: Test RUTOS-specific features
       run: |
         echo "🧪 Testing RUTOS-specific features..."
-        
+
         # Test UCI schema validation
         if [ -f "uci-schema/autonomy.sc" ]; then
           echo "✅ UCI schema found and validated"
         else
           echo "⚠️  UCI schema not found"
         fi
-        
+
         # Test package structure
         if [ -d "package/autonomy" ]; then
           echo "✅ Package structure found"
@@ -199,7 +199,7 @@ jobs:
         else
           echo "⚠️  Package Makefile not found"
         fi
-        
+
         if [ -d "package/autonomy/files" ]; then
           echo "✅ Package files directory found"
           ls -la package/autonomy/files/
@@ -219,14 +219,14 @@ jobs:
     - name: Test configuration files
       run: |
         echo "🧪 Testing configuration files..."
-        
+
         # Check UCI schema
         if [ -f "uci-schema/autonomy.sc" ]; then
           echo "✅ UCI schema found"
         else
           echo "⚠️  UCI schema not found"
         fi
-        
+
         # Check config examples
         if [ -d "configs" ]; then
           echo "✅ Config examples directory found"
@@ -247,10 +247,10 @@ jobs:
     - name: Test script syntax
       run: |
         echo "🧪 Testing script syntax..."
-        
+
         # Test shell scripts
         find scripts -name "*.sh" -exec bash -n {} \; 2>/dev/null || echo "Shell script syntax check completed"
-        
+
         # Test PowerShell scripts
         find scripts -name "*.ps1" -exec pwsh -Command "Get-Content {} | Out-Null" \; 2>/dev/null || echo "PowerShell script syntax check completed"
 
@@ -266,7 +266,7 @@ jobs:
     - name: Test notification system
       run: |
         echo "🧪 Testing notification system..."
-        
+
         # Check notification packages
         if [ -d "pkg/notifications" ]; then
           echo "✅ Notifications package found"
@@ -274,7 +274,7 @@ jobs:
         else
           echo "⚠️  Notifications package not found"
         fi
-        
+
         # Check webhook server
         if [ -f "scripts/webhook-server.go" ]; then
           echo "✅ Webhook server found"
@@ -294,16 +294,16 @@ jobs:
     - name: Test RUTOS SDK compatibility
       run: |
         echo "🧪 Testing RUTOS SDK compatibility..."
-        
+
         # Test Go cross-compilation for RUTOS targets
         echo "Testing Go cross-compilation for RUTOS targets..."
-        
+
         # Test ARM compilation (RUTX50 uses ARM)
         GOOS=linux GOARCH=arm GOARM=7 go build -o bin/autonomyd-arm ./cmd/autonomysysmgmt || echo "ARM compilation test completed"
-        
+
         # Test MIPS compilation (some RUTOS devices use MIPS)
         GOOS=linux GOARCH=mips GOMIPS=softfloat go build -o bin/autonomyd-mips ./cmd/autonomysysmgmt || echo "MIPS compilation test completed"
-        
+
         # Test package building
         if [ -f "package/autonomy/Makefile" ]; then
           echo "✅ Package Makefile found, testing build process"
@@ -325,7 +325,7 @@ jobs:
       run: |
         echo "## 🚀 Deployment Test Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        
+
         echo "### Test Results:" >> $GITHUB_STEP_SUMMARY
         echo "- **RUTOS Tests**: ${{ needs.test-rutos.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- **OpenWrt Tests**: ${{ needs.test-openwrt.result }}" >> $GITHUB_STEP_SUMMARY
@@ -335,13 +335,13 @@ jobs:
         echo "- **Script Tests**: ${{ needs.test-scripts.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Notification Tests**: ${{ needs.test-notifications.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- **RUTOS SDK Tests**: ${{ needs.test-rutos-sdk.result }}" >> $GITHUB_STEP_SUMMARY
-        
+
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### RUTOS SDK Integration:" >> $GITHUB_STEP_SUMMARY
         echo "✅ Cross-compilation for ARM (RUTX50) tested" >> $GITHUB_STEP_SUMMARY
         echo "✅ Cross-compilation for MIPS tested" >> $GITHUB_STEP_SUMMARY
         echo "✅ Package structure validated" >> $GITHUB_STEP_SUMMARY
         echo "✅ UCI schema validated" >> $GITHUB_STEP_SUMMARY
-        
+
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "📊 **All deployment tests completed successfully**" >> $GITHUB_STEP_SUMMARY

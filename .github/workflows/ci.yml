@@ -21,32 +21,32 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
         go-version: ${{ env.GO_VERSION }}
-        
+
     - name: Install dependencies
       run: go mod download
-      
+
     - name: Install golangci-lint
       run: |
         echo "🔧 Installing golangci-lint..."
         curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
-        
+
     - name: Run linter
       run: |
         echo "🔍 Running golangci-lint..."
         golangci-lint run --timeout=5m --out-format=colored-line-number || echo "⚠️ Some linting issues found (expected during development)"
-        
+
     - name: Run vet
       run: go vet ./...
-      
+
     - name: Run tests
       run: |
         echo "🧪 Running tests with timeouts..."
@@ -55,16 +55,16 @@ jobs:
         ls -la cmd/
         echo "🔍 Debug: Listing cmd/autonomyd directory:"
         ls -la cmd/autonomyd/
-        
+
         # Set test timeout to prevent hanging tests
         export GOTEST_TIMEOUT=2m
-        
+
         # Run tests with shorter timeout and proper error handling
         # Skip problematic tests that require system dependencies
         go test -v -coverprofile=coverage.out -timeout=2m ./pkg/... -tags=!ci -skip="TestAuditor_CheckAccess|TestSystemIntegration|TestAuditor_BlockIP|TestAuditorAccessControl|TestUbusClientCall|TestMQTTClient_PublishSample|TestCalculateJitter|TestEngine_PredictiveFailover" || echo "⚠️ Some tests failed (continuing build)"
-        
+
         echo "✅ Tests completed"
-      
+
     - name: Upload coverage
       uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3
       with:
@@ -78,23 +78,23 @@ jobs:
     needs: test
     permissions:
       contents: read
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
         go-version: ${{ env.GO_VERSION }}
-        
+
     - name: Build binary
       run: |
         echo "🔨 Building for linux/amd64..."
         echo "🔍 Debug: Current directory: $(pwd)"
         echo "🔍 Debug: Checking if main.go exists:"
         ls -la cmd/autonomyd/main.go || echo "❌ main.go not found!"
-        
+
         # Build with explicit path and error handling
         if [ -f "cmd/autonomyd/main.go" ]; then
           GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o autonomyd ./cmd/autonomyd
@@ -105,7 +105,7 @@ jobs:
           echo "❌ Build failed: main.go not found"
           exit 1
         fi
-        
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
@@ -119,27 +119,27 @@ jobs:
     if: github.event_name == 'release'
     permissions:
       contents: read
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
         go-version: ${{ env.GO_VERSION }}
-        
+
     - name: Build for ARM (RutOS/OpenWrt)
       run: |
         GOOS=linux GOARCH=arm GOARM=7 go build -ldflags "-s -w" -o autonomyd ./cmd/autonomyd
         strip autonomyd
-        
+
     - name: Create opkg package
       run: |
         mkdir -p autonomy_1.0.0/usr/sbin
         cp autonomyd autonomy_1.0.0/usr/sbin/
         chmod 755 autonomy_1.0.0/usr/sbin/autonomyd
-        
+
         # Create control file
         mkdir -p autonomy_1.0.0/CONTROL
         cat > autonomy_1.0.0/CONTROL/control << EOF
@@ -150,17 +150,17 @@ jobs:
         Installed-Size: $(du -sb autonomy_1.0.0/usr/sbin/autonomyd | cut -f1)
         Description: Intelligent Multi-Interface Failover System
         EOF
-        
+
         # Create data.tar.gz
         tar -czf data.tar.gz -C autonomy_1.0.0 usr/
-        
+
         # Create control.tar.gz
         tar -czf control.tar.gz -C autonomy_1.0.0 CONTROL/
-        
+
         # Create .ipk package
         echo "2.0" > debian-binary
         ar r autonomy_1.0.0_arm_cortex-a7_neon-vfpv4.ipk debian-binary control.tar.gz data.tar.gz
-        
+
     - name: Upload package
       uses: actions/upload-artifact@v4
       with:
@@ -169,5 +169,3 @@ jobs:
 
   # Security scanning is handled by the separate Security & Secret Checks workflow
   # to prevent CI/CD Pipeline from hanging
-
-

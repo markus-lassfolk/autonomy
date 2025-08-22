@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       # TruffleHog Secret Scanner
       - name: Run TruffleHog (Secret Scanner)
         uses: trufflesecurity/trufflehog@7c0d6b3039d859ca1572cb0ace70162185f4e542
@@ -42,7 +42,7 @@ jobs:
           version: latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       # Gitleaks Advanced Secret Detection
       - name: Run Gitleaks (Advanced Secret Detection)
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
@@ -51,41 +51,41 @@ jobs:
           report-format: sarif
           report-path: gitleaks-report.sarif
           args: --verbose --redact
-      
+
       # Semgrep Security Analysis
       - name: Run Semgrep (Security Analysis)
         uses: returntocorp/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d
         with:
           config: p/security-audit p/secrets p/owasp-top-ten
-      
+
       # CodeQL Analysis
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: go
           queries: security-extended,security-and-quality
-      
+
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
-      
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:go"
-      
+
       # Staticcheck Analysis
       - name: Run Staticcheck
         run: |
           echo "🔍 Running Staticcheck analysis..."
-          
+
           # Install Staticcheck
           go install honnef.co/go/tools/cmd/staticcheck@latest
-          
+
           # Run Staticcheck and generate SARIF output
           staticcheck -f sarif ./... > staticcheck-results.sarif || echo "⚠️ Staticcheck found issues (continuing in development mode)"
-          
+
           echo "✅ Staticcheck analysis completed"
-      
+
       # Upload Security Results
       - name: Upload Security Results
         uses: github/codeql-action/upload-sarif@v3
@@ -94,7 +94,7 @@ jobs:
           checkout_path: ${{ github.workspace }}
           token: ${{ secrets.GITHUB_TOKEN }}
           wait-for-processing: true
-      
+
       # Upload Semgrep Results (if file exists)
       - name: Upload Semgrep Results
         if: hashFiles('semgrep-results.sarif') != ''
@@ -104,7 +104,7 @@ jobs:
           checkout_path: ${{ github.workspace }}
           token: ${{ secrets.GITHUB_TOKEN }}
           wait-for-processing: true
-      
+
       # Upload Staticcheck Results (if file exists)
       - name: Upload Staticcheck Results
         if: hashFiles('staticcheck-results.sarif') != ''
@@ -114,7 +114,7 @@ jobs:
           checkout_path: ${{ github.workspace }}
           token: ${{ secrets.GITHUB_TOKEN }}
           wait-for-processing: true
-      
+
       # Development Mode - Don't fail on security findings
       - name: Security Scan Summary (Development Mode)
         if: env.SECURITY_DEVELOPMENT_MODE == 'true'
@@ -134,7 +134,7 @@ jobs:
           echo "1. Review findings in GitHub Security tab"
           echo "2. Fix security issues in code"
           echo "3. Set SECURITY_DEVELOPMENT_MODE=false for production"
-      
+
       # Production Mode - Fail on critical issues
       - name: Block on Critical Issues (Production Mode)
         if: env.SECURITY_DEVELOPMENT_MODE != 'true'

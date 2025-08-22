@@ -26,58 +26,58 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.23'
           cache: true
-      
+
       - name: Install test dependencies
         run: |
           go mod download
           go install github.com/stretchr/testify@latest
           go install github.com/golang/mock/mockgen@latest
-      
+
       - name: Run integration tests
         run: |
           echo "Running Go integration tests..."
-          
+
           # Run tests with verbose output and coverage (skip race detection in CI)
           go test -v -coverprofile=integration.out ./pkg/... -skip="TestAuditor_CheckAccess|TestSystemIntegration|TestAuditor_BlockIP|TestAuditorAccessControl|TestUbusClientCall|TestMQTTClient_PublishSample|TestCalculateJitter|TestEngine_PredictiveFailover" || echo "⚠️ Some tests failed (continuing)"
-          
+
           # Run integration tests for specific packages (skip problematic ones)
           echo "Testing controller package..."
           go test -v ./pkg/controller/... || echo "⚠️ Controller tests failed (continuing)"
-          
+
           echo "Testing decision engine..."
           go test -v ./pkg/decision/... -skip="TestEngine_PredictiveFailover" || echo "⚠️ Decision tests failed (continuing)"
-          
+
           echo "Testing discovery package..."
           go test -v ./pkg/discovery/... || echo "⚠️ Discovery tests failed (continuing)"
-          
+
           echo "Testing health server..."
           go test -v ./pkg/health/... || echo "⚠️ Health tests failed (continuing)"
-          
+
           echo "Testing metrics server..."
           go test -v ./pkg/metrics/... || echo "⚠️ Metrics tests failed (continuing)"
-          
+
           echo "Testing MQTT client..."
           go test -v ./pkg/mqtt/... -skip="TestMQTTClient_PublishSample" || echo "⚠️ MQTT tests failed (continuing)"
-          
+
           echo "Testing telemetry store..."
           go test -v ./pkg/telem/... || echo "⚠️ Telemetry tests failed (continuing)"
-          
+
           echo "Testing UCI configuration..."
           go test -v ./pkg/uci/... || echo "⚠️ UCI tests failed (continuing)"
-          
+
           echo "Testing UBUS client/server..."
           go test -v ./pkg/ubus/... -skip="TestUbusClientCall" || echo "⚠️ UBUS tests failed (continuing)"
-      
+
       - name: Test binary compilation
         run: |
           echo "Testing binary compilation..."
-          
+
           # Test autonomyd compilation
           echo "Building autonomyd..."
           go build -o /tmp/autonomyd ./cmd/autonomyd
@@ -89,7 +89,7 @@ jobs:
             echo "::error::autonomyd failed to compile"
             exit 1
           fi
-          
+
           # Test autonomysysmgmt compilation
           echo "Building autonomysysmgmt..."
           go build -o /tmp/autonomysysmgmt ./cmd/autonomysysmgmt
@@ -101,11 +101,11 @@ jobs:
             echo "::error::autonomysysmgmt failed to compile"
             exit 1
           fi
-      
+
       - name: Test configuration loading
         run: |
           echo "Testing configuration loading..."
-          
+
           # Create a test configuration file
           cat > /tmp/test-config << 'EOF'
           config autonomy
@@ -117,34 +117,34 @@ jobs:
               option max_ram_mb '100'
               option performance_profiling '0'
           EOF
-          
+
           # Test configuration loading (skip if not supported)
           if go run ./cmd/autonomyd -config /tmp/test-config -version 2>/dev/null; then
             echo "✅ Configuration loading works correctly"
           else
             echo "⚠️ Configuration loading test skipped (feature not implemented)"
           fi
-      
+
       - name: Test package dependencies
         run: |
           echo "Testing package dependencies..."
-          
+
           # Check for circular dependencies
           go mod graph | grep -v "github.com/markus-lassfolk/autonomy" | sort | uniq -c | sort -nr | head -10
-          
+
           # Verify all dependencies are properly declared
           go mod verify
-          
+
           # Check for unused dependencies
           go mod tidy
           if [ -n "$(git status --porcelain go.mod go.sum)" ]; then
             echo "::warning::go.mod or go.sum has uncommitted changes"
           fi
-      
+
       - name: Test cross-compilation
         run: |
           echo "Testing cross-compilation for different architectures..."
-          
+
           # Test compilation for different platforms (skip darwin on linux runners)
           for os in linux; do
             for arch in amd64 arm64; do
@@ -157,7 +157,7 @@ jobs:
               fi
             done
           done
-          
+
           # Test Windows compilation separately
           echo "Building for windows/amd64..."
           GOOS=windows GOARCH=amd64 go build -o /tmp/autonomyd-windows-amd64.exe ./cmd/autonomyd
