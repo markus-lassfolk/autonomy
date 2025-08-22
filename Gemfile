@@ -3,7 +3,7 @@ source "https://rubygems.org"
 # Specify Ruby version to resolve conflicts
 ruby "~> 3.1.0"
 
-gem "jekyll", "~> 4.4.0"
+gem "jekyll", "~> 3.9.3"
 gem "github-pages", "~> 228", group: :jekyll_plugins
 
 group :jekyll_plugins do
