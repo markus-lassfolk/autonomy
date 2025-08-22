@@ -1,0 +1,191 @@
+{
+  "method": "area_search_estimation",
+  "success": true,
+  "estimated_lat": 59.4820500048254,
+  "estimated_lon": 18.28160000010301,
+  "estimated_accuracy": 13271.440721310384,
+  "nearby_cells": [
+    {
+      "cellid": 51821,
+      "lat": 59.48,
+      "lon": 18.281,
+      "range": 6977,
+      "samples": 1,
+      "radio": "GSM",
+      "distance_from_gps": 0.0012880542588140202
+    },
+    {
+      "cellid": 25939744,
+      "lat": 59.482,
+      "lon": 18.28,
+      "range": 1000,
+      "samples": 1,
+      "radio": "UMTS",
+      "distance_from_gps": 0.0036363225323903696
+    },
+    {
+      "cellid": 25938975,
+      "lat": 59.482,
+      "lon": 18.278,
+      "range": 2632,
+      "samples": 1,
+      "radio": "LTE",
+      "distance_from_gps": 0.006935542420877946
+    },
+    {
+      "cellid": 51462,
+      "lat": 59.481,
+      "lon": 18.283,
+      "range": 1000,
+      "samples": 1,
+      "radio": "GSM",
+      "distance_from_gps": 0.01046764841914463
+    },
+    {
+      "cellid": 4770295,
+      "lat": 59.483,
+      "lon": 18.283,
+      "range": 1000,
+      "samples": 1,
+      "radio": "UMTS",
+      "distance_from_gps": 0.01795881828357407
+    },
+    {
+      "cellid": 4740310,
+      "lat": 59.485,
+      "lon": 18.279,
+      "range": 1000,
+      "samples": 1,
+      "radio": "UMTS",
+      "distance_from_gps": 0.02428555759914872
+    },
+    {
+      "cellid": 25939744,
+      "lat": 59.484,
+      "lon": 18.276,
+      "range": 9465,
+      "samples": 1,
+      "radio": "LTE",
+      "distance_from_gps": 0.029370237662591746
+    },
+    {
+      "cellid": 4740301,
+      "lat": 59.483,
+      "lon": 18.285,
+      "range": 1000,
+      "samples": 1,
+      "radio": "UMTS",
+      "distance_from_gps": 0.03406677420969839
+    },
+    {
+      "cellid": 11293895,
+      "lat": 59.483,
+      "lon": 18.285,
+      "range": 1000,
+      "samples": 1,
+      "radio": "UMTS",
+      "distance_from_gps": 0.03406677420969839
+    },
+    {
+      "cellid": 4727626,
+      "lat": 59.483,
+      "lon": 18.285,
+      "range": 1000,
+      "samples": 1,
+      "radio": "UMTS",
+      "distance_from_gps": 0.03406677420969839
+    },
+    {
+      "cellid": 25939488,
+      "lat": 59.483,
+      "lon": 18.286,
+      "range": 2019,
+      "samples": 1,
+      "radio": "LTE",
+      "distance_from_gps": 0.04503182854497059
+    },
+    {
+      "cellid": 51462,
+      "lat": 59.485,
+      "lon": 18.275,
+      "range": 23699,
+      "samples": 1,
+      "radio": "GSM",
+      "distance_from_gps": 0.0464097380278194
+    },
+    {
+      "cellid": 4727629,
+      "lat": 59.481,
+      "lon": 18.287,
+      "range": 1000,
+      "samples": 1,
+      "radio": "UMTS",
+      "distance_from_gps": 0.050446430597230175
+    },
+    {
+      "cellid": 11281223,
+      "lat": 59.481,
+      "lon": 18.287,
+      "range": 1000,
+      "samples": 1,
+      "radio": "UMTS",
+      "distance_from_gps": 0.050446430597230175
+    },
+    {
+      "cellid": 4757623,
+      "lat": 59.482,
+      "lon": 18.287,
+      "range": 1000,
+      "samples": 1,
+      "radio": "UMTS",
+      "distance_from_gps": 0.05322165673871873
+    },
+    {
+      "cellid": 25939734,
+      "lat": 59.474,
+      "lon": 18.275,
+      "range": 1000,
+      "samples": 1,
+      "radio": "LTE",
+      "distance_from_gps": 0.0585780372635797
+    },
+    {
+      "cellid": 11311264,
+      "lat": 59.482,
+      "lon": 18.271,
+      "range": 1000,
+      "samples": 1,
+      "radio": "UMTS",
+      "distance_from_gps": 0.0796154158465842
+    },
+    {
+      "cellid": 51460,
+      "lat": 59.481,
+      "lon": 18.289,
+      "range": 1000,
+      "samples": 1,
+      "radio": "GSM",
+      "distance_from_gps": 0.08208012717509136
+    },
+    {
+      "cellid": 11311225,
+      "lat": 59.483,
+      "lon": 18.271,
+      "range": 1000,
+      "samples": 1,
+      "radio": "UMTS",
+      "distance_from_gps": 0.08433135956952509
+    },
+    {
+      "cellid": 4740307,
+      "lat": 59.483,
+      "lon": 18.289,
+      "range": 1000,
+      "samples": 1,
+      "radio": "UMTS",
+      "distance_from_gps": 0.0895712970395208
+    }
+  ],
+  "distance_from_gps": 0.006775937291863186,
+  "response_time_ms": 202.3752
+}

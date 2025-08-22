@@ -193,7 +193,7 @@ func createGitHubIssue(issue GitHubIssue) error {
 		return fmt.Errorf("GitHub API error: %d - %s", resp.StatusCode, string(body))
 	}
 
-	log.Printf("✅ Created GitHub issue: %s", issue.Title)
+	log.Printf("✅ Created GitHub issue: %s", sanitizeForLogging(issue.Title))
 	return nil
 }
 

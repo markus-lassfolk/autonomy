@@ -229,8 +229,15 @@ func (u *UCI) GetSections(ctx context.Context, sectionType string) ([]string, er
 	return sections, nil
 }
 
-// execUCI executes a UCI command
+// execUCI executes a UCI command with proper argument validation
 func (u *UCI) execUCI(ctx context.Context, args ...string) (string, error) {
+	// Validate arguments to prevent command injection
+	for _, arg := range args {
+		if strings.ContainsAny(arg, ";&|`$(){}[]<>\"'\\") {
+			return "", fmt.Errorf("invalid character in UCI argument: %s", arg)
+		}
+	}
+	
 	cmd := exec.CommandContext(ctx, "uci", args...)
 	output, err := cmd.Output()
 	if err != nil {

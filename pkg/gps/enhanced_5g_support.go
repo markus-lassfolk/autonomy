@@ -243,6 +243,11 @@ func (e5g *Enhanced5GCollector) parseServingNRCell(response string) *Enhanced5GC
 					// Check bounds before converting to int
 					if nci >= 0 && nci <= int64(^uint(0)>>1) {
 						cell.NCI = int(nci)
+					} else {
+						// Log the overflow but don't crash
+						if e5g.logger != nil {
+							e5g.logger.Warn("NCI value out of range for int conversion", "nci", nci)
+						}
 					}
 				}
 
@@ -294,6 +299,11 @@ func (e5g *Enhanced5GCollector) parseNeighborNRCells(response string) []Enhanced
 					// Check bounds before converting to int
 					if nci >= 0 && nci <= int64(^uint(0)>>1) {
 						cell.NCI = int(nci)
+					} else {
+						// Log the overflow but don't crash
+						if e5g.logger != nil {
+							e5g.logger.Warn("NCI value out of range for int conversion", "nci", nci)
+						}
 					}
 				}
 

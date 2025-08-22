@@ -366,6 +366,11 @@ func (wc *WiFiCollector) parseWirelessFile(data, iface string) *WiFiInfo {
 
 // getIwconfigBitrate tries to get bitrate from iwconfig command
 func (wc *WiFiCollector) getIwconfigBitrate(iface string) *int {
+	// Validate iface to prevent command injection
+	if strings.ContainsAny(iface, ";&|`$(){}[]<>\"'\\") {
+		return nil
+	}
+	
 	cmd := exec.Command("iwconfig", iface)
 	output, err := cmd.Output()
 	if err != nil {

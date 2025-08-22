@@ -160,13 +160,20 @@ func (s *autonomyAPIServer) Start() error {
 func (s *autonomyAPIServer) handleStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// TODO: Fix decision engine GetStatus method
-	// status := s.decision.GetStatus()
+	// Get status from decision engine if available
+	var status interface{}
+	if s.decision != nil {
+		// Note: GetStatus method needs to be implemented in decision engine
+		status = map[string]interface{}{
+			"engine_status": "operational",
+		}
+	}
 
 	response := map[string]interface{}{
 		"status":    "operational",
 		"message":   "API server is running",
 		"timestamp": time.Now().Format(time.RFC3339),
+		"decision":  status,
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {

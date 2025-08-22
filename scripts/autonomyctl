@@ -1,0 +1,301 @@
+#!/bin/sh
+# autonomyctl - Command line interface for autonomy daemon
+
+# Default values
+UBUS_PATH="ubus"
+SERVICE_NAME="autonomy"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Helper functions
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if ubus is available
+check_ubus() {
+    if ! command -v "$UBUS_PATH" >/dev/null 2>&1; then
+        log_error "ubus command not found. Please ensure ubus is installed."
+        exit 1
+    fi
+}
+
+# Check if autonomy service is available
+check_service() {
+    if ! "$UBUS_PATH" list | grep -q "^$SERVICE_NAME$"; then
+        log_error "autonomy service not found. Is the daemon running?"
+        exit 1
+    fi
+}
+
+# Format JSON output
+format_json() {
+    if command -v jq >/dev/null 2>&1; then
+        jq .
+    else
+        cat
+    fi
+}
+
+# Show usage
+show_usage() {
+    cat << EOF
+Usage: autonomyctl <command> [options]
+
+Commands:
+  status                    Show current status and summary
+  members                   List all discovered members
+  metrics <name>            Show metrics for a specific member
+  history <name> [since_s]  Show historical data for a member
+  events [limit]            Show recent events
+  failover                  Force manual failover
+  restore                   Force manual restore
+  recheck                   Trigger immediate recheck
+  setlog <level>            Set log level (debug|info|warn|error)
+  config                    Show current configuration
+  info                      Show detailed system information
+
+Options:
+  -h, --help               Show this help message
+  -v, --version            Show version information
+  -j, --json               Output in JSON format
+  -p, --pretty             Pretty print JSON output (requires jq)
+
+Examples:
+  autonomyctl status
+  autonomyctl members
+  autonomyctl metrics wan_starlink
+  autonomyctl history wan_cell 300
+  autonomyctl events 50
+  autonomyctl setlog debug
+  autonomyctl failover
+
+EOF
+}
+
+# Show version
+show_version() {
+    echo "autonomyctl version 1.0.0"
+    echo "Part of the autonomy multi-interface failover system"
+}
+
+# Main command handlers
+cmd_status() {
+    log_info "Getting autonomy status..."
+    "$UBUS_PATH" call "$SERVICE_NAME" status | format_json
+}
+
+cmd_members() {
+    log_info "Getting member information..."
+    "$UBUS_PATH" call "$SERVICE_NAME" members | format_json
+}
+
+cmd_metrics() {
+    if [ -z "$1" ]; then
+        log_error "Member name required for metrics command"
+        echo "Usage: autonomyctl metrics <member_name>"
+        exit 1
+    fi
+    
+    log_info "Getting metrics for member: $1"
+    "$UBUS_PATH" call "$SERVICE_NAME" metrics "{\"name\":\"$1\"}" | format_json
+}
+
+cmd_history() {
+    if [ -z "$1" ]; then
+        log_error "Member name required for history command"
+        echo "Usage: autonomyctl history <member_name> [since_s]"
+        exit 1
+    fi
+    
+    since_s=${2:-600}  # Default to 10 minutes
+    log_info "Getting history for member: $1 (since ${since_s}s ago)"
+    "$UBUS_PATH" call "$SERVICE_NAME" history "{\"name\":\"$1\",\"since_s\":$since_s}" | format_json
+}
+
+cmd_events() {
+    limit=${1:-100}  # Default to 100 events
+    log_info "Getting recent events (limit: $limit)..."
+    "$UBUS_PATH" call "$SERVICE_NAME" events "{\"limit\":$limit}" | format_json
+}
+
+cmd_failover() {
+    log_warning "Forcing manual failover..."
+    "$UBUS_PATH" call "$SERVICE_NAME" action '{"cmd":"failover"}' | format_json
+}
+
+cmd_restore() {
+    log_warning "Forcing manual restore..."
+    "$UBUS_PATH" call "$SERVICE_NAME" action '{"cmd":"restore"}' | format_json
+}
+
+cmd_recheck() {
+    log_info "Triggering immediate recheck..."
+    "$UBUS_PATH" call "$SERVICE_NAME" action '{"cmd":"recheck"}' | format_json
+}
+
+cmd_setlog() {
+    if [ -z "$1" ]; then
+        log_error "Log level required for setlog command"
+        echo "Usage: autonomyctl setlog <debug|info|warn|error>"
+        exit 1
+    fi
+    
+    case "$1" in
+        debug|info|warn|error)
+            log_info "Setting log level to: $1"
+            "$UBUS_PATH" call "$SERVICE_NAME" action "{\"cmd\":\"set_level\",\"level\":\"$1\"}" | format_json
+            ;;
+        *)
+            log_error "Invalid log level: $1"
+            echo "Valid levels: debug, info, warn, error"
+            exit 1
+            ;;
+    esac
+}
+
+cmd_config() {
+    log_info "Getting current configuration..."
+    "$UBUS_PATH" call "$SERVICE_NAME" config.get | format_json
+}
+
+cmd_info() {
+    log_info "Getting detailed system information..."
+    
+    echo "=== autonomy Status ==="
+    "$UBUS_PATH" call "$SERVICE_NAME" status | format_json
+    
+    echo -e "\n=== Members ==="
+    "$UBUS_PATH" call "$SERVICE_NAME" members | format_json
+    
+    echo -e "\n=== Recent Events ==="
+    "$UBUS_PATH" call "$SERVICE_NAME" events '{"limit":10}' | format_json
+    
+    echo -e "\n=== Configuration ==="
+    "$UBUS_PATH" call "$SERVICE_NAME" config.get | format_json
+}
+
+# Main script logic
+main() {
+    # Parse command line arguments
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h|--help)
+                show_usage
+                exit 0
+                ;;
+            -v|--version)
+                show_version
+                exit 0
+                ;;
+            -j|--json)
+                # JSON output is handled by format_json function
+                shift
+                ;;
+            -p|--pretty)
+                # Pretty print is handled by format_json function
+                shift
+                ;;
+            status)
+                check_ubus
+                check_service
+                cmd_status
+                exit 0
+                ;;
+            members)
+                check_ubus
+                check_service
+                cmd_members
+                exit 0
+                ;;
+            metrics)
+                check_ubus
+                check_service
+                shift
+                cmd_metrics "$@"
+                exit 0
+                ;;
+            history)
+                check_ubus
+                check_service
+                shift
+                cmd_history "$@"
+                exit 0
+                ;;
+            events)
+                check_ubus
+                check_service
+                shift
+                cmd_events "$@"
+                exit 0
+                ;;
+            failover)
+                check_ubus
+                check_service
+                cmd_failover
+                exit 0
+                ;;
+            restore)
+                check_ubus
+                check_service
+                cmd_restore
+                exit 0
+                ;;
+            recheck)
+                check_ubus
+                check_service
+                cmd_recheck
+                exit 0
+                ;;
+            setlog)
+                check_ubus
+                check_service
+                shift
+                cmd_setlog "$@"
+                exit 0
+                ;;
+            config)
+                check_ubus
+                check_service
+                cmd_config
+                exit 0
+                ;;
+            info)
+                check_ubus
+                check_service
+                cmd_info
+                exit 0
+                ;;
+            *)
+                log_error "Unknown command: $1"
+                show_usage
+                exit 1
+                ;;
+        esac
+    done
+    
+    # No command provided
+    log_error "No command specified"
+    show_usage
+    exit 1
+}
+
+# Run main function with all arguments
+main "$@"

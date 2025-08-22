@@ -1,0 +1,94 @@
+{
+  "cellular_data": {
+    "serving_cell": {
+      "cell_id": "25939743",
+      "tac": "23",
+      "pcid": 443,
+      "earfcn": 1300,
+      "band": "B3",
+      "mcc": "240",
+      "mnc": "01",
+      "operator": "Telia"
+    },
+    "neighbor_cells": [
+      {
+        "pcid": 444,
+        "earfcn": 1300,
+        "rssi": -67,
+        "rsrp": 0,
+        "rsrq": 0,
+        "cell_type": "intra"
+      },
+      {
+        "pcid": 445,
+        "earfcn": 1300,
+        "rssi": -72,
+        "rsrp": 0,
+        "rsrq": 0,
+        "cell_type": "intra"
+      },
+      {
+        "pcid": 446,
+        "earfcn": 1300,
+        "rssi": -78,
+        "rsrp": 0,
+        "rsrq": 0,
+        "cell_type": "intra"
+      },
+      {
+        "pcid": 447,
+        "earfcn": 1275,
+        "rssi": -81,
+        "rsrp": 0,
+        "rsrq": 0,
+        "cell_type": "inter"
+      }
+    ],
+    "location_fingerprint": {
+      "primary_cell_id": "25939743",
+      "neighbor_pcids": [
+        444,
+        445,
+        446,
+        447
+      ],
+      "signal_pattern": "RSSI:-53,PCID:443,NEIGHBORS:4",
+      "location_name": "stockholm_area",
+      "confidence": 0.9
+    },
+    "signal_quality": {
+      "rssi": -53,
+      "rsrp": -84,
+      "rsrq": -8,
+      "sinr": 17
+    },
+    "network_info": {
+      "operator": "Telia",
+      "technology": "5G-NSA",
+      "band": "B3",
+      "bandwidth": "",
+      "registered": true
+    },
+    "timestamp": 1755305145,
+    "collected_at": "2025-08-16T02:45:45.8596703+02:00",
+    "valid": true
+  },
+  "gps_reference": {
+    "latitude": 59.48007,
+    "longitude": 18.27985,
+    "accuracy": 0.4,
+    "source": "quectel_multi_gnss_reference"
+  },
+  "mozilla_result": {
+    "test_duration": 235782600,
+    "success": false,
+    "error_details": "unexpected end of JSON input"
+  },
+  "opencellid_result": {
+    "test_duration": 318305900,
+    "success": false,
+    "error_details": "API error: No matches found"
+  },
+  "test_type": "local_cell_tower_accuracy",
+  "timestamp": "2025-08-16T02:45:46+02:00"
+}

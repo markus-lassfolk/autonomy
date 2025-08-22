@@ -253,11 +253,19 @@ func (cc *CellularCollector) collectCellularInfo(ctx context.Context, member *pk
 	return info, nil
 }
 
-// queryUbusProvider queries a specific ubus provider
+// queryUbusProvider queries a specific ubus provider with proper argument validation
 func (cc *CellularCollector) queryUbusProvider(ctx context.Context, provider, iface string) (map[string]interface{}, error) {
 	// Create context with timeout
 	ctx, cancel := context.WithTimeout(ctx, cc.timeout)
 	defer cancel()
+
+	// Validate arguments to prevent command injection
+	if strings.ContainsAny(provider, ";&|`$(){}[]<>\"'\\") {
+		return nil, fmt.Errorf("invalid character in provider argument: %s", provider)
+	}
+	if strings.ContainsAny(iface, ";&|`$(){}[]<>\"'\\") {
+		return nil, fmt.Errorf("invalid character in iface argument: %s", iface)
+	}
 
 	// Try to call ubus
 	cmd := exec.CommandContext(ctx, cc.ubusPath, "call", provider, "status")

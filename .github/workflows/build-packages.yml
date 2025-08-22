@@ -90,10 +90,10 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
 
     - name: Build RUTOS image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
       with:
         context: ./test/docker
         file: ./test/docker/Dockerfile.rutos
@@ -103,7 +103,7 @@ jobs:
         cache-to: type=gha,mode=max
 
     - name: Build OpenWrt image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
       with:
         context: ./test/docker
         file: ./test/docker/Dockerfile.openwrt
@@ -128,7 +128,7 @@ jobs:
         name: autonomy-packages
 
     - name: Create Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2
       with:
         files: |
           autonomyd

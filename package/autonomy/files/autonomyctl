@@ -1,0 +1,192 @@
+#!/bin/sh
+# autonomyctl - Command line interface for autonomy daemon
+# Simple wrapper for ubus calls to the autonomy service
+
+# Default values
+UBUS_PATH="ubus"
+SERVICE_NAME="autonomy"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Helper functions
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if ubus is available
+check_ubus() {
+    if ! command -v "$UBUS_PATH" >/dev/null 2>&1; then
+        log_error "ubus command not found. Please ensure ubus is installed."
+        exit 1
+    fi
+}
+
+# Check if autonomy service is available
+check_service() {
+    if "$UBUS_PATH" list | grep -q "^$SERVICE_NAME$"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Format JSON output
+format_json() {
+    if command -v jq >/dev/null 2>&1; then
+        jq .
+    else
+        cat
+    fi
+}
+
+# Show status
+show_status() {
+    if check_service; then
+        log_info "Autonomy service status:"
+        "$UBUS_PATH" call "$SERVICE_NAME" status | format_json
+    else
+        log_error "Autonomy service not available via ubus"
+        log_info "Try: /etc/init.d/autonomy start"
+        exit 1
+    fi
+}
+
+# Show configuration
+show_config() {
+    if check_service; then
+        log_info "Autonomy configuration:"
+        "$UBUS_PATH" call "$SERVICE_NAME" config | format_json
+    else
+        log_error "Autonomy service not available via ubus"
+        exit 1
+    fi
+}
+
+# Show interfaces
+show_interfaces() {
+    if check_service; then
+        log_info "Autonomy interfaces:"
+        "$UBUS_PATH" call "$SERVICE_NAME" interfaces | format_json
+    else
+        log_error "Autonomy service not available via ubus"
+        exit 1
+    fi
+}
+
+# Show telemetry
+show_telemetry() {
+    if check_service; then
+        log_info "Autonomy telemetry:"
+        "$UBUS_PATH" call "$SERVICE_NAME" telemetry | format_json
+    else
+        log_error "Autonomy service not available via ubus"
+        exit 1
+    fi
+}
+
+# Show health
+show_health() {
+    if check_service; then
+        log_info "Autonomy health:"
+        "$UBUS_PATH" call "$SERVICE_NAME" health | format_json
+    else
+        log_error "Autonomy service not available via ubus"
+        exit 1
+    fi
+}
+
+# Reload configuration
+reload_config() {
+    if check_service; then
+        log_info "Reloading autonomy configuration..."
+        "$UBUS_PATH" call "$SERVICE_NAME" reload
+        log_success "Configuration reloaded"
+    else
+        log_error "Autonomy service not available via ubus"
+        exit 1
+    fi
+}
+
+# Show usage
+show_usage() {
+    cat << EOF
+Usage: autonomyctl <command> [options]
+
+Commands:
+  status      Show autonomy service status
+  config      Show current configuration
+  interfaces  Show interface information
+  telemetry   Show telemetry data
+  health      Show health information
+  reload      Reload configuration
+  help        Show this help message
+
+Examples:
+  autonomyctl status
+  autonomyctl config
+  autonomyctl interfaces
+  autonomyctl telemetry
+  autonomyctl health
+  autonomyctl reload
+
+EOF
+}
+
+# Main command dispatcher
+main() {
+    check_ubus
+    
+    case "$1" in
+        status)
+            show_status
+            ;;
+        config)
+            show_config
+            ;;
+        interfaces)
+            show_interfaces
+            ;;
+        telemetry)
+            show_telemetry
+            ;;
+        health)
+            show_health
+            ;;
+        reload)
+            reload_config
+            ;;
+        help|--help|-h)
+            show_usage
+            ;;
+        *)
+            if [ -z "$1" ]; then
+                show_status
+            else
+                log_error "Unknown command: $1"
+                show_usage
+                exit 1
+            fi
+            ;;
+    esac
+}
+
+# Run main function with all arguments
+main "$@"
+

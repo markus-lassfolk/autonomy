@@ -882,7 +882,7 @@ func (re *RuleEngine) GetEngineStatus() map[string]interface{} {
 	status := map[string]interface{}{
 		"enabled":                re.config.Enabled,
 		"total_rules":            len(re.rules),
-		"enabled_rules":          len(re.rules), // TODO: Count enabled rules
+		"enabled_rules":          re.countEnabledRules(),
 		"execution_history_size": len(re.executionHistory),
 		"last_execution":         re.lastExecution.Format(time.RFC3339),
 		"config":                 re.config,

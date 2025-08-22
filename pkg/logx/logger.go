@@ -323,11 +323,11 @@ func (l *Logger) LogPerformance(operation string, duration time.Duration, data m
 // LogStartup logs startup information
 func (l *Logger) LogStartup(version string, data map[string]interface{}) {
 	fields := logrus.Fields{
-		"version": version,
+		"version": sanitizeForLogging(version),
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Info("startup")
@@ -336,11 +336,11 @@ func (l *Logger) LogStartup(version string, data map[string]interface{}) {
 // LogShutdown logs shutdown information
 func (l *Logger) LogShutdown(reason string, data map[string]interface{}) {
 	fields := logrus.Fields{
-		"reason": reason,
+		"reason": sanitizeForLogging(reason),
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Info("shutdown")
@@ -381,11 +381,11 @@ func (l *Logger) LogValidation(component string, valid bool, data map[string]int
 // LogReload logs configuration reload events
 func (l *Logger) LogReload(source string, data map[string]interface{}) {
 	fields := logrus.Fields{
-		"source": source,
+		"source": sanitizeForLogging(source),
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Info("reload")

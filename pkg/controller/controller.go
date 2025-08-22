@@ -125,6 +125,11 @@ func (c *Controller) testMWAN3() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// Validate mwan3Path to prevent command injection
+	if strings.ContainsAny(c.mwan3Path, ";&|`$(){}[]<>\"'\\") {
+		return fmt.Errorf("invalid character in mwan3Path: %s", c.mwan3Path)
+	}
+
 	cmd := exec.CommandContext(ctx, c.mwan3Path, "status")
 	return cmd.Run()
 }

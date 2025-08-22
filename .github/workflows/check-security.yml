@@ -63,7 +63,7 @@ jobs:
           fi
           
       - name: Run gitleaks secret scan
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
         with:
           config-path: .gitleaks.toml
         continue-on-error: true
