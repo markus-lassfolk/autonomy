@@ -1,4 +1,4 @@
-# WSL-based OpenWrt Testing Environment Setup
+﻿# WSL-based OpenWrt Testing Environment Setup
 # This script creates a dedicated WSL instance for OpenWrt testing
 
 param(

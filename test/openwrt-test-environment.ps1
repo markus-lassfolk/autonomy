@@ -1,4 +1,4 @@
-# OpenWrt Testing Environment Setup (PowerShell)
+﻿# OpenWrt Testing Environment Setup (PowerShell)
 # This script provides multiple options for testing OpenWrt packages on Windows
 
 param(

@@ -1,4 +1,4 @@
-# OpenWrt-compatible build script for autonomy package
+﻿# OpenWrt-compatible build script for autonomy package
 # This script creates a complete IPK package for OpenWrt devices
 
 param(

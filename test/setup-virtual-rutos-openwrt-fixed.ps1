@@ -1,4 +1,4 @@
-﻿# Virtual RUTOS Testing Environment Setup (OpenWrt-based)
+# Virtual RUTOS Testing Environment Setup (OpenWrt-based)
 # This script creates a virtual RUTOS environment that simulates actual OpenWrt/BusyBox
 
 param(
@@ -7,7 +7,7 @@ param(
     [string]$OpenWrtVersion = "22.03.5"
 )
 
-# Colors for output
+# Colors for output (fixed escape sequences)
 $Red = "`e[31m"
 $Green = "`e[32m"
 $Yellow = "`e[33m"
@@ -45,11 +45,11 @@ Write-Status "===================================================="
 Write-Status ""
 Write-Status "USAGE GUIDE:"
 Write-Status "============"
-Write-Status "â€¢ FIRST TIME: Run option 1 to create the OpenWrt RUTOS environment"
-Write-Status "â€¢ DAILY USE: Run option 4 to start interactive shell for development"
-Write-Status "â€¢ TESTING: Run option 3 to validate your packages work correctly"
-Write-Status "â€¢ ADVANCED: Run option 2 to build real OpenWrt firmware images"
-Write-Status "â€¢ CHECK STATUS: Run option 5 to see what environments are available"
+Write-Status "• FIRST TIME: Run option 1 to create the OpenWrt RUTOS environment"
+Write-Status "• DAILY USE: Run option 4 to start interactive shell for development"
+Write-Status "• TESTING: Run option 3 to validate your packages work correctly"
+Write-Status "• ADVANCED: Run option 2 to build real OpenWrt firmware images"
+Write-Status "• CHECK STATUS: Run option 5 to see what environments are available"
 Write-Status ""
 Write-Status "TYPICAL WORKFLOW:"
 Write-Status "================="
@@ -106,12 +106,12 @@ function Setup-OpenWrtRutosEnvironment {
     Write-Status "Installing Ubuntu WSL instance for OpenWrt simulation..."
     Write-Status "This will create a separate Ubuntu instance to simulate OpenWrt/RUTOS"
 
-        # Install Ubuntu with a specific name and default credentials
+    # Install Ubuntu with a specific name
     Write-Status "Installing Ubuntu with default credentials (admin/Passw0rd!)..."
     wsl --install -d Ubuntu --name $WSLName
 
     Write-Status "Waiting for Ubuntu installation to complete..."
-    Start-Sleep -Seconds 20
+    Start-Sleep -Seconds 30
 
     # Set up default user credentials for unattended installation
     Write-Status "Setting up default user credentials..."
@@ -130,41 +130,16 @@ echo 'export HOME=/home/admin' >> /home/admin/.bashrc
 "@
 
     Write-Status "Setting up OpenWrt/RUTOS simulation environment..."
-    wsl -d $WSLName -e bash -c @"
+
+    # Create a separate bash script to avoid line ending issues
+    $bashScript = @"
+#!/bin/bash
 # Update Ubuntu
 sudo apt-get update
 sudo apt-get upgrade -y
 
 # Install OpenWrt build dependencies
-sudo apt-get install -y \
-    build-essential \
-    ccache \
-    ecj \
-    fastjar \
-    file \
-    g++ \
-    gawk \
-    gettext \
-    git \
-    java-propose-classpath \
-    libelf-dev \
-    libncurses5-dev \
-    libncursesw5-dev \
-    libssl-dev \
-    python3 \
-    python3-setuptools \
-    python3-dev \
-    rsync \
-    subversion \
-    swig \
-    time \
-    unzip \
-    wget \
-    xsltproc \
-    zlib1g-dev \
-    curl \
-    jq \
-    busybox
+sudo apt-get install -y build-essential ccache ecj fastjar file g++ gawk gettext git java-propose-classpath libelf-dev libncurses5-dev libncursesw5-dev libssl-dev python3 python3-setuptools python3-dev rsync subversion swig time unzip wget xsltproc zlib1g-dev curl jq busybox
 
 sudo rm -rf /var/lib/apt/lists/*
 
@@ -240,8 +215,19 @@ echo "OpenWrt-based RUTOS environment setup complete!"
 echo "This simulates the actual OpenWrt/BusyBox environment used by RUTOS"
 "@
 
+    # Write the bash script to a temporary file
+    $tempScript = Join-Path $env:TEMP "setup-openwrt-env.sh"
+    $bashScript | Out-File -FilePath $tempScript -Encoding UTF8 -NoNewline
+
+    # Copy the script to WSL and execute it
+    wsl -d $WSLName -e bash -c "cp /mnt/c/Users/$env:USERNAME/AppData/Local/Temp/setup-openwrt-env.sh /tmp/setup-openwrt-env.sh && chmod +x /tmp/setup-openwrt-env.sh && /tmp/setup-openwrt-env.sh"
+
+    # Clean up
+    Remove-Item $tempScript -ErrorAction SilentlyContinue
+
     Write-Success "OpenWrt-based RUTOS environment $WSLName created successfully!"
     Write-Status "To access: wsl -d $WSLName"
+    Write-Status "Default credentials: admin / Passw0rd!"
     Write-Status "This simulates the actual OpenWrt/BusyBox environment used by RUTOS"
 }
 
@@ -328,6 +314,7 @@ function Start-OpenWrtRutosShell {
 
     Write-Status "Starting OpenWrt RUTOS shell for $WSLName..."
     Write-Status "This simulates the actual OpenWrt/BusyBox environment used by RUTOS"
+    Write-Status "Default credentials: admin / Passw0rd!"
     Write-Status "Use 'exit' to return to Windows"
     wsl -d $WSLName
 }
@@ -343,6 +330,7 @@ function Show-Menu {
     Write-Host "   - Installs mock ubus, uci, opkg, gpsctl, gsmctl commands"
     Write-Host "   - Sets up OpenWrt-style directory structure and configs"
     Write-Host "   - Use this FIRST TIME to set up your testing environment"
+    Write-Host "   - Default credentials: admin / Passw0rd!"
     Write-Host ""
     Write-Host "2. Setup OpenWrt Image Builder"
     Write-Host "   - Downloads and configures OpenWrt Image Builder"

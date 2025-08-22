@@ -1,4 +1,4 @@
-# Simple OpenWrt Testing Environment
+﻿# Simple OpenWrt Testing Environment
 # This script provides a quick way to test OpenWrt packages
 
 param(

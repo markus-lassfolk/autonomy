@@ -1,4 +1,4 @@
-# Simplified build script for RUTOS autonomy package with web interface
+﻿# Simplified build script for RUTOS autonomy package with web interface
 # This script creates a complete IPK package for RUTOS devices using PowerShell compression
 
 param(

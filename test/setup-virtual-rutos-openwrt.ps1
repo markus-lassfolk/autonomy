@@ -1,4 +1,4 @@
-# Virtual RUTOS Testing Environment Setup (OpenWrt-based)
+﻿# Virtual RUTOS Testing Environment Setup (OpenWrt-based)
 # This script creates a virtual RUTOS environment that simulates actual OpenWrt/BusyBox
 
 param(
@@ -43,15 +43,15 @@ $BuildDir = Join-Path $ProjectRoot "build-rutos"
 Write-Status "Virtual RUTOS Testing Environment Setup (OpenWrt-based)"
 Write-Status "===================================================="
 Write-Status ""
-Write-Status "📋 USAGE GUIDE:"
+Write-Status "ðŸ“‹ USAGE GUIDE:"
 Write-Status "==============="
-Write-Status "• FIRST TIME: Run option 1 to create the OpenWrt RUTOS environment"
-Write-Status "• DAILY USE: Run option 4 to start interactive shell for development"
-Write-Status "• TESTING: Run option 3 to validate your packages work correctly"
-Write-Status "• ADVANCED: Run option 2 to build real OpenWrt firmware images"
-Write-Status "• CHECK STATUS: Run option 5 to see what environments are available"
+Write-Status "â€¢ FIRST TIME: Run option 1 to create the OpenWrt RUTOS environment"
+Write-Status "â€¢ DAILY USE: Run option 4 to start interactive shell for development"
+Write-Status "â€¢ TESTING: Run option 3 to validate your packages work correctly"
+Write-Status "â€¢ ADVANCED: Run option 2 to build real OpenWrt firmware images"
+Write-Status "â€¢ CHECK STATUS: Run option 5 to see what environments are available"
 Write-Status ""
-Write-Status "🎯 TYPICAL WORKFLOW:"
+Write-Status "ðŸŽ¯ TYPICAL WORKFLOW:"
 Write-Status "==================="
 Write-Status "1. Create environment (option 1) - ONE TIME SETUP"
 Write-Status "2. Start shell (option 4) - DAILY DEVELOPMENT"
