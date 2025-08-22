@@ -27,7 +27,7 @@ func SecureTempFile(dir, pattern string) (*os.File, error) {
 	filepath := filepath.Join(dir, filename)
 
 	// Create file with secure permissions (0600 = owner read/write only)
-	file, err := os.OpenFile(filepath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	file, err := os.OpenFile(filepath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create secure temp file: %w", err)
 	}
@@ -54,7 +54,7 @@ func SecureTempDir(dir, pattern string) (string, error) {
 	dirpath := filepath.Join(dir, dirname)
 
 	// Create directory with secure permissions (0700 = owner read/write/execute only)
-	if err := os.MkdirAll(dirpath, 0700); err != nil {
+	if err := os.MkdirAll(dirpath, 0o700); err != nil {
 		return "", fmt.Errorf("failed to create secure temp directory: %w", err)
 	}
 

@@ -376,10 +376,10 @@ func (e5g *Enhanced5GCollector) detectCarrierAggregation(ctx context.Context) bo
 		if output, err := e5g.executeATCommand(ctx, cmd); err == nil {
 			output = strings.ToUpper(output)
 			// Look for carrier aggregation indicators
-			if strings.Contains(output, "CA 1") || 
-			   strings.Contains(output, "SECONDARY:") ||
-			   strings.Contains(output, "CARRIER AGGREGATION") ||
-			   strings.Contains(output, "MULTIPLE CELLS") {
+			if strings.Contains(output, "CA 1") ||
+				strings.Contains(output, "SECONDARY:") ||
+				strings.Contains(output, "CARRIER AGGREGATION") ||
+				strings.Contains(output, "MULTIPLE CELLS") {
 				return true
 			}
 		}
@@ -443,7 +443,7 @@ func (e5g *Enhanced5GCollector) calculateConfidence(info *Enhanced5GNetworkInfo)
 // executeATCommand executes an AT command with retry logic
 func (e5g *Enhanced5GCollector) executeATCommand(ctx context.Context, command string) (string, error) {
 	var lastErr error
-	
+
 	for attempt := 0; attempt < e5g.config.RetryAttempts; attempt++ {
 		select {
 		case <-ctx.Done():
@@ -453,22 +453,22 @@ func (e5g *Enhanced5GCollector) executeATCommand(ctx context.Context, command st
 
 		cmd := exec.CommandContext(ctx, "gsmctl", "-A", command)
 		output, err := cmd.Output()
-		
+
 		if err == nil {
 			return string(output), nil
 		}
-		
+
 		lastErr = err
 		e5g.logger.LogDebugVerbose("5g_command_retry", map[string]interface{}{
 			"command": command,
 			"attempt": attempt + 1,
 			"error":   err.Error(),
 		})
-		
+
 		// Wait before retry
 		time.Sleep(100 * time.Millisecond)
 	}
-	
+
 	return "", fmt.Errorf("failed after %d attempts: %w", e5g.config.RetryAttempts, lastErr)
 }
 
@@ -476,7 +476,7 @@ func (e5g *Enhanced5GCollector) executeATCommand(ctx context.Context, command st
 func (e5g *Enhanced5GCollector) parseNetworkMode(output string) string {
 	// Parse various network mode formats
 	output = strings.ToUpper(output)
-	
+
 	if strings.Contains(output, "5G-SA") {
 		return "5G-SA"
 	} else if strings.Contains(output, "5G-NSA") {
@@ -486,7 +486,7 @@ func (e5g *Enhanced5GCollector) parseNetworkMode(output string) string {
 	} else if strings.Contains(output, "NR5G") {
 		return "5G-NSA" // Assume NSA if NR5G is mentioned
 	}
-	
+
 	return "UNKNOWN"
 }
 
@@ -511,7 +511,7 @@ func (e5G *Enhanced5GCollector) parse5GRegistrationStatus(output string) string 
 			}
 		}
 	}
-	
+
 	return "UNKNOWN"
 }
 
@@ -537,7 +537,7 @@ func (e5g *Enhanced5GCollector) Get5GNetworkSummary(ctx context.Context) (map[st
 	if len(info.NRCells) > 0 {
 		var totalRSRP, totalRSRQ, totalSINR int
 		validSignals := 0
-		
+
 		for _, cell := range info.NRCells {
 			if cell.RSRP != 0 {
 				totalRSRP += cell.RSRP
@@ -550,7 +550,7 @@ func (e5g *Enhanced5GCollector) Get5GNetworkSummary(ctx context.Context) (map[st
 				totalSINR += cell.SINR
 			}
 		}
-		
+
 		if validSignals > 0 {
 			summary["average_rsrp"] = totalRSRP / validSignals
 			summary["average_rsrq"] = totalRSRQ / validSignals

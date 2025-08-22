@@ -41,37 +41,37 @@ type IntelligentCellCache struct {
 	debounceDelay        time.Duration // Debounce delay (e.g., 10 seconds)
 	towerChangeThreshold float64       // Percentage threshold for tower changes (e.g., 0.35 = 35%)
 	topTowersCount       int           // Number of top towers to monitor (e.g., 5)
-	
+
 	// Advanced features
-	enablePredictiveLoading bool
+	enablePredictiveLoading    bool
 	enableGeographicClustering bool
-	clusterRadius            float64 // meters
-	predictiveLoadThreshold  float64 // confidence threshold for predictive loading
+	clusterRadius              float64 // meters
+	predictiveLoadThreshold    float64 // confidence threshold for predictive loading
 }
 
 // IntelligentCellCacheConfig holds configuration for the intelligent cache
 type IntelligentCellCacheConfig struct {
-	MaxCacheAge              time.Duration `json:"max_cache_age"`
-	DebounceDelay            time.Duration `json:"debounce_delay"`
-	TowerChangeThreshold     float64       `json:"tower_change_threshold"`
-	TopTowersCount           int           `json:"top_towers_count"`
-	EnablePredictiveLoading  bool          `json:"enable_predictive_loading"`
-	EnableGeographicClustering bool        `json:"enable_geographic_clustering"`
-	ClusterRadius            float64       `json:"cluster_radius"`
-	PredictiveLoadThreshold  float64       `json:"predictive_load_threshold"`
+	MaxCacheAge                time.Duration `json:"max_cache_age"`
+	DebounceDelay              time.Duration `json:"debounce_delay"`
+	TowerChangeThreshold       float64       `json:"tower_change_threshold"`
+	TopTowersCount             int           `json:"top_towers_count"`
+	EnablePredictiveLoading    bool          `json:"enable_predictive_loading"`
+	EnableGeographicClustering bool          `json:"enable_geographic_clustering"`
+	ClusterRadius              float64       `json:"cluster_radius"`
+	PredictiveLoadThreshold    float64       `json:"predictive_load_threshold"`
 }
 
 // DefaultIntelligentCellCacheConfig returns default configuration
 func DefaultIntelligentCellCacheConfig() *IntelligentCellCacheConfig {
 	return &IntelligentCellCacheConfig{
-		MaxCacheAge:              1 * time.Hour,
-		DebounceDelay:            10 * time.Second,
-		TowerChangeThreshold:     0.35, // 35%
-		TopTowersCount:           5,
-		EnablePredictiveLoading:  true,
+		MaxCacheAge:                1 * time.Hour,
+		DebounceDelay:              10 * time.Second,
+		TowerChangeThreshold:       0.35, // 35%
+		TopTowersCount:             5,
+		EnablePredictiveLoading:    true,
 		EnableGeographicClustering: true,
-		ClusterRadius:            1000.0, // 1km
-		PredictiveLoadThreshold:  0.7,    // 70% confidence
+		ClusterRadius:              1000.0, // 1km
+		PredictiveLoadThreshold:    0.7,    // 70% confidence
 	}
 }
 
@@ -82,15 +82,15 @@ func NewIntelligentCellCache(config *IntelligentCellCacheConfig, logger *logx.Lo
 	}
 
 	return &IntelligentCellCache{
-		logger:                    logger,
-		maxCacheAge:               config.MaxCacheAge,
-		debounceDelay:             config.DebounceDelay,
-		towerChangeThreshold:      config.TowerChangeThreshold,
-		topTowersCount:            config.TopTowersCount,
-		enablePredictiveLoading:   config.EnablePredictiveLoading,
+		logger:                     logger,
+		maxCacheAge:                config.MaxCacheAge,
+		debounceDelay:              config.DebounceDelay,
+		towerChangeThreshold:       config.TowerChangeThreshold,
+		topTowersCount:             config.TopTowersCount,
+		enablePredictiveLoading:    config.EnablePredictiveLoading,
 		enableGeographicClustering: config.EnableGeographicClustering,
-		clusterRadius:             config.ClusterRadius,
-		predictiveLoadThreshold:   config.PredictiveLoadThreshold,
+		clusterRadius:              config.ClusterRadius,
+		predictiveLoadThreshold:    config.PredictiveLoadThreshold,
 	}
 }
 
@@ -166,14 +166,14 @@ func (cache *IntelligentCellCache) shouldQueryForGeographicReason(currentEnv *Ce
 
 	// Generate hash for current environment
 	currentHash := cache.generateEnvironmentHash(currentEnv)
-	
+
 	// If environment hash is significantly different, consider geographic clustering
 	if currentHash != cache.lastEnvironment.LocationHash {
 		// Calculate distance-based clustering
 		// This is a simplified version - in practice, you'd use actual GPS coordinates
 		// For now, we'll use the hash difference as a proxy for geographic distance
 		hashSimilarity := cache.calculateHashSimilarity(currentHash, cache.lastEnvironment.LocationHash)
-		
+
 		if hashSimilarity < 0.5 { // Less than 50% similarity
 			return true
 		}
@@ -292,7 +292,7 @@ func (cache *IntelligentCellCache) getTopTowers(towers []CellTowerInfo, count in
 func (cache *IntelligentCellCache) UpdateCache(env *CellEnvironment, location *CellTowerLocation) {
 	// Generate location hash for the environment
 	env.LocationHash = cache.generateEnvironmentHash(env)
-	
+
 	cache.lastEnvironment = env
 	cache.lastLocationResult = location
 	cache.lastLocationQuery = time.Now()
@@ -350,12 +350,12 @@ func (cache *IntelligentCellCache) GetCacheStatus(currentEnv *CellEnvironment) m
 	if currentEnv != nil {
 		status["current_serving_cell"] = currentEnv.ServingCell.CellID
 		status["current_neighbor_count"] = len(currentEnv.NeighborCells)
-		
+
 		// Calculate change metrics
 		if cache.lastEnvironment != nil {
 			changePercentage := cache.calculateTowerChangePercentage(currentEnv)
 			topChanges := cache.countTopTowerChanges(currentEnv)
-			
+
 			status["tower_change_percentage"] = changePercentage
 			status["top_tower_changes"] = topChanges
 			status["serving_cell_changed"] = cache.lastEnvironment.ServingCell.CellID != currentEnv.ServingCell.CellID
@@ -468,19 +468,19 @@ func (cache *IntelligentCellCache) ClearCache() {
 	cache.lastLocationResult = nil
 	cache.lastLocationQuery = time.Time{}
 	cache.debounceTimer = time.Time{}
-	
+
 	cache.logger.Info("Intelligent cache: cleared")
 }
 
 // GetCacheMetrics returns cache performance metrics
 func (cache *IntelligentCellCache) GetCacheMetrics() map[string]interface{} {
 	metrics := map[string]interface{}{
-		"cache_hits":           0, // Would need to track this
-		"cache_misses":         0, // Would need to track this
-		"predictive_loads":     0, // Would need to track this
-		"geographic_clusters":  0, // Would need to track this
-		"average_cache_age":    time.Since(cache.lastLocationQuery).String(),
-		"cache_efficiency":     0.0, // Would need to calculate this
+		"cache_hits":          0, // Would need to track this
+		"cache_misses":        0, // Would need to track this
+		"predictive_loads":    0, // Would need to track this
+		"geographic_clusters": 0, // Would need to track this
+		"average_cache_age":   time.Since(cache.lastLocationQuery).String(),
+		"cache_efficiency":    0.0, // Would need to calculate this
 	}
 
 	return metrics

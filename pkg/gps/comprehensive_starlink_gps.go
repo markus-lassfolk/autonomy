@@ -56,31 +56,31 @@ type StarlinkAPICollector struct {
 
 // StarlinkAPICollectorConfig holds configuration for the collector
 type StarlinkAPICollectorConfig struct {
-	Host                    string        `json:"host"`
-	Port                    int           `json:"port"`
-	Timeout                 time.Duration `json:"timeout"`
-	EnableAllAPIs           bool          `json:"enable_all_apis"`
-	EnableLocationAPI       bool          `json:"enable_location_api"`
-	EnableStatusAPI         bool          `json:"enable_status_api"`
-	EnableDiagnosticsAPI    bool          `json:"enable_diagnostics_api"`
-	RetryAttempts           int           `json:"retry_attempts"`
-	ConfidenceThreshold     float64       `json:"confidence_threshold"`
-	QualityScoreThreshold   float64       `json:"quality_score_threshold"`
+	Host                  string        `json:"host"`
+	Port                  int           `json:"port"`
+	Timeout               time.Duration `json:"timeout"`
+	EnableAllAPIs         bool          `json:"enable_all_apis"`
+	EnableLocationAPI     bool          `json:"enable_location_api"`
+	EnableStatusAPI       bool          `json:"enable_status_api"`
+	EnableDiagnosticsAPI  bool          `json:"enable_diagnostics_api"`
+	RetryAttempts         int           `json:"retry_attempts"`
+	ConfidenceThreshold   float64       `json:"confidence_threshold"`
+	QualityScoreThreshold float64       `json:"quality_score_threshold"`
 }
 
 // DefaultStarlinkAPICollectorConfig returns default configuration
 func DefaultStarlinkAPICollectorConfig() *StarlinkAPICollectorConfig {
 	return &StarlinkAPICollectorConfig{
-		Host:                   "192.168.100.1",
-		Port:                   9200,
-		Timeout:                10 * time.Second,
-		EnableAllAPIs:          true,
-		EnableLocationAPI:      true,
-		EnableStatusAPI:        true,
-		EnableDiagnosticsAPI:   true,
-		RetryAttempts:          3,
-		ConfidenceThreshold:    0.3,
-		QualityScoreThreshold:  0.5,
+		Host:                  "192.168.100.1",
+		Port:                  9200,
+		Timeout:               10 * time.Second,
+		EnableAllAPIs:         true,
+		EnableLocationAPI:     true,
+		EnableStatusAPI:       true,
+		EnableDiagnosticsAPI:  true,
+		RetryAttempts:         3,
+		ConfidenceThreshold:   0.3,
+		QualityScoreThreshold: 0.5,
 	}
 }
 
@@ -174,11 +174,11 @@ func (sc *StarlinkAPICollector) CollectComprehensiveGPS(ctx context.Context) (*C
 	gps.Valid = gps.Confidence > 0.3
 
 	sc.logger.LogDebugVerbose("starlink_comprehensive_collection_complete", map[string]interface{}{
-		"data_sources":   gps.DataSources,
-		"collection_ms":  gps.CollectionMs,
-		"confidence":     gps.Confidence,
-		"quality_score":  gps.QualityScore,
-		"valid":          gps.Valid,
+		"data_sources":  gps.DataSources,
+		"collection_ms": gps.CollectionMs,
+		"confidence":    gps.Confidence,
+		"quality_score": gps.QualityScore,
+		"valid":         gps.Valid,
 	})
 
 	return gps, nil
@@ -209,13 +209,13 @@ func (sc *StarlinkAPICollector) collectLocationData(ctx context.Context) (map[st
 
 	// Convert to map for merging
 	data := map[string]interface{}{
-		"latitude":              location.Latitude,
-		"longitude":             location.Longitude,
-		"altitude":              location.Altitude,
-		"accuracy":              location.Accuracy,
-		"horizontal_speed_mps":  location.HorizontalSpeedMps,
-		"vertical_speed_mps":    location.VerticalSpeedMps,
-		"gps_source":            location.GPSSource,
+		"latitude":             location.Latitude,
+		"longitude":            location.Longitude,
+		"altitude":             location.Altitude,
+		"accuracy":             location.Accuracy,
+		"horizontal_speed_mps": location.HorizontalSpeedMps,
+		"vertical_speed_mps":   location.VerticalSpeedMps,
+		"gps_source":           location.GPSSource,
 	}
 
 	return data, nil
@@ -436,16 +436,16 @@ func (sc *StarlinkAPICollector) GetGPSStatus(ctx context.Context) (map[string]in
 	}
 
 	status := map[string]interface{}{
-		"valid":           comprehensive.Valid,
-		"confidence":      comprehensive.Confidence,
-		"quality_score":   comprehensive.QualityScore,
-		"data_sources":    comprehensive.DataSources,
-		"collection_ms":   comprehensive.CollectionMs,
-		"gps_valid":       comprehensive.GPSValid,
-		"gps_satellites":  comprehensive.GPSSatellites,
-		"gps_source":      comprehensive.GPSSource,
-		"accuracy":        comprehensive.Accuracy,
-		"uncertainty":     comprehensive.UncertaintyMeters,
+		"valid":            comprehensive.Valid,
+		"confidence":       comprehensive.Confidence,
+		"quality_score":    comprehensive.QualityScore,
+		"data_sources":     comprehensive.DataSources,
+		"collection_ms":    comprehensive.CollectionMs,
+		"gps_valid":        comprehensive.GPSValid,
+		"gps_satellites":   comprehensive.GPSSatellites,
+		"gps_source":       comprehensive.GPSSource,
+		"accuracy":         comprehensive.Accuracy,
+		"uncertainty":      comprehensive.UncertaintyMeters,
 		"location_enabled": comprehensive.LocationEnabled,
 	}
 
