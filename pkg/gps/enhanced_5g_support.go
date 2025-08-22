@@ -55,6 +55,14 @@ type Enhanced5GConfig struct {
 	RetryAttempts            int           `json:"retry_attempts"`
 }
 
+// safeInt64ToInt safely converts int64 to int with bounds checking
+func safeInt64ToInt(value int64) (int, bool) {
+	if value >= 0 && value <= int64(^uint(0)>>1) {
+		return int(value), true
+	}
+	return 0, false
+}
+
 // NewEnhanced5GCollector creates a new 5G collector
 func NewEnhanced5GCollector(config *Enhanced5GConfig, logger *logx.Logger) *Enhanced5GCollector {
 	if config == nil {
@@ -255,8 +263,8 @@ func (e5g *Enhanced5GCollector) parseQNWINFO(line string) *Enhanced5GCellInfo {
 	// Extract NCI if available
 	if len(parts) >= 2 {
 		if nci, err := strconv.ParseInt(strings.TrimSpace(parts[1]), 16, 64); err == nil {
-			if nci >= 0 && nci <= int64(^uint(0)>>1) {
-				cell.NCI = int(nci)
+			if convertedNCI, ok := safeInt64ToInt(nci); ok {
+				cell.NCI = convertedNCI
 			} else {
 				e5g.logger.Warn("NCI value out of range for int conversion", "nci", nci)
 			}
@@ -321,8 +329,8 @@ func (e5g *Enhanced5GCollector) parseQENG(line string) *Enhanced5GCellInfo {
 	// Parse NCI (hex format)
 	if len(parts) >= 5 {
 		if nci, err := strconv.ParseInt(strings.TrimPrefix(strings.TrimSpace(parts[4]), "0x"), 16, 64); err == nil {
-			if nci >= 0 && nci <= int64(^uint(0)>>1) {
-				cell.NCI = int(nci)
+			if convertedNCI, ok := safeInt64ToInt(nci); ok {
+				cell.NCI = convertedNCI
 			} else {
 				e5g.logger.Warn("NCI value out of range for int conversion", "nci", nci)
 			}
