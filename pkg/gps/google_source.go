@@ -95,6 +95,8 @@ type GoogleMapsElevationResponse struct {
 	Status string `json:"status"`
 }
 
+
+
 // NewGoogleLocationSource creates a new Google Location API source
 func NewGoogleLocationSource(priority int, apiKey string, useGoogleElevation bool, logger *logx.Logger) *GoogleLocationSource {
 	return &GoogleLocationSource{
@@ -374,8 +376,14 @@ func (gs *GoogleLocationSource) parseServingCell(line string) *GoogleCellTower {
 		}
 	}
 
+	// Safe conversion from int64 to int
+	safeCellId, ok := safeInt64ToInt(cellId)
+	if !ok {
+		return nil
+	}
+
 	return &GoogleCellTower{
-		CellId:            int(cellId),
+		CellId:            safeCellId,
 		LocationAreaCode:  lac,
 		MobileCountryCode: mcc,
 		MobileNetworkCode: mnc,

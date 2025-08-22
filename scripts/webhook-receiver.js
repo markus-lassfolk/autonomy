@@ -67,13 +67,29 @@ function log(level, message, data = null) {
     };
     
     const color = levelColors[level] || colors.reset;
-    console.log(`${color}[${timestamp}] [${level.toUpperCase()}]${colors.reset} ${message}`);
+    
+    // Sanitize message to prevent log injection
+    const sanitizedMessage = sanitizeMessage(message);
+    console.log(`${color}[${timestamp}] [${level.toUpperCase()}]${colors.reset} ${sanitizedMessage}`);
     
     if (data && config.logLevel === 'debug') {
         // Filter out sensitive data before logging
         const sanitizedData = sanitizeForLogging(data);
         console.log(JSON.stringify(sanitizedData, null, 2));
     }
+}
+
+// Sanitize message to prevent log injection
+function sanitizeMessage(message) {
+    if (typeof message !== 'string') {
+        return String(message);
+    }
+    
+    // Remove newlines and other control characters that could be used for log injection
+    return message
+        .replace(/[\n\r\t]/g, ' ')
+        .replace(/[<>]/g, '') // Remove potential HTML/script tags
+        .substring(0, 500); // Limit length to prevent log flooding
 }
 
 // Verify webhook signature

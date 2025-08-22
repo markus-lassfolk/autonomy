@@ -219,6 +219,21 @@ self.addEventListener('notificationclick', event => {
 
 // Message handling for communication with main thread
 self.addEventListener('message', event => {
+  // Verify origin to prevent unauthorized access
+  const allowedOrigins = [
+    'https://localhost',
+    'https://127.0.0.1',
+    'https://192.168.1.1',
+    'https://192.168.0.1',
+    'https://10.0.0.1'
+  ];
+  
+  // Check if origin is allowed
+  if (!event.origin || !allowedOrigins.includes(event.origin)) {
+    console.warn('Blocked message from unauthorized origin:', event.origin);
+    return;
+  }
+  
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }

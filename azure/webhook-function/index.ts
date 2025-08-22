@@ -88,6 +88,44 @@ function generateIssueKey(payload: WebhookPayload): string {
   return crypto.createHash('sha256').update(keyData).digest('hex').slice(0, 12);
 }
 
+// Sanitize string to prevent log injection
+function sanitizeString(input: string): string {
+  if (typeof input !== 'string') {
+    return String(input);
+  }
+  
+  // Remove newlines and other control characters that could be used for log injection
+  return input
+    .replace(/[\n\r\t]/g, ' ')
+    .replace(/[<>]/g, '') // Remove potential HTML/script tags
+    .substring(0, 100); // Limit length to prevent log flooding
+}
+
+// Sanitize data for logging to prevent log injection
+function sanitizeForLogging(data: any): any {
+  if (!data || typeof data !== 'object') {
+    return data;
+  }
+  
+  const sensitiveKeys = ['secret', 'password', 'token', 'key', 'auth', 'credential', 'cert'];
+  const sanitized: any = {};
+  
+  for (const [key, value] of Object.entries(data)) {
+    const lowerKey = key.toLowerCase();
+    const isSensitive = sensitiveKeys.some(sensitive => lowerKey.includes(sensitive));
+    
+    if (isSensitive && typeof value === 'string' && value.length > 0) {
+      sanitized[key] = value.substring(0, Math.min(4, value.length)) + '***';
+    } else if (typeof value === 'object' && value !== null) {
+      sanitized[key] = sanitizeForLogging(value);
+    } else {
+      sanitized[key] = value;
+    }
+  }
+  
+  return sanitized;
+}
+
 function searchExistingIssue(issueKey: string): Promise<any> {
   return new Promise((resolve, reject) => {
     const query = `repo:markus-lassfolk/rutos-starlink-failover state:open label:autonomy-alert in:body "Issue Key: ${issueKey}"`;
@@ -359,7 +397,9 @@ function updateIssueLabels(issueNumber: number, newLabels: string[]): void {
 }
 
 async function processWebhook(payload: WebhookPayload, signature: string): Promise<{ success: boolean; reason?: string; issue?: any }> {
-  console.log('Received payload:', JSON.stringify(payload, null, 2));
+  // Sanitize payload for logging to prevent log injection
+  const sanitizedPayload = sanitizeForLogging(payload);
+  console.log('Received payload:', JSON.stringify(sanitizedPayload, null, 2));
   
   // Validate HMAC signature
   if (!validateHMAC(JSON.stringify(payload), signature)) {
@@ -369,7 +409,8 @@ async function processWebhook(payload: WebhookPayload, signature: string): Promi
   
   // Version filtering
   if (!isSupportedVersion(payload.fw)) {
-    console.log(`⚠️ Skipping issue creation - unsupported firmware version: ${payload.fw}`);
+    const sanitizedFw = sanitizeString(payload.fw);
+    console.log(`⚠️ Skipping issue creation - unsupported firmware version: ${sanitizedFw}`);
     return { success: false, reason: 'unsupported_version' };
   }
   
@@ -378,13 +419,15 @@ async function processWebhook(payload: WebhookPayload, signature: string): Promi
   const minSeverityLevel = SEVERITY_LEVELS[MIN_SEVERITY] || 0;
   
   if (severityLevel < minSeverityLevel) {
-    console.log(`⚠️ Skipping issue creation - severity below threshold: ${payload.severity}`);
+    const sanitizedSeverity = sanitizeString(payload.severity);
+    console.log(`⚠️ Skipping issue creation - severity below threshold: ${sanitizedSeverity}`);
     return { success: false, reason: 'severity_filtered' };
   }
   
   // Configuration vs code issue filtering
   if (!isCodeIssue(payload.scenario, payload.note)) {
-    console.log(`⚠️ Skipping issue creation - not a code issue: ${payload.scenario}`);
+    const sanitizedScenario = sanitizeString(payload.scenario);
+    console.log(`⚠️ Skipping issue creation - not a code issue: ${sanitizedScenario}`);
     return { success: false, reason: 'not_code_issue' };
   }
   
@@ -408,7 +451,8 @@ async function processWebhook(payload: WebhookPayload, signature: string): Promi
       if (currentSeverity > existingSeverity) {
         console.log(`⚠️ Severity increased, updating labels for issue #${existingIssue.number}`);
         const newLabels = existingIssue.labels.map((l: any) => l.name).filter((l: string) => !l.startsWith('severity-'));
-        newLabels.push(`severity-${payload.severity}`);
+        const sanitizedSeverity = sanitizeString(payload.severity);
+        newLabels.push(`severity-${sanitizedSeverity}`);
         updateIssueLabels(existingIssue.number, newLabels);
       }
       
