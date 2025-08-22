@@ -157,7 +157,7 @@ func (l *Logger) LogEvent(eventType, member string, data map[string]interface{})
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Info("event")
@@ -170,7 +170,7 @@ func (l *Logger) LogMetrics(member string, metrics map[string]interface{}) {
 	}
 
 	for k, v := range metrics {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Debug("metrics")
@@ -185,7 +185,7 @@ func (l *Logger) LogDecision(decisionType, from, to string, data map[string]inte
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Info("decision")
@@ -200,7 +200,7 @@ func (l *Logger) LogDiscovery(member, class, iface string, data map[string]inter
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Info("discovery")
@@ -213,7 +213,7 @@ func (l *Logger) LogError(err error, context map[string]interface{}) {
 	}
 
 	for k, v := range context {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Error("error")
@@ -226,7 +226,7 @@ func (l *Logger) LogConfig(action string, data map[string]interface{}) {
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Info("config")
@@ -278,7 +278,7 @@ func (l *Logger) LogProvider(member, provider string, data map[string]interface{
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Info("provider")
@@ -291,7 +291,7 @@ func (l *Logger) LogMWAN3(action string, data map[string]interface{}) {
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Info("mwan3")
@@ -314,7 +314,7 @@ func (l *Logger) LogPerformance(operation string, duration time.Duration, data m
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Debug("performance")
@@ -353,7 +353,7 @@ func (l *Logger) LogUptime(uptime time.Duration, data map[string]interface{}) {
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Info("uptime")
@@ -367,7 +367,7 @@ func (l *Logger) LogValidation(component string, valid bool, data map[string]int
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	level := logrus.InfoLevel
@@ -398,7 +398,7 @@ func (l *Logger) LogHeartbeat(interval time.Duration, data map[string]interface{
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Debug("heartbeat")
@@ -416,7 +416,7 @@ func (l *Logger) LogVerbose(operation string, data map[string]interface{}) {
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Trace("verbose")
@@ -429,7 +429,7 @@ func (l *Logger) LogDebugVerbose(operation string, data map[string]interface{}) 
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Debug("debug_verbose")
@@ -445,7 +445,7 @@ func (l *Logger) LogStateChange(component, fromState, toState string, reason str
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Info("state_change")
@@ -461,7 +461,7 @@ func (l *Logger) LogDataFlow(from, to string, dataType string, dataSize int, dat
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Debug("data_flow")
@@ -476,7 +476,7 @@ func (l *Logger) LogTiming(operation string, duration time.Duration, data map[st
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Debug("timing")
@@ -493,7 +493,7 @@ func (l *Logger) LogResourceUsage(resourceType string, usage float64, limit floa
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Debug("resource_usage")
@@ -507,7 +507,7 @@ func (l *Logger) LogNetworkActivity(activity string, interfaceName string, data 
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Debug("network_activity")
@@ -526,10 +526,10 @@ func (l *Logger) LogSystemCall(command string, args []string, exitCode int, stdo
 
 	// Only log stdout/stderr if they're not too long
 	if len(stdout) > 0 && len(stdout) < 1000 {
-		fields["stdout"] = stdout
+		fields["stdout"] = sanitizeForLogging(stdout)
 	}
 	if len(stderr) > 0 && len(stderr) < 1000 {
-		fields["stderr"] = stderr
+		fields["stderr"] = sanitizeForLogging(stderr)
 	}
 
 	level := logrus.InfoLevel
@@ -550,7 +550,7 @@ func (l *Logger) LogAPICall(method, url string, statusCode int, responseTime tim
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	level := logrus.InfoLevel
@@ -573,7 +573,7 @@ func (l *Logger) LogConfiguration(action string, configPath string, valid bool, 
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	level := logrus.InfoLevel
@@ -592,7 +592,7 @@ func (l *Logger) LogHealthCheck(component string, status string, details map[str
 	}
 
 	for k, v := range details {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	level := logrus.InfoLevel

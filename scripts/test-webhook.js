@@ -160,7 +160,7 @@ async function runTests() {
   
   for (const test of testPayloads) {
     console.log(`📋 Testing: ${test.name}`);
-    console.log(`   Payload: ${JSON.stringify(test.payload, null, 2)}`);
+    console.log(`   Payload: ${JSON.stringify(test.payload, null, 2).replace(/[\n\r\t]/g, ' ')}`);
     
     try {
       const signature = generateHMAC(test.payload, WEBHOOK_SECRET);
