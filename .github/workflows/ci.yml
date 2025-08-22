@@ -146,33 +146,4 @@ jobs:
   # Security scanning is handled by the separate Security & Secret Checks workflow
   # to prevent CI/CD Pipeline from hanging
 
-  docs:
-    name: Build Documentation
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.2'
-        bundler-cache: true
-        
-    - name: Install Jekyll
-      run: |
-        gem install jekyll bundler
-        bundle install
-        
-    - name: Build documentation
-      run: |
-        cd docs
-        jekyll build
-        
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.AUTONOMY_GH_TOKEN }}
-        publish_dir: ./docs/_site
+
