@@ -1,8 +1,8 @@
 package gps
 
 import (
-	"crypto/sha256"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"math"
@@ -444,16 +444,14 @@ func secureRandomInt(max int) int {
 	if max <= 0 {
 		return 0
 	}
-	
+
 	var buf [8]byte
 	_, err := rand.Read(buf[:])
 	if err != nil {
 		// Fallback to time-based seed if crypto/rand fails
 		return int(time.Now().UnixNano() % int64(max))
 	}
-	
+
 	val := binary.BigEndian.Uint64(buf[:])
 	return int(val % uint64(max))
 }
-
-

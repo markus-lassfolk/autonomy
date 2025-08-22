@@ -30,7 +30,7 @@ type autonomyAPIServerConfig struct {
 	Enabled  bool   `json:"enabled" default:"false"`
 	Port     int    `json:"port" default:"8081"`
 	Host     string `json:"host" default:"localhost"`
-	AuthKey  string `json:"auth_key"` // Optional authentication key
+	AuthKey  string `json:"auth_key"`  // Optional authentication key
 	CertFile string `json:"cert_file"` // TLS certificate file path
 	KeyFile  string `json:"key_file"`  // TLS private key file path
 }

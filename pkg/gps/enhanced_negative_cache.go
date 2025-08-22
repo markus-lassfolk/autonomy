@@ -245,14 +245,14 @@ func secureRandomInt64(max int64) int64 {
 	if max <= 0 {
 		return 0
 	}
-	
+
 	var buf [8]byte
 	_, err := rand.Read(buf[:])
 	if err != nil {
 		// Fallback to time-based seed if crypto/rand fails
 		return time.Now().UnixNano() % max
 	}
-	
+
 	val := binary.BigEndian.Uint64(buf[:])
 	return int64(val % uint64(max))
 }
@@ -265,7 +265,7 @@ func secureRandomFloat32() float32 {
 		// Fallback to time-based value if crypto/rand fails
 		return float32(time.Now().UnixNano()%1000) / 1000.0
 	}
-	
+
 	val := binary.BigEndian.Uint32(buf[:])
 	return float32(val) / float32(^uint32(0))
 }

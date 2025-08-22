@@ -237,7 +237,7 @@ func (u *UCI) execUCI(ctx context.Context, args ...string) (string, error) {
 			return "", fmt.Errorf("invalid character in UCI argument: %s", arg)
 		}
 	}
-	
+
 	cmd := exec.CommandContext(ctx, "uci", args...)
 	output, err := cmd.Output()
 	if err != nil {

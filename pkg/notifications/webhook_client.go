@@ -43,7 +43,7 @@ func NewWebhookClient(config *WebhookConfig, logger *logx.Logger, client *http.C
 	// Create custom HTTP client if advanced settings are configured
 	if config.Timeout > 0 || !config.VerifySSL || !config.FollowRedirects {
 		transport := &http.Transport{
-			TLSClientConfig: &tls.Config{ MinVersion: tls.VersionTLS13,
+			TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS13,
 				InsecureSkipVerify: !config.VerifySSL,
 			},
 		}

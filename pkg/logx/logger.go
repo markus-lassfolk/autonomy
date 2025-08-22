@@ -109,7 +109,7 @@ func sanitizeForLogging(input interface{}) interface{} {
 	if input == nil {
 		return input
 	}
-	
+
 	switch v := input.(type) {
 	case string:
 		if v == "" {

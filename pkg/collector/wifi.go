@@ -370,7 +370,7 @@ func (wc *WiFiCollector) getIwconfigBitrate(iface string) *int {
 	if strings.ContainsAny(iface, ";&|`$(){}[]<>\"'\\") {
 		return nil
 	}
-	
+
 	cmd := exec.Command("iwconfig", iface)
 	output, err := cmd.Output()
 	if err != nil {
