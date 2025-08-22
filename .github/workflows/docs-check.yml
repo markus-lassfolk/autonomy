@@ -12,6 +12,11 @@ on:
       - '**/*.md'
       - 'docs/**'
 
+env:
+  # Enable debug logging
+  ACTIONS_STEP_DEBUG: true
+  ACTIONS_RUNNER_DEBUG: true
+
 jobs:
   markdown-check:
     runs-on: ubuntu-latest
@@ -26,6 +31,10 @@ jobs:
     - name: Get changed files
       id: changed-files
       run: |
+        echo "🔍 Debug: Getting changed files..."
+        echo "🔍 Debug: Event name: ${{ github.event_name }}"
+        echo "🔍 Debug: Current directory: $(pwd)"
+        
         if [ "${{ github.event_name }}" = "pull_request" ]; then
           echo "Getting markdown files changed in PR #${{ github.event.number }}"
           # Get files changed in this PR, filter for markdown files
@@ -41,6 +50,9 @@ jobs:
           find . -name "*.md" | grep -v .git | head -20 >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         fi
+        
+        echo "🔍 Debug: Files to check:"
+        echo "${{ steps.changed-files.outputs.files }}"
     
     - name: Check markdown links
       if: steps.changed-files.outputs.files != ''
@@ -53,7 +65,7 @@ jobs:
         
     - name: Check for TODO/FIXME comments in changed files
       run: |
-        echo "Checking for TODO/FIXME comments in changed files..."
+        echo "🔍 Checking for TODO/FIXME comments in changed files..."
         if [ -z "${{ steps.changed-files.outputs.files }}" ]; then
           echo "No files to check"
           exit 0
@@ -63,6 +75,7 @@ jobs:
         echo "${{ steps.changed-files.outputs.files }}" | while IFS= read -r file; do
           if [ -z "$file" ] || [ ! -f "$file" ]; then continue; fi
           
+          echo "🔍 Checking file: $file"
           if grep -n -i "todo\|fixme\|hack" "$file"; then
             echo "::warning file=$file::Found TODO/FIXME comments that should be addressed"
             found_todos=true
