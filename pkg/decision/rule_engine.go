@@ -874,6 +874,17 @@ func (re *RuleEngine) GetExecutionHistory(limit int) []*RuleExecution {
 	return history
 }
 
+// countEnabledRules returns the number of enabled rules
+func (re *RuleEngine) countEnabledRules() int {
+	count := 0
+	for _, rule := range re.rules {
+		if rule.Enabled {
+			count++
+		}
+	}
+	return count
+}
+
 // GetEngineStatus returns the rule engine status
 func (re *RuleEngine) GetEngineStatus() map[string]interface{} {
 	re.mu.RLock()
