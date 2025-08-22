@@ -1,5 +1,8 @@
 source "https://rubygems.org"
 
+# Specify Ruby version to resolve conflicts
+ruby "~> 3.1.0"
+
 gem "jekyll", "~> 4.4.0"
 gem "github-pages", group: :jekyll_plugins
 

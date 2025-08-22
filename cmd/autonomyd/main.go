@@ -1058,16 +1058,23 @@ func writeHeartbeat(ctx context.Context, ticker *time.Ticker, startTime time.Tim
 			}
 
 			// Write to file atomically (write to temp file, then rename)
-			tempFile := heartbeatFile + ".tmp"
-			if err := os.WriteFile(tempFile, data, 0o644); err != nil {
-				logger.Error("Failed to write heartbeat file", "error", err, "file", tempFile)
+			// Use os.CreateTemp for secure temporary file creation
+			tempFile, err := os.CreateTemp("/tmp", "autonomyd-heartbeat-*.tmp")
+			if err != nil {
+				logger.Error("Failed to create temporary file", "error", err)
+				continue
+			}
+			defer os.Remove(tempFile.Name()) // Clean up temp file
+			
+			if err := os.WriteFile(tempFile.Name(), data, 0o644); err != nil {
+				logger.Error("Failed to write heartbeat file", "error", err, "file", tempFile.Name())
 				continue
 			}
 
-			if err := os.Rename(tempFile, heartbeatFile); err != nil {
-				logger.Error("Failed to rename heartbeat file", "error", err, "from", tempFile, "to", heartbeatFile)
+			if err := os.Rename(tempFile.Name(), heartbeatFile); err != nil {
+				logger.Error("Failed to rename heartbeat file", "error", err, "from", tempFile.Name(), "to", heartbeatFile)
 				// Clean up temp file
-				os.Remove(tempFile)
+				os.Remove(tempFile.Name())
 				continue
 			}
 
