@@ -20,31 +20,7 @@ type StarlinkGPSSource struct {
 	successCount int
 }
 
-// ComprehensiveStarlinkGPS combines data from all three Starlink APIs
-type ComprehensiveStarlinkGPS struct {
-	// Core Location Data (from get_location)
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	Altitude  float64 `json:"altitude"`
-	Speed     float64 `json:"speed"`
-	Source    string  `json:"source"`
-
-	// GPS Status Data (from get_status)
-	GPSValid     bool  `json:"gps_valid"`
-	GPSSats      int   `json:"gps_sats"`
-	GPSTimestamp int64 `json:"gps_timestamp"`
-
-	// Enhanced Data (from get_diagnostics)
-	UncertaintyMeters float64 `json:"uncertainty_meters"`
-	GPSTimeS          int64   `json:"gps_time_s"`
-	LocationEnabled   bool    `json:"location_enabled"`
-
-	// Quality Metrics
-	QualityScore   float64       `json:"quality_score"`
-	Confidence     float64       `json:"confidence"`
-	DataSources    []string      `json:"data_sources"`
-	CollectionTime time.Duration `json:"collection_time"`
-}
+// Note: ComprehensiveStarlinkGPS type is defined in comprehensive_starlink_gps.go
 
 // NewStarlinkGPSSource creates a new Starlink GPS source
 func NewStarlinkGPSSource(priority int, client *starlink.Client, logger *logx.Logger) *StarlinkGPSSource {
@@ -143,7 +119,7 @@ func (ss *StarlinkGPSSource) collectComprehensiveGPS(ctx context.Context) (*Comp
 		})
 	}
 
-	gps.CollectionTime = time.Since(start)
+	gps.CollectionMs = time.Since(start).Milliseconds()
 
 	// Validate and score the collected data
 	ss.validateAndScore(gps)
@@ -225,10 +201,10 @@ func (ss *StarlinkGPSSource) mergeLocationData(gps *ComprehensiveStarlinkGPS, da
 			}
 		}
 		if source, ok := getLocation["source"].(string); ok {
-			gps.Source = source
+			gps.GPSSource = source
 		}
 		if speed, ok := getLocation["horizontalSpeedMps"].(float64); ok {
-			gps.Speed = speed
+			gps.HorizontalSpeedMps = speed
 		}
 	}
 }
@@ -237,12 +213,13 @@ func (ss *StarlinkGPSSource) mergeLocationData(gps *ComprehensiveStarlinkGPS, da
 func (ss *StarlinkGPSSource) mergeStatusData(gps *ComprehensiveStarlinkGPS, data map[string]interface{}) {
 	if dishGetStatus, ok := data["dishGetStatus"].(map[string]interface{}); ok {
 		if gpsStats, ok := dishGetStatus["gpsStats"].(map[string]interface{}); ok {
-			if gpsValid, ok := gpsStats["gpsValid"].(bool); ok {
-				gps.GPSValid = gpsValid
-			}
-			if gpsSats, ok := gpsStats["gpsSats"].(float64); ok {
-				gps.GPSSats = int(gpsSats)
-			}
+					if gpsValid, ok := gpsStats["gpsValid"].(bool); ok {
+			gps.GPSValid = &gpsValid
+		}
+		if gpsSats, ok := gpsStats["gpsSats"].(float64); ok {
+			gpsSatsInt := int(gpsSats)
+			gps.GPSSatellites = &gpsSatsInt
+		}
 		}
 	}
 }
@@ -251,15 +228,15 @@ func (ss *StarlinkGPSSource) mergeStatusData(gps *ComprehensiveStarlinkGPS, data
 func (ss *StarlinkGPSSource) mergeDiagnosticsData(gps *ComprehensiveStarlinkGPS, data map[string]interface{}) {
 	if dishGetDiagnostics, ok := data["dishGetDiagnostics"].(map[string]interface{}); ok {
 		if location, ok := dishGetDiagnostics["location"].(map[string]interface{}); ok {
-			if enabled, ok := location["enabled"].(bool); ok {
-				gps.LocationEnabled = enabled
-			}
-			if gpsTimeS, ok := location["gpsTimeS"].(float64); ok {
-				gps.GPSTimeS = int64(gpsTimeS)
-			}
-			if uncertaintyMeters, ok := location["uncertaintyMeters"].(float64); ok {
-				gps.UncertaintyMeters = uncertaintyMeters
-			}
+					if enabled, ok := location["enabled"].(bool); ok {
+			gps.LocationEnabled = &enabled
+		}
+		if gpsTimeS, ok := location["gpsTimeS"].(float64); ok {
+			gps.GPSTimeS = &gpsTimeS
+		}
+		if uncertaintyMeters, ok := location["uncertaintyMeters"].(float64); ok {
+			gps.UncertaintyMeters = &uncertaintyMeters
+		}
 
 			// Use diagnostics coordinates if primary coordinates are missing
 			if gps.Latitude == 0 && gps.Longitude == 0 {
@@ -287,25 +264,25 @@ func (ss *StarlinkGPSSource) validateAndScore(gps *ComprehensiveStarlinkGPS) {
 		score += 30.0 // Base score for coordinates
 		confidence += 0.3
 	}
-	if gps.GPSValid {
+	if gps.GPSValid != nil && *gps.GPSValid {
 		score += 20.0 // GPS validity
 		confidence += 0.2
 	}
-	if gps.GPSSats > 0 {
-		score += float64(gps.GPSSats) * 2.0       // Satellite count
-		confidence += float64(gps.GPSSats) / 50.0 // Max 0.3 for 15+ satellites
+	if gps.GPSSatellites != nil && *gps.GPSSatellites > 0 {
+		score += float64(*gps.GPSSatellites) * 2.0       // Satellite count
+		confidence += float64(*gps.GPSSatellites) / 50.0 // Max 0.3 for 15+ satellites
 	}
-	if gps.LocationEnabled {
+	if gps.LocationEnabled != nil && *gps.LocationEnabled {
 		score += 10.0 // Location service enabled
 		confidence += 0.1
 	}
-	if gps.UncertaintyMeters > 0 {
+	if gps.UncertaintyMeters != nil && *gps.UncertaintyMeters > 0 {
 		score += 10.0 // Uncertainty data available
 		confidence += 0.1
 		// Better confidence for lower uncertainty
-		if gps.UncertaintyMeters <= 5 {
+		if *gps.UncertaintyMeters <= 5 {
 			confidence += 0.2
-		} else if gps.UncertaintyMeters <= 15 {
+		} else if *gps.UncertaintyMeters <= 15 {
 			confidence += 0.1
 		}
 	}
@@ -319,7 +296,16 @@ func (ss *StarlinkGPSSource) validateAndScore(gps *ComprehensiveStarlinkGPS) {
 		confidence = 1.0
 	}
 
-	gps.QualityScore = score
+	// Convert score to quality string
+	if score >= 80 {
+		gps.QualityScore = "excellent"
+	} else if score >= 60 {
+		gps.QualityScore = "good"
+	} else if score >= 40 {
+		gps.QualityScore = "fair"
+	} else {
+		gps.QualityScore = "poor"
+	}
 	gps.Confidence = confidence
 }
 
@@ -327,16 +313,22 @@ func (ss *StarlinkGPSSource) validateAndScore(gps *ComprehensiveStarlinkGPS) {
 func (ss *StarlinkGPSSource) convertToStandardized(comprehensive *ComprehensiveStarlinkGPS) *StandardizedGPSData {
 	// Determine accuracy from uncertainty or estimate
 	accuracy := 5.0 // Default accuracy for Starlink
-	if comprehensive.UncertaintyMeters > 0 {
-		accuracy = comprehensive.UncertaintyMeters
+	if comprehensive.UncertaintyMeters != nil && *comprehensive.UncertaintyMeters > 0 {
+		accuracy = *comprehensive.UncertaintyMeters
 	}
 
 	// Determine fix type based on GPS validity and satellite count
 	fixType := 0
-	if comprehensive.GPSValid {
-		if comprehensive.GPSSats >= 6 {
+	gpsValid := comprehensive.GPSValid != nil && *comprehensive.GPSValid
+	gpsSats := 0
+	if comprehensive.GPSSatellites != nil {
+		gpsSats = *comprehensive.GPSSatellites
+	}
+	
+	if gpsValid {
+		if gpsSats >= 6 {
 			fixType = 3 // DGPS fix
-		} else if comprehensive.GPSSats >= 4 {
+		} else if gpsSats >= 4 {
 			fixType = 2 // 3D fix
 		} else {
 			fixType = 1 // 2D fix
@@ -345,11 +337,11 @@ func (ss *StarlinkGPSSource) convertToStandardized(comprehensive *ComprehensiveS
 
 	// Determine fix quality
 	fixQuality := "poor"
-	if comprehensive.GPSValid && comprehensive.GPSSats >= 8 && accuracy <= 5 {
+	if gpsValid && gpsSats >= 8 && accuracy <= 5 {
 		fixQuality = "excellent"
-	} else if comprehensive.GPSValid && comprehensive.GPSSats >= 6 && accuracy <= 15 {
+	} else if gpsValid && gpsSats >= 6 && accuracy <= 15 {
 		fixQuality = "good"
-	} else if comprehensive.GPSValid && comprehensive.GPSSats >= 4 {
+	} else if gpsValid && gpsSats >= 4 {
 		fixQuality = "fair"
 	}
 
@@ -358,14 +350,14 @@ func (ss *StarlinkGPSSource) convertToStandardized(comprehensive *ComprehensiveS
 		Longitude:   comprehensive.Longitude,
 		Altitude:    comprehensive.Altitude,
 		Accuracy:    accuracy,
-		Speed:       comprehensive.Speed,
+		Speed:       comprehensive.HorizontalSpeedMps,
 		FixType:     fixType,
 		FixQuality:  fixQuality,
-		Satellites:  comprehensive.GPSSats,
+		Satellites:  gpsSats,
 		Source:      "Starlink Multi-API",
 		Method:      "starlink_comprehensive",
 		DataSources: comprehensive.DataSources,
-		Valid:       comprehensive.GPSValid && comprehensive.Latitude != 0 && comprehensive.Longitude != 0,
+		Valid:       gpsValid && comprehensive.Latitude != 0 && comprehensive.Longitude != 0,
 		Confidence:  comprehensive.Confidence,
 		Timestamp:   time.Now(),
 	}
