@@ -3,6 +3,7 @@ package logx
 import (
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -103,6 +104,35 @@ func (l *Logger) WithFields(fields map[string]interface{}) *Logger {
 	return &Logger{logger: l.logger.WithFields(logrus.Fields(fields)).Logger}
 }
 
+// sanitizeForLogging removes or escapes potentially dangerous characters for logging
+func sanitizeForLogging(input interface{}) interface{} {
+	if input == nil {
+		return input
+	}
+	
+	switch v := input.(type) {
+	case string:
+		if v == "" {
+			return v
+		}
+		// Replace newlines and other control characters that could be used for log injection
+		replacer := strings.NewReplacer(
+			"\n", "\\n",
+			"\r", "\\r",
+			"\t", "\\t",
+		)
+		return replacer.Replace(v)
+	case map[string]interface{}:
+		sanitized := make(map[string]interface{})
+		for k, val := range v {
+			sanitized[k] = sanitizeForLogging(val)
+		}
+		return sanitized
+	default:
+		return input
+	}
+}
+
 // parseFields converts variadic arguments to logrus.Fields
 func parseFields(fields ...interface{}) logrus.Fields {
 	result := make(logrus.Fields)
@@ -111,7 +141,7 @@ func parseFields(fields ...interface{}) logrus.Fields {
 		if i+1 < len(fields) {
 			key, ok := fields[i].(string)
 			if ok {
-				result[key] = fields[i+1]
+				result[key] = sanitizeForLogging(fields[i+1])
 			}
 		}
 	}

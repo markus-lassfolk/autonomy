@@ -400,6 +400,7 @@ func (sc *StarlinkCollector) extractMetricsFromAPIResponseDetailed(apiResp *Star
 	obstructionTime := apiResp.Status.ObstructionStats.TimeObstructed
 	metrics.ObstructionTimePct = &obstructionTime
 
+	// ValidS is already int, just assign it
 	validS := int64(apiResp.Status.ObstructionStats.ValidS)
 	metrics.ObstructionValidS = &validS
 
@@ -437,7 +438,7 @@ func (sc *StarlinkCollector) extractMetricsFromAPIResponseDetailed(apiResp *Star
 	}
 
 	// System uptime and boot count
-	if apiResp.Status.DeviceState.UptimeS <= uint64(^int64(0)>>1) {
+	if apiResp.Status.DeviceState.UptimeS <= uint64(1<<63-1) {
 		uptime := int64(apiResp.Status.DeviceState.UptimeS)
 		metrics.UptimeS = &uptime
 	}

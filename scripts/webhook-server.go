@@ -82,6 +82,20 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
+// sanitizeForLogging removes or escapes potentially dangerous characters for logging
+func sanitizeForLogging(input string) string {
+	if input == "" {
+		return input
+	}
+	// Replace newlines and other control characters that could be used for log injection
+	replacer := strings.NewReplacer(
+		"\n", "\\n",
+		"\r", "\\r",
+		"\t", "\\t",
+	)
+	return replacer.Replace(input)
+}
+
 // Rate limiting middleware
 type RateLimiter struct {
 	requests map[string][]time.Time
@@ -201,7 +215,7 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	// Verify signature
 	signature := r.Header.Get("X-Hub-Signature-256")
 	if !verifySignature(body, signature) {
-		log.Printf("❌ Invalid webhook signature from %s", getClientIP(r))
+		log.Printf("❌ Invalid webhook signature from %s", sanitizeForLogging(getClientIP(r)))
 		http.Error(w, "Invalid signature", http.StatusUnauthorized)
 		return
 	}
@@ -214,7 +228,7 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("📨 Received webhook: %s from %s", payload.Event, payload.Source)
+	log.Printf("📨 Received webhook: %s from %s", sanitizeForLogging(payload.Event), sanitizeForLogging(payload.Source))
 
 	// Process webhook based on event type
 	switch payload.Event {
@@ -227,7 +241,7 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	case "system_alert":
 		handleSystemAlert(payload)
 	default:
-		log.Printf("⚠️  Unknown event type: %s", payload.Event)
+		log.Printf("⚠️  Unknown event type: %s", sanitizeForLogging(payload.Event))
 	}
 
 	w.WriteHeader(http.StatusOK)
