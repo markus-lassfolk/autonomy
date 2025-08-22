@@ -59,17 +59,12 @@ jobs:
           config: p/security-audit p/secrets p/owasp-top-ten
         continue-on-error: true
 
-      # CodeQL Analysis
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: go
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+      # CodeQL Analysis (disabled due to configuration conflicts)
+      - name: Skip CodeQL Analysis
+        run: |
+          echo "⚠️ CodeQL Analysis disabled due to configuration conflicts"
+          echo "CodeQL analysis is handled by the separate CodeQL workflow"
+          echo "This prevents conflicts between default and advanced configurations"
 
       # Staticcheck Analysis
       - name: Run Staticcheck
