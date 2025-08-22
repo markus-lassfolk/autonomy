@@ -160,7 +160,12 @@ async function runTests() {
   
   for (const test of testPayloads) {
     console.log(`📋 Testing: ${test.name}`);
-    console.log(`   Payload: ${JSON.stringify(test.payload, null, 2).replace(/[\n\r\t]/g, ' ')}`);
+    // Sanitize payload for logging to prevent log injection
+    const sanitizedPayload = JSON.stringify(test.payload, null, 2)
+      .replace(/[\n\r\t]/g, ' ')
+      .replace(/[<>]/g, '') // Remove potential HTML/script tags
+      .substring(0, 500); // Limit length to prevent log flooding
+    console.log(`   Payload: ${sanitizedPayload}`);
     
     try {
       const signature = generateHMAC(test.payload, WEBHOOK_SECRET);

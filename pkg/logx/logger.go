@@ -81,17 +81,23 @@ func (l *Logger) Debug(msg string, fields ...interface{}) {
 
 // Info logs an info message with fields
 func (l *Logger) Info(msg string, fields ...interface{}) {
-	l.logger.WithFields(parseFields(fields...)).Info(msg)
+	// Sanitize the message to prevent log injection
+	sanitizedMsg := sanitizeForLogging(msg).(string)
+	l.logger.WithFields(parseFields(fields...)).Info(sanitizedMsg)
 }
 
 // Warn logs a warning message with fields
 func (l *Logger) Warn(msg string, fields ...interface{}) {
-	l.logger.WithFields(parseFields(fields...)).Warn(msg)
+	// Sanitize the message to prevent log injection
+	sanitizedMsg := sanitizeForLogging(msg).(string)
+	l.logger.WithFields(parseFields(fields...)).Warn(sanitizedMsg)
 }
 
 // Error logs an error message with fields
 func (l *Logger) Error(msg string, fields ...interface{}) {
-	l.logger.WithFields(parseFields(fields...)).Error(msg)
+	// Sanitize the message to prevent log injection
+	sanitizedMsg := sanitizeForLogging(msg).(string)
+	l.logger.WithFields(parseFields(fields...)).Error(sanitizedMsg)
 }
 
 // WithField returns a logger with a single field
@@ -120,7 +126,15 @@ func sanitizeForLogging(input interface{}) interface{} {
 			"\n", "\\n",
 			"\r", "\\r",
 			"\t", "\\t",
+			"<", "&lt;",
+			">", "&gt;",
+			"\"", "&quot;",
+			"'", "&#39;",
 		)
+		// Limit length to prevent log flooding attacks
+		if len(v) > 1000 {
+			v = v[:1000] + "..."
+		}
 		return replacer.Replace(v)
 	case map[string]interface{}:
 		sanitized := make(map[string]interface{})
