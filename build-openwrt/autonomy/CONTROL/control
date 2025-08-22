@@ -1,0 +1,8 @@
+Package: autonomy
+Version: 1.0.0
+Depends: luci-base
+Section: net
+Architecture: x86_64
+Installed-Size: 12400
+Description: Autonomous networking system for OpenWrt
+ Provides intelligent network failover management.

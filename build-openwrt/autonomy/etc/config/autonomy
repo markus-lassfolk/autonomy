@@ -1,0 +1,11 @@
+config autonomy 'main'
+    option enabled '1'
+    option log_level 'info'
+
+config autonomy 'starlink'
+    option enabled '1'
+    option api_key ''
+
+config autonomy 'cellular'
+    option enabled '1'
+    option interface 'wwan0'

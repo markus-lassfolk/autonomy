@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=15
+
+start() {
+    echo "Starting autonomy system..."
+    /usr/bin/autonomysysmgmt --config /etc/config/autonomy &
+}
+
+stop() {
+    echo "Stopping autonomy system..."
+    killall autonomysysmgmt 2>/dev/null || true
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
