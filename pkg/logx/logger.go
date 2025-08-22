@@ -251,7 +251,7 @@ func (l *Logger) LogSwitch(from, to, reason string, delta float64, data map[stri
 	}
 
 	for k, v := range data {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Info("switch")
@@ -264,7 +264,7 @@ func (l *Logger) LogSample(member string, metrics map[string]interface{}) {
 	}
 
 	for k, v := range metrics {
-		fields[k] = v
+		fields[k] = sanitizeForLogging(v)
 	}
 
 	l.logger.WithFields(fields).Debug("sample")
