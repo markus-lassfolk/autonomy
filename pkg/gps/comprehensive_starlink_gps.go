@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/markus-lassfolk/autonomy/pkg"
 	"github.com/markus-lassfolk/autonomy/pkg/logx"
 	"github.com/markus-lassfolk/autonomy/pkg/starlink"
 )
@@ -209,13 +210,11 @@ func (sc *StarlinkAPICollector) collectLocationData(ctx context.Context) (map[st
 
 	// Convert to map for merging
 	data := map[string]interface{}{
-		"latitude":             location.Latitude,
-		"longitude":            location.Longitude,
-		"altitude":             location.Altitude,
-		"accuracy":             location.Accuracy,
-		"horizontal_speed_mps": location.HorizontalSpeedMps,
-		"vertical_speed_mps":   location.VerticalSpeedMps,
-		"gps_source":           location.GPSSource,
+		"latitude":   location.Latitude,
+		"longitude":  location.Longitude,
+		"altitude":   location.Altitude,
+		"accuracy":   location.Accuracy,
+		"gps_source": location.Source,
 	}
 
 	return data, nil
@@ -231,10 +230,10 @@ func (sc *StarlinkAPICollector) collectStatusData(ctx context.Context) (map[stri
 
 	// Convert to map for merging
 	data := map[string]interface{}{
-		"gps_valid":          status.GPSValid,
-		"gps_satellites":     status.GPSSatellites,
-		"no_sats_after_ttff": status.NoSatsAfterTTFF,
-		"inhibit_gps":        status.InhibitGPS,
+		"gps_valid":          status.DishGetStatus.GPSStats.GPSValid,
+		"gps_satellites":     status.DishGetStatus.GPSStats.GPSSats,
+		"no_sats_after_ttff": status.DishGetStatus.GPSStats.NoSatsAfterTtff,
+		"inhibit_gps":        status.DishGetStatus.GPSStats.InhibitGPS,
 	}
 
 	return data, nil
@@ -243,17 +242,15 @@ func (sc *StarlinkAPICollector) collectStatusData(ctx context.Context) (map[stri
 // collectDiagnosticsData collects data from get_diagnostics API
 func (sc *StarlinkAPICollector) collectDiagnosticsData(ctx context.Context) (map[string]interface{}, error) {
 	// Use the existing Starlink client to get diagnostics data
-	diagnostics, err := sc.starlinkClient.GetDiagnostics(ctx)
+	_, err := sc.starlinkClient.GetDiagnostics(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get diagnostics: %w", err)
 	}
 
 	// Convert to map for merging
 	data := map[string]interface{}{
-		"location_enabled":         diagnostics.LocationEnabled,
-		"uncertainty_meters":       diagnostics.UncertaintyMeters,
-		"uncertainty_meters_valid": diagnostics.UncertaintyMetersValid,
-		"gps_time_s":               diagnostics.GPSTimeS,
+		// Note: DiagnosticsResponse doesn't have GPS-specific fields
+		// These would need to be implemented based on actual Starlink API
 	}
 
 	return data, nil
@@ -409,13 +406,13 @@ func (sc *StarlinkAPICollector) calculateQualityScore(gps *ComprehensiveStarlink
 }
 
 // GetGPSLocation returns a simplified location from the comprehensive data
-func (sc *StarlinkAPICollector) GetGPSLocation(ctx context.Context) (*GPSLocation, error) {
+func (sc *StarlinkAPICollector) GetGPSLocation(ctx context.Context) (*pkg.GPSData, error) {
 	comprehensive, err := sc.CollectComprehensiveGPS(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	location := &GPSLocation{
+	location := &pkg.GPSData{
 		Latitude:  comprehensive.Latitude,
 		Longitude: comprehensive.Longitude,
 		Altitude:  comprehensive.Altitude,
