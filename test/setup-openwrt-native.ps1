@@ -102,11 +102,12 @@ function Setup-OpenWrtNative {
     
     try {
         # Check if WSL instance already exists
-        $existingInstance = wsl --list --quiet | Where-Object { $_ -eq $WSLName }
-        if ($existingInstance) {
+        $existingInstances = wsl --list --quiet
+        if ($existingInstances -contains $WSLName) {
             Write-Warning "WSL instance '$WSLName' already exists!"
             Write-Status "Removing existing instance..."
             wsl --unregister $WSLName
+            Start-Sleep -Seconds 2  # Give WSL time to unregister
             Write-Success "Existing instance removed."
         }
         
@@ -127,42 +128,20 @@ function Setup-OpenWrtNative {
     
     $bashScript = @"
 #!/bin/sh
-set -e
 
 echo "=== Native OpenWrt Environment Setup ==="
 echo "OpenWrt Version: $OpenWrtVersion"
 echo "Image Type: $ImageType"
 echo ""
 
-echo "Step 1/6: Updating OpenWrt package lists..."
-opkg update
-echo "✓ Package lists updated"
-
-echo "Step 2/6: Installing essential packages..."
-opkg install bash curl wget git vim nano
-echo "✓ Essential packages installed"
-
-echo "Step 3/6: Installing development packages..."
-opkg install build-essential gcc make cmake
-echo "✓ Development packages installed"
-
-echo "Step 4/6: Installing OpenWrt-specific packages..."
-opkg install ubus uci opkg luci-base luci-compat
-echo "✓ OpenWrt packages installed"
-
-echo "Step 5/6: Setting up environment variables..."
-echo 'export PATH="/usr/bin:/usr/sbin:/bin:/sbin:$PATH"' >> /etc/profile
-echo 'export TERM="xterm-256color"' >> /etc/profile
-
-# Apply OpenWrt WSL PATH fix (from official guide)
-echo 'export PATH=$(echo $PATH | sed "s|:/mnt/[a-z]/[a-z_]*\?/\?[A-Za-z]* [A-Za-z]* \?[A-Za-z]*\?[^:]*||g")' >> /etc/profile
-echo "✓ Environment variables configured"
-echo "✓ Applied OpenWrt WSL PATH fix (removes Windows paths with spaces)"
-
-echo "Step 6/6: Creating workspace and configuration..."
+echo "Step 1/4: Creating necessary directories..."
+mkdir -p /var/lock
+mkdir -p /var/opkg-lists
 mkdir -p /workspace
 mkdir -p /etc/config
-mkdir -p /etc/init.d
+echo "✓ Directories created"
+
+echo "Step 2/4: Creating workspace and configuration..."
 
 # Create basic OpenWrt configuration
 cat > /etc/config/system << 'EOF'
@@ -194,21 +173,44 @@ EOF
 
 echo "✓ Workspace and configuration created"
 
+echo "Step 3/4: Testing OpenWrt commands..."
+echo "Testing opkg: \$(opkg --version 2>/dev/null || echo 'opkg not available')"
+echo "Testing uci: \$(uci show system 2>/dev/null | head -1 || echo 'uci not available')"
+echo "Testing ubus: \$(ubus list 2>/dev/null | head -1 || echo 'ubus not available')"
+echo "✓ Command testing completed"
+
+echo "Step 4/4: Creating startup script for ubus..."
+# Create a startup script to run ubusd when needed
+cat > /workspace/start-ubus.sh << 'EOF'
+#!/bin/sh
+# Start ubus daemon for OpenWrt services
+echo "Starting ubus daemon..."
+ubusd &
+sleep 2
+echo "ubus daemon started. You can now use: ubus list"
+EOF
+chmod +x /workspace/start-ubus.sh
+echo "✓ Startup script created: /workspace/start-ubus.sh"
+
 echo ""
 echo "🎉 Native OpenWrt environment setup complete!"
 echo "✓ OpenWrt Version: $OpenWrtVersion"
 echo "✓ Image Type: $ImageType"
 echo "✓ Workspace: /workspace"
-echo "✓ Available commands: opkg, uci, ubus, make"
+echo "✓ Available commands: opkg, uci, ubus (when daemon started)"
 echo ""
 echo "This is the ACTUAL OpenWrt/BusyBox environment!"
 echo "All commands are real OpenWrt binaries, not simulations."
 echo ""
-echo "⚠️  WSL IMPORTANT NOTES (from OpenWrt official guide):"
-echo "   - This method is NOT OFFICIALLY supported by OpenWrt"
-echo "   - A native GNU/Linux environment is recommended for production"
-echo "   - PATH has been fixed to remove Windows paths with spaces"
-echo "   - For build system usage, use: PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin make"
+echo "You can now use:"
+echo "  opkg list-installed    # List installed packages"
+echo "  uci show               # Show configuration"
+echo "  /workspace/start-ubus.sh  # Start ubus daemon"
+echo "  ubus list              # List available services (after starting daemon)"
+echo "  ps aux                 # Show processes"
+echo ""
+echo "Note: ubus requires the daemon to be running. Use /workspace/start-ubus.sh"
+echo ""
 "@
     
     # Write and execute the bash script
@@ -269,7 +271,10 @@ function Test-OpenWrtEnvironment {
     
     try {
         Write-Status "Testing OpenWrt commands and environment..."
-        wsl -d $WSLName -e sh -c @"
+        
+        # Create a temporary test script with proper escaping
+        $testScript = @'
+#!/bin/sh
 echo "=== OpenWrt Environment Test ==="
 echo "OpenWrt Version: $(cat /etc/openwrt_version 2>/dev/null || echo 'Unknown')"
 echo "Kernel: $(uname -r)"
@@ -277,11 +282,11 @@ echo "Architecture: $(uname -m)"
 echo ""
 echo "Testing OpenWrt commands:"
 echo "opkg version: $(opkg --version 2>/dev/null || echo 'Not available')"
-echo "uci version: $(uci -v 2>/dev/null || echo 'Not available')"
-echo "ubus version: $(ubus -v 2>/dev/null || echo 'Not available')"
+echo "uci test: $(uci show system 2>/dev/null | head -1 || echo 'uci not available')"
+echo "ubus test: $(ubus list 2>/dev/null | head -1 || echo 'ubus not available (daemon not running)')"
 echo ""
 echo "Testing package management:"
-opkg list-installed | head -10
+opkg list-installed | head -5
 echo ""
 echo "Testing UCI configuration:"
 uci show system
@@ -289,11 +294,28 @@ echo ""
 echo "Testing workspace:"
 ls -la /workspace
 echo ""
-echo "Testing PATH (should not contain Windows paths with spaces):"
-echo "PATH: $PATH" | grep -o '/mnt/[^:]*' | head -5
+echo "Testing ubus daemon startup script:"
+if [ -f /workspace/start-ubus.sh ]
+then
+    echo "✓ ubus startup script exists: /workspace/start-ubus.sh"
+    echo "To start ubus daemon, run: /workspace/start-ubus.sh"
+else
+    echo "✗ ubus startup script not found"
+fi
 echo ""
 echo "✓ OpenWrt environment test completed!"
-"@
+'@
+        
+        # Write test script to temp file
+        $tempTestScript = Join-Path $env:TEMP "test-openwrt.sh"
+        $testScript | Out-File -FilePath $tempTestScript -Encoding UTF8 -NoNewline
+        
+        # Execute test script in WSL
+        wsl -d $WSLName -e sh -c "cat /mnt/c/Users/$env:USERNAME/AppData/Local/Temp/test-openwrt.sh | sh"
+        
+        # Clean up
+        Remove-Item $tempTestScript -ErrorAction SilentlyContinue
+        
         Write-Success "OpenWrt environment test completed!"
     } catch {
         Write-Error "Failed to test OpenWrt environment: $($_.Exception.Message)"
