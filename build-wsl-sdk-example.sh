@@ -1,0 +1,298 @@
+#!/bin/bash
+set -e
+
+echo "=== Building RUTOS Example Package with WSL SDK ==="
+
+# Script configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SDK_DIR="/home/markusla/rutos-sdk"
+VUCI_DIR="$SDK_DIR/package/feeds/vuci"
+
+# Ensure we're in the right directory
+echo "Current directory: $(pwd)"
+echo "Script directory: $SCRIPT_DIR"
+
+echo "Project root: $SCRIPT_DIR"
+echo "SDK directory: $SDK_DIR"
+
+# Check if SDK directory exists
+if [ ! -d "$SDK_DIR" ]; then
+    echo "ERROR: SDK directory not found at $SDK_DIR"
+    echo "Please ensure the SDK is installed at $SDK_DIR"
+    exit 1
+fi
+
+# Create a simple example package
+echo "Creating simple example package..."
+
+EXAMPLE_PKG_DIR="$SCRIPT_DIR/vuci-app-example-simple"
+rm -rf "$EXAMPLE_PKG_DIR"
+mkdir -p "$EXAMPLE_PKG_DIR"
+
+# Create the package Makefile
+cat > "$EXAMPLE_PKG_DIR/Makefile" << 'EOF'
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=vuci-app-example-simple
+PKG_VERSION:=1.0
+PKG_RELEASE:=1
+
+PKG_MAINTAINER:=Autonomy Team
+PKG_LICENSE:=MIT
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/$(PKG_NAME)
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=Simple Example VUCI App
+  DEPENDS:=+rpcd +rpcd-mod-file +rpcd-mod-iwinfo +uhttpd +uhttpd-mod-ubus
+endef
+
+define Package/$(PKG_NAME)/description
+  A simple example VUCI application for testing package deployment.
+endef
+
+define Build/Compile
+endef
+
+define Package/$(PKG_NAME)/install
+	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
+	$(INSTALL_BIN) ./files/example.lua $(1)/usr/libexec/rpcd/
+	
+	$(INSTALL_DIR) $(1)/www
+	$(INSTALL_DATA) ./files/index.html $(1)/www/
+	
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/example.init $(1)/etc/init.d/example
+endef
+
+$(eval $(call BuildPackage,$(PKG_NAME)))
+EOF
+
+# Create the Lua API file
+mkdir -p "$EXAMPLE_PKG_DIR/files"
+cat > "$EXAMPLE_PKG_DIR/files/example.lua" << 'EOF'
+local ubus = require "ubus"
+local json = require "luci.jsonc"
+
+local function example_status()
+    return {
+        status = "running",
+        timestamp = os.time(),
+        version = "1.0.0",
+        message = "Hello from example package!"
+    }
+end
+
+local function example_info()
+    return {
+        name = "example-simple",
+        description = "A simple example VUCI application",
+        author = "Autonomy Team",
+        version = "1.0.0"
+    }
+end
+
+local ubus_conn = ubus.connect()
+if not ubus_conn then
+    error("Failed to connect to ubus")
+end
+
+ubus_conn:add({
+    example = {
+        status = example_status,
+        info = example_info
+    }
+})
+
+ubus_conn:listen()
+EOF
+
+# Create the HTML UI file
+cat > "$EXAMPLE_PKG_DIR/files/index.html" << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Example Simple App</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .status-box { background: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0; }
+        .info-box { background: #e8f4fd; padding: 20px; border-radius: 5px; margin: 20px 0; }
+        button { background: #007cba; color: white; border: none; padding: 10px 20px; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #005a87; }
+        pre { background: #f8f8f8; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Example Simple App</h1>
+        <p>This is a simple example VUCI application to test package deployment.</p>
+        
+        <div class="status-box">
+            <h2>Status</h2>
+            <button onclick="getStatus()">Get Status</button>
+            <pre id="status-result">Click button to get status...</pre>
+        </div>
+        
+        <div class="info-box">
+            <h2>Info</h2>
+            <button onclick="getInfo()">Get Info</button>
+            <pre id="info-result">Click button to get info...</pre>
+        </div>
+    </div>
+
+    <script>
+        function callUbus(method, params) {
+            return fetch('/ubus', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    method: 'call',
+                    params: [
+                        '00000000000000000000000000000000',
+                        'example',
+                        method,
+                        params || {}
+                    ]
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data[0] === 0) {
+                    return data[1];
+                } else {
+                    throw new Error('Ubus call failed: ' + data[1]);
+                }
+            });
+        }
+
+        function getStatus() {
+            document.getElementById('status-result').textContent = 'Loading...';
+            callUbus('status')
+                .then(result => {
+                    document.getElementById('status-result').textContent = JSON.stringify(result, null, 2);
+                })
+                .catch(error => {
+                    document.getElementById('status-result').textContent = 'Error: ' + error.message;
+                });
+        }
+
+        function getInfo() {
+            document.getElementById('info-result').textContent = 'Loading...';
+            callUbus('info')
+                .then(result => {
+                    document.getElementById('info-result').textContent = JSON.stringify(result, null, 2);
+                })
+                .catch(error => {
+                    document.getElementById('info-result').textContent = 'Error: ' + error.message;
+                });
+        }
+
+        // Auto-load status on page load
+        window.onload = function() {
+            getStatus();
+            getInfo();
+        };
+    </script>
+</body>
+</html>
+EOF
+
+# Create the init script
+cat > "$EXAMPLE_PKG_DIR/files/example.init" << 'EOF'
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=10
+
+start() {
+    echo "Starting example service..."
+    # The service is handled by rpcd, so we just need to ensure rpcd is running
+    /etc/init.d/rpcd restart
+}
+
+stop() {
+    echo "Stopping example service..."
+    # rpcd will handle the cleanup
+}
+
+reload() {
+    echo "Reloading example service..."
+    /etc/init.d/rpcd restart
+}
+EOF
+
+# Copy package to SDK
+echo "Copying package to SDK..."
+rm -rf "$VUCI_DIR/vuci-app-example-simple"
+cp -r "$EXAMPLE_PKG_DIR" "$VUCI_DIR/"
+
+# Change to SDK directory
+cd "$SDK_DIR"
+
+# Configure the build
+echo "Configuring build..."
+
+# Create a minimal .config
+cat > .config << EOF
+CONFIG_TARGET_ar71xx=y
+CONFIG_TARGET_ar71xx_generic=y
+CONFIG_TARGET_ar71xx_generic_DEVICE_tl-wr841n-v8=y
+CONFIG_PACKAGE_vuci-app-example-simple=m
+CONFIG_PACKAGE_rpcd=y
+CONFIG_PACKAGE_rpcd-mod-file=y
+CONFIG_PACKAGE_rpcd-mod-iwinfo=y
+CONFIG_PACKAGE_uhttpd=y
+CONFIG_PACKAGE_uhttpd-mod-ubus=y
+EOF
+
+# Build the package
+echo "Building package..."
+make defconfig
+make package/vuci-app-example-simple/clean
+make package/vuci-app-example-simple/compile V=s
+
+# Find the built package
+echo "Looking for built package..."
+PACKAGE=$(find "$SDK_DIR/bin" -name "vuci-app-example-simple_*.ipk" | head -1)
+
+if [ -n "$PACKAGE" ]; then
+    echo "Package built successfully!"
+    echo "Package: $PACKAGE"
+    
+    # Copy package to project directory
+    cp "$PACKAGE" "$SCRIPT_DIR/"
+    
+    echo ""
+    echo "Package copied to project directory:"
+    echo "- $(basename "$PACKAGE")"
+    echo ""
+    echo "To install on device:"
+    echo "1. Copy package to device:"
+    echo "   scp $SCRIPT_DIR/$(basename "$PACKAGE") root@192.168.80.1:/tmp/"
+    echo ""
+    echo "2. Install package:"
+    echo "   ssh root@192.168.80.1 'opkg install /tmp/$(basename "$PACKAGE")'"
+    echo ""
+    echo "3. Restart services:"
+    echo "   ssh root@192.168.80.1 '/etc/init.d/rpcd restart && /etc/init.d/uhttpd restart'"
+    echo ""
+    echo "4. Access the UI at:"
+    echo "   http://192.168.80.1/example/"
+    echo ""
+    echo "5. Test the API:"
+    echo "   ssh root@192.168.80.1 'ubus call example status'"
+    echo "   ssh root@192.168.80.1 'ubus call example info'"
+else
+    echo "ERROR: Failed to find built package"
+    echo "Package: $PACKAGE"
+    exit 1
+fi
+
+echo "Build completed successfully!"

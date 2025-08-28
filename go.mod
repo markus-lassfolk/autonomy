@@ -2,6 +2,8 @@ module github.com/markus-lassfolk/autonomy
 
 go 1.23.0
 
+toolchain go1.24.6
+
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/fullstorydev/grpcurl v1.9.3

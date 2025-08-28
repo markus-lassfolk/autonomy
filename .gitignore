@@ -23,6 +23,7 @@ cmd/*/test-*
 # Build directories
 build/
 dist/
+SDK/
 
 # Temporary files
 *.tmp

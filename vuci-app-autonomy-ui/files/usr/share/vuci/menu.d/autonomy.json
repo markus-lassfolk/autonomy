@@ -1,0 +1,37 @@
+{
+  "services/autonomy": {
+    "title": "Autonomy",
+    "index": 50,
+    "view": "services/Autonomy",
+    "acls": ["services/autonomy"]
+  },
+  "services/autonomy/overview": {
+    "title": "Overview",
+    "index": 1,
+    "view": "services/AutonomyOverview",
+    "acls": ["services/autonomy"]
+  },
+  "services/autonomy/configuration": {
+    "title": "Configuration",
+    "index": 2,
+    "view": "services/AutonomyConfig",
+    "acls": ["services/autonomy"]
+  },
+  "services/autonomy/status": {
+    "title": "Status",
+    "index": 3,
+    "view": "services/AutonomyStatus",
+    "acls": ["services/autonomy"]
+  },
+  "services/autonomy/logs": {
+    "title": "Logs",
+    "index": 4,
+    "view": "services/AutonomyLogs",
+    "acls": ["services/autonomy"]
+  }
+}
+
+
+
+
+

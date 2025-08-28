@@ -1,19 +1,12 @@
 include $(TOPDIR)/rules.mk
 
-APP_TITLE:=VuCI API Support for Autonomy System
-APP_NAME:=$(notdir ${CURDIR})
+APP_TITLE:=VuCI API Support for Autonomy APP
+APP_DEPENDS:=+api-core
 CLOSED_GPL_INSTALL:=y
 
-ifeq (m, $(CONFIG_PACKAGE_$(APP_NAME)))
-	APP_TLT_NAME:=Autonomy API
-	APP_ROUTER:=$(TLT_PLATFORM_NAME)
-endif
+# Enable Lua compilation
+CONFIG_VUCI_COMPILE_LUA:=y
 
-define Package/$(APP_NAME)/description
-	API backend for the Autonomy autonomous networking system.
-	Provides REST API endpoints for monitoring, configuration, and control.
-endef
-
-include ../app.mk
+include ../api.mk
 
 # call BuildPackage - OpenWrt buildroot signature
