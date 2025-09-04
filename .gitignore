@@ -54,6 +54,8 @@ private_key*
 *token*
 *secret*
 *password*
+/keys
+keys
 
 # Personal configuration
 configs/autonomy.local
