@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛰️ Starlink Sky Tracker - Real-time Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem 2rem;
+            border-bottom: 2px solid #00ff88;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.3rem 0.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            padding: 2rem;
+            min-height: calc(100vh - 120px);
+        }
+        
+        .main-view {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .view-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .view-btn {
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .view-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+        }
+        
+        .view-btn.active {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+        }
+        
+        .sky-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .sky-view {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, #001122 0%, #000000 70%, #333333 100%);
+            border: 3px solid #00ff88;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+        }
+        
+        .compass {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #00ff88;
+            color: #000;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        
+        .compass.south { top: auto; bottom: -15px; }
+        .compass.east { top: 50%; right: -25px; left: auto; transform: translateY(-50%); }
+        .compass.west { top: 50%; left: -25px; transform: translateY(-50%); }
+        
+        .elevation-rings {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+        
+        .elevation-ring {
+            position: absolute;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .satellite {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .satellite.visible {
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+        }
+        
+        .satellite.obstructed {
+            background: #ff4757;
+            box-shadow: 0 0 10px #ff4757;
+        }
+        
+        .satellite.active {
+            background: #ffa502;
+            box-shadow: 0 0 15px #ffa502;
+            width: 12px;
+            height: 12px;
+            z-index: 10;
+        }
+        
+        .satellite-path {
+            position: absolute;
+            stroke-width: 2;
+            fill: none;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .path-clear { stroke: #00ff88; }
+        .path-obstructed { stroke: #ff4757; }
+        .path-active { stroke: #ffa502; stroke-width: 3; opacity: 1; }
+        
+        .obstruction-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        
+        .sidebar {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: fit-content;
+        }
+        
+        .section {
+            margin-bottom: 2rem;
+        }
+        
+        .section h3 {
+            color: #00ff88;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .metric:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-value {
+            font-weight: bold;
+            color: #00ff88;
+        }
+        
+        .predictions-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .prediction-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid #ff4757;
+        }
+        
+        .prediction-item.low { border-left-color: #00ff88; }
+        .prediction-item.medium { border-left-color: #ffa502; }
+        .prediction-item.high { border-left-color: #ff4757; }
+        
+        .prediction-time {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        
+        .prediction-desc {
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .control-group label {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00ff88;
+            cursor: pointer;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #00ff88;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+            
+            .sidebar {
+                order: -1;
+            }
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 1000;
+            border: 1px solid #00ff88;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff88;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛰️ Starlink Sky Tracker</h1>
+        <div class="status-bar">
+            <div class="status-item">
+                <span>🔄</span>
+                <span id="connectionStatus">Connecting...</span>
+            </div>
+            <div class="status-item">
+                <span>🛰️</span>
+                <span id="satelliteCount">0 satellites</span>
+            </div>
+            <div class="status-item">
+                <span>📡</span>
+                <span id="dishStatus">Unknown</span>
+            </div>
+            <div class="status-item">
+                <span>⚠️</span>
+                <span id="alertCount">0 alerts</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-view">
+            <div class="view-controls">
+                <button class="view-btn active" id="groundViewBtn" onclick="switchView('ground')">
+                    🌍 Ground View (Looking Up)
+                </button>
+                <button class="view-btn" id="satelliteViewBtn" onclick="switchView('satellite')">
+                    🛰️ Satellite View (Looking Down)
+                </button>
+            </div>
+            
+            <div class="sky-container">
+                <div class="sky-view" id="skyView">
+                    <div class="loading" id="loadingIndicator">Loading sky data...</div>
+                    
+                    <!-- Compass directions -->
+                    <div class="compass">N</div>
+                    <div class="compass south">S</div>
+                    <div class="compass east">E</div>
+                    <div class="compass west">W</div>
+                    
+                    <!-- Elevation rings -->
+                    <div class="elevation-rings" id="elevationRings"></div>
+                    
+                    <!-- Obstruction overlay canvas -->
+                    <canvas id="obstructionCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%;"></canvas>
+                    
+                    <!-- Satellite paths SVG -->
+                    <svg id="pathsSvg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                    </svg>
+                    
+                    <!-- Satellites container -->
+                    <div id="satellitesContainer"></div>
+                </div>
+                
+                <div id="timeSlider" style="margin-top: 1rem;">
+                    <label for="timeControl">Time: <span id="currentTime">Now</span></label>
+                    <input type="range" id="timeControl" class="slider" min="0" max="1440" value="0" step="5">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #ccc; margin-top: 0.3rem;">
+                        <span>Now</span>
+                        <span>+12h</span>
+                        <span>+24h</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="section">
+                <h3>📊 Live Metrics</h3>
+                <div class="metric">
+                    <span>Visible Satellites</span>
+                    <span class="metric-value" id="visibleSats">0</span>
+                </div>
+                <div class="metric">
+                    <span>Unobstructed</span>
+                    <span class="metric-value" id="unobstructedSats">0</span>
+                </div>
+                <div class="metric">
+                    <span>Active Satellite</span>
+                    <span class="metric-value" id="activeSat">Unknown</span>
+                </div>
+                <div class="metric">
+                    <span>Sky Coverage</span>
+                    <span class="metric-value" id="skyCoverage">0%</span>
+                </div>
+                <div class="metric">
+                    <span>Obstruction Level</span>
+                    <span class="metric-value" id="obstructionLevel">0%</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>🔮 Predictions</h3>
+                <div class="predictions-list" id="predictionsList">
+                    <div style="text-align: center; color: #666; padding: 2rem;">
+                        Loading predictions...
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>⚙️ Controls</h3>
+                <div class="controls">
+                    <div class="control-group">
+                        <label>Update Frequency</label>
+                        <input type="range" class="slider" id="updateFreq" min="1" max="30" value="5">
+                        <span id="updateFreqValue">5 seconds</span>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Prediction Horizon</label>
+                        <input type="range" class="slider" id="predictionHorizon" min="1" max="48" value="24">
+                        <span id="horizonValue">24 hours</span>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label style="display: flex; justify-content: space-between; align-items: center;">
+                            Show Satellite Paths
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="showPaths" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label style="display: flex; justify-content: space-between; align-items: center;">
+                            Show Obstruction Overlay
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="showObstructions" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label style="display: flex; justify-content: space-between; align-items: center;">
+                            Real-time Updates
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="realTimeUpdates" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>📈 Performance</h3>
+                <div class="metric">
+                    <span>Update Rate</span>
+                    <span class="metric-value" id="updateRate">0 Hz</span>
+                </div>
+                <div class="metric">
+                    <span>Propagation Time</span>
+                    <span class="metric-value" id="propagationTime">0 ms</span>
+                </div>
+                <div class="metric">
+                    <span>Accuracy</span>
+                    <span class="metric-value" id="accuracy">0%</span>
+                </div>
+                <div class="metric">
+                    <span>Last Update</span>
+                    <span class="metric-value" id="lastUpdate">Never</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip" style="display: none;"></div>
+
+    <script src="starlink_visualization.js"></script>
+</body>
+</html>

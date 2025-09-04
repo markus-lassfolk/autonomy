@@ -1,0 +1,8 @@
+Package: vuci-app-autonomy-ui
+Version: 2.0.19-1
+Depends: libc, vuci-app-autonomy-api, vuci-ui-core
+Section: vuci
+Category: VUCI
+Architecture: arm_cortex-a7_neon-vfpv4
+Installed-Size: 8192
+Description: VuCI UI Support for Autonomy APP

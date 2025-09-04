@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomy Cellular Tower Map</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Bootstrap CSS for styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .cellular-map {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .status-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #dee2e6;
+        }
+        
+        .metric-card {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 15px;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .cell-info-card {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: white;
+        }
+        
+        .serving-cell {
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        
+        .neighbor-cell {
+            border-left: 4px solid #28a745;
+        }
+        
+        .cell-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .cell-id {
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .signal-badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .signal-badge.serving {
+            background-color: #007bff;
+        }
+        
+        .signal-badge.neighbor {
+            background-color: #28a745;
+        }
+        
+        .signal-strength-excellent { color: #28a745; font-weight: bold; }
+        .signal-strength-good { color: #6f42c1; font-weight: bold; }
+        .signal-strength-fair { color: #fd7e14; font-weight: bold; }
+        .signal-strength-poor { color: #dc3545; font-weight: bold; }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            z-index: 1000;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .legend-marker {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        .legend-marker.serving { background-color: #007bff; }
+        .legend-marker.neighbor { background-color: #28a745; }
+        .legend-marker.cached { background-color: #6c757d; }
+        
+        .controls-row {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .refresh-btn {
+            animation: none;
+        }
+        
+        .refresh-btn.spinning {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">📡 Cellular Tower Map</h1>
+            <div>
+                <button class="btn btn-outline-primary btn-sm" onclick="window.history.back()">
+                    ← Back to Autonomy
+                </button>
+            </div>
+        </div>
+        
+        <!-- Position Status Card -->
+        <div class="status-card">
+            <h5 class="mb-3">📍 Current Position</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Method:</strong>
+                    <span id="position-method" class="ms-2">Loading...</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Accuracy:</strong>
+                    <span id="position-accuracy" class="ms-2">Loading...</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Confidence:</strong>
+                    <span id="position-confidence" class="ms-2">Loading...</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Cells Used:</strong>
+                    <span id="position-cells" class="ms-2">Loading...</span>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-6">
+                    <strong>Coordinates:</strong>
+                    <span id="position-coordinates" class="ms-2">Loading...</span>
+                </div>
+                <div class="col-md-6">
+                    <strong>Last Update:</strong>
+                    <span id="position-timestamp" class="ms-2">Loading...</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="controls-row">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <label class="form-label mb-1">Search Radius:</label>
+                    <select id="radius-select" class="form-select form-select-sm" onchange="refreshTowers()">
+                        <option value="1000">1 km</option>
+                        <option value="2000" selected>2 km</option>
+                        <option value="5000">5 km</option>
+                        <option value="10000">10 km</option>
+                        <option value="20000">20 km</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label mb-1">Max Towers:</label>
+                    <select id="towers-select" class="form-select form-select-sm" onchange="refreshTowers()">
+                        <option value="5">5 towers</option>
+                        <option value="10" selected>10 towers</option>
+                        <option value="20">20 towers</option>
+                        <option value="50">50 towers</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-marker serving"></div>
+                            <span>Serving Cell</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-marker neighbor"></div>
+                            <span>Neighbor Cell</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-marker cached"></div>
+                            <span>Cached Cell</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-12">
+                    <button class="btn btn-primary btn-sm me-2 refresh-btn" onclick="refreshAll()" id="refresh-btn">
+                        🔄 Refresh All
+                    </button>
+                    <button class="btn btn-success btn-sm me-2" onclick="contributeData()">
+                        📤 Contribute Data
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="centerOnPosition()">
+                        📍 Center Map
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Map Container -->
+        <div class="status-card">
+            <div style="position: relative;">
+                <div id="cellular-map" class="cellular-map"></div>
+                <div id="loading-overlay" class="loading-overlay" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 mb-0">Loading cellular towers...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tower Details -->
+        <div class="row">
+            <!-- Serving Cell -->
+            <div class="col-md-6">
+                <div class="status-card">
+                    <h5 class="mb-3">🎯 Serving Cell</h5>
+                    <div id="serving-cell-info">
+                        <p class="text-muted">Loading cellular environment...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Neighbor Cells -->
+            <div class="col-md-6">
+                <div class="status-card">
+                    <h5 class="mb-3">📶 Neighbor Cells</h5>
+                    <div id="neighbor-cells-info" style="max-height: 300px; overflow-y: auto;">
+                        <p class="text-muted">Loading neighbor cells...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="status-card">
+            <h5 class="mb-3">📊 OpenCellID Statistics</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-value" id="stat-lookups">0</div>
+                        <div class="metric-label">API Lookups</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-value" id="stat-cache-rate">0%</div>
+                        <div class="metric-label">Cache Hit Rate</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-value" id="stat-triangulations">0</div>
+                        <div class="metric-label">Triangulations</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-value" id="stat-contributions">0</div>
+                        <div class="metric-label">Contributions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Main JavaScript -->
+    <script>
+        let map = null;
+        let accuracyCircle = null;
+        let towerMarkers = [];
+        let currentPosition = { latitude: 0, longitude: 0, accuracy: 0, confidence: 0 };
+        let visibleTowers = [];
+        let refreshInterval = null;
+        
+        // Initialize map
+        function initMap() {
+            map = L.map('cellular-map').setView([59.3293, 18.0686], 13);
+            
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Initialize accuracy circle
+            accuracyCircle = L.circle([59.3293, 18.0686], {
+                color: '#007bff',
+                fillColor: '#007bff',
+                fillOpacity: 0.15,
+                weight: 2,
+                radius: 150
+            }).addTo(map);
+        }
+        
+        // Update map with towers and position
+        function updateMap() {
+            if (!map) return;
+            
+            // Clear existing markers
+            towerMarkers.forEach(marker => map.removeLayer(marker));
+            towerMarkers = [];
+            
+            // Update accuracy circle
+            if (accuracyCircle && currentPosition.latitude && currentPosition.longitude) {
+                accuracyCircle.setLatLng([currentPosition.latitude, currentPosition.longitude]);
+                accuracyCircle.setRadius(currentPosition.accuracy || 150);
+                
+                // Update circle color based on confidence
+                const confidence = currentPosition.confidence || 0;
+                let color = '#dc3545'; // Red for low confidence
+                if (confidence > 0.8) color = '#28a745'; // Green for high confidence
+                else if (confidence > 0.6) color = '#ffc107'; // Yellow for medium confidence
+                else if (confidence > 0.4) color = '#fd7e14'; // Orange for low-medium confidence
+                
+                accuracyCircle.setStyle({ color: color, fillColor: color });
+            }
+            
+            // Add tower markers
+            visibleTowers.forEach(tower => {
+                let markerColor = '#6c757d'; // Gray for cached towers
+                let markerSize = 8;
+                let zIndex = 100;
+                
+                if (tower.is_serving) {
+                    markerColor = '#007bff'; // Blue for serving cell
+                    markerSize = 14;
+                    zIndex = 300;
+                } else if (tower.is_neighbor) {
+                    markerColor = '#28a745'; // Green for neighbor cells
+                    markerSize = 11;
+                    zIndex = 200;
+                }
+                
+                const marker = L.circleMarker([tower.latitude, tower.longitude], {
+                    color: markerColor,
+                    fillColor: markerColor,
+                    fillOpacity: 0.8,
+                    radius: markerSize,
+                    weight: 2
+                }).addTo(map);
+                
+                // Create popup content
+                const signalInfo = tower.rsrp ? 
+                    `<div><strong>RSRP:</strong> <span class="${getSignalClass(tower.rsrp)}">${tower.rsrp} dBm</span></div>` +
+                    (tower.rsrq ? `<div><strong>RSRQ:</strong> <span class="${getSignalClass(tower.rsrq, 'rsrq')}">${tower.rsrq} dB</span></div>` : '')
+                    : '';
+                
+                const popupContent = `
+                    <div class="tower-popup">
+                        <h6 style="color: ${markerColor}; margin-bottom: 8px;">
+                            ${tower.is_serving ? '🎯 Serving Cell' : (tower.is_neighbor ? '📶 Neighbor Cell' : '📡 Cell Tower')}
+                        </h6>
+                        <div><strong>Cell ID:</strong> ${formatCellId(tower)}</div>
+                        <div><strong>Technology:</strong> ${tower.radio}</div>
+                        <div><strong>Distance:</strong> ${formatDistance(tower.distance)}</div>
+                        <div><strong>Range:</strong> ${formatDistance(tower.range)}</div>
+                        <div><strong>Confidence:</strong> ${formatPercentage(tower.confidence)}</div>
+                        ${signalInfo}
+                        <div><strong>Samples:</strong> ${tower.samples || 0}</div>
+                        <div><strong>Source:</strong> ${tower.source}</div>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent);
+                marker.setZIndexOffset(zIndex);
+                
+                towerMarkers.push(marker);
+            });
+            
+            // Center map on current position if available
+            if (currentPosition.latitude && currentPosition.longitude) {
+                map.setView([currentPosition.latitude, currentPosition.longitude], 13);
+            }
+        }
+        
+        // API functions
+        async function makeUbusCall(method, params = {}) {
+            try {
+                const response = await fetch('/ubus', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: Math.floor(Math.random() * 1000),
+                        method: 'call',
+                        params: ['00000000000000000000000000000000', 'autonomy', method, params]
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.result && data.result[1]) {
+                    return data.result[1];
+                }
+                throw new Error('Invalid response format');
+            } catch (error) {
+                console.error(`UBUS call failed for ${method}:`, error);
+                return null;
+            }
+        }
+        
+        async function refreshPosition() {
+            try {
+                const result = await makeUbusCall('opencellid_get_position');
+                if (result && result.success && result.position) {
+                    currentPosition = result.position;
+                    
+                    document.getElementById('position-method').textContent = formatMethod(currentPosition.method);
+                    document.getElementById('position-accuracy').textContent = formatDistance(currentPosition.accuracy);
+                    document.getElementById('position-confidence').textContent = formatPercentage(currentPosition.confidence);
+                    document.getElementById('position-cells').textContent = currentPosition.cells_used || 0;
+                    document.getElementById('position-coordinates').textContent = formatCoordinates(currentPosition.latitude, currentPosition.longitude);
+                    document.getElementById('position-timestamp').textContent = formatTimestamp(currentPosition.timestamp);
+                    
+                    // Update method styling
+                    const methodElement = document.getElementById('position-method');
+                    methodElement.className = getMethodClass(currentPosition.method);
+                }
+            } catch (error) {
+                console.error('Failed to refresh position:', error);
+            }
+        }
+        
+        async function refreshCellularEnvironment() {
+            try {
+                const result = await makeUbusCall('opencellid_get_cellular_environment');
+                if (result && result.success) {
+                    updateServingCellInfo(result.serving_cell);
+                    updateNeighborCellsInfo(result.neighbor_cells);
+                }
+            } catch (error) {
+                console.error('Failed to refresh cellular environment:', error);
+            }
+        }
+        
+        async function refreshTowers() {
+            showLoading(true);
+            
+            try {
+                const radius = document.getElementById('radius-select').value;
+                const maxTowers = document.getElementById('towers-select').value;
+                
+                const params = {
+                    radius: parseInt(radius),
+                    max_towers: parseInt(maxTowers)
+                };
+                
+                if (currentPosition.latitude && currentPosition.longitude) {
+                    params.center_lat = currentPosition.latitude;
+                    params.center_lon = currentPosition.longitude;
+                }
+                
+                const result = await makeUbusCall('opencellid_get_visible_towers', params);
+                if (result && result.success) {
+                    visibleTowers = result.towers || [];
+                    updateMap();
+                }
+            } catch (error) {
+                console.error('Failed to refresh towers:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        async function refreshStatistics() {
+            try {
+                const result = await makeUbusCall('opencellid_get_statistics');
+                if (result && result.success && result.statistics) {
+                    const stats = result.statistics;
+                    
+                    document.getElementById('stat-lookups').textContent = stats.api ? stats.api.total_lookups : 0;
+                    document.getElementById('stat-cache-rate').textContent = formatPercentage(stats.cache ? stats.cache.hit_ratio : 0);
+                    document.getElementById('stat-triangulations').textContent = stats.triangulation ? stats.triangulation.total_performed : 0;
+                    document.getElementById('stat-contributions').textContent = stats.contribution ? stats.contribution.total_sent : 0;
+                }
+            } catch (error) {
+                console.error('Failed to refresh statistics:', error);
+            }
+        }
+        
+        async function contributeData() {
+            try {
+                const result = await makeUbusCall('opencellid_contribute_now');
+                if (result && result.success) {
+                    alert('Data contribution queued successfully!');
+                    await refreshStatistics();
+                } else {
+                    alert('Failed to contribute data. Check GPS accuracy and cellular environment.');
+                }
+            } catch (error) {
+                console.error('Failed to contribute data:', error);
+                alert('Failed to contribute data: ' + error.message);
+            }
+        }
+        
+        function centerOnPosition() {
+            if (map && currentPosition.latitude && currentPosition.longitude) {
+                map.setView([currentPosition.latitude, currentPosition.longitude], 15);
+            }
+        }
+        
+        async function refreshAll() {
+            const btn = document.getElementById('refresh-btn');
+            btn.classList.add('spinning');
+            
+            try {
+                await refreshPosition();
+                await refreshCellularEnvironment();
+                await refreshTowers();
+                await refreshStatistics();
+            } finally {
+                btn.classList.remove('spinning');
+            }
+        }
+        
+        function showLoading(show) {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.style.display = show ? 'block' : 'none';
+        }
+        
+        // Update serving cell info
+        function updateServingCellInfo(servingCell) {
+            const container = document.getElementById('serving-cell-info');
+            if (!servingCell) {
+                container.innerHTML = '<p class="text-muted">No serving cell information available</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="cell-info-card serving-cell">
+                    <div class="cell-header">
+                        <span class="cell-id">${formatCellId(servingCell.cell)}</span>
+                        <span class="signal-badge serving">${formatSignalStrength(servingCell.rsrp)}</span>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <small><strong>Operator:</strong> ${servingCell.operator || 'Unknown'}</small><br>
+                            <small><strong>Technology:</strong> ${servingCell.cell.radio}</small><br>
+                            <small><strong>PCI:</strong> ${servingCell.cell.pci || 'N/A'}</small>
+                        </div>
+                        <div class="col-6">
+                            <small><strong>RSRP:</strong> <span class="${getSignalClass(servingCell.rsrp)}">${servingCell.rsrp} dBm</span></small><br>
+                            <small><strong>RSRQ:</strong> <span class="${getSignalClass(servingCell.rsrq, 'rsrq')}">${servingCell.rsrq} dB</span></small><br>
+                            ${servingCell.timing_advance_distance ? `<small><strong>Distance:</strong> ${formatDistance(servingCell.timing_advance_distance)}</small>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Update neighbor cells info
+        function updateNeighborCellsInfo(neighborCells) {
+            const container = document.getElementById('neighbor-cells-info');
+            if (!neighborCells || neighborCells.length === 0) {
+                container.innerHTML = '<p class="text-muted">No neighbor cells detected</p>';
+                return;
+            }
+            
+            let html = '';
+            neighborCells.slice(0, 8).forEach(neighbor => {
+                html += `
+                    <div class="cell-info-card neighbor-cell">
+                        <div class="cell-header">
+                            <span class="cell-id">${formatCellId(neighbor.cell)}</span>
+                            <span class="signal-badge neighbor">${formatSignalStrength(neighbor.rsrp)}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <small>${neighbor.cell.radio}</small>
+                            <small class="${getSignalClass(neighbor.rsrp)}">${neighbor.rsrp} dBm</small>
+                            <small class="text-muted">${neighbor.type || 'neighbor'}</small>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (neighborCells.length > 8) {
+                html += `<p class="text-center text-muted mt-2">+ ${neighborCells.length - 8} more cells</p>`;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // Utility functions
+        function formatCellId(cell) {
+            if (!cell) return 'Unknown';
+            return `${cell.mcc}-${cell.mnc}-${cell.lac}-${cell.cell_id}`;
+        }
+        
+        function formatCoordinates(lat, lon) {
+            if (!lat || !lon) return 'Unknown';
+            return `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+        }
+        
+        function formatDistance(distance) {
+            if (!distance) return 'Unknown';
+            if (distance < 1000) return `${Math.round(distance)} m`;
+            return `${(distance / 1000).toFixed(1)} km`;
+        }
+        
+        function formatPercentage(value) {
+            if (!value) return '0%';
+            return `${Math.round(value * 100)}%`;
+        }
+        
+        function formatSignalStrength(rsrp) {
+            if (!rsrp) return 'N/A';
+            return `${rsrp} dBm`;
+        }
+        
+        function formatMethod(method) {
+            const methods = {
+                'single_cell': 'Single Cell',
+                'weighted_centroid': 'Weighted Centroid', 
+                'triangulation': 'Triangulation',
+                'unknown': 'Unknown'
+            };
+            return methods[method] || method;
+        }
+        
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'Never';
+            return new Date(timestamp * 1000).toLocaleString();
+        }
+        
+        function getMethodClass(method) {
+            const classes = {
+                'triangulation': 'text-success',
+                'weighted_centroid': 'text-warning',
+                'single_cell': 'text-info',
+                'unknown': 'text-danger'
+            };
+            return classes[method] || 'text-muted';
+        }
+        
+        function getSignalClass(signal, type = 'rsrp') {
+            if (!signal) return 'text-muted';
+            
+            if (type === 'rsrp') {
+                if (signal > -80) return 'signal-strength-excellent';
+                if (signal > -90) return 'signal-strength-good';
+                if (signal > -100) return 'signal-strength-fair';
+                return 'signal-strength-poor';
+            } else if (type === 'rsrq') {
+                if (signal > -10) return 'signal-strength-excellent';
+                if (signal > -15) return 'signal-strength-good';
+                if (signal > -20) return 'signal-strength-fair';
+                return 'signal-strength-poor';
+            }
+            
+            return 'text-muted';
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Initializing Cellular Tower Map...');
+            
+            // Initialize map
+            initMap();
+            
+            // Load initial data
+            await refreshAll();
+            
+            // Set up auto-refresh every 30 seconds
+            refreshInterval = setInterval(refreshAll, 30000);
+            
+            console.log('Cellular Tower Map initialized successfully');
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>

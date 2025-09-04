@@ -1,0 +1,187 @@
+root@RUTX50:~# opkg
+opkg must have one sub-command argument
+usage: opkg [options...] sub-command [arguments...]
+where sub-command is one of:
+
+Package Manipulation:
+        update                  Update list of available packages
+        upgrade <pkgs>          Upgrade packages
+        install <pkgs>          Install package(s)
+        configure <pkgs>        Configure unpacked package(s)
+        remove <pkgs|regexp>    Remove package(s)
+        flag <flag> <pkgs>      Flag package(s)
+         <flag>=hold|noprune|user|ok|installed|unpacked (one per invocation)
+
+Informational Commands:
+        list                    List available packages
+        list-installed          List installed packages
+        list-upgradable         List installed and upgradable packages
+        list-changed-conffiles  List user modified configuration files
+        files <pkg>             List files belonging to <pkg>
+        search <file|regexp>    List package providing <file>
+        find <regexp>           List packages whose name or description matches                                                                                                                                                                                        <regexp>
+        info [pkg|regexp]       Display all info for <pkg>
+        status [pkg|regexp]     Display all status for <pkg>
+        download <pkg>          Download <pkg> to current directory
+        compare-versions <v1> <op> <v2>
+                            compare versions using <= < > >= = << >>
+        print-architecture      List installable package architectures
+        depends [-A] [pkgname|pat]+
+        whatdepends [-A] [pkgname|pat]+
+        whatdependsrec [-A] [pkgname|pat]+
+        whatrecommends[-A] [pkgname|pat]+
+        whatsuggests[-A] [pkgname|pat]+
+        whatprovides [-A] [pkgname|pat]+
+        whatconflicts [-A] [pkgname|pat]+
+        whatreplaces [-A] [pkgname|pat]+
+
+Options:
+        -A                      Query all packages not just those installed
+        -V[<level>]             Set verbosity level to <level>.
+        --verbosity[=<level>]   Verbosity levels:
+                                        0 errors only
+                                        1 normal messages (default)
+                                        2 informative messages
+                                        3 debug
+                                        4 debug level 2
+        -f <conf_file>          Use <conf_file> as the opkg configuration file
+        --conf <conf_file>
+        --cache <directory>     Use a package cache
+        -d <dest_name>          Use <dest_name> as the the root directory for
+        --dest <dest_name>      package installation, removal, upgrading.
+                                <dest_name> should be a defined dest name from
+                                the configuration file, (but can also be a
+                                directory name in a pinch).
+        -o <dir>                Use <dir> as the root directory for
+        --offline-root <dir>    offline installation of packages.
+        --verify-program <path> Use the given program to verify usign signatures
+        --add-arch <arch>:<prio>        Register architecture with given priorit                                                                                                                                                                                       y
+        --add-dest <name>:<path>        Register destination with given path
+
+Force Options:
+        --force-depends         Install/remove despite failed dependencies
+        --force-maintainer      Overwrite preexisting config files
+        --force-reinstall       Reinstall package(s)
+        --force-overwrite       Overwrite files from other package(s)
+        --force-downgrade       Allow opkg to downgrade packages
+        --force-space           Disable free space checks
+        --force-postinstall     Run postinstall scripts even in offline mode
+        --force-remove  Remove package even if prerm script fails
+        --force-checksum        Don't fail on checksum mismatches
+        --no-autoremove         Don't remove all newly installed packages and de                                                                                                                                                                                       pendencies if size validation fails
+        --no-check-certificate Don't validate SSL certificates
+        --noaction              No action -- test only
+        --download-only No action -- download only
+        --nodeps                Do not follow dependencies
+        --nocase                Perform case insensitive pattern matching
+        --size                  Print package size when listing available packag                                                                                                                                                                                       es
+        --strip-abi             Print package name without appended ABI version
+        --force-removal-of-dependent-packages
+                                Remove package and all dependencies
+        --autoremove            Remove packages that were installed
+                                automatically to satisfy dependencies
+        -t                      Specify tmp-dir.
+        --tmp-dir               Specify tmp-dir.
+        -l                      Specify lists-dir.
+        --lists-dir             Specify lists-dir.
+        -e <file>               Specify feeds file.
+        --force_feeds <file>    Specify feeds file.
+        -c                      Remove configuration files when removing.
+        --remove_conf           Remove configuration files when removing.
+
+ regexp could be something like 'pkgname*' '*file*' or similar
+ e.g. opkg info 'libstd*' or opkg search '*libop*' or opkg remove 'libncur*'
+root@RUTX50:~# opkg
+opkg must have one sub-command argument
+usage: opkg [options...] sub-command [arguments...]
+where sub-command is one of:
+
+Package Manipulation:
+        update                  Update list of available packages
+        upgrade <pkgs>          Upgrade packages
+        install <pkgs>          Install package(s)
+        configure <pkgs>        Configure unpacked package(s)
+        remove <pkgs|regexp>    Remove package(s)
+        flag <flag> <pkgs>      Flag package(s)
+         <flag>=hold|noprune|user|ok|installed|unpacked (one per invocation)
+
+Informational Commands:
+        list                    List available packages
+        list-installed          List installed packages
+        list-upgradable         List installed and upgradable packages
+        list-changed-conffiles  List user modified configuration files
+        files <pkg>             List files belonging to <pkg>
+        search <file|regexp>    List package providing <file>
+        find <regexp>           List packages whose name or description matches <regexp>
+        info [pkg|regexp]       Display all info for <pkg>
+        status [pkg|regexp]     Display all status for <pkg>
+        download <pkg>          Download <pkg> to current directory
+        compare-versions <v1> <op> <v2>
+                            compare versions using <= < > >= = << >>
+        print-architecture      List installable package architectures
+        depends [-A] [pkgname|pat]+
+        whatdepends [-A] [pkgname|pat]+
+        whatdependsrec [-A] [pkgname|pat]+
+        whatrecommends[-A] [pkgname|pat]+
+        whatsuggests[-A] [pkgname|pat]+
+        whatprovides [-A] [pkgname|pat]+
+        whatconflicts [-A] [pkgname|pat]+
+        whatreplaces [-A] [pkgname|pat]+
+
+Options:
+        -A                      Query all packages not just those installed
+        -V[<level>]             Set verbosity level to <level>.
+        --verbosity[=<level>]   Verbosity levels:
+                                        0 errors only
+                                        1 normal messages (default)
+                                        2 informative messages
+                                        3 debug
+                                        4 debug level 2
+        -f <conf_file>          Use <conf_file> as the opkg configuration file
+        --conf <conf_file>
+        --cache <directory>     Use a package cache
+        -d <dest_name>          Use <dest_name> as the the root directory for
+        --dest <dest_name>      package installation, removal, upgrading.
+                                <dest_name> should be a defined dest name from
+                                the configuration file, (but can also be a
+                                directory name in a pinch).
+        -o <dir>                Use <dir> as the root directory for
+        --offline-root <dir>    offline installation of packages.
+        --verify-program <path> Use the given program to verify usign signatures
+        --add-arch <arch>:<prio>        Register architecture with given priority
+        --add-dest <name>:<path>        Register destination with given path
+
+Force Options:
+        --force-depends         Install/remove despite failed dependencies
+        --force-maintainer      Overwrite preexisting config files
+        --force-reinstall       Reinstall package(s)
+        --force-overwrite       Overwrite files from other package(s)
+        --force-downgrade       Allow opkg to downgrade packages
+        --force-space           Disable free space checks
+        --force-postinstall     Run postinstall scripts even in offline mode
+        --force-remove  Remove package even if prerm script fails
+        --force-checksum        Don't fail on checksum mismatches
+        --no-autoremove         Don't remove all newly installed packages and dependencies if size validation fails
+        --no-check-certificate Don't validate SSL certificates
+        --noaction              No action -- test only
+        --download-only No action -- download only
+        --nodeps                Do not follow dependencies
+        --nocase                Perform case insensitive pattern matching
+        --size                  Print package size when listing available packages
+        --strip-abi             Print package name without appended ABI version
+        --force-removal-of-dependent-packages
+                                Remove package and all dependencies
+        --autoremove            Remove packages that were installed
+                                automatically to satisfy dependencies
+        -t                      Specify tmp-dir.
+        --tmp-dir               Specify tmp-dir.
+        -l                      Specify lists-dir.
+        --lists-dir             Specify lists-dir.
+        -e <file>               Specify feeds file.
+        --force_feeds <file>    Specify feeds file.
+        -c                      Remove configuration files when removing.
+        --remove_conf           Remove configuration files when removing.
+
+ regexp could be something like 'pkgname*' '*file*' or similar
+ e.g. opkg info 'libstd*' or opkg search '*libop*' or opkg remove 'libncur*'
+
