@@ -1,0 +1,17 @@
+{
+    "autonomy": {
+        "description": "Autonomy system API",
+        "read": {
+            "ubus": {
+                "autonomy": ["status", "interfaces", "predictions"],
+                "starlink_tracker": ["status", "predictions", "satellites"]
+            }
+        },
+        "write": {
+            "ubus": {
+                "autonomy": ["switch", "reload", "configure"],
+                "starlink_tracker": ["reload", "configure"]
+            }
+        }
+    }
+}
