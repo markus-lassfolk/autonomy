@@ -5,7 +5,7 @@
 #include <strings.h>
 
 // Initialize event builder
-int event_builder_init(event_builder_t* builder) {
+static int event_builder_init(event_builder_t* builder) {
     if (!builder) {
         return -1;
     }
@@ -15,7 +15,7 @@ int event_builder_init(event_builder_t* builder) {
 }
 
 // Clean up event builder
-void event_builder_cleanup(event_builder_t* builder) {
+static void event_builder_cleanup(event_builder_t* builder) {
     if (!builder) return;
     
     builder->initialized = false;
@@ -75,10 +75,13 @@ void event_builder_format_metrics(const event_metrics_t* metrics, const char* me
         char latency_icon[8];
         if (metrics->latency_ms > 500) {
             strncpy(latency_icon, "🔴", sizeof(latency_icon) - 1);
+            latency_icon[sizeof(latency_icon) - 1] = '\0';
         } else if (metrics->latency_ms > 200) {
             strncpy(latency_icon, "🟡", sizeof(latency_icon) - 1);
+            latency_icon[sizeof(latency_icon) - 1] = '\0';
         } else {
             strncpy(latency_icon, "🟢", sizeof(latency_icon) - 1);
+            latency_icon[sizeof(latency_icon) - 1] = '\0';
         }
         
         char temp[128];
@@ -90,10 +93,13 @@ void event_builder_format_metrics(const event_metrics_t* metrics, const char* me
         char loss_icon[8];
         if (metrics->loss_percent > 5) {
             strncpy(loss_icon, "🔴", sizeof(loss_icon) - 1);
+            loss_icon[sizeof(loss_icon) - 1] = '\0';
         } else if (metrics->loss_percent > 1) {
             strncpy(loss_icon, "🟡", sizeof(loss_icon) - 1);
+            loss_icon[sizeof(loss_icon) - 1] = '\0';
         } else {
             strncpy(loss_icon, "🟢", sizeof(loss_icon) - 1);
+            loss_icon[sizeof(loss_icon) - 1] = '\0';
         }
         
         char temp[128];
@@ -111,10 +117,13 @@ void event_builder_format_metrics(const event_metrics_t* metrics, const char* me
         char obstruction_icon[8];
         if (metrics->obstruction_pct > 15) {
             strncpy(obstruction_icon, "🔴", sizeof(obstruction_icon) - 1);
+            obstruction_icon[sizeof(obstruction_icon) - 1] = '\0';
         } else if (metrics->obstruction_pct > 5) {
             strncpy(obstruction_icon, "🟡", sizeof(obstruction_icon) - 1);
+            obstruction_icon[sizeof(obstruction_icon) - 1] = '\0';
         } else {
             strncpy(obstruction_icon, "🟢", sizeof(obstruction_icon) - 1);
+            obstruction_icon[sizeof(obstruction_icon) - 1] = '\0';
         }
         
         char temp[128];
@@ -184,6 +193,7 @@ int event_builder_create_failover_event(event_builder_t* builder,
     }
     
     strncpy(event->message, message_buffer, sizeof(event->message) - 1);
+    event->message[sizeof(event->message) - 1] = '\0';
     
     // Set other fields
     event->type = NOTIFICATION_TYPE_FAILOVER;
@@ -218,10 +228,12 @@ int event_builder_create_failback_event(event_builder_t* builder,
     
     // Create title
     strncpy(event->title, "✅ Network Restored", sizeof(event->title) - 1);
+    event->title[sizeof(event->title) - 1] = '\0';
     
     // Create message
     char message_buffer[2048];
     strncpy(message_buffer, "Primary connection restored\n\n", sizeof(message_buffer) - 1);
+    message_buffer[sizeof(message_buffer) - 1] = '\0';
     
     if (from_member) {
         char temp[256];
@@ -243,6 +255,7 @@ int event_builder_create_failback_event(event_builder_t* builder,
     }
     
     strncpy(event->message, message_buffer, sizeof(event->message) - 1);
+    event->message[sizeof(event->message) - 1] = '\0';
     
     // Set other fields
     event->type = NOTIFICATION_TYPE_NETWORK_ISSUE;
@@ -280,6 +293,7 @@ int event_builder_create_member_down_event(event_builder_t* builder,
     // Create title
     char class_title[64];
     strncpy(class_title, member->class, sizeof(class_title) - 1);
+    class_title[sizeof(class_title) - 1] = '\0';
     class_title[0] = toupper(class_title[0]); // Capitalize first letter
     
     snprintf(event->title, sizeof(event->title), "%s %s Connection Down", emoji, class_title);
@@ -308,12 +322,14 @@ int event_builder_create_member_down_event(event_builder_t* builder,
     }
     
     strncpy(event->message, message_buffer, sizeof(event->message) - 1);
+    event->message[sizeof(event->message) - 1] = '\0';
     
     // Set other fields
     event->type = NOTIFICATION_TYPE_NETWORK_ISSUE;
     event->priority = NOTIFICATION_PRIORITY_HIGH;
     event->timestamp = now;
     strncpy(event->member_name, member->name, sizeof(event->member_name) - 1);
+    event->member_name[sizeof(event->member_name) - 1] = '\0';
     
     // Add details JSON
     snprintf(event->details_json, sizeof(event->details_json),
@@ -344,6 +360,7 @@ int event_builder_create_member_up_event(event_builder_t* builder,
     // Create title
     char class_title[64];
     strncpy(class_title, member->class, sizeof(class_title) - 1);
+    class_title[sizeof(class_title) - 1] = '\0';
     class_title[0] = toupper(class_title[0]); // Capitalize first letter
     
     snprintf(event->title, sizeof(event->title), "%s %s Connection Restored", emoji, class_title);
@@ -367,12 +384,14 @@ int event_builder_create_member_up_event(event_builder_t* builder,
     }
     
     strncpy(event->message, message_buffer, sizeof(event->message) - 1);
+    event->message[sizeof(event->message) - 1] = '\0';
     
     // Set other fields
     event->type = NOTIFICATION_TYPE_NETWORK_ISSUE;
     event->priority = NOTIFICATION_PRIORITY_NORMAL;
     event->timestamp = now;
     strncpy(event->member_name, member->name, sizeof(event->member_name) - 1);
+    event->member_name[sizeof(event->member_name) - 1] = '\0';
     
     // Add details JSON
     snprintf(event->details_json, sizeof(event->details_json),
@@ -401,6 +420,7 @@ int event_builder_create_predictive_event(event_builder_t* builder,
     
     // Create title
     strncpy(event->title, "🔮 Predictive Warning", sizeof(event->title) - 1);
+    event->title[sizeof(event->title) - 1] = '\0';
     
     // Create message
     char message_buffer[2048];
@@ -426,12 +446,14 @@ int event_builder_create_predictive_event(event_builder_t* builder,
     strncat(message_buffer, "\nRecommendation: Monitor connection closely", sizeof(message_buffer) - strlen(message_buffer) - 1);
     
     strncpy(event->message, message_buffer, sizeof(event->message) - 1);
+    event->message[sizeof(event->message) - 1] = '\0';
     
     // Set other fields
     event->type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
     event->priority = NOTIFICATION_PRIORITY_NORMAL;
     event->timestamp = now;
     strncpy(event->member_name, member->name, sizeof(event->member_name) - 1);
+    event->member_name[sizeof(event->member_name) - 1] = '\0';
     
     // Add details JSON
     snprintf(event->details_json, sizeof(event->details_json),
@@ -459,6 +481,7 @@ int event_builder_create_critical_error_event(event_builder_t* builder,
     
     // Create title
     strncpy(event->title, "🚨 CRITICAL: System Error", sizeof(event->title) - 1);
+    event->title[sizeof(event->title) - 1] = '\0';
     
     // Create message
     char message_buffer[2048];
@@ -475,6 +498,7 @@ int event_builder_create_critical_error_event(event_builder_t* builder,
     strncat(message_buffer, "\nImmediate attention required!", sizeof(message_buffer) - strlen(message_buffer) - 1);
     
     strncpy(event->message, message_buffer, sizeof(event->message) - 1);
+    event->message[sizeof(event->message) - 1] = '\0';
     
     // Set other fields
     event->type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
@@ -484,6 +508,7 @@ int event_builder_create_critical_error_event(event_builder_t* builder,
     // Add details JSON
     if (details_json && strlen(details_json) > 0) {
         strncpy(event->details_json, details_json, sizeof(event->details_json) - 1);
+        event->details_json[sizeof(event->details_json) - 1] = '\0';
     } else {
         snprintf(event->details_json, sizeof(event->details_json),
                  "{\"event_type\":\"critical_error\",\"component\":\"%s\",\"error\":\"%s\"}",
@@ -508,7 +533,9 @@ int event_builder_create_test_event(event_builder_t* builder,
     
     // Create test notification
     strncpy(event->title, "🧪 Test Notification", sizeof(event->title) - 1);
+    event->title[sizeof(event->title) - 1] = '\0';
     strncpy(event->message, "This is a test notification from autonomy.\n\nIf you receive this, notifications are working correctly!", sizeof(event->message) - 1);
+    event->message[sizeof(event->message) - 1] = '\0';
     
     event->type = NOTIFICATION_TYPE_STATUS_UPDATE;
     event->priority = NOTIFICATION_PRIORITY_NORMAL;
@@ -516,6 +543,7 @@ int event_builder_create_test_event(event_builder_t* builder,
     
     // Add details JSON
     strncpy(event->details_json, "{\"event_type\":\"test\",\"test\":true}", sizeof(event->details_json) - 1);
+    event->details_json[sizeof(event->details_json) - 1] = '\0';
     
     return 0;
 }
@@ -539,7 +567,9 @@ int event_builder_create_custom_event(event_builder_t* builder,
     
     // Set fields
     strncpy(event->title, title, sizeof(event->title) - 1);
+    event->title[sizeof(event->title) - 1] = '\0';
     strncpy(event->message, message, sizeof(event->message) - 1);
+    event->message[sizeof(event->message) - 1] = '\0';
     event->type = type;
     event->priority = priority;
     event->timestamp = now;

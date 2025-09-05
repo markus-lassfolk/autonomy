@@ -291,7 +291,7 @@ static int http_request_handler(void *cls, struct MHD_Connection *connection,
 }
 
 // Initialize API server
-int api_server_init(int port, const char *bind_address) {
+static int api_server_init(int port, const char *bind_address) {
     if (g_api_server_running) {
         LOGX_WARN("API server already running");
         return AUTONOMY_SUCCESS;
@@ -303,6 +303,7 @@ int api_server_init(int port, const char *bind_address) {
     
     if (bind_address) {
         strncpy(g_api_bind_address, bind_address, sizeof(g_api_bind_address) - 1);
+        g_api_bind_address[sizeof(g_api_bind_address) - 1] = '\0';
     }
     
     // Create HTTP daemon
@@ -322,12 +323,12 @@ int api_server_init(int port, const char *bind_address) {
 }
 
 // Start API server with default settings
-int api_server_start(void) {
+static int api_server_start(void) {
     return api_server_init(8080, "0.0.0.0");
 }
 
 // Stop API server
-void api_server_stop(void) {
+static void api_server_stop(void) {
     if (g_http_daemon) {
         MHD_stop_daemon(g_http_daemon);
         g_http_daemon = NULL;
@@ -338,12 +339,12 @@ void api_server_stop(void) {
 }
 
 // Check if API server is running
-bool api_server_is_running(void) {
+static bool api_server_is_running(void) {
     return g_api_server_running;
 }
 
 // Get API server port
-int api_server_get_port(void) {
+static int api_server_get_port(void) {
     return g_api_port;
 }
 
@@ -353,7 +354,7 @@ const char* api_server_get_bind_address(void) {
 }
 
 // Set API server configuration
-int api_server_set_config(int port, const char *bind_address) {
+static int api_server_set_config(int port, const char *bind_address) {
     if (g_api_server_running) {
         LOGX_WARN("Cannot change configuration while server is running");
         return AUTONOMY_ERROR_INVALID_PARAM;
@@ -365,13 +366,14 @@ int api_server_set_config(int port, const char *bind_address) {
     
     if (bind_address) {
         strncpy(g_api_bind_address, bind_address, sizeof(g_api_bind_address) - 1);
+        g_api_bind_address[sizeof(g_api_bind_address) - 1] = '\0';
     }
     
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup API server
-void api_server_cleanup(void) {
+static void api_server_cleanup(void) {
     api_server_stop();
     pthread_mutex_destroy(&g_api_mutex);
     LOGX_INFO("API server cleaned up");

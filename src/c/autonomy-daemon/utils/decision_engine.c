@@ -22,7 +22,7 @@ static bool should_failover(const connection_score_t* scores, int score_count);
 static bool can_recover(const connection_score_t* scores, int score_count);
 
 // Initialize decision engine
-int decision_engine_init(const decision_engine_config_t* config) {
+static int decision_engine_init(const decision_engine_config_t* config) {
     if (g_decision_engine_initialized) {
         return 0; // Already initialized
     }
@@ -68,7 +68,7 @@ int decision_engine_init(const decision_engine_config_t* config) {
 }
 
 // Clean up decision engine
-void decision_engine_cleanup(void) {
+static void decision_engine_cleanup(void) {
     if (!g_decision_engine_initialized) return;
     
     if (g_decision_engine.mutex) {
@@ -81,7 +81,7 @@ void decision_engine_cleanup(void) {
 }
 
 // Make decision
-int decision_engine_make_decision(decision_result_t* result) {
+static int decision_engine_make_decision(decision_result_t* result) {
     if (!g_decision_engine_initialized || !result) {
         return -1;
     }
@@ -145,6 +145,7 @@ int decision_engine_make_decision(decision_result_t* result) {
         strcpy(telemetry_decision.decision_type, needs_failover ? "failover" : "evaluation");
         strcpy(telemetry_decision.trigger, "periodic_evaluation");
         strncpy(telemetry_decision.reasoning, result->reason, sizeof(telemetry_decision.reasoning) - 1);
+        telemetry_decision.reasoning[sizeof(telemetry_decision.reasoning) - 1] = '\0';
         telemetry_decision.confidence = result->confidence;
         
         // Interface information
@@ -161,6 +162,7 @@ int decision_engine_make_decision(decision_result_t* result) {
             telemetry_decision.gps_longitude = gps_data.longitude;
             telemetry_decision.gps_accuracy = gps_data.accuracy;
             strncpy(telemetry_decision.gps_source, gps_data.source, sizeof(telemetry_decision.gps_source) - 1);
+            telemetry_decision.gps_source[sizeof(telemetry_decision.gps_source) - 1] = '\0';
         }
         
         // Performance context
@@ -199,7 +201,7 @@ int decision_engine_make_decision(decision_result_t* result) {
 }
 
 // Evaluate connection scores
-int decision_engine_evaluate_connections(connection_score_t* scores, int max_scores) {
+static int decision_engine_evaluate_connections(connection_score_t* scores, int max_scores) {
     if (!g_decision_engine_initialized || !scores || max_scores <= 0) {
         return -1;
     }
@@ -270,7 +272,7 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
 }
 
 // Calculate connection score
-double decision_engine_calculate_score(const connection_score_t* score) {
+static double decision_engine_calculate_score(const connection_score_t* score) {
     if (!score) return 0.0;
     
     const decision_weights_t* weights = &g_decision_engine.config.weights;
@@ -288,7 +290,7 @@ double decision_engine_calculate_score(const connection_score_t* score) {
 }
 
 // Check if failover is needed
-bool decision_engine_needs_failover(void) {
+static bool decision_engine_needs_failover(void) {
     if (!g_decision_engine_initialized) return false;
     
     pthread_mutex_lock(g_decision_engine.mutex);
@@ -303,7 +305,7 @@ bool decision_engine_needs_failover(void) {
 }
 
 // Check if recovery is possible
-bool decision_engine_can_recover(void) {
+static bool decision_engine_can_recover(void) {
     if (!g_decision_engine_initialized) return false;
     
     pthread_mutex_lock(g_decision_engine.mutex);
@@ -318,7 +320,7 @@ bool decision_engine_can_recover(void) {
 }
 
 // Get decision history
-int decision_engine_get_history(decision_result_t* history, int max_history) {
+static int decision_engine_get_history(decision_result_t* history, int max_history) {
     if (!g_decision_engine_initialized || !history || max_history <= 0) {
         return -1;
     }
@@ -384,7 +386,7 @@ static bool can_recover(const connection_score_t* scores, int score_count) {
 }
 
 // Get decision engine status
-void decision_engine_get_status(decision_engine_t* status) {
+static void decision_engine_get_status(decision_engine_t* status) {
     if (!status || !g_decision_engine_initialized) return;
     
     pthread_mutex_lock(g_decision_engine.mutex);
@@ -393,11 +395,11 @@ void decision_engine_get_status(decision_engine_t* status) {
 }
 
 // Check if decision engine is initialized
-bool decision_engine_is_initialized(void) {
+static bool decision_engine_is_initialized(void) {
     return g_decision_engine_initialized;
 }
 
 // Get decision engine instance
-decision_engine_t* decision_engine_get_instance(void) {
+static decision_engine_t* decision_engine_get_instance(void) {
     return g_decision_engine_initialized ? &g_decision_engine : NULL;
 }

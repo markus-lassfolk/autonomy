@@ -26,7 +26,7 @@ static bool g_fusion_initialized = false;
 static pthread_mutex_t g_fusion_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS fusion system
-int gps_fusion_init(void) {
+static int gps_fusion_init(void) {
     if (g_fusion_initialized) {
         LOGX_WARN("GPS fusion system already initialized");
         return AUTONOMY_SUCCESS;
@@ -69,7 +69,7 @@ int gps_fusion_init(void) {
 }
 
 // Add GPS source for fusion
-int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type) {
+static int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type) {
     if (!g_fusion_initialized || !source_name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -103,6 +103,7 @@ int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type
     gps_fusion_source_t *source = &g_fusion.sources[source_index];
     source->active = true;
     strncpy(source->name, source_name, sizeof(source->name) - 1);
+    source->name[sizeof(source->name) - 1] = '\0';
     source->source_type = source_type;
     source->registration_time = time(NULL);
     source->last_update = 0;
@@ -125,7 +126,7 @@ int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type
 }
 
 // Update GPS source data
-int gps_fusion_update_source(const char *source_name, const gps_data_t *gps_data) {
+static int gps_fusion_update_source(const char *source_name, const gps_data_t *gps_data) {
     if (!g_fusion_initialized || !source_name || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -231,7 +232,7 @@ static void update_source_reliability(gps_fusion_source_t *source) {
 }
 
 // Perform GPS data fusion
-int gps_fusion_perform_fusion(gps_data_t *fused_data) {
+static int gps_fusion_perform_fusion(gps_data_t *fused_data) {
     if (!g_fusion_initialized || !fused_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -418,7 +419,7 @@ static int find_fusion_source_by_name(const char *source_name) {
 }
 
 // Get fusion status
-int gps_fusion_get_status(gps_fusion_status_t *status) {
+static int gps_fusion_get_status(gps_fusion_status_t *status) {
     if (!g_fusion_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -449,7 +450,7 @@ int gps_fusion_get_status(gps_fusion_status_t *status) {
 }
 
 // Get fusion configuration
-int gps_fusion_get_config(gps_fusion_config_t *config) {
+static int gps_fusion_get_config(gps_fusion_config_t *config) {
     if (!g_fusion_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -471,7 +472,7 @@ int gps_fusion_get_config(gps_fusion_config_t *config) {
 }
 
 // Set fusion configuration
-int gps_fusion_set_config(const gps_fusion_config_t *config) {
+static int gps_fusion_set_config(const gps_fusion_config_t *config) {
     if (!g_fusion_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -494,7 +495,7 @@ int gps_fusion_set_config(const gps_fusion_config_t *config) {
 }
 
 // Enable/disable fusion
-int gps_fusion_set_enabled(bool enabled) {
+static int gps_fusion_set_enabled(bool enabled) {
     if (!g_fusion_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -508,7 +509,7 @@ int gps_fusion_set_enabled(bool enabled) {
 }
 
 // Force fusion update
-int gps_fusion_force_update(void) {
+static int gps_fusion_force_update(void) {
     if (!g_fusion_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -524,7 +525,7 @@ int gps_fusion_force_update(void) {
 }
 
 // Reset fusion system
-int gps_fusion_reset(void) {
+static int gps_fusion_reset(void) {
     if (!g_fusion_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -559,7 +560,7 @@ int gps_fusion_reset(void) {
 }
 
 // Cleanup fusion system
-void gps_fusion_cleanup(void) {
+static void gps_fusion_cleanup(void) {
     if (!g_fusion_initialized) {
         return;
     }

@@ -18,13 +18,13 @@ static const double MIN_LON = -180.0;                      // Minimum longitude
 static const double MAX_LON = 180.0;                       // Maximum longitude
 
 // Initialize GPS coordinate utilities
-int gps_coordinate_utils_init(void) {
+static int gps_coordinate_utils_init(void) {
     LOGX_INFO("GPS coordinate utilities initialized");
     return AUTONOMY_SUCCESS;
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
+static double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
     // Convert to radians
     double lat1_rad = lat1 * DEG_TO_RAD;
     double lat2_rad = lat2 * DEG_TO_RAD;
@@ -42,12 +42,12 @@ double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon
 }
 
 // Calculate distance in kilometers
-double gps_coordinate_distance_km(double lat1, double lon1, double lat2, double lon2) {
+static double gps_coordinate_distance_km(double lat1, double lon1, double lat2, double lon2) {
     return gps_coordinate_distance(lat1, lon1, lat2, lon2) / 1000.0;
 }
 
 // Calculate bearing between two GPS coordinates
-double gps_coordinate_bearing(double lat1, double lon1, double lat2, double lon2) {
+static double gps_coordinate_bearing(double lat1, double lon1, double lat2, double lon2) {
     // Convert to radians
     double lat1_rad = lat1 * DEG_TO_RAD;
     double lat2_rad = lat2 * DEG_TO_RAD;
@@ -129,7 +129,7 @@ int gps_coordinate_midpoint(double lat1, double lon1, double lat2, double lon2,
 }
 
 // Calculate area of a polygon defined by GPS coordinates
-double gps_coordinate_polygon_area(const gps_coordinate_t *coordinates, int num_coordinates) {
+static double gps_coordinate_polygon_area(const gps_coordinate_t *coordinates, int num_coordinates) {
     if (!coordinates || num_coordinates < 3) {
         return 0.0;
     }
@@ -153,7 +153,7 @@ double gps_coordinate_polygon_area(const gps_coordinate_t *coordinates, int num_
 }
 
 // Check if a point is inside a polygon (ray casting algorithm)
-bool gps_coordinate_point_in_polygon(double lat, double lon, const gps_coordinate_t *polygon, int num_vertices) {
+static bool gps_coordinate_point_in_polygon(double lat, double lon, const gps_coordinate_t *polygon, int num_vertices) {
     if (!polygon || num_vertices < 3) {
         return false;
     }
@@ -209,7 +209,7 @@ int gps_coordinate_polygon_centroid(const gps_coordinate_t *coordinates, int num
 }
 
 // Convert decimal degrees to degrees, minutes, seconds format
-void gps_coordinate_decimal_to_dms(double decimal_degrees, int *degrees, int *minutes, double *seconds) {
+static void gps_coordinate_decimal_to_dms(double decimal_degrees, int *degrees, int *minutes, double *seconds) {
     if (!degrees || !minutes || !seconds) {
         return;
     }
@@ -221,7 +221,7 @@ void gps_coordinate_decimal_to_dms(double decimal_degrees, int *degrees, int *mi
 }
 
 // Convert degrees, minutes, seconds to decimal degrees
-double gps_coordinate_dms_to_decimal(int degrees, int minutes, double seconds) {
+static double gps_coordinate_dms_to_decimal(int degrees, int minutes, double seconds) {
     double decimal = (double)degrees;
     
     if (degrees >= 0) {
@@ -234,27 +234,27 @@ double gps_coordinate_dms_to_decimal(int degrees, int minutes, double seconds) {
 }
 
 // Validate GPS coordinates
-bool gps_coordinate_is_valid(double lat, double lon) {
+static bool gps_coordinate_is_valid(double lat, double lon) {
     return (lat >= MIN_LAT && lat <= MAX_LAT && 
             lon >= MIN_LON && lon <= MAX_LON);
 }
 
 // Normalize longitude to -180 to 180 range
-double gps_coordinate_normalize_lon(double lon) {
+static double gps_coordinate_normalize_lon(double lon) {
     while (lon > 180.0) lon -= 360.0;
     while (lon < -180.0) lon += 360.0;
     return lon;
 }
 
 // Normalize latitude to -90 to 90 range
-double gps_coordinate_normalize_lat(double lat) {
+static double gps_coordinate_normalize_lat(double lat) {
     if (lat > 90.0) lat = 90.0;
     if (lat < -90.0) lat = -90.0;
     return lat;
 }
 
 // Calculate great circle distance (spherical approximation)
-double gps_coordinate_great_circle_distance(double lat1, double lon1, double lat2, double lon2) {
+static double gps_coordinate_great_circle_distance(double lat1, double lon1, double lat2, double lon2) {
     double lat1_rad = lat1 * DEG_TO_RAD;
     double lat2_rad = lat2 * DEG_TO_RAD;
     double delta_lon = (lon2 - lon1) * DEG_TO_RAD;
@@ -393,6 +393,6 @@ int gps_coordinate_closest_point_on_line(double point_lat, double point_lon,
 }
 
 // Cleanup GPS coordinate utilities
-void gps_coordinate_utils_cleanup(void) {
+static void gps_coordinate_utils_cleanup(void) {
     LOGX_INFO("GPS coordinate utilities cleaned up");
 }

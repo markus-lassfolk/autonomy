@@ -20,7 +20,7 @@ static unwiredlabs_config_t g_unwiredlabs_config = {0};
 static intelligent_cache_config_t g_cache_config = {0};
 
 // Initialize enhanced OpenCellID system
-int gps_opencellid_enhanced_init(const enhanced_opencellid_config_t* config) {
+static int gps_opencellid_enhanced_init(const enhanced_opencellid_config_t* config) {
     if (!config) {
         return -1;
     }
@@ -53,6 +53,7 @@ int gps_opencellid_enhanced_init(const enhanced_opencellid_config_t* config) {
         g_google_config.enable_ip_fallback = true;
         g_google_config.min_accuracy_threshold = 1000.0; // 1km
         strncpy(g_google_config.api_key, config->google_api_key, sizeof(g_google_config.api_key) - 1);
+        g_google_config.api_key[sizeof(g_google_config.api_key) - 1] = '\0';
         
         if (google_api_init(&g_google_config) != 0) {
             pthread_mutex_unlock(&g_enhanced_mutex);
@@ -70,6 +71,7 @@ int gps_opencellid_enhanced_init(const enhanced_opencellid_config_t* config) {
         g_unwiredlabs_config.enable_address_lookup = true;
         g_unwiredlabs_config.min_accuracy_threshold = 1000.0; // 1km
         strncpy(g_unwiredlabs_config.token, config->unwiredlabs_token, sizeof(g_unwiredlabs_config.token) - 1);
+        g_unwiredlabs_config.token[sizeof(g_unwiredlabs_config.token) - 1] = '\0';
         
         if (unwiredlabs_api_init(&g_unwiredlabs_config) != 0) {
             pthread_mutex_unlock(&g_enhanced_mutex);
@@ -83,7 +85,7 @@ int gps_opencellid_enhanced_init(const enhanced_opencellid_config_t* config) {
 }
 
 // Cleanup enhanced OpenCellID system
-void gps_opencellid_enhanced_cleanup(void) {
+static void gps_opencellid_enhanced_cleanup(void) {
     if (!g_enhanced_initialized) {
         return;
     }
@@ -108,7 +110,7 @@ void gps_opencellid_enhanced_cleanup(void) {
 }
 
 // Enhanced lookup with multiple database support
-int gps_opencellid_enhanced_lookup(const opencellid_cell_key_t* cell_key, opencellid_response_t* response) {
+static int gps_opencellid_enhanced_lookup(const opencellid_cell_key_t* cell_key, opencellid_response_t* response) {
     if (!g_enhanced_initialized || !cell_key || !response) {
         return -1;
     }
@@ -153,6 +155,7 @@ int gps_opencellid_enhanced_lookup(const opencellid_cell_key_t* cell_key, opence
         unwiredlabs_cell.mcc = atoi(cell_key->mcc);
         unwiredlabs_cell.mnc = atoi(cell_key->mnc);
         strncpy(unwiredlabs_cell.radio, "lte", sizeof(unwiredlabs_cell.radio) - 1);
+        unwiredlabs_cell.radio[sizeof(unwiredlabs_cell.radio) - 1] = '\0';
         unwiredlabs_cell.signal = -100; // Default signal strength
         
         unwiredlabs_response_t unwiredlabs_response;
@@ -237,7 +240,7 @@ int gps_opencellid_enhanced_lookup_with_cache(const opencellid_cell_key_t* cell_
 }
 
 // Get enhanced statistics
-int gps_opencellid_enhanced_get_stats(enhanced_opencellid_stats_t* stats) {
+static int gps_opencellid_enhanced_get_stats(enhanced_opencellid_stats_t* stats) {
     if (!g_enhanced_initialized || !stats) {
         return -1;
     }
@@ -273,7 +276,7 @@ int gps_opencellid_enhanced_get_stats(enhanced_opencellid_stats_t* stats) {
 }
 
 // Perform health check
-int gps_opencellid_enhanced_health_check(void) {
+static int gps_opencellid_enhanced_health_check(void) {
     if (!g_enhanced_initialized) {
         return -1;
     }
@@ -319,12 +322,12 @@ int gps_opencellid_enhanced_health_check(void) {
 }
 
 // Check if enhanced OpenCellID is initialized
-bool gps_opencellid_enhanced_is_initialized(void) {
+static bool gps_opencellid_enhanced_is_initialized(void) {
     return g_enhanced_initialized;
 }
 
 // Mozilla Location Service lookup (placeholder - would need implementation)
-int gps_opencellid_mozilla_lookup(const opencellid_cell_key_t* cell_key, opencellid_response_t* response) {
+static int gps_opencellid_mozilla_lookup(const opencellid_cell_key_t* cell_key, opencellid_response_t* response) {
     // This would implement the Mozilla Location Service API
     // For now, return failure to indicate not implemented
     if (response) {

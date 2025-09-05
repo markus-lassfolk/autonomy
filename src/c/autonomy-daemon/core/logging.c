@@ -5,7 +5,7 @@
 #include <time.h>
 
 // Structured logging
-void log_message(log_level_t level, const char *format, ...) {
+static void log_message(log_level_t level, const char *format, ...) {
     const char *level_str[] = {"DEBUG", "INFO", "WARN", "ERROR"};
     time_t now = time(NULL);
     char time_str[64];

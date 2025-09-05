@@ -340,7 +340,7 @@ static int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct 
 /**
  * Register overlay management UBUS object
  */
-int overlay_management_ubus_register(struct ubus_context *ctx) {
+static int overlay_management_ubus_register(struct ubus_context *ctx) {
     int ret = ubus_add_object(ctx, &autonomy_overlay_management_obj);
     if (ret) {
         fprintf(stderr, "Failed to add overlay management object: %s\n", ubus_strerror(ret));
@@ -354,7 +354,7 @@ int overlay_management_ubus_register(struct ubus_context *ctx) {
 /**
  * Unregister overlay management UBUS object
  */
-void overlay_management_ubus_unregister(struct ubus_context *ctx) {
+static void overlay_management_ubus_unregister(struct ubus_context *ctx) {
     ubus_remove_object(ctx, &autonomy_overlay_management_obj);
     fprintf(stderr, "Overlay management UBUS object unregistered\n");
 }

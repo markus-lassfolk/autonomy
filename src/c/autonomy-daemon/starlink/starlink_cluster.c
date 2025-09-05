@@ -16,7 +16,7 @@
 static starlink_cluster_t g_starlink_cluster = {0};
 
 // Initialize Starlink cluster
-int starlink_cluster_init(void) {
+static int starlink_cluster_init(void) {
     memset(&g_starlink_cluster, 0, sizeof(starlink_cluster_t));
     
     // Set default values
@@ -35,7 +35,7 @@ int starlink_cluster_init(void) {
 }
 
 // Add a Starlink to the cluster
-int starlink_cluster_add(const char *id, const starlink_config_t *config) {
+static int starlink_cluster_add(const char *id, const starlink_config_t *config) {
     if (!id || !config || g_starlink_cluster.count >= MAX_STARLINKS) {
         return -1;
     }
@@ -46,6 +46,7 @@ int starlink_cluster_add(const char *id, const starlink_config_t *config) {
     // Initialize instance
     memset(instance, 0, sizeof(starlink_instance_t));
     strncpy(instance->id, id, sizeof(instance->id) - 1);
+    instance->id[sizeof(instance->id) - 1] = '\0';
     memcpy(&instance->config, config, sizeof(starlink_config_t));
     
     // Set default values
@@ -68,7 +69,7 @@ int starlink_cluster_add(const char *id, const starlink_config_t *config) {
 }
 
 // Remove a Starlink from the cluster
-int starlink_cluster_remove(const char *id) {
+static int starlink_cluster_remove(const char *id) {
     if (!id) {
         return -1;
     }
@@ -110,7 +111,7 @@ int starlink_cluster_remove(const char *id) {
 }
 
 // Find the best Starlink based on performance metrics
-int starlink_cluster_find_best_starlink(void) {
+static int starlink_cluster_find_best_starlink(void) {
     if (g_starlink_cluster.count == 0) {
         return -1;
     }
@@ -158,7 +159,7 @@ int starlink_cluster_find_best_starlink(void) {
 }
 
 // Perform failover to a specific Starlink
-int starlink_cluster_failover_to(int index, const char *reason) {
+static int starlink_cluster_failover_to(int index, const char *reason) {
     if (index < 0 || index >= g_starlink_cluster.count) {
         return -1;
     }
@@ -184,7 +185,7 @@ int starlink_cluster_failover_to(int index, const char *reason) {
 }
 
 // Check if automatic failover is needed
-int starlink_cluster_check_failover(void) {
+static int starlink_cluster_check_failover(void) {
     if (!g_starlink_cluster.auto_failover_enabled || g_starlink_cluster.count < 2) {
         return 0;
     }
@@ -234,7 +235,7 @@ int starlink_cluster_check_failover(void) {
 }
 
 // Update Starlink instance with new data
-int starlink_cluster_update_instance(int index, const starlink_collection_result_t *result) {
+static int starlink_cluster_update_instance(int index, const starlink_collection_result_t *result) {
     if (index < 0 || index >= g_starlink_cluster.count || !result) {
         return -1;
     }
@@ -287,7 +288,7 @@ int starlink_cluster_update_instance(int index, const starlink_collection_result
 }
 
 // Get cluster status
-int starlink_cluster_get_status(starlink_cluster_t *cluster) {
+static int starlink_cluster_get_status(starlink_cluster_t *cluster) {
     if (!cluster) {
         return -1;
     }
@@ -328,14 +329,14 @@ const starlink_instance_t* starlink_cluster_get_by_index(int index) {
 }
 
 // Set cluster configuration
-void starlink_cluster_set_config(bool auto_failover, int failover_threshold, float min_health_score) {
+static void starlink_cluster_set_config(bool auto_failover, int failover_threshold, float min_health_score) {
     g_starlink_cluster.auto_failover_enabled = auto_failover;
     g_starlink_cluster.failover_threshold = failover_threshold;
     g_starlink_cluster.min_health_score = min_health_score;
 }
 
 // Cleanup cluster
-void starlink_cluster_cleanup(void) {
+static void starlink_cluster_cleanup(void) {
     // Cleanup Starlink obstruction analysis
     starlink_obstruction_cleanup();
     

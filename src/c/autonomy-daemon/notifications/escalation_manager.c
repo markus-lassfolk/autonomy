@@ -22,7 +22,7 @@ static double calculate_escalation_effectiveness(escalation_chain_t* chain, time
 static char* create_escalation_message(escalation_chain_t* chain, escalation_contact_t* contact);
 
 // Initialize escalation manager
-int escalation_manager_init(const escalation_manager_config_t* config) {
+static int escalation_manager_init(const escalation_manager_config_t* config) {
     if (g_escalation_manager_initialized) {
         return 0; // Already initialized
     }
@@ -82,7 +82,7 @@ int escalation_manager_init(const escalation_manager_config_t* config) {
 }
 
 // Clean up escalation manager
-void escalation_manager_cleanup(void) {
+static void escalation_manager_cleanup(void) {
     if (!g_escalation_manager_initialized) return;
     
     // Stop escalation thread
@@ -188,6 +188,7 @@ static void get_escalation_contacts(notification_type_t alert_type, int severity
     escalation_contact_t* contact = &contacts[(*contact_count)++];
     contact->level = 1;
     strncpy(contact->name, "On-Call Engineer", sizeof(contact->name) - 1);
+    contact->name[sizeof(contact->name) - 1] = '\0';
     contact->channels[0] = NOTIFICATION_CHANNEL_PUSHOVER;
     contact->channels[1] = NOTIFICATION_CHANNEL_SLACK;
     contact->channel_count = 2;
@@ -201,6 +202,7 @@ static void get_escalation_contacts(notification_type_t alert_type, int severity
     contact = &contacts[(*contact_count)++];
     contact->level = 2;
     strncpy(contact->name, "Team Lead", sizeof(contact->name) - 1);
+    contact->name[sizeof(contact->name) - 1] = '\0';
     contact->channels[0] = NOTIFICATION_CHANNEL_PUSHOVER;
     contact->channels[1] = NOTIFICATION_CHANNEL_EMAIL;
     contact->channels[2] = NOTIFICATION_CHANNEL_SLACK;
@@ -215,6 +217,7 @@ static void get_escalation_contacts(notification_type_t alert_type, int severity
     contact = &contacts[(*contact_count)++];
     contact->level = 3;
     strncpy(contact->name, "Engineering Manager", sizeof(contact->name) - 1);
+    contact->name[sizeof(contact->name) - 1] = '\0';
     contact->channels[0] = NOTIFICATION_CHANNEL_PUSHOVER;
     contact->channels[1] = NOTIFICATION_CHANNEL_EMAIL;
     contact->channels[2] = NOTIFICATION_CHANNEL_SLACK;
@@ -231,6 +234,7 @@ static void get_escalation_contacts(notification_type_t alert_type, int severity
         contact = &contacts[(*contact_count)++];
         contact->level = 4;
         strncpy(contact->name, "VP Engineering", sizeof(contact->name) - 1);
+        contact->name[sizeof(contact->name) - 1] = '\0';
         contact->channels[0] = NOTIFICATION_CHANNEL_PUSHOVER;
         contact->channels[1] = NOTIFICATION_CHANNEL_EMAIL;
         contact->channels[2] = NOTIFICATION_CHANNEL_TELEGRAM;
@@ -321,6 +325,7 @@ static void send_escalation_notification(escalation_chain_t* chain, int level) {
     
     char* message = create_escalation_message(chain, contact);
     strncpy(event.message, message, sizeof(event.message) - 1);
+    event.message[sizeof(event.message) - 1] = '\0';
     
     event.type = chain->alert_type;
     event.priority = NOTIFICATION_PRIORITY_EMERGENCY;
@@ -360,7 +365,9 @@ static void record_escalation_completion(escalation_chain_t* chain) {
         escalation_record_t* record = &g_escalation_manager.escalation_history[index];
         
         strncpy(record->id, chain->id, sizeof(record->id) - 1);
+        record->id[sizeof(record->id) - 1] = '\0';
         strncpy(record->incident_id, chain->incident_id, sizeof(record->incident_id) - 1);
+        record->incident_id[sizeof(record->incident_id) - 1] = '\0';
         record->alert_type = chain->alert_type;
         record->start_time = chain->start_time;
         record->end_time = end_time;
@@ -382,7 +389,9 @@ static void record_escalation_completion(escalation_chain_t* chain) {
         escalation_record_t* record = &g_escalation_manager.escalation_history[index];
         
         strncpy(record->id, chain->id, sizeof(record->id) - 1);
+        record->id[sizeof(record->id) - 1] = '\0';
         strncpy(record->incident_id, chain->incident_id, sizeof(record->incident_id) - 1);
+        record->incident_id[sizeof(record->incident_id) - 1] = '\0';
         record->alert_type = chain->alert_type;
         record->start_time = chain->start_time;
         record->end_time = end_time;
@@ -469,6 +478,7 @@ int escalation_manager_trigger_emergency_escalation(const char* incident_id,
     time_t now = time(NULL);
     snprintf(chain->id, sizeof(chain->id), "esc_%s_%ld", incident_id, now);
     strncpy(chain->incident_id, incident_id, sizeof(chain->incident_id) - 1);
+    chain->incident_id[sizeof(chain->incident_id) - 1] = '\0';
     chain->alert_type = alert_type;
     chain->start_time = now;
     chain->current_level = 1;
@@ -481,6 +491,7 @@ int escalation_manager_trigger_emergency_escalation(const char* incident_id,
     
     if (context_json) {
         strncpy(chain->context_json, context_json, sizeof(chain->context_json) - 1);
+        chain->context_json[sizeof(chain->context_json) - 1] = '\0';
     } else {
         chain->context_json[0] = '\0';
     }
@@ -502,7 +513,7 @@ int escalation_manager_trigger_emergency_escalation(const char* incident_id,
 }
 
 // Acknowledge escalation
-int escalation_manager_acknowledge_escalation(const char* escalation_id, const char* acknowledged_by) {
+static int escalation_manager_acknowledge_escalation(const char* escalation_id, const char* acknowledged_by) {
     if (!g_escalation_manager_initialized || !escalation_id || !acknowledged_by) {
         return -1;
     }
@@ -531,6 +542,7 @@ int escalation_manager_acknowledge_escalation(const char* escalation_id, const c
     time_t now = time(NULL);
     chain->acknowledged = true;
     strncpy(chain->acknowledged_by, acknowledged_by, sizeof(chain->acknowledged_by) - 1);
+    chain->acknowledged_by[sizeof(chain->acknowledged_by) - 1] = '\0';
     chain->acknowledged_at = now;
     chain->status = ESCALATION_STATUS_PAUSED;
     
@@ -544,7 +556,7 @@ int escalation_manager_acknowledge_escalation(const char* escalation_id, const c
 }
 
 // Cancel escalation
-int escalation_manager_cancel_escalation(const char* escalation_id, const char* reason) {
+static int escalation_manager_cancel_escalation(const char* escalation_id, const char* reason) {
     if (!g_escalation_manager_initialized || !escalation_id) {
         return -1;
     }
@@ -577,7 +589,7 @@ int escalation_manager_cancel_escalation(const char* escalation_id, const char* 
 }
 
 // Get active escalations
-int escalation_manager_get_active_escalations(escalation_chain_t* escalations, int max_escalations) {
+static int escalation_manager_get_active_escalations(escalation_chain_t* escalations, int max_escalations) {
     if (!g_escalation_manager_initialized || !escalations || max_escalations <= 0) {
         return -1;
     }
@@ -596,7 +608,7 @@ int escalation_manager_get_active_escalations(escalation_chain_t* escalations, i
 }
 
 // Get escalation history
-int escalation_manager_get_escalation_history(escalation_record_t* history, int max_history) {
+static int escalation_manager_get_escalation_history(escalation_record_t* history, int max_history) {
     if (!g_escalation_manager_initialized || !history || max_history <= 0) {
         return -1;
     }
@@ -619,7 +631,7 @@ int escalation_manager_get_escalation_history(escalation_record_t* history, int 
 }
 
 // Get escalation manager status
-void escalation_manager_get_status(escalation_manager_status_t* status) {
+static void escalation_manager_get_status(escalation_manager_status_t* status) {
     if (!status || !g_escalation_manager_initialized) return;
     
     pthread_mutex_lock(g_escalation_manager.mutex);
@@ -651,11 +663,11 @@ void escalation_manager_get_status(escalation_manager_status_t* status) {
 }
 
 // Check if escalation manager is initialized
-bool escalation_manager_is_initialized(void) {
+static bool escalation_manager_is_initialized(void) {
     return g_escalation_manager_initialized;
 }
 
 // Get escalation manager instance
-escalation_manager_t* escalation_manager_get_instance(void) {
+static escalation_manager_t* escalation_manager_get_instance(void) {
     return g_escalation_manager_initialized ? &g_escalation_manager : NULL;
 }

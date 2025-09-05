@@ -25,7 +25,7 @@ static bool g_geofence_initialized = false;
 static pthread_mutex_t g_geofence_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS geofencing system
-int gps_geofence_init(void) {
+static int gps_geofence_init(void) {
     if (g_geofence_initialized) {
         LOGX_WARN("GPS geofencing system already initialized");
         return AUTONOMY_SUCCESS;
@@ -104,6 +104,7 @@ int gps_geofence_create_circle(const char *name, double center_lat, double cente
     
     // Set geofence name
     strncpy(geofence->name, name, sizeof(geofence->name) - 1);
+    geofence->name[sizeof(geofence->name) - 1] = '\0';
     
     // Set center point
     geofence->points[0].lat = center_lat;
@@ -161,6 +162,7 @@ int gps_geofence_create_rectangle(const char *name, double min_lat, double max_l
     
     // Set geofence name
     strncpy(geofence->name, name, sizeof(geofence->name) - 1);
+    geofence->name[sizeof(geofence->name) - 1] = '\0';
     
     // Set rectangle corners (clockwise from top-left)
     geofence->points[0].lat = max_lat; geofence->points[0].lon = min_lon; // Top-left
@@ -227,6 +229,7 @@ int gps_geofence_create_polygon(const char *name, const gps_coordinate_t *points
     
     // Set geofence name
     strncpy(geofence->name, name, sizeof(geofence->name) - 1);
+    geofence->name[sizeof(geofence->name) - 1] = '\0';
     
     // Copy points and calculate center
     double sum_lat = 0.0, sum_lon = 0.0;
@@ -257,7 +260,7 @@ static int generate_geofence_id(void) {
 }
 
 // Check GPS position against all geofences
-int gps_geofence_check_position(const gps_data_t *gps_data) {
+static int gps_geofence_check_position(const gps_data_t *gps_data) {
     if (!g_geofence_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -463,7 +466,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Get geofence status
-int gps_geofence_get_status(gps_geofence_status_t *status) {
+static int gps_geofence_get_status(gps_geofence_status_t *status) {
     if (!g_geofence_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -493,7 +496,7 @@ int gps_geofence_get_status(gps_geofence_status_t *status) {
 }
 
 // Get geofence configuration
-int gps_geofence_get_config(gps_geofence_config_t *config) {
+static int gps_geofence_get_config(gps_geofence_config_t *config) {
     if (!g_geofence_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -512,7 +515,7 @@ int gps_geofence_get_config(gps_geofence_config_t *config) {
 }
 
 // Set geofence configuration
-int gps_geofence_set_config(const gps_geofence_config_t *config) {
+static int gps_geofence_set_config(const gps_geofence_config_t *config) {
     if (!g_geofence_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -532,7 +535,7 @@ int gps_geofence_set_config(const gps_geofence_config_t *config) {
 }
 
 // Enable/disable geofencing
-int gps_geofence_set_enabled(bool enabled) {
+static int gps_geofence_set_enabled(bool enabled) {
     if (!g_geofence_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -546,7 +549,7 @@ int gps_geofence_set_enabled(bool enabled) {
 }
 
 // Enable/disable specific geofence
-int gps_geofence_set_geofence_enabled(int geofence_id, bool enabled) {
+static int gps_geofence_set_geofence_enabled(int geofence_id, bool enabled) {
     if (!g_geofence_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -577,7 +580,7 @@ int gps_geofence_set_geofence_enabled(int geofence_id, bool enabled) {
 }
 
 // Delete geofence
-int gps_geofence_delete(int geofence_id) {
+static int gps_geofence_delete(int geofence_id) {
     if (!g_geofence_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -607,7 +610,7 @@ int gps_geofence_delete(int geofence_id) {
 }
 
 // Reset geofencing system
-int gps_geofence_reset(void) {
+static int gps_geofence_reset(void) {
     if (!g_geofence_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -631,7 +634,7 @@ int gps_geofence_reset(void) {
 }
 
 // Cleanup geofencing system
-void gps_geofence_cleanup(void) {
+static void gps_geofence_cleanup(void) {
     if (!g_geofence_initialized) {
         return;
     }

@@ -40,7 +40,7 @@ static int publish_all_telemetry_events(void);
 static int publish_system_status_update(void);
 
 // Initialize MQTT telemetry publisher
-int mqtt_telemetry_publisher_init(void) {
+static int mqtt_telemetry_publisher_init(void) {
     if (g_mqtt_telemetry_publisher_initialized) {
         return 0; // Already initialized
     }
@@ -67,7 +67,7 @@ int mqtt_telemetry_publisher_init(void) {
 }
 
 // Clean up MQTT telemetry publisher
-void mqtt_telemetry_publisher_cleanup(void) {
+static void mqtt_telemetry_publisher_cleanup(void) {
     if (!g_mqtt_telemetry_publisher_initialized) return;
     
     // Stop publisher thread
@@ -86,7 +86,7 @@ void mqtt_telemetry_publisher_cleanup(void) {
 }
 
 // Start MQTT telemetry publisher
-int mqtt_telemetry_publisher_start(void) {
+static int mqtt_telemetry_publisher_start(void) {
     if (!g_mqtt_telemetry_publisher_initialized || !g_mqtt_telemetry_publisher.enabled) {
         return -1;
     }
@@ -115,7 +115,7 @@ int mqtt_telemetry_publisher_start(void) {
 }
 
 // Stop MQTT telemetry publisher
-int mqtt_telemetry_publisher_stop(void) {
+static int mqtt_telemetry_publisher_stop(void) {
     if (!g_mqtt_telemetry_publisher_initialized || !g_mqtt_telemetry_publisher.thread_running) {
         return -1;
     }
@@ -243,7 +243,7 @@ static int publish_system_status_update(void) {
 }
 
 // Publish specific telemetry sample
-int mqtt_telemetry_publisher_publish_sample(const telemetry_sample_t* sample) {
+static int mqtt_telemetry_publisher_publish_sample(const telemetry_sample_t* sample) {
     if (!g_mqtt_telemetry_publisher_initialized || !sample) {
         return -1;
     }
@@ -264,7 +264,7 @@ int mqtt_telemetry_publisher_publish_sample(const telemetry_sample_t* sample) {
 }
 
 // Publish specific telemetry event
-int mqtt_telemetry_publisher_publish_event(const telemetry_event_t* event) {
+static int mqtt_telemetry_publisher_publish_event(const telemetry_event_t* event) {
     if (!g_mqtt_telemetry_publisher_initialized || !event) {
         return -1;
     }
@@ -285,7 +285,7 @@ int mqtt_telemetry_publisher_publish_event(const telemetry_event_t* event) {
 }
 
 // Get MQTT telemetry publisher status
-void mqtt_telemetry_publisher_get_status(mqtt_telemetry_publisher_t* status) {
+static void mqtt_telemetry_publisher_get_status(mqtt_telemetry_publisher_t* status) {
     if (!status || !g_mqtt_telemetry_publisher_initialized) return;
     
     pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex);
@@ -294,16 +294,16 @@ void mqtt_telemetry_publisher_get_status(mqtt_telemetry_publisher_t* status) {
 }
 
 // Check if MQTT telemetry publisher is initialized
-bool mqtt_telemetry_publisher_is_initialized(void) {
+static bool mqtt_telemetry_publisher_is_initialized(void) {
     return g_mqtt_telemetry_publisher_initialized;
 }
 
 // Check if MQTT telemetry publisher is running
-bool mqtt_telemetry_publisher_is_running(void) {
+static bool mqtt_telemetry_publisher_is_running(void) {
     return g_mqtt_telemetry_publisher_initialized && g_mqtt_telemetry_publisher.thread_running;
 }
 
 // Get MQTT telemetry publisher instance
-mqtt_telemetry_publisher_t* mqtt_telemetry_publisher_get_instance(void) {
+static mqtt_telemetry_publisher_t* mqtt_telemetry_publisher_get_instance(void) {
     return g_mqtt_telemetry_publisher_initialized ? &g_mqtt_telemetry_publisher : NULL;
 }

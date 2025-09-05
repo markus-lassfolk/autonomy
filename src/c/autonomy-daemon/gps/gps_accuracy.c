@@ -30,7 +30,7 @@ static gps_accuracy_t g_accuracy_validator = {0};
 static bool g_accuracy_initialized = false;
 
 // Initialize GPS accuracy validator
-int gps_accuracy_init(void) {
+static int gps_accuracy_init(void) {
     if (g_accuracy_initialized) {
         LOGX_WARN("GPS accuracy validator already initialized");
         return AUTONOMY_SUCCESS;
@@ -62,7 +62,7 @@ int gps_accuracy_init(void) {
 }
 
 // Validate GPS accuracy
-int gps_accuracy_validate(const gps_data_t *gps_data, gps_validation_result_t *result) {
+static int gps_accuracy_validate(const gps_data_t *gps_data, gps_validation_result_t *result) {
     if (!g_accuracy_initialized || !gps_data || !result) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -129,23 +129,27 @@ static bool validate_basic_parameters(const gps_data_t *gps_data, gps_validation
     // Check for valid coordinates
     if (gps_data->lat < -90.0 || gps_data->lat > 90.0) {
         strncpy(result->error_message, "Invalid latitude value", sizeof(result->error_message) - 1);
+        result->error_message[sizeof(result->error_message) - 1] = '\0';
         return false;
     }
     
     if (gps_data->lon < -180.0 || gps_data->lon > 180.0) {
         strncpy(result->error_message, "Invalid longitude value", sizeof(result->error_message) - 1);
+        result->error_message[sizeof(result->error_message) - 1] = '\0';
         return false;
     }
     
     // Check for zero coordinates (often indicates no fix)
     if (gps_data->lat == 0.0 && gps_data->lon == 0.0) {
         strncpy(result->error_message, "Zero coordinates (no GPS fix)", sizeof(result->error_message) - 1);
+        result->error_message[sizeof(result->error_message) - 1] = '\0';
         return false;
     }
     
     // Check timestamp validity
     if (gps_data->timestamp <= 0) {
         strncpy(result->error_message, "Invalid timestamp", sizeof(result->error_message) - 1);
+        result->error_message[sizeof(result->error_message) - 1] = '\0';
         return false;
     }
     
@@ -157,11 +161,13 @@ static bool validate_accuracy_values(const gps_data_t *gps_data, gps_validation_
     // Check accuracy bounds
     if (gps_data->accuracy < g_accuracy_validator.min_accuracy) {
         strncpy(result->error_message, "Accuracy below minimum threshold", sizeof(result->error_message) - 1);
+        result->error_message[sizeof(result->error_message) - 1] = '\0';
         return false;
     }
     
     if (gps_data->accuracy > g_accuracy_validator.max_accuracy) {
         strncpy(result->error_message, "Accuracy above maximum threshold", sizeof(result->error_message) - 1);
+        result->error_message[sizeof(result->error_message) - 1] = '\0';
         return false;
     }
     
@@ -169,12 +175,14 @@ static bool validate_accuracy_values(const gps_data_t *gps_data, gps_validation_
     if (gps_data->accuracy < g_accuracy_validator.suspicious_accuracy) {
         result->flags |= GPS_VALIDATION_SUSPICIOUS_ACCURACY;
         strncpy(result->warning_message, "Suspiciously good accuracy", sizeof(result->warning_message) - 1);
+        result->warning_message[sizeof(result->warning_message) - 1] = '\0';
     }
     
     // Check for poor accuracy
     if (gps_data->accuracy > g_accuracy_validator.poor_accuracy) {
         result->flags |= GPS_VALIDATION_POOR_ACCURACY;
         strncpy(result->warning_message, "Poor accuracy", sizeof(result->warning_message) - 1);
+        result->warning_message[sizeof(result->warning_message) - 1] = '\0';
     }
     
     return true;
@@ -185,17 +193,20 @@ static bool validate_satellite_data(const gps_data_t *gps_data, gps_validation_r
     // Check satellite count bounds
     if (gps_data->satellites < g_accuracy_validator.min_satellites) {
         strncpy(result->error_message, "Insufficient satellites for valid fix", sizeof(result->error_message) - 1);
+        result->error_message[sizeof(result->error_message) - 1] = '\0';
         return false;
     }
     
     if (gps_data->satellites > g_accuracy_validator.max_satellites) {
         strncpy(result->error_message, "Unrealistic satellite count", sizeof(result->error_message) - 1);
+        result->error_message[sizeof(result->error_message) - 1] = '\0';
         return false;
     }
     
     // Check fix quality
     if (gps_data->fix_quality == 0) {
         strncpy(result->error_message, "No GPS fix", sizeof(result->error_message) - 1);
+        result->error_message[sizeof(result->error_message) - 1] = '\0';
         return false;
     }
     
@@ -209,6 +220,7 @@ static bool validate_position_data(const gps_data_t *gps_data, gps_validation_re
         gps_data->altitude > g_accuracy_validator.max_altitude) {
         result->flags |= GPS_VALIDATION_SUSPICIOUS_ALTITUDE;
         strncpy(result->warning_message, "Suspicious altitude value", sizeof(result->warning_message) - 1);
+        result->warning_message[sizeof(result->warning_message) - 1] = '\0';
     }
     
     // Check for position jumps (if we have previous data)
@@ -222,6 +234,7 @@ static bool validate_position_data(const gps_data_t *gps_data, gps_validation_re
         if (time_diff > 0 && distance > POSITION_JUMP_THRESHOLD) {
             result->flags |= GPS_VALIDATION_POSITION_JUMP;
             strncpy(result->warning_message, "Large position jump detected", sizeof(result->warning_message) - 1);
+            result->warning_message[sizeof(result->warning_message) - 1] = '\0';
         }
     }
     
@@ -240,11 +253,13 @@ static bool validate_temporal_data(const gps_data_t *gps_data, gps_validation_re
     if (age > VALIDATION_WINDOW) {
         result->flags |= GPS_VALIDATION_OLD_DATA;
         strncpy(result->warning_message, "GPS data is old", sizeof(result->warning_message) - 1);
+        result->warning_message[sizeof(result->warning_message) - 1] = '\0';
     }
     
     // Check for future timestamps
     if (gps_data->timestamp > now + 60) {  // Allow 1 minute clock skew
         strncpy(result->error_message, "Future timestamp", sizeof(result->error_message) - 1);
+        result->error_message[sizeof(result->error_message) - 1] = '\0';
         return false;
     }
     
@@ -262,9 +277,11 @@ static bool validate_consistency(const gps_data_t *gps_data, gps_validation_resu
         if (accuracy_ratio < ACCURACY_IMPROVEMENT_THRESHOLD) {
             result->flags |= GPS_VALIDATION_SUSPICIOUS_ACCURACY;
             strncpy(result->warning_message, "Accuracy better than expected", sizeof(result->warning_message) - 1);
+            result->warning_message[sizeof(result->warning_message) - 1] = '\0';
         } else if (accuracy_ratio > ACCURACY_DEGRADATION_THRESHOLD) {
             result->flags |= GPS_VALIDATION_POOR_ACCURACY;
             strncpy(result->warning_message, "Accuracy worse than expected", sizeof(result->warning_message) - 1);
+            result->warning_message[sizeof(result->warning_message) - 1] = '\0';
         }
     }
     
@@ -333,7 +350,7 @@ static void update_validation_statistics(const gps_validation_result_t *result) 
 }
 
 // Get accuracy validation statistics
-int gps_accuracy_get_statistics(gps_accuracy_stats_t *stats) {
+static int gps_accuracy_get_statistics(gps_accuracy_stats_t *stats) {
     if (!g_accuracy_initialized || !stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -354,7 +371,7 @@ int gps_accuracy_get_statistics(gps_accuracy_stats_t *stats) {
 }
 
 // Get accuracy validator configuration
-int gps_accuracy_get_config(gps_accuracy_config_t *config) {
+static int gps_accuracy_get_config(gps_accuracy_config_t *config) {
     if (!g_accuracy_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -374,7 +391,7 @@ int gps_accuracy_get_config(gps_accuracy_config_t *config) {
 }
 
 // Set accuracy validator configuration
-int gps_accuracy_set_config(const gps_accuracy_config_t *config) {
+static int gps_accuracy_set_config(const gps_accuracy_config_t *config) {
     if (!g_accuracy_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -395,7 +412,7 @@ int gps_accuracy_set_config(const gps_accuracy_config_t *config) {
 }
 
 // Enable/disable accuracy validator
-int gps_accuracy_set_enabled(bool enabled) {
+static int gps_accuracy_set_enabled(bool enabled) {
     if (!g_accuracy_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -406,7 +423,7 @@ int gps_accuracy_set_enabled(bool enabled) {
 }
 
 // Reset validation statistics
-int gps_accuracy_reset_statistics(void) {
+static int gps_accuracy_reset_statistics(void) {
     if (!g_accuracy_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -422,7 +439,7 @@ int gps_accuracy_reset_statistics(void) {
 }
 
 // Cleanup accuracy validator
-void gps_accuracy_cleanup(void) {
+static void gps_accuracy_cleanup(void) {
     if (!g_accuracy_initialized) {
         return;
     }

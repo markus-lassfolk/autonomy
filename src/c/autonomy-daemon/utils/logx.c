@@ -54,7 +54,7 @@ static const char* LOGX_LEVEL_COLORS[] = {
 static const char* LOGX_RESET_COLOR = "\033[0m";
 
 // Initialize logx system
-int logx_init(const logx_config_t *config) {
+static int logx_init(const logx_config_t *config) {
     if (config) {
         memcpy(&g_logx_config, config, sizeof(logx_config_t));
     }
@@ -167,7 +167,7 @@ static void format_message(char *buffer, size_t size, logx_level_t level,
 }
 
 // Core logging function
-void logx_log(logx_level_t level, const char *file, int line, const char *func, const char *format, ...) {
+static void logx_log(logx_level_t level, const char *file, int line, const char *func, const char *format, ...) {
     if (level < g_logx_config.level) {
         return;
     }
@@ -203,42 +203,42 @@ void logx_log(logx_level_t level, const char *file, int line, const char *func, 
 }
 
 // Convenience logging functions
-void logx_trace(const char *file, int line, const char *func, const char *format, ...) {
+static void logx_trace(const char *file, int line, const char *func, const char *format, ...) {
     va_list args;
     va_start(args, format);
     logx_log(LOGX_LEVEL_TRACE, file, line, func, format, args);
     va_end(args);
 }
 
-void logx_debug(const char *file, int line, const char *func, const char *format, ...) {
+static void logx_debug(const char *file, int line, const char *func, const char *format, ...) {
     va_list args;
     va_start(args, format);
     logx_log(LOGX_LEVEL_DEBUG, file, line, func, format, args);
     va_end(args);
 }
 
-void logx_info(const char *file, int line, const char *func, const char *format, ...) {
+static void logx_info(const char *file, int line, const char *func, const char *format, ...) {
     va_list args;
     va_start(args, format);
     logx_log(LOGX_LEVEL_INFO, file, line, func, format, args);
     va_end(args);
 }
 
-void logx_warn(const char *file, int line, const char *func, const char *format, ...) {
+static void logx_warn(const char *file, int line, const char *func, const char *format, ...) {
     va_list args;
     va_start(args, format);
     logx_log(LOGX_LEVEL_WARN, file, line, func, format, args);
     va_end(args);
 }
 
-void logx_error(const char *file, int line, const char *func, const char *format, ...) {
+static void logx_error(const char *file, int line, const char *func, const char *format, ...) {
     va_list args;
     va_start(args, format);
     logx_log(LOGX_LEVEL_ERROR, file, line, func, format, args);
     va_end(args);
 }
 
-void logx_fatal(const char *file, int line, const char *func, const char *format, ...) {
+static void logx_fatal(const char *file, int line, const char *func, const char *format, ...) {
     va_list args;
     va_start(args, format);
     logx_log(LOGX_LEVEL_FATAL, file, line, func, format, args);
@@ -249,27 +249,27 @@ void logx_fatal(const char *file, int line, const char *func, const char *format
 }
 
 // Set log level
-void logx_set_level(logx_level_t level) {
+static void logx_set_level(logx_level_t level) {
     g_logx_config.level = level;
 }
 
 // Get current log level
-logx_level_t logx_get_level(void) {
+static logx_level_t logx_get_level(void) {
     return g_logx_config.level;
 }
 
 // Set output destinations
-void logx_set_output(logx_output_t output) {
+static void logx_set_output(logx_output_t output) {
     g_logx_config.output = output;
 }
 
 // Get current output configuration
-logx_output_t logx_get_output(void) {
+static logx_output_t logx_get_output(void) {
     return g_logx_config.output;
 }
 
 // Cleanup logx system
-void logx_cleanup(void) {
+static void logx_cleanup(void) {
     if (g_logx_config.output & LOGX_OUTPUT_SYSLOG) {
         closelog();
     }

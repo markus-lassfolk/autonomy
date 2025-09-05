@@ -32,7 +32,7 @@ static bool g_error_recovery_initialized = false;
 static pthread_mutex_t g_error_recovery_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS error recovery
-int gps_error_recovery_init(void) {
+static int gps_error_recovery_init(void) {
     if (g_error_recovery_initialized) {
         LOGX_WARN("GPS error recovery already initialized");
         return AUTONOMY_SUCCESS;
@@ -93,7 +93,7 @@ int gps_error_recovery_init(void) {
 }
 
 // Record GPS error
-int gps_error_recovery_record_error(int source_id, gps_error_type_t error_type, int error_code, const char *error_message) {
+static int gps_error_recovery_record_error(int source_id, gps_error_type_t error_type, int error_code, const char *error_message) {
     if (!g_error_recovery_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -460,7 +460,7 @@ static bool perform_switch_source_recovery(gps_source_error_t *source, gps_error
 }
 
 // Get error recovery status
-int gps_error_recovery_get_status(gps_error_recovery_status_t *status) {
+static int gps_error_recovery_get_status(gps_error_recovery_status_t *status) {
     if (!g_error_recovery_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -488,7 +488,7 @@ int gps_error_recovery_get_status(gps_error_recovery_status_t *status) {
 }
 
 // Get source error information
-int gps_error_recovery_get_source_errors(int source_id, gps_source_error_t *source_errors) {
+static int gps_error_recovery_get_source_errors(int source_id, gps_source_error_t *source_errors) {
     if (!g_error_recovery_initialized || !source_errors || source_id < 0 || source_id >= GPS_MAX_SOURCES) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -503,7 +503,7 @@ int gps_error_recovery_get_source_errors(int source_id, gps_source_error_t *sour
 }
 
 // Get all source error data
-int gps_error_recovery_get_all_sources(gps_source_error_t *sources, int max_sources) {
+static int gps_error_recovery_get_all_sources(gps_source_error_t *sources, int max_sources) {
     if (!g_error_recovery_initialized || !sources || max_sources <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -524,7 +524,7 @@ int gps_error_recovery_get_all_sources(gps_source_error_t *sources, int max_sour
 }
 
 // Get error history
-int gps_error_recovery_get_history(gps_error_entry_t *history, int max_entries, time_t since) {
+static int gps_error_recovery_get_history(gps_error_entry_t *history, int max_entries, time_t since) {
     if (!g_error_recovery_initialized || !history || max_entries <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -546,7 +546,7 @@ int gps_error_recovery_get_history(gps_error_entry_t *history, int max_entries, 
 }
 
 // Get error recovery configuration
-int gps_error_recovery_get_config(gps_error_recovery_config_t *config) {
+static int gps_error_recovery_get_config(gps_error_recovery_config_t *config) {
     if (!g_error_recovery_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -567,7 +567,7 @@ int gps_error_recovery_get_config(gps_error_recovery_config_t *config) {
 }
 
 // Set error recovery configuration
-int gps_error_recovery_set_config(const gps_error_recovery_config_t *config) {
+static int gps_error_recovery_set_config(const gps_error_recovery_config_t *config) {
     if (!g_error_recovery_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -589,7 +589,7 @@ int gps_error_recovery_set_config(const gps_error_recovery_config_t *config) {
 }
 
 // Enable/disable error recovery
-int gps_error_recovery_set_enabled(bool enabled) {
+static int gps_error_recovery_set_enabled(bool enabled) {
     if (!g_error_recovery_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -603,7 +603,7 @@ int gps_error_recovery_set_enabled(bool enabled) {
 }
 
 // Force error recovery for a source
-int gps_error_recovery_force_recovery(int source_id) {
+static int gps_error_recovery_force_recovery(int source_id) {
     if (!g_error_recovery_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -628,7 +628,7 @@ int gps_error_recovery_force_recovery(int source_id) {
 }
 
 // Reset error recovery
-int gps_error_recovery_reset(void) {
+static int gps_error_recovery_reset(void) {
     if (!g_error_recovery_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -677,7 +677,7 @@ int gps_error_recovery_reset(void) {
 }
 
 // Cleanup error recovery
-void gps_error_recovery_cleanup(void) {
+static void gps_error_recovery_cleanup(void) {
     if (!g_error_recovery_initialized) {
         return;
     }

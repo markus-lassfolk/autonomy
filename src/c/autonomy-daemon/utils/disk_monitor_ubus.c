@@ -341,7 +341,7 @@ static int autonomy_disk_monitor_cleanup(struct ubus_context *ctx, struct ubus_r
 /**
  * Register disk monitor UBUS object
  */
-int disk_monitor_ubus_register(struct ubus_context *ctx) {
+static int disk_monitor_ubus_register(struct ubus_context *ctx) {
     int ret = ubus_add_object(ctx, &autonomy_disk_monitor_obj);
     if (ret) {
         fprintf(stderr, "Failed to add disk monitor object: %s\n", ubus_strerror(ret));
@@ -355,7 +355,7 @@ int disk_monitor_ubus_register(struct ubus_context *ctx) {
 /**
  * Unregister disk monitor UBUS object
  */
-void disk_monitor_ubus_unregister(struct ubus_context *ctx) {
+static void disk_monitor_ubus_unregister(struct ubus_context *ctx) {
     ubus_remove_object(ctx, &autonomy_disk_monitor_obj);
     fprintf(stderr, "Disk monitor UBUS object unregistered\n");
 }

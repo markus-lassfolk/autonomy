@@ -29,7 +29,7 @@ static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, cur
 }
 
 // Initialize discord client
-int discord_client_init(discord_client_t* client, const discord_config_t* config) {
+static int discord_client_init(discord_client_t* client, const discord_config_t* config) {
     if (!client || !config) {
         return -1;
     }
@@ -42,6 +42,7 @@ int discord_client_init(discord_client_t* client, const discord_config_t* config
     // Initialize status
     client->status.enabled = config->enabled;
     strncpy(client->status.webhook_url, config->webhook_url, sizeof(client->status.webhook_url) - 1);
+    client->status.webhook_url[sizeof(client->status.webhook_url) - 1] = '\0';
     client->status.total_sent = 0;
     client->status.total_failed = 0;
     client->status.last_response_code = 0;
@@ -53,7 +54,7 @@ int discord_client_init(discord_client_t* client, const discord_config_t* config
 }
 
 // Clean up discord client
-void discord_client_cleanup(discord_client_t* client) {
+static void discord_client_cleanup(discord_client_t* client) {
     if (!client) return;
     
     // Clear sensitive data
@@ -61,7 +62,7 @@ void discord_client_cleanup(discord_client_t* client) {
 }
 
 // Get embed color for notification priority
-int discord_client_get_embed_color(notification_priority_t priority) {
+static int discord_client_get_embed_color(notification_priority_t priority) {
     switch (priority) {
         case NOTIFICATION_PRIORITY_EMERGENCY:
             return 0xFF0000; // Red
@@ -106,12 +107,15 @@ void discord_client_create_message(discord_client_t* client, const notification_
     // Set username and avatar
     if (strlen(client->config.username) > 0) {
         strncpy(message->username, client->config.username, sizeof(message->username) - 1);
+        message->username[sizeof(message->username) - 1] = '\0';
     } else {
         strncpy(message->username, "autonomy", sizeof(message->username) - 1);
+        message->username[sizeof(message->username) - 1] = '\0';
     }
     
     if (strlen(client->config.avatar_url) > 0) {
         strncpy(message->avatar_url, client->config.avatar_url, sizeof(message->avatar_url) - 1);
+        message->avatar_url[sizeof(message->avatar_url) - 1] = '\0';
     }
     
     if (client->config.use_embeds) {
@@ -120,7 +124,9 @@ void discord_client_create_message(discord_client_t* client, const notification_
         message->embed_count = 1;
         
         strncpy(embed->title, event->title, sizeof(embed->title) - 1);
+        embed->title[sizeof(embed->title) - 1] = '\0';
         strncpy(embed->description, event->message, sizeof(embed->description) - 1);
+        embed->description[sizeof(embed->description) - 1] = '\0';
         embed->color = discord_client_get_embed_color(event->priority);
         
         // Format timestamp
@@ -129,17 +135,22 @@ void discord_client_create_message(discord_client_t* client, const notification_
         
         // Add footer
         strncpy(embed->footer_text, "autonomy Daemon", sizeof(embed->footer_text) - 1);
+        embed->footer_text[sizeof(embed->footer_text) - 1] = '\0';
         
         // Add priority field
         discord_embed_field_t* priority_field = &embed->fields[embed->field_count++];
         strncpy(priority_field->name, "Priority", sizeof(priority_field->name) - 1);
+        priority_field->name[sizeof(priority_field->name) - 1] = '\0';
         strncpy(priority_field->value, discord_client_get_priority_text(event->priority), sizeof(priority_field->value) - 1);
+        priority_field->value[sizeof(priority_field->value) - 1] = '\0';
         priority_field->inline_field = true;
         
         // Add type field
         discord_embed_field_t* type_field = &embed->fields[embed->field_count++];
         strncpy(type_field->name, "Type", sizeof(type_field->name) - 1);
+        type_field->name[sizeof(type_field->name) - 1] = '\0';
         strncpy(type_field->value, notification_type_to_string(event->type), sizeof(type_field->value) - 1);
+        type_field->value[sizeof(type_field->value) - 1] = '\0';
         type_field->inline_field = true;
         
         // Add context fields if enabled and available
@@ -148,7 +159,9 @@ void discord_client_create_message(discord_client_t* client, const notification_
             if (strstr(event->details_json, "latency")) {
                 discord_embed_field_t* latency_field = &embed->fields[embed->field_count++];
                 strncpy(latency_field->name, "Latency", sizeof(latency_field->name) - 1);
+                latency_field->name[sizeof(latency_field->name) - 1] = '\0';
                 strncpy(latency_field->value, "See details", sizeof(latency_field->value) - 1);
+                latency_field->value[sizeof(latency_field->value) - 1] = '\0';
                 latency_field->inline_field = true;
             }
         }
@@ -233,6 +246,7 @@ static int send_discord_request(discord_client_t* client, discord_message_t* mes
     CURL* curl = curl_easy_init();
     if (!curl) {
         strncpy(client->status.last_error, "Failed to initialize curl", sizeof(client->status.last_error) - 1);
+        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
         return -1;
     }
     
@@ -245,6 +259,7 @@ static int send_discord_request(discord_client_t* client, discord_message_t* mes
     if (!json_payload) {
         curl_easy_cleanup(curl);
         strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error) - 1);
+        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
         return -1;
     }
     
@@ -306,13 +321,14 @@ static int send_discord_request(discord_client_t* client, discord_message_t* mes
 }
 
 // Send notification via Discord with retry logic
-int discord_client_send(discord_client_t* client, const notification_event_t* event) {
+static int discord_client_send(discord_client_t* client, const notification_event_t* event) {
     if (!client || !event || !client->config.enabled) {
         return -1;
     }
     
     if (strlen(client->config.webhook_url) == 0) {
         strncpy(client->status.last_error, "Discord webhook URL is required", sizeof(client->status.last_error) - 1);
+        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
         client->status.last_error_time = time(NULL);
         client->status.total_failed++;
         return -1;
@@ -352,7 +368,7 @@ int discord_client_send(discord_client_t* client, const notification_event_t* ev
 }
 
 // Get discord client status
-void discord_client_get_status(discord_client_t* client, discord_client_status_t* status) {
+static void discord_client_get_status(discord_client_t* client, discord_client_status_t* status) {
     if (!client || !status) return;
     
     *status = client->status;

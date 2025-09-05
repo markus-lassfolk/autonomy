@@ -27,7 +27,7 @@ static gps_nmea_t g_nmea_parser = {0};
 static bool g_nmea_initialized = false;
 
 // Initialize NMEA parser
-int gps_nmea_init(void) {
+static int gps_nmea_init(void) {
     if (g_nmea_initialized) {
         LOGX_WARN("NMEA parser already initialized");
         return AUTONOMY_SUCCESS;
@@ -60,7 +60,7 @@ int gps_nmea_init(void) {
 }
 
 // Parse NMEA sentence
-int gps_nmea_parse_sentence(const char *sentence, gps_data_t *gps_data) {
+static int gps_nmea_parse_sentence(const char *sentence, gps_data_t *gps_data) {
     if (!g_nmea_initialized || !sentence || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -598,7 +598,7 @@ static double estimate_accuracy_from_hdop(double hdop) {
 }
 
 // Get NMEA parser statistics
-int gps_nmea_get_statistics(gps_nmea_stats_t *stats) {
+static int gps_nmea_get_statistics(gps_nmea_stats_t *stats) {
     if (!g_nmea_initialized || !stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -618,7 +618,7 @@ int gps_nmea_get_statistics(gps_nmea_stats_t *stats) {
 }
 
 // Get NMEA parser configuration
-int gps_nmea_get_config(gps_nmea_config_t *config) {
+static int gps_nmea_get_config(gps_nmea_config_t *config) {
     if (!g_nmea_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -632,7 +632,7 @@ int gps_nmea_get_config(gps_nmea_config_t *config) {
 }
 
 // Set NMEA parser configuration
-int gps_nmea_set_config(const gps_nmea_config_t *config) {
+static int gps_nmea_set_config(const gps_nmea_config_t *config) {
     if (!g_nmea_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -647,7 +647,7 @@ int gps_nmea_set_config(const gps_nmea_config_t *config) {
 }
 
 // Enable/disable NMEA parser
-int gps_nmea_set_enabled(bool enabled) {
+static int gps_nmea_set_enabled(bool enabled) {
     if (!g_nmea_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -658,7 +658,7 @@ int gps_nmea_set_enabled(bool enabled) {
 }
 
 // Reset NMEA parser statistics
-int gps_nmea_reset_statistics(void) {
+static int gps_nmea_reset_statistics(void) {
     if (!g_nmea_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -673,7 +673,7 @@ int gps_nmea_reset_statistics(void) {
 }
 
 // Cleanup NMEA parser
-void gps_nmea_cleanup(void) {
+static void gps_nmea_cleanup(void) {
     if (!g_nmea_initialized) {
         return;
     }

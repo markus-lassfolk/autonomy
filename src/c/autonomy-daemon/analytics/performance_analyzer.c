@@ -16,7 +16,7 @@ static double calculate_weighted_average(const double* values, const bool* has_v
                                         int count, double default_value);
 
 // Initialize performance analyzer
-int performance_analyzer_init(void) {
+static int performance_analyzer_init(void) {
     if (g_performance_analyzer_initialized) {
         return 0; // Already initialized
     }
@@ -42,7 +42,7 @@ int performance_analyzer_init(void) {
 }
 
 // Clean up performance analyzer
-void performance_analyzer_cleanup(void) {
+static void performance_analyzer_cleanup(void) {
     if (!g_performance_analyzer_initialized) return;
     
     if (g_performance_analyzer.mutex) {
@@ -60,7 +60,7 @@ void performance_analyzer_cleanup(void) {
 }
 
 // Analyze performance for all members
-int performance_analyzer_analyze(performance_analysis_t* result) {
+static int performance_analyzer_analyze(performance_analysis_t* result) {
     if (!g_performance_analyzer_initialized || !result) {
         return -1;
     }
@@ -89,6 +89,7 @@ int performance_analyzer_analyze(performance_analysis_t* result) {
     // Analyze each member
     for (int i = 0; i < member_count; i++) {
         strncpy(result->member_names[i], member_names[i], sizeof(result->member_names[i]) - 1);
+        result->member_names[i][sizeof(result->member_names[i]) - 1] = '\0';
         
         // Get performance for this member
         if (performance_analyzer_get_member_performance(member_names[i], 
@@ -286,7 +287,7 @@ static double calculate_weighted_average(const double* values, const bool* has_v
 }
 
 // Calculate performance score
-double performance_analyzer_calculate_score(const member_performance_t* performance) {
+static double performance_analyzer_calculate_score(const member_performance_t* performance) {
     if (!performance) return 0.0;
     
     double score = 100.0;
@@ -335,7 +336,7 @@ double performance_analyzer_calculate_score(const member_performance_t* performa
 }
 
 // Get performance analyzer status
-void performance_analyzer_get_status(performance_analyzer_t* status) {
+static void performance_analyzer_get_status(performance_analyzer_t* status) {
     if (!status || !g_performance_analyzer_initialized) return;
     
     pthread_mutex_lock(g_performance_analyzer.mutex);
@@ -344,11 +345,11 @@ void performance_analyzer_get_status(performance_analyzer_t* status) {
 }
 
 // Check if performance analyzer is initialized
-bool performance_analyzer_is_initialized(void) {
+static bool performance_analyzer_is_initialized(void) {
     return g_performance_analyzer_initialized;
 }
 
 // Get performance analyzer instance
-performance_analyzer_t* performance_analyzer_get_instance(void) {
+static performance_analyzer_t* performance_analyzer_get_instance(void) {
     return g_performance_analyzer_initialized ? &g_performance_analyzer : NULL;
 }

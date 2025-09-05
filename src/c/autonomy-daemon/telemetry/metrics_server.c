@@ -30,7 +30,7 @@ static enum MHD_Result send_json_response(struct MHD_Connection* connection,
 static bool check_authentication(struct MHD_Connection* connection, const char* required_token);
 
 // Initialize metrics server
-int metrics_server_init(const metrics_server_config_t* config) {
+static int metrics_server_init(const metrics_server_config_t* config) {
     if (g_metrics_server_initialized) {
         return 0; // Already initialized
     }
@@ -56,6 +56,7 @@ int metrics_server_init(const metrics_server_config_t* config) {
     g_metrics_server.status.running = false;
     g_metrics_server.status.port = config->port;
     strncpy(g_metrics_server.status.bind_address, config->bind_address, sizeof(g_metrics_server.status.bind_address) - 1);
+    g_metrics_server.status.bind_address[sizeof(g_metrics_server.status.bind_address) - 1] = '\0';
     g_metrics_server.status.total_requests = 0;
     g_metrics_server.status.successful_requests = 0;
     g_metrics_server.status.failed_requests = 0;
@@ -67,7 +68,7 @@ int metrics_server_init(const metrics_server_config_t* config) {
 }
 
 // Clean up metrics server
-void metrics_server_cleanup(void) {
+static void metrics_server_cleanup(void) {
     if (!g_metrics_server_initialized) return;
     
     // Stop server if running
@@ -87,7 +88,7 @@ void metrics_server_cleanup(void) {
 }
 
 // Start metrics server
-int metrics_server_start(void) {
+static int metrics_server_start(void) {
     if (!g_metrics_server_initialized || !g_metrics_server.config.enabled) {
         return -1;
     }
@@ -121,7 +122,7 @@ int metrics_server_start(void) {
 }
 
 // Stop metrics server
-int metrics_server_stop(void) {
+static int metrics_server_stop(void) {
     if (!g_metrics_server_initialized || !g_metrics_server.status.running) {
         return -1;
     }
@@ -311,7 +312,7 @@ static bool check_authentication(struct MHD_Connection* connection, const char* 
 }
 
 // Get metrics server status
-void metrics_server_get_status(metrics_server_status_t* status) {
+static void metrics_server_get_status(metrics_server_status_t* status) {
     if (!status || !g_metrics_server_initialized) return;
     
     pthread_mutex_lock(g_metrics_server.mutex);
@@ -320,16 +321,16 @@ void metrics_server_get_status(metrics_server_status_t* status) {
 }
 
 // Check if metrics server is initialized
-bool metrics_server_is_initialized(void) {
+static bool metrics_server_is_initialized(void) {
     return g_metrics_server_initialized;
 }
 
 // Check if metrics server is running
-bool metrics_server_is_running(void) {
+static bool metrics_server_is_running(void) {
     return g_metrics_server_initialized && g_metrics_server.status.running;
 }
 
 // Get metrics server instance
-metrics_server_t* metrics_server_get_instance(void) {
+static metrics_server_t* metrics_server_get_instance(void) {
     return g_metrics_server_initialized ? &g_metrics_server : NULL;
 }

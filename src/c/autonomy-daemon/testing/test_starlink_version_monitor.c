@@ -117,7 +117,7 @@ int main(void) {
 #ifndef TESTING_STUB_IMPLEMENTATIONS
 
 // Stub compare function for testing
-int starlink_compare_api_versions(const starlink_api_version_t* version1, const starlink_api_version_t* version2) {
+static int starlink_compare_api_versions(const starlink_api_version_t* version1, const starlink_api_version_t* version2) {
     if (!version1 || !version2) return 0;
     
     // Compare major version first

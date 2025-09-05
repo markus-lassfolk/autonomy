@@ -41,7 +41,7 @@ static int save_version_to_storage(const starlink_api_version_t* version);
 static int load_version_from_storage(starlink_api_version_t* version);
 
 // Initialize Starlink API version monitor
-int starlink_api_version_monitor_init(const starlink_api_version_monitor_config_t* config) {
+static int starlink_api_version_monitor_init(const starlink_api_version_monitor_config_t* config) {
     if (g_api_version_monitor_initialized) {
         LOGX_WARN("Starlink API version monitor already initialized");
         return AUTONOMY_SUCCESS;
@@ -116,7 +116,7 @@ int starlink_api_version_monitor_init(const starlink_api_version_monitor_config_
 }
 
 // Cleanup API version monitor
-void starlink_api_version_monitor_cleanup(void) {
+static void starlink_api_version_monitor_cleanup(void) {
     if (!g_api_version_monitor_initialized) return;
     
     pthread_mutex_lock(&g_api_version_monitor.mutex);
@@ -147,7 +147,7 @@ void starlink_api_version_monitor_cleanup(void) {
 }
 
 // Check for API version changes
-int starlink_api_version_monitor_check_version(void) {
+static int starlink_api_version_monitor_check_version(void) {
     if (!g_api_version_monitor_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -256,7 +256,7 @@ int starlink_api_version_monitor_check_version(void) {
 }
 
 // Parse Starlink software version string
-int starlink_parse_software_version(const char* version_str, starlink_api_version_t* version) {
+static int starlink_parse_software_version(const char* version_str, starlink_api_version_t* version) {
     if (!version_str || !version) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -289,6 +289,7 @@ int starlink_parse_software_version(const char* version_str, starlink_api_versio
                     *build_start = '\0';
                     version->patch_version = atoi(token);
                     strncpy(version->build_identifier, build_start + 1, sizeof(version->build_identifier) - 1);
+                    version->build_identifier[sizeof(version->build_identifier) - 1] = '\0';
                 } else {
                     version->patch_version = atoi(token);
                     
@@ -296,6 +297,7 @@ int starlink_parse_software_version(const char* version_str, starlink_api_versio
                     token = strtok(NULL, ".");
                     if (token) {
                         strncpy(version->build_identifier, token, sizeof(version->build_identifier) - 1);
+                        version->build_identifier[sizeof(version->build_identifier) - 1] = '\0';
                     }
                 }
             }
@@ -569,7 +571,7 @@ static int send_version_change_notification(const starlink_api_version_change_t*
 }
 
 // Generate impact assessment
-int starlink_generate_impact_assessment(const starlink_api_version_change_t* change, char* assessment_buffer) {
+static int starlink_generate_impact_assessment(const starlink_api_version_change_t* change, char* assessment_buffer) {
     if (!change || !assessment_buffer) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -604,7 +606,7 @@ int starlink_generate_impact_assessment(const starlink_api_version_change_t* cha
 }
 
 // Generate recommended actions
-int starlink_generate_recommended_actions(const starlink_api_version_change_t* change, char* actions_buffer) {
+static int starlink_generate_recommended_actions(const starlink_api_version_change_t* change, char* actions_buffer) {
     if (!change || !actions_buffer) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -660,7 +662,7 @@ const char* starlink_api_endpoint_to_string(starlink_api_endpoint_t endpoint) {
     return "unknown";
 }
 
-bool starlink_api_version_monitor_is_initialized(void) {
+static bool starlink_api_version_monitor_is_initialized(void) {
     return g_api_version_monitor_initialized;
 }
 
@@ -733,10 +735,13 @@ static int load_version_from_storage(starlink_api_version_t* version) {
         if (sscanf(line, "%63[^=]=%191s", key, value) == 2) {
             if (strcmp(key, "software_version") == 0) {
                 strncpy(version->software_version, value, sizeof(version->software_version) - 1);
+                version->software_version[sizeof(version->software_version) - 1] = '\0';
             } else if (strcmp(key, "hardware_version") == 0) {
                 strncpy(version->hardware_version, value, sizeof(version->hardware_version) - 1);
+                version->hardware_version[sizeof(version->hardware_version) - 1] = '\0';
             } else if (strcmp(key, "software_part_number") == 0) {
                 strncpy(version->software_part_number, value, sizeof(version->software_part_number) - 1);
+                version->software_part_number[sizeof(version->software_part_number) - 1] = '\0';
             } else if (strcmp(key, "generation_number") == 0) {
                 version->generation_number = atoi(value);
             } else if (strcmp(key, "major_version") == 0) {
@@ -747,6 +752,7 @@ static int load_version_from_storage(starlink_api_version_t* version) {
                 version->patch_version = atoi(value);
             } else if (strcmp(key, "build_identifier") == 0) {
                 strncpy(version->build_identifier, value, sizeof(version->build_identifier) - 1);
+                version->build_identifier[sizeof(version->build_identifier) - 1] = '\0';
             } else if (strcmp(key, "first_detected") == 0) {
                 version->first_detected = atol(value);
             } else if (strcmp(key, "last_seen") == 0) {

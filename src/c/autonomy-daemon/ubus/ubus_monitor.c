@@ -27,7 +27,7 @@ static void send_notification(const char *type, const char *message);
 /**
  * Initialize UBUS monitor
  */
-int ubus_monitor_init(void) {
+static int ubus_monitor_init(void) {
     memset(&g_ubus_monitor, 0, sizeof(ubus_monitor_t));
     
     // Set default configuration
@@ -55,7 +55,7 @@ int ubus_monitor_init(void) {
 /**
  * Check UBUS health
  */
-int ubus_monitor_check_ubus_health(ubus_health_info_t *info) {
+static int ubus_monitor_check_ubus_health(ubus_health_info_t *info) {
     if (!info) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -230,6 +230,7 @@ static void send_notification(const char *type, const char *message) {
     notification_event_t event = {0};
     strcpy(event.title, "UBUS Monitor Alert");
     strncpy(event.message, message, sizeof(event.message) - 1);
+    event.message[sizeof(event.message) - 1] = '\0';
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
     event.timestamp = time(NULL);
     
@@ -254,7 +255,7 @@ static void send_notification(const char *type, const char *message) {
 /**
  * Get UBUS monitor status
  */
-int ubus_monitor_get_status(ubus_monitor_status_t *status) {
+static int ubus_monitor_get_status(ubus_monitor_status_t *status) {
     if (!status) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -281,7 +282,7 @@ int ubus_monitor_get_status(ubus_monitor_status_t *status) {
 /**
  * Get UBUS monitor configuration
  */
-int ubus_monitor_get_config(ubus_monitor_config_t *config) {
+static int ubus_monitor_get_config(ubus_monitor_config_t *config) {
     if (!config) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -293,7 +294,7 @@ int ubus_monitor_get_config(ubus_monitor_config_t *config) {
 /**
  * Set UBUS monitor configuration
  */
-int ubus_monitor_set_config(const ubus_monitor_config_t *config) {
+static int ubus_monitor_set_config(const ubus_monitor_config_t *config) {
     if (!config) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -305,7 +306,7 @@ int ubus_monitor_set_config(const ubus_monitor_config_t *config) {
 /**
  * Enable/disable UBUS monitor
  */
-int ubus_monitor_set_enabled(bool enabled) {
+static int ubus_monitor_set_enabled(bool enabled) {
     g_ubus_monitor.config.enabled = enabled;
     return AUTONOMY_SUCCESS;
 }
@@ -313,7 +314,7 @@ int ubus_monitor_set_enabled(bool enabled) {
 /**
  * Reset UBUS monitor
  */
-int ubus_monitor_reset(void) {
+static int ubus_monitor_reset(void) {
     g_ubus_monitor.fix_attempts = 0;
     g_ubus_monitor.last_fix_time = 0;
     return AUTONOMY_SUCCESS;
@@ -322,6 +323,6 @@ int ubus_monitor_reset(void) {
 /**
  * Cleanup UBUS monitor
  */
-void ubus_monitor_cleanup(void) {
+static void ubus_monitor_cleanup(void) {
     // Nothing to cleanup for this module
 }

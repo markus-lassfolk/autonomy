@@ -13,7 +13,7 @@ extern struct autonomy_state g_state;
 struct system_health g_system_health = {0};
 
 // System health check functions
-int check_starlink_health(void) {
+static int check_starlink_health(void) {
     // Simulate Starlink health check
     int health = 85 + (rand() % 20); // 85-105 range
     if (health > 100) health = 100;
@@ -22,7 +22,7 @@ int check_starlink_health(void) {
     return health;
 }
 
-int check_uci_health(void) {
+static int check_uci_health(void) {
     // Simulate UCI configuration health check
     int health = 90 + (rand() % 15); // 90-105 range
     if (health > 100) health = 100;
@@ -31,7 +31,7 @@ int check_uci_health(void) {
     return health;
 }
 
-int check_overlay_health(void) {
+static int check_overlay_health(void) {
     // Simulate overlay filesystem health check
     int health = 95 + (rand() % 10); // 95-105 range
     if (health > 100) health = 100;
@@ -40,7 +40,7 @@ int check_overlay_health(void) {
     return health;
 }
 
-int check_services_health(void) {
+static int check_services_health(void) {
     // Simulate system services health check
     int health = 88 + (rand() % 17); // 88-105 range
     if (health > 100) health = 100;
@@ -49,7 +49,7 @@ int check_services_health(void) {
     return health;
 }
 
-int check_database_health(void) {
+static int check_database_health(void) {
     // Simulate database health check
     int health = 92 + (rand() % 13); // 92-105 range
     if (health > 100) health = 100;
@@ -58,7 +58,7 @@ int check_database_health(void) {
     return health;
 }
 
-int check_time_health(void) {
+static int check_time_health(void) {
     // Simulate time synchronization health check
     int health = 96 + (rand() % 9); // 96-105 range
     if (health > 100) health = 100;
@@ -67,7 +67,7 @@ int check_time_health(void) {
     return health;
 }
 
-int check_logs_health(void) {
+static int check_logs_health(void) {
     // Simulate log system health check
     int health = 87 + (rand() % 18); // 87-105 range
     if (health > 100) health = 100;
@@ -76,7 +76,7 @@ int check_logs_health(void) {
     return health;
 }
 
-int perform_system_health_check(void) {
+static int perform_system_health_check(void) {
     time_t now = time(NULL);
     
     // Perform all health checks
@@ -114,7 +114,7 @@ int perform_system_health_check(void) {
     return 0;
 }
 
-int get_system_memory_usage(void) {
+static int get_system_memory_usage(void) {
     struct sysinfo si;
     if (sysinfo(&si) == 0) {
         // Convert to MB
@@ -123,7 +123,7 @@ int get_system_memory_usage(void) {
     return 0;
 }
 
-int get_system_uptime(void) {
+static int get_system_uptime(void) {
     struct sysinfo si;
     if (sysinfo(&si) == 0) {
         return (int)si.uptime;
@@ -131,7 +131,7 @@ int get_system_uptime(void) {
     return 0;
 }
 
-int get_system_load_average(void) {
+static int get_system_load_average(void) {
     struct sysinfo si;
     if (sysinfo(&si) == 0) {
         // Return load average as percentage

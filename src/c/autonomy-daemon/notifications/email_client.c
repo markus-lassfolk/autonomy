@@ -37,6 +37,7 @@ static void parse_recipients(email_client_t* client, const char* recipients_str)
     char temp[1024];
     strncpy(temp, recipients_str, sizeof(temp) - 1);
     temp[sizeof(temp) - 1] = '\0';
+    temp[sizeof(temp) - 1] = '\0';
     
     char* token = strtok(temp, ",");
     while (token && client->recipient_count < 16) {
@@ -60,7 +61,7 @@ static void parse_recipients(email_client_t* client, const char* recipients_str)
 }
 
 // Initialize email client
-int email_client_init(email_client_t* client, const email_config_t* config) {
+static int email_client_init(email_client_t* client, const email_config_t* config) {
     if (!client || !config) {
         return -1;
     }
@@ -76,6 +77,7 @@ int email_client_init(email_client_t* client, const email_config_t* config) {
     // Initialize status
     client->status.enabled = config->enabled;
     strncpy(client->status.smtp_host, config->smtp_host, sizeof(client->status.smtp_host) - 1);
+    client->status.smtp_host[sizeof(client->status.smtp_host) - 1] = '\0';
     client->status.smtp_port = config->smtp_port;
     client->status.total_sent = 0;
     client->status.total_failed = 0;
@@ -88,7 +90,7 @@ int email_client_init(email_client_t* client, const email_config_t* config) {
 }
 
 // Clean up email client
-void email_client_cleanup(email_client_t* client) {
+static void email_client_cleanup(email_client_t* client) {
     if (!client) return;
     
     // Clear sensitive data
@@ -281,6 +283,7 @@ static int send_email_smtp(email_client_t* client, const char* recipient, const 
     CURL* curl = curl_easy_init();
     if (!curl) {
         strncpy(client->status.last_error, "Failed to initialize curl", sizeof(client->status.last_error) - 1);
+        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
         return -1;
     }
     
@@ -354,13 +357,14 @@ static int send_email_smtp(email_client_t* client, const char* recipient, const 
 }
 
 // Send notification via email
-int email_client_send(email_client_t* client, const notification_event_t* event) {
+static int email_client_send(email_client_t* client, const notification_event_t* event) {
     if (!client || !event || !client->config.enabled) {
         return -1;
     }
     
     if (client->recipient_count == 0) {
         strncpy(client->status.last_error, "No recipients configured", sizeof(client->status.last_error) - 1);
+        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
         client->status.last_error_time = time(NULL);
         client->status.total_failed++;
         return -1;
@@ -420,7 +424,7 @@ int email_client_send(email_client_t* client, const notification_event_t* event)
 }
 
 // Get email client status
-void email_client_get_status(email_client_t* client, email_client_status_t* status) {
+static void email_client_get_status(email_client_t* client, email_client_status_t* status) {
     if (!client || !status) return;
     
     *status = client->status;

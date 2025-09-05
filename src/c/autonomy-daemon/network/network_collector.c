@@ -29,7 +29,7 @@ static const char* DEFAULT_TEST_TARGETS[] = {
 static const int DEFAULT_TEST_TARGET_COUNT = 4;
 
 // Initialize network collector
-int network_collector_init(void) {
+static int network_collector_init(void) {
     if (g_collector_initialized) {
         LOGX_WARN("Network collector already initialized");
         return AUTONOMY_SUCCESS;
@@ -48,6 +48,7 @@ int network_collector_init(void) {
     g_collector.test_target_count = DEFAULT_TEST_TARGET_COUNT;
     for (int i = 0; i < DEFAULT_TEST_TARGET_COUNT && i < g_collector.max_test_targets; i++) {
         strncpy(g_collector.test_targets[i], DEFAULT_TEST_TARGETS[i], sizeof(g_collector.test_targets[i]) - 1);
+        g_collector.test_targets[i][sizeof(g_collector.test_targets[i]) - 1] = '\0';
     }
     
     // Initialize metrics history
@@ -161,6 +162,7 @@ static int perform_ping_test(const char *target, int timeout_ms, ping_result_t *
     
     result->target[0] = '\0';
     strncpy(result->target, target, sizeof(result->target) - 1);
+    result->target[sizeof(result->target) - 1] = '\0';
     result->latency_ms = latency;
     result->success = true;
     result->timestamp = time(NULL);
@@ -219,6 +221,7 @@ static int perform_tcp_test(const char *target, int port, int timeout_ms, tcp_re
     
     result->target[0] = '\0';
     strncpy(result->target, target, sizeof(result->target) - 1);
+    result->target[sizeof(result->target) - 1] = '\0';
     result->port = port;
     result->connect_time_ms = connect_time;
     result->success = true;
@@ -251,6 +254,7 @@ static int perform_dns_test(const char *domain, int timeout_ms, dns_result_t *re
     
     result->domain[0] = '\0';
     strncpy(result->domain, domain, sizeof(result->domain) - 1);
+    result->domain[sizeof(result->domain) - 1] = '\0';
     result->resolve_time_ms = resolve_time;
     result->success = true;
     result->timestamp = time(NULL);
@@ -271,6 +275,7 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
     
     memset(metrics, 0, sizeof(network_metrics_t));
     strncpy(metrics->interface_name, interface_name, sizeof(metrics->interface_name) - 1);
+    metrics->interface_name[sizeof(metrics->interface_name) - 1] = '\0';
     metrics->timestamp = time(NULL);
     
     // Test ping to all targets
@@ -376,7 +381,7 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
 }
 
 // Collect network metrics for all interfaces
-int network_collector_collect_metrics(void) {
+static int network_collector_collect_metrics(void) {
     if (!g_collector_initialized) {
         LOGX_ERROR("Network collector not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
@@ -433,7 +438,7 @@ int network_collector_collect_metrics(void) {
 }
 
 // Get latest metrics for an interface
-int network_collector_get_interface_metrics(const char *interface_name, network_metrics_t *metrics) {
+static int network_collector_get_interface_metrics(const char *interface_name, network_metrics_t *metrics) {
     if (!g_collector_initialized || !interface_name || !metrics) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -480,7 +485,7 @@ int network_collector_get_metrics_history(const char *interface_name, network_me
 }
 
 // Add test target
-int network_collector_add_test_target(const char *target) {
+static int network_collector_add_test_target(const char *target) {
     if (!g_collector_initialized || !target) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -512,7 +517,7 @@ int network_collector_add_test_target(const char *target) {
 }
 
 // Remove test target
-int network_collector_remove_test_target(const char *target) {
+static int network_collector_remove_test_target(const char *target) {
     if (!g_collector_initialized || !target) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -538,7 +543,7 @@ int network_collector_remove_test_target(const char *target) {
 }
 
 // Set collection interval
-int network_collector_set_interval(int interval_seconds) {
+static int network_collector_set_interval(int interval_seconds) {
     if (!g_collector_initialized || interval_seconds < 5) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -552,7 +557,7 @@ int network_collector_set_interval(int interval_seconds) {
 }
 
 // Set test timeout
-int network_collector_set_timeout(int timeout_seconds) {
+static int network_collector_set_timeout(int timeout_seconds) {
     if (!g_collector_initialized || timeout_seconds < 1) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -566,7 +571,7 @@ int network_collector_set_timeout(int timeout_seconds) {
 }
 
 // Enable/disable collector
-int network_collector_set_enabled(bool enabled) {
+static int network_collector_set_enabled(bool enabled) {
     if (!g_collector_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -580,7 +585,7 @@ int network_collector_set_enabled(bool enabled) {
 }
 
 // Get collector status
-int network_collector_get_status(network_collector_status_t *status) {
+static int network_collector_get_status(network_collector_status_t *status) {
     if (!g_collector_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -601,7 +606,7 @@ int network_collector_get_status(network_collector_status_t *status) {
 }
 
 // Cleanup network collector
-void network_collector_cleanup(void) {
+static void network_collector_cleanup(void) {
     if (!g_collector_initialized) {
         return;
     }

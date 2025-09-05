@@ -26,7 +26,7 @@ static int find_member_by_name(const char* name);
 static void call_failover_callbacks(const network_member_t* from, const network_member_t* to);
 
 // Initialize network controller
-int network_controller_init(const network_controller_config_t* config) {
+static int network_controller_init(const network_controller_config_t* config) {
     if (g_network_controller_initialized) {
         LOGX_WARN("Network controller already initialized");
         return AUTONOMY_SUCCESS;
@@ -85,7 +85,7 @@ int network_controller_init(const network_controller_config_t* config) {
 }
 
 // Cleanup network controller
-void network_controller_cleanup(void) {
+static void network_controller_cleanup(void) {
     if (!g_network_controller_initialized) return;
     
     pthread_mutex_destroy(&g_network_controller.mutex);
@@ -95,7 +95,7 @@ void network_controller_cleanup(void) {
 }
 
 // Switch from one member to another
-int network_controller_switch(const network_member_t* from, const network_member_t* to, switch_result_t* result) {
+static int network_controller_switch(const network_member_t* from, const network_member_t* to, switch_result_t* result) {
     if (!g_network_controller_initialized || !to || !result) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -397,7 +397,7 @@ static void call_failover_callbacks(const network_member_t* from, const network_
 }
 
 // Get current active member
-int network_controller_get_current_member(network_member_t* member) {
+static int network_controller_get_current_member(network_member_t* member) {
     if (!member || !g_network_controller_initialized) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -415,7 +415,7 @@ int network_controller_get_current_member(network_member_t* member) {
 }
 
 // Set members list
-int network_controller_set_members(const network_member_t* members, int count) {
+static int network_controller_set_members(const network_member_t* members, int count) {
     if (!members || count <= 0 || !g_network_controller_initialized) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -448,7 +448,7 @@ int network_controller_set_members(const network_member_t* members, int count) {
 }
 
 // Get members list
-int network_controller_get_members(network_member_t* members, int max_count, int* actual_count) {
+static int network_controller_get_members(network_member_t* members, int max_count, int* actual_count) {
     if (!members || max_count <= 0 || !actual_count || !g_network_controller_initialized) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -467,7 +467,7 @@ int network_controller_get_members(network_member_t* members, int max_count, int
 }
 
 // Validate member configuration
-int network_controller_validate_member(const network_member_t* member) {
+static int network_controller_validate_member(const network_member_t* member) {
     if (!member) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -507,7 +507,7 @@ int network_controller_validate_member(const network_member_t* member) {
 }
 
 // Add failover callback
-int network_controller_add_callback(failover_callback_t callback) {
+static int network_controller_add_callback(failover_callback_t callback) {
     if (!callback || !g_network_controller_initialized) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -525,7 +525,7 @@ int network_controller_add_callback(failover_callback_t callback) {
 }
 
 // Test MWAN3 availability
-int network_controller_test_mwan3(void) {
+static int network_controller_test_mwan3(void) {
     char command[256];
     char output[512];
     
@@ -541,7 +541,7 @@ int network_controller_test_mwan3(void) {
 }
 
 // Test netifd availability
-int network_controller_test_netifd(void) {
+static int network_controller_test_netifd(void) {
     struct ubus_context* ctx = ubus_connect(NULL);
     if (!ctx) {
         return AUTONOMY_ERROR_SYSTEM;
@@ -561,7 +561,7 @@ int network_controller_test_netifd(void) {
 }
 
 // Get network controller statistics
-int network_controller_get_stats(network_controller_stats_t* stats) {
+static int network_controller_get_stats(network_controller_stats_t* stats) {
     if (!stats || !g_network_controller_initialized) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -574,7 +574,7 @@ int network_controller_get_stats(network_controller_stats_t* stats) {
 }
 
 // Set dry run mode
-int network_controller_set_dry_run(bool dry_run) {
+static int network_controller_set_dry_run(bool dry_run) {
     if (!g_network_controller_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -586,7 +586,7 @@ int network_controller_set_dry_run(bool dry_run) {
 }
 
 // Check if network controller is initialized
-bool network_controller_is_initialized(void) {
+static bool network_controller_is_initialized(void) {
     return g_network_controller_initialized;
 }
 

@@ -319,7 +319,7 @@ static int autonomy_service_watchdog_check(struct ubus_context *ctx, struct ubus
 /**
  * Register service watchdog UBUS object
  */
-int service_watchdog_ubus_register(struct ubus_context *ctx) {
+static int service_watchdog_ubus_register(struct ubus_context *ctx) {
     int ret = ubus_add_object(ctx, &autonomy_service_watchdog_obj);
     if (ret) {
         fprintf(stderr, "Failed to add service watchdog object: %s\n", ubus_strerror(ret));
@@ -333,7 +333,7 @@ int service_watchdog_ubus_register(struct ubus_context *ctx) {
 /**
  * Unregister service watchdog UBUS object
  */
-void service_watchdog_ubus_unregister(struct ubus_context *ctx) {
+static void service_watchdog_ubus_unregister(struct ubus_context *ctx) {
     ubus_remove_object(ctx, &autonomy_service_watchdog_obj);
     fprintf(stderr, "Service watchdog UBUS object unregistered\n");
 }

@@ -5,7 +5,7 @@
 #include <time.h>
 
 // Initialize priority queue
-int priority_queue_init(priority_queue_t* queue, int max_size) {
+static int priority_queue_init(priority_queue_t* queue, int max_size) {
     if (!queue || max_size <= 0) {
         return -1;
     }
@@ -28,7 +28,7 @@ int priority_queue_init(priority_queue_t* queue, int max_size) {
 }
 
 // Clean up priority queue
-void priority_queue_cleanup(priority_queue_t* queue) {
+static void priority_queue_cleanup(priority_queue_t* queue) {
     if (!queue) return;
     
     if (queue->mutex) {
@@ -115,21 +115,32 @@ int priority_queue_push(priority_queue_t* queue, const notification_event_t* eve
     
     // Copy event data
     strncpy(queue->items[index].event.id, event->id, sizeof(queue->items[index].event.id) - 1);
+    queue->items[index].event.id[sizeof(queue->items[index].event.id) - 1] = '\0';
     strncpy(queue->items[index].event.title, event->title, sizeof(queue->items[index].event.title) - 1);
+    queue->items[index].event.title[sizeof(queue->items[index].event.title) - 1] = '\0';
     strncpy(queue->items[index].event.message, event->message, sizeof(queue->items[index].event.message) - 1);
+    queue->items[index].event.message[sizeof(queue->items[index].event.message) - 1] = '\0';
     queue->items[index].event.type = event->type;
     queue->items[index].event.priority = event->priority;
     strncpy(queue->items[index].event.sound, event->sound, sizeof(queue->items[index].event.sound) - 1);
+    queue->items[index].event.sound[sizeof(queue->items[index].event.sound) - 1] = '\0';
     strncpy(queue->items[index].event.url, event->url, sizeof(queue->items[index].event.url) - 1);
+    queue->items[index].event.url[sizeof(queue->items[index].event.url) - 1] = '\0';
     strncpy(queue->items[index].event.url_title, event->url_title, sizeof(queue->items[index].event.url_title) - 1);
+    queue->items[index].event.url_title[sizeof(queue->items[index].event.url_title) - 1] = '\0';
     queue->items[index].event.timestamp = event->timestamp;
     
     // Copy enhanced context data
     strncpy(queue->items[index].event.member_name, event->member_name, sizeof(queue->items[index].event.member_name) - 1);
+    queue->items[index].event.member_name[sizeof(queue->items[index].event.member_name) - 1] = '\0';
     strncpy(queue->items[index].event.from_member, event->from_member, sizeof(queue->items[index].event.from_member) - 1);
+    queue->items[index].event.from_member[sizeof(queue->items[index].event.from_member) - 1] = '\0';
     strncpy(queue->items[index].event.to_member, event->to_member, sizeof(queue->items[index].event.to_member) - 1);
+    queue->items[index].event.to_member[sizeof(queue->items[index].event.to_member) - 1] = '\0';
     strncpy(queue->items[index].event.error_details, event->error_details, sizeof(queue->items[index].event.error_details) - 1);
+    queue->items[index].event.error_details[sizeof(queue->items[index].event.error_details) - 1] = '\0';
     strncpy(queue->items[index].event.details_json, event->details_json, sizeof(queue->items[index].event.details_json) - 1);
+    queue->items[index].event.details_json[sizeof(queue->items[index].event.details_json) - 1] = '\0';
     
     // Copy rich context features
     if (event->location) {
@@ -144,6 +155,7 @@ int priority_queue_push(priority_queue_t* queue, const notification_event_t* eve
     queue->items[index].event.duration = event->duration;
     queue->items[index].event.acknowledged = event->acknowledged;
     strncpy(queue->items[index].event.message_id, event->message_id, sizeof(queue->items[index].event.message_id) - 1);
+    queue->items[index].event.message_id[sizeof(queue->items[index].event.message_id) - 1] = '\0';
     
     queue->size++;
     
@@ -155,7 +167,7 @@ int priority_queue_push(priority_queue_t* queue, const notification_event_t* eve
 }
 
 // Pop highest priority item from queue
-int priority_queue_pop(priority_queue_t* queue, priority_queue_item_t* item) {
+static int priority_queue_pop(priority_queue_t* queue, priority_queue_item_t* item) {
     if (!queue || !item || !queue->mutex) {
         return -1;
     }
@@ -182,7 +194,7 @@ int priority_queue_pop(priority_queue_t* queue, priority_queue_item_t* item) {
 }
 
 // Peek at highest priority item without removing it
-int priority_queue_peek(const priority_queue_t* queue, priority_queue_item_t* item) {
+static int priority_queue_peek(const priority_queue_t* queue, priority_queue_item_t* item) {
     if (!queue || !item || !queue->mutex) {
         return -1;
     }
@@ -201,7 +213,7 @@ int priority_queue_peek(const priority_queue_t* queue, priority_queue_item_t* it
 }
 
 // Get queue size
-int priority_queue_size(const priority_queue_t* queue) {
+static int priority_queue_size(const priority_queue_t* queue) {
     if (!queue || !queue->mutex) {
         return -1;
     }
@@ -214,18 +226,18 @@ int priority_queue_size(const priority_queue_t* queue) {
 }
 
 // Check if queue is empty
-bool priority_queue_is_empty(const priority_queue_t* queue) {
+static bool priority_queue_is_empty(const priority_queue_t* queue) {
     return priority_queue_size(queue) == 0;
 }
 
 // Check if queue is full
-bool priority_queue_is_full(const priority_queue_t* queue) {
+static bool priority_queue_is_full(const priority_queue_t* queue) {
     if (!queue) return true;
     return priority_queue_size(queue) >= queue->max_size;
 }
 
 // Clear all items from queue
-void priority_queue_clear(priority_queue_t* queue) {
+static void priority_queue_clear(priority_queue_t* queue) {
     if (!queue || !queue->mutex) return;
     
     pthread_mutex_lock(queue->mutex);
@@ -244,7 +256,7 @@ void priority_queue_clear(priority_queue_t* queue) {
 }
 
 // Remove items older than specified timestamp
-int priority_queue_remove_old(priority_queue_t* queue, time_t cutoff_time) {
+static int priority_queue_remove_old(priority_queue_t* queue, time_t cutoff_time) {
     if (!queue || !queue->mutex) {
         return -1;
     }
@@ -282,7 +294,7 @@ int priority_queue_remove_old(priority_queue_t* queue, time_t cutoff_time) {
 }
 
 // Get statistics about the queue
-void priority_queue_get_stats(const priority_queue_t* queue, priority_queue_stats_t* stats) {
+static void priority_queue_get_stats(const priority_queue_t* queue, priority_queue_stats_t* stats) {
     if (!queue || !stats || !queue->mutex) return;
     
     pthread_mutex_lock(queue->mutex);

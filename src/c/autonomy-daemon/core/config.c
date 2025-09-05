@@ -27,6 +27,7 @@ int load_uci_config(void) {
         const char *log_level = uci_lookup_option_string(uci_ctx, s, "log_level");
         if (log_level) {
             strncpy(g_config.log_level, log_level, sizeof(g_config.log_level) - 1);
+            g_config.log_level[sizeof(g_config.log_level) - 1] = '\0';
         }
         
         const char *enable_gps = uci_lookup_option_string(uci_ctx, s, "enable_gps");

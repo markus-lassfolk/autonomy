@@ -37,7 +37,7 @@ static cellular_network_type_t parse_network_type(const char* network_str);
 static const char* network_type_to_string(cellular_network_type_t type);
 
 // Initialize cellular collector
-int cellular_collector_init(const cellular_collector_config_t* config) {
+static int cellular_collector_init(const cellular_collector_config_t* config) {
     if (g_cellular_collector_initialized) {
         LOGX_WARN("Cellular collector already initialized");
         return AUTONOMY_SUCCESS;
@@ -80,7 +80,7 @@ int cellular_collector_init(const cellular_collector_config_t* config) {
 }
 
 // Cleanup cellular collector
-void cellular_collector_cleanup(void) {
+static void cellular_collector_cleanup(void) {
     if (!g_cellular_collector_initialized) return;
     
     pthread_mutex_destroy(&g_cellular_collector.mutex);
@@ -90,7 +90,7 @@ void cellular_collector_cleanup(void) {
 }
 
 // Collect cellular metrics
-int cellular_collector_collect(cellular_info_t* info) {
+static int cellular_collector_collect(cellular_info_t* info) {
     if (!g_cellular_collector_initialized || !info) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -390,7 +390,7 @@ static double calculate_signal_quality_score(const cellular_info_t* info) {
 }
 
 // Calculate stability score
-double cellular_collector_calculate_stability_score(const cellular_info_t* info) {
+static double cellular_collector_calculate_stability_score(const cellular_info_t* info) {
     if (!info || !g_cellular_collector_initialized) {
         return 0.0;
     }
@@ -421,7 +421,7 @@ double cellular_collector_calculate_stability_score(const cellular_info_t* info)
 }
 
 // Calculate predictive risk score
-double cellular_collector_calculate_predictive_risk(const cellular_info_t* info) {
+static double cellular_collector_calculate_predictive_risk(const cellular_info_t* info) {
     if (!info || !g_cellular_collector_initialized) {
         return 1.0; // Maximum risk if no data
     }
@@ -464,7 +464,7 @@ double cellular_collector_calculate_predictive_risk(const cellular_info_t* info)
 }
 
 // Get cellular collector statistics
-int cellular_collector_get_stats(cellular_collector_stats_t* stats) {
+static int cellular_collector_get_stats(cellular_collector_stats_t* stats) {
     if (!stats || !g_cellular_collector_initialized) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -477,7 +477,7 @@ int cellular_collector_get_stats(cellular_collector_stats_t* stats) {
 }
 
 // Get cellular collector configuration
-int cellular_collector_get_config(cellular_collector_config_t* config) {
+static int cellular_collector_get_config(cellular_collector_config_t* config) {
     if (!config || !g_cellular_collector_initialized) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -487,7 +487,7 @@ int cellular_collector_get_config(cellular_collector_config_t* config) {
 }
 
 // Set cellular collector configuration
-int cellular_collector_set_config(const cellular_collector_config_t* config) {
+static int cellular_collector_set_config(const cellular_collector_config_t* config) {
     if (!config || !g_cellular_collector_initialized) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -501,7 +501,7 @@ int cellular_collector_set_config(const cellular_collector_config_t* config) {
 }
 
 // Enable/disable cellular collector
-int cellular_collector_set_enabled(bool enabled) {
+static int cellular_collector_set_enabled(bool enabled) {
     if (!g_cellular_collector_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -513,7 +513,7 @@ int cellular_collector_set_enabled(bool enabled) {
 }
 
 // Reset cellular collector statistics
-int cellular_collector_reset_stats(void) {
+static int cellular_collector_reset_stats(void) {
     if (!g_cellular_collector_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -529,12 +529,12 @@ int cellular_collector_reset_stats(void) {
 }
 
 // Force immediate collection
-int cellular_collector_force_collect(cellular_info_t* info) {
+static int cellular_collector_force_collect(cellular_info_t* info) {
     return cellular_collector_collect(info);
 }
 
 // Check if cellular collector is initialized
-bool cellular_collector_is_initialized(void) {
+static bool cellular_collector_is_initialized(void) {
     return g_cellular_collector_initialized;
 }
 

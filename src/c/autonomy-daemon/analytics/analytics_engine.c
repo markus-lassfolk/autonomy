@@ -22,7 +22,7 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
                                              int max_recommendations);
 
 // Initialize analytics engine
-int analytics_engine_init(const analytics_config_t* config) {
+static int analytics_engine_init(const analytics_config_t* config) {
     if (g_analytics_engine_initialized) {
         return 0; // Already initialized
     }
@@ -78,7 +78,7 @@ int analytics_engine_init(const analytics_config_t* config) {
 }
 
 // Clean up analytics engine
-void analytics_engine_cleanup(void) {
+static void analytics_engine_cleanup(void) {
     if (!g_analytics_engine_initialized) return;
     
     // Stop engine if running
@@ -101,7 +101,7 @@ void analytics_engine_cleanup(void) {
 }
 
 // Start analytics engine
-int analytics_engine_start(void) {
+static int analytics_engine_start(void) {
     if (!g_analytics_engine_initialized || !g_analytics_engine.config.enabled) {
         return -1;
     }
@@ -152,7 +152,7 @@ int analytics_engine_start(void) {
 }
 
 // Stop analytics engine
-int analytics_engine_stop(void) {
+static int analytics_engine_stop(void) {
     if (!g_analytics_engine_initialized || !g_analytics_engine.status.running) {
         return -1;
     }
@@ -198,7 +198,7 @@ static void* analytics_thread(void* arg) {
 }
 
 // Update analytics metrics
-int analytics_engine_update_metrics(void) {
+static int analytics_engine_update_metrics(void) {
     if (!g_analytics_engine_initialized) {
         return -1;
     }
@@ -375,7 +375,7 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
 }
 
 // Get dashboard metrics
-void analytics_engine_get_dashboard_metrics(dashboard_metrics_t* metrics) {
+static void analytics_engine_get_dashboard_metrics(dashboard_metrics_t* metrics) {
     if (!metrics || !g_analytics_engine_initialized) return;
     
     pthread_mutex_lock(g_analytics_engine.mutex);
@@ -410,6 +410,7 @@ int analytics_engine_get_member_analytics(const char* member_name, int hours,
     // Convert to performance metrics format
     analytics->member_count = 1;
     strncpy(analytics->member_names[0], member_name, sizeof(analytics->member_names[0]) - 1);
+    analytics->member_names[0][sizeof(analytics->member_names[0]) - 1] = '\0';
     analytics->average_latency[0] = performance.average_latency;
     analytics->average_loss[0] = performance.average_loss;
     analytics->average_signal[0] = performance.average_signal;
@@ -422,7 +423,7 @@ int analytics_engine_get_member_analytics(const char* member_name, int hours,
 }
 
 // Get analytics engine status
-void analytics_engine_get_status(analytics_engine_status_t* status) {
+static void analytics_engine_get_status(analytics_engine_status_t* status) {
     if (!status || !g_analytics_engine_initialized) return;
     
     pthread_mutex_lock(g_analytics_engine.mutex);
@@ -431,16 +432,16 @@ void analytics_engine_get_status(analytics_engine_status_t* status) {
 }
 
 // Check if analytics engine is initialized
-bool analytics_engine_is_initialized(void) {
+static bool analytics_engine_is_initialized(void) {
     return g_analytics_engine_initialized;
 }
 
 // Check if analytics engine is running
-bool analytics_engine_is_running(void) {
+static bool analytics_engine_is_running(void) {
     return g_analytics_engine_initialized && g_analytics_engine.status.running;
 }
 
 // Get analytics engine instance
-analytics_engine_t* analytics_engine_get_instance(void) {
+static analytics_engine_t* analytics_engine_get_instance(void) {
     return g_analytics_engine_initialized ? &g_analytics_engine : NULL;
 }

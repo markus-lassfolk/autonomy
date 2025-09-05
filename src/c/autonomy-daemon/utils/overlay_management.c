@@ -35,7 +35,7 @@ static void send_notification(const char *type, const char *message);
 /**
  * Initialize overlay management
  */
-int overlay_management_init(void) {
+static int overlay_management_init(void) {
     memset(&g_overlay_manager, 0, sizeof(overlay_management_t));
     
     // Set default configuration
@@ -60,7 +60,7 @@ int overlay_management_init(void) {
 /**
  * Check overlay space and perform cleanup if needed
  */
-int overlay_management_check(void) {
+static int overlay_management_check(void) {
     if (!g_overlay_manager.config.enabled) {
         return AUTONOMY_SUCCESS;
     }
@@ -517,6 +517,7 @@ static void send_notification(const char *type, const char *message) {
     notification_event_t event = {0};
     strcpy(event.title, "Overlay Management Alert");
     strncpy(event.message, message, sizeof(event.message) - 1);
+    event.message[sizeof(event.message) - 1] = '\0';
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
     event.timestamp = time(NULL);
     
@@ -541,7 +542,7 @@ static void send_notification(const char *type, const char *message) {
 /**
  * Get overlay management status
  */
-int overlay_management_get_status(overlay_management_status_t *status) {
+static int overlay_management_get_status(overlay_management_status_t *status) {
     if (!status) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -566,7 +567,7 @@ int overlay_management_get_status(overlay_management_status_t *status) {
 /**
  * Get overlay management configuration
  */
-int overlay_management_get_config(overlay_management_config_t *config) {
+static int overlay_management_get_config(overlay_management_config_t *config) {
     if (!config) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -578,7 +579,7 @@ int overlay_management_get_config(overlay_management_config_t *config) {
 /**
  * Set overlay management configuration
  */
-int overlay_management_set_config(const overlay_management_config_t *config) {
+static int overlay_management_set_config(const overlay_management_config_t *config) {
     if (!config) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -590,7 +591,7 @@ int overlay_management_set_config(const overlay_management_config_t *config) {
 /**
  * Enable/disable overlay management
  */
-int overlay_management_set_enabled(bool enabled) {
+static int overlay_management_set_enabled(bool enabled) {
     g_overlay_manager.config.enabled = enabled;
     return AUTONOMY_SUCCESS;
 }
@@ -598,7 +599,7 @@ int overlay_management_set_enabled(bool enabled) {
 /**
  * Reset overlay management
  */
-int overlay_management_reset(void) {
+static int overlay_management_reset(void) {
     memset(&g_overlay_manager.stats, 0, sizeof(overlay_management_stats_t));
     return AUTONOMY_SUCCESS;
 }
@@ -606,6 +607,6 @@ int overlay_management_reset(void) {
 /**
  * Cleanup overlay management
  */
-void overlay_management_cleanup(void) {
+static void overlay_management_cleanup(void) {
     // Nothing to cleanup for this module
 }

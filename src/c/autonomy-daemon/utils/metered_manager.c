@@ -25,7 +25,7 @@ static void update_usage_statistics(void);
 static bool check_usage_thresholds(void);
 
 // Initialize metered manager
-int metered_manager_init(const metered_manager_config_t* config) {
+static int metered_manager_init(const metered_manager_config_t* config) {
     if (g_metered_manager_initialized) {
         return 0; // Already initialized
     }
@@ -79,7 +79,7 @@ int metered_manager_init(const metered_manager_config_t* config) {
 }
 
 // Clean up metered manager
-void metered_manager_cleanup(void) {
+static void metered_manager_cleanup(void) {
     if (!g_metered_manager_initialized) return;
     
     if (g_metered_manager.mutex) {
@@ -92,7 +92,7 @@ void metered_manager_cleanup(void) {
 }
 
 // Check metered connection status
-int metered_manager_check_status(void) {
+static int metered_manager_check_status(void) {
     if (!g_metered_manager_initialized || !g_metered_manager.config.enabled) {
         return -1;
     }
@@ -136,7 +136,7 @@ int metered_manager_check_status(void) {
 }
 
 // Get data usage statistics
-int metered_manager_get_usage_stats(data_usage_stats_t* stats) {
+static int metered_manager_get_usage_stats(data_usage_stats_t* stats) {
     if (!g_metered_manager_initialized || !stats) {
         return -1;
     }
@@ -149,7 +149,7 @@ int metered_manager_get_usage_stats(data_usage_stats_t* stats) {
 }
 
 // Get metered connection status
-int metered_manager_get_connection_status(metered_connection_status_t* status) {
+static int metered_manager_get_connection_status(metered_connection_status_t* status) {
     if (!g_metered_manager_initialized || !status) {
         return -1;
     }
@@ -162,7 +162,7 @@ int metered_manager_get_connection_status(metered_connection_status_t* status) {
 }
 
 // Check if connection is metered
-bool metered_manager_is_metered(void) {
+static bool metered_manager_is_metered(void) {
     if (!g_metered_manager_initialized) return false;
     
     pthread_mutex_lock(g_metered_manager.mutex);
@@ -173,7 +173,7 @@ bool metered_manager_is_metered(void) {
 }
 
 // Check if roaming
-bool metered_manager_is_roaming(void) {
+static bool metered_manager_is_roaming(void) {
     if (!g_metered_manager_initialized) return false;
     
     pthread_mutex_lock(g_metered_manager.mutex);
@@ -184,7 +184,7 @@ bool metered_manager_is_roaming(void) {
 }
 
 // Get remaining data
-uint64_t metered_manager_get_remaining_data(void) {
+static uint64_t metered_manager_get_remaining_data(void) {
     if (!g_metered_manager_initialized) return 0;
     
     pthread_mutex_lock(g_metered_manager.mutex);
@@ -195,7 +195,7 @@ uint64_t metered_manager_get_remaining_data(void) {
 }
 
 // Reset usage counters
-int metered_manager_reset_usage(void) {
+static int metered_manager_reset_usage(void) {
     if (!g_metered_manager_initialized) return -1;
     
     pthread_mutex_lock(g_metered_manager.mutex);
@@ -214,7 +214,7 @@ int metered_manager_reset_usage(void) {
 }
 
 // Set data thresholds
-int metered_manager_set_thresholds(const data_thresholds_t* thresholds) {
+static int metered_manager_set_thresholds(const data_thresholds_t* thresholds) {
     if (!g_metered_manager_initialized || !thresholds) return -1;
     
     pthread_mutex_lock(g_metered_manager.mutex);
@@ -440,7 +440,7 @@ static bool check_usage_thresholds(void) {
 }
 
 // Get metered manager status
-void metered_manager_get_status(metered_manager_t* status) {
+static void metered_manager_get_status(metered_manager_t* status) {
     if (!status || !g_metered_manager_initialized) return;
     
     pthread_mutex_lock(g_metered_manager.mutex);
@@ -449,11 +449,11 @@ void metered_manager_get_status(metered_manager_t* status) {
 }
 
 // Check if metered manager is initialized
-bool metered_manager_is_initialized(void) {
+static bool metered_manager_is_initialized(void) {
     return g_metered_manager_initialized;
 }
 
 // Get metered manager instance
-metered_manager_t* metered_manager_get_instance(void) {
+static metered_manager_t* metered_manager_get_instance(void) {
     return g_metered_manager_initialized ? &g_metered_manager : NULL;
 }

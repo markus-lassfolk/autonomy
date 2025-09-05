@@ -20,7 +20,7 @@ static bool g_integration_initialized = false;
 static pthread_mutex_t g_integration_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS integration system
-int gps_integration_init(void) {
+static int gps_integration_init(void) {
     if (g_integration_initialized) {
         LOGX_WARN("GPS integration already initialized");
         return AUTONOMY_SUCCESS;
@@ -76,7 +76,7 @@ int gps_integration_init(void) {
 }
 
 // Register GPS source
-int gps_integration_register_source(const char *name, gps_source_type_t source_type) {
+static int gps_integration_register_source(const char *name, gps_source_type_t source_type) {
     if (!g_integration_initialized || !name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -120,6 +120,7 @@ int gps_integration_register_source(const char *name, gps_source_type_t source_t
     source->reliability = 1.0;     // Start with perfect reliability
     
     strncpy(source->name, name, sizeof(source->name) - 1);
+    source->name[sizeof(source->name) - 1] = '\0';
     
     g_integration.source_count++;
     g_integration.active_sources++;
@@ -139,7 +140,7 @@ static int generate_source_id(void) {
 }
 
 // Update GPS source data
-int gps_integration_update_source(int source_id, const gps_data_t *gps_data) {
+static int gps_integration_update_source(int source_id, const gps_data_t *gps_data) {
     if (!g_integration_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -428,7 +429,7 @@ static void check_location_services_update(void) {
 }
 
 // Get GPS integration status
-int gps_integration_get_status(gps_integration_status_t *status) {
+static int gps_integration_get_status(gps_integration_status_t *status) {
     if (!g_integration_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -463,7 +464,7 @@ int gps_integration_get_status(gps_integration_status_t *status) {
 }
 
 // Get GPS integration configuration
-int gps_integration_get_config(gps_integration_config_t *config) {
+static int gps_integration_get_config(gps_integration_config_t *config) {
     if (!g_integration_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -483,7 +484,7 @@ int gps_integration_get_config(gps_integration_config_t *config) {
 }
 
 // Set GPS integration configuration
-int gps_integration_set_config(const gps_integration_config_t *config) {
+static int gps_integration_set_config(const gps_integration_config_t *config) {
     if (!g_integration_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -504,7 +505,7 @@ int gps_integration_set_config(const gps_integration_config_t *config) {
 }
 
 // Enable/disable GPS integration
-int gps_integration_set_enabled(bool enabled) {
+static int gps_integration_set_enabled(bool enabled) {
     if (!g_integration_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -518,7 +519,7 @@ int gps_integration_set_enabled(bool enabled) {
 }
 
 // Enable/disable specific GPS source
-int gps_integration_set_source_enabled(int source_id, bool enabled) {
+static int gps_integration_set_source_enabled(int source_id, bool enabled) {
     if (!g_integration_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -549,7 +550,7 @@ int gps_integration_set_source_enabled(int source_id, bool enabled) {
 }
 
 // Unregister GPS source
-int gps_integration_unregister_source(int source_id) {
+static int gps_integration_unregister_source(int source_id) {
     if (!g_integration_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -578,7 +579,7 @@ int gps_integration_unregister_source(int source_id) {
 }
 
 // Reset GPS integration
-int gps_integration_reset(void) {
+static int gps_integration_reset(void) {
     if (!g_integration_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -609,7 +610,7 @@ int gps_integration_reset(void) {
 }
 
 // Cleanup GPS integration
-void gps_integration_cleanup(void) {
+static void gps_integration_cleanup(void) {
     if (!g_integration_initialized) {
         return;
     }

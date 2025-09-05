@@ -11,7 +11,7 @@ static intelligent_cache_t g_intelligent_cache = {0};
 static bool g_cache_initialized = false;
 
 // Initialize intelligent cache system
-int intelligent_cache_init(const intelligent_cache_config_t* config) {
+static int intelligent_cache_init(const intelligent_cache_config_t* config) {
     if (!config) {
         return -1;
     }
@@ -35,7 +35,7 @@ int intelligent_cache_init(const intelligent_cache_config_t* config) {
 }
 
 // Cleanup intelligent cache system
-void intelligent_cache_cleanup(void) {
+static void intelligent_cache_cleanup(void) {
     if (!g_cache_initialized) {
         return;
     }
@@ -60,7 +60,7 @@ void intelligent_cache_cleanup(void) {
 }
 
 // Generate location hash for environment comparison
-void intelligent_cache_generate_location_hash(const cell_environment_t* env, char* hash) {
+static void intelligent_cache_generate_location_hash(const cell_environment_t* env, char* hash) {
     if (!env || !hash) {
         return;
     }
@@ -205,7 +205,7 @@ bool intelligent_cache_top_towers_changed(const cell_environment_t* current,
 }
 
 // Check if new location query should be made based on environment changes
-bool intelligent_cache_should_query_new_location(const cell_environment_t* env) {
+static bool intelligent_cache_should_query_new_location(const cell_environment_t* env) {
     if (!g_cache_initialized || !env) {
         return true; // Query if not initialized or no environment
     }
@@ -256,7 +256,7 @@ bool intelligent_cache_should_query_new_location(const cell_environment_t* env) 
 }
 
 // Update cache with new location result
-void intelligent_cache_update_location(const cell_environment_t* env, const opencellid_response_t* result) {
+static void intelligent_cache_update_location(const cell_environment_t* env, const opencellid_response_t* result) {
     if (!g_cache_initialized || !env || !result) {
         return;
     }
@@ -294,7 +294,7 @@ void intelligent_cache_update_location(const cell_environment_t* env, const open
 }
 
 // Get cached location if available and valid
-bool intelligent_cache_get_cached_location(opencellid_response_t* result) {
+static bool intelligent_cache_get_cached_location(opencellid_response_t* result) {
     if (!g_cache_initialized || !result) {
         return false;
     }

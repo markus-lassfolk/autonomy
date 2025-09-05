@@ -25,7 +25,7 @@ static bool g_cell_tower_initialized = false;
 static pthread_mutex_t g_cell_tower_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize cell tower positioning
-int gps_cell_tower_init(void) {
+static int gps_cell_tower_init(void) {
     if (g_cell_tower_initialized) {
         LOGX_WARN("Cell tower positioning already initialized");
         return AUTONOMY_SUCCESS;
@@ -84,7 +84,7 @@ int gps_cell_tower_init(void) {
 }
 
 // Add cell tower information
-int gps_cell_tower_add_tower(const gps_cell_tower_info_t *tower_info) {
+static int gps_cell_tower_add_tower(const gps_cell_tower_info_t *tower_info) {
     if (!g_cell_tower_initialized || !tower_info) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -192,7 +192,7 @@ static int find_oldest_tower(void) {
 }
 
 // Update cell tower positioning
-int gps_cell_tower_update_position(void) {
+static int gps_cell_tower_update_position(void) {
     if (!g_cell_tower_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -324,7 +324,7 @@ static void add_position_history(void) {
 }
 
 // Get cell tower position
-int gps_cell_tower_get_position(double *lat, double *lon, double *accuracy) {
+static int gps_cell_tower_get_position(double *lat, double *lon, double *accuracy) {
     if (!g_cell_tower_initialized || !lat || !lon || !accuracy) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -341,7 +341,7 @@ int gps_cell_tower_get_position(double *lat, double *lon, double *accuracy) {
 }
 
 // Get cell tower status
-int gps_cell_tower_get_status(gps_cell_tower_status_t *status) {
+static int gps_cell_tower_get_status(gps_cell_tower_status_t *status) {
     if (!g_cell_tower_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -374,7 +374,7 @@ int gps_cell_tower_get_status(gps_cell_tower_status_t *status) {
 }
 
 // Get cell tower configuration
-int gps_cell_tower_get_config(gps_cell_tower_config_t *config) {
+static int gps_cell_tower_get_config(gps_cell_tower_config_t *config) {
     if (!g_cell_tower_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -394,7 +394,7 @@ int gps_cell_tower_get_config(gps_cell_tower_config_t *config) {
 }
 
 // Set cell tower configuration
-int gps_cell_tower_set_config(const gps_cell_tower_config_t *config) {
+static int gps_cell_tower_set_config(const gps_cell_tower_config_t *config) {
     if (!g_cell_tower_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -415,7 +415,7 @@ int gps_cell_tower_set_config(const gps_cell_tower_config_t *config) {
 }
 
 // Enable/disable cell tower positioning
-int gps_cell_tower_set_enabled(bool enabled) {
+static int gps_cell_tower_set_enabled(bool enabled) {
     if (!g_cell_tower_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -429,7 +429,7 @@ int gps_cell_tower_set_enabled(bool enabled) {
 }
 
 // Force position update
-int gps_cell_tower_force_position_update(void) {
+static int gps_cell_tower_force_position_update(void) {
     if (!g_cell_tower_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -444,7 +444,7 @@ int gps_cell_tower_force_position_update(void) {
 }
 
 // Get cell tower statistics
-int gps_cell_tower_get_statistics(gps_cell_tower_stats_t *stats) {
+static int gps_cell_tower_get_statistics(gps_cell_tower_stats_t *stats) {
     if (!g_cell_tower_initialized || !stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -486,7 +486,7 @@ int gps_cell_tower_get_statistics(gps_cell_tower_stats_t *stats) {
 }
 
 // Reset cell tower positioning
-int gps_cell_tower_reset(void) {
+static int gps_cell_tower_reset(void) {
     if (!g_cell_tower_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -534,7 +534,7 @@ int gps_cell_tower_reset(void) {
 }
 
 // Cleanup cell tower positioning
-void gps_cell_tower_cleanup(void) {
+static void gps_cell_tower_cleanup(void) {
     if (!g_cell_tower_initialized) {
         return;
     }

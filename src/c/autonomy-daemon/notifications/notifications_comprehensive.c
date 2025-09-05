@@ -39,7 +39,7 @@ static void learn_from_delivery_result(const comprehensive_notification_record_t
 static char* generate_unique_id(notification_type_t type, time_t timestamp);
 
 // Initialize comprehensive notifications system
-int notifications_comprehensive_init(const comprehensive_notification_config_t* config) {
+static int notifications_comprehensive_init(const comprehensive_notification_config_t* config) {
     if (g_notifications_comprehensive_initialized) {
         LOGX_WARN("Comprehensive notifications already initialized");
         return AUTONOMY_SUCCESS;
@@ -170,7 +170,7 @@ int notifications_comprehensive_init(const comprehensive_notification_config_t* 
 }
 
 // Cleanup comprehensive notifications system
-void notifications_comprehensive_cleanup(void) {
+static void notifications_comprehensive_cleanup(void) {
     if (!g_notifications_comprehensive_initialized) return;
     
     pthread_mutex_lock(&g_notifications_comprehensive.mutex);
@@ -226,22 +226,27 @@ const char* notifications_comprehensive_send(notification_type_t type,
     // Generate unique ID
     char* unique_id = generate_unique_id(type, start_time);
     strncpy(record->id, unique_id, sizeof(record->id) - 1);
+    record->id[sizeof(record->id) - 1] = '\0';
     free(unique_id);
     
     // Fill basic information
     record->type = type;
     record->priority = priority;
     strncpy(record->title, title, sizeof(record->title) - 1);
+    record->title[sizeof(record->title) - 1] = '\0';
     strncpy(record->message, message, sizeof(record->message) - 1);
+    record->message[sizeof(record->message) - 1] = '\0';
     record->created_at = start_time;
     record->status = NOTIFICATION_DELIVERY_PENDING;
     
     if (context_json) {
         strncpy(record->context_json, context_json, sizeof(record->context_json) - 1);
+        record->context_json[sizeof(record->context_json) - 1] = '\0';
     }
     
     if (source_module) {
         strncpy(record->source_module, source_module, sizeof(record->source_module) - 1);
+        record->source_module[sizeof(record->source_module) - 1] = '\0';
     }
     
     // Generate fingerprint for deduplication
@@ -604,8 +609,11 @@ static int send_to_all_selected_channels(const comprehensive_notification_record
     };
     
     strncpy(event.title, record->title, sizeof(event.title) - 1);
+    event.title[sizeof(event.title) - 1] = '\0';
     strncpy(event.message, record->message, sizeof(event.message) - 1);
+    event.message[sizeof(event.message) - 1] = '\0';
     strncpy(event.details_json, record->context_json, sizeof(event.details_json) - 1);
+    event.details_json[sizeof(event.details_json) - 1] = '\0';
     
     // Use existing notification manager to send
     int result = notification_manager_send_event(&event);
@@ -624,7 +632,7 @@ const char* notification_delivery_status_to_string(notification_delivery_status_
     return "unknown";
 }
 
-bool notifications_comprehensive_is_initialized(void) {
+static bool notifications_comprehensive_is_initialized(void) {
     return g_notifications_comprehensive_initialized;
 }
 

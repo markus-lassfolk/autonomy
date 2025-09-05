@@ -30,7 +30,7 @@ static bool g_health_initialized = false;
 static pthread_mutex_t g_health_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS health monitor
-int gps_health_init(void) {
+static int gps_health_init(void) {
     if (g_health_initialized) {
         LOGX_WARN("GPS health monitor already initialized");
         return AUTONOMY_SUCCESS;
@@ -72,7 +72,7 @@ int gps_health_init(void) {
 }
 
 // Register GPS source for health monitoring
-int gps_health_register_source(const char *source_name, gps_source_type_t source_type) {
+static int gps_health_register_source(const char *source_name, gps_source_type_t source_type) {
     if (!g_health_initialized || !source_name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -106,6 +106,7 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
     gps_source_health_t *source = &g_health_monitor.sources[source_index];
     source->active = true;
     strncpy(source->name, source_name, sizeof(source->name) - 1);
+    source->name[sizeof(source->name) - 1] = '\0';
     source->source_type = source_type;
     source->registration_time = time(NULL);
     source->last_update = 0;
@@ -129,7 +130,7 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
 }
 
 // Update GPS source health
-int gps_health_update_source(const char *source_name, const gps_data_t *gps_data, bool update_successful) {
+static int gps_health_update_source(const char *source_name, const gps_data_t *gps_data, bool update_successful) {
     if (!g_health_initialized || !source_name || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -287,7 +288,7 @@ static void update_source_status(gps_source_health_t *source) {
 }
 
 // Perform health check
-int gps_health_perform_check(void) {
+static int gps_health_perform_check(void) {
     if (!g_health_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -377,7 +378,7 @@ static int find_source_by_name(const char *source_name) {
 }
 
 // Get GPS health status
-int gps_health_get_status(gps_health_status_t *status) {
+static int gps_health_get_status(gps_health_status_t *status) {
     if (!g_health_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -407,7 +408,7 @@ int gps_health_get_status(gps_health_status_t *status) {
 }
 
 // Get health monitor configuration
-int gps_health_get_config(gps_health_config_t *config) {
+static int gps_health_get_config(gps_health_config_t *config) {
     if (!g_health_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -431,7 +432,7 @@ int gps_health_get_config(gps_health_config_t *config) {
 }
 
 // Set health monitor configuration
-int gps_health_set_config(const gps_health_config_t *config) {
+static int gps_health_set_config(const gps_health_config_t *config) {
     if (!g_health_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -456,7 +457,7 @@ int gps_health_set_config(const gps_health_config_t *config) {
 }
 
 // Enable/disable health monitor
-int gps_health_set_enabled(bool enabled) {
+static int gps_health_set_enabled(bool enabled) {
     if (!g_health_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -470,7 +471,7 @@ int gps_health_set_enabled(bool enabled) {
 }
 
 // Get source health
-int gps_health_get_source_health(const char *source_name, gps_source_health_t *source_health) {
+static int gps_health_get_source_health(const char *source_name, gps_source_health_t *source_health) {
     if (!g_health_initialized || !source_name || !source_health) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -491,7 +492,7 @@ int gps_health_get_source_health(const char *source_name, gps_source_health_t *s
 }
 
 // Unregister GPS source
-int gps_health_unregister_source(const char *source_name) {
+static int gps_health_unregister_source(const char *source_name) {
     if (!g_health_initialized || !source_name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -515,7 +516,7 @@ int gps_health_unregister_source(const char *source_name) {
 }
 
 // Reset health monitor
-int gps_health_reset(void) {
+static int gps_health_reset(void) {
     if (!g_health_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -547,7 +548,7 @@ int gps_health_reset(void) {
 }
 
 // Cleanup health monitor
-void gps_health_cleanup(void) {
+static void gps_health_cleanup(void) {
     if (!g_health_initialized) {
         return;
     }

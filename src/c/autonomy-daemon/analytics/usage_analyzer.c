@@ -20,7 +20,7 @@ static void calculate_usage_patterns(const telemetry_sample_t* samples, int samp
                                     usage_pattern_t* patterns, int max_patterns);
 
 // Initialize usage analyzer
-int usage_analyzer_init(void) {
+static int usage_analyzer_init(void) {
     if (g_usage_analyzer_initialized) {
         return 0; // Already initialized
     }
@@ -46,7 +46,7 @@ int usage_analyzer_init(void) {
 }
 
 // Clean up usage analyzer
-void usage_analyzer_cleanup(void) {
+static void usage_analyzer_cleanup(void) {
     if (!g_usage_analyzer_initialized) return;
     
     if (g_usage_analyzer.mutex) {
@@ -64,7 +64,7 @@ void usage_analyzer_cleanup(void) {
 }
 
 // Analyze usage for all members
-int usage_analyzer_analyze(usage_metrics_t* result) {
+static int usage_analyzer_analyze(usage_metrics_t* result) {
     if (!g_usage_analyzer_initialized || !result) {
         return -1;
     }
@@ -89,6 +89,7 @@ int usage_analyzer_analyze(usage_metrics_t* result) {
     // Analyze each member
     for (int i = 0; i < member_count; i++) {
         strncpy(result->member_names[i], member_names[i], sizeof(result->member_names[i]) - 1);
+        result->member_names[i][sizeof(result->member_names[i]) - 1] = '\0';
         
         // Get samples from last 24 hours
         time_t since = time(NULL) - 86400;
@@ -362,7 +363,7 @@ static void calculate_usage_patterns(const telemetry_sample_t* samples, int samp
 }
 
 // Get usage for specific member
-int usage_analyzer_get_member_usage(const char* member_name, usage_metrics_t* usage) {
+static int usage_analyzer_get_member_usage(const char* member_name, usage_metrics_t* usage) {
     if (!g_usage_analyzer_initialized || !member_name || !usage) {
         return -1;
     }
@@ -384,6 +385,7 @@ int usage_analyzer_get_member_usage(const char* member_name, usage_metrics_t* us
     memset(usage, 0, sizeof(usage_metrics_t));
     usage->member_count = 1;
     strncpy(usage->member_names[0], member_name, sizeof(usage->member_names[0]) - 1);
+    usage->member_names[0][sizeof(usage->member_names[0]) - 1] = '\0';
     usage->analysis_timestamp = time(NULL);
     
     // Analyze usage
@@ -396,7 +398,7 @@ int usage_analyzer_get_member_usage(const char* member_name, usage_metrics_t* us
 }
 
 // Calculate usage patterns
-int usage_analyzer_calculate_patterns(const char* member_name, usage_pattern_t* patterns, int max_patterns) {
+static int usage_analyzer_calculate_patterns(const char* member_name, usage_pattern_t* patterns, int max_patterns) {
     if (!g_usage_analyzer_initialized || !member_name || !patterns || max_patterns <= 0) {
         return -1;
     }
@@ -428,7 +430,7 @@ int usage_analyzer_calculate_patterns(const char* member_name, usage_pattern_t* 
 }
 
 // Get usage analyzer status
-void usage_analyzer_get_status(usage_analyzer_t* status) {
+static void usage_analyzer_get_status(usage_analyzer_t* status) {
     if (!status || !g_usage_analyzer_initialized) return;
     
     pthread_mutex_lock(g_usage_analyzer.mutex);
@@ -437,11 +439,11 @@ void usage_analyzer_get_status(usage_analyzer_t* status) {
 }
 
 // Check if usage analyzer is initialized
-bool usage_analyzer_is_initialized(void) {
+static bool usage_analyzer_is_initialized(void) {
     return g_usage_analyzer_initialized;
 }
 
 // Get usage analyzer instance
-usage_analyzer_t* usage_analyzer_get_instance(void) {
+static usage_analyzer_t* usage_analyzer_get_instance(void) {
     return g_usage_analyzer_initialized ? &g_usage_analyzer : NULL;
 }

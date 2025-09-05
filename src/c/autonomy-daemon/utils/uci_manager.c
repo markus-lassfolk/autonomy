@@ -46,7 +46,7 @@ static const autonomy_config_t DEFAULT_CONFIG = {
 };
 
 // Initialize UCI system
-int uci_manager_init(void) {
+static int uci_manager_init(void) {
     if (g_uci_initialized) {
         LOGX_WARN("UCI manager already initialized");
         return AUTONOMY_SUCCESS;
@@ -69,7 +69,7 @@ int uci_manager_init(void) {
 }
 
 // Load configuration from UCI
-int uci_manager_load_config(autonomy_config_t *config) {
+static int uci_manager_load_config(autonomy_config_t *config) {
     if (!g_uci_initialized || !config) {
         LOGX_ERROR("UCI manager not initialized or invalid config pointer");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
@@ -114,6 +114,7 @@ int uci_manager_load_config(autonomy_config_t *config) {
         value = uci_lookup_option_string(g_uci_ctx, general, "log_file");
         if (value) {
             strncpy(config->log_file, value, sizeof(config->log_file) - 1);
+            config->log_file[sizeof(config->log_file) - 1] = '\0';
         }
         
         value = uci_lookup_option_string(g_uci_ctx, general, "pid_file_timeout");
@@ -192,6 +193,7 @@ int uci_manager_load_config(autonomy_config_t *config) {
         value = uci_lookup_option_string(g_uci_ctx, starlink, "host");
         if (value) {
             strncpy(config->starlink_host, value, sizeof(config->starlink_host) - 1);
+            config->starlink_host[sizeof(config->starlink_host) - 1] = '\0';
         }
         
         value = uci_lookup_option_string(g_uci_ctx, starlink, "port");
@@ -254,21 +256,25 @@ int uci_manager_load_config(autonomy_config_t *config) {
         value = uci_lookup_option_string(g_uci_ctx, notifications, "webhook_url");
         if (value) {
             strncpy(config->webhook_url, value, sizeof(config->webhook_url) - 1);
+            config->webhook_url[sizeof(config->webhook_url) - 1] = '\0';
         }
         
         value = uci_lookup_option_string(g_uci_ctx, notifications, "email_smtp");
         if (value) {
             strncpy(config->email_smtp, value, sizeof(config->email_smtp) - 1);
+            config->email_smtp[sizeof(config->email_smtp) - 1] = '\0';
         }
         
         value = uci_lookup_option_string(g_uci_ctx, notifications, "email_from");
         if (value) {
             strncpy(config->email_from, value, sizeof(config->email_from) - 1);
+            config->email_from[sizeof(config->email_from) - 1] = '\0';
         }
         
         value = uci_lookup_option_string(g_uci_ctx, notifications, "email_to");
         if (value) {
             strncpy(config->email_to, value, sizeof(config->email_to) - 1);
+            config->email_to[sizeof(config->email_to) - 1] = '\0';
         }
     }
     
@@ -280,7 +286,7 @@ int uci_manager_load_config(autonomy_config_t *config) {
 }
 
 // Save configuration to UCI
-int uci_manager_save_config(const autonomy_config_t *config) {
+static int uci_manager_save_config(const autonomy_config_t *config) {
     if (!g_uci_initialized || !config) {
         LOGX_ERROR("UCI manager not initialized or invalid config pointer");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
@@ -401,7 +407,7 @@ static char* float_to_string(float value) {
 }
 
 // Validate configuration
-int uci_manager_validate_config(const autonomy_config_t *config) {
+static int uci_manager_validate_config(const autonomy_config_t *config) {
     if (!config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -457,12 +463,12 @@ const autonomy_config_t* uci_manager_get_default_config(void) {
 }
 
 // Check if UCI is available
-bool uci_manager_is_available(void) {
+static bool uci_manager_is_available(void) {
     return g_uci_initialized && g_uci_ctx != NULL;
 }
 
 // Cleanup UCI system
-void uci_manager_cleanup(void) {
+static void uci_manager_cleanup(void) {
     if (g_uci_ctx) {
         uci_free_context(g_uci_ctx);
         g_uci_ctx = NULL;

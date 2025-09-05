@@ -19,7 +19,7 @@ static double parse_json_double(const char* json, const char* key, double defaul
 static int parse_json_int(const char* json, const char* key, int default_value);
 
 // Initialize priority optimizer
-int priority_optimizer_init(const priority_optimizer_config_t* config) {
+static int priority_optimizer_init(const priority_optimizer_config_t* config) {
     if (g_priority_optimizer_initialized) {
         return 0; // Already initialized
     }
@@ -63,7 +63,7 @@ int priority_optimizer_init(const priority_optimizer_config_t* config) {
 }
 
 // Clean up priority optimizer
-void priority_optimizer_cleanup(void) {
+static void priority_optimizer_cleanup(void) {
     if (!g_priority_optimizer_initialized) return;
     
     if (g_priority_optimizer.mutex) {
@@ -454,6 +454,7 @@ int priority_optimizer_update_learning(notification_type_t alert_type,
         }
         
         strncpy(entry->alert_type, alert_type_str, sizeof(entry->alert_type) - 1);
+        entry->alert_type[sizeof(entry->alert_type) - 1] = '\0';
         entry->optimal_priority = (int)used_priority;
         entry->effectiveness_score = effectiveness_score;
         entry->confidence_score = 0.5; // Start with medium confidence
@@ -496,7 +497,7 @@ void priority_optimizer_get_priority_scores(notification_type_t alert_type,
 }
 
 // Get priority optimizer status
-void priority_optimizer_get_status(priority_optimizer_status_t* status) {
+static void priority_optimizer_get_status(priority_optimizer_status_t* status) {
     if (!status || !g_priority_optimizer_initialized) return;
     
     pthread_mutex_lock(g_priority_optimizer.mutex);
@@ -514,7 +515,7 @@ void priority_optimizer_get_status(priority_optimizer_status_t* status) {
 }
 
 // Get optimization statistics
-void priority_optimizer_get_stats(char* stats_json, size_t max_size) {
+static void priority_optimizer_get_stats(char* stats_json, size_t max_size) {
     if (!stats_json || max_size == 0 || !g_priority_optimizer_initialized) return;
     
     pthread_mutex_lock(g_priority_optimizer.mutex);
@@ -544,11 +545,11 @@ void priority_optimizer_get_stats(char* stats_json, size_t max_size) {
 }
 
 // Check if priority optimizer is initialized
-bool priority_optimizer_is_initialized(void) {
+static bool priority_optimizer_is_initialized(void) {
     return g_priority_optimizer_initialized;
 }
 
 // Get priority optimizer instance
-priority_optimizer_t* priority_optimizer_get_instance(void) {
+static priority_optimizer_t* priority_optimizer_get_instance(void) {
     return g_priority_optimizer_initialized ? &g_priority_optimizer : NULL;
 }

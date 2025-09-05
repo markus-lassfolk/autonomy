@@ -34,7 +34,7 @@ static int get_elevation_from_local_srtm(double lat, double lon, double* elevati
 static int get_elevation_from_open_elevation_api(double lat, double lon, double* elevation);
 
 // Initialize GPS terrain analysis
-int gps_terrain_init(void) {
+static int gps_terrain_init(void) {
     if (g_terrain_initialized) {
         LOGX_WARN("GPS terrain analysis already initialized");
         return AUTONOMY_SUCCESS;
@@ -89,7 +89,7 @@ int gps_terrain_init(void) {
 }
 
 // Analyze terrain for coordinates
-int gps_terrain_analyze(double lat, double lon, gps_terrain_info_t *terrain_info) {
+static int gps_terrain_analyze(double lat, double lon, gps_terrain_info_t *terrain_info) {
     if (!g_terrain_initialized || !terrain_info) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -625,7 +625,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Get terrain analysis status
-int gps_terrain_get_status(gps_terrain_status_t *status) {
+static int gps_terrain_get_status(gps_terrain_status_t *status) {
     if (!g_terrain_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -653,7 +653,7 @@ int gps_terrain_get_status(gps_terrain_status_t *status) {
 }
 
 // Get terrain analysis configuration
-int gps_terrain_get_config(gps_terrain_config_t *config) {
+static int gps_terrain_get_config(gps_terrain_config_t *config) {
     if (!g_terrain_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -673,7 +673,7 @@ int gps_terrain_get_config(gps_terrain_config_t *config) {
 }
 
 // Set terrain analysis configuration
-int gps_terrain_set_config(const gps_terrain_config_t *config) {
+static int gps_terrain_set_config(const gps_terrain_config_t *config) {
     if (!g_terrain_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -694,7 +694,7 @@ int gps_terrain_set_config(const gps_terrain_config_t *config) {
 }
 
 // Enable/disable terrain analysis
-int gps_terrain_set_enabled(bool enabled) {
+static int gps_terrain_set_enabled(bool enabled) {
     if (!g_terrain_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -708,7 +708,7 @@ int gps_terrain_set_enabled(bool enabled) {
 }
 
 // Force terrain update
-int gps_terrain_force_update(void) {
+static int gps_terrain_force_update(void) {
     if (!g_terrain_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -723,7 +723,7 @@ int gps_terrain_force_update(void) {
 }
 
 // Get terrain statistics
-int gps_terrain_get_statistics(gps_terrain_stats_t *stats) {
+static int gps_terrain_get_statistics(gps_terrain_stats_t *stats) {
     if (!g_terrain_initialized || !stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -768,7 +768,7 @@ int gps_terrain_get_statistics(gps_terrain_stats_t *stats) {
 }
 
 // Reset terrain analysis
-int gps_terrain_reset(void) {
+static int gps_terrain_reset(void) {
     if (!g_terrain_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -804,7 +804,7 @@ int gps_terrain_reset(void) {
 }
 
 // Cleanup terrain analysis
-void gps_terrain_cleanup(void) {
+static void gps_terrain_cleanup(void) {
     if (!g_terrain_initialized) {
         return;
     }

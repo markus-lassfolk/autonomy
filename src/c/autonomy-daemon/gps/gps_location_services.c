@@ -26,7 +26,7 @@ static bool g_location_services_initialized = false;
 static pthread_mutex_t g_location_services_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS location services
-int gps_location_services_init(void) {
+static int gps_location_services_init(void) {
     if (g_location_services_initialized) {
         LOGX_WARN("GPS location services already initialized");
         return AUTONOMY_SUCCESS;
@@ -73,7 +73,7 @@ int gps_location_services_init(void) {
 }
 
 // Reverse geocode GPS coordinates
-int gps_location_services_reverse_geocode(double lat, double lon, gps_location_info_t *location_info) {
+static int gps_location_services_reverse_geocode(double lat, double lon, gps_location_info_t *location_info) {
     if (!g_location_services_initialized || !location_info) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -91,11 +91,17 @@ int gps_location_services_reverse_geocode(double lat, double lon, gps_location_i
         location_info->lat = cache_entry->lat;
         location_info->lon = cache_entry->lon;
         strncpy(location_info->place_name, cache_entry->place_name, sizeof(location_info->place_name) - 1);
+        location_info->place_name[sizeof(location_info->place_name) - 1] = '\0';
         strncpy(location_info->address, cache_entry->address, sizeof(location_info->address) - 1);
+        location_info->address[sizeof(location_info->address) - 1] = '\0';
         strncpy(location_info->country, cache_entry->country, sizeof(location_info->country) - 1);
+        location_info->country[sizeof(location_info->country) - 1] = '\0';
         strncpy(location_info->state, cache_entry->state, sizeof(location_info->state) - 1);
+        location_info->state[sizeof(location_info->state) - 1] = '\0';
         strncpy(location_info->city, cache_entry->city, sizeof(location_info->city) - 1);
+        location_info->city[sizeof(location_info->city) - 1] = '\0';
         strncpy(location_info->postal_code, cache_entry->postal_code, sizeof(location_info->postal_code) - 1);
+        location_info->postal_code[sizeof(location_info->postal_code) - 1] = '\0';
         location_info->service_used = cache_entry->service_used;
         location_info->timestamp = cache_entry->timestamp;
         
@@ -180,11 +186,17 @@ static void add_location_to_cache(const gps_location_info_t *location_info) {
     cache_entry->lat = location_info->lat;
     cache_entry->lon = location_info->lon;
     strncpy(cache_entry->place_name, location_info->place_name, sizeof(cache_entry->place_name) - 1);
+    cache_entry->place_name[sizeof(cache_entry->place_name) - 1] = '\0';
     strncpy(cache_entry->address, location_info->address, sizeof(cache_entry->address) - 1);
+    cache_entry->address[sizeof(cache_entry->address) - 1] = '\0';
     strncpy(cache_entry->country, location_info->country, sizeof(cache_entry->country) - 1);
+    cache_entry->country[sizeof(cache_entry->country) - 1] = '\0';
     strncpy(cache_entry->state, location_info->state, sizeof(cache_entry->state) - 1);
+    cache_entry->state[sizeof(cache_entry->state) - 1] = '\0';
     strncpy(cache_entry->city, location_info->city, sizeof(cache_entry->city) - 1);
+    cache_entry->city[sizeof(cache_entry->city) - 1] = '\0';
     strncpy(cache_entry->postal_code, location_info->postal_code, sizeof(cache_entry->postal_code) - 1);
+    cache_entry->postal_code[sizeof(cache_entry->postal_code) - 1] = '\0';
     cache_entry->service_used = location_info->service_used;
     
     LOGX_DEBUG("Added location to cache: %s", location_info->place_name);
@@ -406,7 +418,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Get location services status
-int gps_location_services_get_status(gps_location_services_status_t *status) {
+static int gps_location_services_get_status(gps_location_services_status_t *status) {
     if (!g_location_services_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -442,7 +454,7 @@ int gps_location_services_get_status(gps_location_services_status_t *status) {
 }
 
 // Get location services configuration
-int gps_location_services_get_config(gps_location_services_config_t *config) {
+static int gps_location_services_get_config(gps_location_services_config_t *config) {
     if (!g_location_services_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -462,7 +474,7 @@ int gps_location_services_get_config(gps_location_services_config_t *config) {
 }
 
 // Set location services configuration
-int gps_location_services_set_config(const gps_location_services_config_t *config) {
+static int gps_location_services_set_config(const gps_location_services_config_t *config) {
     if (!g_location_services_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -483,7 +495,7 @@ int gps_location_services_set_config(const gps_location_services_config_t *confi
 }
 
 // Enable/disable location services
-int gps_location_services_set_enabled(bool enabled) {
+static int gps_location_services_set_enabled(bool enabled) {
     if (!g_location_services_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -497,7 +509,7 @@ int gps_location_services_set_enabled(bool enabled) {
 }
 
 // Clear location cache
-int gps_location_services_clear_cache(void) {
+static int gps_location_services_clear_cache(void) {
     if (!g_location_services_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -515,7 +527,7 @@ int gps_location_services_clear_cache(void) {
 }
 
 // Reset location services
-int gps_location_services_reset(void) {
+static int gps_location_services_reset(void) {
     if (!g_location_services_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -541,7 +553,7 @@ int gps_location_services_reset(void) {
 }
 
 // Cleanup location services
-void gps_location_services_cleanup(void) {
+static void gps_location_services_cleanup(void) {
     if (!g_location_services_initialized) {
         return;
     }

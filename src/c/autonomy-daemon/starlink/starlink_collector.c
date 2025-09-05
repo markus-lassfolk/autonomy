@@ -28,7 +28,7 @@ static struct {
 };
 
 // Initialize Starlink collector
-int starlink_collector_init(int collection_interval) {
+static int starlink_collector_init(int collection_interval) {
     if (collection_interval > 0) {
         g_collector_state.collection_interval = collection_interval;
     }
@@ -52,7 +52,7 @@ int starlink_collector_init(int collection_interval) {
 }
 
 // Check if we should collect new data
-bool starlink_should_collect(void) {
+static bool starlink_should_collect(void) {
     if (!g_collector_state.collection_enabled) {
         return false;
     }
@@ -62,7 +62,7 @@ bool starlink_should_collect(void) {
 }
 
 // Collect Starlink data
-int starlink_collect_data(starlink_collection_result_t *result) {
+static int starlink_collect_data(starlink_collection_result_t *result) {
     if (!result) {
         return -1;
     }
@@ -189,7 +189,7 @@ int starlink_collect_data(starlink_collection_result_t *result) {
 }
 
 // Get cached Starlink data
-int starlink_get_cached_data(starlink_collection_result_t *result) {
+static int starlink_get_cached_data(starlink_collection_result_t *result) {
     if (!result) {
         return -1;
     }
@@ -203,7 +203,7 @@ int starlink_get_cached_data(starlink_collection_result_t *result) {
 }
 
 // Get Starlink statistics
-void starlink_get_collector_stats(int *cache_hits, int *cache_misses, int *errors, int *successes) {
+static void starlink_get_collector_stats(int *cache_hits, int *cache_misses, int *errors, int *successes) {
     if (cache_hits) *cache_hits = g_collector_state.cache_hit_count;
     if (cache_misses) *cache_misses = g_collector_state.cache_miss_count;
     if (errors) *errors = g_collector_state.error_count;
@@ -211,19 +211,19 @@ void starlink_get_collector_stats(int *cache_hits, int *cache_misses, int *error
 }
 
 // Set collection interval
-void starlink_set_collection_interval(int interval_seconds) {
+static void starlink_set_collection_interval(int interval_seconds) {
     if (interval_seconds > 0) {
         g_collector_state.collection_interval = interval_seconds;
     }
 }
 
 // Enable/disable collection
-void starlink_set_collection_enabled(bool enabled) {
+static void starlink_set_collection_enabled(bool enabled) {
     g_collector_state.collection_enabled = enabled;
 }
 
 // Force immediate collection (bypass cache)
-int starlink_force_collect(starlink_collection_result_t *result) {
+static int starlink_force_collect(starlink_collection_result_t *result) {
     if (!result) {
         return -1;
     }
@@ -241,7 +241,7 @@ int starlink_force_collect(starlink_collection_result_t *result) {
 }
 
 // Get Starlink location (cached if available)
-int starlink_get_location(starlink_lla_position_t *location) {
+static int starlink_get_location(starlink_lla_position_t *location) {
     if (!location) {
         return -1;
     }
@@ -267,7 +267,7 @@ int starlink_get_location(starlink_lla_position_t *location) {
 }
 
 // Get Starlink health status
-int starlink_get_health(starlink_health_t *health) {
+static int starlink_get_health(starlink_health_t *health) {
     if (!health) {
         return -1;
     }
@@ -288,7 +288,7 @@ int starlink_get_health(starlink_health_t *health) {
 }
 
 // Cleanup Starlink collector
-void starlink_collector_cleanup(void) {
+static void starlink_collector_cleanup(void) {
     starlink_client_cleanup();
     memset(&g_collector_state, 0, sizeof(g_collector_state));
 }

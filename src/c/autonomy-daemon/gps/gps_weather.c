@@ -44,7 +44,7 @@ static size_t weather_write_callback(void *contents, size_t size, size_t nmemb, 
 }
 
 // Initialize GPS weather integration
-int gps_weather_init(const char *api_key) {
+static int gps_weather_init(const char *api_key) {
     if (g_weather_initialized) {
         LOGX_WARN("GPS weather integration already initialized");
         return AUTONOMY_SUCCESS;
@@ -62,6 +62,7 @@ int gps_weather_init(const char *api_key) {
     
     if (api_key && strlen(api_key) > 0) {
         strncpy(g_weather.api_key, api_key, sizeof(g_weather.api_key) - 1);
+        g_weather.api_key[sizeof(g_weather.api_key) - 1] = '\0';
     }
     
     g_weather.cache_entry_count = 0;
@@ -161,7 +162,7 @@ static int perform_weather_api_request(const char *endpoint, const char *params,
 }
 
 // Get current weather for coordinates
-int gps_weather_get_current(double lat, double lon, gps_weather_current_t *weather) {
+static int gps_weather_get_current(double lat, double lon, gps_weather_current_t *weather) {
     if (!g_weather_initialized || !weather) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -184,7 +185,9 @@ int gps_weather_get_current(double lat, double lon, gps_weather_current_t *weath
             weather->wind_direction = weather_data.wind_direction_deg;
             weather->visibility = weather_data.visibility_km * 1000.0; // Convert km to m
             strncpy(weather->description, weather_data.description, sizeof(weather->description) - 1);
+            weather->description[sizeof(weather->description) - 1] = '\0';
             strncpy(weather->icon, weather_data.icon, sizeof(weather->icon) - 1);
+            weather->icon[sizeof(weather->icon) - 1] = '\0';
             weather->timestamp = weather_data.timestamp;
             weather->lat = lat;
             weather->lon = lon;
@@ -254,7 +257,7 @@ int gps_weather_get_forecast(double lat, double lon, int days,
 }
 
 // Get air quality for coordinates
-int gps_weather_get_air_quality(double lat, double lon, gps_weather_air_quality_t *air_quality) {
+static int gps_weather_get_air_quality(double lat, double lon, gps_weather_air_quality_t *air_quality) {
     if (!g_weather_initialized || !air_quality) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -443,7 +446,7 @@ static void parse_air_quality_response(const gps_weather_api_response_t *respons
 }
 
 // Get weather integration status
-int gps_weather_get_status(gps_weather_status_t *status) {
+static int gps_weather_get_status(gps_weather_status_t *status) {
     if (!g_weather_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -471,7 +474,7 @@ int gps_weather_get_status(gps_weather_status_t *status) {
 }
 
 // Get weather integration configuration
-int gps_weather_get_config(gps_weather_config_t *config) {
+static int gps_weather_get_config(gps_weather_config_t *config) {
     if (!g_weather_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -484,6 +487,7 @@ int gps_weather_get_config(gps_weather_config_t *config) {
     config->max_forecast_days = g_weather.max_forecast_days;
     config->cache_radius = g_weather.cache_radius;
     strncpy(config->api_key, g_weather.api_key, sizeof(config->api_key) - 1);
+    config->api_key[sizeof(config->api_key) - 1] = '\0';
     
     pthread_mutex_unlock(&g_weather_mutex);
     
@@ -491,7 +495,7 @@ int gps_weather_get_config(gps_weather_config_t *config) {
 }
 
 // Set weather integration configuration
-int gps_weather_set_config(const gps_weather_config_t *config) {
+static int gps_weather_set_config(const gps_weather_config_t *config) {
     if (!g_weather_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -506,6 +510,7 @@ int gps_weather_set_config(const gps_weather_config_t *config) {
     
     if (strlen(config->api_key) > 0) {
         strncpy(g_weather.api_key, config->api_key, sizeof(g_weather.api_key) - 1);
+        g_weather.api_key[sizeof(g_weather.api_key) - 1] = '\0';
     }
     
     pthread_mutex_unlock(&g_weather_mutex);
@@ -515,7 +520,7 @@ int gps_weather_set_config(const gps_weather_config_t *config) {
 }
 
 // Enable/disable weather integration
-int gps_weather_set_enabled(bool enabled) {
+static int gps_weather_set_enabled(bool enabled) {
     if (!g_weather_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -529,7 +534,7 @@ int gps_weather_set_enabled(bool enabled) {
 }
 
 // Force weather update
-int gps_weather_force_update(void) {
+static int gps_weather_force_update(void) {
     if (!g_weather_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -544,7 +549,7 @@ int gps_weather_force_update(void) {
 }
 
 // Get weather statistics
-int gps_weather_get_statistics(gps_weather_stats_t *stats) {
+static int gps_weather_get_statistics(gps_weather_stats_t *stats) {
     if (!g_weather_initialized || !stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -586,7 +591,7 @@ int gps_weather_get_statistics(gps_weather_stats_t *stats) {
 }
 
 // Reset weather integration
-int gps_weather_reset(void) {
+static int gps_weather_reset(void) {
     if (!g_weather_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -623,7 +628,7 @@ int gps_weather_reset(void) {
 }
 
 // Cleanup weather integration
-void gps_weather_cleanup(void) {
+static void gps_weather_cleanup(void) {
     if (!g_weather_initialized) {
         return;
     }

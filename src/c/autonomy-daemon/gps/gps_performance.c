@@ -26,7 +26,7 @@ static bool g_performance_initialized = false;
 static pthread_mutex_t g_performance_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS performance tracking
-int gps_performance_init(void) {
+static int gps_performance_init(void) {
     if (g_performance_initialized) {
         LOGX_WARN("GPS performance tracking already initialized");
         return AUTONOMY_SUCCESS;
@@ -90,7 +90,7 @@ int gps_performance_init(void) {
 }
 
 // Record GPS performance measurement
-int gps_performance_record_measurement(int source_id, double accuracy, double response_time, bool success) {
+static int gps_performance_record_measurement(int source_id, double accuracy, double response_time, bool success) {
     if (!g_performance_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -446,7 +446,7 @@ static void calculate_overall_performance(void) {
 }
 
 // Get GPS performance status
-int gps_performance_get_status(gps_performance_status_t *status) {
+static int gps_performance_get_status(gps_performance_status_t *status) {
     if (!g_performance_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -473,7 +473,7 @@ int gps_performance_get_status(gps_performance_status_t *status) {
 }
 
 // Get source performance
-int gps_performance_get_source_performance(int source_id, gps_source_performance_t *source_perf) {
+static int gps_performance_get_source_performance(int source_id, gps_source_performance_t *source_perf) {
     if (!g_performance_initialized || !source_perf || source_id < 0 || source_id >= GPS_MAX_SOURCES) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -488,7 +488,7 @@ int gps_performance_get_source_performance(int source_id, gps_source_performance
 }
 
 // Get all source performance data
-int gps_performance_get_all_sources(gps_source_performance_t *sources, int max_sources) {
+static int gps_performance_get_all_sources(gps_source_performance_t *sources, int max_sources) {
     if (!g_performance_initialized || !sources || max_sources <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -509,7 +509,7 @@ int gps_performance_get_all_sources(gps_source_performance_t *sources, int max_s
 }
 
 // Get performance history
-int gps_performance_get_history(gps_performance_entry_t *history, int max_entries, time_t since) {
+static int gps_performance_get_history(gps_performance_entry_t *history, int max_entries, time_t since) {
     if (!g_performance_initialized || !history || max_entries <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -531,7 +531,7 @@ int gps_performance_get_history(gps_performance_entry_t *history, int max_entrie
 }
 
 // Get performance configuration
-int gps_performance_get_config(gps_performance_config_t *config) {
+static int gps_performance_get_config(gps_performance_config_t *config) {
     if (!g_performance_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -551,7 +551,7 @@ int gps_performance_get_config(gps_performance_config_t *config) {
 }
 
 // Set performance configuration
-int gps_performance_set_config(const gps_performance_config_t *config) {
+static int gps_performance_set_config(const gps_performance_config_t *config) {
     if (!g_performance_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -572,7 +572,7 @@ int gps_performance_set_config(const gps_performance_config_t *config) {
 }
 
 // Enable/disable performance tracking
-int gps_performance_set_enabled(bool enabled) {
+static int gps_performance_set_enabled(bool enabled) {
     if (!g_performance_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -586,7 +586,7 @@ int gps_performance_set_enabled(bool enabled) {
 }
 
 // Reset performance tracking
-int gps_performance_reset(void) {
+static int gps_performance_reset(void) {
     if (!g_performance_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -639,7 +639,7 @@ int gps_performance_reset(void) {
 }
 
 // Cleanup performance tracking
-void gps_performance_cleanup(void) {
+static void gps_performance_cleanup(void) {
     if (!g_performance_initialized) {
         return;
     }

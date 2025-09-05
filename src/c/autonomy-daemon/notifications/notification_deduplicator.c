@@ -6,7 +6,7 @@
 #include <math.h>
 
 // Initialize deduplicator
-int notification_deduplicator_init(notification_deduplicator_t* dedup, const deduplicator_config_t* config) {
+static int notification_deduplicator_init(notification_deduplicator_t* dedup, const deduplicator_config_t* config) {
     if (!dedup || !config) {
         return -1;
     }
@@ -38,7 +38,7 @@ int notification_deduplicator_init(notification_deduplicator_t* dedup, const ded
 }
 
 // Clean up deduplicator
-void notification_deduplicator_cleanup(notification_deduplicator_t* dedup) {
+static void notification_deduplicator_cleanup(notification_deduplicator_t* dedup) {
     if (!dedup) return;
     
     if (dedup->mutex) {
@@ -260,7 +260,7 @@ bool notification_deduplicator_is_duplicate(notification_deduplicator_t* dedup,
 }
 
 // Clean up old fingerprints
-int notification_deduplicator_cleanup_old(notification_deduplicator_t* dedup) {
+static int notification_deduplicator_cleanup_old(notification_deduplicator_t* dedup) {
     if (!dedup || !dedup->mutex) {
         return -1;
     }
@@ -320,7 +320,7 @@ void notification_deduplicator_get_stats(const notification_deduplicator_t* dedu
 }
 
 // Reset deduplicator
-void notification_deduplicator_reset(notification_deduplicator_t* dedup) {
+static void notification_deduplicator_reset(notification_deduplicator_t* dedup) {
     if (!dedup || !dedup->mutex) return;
     
     pthread_mutex_lock(dedup->mutex);
@@ -343,17 +343,17 @@ void notification_deduplicator_reset(notification_deduplicator_t* dedup) {
 }
 
 // Check if deduplicator is enabled
-bool notification_deduplicator_is_enabled(const notification_deduplicator_t* dedup) {
+static bool notification_deduplicator_is_enabled(const notification_deduplicator_t* dedup) {
     return dedup && dedup->config.enabled;
 }
 
 // Get deduplication window
-int notification_deduplicator_get_window(const notification_deduplicator_t* dedup) {
+static int notification_deduplicator_get_window(const notification_deduplicator_t* dedup) {
     return dedup ? dedup->config.deduplication_window_seconds : 0;
 }
 
 // Set deduplication window
-void notification_deduplicator_set_window(notification_deduplicator_t* dedup, int window_seconds) {
+static void notification_deduplicator_set_window(notification_deduplicator_t* dedup, int window_seconds) {
     if (dedup && window_seconds > 0) {
         dedup->config.deduplication_window_seconds = window_seconds;
     }

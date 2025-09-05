@@ -22,7 +22,7 @@ static size_t http_response_callback(void* contents, size_t size, size_t nmemb, 
 }
 
 // Initialize OpenCellID API
-int gps_opencellid_init(const opencellid_config_t* config) {
+static int gps_opencellid_init(const opencellid_config_t* config) {
     if (!config) {
         return -1;
     }
@@ -45,7 +45,7 @@ int gps_opencellid_init(const opencellid_config_t* config) {
 }
 
 // Cleanup OpenCellID API
-void gps_opencellid_cleanup(void) {
+static void gps_opencellid_cleanup(void) {
     if (g_curl_handle) {
         curl_easy_cleanup(g_curl_handle);
         g_curl_handle = NULL;
@@ -99,6 +99,7 @@ static int make_opencellid_request(const char* url, opencellid_response_t* respo
     if (!json_response) {
         response->success = false;
         strncpy(response->error_message, "Failed to parse JSON response", sizeof(response->error_message) - 1);
+        response->error_message[sizeof(response->error_message) - 1] = '\0';
         g_opencellid_stats.failed_requests++;
         return -1;
     }
@@ -137,6 +138,7 @@ static int make_opencellid_request(const char* url, opencellid_response_t* respo
             json_object* message_obj;
             if (json_object_object_get_ex(error_obj, "message", &message_obj)) {
                 strncpy(response->error_message, json_object_get_string(message_obj), sizeof(response->error_message) - 1);
+                response->error_message[sizeof(response->error_message) - 1] = '\0';
             }
         }
         g_opencellid_stats.failed_requests++;
@@ -147,7 +149,7 @@ static int make_opencellid_request(const char* url, opencellid_response_t* respo
 }
 
 // Lookup cell tower location
-int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_response_t* response) {
+static int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_response_t* response) {
     if (!g_opencellid_initialized || !cell_key || !response) {
         return -1;
     }
@@ -166,7 +168,7 @@ int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_resp
 }
 
 // Contribute cell tower data
-int gps_opencellid_contribute(const opencellid_cell_key_t* cell_key, double lat, double lon, int range) {
+static int gps_opencellid_contribute(const opencellid_cell_key_t* cell_key, double lat, double lon, int range) {
     if (!g_opencellid_initialized || !cell_key) {
         return -1;
     }
@@ -197,7 +199,7 @@ int gps_opencellid_contribute(const opencellid_cell_key_t* cell_key, double lat,
 }
 
 // Get API statistics
-int gps_opencellid_get_stats(opencellid_stats_t* stats) {
+static int gps_opencellid_get_stats(opencellid_stats_t* stats) {
     if (!g_opencellid_initialized || !stats) {
         return -1;
     }
@@ -207,12 +209,12 @@ int gps_opencellid_get_stats(opencellid_stats_t* stats) {
 }
 
 // Check if OpenCellID is initialized
-bool gps_opencellid_is_initialized(void) {
+static bool gps_opencellid_is_initialized(void) {
     return g_opencellid_initialized;
 }
 
 // Validate API key
-bool gps_opencellid_validate_key(void) {
+static bool gps_opencellid_validate_key(void) {
     if (!g_opencellid_initialized) {
         return false;
     }
@@ -220,9 +222,13 @@ bool gps_opencellid_validate_key(void) {
     // Make a simple test request
     opencellid_cell_key_t test_cell = {0};
     strncpy(test_cell.mcc, "1", sizeof(test_cell.mcc) - 1);
+    test_cell.mcc[sizeof(test_cell.mcc) - 1] = '\0';
     strncpy(test_cell.mnc, "1", sizeof(test_cell.mnc) - 1);
+    test_cell.mnc[sizeof(test_cell.mnc) - 1] = '\0';
     strncpy(test_cell.lac, "1", sizeof(test_cell.lac) - 1);
+    test_cell.lac[sizeof(test_cell.lac) - 1] = '\0';
     strncpy(test_cell.cell_id, "1", sizeof(test_cell.cell_id) - 1);
+    test_cell.cell_id[sizeof(test_cell.cell_id) - 1] = '\0';
     test_cell.radio = OPENCELLID_RADIO_LTE;
     
     opencellid_response_t test_response;
@@ -231,14 +237,14 @@ bool gps_opencellid_validate_key(void) {
 }
 
 // Get quota status
-int gps_opencellid_get_quota_remaining(void) {
+static int gps_opencellid_get_quota_remaining(void) {
     // OpenCellID API doesn't provide quota information in the response
     // This would need to be tracked separately or queried from their dashboard
     return -1; // Unknown
 }
 
 // Start background contribution manager
-int gps_opencellid_start_contribution_manager(void) {
+static int gps_opencellid_start_contribution_manager(void) {
     if (!g_opencellid_initialized) {
         return -1;
     }
@@ -249,7 +255,7 @@ int gps_opencellid_start_contribution_manager(void) {
 }
 
 // Stop background contribution manager
-int gps_opencellid_stop_contribution_manager(void) {
+static int gps_opencellid_stop_contribution_manager(void) {
     if (!g_opencellid_initialized) {
         return -1;
     }
@@ -260,7 +266,7 @@ int gps_opencellid_stop_contribution_manager(void) {
 }
 
 // Perform health check
-int gps_opencellid_health_check(void) {
+static int gps_opencellid_health_check(void) {
     if (!g_opencellid_initialized) {
         return -1;
     }
@@ -268,9 +274,13 @@ int gps_opencellid_health_check(void) {
     // Simple health check - try to make a request
     opencellid_cell_key_t test_cell = {0};
     strncpy(test_cell.mcc, "1", sizeof(test_cell.mcc) - 1);
+    test_cell.mcc[sizeof(test_cell.mcc) - 1] = '\0';
     strncpy(test_cell.mnc, "1", sizeof(test_cell.mnc) - 1);
+    test_cell.mnc[sizeof(test_cell.mnc) - 1] = '\0';
     strncpy(test_cell.lac, "1", sizeof(test_cell.lac) - 1);
+    test_cell.lac[sizeof(test_cell.lac) - 1] = '\0';
     strncpy(test_cell.cell_id, "1", sizeof(test_cell.cell_id) - 1);
+    test_cell.cell_id[sizeof(test_cell.cell_id) - 1] = '\0';
     test_cell.radio = OPENCELLID_RADIO_LTE;
     
     opencellid_response_t test_response;

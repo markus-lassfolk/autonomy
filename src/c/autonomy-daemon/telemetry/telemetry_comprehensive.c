@@ -120,7 +120,7 @@ static int export_ml_dataset(void);
 static double calculate_distance_meters(double lat1, double lon1, double lat2, double lon2);
 
 // Initialize comprehensive telemetry collection system
-int telemetry_comprehensive_init(const telemetry_collection_config_t* config) {
+static int telemetry_comprehensive_init(const telemetry_collection_config_t* config) {
     if (g_telemetry_comprehensive_initialized) {
         LOGX_WARN("Comprehensive telemetry already initialized");
         return AUTONOMY_SUCCESS;
@@ -251,7 +251,7 @@ int telemetry_comprehensive_init(const telemetry_collection_config_t* config) {
 }
 
 // Cleanup comprehensive telemetry collection system
-void telemetry_comprehensive_cleanup(void) {
+static void telemetry_comprehensive_cleanup(void) {
     if (!g_telemetry_comprehensive_initialized) return;
     
     pthread_mutex_lock(&g_telemetry_comprehensive.mutex);
@@ -307,7 +307,9 @@ int telemetry_comprehensive_collect_sample(const char* member_name,
     buffer_sample->id = g_telemetry_comprehensive.next_sample_id++;
     buffer_sample->timestamp = time(NULL);
     strncpy(buffer_sample->member_name, member_name, sizeof(buffer_sample->member_name) - 1);
+    buffer_sample->member_name[sizeof(buffer_sample->member_name) - 1] = '\0';
     strncpy(buffer_sample->interface_name, interface_name, sizeof(buffer_sample->interface_name) - 1);
+    buffer_sample->interface_name[sizeof(buffer_sample->interface_name) - 1] = '\0';
     
     // Get location reference ID if GPS data is available and location reference system is enabled
     if (gps_location_reference_is_initialized() && 
@@ -325,6 +327,7 @@ int telemetry_comprehensive_collect_sample(const char* member_name,
                 buffer_sample->location_reference_id = location_id;
                 buffer_sample->gps_accuracy = gps_data.accuracy;
                 strncpy(buffer_sample->gps_source, gps_data.source, sizeof(buffer_sample->gps_source) - 1);
+                buffer_sample->gps_source[sizeof(buffer_sample->gps_source) - 1] = '\0';
                 
                 // Update location usage with performance metrics
                 gps_location_reference_update_usage(location_id, sample->signal_quality, sample->latency_ms);
@@ -387,7 +390,7 @@ int telemetry_comprehensive_collect_sample(const char* member_name,
 }
 
 // Log failover/failback decision with full context
-int telemetry_comprehensive_log_decision(const decision_record_t* decision) {
+static int telemetry_comprehensive_log_decision(const decision_record_t* decision) {
     if (!g_telemetry_comprehensive_initialized || !decision) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -437,10 +440,11 @@ int telemetry_comprehensive_log_decision(const decision_record_t* decision) {
 }
 
 // Initialize SQLite database with proper schema
-int telemetry_db_init(void) {
+static int telemetry_db_init(void) {
     // Ensure database directory exists
     char db_dir[256];
     strncpy(db_dir, g_telemetry_comprehensive.config.database_path, sizeof(db_dir) - 1);
+    db_dir[sizeof(db_dir) - 1] = '\0';
     
     char* last_slash = strrchr(db_dir, '/');
     if (last_slash) {
@@ -538,6 +542,7 @@ static int collect_current_telemetry(void) {
                     sample.location_reference_id = location_id;
                     sample.gps_accuracy = gps_data.accuracy;
                     strncpy(sample.gps_source, gps_data.source, sizeof(sample.gps_source) - 1);
+                    sample.gps_source[sizeof(sample.gps_source) - 1] = '\0';
                     sample.movement_kmh = gps_data.speed * 3.6; // Convert m/s to km/h
                 }
             }
@@ -573,6 +578,7 @@ static int collect_current_telemetry(void) {
                 sample.satellites = gps_data.satellites;
                 sample.hdop = gps_data.hdop;
                 strncpy(sample.gps_source, gps_data.source, sizeof(sample.gps_source) - 1);
+                sample.gps_source[sizeof(sample.gps_source) - 1] = '\0';
                 sample.movement_kmh = gps_data.speed * 3.6;
             }
             
@@ -581,6 +587,7 @@ static int collect_current_telemetry(void) {
             sample.rsrq_db = cellular_info.rsrq;
             sample.sinr_db = cellular_info.sinr;
             strncpy(sample.carrier, cellular_info.operator, sizeof(sample.carrier) - 1);
+            sample.carrier[sizeof(sample.carrier) - 1] = '\0';
             sample.cell_id = cellular_info.cell_id;
             sample.signal_quality = cellular_info.signal_quality / 100.0;
             sample.overall_score = cellular_info.reliability_score * 100.0;
@@ -704,7 +711,7 @@ static int insert_sample_to_database(const telemetry_sample_t* sample) {
     return AUTONOMY_SUCCESS;
 }
 
-bool telemetry_comprehensive_is_initialized(void) {
+static bool telemetry_comprehensive_is_initialized(void) {
     return g_telemetry_comprehensive_initialized;
 }
 

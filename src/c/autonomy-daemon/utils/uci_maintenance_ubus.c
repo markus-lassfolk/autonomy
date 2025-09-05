@@ -173,7 +173,7 @@ static int autonomy_uci_maintenance_perform(struct ubus_context *ctx, struct ubu
 /**
  * Register UCI maintenance UBUS object
  */
-int uci_maintenance_ubus_register(struct ubus_context *ctx) {
+static int uci_maintenance_ubus_register(struct ubus_context *ctx) {
     int ret = ubus_add_object(ctx, &autonomy_uci_maintenance_obj);
     if (ret) {
         fprintf(stderr, "Failed to add UCI maintenance object: %s\n", ubus_strerror(ret));
@@ -187,7 +187,7 @@ int uci_maintenance_ubus_register(struct ubus_context *ctx) {
 /**
  * Unregister UCI maintenance UBUS object
  */
-void uci_maintenance_ubus_unregister(struct ubus_context *ctx) {
+static void uci_maintenance_ubus_unregister(struct ubus_context *ctx) {
     ubus_remove_object(ctx, &autonomy_uci_maintenance_obj);
     fprintf(stderr, "UCI maintenance UBUS object unregistered\n");
 }

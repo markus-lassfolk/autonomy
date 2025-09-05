@@ -24,7 +24,7 @@ typedef struct {
 static location_manager_state_t g_location_manager = {0};
 
 // Initialize location manager
-int location_manager_init(const location_manager_config_t* config) {
+static int location_manager_init(const location_manager_config_t* config) {
     if (!config) {
         return -1;
     }
@@ -47,7 +47,7 @@ int location_manager_init(const location_manager_config_t* config) {
 }
 
 // Add location source
-int location_manager_add_source(gps_source_type_t source_type, const char* name) {
+static int location_manager_add_source(gps_source_type_t source_type, const char* name) {
     if (!g_location_manager.initialized || !name) {
         return -1;
     }
@@ -73,6 +73,7 @@ int location_manager_add_source(gps_source_type_t source_type, const char* name)
     source->type = source_type;
     strncpy(source->name, name, sizeof(source->name) - 1);
     source->name[sizeof(source->name) - 1] = '\0';
+    source->name[sizeof(source->name) - 1] = '\0';
     source->last_update = 0;
     source->reliability_score = 0.5; // Default reliability
     source->data_quality = 0.5;      // Default quality
@@ -85,7 +86,7 @@ int location_manager_add_source(gps_source_type_t source_type, const char* name)
 }
 
 // Remove location source
-int location_manager_remove_source(gps_source_type_t source_type) {
+static int location_manager_remove_source(gps_source_type_t source_type) {
     if (!g_location_manager.initialized) {
         return -1;
     }
@@ -108,7 +109,7 @@ int location_manager_remove_source(gps_source_type_t source_type) {
 }
 
 // Update location source data
-int location_manager_update_source(gps_source_type_t source_type, const location_data_t* location) {
+static int location_manager_update_source(gps_source_type_t source_type, const location_data_t* location) {
     if (!g_location_manager.initialized || !location) {
         return -1;
     }
@@ -138,7 +139,7 @@ int location_manager_update_source(gps_source_type_t source_type, const location
 }
 
 // Validate location data
-bool location_manager_validate_location(const location_data_t* location) {
+static bool location_manager_validate_location(const location_data_t* location) {
     if (!location) {
         return false;
     }
@@ -177,7 +178,7 @@ bool location_manager_validate_location(const location_data_t* location) {
 }
 
 // Fuse multiple location sources
-int location_manager_fuse_sources(const location_data_t* sources, int source_count, location_data_t* fused_location) {
+static int location_manager_fuse_sources(const location_data_t* sources, int source_count, location_data_t* fused_location) {
     if (!sources || !fused_location || source_count <= 0) {
         return -1;
     }
@@ -232,16 +233,21 @@ int location_manager_fuse_sources(const location_data_t* sources, int source_cou
         fused_location->valid = true;
         fused_location->source_type = GPS_SOURCE_COMBINED;
         strncpy(fused_location->source_name, "fused", sizeof(fused_location->source_name) - 1);
+        fused_location->source_name[sizeof(fused_location->source_name) - 1] = '\0';
         
         // Determine quality score
         if (fused_location->confidence >= 0.9) {
             strncpy(fused_location->quality_score, "excellent", sizeof(fused_location->quality_score) - 1);
+            fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
         } else if (fused_location->confidence >= 0.7) {
             strncpy(fused_location->quality_score, "good", sizeof(fused_location->quality_score) - 1);
+            fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
         } else if (fused_location->confidence >= 0.5) {
             strncpy(fused_location->quality_score, "fair", sizeof(fused_location->quality_score) - 1);
+            fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
         } else {
             strncpy(fused_location->quality_score, "poor", sizeof(fused_location->quality_score) - 1);
+            fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
         }
         fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
     }
@@ -250,7 +256,7 @@ int location_manager_fuse_sources(const location_data_t* sources, int source_cou
 }
 
 // Get location from specific source
-int location_manager_get_location_from_source(gps_source_type_t source_type, location_data_t* location) {
+static int location_manager_get_location_from_source(gps_source_type_t source_type, location_data_t* location) {
     if (!g_location_manager.initialized || !location) {
         return -1;
     }
@@ -279,7 +285,7 @@ int location_manager_get_location_from_source(gps_source_type_t source_type, loc
 }
 
 // Get best location from all available sources
-int location_manager_get_best_location(location_data_t* location) {
+static int location_manager_get_best_location(location_data_t* location) {
     if (!g_location_manager.initialized || !location) {
         return -1;
     }
@@ -340,7 +346,7 @@ int location_manager_get_best_location(location_data_t* location) {
 }
 
 // Get location manager status
-int location_manager_get_status(gps_manager_status_t* status) {
+static int location_manager_get_status(gps_manager_status_t* status) {
     if (!g_location_manager.initialized || !status) {
         return -1;
     }
@@ -372,7 +378,7 @@ int location_manager_get_status(gps_manager_status_t* status) {
 }
 
 // Cleanup location manager
-void location_manager_cleanup(void) {
+static void location_manager_cleanup(void) {
     if (!g_location_manager.initialized) {
         return;
     }

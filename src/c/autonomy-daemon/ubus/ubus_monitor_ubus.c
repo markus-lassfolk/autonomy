@@ -279,7 +279,7 @@ static int autonomy_ubus_monitor_check(struct ubus_context *ctx, struct ubus_req
 /**
  * Register UBUS monitor UBUS object
  */
-int ubus_monitor_ubus_register(struct ubus_context *ctx) {
+static int ubus_monitor_ubus_register(struct ubus_context *ctx) {
     int ret = ubus_add_object(ctx, &autonomy_ubus_monitor_obj);
     if (ret) {
         fprintf(stderr, "Failed to add UBUS monitor object: %s\n", ubus_strerror(ret));
@@ -293,7 +293,7 @@ int ubus_monitor_ubus_register(struct ubus_context *ctx) {
 /**
  * Unregister UBUS monitor UBUS object
  */
-void ubus_monitor_ubus_unregister(struct ubus_context *ctx) {
+static void ubus_monitor_ubus_unregister(struct ubus_context *ctx) {
     ubus_remove_object(ctx, &autonomy_ubus_monitor_obj);
     fprintf(stderr, "UBUS monitor UBUS object unregistered\n");
 }

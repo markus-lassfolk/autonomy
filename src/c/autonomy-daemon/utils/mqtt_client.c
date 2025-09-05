@@ -41,7 +41,7 @@ static int mqtt_parse_suback(const uint8_t* packet, int length);
 static void* mqtt_keepalive_thread(void* arg);
 
 // Initialize MQTT client
-int mqtt_client_init(const mqtt_config_t* config) {
+static int mqtt_client_init(const mqtt_config_t* config) {
     if (g_mqtt_client_initialized) {
         return 0; // Already initialized
     }
@@ -80,7 +80,7 @@ int mqtt_client_init(const mqtt_config_t* config) {
 }
 
 // Clean up MQTT client
-void mqtt_client_cleanup(void) {
+static void mqtt_client_cleanup(void) {
     if (!g_mqtt_client_initialized) return;
     
     // Disconnect if connected
@@ -103,7 +103,7 @@ void mqtt_client_cleanup(void) {
 }
 
 // Connect to MQTT broker
-int mqtt_client_connect(void) {
+static int mqtt_client_connect(void) {
     if (!g_mqtt_client_initialized || g_mqtt_client.connected) {
         return -1;
     }
@@ -213,7 +213,7 @@ int mqtt_client_connect(void) {
 }
 
 // Disconnect from MQTT broker
-int mqtt_client_disconnect(void) {
+static int mqtt_client_disconnect(void) {
     if (!g_mqtt_client_initialized || !g_mqtt_client.connected) {
         return -1;
     }
@@ -239,7 +239,7 @@ int mqtt_client_disconnect(void) {
 }
 
 // Publish message
-int mqtt_client_publish(const char* topic, const char* payload, int qos, bool retain) {
+static int mqtt_client_publish(const char* topic, const char* payload, int qos, bool retain) {
     if (!g_mqtt_client_initialized || !g_mqtt_client.connected || !topic || !payload) {
         return -1;
     }
@@ -269,7 +269,7 @@ int mqtt_client_publish(const char* topic, const char* payload, int qos, bool re
 }
 
 // Subscribe to topic
-int mqtt_client_subscribe(const char* topic, int qos) {
+static int mqtt_client_subscribe(const char* topic, int qos) {
     if (!g_mqtt_client_initialized || !g_mqtt_client.connected || !topic) {
         return -1;
     }
@@ -306,7 +306,7 @@ int mqtt_client_subscribe(const char* topic, int qos) {
 }
 
 // Unsubscribe from topic
-int mqtt_client_unsubscribe(const char* topic) {
+static int mqtt_client_unsubscribe(const char* topic) {
     if (!g_mqtt_client_initialized || !g_mqtt_client.connected || !topic) {
         return -1;
     }
@@ -316,7 +316,7 @@ int mqtt_client_unsubscribe(const char* topic) {
 }
 
 // Publish telemetry data
-int mqtt_client_publish_telemetry(const telemetry_sample_t* sample) {
+static int mqtt_client_publish_telemetry(const telemetry_sample_t* sample) {
     if (!sample) return -1;
     
     // Create JSON payload
@@ -337,7 +337,7 @@ int mqtt_client_publish_telemetry(const telemetry_sample_t* sample) {
 }
 
 // Publish event data
-int mqtt_client_publish_event(const telemetry_event_t* event) {
+static int mqtt_client_publish_event(const telemetry_event_t* event) {
     if (!event) return -1;
     
     // Create JSON payload
@@ -355,7 +355,7 @@ int mqtt_client_publish_event(const telemetry_event_t* event) {
 }
 
 // Publish system status
-int mqtt_client_publish_system_status(void) {
+static int mqtt_client_publish_system_status(void) {
     // Create system status payload
     char payload[1024];
     snprintf(payload, sizeof(payload),
@@ -560,7 +560,7 @@ static int mqtt_parse_suback(const uint8_t* packet, int length) {
 }
 
 // Get MQTT client status
-void mqtt_client_get_status(mqtt_client_t* status) {
+static void mqtt_client_get_status(mqtt_client_t* status) {
     if (!status || !g_mqtt_client_initialized) return;
     
     pthread_mutex_lock(g_mqtt_client.mutex);
@@ -569,16 +569,16 @@ void mqtt_client_get_status(mqtt_client_t* status) {
 }
 
 // Check if MQTT client is initialized
-bool mqtt_client_is_initialized(void) {
+static bool mqtt_client_is_initialized(void) {
     return g_mqtt_client_initialized;
 }
 
 // Check if MQTT client is connected
-bool mqtt_client_is_connected(void) {
+static bool mqtt_client_is_connected(void) {
     return g_mqtt_client_initialized && g_mqtt_client.connected;
 }
 
 // Get MQTT client instance
-mqtt_client_t* mqtt_client_get_instance(void) {
+static mqtt_client_t* mqtt_client_get_instance(void) {
     return g_mqtt_client_initialized ? &g_mqtt_client : NULL;
 }

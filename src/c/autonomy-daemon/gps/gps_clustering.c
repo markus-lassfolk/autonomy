@@ -22,7 +22,7 @@ static bool g_clustering_initialized = false;
 static pthread_mutex_t g_clustering_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS clustering system
-int gps_clustering_init(void) {
+static int gps_clustering_init(void) {
     if (g_clustering_initialized) {
         LOGX_WARN("GPS clustering system already initialized");
         return AUTONOMY_SUCCESS;
@@ -74,7 +74,7 @@ int gps_clustering_init(void) {
 }
 
 // Add GPS position for clustering
-int gps_clustering_add_position(const gps_data_t *gps_data) {
+static int gps_clustering_add_position(const gps_data_t *gps_data) {
     if (!g_clustering_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -332,7 +332,7 @@ static void perform_clustering_analysis(void) {
 }
 
 // Get clustered GPS position
-int gps_clustering_get_position(gps_data_t *gps_data) {
+static int gps_clustering_get_position(gps_data_t *gps_data) {
     if (!g_clustering_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -375,7 +375,7 @@ int gps_clustering_get_position(gps_data_t *gps_data) {
 }
 
 // Get clustering statistics
-int gps_clustering_get_statistics(gps_clustering_stats_t *stats) {
+static int gps_clustering_get_statistics(gps_clustering_stats_t *stats) {
     if (!g_clustering_initialized || !stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -401,7 +401,7 @@ int gps_clustering_get_statistics(gps_clustering_stats_t *stats) {
 }
 
 // Get clustering configuration
-int gps_clustering_get_config(gps_clustering_config_t *config) {
+static int gps_clustering_get_config(gps_clustering_config_t *config) {
     if (!g_clustering_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -423,7 +423,7 @@ int gps_clustering_get_config(gps_clustering_config_t *config) {
 }
 
 // Set clustering configuration
-int gps_clustering_set_config(const gps_clustering_config_t *config) {
+static int gps_clustering_set_config(const gps_clustering_config_t *config) {
     if (!g_clustering_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -446,7 +446,7 @@ int gps_clustering_set_config(const gps_clustering_config_t *config) {
 }
 
 // Enable/disable clustering
-int gps_clustering_set_enabled(bool enabled) {
+static int gps_clustering_set_enabled(bool enabled) {
     if (!g_clustering_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -460,7 +460,7 @@ int gps_clustering_set_enabled(bool enabled) {
 }
 
 // Force clustering analysis
-int gps_clustering_force_analysis(void) {
+static int gps_clustering_force_analysis(void) {
     if (!g_clustering_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -477,7 +477,7 @@ int gps_clustering_force_analysis(void) {
 }
 
 // Reset clustering system
-int gps_clustering_reset(void) {
+static int gps_clustering_reset(void) {
     if (!g_clustering_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -535,7 +535,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Cleanup clustering system
-void gps_clustering_cleanup(void) {
+static void gps_clustering_cleanup(void) {
     if (!g_clustering_initialized) {
         return;
     }

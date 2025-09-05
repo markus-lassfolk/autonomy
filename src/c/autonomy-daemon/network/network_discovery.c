@@ -31,7 +31,7 @@ static pthread_t g_discovery_thread = 0;
 static bool g_discovery_thread_running = false;
 
 // Initialize network discovery system
-int network_discovery_init(void) {
+static int network_discovery_init(void) {
     if (g_discovery_initialized) {
         LOGX_WARN("Network discovery already initialized");
         return AUTONOMY_SUCCESS;
@@ -57,7 +57,7 @@ int network_discovery_init(void) {
 }
 
 // Start network discovery monitoring thread
-int network_discovery_start_monitoring(void) {
+static int network_discovery_start_monitoring(void) {
     if (!g_discovery_initialized) {
         LOGX_ERROR("Network discovery not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
@@ -82,7 +82,7 @@ int network_discovery_start_monitoring(void) {
 }
 
 // Stop network discovery monitoring
-void network_discovery_stop_monitoring(void) {
+static void network_discovery_stop_monitoring(void) {
     if (!g_discovery_thread_running) {
         return;
     }
@@ -118,7 +118,7 @@ static void* discovery_monitor_thread(void *arg) {
 }
 
 // Scan for available network interfaces
-int network_discovery_scan_interfaces(void) {
+static int network_discovery_scan_interfaces(void) {
     if (!g_discovery_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -187,6 +187,7 @@ static void discover_system_interfaces(void) {
             memset(iface, 0, sizeof(network_interface_t));
             
             strncpy(iface->name, i->if_name, sizeof(iface->name) - 1);
+            iface->name[sizeof(iface->name) - 1] = '\0';
             iface->index = i->if_index;
             iface->last_seen = time(NULL);
             iface->discovered = true;
@@ -233,6 +234,7 @@ static void discover_uci_interfaces(void) {
                 memset(iface, 0, sizeof(network_interface_t));
                 
                 strncpy(iface->name, common_interfaces[i], sizeof(iface->name) - 1);
+                iface->name[sizeof(iface->name) - 1] = '\0';
                 iface->last_seen = time(NULL);
                 iface->discovered = true;
                 
@@ -337,18 +339,25 @@ static void determine_interface_type(network_interface_t *iface) {
     // Check interface name patterns
     if (strncmp(iface->name, "eth", 3) == 0) {
         strncpy(iface->type, "ethernet", sizeof(iface->type) - 1);
+        iface->type[sizeof(iface->type) - 1] = '\0';
     } else if (strncmp(iface->name, "wlan", 4) == 0) {
         strncpy(iface->type, "wifi", sizeof(iface->type) - 1);
+        iface->type[sizeof(iface->type) - 1] = '\0';
     } else if (strncmp(iface->name, "wwan", 4) == 0) {
         strncpy(iface->type, "cellular", sizeof(iface->type) - 1);
+        iface->type[sizeof(iface->type) - 1] = '\0';
     } else if (strncmp(iface->name, "tun", 3) == 0 || strncmp(iface->name, "tap", 3) == 0) {
         strncpy(iface->type, "vpn", sizeof(iface->type) - 1);
+        iface->type[sizeof(iface->type) - 1] = '\0';
     } else if (strncmp(iface->name, "br", 2) == 0) {
         strncpy(iface->type, "bridge", sizeof(iface->type) - 1);
+        iface->type[sizeof(iface->type) - 1] = '\0';
     } else if (strncmp(iface->name, "vlan", 4) == 0) {
         strncpy(iface->type, "vlan", sizeof(iface->type) - 1);
+        iface->type[sizeof(iface->type) - 1] = '\0';
     } else {
         strncpy(iface->type, "unknown", sizeof(iface->type) - 1);
+        iface->type[sizeof(iface->type) - 1] = '\0';
     }
 }
 
@@ -422,7 +431,7 @@ static void cleanup_stale_interfaces(time_t now) {
 }
 
 // Get discovered interfaces
-int network_discovery_get_interfaces(network_interface_t *interfaces, int max_count, int *actual_count) {
+static int network_discovery_get_interfaces(network_interface_t *interfaces, int max_count, int *actual_count) {
     if (!g_discovery_initialized || !interfaces || !actual_count) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -443,7 +452,7 @@ int network_discovery_get_interfaces(network_interface_t *interfaces, int max_co
 }
 
 // Get interface by name
-int network_discovery_get_interface(const char *interface_name, network_interface_t *interface) {
+static int network_discovery_get_interface(const char *interface_name, network_interface_t *interface) {
     if (!g_discovery_initialized || !interface_name || !interface) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -463,7 +472,7 @@ int network_discovery_get_interface(const char *interface_name, network_interfac
 }
 
 // Get discovery status
-int network_discovery_get_status(network_discovery_status_t *status) {
+static int network_discovery_get_status(network_discovery_status_t *status) {
     if (!g_discovery_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -484,7 +493,7 @@ int network_discovery_get_status(network_discovery_status_t *status) {
 }
 
 // Set discovery configuration
-int network_discovery_set_config(const network_discovery_config_t *config) {
+static int network_discovery_set_config(const network_discovery_config_t *config) {
     if (!g_discovery_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -512,7 +521,7 @@ int network_discovery_set_config(const network_discovery_config_t *config) {
 }
 
 // Enable/disable discovery system
-int network_discovery_set_enabled(bool enabled) {
+static int network_discovery_set_enabled(bool enabled) {
     if (!g_discovery_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -526,7 +535,7 @@ int network_discovery_set_enabled(bool enabled) {
 }
 
 // Force immediate discovery
-int network_discovery_force_scan(void) {
+static int network_discovery_force_scan(void) {
     if (!g_discovery_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -536,7 +545,7 @@ int network_discovery_force_scan(void) {
 }
 
 // Cleanup discovery system
-void network_discovery_cleanup(void) {
+static void network_discovery_cleanup(void) {
     if (!g_discovery_initialized) {
         return;
     }

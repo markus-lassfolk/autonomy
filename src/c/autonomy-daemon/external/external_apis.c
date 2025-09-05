@@ -42,7 +42,7 @@ static void* health_monitor_worker(void* arg);
 static int perform_api_health_check(external_api_type_t api_type);
 
 // Initialize external APIs manager
-int external_apis_init(void) {
+static int external_apis_init(void) {
     if (g_external_apis_initialized) {
         LOGX_WARN("External APIs manager already initialized");
         return AUTONOMY_SUCCESS;
@@ -153,7 +153,7 @@ int external_apis_init(void) {
 }
 
 // Cleanup external APIs manager
-void external_apis_cleanup(void) {
+static void external_apis_cleanup(void) {
     if (!g_external_apis_initialized) return;
     
     pthread_mutex_lock(&g_external_apis.mutex);
@@ -178,7 +178,7 @@ void external_apis_cleanup(void) {
 }
 
 // Get elevation data from Google or Open Elevation API
-int external_apis_get_elevation(double latitude, double longitude, external_elevation_data_t* elevation_data) {
+static int external_apis_get_elevation(double latitude, double longitude, external_elevation_data_t* elevation_data) {
     if (!g_external_apis_initialized || !elevation_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -324,7 +324,7 @@ int external_apis_get_elevation(double latitude, double longitude, external_elev
 }
 
 // Get weather data from weather APIs
-int external_apis_get_weather(double latitude, double longitude, external_weather_data_t* weather_data) {
+static int external_apis_get_weather(double latitude, double longitude, external_weather_data_t* weather_data) {
     if (!g_external_apis_initialized || !weather_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -401,10 +401,12 @@ int external_apis_get_weather(double latitude, double longitude, external_weathe
                                 if (json_object_object_get_ex(weather_item, "description", &desc_obj)) {
                                     const char* description = json_object_get_string(desc_obj);
                                     strncpy(weather_data->description, description, sizeof(weather_data->description) - 1);
+                                    weather_data->description[sizeof(weather_data->description) - 1] = '\0';
                                 }
                                 if (json_object_object_get_ex(weather_item, "icon", &icon_obj)) {
                                     const char* icon = json_object_get_string(icon_obj);
                                     strncpy(weather_data->icon, icon, sizeof(weather_data->icon) - 1);
+                                    weather_data->icon[sizeof(weather_data->icon) - 1] = '\0';
                                 }
                             }
                         }
@@ -635,7 +637,7 @@ const char* external_api_type_to_string(external_api_type_t api_type) {
     return "unknown";
 }
 
-external_api_type_t external_api_parse_type(const char* api_str) {
+static external_api_type_t external_api_parse_type(const char* api_str) {
     if (!api_str) return EXTERNAL_API_GOOGLE_LOCATION;
     
     for (int i = 0; i < EXTERNAL_API_MAX; i++) {
@@ -654,7 +656,7 @@ const char* external_api_status_to_string(api_status_t status) {
     return "unknown";
 }
 
-bool external_apis_is_initialized(void) {
+static bool external_apis_is_initialized(void) {
     return g_external_apis_initialized;
 }
 

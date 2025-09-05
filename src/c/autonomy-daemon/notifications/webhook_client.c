@@ -29,7 +29,7 @@ static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, cur
 }
 
 // Initialize webhook client
-int webhook_client_init(webhook_client_t* client, const webhook_config_t* config) {
+static int webhook_client_init(webhook_client_t* client, const webhook_config_t* config) {
     if (!client || !config) {
         return -1;
     }
@@ -42,6 +42,7 @@ int webhook_client_init(webhook_client_t* client, const webhook_config_t* config
     // Initialize status
     client->status.enabled = config->enabled;
     strncpy(client->status.url, config->url, sizeof(client->status.url) - 1);
+    client->status.url[sizeof(client->status.url) - 1] = '\0';
     client->status.total_sent = 0;
     client->status.total_failed = 0;
     client->status.last_response_code = 0;
@@ -60,7 +61,7 @@ int webhook_client_init(webhook_client_t* client, const webhook_config_t* config
 }
 
 // Clean up webhook client
-void webhook_client_cleanup(webhook_client_t* client) {
+static void webhook_client_cleanup(webhook_client_t* client) {
     if (!client) return;
     
     // Clear sensitive data
@@ -69,7 +70,7 @@ void webhook_client_cleanup(webhook_client_t* client) {
 }
 
 // Check if notification should be sent based on filters
-bool webhook_client_should_send(webhook_client_t* client, const notification_event_t* event) {
+static bool webhook_client_should_send(webhook_client_t* client, const notification_event_t* event) {
     if (!client || !event || !client->config.enabled) {
         return false;
     }
@@ -114,8 +115,11 @@ void webhook_client_create_payload(webhook_client_t* client, const notification_
     
     // Fill payload fields
     strncpy(payload->type, notification_type_to_string(event->type), sizeof(payload->type) - 1);
+    payload->type[sizeof(payload->type) - 1] = '\0';
     strncpy(payload->title, event->title, sizeof(payload->title) - 1);
+    payload->title[sizeof(payload->title) - 1] = '\0';
     strncpy(payload->message, event->message, sizeof(payload->message) - 1);
+    payload->message[sizeof(payload->message) - 1] = '\0';
     payload->priority = (int)event->priority;
     
     // Format timestamp
@@ -125,14 +129,18 @@ void webhook_client_create_payload(webhook_client_t* client, const notification_
     // Add context JSON if available
     if (strlen(event->details_json) > 0) {
         strncpy(payload->context_json, event->details_json, sizeof(payload->context_json) - 1);
+        payload->context_json[sizeof(payload->context_json) - 1] = '\0';
     }
     
     // Add metadata
     strncpy(payload->source, "autonomy", sizeof(payload->source) - 1);
+    payload->source[sizeof(payload->source) - 1] = '\0';
     strncpy(payload->version, "1.0.0", sizeof(payload->version) - 1);
+    payload->version[sizeof(payload->version) - 1] = '\0';
     
     // Add hostname (simplified - could get from system)
     strncpy(payload->hostname, "router", sizeof(payload->hostname) - 1);
+    payload->hostname[sizeof(payload->hostname) - 1] = '\0';
 }
 
 // Create JSON payload string
@@ -184,6 +192,7 @@ static int send_webhook_request(webhook_client_t* client, const char* payload_da
     CURL* curl = curl_easy_init();
     if (!curl) {
         strncpy(client->status.last_error, "Failed to initialize curl", sizeof(client->status.last_error) - 1);
+        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
         return -1;
     }
     
@@ -308,7 +317,7 @@ static int send_webhook_request(webhook_client_t* client, const char* payload_da
 }
 
 // Send notification via webhook with retry logic
-int webhook_client_send(webhook_client_t* client, const notification_event_t* event) {
+static int webhook_client_send(webhook_client_t* client, const notification_event_t* event) {
     if (!client || !event) {
         return -1;
     }
@@ -325,6 +334,7 @@ int webhook_client_send(webhook_client_t* client, const notification_event_t* ev
     char* json_payload = create_json_payload(&payload);
     if (!json_payload) {
         strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error) - 1);
+        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
         client->status.last_error_time = time(NULL);
         client->status.total_failed++;
         return -1;
@@ -362,7 +372,7 @@ int webhook_client_send(webhook_client_t* client, const notification_event_t* ev
 }
 
 // Get webhook client status
-void webhook_client_get_status(webhook_client_t* client, webhook_client_status_t* status) {
+static void webhook_client_get_status(webhook_client_t* client, webhook_client_status_t* status) {
     if (!client || !status) return;
     
     *status = client->status;

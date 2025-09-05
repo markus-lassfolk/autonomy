@@ -44,7 +44,7 @@ static void* collection_thread_worker(void* arg);
 static void* analysis_thread_worker(void* arg);
 
 // Initialize comprehensive Starlink collector
-int starlink_comprehensive_init(const starlink_comprehensive_config_t* config) {
+static int starlink_comprehensive_init(const starlink_comprehensive_config_t* config) {
     if (g_starlink_comprehensive_initialized) {
         LOGX_WARN("Comprehensive Starlink collector already initialized");
         return AUTONOMY_SUCCESS;
@@ -121,7 +121,7 @@ int starlink_comprehensive_init(const starlink_comprehensive_config_t* config) {
 }
 
 // Cleanup comprehensive Starlink collector
-void starlink_comprehensive_cleanup(void) {
+static void starlink_comprehensive_cleanup(void) {
     if (!g_starlink_comprehensive_initialized) return;
     
     pthread_mutex_lock(&g_starlink_comprehensive.mutex);
@@ -152,7 +152,7 @@ void starlink_comprehensive_cleanup(void) {
 }
 
 // Collect comprehensive Starlink data from all APIs
-int starlink_comprehensive_collect_all(starlink_comprehensive_status_t* status) {
+static int starlink_comprehensive_collect_all(starlink_comprehensive_status_t* status) {
     if (!g_starlink_comprehensive_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -247,7 +247,7 @@ int starlink_comprehensive_collect_all(starlink_comprehensive_status_t* status) 
 }
 
 // Collect comprehensive GPS data from multiple Starlink APIs
-int starlink_comprehensive_collect_gps(starlink_comprehensive_gps_t* gps_data) {
+static int starlink_comprehensive_collect_gps(starlink_comprehensive_gps_t* gps_data) {
     if (!gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -394,7 +394,7 @@ static int collect_from_diagnostics_api(starlink_comprehensive_gps_t* gps_data) 
 }
 
 // Analyze Starlink events and outages
-int starlink_comprehensive_analyze_events(starlink_events_outages_analysis_t* analysis) {
+static int starlink_comprehensive_analyze_events(starlink_events_outages_analysis_t* analysis) {
     if (!g_starlink_comprehensive_initialized || !analysis) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -499,7 +499,7 @@ static void analyze_events_and_outages(starlink_events_outages_analysis_t* analy
 }
 
 // Calculate GPS confidence from comprehensive data
-double starlink_calculate_gps_confidence(const starlink_comprehensive_gps_t* gps_data) {
+static double starlink_calculate_gps_confidence(const starlink_comprehensive_gps_t* gps_data) {
     if (!gps_data) return 0.0;
     
     double confidence = 0.0;
@@ -554,7 +554,7 @@ double starlink_calculate_gps_confidence(const starlink_comprehensive_gps_t* gps
 }
 
 // Calculate stability score from events and outages
-double starlink_calculate_stability_score(const starlink_events_outages_analysis_t* analysis) {
+static double starlink_calculate_stability_score(const starlink_events_outages_analysis_t* analysis) {
     if (!analysis) return 1.0;
     
     double score = 1.0; // Start with perfect stability
@@ -667,7 +667,7 @@ const char* starlink_outage_cause_to_string(starlink_outage_cause_t cause) {
     return "unknown";
 }
 
-bool starlink_comprehensive_is_initialized(void) {
+static bool starlink_comprehensive_is_initialized(void) {
     return g_starlink_comprehensive_initialized;
 }
 

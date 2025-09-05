@@ -7,7 +7,7 @@
 extern struct autonomy_state g_state;
 
 // GPS discovery and management
-int discover_gps_sources(void) {
+static int discover_gps_sources(void) {
     // Initialize GPS sources
     g_state.gps_source_count = 0;
     
@@ -96,7 +96,7 @@ static int calculate_gps_confidence(struct gps_source *source) {
     return confidence;
 }
 
-int perform_gps_health_check(void) {
+static int perform_gps_health_check(void) {
     time_t now = time(NULL);
     
     for (int i = 0; i < g_state.gps_source_count; i++) {

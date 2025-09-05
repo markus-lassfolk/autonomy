@@ -29,7 +29,7 @@ static void send_notification(const char *type, const char *message);
 /**
  * Initialize UCI maintenance
  */
-int uci_maintenance_init(void) {
+static int uci_maintenance_init(void) {
     memset(&g_uci_maintenance, 0, sizeof(uci_maintenance_t));
     
     // Initialize statistics
@@ -45,7 +45,7 @@ int uci_maintenance_init(void) {
 /**
  * Perform comprehensive UCI maintenance
  */
-int uci_maintenance_perform_maintenance(uci_maintenance_result_t *result) {
+static int uci_maintenance_perform_maintenance(uci_maintenance_result_t *result) {
     if (!result) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -124,10 +124,13 @@ static int check_parse_errors(uci_maintenance_result_t *result) {
             uci_issue_t *issue = malloc(sizeof(uci_issue_t));
             if (issue) {
                 strncpy(issue->type, "parse_error", sizeof(issue->type) - 1);
+                issue->type[sizeof(issue->type) - 1] = '\0';
                 strncpy(issue->section, test_sections[i], sizeof(issue->section) - 1);
+                issue->section[sizeof(issue->section) - 1] = '\0';
                 snprintf(issue->description, sizeof(issue->description) - 1,
                         "UCI parse error in %s section", test_sections[i]);
                 strncpy(issue->severity, "critical", sizeof(issue->severity) - 1);
+                issue->severity[sizeof(issue->severity) - 1] = '\0';
                 issue->can_auto_fix = true;
                 issue->timestamp = time(NULL);
                 
@@ -158,10 +161,13 @@ static int validate_critical_sections(uci_maintenance_result_t *result) {
             uci_issue_t *issue = malloc(sizeof(uci_issue_t));
             if (issue) {
                 strncpy(issue->type, "missing_section", sizeof(issue->type) - 1);
+                issue->type[sizeof(issue->type) - 1] = '\0';
                 strncpy(issue->section, critical_sections[i], sizeof(issue->section) - 1);
+                issue->section[sizeof(issue->section) - 1] = '\0';
                 snprintf(issue->description, sizeof(issue->description) - 1,
                         "Critical UCI section %s is missing", critical_sections[i]);
                 strncpy(issue->severity, "critical", sizeof(issue->severity) - 1);
+                issue->severity[sizeof(issue->severity) - 1] = '\0';
                 issue->can_auto_fix = false; // Cannot auto-fix missing sections
                 issue->timestamp = time(NULL);
                 
@@ -200,11 +206,14 @@ static int check_uci_corruption(uci_maintenance_result_t *result) {
                     uci_issue_t *issue = malloc(sizeof(uci_issue_t));
                     if (issue) {
                         strncpy(issue->type, "corruption", sizeof(issue->type) - 1);
+                        issue->type[sizeof(issue->type) - 1] = '\0';
                         strncpy(issue->section, entry->d_name, sizeof(issue->section) - 1);
+                        issue->section[sizeof(issue->section) - 1] = '\0';
                         snprintf(issue->description, sizeof(issue->description) - 1,
                                 "UCI file %s appears corrupted (size: %lld bytes)", 
                                 entry->d_name, (long long)st.st_size);
                         strncpy(issue->severity, "critical", sizeof(issue->severity) - 1);
+                        issue->severity[sizeof(issue->severity) - 1] = '\0';
                         issue->can_auto_fix = true;
                         issue->timestamp = time(NULL);
                         
@@ -247,10 +256,13 @@ static int check_unwanted_config_files(uci_maintenance_result_t *result) {
                 uci_issue_t *issue = malloc(sizeof(uci_issue_t));
                 if (issue) {
                     strncpy(issue->type, "unwanted_file", sizeof(issue->type) - 1);
+                    issue->type[sizeof(issue->type) - 1] = '\0';
                     strncpy(issue->section, filename, sizeof(issue->section) - 1);
+                    issue->section[sizeof(issue->section) - 1] = '\0';
                     snprintf(issue->description, sizeof(issue->description) - 1,
                             "Unwanted file %s found in /etc/config", filename);
                     strncpy(issue->severity, "warning", sizeof(issue->severity) - 1);
+                    issue->severity[sizeof(issue->severity) - 1] = '\0';
                     issue->can_auto_fix = true;
                     issue->timestamp = time(NULL);
                     
@@ -430,6 +442,7 @@ static void send_notification(const char *type, const char *message) {
     notification_event_t event = {0};
     strcpy(event.title, "UCI Maintenance Alert");
     strncpy(event.message, message, sizeof(event.message) - 1);
+    event.message[sizeof(event.message) - 1] = '\0';
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
     event.timestamp = time(NULL);
     
@@ -454,7 +467,7 @@ static void send_notification(const char *type, const char *message) {
 /**
  * Get UCI maintenance status
  */
-int uci_maintenance_get_status(uci_maintenance_status_t *status) {
+static int uci_maintenance_get_status(uci_maintenance_status_t *status) {
     if (!status) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -471,7 +484,7 @@ int uci_maintenance_get_status(uci_maintenance_status_t *status) {
 /**
  * Reset UCI maintenance
  */
-int uci_maintenance_reset(void) {
+static int uci_maintenance_reset(void) {
     memset(&g_uci_maintenance.stats, 0, sizeof(uci_maintenance_stats_t));
     return AUTONOMY_SUCCESS;
 }
@@ -479,6 +492,6 @@ int uci_maintenance_reset(void) {
 /**
  * Cleanup UCI maintenance
  */
-void uci_maintenance_cleanup(void) {
+static void uci_maintenance_cleanup(void) {
     // Nothing to cleanup for this module
 }

@@ -25,7 +25,7 @@ static void update_metrics_history(performance_metrics_t* metrics);
 static bool check_thresholds(const performance_metrics_t* metrics);
 
 // Initialize performance monitor
-int performance_monitor_init(const performance_monitor_config_t* config) {
+static int performance_monitor_init(const performance_monitor_config_t* config) {
     if (g_performance_monitor_initialized) {
         return 0; // Already initialized
     }
@@ -70,7 +70,7 @@ int performance_monitor_init(const performance_monitor_config_t* config) {
 }
 
 // Clean up performance monitor
-void performance_monitor_cleanup(void) {
+static void performance_monitor_cleanup(void) {
     if (!g_performance_monitor_initialized) return;
     
     if (g_performance_monitor.mutex) {
@@ -83,7 +83,7 @@ void performance_monitor_cleanup(void) {
 }
 
 // Collect performance metrics
-int performance_monitor_collect_metrics(void) {
+static int performance_monitor_collect_metrics(void) {
     if (!g_performance_monitor_initialized || !g_performance_monitor.config.enabled) {
         return -1;
     }
@@ -144,7 +144,7 @@ int performance_monitor_collect_metrics(void) {
 }
 
 // Get current performance metrics
-int performance_monitor_get_metrics(performance_metrics_t* metrics) {
+static int performance_monitor_get_metrics(performance_metrics_t* metrics) {
     if (!g_performance_monitor_initialized || !metrics) {
         return -1;
     }
@@ -157,7 +157,7 @@ int performance_monitor_get_metrics(performance_metrics_t* metrics) {
 }
 
 // Get performance history
-int performance_monitor_get_history(performance_metrics_t* history, int max_history) {
+static int performance_monitor_get_history(performance_metrics_t* history, int max_history) {
     if (!g_performance_monitor_initialized || !history || max_history <= 0) {
         return -1;
     }
@@ -181,7 +181,7 @@ int performance_monitor_get_history(performance_metrics_t* history, int max_hist
 }
 
 // Check performance thresholds
-bool performance_monitor_check_thresholds(void) {
+static bool performance_monitor_check_thresholds(void) {
     if (!g_performance_monitor_initialized) return false;
     
     pthread_mutex_lock(g_performance_monitor.mutex);
@@ -374,7 +374,7 @@ static bool check_thresholds(const performance_metrics_t* metrics) {
 }
 
 // Get performance monitor status
-void performance_monitor_get_status(performance_monitor_t* status) {
+static void performance_monitor_get_status(performance_monitor_t* status) {
     if (!status || !g_performance_monitor_initialized) return;
     
     pthread_mutex_lock(g_performance_monitor.mutex);
@@ -383,11 +383,11 @@ void performance_monitor_get_status(performance_monitor_t* status) {
 }
 
 // Check if performance monitor is initialized
-bool performance_monitor_is_initialized(void) {
+static bool performance_monitor_is_initialized(void) {
     return g_performance_monitor_initialized;
 }
 
 // Get performance monitor instance
-performance_monitor_t* performance_monitor_get_instance(void) {
+static performance_monitor_t* performance_monitor_get_instance(void) {
     return g_performance_monitor_initialized ? &g_performance_monitor : NULL;
 }

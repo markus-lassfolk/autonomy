@@ -23,7 +23,7 @@ static void classify_trend(trend_result_t* result);
 static double linear_regression_slope(const double* x_values, const double* y_values, int count);
 
 // Initialize trend analyzer
-int trend_analyzer_init(const trend_analyzer_config_t* config) {
+static int trend_analyzer_init(const trend_analyzer_config_t* config) {
     if (g_trend_analyzer_initialized) {
         return 0; // Already initialized
     }
@@ -60,7 +60,7 @@ int trend_analyzer_init(const trend_analyzer_config_t* config) {
 }
 
 // Clean up trend analyzer
-void trend_analyzer_cleanup(void) {
+static void trend_analyzer_cleanup(void) {
     if (!g_trend_analyzer_initialized) return;
     
     if (g_trend_analyzer.mutex) {
@@ -73,7 +73,7 @@ void trend_analyzer_cleanup(void) {
 }
 
 // Analyze trends for all members
-int trend_analyzer_analyze_all(void) {
+static int trend_analyzer_analyze_all(void) {
     if (!g_trend_analyzer_initialized) {
         return -1;
     }
@@ -114,7 +114,7 @@ int trend_analyzer_analyze_all(void) {
 }
 
 // Analyze trends for specific member
-int trend_analyzer_analyze_member(const char* member_name, member_trends_t* trends) {
+static int trend_analyzer_analyze_member(const char* member_name, member_trends_t* trends) {
     if (!g_trend_analyzer_initialized || !member_name || !trends) {
         return -1;
     }
@@ -126,6 +126,7 @@ int trend_analyzer_analyze_member(const char* member_name, member_trends_t* tren
     // Initialize trends structure
     memset(trends, 0, sizeof(member_trends_t));
     strncpy(trends->member_name, member_name, sizeof(trends->member_name) - 1);
+    trends->member_name[sizeof(trends->member_name) - 1] = '\0';
     trends->last_analysis = time(NULL);
     
     // Get samples from trend window
@@ -441,7 +442,7 @@ double trend_analyzer_calculate_confidence(const double* values, const double* r
 }
 
 // Predict future value
-double trend_analyzer_predict_value(const trend_result_t* trend, time_t future_time) {
+static double trend_analyzer_predict_value(const trend_result_t* trend, time_t future_time) {
     if (!trend || !trend->has_prediction) return 0.0;
     
     // Simple linear prediction
@@ -450,7 +451,7 @@ double trend_analyzer_predict_value(const trend_result_t* trend, time_t future_t
 }
 
 // Get trend results for all members
-int trend_analyzer_get_all_trends(member_trends_t* trends, int max_trends) {
+static int trend_analyzer_get_all_trends(member_trends_t* trends, int max_trends) {
     if (!g_trend_analyzer_initialized || !trends || max_trends <= 0) {
         return -1;
     }
@@ -470,7 +471,7 @@ int trend_analyzer_get_all_trends(member_trends_t* trends, int max_trends) {
 }
 
 // Get trend results for specific member
-int trend_analyzer_get_member_trends(const char* member_name, member_trends_t* trends) {
+static int trend_analyzer_get_member_trends(const char* member_name, member_trends_t* trends) {
     if (!g_trend_analyzer_initialized || !member_name || !trends) {
         return -1;
     }
@@ -490,7 +491,7 @@ int trend_analyzer_get_member_trends(const char* member_name, member_trends_t* t
 }
 
 // Get trend analyzer status
-void trend_analyzer_get_status(trend_analyzer_t* status) {
+static void trend_analyzer_get_status(trend_analyzer_t* status) {
     if (!status || !g_trend_analyzer_initialized) return;
     
     pthread_mutex_lock(g_trend_analyzer.mutex);
@@ -499,11 +500,11 @@ void trend_analyzer_get_status(trend_analyzer_t* status) {
 }
 
 // Check if trend analyzer is initialized
-bool trend_analyzer_is_initialized(void) {
+static bool trend_analyzer_is_initialized(void) {
     return g_trend_analyzer_initialized;
 }
 
 // Get trend analyzer instance
-trend_analyzer_t* trend_analyzer_get_instance(void) {
+static trend_analyzer_t* trend_analyzer_get_instance(void) {
     return g_trend_analyzer_initialized ? &g_trend_analyzer : NULL;
 }

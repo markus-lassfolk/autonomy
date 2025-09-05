@@ -25,7 +25,7 @@ static void update_security_events(const char* event_type, const char* descripti
 static char* generate_event_id(void);
 
 // Initialize security monitor
-int security_monitor_init(const security_monitor_config_t* config) {
+static int security_monitor_init(const security_monitor_config_t* config) {
     if (g_security_monitor_initialized) {
         return 0; // Already initialized
     }
@@ -63,7 +63,7 @@ int security_monitor_init(const security_monitor_config_t* config) {
 }
 
 // Clean up security monitor
-void security_monitor_cleanup(void) {
+static void security_monitor_cleanup(void) {
     if (!g_security_monitor_initialized) return;
     
     if (g_security_monitor.mutex) {
@@ -76,7 +76,7 @@ void security_monitor_cleanup(void) {
 }
 
 // Perform security scan
-int security_monitor_perform_scan(void) {
+static int security_monitor_perform_scan(void) {
     if (!g_security_monitor_initialized || !g_security_monitor.config.enabled) {
         return -1;
     }
@@ -152,7 +152,7 @@ int security_monitor_perform_scan(void) {
 }
 
 // Get security scan results
-int security_monitor_get_scan_results(security_scan_result_t* results) {
+static int security_monitor_get_scan_results(security_scan_result_t* results) {
     if (!g_security_monitor_initialized || !results) {
         return -1;
     }
@@ -165,7 +165,7 @@ int security_monitor_get_scan_results(security_scan_result_t* results) {
 }
 
 // Get security events
-int security_monitor_get_events(security_event_t* events, int max_events) {
+static int security_monitor_get_events(security_event_t* events, int max_events) {
     if (!g_security_monitor_initialized || !events || max_events <= 0) {
         return -1;
     }
@@ -189,7 +189,7 @@ int security_monitor_get_events(security_event_t* events, int max_events) {
 }
 
 // Acknowledge security event
-int security_monitor_acknowledge_event(const char* event_id) {
+static int security_monitor_acknowledge_event(const char* event_id) {
     if (!g_security_monitor_initialized || !event_id) {
         return -1;
     }
@@ -372,7 +372,7 @@ static char* generate_event_id(void) {
 }
 
 // Get security monitor status
-void security_monitor_get_status(security_monitor_t* status) {
+static void security_monitor_get_status(security_monitor_t* status) {
     if (!status || !g_security_monitor_initialized) return;
     
     pthread_mutex_lock(g_security_monitor.mutex);
@@ -381,11 +381,11 @@ void security_monitor_get_status(security_monitor_t* status) {
 }
 
 // Check if security monitor is initialized
-bool security_monitor_is_initialized(void) {
+static bool security_monitor_is_initialized(void) {
     return g_security_monitor_initialized;
 }
 
 // Get security monitor instance
-security_monitor_t* security_monitor_get_instance(void) {
+static security_monitor_t* security_monitor_get_instance(void) {
     return g_security_monitor_initialized ? &g_security_monitor : NULL;
 }

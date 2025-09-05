@@ -27,7 +27,7 @@ static void send_notification(const char *type, const char *message);
 /**
  * Initialize service watchdog
  */
-int service_watchdog_init(void) {
+static int service_watchdog_init(void) {
     memset(&g_service_watchdog, 0, sizeof(service_watchdog_t));
     
     // Set default configuration
@@ -57,7 +57,7 @@ int service_watchdog_init(void) {
 /**
  * Check services and restart hung ones
  */
-int service_watchdog_check(void) {
+static int service_watchdog_check(void) {
     if (!g_service_watchdog.config.enabled) {
         return AUTONOMY_SUCCESS;
     }
@@ -293,6 +293,7 @@ static void send_notification(const char *type, const char *message) {
     notification_event_t event = {0};
     strcpy(event.title, "Service Watchdog Alert");
     strncpy(event.message, message, sizeof(event.message) - 1);
+    event.message[sizeof(event.message) - 1] = '\0';
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
     event.timestamp = time(NULL);
     
@@ -317,7 +318,7 @@ static void send_notification(const char *type, const char *message) {
 /**
  * Get service watchdog status
  */
-int service_watchdog_get_status(service_watchdog_status_t *status) {
+static int service_watchdog_get_status(service_watchdog_status_t *status) {
     if (!status) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -346,7 +347,7 @@ int service_watchdog_get_status(service_watchdog_status_t *status) {
 /**
  * Get service watchdog configuration
  */
-int service_watchdog_get_config(service_watchdog_config_t *config) {
+static int service_watchdog_get_config(service_watchdog_config_t *config) {
     if (!config) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -358,7 +359,7 @@ int service_watchdog_get_config(service_watchdog_config_t *config) {
 /**
  * Set service watchdog configuration
  */
-int service_watchdog_set_config(const service_watchdog_config_t *config) {
+static int service_watchdog_set_config(const service_watchdog_config_t *config) {
     if (!config) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -370,7 +371,7 @@ int service_watchdog_set_config(const service_watchdog_config_t *config) {
 /**
  * Enable/disable service watchdog
  */
-int service_watchdog_set_enabled(bool enabled) {
+static int service_watchdog_set_enabled(bool enabled) {
     g_service_watchdog.config.enabled = enabled;
     return AUTONOMY_SUCCESS;
 }
@@ -378,7 +379,7 @@ int service_watchdog_set_enabled(bool enabled) {
 /**
  * Reset service watchdog
  */
-int service_watchdog_reset(void) {
+static int service_watchdog_reset(void) {
     memset(&g_service_watchdog.stats, 0, sizeof(service_watchdog_stats_t));
     return AUTONOMY_SUCCESS;
 }
@@ -386,6 +387,6 @@ int service_watchdog_reset(void) {
 /**
  * Cleanup service watchdog
  */
-void service_watchdog_cleanup(void) {
+static void service_watchdog_cleanup(void) {
     // Nothing to cleanup for this module
 }

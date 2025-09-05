@@ -18,7 +18,7 @@ static double calculate_test_duration(time_t start_time, time_t end_time);
 static void log_test_result(const test_case_t* test_case);
 
 // Initialize test framework
-int test_framework_init(const test_framework_config_t* config) {
+static int test_framework_init(const test_framework_config_t* config) {
     if (g_test_framework_initialized) {
         return 0; // Already initialized
     }
@@ -91,7 +91,7 @@ int test_framework_init(const test_framework_config_t* config) {
 }
 
 // Clean up test framework
-void test_framework_cleanup(void) {
+static void test_framework_cleanup(void) {
     if (!g_test_framework_initialized) return;
     
     if (g_test_framework.mutex) {
@@ -104,7 +104,7 @@ void test_framework_cleanup(void) {
 }
 
 // Run all tests
-int test_framework_run_all_tests(void) {
+static int test_framework_run_all_tests(void) {
     if (!g_test_framework_initialized || !g_test_framework.config.enabled) {
         return -1;
     }
@@ -147,7 +147,7 @@ int test_framework_run_all_tests(void) {
 }
 
 // Run specific test suite
-int test_framework_run_test_suite(const char* suite_name) {
+static int test_framework_run_test_suite(const char* suite_name) {
     if (!g_test_framework_initialized || !g_test_framework.config.enabled || !suite_name) {
         return -1;
     }
@@ -156,7 +156,7 @@ int test_framework_run_test_suite(const char* suite_name) {
 }
 
 // Run specific test case
-int test_framework_run_test_case(const char* suite_name, const char* test_name) {
+static int test_framework_run_test_case(const char* suite_name, const char* test_name) {
     if (!g_test_framework_initialized || !g_test_framework.config.enabled || !suite_name || !test_name) {
         return -1;
     }
@@ -219,7 +219,7 @@ int test_framework_add_test_case(const char* suite_name, const char* test_name,
 }
 
 // Get test results
-int test_framework_get_results(test_suite_t* suites, int max_suites) {
+static int test_framework_get_results(test_suite_t* suites, int max_suites) {
     if (!g_test_framework_initialized || !suites || max_suites <= 0) {
         return -1;
     }
@@ -388,6 +388,7 @@ static void update_test_result(test_case_t* test_case, test_result_t result, con
     if (error_message && result != TEST_RESULT_PASS) {
         strncpy(test_case->error_message, error_message, sizeof(test_case->error_message) - 1);
         test_case->error_message[sizeof(test_case->error_message) - 1] = '\0';
+        test_case->error_message[sizeof(test_case->error_message) - 1] = '\0';
     } else {
         test_case->error_message[0] = '\0';
     }
@@ -428,7 +429,7 @@ static void log_test_result(const test_case_t* test_case) {
 }
 
 // Get test framework status
-void test_framework_get_status(test_framework_t* status) {
+static void test_framework_get_status(test_framework_t* status) {
     if (!status || !g_test_framework_initialized) return;
     
     pthread_mutex_lock(g_test_framework.mutex);
@@ -437,11 +438,11 @@ void test_framework_get_status(test_framework_t* status) {
 }
 
 // Check if test framework is initialized
-bool test_framework_is_initialized(void) {
+static bool test_framework_is_initialized(void) {
     return g_test_framework_initialized;
 }
 
 // Get test framework instance
-test_framework_t* test_framework_get_instance(void) {
+static test_framework_t* test_framework_get_instance(void) {
     return g_test_framework_initialized ? &g_test_framework : NULL;
 }

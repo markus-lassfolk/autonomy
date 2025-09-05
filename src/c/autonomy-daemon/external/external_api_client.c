@@ -27,7 +27,7 @@ static int api_disconnect(void);
 static double calculate_response_time(time_t start_time);
 
 // Initialize external API client
-int external_api_client_init(const api_endpoint_config_t* config) {
+static int external_api_client_init(const api_endpoint_config_t* config) {
     if (g_external_api_client_initialized) {
         return 0; // Already initialized
     }
@@ -63,7 +63,7 @@ int external_api_client_init(const api_endpoint_config_t* config) {
 }
 
 // Clean up external API client
-void external_api_client_cleanup(void) {
+static void external_api_client_cleanup(void) {
     if (!g_external_api_client_initialized) return;
     
     // Disconnect if connected
@@ -86,7 +86,7 @@ void external_api_client_cleanup(void) {
 }
 
 // Send API request
-int external_api_client_send_request(const api_request_t* request, api_response_t* response) {
+static int external_api_client_send_request(const api_request_t* request, api_response_t* response) {
     if (!g_external_api_client_initialized || !request || !response) {
         return -1;
     }
@@ -131,7 +131,7 @@ int external_api_client_send_request(const api_request_t* request, api_response_
 }
 
 // Test API connection
-int external_api_client_test_connection(void) {
+static int external_api_client_test_connection(void) {
     if (!g_external_api_client_initialized) {
         return -1;
     }
@@ -332,7 +332,7 @@ static double calculate_response_time(time_t start_time) {
 }
 
 // Get API client status
-void external_api_client_get_status(external_api_client_t* status) {
+static void external_api_client_get_status(external_api_client_t* status) {
     if (!status || !g_external_api_client_initialized) return;
     
     pthread_mutex_lock(g_external_api_client.mutex);
@@ -341,16 +341,16 @@ void external_api_client_get_status(external_api_client_t* status) {
 }
 
 // Check if API client is initialized
-bool external_api_client_is_initialized(void) {
+static bool external_api_client_is_initialized(void) {
     return g_external_api_client_initialized;
 }
 
 // Check if API client is connected
-bool external_api_client_is_connected(void) {
+static bool external_api_client_is_connected(void) {
     return g_external_api_client_initialized && g_external_api_client.connected;
 }
 
 // Get API client instance
-external_api_client_t* external_api_client_get_instance(void) {
+static external_api_client_t* external_api_client_get_instance(void) {
     return g_external_api_client_initialized ? &g_external_api_client : NULL;
 }

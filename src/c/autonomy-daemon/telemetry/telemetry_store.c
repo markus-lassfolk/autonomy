@@ -16,7 +16,7 @@ static void downsample_old_data(void);
 static int find_member_index(const char* member_name);
 
 // Create ring buffer
-telemetry_ring_buffer_t* telemetry_ring_buffer_create(int capacity) {
+static telemetry_ring_buffer_t* telemetry_ring_buffer_create(int capacity) {
     telemetry_ring_buffer_t* buffer = malloc(sizeof(telemetry_ring_buffer_t));
     if (!buffer) return NULL;
     
@@ -44,7 +44,7 @@ telemetry_ring_buffer_t* telemetry_ring_buffer_create(int capacity) {
 }
 
 // Destroy ring buffer
-void telemetry_ring_buffer_destroy(telemetry_ring_buffer_t* buffer) {
+static void telemetry_ring_buffer_destroy(telemetry_ring_buffer_t* buffer) {
     if (!buffer) return;
     
     if (buffer->mutex) {
@@ -67,7 +67,7 @@ void telemetry_ring_buffer_destroy(telemetry_ring_buffer_t* buffer) {
 }
 
 // Add item to ring buffer
-int telemetry_ring_buffer_add(telemetry_ring_buffer_t* buffer, void* item) {
+static int telemetry_ring_buffer_add(telemetry_ring_buffer_t* buffer, void* item) {
     if (!buffer || !item) return -1;
     
     pthread_mutex_lock(buffer->mutex);
@@ -120,7 +120,7 @@ int telemetry_ring_buffer_get_since(telemetry_ring_buffer_t* buffer, time_t sinc
 }
 
 // Get ring buffer size
-int telemetry_ring_buffer_size(telemetry_ring_buffer_t* buffer) {
+static int telemetry_ring_buffer_size(telemetry_ring_buffer_t* buffer) {
     if (!buffer) return 0;
     
     pthread_mutex_lock(buffer->mutex);
@@ -131,7 +131,7 @@ int telemetry_ring_buffer_size(telemetry_ring_buffer_t* buffer) {
 }
 
 // Remove items before timestamp
-int telemetry_ring_buffer_remove_before(telemetry_ring_buffer_t* buffer, time_t before) {
+static int telemetry_ring_buffer_remove_before(telemetry_ring_buffer_t* buffer, time_t before) {
     if (!buffer) return 0;
     
     pthread_mutex_lock(buffer->mutex);
@@ -164,7 +164,7 @@ int telemetry_ring_buffer_remove_before(telemetry_ring_buffer_t* buffer, time_t 
 }
 
 // Initialize telemetry store
-int telemetry_store_init(const telemetry_store_config_t* config) {
+static int telemetry_store_init(const telemetry_store_config_t* config) {
     if (g_telemetry_store_initialized) {
         return 0; // Already initialized
     }
@@ -229,7 +229,7 @@ int telemetry_store_init(const telemetry_store_config_t* config) {
 }
 
 // Clean up telemetry store
-void telemetry_store_cleanup(void) {
+static void telemetry_store_cleanup(void) {
     if (!g_telemetry_store_initialized) return;
     
     // Stop cleanup thread
@@ -288,7 +288,7 @@ static int find_member_index(const char* member_name) {
 }
 
 // Add telemetry sample
-int telemetry_store_add_sample(const char* member_name, const telemetry_sample_t* sample) {
+static int telemetry_store_add_sample(const char* member_name, const telemetry_sample_t* sample) {
     if (!g_telemetry_store_initialized || !member_name || !sample) {
         return -1;
     }
@@ -306,6 +306,7 @@ int telemetry_store_add_sample(const char* member_name, const telemetry_sample_t
         
         member_index = g_telemetry_store.member_count;
         strncpy(g_telemetry_store.member_names[member_index], member_name, sizeof(g_telemetry_store.member_names[member_index]) - 1);
+        g_telemetry_store.member_names[member_index][sizeof(g_telemetry_store.member_names[member_index]) - 1] = '\0';
         
         g_telemetry_store.member_buffers[member_index] = telemetry_ring_buffer_create(g_telemetry_store.config.max_samples_per_member);
         if (!g_telemetry_store.member_buffers[member_index]) {
@@ -346,7 +347,7 @@ int telemetry_store_add_sample(const char* member_name, const telemetry_sample_t
 }
 
 // Add system event
-int telemetry_store_add_event(const telemetry_event_t* event) {
+static int telemetry_store_add_event(const telemetry_event_t* event) {
     if (!g_telemetry_store_initialized || !event) {
         return -1;
     }
@@ -418,7 +419,7 @@ int telemetry_store_get_samples(const char* member_name, time_t since,
 }
 
 // Get events since timestamp
-int telemetry_store_get_events(time_t since, telemetry_event_t* events, int max_events) {
+static int telemetry_store_get_events(time_t since, telemetry_event_t* events, int max_events) {
     if (!g_telemetry_store_initialized || !events || max_events <= 0) {
         return -1;
     }
@@ -446,7 +447,7 @@ int telemetry_store_get_events(time_t since, telemetry_event_t* events, int max_
 }
 
 // Get all member names
-int telemetry_store_get_members(char member_names[][128], int max_members) {
+static int telemetry_store_get_members(char member_names[][128], int max_members) {
     if (!g_telemetry_store_initialized || !member_names || max_members <= 0) {
         return -1;
     }
@@ -521,7 +522,7 @@ static void downsample_old_data(void) {
 }
 
 // Get memory usage in MB
-int telemetry_store_get_memory_usage(void) {
+static int telemetry_store_get_memory_usage(void) {
     if (!g_telemetry_store_initialized) return 0;
     
     pthread_mutex_lock(g_telemetry_store.mutex);
@@ -533,7 +534,7 @@ int telemetry_store_get_memory_usage(void) {
 }
 
 // Perform cleanup of old data
-void telemetry_store_perform_cleanup(void) {
+static void telemetry_store_perform_cleanup(void) {
     if (!g_telemetry_store_initialized) return;
     
     pthread_mutex_lock(g_telemetry_store.mutex);
@@ -560,7 +561,7 @@ void telemetry_store_perform_cleanup(void) {
 }
 
 // Get telemetry store status
-void telemetry_store_get_status(telemetry_store_status_t* status) {
+static void telemetry_store_get_status(telemetry_store_status_t* status) {
     if (!status || !g_telemetry_store_initialized) return;
     
     pthread_mutex_lock(g_telemetry_store.mutex);
@@ -570,7 +571,7 @@ void telemetry_store_get_status(telemetry_store_status_t* status) {
 }
 
 // Export telemetry data as JSON
-void telemetry_store_export_json(time_t since, char* json_output, size_t max_size) {
+static void telemetry_store_export_json(time_t since, char* json_output, size_t max_size) {
     if (!g_telemetry_store_initialized || !json_output || max_size == 0) return;
     
     pthread_mutex_lock(g_telemetry_store.mutex);
@@ -596,11 +597,11 @@ void telemetry_store_export_json(time_t since, char* json_output, size_t max_siz
 }
 
 // Check if telemetry store is initialized
-bool telemetry_store_is_initialized(void) {
+static bool telemetry_store_is_initialized(void) {
     return g_telemetry_store_initialized;
 }
 
 // Get telemetry store instance
-telemetry_store_t* telemetry_store_get_instance(void) {
+static telemetry_store_t* telemetry_store_get_instance(void) {
     return g_telemetry_store_initialized ? &g_telemetry_store : NULL;
 }

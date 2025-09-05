@@ -30,7 +30,7 @@ static struct {
 } g_starlink_state = {0};
 
 // Initialize Starlink client
-int starlink_client_init(const starlink_config_t *config) {
+static int starlink_client_init(const starlink_config_t *config) {
     if (!config) {
         return -1;
     }
@@ -48,7 +48,7 @@ int starlink_client_init(const starlink_config_t *config) {
 }
 
 // Create TCP connection to Starlink dish
-int starlink_connect(void) {
+static int starlink_connect(void) {
     if (g_starlink_state.socket_fd >= 0) {
         close(g_starlink_state.socket_fd);
         g_starlink_state.socket_fd = -1;
@@ -106,7 +106,7 @@ int starlink_connect(void) {
 }
 
 // Disconnect from Starlink dish
-void starlink_disconnect(void) {
+static void starlink_disconnect(void) {
     if (g_starlink_state.socket_fd >= 0) {
         close(g_starlink_state.socket_fd);
         g_starlink_state.socket_fd = -1;
@@ -115,7 +115,7 @@ void starlink_disconnect(void) {
 }
 
 // Send gRPC request to Starlink
-int starlink_send_request(starlink_method_t method, char *response, size_t response_size) {
+static int starlink_send_request(starlink_method_t method, char *response, size_t response_size) {
     if (!g_starlink_state.connection_healthy || g_starlink_state.socket_fd < 0) {
         if (starlink_connect() < 0) {
             return -1;
@@ -163,7 +163,7 @@ int starlink_send_request(starlink_method_t method, char *response, size_t respo
 }
 
 // Parse JSON response from Starlink (simplified parser)
-int starlink_parse_response(const char *json_response, starlink_status_response_t *status) {
+static int starlink_parse_response(const char *json_response, starlink_status_response_t *status) {
     if (!json_response || !status) {
         return -1;
     }
@@ -225,7 +225,7 @@ int starlink_parse_response(const char *json_response, starlink_status_response_
 }
 
 // Get Starlink status
-int starlink_get_status(starlink_status_response_t *status) {
+static int starlink_get_status(starlink_status_response_t *status) {
     if (!status) {
         return -1;
     }
@@ -240,7 +240,7 @@ int starlink_get_status(starlink_status_response_t *status) {
 }
 
 // Get Starlink device info
-int starlink_get_device_info(starlink_device_info_t *device_info) {
+static int starlink_get_device_info(starlink_device_info_t *device_info) {
     if (!device_info) {
         return -1;
     }
@@ -261,7 +261,7 @@ int starlink_get_device_info(starlink_device_info_t *device_info) {
 }
 
 // Get Starlink location
-int starlink_get_location(starlink_lla_position_t *location) {
+static int starlink_get_location(starlink_lla_position_t *location) {
     if (!location) {
         return -1;
     }
@@ -285,7 +285,7 @@ int starlink_get_location(starlink_lla_position_t *location) {
 }
 
 // Check Starlink connection health
-bool starlink_is_healthy(void) {
+static bool starlink_is_healthy(void) {
     return g_starlink_state.connection_healthy && g_starlink_state.socket_fd >= 0;
 }
 
@@ -295,7 +295,7 @@ const starlink_config_t* starlink_get_config(void) {
 }
 
 // Cleanup Starlink client
-void starlink_client_cleanup(void) {
+static void starlink_client_cleanup(void) {
     starlink_disconnect();
     g_starlink_state.initialized = false;
 }

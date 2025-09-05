@@ -111,7 +111,7 @@ static int queue_contribution(const opencellid_cellular_environment_t* environme
 static int send_contribution_batch(contribution_queue_entry_t* entries, int count);
 
 // Initialize the complete OpenCellID system
-int opencellid_system_init(const opencellid_config_t* config) {
+static int opencellid_system_init(const opencellid_config_t* config) {
     if (g_system_initialized) {
         LOGX_WARN("OpenCellID system already initialized");
         return AUTONOMY_SUCCESS;
@@ -205,7 +205,7 @@ cleanup:
 }
 
 // Cleanup the OpenCellID system
-void opencellid_system_cleanup(void) {
+static void opencellid_system_cleanup(void) {
     if (!g_system_initialized) return;
     
     pthread_mutex_lock(&g_opencellid_system.mutex);
@@ -238,7 +238,7 @@ void opencellid_system_cleanup(void) {
 }
 
 // Get current cellular environment
-int opencellid_get_cellular_environment(opencellid_cellular_environment_t* environment) {
+static int opencellid_get_cellular_environment(opencellid_cellular_environment_t* environment) {
     if (!g_system_initialized || !environment) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -525,7 +525,7 @@ const char* opencellid_radio_type_to_string(opencellid_radio_type_t radio) {
 }
 
 // Parse radio type from string
-opencellid_radio_type_t opencellid_parse_radio_type(const char* radio_str) {
+static opencellid_radio_type_t opencellid_parse_radio_type(const char* radio_str) {
     if (!radio_str) return OPENCELLID_RADIO_UNKNOWN;
     
     for (int i = 0; i < OPENCELLID_RADIO_MAX; i++) {
@@ -538,7 +538,7 @@ opencellid_radio_type_t opencellid_parse_radio_type(const char* radio_str) {
 }
 
 // Calculate distance between two points using Haversine formula
-double opencellid_calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+static double opencellid_calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000; // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
@@ -556,7 +556,7 @@ double opencellid_calculate_distance(double lat1, double lon1, double lat2, doub
 }
 
 // Check if system is initialized
-bool opencellid_is_initialized(void) {
+static bool opencellid_is_initialized(void) {
     return g_system_initialized;
 }
 
@@ -601,4 +601,159 @@ static void cleanup_http_client(void) {
     curl_global_cleanup();
 }
 
-// Additional functions would be implemented here following the same pattern...
+// HTTP callback function for curl
+static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response) {
+    size_t total_size = size * nmemb;
+    
+    // Reallocate memory for the response data
+    char* new_data = realloc(response->data, response->size + total_size + 1);
+    if (!new_data) {
+        return 0; // Failed to allocate memory
+    }
+    
+    response->data = new_data;
+    memcpy(&(response->data[response->size]), contents, total_size);
+    response->size += total_size;
+    response->data[response->size] = '\0';
+    
+    return total_size;
+}
+
+// Make HTTP API request
+static int make_api_request(const char* url, const char* post_data, http_response_t* response) {
+    CURL* curl;
+    CURLcode res;
+    
+    if (!url || !response) {
+        return AUTONOMY_ERROR;
+    }
+    
+    // Initialize response structure
+    response->data = NULL;
+    response->size = 0;
+    
+    curl = curl_easy_init();
+    if (!curl) {
+        return AUTONOMY_ERROR;
+    }
+    
+    // Set URL
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    
+    // Set write callback
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+    
+    // Set timeout
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+    
+    // Set user agent
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "autonomy-daemon/1.0");
+    
+    // Set POST data if provided
+    if (post_data) {
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
+    }
+    
+    // Perform the request
+    res = curl_easy_perform(curl);
+    
+    // Clean up
+    curl_easy_cleanup(curl);
+    
+    if (res != CURLE_OK) {
+        if (response->data) {
+            free(response->data);
+            response->data = NULL;
+        }
+        return AUTONOMY_ERROR;
+    }
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Parse cell location response from JSON
+static int parse_cell_location_response(const char* json_data, opencellid_cell_location_t* location) {
+    if (!json_data || !location) {
+        return AUTONOMY_ERROR;
+    }
+    
+    json_object* json_obj = json_tokener_parse(json_data);
+    if (!json_obj) {
+        return AUTONOMY_ERROR;
+    }
+    
+    json_object* lat_obj, *lon_obj, *accuracy_obj;
+    
+    // Parse latitude
+    if (json_object_object_get_ex(json_obj, "lat", &lat_obj)) {
+        location->lat = json_object_get_double(lat_obj);
+    } else {
+        json_object_put(json_obj);
+        return AUTONOMY_ERROR;
+    }
+    
+    // Parse longitude
+    if (json_object_object_get_ex(json_obj, "lon", &lon_obj)) {
+        location->lon = json_object_get_double(lon_obj);
+    } else {
+        json_object_put(json_obj);
+        return AUTONOMY_ERROR;
+    }
+    
+    // Parse accuracy (optional)
+    if (json_object_object_get_ex(json_obj, "accuracy", &accuracy_obj)) {
+        location->accuracy = json_object_get_double(accuracy_obj);
+    } else {
+        location->accuracy = 0.0;
+    }
+    
+    json_object_put(json_obj);
+    return AUTONOMY_SUCCESS;
+}
+
+// Get cell location from cache
+static int cache_get_cell_location(const opencellid_cell_identifier_t* cell_id, opencellid_cell_location_t* location) {
+    if (!cell_id || !location) {
+        return AUTONOMY_ERROR;
+    }
+    
+    // Simple cache lookup - in a real implementation, this would use a proper cache
+    // For now, return not found
+    return AUTONOMY_ERROR;
+}
+
+// Set cell location in cache
+static int cache_set_cell_location(const opencellid_cell_location_t* location) {
+    if (!location) {
+        return AUTONOMY_ERROR;
+    }
+    
+    // Simple cache storage - in a real implementation, this would use a proper cache
+    // For now, just return success
+    return AUTONOMY_SUCCESS;
+}
+
+// Check if rate limiter allows lookup
+static int rate_limiter_can_make_lookup(void) {
+    // Simple rate limiting - in a real implementation, this would check actual limits
+    // For now, always allow
+    return AUTONOMY_SUCCESS;
+}
+
+// Check if rate limiter allows contribution
+static int rate_limiter_can_make_contribution(void) {
+    // Simple rate limiting - in a real implementation, this would check actual limits
+    // For now, always allow
+    return AUTONOMY_SUCCESS;
+}
+
+// Record lookup in rate limiter
+static void rate_limiter_record_lookup(void) {
+    // Record lookup - in a real implementation, this would update rate limiting counters
+}
+
+// Record contribution in rate limiter
+static void rate_limiter_record_contribution(void) {
+    // Record contribution - in a real implementation, this would update rate limiting counters
+}

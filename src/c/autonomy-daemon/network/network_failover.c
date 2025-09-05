@@ -25,7 +25,7 @@ static const int DEFAULT_RECOVERY_TIMEOUT = 300;          // Seconds to wait bef
 static const int DEFAULT_CHECK_INTERVAL = 10;             // Seconds between health checks
 
 // Initialize network failover system
-int network_failover_init(void) {
+static int network_failover_init(void) {
     if (g_failover_initialized) {
         LOGX_WARN("Network failover already initialized");
         return AUTONOMY_SUCCESS;
@@ -55,7 +55,7 @@ int network_failover_init(void) {
 }
 
 // Start failover monitoring thread
-int network_failover_start_monitoring(void) {
+static int network_failover_start_monitoring(void) {
     if (!g_failover_initialized) {
         LOGX_ERROR("Network failover not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
@@ -80,7 +80,7 @@ int network_failover_start_monitoring(void) {
 }
 
 // Stop failover monitoring
-void network_failover_stop_monitoring(void) {
+static void network_failover_stop_monitoring(void) {
     if (!g_failover_thread_running) {
         return;
     }
@@ -116,7 +116,7 @@ static void* failover_monitor_thread(void *arg) {
 }
 
 // Check health of all interfaces
-int network_failover_check_health(void) {
+static int network_failover_check_health(void) {
     if (!g_failover_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -307,7 +307,7 @@ static int deactivate_interface_routing(int interface_index) {
 }
 
 // Add interface to failover system
-int network_failover_add_interface(const network_interface_t *interface) {
+static int network_failover_add_interface(const network_interface_t *interface) {
     if (!g_failover_initialized || !interface) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -347,7 +347,7 @@ int network_failover_add_interface(const network_interface_t *interface) {
 }
 
 // Remove interface from failover system
-int network_failover_remove_interface(const char *interface_name) {
+static int network_failover_remove_interface(const char *interface_name) {
     if (!g_failover_initialized || !interface_name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -385,7 +385,7 @@ int network_failover_remove_interface(const char *interface_name) {
 }
 
 // Force failover to specified interface
-int network_failover_force_failover(const char *interface_name) {
+static int network_failover_force_failover(const char *interface_name) {
     if (!g_failover_initialized || !interface_name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -435,7 +435,7 @@ int network_failover_force_failover(const char *interface_name) {
 }
 
 // Get failover status
-int network_failover_get_status(network_failover_status_t *status) {
+static int network_failover_get_status(network_failover_status_t *status) {
     if (!g_failover_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -461,7 +461,7 @@ int network_failover_get_status(network_failover_status_t *status) {
 }
 
 // Set failover configuration
-int network_failover_set_config(const network_failover_config_t *config) {
+static int network_failover_set_config(const network_failover_config_t *config) {
     if (!g_failover_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -497,7 +497,7 @@ int network_failover_set_config(const network_failover_config_t *config) {
 }
 
 // Enable/disable failover system
-int network_failover_set_enabled(bool enabled) {
+static int network_failover_set_enabled(bool enabled) {
     if (!g_failover_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -511,7 +511,7 @@ int network_failover_set_enabled(bool enabled) {
 }
 
 // Cleanup failover system
-void network_failover_cleanup(void) {
+static void network_failover_cleanup(void) {
     if (!g_failover_initialized) {
         return;
     }

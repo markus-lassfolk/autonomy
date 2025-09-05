@@ -51,7 +51,7 @@ static bool g_obstruction_initialized = false;
 static pthread_mutex_t g_obstruction_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize Starlink obstruction analysis
-int starlink_obstruction_init(void) {
+static int starlink_obstruction_init(void) {
     if (g_obstruction_initialized) {
         LOGX_WARN("Starlink obstruction analysis already initialized");
         return AUTONOMY_SUCCESS;
@@ -142,7 +142,7 @@ int starlink_obstruction_init(void) {
 }
 
 // Record obstruction observation
-int starlink_obstruction_record_observation(const starlink_obstruction_sample_t *sample) {
+static int starlink_obstruction_record_observation(const starlink_obstruction_sample_t *sample) {
     if (!g_obstruction_initialized || !sample) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -366,7 +366,9 @@ static void update_or_create_pattern(const char *name, const char *description,
         pattern->active = true;
         strncpy(pattern->name, name, sizeof(pattern->name) - 1);
         pattern->name[sizeof(pattern->name) - 1] = '\0';
+        pattern->name[sizeof(pattern->name) - 1] = '\0';
         strncpy(pattern->description, description, sizeof(pattern->description) - 1);
+        pattern->description[sizeof(pattern->description) - 1] = '\0';
         pattern->description[sizeof(pattern->description) - 1] = '\0';
         
         // Update pattern data
@@ -500,7 +502,9 @@ static void create_or_update_active_match(const starlink_environmental_pattern_t
         match->active = true;
         strncpy(match->pattern_id, pattern->id, sizeof(match->pattern_id) - 1);
         match->pattern_id[sizeof(match->pattern_id) - 1] = '\0';
+        match->pattern_id[sizeof(match->pattern_id) - 1] = '\0';
         strncpy(match->pattern_name, pattern->name, sizeof(match->pattern_name) - 1);
+        match->pattern_name[sizeof(match->pattern_name) - 1] = '\0';
         match->pattern_name[sizeof(match->pattern_name) - 1] = '\0';
         
         if (match->start_time == 0) {
@@ -581,12 +585,15 @@ static void add_match_to_history(const starlink_active_match_t *match, const cha
         result->timestamp = match->last_update;
         strncpy(result->pattern_id, match->pattern_id, sizeof(result->pattern_id) - 1);
         result->pattern_id[sizeof(result->pattern_id) - 1] = '\0';
+        result->pattern_id[sizeof(result->pattern_id) - 1] = '\0';
         strncpy(result->pattern_name, match->pattern_name, sizeof(result->pattern_name) - 1);
+        result->pattern_name[sizeof(result->pattern_name) - 1] = '\0';
         result->pattern_name[sizeof(result->pattern_name) - 1] = '\0';
         result->similarity = match->similarity;
         result->confidence = match->confidence;
         result->success = (match->status == MATCH_STATUS_CONFIRMED);
         strncpy(result->reason, reason, sizeof(result->reason) - 1);
+        result->reason[sizeof(result->reason) - 1] = '\0';
         result->reason[sizeof(result->reason) - 1] = '\0';
         result->duration = match->last_update - match->start_time;
         result->sample_count = match->sample_count;
@@ -661,7 +668,7 @@ static void analyze_trend(const trend_point_array_t *history, const char *metric
 }
 
 // Get obstruction analysis status
-int starlink_obstruction_get_status(starlink_obstruction_status_t *status) {
+static int starlink_obstruction_get_status(starlink_obstruction_status_t *status) {
     if (!g_obstruction_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -682,7 +689,7 @@ int starlink_obstruction_get_status(starlink_obstruction_status_t *status) {
 }
 
 // Get environmental patterns
-int starlink_obstruction_get_patterns(starlink_environmental_pattern_t *patterns, int max_patterns) {
+static int starlink_obstruction_get_patterns(starlink_environmental_pattern_t *patterns, int max_patterns) {
     if (!g_obstruction_initialized || !patterns || max_patterns <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -703,7 +710,7 @@ int starlink_obstruction_get_patterns(starlink_environmental_pattern_t *patterns
 }
 
 // Get active matches
-int starlink_obstruction_get_active_matches(starlink_active_match_t *matches, int max_matches) {
+static int starlink_obstruction_get_active_matches(starlink_active_match_t *matches, int max_matches) {
     if (!g_obstruction_initialized || !matches || max_matches <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -724,7 +731,7 @@ int starlink_obstruction_get_active_matches(starlink_active_match_t *matches, in
 }
 
 // Get match history
-int starlink_obstruction_get_match_history(starlink_match_result_t *results, int max_results) {
+static int starlink_obstruction_get_match_history(starlink_match_result_t *results, int max_results) {
     if (!g_obstruction_initialized || !results || max_results <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -745,7 +752,7 @@ int starlink_obstruction_get_match_history(starlink_match_result_t *results, int
 }
 
 // Get obstruction configuration
-int starlink_obstruction_get_config(starlink_obstruction_config_t *config) {
+static int starlink_obstruction_get_config(starlink_obstruction_config_t *config) {
     if (!g_obstruction_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -767,7 +774,7 @@ int starlink_obstruction_get_config(starlink_obstruction_config_t *config) {
 }
 
 // Set obstruction configuration
-int starlink_obstruction_set_config(const starlink_obstruction_config_t *config) {
+static int starlink_obstruction_set_config(const starlink_obstruction_config_t *config) {
     if (!g_obstruction_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -790,7 +797,7 @@ int starlink_obstruction_set_config(const starlink_obstruction_config_t *config)
 }
 
 // Enable/disable obstruction analysis
-int starlink_obstruction_set_enabled(bool enabled) {
+static int starlink_obstruction_set_enabled(bool enabled) {
     if (!g_obstruction_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -804,7 +811,7 @@ int starlink_obstruction_set_enabled(bool enabled) {
 }
 
 // Reset obstruction analysis
-int starlink_obstruction_reset(void) {
+static int starlink_obstruction_reset(void) {
     if (!g_obstruction_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -838,7 +845,7 @@ int starlink_obstruction_reset(void) {
 }
 
 // Cleanup obstruction analysis
-void starlink_obstruction_cleanup(void) {
+static void starlink_obstruction_cleanup(void) {
     if (!g_obstruction_initialized) {
         return;
     }

@@ -27,7 +27,7 @@ static bool g_movement_initialized = false;
 static pthread_mutex_t g_movement_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS movement detector
-int gps_movement_init(void) {
+static int gps_movement_init(void) {
     if (g_movement_initialized) {
         LOGX_WARN("GPS movement detector already initialized");
         return AUTONOMY_SUCCESS;
@@ -69,7 +69,7 @@ int gps_movement_init(void) {
 }
 
 // Add GPS position for movement analysis
-int gps_movement_add_position(const gps_data_t *gps_data) {
+static int gps_movement_add_position(const gps_data_t *gps_data) {
     if (!g_movement_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -387,7 +387,7 @@ static double calculate_bearing(double lat1, double lon1, double lat2, double lo
 }
 
 // Get movement detection status
-int gps_movement_get_status(gps_movement_status_t *status) {
+static int gps_movement_get_status(gps_movement_status_t *status) {
     if (!g_movement_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -410,7 +410,7 @@ int gps_movement_get_status(gps_movement_status_t *status) {
 }
 
 // Get movement detector configuration
-int gps_movement_get_config(gps_movement_config_t *config) {
+static int gps_movement_get_config(gps_movement_config_t *config) {
     if (!g_movement_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -432,7 +432,7 @@ int gps_movement_get_config(gps_movement_config_t *config) {
 }
 
 // Set movement detector configuration
-int gps_movement_set_config(const gps_movement_config_t *config) {
+static int gps_movement_set_config(const gps_movement_config_t *config) {
     if (!g_movement_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -455,7 +455,7 @@ int gps_movement_set_config(const gps_movement_config_t *config) {
 }
 
 // Enable/disable movement detector
-int gps_movement_set_enabled(bool enabled) {
+static int gps_movement_set_enabled(bool enabled) {
     if (!g_movement_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -469,7 +469,7 @@ int gps_movement_set_enabled(bool enabled) {
 }
 
 // Force movement analysis
-int gps_movement_force_analysis(void) {
+static int gps_movement_force_analysis(void) {
     if (!g_movement_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -491,7 +491,7 @@ int gps_movement_force_analysis(void) {
 }
 
 // Reset movement detector
-int gps_movement_reset(void) {
+static int gps_movement_reset(void) {
     if (!g_movement_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -520,7 +520,7 @@ int gps_movement_reset(void) {
 }
 
 // Cleanup movement detector
-void gps_movement_cleanup(void) {
+static void gps_movement_cleanup(void) {
     if (!g_movement_initialized) {
         return;
     }

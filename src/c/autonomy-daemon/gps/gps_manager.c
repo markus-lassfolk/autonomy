@@ -34,7 +34,7 @@ static pthread_t g_gps_manager_thread = 0;
 static bool g_gps_manager_thread_running = false;
 
 // Initialize GPS manager system
-int gps_manager_init(void) {
+static int gps_manager_init(void) {
     if (g_gps_manager_initialized) {
         LOGX_WARN("GPS manager already initialized");
         return AUTONOMY_SUCCESS;
@@ -150,7 +150,7 @@ int gps_manager_init(void) {
 }
 
 // Start GPS manager monitoring thread
-int gps_manager_start_monitoring(void) {
+static int gps_manager_start_monitoring(void) {
     if (!g_gps_manager_initialized) {
         LOGX_ERROR("GPS manager not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
@@ -175,7 +175,7 @@ int gps_manager_start_monitoring(void) {
 }
 
 // Stop GPS manager monitoring
-void gps_manager_stop_monitoring(void) {
+static void gps_manager_stop_monitoring(void) {
     if (!g_gps_manager_thread_running) {
         return;
     }
@@ -214,7 +214,7 @@ static void* gps_manager_monitor_thread(void *arg) {
 }
 
 // Update GPS data from all sources
-int gps_manager_update_all_sources(void) {
+static int gps_manager_update_all_sources(void) {
     if (!g_gps_manager_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -316,6 +316,7 @@ static int find_or_create_gps_source(gps_source_type_t type, const char *name) {
         g_gps_manager.sources[index].enabled = true;
         g_gps_manager.sources[index].type = type;
         strncpy(g_gps_manager.sources[index].name, name, sizeof(g_gps_manager.sources[index].name) - 1);
+        g_gps_manager.sources[index].name[sizeof(g_gps_manager.sources[index].name) - 1] = '\0';
         g_gps_manager.sources[index].last_update = 0;
         g_gps_manager.sources[index].reliability_score = 0.0;
         g_gps_manager.sources[index].data_quality = 0.0;
@@ -399,7 +400,7 @@ static void cleanup_stale_gps_sources(time_t now) {
 }
 
 // Calculate unified GPS position
-int gps_manager_calculate_unified_position(void) {
+static int gps_manager_calculate_unified_position(void) {
     if (!g_gps_manager_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -477,7 +478,7 @@ static bool check_position_change(const gps_data_t *new_data) {
 }
 
 // Get unified GPS data
-int gps_manager_get_unified_gps(gps_data_t *gps_data) {
+static int gps_manager_get_unified_gps(gps_data_t *gps_data) {
     if (!g_gps_manager_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -492,7 +493,7 @@ int gps_manager_get_unified_gps(gps_data_t *gps_data) {
 }
 
 // Get GPS source information
-int gps_manager_get_sources(gps_source_t *sources, int max_count, int *actual_count) {
+static int gps_manager_get_sources(gps_source_t *sources, int max_count, int *actual_count) {
     if (!g_gps_manager_initialized || !sources || !actual_count) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -513,7 +514,7 @@ int gps_manager_get_sources(gps_source_t *sources, int max_count, int *actual_co
 }
 
 // Get GPS manager status
-int gps_manager_get_status(gps_manager_status_t *status) {
+static int gps_manager_get_status(gps_manager_status_t *status) {
     if (!g_gps_manager_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -534,7 +535,7 @@ int gps_manager_get_status(gps_manager_status_t *status) {
 }
 
 // Set GPS manager configuration
-int gps_manager_set_config(const gps_manager_config_t *config) {
+static int gps_manager_set_config(const gps_manager_config_t *config) {
     if (!g_gps_manager_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -558,7 +559,7 @@ int gps_manager_set_config(const gps_manager_config_t *config) {
 }
 
 // Enable/disable GPS manager
-int gps_manager_set_enabled(bool enabled) {
+static int gps_manager_set_enabled(bool enabled) {
     if (!g_gps_manager_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -572,7 +573,7 @@ int gps_manager_set_enabled(bool enabled) {
 }
 
 // Force immediate GPS update
-int gps_manager_force_update(void) {
+static int gps_manager_force_update(void) {
     if (!g_gps_manager_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -582,7 +583,7 @@ int gps_manager_force_update(void) {
 }
 
 // Cleanup GPS manager system
-void gps_manager_cleanup(void) {
+static void gps_manager_cleanup(void) {
     if (!g_gps_manager_initialized) {
         return;
     }

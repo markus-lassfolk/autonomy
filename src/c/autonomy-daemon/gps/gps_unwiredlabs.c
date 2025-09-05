@@ -22,7 +22,7 @@ static size_t http_response_callback(void* contents, size_t size, size_t nmemb, 
 }
 
 // Initialize UnwiredLabs API
-int unwiredlabs_api_init(const unwiredlabs_config_t* config) {
+static int unwiredlabs_api_init(const unwiredlabs_config_t* config) {
     if (!config) {
         return -1;
     }
@@ -45,7 +45,7 @@ int unwiredlabs_api_init(const unwiredlabs_config_t* config) {
 }
 
 // Cleanup UnwiredLabs API
-void unwiredlabs_api_cleanup(void) {
+static void unwiredlabs_api_cleanup(void) {
     if (g_curl_handle) {
         curl_easy_cleanup(g_curl_handle);
         g_curl_handle = NULL;
@@ -107,6 +107,7 @@ static int make_unwiredlabs_request(const char* json_data, unwiredlabs_response_
     if (!json_response) {
         response->success = false;
         strncpy(response->error_message, "Failed to parse JSON response", sizeof(response->error_message) - 1);
+        response->error_message[sizeof(response->error_message) - 1] = '\0';
         g_unwiredlabs_stats.failed_requests++;
         return -1;
     }
@@ -116,6 +117,7 @@ static int make_unwiredlabs_request(const char* json_data, unwiredlabs_response_
         json_object* status_obj;
         if (json_object_object_get_ex(json_response, "status", &status_obj)) {
             strncpy(response->status, json_object_get_string(status_obj), sizeof(response->status) - 1);
+            response->status[sizeof(response->status) - 1] = '\0';
             response->success = (strcmp(response->status, "ok") == 0);
         }
         
@@ -136,26 +138,31 @@ static int make_unwiredlabs_request(const char* json_data, unwiredlabs_response_
             json_object* address_obj;
             if (json_object_object_get_ex(json_response, "address", &address_obj)) {
                 strncpy(response->address, json_object_get_string(address_obj), sizeof(response->address) - 1);
+                response->address[sizeof(response->address) - 1] = '\0';
             }
             
             json_object* country_obj;
             if (json_object_object_get_ex(json_response, "country", &country_obj)) {
                 strncpy(response->country, json_object_get_string(country_obj), sizeof(response->country) - 1);
+                response->country[sizeof(response->country) - 1] = '\0';
             }
             
             json_object* region_obj;
             if (json_object_object_get_ex(json_response, "region", &region_obj)) {
                 strncpy(response->region, json_object_get_string(region_obj), sizeof(response->region) - 1);
+                response->region[sizeof(response->region) - 1] = '\0';
             }
             
             json_object* city_obj;
             if (json_object_object_get_ex(json_response, "city", &city_obj)) {
                 strncpy(response->city, json_object_get_string(city_obj), sizeof(response->city) - 1);
+                response->city[sizeof(response->city) - 1] = '\0';
             }
             
             json_object* zip_obj;
             if (json_object_object_get_ex(json_response, "zip", &zip_obj)) {
                 strncpy(response->zip, json_object_get_string(zip_obj), sizeof(response->zip) - 1);
+                response->zip[sizeof(response->zip) - 1] = '\0';
             }
             
             g_unwiredlabs_stats.successful_requests++;
@@ -168,6 +175,7 @@ static int make_unwiredlabs_request(const char* json_data, unwiredlabs_response_
             json_object* message_obj;
             if (json_object_object_get_ex(json_response, "message", &message_obj)) {
                 strncpy(response->error_message, json_object_get_string(message_obj), sizeof(response->error_message) - 1);
+                response->error_message[sizeof(response->error_message) - 1] = '\0';
             }
             g_unwiredlabs_stats.failed_requests++;
         }
@@ -177,6 +185,7 @@ static int make_unwiredlabs_request(const char* json_data, unwiredlabs_response_
         json_object* message_obj;
         if (json_object_object_get_ex(json_response, "message", &message_obj)) {
             strncpy(response->error_message, json_object_get_string(message_obj), sizeof(response->error_message) - 1);
+            response->error_message[sizeof(response->error_message) - 1] = '\0';
         }
         g_unwiredlabs_stats.failed_requests++;
     }
@@ -186,7 +195,7 @@ static int make_unwiredlabs_request(const char* json_data, unwiredlabs_response_
 }
 
 // Get location using cell towers
-int unwiredlabs_api_get_cellular_location(const unwiredlabs_cell_t* cells, int cell_count, unwiredlabs_response_t* response) {
+static int unwiredlabs_api_get_cellular_location(const unwiredlabs_cell_t* cells, int cell_count, unwiredlabs_response_t* response) {
     if (!cells || cell_count <= 0 || !response) {
         return -1;
     }
@@ -243,7 +252,7 @@ int unwiredlabs_api_get_cellular_location(const unwiredlabs_cell_t* cells, int c
 }
 
 // Get location using WiFi access points
-int unwiredlabs_api_get_wifi_location(const unwiredlabs_wifi_ap_t* wifi_aps, int wifi_count, unwiredlabs_response_t* response) {
+static int unwiredlabs_api_get_wifi_location(const unwiredlabs_wifi_ap_t* wifi_aps, int wifi_count, unwiredlabs_response_t* response) {
     if (!wifi_aps || wifi_count <= 0 || !response) {
         return -1;
     }
@@ -279,7 +288,7 @@ int unwiredlabs_api_get_wifi_location(const unwiredlabs_wifi_ap_t* wifi_aps, int
 }
 
 // Get location using combined cell and WiFi data
-int unwiredlabs_api_get_combined_location(const unwiredlabs_request_t* request, unwiredlabs_response_t* response) {
+static int unwiredlabs_api_get_combined_location(const unwiredlabs_request_t* request, unwiredlabs_response_t* response) {
     if (!request || !response) {
         return -1;
     }
@@ -333,7 +342,7 @@ int unwiredlabs_api_get_combined_location(const unwiredlabs_request_t* request, 
 }
 
 // Get API statistics
-int unwiredlabs_api_get_stats(unwiredlabs_stats_t* stats) {
+static int unwiredlabs_api_get_stats(unwiredlabs_stats_t* stats) {
     if (!g_unwiredlabs_initialized || !stats) {
         return -1;
     }
@@ -343,12 +352,12 @@ int unwiredlabs_api_get_stats(unwiredlabs_stats_t* stats) {
 }
 
 // Check if UnwiredLabs API is initialized
-bool unwiredlabs_api_is_initialized(void) {
+static bool unwiredlabs_api_is_initialized(void) {
     return g_unwiredlabs_initialized;
 }
 
 // Validate API token
-bool unwiredlabs_api_validate_token(void) {
+static bool unwiredlabs_api_validate_token(void) {
     if (!g_unwiredlabs_initialized) {
         return false;
     }
@@ -357,10 +366,13 @@ bool unwiredlabs_api_validate_token(void) {
     unwiredlabs_response_t test_response;
     unwiredlabs_cell_t test_cell = {0};
     strncpy(test_cell.lac, "1", sizeof(test_cell.lac) - 1);
+    test_cell.lac[sizeof(test_cell.lac) - 1] = '\0';
     strncpy(test_cell.cid, "1", sizeof(test_cell.cid) - 1);
+    test_cell.cid[sizeof(test_cell.cid) - 1] = '\0';
     test_cell.mcc = 1;
     test_cell.mnc = 1;
     strncpy(test_cell.radio, "lte", sizeof(test_cell.radio) - 1);
+    test_cell.radio[sizeof(test_cell.radio) - 1] = '\0';
     test_cell.signal = -100;
     
     int result = unwiredlabs_api_get_cellular_location(&test_cell, 1, &test_response);
@@ -368,7 +380,7 @@ bool unwiredlabs_api_validate_token(void) {
 }
 
 // Check quota status
-int unwiredlabs_api_get_quota_remaining(void) {
+static int unwiredlabs_api_get_quota_remaining(void) {
     // UnwiredLabs API doesn't provide quota information in the response
     // This would need to be tracked separately or queried from their dashboard
     return -1; // Unknown

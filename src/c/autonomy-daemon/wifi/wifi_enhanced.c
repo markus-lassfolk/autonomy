@@ -54,7 +54,7 @@ static void* optimization_thread_worker(void* arg);
 static void* scheduler_thread_worker(void* arg);
 
 // Initialize enhanced WiFi management system
-int wifi_enhanced_init(const wifi_optimization_config_t* config) {
+static int wifi_enhanced_init(const wifi_optimization_config_t* config) {
     if (g_wifi_enhanced_initialized) {
         LOGX_WARN("Enhanced WiFi management already initialized");
         return AUTONOMY_SUCCESS;
@@ -109,7 +109,7 @@ int wifi_enhanced_init(const wifi_optimization_config_t* config) {
 }
 
 // Cleanup enhanced WiFi management system
-void wifi_enhanced_cleanup(void) {
+static void wifi_enhanced_cleanup(void) {
     if (!g_wifi_enhanced_initialized) return;
     
     pthread_mutex_lock(&g_wifi_enhanced.mutex);
@@ -131,7 +131,7 @@ void wifi_enhanced_cleanup(void) {
 }
 
 // Discover WiFi interfaces using RUTOS iwinfo
-int wifi_enhanced_discover_interfaces(void) {
+static int wifi_enhanced_discover_interfaces(void) {
     if (!g_wifi_enhanced_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -171,6 +171,7 @@ int wifi_enhanced_discover_interfaces(void) {
                     wifi_interface_t* interface = &g_wifi_enhanced.interfaces[g_wifi_enhanced.interface_count];
                     
                     strncpy(interface->name, line, sizeof(interface->name) - 1);
+                    interface->name[sizeof(interface->name) - 1] = '\0';
                     
                     // Get detailed interface information via UBUS
                     if (wifi_enhanced_get_interface_info(line, interface) == AUTONOMY_SUCCESS) {
@@ -199,7 +200,7 @@ int wifi_enhanced_discover_interfaces(void) {
 }
 
 // Perform enhanced WiFi channel scan using RUTOS ubus iwinfo
-int wifi_enhanced_scan_channels(const char* device, wifi_enhanced_channel_score_t* scores, int max_scores) {
+static int wifi_enhanced_scan_channels(const char* device, wifi_enhanced_channel_score_t* scores, int max_scores) {
     if (!g_wifi_enhanced_initialized || !device || !scores || max_scores <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -308,11 +309,13 @@ static int perform_ubus_iwinfo_scan(const char* device, wifi_access_point_t* acc
         if (json_object_object_get_ex(ap_obj, "ssid", &ssid_obj)) {
             const char* ssid = json_object_get_string(ssid_obj);
             strncpy(ap->ssid, ssid, sizeof(ap->ssid) - 1);
+            ap->ssid[sizeof(ap->ssid) - 1] = '\0';
         }
         
         if (json_object_object_get_ex(ap_obj, "bssid", &bssid_obj)) {
             const char* bssid = json_object_get_string(bssid_obj);
             strncpy(ap->bssid, bssid, sizeof(ap->bssid) - 1);
+            ap->bssid[sizeof(ap->bssid) - 1] = '\0';
         }
         
         if (json_object_object_get_ex(ap_obj, "channel", &channel_obj)) {
@@ -326,6 +329,7 @@ static int perform_ubus_iwinfo_scan(const char* device, wifi_access_point_t* acc
         if (json_object_object_get_ex(ap_obj, "htmode", &htmode_obj)) {
             const char* htmode = json_object_get_string(htmode_obj);
             strncpy(ap->htmode, htmode, sizeof(ap->htmode) - 1);
+            ap->htmode[sizeof(ap->htmode) - 1] = '\0';
         }
         
         if (json_object_object_get_ex(ap_obj, "frequency", &frequency_obj)) {
@@ -576,7 +580,7 @@ const char* wifi_width_to_string(wifi_width_t width) {
     return "unknown";
 }
 
-wifi_band_t wifi_get_band_from_channel(int channel) {
+static wifi_band_t wifi_get_band_from_channel(int channel) {
     if (channel <= 14) {
         return WIFI_BAND_24GHZ;
     } else if (channel >= 36 && channel <= 165) {
@@ -588,7 +592,7 @@ wifi_band_t wifi_get_band_from_channel(int channel) {
 }
 
 // Get regulatory domain channels
-int wifi_get_regulatory_channels(const char* country_code, wifi_band_t band, int* channels, int max_channels) {
+static int wifi_get_regulatory_channels(const char* country_code, wifi_band_t band, int* channels, int max_channels) {
     if (!country_code || !channels || max_channels <= 0) {
         return 0;
     }
@@ -618,7 +622,7 @@ int wifi_get_regulatory_channels(const char* country_code, wifi_band_t band, int
 }
 
 // Calculate signal quality score
-int wifi_calculate_signal_quality(int rssi, int noise) {
+static int wifi_calculate_signal_quality(int rssi, int noise) {
     // Calculate SNR (Signal-to-Noise Ratio)
     int snr = rssi - noise;
     
@@ -631,7 +635,7 @@ int wifi_calculate_signal_quality(int rssi, int noise) {
     return 0;                       // Very poor
 }
 
-bool wifi_enhanced_is_initialized(void) {
+static bool wifi_enhanced_is_initialized(void) {
     return g_wifi_enhanced_initialized;
 }
 
