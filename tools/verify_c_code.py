@@ -88,8 +88,8 @@ class CCodeVerifier:
     def log(self, message: str, level: str = "info"):
         """Log message with appropriate level"""
         if self.verbose or level in ["warning", "error", "critical"]:
-            prefix = {"info": "ℹ️", "warning": "⚠️", "error": "❌", "critical": "🚨"}
-            print(f"{prefix.get(level, 'ℹ️')} {message}")
+            prefix = {"info": "[INFO]", "warning": "[WARN]", "error": "[ERROR]", "critical": "[CRITICAL]"}
+            print(f"{prefix.get(level, '[INFO]')} {message}")
     
     def add_result(self, file_path: str, message: str, severity: str = "warning", 
                    line_number: int = 0, category: str = "", suggestion: str = "", 
@@ -1267,7 +1267,7 @@ class CCodeVerifier:
             by_severity[result.severity].append(result)
         
         report = []
-        report.append("🔍 C Code Verification Report")
+        report.append("C Code Verification Report")
         report.append("=" * 50)
         report.append("")
         
@@ -1278,7 +1278,7 @@ class CCodeVerifier:
         warning_count = len(by_severity.get('warning', []))
         info_count = len(by_severity.get('info', []))
         
-        report.append(f"📊 Summary:")
+        report.append(f"Summary:")
         report.append(f"  Total issues: {total_issues}")
         report.append(f"  Critical: {critical_count}")
         report.append(f"  Errors: {error_count}")

@@ -19,7 +19,7 @@
 #include "autonomy_types.h"
 #include "autonomy_modules.h"
 #include "../starlink/starlink_modules.h"
-#include "../starlink-tracking/starlink_tracker.h"
+#include "../starlink/starlink_tracker.h"
 
 // Global variables
 struct autonomy_config g_config = {
