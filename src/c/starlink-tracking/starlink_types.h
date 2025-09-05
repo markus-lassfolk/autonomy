@@ -70,6 +70,38 @@ typedef struct {
     double alt;
 } starlink_lla_position_t;
 
+// Comprehensive Starlink GPS data structure
+typedef struct {
+    // Core Location Data (from get_location)
+    double latitude;
+    double longitude;
+    double altitude;
+    double accuracy;                    // sigmaM from get_location
+    double horizontal_speed_mps;
+    double vertical_speed_mps;
+    char gps_source[32];               // GPS source (GNC_FUSED, etc.)
+    
+    // Satellite Data (from get_status)
+    bool gps_valid;
+    int32_t gps_satellites;
+    bool no_sats_after_ttff;
+    bool inhibit_gps;
+    
+    // Enhanced Data (from get_diagnostics)
+    bool location_enabled;
+    double uncertainty_meters;
+    bool uncertainty_meters_valid;
+    double gps_time_s;
+    
+    // Metadata
+    char data_sources[128];            // Which APIs provided data
+    time_t collected_at;               // When data was collected
+    int64_t collection_ms;             // Time taken to collect all data
+    bool valid;                        // Overall validity
+    double confidence;                 // Confidence score 0.0-1.0
+    char quality_score[16];            // excellent, good, fair, poor
+} starlink_comprehensive_gps_t;
+
 typedef struct {
     double x;
     double y;

@@ -1,8 +1,73 @@
-# ⚖️ Hybrid Weight System for Network Decision Making
+# ⚖️ Hybrid Weight System Documentation
 
-## Overview
+## 🎯 Overview
 
-The Autonomy networking system implements a sophisticated hybrid weight system that combines multiple factors to make intelligent network failover and optimization decisions. This system uses machine learning, historical data, and real-time metrics to determine the optimal network configuration.
+The **Hybrid Weight System** is a revolutionary approach to network failover that **respects your MWAN3 configuration** while adding intelligent monitoring and temporary adjustments. Unlike the old system that overrode all your carefully configured weights, this system works **with** MWAN3, not against it.
+
+## 🤔 The Problem with the Old System
+
+### ❌ Old Approach (Override Everything)
+```bash
+# Your MWAN3 Configuration
+starlink_m1:  weight 100
+cellular1_m1: weight 85  
+cellular2_m1: weight 84
+cellular3_m1: weight 83
+# ... carefully configured priorities
+
+# What autonomy Did (BAD!)
+starlink_m1:  weight 100  ← Selected interface
+cellular1_m1: weight 10   ← Everything else forced to 10
+cellular2_m1: weight 10   ← Your configuration ignored
+cellular3_m1: weight 10   ← User loses control
+```
+
+**Problems:**
+- 👤 **User loses control** - Your careful weight configuration is ignored
+- 🐛 **Hard to debug** - Two conflicting weight systems
+- ⚙️ **Unnecessary complexity** - Duplicates MWAN3 functionality
+- 🔄 **Poor integration** - Fights against MWAN3 instead of working with it
+
+## ✅ The New Hybrid Approach
+
+### 🎯 Respects Your Configuration
+```bash
+# Your MWAN3 Configuration (PRESERVED!)
+starlink_m1:  weight 100  ← Your preference
+cellular1_m1: weight 85   ← Your preference  
+cellular2_m1: weight 84   ← Your preference
+cellular3_m1: weight 83   ← Your preference
+
+# What Hybrid System Does (GOOD!)
+# Normal operation: Uses your weights exactly as configured
+# Intelligent adjustments: Only when conditions warrant
+# Temporary changes: Automatically restored after conditions improve
+```
+
+## 🧠 How It Works
+
+### 1. **Normal Operation**
+- Uses your MWAN3 weights exactly as configured
+- No interference with your priority system
+- MWAN3 handles failover based on your preferences + health checks
+
+### 2. **Intelligent Monitoring**
+- Monitors Starlink obstructions, outages, dish health
+- Tracks cellular signal strength, roaming status
+- Analyzes latency, packet loss, performance trends
+- Detects emergency situations
+
+### 3. **Temporary Adjustments**
+- **Penalties**: Reduce weight when issues detected
+- **Boosts**: Increase weight when conditions are excellent
+- **Emergency Overrides**: Critical situations only
+- **Automatic Restoration**: Return to user weights when conditions improve
+
+### 4. **Configurable Behavior**
+- Full control via UCI configuration
+- Enable/disable each feature independently
+- Adjust thresholds and durations
+- Emergency-only mode available
 
 ## Core Decision Factors
 

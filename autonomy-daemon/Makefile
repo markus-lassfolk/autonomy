@@ -36,7 +36,7 @@ endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	$(CP) $(PKG_BUILD_DIR)/src/c/autonomy-daemon/* $(PKG_BUILD_DIR)/
+	$(CP) -r $(PKG_BUILD_DIR)/src/c/autonomy-daemon/* $(PKG_BUILD_DIR)/
 endef
 
 define Build/Configure

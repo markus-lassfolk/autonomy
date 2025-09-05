@@ -6,18 +6,8 @@ CFLAGS ?= -Wall -Wextra -std=c99 -O2
 LDFLAGS ?= 
 LIBS = -lubus -lblobmsg_json -lubox -ljson-c -luci -lcurl -lm -lpthread
 
-# Source files
-SOURCES = autonomy-daemon.c \
-          logging.c \
-          network.c \
-          gps.c \
-          config.c \
-          pidfile.c \
-          ubus_methods.c \
-          network_ubus.c \
-          gps_ubus.c \
-          system_management.c \
-          system_ubus.c
+# Source files - include all C files from subdirectories
+SOURCES = $(shell find . -name "*.c" -not -name "test_*.c" -not -path "./testing/*")
 
 # Object files
 OBJECTS = $(SOURCES:.c=.o)

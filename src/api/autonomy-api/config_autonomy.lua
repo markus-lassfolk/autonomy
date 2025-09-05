@@ -1,78 +1,59 @@
-local ConfigService = require("api/ConfigService")
+local M = {}
 
-local Autonomy = ConfigService:new({
-	-- delete = false,          -- Disable deletion of UCI sections
-	-- create = false,          -- Disable creation of UCI sections
-	-- general_section = "main",-- General UCI section name
-	-- anonymous = true,        -- Create UCI anonymous sections
-	-- increment_name = true,   -- Create UCI sections with numeric incremental names
-})
-
-local ConfigAutonomy = Autonomy:section(
-	"autonomy", -- UCI config name
-	"autonomy"  -- UCI section type
-)
-ConfigAutonomy:make_primary()
-ConfigAutonomy.default_options.id.maxlength = 32 -- Default id option can also have validations
-
-function ConfigAutonomy:create_defaults(sid)
-	-- Default values to be added with every creation
-	return {
-		enabled = "1",
-		check_interval = "30",
-		starlink_enabled = "1",
-		cellular_enabled = "1",
-		gps_enabled = "1"
-	}
+function M.get_config()
+    local uci = require("uci")
+    local cursor = uci.cursor()
+    local config = {}
+    
+    -- Get main configuration
+    cursor:foreach("autonomy", "main", function(s)
+        config.main = s
+    end)
+    
+    -- Get other sections
+    cursor:foreach("autonomy", "starlink", function(s)
+        config.starlink = s
+    end)
+    
+    cursor:foreach("autonomy", "gps", function(s)
+        config.gps = s
+    end)
+    
+    cursor:foreach("autonomy", "notifications", function(s)
+        config.notifications = s
+    end)
+    
+    cursor:foreach("autonomy", "maintenance", function(s)
+        config.maintenance = s
+    end)
+    
+    return config
 end
 
-	local opt_enabled = ConfigAutonomy:option("enabled")
-		opt_enabled.maxlength = 1
-		function opt_enabled:validate(value)
-			return self.dt:is_bool(value)
-		end
+function M.set_config(section, option, value)
+    local uci = require("uci")
+    local cursor = uci.cursor()
+    
+    cursor:set("autonomy", section, option, value)
+    cursor:commit("autonomy")
+    
+    return { success = true }
+end
 
-	local opt_check_interval = ConfigAutonomy:option("check_interval")
-		opt_check_interval.maxlength = 10
-		function opt_check_interval:validate(value)
-			local num = tonumber(value)
-			return num and num >= 5 and num <= 3600
-		end
+function M.handle(method, path, query, body)
+    if method == "GET" and path:match("/config") then
+        return M.get_config()
+    elseif method == "POST" and path:match("/config") then
+        local data = json.decode(body or "{}")
+        if data.section and data.option and data.value then
+            return M.set_config(data.section, data.option, data.value)
+        else
+            return { error = "Missing section, option, or value" }
+        end
+    else
+        return { error = "Unknown endpoint", path = path }
+    end
+end
 
-	local opt_starlink_enabled = ConfigAutonomy:option("starlink_enabled")
-		opt_starlink_enabled.maxlength = 1
-		function opt_starlink_enabled:validate(value)
-			return self.dt:is_bool(value)
-		end
-
-	local opt_cellular_enabled = ConfigAutonomy:option("cellular_enabled")
-		opt_cellular_enabled.maxlength = 1
-		function opt_cellular_enabled:validate(value)
-			return self.dt:is_bool(value)
-		end
-
-	local opt_gps_enabled = ConfigAutonomy:option("gps_enabled")
-		opt_gps_enabled.maxlength = 1
-		function opt_gps_enabled:validate(value)
-			return self.dt:is_bool(value)
-		end
-
-	local opt_log_level = ConfigAutonomy:option("log_level")
-		function opt_log_level:validate(value)
-			return self.dt:check_array(value, { "debug", "info", "warn", "error" })
-		end
-
-	local opt_failover_threshold = ConfigAutonomy:option("failover_threshold")
-		opt_failover_threshold.maxlength = 10
-		function opt_failover_threshold:validate(value)
-			local num = tonumber(value)
-			return num and num >= 1 and num <= 10
-		end
-
-return Autonomy
-
-
-
-
-
+return M
 

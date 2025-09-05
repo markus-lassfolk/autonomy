@@ -1,0 +1,15 @@
+{
+  "autonomy": {
+    "description": "Autonomy App permissions",
+    "read": {
+      "ubus": {
+        "autonomy": ["status", "config_get"]
+      }
+    },
+    "write": {
+      "ubus": {
+        "autonomy": ["config_set", "start", "stop", "restart"]
+      }
+    }
+  }
+}

@@ -1,8 +1,29 @@
-# 🧠 Intelligent Cell Caching System
+# 🧠 Intelligent Cell Location Caching System
 
 ## Overview
 
-The Autonomy networking system implements an intelligent cell caching system that optimizes location services performance through multi-level caching, predictive loading, and adaptive cache management. This system reduces API calls, improves response times, and minimizes costs while maintaining high accuracy.
+The intelligent cell location caching system implements smart triggers for querying OpenCellID, reducing API usage while maintaining location accuracy. Instead of time-based intervals, it monitors the cellular environment and only queries when meaningful changes occur. This system optimizes location services performance through intelligent caching, predictive loading, and adaptive cache management.
+
+## Trigger Logic
+
+The system queries OpenCellID for a new location when:
+
+1. **Serving Cell Change**: The primary cell tower changes (different Cell ID)
+2. **Significant Tower Changes**: ≥35% of neighbor towers differ from the last fix
+3. **Top Tower Changes**: ≥2 of the top-5 strongest towers have changed
+4. **Cache Expiration**: As a fallback, if no changes occur for 1 hour
+
+All triggers are debounced by 10 seconds to prevent excessive queries during rapid changes.
+
+## Configuration
+
+Default settings:
+- **Max Cache Age**: 1 hour (fallback)
+- **Debounce Delay**: 10 seconds
+- **Tower Change Threshold**: 35%
+- **Top Towers Monitored**: 5
+
+These can be customized via `SetCacheConfiguration()`.
 
 ## Architecture Overview
 

@@ -1,0 +1,280 @@
+#include "adaptive_rate_limiter.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <time.h>
+#include <math.h>
+
+// Initialize rate limiter
+int adaptive_rate_limiter_init(adaptive_rate_limiter_t* limiter, const rate_limiter_config_t* config) {
+    if (!limiter || !config) {
+        return -1;
+    }
+    
+    limiter->config = *config;
+    
+    // Initialize rate tracking
+    limiter->current_rate = config->initial_rate;
+    limiter->last_adjustment = time(NULL);
+    limiter->success_count = 0;
+    limiter->failure_count = 0;
+    limiter->total_requests = 0;
+    
+    // Initialize sliding window
+    limiter->window_size = config->window_size_seconds;
+    limiter->window_start = time(NULL);
+    limiter->request_count = 0;
+    
+    // Initialize priority-based tracking
+    for (int i = 0; i < NOTIFICATION_PRIORITY_EMERGENCY + 1; i++) {
+        limiter->priority_last_request[i] = 0;
+        limiter->priority_request_count[i] = 0;
+    }
+    
+    // Initialize adaptive parameters
+    limiter->success_threshold = config->success_threshold;
+    limiter->failure_threshold = config->failure_threshold;
+    limiter->adjustment_factor = config->adjustment_factor;
+    limiter->min_rate = config->min_rate;
+    limiter->max_rate = config->max_rate;
+    
+    return 0;
+}
+
+// Check if request is allowed
+bool adaptive_rate_limiter_allow_request(adaptive_rate_limiter_t* limiter, 
+                                       notification_priority_t priority) {
+    if (!limiter) return false;
+    
+    time_t now = time(NULL);
+    
+    // Check if we need to reset the window
+    if (now - limiter->window_start >= limiter->window_size) {
+        limiter->window_start = now;
+        limiter->request_count = 0;
+        
+        // Reset priority counters
+        for (int i = 0; i < NOTIFICATION_PRIORITY_EMERGENCY + 1; i++) {
+            limiter->priority_request_count[i] = 0;
+        }
+    }
+    
+    // Check global rate limit
+    if (limiter->request_count >= limiter->current_rate) {
+        return false;
+    }
+    
+    // Check priority-based rate limits
+    int priority_limit = get_priority_rate_limit(limiter, priority);
+    if (limiter->priority_request_count[priority] >= priority_limit) {
+        return false;
+    }
+    
+    // Check cooldown periods for priorities
+    if (now - limiter->priority_last_request[priority] < get_priority_cooldown(limiter, priority)) {
+        return false;
+    }
+    
+    // Request allowed - update counters
+    limiter->request_count++;
+    limiter->priority_request_count[priority]++;
+    limiter->priority_last_request[priority] = now;
+    limiter->total_requests++;
+    
+    return true;
+}
+
+// Record successful request
+void adaptive_rate_limiter_record_success(adaptive_rate_limiter_t* limiter) {
+    if (!limiter) return;
+    
+    limiter->success_count++;
+    
+    // Check if we should increase the rate
+    if (limiter->success_count >= limiter->success_threshold) {
+        adaptive_rate_limiter_adjust_rate(limiter, true);
+        limiter->success_count = 0;
+        limiter->failure_count = 0;
+    }
+}
+
+// Record failed request
+void adaptive_rate_limiter_record_failure(adaptive_rate_limiter_t* limiter) {
+    if (!limiter) return;
+    
+    limiter->failure_count++;
+    
+    // Check if we should decrease the rate
+    if (limiter->failure_count >= limiter->failure_threshold) {
+        adaptive_rate_limiter_adjust_rate(limiter, false);
+        limiter->success_count = 0;
+        limiter->failure_count = 0;
+    }
+}
+
+// Adjust rate based on success/failure
+void adaptive_rate_limiter_adjust_rate(adaptive_rate_limiter_t* limiter, bool success) {
+    if (!limiter) return;
+    
+    time_t now = time(NULL);
+    
+    // Don't adjust too frequently
+    if (now - limiter->last_adjustment < limiter->config.min_adjustment_interval) {
+        return;
+    }
+    
+    if (success) {
+        // Increase rate
+        limiter->current_rate = (int)(limiter->current_rate * (1.0 + limiter->adjustment_factor));
+        if (limiter->current_rate > limiter->max_rate) {
+            limiter->current_rate = limiter->max_rate;
+        }
+    } else {
+        // Decrease rate
+        limiter->current_rate = (int)(limiter->current_rate * (1.0 - limiter->adjustment_factor));
+        if (limiter->current_rate < limiter->min_rate) {
+            limiter->current_rate = limiter->min_rate;
+        }
+    }
+    
+    limiter->last_adjustment = now;
+}
+
+// Get priority-specific rate limit
+static int get_priority_rate_limit(adaptive_rate_limiter_t* limiter, notification_priority_t priority) {
+    if (!limiter) return 1;
+    
+    switch (priority) {
+        case NOTIFICATION_PRIORITY_EMERGENCY:
+            return limiter->config.emergency_rate_limit;
+        case NOTIFICATION_PRIORITY_HIGH:
+            return limiter->config.high_rate_limit;
+        case NOTIFICATION_PRIORITY_NORMAL:
+            return limiter->config.normal_rate_limit;
+        case NOTIFICATION_PRIORITY_LOW:
+            return limiter->config.low_rate_limit;
+        case NOTIFICATION_PRIORITY_LOWEST:
+            return limiter->config.lowest_rate_limit;
+        default:
+            return limiter->config.normal_rate_limit;
+    }
+}
+
+// Get priority-specific cooldown period
+static int get_priority_cooldown(adaptive_rate_limiter_t* limiter, notification_priority_t priority) {
+    if (!limiter) return 60; // Default 1 minute
+    
+    switch (priority) {
+        case NOTIFICATION_PRIORITY_EMERGENCY:
+            return limiter->config.emergency_cooldown_seconds;
+        case NOTIFICATION_PRIORITY_HIGH:
+            return limiter->config.high_cooldown_seconds;
+        case NOTIFICATION_PRIORITY_NORMAL:
+            return limiter->config.normal_cooldown_seconds;
+        case NOTIFICATION_PRIORITY_LOW:
+            return limiter->config.low_cooldown_seconds;
+        case NOTIFICATION_PRIORITY_LOWEST:
+            return limiter->config.lowest_cooldown_seconds;
+        default:
+            return limiter->config.normal_cooldown_seconds;
+    }
+}
+
+// Get current rate limit
+int adaptive_rate_limiter_get_current_rate(const adaptive_rate_limiter_t* limiter) {
+    return limiter ? limiter->current_rate : 0;
+}
+
+// Set rate limit manually
+void adaptive_rate_limiter_set_rate(adaptive_rate_limiter_t* limiter, int new_rate) {
+    if (!limiter) return;
+    
+    if (new_rate >= limiter->min_rate && new_rate <= limiter->max_rate) {
+        limiter->current_rate = new_rate;
+    }
+}
+
+// Get rate limiter statistics
+void adaptive_rate_limiter_get_stats(const adaptive_rate_limiter_t* limiter, 
+                                   rate_limiter_stats_t* stats) {
+    if (!limiter || !stats) return;
+    
+    stats->current_rate = limiter->current_rate;
+    stats->min_rate = limiter->min_rate;
+    stats->max_rate = limiter->max_rate;
+    stats->success_count = limiter->success_count;
+    stats->failure_count = limiter->failure_count;
+    stats->total_requests = limiter->total_requests;
+    stats->window_start = limiter->window_start;
+    stats->request_count = limiter->request_count;
+    stats->window_size = limiter->window_size;
+    stats->last_adjustment = limiter->last_adjustment;
+    
+    // Copy priority statistics
+    for (int i = 0; i < NOTIFICATION_PRIORITY_EMERGENCY + 1; i++) {
+        stats->priority_last_request[i] = limiter->priority_last_request[i];
+        stats->priority_request_count[i] = limiter->priority_request_count[i];
+    }
+}
+
+// Reset rate limiter
+void adaptive_rate_limiter_reset(adaptive_rate_limiter_t* limiter) {
+    if (!limiter) return;
+    
+    limiter->current_rate = limiter->config.initial_rate;
+    limiter->last_adjustment = time(NULL);
+    limiter->success_count = 0;
+    limiter->failure_count = 0;
+    limiter->total_requests = 0;
+    limiter->window_start = time(NULL);
+    limiter->request_count = 0;
+    
+    for (int i = 0; i < NOTIFICATION_PRIORITY_EMERGENCY + 1; i++) {
+        limiter->priority_last_request[i] = 0;
+        limiter->priority_request_count[i] = 0;
+    }
+}
+
+// Check if rate limiter is in emergency mode
+bool adaptive_rate_limiter_is_emergency_mode(const adaptive_rate_limiter_t* limiter) {
+    if (!limiter) return false;
+    
+    // Emergency mode if we're at minimum rate and have recent failures
+    return (limiter->current_rate <= limiter->min_rate && 
+            limiter->failure_count > 0);
+}
+
+// Get time until next allowed request for priority
+int adaptive_rate_limiter_get_wait_time(const adaptive_rate_limiter_t* limiter, 
+                                      notification_priority_t priority) {
+    if (!limiter) return 0;
+    
+    time_t now = time(NULL);
+    int cooldown = get_priority_cooldown(limiter, priority);
+    time_t last_request = limiter->priority_last_request[priority];
+    
+    if (last_request == 0) return 0;
+    
+    int wait_time = cooldown - (int)(now - last_request);
+    return wait_time > 0 ? wait_time : 0;
+}
+
+// Clean up rate limiter
+void adaptive_rate_limiter_cleanup(adaptive_rate_limiter_t* limiter) {
+    if (!limiter) return;
+    
+    // Reset all counters
+    limiter->current_rate = 0;
+    limiter->last_adjustment = 0;
+    limiter->success_count = 0;
+    limiter->failure_count = 0;
+    limiter->total_requests = 0;
+    limiter->window_start = 0;
+    limiter->request_count = 0;
+    
+    // Reset priority tracking
+    for (int i = 0; i < NOTIFICATION_PRIORITY_EMERGENCY + 1; i++) {
+        limiter->priority_last_request[i] = 0;
+        limiter->priority_request_count[i] = 0;
+    }
+}

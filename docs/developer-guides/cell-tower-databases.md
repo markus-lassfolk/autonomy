@@ -1,33 +1,98 @@
-# 📡 Cell Tower Database Integration Guide
+# 🗼 Cell Tower Location Databases & Services
 
-## Overview
+## 🎯 **Your Cell Tower Data:**
+```
+Cell ID: 25939743
+MCC: 240 (Sweden)
+MNC: 01 (Telia)
+TAC: 23 (Tracking Area Code)
+PCID: 443 (Physical Cell ID)
+Signal: RSSI -53 (Excellent)
+Technology: 5G-NSA / LTE B3
+```
 
-The Autonomy networking system integrates with multiple cell tower databases to provide reliable location services and network optimization. This guide covers the supported databases, integration methods, and best practices for cellular location services.
+## 🌍 **Available Location Services:**
 
-## Supported Databases
+### **1. 🆓 Mozilla Location Service (MLS)**
+- **Cost:** FREE, no registration required
+- **Coverage:** Global crowdsourced database
+- **Accuracy:** 100-2000 meters
+- **API Limit:** No official limit
+- **Best For:** Production use, reliable fallback
 
-### 1. **OpenCellID** 🌐
-- **Type**: Community-driven, free
-- **Coverage**: Global
-- **Accuracy**: 100-1000m (varies by region)
-- **API**: RESTful with rate limits
-- **Cost**: Free with contribution requirements
-- **Best For**: General location services, cost-sensitive deployments
+**API Example:**
+```bash
+curl -X POST "https://location.services.mozilla.com/v1/geolocate?key=test" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cellTowers": [{
+      "radioType": "lte",
+      "mobileCountryCode": 240,
+      "mobileNetworkCode": 1,
+      "locationAreaCode": 23,
+      "cellId": 25939743,
+      "signalStrength": -53
+    }]
+  }'
+```
 
-### 2. **Google Location Services** 🔍
-- **Type**: Commercial, paid
-- **Coverage**: Global
-- **Accuracy**: 50-500m
-- **API**: RESTful with quotas
-- **Cost**: Pay-per-request
-- **Best For**: High-accuracy requirements, enterprise deployments
+### **2. 🆓 OpenCellID**
+- **Cost:** FREE with registration
+- **Coverage:** 40+ million cell towers globally
+- **Accuracy:** 50-1000 meters
+- **API Limit:** 1000 requests/day (free tier)
+- **Best For:** High accuracy, detailed data
 
-### 3. **Mozilla Location Service** 🦊
-- **Type**: Open source, community-driven
-- **Coverage**: Global (limited)
-- **Accuracy**: 100-500m
-- **API**: RESTful
-- **Cost**: Free
+**API Example:**
+```bash
+curl -X POST "https://us1.unwiredlabs.com/v2/process.php" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "YOUR_API_KEY",
+    "radio": "lte",
+    "mcc": 240,
+    "mnc": 1,
+    "cells": [{
+      "lac": 23,
+      "cid": 25939743
+    }]
+  }'
+```
+
+### **3. 💰 Google Geolocation API**
+- **Cost:** $5 per 1000 requests
+- **Coverage:** Excellent global coverage
+- **Accuracy:** 10-500 meters (very accurate)
+- **API Limit:** Based on billing
+- **Best For:** Highest accuracy, commercial use
+
+**API Example:**
+```bash
+curl -X POST "https://www.googleapis.com/geolocation/v1/geolocate?key=YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cellTowers": [{
+      "cellId": 25939743,
+      "locationAreaCode": 23,
+      "mobileCountryCode": 240,
+      "mobileNetworkCode": 1,
+      "signalStrength": -53
+    }]
+  }'
+```
+
+### **4. 🆓 CellMapper (Community)**
+- **Website:** https://www.cellmapper.net/
+- **Cost:** FREE (community database)
+- **Coverage:** Crowdsourced, varies by region
+- **Accuracy:** Varies, often very precise
+- **Best For:** Research, verification
+
+### **5. 💰 HERE Location Services**
+- **Cost:** Paid service
+- **Coverage:** Global commercial database
+- **Accuracy:** High precision
+- **Best For:** Enterprise applications
 - **Best For**: Privacy-focused deployments, open source projects
 
 ### 4. **Carrier APIs** 📱

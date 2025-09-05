@@ -1,0 +1,662 @@
+#include "external_apis.h"
+#include "logx.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <pthread.h>
+#include <time.h>
+#include <curl/curl.h>
+#include <json-c/json.h>
+
+// Global external APIs manager
+static external_apis_manager_t g_external_apis = {0};
+static bool g_external_apis_initialized = false;
+
+// API type strings
+static const char* API_TYPE_STRINGS[] = {
+    "google_location", "google_elevation", "google_geocoding", "google_places", "google_timezone",
+    "open_elevation", "openstreetmap_nominatim", "weather_openweather", "weather_weatherapi",
+    "ipinfo_geolocation", "mozilla_location"
+};
+
+// API status strings
+static const char* API_STATUS_STRINGS[] = {
+    "unknown", "healthy", "degraded", "failed", "rate_limited", "quota_exceeded", "disabled"
+};
+
+// HTTP response structure for CURL
+typedef struct {
+    char* data;
+    size_t size;
+} http_response_t;
+
+// Forward declarations
+static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response);
+static int make_http_request(const char* url, const char* headers, const char* post_data, 
+                           int timeout, http_response_t* response);
+static void update_api_statistics(external_api_type_t api_type, bool success, double duration_ms);
+static bool check_rate_limits(external_api_type_t api_type);
+static void reset_hourly_counters(void);
+static void* health_monitor_worker(void* arg);
+static int perform_api_health_check(external_api_type_t api_type);
+
+// Initialize external APIs manager
+int external_apis_init(void) {
+    if (g_external_apis_initialized) {
+        LOGX_WARN("External APIs manager already initialized");
+        return AUTONOMY_SUCCESS;
+    }
+    
+    memset(&g_external_apis, 0, sizeof(external_apis_manager_t));
+    
+    // Initialize mutex
+    if (pthread_mutex_init(&g_external_apis.mutex, NULL) != 0) {
+        LOGX_ERROR("Failed to initialize external APIs mutex");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Initialize default configurations
+    for (int i = 0; i < EXTERNAL_API_MAX; i++) {
+        external_api_config_t* config = &g_external_apis.configs[i];
+        external_api_statistics_t* stats = &g_external_apis.stats[i];
+        
+        config->api_type = (external_api_type_t)i;
+        config->enabled = false; // Disabled by default (requires configuration)
+        strcpy(config->name, external_api_type_to_string((external_api_type_t)i));
+        config->timeout_seconds = 30;
+        config->max_requests_per_hour = 100;
+        config->max_requests_per_day = 1000;
+        config->retry_attempts = 3;
+        config->retry_delay_seconds = 5;
+        config->use_ssl = true;
+        strcpy(config->user_agent, "Autonomy-Daemon/6.1.0");
+        config->enable_health_monitoring = true;
+        config->health_check_interval_minutes = 60;
+        config->min_success_rate = 0.8;
+        config->max_consecutive_failures = 5;
+        
+        // API-specific defaults
+        switch (i) {
+            case EXTERNAL_API_GOOGLE_LOCATION:
+                strcpy(config->base_url, "https://www.googleapis.com/geolocation/v1");
+                config->cost_per_request = 0.005; // $5 per 1000 requests
+                config->quota_limit_daily = 100000;
+                config->max_requests_per_hour = 2500;
+                break;
+                
+            case EXTERNAL_API_GOOGLE_ELEVATION:
+                strcpy(config->base_url, "https://maps.googleapis.com/maps/api/elevation");
+                config->cost_per_request = 0.005;
+                config->quota_limit_daily = 100000;
+                break;
+                
+            case EXTERNAL_API_GOOGLE_GEOCODING:
+                strcpy(config->base_url, "https://maps.googleapis.com/maps/api/geocode");
+                config->cost_per_request = 0.005;
+                config->quota_limit_daily = 100000;
+                break;
+                
+            case EXTERNAL_API_OPEN_ELEVATION:
+                strcpy(config->base_url, "https://api.open-elevation.com/api/v1");
+                config->cost_per_request = 0.0; // Free
+                config->max_requests_per_hour = 1000;
+                config->max_requests_per_day = 10000;
+                break;
+                
+            case EXTERNAL_API_OPENSTREETMAP_NOMINATIM:
+                strcpy(config->base_url, "https://nominatim.openstreetmap.org");
+                config->cost_per_request = 0.0; // Free
+                config->max_requests_per_hour = 100;
+                config->max_requests_per_day = 1000;
+                break;
+                
+            case EXTERNAL_API_WEATHER_OPENWEATHER:
+                strcpy(config->base_url, "https://api.openweathermap.org/data/2.5");
+                config->cost_per_request = 0.0; // Free tier available
+                config->max_requests_per_hour = 1000;
+                config->quota_limit_daily = 60000;
+                break;
+                
+            default:
+                strcpy(config->base_url, "https://api.example.com");
+                break;
+        }
+        
+        // Initialize statistics
+        stats->stats_reset_time = time(NULL);
+        stats->status = API_STATUS_UNKNOWN;
+        stats->success_rate = 0.0;
+    }
+    
+    // Initialize CURL
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    
+    // Start health monitoring thread
+    g_external_apis.health_monitoring_enabled = true;
+    g_external_apis.threads_running = true;
+    
+    if (pthread_create(&g_external_apis.health_monitor_thread, NULL, health_monitor_worker, NULL) != 0) {
+        LOGX_ERROR("Failed to create external APIs health monitor thread");
+        curl_global_cleanup();
+        pthread_mutex_destroy(&g_external_apis.mutex);
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    g_external_apis_initialized = true;
+    
+    LOGX_INFO("External APIs manager initialized",
+              "apis_available", EXTERNAL_API_MAX,
+              "health_monitoring", g_external_apis.health_monitoring_enabled);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Cleanup external APIs manager
+void external_apis_cleanup(void) {
+    if (!g_external_apis_initialized) return;
+    
+    pthread_mutex_lock(&g_external_apis.mutex);
+    
+    // Stop health monitoring thread
+    g_external_apis.threads_running = false;
+    
+    if (g_external_apis.health_monitoring_enabled) {
+        pthread_cancel(g_external_apis.health_monitor_thread);
+        pthread_join(g_external_apis.health_monitor_thread, NULL);
+    }
+    
+    // Cleanup CURL
+    curl_global_cleanup();
+    
+    pthread_mutex_unlock(&g_external_apis.mutex);
+    pthread_mutex_destroy(&g_external_apis.mutex);
+    
+    g_external_apis_initialized = false;
+    
+    LOGX_INFO("External APIs manager cleaned up");
+}
+
+// Get elevation data from Google or Open Elevation API
+int external_apis_get_elevation(double latitude, double longitude, external_elevation_data_t* elevation_data) {
+    if (!g_external_apis_initialized || !elevation_data) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    memset(elevation_data, 0, sizeof(external_elevation_data_t));
+    elevation_data->timestamp = time(NULL);
+    
+    // Try Google Elevation API first if enabled and configured
+    if (g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].enabled &&
+        strlen(g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].api_key) > 0) {
+        
+        if (!check_rate_limits(EXTERNAL_API_GOOGLE_ELEVATION)) {
+            LOGX_WARN("Google Elevation API rate limited");
+            g_external_apis.stats[EXTERNAL_API_GOOGLE_ELEVATION].rate_limited_requests++;
+        } else {
+            char url[512];
+            snprintf(url, sizeof(url), 
+                    "%s/json?locations=%.6f,%.6f&key=%s",
+                    g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].base_url,
+                    latitude, longitude,
+                    g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].api_key);
+            
+            http_response_t response = {0};
+            time_t start_time = time(NULL);
+            
+            if (make_http_request(url, NULL, NULL, 
+                                g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].timeout_seconds,
+                                &response) == AUTONOMY_SUCCESS && response.data) {
+                
+                // Parse Google Elevation API response
+                json_object* root = json_tokener_parse(response.data);
+                if (root) {
+                    json_object* status_obj;
+                    if (json_object_object_get_ex(root, "status", &status_obj)) {
+                        const char* status = json_object_get_string(status_obj);
+                        if (strcmp(status, "OK") == 0) {
+                            json_object* results_obj;
+                            if (json_object_object_get_ex(root, "results", &results_obj)) {
+                                int results_len = json_object_array_length(results_obj);
+                                if (results_len > 0) {
+                                    json_object* first_result = json_object_array_get_idx(results_obj, 0);
+                                    if (first_result) {
+                                        json_object* elevation_obj, *resolution_obj;
+                                        if (json_object_object_get_ex(first_result, "elevation", &elevation_obj)) {
+                                            elevation_data->elevation = json_object_get_double(elevation_obj);
+                                            strcpy(elevation_data->source, "google_elevation");
+                                            
+                                            if (json_object_object_get_ex(first_result, "resolution", &resolution_obj)) {
+                                                elevation_data->resolution = json_object_get_double(resolution_obj);
+                                            }
+                                            
+                                            double duration = difftime(time(NULL), start_time) * 1000.0;
+                                            update_api_statistics(EXTERNAL_API_GOOGLE_ELEVATION, true, duration);
+                                            
+                                            LOGX_INFO("Google Elevation API success",
+                                                     "lat", latitude, "lon", longitude,
+                                                     "elevation", elevation_data->elevation,
+                                                     "resolution", elevation_data->resolution);
+                                            
+                                            json_object_put(root);
+                                            if (response.data) free(response.data);
+                                            return AUTONOMY_SUCCESS;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    json_object_put(root);
+                }
+                
+                double duration = difftime(time(NULL), start_time) * 1000.0;
+                update_api_statistics(EXTERNAL_API_GOOGLE_ELEVATION, false, duration);
+            }
+            
+            if (response.data) free(response.data);
+        }
+    }
+    
+    // Fallback to Open Elevation API
+    if (g_external_apis.configs[EXTERNAL_API_OPEN_ELEVATION].enabled ||
+        !g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].enabled) {
+        
+        if (!check_rate_limits(EXTERNAL_API_OPEN_ELEVATION)) {
+            LOGX_WARN("Open Elevation API rate limited");
+            g_external_apis.stats[EXTERNAL_API_OPEN_ELEVATION].rate_limited_requests++;
+        } else {
+            char url[512];
+            snprintf(url, sizeof(url), 
+                    "%s/lookup?locations=%.6f,%.6f",
+                    g_external_apis.configs[EXTERNAL_API_OPEN_ELEVATION].base_url,
+                    latitude, longitude);
+            
+            http_response_t response = {0};
+            time_t start_time = time(NULL);
+            
+            if (make_http_request(url, NULL, NULL, 
+                                g_external_apis.configs[EXTERNAL_API_OPEN_ELEVATION].timeout_seconds,
+                                &response) == AUTONOMY_SUCCESS && response.data) {
+                
+                // Parse Open Elevation API response
+                json_object* root = json_tokener_parse(response.data);
+                if (root) {
+                    json_object* results_obj;
+                    if (json_object_object_get_ex(root, "results", &results_obj)) {
+                        int results_len = json_object_array_length(results_obj);
+                        if (results_len > 0) {
+                            json_object* first_result = json_object_array_get_idx(results_obj, 0);
+                            if (first_result) {
+                                json_object* elevation_obj;
+                                if (json_object_object_get_ex(first_result, "elevation", &elevation_obj)) {
+                                    elevation_data->elevation = json_object_get_double(elevation_obj);
+                                    elevation_data->resolution = 30.0; // SRTM resolution
+                                    strcpy(elevation_data->source, "open_elevation");
+                                    
+                                    double duration = difftime(time(NULL), start_time) * 1000.0;
+                                    update_api_statistics(EXTERNAL_API_OPEN_ELEVATION, true, duration);
+                                    
+                                    LOGX_INFO("Open Elevation API success",
+                                             "lat", latitude, "lon", longitude,
+                                             "elevation", elevation_data->elevation);
+                                    
+                                    json_object_put(root);
+                                    if (response.data) free(response.data);
+                                    return AUTONOMY_SUCCESS;
+                                }
+                            }
+                        }
+                    }
+                    json_object_put(root);
+                }
+                
+                double duration = difftime(time(NULL), start_time) * 1000.0;
+                update_api_statistics(EXTERNAL_API_OPEN_ELEVATION, false, duration);
+            }
+            
+            if (response.data) free(response.data);
+        }
+    }
+    
+    LOGX_ERROR("All elevation APIs failed or disabled");
+    return AUTONOMY_ERROR_NOT_FOUND;
+}
+
+// Get weather data from weather APIs
+int external_apis_get_weather(double latitude, double longitude, external_weather_data_t* weather_data) {
+    if (!g_external_apis_initialized || !weather_data) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    memset(weather_data, 0, sizeof(external_weather_data_t));
+    weather_data->timestamp = time(NULL);
+    
+    // Try OpenWeatherMap API
+    if (g_external_apis.configs[EXTERNAL_API_WEATHER_OPENWEATHER].enabled &&
+        strlen(g_external_apis.configs[EXTERNAL_API_WEATHER_OPENWEATHER].api_key) > 0) {
+        
+        if (!check_rate_limits(EXTERNAL_API_WEATHER_OPENWEATHER)) {
+            LOGX_WARN("OpenWeatherMap API rate limited");
+            g_external_apis.stats[EXTERNAL_API_WEATHER_OPENWEATHER].rate_limited_requests++;
+        } else {
+            char url[512];
+            snprintf(url, sizeof(url),
+                    "%s/weather?lat=%.6f&lon=%.6f&appid=%s&units=metric",
+                    g_external_apis.configs[EXTERNAL_API_WEATHER_OPENWEATHER].base_url,
+                    latitude, longitude,
+                    g_external_apis.configs[EXTERNAL_API_WEATHER_OPENWEATHER].api_key);
+            
+            http_response_t response = {0};
+            time_t start_time = time(NULL);
+            
+            if (make_http_request(url, NULL, NULL,
+                                g_external_apis.configs[EXTERNAL_API_WEATHER_OPENWEATHER].timeout_seconds,
+                                &response) == AUTONOMY_SUCCESS && response.data) {
+                
+                // Parse OpenWeatherMap response
+                json_object* root = json_tokener_parse(response.data);
+                if (root) {
+                    // Get main weather data
+                    json_object* main_obj;
+                    if (json_object_object_get_ex(root, "main", &main_obj)) {
+                        json_object* temp_obj, *humidity_obj, *pressure_obj;
+                        if (json_object_object_get_ex(main_obj, "temp", &temp_obj)) {
+                            weather_data->temperature_celsius = json_object_get_double(temp_obj);
+                        }
+                        if (json_object_object_get_ex(main_obj, "humidity", &humidity_obj)) {
+                            weather_data->humidity_percent = json_object_get_double(humidity_obj);
+                        }
+                        if (json_object_object_get_ex(main_obj, "pressure", &pressure_obj)) {
+                            weather_data->pressure_hpa = json_object_get_double(pressure_obj);
+                        }
+                    }
+                    
+                    // Get wind data
+                    json_object* wind_obj;
+                    if (json_object_object_get_ex(root, "wind", &wind_obj)) {
+                        json_object* speed_obj, *deg_obj;
+                        if (json_object_object_get_ex(wind_obj, "speed", &speed_obj)) {
+                            weather_data->wind_speed_ms = json_object_get_double(speed_obj);
+                        }
+                        if (json_object_object_get_ex(wind_obj, "deg", &deg_obj)) {
+                            weather_data->wind_direction_deg = json_object_get_double(deg_obj);
+                        }
+                    }
+                    
+                    // Get visibility
+                    json_object* visibility_obj;
+                    if (json_object_object_get_ex(root, "visibility", &visibility_obj)) {
+                        weather_data->visibility_km = json_object_get_double(visibility_obj) / 1000.0; // Convert m to km
+                    }
+                    
+                    // Get weather description
+                    json_object* weather_obj;
+                    if (json_object_object_get_ex(root, "weather", &weather_obj)) {
+                        int weather_len = json_object_array_length(weather_obj);
+                        if (weather_len > 0) {
+                            json_object* weather_item = json_object_array_get_idx(weather_obj, 0);
+                            if (weather_item) {
+                                json_object* desc_obj, *icon_obj;
+                                if (json_object_object_get_ex(weather_item, "description", &desc_obj)) {
+                                    const char* description = json_object_get_string(desc_obj);
+                                    strncpy(weather_data->description, description, sizeof(weather_data->description) - 1);
+                                }
+                                if (json_object_object_get_ex(weather_item, "icon", &icon_obj)) {
+                                    const char* icon = json_object_get_string(icon_obj);
+                                    strncpy(weather_data->icon, icon, sizeof(weather_data->icon) - 1);
+                                }
+                            }
+                        }
+                    }
+                    
+                    strcpy(weather_data->source, "openweathermap");
+                    
+                    double duration = difftime(time(NULL), start_time) * 1000.0;
+                    update_api_statistics(EXTERNAL_API_WEATHER_OPENWEATHER, true, duration);
+                    
+                    LOGX_INFO("OpenWeatherMap API success",
+                             "lat", latitude, "lon", longitude,
+                             "temperature", weather_data->temperature_celsius,
+                             "humidity", weather_data->humidity_percent,
+                             "description", weather_data->description);
+                    
+                    json_object_put(root);
+                    if (response.data) free(response.data);
+                    return AUTONOMY_SUCCESS;
+                }
+                
+                double duration = difftime(time(NULL), start_time) * 1000.0;
+                update_api_statistics(EXTERNAL_API_WEATHER_OPENWEATHER, false, duration);
+            }
+            
+            if (response.data) free(response.data);
+        }
+    }
+    
+    LOGX_ERROR("Weather API failed or disabled");
+    return AUTONOMY_ERROR_NOT_FOUND;
+}
+
+// CURL write callback
+static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response) {
+    size_t total_size = size * nmemb;
+    
+    char* new_data = realloc(response->data, response->size + total_size + 1);
+    if (!new_data) {
+        LOGX_ERROR("Failed to allocate memory for HTTP response");
+        return 0;
+    }
+    
+    response->data = new_data;
+    memcpy(&(response->data[response->size]), contents, total_size);
+    response->size += total_size;
+    response->data[response->size] = '\0';
+    
+    return total_size;
+}
+
+// Make HTTP request using CURL
+static int make_http_request(const char* url, const char* headers, const char* post_data, 
+                           int timeout, http_response_t* response) {
+    if (!url || !response) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    CURL* curl = curl_easy_init();
+    if (!curl) {
+        LOGX_ERROR("Failed to initialize CURL");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Set CURL options
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-Daemon/6.1.0");
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+    
+    // Set custom headers if provided
+    struct curl_slist* header_list = NULL;
+    if (headers) {
+        header_list = curl_slist_append(header_list, headers);
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header_list);
+    }
+    
+    // Set POST data if provided
+    if (post_data) {
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(post_data));
+    }
+    
+    // Perform request
+    CURLcode curl_result = curl_easy_perform(curl);
+    
+    long response_code;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+    
+    if (header_list) {
+        curl_slist_free_all(header_list);
+    }
+    curl_easy_cleanup(curl);
+    
+    if (curl_result != CURLE_OK) {
+        LOGX_ERROR("CURL request failed", "error", curl_easy_strerror(curl_result));
+        return AUTONOMY_ERROR_NETWORK;
+    }
+    
+    if (response_code != 200) {
+        LOGX_ERROR("HTTP request failed", "response_code", response_code);
+        return AUTONOMY_ERROR_NETWORK;
+    }
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Update API statistics
+static void update_api_statistics(external_api_type_t api_type, bool success, double duration_ms) {
+    if (api_type >= EXTERNAL_API_MAX) return;
+    
+    external_api_statistics_t* stats = &g_external_apis.stats[api_type];
+    
+    stats->total_requests++;
+    stats->last_request = time(NULL);
+    
+    if (success) {
+        stats->successful_requests++;
+        stats->consecutive_successes++;
+        stats->consecutive_failures = 0;
+        stats->last_success = time(NULL);
+        stats->status = API_STATUS_HEALTHY;
+        
+        // Update average response time
+        stats->average_response_time_ms = 
+            (stats->average_response_time_ms * (stats->successful_requests - 1) + duration_ms) /
+            stats->successful_requests;
+    } else {
+        stats->failed_requests++;
+        stats->consecutive_failures++;
+        stats->consecutive_successes = 0;
+        stats->last_failure = time(NULL);
+        
+        // Update status based on consecutive failures
+        if (stats->consecutive_failures >= g_external_apis.configs[api_type].max_consecutive_failures) {
+            stats->status = API_STATUS_FAILED;
+        } else {
+            stats->status = API_STATUS_DEGRADED;
+        }
+    }
+    
+    // Calculate success rate
+    if (stats->total_requests > 0) {
+        stats->success_rate = (double)stats->successful_requests / stats->total_requests;
+    }
+    
+    // Update cost tracking
+    stats->total_cost += g_external_apis.configs[api_type].cost_per_request;
+    stats->cost_this_month += g_external_apis.configs[api_type].cost_per_request;
+    
+    LOGX_DEBUG("API statistics updated",
+              "api", external_api_type_to_string(api_type),
+              "success", success,
+              "duration_ms", duration_ms,
+              "success_rate", stats->success_rate,
+              "status", external_api_status_to_string(stats->status));
+}
+
+// Check rate limits
+static bool check_rate_limits(external_api_type_t api_type) {
+    if (api_type >= EXTERNAL_API_MAX) return false;
+    
+    external_api_config_t* config = &g_external_apis.configs[api_type];
+    external_api_statistics_t* stats = &g_external_apis.stats[api_type];
+    
+    time_t now = time(NULL);
+    
+    // Reset counters if needed
+    if (difftime(now, stats->hour_reset_time) >= 3600) {
+        stats->requests_this_hour = 0;
+        stats->hour_reset_time = now;
+    }
+    
+    if (difftime(now, stats->day_reset_time) >= 86400) {
+        stats->requests_this_day = 0;
+        stats->day_reset_time = now;
+    }
+    
+    // Check hourly limit
+    if (stats->requests_this_hour >= config->max_requests_per_hour) {
+        return false;
+    }
+    
+    // Check daily limit
+    if (stats->requests_this_day >= config->max_requests_per_day) {
+        return false;
+    }
+    
+    // Update counters
+    stats->requests_this_hour++;
+    stats->requests_this_day++;
+    
+    return true;
+}
+
+// Health monitor thread worker
+static void* health_monitor_worker(void* arg) {
+    LOGX_INFO("External APIs health monitor started");
+    
+    while (g_external_apis_initialized && g_external_apis.threads_running) {
+        sleep(300); // Check every 5 minutes
+        
+        if (!g_external_apis.threads_running) break;
+        
+        // Perform health check for all enabled APIs
+        for (int i = 0; i < EXTERNAL_API_MAX; i++) {
+            if (g_external_apis.configs[i].enabled) {
+                perform_api_health_check((external_api_type_t)i);
+            }
+        }
+        
+        g_external_apis.last_health_check = time(NULL);
+    }
+    
+    LOGX_INFO("External APIs health monitor stopped");
+    return NULL;
+}
+
+// Utility functions
+const char* external_api_type_to_string(external_api_type_t api_type) {
+    if (api_type >= 0 && api_type < EXTERNAL_API_MAX) {
+        return API_TYPE_STRINGS[api_type];
+    }
+    return "unknown";
+}
+
+external_api_type_t external_api_parse_type(const char* api_str) {
+    if (!api_str) return EXTERNAL_API_GOOGLE_LOCATION;
+    
+    for (int i = 0; i < EXTERNAL_API_MAX; i++) {
+        if (strcasecmp(api_str, API_TYPE_STRINGS[i]) == 0) {
+            return (external_api_type_t)i;
+        }
+    }
+    
+    return EXTERNAL_API_GOOGLE_LOCATION;
+}
+
+const char* external_api_status_to_string(api_status_t status) {
+    if (status >= 0 && status < API_STATUS_MAX) {
+        return API_STATUS_STRINGS[status];
+    }
+    return "unknown";
+}
+
+bool external_apis_is_initialized(void) {
+    return g_external_apis_initialized;
+}
+
+// Additional functions would be implemented here...
+// (get_google_location, get_reverse_geocoding, configure APIs, etc.)

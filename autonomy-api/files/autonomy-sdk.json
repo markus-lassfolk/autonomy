@@ -1,0 +1,15 @@
+{
+  "unauthenticated": {
+    "description": "Access to autonomy API",
+    "read": {
+      "ubus": {
+        "autonomy": ["status", "config_get"]
+      }
+    },
+    "write": {
+      "ubus": {
+        "autonomy": ["start", "stop", "restart"]
+      }
+    }
+  }
+}

@@ -13,6 +13,10 @@ typedef struct space_track_connector space_track_connector_t;
 typedef struct obstruction_analyzer obstruction_analyzer_t;
 typedef struct prediction_engine prediction_engine_t;
 
+// Comprehensive GPS collection functions
+int starlink_collect_comprehensive_gps(starlink_comprehensive_gps_t *gps);
+int starlink_get_location_with_fallback(starlink_comprehensive_gps_t *gps);
+
 // Configuration for the tracking system
 typedef struct {
     char space_track_username[64];

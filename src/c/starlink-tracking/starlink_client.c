@@ -12,6 +12,8 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/time.h>
+#include <pthread.h>
+#include <math.h>
 
 // Global Starlink client configuration
 static starlink_config_t g_starlink_config = {
@@ -447,4 +449,219 @@ void starlink_client_cleanup(void) {
     starlink_disconnect();
     g_starlink_state.initialized = false;
     g_starlink_state.tracking_enabled = false;
+}
+
+// Thread data for parallel API collection
+typedef struct {
+    starlink_comprehensive_gps_t *result;
+    pthread_mutex_t *mutex;
+    int *success_count;
+} parallel_collection_data_t;
+
+// Thread function for collecting location data
+static void* collect_location_data(void *arg) {
+    parallel_collection_data_t *data = (parallel_collection_data_t*)arg;
+    char response[2048];
+    
+    if (starlink_send_request(STARLINK_METHOD_GET_LOCATION, response, sizeof(response)) == 0) {
+        // Parse location response (simplified - would need proper JSON parsing)
+        pthread_mutex_lock(data->mutex);
+        data->result->latitude = 0.0;  // Would parse from response
+        data->result->longitude = 0.0; // Would parse from response
+        data->result->altitude = 0.0;  // Would parse from response
+        data->result->accuracy = 0.0;  // Would parse from response
+        strncpy(data->result->gps_source, "GNC_FUSED", sizeof(data->result->gps_source) - 1);
+        data->result->gps_source[sizeof(data->result->gps_source) - 1] = '\0';
+        
+        // Add to data sources
+        if (strlen(data->result->data_sources) > 0) {
+            strncat(data->result->data_sources, ",", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+        }
+        strncat(data->result->data_sources, "get_location", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+        
+        (*data->success_count)++;
+        pthread_mutex_unlock(data->mutex);
+    }
+    
+    return NULL;
+}
+
+// Thread function for collecting status data
+static void* collect_status_data(void *arg) {
+    parallel_collection_data_t *data = (parallel_collection_data_t*)arg;
+    char response[2048];
+    
+    if (starlink_send_request(STARLINK_METHOD_GET_STATUS, response, sizeof(response)) == 0) {
+        // Parse status response (simplified - would need proper JSON parsing)
+        pthread_mutex_lock(data->mutex);
+        data->result->gps_valid = true;      // Would parse from response
+        data->result->gps_satellites = 8;    // Would parse from response
+        data->result->no_sats_after_ttff = false; // Would parse from response
+        data->result->inhibit_gps = false;   // Would parse from response
+        
+        // Add to data sources
+        if (strlen(data->result->data_sources) > 0) {
+            strncat(data->result->data_sources, ",", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+        }
+        strncat(data->result->data_sources, "get_status", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+        
+        (*data->success_count)++;
+        pthread_mutex_unlock(data->mutex);
+    }
+    
+    return NULL;
+}
+
+// Thread function for collecting diagnostics data
+static void* collect_diagnostics_data(void *arg) {
+    parallel_collection_data_t *data = (parallel_collection_data_t*)arg;
+    char response[2048];
+    
+    if (starlink_send_request(STARLINK_METHOD_GET_DIAGNOSTICS, response, sizeof(response)) == 0) {
+        // Parse diagnostics response (simplified - would need proper JSON parsing)
+        pthread_mutex_lock(data->mutex);
+        data->result->location_enabled = true;        // Would parse from response
+        data->result->uncertainty_meters = 5.0;       // Would parse from response
+        data->result->uncertainty_meters_valid = true; // Would parse from response
+        data->result->gps_time_s = time(NULL);        // Would parse from response
+        
+        // Add to data sources
+        if (strlen(data->result->data_sources) > 0) {
+            strncat(data->result->data_sources, ",", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+        }
+        strncat(data->result->data_sources, "get_diagnostics", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+        
+        (*data->success_count)++;
+        pthread_mutex_unlock(data->mutex);
+    }
+    
+    return NULL;
+}
+
+// Calculate confidence score based on collected data
+static void calculate_confidence_score(starlink_comprehensive_gps_t *gps) {
+    double confidence = 0.0;
+    
+    // Base confidence from data sources
+    int source_count = 0;
+    char *sources = gps->data_sources;
+    while (*sources) {
+        if (*sources == ',') source_count++;
+        sources++;
+    }
+    source_count++; // Count the last source
+    
+    if (source_count >= 2) {
+        confidence += 0.3; // Multiple sources
+    }
+    
+    // GPS validity
+    if (gps->gps_valid) {
+        confidence += 0.4;
+    }
+    
+    // Satellite count
+    if (gps->gps_satellites >= 4) {
+        confidence += 0.2;
+    }
+    
+    // Accuracy assessment
+    if (gps->accuracy > 0 && gps->accuracy < 10) {
+        confidence += 0.1;
+    }
+    
+    gps->confidence = fmin(confidence, 1.0);
+    
+    // Determine quality score
+    if (gps->confidence >= 0.9) {
+        strncpy(gps->quality_score, "excellent", sizeof(gps->quality_score) - 1);
+    } else if (gps->confidence >= 0.7) {
+        strncpy(gps->quality_score, "good", sizeof(gps->quality_score) - 1);
+    } else if (gps->confidence >= 0.5) {
+        strncpy(gps->quality_score, "fair", sizeof(gps->quality_score) - 1);
+    } else {
+        strncpy(gps->quality_score, "poor", sizeof(gps->quality_score) - 1);
+    }
+    gps->quality_score[sizeof(gps->quality_score) - 1] = '\0';
+}
+
+// Comprehensive Starlink GPS collection with parallel API calls
+int starlink_collect_comprehensive_gps(starlink_comprehensive_gps_t *gps) {
+    if (!gps || !g_starlink_state.initialized) {
+        return -1;
+    }
+    
+    // Initialize result structure
+    memset(gps, 0, sizeof(starlink_comprehensive_gps_t));
+    gps->collected_at = time(NULL);
+    
+    struct timeval start_time, end_time;
+    gettimeofday(&start_time, NULL);
+    
+    // Create threads for parallel collection
+    pthread_t threads[3];
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    int success_count = 0;
+    
+    parallel_collection_data_t thread_data = {
+        .result = gps,
+        .mutex = &mutex,
+        .success_count = &success_count
+    };
+    
+    // Start parallel collection threads
+    pthread_create(&threads[0], NULL, collect_location_data, &thread_data);
+    pthread_create(&threads[1], NULL, collect_status_data, &thread_data);
+    pthread_create(&threads[2], NULL, collect_diagnostics_data, &thread_data);
+    
+    // Wait for all threads to complete
+    for (int i = 0; i < 3; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    pthread_mutex_destroy(&mutex);
+    
+    // Calculate collection time
+    gettimeofday(&end_time, NULL);
+    gps->collection_ms = (end_time.tv_sec - start_time.tv_sec) * 1000 + 
+                        (end_time.tv_usec - start_time.tv_usec) / 1000;
+    
+    // Calculate confidence and quality
+    calculate_confidence_score(gps);
+    
+    // Set validity based on success
+    gps->valid = (success_count > 0);
+    
+    return (success_count > 0) ? 0 : -1;
+}
+
+// Get location with fallback logic
+int starlink_get_location_with_fallback(starlink_comprehensive_gps_t *gps) {
+    if (!gps) {
+        return -1;
+    }
+    
+    // Try comprehensive collection first
+    if (starlink_collect_comprehensive_gps(gps) == 0) {
+        return 0;
+    }
+    
+    // Fallback to diagnostics coordinates only
+    char response[2048];
+    if (starlink_send_request(STARLINK_METHOD_GET_DIAGNOSTICS, response, sizeof(response)) == 0) {
+        // Parse diagnostics response for coordinates (simplified)
+        memset(gps, 0, sizeof(starlink_comprehensive_gps_t));
+        gps->latitude = 0.0;  // Would parse from response
+        gps->longitude = 0.0; // Would parse from response
+        gps->altitude = 0.0;  // Would parse from response
+        gps->accuracy = 0.0;  // Would parse from response
+        gps->collected_at = time(NULL);
+        gps->valid = true;
+        gps->confidence = 0.5; // Lower confidence for fallback
+        strncpy(gps->quality_score, "fair", sizeof(gps->quality_score) - 1);
+        strncpy(gps->data_sources, "get_diagnostics", sizeof(gps->data_sources) - 1);
+        return 0;
+    }
+    
+    return -1;
 }

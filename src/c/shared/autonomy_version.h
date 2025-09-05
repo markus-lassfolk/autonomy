@@ -12,7 +12,7 @@
 // Main version information
 #define AUTONOMY_VERSION_MAJOR    5
 #define AUTONOMY_VERSION_MINOR    6
-#define AUTONOMY_VERSION_PATCH    0
+#define AUTONOMY_VERSION_PATCH    1
 #define AUTONOMY_VERSION_BUILD     1
 
 // Version string macros

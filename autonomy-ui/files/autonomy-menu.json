@@ -1,0 +1,10 @@
+﻿{
+  "services/Autonomy": {
+    "title": "Autonomy",
+    "index": 250,
+    "view": "services/Autonomy",
+    "acls": [
+      "autonomy"
+    ]
+  }
+}

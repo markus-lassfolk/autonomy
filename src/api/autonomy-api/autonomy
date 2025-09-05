@@ -1,0 +1,44 @@
+#!/bin/sh
+
+case "$1" in
+  list)
+    echo '{"status":{},"config_get":{},"start":{},"stop":{},"restart":{}}'
+    ;;
+  call)
+    case "$2" in
+      status)
+        if pgrep -f autonomyd > /dev/null; then
+          echo '{"daemon_running":true,"status":"running"}'
+        else
+          echo '{"daemon_running":false,"status":"stopped"}'
+        fi
+        ;;
+      config_get)
+        config=$(uci -q show autonomy 2>/dev/null | head -5)
+        if [ $? -eq 0 ]; then
+          echo "{\"config\":\"$config\"}"
+        else
+          echo '{"config":"No configuration found"}'
+        fi
+        ;;
+      start)
+        /etc/init.d/autonomy start
+        echo '{"ok":true,"message":"Service started"}'
+        ;;
+      stop)
+        /etc/init.d/autonomy stop
+        echo '{"ok":true,"message":"Service stopped"}'
+        ;;
+      restart)
+        /etc/init.d/autonomy restart
+        echo '{"ok":true,"message":"Service restarted"}'
+        ;;
+      *)
+        echo '{"error":"Unknown method"}'
+        ;;
+    esac
+    ;;
+  *)
+    echo '{"error":"Invalid command"}'
+    ;;
+esac

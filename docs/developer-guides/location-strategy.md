@@ -1,12 +1,87 @@
-# Multi-Source Location Strategy
+# 🎯 Multi-Source Location Strategy & Flow
 
-**Version:** 3.0.0 | **Updated:** 2025-08-22
+**Version:** 4.0.0 | **Updated:** 2025-01-15
 
-This document describes Autonomy's comprehensive multi-source location strategy, combining GPS, Starlink, cellular, and WiFi data for maximum reliability and accuracy.
+This document describes Autonomy's comprehensive multi-source location strategy, combining GPS, Starlink, cellular, and WiFi data for maximum reliability and accuracy with intelligent fallback and performance optimization.
+
+## 📊 **Location Source Hierarchy & Performance**
+
+| Priority | Source | Accuracy | Typical Range | Query Cost | Battery Impact | Reliability |
+|----------|--------|----------|---------------|------------|----------------|-------------|
+| **1st** | 🛰️ **Quectel GNSS** | ±2m | Global | Free | Low | 95% (clear sky) |
+| **2nd** | 🚀 **Enhanced ubus WiFi** | ±41m | Urban/Suburban | Free | Very Low | 90% (populated areas) |
+| **3rd** | 📡 **Combined Cell+WiFi** | ±69m | Most areas | API calls | Low | 85% (network coverage) |
+| **4th** | 📶 **WiFi-Only** | ±70m | WiFi-dense areas | API calls | Very Low | 80% (urban) |
+| **5th** | 📱 **Cellular-Only** | ±1334m | Network coverage | API calls | Low | 95% (cellular coverage) |
 
 ## 🎯 Overview
 
 Autonomy implements an intelligent multi-source location system that automatically selects the best available location source based on accuracy, reliability, and availability. The system includes advanced features like predictive loading, geographic clustering, and comprehensive 5G support.
+
+## 🔄 **Recommended Location Flow & Rules**
+
+### **🎯 Primary Strategy: GPS-First with Intelligent Fallback**
+
+```
+┌─────────────────┐
+│   Start Query   │
+└─────────┬───────┘
+          │
+    ┌─────▼─────┐
+    │ Try GNSS  │ ◄─── Always try GPS first (±2m accuracy)
+    │ (±2m)     │
+    └─────┬─────┘
+          │
+     ┌────▼────┐
+     │ Success?│
+     └────┬────┘
+          │
+    ┌─────▼─────┐ YES
+    │  Return   │ ◄─── 95% of queries end here
+    │ GPS Data  │
+    └───────────┘
+          │ NO
+    ┌─────▼─────┐
+    │ Enhanced  │ ◄─── Rich WiFi data (quality, SNR, channels)
+    │ WiFi Scan │
+    │ (±41m)    │
+    └─────┬─────┘
+          │
+     ┌────▼────┐
+     │ ≥2 APs? │
+     └────┬────┘
+          │
+    ┌─────▼─────┐ YES
+    │  Google   │ ◄─── High accuracy WiFi location
+    │ WiFi API  │
+    └─────┬─────┘
+          │ NO
+    ┌─────▼─────┐
+    │ Combined  │ ◄─── Cell towers + available WiFi
+    │ Cell+WiFi │
+    │ (±69m)    │
+    └─────┬─────┘
+          │
+     ┌────▼────┐
+     │ Success?│
+     └────┬────┘
+          │
+    ┌─────▼─────┐ YES
+    │  Return   │
+    │ Location  │
+    └───────────┘
+          │ NO
+    ┌─────▼─────┐
+    │ Cellular  │ ◄─── Last resort (wide accuracy)
+    │   Only    │
+    │ (±1334m)  │
+    └─────┬─────┘
+          │
+    ┌─────▼─────┐
+    │  Return   │
+    │ Best Avail│
+    └───────────┘
+```
 
 ## 🚀 Key Features
 
