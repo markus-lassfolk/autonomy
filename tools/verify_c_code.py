@@ -1288,7 +1288,7 @@ class CCodeVerifier:
         
         # Detailed results by severity
         severity_order = ['critical', 'error', 'warning', 'info']
-        severity_icons = {'critical': '🚨', 'error': '❌', 'warning': '⚠️', 'info': 'ℹ️'}
+        severity_icons = {'critical': '[CRITICAL]', 'error': '[ERROR]', 'warning': '[WARNING]', 'info': '[INFO]'}
         
         for severity in severity_order:
             if severity in by_severity:
@@ -1300,9 +1300,9 @@ class CCodeVerifier:
                     report.append(f"  {location}")
                     report.append(f"    {result.message}")
                     if result.suggestion:
-                        report.append(f"    💡 {result.suggestion}")
+                        report.append(f"    [SUGGESTION] {result.suggestion}")
                     if result.code_snippet:
-                        report.append(f"    📝 {result.code_snippet}")
+                        report.append(f"    [CODE] {result.code_snippet}")
                     report.append("")
         
         report_text = "\n".join(report)
