@@ -140,9 +140,7 @@ void parallel_result_init(parallel_result_t *result);
 void parallel_result_cleanup(parallel_result_t *result);
 
 // Worker thread functions (internal)
-static void* worker_thread_main(void *arg);
-static int worker_process_job(worker_thread_t *worker, const propagation_job_t *job);
-static int worker_submit_job(worker_thread_t *worker, const propagation_job_t *job);
+// These functions are implemented in the corresponding .c file
 
 // Error codes
 #define PARALLEL_SUCCESS                 0

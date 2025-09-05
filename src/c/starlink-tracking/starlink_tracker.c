@@ -39,7 +39,9 @@ starlink_tracker_t* starlink_tracker_init(const starlink_tracker_config_t *confi
     space_track_config_t space_config;
     space_track_config_init_defaults(&space_config);
     strncpy(space_config.username, config->space_track_username, sizeof(space_config.username) - 1);
+    space_config.username[sizeof(space_config.username) - 1] = '\0';
     strncpy(space_config.password, config->space_track_password, sizeof(space_config.password) - 1);
+    space_config.password[sizeof(space_config.password) - 1] = '\0';
     space_config.rate_limit_requests_per_minute = config->rate_limit_requests_per_minute;
     space_config.cache_duration_hours = config->cache_duration_hours;
     

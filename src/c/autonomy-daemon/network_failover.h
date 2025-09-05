@@ -8,12 +8,7 @@
 #include <time.h>
 
 // Forward declarations
-static void* failover_monitor_thread(void *arg);
-static int find_best_interface(void);
-static int perform_failover(int target_interface);
-static int activate_interface(int interface_index);
-static int activate_interface_routing(int interface_index);
-static int deactivate_interface_routing(int interface_index);
+// These functions are implemented in the corresponding .c file
 
 // Network failover configuration
 typedef struct {

@@ -8,11 +8,7 @@
 #include <time.h>
 
 // Forward declarations
-static void* rutos_monitor_thread(void *arg);
-static int read_rutos_gps_data(gps_data_t *data);
-static int read_rutos_gps_fallback(gps_data_t *data);
-static bool validate_gps_data(const gps_data_t *data);
-static float calculate_reliability_score(void);
+// These functions are implemented in the corresponding .c file
 
 // GPS data structure
 typedef struct {

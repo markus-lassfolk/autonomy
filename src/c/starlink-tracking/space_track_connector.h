@@ -120,9 +120,6 @@ int space_track_config_from_env(space_track_config_t *config);
 #define SPACE_TRACK_ERROR_MEMORY_FAILURE    -9
 
 // Internal helper functions (not exposed in public API)
-static size_t write_callback(void *contents, size_t size, size_t nmemb, http_response_t *response);
-static int perform_http_request(space_track_connector_t *connector, const char *url, const char *post_data, http_response_t *response);
-static int check_rate_limit(space_track_connector_t *connector);
-static void update_rate_limit(space_track_connector_t *connector);
+// These are implemented in the corresponding .c file
 
 #endif // SPACE_TRACK_CONNECTOR_H

@@ -679,6 +679,99 @@ class CCodeVerifier:
                     f"Add #include <{required_header}>"
                 )
     
+    def check_libubox_compatibility(self, file_path: str):
+        """Check for libubox-specific compatibility issues"""
+        if file_path not in self.files:
+            return
+        
+        code_file = self.files[file_path]
+        
+        # Check for blobmsg_add_f32 usage (doesn't exist in libubox)
+        for i, line in enumerate(code_file.lines):
+            if 'blobmsg_add_f32' in line:
+                self.add_result(
+                    file_path,
+                    f"blobmsg_add_f32 function does not exist in libubox: {line.strip()}",
+                    "error",
+                    i + 1,
+                    "libubox_compatibility",
+                    "Use blobmsg_add_double instead of blobmsg_add_f32"
+                )
+        
+        # Check for const struct blob_attr ** usage (should be struct blob_attr **)
+        for i, line in enumerate(code_file.lines):
+            if 'const struct blob_attr **' in line and 'blobmsg_parse' in line:
+                self.add_result(
+                    file_path,
+                    f"Incompatible pointer type in blobmsg_parse: {line.strip()}",
+                    "error",
+                    i + 1,
+                    "libubox_compatibility",
+                    "Remove 'const' from struct blob_attr ** parameter"
+                )
+        
+        # Check for unused static function declarations in headers
+        if file_path.endswith('.h'):
+            for i, line in enumerate(code_file.lines):
+                if re.search(r'static\s+\w+\s+\w+\s*\([^)]*\)\s*;', line):
+                    func_name = re.search(r'static\s+\w+\s+(\w+)\s*\(', line)
+                    if func_name:
+                        self.add_result(
+                            file_path,
+                            f"Static function declared but may not be defined: {func_name.group(1)}",
+                            "warning",
+                            i + 1,
+                            "libubox_compatibility",
+                            "Remove static declaration from header or ensure function is defined"
+                        )
+    
+    def check_strncpy_safety(self, file_path: str):
+        """Check for strncpy safety issues"""
+        if file_path not in self.files:
+            return
+        
+        code_file = self.files[file_path]
+        
+        # Check for strncpy without null termination
+        for i, line in enumerate(code_file.lines):
+            if 'strncpy(' in line and 'sizeof(' in line and '- 1)' in line:
+                # Check if the next line ensures null termination
+                next_line_idx = i + 1
+                if next_line_idx < len(code_file.lines):
+                    next_line = code_file.lines[next_line_idx]
+                    if not ('= \'\\0\'' in next_line or '= 0' in next_line):
+                        # Extract variable name from strncpy call
+                        var_match = re.search(r'strncpy\s*\(\s*(\w+)', line)
+                        if var_match:
+                            var_name = var_match.group(1)
+                            self.add_result(
+                                file_path,
+                                f"strncpy may truncate without null termination: {line.strip()}",
+                                "warning",
+                                i + 1,
+                                "strncpy_safety",
+                                f"Add null termination: {var_name}[sizeof({var_name}) - 1] = '\\0';"
+                            )
+    
+    def check_pointer_casting_issues(self, file_path: str):
+        """Check for unnecessary pointer casting issues"""
+        if file_path not in self.files:
+            return
+        
+        code_file = self.files[file_path]
+        
+        # Check for unnecessary casting in blobmsg_get_* calls
+        for i, line in enumerate(code_file.lines):
+            if re.search(r'blobmsg_get_\w+\s*\(\s*\(struct blob_attr \*\)', line):
+                self.add_result(
+                    file_path,
+                    f"Unnecessary pointer casting in blobmsg_get call: {line.strip()}",
+                    "warning",
+                    i + 1,
+                    "pointer_casting",
+                    "Remove unnecessary (struct blob_attr *) cast"
+                )
+    
     def verify_file(self, file_path: str):
         """Run all verification checks on a single file"""
         self.log(f"Verifying {file_path}")
@@ -694,6 +787,9 @@ class CCodeVerifier:
         self.check_undefined_behavior(file_path)
         self.check_memory_management(file_path)
         self.check_build_compatibility(file_path)
+        self.check_libubox_compatibility(file_path)
+        self.check_strncpy_safety(file_path)
+        self.check_pointer_casting_issues(file_path)
     
     def verify_directory(self, directory: str, include_patterns: List[str] = None, 
                         exclude_patterns: List[str] = None):

@@ -364,6 +364,7 @@ starlink_tracker_t* starlink_tracker_init_from_uci(struct uci_context *uci_ctx) 
     
     // Set defaults
     strncpy(config.starlink_dish_ip, "192.168.100.1", sizeof(config.starlink_dish_ip) - 1);
+    config.starlink_dish_ip[sizeof(config.starlink_dish_ip) - 1] = '\0';
     config.starlink_dish_port = 9200;
     config.update_interval_minutes = 60;
     config.prediction_horizon_hours = 24;
@@ -382,10 +383,12 @@ starlink_tracker_t* starlink_tracker_init_from_uci(struct uci_context *uci_ctx) 
     
     if (username) {
         strncpy(config.space_track_username, username, sizeof(config.space_track_username) - 1);
+        config.space_track_username[sizeof(config.space_track_username) - 1] = '\0';
     }
     
     if (password) {
         strncpy(config.space_track_password, password, sizeof(config.space_track_password) - 1);
+        config.space_track_password[sizeof(config.space_track_password) - 1] = '\0';
     }
     
     // Check if we have required credentials

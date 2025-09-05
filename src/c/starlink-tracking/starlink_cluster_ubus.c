@@ -38,7 +38,7 @@ int autonomy_starlink_cluster_status(struct ubus_context *uctx, struct ubus_obje
         blobmsg_add_u32(&bb, "failover_count", cluster.failover_count);
         blobmsg_add_u8(&bb, "auto_failover_enabled", cluster.auto_failover_enabled);
         blobmsg_add_u32(&bb, "failover_threshold", cluster.failover_threshold);
-        blobmsg_add_f32(&bb, "min_health_score", cluster.min_health_score);
+        blobmsg_add_double(&bb, "min_health_score", cluster.min_health_score);
         
         if (cluster.last_failover > 0) {
             blobmsg_add_u32(&bb, "last_failover", cluster.last_failover);
@@ -66,9 +66,9 @@ int autonomy_starlink_cluster_status(struct ubus_context *uctx, struct ubus_obje
             
             blobmsg_add_u32(&bb, "consecutive_successes", instance->consecutive_successes);
             blobmsg_add_u32(&bb, "consecutive_failures", instance->consecutive_failures);
-            blobmsg_add_f32(&bb, "average_latency_ms", instance->average_latency);
-            blobmsg_add_f32(&bb, "average_throughput_mbps", instance->average_throughput);
-            blobmsg_add_f32(&bb, "reliability_score", instance->reliability_score);
+            blobmsg_add_double(&bb, "average_latency_ms", instance->average_latency);
+            blobmsg_add_double(&bb, "average_throughput_mbps", instance->average_throughput);
+            blobmsg_add_double(&bb, "reliability_score", instance->reliability_score);
             
             if (instance->last_result.success) {
                 blobmsg_add_u32(&bb, "health_score", instance->last_result.health.overall_score);
@@ -105,7 +105,7 @@ int autonomy_starlink_cluster_add(struct ubus_context *uctx, struct ubus_object 
     blob_buf_init(&bb, 0);
     
     // Parse request parameters
-    const struct blob_attr *tb[8];
+    struct blob_attr *tb[8];
     blobmsg_parse(cluster_policy, 7, tb, blob_data(msg), blob_len(msg));
     
     if (!tb[0] || !tb[1] || !tb[2]) {
@@ -119,7 +119,7 @@ int autonomy_starlink_cluster_add(struct ubus_context *uctx, struct ubus_object 
     
     // Create Starlink configuration
     starlink_config_t config = {0};
-    strcpy(config.host, blobmsg_get_string((struct blob_attr *)tb[1]));
+    strcpy(config.host, blobmsg_get_string(tb[1]));
     config.port = blobmsg_get_u32(tb[2]);
     config.timeout_seconds = STARLINK_DEFAULT_TIMEOUT;
     config.grpc_first = true;
@@ -131,11 +131,11 @@ int autonomy_starlink_cluster_add(struct ubus_context *uctx, struct ubus_object 
     // Optional parameters
     if (tb[3]) strcpy(config.interface_name, blobmsg_get_string(tb[3]));
     if (tb[4]) strcpy(config.mwan3_member, blobmsg_get_string(tb[4]));
-    if (tb[5]) config.priority = blobmsg_get_u32((struct blob_attr *)tb[5]);
-    if (tb[6]) config.enabled = blobmsg_get_u8((struct blob_attr *)tb[6]);
+    if (tb[5]) config.priority = blobmsg_get_u32(tb[5]);
+    if (tb[6]) config.enabled = blobmsg_get_u8(tb[6]);
     
     // Add to cluster
-    const char *id = blobmsg_get_string((struct blob_attr *)tb[0]);
+    const char *id = blobmsg_get_string(tb[0]);
     if (!id) {
         blobmsg_add_string(&bb, "result", "invalid_parameters");
         blobmsg_add_string(&bb, "error", "Invalid ID parameter");
@@ -174,7 +174,7 @@ int autonomy_starlink_cluster_remove(struct ubus_context *uctx, struct ubus_obje
     blob_buf_init(&bb, 0);
     
     // Parse request parameters
-    const struct blob_attr *tb[1];
+    struct blob_attr *tb[1];
     blobmsg_parse(cluster_policy, 1, tb, blob_data(msg), blob_len(msg));
     
     if (!tb[0]) {
@@ -186,7 +186,7 @@ int autonomy_starlink_cluster_remove(struct ubus_context *uctx, struct ubus_obje
         return 0;
     }
     
-    const char *id = blobmsg_get_string((struct blob_attr *)tb[0]);
+    const char *id = blobmsg_get_string(tb[0]);
     if (!id) {
         blobmsg_add_string(&bb, "result", "invalid_parameters");
         blobmsg_add_string(&bb, "error", "Invalid ID parameter");
@@ -222,7 +222,7 @@ int autonomy_starlink_cluster_failover(struct ubus_context *uctx, struct ubus_ob
     blob_buf_init(&bb, 0);
     
     // Parse request parameters
-    const struct blob_attr *tb[2];
+    struct blob_attr *tb[2];
     blobmsg_parse(cluster_policy, 2, tb, blob_data(msg), blob_len(msg));
     
     if (!tb[0]) {
@@ -234,7 +234,7 @@ int autonomy_starlink_cluster_failover(struct ubus_context *uctx, struct ubus_ob
         return 0;
     }
     
-    const char *target = blobmsg_get_string((struct blob_attr *)tb[0]);
+    const char *target = blobmsg_get_string(tb[0]);
     if (!target) {
         blobmsg_add_string(&bb, "result", "invalid_parameters");
         blobmsg_add_string(&bb, "error", "Invalid target parameter");
@@ -244,7 +244,7 @@ int autonomy_starlink_cluster_failover(struct ubus_context *uctx, struct ubus_ob
         return 0;
     }
     
-    const char *reason = tb[1] ? blobmsg_get_string((struct blob_attr *)tb[1]) : "Manual failover";
+    const char *reason = tb[1] ? blobmsg_get_string(tb[1]) : "Manual failover";
     
     int result = -1;
     
@@ -365,7 +365,7 @@ int autonomy_starlink_cluster_config(struct ubus_context *uctx, struct ubus_obje
     blobmsg_add_string(&bb, "result", "cluster_config_updated");
     blobmsg_add_u8(&bb, "auto_failover", auto_failover);
     blobmsg_add_u32(&bb, "failover_threshold", failover_threshold);
-    blobmsg_add_f32(&bb, "min_health_score", min_health_score);
+    blobmsg_add_double(&bb, "min_health_score", min_health_score);
     blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
     
     ubus_send_reply(uctx, req, bb.head);

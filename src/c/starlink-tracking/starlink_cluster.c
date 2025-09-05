@@ -38,6 +38,7 @@ int starlink_cluster_add(const char *id, const starlink_config_t *config) {
     // Initialize instance
     memset(instance, 0, sizeof(starlink_instance_t));
     strncpy(instance->id, id, sizeof(instance->id) - 1);
+    instance->id[sizeof(instance->id) - 1] = '\0';
     memcpy(&instance->config, config, sizeof(starlink_config_t));
     
     // Set default values

@@ -1,8 +1,11 @@
 include $(TOPDIR)/rules.mk
 
+# Load version information from centralized VERSION file
+include $(CURDIR)/../VERSION
+
 PKG_NAME:=autonomy-api
-PKG_VERSION:=1.0.0
-PKG_RELEASE:=1
+PKG_VERSION:=$(AUTONOMY_VERSION)
+PKG_RELEASE:=$(AUTONOMY_VERSION_BUILD)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/markus-lassfolk/autonomy.git
