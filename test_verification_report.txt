@@ -1,0 +1,428 @@
+🔍 C Code Verification Report
+==================================================
+
+📊 Summary:
+  Total issues: 105
+  Critical: 0
+  Errors: 82
+  Warnings: 23
+  Info: 0
+
+❌ ERROR (82)
+------------------------------
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: stdio.h
+    💡 Check if stdio.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: stdlib.h
+    💡 Check if stdlib.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: signal.h
+    💡 Check if signal.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: unistd.h
+    💡 Check if unistd.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: string.h
+    💡 Check if string.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: sys/stat.h
+    💡 Check if sys/stat.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: sys/types.h
+    💡 Check if sys/types.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: errno.h
+    💡 Check if errno.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: libubus.h
+    💡 Check if libubus.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: libubox/blobmsg_json.h
+    💡 Check if libubox/blobmsg_json.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: libubox/uloop.h
+    💡 Check if libubox/uloop.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: uci.h
+    💡 Check if uci.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: syslog.h
+    💡 Check if syslog.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: stdarg.h
+    💡 Check if stdarg.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c
+    Missing include file: math.h
+    💡 Check if math.h exists in include paths
+
+  src\c\autonomy-daemon\core\config.c
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\core\config.c
+    Missing include file: stdio.h
+    💡 Check if stdio.h exists in include paths
+
+  src\c\autonomy-daemon\core\config.c
+    Missing include file: string.h
+    💡 Check if string.h exists in include paths
+
+  src\c\autonomy-daemon\core\config.c
+    Missing include file: stdlib.h
+    💡 Check if stdlib.h exists in include paths
+
+  src\c\autonomy-daemon\core\config.c
+    Missing include file: uci.h
+    💡 Check if uci.h exists in include paths
+
+  src\c\autonomy-daemon\core\logging.c
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\core\logging.c
+    Missing include file: stdio.h
+    💡 Check if stdio.h exists in include paths
+
+  src\c\autonomy-daemon\core\logging.c
+    Missing include file: stdarg.h
+    💡 Check if stdarg.h exists in include paths
+
+  src\c\autonomy-daemon\core\logging.c
+    Missing include file: syslog.h
+    💡 Check if syslog.h exists in include paths
+
+  src\c\autonomy-daemon\core\logging.c
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\core\pidfile.c
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\core\pidfile.c
+    Missing include file: stdio.h
+    💡 Check if stdio.h exists in include paths
+
+  src\c\autonomy-daemon\core\pidfile.c
+    Missing include file: stdlib.h
+    💡 Check if stdlib.h exists in include paths
+
+  src\c\autonomy-daemon\core\pidfile.c
+    Missing include file: string.h
+    💡 Check if string.h exists in include paths
+
+  src\c\autonomy-daemon\core\pidfile.c
+    Missing include file: errno.h
+    💡 Check if errno.h exists in include paths
+
+  src\c\autonomy-daemon\core\pidfile.c
+    Missing include file: signal.h
+    💡 Check if signal.h exists in include paths
+
+  src\c\autonomy-daemon\core\pidfile.c
+    Missing include file: syslog.h
+    💡 Check if syslog.h exists in include paths
+
+  src\c\autonomy-daemon\core\pidfile.c
+    Missing include file: unistd.h
+    💡 Check if unistd.h exists in include paths
+
+  src\c\autonomy-daemon\core\system_management.c
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\core\system_management.c
+    Missing include file: stdio.h
+    💡 Check if stdio.h exists in include paths
+
+  src\c\autonomy-daemon\core\system_management.c
+    Missing include file: stdlib.h
+    💡 Check if stdlib.h exists in include paths
+
+  src\c\autonomy-daemon\core\system_management.c
+    Missing include file: string.h
+    💡 Check if string.h exists in include paths
+
+  src\c\autonomy-daemon\core\system_management.c
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\core\system_management.c
+    Missing include file: unistd.h
+    💡 Check if unistd.h exists in include paths
+
+  src\c\autonomy-daemon\core\system_management.c
+    Missing include file: sys/stat.h
+    💡 Check if sys/stat.h exists in include paths
+
+  src\c\autonomy-daemon\core\system_management.c
+    Missing include file: sys/sysinfo.h
+    💡 Check if sys/sysinfo.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy_types.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\core\system_management.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\core\system_management.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\core\types.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\core\types.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\core\types.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:5
+    Function declared but not implemented: discover_network_interfaces
+    💡 Implement function: int discover_network_interfaces or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:6
+    Function declared but not implemented: perform_network_health_check
+    💡 Implement function: int perform_network_health_check or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:9
+    Function declared but not implemented: discover_gps_sources
+    💡 Implement function: int discover_gps_sources or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:10
+    Function declared but not implemented: perform_gps_health_check
+    💡 Implement function: int perform_gps_health_check or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:21
+    Function declared but not implemented: autonomy_status
+    💡 Implement function: int autonomy_status or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:24
+    Function declared but not implemented: autonomy_health
+    💡 Implement function: int autonomy_health or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:27
+    Function declared but not implemented: autonomy_config
+    💡 Implement function: int autonomy_config or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:30
+    Function declared but not implemented: autonomy_start
+    💡 Implement function: int autonomy_start or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:33
+    Function declared but not implemented: autonomy_stop
+    💡 Implement function: int autonomy_stop or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:36
+    Function declared but not implemented: autonomy_restart
+    💡 Implement function: int autonomy_restart or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:39
+    Function declared but not implemented: autonomy_pid_status
+    💡 Implement function: int autonomy_pid_status or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:42
+    Function declared but not implemented: autonomy_log_status
+    💡 Implement function: int autonomy_log_status or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:45
+    Function declared but not implemented: autonomy_config_status
+    💡 Implement function: int autonomy_config_status or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:50
+    Function declared but not implemented: autonomy_network_status
+    💡 Implement function: int autonomy_network_status or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:53
+    Function declared but not implemented: autonomy_network_interfaces
+    💡 Implement function: int autonomy_network_interfaces or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:56
+    Function declared but not implemented: autonomy_network_health_check
+    💡 Implement function: int autonomy_network_health_check or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:59
+    Function declared but not implemented: autonomy_network_failover
+    💡 Implement function: int autonomy_network_failover or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:64
+    Function declared but not implemented: autonomy_gps_status
+    💡 Implement function: int autonomy_gps_status or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:67
+    Function declared but not implemented: autonomy_gps_sources
+    💡 Implement function: int autonomy_gps_sources or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:70
+    Function declared but not implemented: autonomy_gps_health_check
+    💡 Implement function: int autonomy_gps_health_check or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:75
+    Function declared but not implemented: autonomy_system_status
+    💡 Implement function: int autonomy_system_status or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:78
+    Function declared but not implemented: autonomy_system_health_check
+    💡 Implement function: int autonomy_system_health_check or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:81
+    Function declared but not implemented: autonomy_system_health_details
+    💡 Implement function: int autonomy_system_health_details or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:84
+    Function declared but not implemented: autonomy_system_maintenance
+    💡 Implement function: int autonomy_system_maintenance or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:87
+    Function declared but not implemented: autonomy_system_restart_services
+    💡 Implement function: int autonomy_system_restart_services or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:92
+    Function declared but not implemented: autonomy_starlink_status
+    💡 Implement function: int autonomy_starlink_status or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:95
+    Function declared but not implemented: autonomy_starlink_health
+    💡 Implement function: int autonomy_starlink_health or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:98
+    Function declared but not implemented: autonomy_starlink_location
+    💡 Implement function: int autonomy_starlink_location or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:101
+    Function declared but not implemented: autonomy_starlink_collector_stats
+    💡 Implement function: int autonomy_starlink_collector_stats or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:104
+    Function declared but not implemented: autonomy_starlink_force_collect
+    💡 Implement function: int autonomy_starlink_force_collect or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:107
+    Function declared but not implemented: autonomy_starlink_cluster_status
+    💡 Implement function: int autonomy_starlink_cluster_status or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy_modules.h:110
+    Function declared but not implemented: autonomy_starlink_cluster_check_failover
+    💡 Implement function: int autonomy_starlink_cluster_check_failover or remove declaration
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c:55
+    Missing type definition: starlink_tracker_t
+    💡 Define type starlink_tracker_t in appropriate header file
+
+⚠️ WARNING (23)
+------------------------------
+  src\c\autonomy-daemon\core\autonomy-daemon.c:22
+    Potentially incorrect include path: ../starlink-tracking/starlink_tracker.h
+    💡 Verify include path exists: src\c\autonomy-daemon\core\..\starlink-tracking\starlink_tracker.h
+
+  src\c\autonomy-daemon\core\config.c:29
+    strncpy may truncate without null termination: strncpy(g_config.log_level, log_level, sizeof(g_config.log_level) - 1);
+    💡 Add null termination: g_config[sizeof(g_config) - 1] = '\0';
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c:22
+    Potentially incorrect include path: ../starlink-tracking/starlink_tracker.h
+    💡 Verify include path exists: src\c\autonomy-daemon\core\..\starlink-tracking\starlink_tracker.h
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c:22
+    Potentially incorrect include path: ../starlink-tracking/starlink_tracker.h
+    💡 Verify include path exists: src\c\autonomy-daemon\core\..\starlink-tracking\starlink_tracker.h
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c:22
+    Potentially incorrect include path: ../starlink-tracking/starlink_tracker.h
+    💡 Verify include path exists: src\c\autonomy-daemon\core\..\starlink-tracking\starlink_tracker.h
+
+  src\c\autonomy-daemon\core\system_management.c:105
+    Potentially unsafe function: strcpy
+    💡 Use safer alternatives like strncpy, strncat, snprintf
+
+  src\c\autonomy-daemon\core\system_management.c:107
+    Potentially unsafe function: strcpy
+    💡 Use safer alternatives like strncpy, strncat, snprintf
+
+  src\c\autonomy-daemon\core\system_management.c:109
+    Potentially unsafe function: strcpy
+    💡 Use safer alternatives like strncpy, strncat, snprintf
+
+  src\c\autonomy-daemon\core\system_management.c:111
+    Potentially unsafe function: strcpy
+    💡 Use safer alternatives like strncpy, strncat, snprintf
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c:22
+    Potentially incorrect include path: ../starlink-tracking/starlink_tracker.h
+    💡 Verify include path exists: src\c\autonomy-daemon\core\..\starlink-tracking\starlink_tracker.h
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c:22
+    Potentially incorrect include path: ../starlink-tracking/starlink_tracker.h
+    💡 Verify include path exists: src\c\autonomy-daemon\core\..\starlink-tracking\starlink_tracker.h
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c:22
+    Potentially incorrect include path: ../starlink-tracking/starlink_tracker.h
+    💡 Verify include path exists: src\c\autonomy-daemon\core\..\starlink-tracking\starlink_tracker.h
+
+  src\c\autonomy-daemon\core\system_management.h
+    Missing include for time: time.h
+    💡 Add #include <time.h>
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c:22
+    Potentially incorrect include path: ../starlink-tracking/starlink_tracker.h
+    💡 Verify include path exists: src\c\autonomy-daemon\core\..\starlink-tracking\starlink_tracker.h
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c:22
+    Potentially incorrect include path: ../starlink-tracking/starlink_tracker.h
+    💡 Verify include path exists: src\c\autonomy-daemon\core\..\starlink-tracking\starlink_tracker.h
+
+  src\c\autonomy-daemon\core\autonomy-daemon.c:76
+    Function defined but not declared: handle_sig
+    💡 Add function declaration to header file or make function static
+
+  src\c\autonomy-daemon\core\system_management.c:16
+    Function defined but not declared: check_starlink_health
+    💡 Add function declaration to header file or make function static
+
+  src\c\autonomy-daemon\core\system_management.c:25
+    Function defined but not declared: check_uci_health
+    💡 Add function declaration to header file or make function static
+
+  src\c\autonomy-daemon\core\system_management.c:34
+    Function defined but not declared: check_overlay_health
+    💡 Add function declaration to header file or make function static
+
+  src\c\autonomy-daemon\core\system_management.c:43
+    Function defined but not declared: check_services_health
+    💡 Add function declaration to header file or make function static
+
+  src\c\autonomy-daemon\core\system_management.c:52
+    Function defined but not declared: check_database_health
+    💡 Add function declaration to header file or make function static
+
+  src\c\autonomy-daemon\core\system_management.c:61
+    Function defined but not declared: check_time_health
+    💡 Add function declaration to header file or make function static
+
+  src\c\autonomy-daemon\core\system_management.c:70
+    Function defined but not declared: check_logs_health
+    💡 Add function declaration to header file or make function static

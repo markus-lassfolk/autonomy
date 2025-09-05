@@ -170,7 +170,7 @@ int autonomy_wifi_management_config(struct ubus_context *uctx, struct ubus_objec
     if (wifi_management_get_config(&config) == 0) {
         blobmsg_add_string(&bb, "result", "config_retrieved");
         blobmsg_add_u8(&bb, "enabled", config.enabled);
-        blobmsg_add_f32(&bb, "movement_threshold", config.movement_threshold);
+        blobmsg_add_double(&bb, "movement_threshold", config.movement_threshold);
         blobmsg_add_u32(&bb, "stationary_time", config.stationary_time);
         blobmsg_add_u8(&bb, "nightly_optimization", config.nightly_optimization);
         blobmsg_add_u32(&bb, "nightly_time", config.nightly_time);
@@ -189,7 +189,7 @@ int autonomy_wifi_management_config(struct ubus_context *uctx, struct ubus_objec
         blobmsg_add_u32(&bb, "good_threshold", config.good_threshold);
         blobmsg_add_u32(&bb, "fair_threshold", config.fair_threshold);
         blobmsg_add_u32(&bb, "poor_threshold", config.poor_threshold);
-        blobmsg_add_f32(&bb, "overlap_penalty_ratio", config.overlap_penalty_ratio);
+        blobmsg_add_double(&bb, "overlap_penalty_ratio", config.overlap_penalty_ratio);
     } else {
         blobmsg_add_string(&bb, "result", "config_failed");
         blobmsg_add_string(&bb, "error", "Unable to retrieve WiFi management configuration");
@@ -467,9 +467,9 @@ int autonomy_wifi_management_update_gps_location(struct ubus_context *uctx, stru
     int result = wifi_management_update_gps_location(lat, lon, accuracy, timestamp);
     if (result == 0) {
         blobmsg_add_string(&bb, "result", "gps_location_updated");
-        blobmsg_add_f32(&bb, "latitude", lat);
-        blobmsg_add_f32(&bb, "longitude", lon);
-        blobmsg_add_f32(&bb, "accuracy", accuracy);
+        blobmsg_add_double(&bb, "latitude", lat);
+        blobmsg_add_double(&bb, "longitude", lon);
+        blobmsg_add_double(&bb, "accuracy", accuracy);
         blobmsg_add_u32(&bb, "timestamp", (uint32_t)timestamp);
         blobmsg_add_string(&bb, "message", "GPS location updated for WiFi optimization");
     } else {

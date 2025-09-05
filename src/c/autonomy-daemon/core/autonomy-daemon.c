@@ -16,8 +16,9 @@
 #include <math.h>
 
 // Include our modular headers
-#include "../shared/autonomy_types.h"
-#include "../shared/autonomy_modules.h"
+#include "autonomy_types.h"
+#include "autonomy_modules.h"
+#include "../starlink/starlink_modules.h"
 #include "../starlink-tracking/starlink_tracker.h"
 
 // Global variables
@@ -39,11 +40,34 @@ struct autonomy_state g_state = {
     .network_health_score = 0.0,
     .gps_source_count = 0,
     .gps_enabled = 1,
-    .gps_health_score = 0.0
+    .gps_health_score = 0.0,
+    .current_lat = 0.0,
+    .current_lon = 0.0,
+    .current_accuracy = 0.0,
+    .current_confidence = 0,
+    .last_gps_update = 0,
+    .location_status = "unknown",
+    .movement_detected = 0,
+    .last_movement_check = 0
 };
 
 // Global Starlink tracker
 static starlink_tracker_t *g_starlink_tracker = NULL;
+
+// Global system health
+struct system_health g_system_health = {
+    .starlink_health = 0,
+    .uci_health = 0,
+    .overlay_health = 0,
+    .services_health = 0,
+    .network_health = 0,
+    .database_health = 0,
+    .time_health = 0,
+    .logs_health = 0,
+    .overall_score = 0,
+    .last_check = 0,
+    .status = "unknown"
+};
 
 static struct ubus_context *ctx;
 struct uci_context *uci_ctx;

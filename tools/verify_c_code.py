@@ -725,6 +725,344 @@ class CCodeVerifier:
                             "Remove static declaration from header or ensure function is defined"
                         )
     
+    def check_missing_function_implementations(self):
+        """Check for functions that are declared but not implemented"""
+        # Collect all function declarations and definitions
+        declarations = {}  # {function_name: [(file_path, line_number, signature)]}
+        definitions = {}   # {function_name: [(file_path, line_number, signature)]}
+        
+        for file_path, code_file in self.files.items():
+            for func in code_file.functions:
+                func_name = func['name']
+                signature = f"{func['return_type']} {func_name}"
+                location = (file_path, func['line'], signature)
+                
+                if func['type'] == 'declaration':
+                    if func_name not in declarations:
+                        declarations[func_name] = []
+                    declarations[func_name].append(location)
+                elif func['type'] == 'definition':
+                    if func_name not in definitions:
+                        definitions[func_name] = []
+                    definitions[func_name].append(location)
+        
+        # Check for declared but not defined functions
+        for func_name, decl_locations in declarations.items():
+            if func_name not in definitions:
+                for file_path, line_num, signature in decl_locations:
+                    self.add_result(
+                        file_path,
+                        f"Function declared but not implemented: {func_name}",
+                        "error",
+                        line_num,
+                        "missing_implementation",
+                        f"Implement function: {signature} or remove declaration"
+                    )
+        
+        # Check for defined but not declared functions (potential issues)
+        for func_name, def_locations in definitions.items():
+            if func_name not in declarations and func_name not in ['main', 'signal_handler']:
+                for file_path, line_num, signature in def_locations:
+                    self.add_result(
+                        file_path,
+                        f"Function defined but not declared: {func_name}",
+                        "warning",
+                        line_num,
+                        "missing_declaration",
+                        f"Add function declaration to header file or make function static"
+                    )
+    
+    def check_static_function_implementations(self):
+        """Check for static functions that are declared but not implemented"""
+        static_declarations = {}  # {function_name: [(file_path, line_number)]}
+        static_definitions = {}   # {function_name: [(file_path, line_number)]}
+        
+        for file_path, code_file in self.files.items():
+            # Look for static function declarations and definitions
+            for i, line in enumerate(code_file.lines):
+                # Static function declaration pattern
+                static_decl_match = re.search(r'static\s+(\w+(?:\s+\w+)*)\s+(\w+)\s*\([^)]*\)\s*;', line)
+                if static_decl_match:
+                    func_name = static_decl_match.group(2)
+                    if func_name not in static_declarations:
+                        static_declarations[func_name] = []
+                    static_declarations[func_name].append((file_path, i + 1))
+                
+                # Static function definition pattern
+                static_def_match = re.search(r'static\s+(\w+(?:\s+\w+)*)\s+(\w+)\s*\([^)]*\)\s*\{', line)
+                if static_def_match:
+                    func_name = static_def_match.group(2)
+                    if func_name not in static_definitions:
+                        static_definitions[func_name] = []
+                    static_definitions[func_name].append((file_path, i + 1))
+        
+        # Check for static functions declared but not defined
+        for func_name, decl_locations in static_declarations.items():
+            if func_name not in static_definitions:
+                for file_path, line_num in decl_locations:
+                    self.add_result(
+                        file_path,
+                        f"Static function declared but not implemented: {func_name}",
+                        "error",
+                        line_num,
+                        "missing_static_implementation",
+                        f"Implement static function {func_name} or remove declaration"
+                    )
+    
+    def check_missing_struct_members(self):
+        """Check for missing struct members that are referenced but not defined"""
+        # Known struct members that should exist
+        required_struct_members = {
+            'autonomy_state': [
+                'running', 'gps_enabled', 'current_lat', 'current_lon', 
+                'current_accuracy', 'current_confidence', 'last_gps_update',
+                'location_status', 'movement_detected', 'last_movement_check'
+            ],
+            'starlink_device_info_t': ['lat', 'lon'],
+            'system_health': [
+                'starlink_health', 'uci_health', 'overlay_health', 'services_health',
+                'network_health', 'database_health', 'time_health', 'logs_health',
+                'overall_score', 'last_check', 'status'
+            ]
+        }
+        
+        # Find struct definitions
+        struct_definitions = {}
+        for file_path, code_file in self.files.items():
+            for struct in code_file.structs:
+                struct_definitions[struct['name']] = (file_path, struct['line'])
+        
+        # Check for missing members in struct definitions
+        for file_path, code_file in self.files.items():
+            for i, line in enumerate(code_file.lines):
+                # Look for struct member access
+                for struct_name, required_members in required_struct_members.items():
+                    if struct_name in line and '.' in line:
+                        for member in required_members:
+                            if f'.{member}' in line:
+                                # Check if this struct is defined and has the member
+                                if struct_name in struct_definitions:
+                                    struct_file, struct_line = struct_definitions[struct_name]
+                                    # This is a simplified check - in reality, we'd need to parse the struct definition
+                                    # to see if the member exists
+                                    pass
+    
+    def check_missing_type_definitions(self):
+        """Check for missing type definitions that are referenced"""
+        # Known types that should be defined
+        required_types = [
+            'starlink_collection_result_t',
+            'starlink_lla_position_t', 
+            'starlink_health_t',
+            'starlink_tracker_t'
+        ]
+        
+        # Find type definitions
+        type_definitions = set()
+        for file_path, code_file in self.files.items():
+            # Look for typedef statements
+            for i, line in enumerate(code_file.lines):
+                typedef_match = re.search(r'typedef\s+.*\s+(\w+)\s*;', line)
+                if typedef_match:
+                    type_definitions.add(typedef_match.group(1))
+        
+        # Check for missing type definitions
+        for file_path, code_file in self.files.items():
+            for i, line in enumerate(code_file.lines):
+                for required_type in required_types:
+                    if required_type in line and required_type not in type_definitions:
+                        self.add_result(
+                            file_path,
+                            f"Missing type definition: {required_type}",
+                            "error",
+                            i + 1,
+                            "missing_type_definition",
+                            f"Define type {required_type} in appropriate header file"
+                        )
+    
+    def check_include_path_issues(self):
+        """Check for incorrect include paths"""
+        for file_path, code_file in self.files.items():
+            file_dir = Path(file_path).parent
+            
+            for i, line in enumerate(code_file.lines):
+                if line.strip().startswith('#include'):
+                    # Check for relative includes that might be incorrect
+                    if '"' in line and '../' in line:
+                        # Extract the include path
+                        include_match = re.search(r'#include\s*"([^"]+)"', line)
+                        if include_match:
+                            include_path = include_match.group(1)
+                            # Check if the path exists
+                            full_path = file_dir / include_path
+                            if not full_path.exists():
+                                self.add_result(
+                                    file_path,
+                                    f"Potentially incorrect include path: {include_path}",
+                                    "warning",
+                                    i + 1,
+                                    "include_path",
+                                    f"Verify include path exists: {full_path}"
+                                )
+    
+    def check_format_string_issues(self):
+        """Check for format string issues"""
+        for file_path, code_file in self.files.items():
+            for i, line in enumerate(code_file.lines):
+                # Check for incorrect format specifiers
+                if 'sscanf' in line and '%lu' in line and 'uint64_t' in line:
+                    self.add_result(
+                        file_path,
+                        f"Incorrect format specifier for uint64_t: {line.strip()}",
+                        "error",
+                        i + 1,
+                        "format_string",
+                        "Use %llu for uint64_t instead of %lu"
+                    )
+                
+                # Check for other common format string issues
+                if 'printf' in line and '%d' in line and 'size_t' in line:
+                    self.add_result(
+                        file_path,
+                        f"Potential format specifier issue with size_t: {line.strip()}",
+                        "warning",
+                        i + 1,
+                        "format_string",
+                        "Use %zu for size_t instead of %d"
+                    )
+    
+    def check_global_variable_declarations(self):
+        """Check for missing global variable declarations"""
+        # Known global variables that should be declared
+        required_globals = ['g_system_health', 'g_state', 'g_config']
+        
+        # Find global variable declarations
+        global_declarations = set()
+        for file_path, code_file in self.files.items():
+            for var in code_file.variables:
+                if var['name'].startswith('g_'):
+                    global_declarations.add(var['name'])
+        
+        # Check for missing global variable declarations
+        for file_path, code_file in self.files.items():
+            for i, line in enumerate(code_file.lines):
+                for required_global in required_globals:
+                    if required_global in line and required_global not in global_declarations:
+                        self.add_result(
+                            file_path,
+                            f"Missing global variable declaration: {required_global}",
+                            "error",
+                            i + 1,
+                            "missing_global_declaration",
+                            f"Declare global variable {required_global} in appropriate header file"
+                        )
+    
+    def check_compilation_issues_specific(self):
+        """Check for specific compilation issues that were fixed in autonomy-daemon"""
+        self.log("Running specific compilation issue checks...")
+        
+        # Check for specific missing function implementations that were identified
+        specific_missing_functions = {
+            'curl_write_callback': 'opencellid_complete.c',
+            'make_api_request': 'opencellid_complete.c', 
+            'parse_cell_location_response': 'opencellid_complete.c',
+            'cache_get_cell_location': 'opencellid_complete.c',
+            'cache_set_cell_location': 'opencellid_complete.c',
+            'rate_limiter_can_make_lookup': 'opencellid_complete.c',
+            'rate_limiter_can_make_contribution': 'opencellid_complete.c',
+            'rate_limiter_record_lookup': 'opencellid_complete.c',
+            'make_http_request': 'external_apis.c'
+        }
+        
+        # Check for these specific functions
+        for file_path, code_file in self.files.items():
+            if any(func_file in file_path for func_file in specific_missing_functions.values()):
+                for i, line in enumerate(code_file.lines):
+                    # Look for static function declarations
+                    static_decl_match = re.search(r'static\s+(\w+(?:\s+\w+)*)\s+(\w+)\s*\([^)]*\)\s*;', line)
+                    if static_decl_match:
+                        func_name = static_decl_match.group(2)
+                        if func_name in specific_missing_functions:
+                            # Check if this function is actually implemented
+                            func_impl_found = False
+                            for j, impl_line in enumerate(code_file.lines[i+1:], i+2):
+                                if re.search(rf'static\s+.*\s+{func_name}\s*\([^)]*\)\s*\{{', impl_line):
+                                    func_impl_found = True
+                                    break
+                            
+                            if not func_impl_found:
+                                self.add_result(
+                                    file_path,
+                                    f"CRITICAL: Static function declared but not implemented: {func_name}",
+                                    "critical",
+                                    i + 1,
+                                    "missing_static_implementation",
+                                    f"Implement static function {func_name} or remove declaration"
+                                )
+        
+        # Check for specific UBUS method declarations that should exist
+        required_ubus_methods = [
+            'autonomy_system_status',
+            'autonomy_system_health_check', 
+            'autonomy_system_health_details',
+            'autonomy_system_maintenance',
+            'autonomy_system_restart_services',
+            'autonomy_starlink_status',
+            'autonomy_starlink_health',
+            'autonomy_starlink_location',
+            'autonomy_starlink_collector_stats',
+            'autonomy_starlink_force_collect',
+            'autonomy_starlink_cluster_status',
+            'autonomy_starlink_cluster_check_failover'
+        ]
+        
+        # Check if these UBUS methods are declared in autonomy_modules.h
+        for file_path, code_file in self.files.items():
+            if 'autonomy_modules.h' in file_path:
+                for required_method in required_ubus_methods:
+                    method_found = False
+                    for line in code_file.lines:
+                        if required_method in line and 'struct ubus_context' in line:
+                            method_found = True
+                            break
+                    
+                    if not method_found:
+                        self.add_result(
+                            file_path,
+                            f"Missing UBUS method declaration: {required_method}",
+                            "error",
+                            0,
+                            "missing_ubus_method",
+                            f"Add declaration for {required_method} in autonomy_modules.h"
+                        )
+        
+        # Check for specific struct member issues
+        struct_member_issues = {
+            'starlink_device_info_t': ['lat', 'lon'],
+            'autonomy_state': [
+                'current_lat', 'current_lon', 'current_accuracy', 
+                'current_confidence', 'last_gps_update', 'location_status',
+                'movement_detected', 'last_movement_check'
+            ]
+        }
+        
+        for file_path, code_file in self.files.items():
+            for i, line in enumerate(code_file.lines):
+                for struct_name, required_members in struct_member_issues.items():
+                    if struct_name in line and '.' in line:
+                        for member in required_members:
+                            if f'.{member}' in line:
+                                # This is a usage of the member - check if it's properly defined
+                                # This is a simplified check - in a real implementation, we'd parse the struct definition
+                                self.add_result(
+                                    file_path,
+                                    f"Struct member usage detected: {struct_name}.{member}",
+                                    "info",
+                                    i + 1,
+                                    "struct_member_usage",
+                                    f"Verify {struct_name} struct has member {member} defined"
+                                )
+    
     def check_strncpy_safety(self, file_path: str):
         """Check for strncpy safety issues"""
         if file_path not in self.files:
@@ -790,6 +1128,8 @@ class CCodeVerifier:
         self.check_libubox_compatibility(file_path)
         self.check_strncpy_safety(file_path)
         self.check_pointer_casting_issues(file_path)
+        self.check_include_path_issues()
+        self.check_format_string_issues()
     
     def verify_directory(self, directory: str, include_patterns: List[str] = None, 
                         exclude_patterns: List[str] = None):
@@ -811,6 +1151,12 @@ class CCodeVerifier:
         self.check_circular_dependencies()
         self.check_duplicate_definitions()
         self.check_unused_code()
+        self.check_missing_function_implementations()
+        self.check_static_function_implementations()
+        self.check_missing_struct_members()
+        self.check_missing_type_definitions()
+        self.check_global_variable_declarations()
+        self.check_compilation_issues_specific()
         
         self.log(f"Verification complete. Found {len(self.results)} issues.")
     

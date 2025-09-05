@@ -1,4 +1,5 @@
 #include "starlink_types.h"
+#include "starlink_modules.h"
 #include "../starlink_obstruction.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
@@ -35,29 +36,29 @@ int autonomy_starlink_status(struct ubus_context *uctx, struct ubus_object *obj,
         void *gps_info = blobmsg_open_table(&bb, "gps");
         blobmsg_add_u8(&bb, "valid", result.status.gps_stats.gps_valid);
         blobmsg_add_u32(&bb, "satellites", result.status.gps_stats.gps_sats);
-        blobmsg_add_f32(&bb, "lat", (float)result.status.device_info.lat);
-        blobmsg_add_f32(&bb, "lon", (float)result.status.device_info.lon);
+        blobmsg_add_double(&bb, "lat", result.status.device_info.lat);
+        blobmsg_add_double(&bb, "lon", result.status.device_info.lon);
         blobmsg_close_table(&bb, gps_info);
         
         // Add network performance
         void *network = blobmsg_open_table(&bb, "network");
-        blobmsg_add_f32(&bb, "ping_latency_ms", (float)result.status.network_perf.pop_ping_latency_ms);
-        blobmsg_add_f32(&bb, "downlink_mbps", (float)(result.status.network_perf.downlink_throughput_bps / 1000000.0));
-        blobmsg_add_f32(&bb, "uplink_mbps", (float)(result.status.network_perf.uplink_throughput_bps / 1000000.0));
-        blobmsg_add_f32(&bb, "drop_rate", (float)result.status.network_perf.pop_ping_drop_rate);
+        blobmsg_add_double(&bb, "ping_latency_ms", result.status.network_perf.pop_ping_latency_ms);
+        blobmsg_add_double(&bb, "downlink_mbps", result.status.network_perf.downlink_throughput_bps / 1000000.0);
+        blobmsg_add_double(&bb, "uplink_mbps", result.status.network_perf.uplink_throughput_bps / 1000000.0);
+        blobmsg_add_double(&bb, "drop_rate", result.status.network_perf.pop_ping_drop_rate);
         blobmsg_close_table(&bb, network);
         
         // Add signal quality
         void *signal = blobmsg_open_table(&bb, "signal");
-        blobmsg_add_f32(&bb, "snr_db", (float)result.status.signal_quality.snr_db);
+        blobmsg_add_double(&bb, "snr_db", result.status.signal_quality.snr_db);
         blobmsg_add_u8(&bb, "above_noise_floor", result.status.signal_quality.is_snr_above_noise_floor);
         blobmsg_add_u8(&bb, "persistently_low", result.status.signal_quality.is_snr_persistently_low);
         blobmsg_close_table(&bb, signal);
         
         // Add positioning
         void *positioning = blobmsg_open_table(&bb, "positioning");
-        blobmsg_add_f32(&bb, "azimuth_deg", (float)result.status.positioning.boresight_azimuth_deg);
-        blobmsg_add_f32(&bb, "elevation_deg", (float)result.status.positioning.boresight_elevation_deg);
+        blobmsg_add_double(&bb, "azimuth_deg", result.status.positioning.boresight_azimuth_deg);
+        blobmsg_add_double(&bb, "elevation_deg", result.status.positioning.boresight_elevation_deg);
         blobmsg_close_table(&bb, positioning);
         
         // Add health status
@@ -123,9 +124,9 @@ int autonomy_starlink_location(struct ubus_context *uctx, struct ubus_object *ob
     starlink_lla_position_t location;
     if (starlink_get_location(&location) == 0) {
         blobmsg_add_string(&bb, "result", "location_retrieved");
-        blobmsg_add_f32(&bb, "latitude", (float)location.lat);
-        blobmsg_add_f32(&bb, "longitude", (float)location.lon);
-        blobmsg_add_f32(&bb, "altitude", (float)location.alt);
+        blobmsg_add_double(&bb, "latitude", location.lat);
+        blobmsg_add_double(&bb, "longitude", location.lon);
+        blobmsg_add_double(&bb, "altitude", location.alt);
         blobmsg_add_string(&bb, "source", "starlink");
         blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
     } else {
@@ -162,12 +163,12 @@ int autonomy_starlink_collector_stats(struct ubus_context *uctx, struct ubus_obj
     // Calculate cache hit rate
     int total_requests = cache_hits + cache_misses;
     float hit_rate = (total_requests > 0) ? ((float)cache_hits / total_requests) * 100.0 : 0.0;
-    blobmsg_add_f32(&bb, "cache_hit_rate_percent", hit_rate);
+    blobmsg_add_double(&bb, "cache_hit_rate_percent", hit_rate);
     
     // Calculate success rate
     int total_attempts = successes + errors;
     float success_rate = (total_attempts > 0) ? ((float)successes / total_attempts) * 100.0 : 0.0;
-    blobmsg_add_f32(&bb, "success_rate_percent", success_rate);
+    blobmsg_add_double(&bb, "success_rate_percent", success_rate);
     blobmsg_close_table(&bb, stats);
     
     blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
@@ -260,9 +261,9 @@ int autonomy_starlink_obstruction_patterns(struct ubus_context *uctx, struct ubu
             blobmsg_add_string(&bb, "id", patterns[i].id);
             blobmsg_add_string(&bb, "name", patterns[i].name);
             blobmsg_add_string(&bb, "description", patterns[i].description);
-            blobmsg_add_f32(&bb, "latitude", (float)patterns[i].latitude);
-            blobmsg_add_f32(&bb, "longitude", (float)patterns[i].longitude);
-            blobmsg_add_f32(&bb, "confidence", (float)patterns[i].confidence);
+            blobmsg_add_double(&bb, "latitude", patterns[i].latitude);
+            blobmsg_add_double(&bb, "longitude", patterns[i].longitude);
+            blobmsg_add_double(&bb, "confidence", patterns[i].confidence);
             blobmsg_add_u32(&bb, "sample_count", patterns[i].sample_count);
             blobmsg_add_u32(&bb, "first_seen", (uint32_t)patterns[i].first_seen);
             blobmsg_add_u32(&bb, "last_seen", (uint32_t)patterns[i].last_seen);
@@ -304,8 +305,8 @@ int autonomy_starlink_obstruction_matches(struct ubus_context *uctx, struct ubus
             blobmsg_add_string(&bb, "pattern_name", matches[i].pattern_name);
             blobmsg_add_u32(&bb, "start_time", (uint32_t)matches[i].start_time);
             blobmsg_add_u32(&bb, "last_update", (uint32_t)matches[i].last_update);
-            blobmsg_add_f32(&bb, "similarity", (float)matches[i].similarity);
-            blobmsg_add_f32(&bb, "confidence", (float)matches[i].confidence);
+            blobmsg_add_double(&bb, "similarity", matches[i].similarity);
+            blobmsg_add_double(&bb, "confidence", matches[i].confidence);
             blobmsg_add_u32(&bb, "sample_count", matches[i].sample_count);
             blobmsg_close_table(&bb, match);
         }
@@ -337,8 +338,8 @@ int autonomy_starlink_obstruction_config(struct ubus_context *uctx, struct ubus_
         blobmsg_add_u8(&bb, "enabled", config.enabled);
         blobmsg_add_u32(&bb, "max_patterns", config.max_patterns);
         blobmsg_add_u32(&bb, "min_observations_to_learn", config.min_observations_to_learn);
-        blobmsg_add_f32(&bb, "pattern_similarity_threshold", (float)config.pattern_similarity_threshold);
-        blobmsg_add_f32(&bb, "location_radius_meters", (float)config.location_radius_meters);
+        blobmsg_add_double(&bb, "pattern_similarity_threshold", config.pattern_similarity_threshold);
+        blobmsg_add_double(&bb, "location_radius_meters", config.location_radius_meters);
         blobmsg_add_u32(&bb, "max_active_matches", config.max_active_matches);
         blobmsg_add_u32(&bb, "match_timeout_minutes", config.match_timeout_minutes);
         blobmsg_add_u32(&bb, "history_size", config.history_size);

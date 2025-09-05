@@ -30,6 +30,8 @@ typedef struct {
     int32_t generation_number;
     bool dish_cohoused;
     int64_t utcns_offset_ns;
+    double lat;
+    double lon;
 } starlink_device_info_t;
 
 // Device State

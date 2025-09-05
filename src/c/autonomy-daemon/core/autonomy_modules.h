@@ -71,4 +71,44 @@ int autonomy_gps_health_check(struct ubus_context *uctx, struct ubus_object *obj
                              struct ubus_request_data *req, const char *method,
                              struct blob_attr *msg);
 
+// System management UBUS methods
+int autonomy_system_status(struct ubus_context *uctx, struct ubus_object *obj,
+                          struct ubus_request_data *req, const char *method,
+                          struct blob_attr *msg);
+int autonomy_system_health_check(struct ubus_context *uctx, struct ubus_object *obj,
+                                struct ubus_request_data *req, const char *method,
+                                struct blob_attr *msg);
+int autonomy_system_health_details(struct ubus_context *uctx, struct ubus_object *obj,
+                                  struct ubus_request_data *req, const char *method,
+                                  struct blob_attr *msg);
+int autonomy_system_maintenance(struct ubus_context *uctx, struct ubus_object *obj,
+                               struct ubus_request_data *req, const char *method,
+                               struct blob_attr *msg);
+int autonomy_system_restart_services(struct ubus_context *uctx, struct ubus_object *obj,
+                                    struct ubus_request_data *req, const char *method,
+                                    struct blob_attr *msg);
+
+// Starlink UBUS method handlers
+int autonomy_starlink_status(struct ubus_context *uctx, struct ubus_object *obj,
+                           struct ubus_request_data *req, const char *method,
+                           struct blob_attr *msg);
+int autonomy_starlink_health(struct ubus_context *uctx, struct ubus_object *obj,
+                           struct ubus_request_data *req, const char *method,
+                           struct blob_attr *msg);
+int autonomy_starlink_location(struct ubus_context *uctx, struct ubus_object *obj,
+                             struct ubus_request_data *req, const char *method,
+                             struct blob_attr *msg);
+int autonomy_starlink_collector_stats(struct ubus_context *uctx, struct ubus_object *obj,
+                                    struct ubus_request_data *req, const char *method,
+                                    struct blob_attr *msg);
+int autonomy_starlink_force_collect(struct ubus_context *uctx, struct ubus_object *obj,
+                                  struct ubus_request_data *req, const char *method,
+                                  struct blob_attr *msg);
+int autonomy_starlink_cluster_status(struct ubus_context *uctx, struct ubus_object *obj,
+                                   struct ubus_request_data *req, const char *method,
+                                   struct blob_attr *msg);
+int autonomy_starlink_cluster_check_failover(struct ubus_context *uctx, struct ubus_object *obj,
+                                           struct ubus_request_data *req, const char *method,
+                                           struct blob_attr *msg);
+
 #endif // AUTONOMY_MODULES_H

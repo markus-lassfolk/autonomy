@@ -1,4 +1,5 @@
 #include "starlink_types.h"
+#include "starlink_modules.h"
 #include "../starlink_obstruction.h"
 #include <stdio.h>
 #include <stdlib.h>
