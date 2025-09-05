@@ -4,6 +4,7 @@
 #include "starlink_tracker.h"
 #include "obstruction_analyzer.h"
 #include <pthread.h>
+#include <sys/time.h>
 
 // Dynamic tracking configuration based on Gemini's research
 typedef struct {
