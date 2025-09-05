@@ -8,27 +8,16 @@ LIBS = -lubus -lblobmsg_json -lubox -ljson-c -luci -lcurl -lm -lpthread
 
 # Source files
 SOURCES = autonomy-daemon.c \
-          modules/logging.c \
-          modules/network.c \
-          modules/gps.c \
-          modules/config.c \
-          modules/pidfile.c \
-          modules/ubus_methods.c \
-          modules/network_ubus.c \
-          modules/gps_ubus.c \
-          modules/system_management.c \
-          modules/system_ubus.c \
-          modules/starlink/starlink_client.c \
-          modules/starlink/starlink_collector.c \
-          modules/starlink/starlink_ubus.c \
-          modules/starlink/starlink_cluster.c \
-          modules/starlink/starlink_cluster_ubus.c \
-          modules/starlink/starlink_tracker.c \
-          modules/starlink/starlink_tracker_ubus.c \
-          modules/starlink/space_track_connector.c \
-          modules/starlink/obstruction_analyzer.c \
-          modules/starlink/prediction_engine.c \
-          modules/starlink/validation_module.c
+          logging.c \
+          network.c \
+          gps.c \
+          config.c \
+          pidfile.c \
+          ubus_methods.c \
+          network_ubus.c \
+          gps_ubus.c \
+          system_management.c \
+          system_ubus.c
 
 # Object files
 OBJECTS = $(SOURCES:.c=.o)

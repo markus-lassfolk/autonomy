@@ -21,7 +21,9 @@ SOURCES = starlink_client.c \
           validation_module.c \
           astro_coordinates.c \
           dynamic_satellite_tracker.c \
-          parallel_propagator.c
+          parallel_propagator.c \
+          core/starlink_tracker_standalone.c \
+          core/http_api_server.c
 
 # Object files
 OBJECTS = $(SOURCES:.c=.o)
