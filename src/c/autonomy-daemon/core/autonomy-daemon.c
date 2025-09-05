@@ -30,15 +30,6 @@ struct autonomy_config g_config = {
     .config_file = "/etc/config/autonomy"
 };
 
-struct system_health g_system_health = {
-    .status = "unknown",
-    .starlink_health = 0,
-    .network_health = 0,
-    .gps_health = 0,
-    .overall_health = 0,
-    .last_check = 0
-};
-
 struct autonomy_state g_state = {
     .running = 0,
     .start_time = 0,
@@ -65,6 +56,7 @@ static starlink_tracker_t *g_starlink_tracker = NULL;
 
 // Global system health
 struct system_health g_system_health = {
+    .status = "unknown",
     .starlink_health = 0,
     .uci_health = 0,
     .overlay_health = 0,
@@ -73,9 +65,10 @@ struct system_health g_system_health = {
     .database_health = 0,
     .time_health = 0,
     .logs_health = 0,
+    .gps_health = 0,
+    .overall_health = 0,
     .overall_score = 0,
-    .last_check = 0,
-    .status = "unknown"
+    .last_check = 0
 };
 
 static struct ubus_context *ctx;

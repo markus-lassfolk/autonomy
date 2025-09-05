@@ -115,8 +115,8 @@ int autonomy_starlink_cluster_add(struct ubus_context *uctx, struct ubus_object 
     blob_buf_init(&bb, 0);
     
     // Parse request parameters
-    const struct blob_attr *tb[8];
-    blobmsg_parse(cluster_add_policy, 7, tb, blob_data(msg), blob_len(msg));
+    struct blob_attr *tb[8];
+    blobmsg_parse(cluster_add_policy, 7, tb, blobmsg_data(msg), blobmsg_len(msg));
     
     if (!tb[0] || !tb[1] || !tb[2]) {
         blobmsg_add_string(&bb, "result", "invalid_parameters");
@@ -175,8 +175,8 @@ int autonomy_starlink_cluster_remove(struct ubus_context *uctx, struct ubus_obje
     blob_buf_init(&bb, 0);
     
     // Parse request parameters
-    const struct blob_attr *tb[1];
-    blobmsg_parse(cluster_remove_policy, 1, tb, blob_data(msg), blob_len(msg));
+    struct blob_attr *tb[1];
+    blobmsg_parse(cluster_remove_policy, 1, tb, blobmsg_data(msg), blobmsg_len(msg));
     
     if (!tb[0]) {
         blobmsg_add_string(&bb, "result", "invalid_parameters");
@@ -214,8 +214,8 @@ int autonomy_starlink_cluster_failover(struct ubus_context *uctx, struct ubus_ob
     blob_buf_init(&bb, 0);
     
     // Parse request parameters
-    const struct blob_attr *tb[2];
-    blobmsg_parse(cluster_failover_policy, 2, tb, blob_data(msg), blob_len(msg));
+    struct blob_attr *tb[2];
+    blobmsg_parse(cluster_failover_policy, 2, tb, blobmsg_data(msg), blobmsg_len(msg));
     
     if (!tb[0]) {
         blobmsg_add_string(&bb, "result", "invalid_parameters");
@@ -324,8 +324,8 @@ int autonomy_starlink_cluster_config(struct ubus_context *uctx, struct ubus_obje
     blob_buf_init(&bb, 0);
     
     // Parse request parameters
-    const struct blob_attr *tb[4];
-    blobmsg_parse(cluster_config_policy, 3, tb, blob_data(msg), blob_len(msg));
+    struct blob_attr *tb[4];
+    blobmsg_parse(cluster_config_policy, 3, tb, blobmsg_data(msg), blobmsg_len(msg));
     
     bool auto_failover = true;
     int failover_threshold = 3;

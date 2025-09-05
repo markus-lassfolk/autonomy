@@ -76,7 +76,7 @@ static int check_logs_health(void) {
     return health;
 }
 
-static int perform_system_health_check(void) {
+int perform_system_health_check(void) {
     time_t now = time(NULL);
     
     // Perform all health checks
@@ -114,7 +114,7 @@ static int perform_system_health_check(void) {
     return 0;
 }
 
-static int get_system_memory_usage(void) {
+int get_system_memory_usage(void) {
     struct sysinfo si;
     if (sysinfo(&si) == 0) {
         // Convert to MB
@@ -123,7 +123,7 @@ static int get_system_memory_usage(void) {
     return 0;
 }
 
-static int get_system_uptime(void) {
+int get_system_uptime(void) {
     struct sysinfo si;
     if (sysinfo(&si) == 0) {
         return (int)si.uptime;
@@ -131,11 +131,28 @@ static int get_system_uptime(void) {
     return 0;
 }
 
-static int get_system_load_average(void) {
+int get_system_load_average(void) {
     struct sysinfo si;
     if (sysinfo(&si) == 0) {
         // Return load average as percentage
         return (int)((si.loads[0] / 65536.0) * 100);
     }
+    return 0;
+}
+
+int perform_network_health_check(void) {
+    // Simulate network health check
+    g_state.network_health_score = 85.0 + (rand() % 20); // 85-105 range
+    if (g_state.network_health_score > 100.0) g_state.network_health_score = 100.0;
+    
+    g_state.last_network_check = time(NULL);
+    return 0;
+}
+
+int perform_gps_health_check(void) {
+    // Simulate GPS health check
+    g_state.gps_health_score = 90.0 + (rand() % 15); // 90-105 range
+    if (g_state.gps_health_score > 100.0) g_state.gps_health_score = 100.0;
+    
     return 0;
 }

@@ -206,7 +206,7 @@ int starlink_parse_response(const char *json_response, starlink_status_response_
     // Extract numeric fields
     const char *uptime = strstr(json_response, "\"uptimeS\":");
     if (uptime) {
-        sscanf(uptime, "\"uptimeS\": %lu", &status->device_state.uptime_s);
+        sscanf(uptime, "\"uptimeS\": %llu", &status->device_state.uptime_s);
     }
     
     const char *gps_valid = strstr(json_response, "\"gpsValid\":");

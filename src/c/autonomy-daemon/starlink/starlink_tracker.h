@@ -43,8 +43,8 @@ void starlink_tracker_cleanup(starlink_tracker_t *tracker);
 int starlink_tracker_update_tle(starlink_tracker_t *tracker);
 int starlink_tracker_update_predictions(starlink_tracker_t *tracker);
 int starlink_tracker_get_visibility(starlink_tracker_t *tracker, double lat, double lon, double alt, time_t timestamp);
-starlink_tracker_t* starlink_tracker_init_from_uci(void *uci_ctx);
-int starlink_tracker_ubus_init(void *ctx, starlink_tracker_t *tracker);
+starlink_tracker_t* starlink_tracker_init_from_uci(struct uci_context *uci_ctx);
+int starlink_tracker_ubus_init(struct ubus_context *ctx, starlink_tracker_t *tracker);
 void starlink_tracker_ubus_cleanup(void *ctx);
 
 #endif // STARLINK_TRACKER_H

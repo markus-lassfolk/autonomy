@@ -93,9 +93,16 @@ struct autonomy_state {
 struct system_health {
     char status[32];
     int starlink_health;
+    int uci_health;
+    int overlay_health;
+    int services_health;
     int network_health;
+    int database_health;
+    int time_health;
+    int logs_health;
     int gps_health;
     int overall_health;
+    int overall_score;
     time_t last_check;
 };
 

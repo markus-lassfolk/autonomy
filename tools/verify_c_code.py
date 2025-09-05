@@ -974,6 +974,157 @@ class CCodeVerifier:
             'make_http_request': 'external_apis.c'
         }
         
+        # Check for missing type definitions that cause compilation errors
+        missing_type_definitions = [
+            'starlink_collection_result_t',
+            'starlink_lla_position_t', 
+            'starlink_health_t',
+            'starlink_tracker_t'
+        ]
+        
+        for file_path, code_file in self.files.items():
+            for i, line in enumerate(code_file.lines):
+                for missing_type in missing_type_definitions:
+                    if missing_type in line and ('unknown type name' in line or 'error:' in line):
+                        self.add_result(
+                            file_path,
+                            f"Missing type definition: {missing_type}",
+                            "error",
+                            i + 1,
+                            "missing_type_definition",
+                            f"Add typedef for {missing_type} or include proper header"
+                        )
+        
+        # Check for missing struct members
+        missing_struct_members = {
+            'autonomy_state': ['running', 'gps_enabled'],
+            'starlink_device_info_t': ['lat', 'lon']
+        }
+        
+        for file_path, code_file in self.files.items():
+            for i, line in enumerate(code_file.lines):
+                for struct_name, members in missing_struct_members.items():
+                    for member in members:
+                        if f'{struct_name}' in line and f'.{member}' in line and 'has no member named' in line:
+                            self.add_result(
+                                file_path,
+                                f"Missing struct member: {struct_name}.{member}",
+                                "error",
+                                i + 1,
+                                "missing_struct_member",
+                                f"Add member {member} to struct {struct_name}"
+                            )
+        
+        # Check for undeclared functions
+        undeclared_functions = [
+            'autonomy_starlink_status',
+            'autonomy_starlink_health', 
+            'autonomy_starlink_location',
+            'autonomy_starlink_collector_stats',
+            'autonomy_starlink_force_collect',
+            'autonomy_starlink_cluster_status',
+            'autonomy_starlink_cluster_check_failover',
+            'starlink_tracker_ubus_init',
+            'starlink_tracker_init_from_uci'
+        ]
+        
+        for file_path, code_file in self.files.items():
+            for i, line in enumerate(code_file.lines):
+                for func in undeclared_functions:
+                    if func in line and 'undeclared here' in line:
+                        self.add_result(
+                            file_path,
+                            f"Undeclared function: {func}",
+                            "error",
+                            i + 1,
+                            "undeclared_function",
+                            f"Add function declaration for {func}"
+                        )
+        
+        # Check for missing global variables
+        missing_globals = ['g_system_health']
+        
+        for file_path, code_file in self.files.items():
+            for i, line in enumerate(code_file.lines):
+                for global_var in missing_globals:
+                    if global_var in line and 'undeclared' in line:
+                        self.add_result(
+                            file_path,
+                            f"Missing global variable: {global_var}",
+                            "error",
+                            i + 1,
+                            "missing_global_variable",
+                            f"Add extern declaration for {global_var}"
+                        )
+        
+        # Check for blobmsg function issues
+        for file_path, code_file in self.files.items():
+            for i, line in enumerate(code_file.lines):
+                if 'blobmsg_add_f32' in line:
+                    self.add_result(
+                        file_path,
+                        "blobmsg_add_f32 function does not exist in libubox",
+                        "error",
+                        i + 1,
+                        "libubox_compatibility",
+                        "Use blobmsg_add_double instead of blobmsg_add_f32"
+                    )
+                
+                if 'blob_data' in line and 'blobmsg_policy' in line and 'redeclared as different kind of symbol' in line:
+                    self.add_result(
+                        file_path,
+                        "blob_data naming conflict with libubox function",
+                        "error",
+                        i + 1,
+                        "naming_conflict",
+                        "Rename blob_data array to avoid conflict with libubox blob_data() function"
+                    )
+        
+        # Check for format string issues
+        for file_path, code_file in self.files.items():
+            for i, line in enumerate(code_file.lines):
+                if '%lu' in line and 'uint64_t' in line and 'format' in line:
+                    self.add_result(
+                        file_path,
+                        "Incorrect format specifier for uint64_t",
+                        "error",
+                        i + 1,
+                        "format_string_error",
+                        "Use %llu for uint64_t instead of %lu"
+                    )
+        
+        # Check for implicit function declarations
+        implicit_functions = [
+            'starlink_client_init',
+            'starlink_get_status',
+            'starlink_get_health',
+            'starlink_get_location',
+            'starlink_get_collector_stats',
+            'starlink_force_collect',
+            'starlink_client_cleanup',
+            'starlink_cluster_find_best_starlink',
+            'starlink_cluster_failover_to',
+            'perform_network_health_check',
+            'perform_gps_health_check',
+            'perform_system_health_check',
+            'get_system_uptime',
+            'get_system_memory_usage',
+            'get_system_load_average'
+        ]
+        
+        for file_path, code_file in self.files.items():
+            for i, line in enumerate(code_file.lines):
+                for func in implicit_functions:
+                    if func in line and 'implicit declaration' in line:
+                        self.add_result(
+                            file_path,
+                            f"Implicit function declaration: {func}",
+                            "error",
+                            i + 1,
+                            "implicit_declaration",
+                            f"Add function declaration for {func}"
+                        )
+        
         # Check for these specific functions
         for file_path, code_file in self.files.items():
             if any(func_file in file_path for func_file in specific_missing_functions.values()):
