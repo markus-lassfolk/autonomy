@@ -30,6 +30,15 @@ struct autonomy_config g_config = {
     .config_file = "/etc/config/autonomy"
 };
 
+struct system_health g_system_health = {
+    .status = "unknown",
+    .starlink_health = 0,
+    .network_health = 0,
+    .gps_health = 0,
+    .overall_health = 0,
+    .last_check = 0
+};
+
 struct autonomy_state g_state = {
     .running = 0,
     .start_time = 0,

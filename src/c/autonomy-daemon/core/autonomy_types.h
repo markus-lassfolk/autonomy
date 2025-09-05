@@ -52,6 +52,7 @@ struct autonomy_config {
 
 // Autonomy daemon state
 struct autonomy_state {
+    int running;
     time_t start_time;
     char version[32];
     char status[32];
@@ -86,6 +87,16 @@ struct autonomy_state {
     char location_status[16];
     int movement_detected;
     time_t last_movement_check;
+};
+
+// System health structure
+struct system_health {
+    char status[32];
+    int starlink_health;
+    int network_health;
+    int gps_health;
+    int overall_health;
+    time_t last_check;
 };
 
 // Function declarations

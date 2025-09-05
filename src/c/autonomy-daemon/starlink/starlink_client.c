@@ -30,7 +30,7 @@ static struct {
 } g_starlink_state = {0};
 
 // Initialize Starlink client
-static int starlink_client_init(const starlink_config_t *config) {
+int starlink_client_init(const starlink_config_t *config) {
     if (!config) {
         return -1;
     }
@@ -45,6 +45,17 @@ static int starlink_client_init(const starlink_config_t *config) {
     g_starlink_state.connection_healthy = false;
     
     return 0;
+}
+
+// Cleanup Starlink client
+void starlink_client_cleanup(void) {
+    if (g_starlink_state.socket_fd >= 0) {
+        close(g_starlink_state.socket_fd);
+        g_starlink_state.socket_fd = -1;
+    }
+    
+    g_starlink_state.initialized = false;
+    g_starlink_state.connection_healthy = false;
 }
 
 // Create TCP connection to Starlink dish
