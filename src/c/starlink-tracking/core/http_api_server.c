@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <microhttpd.h>
 #include <json-c/json.h>
 
@@ -103,7 +104,7 @@ static struct api_response create_predictions_response(void) {
 }
 
 // Serve static files
-static struct api_response serve_static_file(const char *filename) {
+static struct api_response starlink_serve_static_file(const char *filename) {
     struct api_response response = {0};
     
     // Determine content type
@@ -150,7 +151,7 @@ static struct api_response serve_static_file(const char *filename) {
 }
 
 // HTTP request handler
-static enum MHD_Result request_handler(void *cls,
+static enum MHD_Result starlink_request_handler(void *cls,
                                      struct MHD_Connection *connection,
                                      const char *url,
                                      const char *method,
@@ -177,9 +178,9 @@ static enum MHD_Result request_handler(void *cls,
     
     // Route requests
     if (strcmp(url, "/") == 0 || strcmp(url, "/index.html") == 0) {
-        api_resp = serve_static_file("index.html");
+        api_resp = starlink_serve_static_file("index.html");
     } else if (strcmp(url, "/starlink_visualization.js") == 0) {
-        api_resp = serve_static_file("starlink_visualization.js");
+        api_resp = starlink_serve_static_file("starlink_visualization.js");
     } else if (strcmp(url, "/api/status") == 0) {
         api_resp = create_status_response();
     } else if (strcmp(url, "/api/predictions") == 0) {
@@ -225,7 +226,7 @@ int start_http_api_server(standalone_tracker_t *tracker, int port) {
         MHD_USE_THREAD_PER_CONNECTION,
         port,
         NULL, NULL,
-        &request_handler, NULL,
+        &starlink_request_handler, NULL,
         MHD_OPTION_END
     );
     

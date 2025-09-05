@@ -20,3 +20,6 @@ start_service() {
 reload_service() {
     ubus call starlink_tracker reload
 }
+
+
+

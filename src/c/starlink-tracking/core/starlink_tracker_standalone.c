@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
+#include <pthread.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
 #include <sys/stat.h>

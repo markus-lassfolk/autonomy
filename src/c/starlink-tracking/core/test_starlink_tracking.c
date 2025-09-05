@@ -1,19 +1,20 @@
-#include "package/utils/tlt-autonomy-daemon/src/modules/starlink/starlink_tracker.h"
+#include "starlink_tracker_standalone.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <time.h>
 
 static bool running = true;
 
 // Signal handler for graceful shutdown
-void signal_handler(int sig) {
+void test_signal_handler(int sig) {
     printf("Received signal %d, shutting down...\n", sig);
     running = false;
 }
 
 // Outage callback function
-void outage_alert_callback(const outage_prediction_t *prediction, void *user_data) {
+void outage_alert_callback(const standalone_outage_prediction_t *prediction, void *user_data) {
     printf("🚨 OUTAGE ALERT 🚨\n");
     printf("  Time: %s", ctime(&prediction->start_time));
     printf("  Duration: %d seconds\n", prediction->duration_seconds);
@@ -24,16 +25,16 @@ void outage_alert_callback(const outage_prediction_t *prediction, void *user_dat
     printf("\n");
 }
 
-int main(int argc, char *argv[]) {
+int test_main(int argc, char *argv[]) {
     printf("🛰️  Starlink Tracking Demo\n");
     printf("==========================\n\n");
     
     // Setup signal handlers
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
+    signal(SIGINT, test_signal_handler);
+    signal(SIGTERM, test_signal_handler);
     
     // Initialize tracker configuration
-    starlink_tracker_config_t config = {
+    standalone_config_t config = {
         .starlink_dish_ip = "192.168.100.1",
         .starlink_dish_port = 9200,
         .update_interval_minutes = 5, // Shorter interval for demo
@@ -61,7 +62,7 @@ int main(int argc, char *argv[]) {
     
     // Initialize tracker
     printf("🔧 Initializing Starlink tracker...\n");
-    starlink_tracker_t *tracker = starlink_tracker_init(&config);
+    standalone_tracker_t *tracker = standalone_tracker_init(&config);
     if (!tracker) {
         printf("❌ Failed to initialize Starlink tracker\n");
         return 1;
@@ -70,40 +71,41 @@ int main(int argc, char *argv[]) {
     printf("✅ Tracker initialized successfully\n\n");
     
     // Set outage callback
-    starlink_tracker_set_outage_callback(tracker, outage_alert_callback, NULL);
+    standalone_tracker_set_outage_callback(tracker, outage_alert_callback, NULL);
     
     // Initial data collection
     printf("📡 Collecting initial data...\n");
     
     printf("  - Updating dish location...");
-    int location_result = starlink_tracker_update_dish_location(tracker);
-    printf(" %s\n", (location_result == TRACKER_SUCCESS) ? "✅" : "❌");
+    int location_result = standalone_tracker_update_dish_location(tracker);
+    printf(" %s\n", (location_result == STANDALONE_SUCCESS) ? "✅" : "❌");
     
     printf("  - Updating obstruction map...");
-    int obstruction_result = starlink_tracker_update_obstruction_map(tracker);
-    printf(" %s\n", (obstruction_result == TRACKER_SUCCESS) ? "✅" : "❌");
+    int obstruction_result = standalone_tracker_update_obstruction_map(tracker);
+    printf(" %s\n", (obstruction_result == STANDALONE_SUCCESS) ? "✅" : "❌");
     
     printf("  - Fetching satellite data...");
-    int constellation_result = starlink_tracker_update_constellation_data(tracker);
-    printf(" %s\n", (constellation_result == TRACKER_SUCCESS) ? "✅" : "❌");
+    int constellation_result = standalone_tracker_update_constellation_data(tracker);
+    printf(" %s\n", (constellation_result == STANDALONE_SUCCESS) ? "✅" : "❌");
     
-    if (constellation_result != TRACKER_SUCCESS) {
+    if (constellation_result != STANDALONE_SUCCESS) {
         printf("⚠️  Warning: Could not fetch satellite data. Check Space-Track credentials and network connectivity.\n");
     }
     
     // Calculate initial predictions
     printf("  - Calculating predictions...");
-    int prediction_result = starlink_tracker_calculate_predictions(tracker, config.prediction_horizon_hours);
-    printf(" %s\n\n", (prediction_result == TRACKER_SUCCESS) ? "✅" : "❌");
+    int prediction_result = standalone_tracker_calculate_predictions(tracker);
+    printf(" %s\n\n", (prediction_result == STANDALONE_SUCCESS) ? "✅" : "❌");
     
     // Show current status
     printf("📊 Current Status:\n");
-    printf("  - Visible satellites: %d\n", starlink_tracker_get_visible_satellite_count(tracker));
-    printf("  - Unobstructed satellites: %d\n", starlink_tracker_get_unobstructed_satellite_count(tracker));
+    standalone_stats_t stats = standalone_tracker_get_stats(tracker);
+    printf("  - Visible satellites: %d\n", stats.visible_satellites);
+    printf("  - Unobstructed satellites: %d\n", stats.unobstructed_satellites);
     
     // Get and display predictions
-    outage_prediction_t *predictions;
-    int num_predictions = starlink_tracker_get_predictions(tracker, &predictions);
+    standalone_outage_prediction_t *predictions;
+    int num_predictions = standalone_tracker_get_predictions(tracker, &predictions);
     
     printf("  - Predictions for next %d hours: %d\n", config.prediction_horizon_hours, num_predictions);
     
@@ -118,15 +120,15 @@ int main(int argc, char *argv[]) {
             printf("     %s\n", predictions[i].description);
         }
         
-        starlink_tracker_free_predictions(predictions, num_predictions);
+        standalone_tracker_free_predictions(predictions, num_predictions);
     } else {
         printf("  ✅ No outages predicted!\n");
     }
     
     // Start monitoring
     printf("\n🔄 Starting continuous monitoring...\n");
-    int monitoring_result = starlink_tracker_start_monitoring(tracker);
-    if (monitoring_result == TRACKER_SUCCESS) {
+    int monitoring_result = standalone_tracker_start_monitoring(tracker);
+    if (monitoring_result == STANDALONE_SUCCESS) {
         printf("✅ Monitoring started successfully\n");
         printf("   Press Ctrl+C to stop...\n\n");
         
@@ -139,27 +141,29 @@ int main(int argc, char *argv[]) {
             // Show periodic status
             if (loop_count % 10 == 0) { // Every 5 minutes
                 printf("📈 Status Update:\n");
-                printf("  - Visible satellites: %d\n", starlink_tracker_get_visible_satellite_count(tracker));
-                printf("  - Unobstructed satellites: %d\n", starlink_tracker_get_unobstructed_satellite_count(tracker));
-                
-                const tracking_stats_t *stats = starlink_tracker_get_stats(tracker);
-                printf("  - Total predictions: %d\n", stats->total_predictions);
-                printf("  - Accuracy: %.1f%%\n", stats->accuracy_percentage);
+                standalone_stats_t current_stats = standalone_tracker_get_stats(tracker);
+                printf("  - Visible satellites: %d\n", current_stats.visible_satellites);
+                printf("  - Unobstructed satellites: %d\n", current_stats.unobstructed_satellites);
+                printf("  - Total predictions: %d\n", current_stats.total_predictions);
+                printf("  - Accuracy: %.1f%%\n", current_stats.accuracy_percentage);
                 printf("\n");
             }
         }
         
         // Stop monitoring
         printf("🛑 Stopping monitoring...\n");
-        starlink_tracker_stop_monitoring(tracker);
+        standalone_tracker_stop_monitoring(tracker);
     } else {
         printf("❌ Failed to start monitoring\n");
     }
     
     // Cleanup
     printf("🧹 Cleaning up...\n");
-    starlink_tracker_cleanup(tracker);
+    standalone_tracker_cleanup(tracker);
     
     printf("✅ Demo completed successfully\n");
     return 0;
 }
+
+// Note: This file should be compiled as a separate test executable
+// The main function is intentionally removed to avoid conflicts with production code

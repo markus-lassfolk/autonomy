@@ -68,7 +68,7 @@ static char* call_ubus_method(const char *object, const char *method) {
 }
 
 // Serve static files
-static struct http_response serve_static_file(const char *filename) {
+static struct http_response viz_serve_static_file(const char *filename) {
     struct http_response response = {0};
     
     // Determine content type
@@ -106,7 +106,7 @@ static struct http_response serve_static_file(const char *filename) {
 }
 
 // HTTP request handler
-static enum MHD_Result request_handler(void *cls,
+static enum MHD_Result viz_request_handler(void *cls,
                                      struct MHD_Connection *connection,
                                      const char *url,
                                      const char *method,
@@ -133,9 +133,9 @@ static enum MHD_Result request_handler(void *cls,
     
     // Route requests
     if (strcmp(url, "/") == 0 || strcmp(url, "/index.html") == 0) {
-        http_resp = serve_static_file("index.html");
+        http_resp = viz_serve_static_file("index.html");
     } else if (strcmp(url, "/starlink_visualization.js") == 0) {
-        http_resp = serve_static_file("starlink_visualization.js");
+        http_resp = viz_serve_static_file("starlink_visualization.js");
     } else if (strncmp(url, "/api/", 5) == 0) {
         // API endpoints
         const char *api_path = url + 5; // Skip "/api/"
@@ -204,7 +204,7 @@ static enum MHD_Result request_handler(void *cls,
     return ret;
 }
 
-int main(int argc, char *argv[]) {
+int viz_main(int argc, char *argv[]) {
     int port = DEFAULT_PORT;
     
     if (argc > 1) {
@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
         MHD_USE_THREAD_PER_CONNECTION,
         port,
         NULL, NULL,
-        &request_handler, NULL,
+        &viz_request_handler, NULL,
         MHD_OPTION_END
     );
     
@@ -268,4 +268,9 @@ int main(int argc, char *argv[]) {
     
     printf("✅ Server stopped successfully\n");
     return 0;
+}
+
+// Main function for visualization server executable
+int main(int argc, char *argv[]) {
+    return viz_main(argc, argv);
 }

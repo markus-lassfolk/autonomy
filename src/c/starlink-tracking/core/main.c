@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <time.h>
 
 static bool running = true;
 static standalone_tracker_t *g_tracker = NULL;
