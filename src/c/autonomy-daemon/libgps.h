@@ -44,7 +44,7 @@ typedef struct {
 extern const struct blobmsg_policy g_gps_position_policy[];
 
 lgps_err_t lgps_get(struct ubus_context *, lgps_t *);
-lgps_err_t lgps_subscribe(struct ubus_context *ctx, struct ubus_subscriber *gps_sub, ubus_handler_t cb, ubus_remove_handler_t rm_cb);
+lgps_err_t lgps_subscribe(struct ubus_context *uctx, struct ubus_subscriber *gps_sub, ubus_handler_t cb, ubus_remove_handler_t rm_cb);
 
 const char *lgps_strerror(lgps_err_t);
 #ifdef __cplusplus

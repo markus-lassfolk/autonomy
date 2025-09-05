@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <time.h>
 #include <pthread.h>
+#include <stddef.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -3,6 +3,7 @@
 
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,7 +38,7 @@ extern "C" {
  *   ]
  * }
  */
-int gps_comprehensive_ubus_get_status(struct ubus_context *ctx, struct ubus_object *obj,
+int gps_comprehensive_ubus_get_status(struct ubus_context *uctx, struct ubus_object *obj,
                                      struct ubus_request_data *req, const char *method,
                                      struct blob_attr *msg);
 
@@ -58,7 +59,7 @@ int gps_comprehensive_ubus_get_status(struct ubus_context *ctx, struct ubus_obje
  *   }
  * }
  */
-int gps_comprehensive_ubus_collect_best(struct ubus_context *ctx, struct ubus_object *obj,
+int gps_comprehensive_ubus_collect_best(struct ubus_context *uctx, struct ubus_object *obj,
                                        struct ubus_request_data *req, const char *method,
                                        struct blob_attr *msg);
 
@@ -77,7 +78,7 @@ int gps_comprehensive_ubus_collect_best(struct ubus_context *ctx, struct ubus_ob
  *   }
  * }
  */
-int gps_comprehensive_ubus_collect_all_and_fuse(struct ubus_context *ctx, struct ubus_object *obj,
+int gps_comprehensive_ubus_collect_all_and_fuse(struct ubus_context *uctx, struct ubus_object *obj,
                                                struct ubus_request_data *req, const char *method,
                                                struct blob_attr *msg);
 
@@ -99,7 +100,7 @@ int gps_comprehensive_ubus_collect_all_and_fuse(struct ubus_context *ctx, struct
  *   ]
  * }
  */
-int gps_comprehensive_ubus_get_source_health(struct ubus_context *ctx, struct ubus_object *obj,
+int gps_comprehensive_ubus_get_source_health(struct ubus_context *uctx, struct ubus_object *obj,
                                            struct ubus_request_data *req, const char *method,
                                            struct blob_attr *msg);
 
@@ -121,7 +122,7 @@ int gps_comprehensive_ubus_get_source_health(struct ubus_context *ctx, struct ub
  *   }
  * }
  */
-int gps_comprehensive_ubus_get_movement_status(struct ubus_context *ctx, struct ubus_object *obj,
+int gps_comprehensive_ubus_get_movement_status(struct ubus_context *uctx, struct ubus_object *obj,
                                              struct ubus_request_data *req, const char *method,
                                              struct blob_attr *msg);
 
@@ -142,7 +143,7 @@ int gps_comprehensive_ubus_get_movement_status(struct ubus_context *ctx, struct 
  *   }
  * }
  */
-int gps_comprehensive_ubus_get_fusion_stats(struct ubus_context *ctx, struct ubus_object *obj,
+int gps_comprehensive_ubus_get_fusion_stats(struct ubus_context *uctx, struct ubus_object *obj,
                                           struct ubus_request_data *req, const char *method,
                                           struct blob_attr *msg);
 
@@ -158,7 +159,7 @@ int gps_comprehensive_ubus_get_fusion_stats(struct ubus_context *ctx, struct ubu
  *   }
  * }
  */
-int gps_comprehensive_ubus_get_statistics(struct ubus_context *ctx, struct ubus_object *obj,
+int gps_comprehensive_ubus_get_statistics(struct ubus_context *uctx, struct ubus_object *obj,
                                         struct ubus_request_data *req, const char *method,
                                         struct blob_attr *msg);
 
@@ -173,7 +174,7 @@ int gps_comprehensive_ubus_get_statistics(struct ubus_context *ctx, struct ubus_
  *   }
  * }
  */
-int gps_comprehensive_ubus_force_collection(struct ubus_context *ctx, struct ubus_object *obj,
+int gps_comprehensive_ubus_force_collection(struct ubus_context *uctx, struct ubus_object *obj,
                                           struct ubus_request_data *req, const char *method,
                                           struct blob_attr *msg);
 
@@ -184,7 +185,7 @@ int gps_comprehensive_ubus_force_collection(struct ubus_context *ctx, struct ubu
  *   "message": "GPS statistics reset successfully"
  * }
  */
-int gps_comprehensive_ubus_reset_statistics(struct ubus_context *ctx, struct ubus_object *obj,
+int gps_comprehensive_ubus_reset_statistics(struct ubus_context *uctx, struct ubus_object *obj,
                                           struct ubus_request_data *req, const char *method,
                                           struct blob_attr *msg);
 
@@ -200,7 +201,7 @@ int gps_comprehensive_ubus_reset_statistics(struct ubus_context *ctx, struct ubu
  *   }
  * }
  */
-int gps_comprehensive_ubus_health_check(struct ubus_context *ctx, struct ubus_object *obj,
+int gps_comprehensive_ubus_health_check(struct ubus_context *uctx, struct ubus_object *obj,
                                        struct ubus_request_data *req, const char *method,
                                        struct blob_attr *msg);
 

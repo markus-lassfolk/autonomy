@@ -1,0 +1,1177 @@
+🔍 C Code Verification Report
+==================================================
+
+📊 Summary:
+  Total issues: 309
+  Critical: 0
+  Errors: 301
+  Warnings: 8
+  Info: 0
+
+❌ ERROR (301)
+------------------------------
+  src\c\starlink-tracking\core\http_api_server.c
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\starlink-tracking\core\http_api_server.c
+    Missing include file: stdio.h
+    💡 Check if stdio.h exists in include paths
+
+  src\c\starlink-tracking\core\http_api_server.c
+    Missing include file: stdlib.h
+    💡 Check if stdlib.h exists in include paths
+
+  src\c\starlink-tracking\core\http_api_server.c
+    Missing include file: string.h
+    💡 Check if string.h exists in include paths
+
+  src\c\starlink-tracking\core\http_api_server.c
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\starlink-tracking\core\http_api_server.c
+    Missing include file: microhttpd.h
+    💡 Check if microhttpd.h exists in include paths
+
+  src\c\starlink-tracking\core\http_api_server.c
+    Missing include file: json-c/json.h
+    💡 Check if json-c/json.h exists in include paths
+
+  src\c\starlink-tracking\core\main.c
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\starlink-tracking\core\main.c
+    Missing include file: stdio.h
+    💡 Check if stdio.h exists in include paths
+
+  src\c\starlink-tracking\core\main.c
+    Missing include file: stdlib.h
+    💡 Check if stdlib.h exists in include paths
+
+  src\c\starlink-tracking\core\main.c
+    Missing include file: signal.h
+    💡 Check if signal.h exists in include paths
+
+  src\c\starlink-tracking\core\main.c
+    Missing include file: unistd.h
+    💡 Check if unistd.h exists in include paths
+
+  src\c\starlink-tracking\core\main.c
+    Missing include file: getopt.h
+    💡 Check if getopt.h exists in include paths
+
+  src\c\starlink-tracking\core\main.c
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.c
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.c
+    Missing include file: stdio.h
+    💡 Check if stdio.h exists in include paths
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.c
+    Missing include file: stdlib.h
+    💡 Check if stdlib.h exists in include paths
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.c
+    Missing include file: string.h
+    💡 Check if string.h exists in include paths
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.c
+    Missing include file: unistd.h
+    💡 Check if unistd.h exists in include paths
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.c
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.c
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.c
+    Missing include file: curl/curl.h
+    💡 Check if curl/curl.h exists in include paths
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.c
+    Missing include file: json-c/json.h
+    💡 Check if json-c/json.h exists in include paths
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.c
+    Missing include file: sys/stat.h
+    💡 Check if sys/stat.h exists in include paths
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.c
+    Missing include file: errno.h
+    💡 Check if errno.h exists in include paths
+
+  src\c\starlink-tracking\core\test_starlink_tracking.c
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\starlink-tracking\core\test_starlink_tracking.c
+    Missing include file: stdio.h
+    💡 Check if stdio.h exists in include paths
+
+  src\c\starlink-tracking\core\test_starlink_tracking.c
+    Missing include file: stdlib.h
+    💡 Check if stdlib.h exists in include paths
+
+  src\c\starlink-tracking\core\test_starlink_tracking.c
+    Missing include file: unistd.h
+    💡 Check if unistd.h exists in include paths
+
+  src\c\starlink-tracking\core\test_starlink_tracking.c
+    Missing include file: signal.h
+    💡 Check if signal.h exists in include paths
+
+  src\c\starlink-tracking\core\test_starlink_tracking.c
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\visualization-server\visualization_server.c
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\visualization-server\visualization_server.c
+    Missing include file: stdio.h
+    💡 Check if stdio.h exists in include paths
+
+  src\c\visualization-server\visualization_server.c
+    Missing include file: stdlib.h
+    💡 Check if stdlib.h exists in include paths
+
+  src\c\visualization-server\visualization_server.c
+    Missing include file: string.h
+    💡 Check if string.h exists in include paths
+
+  src\c\visualization-server\visualization_server.c
+    Missing include file: unistd.h
+    💡 Check if unistd.h exists in include paths
+
+  src\c\visualization-server\visualization_server.c
+    Missing include file: sys/socket.h
+    💡 Check if sys/socket.h exists in include paths
+
+  src\c\visualization-server\visualization_server.c
+    Missing include file: netinet/in.h
+    💡 Check if netinet/in.h exists in include paths
+
+  src\c\visualization-server\visualization_server.c
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\visualization-server\visualization_server.c
+    Missing include file: microhttpd.h
+    💡 Check if microhttpd.h exists in include paths
+
+  src\c\visualization-server\visualization_server.c
+    Missing include file: json-c/json.h
+    💡 Check if json-c/json.h exists in include paths
+
+  src\c\visualization-server\visualization_server.c
+    Missing include file: libubus.h
+    💡 Check if libubus.h exists in include paths
+
+  src\c\visualization-server\visualization_server.c
+    Missing include file: libubox/blobmsg_json.h
+    💡 Check if libubox/blobmsg_json.h exists in include paths
+
+  src\c\autonomy-daemon\adaptive_rate_limiter.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\adaptive_rate_limiter.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\adaptive_rate_limiter.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\adaptive_rate_limiter.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\autonomy_types.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\autonomy_types.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\cellular_collector.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\cellular_collector.h
+    Missing include file: ../types.h
+    💡 Check if ../types.h exists in include paths
+
+  src\c\autonomy-daemon\cellular_collector.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\cellular_collector.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\cellular_collector.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\cellular_collector.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\data_limit_notifications.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\data_limit_notifications.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\data_limit_notifications.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\data_limit_notifications.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\discord_client.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\discord_client.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\discord_client.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\discord_client.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\email_client.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\email_client.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\email_client.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\email_client.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_accuracy.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_accuracy.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_accuracy.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_adaptive_cache.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_adaptive_cache.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_adaptive_cache.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_adaptive_cache.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_adaptive_cache.h
+    Missing include file: stddef.h
+    💡 Check if stddef.h exists in include paths
+
+  src\c\autonomy-daemon\gps_cell_tower.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_cell_tower.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_cell_tower.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_cell_tower.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_clustering.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_clustering.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_clustering.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_clustering.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_comprehensive.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_comprehensive.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_comprehensive.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\gps_comprehensive.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_comprehensive.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_comprehensive_ubus.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_comprehensive_ubus.h
+    Missing include file: libubus.h
+    💡 Check if libubus.h exists in include paths
+
+  src\c\autonomy-daemon\gps_comprehensive_ubus.h
+    Missing include file: libubox/blobmsg_json.h
+    💡 Check if libubox/blobmsg_json.h exists in include paths
+
+  src\c\autonomy-daemon\gps_confidence.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_confidence.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_connector.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_connector.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_connector.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_connector.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_coordinate_utils.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_coordinate_utils.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_coordinate_utils.h
+    Missing include file: math.h
+    💡 Check if math.h exists in include paths
+
+  src\c\autonomy-daemon\gps_error_recovery.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_error_recovery.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_error_recovery.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_error_recovery.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_events.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_events.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_events.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_events.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_fusion.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_fusion.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_fusion.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_fusion.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_fusion_engine.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_fusion_engine.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_fusion_engine.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\gps_geofence.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_geofence.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_geofence.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_geofence.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_google_api.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_google_api.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_google_api.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_google_api.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_health.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_health.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_health.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_health.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_integration.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_integration.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_integration.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_integration.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_location_reference.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_location_reference.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_location_reference.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\gps_location_reference.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_location_reference.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_location_reference.h
+    Missing include file: sqlite3.h
+    💡 Check if sqlite3.h exists in include paths
+
+  src\c\autonomy-daemon\gps_location_services.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_location_services.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_location_services.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_location_services.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_manager.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_manager.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_manager.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_movement.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_movement.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_movement.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_movement.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_nmea.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_nmea.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_nmea.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_obstruction.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_obstruction.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_obstruction.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_obstruction.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_opencellid.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_opencellid.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_opencellid.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\gps_opencellid.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_opencellid.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_opencellid_enhanced.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_opencellid_enhanced.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_opencellid_enhanced.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\gps_opencellid_enhanced.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_opencellid_enhanced.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_performance.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_performance.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_performance.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_performance.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_rutos.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_rutos.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\gps_rutos.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_rutos.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_starlink.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_starlink.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_starlink.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_system.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_system.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_system.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_system.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_terrain.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_terrain.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_terrain.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_terrain.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\gps_weather.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\gps_weather.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\gps_weather.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\gps_weather.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\libgps.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\libgps.h
+    Missing include file: libubus.h
+    💡 Check if libubus.h exists in include paths
+
+  src\c\autonomy-daemon\logx.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\logx.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\logx.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\logx.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\logx.h
+    Missing include file: stdio.h
+    💡 Check if stdio.h exists in include paths
+
+  src\c\autonomy-daemon\network_collector.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\network_collector.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\network_collector.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\network_collector.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\network_controller.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\network_controller.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\network_controller.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\network_controller.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\network_discovery.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\network_discovery.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\network_discovery.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\network_failover.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\network_failover.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\network_failover.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\network_failover.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\notifications_comprehensive.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notifications_comprehensive.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\notifications_comprehensive.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\notifications_comprehensive.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\notifications_comprehensive.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\notifications_comprehensive_ubus.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notifications_comprehensive_ubus.h
+    Missing include file: libubus.h
+    💡 Check if libubus.h exists in include paths
+
+  src\c\autonomy-daemon\notifications_comprehensive_ubus.h
+    Missing include file: libubox/blobmsg_json.h
+    💡 Check if libubox/blobmsg_json.h exists in include paths
+
+  src\c\autonomy-daemon\notification_config.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notification_config.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\notification_config.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\notification_deduplicator.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notification_deduplicator.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\notification_deduplicator.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\notification_deduplicator.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\notification_events.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notification_events.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\notification_events.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\notification_manager.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notification_manager.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\notification_manager.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\notification_manager.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\notification_statistics.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notification_statistics.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\notification_statistics.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\notification_statistics.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\notification_types.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notification_types.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\notification_types.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\notification_types.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\notification_ubus.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notification_ubus.h
+    Missing include file: libubus.h
+    💡 Check if libubus.h exists in include paths
+
+  src\c\autonomy-daemon\priority_queue.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\priority_queue.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\priority_queue.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\priority_queue.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\pushover_client.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\pushover_client.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\pushover_client.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\pushover_client.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\slack_client.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\slack_client.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\slack_client.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\slack_client.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\types.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\types.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\types.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\types.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\webhook_client.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\webhook_client.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\webhook_client.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\webhook_client.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\wifi_enhanced.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\wifi_enhanced.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\wifi_enhanced.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\wifi_enhanced.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\wifi_enhanced.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\wifi_enhanced_ubus.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\wifi_enhanced_ubus.h
+    Missing include file: libubus.h
+    💡 Check if libubus.h exists in include paths
+
+  src\c\autonomy-daemon\wifi_enhanced_ubus.h
+    Missing include file: libubox/blobmsg_json.h
+    💡 Check if libubox/blobmsg_json.h exists in include paths
+
+  src\c\autonomy-daemon\wifi_management.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\wifi_management.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\wifi_management.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\wifi_management.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\acknowledgment_tracker.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notifications\acknowledgment_tracker.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\acknowledgment_tracker.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\acknowledgment_tracker.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\delivery_optimizer.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notifications\delivery_optimizer.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\delivery_optimizer.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\delivery_optimizer.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\intelligence_engine.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notifications\intelligence_engine.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\intelligence_engine.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\intelligence_engine.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\notification_types.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notifications\notification_types.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\notification_types.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\notification_types.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\smart_manager.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\autonomy-daemon\notifications\smart_manager.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\smart_manager.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\autonomy-daemon\notifications\smart_manager.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\shared\autonomy_modules.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.h
+    Compilation failed: [WinError 2] The system cannot find the file specified
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.h
+    Missing include file: time.h
+    💡 Check if time.h exists in include paths
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.h
+    Missing include file: stdint.h
+    💡 Check if stdint.h exists in include paths
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.h
+    Missing include file: stdbool.h
+    💡 Check if stdbool.h exists in include paths
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.h
+    Missing include file: pthread.h
+    💡 Check if pthread.h exists in include paths
+
+  src\c\starlink-tracking\core\main.c:114
+    Duplicate function definition: main
+    💡 Function defined in multiple files: src\c\starlink-tracking\core\main.c:114, src\c\starlink-tracking\core\test_starlink_tracking.c:169, src\c\visualization-server\visualization_server.c:207
+
+⚠️ WARNING (8)
+------------------------------
+  src\c\starlink-tracking\core\main.c:279
+    Potentially unsafe function: gets
+    💡 Use safer alternatives like strncpy, strncat, snprintf
+
+  src\c\starlink-tracking\core\starlink_tracker_standalone.c:57
+    Potentially unsafe function: gets
+    💡 Use safer alternatives like strncpy, strncat, snprintf
+
+  src\c\autonomy-daemon\gps_comprehensive_ubus.h
+    Missing include for time: time.h
+    💡 Add #include <time.h>
+
+  src\c\autonomy-daemon\gps_confidence.h
+    Missing include for time: time.h
+    💡 Add #include <time.h>
+
+  src\c\autonomy-daemon\gps_fusion_engine.h
+    Missing include for time: time.h
+    💡 Add #include <time.h>
+
+  src\c\autonomy-daemon\libgps.h
+    Missing include for time: time.h
+    💡 Add #include <time.h>
+
+  src\c\autonomy-daemon\notifications_comprehensive_ubus.h
+    Missing include for time: time.h
+    💡 Add #include <time.h>
+
+  src\c\autonomy-daemon\wifi_enhanced_ubus.h
+    Missing include for time: time.h
+    💡 Add #include <time.h>

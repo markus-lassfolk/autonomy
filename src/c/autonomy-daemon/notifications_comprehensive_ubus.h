@@ -3,6 +3,7 @@
 
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +32,7 @@ extern "C" {
  *   }
  * }
  */
-int notifications_comprehensive_ubus_send(struct ubus_context *ctx, struct ubus_object *obj,
+int notifications_comprehensive_ubus_send(struct ubus_context *uctx, struct ubus_object *obj,
                                          struct ubus_request_data *req, const char *method,
                                          struct blob_attr *msg);
 
@@ -52,7 +53,7 @@ int notifications_comprehensive_ubus_send(struct ubus_context *ctx, struct ubus_
  *   }
  * }
  */
-int notifications_comprehensive_ubus_send_emergency(struct ubus_context *ctx, struct ubus_object *obj,
+int notifications_comprehensive_ubus_send_emergency(struct ubus_context *uctx, struct ubus_object *obj,
                                                    struct ubus_request_data *req, const char *method,
                                                    struct blob_attr *msg);
 
@@ -84,7 +85,7 @@ int notifications_comprehensive_ubus_send_emergency(struct ubus_context *ctx, st
  *   }
  * }
  */
-int notifications_comprehensive_ubus_get_status(struct ubus_context *ctx, struct ubus_object *obj,
+int notifications_comprehensive_ubus_get_status(struct ubus_context *uctx, struct ubus_object *obj,
                                                struct ubus_request_data *req, const char *method,
                                                struct blob_attr *msg);
 
@@ -119,7 +120,7 @@ int notifications_comprehensive_ubus_get_status(struct ubus_context *ctx, struct
  *   }
  * }
  */
-int notifications_comprehensive_ubus_get_statistics(struct ubus_context *ctx, struct ubus_object *obj,
+int notifications_comprehensive_ubus_get_statistics(struct ubus_context *uctx, struct ubus_object *obj,
                                                    struct ubus_request_data *req, const char *method,
                                                    struct blob_attr *msg);
 
@@ -148,7 +149,7 @@ int notifications_comprehensive_ubus_get_statistics(struct ubus_context *ctx, st
  *   }
  * }
  */
-int notifications_comprehensive_ubus_get_history(struct ubus_context *ctx, struct ubus_object *obj,
+int notifications_comprehensive_ubus_get_history(struct ubus_context *uctx, struct ubus_object *obj,
                                                 struct ubus_request_data *req, const char *method,
                                                 struct blob_attr *msg);
 
@@ -168,7 +169,7 @@ int notifications_comprehensive_ubus_get_history(struct ubus_context *ctx, struc
  *   }
  * }
  */
-int notifications_comprehensive_ubus_acknowledge(struct ubus_context *ctx, struct ubus_object *obj,
+int notifications_comprehensive_ubus_acknowledge(struct ubus_context *uctx, struct ubus_object *obj,
                                                 struct ubus_request_data *req, const char *method,
                                                 struct blob_attr *msg);
 
@@ -191,7 +192,7 @@ int notifications_comprehensive_ubus_acknowledge(struct ubus_context *ctx, struc
  *   "overall_result": "6/7 channels working"
  * }
  */
-int notifications_comprehensive_ubus_test_channels(struct ubus_context *ctx, struct ubus_object *obj,
+int notifications_comprehensive_ubus_test_channels(struct ubus_context *uctx, struct ubus_object *obj,
                                                   struct ubus_request_data *req, const char *method,
                                                   struct blob_attr *msg);
 
@@ -211,7 +212,7 @@ int notifications_comprehensive_ubus_test_channels(struct ubus_context *ctx, str
  *   ]
  * }
  */
-int notifications_comprehensive_ubus_get_channel_effectiveness(struct ubus_context *ctx, struct ubus_object *obj,
+int notifications_comprehensive_ubus_get_channel_effectiveness(struct ubus_context *uctx, struct ubus_object *obj,
                                                               struct ubus_request_data *req, const char *method,
                                                               struct blob_attr *msg);
 
@@ -242,7 +243,7 @@ int notifications_comprehensive_ubus_get_channel_effectiveness(struct ubus_conte
  *   }
  * }
  */
-int notifications_comprehensive_ubus_get_config(struct ubus_context *ctx, struct ubus_object *obj,
+int notifications_comprehensive_ubus_get_config(struct ubus_context *uctx, struct ubus_object *obj,
                                                struct ubus_request_data *req, const char *method,
                                                struct blob_attr *msg);
 
@@ -261,7 +262,7 @@ int notifications_comprehensive_ubus_get_config(struct ubus_context *ctx, struct
  *   "message": "Comprehensive notifications configuration updated"
  * }
  */
-int notifications_comprehensive_ubus_set_config(struct ubus_context *ctx, struct ubus_object *obj,
+int notifications_comprehensive_ubus_set_config(struct ubus_context *uctx, struct ubus_object *obj,
                                                struct ubus_request_data *req, const char *method,
                                                struct blob_attr *msg);
 
@@ -272,7 +273,7 @@ int notifications_comprehensive_ubus_set_config(struct ubus_context *ctx, struct
  *   "message": "Comprehensive notifications statistics reset"
  * }
  */
-int notifications_comprehensive_ubus_reset_statistics(struct ubus_context *ctx, struct ubus_object *obj,
+int notifications_comprehensive_ubus_reset_statistics(struct ubus_context *uctx, struct ubus_object *obj,
                                                      struct ubus_request_data *req, const char *method,
                                                      struct blob_attr *msg);
 
@@ -294,7 +295,7 @@ int notifications_comprehensive_ubus_reset_statistics(struct ubus_context *ctx, 
  *   }
  * }
  */
-int notifications_comprehensive_ubus_health_check(struct ubus_context *ctx, struct ubus_object *obj,
+int notifications_comprehensive_ubus_health_check(struct ubus_context *uctx, struct ubus_object *obj,
                                                  struct ubus_request_data *req, const char *method,
                                                  struct blob_attr *msg);
 

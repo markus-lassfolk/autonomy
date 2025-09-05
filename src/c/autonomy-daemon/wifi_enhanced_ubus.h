@@ -3,6 +3,7 @@
 
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,7 +26,7 @@ extern "C" {
  *   ]
  * }
  */
-int wifi_enhanced_ubus_get_interfaces(struct ubus_context *ctx, struct ubus_object *obj,
+int wifi_enhanced_ubus_get_interfaces(struct ubus_context *uctx, struct ubus_object *obj,
                                      struct ubus_request_data *req, const char *method,
                                      struct blob_attr *msg);
 
@@ -50,7 +51,7 @@ int wifi_enhanced_ubus_get_interfaces(struct ubus_context *ctx, struct ubus_obje
  *   }
  * }
  */
-int wifi_enhanced_ubus_scan_channels(struct ubus_context *ctx, struct ubus_object *obj,
+int wifi_enhanced_ubus_scan_channels(struct ubus_context *uctx, struct ubus_object *obj,
                                     struct ubus_request_data *req, const char *method,
                                     struct blob_attr *msg);
 
@@ -71,7 +72,7 @@ int wifi_enhanced_ubus_scan_channels(struct ubus_context *ctx, struct ubus_objec
  *   }
  * }
  */
-int wifi_enhanced_ubus_optimize_channels(struct ubus_context *ctx, struct ubus_object *obj,
+int wifi_enhanced_ubus_optimize_channels(struct ubus_context *uctx, struct ubus_object *obj,
                                         struct ubus_request_data *req, const char *method,
                                         struct blob_attr *msg);
 
@@ -88,7 +89,7 @@ int wifi_enhanced_ubus_optimize_channels(struct ubus_context *ctx, struct ubus_o
  *   }
  * }
  */
-int wifi_enhanced_ubus_get_current_plan(struct ubus_context *ctx, struct ubus_object *obj,
+int wifi_enhanced_ubus_get_current_plan(struct ubus_context *uctx, struct ubus_object *obj,
                                        struct ubus_request_data *req, const char *method,
                                        struct blob_attr *msg);
 
@@ -107,7 +108,7 @@ int wifi_enhanced_ubus_get_current_plan(struct ubus_context *ctx, struct ubus_ob
  *   }
  * }
  */
-int wifi_enhanced_ubus_get_statistics(struct ubus_context *ctx, struct ubus_object *obj,
+int wifi_enhanced_ubus_get_statistics(struct ubus_context *uctx, struct ubus_object *obj,
                                      struct ubus_request_data *req, const char *method,
                                      struct blob_attr *msg);
 
@@ -128,7 +129,7 @@ int wifi_enhanced_ubus_get_statistics(struct ubus_context *ctx, struct ubus_obje
  *   }
  * }
  */
-int wifi_enhanced_ubus_get_movement_status(struct ubus_context *ctx, struct ubus_object *obj,
+int wifi_enhanced_ubus_get_movement_status(struct ubus_context *uctx, struct ubus_object *obj,
                                           struct ubus_request_data *req, const char *method,
                                           struct blob_attr *msg);
 
@@ -153,7 +154,7 @@ int wifi_enhanced_ubus_get_movement_status(struct ubus_context *ctx, struct ubus
  *   }
  * }
  */
-int wifi_enhanced_ubus_get_config(struct ubus_context *ctx, struct ubus_object *obj,
+int wifi_enhanced_ubus_get_config(struct ubus_context *uctx, struct ubus_object *obj,
                                  struct ubus_request_data *req, const char *method,
                                  struct blob_attr *msg);
 
@@ -172,7 +173,7 @@ int wifi_enhanced_ubus_get_config(struct ubus_context *ctx, struct ubus_object *
  *   "message": "WiFi configuration updated successfully"
  * }
  */
-int wifi_enhanced_ubus_set_config(struct ubus_context *ctx, struct ubus_object *obj,
+int wifi_enhanced_ubus_set_config(struct ubus_context *uctx, struct ubus_object *obj,
                                  struct ubus_request_data *req, const char *method,
                                  struct blob_attr *msg);
 
@@ -191,7 +192,7 @@ int wifi_enhanced_ubus_set_config(struct ubus_context *ctx, struct ubus_object *
  *   "reason": "cooldown_active"
  * }
  */
-int wifi_enhanced_ubus_update_gps_location(struct ubus_context *ctx, struct ubus_object *obj,
+int wifi_enhanced_ubus_update_gps_location(struct ubus_context *uctx, struct ubus_object *obj,
                                           struct ubus_request_data *req, const char *method,
                                           struct blob_attr *msg);
 
@@ -202,7 +203,7 @@ int wifi_enhanced_ubus_update_gps_location(struct ubus_context *ctx, struct ubus
  *   "message": "WiFi statistics reset successfully"
  * }
  */
-int wifi_enhanced_ubus_reset_statistics(struct ubus_context *ctx, struct ubus_object *obj,
+int wifi_enhanced_ubus_reset_statistics(struct ubus_context *uctx, struct ubus_object *obj,
                                        struct ubus_request_data *req, const char *method,
                                        struct blob_attr *msg);
 
@@ -217,7 +218,7 @@ int wifi_enhanced_ubus_reset_statistics(struct ubus_context *ctx, struct ubus_ob
  *   }
  * }
  */
-int wifi_enhanced_ubus_health_check(struct ubus_context *ctx, struct ubus_object *obj,
+int wifi_enhanced_ubus_health_check(struct ubus_context *uctx, struct ubus_object *obj,
                                    struct ubus_request_data *req, const char *method,
                                    struct blob_attr *msg);
 

@@ -4,6 +4,8 @@
 #include "gps_comprehensive.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include <pthread.h>
+#include <time.h>
 
 #ifdef __cplusplus
 extern "C" {

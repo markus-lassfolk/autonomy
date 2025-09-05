@@ -302,6 +302,10 @@ class CCodeVerifier:
         if file_path not in self.files:
             return False
         
+        # Skip header files as they can't be compiled standalone
+        if file_path.endswith('.h'):
+            return True
+        
         code_file = self.files[file_path]
         
         # Clean content for compilation (remove Unicode characters that might cause issues)
@@ -565,7 +569,7 @@ class CCodeVerifier:
             r'strcpy\s*\(',
             r'strcat\s*\(',
             r'sprintf\s*\(',
-            r'gets\s*\('
+            r'\bgets\s*\('  # Use word boundary to avoid matching fgets
         ]
         
         for i, line in enumerate(code_file.lines):

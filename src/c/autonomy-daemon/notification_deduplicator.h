@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
+#include <stdint.h>
 
 // Deduplicator configuration
 typedef struct {
