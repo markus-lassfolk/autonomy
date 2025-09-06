@@ -1482,6 +1482,7 @@ class CCodeVerifier:
             self.fix_static_declaration_conflicts(file_path)
             self.fix_curl_callback_conflicts(file_path)
             self.fix_missing_includes(file_path)
+            self.fix_missing_standard_includes_comprehensive(file_path)
             self.fix_struct_member_issues(file_path)
             self.fix_enum_redeclarations(file_path)
             self.fix_macro_conflicts(file_path)
@@ -1530,12 +1531,16 @@ class CCodeVerifier:
             
             original_content = content
             
-            # Common functions that should not be static (based on GPS module experience)
+            # Common functions that should not be static (based on GPS + Analytics module experience)
             functions_to_make_public = [
                 'init', 'cleanup', 'start', 'stop', 'update', 'get_status', 'get_config', 
                 'set_config', 'analyze', 'calculate', 'process', 'handle', 'check',
                 'register', 'unregister', 'add', 'remove', 'find', 'search',
-                'monitor_thread', 'worker_thread', 'callback'
+                'monitor_thread', 'worker_thread', 'callback',
+                # Analytics module patterns
+                'get_instance', 'generate_predictions', 'get_predictions', 'train_models',
+                'collect_metrics', 'get_metrics', 'get_history', 'get_dashboard_metrics',
+                'is_running', 'is_initialized', 'calculate_score', 'detect_issues'
             ]
             
             lines = content.split('\n')
@@ -1616,6 +1621,24 @@ class CCodeVerifier:
             # Check for sys/time.h for struct timeval
             if any('struct timeval' in line for line in lines) and not any('#include <sys/time.h>' in line for line in lines):
                 missing_includes.append('#include <sys/time.h>')
+            
+            # Check for stdint.h for uint64_t (analytics module pattern)
+            if any('uint64_t' in line for line in lines) and not any('#include <stdint.h>' in line for line in lines):
+                missing_includes.append('#include <stdint.h>')
+            
+            # Check for stdbool.h for bool type
+            if any('bool ' in line or ' bool' in line for line in lines) and not any('#include <stdbool.h>' in line for line in lines):
+                missing_includes.append('#include <stdbool.h>')
+            
+            # Check for standard C library includes
+            if any('malloc(' in line or 'free(' in line or 'calloc(' in line for line in lines) and not any('#include <stdlib.h>' in line for line in lines):
+                missing_includes.append('#include <stdlib.h>')
+            
+            if any('strcpy(' in line or 'strlen(' in line or 'strncpy(' in line for line in lines) and not any('#include <string.h>' in line for line in lines):
+                missing_includes.append('#include <string.h>')
+            
+            if any('printf(' in line or 'sprintf(' in line or 'snprintf(' in line for line in lines) and not any('#include <stdio.h>' in line for line in lines):
+                missing_includes.append('#include <stdio.h>')
             
             # Add missing includes after existing includes
             if missing_includes:
@@ -1777,6 +1800,7 @@ class CCodeVerifier:
         
         # Apply all fix methods
         self.apply_automatic_fixes(directory)
+        self.fix_duplicate_type_definitions(directory)
         
         # Additional RUTOS-specific fixes
         c_files = self.find_c_files(directory, ["*.c", "*.h"])
@@ -1814,6 +1838,144 @@ class CCodeVerifier:
                     
             except Exception as e:
                 self.log(f"Error applying RUTOS fixes in {file_path}: {e}", "error")
+    
+    def fix_duplicate_type_definitions(self, directory: str):
+        """Fix duplicate type definitions across headers (Analytics module pattern)"""
+        self.log("Fixing duplicate type definitions...")
+        
+        # Common types that get duplicated across modules
+        common_duplicate_types = [
+            'health_thresholds_t',
+            'member_health_t', 
+            'performance_metrics_t',
+            'trend_analysis_t',
+            'usage_pattern_t',
+            'analytics_config_t'
+        ]
+        
+        # Find all header files
+        header_files = self.find_c_files(directory, ["*.h"])
+        
+        # Track where types are defined
+        type_definitions = {}  # {type_name: [file_paths]}
+        
+        for file_path in header_files:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                for type_name in common_duplicate_types:
+                    # Look for typedef struct definitions
+                    if re.search(rf'typedef\s+struct\s*\{{[^}}]*\}}\s*{type_name}\s*;', content, re.DOTALL):
+                        if type_name not in type_definitions:
+                            type_definitions[type_name] = []
+                        type_definitions[type_name].append(file_path)
+                        
+            except Exception as e:
+                self.log(f"Error scanning {file_path} for type definitions: {e}", "error")
+        
+        # Fix duplicates by keeping the first definition and replacing others with notes
+        for type_name, file_paths in type_definitions.items():
+            if len(file_paths) > 1:
+                self.log(f"Found duplicate type {type_name} in {len(file_paths)} files: {file_paths}")
+                
+                # Keep the first file, replace others with notes
+                primary_file = file_paths[0]
+                for duplicate_file in file_paths[1:]:
+                    self.replace_duplicate_type_with_note(duplicate_file, type_name, primary_file)
+    
+    def replace_duplicate_type_with_note(self, file_path: str, type_name: str, primary_file: str):
+        """Replace duplicate type definition with include note"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Find and replace the typedef struct definition
+            pattern = rf'typedef\s+struct\s*\{{[^}}]*\}}\s*{type_name}\s*;'
+            match = re.search(pattern, content, re.DOTALL)
+            
+            if match:
+                primary_file_relative = os.path.relpath(primary_file, os.path.dirname(file_path))
+                note = f"// Note: {type_name} is defined in {primary_file_relative}"
+                content = content[:match.start()] + note + content[match.end():]
+                
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                
+                self.fixes_applied.append(f"Replaced duplicate {type_name} in {file_path} with note")
+                self.log(f"Replaced duplicate {type_name} in {file_path} with note pointing to {primary_file_relative}")
+                
+        except Exception as e:
+            self.log(f"Error replacing duplicate type in {file_path}: {e}", "error")
+    
+    def fix_missing_standard_includes_comprehensive(self, file_path: str):
+        """Comprehensive fix for missing standard includes (Analytics module pattern)"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            lines = content.split('\n')
+            
+            # Comprehensive include detection based on analytics module
+            include_map = {
+                # Standard C library
+                'stdint.h': ['uint64_t', 'uint32_t', 'uint16_t', 'uint8_t', 'int64_t', 'int32_t', 'int16_t', 'int8_t'],
+                'stdbool.h': ['bool', 'true', 'false'],
+                'stdlib.h': ['malloc', 'free', 'calloc', 'realloc', 'exit', 'abort', 'atoi', 'atof'],
+                'string.h': ['strcpy', 'strncpy', 'strlen', 'strcmp', 'strncmp', 'memcpy', 'memset', 'memcmp'],
+                'stdio.h': ['printf', 'fprintf', 'sprintf', 'snprintf', 'scanf', 'sscanf', 'FILE'],
+                'math.h': ['fmin', 'fmax', 'cos', 'sin', 'tan', 'sqrt', 'pow', 'floor', 'ceil'],
+                'time.h': ['time_t', 'time(', 'localtime', 'gmtime', 'strftime', 'mktime'],
+                'pthread.h': ['pthread_t', 'pthread_create', 'pthread_join', 'pthread_mutex_t', 'pthread_mutex_lock'],
+                
+                # System includes
+                'sys/time.h': ['struct timeval', 'gettimeofday'],
+                'sys/resource.h': ['struct rusage', 'getrusage', 'RUSAGE_SELF'],
+                'sys/sysinfo.h': ['struct sysinfo', 'sysinfo'],
+                'sys/statvfs.h': ['struct statvfs', 'statvfs'],
+                'unistd.h': ['sleep', 'usleep', 'getpid', 'access'],
+                'fcntl.h': ['open', 'O_RDONLY', 'O_WRONLY', 'O_RDWR'],
+                'dirent.h': ['DIR', 'opendir', 'readdir', 'closedir', 'struct dirent'],
+                
+                # Networking
+                'sys/socket.h': ['socket', 'bind', 'listen', 'accept', 'connect'],
+                'netinet/in.h': ['struct sockaddr_in', 'INADDR_ANY'],
+                'arpa/inet.h': ['inet_addr', 'inet_ntoa'],
+                'netdb.h': ['gethostbyname', 'struct hostent']
+            }
+            
+            missing_includes = []
+            content_text = ' '.join(lines)
+            
+            for include_file, identifiers in include_map.items():
+                # Check if any identifier is used and include is missing
+                if any(identifier in content_text for identifier in identifiers):
+                    if not any(f'#include <{include_file}>' in line for line in lines):
+                        missing_includes.append(f'#include <{include_file}>')
+            
+            # Add missing includes after existing includes
+            if missing_includes:
+                # Find the last include line
+                last_include_idx = -1
+                for i, line in enumerate(lines):
+                    if line.strip().startswith('#include'):
+                        last_include_idx = i
+                
+                if last_include_idx >= 0:
+                    # Insert missing includes after the last include
+                    for include in missing_includes:
+                        lines.insert(last_include_idx + 1, include)
+                        last_include_idx += 1
+                    
+                    content = '\n'.join(lines)
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    self.fixes_applied.append(f"Added comprehensive includes in {file_path}: {', '.join(missing_includes)}")
+                    self.log(f"Added comprehensive includes in {file_path}: {', '.join(missing_includes)}")
+                    
+        except Exception as e:
+            self.log(f"Error adding comprehensive includes in {file_path}: {e}", "error")
 
 def main():
     """Main entry point"""
