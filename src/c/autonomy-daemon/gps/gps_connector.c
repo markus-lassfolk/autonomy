@@ -26,7 +26,7 @@ static bool g_connector_initialized = false;
 static pthread_mutex_t g_connector_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS connector system
-static int gps_connector_init(void) {
+int gps_connector_init(void) {
     if (g_connector_initialized) {
         LOGX_WARN("GPS connector already initialized");
         return AUTONOMY_SUCCESS;
@@ -69,7 +69,7 @@ static int gps_connector_init(void) {
 }
 
 // Register GPS module
-static int gps_connector_register_module(const char *name, gps_module_type_t module_type) {
+int gps_connector_register_module(const char *name, gps_module_type_t module_type) {
     if (!g_connector_initialized || !name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -134,7 +134,7 @@ static int generate_module_id(void) {
 }
 
 // Update module operation
-static int gps_connector_update_module_operation(int module_id, bool operation_successful) {
+int gps_connector_update_module_operation(int module_id, bool operation_successful) {
     if (!g_connector_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -272,7 +272,7 @@ static void perform_module_coordination(void) {
 }
 
 // Get connector status
-static int gps_connector_get_status(gps_connector_status_t *status) {
+int gps_connector_get_status(gps_connector_status_t *status) {
     if (!g_connector_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -303,7 +303,7 @@ static int gps_connector_get_status(gps_connector_status_t *status) {
 }
 
 // Get connector configuration
-static int gps_connector_get_config(gps_connector_config_t *config) {
+int gps_connector_get_config(gps_connector_config_t *config) {
     if (!g_connector_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -322,7 +322,7 @@ static int gps_connector_get_config(gps_connector_config_t *config) {
 }
 
 // Set connector configuration
-static int gps_connector_set_config(const gps_connector_config_t *config) {
+int gps_connector_set_config(const gps_connector_config_t *config) {
     if (!g_connector_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -342,7 +342,7 @@ static int gps_connector_set_config(const gps_connector_config_t *config) {
 }
 
 // Enable/disable connector
-static int gps_connector_set_enabled(bool enabled) {
+int gps_connector_set_enabled(bool enabled) {
     if (!g_connector_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -356,7 +356,7 @@ static int gps_connector_set_enabled(bool enabled) {
 }
 
 // Enable/disable specific module
-static int gps_connector_set_module_enabled(int module_id, bool enabled) {
+int gps_connector_set_module_enabled(int module_id, bool enabled) {
     if (!g_connector_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -387,7 +387,7 @@ static int gps_connector_set_module_enabled(int module_id, bool enabled) {
 }
 
 // Unregister module
-static int gps_connector_unregister_module(int module_id) {
+int gps_connector_unregister_module(int module_id) {
     if (!g_connector_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -416,7 +416,7 @@ static int gps_connector_unregister_module(int module_id) {
 }
 
 // Reset connector
-static int gps_connector_reset(void) {
+int gps_connector_reset(void) {
     if (!g_connector_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -441,7 +441,7 @@ static int gps_connector_reset(void) {
 }
 
 // Cleanup connector
-static void gps_connector_cleanup(void) {
+void gps_connector_cleanup(void) {
     if (!g_connector_initialized) {
         return;
     }

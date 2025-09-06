@@ -111,7 +111,7 @@ static int queue_contribution(const opencellid_cellular_environment_t* environme
 static int send_contribution_batch(contribution_queue_entry_t* entries, int count);
 
 // Initialize the complete OpenCellID system
-static int opencellid_system_init(const opencellid_config_t* config) {
+int opencellid_system_init(const opencellid_config_t* config) {
     if (g_system_initialized) {
         LOGX_WARN("OpenCellID system already initialized");
         return AUTONOMY_SUCCESS;
@@ -205,7 +205,7 @@ cleanup:
 }
 
 // Cleanup the OpenCellID system
-static void opencellid_system_cleanup(void) {
+void opencellid_system_cleanup(void) {
     if (!g_system_initialized) return;
     
     pthread_mutex_lock(&g_opencellid_system.mutex);
@@ -238,7 +238,7 @@ static void opencellid_system_cleanup(void) {
 }
 
 // Get current cellular environment
-static int opencellid_get_cellular_environment(opencellid_cellular_environment_t* environment) {
+int opencellid_get_cellular_environment(opencellid_cellular_environment_t* environment) {
     if (!g_system_initialized || !environment) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -525,7 +525,7 @@ const char* opencellid_radio_type_to_string(opencellid_radio_type_t radio) {
 }
 
 // Parse radio type from string
-static opencellid_radio_type_t opencellid_parse_radio_type(const char* radio_str) {
+opencellid_radio_type_t opencellid_parse_radio_type(const char* radio_str) {
     if (!radio_str) return OPENCELLID_RADIO_UNKNOWN;
     
     for (int i = 0; i < OPENCELLID_RADIO_MAX; i++) {
@@ -538,7 +538,7 @@ static opencellid_radio_type_t opencellid_parse_radio_type(const char* radio_str
 }
 
 // Calculate distance between two points using Haversine formula
-static double opencellid_calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double opencellid_calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000; // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
@@ -556,7 +556,7 @@ static double opencellid_calculate_distance(double lat1, double lon1, double lat
 }
 
 // Check if system is initialized
-static bool opencellid_is_initialized(void) {
+bool opencellid_is_initialized(void) {
     return g_system_initialized;
 }
 

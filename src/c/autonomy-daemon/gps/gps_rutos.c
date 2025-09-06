@@ -33,7 +33,7 @@ static pthread_t g_rutos_thread = 0;
 static bool g_rutos_thread_running = false;
 
 // Initialize RUTOS GPS system
-static int gps_rutos_init(void) {
+int gps_rutos_init(void) {
     if (g_rutos_initialized) {
         LOGX_WARN("RUTOS GPS already initialized");
         return AUTONOMY_SUCCESS;
@@ -73,7 +73,7 @@ static int gps_rutos_init(void) {
 }
 
 // Start RUTOS GPS monitoring thread
-static int gps_rutos_start_monitoring(void) {
+int gps_rutos_start_monitoring(void) {
     if (!g_rutos_initialized) {
         LOGX_ERROR("RUTOS GPS not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
@@ -98,7 +98,7 @@ static int gps_rutos_start_monitoring(void) {
 }
 
 // Stop RUTOS GPS monitoring
-static void gps_rutos_stop_monitoring(void) {
+void gps_rutos_stop_monitoring(void) {
     if (!g_rutos_thread_running) {
         return;
     }
@@ -134,7 +134,7 @@ static void* rutos_monitor_thread(void *arg) {
 }
 
 // Read GPS data from RUTOS system
-static int gps_rutos_read_data(void) {
+int gps_rutos_read_data(void) {
     if (!g_rutos_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -341,7 +341,7 @@ static float calculate_reliability_score(void) {
 }
 
 // Get current GPS data
-static int gps_rutos_get_data(gps_data_t *data) {
+int gps_rutos_get_data(gps_data_t *data) {
     if (!g_rutos_initialized || !data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -354,7 +354,7 @@ static int gps_rutos_get_data(gps_data_t *data) {
 }
 
 // Get RUTOS GPS status
-static int gps_rutos_get_status(gps_rutos_status_t *status) {
+int gps_rutos_get_status(gps_rutos_status_t *status) {
     if (!g_rutos_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -378,7 +378,7 @@ static int gps_rutos_get_status(gps_rutos_status_t *status) {
 }
 
 // Set RUTOS GPS configuration
-static int gps_rutos_set_config(const gps_rutos_config_t *config) {
+int gps_rutos_set_config(const gps_rutos_config_t *config) {
     if (!g_rutos_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -406,7 +406,7 @@ static int gps_rutos_set_config(const gps_rutos_config_t *config) {
 }
 
 // Enable/disable RUTOS GPS
-static int gps_rutos_set_enabled(bool enabled) {
+int gps_rutos_set_enabled(bool enabled) {
     if (!g_rutos_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -420,7 +420,7 @@ static int gps_rutos_set_enabled(bool enabled) {
 }
 
 // Check if RUTOS GPS data is recent
-static bool gps_rutos_is_data_recent(int max_age_seconds) {
+bool gps_rutos_is_data_recent(int max_age_seconds) {
     if (!g_rutos_initialized) {
         return false;
     }
@@ -435,7 +435,7 @@ static bool gps_rutos_is_data_recent(int max_age_seconds) {
 }
 
 // Check if RUTOS GPS data meets accuracy requirements
-static bool gps_rutos_meets_accuracy(float required_accuracy) {
+bool gps_rutos_meets_accuracy(float required_accuracy) {
     if (!g_rutos_initialized) {
         return false;
     }
@@ -449,7 +449,7 @@ static bool gps_rutos_meets_accuracy(float required_accuracy) {
 }
 
 // Cleanup RUTOS GPS system
-static void gps_rutos_cleanup(void) {
+void gps_rutos_cleanup(void) {
     if (!g_rutos_initialized) {
         return;
     }

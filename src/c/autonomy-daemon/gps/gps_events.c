@@ -41,7 +41,7 @@ static bool g_events_initialized = false;
 static pthread_mutex_t g_events_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS events system
-static int gps_events_init(void) {
+int gps_events_init(void) {
     if (g_events_initialized) {
         LOGX_WARN("GPS events system already initialized");
         return AUTONOMY_SUCCESS;
@@ -169,7 +169,7 @@ static int generate_event_id(void) {
 }
 
 // Check GPS data against all events
-static int gps_events_check_gps_data(const gps_data_t *gps_data) {
+int gps_events_check_gps_data(const gps_data_t *gps_data) {
     if (!g_events_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -450,7 +450,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Get events status
-static int gps_events_get_status(gps_events_status_t *status) {
+int gps_events_get_status(gps_events_status_t *status) {
     if (!g_events_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -480,7 +480,7 @@ static int gps_events_get_status(gps_events_status_t *status) {
 }
 
 // Get events configuration
-static int gps_events_get_config(gps_events_config_t *config) {
+int gps_events_get_config(gps_events_config_t *config) {
     if (!g_events_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -500,7 +500,7 @@ static int gps_events_get_config(gps_events_config_t *config) {
 }
 
 // Set events configuration
-static int gps_events_set_config(const gps_events_config_t *config) {
+int gps_events_set_config(const gps_events_config_t *config) {
     if (!g_events_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -521,7 +521,7 @@ static int gps_events_set_config(const gps_events_config_t *config) {
 }
 
 // Enable/disable events
-static int gps_events_set_enabled(bool enabled) {
+int gps_events_set_enabled(bool enabled) {
     if (!g_events_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -535,7 +535,7 @@ static int gps_events_set_enabled(bool enabled) {
 }
 
 // Enable/disable specific event
-static int gps_events_set_event_enabled(int event_id, bool enabled) {
+int gps_events_set_event_enabled(int event_id, bool enabled) {
     if (!g_events_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -566,7 +566,7 @@ static int gps_events_set_event_enabled(int event_id, bool enabled) {
 }
 
 // Delete event
-static int gps_events_delete(int event_id) {
+int gps_events_delete(int event_id) {
     if (!g_events_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -596,7 +596,7 @@ static int gps_events_delete(int event_id) {
 }
 
 // Reset events system
-static int gps_events_reset(void) {
+int gps_events_reset(void) {
     if (!g_events_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -632,7 +632,7 @@ static int gps_events_reset(void) {
 }
 
 // Cleanup events system
-static void gps_events_cleanup(void) {
+void gps_events_cleanup(void) {
     if (!g_events_initialized) {
         return;
     }

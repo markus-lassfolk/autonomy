@@ -26,7 +26,7 @@ static bool g_location_services_initialized = false;
 static pthread_mutex_t g_location_services_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS location services
-static int gps_location_services_init(void) {
+int gps_location_services_init(void) {
     if (g_location_services_initialized) {
         LOGX_WARN("GPS location services already initialized");
         return AUTONOMY_SUCCESS;
@@ -73,7 +73,7 @@ static int gps_location_services_init(void) {
 }
 
 // Reverse geocode GPS coordinates
-static int gps_location_services_reverse_geocode(double lat, double lon, gps_location_info_t *location_info) {
+int gps_location_services_reverse_geocode(double lat, double lon, gps_location_info_t *location_info) {
     if (!g_location_services_initialized || !location_info) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -418,7 +418,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Get location services status
-static int gps_location_services_get_status(gps_location_services_status_t *status) {
+int gps_location_services_get_status(gps_location_services_status_t *status) {
     if (!g_location_services_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -454,7 +454,7 @@ static int gps_location_services_get_status(gps_location_services_status_t *stat
 }
 
 // Get location services configuration
-static int gps_location_services_get_config(gps_location_services_config_t *config) {
+int gps_location_services_get_config(gps_location_services_config_t *config) {
     if (!g_location_services_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -474,7 +474,7 @@ static int gps_location_services_get_config(gps_location_services_config_t *conf
 }
 
 // Set location services configuration
-static int gps_location_services_set_config(const gps_location_services_config_t *config) {
+int gps_location_services_set_config(const gps_location_services_config_t *config) {
     if (!g_location_services_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -495,7 +495,7 @@ static int gps_location_services_set_config(const gps_location_services_config_t
 }
 
 // Enable/disable location services
-static int gps_location_services_set_enabled(bool enabled) {
+int gps_location_services_set_enabled(bool enabled) {
     if (!g_location_services_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -509,7 +509,7 @@ static int gps_location_services_set_enabled(bool enabled) {
 }
 
 // Clear location cache
-static int gps_location_services_clear_cache(void) {
+int gps_location_services_clear_cache(void) {
     if (!g_location_services_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -527,7 +527,7 @@ static int gps_location_services_clear_cache(void) {
 }
 
 // Reset location services
-static int gps_location_services_reset(void) {
+int gps_location_services_reset(void) {
     if (!g_location_services_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -553,7 +553,7 @@ static int gps_location_services_reset(void) {
 }
 
 // Cleanup location services
-static void gps_location_services_cleanup(void) {
+void gps_location_services_cleanup(void) {
     if (!g_location_services_initialized) {
         return;
     }

@@ -20,7 +20,7 @@ static unwiredlabs_config_t g_unwiredlabs_config = {0};
 static intelligent_cache_config_t g_cache_config = {0};
 
 // Initialize enhanced OpenCellID system
-static int gps_opencellid_enhanced_init(const enhanced_opencellid_config_t* config) {
+int gps_opencellid_enhanced_init(const enhanced_opencellid_config_t* config) {
     if (!config) {
         return -1;
     }
@@ -85,7 +85,7 @@ static int gps_opencellid_enhanced_init(const enhanced_opencellid_config_t* conf
 }
 
 // Cleanup enhanced OpenCellID system
-static void gps_opencellid_enhanced_cleanup(void) {
+void gps_opencellid_enhanced_cleanup(void) {
     if (!g_enhanced_initialized) {
         return;
     }
@@ -110,7 +110,7 @@ static void gps_opencellid_enhanced_cleanup(void) {
 }
 
 // Enhanced lookup with multiple database support
-static int gps_opencellid_enhanced_lookup(const opencellid_cell_key_t* cell_key, opencellid_response_t* response) {
+int gps_opencellid_enhanced_lookup(const opencellid_cell_key_t* cell_key, opencellid_response_t* response) {
     if (!g_enhanced_initialized || !cell_key || !response) {
         return -1;
     }
@@ -240,7 +240,7 @@ int gps_opencellid_enhanced_lookup_with_cache(const opencellid_cell_key_t* cell_
 }
 
 // Get enhanced statistics
-static int gps_opencellid_enhanced_get_stats(enhanced_opencellid_stats_t* stats) {
+int gps_opencellid_enhanced_get_stats(enhanced_opencellid_stats_t* stats) {
     if (!g_enhanced_initialized || !stats) {
         return -1;
     }
@@ -276,7 +276,7 @@ static int gps_opencellid_enhanced_get_stats(enhanced_opencellid_stats_t* stats)
 }
 
 // Perform health check
-static int gps_opencellid_enhanced_health_check(void) {
+int gps_opencellid_enhanced_health_check(void) {
     if (!g_enhanced_initialized) {
         return -1;
     }
@@ -322,7 +322,7 @@ static int gps_opencellid_enhanced_health_check(void) {
 }
 
 // Check if enhanced OpenCellID is initialized
-static bool gps_opencellid_enhanced_is_initialized(void) {
+bool gps_opencellid_enhanced_is_initialized(void) {
     return g_enhanced_initialized;
 }
 

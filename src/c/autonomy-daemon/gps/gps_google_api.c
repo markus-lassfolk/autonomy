@@ -22,7 +22,7 @@ static size_t http_response_callback(void* contents, size_t size, size_t nmemb, 
 }
 
 // Initialize Google Geolocation API
-static int google_api_init(const google_api_config_t* config) {
+int google_api_init(const google_api_config_t* config) {
     if (!config) {
         return -1;
     }
@@ -45,7 +45,7 @@ static int google_api_init(const google_api_config_t* config) {
 }
 
 // Cleanup Google Geolocation API
-static void google_api_cleanup(void) {
+void google_api_cleanup(void) {
     if (g_curl_handle) {
         curl_easy_cleanup(g_curl_handle);
         g_curl_handle = NULL;
@@ -159,7 +159,7 @@ static int make_google_request(const char* json_data, google_location_response_t
 }
 
 // Get location using WiFi access points
-static int google_api_get_wifi_location(const google_wifi_ap_t* wifi_aps, int wifi_count, google_location_response_t* response) {
+int google_api_get_wifi_location(const google_wifi_ap_t* wifi_aps, int wifi_count, google_location_response_t* response) {
     if (!wifi_aps || wifi_count <= 0 || !response) {
         return -1;
     }
@@ -187,7 +187,7 @@ static int google_api_get_wifi_location(const google_wifi_ap_t* wifi_aps, int wi
 }
 
 // Get location using cell towers
-static int google_api_get_cellular_location(const google_cell_tower_t* cell_towers, int cell_count, google_location_response_t* response) {
+int google_api_get_cellular_location(const google_cell_tower_t* cell_towers, int cell_count, google_location_response_t* response) {
     if (!cell_towers || cell_count <= 0 || !response) {
         return -1;
     }
@@ -217,7 +217,7 @@ static int google_api_get_cellular_location(const google_cell_tower_t* cell_towe
 }
 
 // Get location using combined WiFi and cellular data
-static int google_api_get_combined_location(const google_location_request_t* request, google_location_response_t* response) {
+int google_api_get_combined_location(const google_location_request_t* request, google_location_response_t* response) {
     if (!request || !response) {
         return -1;
     }
@@ -267,7 +267,7 @@ static int google_api_get_combined_location(const google_location_request_t* req
 }
 
 // Get location with IP fallback
-static int google_api_get_location_with_ip_fallback(const google_location_request_t* request, google_location_response_t* response) {
+int google_api_get_location_with_ip_fallback(const google_location_request_t* request, google_location_response_t* response) {
     if (!response) {
         return -1;
     }
@@ -292,7 +292,7 @@ static int google_api_get_location_with_ip_fallback(const google_location_reques
 }
 
 // Get API statistics
-static int google_api_get_stats(google_api_stats_t* stats) {
+int google_api_get_stats(google_api_stats_t* stats) {
     if (!g_google_initialized || !stats) {
         return -1;
     }
@@ -302,12 +302,12 @@ static int google_api_get_stats(google_api_stats_t* stats) {
 }
 
 // Check if Google API is initialized
-static bool google_api_is_initialized(void) {
+bool google_api_is_initialized(void) {
     return g_google_initialized;
 }
 
 // Validate API key
-static bool google_api_validate_key(void) {
+bool google_api_validate_key(void) {
     if (!g_google_initialized) {
         return false;
     }
@@ -322,7 +322,7 @@ static bool google_api_validate_key(void) {
 }
 
 // Check quota status
-static int google_api_get_quota_remaining(void) {
+int google_api_get_quota_remaining(void) {
     // Google API doesn't provide quota information in the response
     // This would need to be tracked separately or queried from Google Cloud Console
     return -1; // Unknown

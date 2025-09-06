@@ -25,7 +25,7 @@ static bool g_geofence_initialized = false;
 static pthread_mutex_t g_geofence_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS geofencing system
-static int gps_geofence_init(void) {
+int gps_geofence_init(void) {
     if (g_geofence_initialized) {
         LOGX_WARN("GPS geofencing system already initialized");
         return AUTONOMY_SUCCESS;
@@ -260,7 +260,7 @@ static int generate_geofence_id(void) {
 }
 
 // Check GPS position against all geofences
-static int gps_geofence_check_position(const gps_data_t *gps_data) {
+int gps_geofence_check_position(const gps_data_t *gps_data) {
     if (!g_geofence_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -466,7 +466,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Get geofence status
-static int gps_geofence_get_status(gps_geofence_status_t *status) {
+int gps_geofence_get_status(gps_geofence_status_t *status) {
     if (!g_geofence_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -496,7 +496,7 @@ static int gps_geofence_get_status(gps_geofence_status_t *status) {
 }
 
 // Get geofence configuration
-static int gps_geofence_get_config(gps_geofence_config_t *config) {
+int gps_geofence_get_config(gps_geofence_config_t *config) {
     if (!g_geofence_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -515,7 +515,7 @@ static int gps_geofence_get_config(gps_geofence_config_t *config) {
 }
 
 // Set geofence configuration
-static int gps_geofence_set_config(const gps_geofence_config_t *config) {
+int gps_geofence_set_config(const gps_geofence_config_t *config) {
     if (!g_geofence_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -535,7 +535,7 @@ static int gps_geofence_set_config(const gps_geofence_config_t *config) {
 }
 
 // Enable/disable geofencing
-static int gps_geofence_set_enabled(bool enabled) {
+int gps_geofence_set_enabled(bool enabled) {
     if (!g_geofence_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -549,7 +549,7 @@ static int gps_geofence_set_enabled(bool enabled) {
 }
 
 // Enable/disable specific geofence
-static int gps_geofence_set_geofence_enabled(int geofence_id, bool enabled) {
+int gps_geofence_set_geofence_enabled(int geofence_id, bool enabled) {
     if (!g_geofence_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -580,7 +580,7 @@ static int gps_geofence_set_geofence_enabled(int geofence_id, bool enabled) {
 }
 
 // Delete geofence
-static int gps_geofence_delete(int geofence_id) {
+int gps_geofence_delete(int geofence_id) {
     if (!g_geofence_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -610,7 +610,7 @@ static int gps_geofence_delete(int geofence_id) {
 }
 
 // Reset geofencing system
-static int gps_geofence_reset(void) {
+int gps_geofence_reset(void) {
     if (!g_geofence_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -634,7 +634,7 @@ static int gps_geofence_reset(void) {
 }
 
 // Cleanup geofencing system
-static void gps_geofence_cleanup(void) {
+void gps_geofence_cleanup(void) {
     if (!g_geofence_initialized) {
         return;
     }

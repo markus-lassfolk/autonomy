@@ -22,7 +22,7 @@ static size_t http_response_callback(void* contents, size_t size, size_t nmemb, 
 }
 
 // Initialize OpenCellID API
-static int gps_opencellid_init(const opencellid_config_t* config) {
+int gps_opencellid_init(const opencellid_config_t* config) {
     if (!config) {
         return -1;
     }
@@ -45,7 +45,7 @@ static int gps_opencellid_init(const opencellid_config_t* config) {
 }
 
 // Cleanup OpenCellID API
-static void gps_opencellid_cleanup(void) {
+void gps_opencellid_cleanup(void) {
     if (g_curl_handle) {
         curl_easy_cleanup(g_curl_handle);
         g_curl_handle = NULL;
@@ -149,7 +149,7 @@ static int make_opencellid_request(const char* url, opencellid_response_t* respo
 }
 
 // Lookup cell tower location
-static int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_response_t* response) {
+int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_response_t* response) {
     if (!g_opencellid_initialized || !cell_key || !response) {
         return -1;
     }
@@ -168,7 +168,7 @@ static int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencell
 }
 
 // Contribute cell tower data
-static int gps_opencellid_contribute(const opencellid_cell_key_t* cell_key, double lat, double lon, int range) {
+int gps_opencellid_contribute(const opencellid_cell_key_t* cell_key, double lat, double lon, int range) {
     if (!g_opencellid_initialized || !cell_key) {
         return -1;
     }
@@ -199,7 +199,7 @@ static int gps_opencellid_contribute(const opencellid_cell_key_t* cell_key, doub
 }
 
 // Get API statistics
-static int gps_opencellid_get_stats(opencellid_stats_t* stats) {
+int gps_opencellid_get_stats(opencellid_stats_t* stats) {
     if (!g_opencellid_initialized || !stats) {
         return -1;
     }
@@ -209,7 +209,7 @@ static int gps_opencellid_get_stats(opencellid_stats_t* stats) {
 }
 
 // Check if OpenCellID is initialized
-static bool gps_opencellid_is_initialized(void) {
+bool gps_opencellid_is_initialized(void) {
     return g_opencellid_initialized;
 }
 

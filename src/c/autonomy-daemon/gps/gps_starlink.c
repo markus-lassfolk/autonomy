@@ -35,7 +35,7 @@ static pthread_t g_starlink_gps_thread = 0;
 static bool g_starlink_gps_thread_running = false;
 
 // Initialize Starlink GPS system
-static int gps_starlink_init(void) {
+int gps_starlink_init(void) {
     if (g_starlink_gps_initialized) {
         LOGX_WARN("Starlink GPS already initialized");
         return AUTONOMY_SUCCESS;
@@ -76,7 +76,7 @@ static int gps_starlink_init(void) {
 }
 
 // Start Starlink GPS monitoring thread
-static int gps_starlink_start_monitoring(void) {
+int gps_starlink_start_monitoring(void) {
     if (!g_starlink_gps_initialized) {
         LOGX_ERROR("Starlink GPS not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
@@ -101,7 +101,7 @@ static int gps_starlink_start_monitoring(void) {
 }
 
 // Stop Starlink GPS monitoring
-static void gps_starlink_stop_monitoring(void) {
+void gps_starlink_stop_monitoring(void) {
     if (!g_starlink_gps_thread_running) {
         return;
     }
@@ -137,7 +137,7 @@ static void* starlink_gps_monitor_thread(void *arg) {
 }
 
 // Extract GPS data from Starlink dish
-static int gps_starlink_extract_data(void) {
+int gps_starlink_extract_data(void) {
     if (!g_starlink_gps_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -366,7 +366,7 @@ static void calculate_gps_reliability(void) {
 }
 
 // Get Starlink GPS data
-static int gps_starlink_get_data(gps_data_t *gps_data) {
+int gps_starlink_get_data(gps_data_t *gps_data) {
     if (!g_starlink_gps_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -415,7 +415,7 @@ static int gps_starlink_get_data(gps_data_t *gps_data) {
 }
 
 // Get Starlink GPS status
-static int gps_starlink_get_status(gps_starlink_status_t *status) {
+int gps_starlink_get_status(gps_starlink_status_t *status) {
     if (!g_starlink_gps_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -440,7 +440,7 @@ static int gps_starlink_get_status(gps_starlink_status_t *status) {
 }
 
 // Set Starlink GPS configuration
-static int gps_starlink_set_config(const gps_starlink_config_t *config) {
+int gps_starlink_set_config(const gps_starlink_config_t *config) {
     if (!g_starlink_gps_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -474,7 +474,7 @@ static int gps_starlink_set_config(const gps_starlink_config_t *config) {
 }
 
 // Enable/disable Starlink GPS
-static int gps_starlink_set_enabled(bool enabled) {
+int gps_starlink_set_enabled(bool enabled) {
     if (!g_starlink_gps_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -488,7 +488,7 @@ static int gps_starlink_set_enabled(bool enabled) {
 }
 
 // Check if GPS data is recent
-static bool gps_starlink_is_data_recent(int max_age_seconds) {
+bool gps_starlink_is_data_recent(int max_age_seconds) {
     if (!g_starlink_gps_initialized) {
         return false;
     }
@@ -505,7 +505,7 @@ static bool gps_starlink_is_data_recent(int max_age_seconds) {
 }
 
 // Check if GPS data meets accuracy requirements
-static bool gps_starlink_meets_accuracy(double required_accuracy) {
+bool gps_starlink_meets_accuracy(double required_accuracy) {
     if (!g_starlink_gps_initialized) {
         return false;
     }
@@ -521,7 +521,7 @@ static bool gps_starlink_meets_accuracy(double required_accuracy) {
 }
 
 // Force immediate GPS update
-static int gps_starlink_force_update(void) {
+int gps_starlink_force_update(void) {
     if (!g_starlink_gps_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -531,7 +531,7 @@ static int gps_starlink_force_update(void) {
 }
 
 // Cleanup Starlink GPS system
-static void gps_starlink_cleanup(void) {
+void gps_starlink_cleanup(void) {
     if (!g_starlink_gps_initialized) {
         return;
     }

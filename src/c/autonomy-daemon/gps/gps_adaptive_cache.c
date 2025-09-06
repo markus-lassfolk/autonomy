@@ -26,7 +26,7 @@ static bool g_cache_initialized = false;
 static pthread_mutex_t g_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS adaptive cache
-static int gps_adaptive_cache_init(void) {
+int gps_adaptive_cache_init(void) {
     if (g_cache_initialized) {
         LOGX_WARN("GPS adaptive cache already initialized");
         return AUTONOMY_SUCCESS;
@@ -187,7 +187,7 @@ int gps_adaptive_cache_find_entry(gps_cache_entry_type_t entry_type, const void 
 }
 
 // Update entry priority
-static int gps_adaptive_cache_update_priority(int entry_id, double new_priority) {
+int gps_adaptive_cache_update_priority(int entry_id, double new_priority) {
     if (!g_cache_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -212,7 +212,7 @@ static int gps_adaptive_cache_update_priority(int entry_id, double new_priority)
 }
 
 // Remove entry from cache
-static int gps_adaptive_cache_remove_entry(int entry_id) {
+int gps_adaptive_cache_remove_entry(int entry_id) {
     if (!g_cache_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -413,7 +413,7 @@ static double calculate_eviction_score(const gps_cache_entry_t *entry) {
 }
 
 // Get cache status
-static int gps_adaptive_cache_get_status(gps_adaptive_cache_status_t *status) {
+int gps_adaptive_cache_get_status(gps_adaptive_cache_status_t *status) {
     if (!g_cache_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -445,7 +445,7 @@ static int gps_adaptive_cache_get_status(gps_adaptive_cache_status_t *status) {
 }
 
 // Get cache configuration
-static int gps_adaptive_cache_get_config(gps_adaptive_cache_config_t *config) {
+int gps_adaptive_cache_get_config(gps_adaptive_cache_config_t *config) {
     if (!g_cache_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -465,7 +465,7 @@ static int gps_adaptive_cache_get_config(gps_adaptive_cache_config_t *config) {
 }
 
 // Set cache configuration
-static int gps_adaptive_cache_set_config(const gps_adaptive_cache_config_t *config) {
+int gps_adaptive_cache_set_config(const gps_adaptive_cache_config_t *config) {
     if (!g_cache_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -486,7 +486,7 @@ static int gps_adaptive_cache_set_config(const gps_adaptive_cache_config_t *conf
 }
 
 // Enable/disable cache
-static int gps_adaptive_cache_set_enabled(bool enabled) {
+int gps_adaptive_cache_set_enabled(bool enabled) {
     if (!g_cache_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -500,7 +500,7 @@ static int gps_adaptive_cache_set_enabled(bool enabled) {
 }
 
 // Force cache cleanup
-static int gps_adaptive_cache_force_cleanup(void) {
+int gps_adaptive_cache_force_cleanup(void) {
     if (!g_cache_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -520,7 +520,7 @@ static int gps_adaptive_cache_force_cleanup(void) {
 }
 
 // Get cache statistics
-static int gps_adaptive_cache_get_statistics(gps_adaptive_cache_stats_t *stats) {
+int gps_adaptive_cache_get_statistics(gps_adaptive_cache_stats_t *stats) {
     if (!g_cache_initialized || !stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -565,7 +565,7 @@ static int gps_adaptive_cache_get_statistics(gps_adaptive_cache_stats_t *stats) 
 }
 
 // Reset cache
-static int gps_adaptive_cache_reset(void) {
+int gps_adaptive_cache_reset(void) {
     if (!g_cache_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -603,7 +603,7 @@ static int gps_adaptive_cache_reset(void) {
 }
 
 // Cleanup adaptive cache
-static void gps_adaptive_cache_cleanup(void) {
+void gps_adaptive_cache_cleanup(void) {
     if (!g_cache_initialized) {
         return;
     }

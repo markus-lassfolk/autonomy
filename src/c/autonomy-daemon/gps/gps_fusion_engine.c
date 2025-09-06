@@ -32,7 +32,7 @@ static void update_kalman_state(const standardized_gps_data_t* measurement);
 static void predict_kalman_state(double dt);
 
 // Initialize GPS fusion engine
-static int gps_fusion_engine_init(const gps_fusion_config_t* config) {
+int gps_fusion_engine_init(const gps_fusion_config_t* config) {
     if (g_fusion_initialized) {
         LOGX_WARN("GPS fusion engine already initialized");
         return AUTONOMY_SUCCESS;
@@ -82,7 +82,7 @@ static int gps_fusion_engine_init(const gps_fusion_config_t* config) {
 }
 
 // Cleanup GPS fusion engine
-static void gps_fusion_engine_cleanup(void) {
+void gps_fusion_engine_cleanup(void) {
     if (!g_fusion_initialized) return;
     
     pthread_mutex_lock(&g_fusion_engine.mutex);
@@ -512,7 +512,7 @@ const char* gps_fusion_method_to_string(gps_fusion_method_t method) {
 }
 
 // Check if fusion engine is initialized
-static bool gps_fusion_engine_is_initialized(void) {
+bool gps_fusion_engine_is_initialized(void) {
     return g_fusion_initialized;
 }
 

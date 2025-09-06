@@ -54,7 +54,7 @@ static int init_location_database(void);
 static void close_location_database(void);
 
 // Initialize GPS location reference system
-static int gps_location_reference_init(const gps_location_reference_config_t* config) {
+int gps_location_reference_init(const gps_location_reference_config_t* config) {
     if (g_location_ref_initialized) {
         LOGX_WARN("GPS location reference already initialized");
         return AUTONOMY_SUCCESS;
@@ -122,7 +122,7 @@ static int gps_location_reference_init(const gps_location_reference_config_t* co
 }
 
 // Cleanup GPS location reference system
-static void gps_location_reference_cleanup(void) {
+void gps_location_reference_cleanup(void) {
     if (!g_location_ref_initialized) return;
     
     pthread_mutex_lock(&g_location_ref_manager.mutex);
@@ -230,7 +230,7 @@ int gps_location_reference_get_or_create(double latitude, double longitude,
 }
 
 // Reduce GPS coordinate precision for storage optimization
-static double gps_reduce_coordinate_precision(double coordinate, double precision_meters) {
+double gps_reduce_coordinate_precision(double coordinate, double precision_meters) {
     // Calculate precision reduction factor
     // At equator: 1 degree ≈ 111,000 meters
     // For 10m precision: ~0.00009 degrees
@@ -241,7 +241,7 @@ static double gps_reduce_coordinate_precision(double coordinate, double precisio
 }
 
 // Calculate distance between two GPS coordinates using Haversine formula
-static double gps_calculate_distance_meters(double lat1, double lon1, double lat2, double lon2) {
+double gps_calculate_distance_meters(double lat1, double lon1, double lat2, double lon2) {
     // Convert degrees to radians
     double lat1_rad = lat1 * M_PI / 180.0;
     double lon1_rad = lon1 * M_PI / 180.0;
@@ -426,7 +426,7 @@ static int find_nearby_location_reference(double latitude, double longitude, uin
 }
 
 // Update location usage statistics
-static int gps_location_reference_update_usage(uint32_t location_id, double signal_quality, double latency_ms) {
+int gps_location_reference_update_usage(uint32_t location_id, double signal_quality, double latency_ms) {
     if (!g_location_ref_initialized || location_id == 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -479,7 +479,7 @@ static int gps_location_reference_update_usage(uint32_t location_id, double sign
 }
 
 // Estimate storage space saved by using location references
-static uint64_t gps_location_reference_estimate_space_saved(uint64_t total_samples, uint32_t unique_locations) {
+uint64_t gps_location_reference_estimate_space_saved(uint64_t total_samples, uint32_t unique_locations) {
     // Each telemetry sample saves:
     // - 2 x sizeof(double) = 16 bytes (lat/lon coordinates)
     // - Various GPS metadata strings ≈ 32 bytes
@@ -497,7 +497,7 @@ static uint64_t gps_location_reference_estimate_space_saved(uint64_t total_sampl
     return (total_saved > total_cost) ? (total_saved - total_cost) : 0;
 }
 
-static bool gps_location_reference_is_initialized(void) {
+bool gps_location_reference_is_initialized(void) {
     return g_location_ref_initialized;
 }
 

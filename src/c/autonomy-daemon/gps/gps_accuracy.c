@@ -30,7 +30,7 @@ static gps_accuracy_t g_accuracy_validator = {0};
 static bool g_accuracy_initialized = false;
 
 // Initialize GPS accuracy validator
-static int gps_accuracy_init(void) {
+int gps_accuracy_init(void) {
     if (g_accuracy_initialized) {
         LOGX_WARN("GPS accuracy validator already initialized");
         return AUTONOMY_SUCCESS;
@@ -62,7 +62,7 @@ static int gps_accuracy_init(void) {
 }
 
 // Validate GPS accuracy
-static int gps_accuracy_validate(const gps_data_t *gps_data, gps_validation_result_t *result) {
+int gps_accuracy_validate(const gps_data_t *gps_data, gps_validation_result_t *result) {
     if (!g_accuracy_initialized || !gps_data || !result) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -350,7 +350,7 @@ static void update_validation_statistics(const gps_validation_result_t *result) 
 }
 
 // Get accuracy validation statistics
-static int gps_accuracy_get_statistics(gps_accuracy_stats_t *stats) {
+int gps_accuracy_get_statistics(gps_accuracy_stats_t *stats) {
     if (!g_accuracy_initialized || !stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -371,7 +371,7 @@ static int gps_accuracy_get_statistics(gps_accuracy_stats_t *stats) {
 }
 
 // Get accuracy validator configuration
-static int gps_accuracy_get_config(gps_accuracy_config_t *config) {
+int gps_accuracy_get_config(gps_accuracy_config_t *config) {
     if (!g_accuracy_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -391,7 +391,7 @@ static int gps_accuracy_get_config(gps_accuracy_config_t *config) {
 }
 
 // Set accuracy validator configuration
-static int gps_accuracy_set_config(const gps_accuracy_config_t *config) {
+int gps_accuracy_set_config(const gps_accuracy_config_t *config) {
     if (!g_accuracy_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -412,7 +412,7 @@ static int gps_accuracy_set_config(const gps_accuracy_config_t *config) {
 }
 
 // Enable/disable accuracy validator
-static int gps_accuracy_set_enabled(bool enabled) {
+int gps_accuracy_set_enabled(bool enabled) {
     if (!g_accuracy_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -423,7 +423,7 @@ static int gps_accuracy_set_enabled(bool enabled) {
 }
 
 // Reset validation statistics
-static int gps_accuracy_reset_statistics(void) {
+int gps_accuracy_reset_statistics(void) {
     if (!g_accuracy_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -439,7 +439,7 @@ static int gps_accuracy_reset_statistics(void) {
 }
 
 // Cleanup accuracy validator
-static void gps_accuracy_cleanup(void) {
+void gps_accuracy_cleanup(void) {
     if (!g_accuracy_initialized) {
         return;
     }

@@ -18,7 +18,7 @@ static bool g_gps_system_initialized = false;
 static pthread_mutex_t g_gps_system_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS system
-static int gps_system_init(void) {
+int gps_system_init(void) {
     if (g_gps_system_initialized) {
         LOGX_WARN("GPS system already initialized");
         return AUTONOMY_SUCCESS;
@@ -340,7 +340,7 @@ static void update_module_status(gps_module_type_t module_type, bool initialized
 }
 
 // Perform GPS system health check
-static int gps_system_health_check(void) {
+int gps_system_health_check(void) {
     if (!g_gps_system_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -426,7 +426,7 @@ static void update_system_health(void) {
 }
 
 // Get GPS system status
-static int gps_system_get_status(gps_system_status_t *status) {
+int gps_system_get_status(gps_system_status_t *status) {
     if (!g_gps_system_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -459,7 +459,7 @@ static int gps_system_get_status(gps_system_status_t *status) {
 }
 
 // Get GPS system configuration
-static int gps_system_get_config(gps_system_config_t *config) {
+int gps_system_get_config(gps_system_config_t *config) {
     if (!g_gps_system_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -477,7 +477,7 @@ static int gps_system_get_config(gps_system_config_t *config) {
 }
 
 // Set GPS system configuration
-static int gps_system_set_config(const gps_system_config_t *config) {
+int gps_system_set_config(const gps_system_config_t *config) {
     if (!g_gps_system_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -496,7 +496,7 @@ static int gps_system_set_config(const gps_system_config_t *config) {
 }
 
 // Enable/disable GPS system
-static int gps_system_set_enabled(bool enabled) {
+int gps_system_set_enabled(bool enabled) {
     if (!g_gps_system_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -510,7 +510,7 @@ static int gps_system_set_enabled(bool enabled) {
 }
 
 // Reset GPS system
-static int gps_system_reset(void) {
+int gps_system_reset(void) {
     if (!g_gps_system_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -540,7 +540,7 @@ static int gps_system_reset(void) {
 }
 
 // Cleanup GPS system
-static void gps_system_cleanup(void) {
+void gps_system_cleanup(void) {
     if (!g_gps_system_initialized) {
         return;
     }

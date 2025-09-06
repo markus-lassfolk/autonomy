@@ -26,7 +26,7 @@ static bool g_obstruction_initialized = false;
 static pthread_mutex_t g_obstruction_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS obstruction analysis
-static int gps_obstruction_init(void) {
+int gps_obstruction_init(void) {
     if (g_obstruction_initialized) {
         LOGX_WARN("GPS obstruction analysis already initialized");
         return AUTONOMY_SUCCESS;
@@ -78,7 +78,7 @@ static int gps_obstruction_init(void) {
 }
 
 // Analyze GPS data for obstructions
-static int gps_obstruction_analyze_gps_data(const gps_data_t *gps_data) {
+int gps_obstruction_analyze_gps_data(const gps_data_t *gps_data) {
     if (!g_obstruction_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -255,7 +255,7 @@ static void analyze_satellite_obstructions(const gps_data_t *gps_data) {
 }
 
 // Get obstruction analysis status
-static int gps_obstruction_get_status(gps_obstruction_status_t *status) {
+int gps_obstruction_get_status(gps_obstruction_status_t *status) {
     if (!g_obstruction_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -285,7 +285,7 @@ static int gps_obstruction_get_status(gps_obstruction_status_t *status) {
 }
 
 // Get obstruction analysis configuration
-static int gps_obstruction_get_config(gps_obstruction_config_t *config) {
+int gps_obstruction_get_config(gps_obstruction_config_t *config) {
     if (!g_obstruction_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -305,7 +305,7 @@ static int gps_obstruction_get_config(gps_obstruction_config_t *config) {
 }
 
 // Set obstruction analysis configuration
-static int gps_obstruction_set_config(const gps_obstruction_config_t *config) {
+int gps_obstruction_set_config(const gps_obstruction_config_t *config) {
     if (!g_obstruction_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -326,7 +326,7 @@ static int gps_obstruction_set_config(const gps_obstruction_config_t *config) {
 }
 
 // Enable/disable obstruction analysis
-static int gps_obstruction_set_enabled(bool enabled) {
+int gps_obstruction_set_enabled(bool enabled) {
     if (!g_obstruction_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -340,7 +340,7 @@ static int gps_obstruction_set_enabled(bool enabled) {
 }
 
 // Force obstruction analysis
-static int gps_obstruction_force_analysis(void) {
+int gps_obstruction_force_analysis(void) {
     if (!g_obstruction_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -355,7 +355,7 @@ static int gps_obstruction_force_analysis(void) {
 }
 
 // Get obstruction statistics
-static int gps_obstruction_get_statistics(gps_obstruction_stats_t *stats) {
+int gps_obstruction_get_statistics(gps_obstruction_stats_t *stats) {
     if (!g_obstruction_initialized || !stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -396,7 +396,7 @@ static int gps_obstruction_get_statistics(gps_obstruction_stats_t *stats) {
 }
 
 // Reset obstruction analysis
-static int gps_obstruction_reset(void) {
+int gps_obstruction_reset(void) {
     if (!g_obstruction_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -437,7 +437,7 @@ static int gps_obstruction_reset(void) {
 }
 
 // Cleanup obstruction analysis
-static void gps_obstruction_cleanup(void) {
+void gps_obstruction_cleanup(void) {
     if (!g_obstruction_initialized) {
         return;
     }

@@ -47,7 +47,7 @@ static void* collection_thread_worker(void* arg);
 static void* health_monitor_thread_worker(void* arg);
 
 // Initialize comprehensive GPS collector
-static int gps_comprehensive_init(const gps_comprehensive_config_t* config) {
+int gps_comprehensive_init(const gps_comprehensive_config_t* config) {
     if (g_collector_initialized) {
         LOGX_WARN("Comprehensive GPS collector already initialized");
         return AUTONOMY_SUCCESS;
@@ -106,7 +106,7 @@ static int gps_comprehensive_init(const gps_comprehensive_config_t* config) {
 }
 
 // Cleanup comprehensive GPS collector
-static void gps_comprehensive_cleanup(void) {
+void gps_comprehensive_cleanup(void) {
     if (!g_collector_initialized) return;
     
     pthread_mutex_lock(&g_gps_collector.mutex);
@@ -128,7 +128,7 @@ static void gps_comprehensive_cleanup(void) {
 }
 
 // Collect GPS data from best available source
-static int gps_comprehensive_collect_best(standardized_gps_data_t* result) {
+int gps_comprehensive_collect_best(standardized_gps_data_t* result) {
     if (!g_collector_initialized || !result) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -181,7 +181,7 @@ static int gps_comprehensive_collect_best(standardized_gps_data_t* result) {
 }
 
 // Collect GPS data from all sources and perform fusion
-static int gps_comprehensive_collect_all_and_fuse(gps_fusion_result_t* result) {
+int gps_comprehensive_collect_all_and_fuse(gps_fusion_result_t* result) {
     if (!g_collector_initialized || !result) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -530,7 +530,7 @@ static int perform_multi_source_fusion(gps_fusion_result_t* result) {
 }
 
 // Perform movement detection
-static int gps_comprehensive_detect_movement(const standardized_gps_data_t* current_data) {
+int gps_comprehensive_detect_movement(const standardized_gps_data_t* current_data) {
     if (!g_collector_initialized || !current_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -784,7 +784,7 @@ const char* gps_source_type_to_string(gps_source_type_t source_type) {
     return "unknown";
 }
 
-static gps_source_type_t gps_parse_source_type(const char* source_str) {
+gps_source_type_t gps_parse_source_type(const char* source_str) {
     if (!source_str) return GPS_SOURCE_RUTOS;
     
     for (int i = 0; i < GPS_SOURCE_MAX; i++) {
@@ -811,7 +811,7 @@ const char* gps_fix_quality_to_string(gps_fix_quality_t fix_quality) {
 }
 
 // Calculate distance using Haversine formula
-static double gps_calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double gps_calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000; // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
@@ -829,7 +829,7 @@ static double gps_calculate_distance(double lat1, double lon1, double lat2, doub
 }
 
 // Calculate bearing between two GPS points
-static double gps_calculate_bearing(double lat1, double lon1, double lat2, double lon2) {
+double gps_calculate_bearing(double lat1, double lon1, double lat2, double lon2) {
     double lat1_rad = lat1 * M_PI / 180.0;
     double lat2_rad = lat2 * M_PI / 180.0;
     double delta_lon = (lon2 - lon1) * M_PI / 180.0;
@@ -845,13 +845,13 @@ static double gps_calculate_bearing(double lat1, double lon1, double lat2, doubl
 }
 
 // Calculate speed from distance and time
-static double gps_calculate_speed(double distance, double time_diff) {
+double gps_calculate_speed(double distance, double time_diff) {
     if (time_diff <= 0) return 0.0;
     return distance / time_diff;
 }
 
 // Check if comprehensive GPS collector is initialized
-static bool gps_comprehensive_is_initialized(void) {
+bool gps_comprehensive_is_initialized(void) {
     return g_collector_initialized;
 }
 

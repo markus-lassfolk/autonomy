@@ -32,7 +32,7 @@ static gps_confidence_t g_confidence_calc = {0};
 static bool g_confidence_initialized = false;
 
 // Initialize GPS confidence calculator
-static int gps_confidence_init(void) {
+int gps_confidence_init(void) {
     if (g_confidence_initialized) {
         LOGX_WARN("GPS confidence calculator already initialized");
         return AUTONOMY_SUCCESS;
@@ -56,7 +56,7 @@ static int gps_confidence_init(void) {
 }
 
 // Calculate GPS confidence score
-static double gps_confidence_calculate(const gps_data_t *gps_data, const gps_confidence_context_t *context) {
+double gps_confidence_calculate(const gps_data_t *gps_data, const gps_confidence_context_t *context) {
     if (!g_confidence_initialized || !gps_data) {
         return MIN_CONFIDENCE;
     }
@@ -274,7 +274,7 @@ static double calculate_position_consistency(double actual_distance, double expe
 }
 
 // Get confidence calculator configuration
-static int gps_confidence_get_config(gps_confidence_config_t *config) {
+int gps_confidence_get_config(gps_confidence_config_t *config) {
     if (!g_confidence_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -292,7 +292,7 @@ static int gps_confidence_get_config(gps_confidence_config_t *config) {
 }
 
 // Set confidence calculator configuration
-static int gps_confidence_set_config(const gps_confidence_config_t *config) {
+int gps_confidence_set_config(const gps_confidence_config_t *config) {
     if (!g_confidence_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -320,7 +320,7 @@ static int gps_confidence_set_config(const gps_confidence_config_t *config) {
 }
 
 // Enable/disable confidence calculator
-static int gps_confidence_set_enabled(bool enabled) {
+int gps_confidence_set_enabled(bool enabled) {
     if (!g_confidence_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -331,7 +331,7 @@ static int gps_confidence_set_enabled(bool enabled) {
 }
 
 // Get confidence calculator status
-static int gps_confidence_get_status(gps_confidence_status_t *status) {
+int gps_confidence_get_status(gps_confidence_status_t *status) {
     if (!g_confidence_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -349,7 +349,7 @@ static int gps_confidence_get_status(gps_confidence_status_t *status) {
 }
 
 // Cleanup confidence calculator
-static void gps_confidence_cleanup(void) {
+void gps_confidence_cleanup(void) {
     if (!g_confidence_initialized) {
         return;
     }
