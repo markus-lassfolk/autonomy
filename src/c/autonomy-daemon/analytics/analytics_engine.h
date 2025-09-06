@@ -2,18 +2,12 @@
 #define ANALYTICS_ENGINE_H
 
 #include "../telemetry/telemetry_store.h"
+#include "health_analyzer.h"
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
 
-// Health thresholds
-typedef struct {
-    double excellent; // > 80
-    double good;      // 60-80
-    double fair;      // 40-60
-    double poor;      // 20-40
-    double critical;  // < 20
-} health_thresholds_t;
+// Note: health_thresholds_t is defined in health_analyzer.h
 
 // Analytics configuration
 typedef struct {
@@ -69,7 +63,7 @@ typedef struct {
     char issues[512];
     time_t last_check;
     trend_t trend;
-} member_health_t;
+}; // Note: member_health_t defined in health_analyzer.h
 
 // Health metrics
 typedef struct {

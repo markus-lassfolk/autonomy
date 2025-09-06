@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <time.h>
+#include <pthread.h>
 
 // Prediction types
 typedef enum {

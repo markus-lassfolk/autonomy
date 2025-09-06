@@ -66,12 +66,14 @@ class CodeFile:
 class CCodeVerifier:
     """Main verification class"""
     
-    def __init__(self, verbose: bool = False, strict: bool = False):
+    def __init__(self, verbose: bool = False, strict: bool = False, fix_mode: bool = False):
         self.verbose = verbose
         self.strict = strict
+        self.fix_mode = fix_mode
         self.results: List[VerificationResult] = []
         self.files: Dict[str, CodeFile] = {}
         self.include_paths: Set[str] = set()
+        self.fixes_applied: List[str] = []
         self.compiler_flags = [
             "-Wall", "-Wextra", "-Wpedantic", "-Werror=implicit-function-declaration",
             "-Werror=implicit-int", "-Werror=incompatible-pointer-types",
@@ -1464,6 +1466,354 @@ class CCodeVerifier:
             self.log(f"Report saved to {output_file}")
         
         return report_text
+    
+    def apply_automatic_fixes(self, directory: str):
+        """Apply automatic fixes for common issues found during GPS module development"""
+        if not self.fix_mode:
+            return
+        
+        self.log("Applying automatic fixes based on GPS module patterns...")
+        
+        # Find all C files in the directory
+        c_files = self.find_c_files(directory, ["*.c", "*.h"])
+        
+        for file_path in c_files:
+            self.fix_include_path_issues(file_path)
+            self.fix_static_declaration_conflicts(file_path)
+            self.fix_curl_callback_conflicts(file_path)
+            self.fix_missing_includes(file_path)
+            self.fix_struct_member_issues(file_path)
+            self.fix_enum_redeclarations(file_path)
+            self.fix_macro_conflicts(file_path)
+        
+        self.log(f"Applied {len(self.fixes_applied)} automatic fixes")
+    
+    def fix_include_path_issues(self, file_path: str):
+        """Fix common include path issues"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Fix autonomy_types.h -> types.h (GPS module pattern)
+            content = content.replace('#include "../autonomy_types.h"', '#include "../core/types.h"')
+            content = content.replace('#include "autonomy_types.h"', '#include "../core/types.h"')
+            
+            # Fix relative include paths
+            content = content.replace('#include "starlink_comprehensive.h"', '#include "../starlink/starlink_comprehensive.h"')
+            content = content.replace('#include "external_apis.h"', '#include "../external/external_apis.h"')
+            content = content.replace('#include "logx.h"', '#include "../utils/logx.h"')
+            
+            # Fix UBUS includes
+            content = content.replace('#include <libubus.h>', '#include <libubus.h>')
+            content = content.replace('#include <ubus.h>', '#include <libubus.h>')
+            content = content.replace('#include <libuci.h>', '#include <uci.h>')
+            
+            if content != original_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed include paths in {file_path}")
+                self.log(f"Fixed include paths in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing includes in {file_path}: {e}", "error")
+    
+    def fix_static_declaration_conflicts(self, file_path: str):
+        """Fix static declaration conflicts (GPS module pattern)"""
+        if not file_path.endswith('.c'):
+            return
+            
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Common functions that should not be static (based on GPS module experience)
+            functions_to_make_public = [
+                'init', 'cleanup', 'start', 'stop', 'update', 'get_status', 'get_config', 
+                'set_config', 'analyze', 'calculate', 'process', 'handle', 'check',
+                'register', 'unregister', 'add', 'remove', 'find', 'search',
+                'monitor_thread', 'worker_thread', 'callback'
+            ]
+            
+            lines = content.split('\n')
+            modified = False
+            
+            for i, line in enumerate(lines):
+                # Look for static function definitions that might need to be public
+                static_match = re.match(r'^static\s+(\w+(?:\s+\w+)*)\s+(\w+)\s*\(', line)
+                if static_match:
+                    func_name = static_match.group(2)
+                    # Check if function name suggests it should be public
+                    for pattern in functions_to_make_public:
+                        if pattern in func_name.lower():
+                            # Remove static keyword
+                            lines[i] = line.replace('static ', '', 1)
+                            modified = True
+                            self.log(f"Removed static from {func_name} in {file_path}")
+                            break
+            
+            if modified:
+                content = '\n'.join(lines)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed static declarations in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing static declarations in {file_path}: {e}", "error")
+    
+    def fix_curl_callback_conflicts(self, file_path: str):
+        """Fix curl_write_callback naming conflicts"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Rename curl_write_callback to avoid conflicts (GPS module pattern)
+            if 'curl_write_callback' in content and file_path.endswith('.c'):
+                # Get the base filename for a unique callback name
+                base_name = Path(file_path).stem
+                new_callback_name = f"{base_name}_write_callback"
+                
+                content = content.replace('curl_write_callback', new_callback_name)
+                
+                if content != original_content:
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    self.fixes_applied.append(f"Renamed curl_write_callback in {file_path}")
+                    self.log(f"Renamed curl_write_callback to {new_callback_name} in {file_path}")
+                    
+        except Exception as e:
+            self.log(f"Error fixing curl callback in {file_path}: {e}", "error")
+    
+    def fix_missing_includes(self, file_path: str):
+        """Add missing includes based on common patterns"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            lines = content.split('\n')
+            
+            # Check for missing includes based on function usage
+            missing_includes = []
+            
+            # Check for pthread functions
+            if any('pthread_' in line for line in lines) and not any('#include <pthread.h>' in line for line in lines):
+                missing_includes.append('#include <pthread.h>')
+            
+            # Check for time functions
+            if any('time(' in line or 'time_t' in line for line in lines) and not any('#include <time.h>' in line for line in lines):
+                missing_includes.append('#include <time.h>')
+            
+            # Check for math functions
+            if any('fmin(' in line or 'fmax(' in line or 'cos(' in line or 'sin(' in line for line in lines) and not any('#include <math.h>' in line for line in lines):
+                missing_includes.append('#include <math.h>')
+            
+            # Check for sys/time.h for struct timeval
+            if any('struct timeval' in line for line in lines) and not any('#include <sys/time.h>' in line for line in lines):
+                missing_includes.append('#include <sys/time.h>')
+            
+            # Add missing includes after existing includes
+            if missing_includes:
+                # Find the last include line
+                last_include_idx = -1
+                for i, line in enumerate(lines):
+                    if line.strip().startswith('#include'):
+                        last_include_idx = i
+                
+                if last_include_idx >= 0:
+                    # Insert missing includes after the last include
+                    for include in missing_includes:
+                        lines.insert(last_include_idx + 1, include)
+                        last_include_idx += 1
+                    
+                    content = '\n'.join(lines)
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    self.fixes_applied.append(f"Added missing includes in {file_path}: {', '.join(missing_includes)}")
+                    self.log(f"Added missing includes in {file_path}: {', '.join(missing_includes)}")
+                    
+        except Exception as e:
+            self.log(f"Error adding missing includes in {file_path}: {e}", "error")
+    
+    def fix_struct_member_issues(self, file_path: str):
+        """Fix common struct member issues found in GPS module"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Fix common struct member typos (GPS module pattern)
+            fixes = {
+                'draination': 'drainage',  # Common typo found in terrain analysis
+                '.geofence.geofences[': '.geofences[',  # Duplicate field access
+                'g_fusion_mutex': 'g_geofence_mutex',  # Wrong mutex name
+            }
+            
+            for incorrect, correct in fixes.items():
+                if incorrect in content:
+                    content = content.replace(incorrect, correct)
+                    self.fixes_applied.append(f"Fixed struct member issue in {file_path}: {incorrect} -> {correct}")
+                    self.log(f"Fixed struct member issue in {file_path}: {incorrect} -> {correct}")
+            
+            if content != original_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                    
+        except Exception as e:
+            self.log(f"Error fixing struct members in {file_path}: {e}", "error")
+    
+    def fix_enum_redeclarations(self, file_path: str):
+        """Fix enum redeclaration issues by adding notes about central definitions"""
+        if not file_path.endswith('.h'):
+            return
+            
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Common enum types that should be centralized (GPS module pattern)
+            centralized_enums = [
+                'gps_source_type_t',
+                'gps_module_type_t', 
+                'opencellid_radio_type_t',
+                'gps_error_type_t',
+                'gps_recovery_strategy_t'
+            ]
+            
+            lines = content.split('\n')
+            modified = False
+            
+            i = 0
+            while i < len(lines):
+                line = lines[i]
+                
+                # Look for enum definitions
+                enum_match = re.match(r'typedef\s+enum\s*\{', line)
+                if enum_match:
+                    # Find the end of the enum and the typedef name
+                    enum_start = i
+                    enum_end = -1
+                    typedef_name = None
+                    
+                    j = i
+                    while j < len(lines):
+                        if '}' in lines[j] and ';' in lines[j]:
+                            # Extract typedef name
+                            typedef_match = re.search(r'\}\s*(\w+)\s*;', lines[j])
+                            if typedef_match:
+                                typedef_name = typedef_match.group(1)
+                                enum_end = j
+                                break
+                        j += 1
+                    
+                    # Check if this enum should be centralized
+                    if typedef_name in centralized_enums:
+                        # Replace the entire enum with a note
+                        note = f"// Note: {typedef_name} is defined in ../core/types.h"
+                        lines[enum_start:enum_end+1] = [note]
+                        modified = True
+                        self.log(f"Replaced duplicate enum {typedef_name} with note in {file_path}")
+                        i = enum_start + 1
+                        continue
+                
+                i += 1
+            
+            if modified:
+                content = '\n'.join(lines)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed enum redeclarations in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing enum redeclarations in {file_path}: {e}", "error")
+    
+    def fix_macro_conflicts(self, file_path: str):
+        """Fix macro conflicts by removing local definitions"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Common macros that should be centralized (GPS module pattern)
+            centralized_macros = [
+                'MAX_GPS_SOURCES', 'MAX_CLUSTERS', 'MAX_EVENTS', 'MAX_GEOFENCES',
+                'MAX_CACHE_ENTRIES', 'MAX_WEATHER_CACHE', 'MAX_TERRAIN_CACHE',
+                'MAX_PERFORMANCE_HISTORY', 'MAX_INTEGRATION_SOURCES', 'MAX_FUSION_SOURCES'
+            ]
+            
+            lines = content.split('\n')
+            modified = False
+            
+            for i, line in enumerate(lines):
+                # Look for local macro definitions that conflict with central ones
+                for macro in centralized_macros:
+                    if re.match(rf'static\s+const\s+int\s+{macro}\s*=', line) or re.match(rf'#define\s+{macro}\s+', line):
+                        # Replace with note
+                        lines[i] = f"// Note: {macro} is defined in ../core/types.h"
+                        modified = True
+                        self.log(f"Replaced local macro {macro} with note in {file_path}")
+            
+            if modified:
+                content = '\n'.join(lines)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed macro conflicts in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing macro conflicts in {file_path}: {e}", "error")
+    
+    def apply_rutos_sdk_fixes(self, directory: str):
+        """Apply comprehensive fixes for RUTOS SDK compatibility based on GPS module success"""
+        self.log("Applying RUTOS SDK compatibility fixes...")
+        
+        # Apply all fix methods
+        self.apply_automatic_fixes(directory)
+        
+        # Additional RUTOS-specific fixes
+        c_files = self.find_c_files(directory, ["*.c", "*.h"])
+        
+        for file_path in c_files:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                original_content = content
+                
+                # Fix LOGX macro calls (GPS module pattern)
+                logx_fixes = {
+                    'LOGX_WARN(': 'LOGX_WARN_MSG(',
+                    'LOGX_ERROR(': 'LOGX_ERROR_MSG(',
+                    'LOGX_INFO(': 'LOGX_INFO_MSG(',
+                    'LOGX_DEBUG(': 'LOGX_DEBUG_MSG('
+                }
+                
+                for incorrect, correct in logx_fixes.items():
+                    if incorrect in content:
+                        content = content.replace(incorrect, correct)
+                        self.log(f"Fixed LOGX macro in {file_path}: {incorrect} -> {correct}")
+                
+                # Fix common function parameter issues
+                if 'uci_set(' in content:
+                    # Fix uci_set calls that have too many arguments
+                    content = re.sub(r'uci_set\([^,]+,\s*[^,]+,\s*[^,]+,\s*[^,]+,\s*[^)]+\)', 
+                                   lambda m: m.group(0).rsplit(',', 1)[0] + ')', content)
+                
+                if content != original_content:
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    self.fixes_applied.append(f"Applied RUTOS SDK fixes in {file_path}")
+                    
+            except Exception as e:
+                self.log(f"Error applying RUTOS fixes in {file_path}: {e}", "error")
 
 def main():
     """Main entry point"""
@@ -1480,11 +1830,17 @@ def main():
                        help="Exclude files matching pattern")
     parser.add_argument("-i", "--include", action="append", default=[], 
                        help="Only include files matching pattern")
+    parser.add_argument("-f", "--fix", action="store_true", 
+                       help="Automatically fix common issues")
     
     args = parser.parse_args()
     
     # Create verifier
-    verifier = CCodeVerifier(verbose=args.verbose, strict=args.strict)
+    verifier = CCodeVerifier(verbose=args.verbose, strict=args.strict, fix_mode=args.fix)
+    
+    # Apply fixes if requested
+    if args.fix:
+        verifier.apply_rutos_sdk_fixes(args.directory)
     
     # Run verification
     verifier.verify_directory(
