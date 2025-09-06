@@ -29,16 +29,21 @@ static const char* RECOVERY_STRATEGY_NAMES[] = {
 
 // Global error recovery state
 
-// Forward declarations - auto-generated
-static void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success);
-static int find_best_cluster(const gps_data_t *gps_data);
-static int create_new_cluster(const gps_data_t *gps_data);
-static bool check_event_conditions(const void *event, const gps_data_t *gps_data);
-static bool evaluate_condition(const void *condition, const gps_data_t *gps_data);
-static void execute_event_actions(const void *event, const gps_data_t *gps_data);
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
-static void analyze_movement_pattern(void);
-static void update_source_error_tracking(int source_id, int error_type);
+// Forward declarations - error recovery specific
+void add_error_history_entry(int source_id, gps_error_type_t error_type, int error_code, const char *error_message);
+int find_oldest_error_entry(void);
+static void update_source_error_tracking(int source_id, gps_error_type_t error_type);
+void calculate_source_error_rate(gps_source_error_local_t *source);
+static bool should_retry_error(const gps_source_error_local_t *source, gps_error_type_t error_type);
+int calculate_backoff_delay(int retry_count);
+void update_source_status(gps_source_error_local_t *source);
+gps_recovery_strategy_t determine_recovery_strategy(int source_id, gps_error_type_t error_type);
+bool attempt_error_recovery(int source_id, gps_error_type_t error_type, gps_recovery_strategy_t strategy);
+static bool perform_retry_recovery(gps_source_error_local_t *source, gps_error_type_t error_type);
+static bool perform_fallback_recovery(gps_source_error_local_t *source, gps_error_type_t error_type);
+static bool perform_reset_recovery(gps_source_error_local_t *source, gps_error_type_t error_type);
+static bool perform_degrade_recovery(gps_source_error_local_t *source, gps_error_type_t error_type);
+static bool perform_switch_source_recovery(gps_source_error_local_t *source, gps_error_type_t error_type);
 
 static gps_error_recovery_t g_error_recovery = {0};
 static bool g_error_recovery_initialized = false;
@@ -208,7 +213,7 @@ static void update_source_error_tracking(int source_id, gps_error_type_t error_t
         return;
     }
     
-    gps_source_error_t *source = &g_error_recovery.source_errors[source_id];
+    gps_source_error_local_t *source = &g_error_recovery.source_errors[source_id];
     
     source->total_errors++;
     source->last_error = time(NULL);
@@ -238,7 +243,7 @@ static void update_source_error_tracking(int source_id, gps_error_type_t error_t
 }
 
 // Calculate source error rate
-static void calculate_source_error_rate(gps_source_error_t *source) {
+void calculate_source_error_rate(gps_source_error_local_t *source) {
     time_t now = time(NULL);
     time_t window_start = now - g_error_recovery.error_window_size;
     
@@ -265,7 +270,7 @@ static void calculate_source_error_rate(gps_source_error_t *source) {
 }
 
 // Check if error should be retried
-static bool should_retry_error(const gps_source_error_t *source, gps_error_type_t error_type) {
+static bool should_retry_error(const gps_source_error_local_t *source, gps_error_type_t error_type) {
     // Don't retry if we've exceeded max attempts
     if (source->current_retry_count >= g_error_recovery.max_retry_attempts) {
         return false;
@@ -288,7 +293,7 @@ static bool should_retry_error(const gps_source_error_t *source, gps_error_type_
 }
 
 // Calculate backoff delay
-static int calculate_backoff_delay(int retry_count) {
+int calculate_backoff_delay(int retry_count) {
     // Exponential backoff with jitter
     int base_delay = g_error_recovery.retry_delay_base * (1 << retry_count);
     
@@ -301,7 +306,7 @@ static int calculate_backoff_delay(int retry_count) {
 }
 
 // Update source status
-static void update_source_status(gps_source_error_t *source) {
+void update_source_status(gps_source_error_local_t *source) {
     if (source->error_rate > g_error_recovery.error_threshold_ratio) {
         if (source->status == SOURCE_STATUS_ACTIVE) {
             source->status = SOURCE_STATUS_DEGRADED;
@@ -324,8 +329,8 @@ static void update_source_status(gps_source_error_t *source) {
 }
 
 // Determine recovery strategy
-static gps_recovery_strategy_t determine_recovery_strategy(int source_id, gps_error_type_t error_type) {
-    gps_source_error_t *source = &g_error_recovery.source_errors[source_id];
+gps_recovery_strategy_t determine_recovery_strategy(int source_id, gps_error_type_t error_type) {
+    gps_source_error_local_t *source = &g_error_recovery.source_errors[source_id];
     
     // Check if source is in backoff period
     if (time(NULL) < source->backoff_until) {
@@ -352,8 +357,8 @@ static gps_recovery_strategy_t determine_recovery_strategy(int source_id, gps_er
 }
 
 // Attempt error recovery
-static bool attempt_error_recovery(int source_id, gps_error_type_t error_type, gps_recovery_strategy_t strategy) {
-    gps_source_error_t *source = &g_error_recovery.source_errors[source_id];
+bool attempt_error_recovery(int source_id, gps_error_type_t error_type, gps_recovery_strategy_t strategy) {
+    gps_source_error_local_t *source = &g_error_recovery.source_errors[source_id];
     
     switch (strategy) {
         case RECOVERY_STRATEGY_RETRY:
@@ -378,7 +383,7 @@ static bool attempt_error_recovery(int source_id, gps_error_type_t error_type, g
 }
 
 // Perform retry recovery
-static bool perform_retry_recovery(gps_source_error_t *source, gps_error_type_t error_type) {
+static bool perform_retry_recovery(gps_source_error_local_t *source, gps_error_type_t error_type) {
     // Simulate retry attempt
     LOGX_DEBUG_MSG("Attempting retry recovery for source %d (attempt %d/%d)", 
               source->source_id, source->current_retry_count, g_error_recovery.max_retry_attempts);
@@ -401,7 +406,7 @@ static bool perform_retry_recovery(gps_source_error_t *source, gps_error_type_t 
 }
 
 // Perform fallback recovery
-static bool perform_fallback_recovery(gps_source_error_t *source, gps_error_type_t error_type) {
+static bool perform_fallback_recovery(gps_source_error_local_t *source, gps_error_type_t error_type) {
     LOGX_DEBUG_MSG("Attempting fallback recovery for source %d", source->source_id);
     
     // Simulate fallback to backup source
@@ -418,7 +423,7 @@ static bool perform_fallback_recovery(gps_source_error_t *source, gps_error_type
 }
 
 // Perform reset recovery
-static bool perform_reset_recovery(gps_source_error_t *source, gps_error_type_t error_type) {
+static bool perform_reset_recovery(gps_source_error_local_t *source, gps_error_type_t error_type) {
     LOGX_DEBUG_MSG("Attempting reset recovery for source %d", source->source_id);
     
     // Simulate source reset
@@ -438,7 +443,7 @@ static bool perform_reset_recovery(gps_source_error_t *source, gps_error_type_t 
 }
 
 // Perform degrade recovery
-static bool perform_degrade_recovery(gps_source_error_t *source, gps_error_type_t error_type) {
+static bool perform_degrade_recovery(gps_source_error_local_t *source, gps_error_type_t error_type) {
     LOGX_DEBUG_MSG("Attempting degrade recovery for source %d", source->source_id);
     
     // Simulate service degradation
@@ -455,7 +460,7 @@ static bool perform_degrade_recovery(gps_source_error_t *source, gps_error_type_
 }
 
 // Perform switch source recovery
-static bool perform_switch_source_recovery(gps_source_error_t *source, gps_error_type_t error_type) {
+static bool perform_switch_source_recovery(gps_source_error_local_t *source, gps_error_type_t error_type) {
     LOGX_DEBUG_MSG("Attempting switch source recovery for source %d", source->source_id);
     
     // Simulate switching to another source
@@ -501,14 +506,14 @@ int gps_error_recovery_get_status(gps_error_recovery_status_t *status) {
 }
 
 // Get source error information
-int gps_error_recovery_get_source_errors(int source_id, gps_source_error_t *source_errors) {
+int gps_error_recovery_get_source_errors(int source_id, gps_source_error_local_t *source_errors) {
     if (!g_error_recovery_initialized || !source_errors || source_id < 0 || source_id >= GPS_MAX_SOURCES) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     pthread_mutex_lock(&g_error_recovery_mutex);
     
-    memcpy(source_errors, &g_error_recovery.source_errors[source_id], sizeof(gps_source_error_t));
+    memcpy(source_errors, &g_error_recovery.source_errors[source_id], sizeof(gps_source_error_local_t));
     
     pthread_mutex_unlock(&g_error_recovery_mutex);
     
@@ -516,7 +521,7 @@ int gps_error_recovery_get_source_errors(int source_id, gps_source_error_t *sour
 }
 
 // Get all source error data
-int gps_error_recovery_get_all_sources(gps_source_error_t *sources, int max_sources) {
+int gps_error_recovery_get_all_sources(gps_source_error_local_t *sources, int max_sources) {
     if (!g_error_recovery_initialized || !sources || max_sources <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -526,7 +531,7 @@ int gps_error_recovery_get_all_sources(gps_source_error_t *sources, int max_sour
     int count = 0;
     for (int i = 0; i < GPS_MAX_SOURCES && count < max_sources; i++) {
         if (g_error_recovery.source_errors[i].total_errors > 0) {
-            memcpy(&sources[count], &g_error_recovery.source_errors[i], sizeof(gps_source_error_t));
+            memcpy(&sources[count], &g_error_recovery.source_errors[i], sizeof(gps_source_error_local_t));
             count++;
         }
     }
@@ -627,7 +632,7 @@ int gps_error_recovery_force_recovery(int source_id) {
     
     pthread_mutex_lock(&g_error_recovery_mutex);
     
-    gps_source_error_t *source = &g_error_recovery.source_errors[source_id];
+    gps_source_error_local_t *source = &g_error_recovery.source_errors[source_id];
     
     // Reset source error state
     source->current_retry_count = 0;
@@ -670,7 +675,7 @@ int gps_error_recovery_reset(void) {
     
     // Reset source error tracking
     for (int i = 0; i < GPS_MAX_SOURCES; i++) {
-        gps_source_error_t *source = &g_error_recovery.source_errors[i];
+        gps_source_error_local_t *source = &g_error_recovery.source_errors[i];
         source->total_errors = 0;
         source->recovered_errors = 0;
         source->unrecovered_errors = 0;

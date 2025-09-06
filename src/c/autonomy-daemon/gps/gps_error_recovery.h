@@ -15,20 +15,10 @@ extern "C" {
 
 // GPS error types
 
-// Recovery strategies
-typedef enum {
-    RECOVERY_STRATEGY_NONE = 0,
-    RECOVERY_STRATEGY_RETRY,
-    RECOVERY_STRATEGY_FALLBACK,
-    RECOVERY_STRATEGY_RESET,
-    RECOVERY_STRATEGY_DEGRADE,
-    RECOVERY_STRATEGY_SWITCH_SOURCE,
-    RECOVERY_STRATEGY_MAX
-} gps_recovery_strategy_t;
+// Note: gps_recovery_strategy_t is defined in ../core/types.h
+// Note: source_status_t and related constants defined locally
 
-// Recovery strategy constants now defined in enum above
-
-// Source status
+// Source status for error recovery
 typedef enum {
     SOURCE_STATUS_ACTIVE = 0,
     SOURCE_STATUS_DEGRADED,
@@ -36,6 +26,14 @@ typedef enum {
     SOURCE_STATUS_MAINTENANCE,
     SOURCE_STATUS_MAX
 } source_status_t;
+
+// Recovery strategy constants
+#define RECOVERY_STRATEGY_NONE 0
+#define RECOVERY_STRATEGY_RETRY 1
+#define RECOVERY_STRATEGY_FALLBACK 2
+#define RECOVERY_STRATEGY_RESET 3
+#define RECOVERY_STRATEGY_DEGRADE 4
+#define RECOVERY_STRATEGY_SWITCH_SOURCE 5
 
 // Error entry structure
 typedef struct {
@@ -64,7 +62,9 @@ typedef struct {
     time_t last_retry;                  // Last retry timestamp
     time_t backoff_until;               // Backoff until timestamp
     source_status_t status;             // Source status
-}; // Note: Use gps_source_error_t from ../core/types.h
+} gps_source_error_local_t; // Local version with extended fields
+
+// Note: gps_source_error_t is defined in ../core/types.h
 
 // Error recovery configuration structure
 typedef struct {
@@ -109,8 +109,8 @@ typedef struct {
     // Error history
     gps_error_entry_t error_history[1000]; // Error history entries
     
-    // Source error tracking
-    gps_source_error_t source_errors[GPS_MAX_SOURCES]; // Source error data
+    // Source error tracking  
+    gps_source_error_local_t source_errors[GPS_MAX_SOURCES]; // Source error data
 } gps_error_recovery_t;
 
 // Function prototypes
@@ -144,7 +144,7 @@ int gps_error_recovery_get_status(gps_error_recovery_status_t *status);
  * @param source_errors Source error structure to populate
  * @return AUTONOMY_SUCCESS on success, error code on failure
  */
-int gps_error_recovery_get_source_errors(int source_id, gps_source_error_t *source_errors);
+int gps_error_recovery_get_source_errors(int source_id, gps_source_error_local_t *source_errors);
 
 /**
  * Get all source error data
@@ -152,7 +152,7 @@ int gps_error_recovery_get_source_errors(int source_id, gps_source_error_t *sour
  * @param max_sources Maximum number of sources to retrieve
  * @return Number of sources retrieved
  */
-int gps_error_recovery_get_all_sources(gps_source_error_t *sources, int max_sources);
+int gps_error_recovery_get_all_sources(gps_source_error_local_t *sources, int max_sources);
 
 /**
  * Get error history
