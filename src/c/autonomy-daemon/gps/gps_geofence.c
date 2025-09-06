@@ -27,6 +27,12 @@ static pthread_mutex_t g_geofence_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Forward declarations
 int generate_geofence_id(void);
 static gps_geofence_status_t check_position_against_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
+static bool check_circle_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
+static bool check_rectangle_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
+static bool check_polygon_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
+static double distance_to_line_segment(double px, double py, double x1, double y1, double x2, double y2);
+void handle_geofence_event(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status, const gps_data_t *gps_data);
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
 
 // Initialize GPS geofencing system
 int gps_geofence_init(void) {
