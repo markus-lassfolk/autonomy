@@ -1,7 +1,9 @@
 #include "uci_maintenance.h"
 #include "../core/types.h"
-#include "notifications/notification_manager.h"
-#include "notifications/notification_types.h"
+// Simple notification function for UCI maintenance
+static void send_uci_notification(const char* level, const char* message) {
+    printf("UCI MAINTENANCE [%s]: %s\n", level, message);
+}
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

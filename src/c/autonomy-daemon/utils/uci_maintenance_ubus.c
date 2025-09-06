@@ -1,4 +1,5 @@
 #include "uci_maintenance.h"
+#include <time.h>
 #include <libubus.h>
 #include <libubox/blobmsg.h>
 #include <libubox/blobmsg_json.h>

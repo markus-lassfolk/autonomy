@@ -1,4 +1,5 @@
 #include "uci_manager.h"
+#include <time.h>
 #include "../utils/logx.h"
 #include <uci.h>
 #include <string.h>

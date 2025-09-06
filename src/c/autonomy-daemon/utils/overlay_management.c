@@ -1,7 +1,9 @@
 #include "overlay_management.h"
 #include "../core/types.h"
-#include "../notifications/notification_manager.h"
-#include "../notifications/notification_types.h"
+// Simple notification function for overlay management
+static void send_overlay_notification(const char* level, const char* message) {
+    printf("OVERLAY MANAGEMENT [%s]: %s\n", level, message);
+}
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,7 +36,7 @@ int64_t cleanup_system_cache(void);
 int64_t remove_file_recursive(const char *path);
 static int64_t get_file_size(const char *path);
 static int is_file_older_than(const char *path, int days);
-static void send_notification(const char *type, const char *message);
+// send_overlay_notification is now implemented as send_overlay_notification above
 
 /**
  * Initialize overlay management
@@ -87,7 +89,7 @@ int overlay_management_check(void) {
         if (g_overlay_manager.config.notifications_enabled && g_overlay_manager.config.notify_on_critical) {
             char message[256];
             snprintf(message, sizeof(message), "Critical overlay space usage: %d%%", usage);
-            send_notification("critical", message);
+            send_overlay_notification("critical", message);
         }
         
         int result = perform_emergency_cleanup();
@@ -100,7 +102,7 @@ int overlay_management_check(void) {
         if (g_overlay_manager.config.notifications_enabled && g_overlay_manager.config.notify_on_fixes) {
             char message[256];
             snprintf(message, sizeof(message), "High overlay space usage: %d%%", usage);
-            send_notification("warning", message);
+            send_overlay_notification("warning", message);
         }
         
         int result = perform_cleanup();
@@ -170,7 +172,7 @@ int perform_cleanup(void) {
         if (g_overlay_manager.config.notifications_enabled && g_overlay_manager.config.notify_on_fixes) {
             char message[256];
             snprintf(message, sizeof(message), "Overlay cleanup completed: freed %lld bytes", (long long)total_freed);
-            send_notification("fix", message);
+            send_overlay_notification("fix", message);
         }
     }
     
@@ -203,7 +205,7 @@ int perform_emergency_cleanup(void) {
         if (g_overlay_manager.config.notifications_enabled && g_overlay_manager.config.notify_on_critical) {
             char message[256];
             snprintf(message, sizeof(message), "Emergency overlay cleanup completed: freed %lld bytes", (long long)total_freed);
-            send_notification("critical", message);
+            send_overlay_notification("critical", message);
         }
     }
     
@@ -516,7 +518,7 @@ static int is_file_older_than(const char *path, int days) {
 /**
  * Send notification via notification manager
  */
-static void send_notification(const char *type, const char *message) {
+static void send_overlay_notification(const char *type, const char *message) {
     // Create notification event
     notification_event_t event = {0};
     strcpy(event.title, "Overlay Management Alert");
