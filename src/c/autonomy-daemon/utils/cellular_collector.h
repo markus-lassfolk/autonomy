@@ -1,7 +1,7 @@
 #ifndef CELLULAR_COLLECTOR_H
 #define CELLULAR_COLLECTOR_H
 
-#include "../types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
