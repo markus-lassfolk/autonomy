@@ -8,9 +8,6 @@
 #include <time.h>
 #include <ctype.h>
 
-// NMEA sentence types
-static const char* NMEA_SENTENCE_TYPES[] = {
-
 // Forward declarations
 static bool validate_nmea_sentence(const char *sentence);
 static bool verify_nmea_checksum(const char *sentence);
@@ -26,9 +23,10 @@ static int split_nmea_fields(const char *sentence, char **fields, int max_fields
 static double parse_nmea_coordinate(const char *coord_str, char direction);
 static time_t parse_nmea_time(const char *time_str);
 static time_t parse_nmea_datetime(const char *time_str, const char *date_str);
-static time_t parse_nmea_datetime(const char *time_str, const char *date_str);
 static double estimate_accuracy_from_hdop(double hdop);
 
+// NMEA sentence types
+static const char* NMEA_SENTENCE_TYPES[] = {
     "GPGGA", "GPGLL", "GPGSA", "GPGSV", "GPRMC", "GPVTG", "GPZDA", "GPDTM"
 };
 
