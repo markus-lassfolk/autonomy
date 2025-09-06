@@ -58,6 +58,10 @@ typedef struct {
     double cloud_cover;                  // Cloud cover percentage
     weather_condition_t weather_condition; // Weather condition
     int air_quality_index;               // Air quality index
+    char description[128];                // Weather description
+    char icon[16];                        // Weather icon code
+    double lat;                           // Latitude
+    double lon;                           // Longitude
 } gps_weather_current_t;
 
 // Weather forecast information

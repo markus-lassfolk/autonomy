@@ -57,15 +57,7 @@ typedef struct {
     time_t recorded_at;                    // When event was recorded
 } starlink_event_t;
 
-// Starlink outage structure
-typedef struct {
-    starlink_outage_cause_t cause;         // Outage cause
-    uint64_t start_timestamp_ns;           // Start timestamp in nanoseconds
-    uint64_t duration_ns;                  // Duration in nanoseconds
-    bool did_switch;                       // Whether failover occurred
-    time_t recorded_at;                    // When outage was recorded
-    char cause_description[128];           // Cause description
-} starlink_outage_t;
+// Note: starlink_outage_t is defined in starlink_types.h
 
 // Comprehensive Starlink GPS data (combining all APIs)
 typedef struct {

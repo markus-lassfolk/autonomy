@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <time.h>
+#include <sys/time.h>
 #include <math.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -33,6 +34,12 @@ static pthread_mutex_t g_starlink_gps_mutex = PTHREAD_MUTEX_INITIALIZER;
 static bool g_starlink_gps_initialized = false;
 static pthread_t g_starlink_gps_thread = 0;
 static bool g_starlink_gps_thread_running = false;
+
+// Forward declarations
+void* starlink_gps_monitor_thread(void *arg);
+static bool extract_gps_from_starlink_api(void);
+static bool parse_gps_from_response(const char *response);
+void calculate_gps_reliability(void);
 
 // Initialize Starlink GPS system
 int gps_starlink_init(void) {
@@ -117,7 +124,7 @@ void gps_starlink_stop_monitoring(void) {
 }
 
 // Starlink GPS monitoring thread
-static void* starlink_gps_monitor_thread(void *arg) {
+void* starlink_gps_monitor_thread(void *arg) {
     (void)arg;
     
     LOGX_INFO_MSG("Starlink GPS monitoring thread started");
@@ -324,7 +331,7 @@ static bool parse_gps_from_response(const char *response) {
 // Simulation removed - production system uses only real data
 
 // Calculate GPS reliability score
-static void calculate_gps_reliability(void) {
+void calculate_gps_reliability(void) {
     double reliability = 0.0;
     
     // Base reliability on fix quality
