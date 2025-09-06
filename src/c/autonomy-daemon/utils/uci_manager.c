@@ -306,58 +306,58 @@ static int uci_manager_save_config(const autonomy_config_t *config) {
     struct uci_section *general = uci_add_section(g_uci_ctx, pkg, "general", "general");
     if (general) {
         uci_set(g_uci_ctx, general, "daemon_mode", config->daemon_mode ? "1" : "0");
-        uci_set(g_uci_ctx, general, "debug_mode");
+        uci_set(g_uci_ctx, general);
         uci_set(g_uci_ctx, general, "log_level", get_log_level_string(config->log_level));
-        uci_set(g_uci_ctx, general, "log_file");
+        uci_set(g_uci_ctx, general);
         uci_set(g_uci_ctx, general, "pid_file_timeout", int_to_string(config->pid_file_timeout));
     }
     
     // Create network section
-    struct uci_section *network = uci_add_section(g_uci_ctx, pkg, "network");
+    struct uci_section *network = uci_add_section(g_uci_ctx, pkg);
     if (network) {
         uci_set(g_uci_ctx, network, "check_interval", int_to_string(config->network_check_interval));
-        uci_set(g_uci_ctx, network, "failover_timeout"));
+        uci_set(g_uci_ctx, network));
         uci_set(g_uci_ctx, network, "auto_failover", config->auto_failover ? "1" : "0");
-        uci_set(g_uci_ctx, network, "min_interface_health"));
+        uci_set(g_uci_ctx, network));
         uci_set(g_uci_ctx, network, "mwan3_integration", config->mwan3_integration ? "1" : "0");
     }
     
     // Create GPS section
-    struct uci_section *gps = uci_add_section(g_uci_ctx, pkg, "gps");
+    struct uci_section *gps = uci_add_section(g_uci_ctx, pkg);
     if (gps) {
         uci_set(g_uci_ctx, gps, "update_interval", int_to_string(config->gps_update_interval));
-        uci_set(g_uci_ctx, gps, "timeout"));
+        uci_set(g_uci_ctx, gps));
         uci_set(g_uci_ctx, gps, "fusion", config->gps_fusion ? "1" : "0");
-        uci_set(g_uci_ctx, gps, "cache_timeout"));
+        uci_set(g_uci_ctx, gps));
         uci_set(g_uci_ctx, gps, "min_accuracy", float_to_string(config->min_gps_accuracy));
     }
     
     // Create Starlink section
-    struct uci_section *starlink = uci_add_section(g_uci_ctx, pkg, "starlink");
+    struct uci_section *starlink = uci_add_section(g_uci_ctx, pkg);
     if (starlink) {
         uci_set(g_uci_ctx, starlink, "host", config->starlink_host);
-        uci_set(g_uci_ctx, starlink, "port"));
+        uci_set(g_uci_ctx, starlink));
         uci_set(g_uci_ctx, starlink, "timeout", int_to_string(config->starlink_timeout));
-        uci_set(g_uci_ctx, starlink, "check_interval"));
+        uci_set(g_uci_ctx, starlink));
         uci_set(g_uci_ctx, starlink, "health_monitoring", config->starlink_health_monitoring ? "1" : "0");
     }
     
     // Create system section
-    struct uci_section *system = uci_add_section(g_uci_ctx, pkg, "system");
+    struct uci_section *system = uci_add_section(g_uci_ctx, pkg);
     if (system) {
         uci_set(g_uci_ctx, system, "check_interval", int_to_string(config->system_check_interval));
-        uci_set(g_uci_ctx, system, "resource_monitoring");
+        uci_set(g_uci_ctx, system);
         uci_set(g_uci_ctx, system, "service_monitoring", config->service_monitoring ? "1" : "0");
-        uci_set(g_uci_ctx, system, "alert_threshold"));
+        uci_set(g_uci_ctx, system));
     }
     
     // Create notifications section
     struct uci_section *notifications = uci_add_section(g_uci_ctx, pkg, "notifications", "notifications");
     if (notifications) {
         uci_set(g_uci_ctx, notifications, "enabled", config->notifications_enabled ? "1" : "0");
-        uci_set(g_uci_ctx, notifications, "webhook_url");
+        uci_set(g_uci_ctx, notifications);
         uci_set(g_uci_ctx, notifications, "email_smtp", config->email_smtp);
-        uci_set(g_uci_ctx, notifications, "email_from");
+        uci_set(g_uci_ctx, notifications);
         uci_set(g_uci_ctx, notifications, "email_to", config->email_to);
     }
     
@@ -365,7 +365,7 @@ static int uci_manager_save_config(const autonomy_config_t *config) {
     ret = uci_save(g_uci_ctx);
     if (ret != UCI_OK) {
         LOGX_ERROR_MSG("Failed to save UCI package");
-        uci_unload(g_uci_ctx, pkg);
+        uci_unload(g_uci_ctx);
         return AUTONOMY_ERROR_SYSTEM;
     }
     

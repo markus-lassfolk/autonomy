@@ -1,5 +1,5 @@
 #include "metered_manager.h"
-#include "logx.h"
+#include "../utils/logx.h"
 #include "../core/types.h"
 #include "../telemetry/cellular_collector.h"
 #include <stdlib.h>
