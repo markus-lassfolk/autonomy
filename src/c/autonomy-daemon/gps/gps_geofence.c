@@ -433,7 +433,7 @@ static double distance_to_line_segment(double px, double py, double x1, double y
 }
 
 // Handle geofence event
-static void handle_geofence_event(gps_geofence_definition_t *geofence, 
+void handle_geofence_event(gps_geofence_definition_t *geofence, 
                                  gps_geofence_status_t previous_status,
                                  const gps_data_t *gps_data) {
     time_t now = time(NULL);
