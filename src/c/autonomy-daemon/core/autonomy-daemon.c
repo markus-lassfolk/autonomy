@@ -56,7 +56,7 @@ struct autonomy_state g_state = {
 static starlink_tracker_t *g_starlink_tracker = NULL;
 
 // Global system health
-struct system_health g_system_health = {
+system_health_t g_system_health = {
     .status = "unknown",
     .starlink_health = 0,
     .uci_health = 0,

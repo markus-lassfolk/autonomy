@@ -365,6 +365,23 @@ typedef opencellid_radio_type_t opencellid_radio_t;
 
 // Note: opencellid_triangulation_result_t is defined in gps/opencellid_complete.h
 
+// System health structure
+typedef struct {
+    char status[32];                    // Overall status
+    int starlink_health;                // Starlink health score
+    int uci_health;                     // UCI health score
+    int overlay_health;                 // Overlay health score
+    int services_health;                // Services health score
+    int network_health;                 // Network health score
+    int database_health;                // Database health score
+    int time_health;                    // Time sync health score
+    int logs_health;                    // Logs health score
+    int gps_health;                     // GPS health score
+    int overall_health;                 // Overall health score
+    double overall_score;               // Overall score (0-100)
+    time_t last_check;                  // Last health check time
+} system_health_t;
+
 // Function declarations
 void log_message(log_level_t level, const char *format, ...);
 

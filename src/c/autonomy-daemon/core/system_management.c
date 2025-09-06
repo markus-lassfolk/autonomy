@@ -11,7 +11,7 @@
 extern struct autonomy_state g_state;
 
 // Global system health variable (defined in autonomy_types.h)
-struct system_health g_system_health = {0};
+system_health_t g_system_health = {0};
 
 // System health check functions
 int check_starlink_health(void) {
