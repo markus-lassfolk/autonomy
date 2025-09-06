@@ -21,7 +21,7 @@
 // Network discovery configuration
 static const int DISCOVERY_INTERVAL = 30;        // 30 seconds
 static const int INTERFACE_TIMEOUT = 300;        // 5 minutes
-static const int MAX_INTERFACES = 32;            // Maximum interfaces to track
+// Note: MAX_INTERFACES is defined in ../core/types.h
 static const char* INTERFACE_TYPES[] = {
     "ethernet", "wifi", "cellular", "vpn", "bridge", "vlan", "tunnel"
 };
@@ -32,6 +32,9 @@ static pthread_mutex_t g_discovery_mutex = PTHREAD_MUTEX_INITIALIZER;
 static bool g_discovery_initialized = false;
 static pthread_t g_discovery_thread = 0;
 static bool g_discovery_thread_running = false;
+
+// Forward declarations
+void* discovery_monitor_thread(void *arg);
 
 // Initialize network discovery system
 int network_discovery_init(void) {

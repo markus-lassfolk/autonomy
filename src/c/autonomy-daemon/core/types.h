@@ -242,6 +242,9 @@ typedef struct {
     network_metrics_t metrics;          // Current metrics
     bool enabled;                       // Interface enabled for failover
     bool up;                            // Interface is up (alias for is_up)
+    time_t last_seen;                   // Last time interface was seen
+    int index;                          // Interface index
+    bool discovered;                    // Interface was discovered
 } network_interface_t;
 
 // GPS geofence system status
