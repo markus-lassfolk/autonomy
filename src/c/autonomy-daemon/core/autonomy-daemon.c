@@ -31,7 +31,7 @@ struct autonomy_config g_config = {
     .config_file = "/etc/config/autonomy"
 };
 
-struct autonomy_state g_state = {
+autonomy_state_t g_state = {
     .running = 0,
     .start_time = 0,
     .health_checks_run = 0,

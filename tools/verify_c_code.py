@@ -1486,6 +1486,8 @@ class CCodeVerifier:
             self.fix_struct_member_issues(file_path)
             self.fix_enum_redeclarations(file_path)
             self.fix_macro_conflicts(file_path)
+            self.fix_missing_core_structs(file_path)
+            self.fix_function_signature_conflicts(file_path)
         
         self.log(f"Applied {len(self.fixes_applied)} automatic fixes")
     
@@ -1702,13 +1704,21 @@ class CCodeVerifier:
             
             original_content = content
             
-            # Common enum types that should be centralized (GPS module pattern)
+            # CORE MODULE LESSON: Don't remove enums from central types.h file
+            if 'types.h' in file_path:
+                self.log(f"Skipping enum cleanup for central types file: {file_path}")
+                return
+            
+            # Common enum types that should be centralized (GPS + Core module patterns)
             centralized_enums = [
                 'gps_source_type_t',
                 'gps_module_type_t', 
                 'opencellid_radio_type_t',
                 'gps_error_type_t',
-                'gps_recovery_strategy_t'
+                'gps_recovery_strategy_t',
+                # Core module patterns
+                'log_level_t',
+                'autonomy_error_t'
             ]
             
             lines = content.split('\n')
@@ -1804,6 +1814,9 @@ class CCodeVerifier:
         
         # Additional RUTOS-specific fixes
         c_files = self.find_c_files(directory, ["*.c", "*.h"])
+        
+        # Core module pattern: Check for missing Starlink obstruction types
+        self.fix_missing_starlink_types(directory)
         
         for file_path in c_files:
             try:
@@ -1976,6 +1989,199 @@ class CCodeVerifier:
                     
         except Exception as e:
             self.log(f"Error adding comprehensive includes in {file_path}: {e}", "error")
+    
+    def fix_missing_core_structs(self, file_path: str):
+        """Detect and suggest fixes for missing core struct definitions (Core module pattern)"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Core structs that are commonly missing (based on core module experience)
+            missing_core_structs = {
+                'system_health': {
+                    'fields': [
+                        'char status[32]',
+                        'int starlink_health', 'int uci_health', 'int overlay_health',
+                        'int services_health', 'int network_health', 'int database_health',
+                        'int time_health', 'int logs_health', 'int gps_health',
+                        'int overall_health', 'double overall_score', 'time_t last_check'
+                    ],
+                    'typedef_name': 'system_health_t'
+                },
+                'autonomy_state': {
+                    'fields': [
+                        'bool running', 'bool gps_enabled', 'double current_lat',
+                        'double current_lon', 'double current_accuracy', 'double current_confidence',
+                        'time_t last_gps_update', 'char location_status[32]',
+                        'bool movement_detected', 'time_t last_movement_check'
+                    ],
+                    'typedef_name': 'autonomy_state_t'
+                },
+                'autonomy_config': {
+                    'fields': [
+                        'bool debug_mode', 'char log_file[256]', 'char pid_file[256]',
+                        'int pid_file_timeout', 'int update_interval', 'int health_check_interval'
+                    ],
+                    'typedef_name': 'autonomy_config_t'
+                }
+            }
+            
+            # Check for usage of these structs
+            for struct_name, struct_info in missing_core_structs.items():
+                if f'struct {struct_name}' in content or f'{struct_info["typedef_name"]}' in content:
+                    # Check if this looks like it needs the struct definition
+                    if ('has no member named' in content or 
+                        'incomplete type' in content or 
+                        'storage size' in content):
+                        
+                        self.add_result(
+                            file_path,
+                            f"Missing core struct definition: {struct_name}",
+                            "error",
+                            0,
+                            "missing_core_struct",
+                            f"Add {struct_info['typedef_name']} definition to types.h with fields: {', '.join(struct_info['fields'][:3])}..."
+                        )
+                        
+                        # If this is types.h, we could automatically add the definition
+                        if 'types.h' in file_path and self.fix_mode:
+                            self.add_core_struct_definition(file_path, struct_name, struct_info)
+                            
+        except Exception as e:
+            self.log(f"Error checking core structs in {file_path}: {e}", "error")
+    
+    def add_core_struct_definition(self, file_path: str, struct_name: str, struct_info: dict):
+        """Add missing core struct definition to types.h"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Generate struct definition
+            struct_def = f"\n// {struct_name.title().replace('_', ' ')} structure\n"
+            struct_def += f"typedef struct {{\n"
+            for field in struct_info['fields']:
+                struct_def += f"    {field};\n"
+            struct_def += f"}} {struct_info['typedef_name']};\n"
+            
+            # Find a good place to insert (before function declarations)
+            lines = content.split('\n')
+            insert_idx = -1
+            
+            for i, line in enumerate(lines):
+                if 'Function declarations' in line or 'void log_message' in line:
+                    insert_idx = i
+                    break
+            
+            if insert_idx > 0:
+                lines.insert(insert_idx, struct_def)
+                content = '\n'.join(lines)
+                
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                
+                self.fixes_applied.append(f"Added missing struct {struct_info['typedef_name']} to {file_path}")
+                self.log(f"Added missing struct {struct_info['typedef_name']} to {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error adding struct definition to {file_path}: {e}", "error")
+    
+    def fix_function_signature_conflicts(self, file_path: str):
+        """Detect function signature conflicts (Core module pattern)"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Common function signature conflicts found in core module
+            signature_conflicts = {
+                'starlink_get_collector_stats': {
+                    'expected_return': 'int',
+                    'common_wrong_return': 'void',
+                    'suggestion': 'Change return type to int for consistency'
+                },
+                'log_message': {
+                    'expected_static': False,
+                    'suggestion': 'Remove static keyword - function should be public'
+                }
+            }
+            
+            lines = content.split('\n')
+            
+            for i, line in enumerate(lines):
+                for func_name, conflict_info in signature_conflicts.items():
+                    if func_name in line:
+                        # Check for return type conflicts
+                        if 'expected_return' in conflict_info:
+                            wrong_return = conflict_info['common_wrong_return']
+                            correct_return = conflict_info['expected_return']
+                            
+                            if f'{wrong_return} {func_name}' in line:
+                                self.add_result(
+                                    file_path,
+                                    f"Function signature conflict: {func_name} should return {correct_return}, not {wrong_return}",
+                                    "error",
+                                    i + 1,
+                                    "function_signature_conflict",
+                                    conflict_info['suggestion']
+                                )
+                        
+                        # Check for static conflicts
+                        if 'expected_static' in conflict_info:
+                            if not conflict_info['expected_static'] and f'static ' in line and func_name in line:
+                                self.add_result(
+                                    file_path,
+                                    f"Function should not be static: {func_name}",
+                                    "error",
+                                    i + 1,
+                                    "static_function_conflict",
+                                    conflict_info['suggestion']
+                                )
+                                
+        except Exception as e:
+            self.log(f"Error checking function signatures in {file_path}: {e}", "error")
+    
+    def fix_missing_starlink_types(self, directory: str):
+        """Fix missing Starlink obstruction types (Core module pattern)"""
+        # Check if we need to add missing Starlink obstruction types
+        starlink_types_needed = [
+            'starlink_obstruction_sample_t',
+            'starlink_obstruction_status_t', 
+            'starlink_environmental_pattern_t',
+            'starlink_active_match_t',
+            'starlink_match_result_t',
+            'starlink_obstruction_config_t'
+        ]
+        
+        # Check if any files reference these types
+        c_files = self.find_c_files(directory, ["*.c", "*.h"])
+        types_referenced = set()
+        
+        for file_path in c_files:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                for type_name in starlink_types_needed:
+                    if type_name in content:
+                        types_referenced.add(type_name)
+                        
+            except Exception as e:
+                continue
+        
+        if types_referenced:
+            self.log(f"Found references to missing Starlink types: {types_referenced}")
+            
+            # Add suggestion to define these types
+            for file_path in c_files:
+                if 'types.h' in file_path:
+                    for type_name in types_referenced:
+                        self.add_result(
+                            file_path,
+                            f"Missing Starlink obstruction type: {type_name}",
+                            "error",
+                            0,
+                            "missing_starlink_type",
+                            f"Define {type_name} in starlink obstruction headers or add forward declaration"
+                        )
 
 def main():
     """Main entry point"""

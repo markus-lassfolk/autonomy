@@ -20,7 +20,7 @@ int starlink_collector_init(int collection_interval);
 bool starlink_should_collect(void);
 int starlink_collect_data(starlink_collection_result_t *result);
 int starlink_get_cached_data(starlink_collection_result_t *result);
-void starlink_get_collector_stats(int *cache_hits, int *cache_misses, int *errors, int *successes);
+int starlink_get_collector_stats(int *cache_hits, int *cache_misses, int *errors, int *successes);
 void starlink_set_collection_interval(int interval_seconds);
 void starlink_set_collection_enabled(bool enabled);
 int starlink_force_collect(starlink_collection_result_t *result);

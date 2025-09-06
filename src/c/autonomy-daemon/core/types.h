@@ -365,6 +365,14 @@ typedef opencellid_radio_type_t opencellid_radio_t;
 
 // Note: opencellid_triangulation_result_t is defined in gps/opencellid_complete.h
 
+// Forward declarations for Starlink obstruction types (Core module pattern)
+typedef struct starlink_obstruction_sample starlink_obstruction_sample_t;
+typedef struct starlink_obstruction_status starlink_obstruction_status_t;
+typedef struct starlink_environmental_pattern starlink_environmental_pattern_t;
+typedef struct starlink_active_match starlink_active_match_t;
+typedef struct starlink_match_result starlink_match_result_t;
+typedef struct starlink_obstruction_config starlink_obstruction_config_t;
+
 // System health structure
 typedef struct {
     char status[32];                    // Overall status
@@ -381,6 +389,28 @@ typedef struct {
     double overall_score;               // Overall score (0-100)
     time_t last_check;                  // Last health check time
 } system_health_t;
+
+// Autonomy state structure
+typedef struct {
+    bool running;                       // Whether daemon is running
+    bool gps_enabled;                   // GPS system enabled
+    double current_lat;                 // Current latitude
+    double current_lon;                 // Current longitude
+    double current_accuracy;            // Current GPS accuracy
+    double current_confidence;          // Current GPS confidence
+    time_t last_gps_update;             // Last GPS update time
+    char location_status[32];           // Location status string
+    bool movement_detected;             // Movement detection flag
+    time_t last_movement_check;         // Last movement check time
+    time_t start_time;                  // Daemon start time
+    int health_checks_run;              // Number of health checks run
+    int health_issues_found;            // Number of health issues found
+    int interface_count;                // Number of network interfaces
+    bool failover_enabled;              // Network failover enabled
+    double network_health_score;        // Network health score
+    int gps_source_count;               // Number of GPS sources
+    double gps_health_score;            // GPS health score
+} autonomy_state_t;
 
 // Function declarations
 void log_message(log_level_t level, const char *format, ...);
