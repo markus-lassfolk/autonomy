@@ -1,9 +1,10 @@
 #include "telemetry_comprehensive_ubus.h"
 #include "telemetry_comprehensive.h"
+#include "telemetry_store.h"
 #include "../core/types.h"
 #include "../utils/logx.h"
-// #include <libubus.h> // Not available in current toolchain
-// #include <libubox/blobmsg_json.h> // Not available in current toolchain
+#include <libubus.h>
+#include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,36 +15,8 @@
 #include <math.h>
 #include <fcntl.h>
 
-// UBUS constants and function stubs
+// UBUS constants
 #define UBUS_STATUS_OK 0
-
-// UBUS function stubs (since UBUS headers not fully available)
-int blobmsg_add_string(struct blob_buf *buf, const char *name, const char *val) { return 0; }
-int blobmsg_add_u32(struct blob_buf *buf, const char *name, uint32_t val) { return 0; }
-int blobmsg_add_u8(struct blob_buf *buf, const char *name, uint8_t val) { return 0; }
-int blobmsg_add_double(struct blob_buf *buf, const char *name, double val) { return 0; }
-int blob_buf_init(struct blob_buf *buf, int id) { return 0; }
-void blob_buf_free(struct blob_buf *buf) { }
-int ubus_send_reply(struct ubus_context *ctx, struct ubus_request_data *req, struct blob_buf *buf) { return 0; }
-struct blob_attr *blobmsg_data(const struct blob_attr *attr) { return NULL; }
-int blobmsg_data_len(const struct blob_attr *attr) { return 0; }
-void *blobmsg_open_table(struct blob_buf *buf, const char *name) { return NULL; }
-void *blobmsg_open_array(struct blob_buf *buf, const char *name) { return NULL; }
-void blobmsg_close_table(struct blob_buf *buf, void *cookie) { }
-void blobmsg_close_array(struct blob_buf *buf, void *cookie) { }
-
-// Forward declarations for UBUS types
-struct ubus_context;
-struct ubus_object;
-struct ubus_request_data;
-struct blob_attr;
-
-// Simple blob_buf definition for compilation
-struct blob_buf {
-    void *head;
-    int buflen;
-    void *buf;
-};
 
 // UBUS parameter policies
 enum {
@@ -55,8 +28,6 @@ enum {
     __TELEMETRY_HISTORICAL_MAX
 };
 
-// UBUS policy arrays disabled due to blobmsg_policy complexity
-/*
 static const struct blobmsg_policy telemetry_historical_policy[] = {
     [TELEMETRY_MEMBER_NAME] = { .name = "member_name", .type = BLOBMSG_TYPE_STRING },
     [TELEMETRY_START_TIME] = { .name = "start_time", .type = BLOBMSG_TYPE_INT32 },
@@ -64,7 +35,6 @@ static const struct blobmsg_policy telemetry_historical_policy[] = {
     [TELEMETRY_LIMIT] = { .name = "limit", .type = BLOBMSG_TYPE_INT32 },
     [TELEMETRY_INCLUDE_GPS] = { .name = "include_gps", .type = BLOBMSG_TYPE_BOOL },
 };
-*/
 
 enum {
     TELEMETRY_LOCATION_LAT,
@@ -75,7 +45,6 @@ enum {
     __TELEMETRY_LOCATION_MAX
 };
 
-/*
 static const struct blobmsg_policy telemetry_location_policy[] = {
     [TELEMETRY_LOCATION_LAT] = { .name = "latitude", .type = BLOBMSG_TYPE_DOUBLE },
     [TELEMETRY_LOCATION_LON] = { .name = "longitude", .type = BLOBMSG_TYPE_DOUBLE },
@@ -83,7 +52,6 @@ static const struct blobmsg_policy telemetry_location_policy[] = {
     [TELEMETRY_LOCATION_MEMBER] = { .name = "member_name", .type = BLOBMSG_TYPE_STRING },
     [TELEMETRY_LOCATION_LIMIT] = { .name = "limit", .type = BLOBMSG_TYPE_INT32 },
 };
-*/
 
 // Helper function to add telemetry sample to blob
 void add_telemetry_sample_to_blob(struct blob_buf *bb, const telemetry_sample_t *sample) {
@@ -113,7 +81,7 @@ void add_telemetry_sample_to_blob(struct blob_buf *bb, const telemetry_sample_t 
     blobmsg_add_double(bb, "packet_loss_percent", sample->packet_loss_percent);
     blobmsg_add_double(bb, "jitter_ms", sample->jitter_ms);
     blobmsg_add_u64(bb, "throughput_bps", sample->throughput_bps);
-    blobmsg_add_double(bb, "signal_quality", sample->signal_quality);
+    blobmsg_add_double(bb, "signal_quality", sample->signal_strength);
     blobmsg_add_string(bb, "status", sample->status);
     blobmsg_close_table(bb, network_table);
     
@@ -412,7 +380,6 @@ int telemetry_comprehensive_ubus_get_decision_history(struct ubus_context *ctx, 
 // Additional UBUS method implementations would continue here...
 
 // UBUS method definitions
-/*
 const struct ubus_method telemetry_comprehensive_ubus_methods[] = {
     UBUS_METHOD_NOARG("get_statistics", telemetry_comprehensive_ubus_get_statistics),
     UBUS_METHOD("get_historical_samples", telemetry_comprehensive_ubus_get_historical_samples, telemetry_historical_policy),
@@ -425,6 +392,5 @@ const struct ubus_method telemetry_comprehensive_ubus_methods[] = {
     UBUS_METHOD_NOARG("force_cleanup", telemetry_comprehensive_ubus_force_cleanup),
     UBUS_METHOD_NOARG("health_check", telemetry_comprehensive_ubus_health_check),
 };
-*/
 
-// const int telemetry_comprehensive_ubus_methods_count = ARRAY_SIZE(telemetry_comprehensive_ubus_methods); // Disabled
+const int telemetry_comprehensive_ubus_methods_count = ARRAY_SIZE(telemetry_comprehensive_ubus_methods);

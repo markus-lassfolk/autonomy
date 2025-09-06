@@ -1,10 +1,10 @@
 #ifndef TELEMETRY_COMPREHENSIVE_UBUS_H
 #define TELEMETRY_COMPREHENSIVE_UBUS_H
 
-// #include <libubus.h> // Not available in current toolchain
-// #include <libubox/blobmsg_json.h> // Not available in current toolchain
+#include <libubus.h>
+#include <libubox/blobmsg_json.h>
 
-// Forward declarations for UBUS types
+// Forward declarations for UBUS types (if needed)
 struct ubus_context;
 struct ubus_object;
 struct ubus_request_data;
@@ -265,8 +265,8 @@ int telemetry_comprehensive_ubus_health_check(struct ubus_context *ctx, struct u
                                              struct blob_attr *msg);
 
 // UBUS method definitions
-// extern const struct ubus_method telemetry_comprehensive_ubus_methods[]; // Disabled due to UBUS complexity
-// extern const int telemetry_comprehensive_ubus_methods_count; // Disabled due to UBUS complexity
+extern const struct ubus_method telemetry_comprehensive_ubus_methods[];
+extern const int telemetry_comprehensive_ubus_methods_count;
 
 #ifdef __cplusplus
 }

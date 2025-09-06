@@ -2,7 +2,17 @@
 #define METRICS_SERVER_H
 
 #include "telemetry_store.h"
-// #include <microhttpd.h> // Not available in current toolchain
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+// Custom HTTP daemon structure (replacing MHD_Daemon)
+typedef struct {
+    int socket_fd;                          // Server socket file descriptor
+    struct sockaddr_in server_addr;         // Server address
+    bool running;                           // Server running status
+    pthread_t server_thread;                // Server thread
+} custom_http_daemon_t;
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
@@ -40,7 +50,7 @@ typedef struct {
     metrics_server_status_t status;
     
     // HTTP daemon
-    struct MHD_Daemon* daemon;
+    custom_http_daemon_t* daemon;
     
     // Mutex for thread safety
     pthread_mutex_t* mutex;

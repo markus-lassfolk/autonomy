@@ -1,8 +1,8 @@
 #include "telemetry_comprehensive.h"
 #include "../gps/gps_comprehensive.h"
 #include "../gps/gps_location_reference.h"
-// #include "cellular_collector.h" // Not available
-// #include "wifi_enhanced.h" // Not available
+#include "cellular_collector.h"
+#include "wifi_enhanced.h"
 #include "../starlink/starlink_comprehensive.h"
 #include "../analytics/performance_monitor.h"
 #include "../utils/logx.h"
@@ -20,12 +20,64 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 
+// Database schema SQL
+static const char* TELEMETRY_SCHEMA_SQL = 
+    "CREATE TABLE IF NOT EXISTS telemetry_samples ("
+    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+    "timestamp INTEGER NOT NULL,"
+    "member_name TEXT NOT NULL,"
+    "interface_name TEXT,"
+    "latitude REAL,"
+    "longitude REAL,"
+    "accuracy REAL,"
+    "satellites INTEGER,"
+    "hdop REAL,"
+    "gps_source TEXT,"
+    "movement_kmh REAL,"
+    "latency_ms REAL,"
+    "packet_loss_percent REAL,"
+    "jitter_ms REAL,"
+    "throughput_bps INTEGER,"
+    "signal_strength REAL,"
+    "status TEXT,"
+    "obstruction_percent REAL,"
+    "snr_db REAL,"
+    "temperature_c REAL,"
+    "outage_count INTEGER,"
+    "pop_ping_drop_rate REAL,"
+    "rsrp_dbm REAL,"
+    "rsrq_db REAL,"
+    "sinr_db REAL,"
+    "carrier TEXT,"
+    "cell_id INTEGER,"
+    "cell_changes INTEGER,"
+    "wifi_rssi_dbm REAL,"
+    "wifi_channel INTEGER,"
+    "wifi_ssid TEXT,"
+    "wifi_noise_floor REAL,"
+    "cpu_usage_percent REAL,"
+    "memory_usage_percent REAL,"
+    "disk_usage_percent REAL,"
+    "load_avg_1min REAL,"
+    "overall_score REAL,"
+    "reliability_score REAL,"
+    "predictive_risk REAL,"
+    "is_active_interface INTEGER,"
+    "collection_method TEXT,"
+    "collection_time_ms REAL"
+    ");"
+    "CREATE INDEX IF NOT EXISTS idx_telemetry_timestamp ON telemetry_samples(timestamp);"
+    "CREATE INDEX IF NOT EXISTS idx_telemetry_member ON telemetry_samples(member_name);"
+    "CREATE INDEX IF NOT EXISTS idx_telemetry_interface ON telemetry_samples(interface_name);";
+
 // Global telemetry comprehensive system
 static telemetry_comprehensive_t g_telemetry_comprehensive = {0};
 static bool g_telemetry_comprehensive_initialized = false;
 
-// SQL schema for telemetry database
-static const char* TELEMETRY_SCHEMA_SQL = 
+// Note: TELEMETRY_SCHEMA_SQL is defined above (removed duplicate)
+/*
+// Duplicate schema definition removed - using the one defined above
+static const char* TELEMETRY_SCHEMA_SQL_DUPLICATE = 
     "CREATE TABLE IF NOT EXISTS telemetry_samples ("
     "    id INTEGER PRIMARY KEY AUTOINCREMENT,"
     "    timestamp INTEGER NOT NULL,"
@@ -71,7 +123,7 @@ static const char* TELEMETRY_SCHEMA_SQL =
     "CREATE INDEX IF NOT EXISTS idx_telemetry_timestamp ON telemetry_samples(timestamp);"
     "CREATE INDEX IF NOT EXISTS idx_telemetry_member ON telemetry_samples(member_name);"
     "CREATE INDEX IF NOT EXISTS idx_telemetry_location ON telemetry_samples(location_reference_id);"
-    "CREATE INDEX IF NOT EXISTS idx_telemetry_active ON telemetry_samples(is_active_interface);"
+    "CREATE INDEX IF NOT EXISTS idx_telemetry_active ON telemetry_samples(is_active_interface);"; // End of duplicate - commented out above
     
     "CREATE TABLE IF NOT EXISTS decision_records ("
     "    id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -112,6 +164,7 @@ static const char* TELEMETRY_SCHEMA_SQL =
     "CREATE INDEX IF NOT EXISTS idx_decisions_type ON decision_records(decision_type);"
     "CREATE INDEX IF NOT EXISTS idx_decisions_location ON decision_records(location_reference_id);"
     "CREATE INDEX IF NOT EXISTS idx_decisions_interfaces ON decision_records(from_interface, to_interface);";
+*/
 
 // Forward declarations
 static void* collection_thread_worker(void* arg);
@@ -309,7 +362,8 @@ int telemetry_comprehensive_collect_sample(const char* member_name,
     telemetry_sample_t* buffer_sample = &g_telemetry_comprehensive.samples_buffer[g_telemetry_comprehensive.samples_buffer_head];
     *buffer_sample = *sample;
     
-    buffer_sample->id = g_telemetry_comprehensive.next_sample_id++;
+    snprintf(buffer_sample->id, sizeof(buffer_sample->id), "sample_%lu_%d", 
+             time(NULL), g_telemetry_comprehensive.next_sample_id++);
     buffer_sample->timestamp = time(NULL);
     strncpy(buffer_sample->member_name, member_name, sizeof(buffer_sample->member_name) - 1);
     buffer_sample->member_name[sizeof(buffer_sample->member_name) - 1] = '\0';
@@ -335,7 +389,7 @@ int telemetry_comprehensive_collect_sample(const char* member_name,
                 buffer_sample->gps_source[sizeof(buffer_sample->gps_source) - 1] = '\0';
                 
                 // Update location usage with performance metrics
-                gps_location_reference_update_usage(location_id, sample->signal_quality, sample->latency_ms);
+                gps_location_reference_update_usage(location_id, sample->signal_strength, sample->latency_ms);
                 
                 LOGX_DEBUG_MSG("Using GPS location reference",
                           "location_id", location_id,
@@ -461,20 +515,31 @@ int telemetry_db_init(void) {
     }
     
     // Open database
-    // Database functionality disabled due to sqlite3 dependency
-    g_telemetry_comprehensive.db = NULL;
-    int result = 0; // Success
-    // Database error handling disabled
-    if (result != 0) {
+    int result = sqlite3_open(g_telemetry_comprehensive.config.database_path, &g_telemetry_comprehensive.db);
+    if (result != SQLITE_OK) {
         LOGX_ERROR_MSG("Failed to open telemetry database",
-                  "path", g_telemetry_comprehensive.config.database_path);
+                  "path", g_telemetry_comprehensive.config.database_path,
+                  "error", sqlite3_errmsg(g_telemetry_comprehensive.db));
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    // Database schema creation disabled due to sqlite3 dependency
-    LOGX_INFO_MSG("Database schema creation skipped - sqlite3 not available");
+    // Execute schema creation
+    char* error_msg = NULL;
+    result = sqlite3_exec(g_telemetry_comprehensive.db, TELEMETRY_SCHEMA_SQL, NULL, NULL, &error_msg);
+    if (result != SQLITE_OK) {
+        LOGX_ERROR_MSG("Failed to create telemetry database schema",
+                  "error", error_msg);
+        sqlite3_free(error_msg);
+        sqlite3_close(g_telemetry_comprehensive.db);
+        return AUTONOMY_ERROR_SYSTEM;
+    }
     
-    // WAL mode configuration disabled due to sqlite3 dependency
+    // Enable WAL mode for better performance
+    result = sqlite3_exec(g_telemetry_comprehensive.db, "PRAGMA journal_mode=WAL;", NULL, NULL, &error_msg);
+    if (result != SQLITE_OK) {
+        LOGX_WARN_MSG("Failed to enable WAL mode", "error", error_msg);
+        sqlite3_free(error_msg);
+    }
     
     LOGX_INFO_MSG("Telemetry database initialized",
              "path", g_telemetry_comprehensive.config.database_path);
@@ -569,7 +634,7 @@ static int collect_current_telemetry(void) {
                 sample.latitude = gps_data.latitude;
                 sample.longitude = gps_data.longitude;
                 sample.accuracy = gps_data.accuracy;
-                sample.satellites = gps_data.satellites;
+                sample.satellites = gps_data.satellites_used;
                 sample.hdop = gps_data.hdop;
                 strncpy(sample.gps_source, gps_data.source, sizeof(sample.gps_source) - 1);
                 sample.gps_source[sizeof(sample.gps_source) - 1] = '\0';
@@ -583,7 +648,7 @@ static int collect_current_telemetry(void) {
             strncpy(sample.carrier, cellular_info.operator, sizeof(sample.carrier) - 1);
             sample.carrier[sizeof(sample.carrier) - 1] = '\0';
             sample.cell_id = cellular_info.cell_id;
-            sample.signal_quality = cellular_info.signal_quality / 100.0;
+            sample.signal_strength = cellular_info.signal_quality / 100.0;
             sample.overall_score = cellular_info.reliability_score * 100.0;
             sample.predictive_risk = cellular_info.predictive_risk;
             strcpy(sample.collection_method, "cellular_collector");
@@ -623,14 +688,84 @@ static int collect_current_telemetry(void) {
 
 // Insert sample to database
 static int insert_sample_to_database(const telemetry_sample_t* sample) {
-    if (!sample) {
+    if (!sample || !g_telemetry_comprehensive.db) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    // Database functionality disabled due to sqlite3 dependency
-    // In a real implementation, this would insert the sample to SQLite database
-    LOGX_DEBUG_MSG("Database insert skipped - sqlite3 not available", 
-                  "member", sample->member_name);
+    const char* sql = 
+        "INSERT INTO telemetry_samples ("
+        "timestamp, member_name, interface_name, latitude, longitude, accuracy, "
+        "satellites, hdop, gps_source, movement_kmh, latency_ms, packet_loss_percent, "
+        "jitter_ms, throughput_bps, signal_quality, status, obstruction_percent, "
+        "snr_db, temperature_c, outage_count, pop_ping_drop_rate, rsrp_dbm, rsrq_db, "
+        "sinr_db, carrier, cell_id, cell_changes, wifi_rssi_dbm, wifi_channel, "
+        "wifi_ssid, wifi_noise_floor, cpu_usage_percent, memory_usage_percent, "
+        "disk_usage_percent, load_avg_1min, overall_score, reliability_score, "
+        "predictive_risk, is_active_interface, collection_method, collection_time_ms"
+        ") VALUES ("
+        "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
+        "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+        ");";
+    
+    sqlite3_stmt* stmt;
+    int result = sqlite3_prepare_v2(g_telemetry_comprehensive.db, sql, -1, &stmt, NULL);
+    if (result != SQLITE_OK) {
+        LOGX_ERROR_MSG("Failed to prepare telemetry insert statement", "error", sqlite3_errmsg(g_telemetry_comprehensive.db));
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Bind parameters
+    int param = 1;
+    sqlite3_bind_int64(stmt, param++, sample->timestamp);
+    sqlite3_bind_text(stmt, param++, sample->member_name, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, param++, sample->interface_name, -1, SQLITE_STATIC);
+    sqlite3_bind_double(stmt, param++, sample->latitude);
+    sqlite3_bind_double(stmt, param++, sample->longitude);
+    sqlite3_bind_double(stmt, param++, sample->accuracy);
+    sqlite3_bind_int(stmt, param++, sample->satellites);
+    sqlite3_bind_double(stmt, param++, sample->hdop);
+    sqlite3_bind_text(stmt, param++, sample->gps_source, -1, SQLITE_STATIC);
+    sqlite3_bind_double(stmt, param++, sample->movement_kmh);
+    sqlite3_bind_double(stmt, param++, sample->latency_ms);
+    sqlite3_bind_double(stmt, param++, sample->packet_loss_percent);
+    sqlite3_bind_double(stmt, param++, sample->jitter_ms);
+    sqlite3_bind_int64(stmt, param++, sample->throughput_bps);
+    sqlite3_bind_double(stmt, param++, sample->signal_strength);
+    sqlite3_bind_text(stmt, param++, sample->status, -1, SQLITE_STATIC);
+    sqlite3_bind_double(stmt, param++, sample->obstruction_percent);
+    sqlite3_bind_double(stmt, param++, sample->snr_db);
+    sqlite3_bind_double(stmt, param++, sample->temperature_c);
+    sqlite3_bind_int(stmt, param++, sample->outage_count);
+    sqlite3_bind_double(stmt, param++, sample->pop_ping_drop_rate);
+    sqlite3_bind_double(stmt, param++, sample->rsrp_dbm);
+    sqlite3_bind_double(stmt, param++, sample->rsrq_db);
+    sqlite3_bind_double(stmt, param++, sample->sinr_db);
+    sqlite3_bind_text(stmt, param++, sample->carrier, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, param++, sample->cell_id);
+    sqlite3_bind_int(stmt, param++, sample->cell_changes);
+    sqlite3_bind_double(stmt, param++, sample->wifi_rssi_dbm);
+    sqlite3_bind_int(stmt, param++, sample->wifi_channel);
+    sqlite3_bind_text(stmt, param++, sample->wifi_ssid, -1, SQLITE_STATIC);
+    sqlite3_bind_double(stmt, param++, sample->wifi_noise_floor);
+    sqlite3_bind_double(stmt, param++, sample->cpu_usage_percent);
+    sqlite3_bind_double(stmt, param++, sample->memory_usage_percent);
+    sqlite3_bind_double(stmt, param++, sample->disk_usage_percent);
+    sqlite3_bind_double(stmt, param++, sample->load_avg_1min);
+    sqlite3_bind_double(stmt, param++, sample->overall_score);
+    sqlite3_bind_double(stmt, param++, sample->reliability_score);
+    sqlite3_bind_double(stmt, param++, sample->predictive_risk);
+    sqlite3_bind_int(stmt, param++, sample->is_active_interface ? 1 : 0);
+    sqlite3_bind_text(stmt, param++, sample->collection_method, -1, SQLITE_STATIC);
+    sqlite3_bind_double(stmt, param++, sample->collection_time_ms);
+    
+    // Execute statement
+    result = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    
+    if (result != SQLITE_DONE) {
+        LOGX_ERROR_MSG("Failed to insert telemetry sample", "error", sqlite3_errmsg(g_telemetry_comprehensive.db));
+        return AUTONOMY_ERROR_SYSTEM;
+    }
     
     return AUTONOMY_SUCCESS;
 }

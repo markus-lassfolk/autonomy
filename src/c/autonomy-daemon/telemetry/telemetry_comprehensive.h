@@ -5,73 +5,17 @@
 #include <stdint.h>
 #include <time.h>
 #include <pthread.h>
-// #include <sqlite3.h> // Not available in current toolchain
+#include <sqlite3.h>
 #include <math.h>
 #include <fcntl.h>
 #include <sys/socket.h>
+#include "telemetry_store.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// GPS-positioned telemetry sample
-typedef struct {
-    uint64_t id;                           // Unique sample ID
-    time_t timestamp;                      // Sample timestamp
-    char member_name[64];                  // Network member name (starlink, cellular, wifi)
-    char interface_name[32];               // Interface name (e.g., wwan0, wlan0)
-    
-    // GPS Position (optimized with location reference)
-    uint32_t location_reference_id;        // Reference to GPS location table (0 = no GPS)
-    double movement_kmh;                   // Movement speed in km/h
-    double gps_accuracy;                   // GPS accuracy at time of sample
-    char gps_source[32];                   // GPS source (rutos, starlink, opencellid)
-    
-    // Network Performance Metrics
-    double latency_ms;                     // Ping latency in milliseconds
-    double packet_loss_percent;            // Packet loss percentage
-    double jitter_ms;                      // Jitter in milliseconds
-    int64_t throughput_bps;                // Throughput in bits per second
-    double signal_quality;                 // Signal quality (0.0-1.0)
-    char status[32];                       // Interface status
-    
-    // Starlink-specific metrics
-    double obstruction_percent;            // Obstruction percentage
-    double snr_db;                         // Signal-to-noise ratio in dB
-    double temperature_c;                  // Temperature in Celsius
-    int outage_count;                      // Number of outages
-    double pop_ping_drop_rate;             // PoP ping drop rate
-    
-    // Cellular-specific metrics
-    double rsrp_dbm;                       // Reference Signal Received Power
-    double rsrq_db;                        // Reference Signal Received Quality
-    double sinr_db;                        // Signal-to-Interference-plus-Noise Ratio
-    char carrier[32];                      // Carrier name
-    int cell_id;                           // Cell tower ID
-    int cell_changes;                      // Number of cell changes
-    
-    // WiFi-specific metrics
-    double wifi_rssi_dbm;                  // WiFi signal strength
-    int wifi_channel;                      // WiFi channel
-    char wifi_ssid[64];                    // Connected SSID
-    double wifi_noise_floor;               // Noise floor
-    
-    // System metrics
-    double cpu_usage_percent;              // CPU usage
-    double memory_usage_percent;           // Memory usage
-    double disk_usage_percent;             // Disk usage
-    double load_avg_1min;                  // 1-minute load average
-    
-    // Quality scores
-    double overall_score;                  // Overall interface score
-    double reliability_score;              // Reliability score
-    double predictive_risk;                // Predictive failure risk (0.0-1.0)
-    
-    // Metadata
-    bool is_active_interface;              // Whether this is the active interface
-    char collection_method[32];            // Collection method used
-    double collection_time_ms;             // Time taken to collect data
-} telemetry_sample_t;
+// Note: telemetry_sample_t is now defined in telemetry_store.h
 
 // Failover/Failback decision record
 typedef struct {
@@ -191,7 +135,7 @@ typedef struct {
     telemetry_collection_statistics_t stats; // Statistics
     
     // Database connection
-    void* db;                              // Database connection (sqlite3 not available)
+    sqlite3* db;                           // SQLite database connection
     bool db_initialized;                   // Database initialization status
     
     // In-memory ring buffers (for performance)
