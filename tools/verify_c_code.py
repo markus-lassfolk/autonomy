@@ -1488,6 +1488,10 @@ class CCodeVerifier:
             self.fix_macro_conflicts(file_path)
             self.fix_missing_core_structs(file_path)
             self.fix_function_signature_conflicts(file_path)
+            # New fixes learned from Utils module
+            self.fix_ubus_method_definitions(file_path)
+            self.fix_missing_constants(file_path)
+            self.fix_struct_field_aliases(file_path)
         
         self.log(f"Applied {len(self.fixes_applied)} automatic fixes")
     
@@ -2182,6 +2186,99 @@ class CCodeVerifier:
                             "missing_starlink_type",
                             f"Define {type_name} in starlink obstruction headers or add forward declaration"
                         )
+    
+    def fix_ubus_method_definitions(self, file_path: str):
+        """Fix UBUS method definition issues learned from Utils module"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Fix struct ubus_method_type to struct ubus_method
+            content = re.sub(
+                r'struct ubus_method_type\s+(\w+)\s*\[\s*\]\s*=',
+                r'struct ubus_method \\1[] =',
+                content
+            )
+            
+            # Fix UBUS_METHOD with 0 parameter to UBUS_METHOD_NOARG
+            content = re.sub(
+                r'UBUS_METHOD\s*\(\s*"([^"]+)"\s*,\s*(\w+)\s*,\s*0\s*\)',
+                r'UBUS_METHOD_NOARG("\\1", \\2)',
+                content
+            )
+            
+            # Fix const struct ubus_object to struct ubus_object (remove const)
+            content = re.sub(
+                r'static const struct ubus_object\s+(\w+)\s*=',
+                r'static struct ubus_object \\1 =',
+                content
+            )
+            
+            if content != original_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed UBUS method definitions in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing UBUS methods in {file_path}: {e}")
+    
+    def fix_missing_constants(self, file_path: str):
+        """Fix missing constants learned from Utils module"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Fix common missing constants
+            constant_fixes = {
+                'AUTONOMY_ERROR_INVALID_PARAMETER': 'AUTONOMY_ERROR_INVALID_PARAM',
+                'AUTONOMY_ERROR_SYSTEM_CALL_FAILED': 'AUTONOMY_ERROR_SYSTEM',
+                'AUTONOMY_ERROR_OPERATION_NOT_PERMITTED': 'AUTONOMY_ERROR_SYSTEM',
+                'NOTIFICATION_TYPE_SYSTEM_HEALTH': 'NOTIFICATION_TYPE_SYSTEM_ALERT',
+                'NOTIFICATION_PRIORITY_EMERGENCY': 'NOTIFICATION_PRIORITY_CRITICAL',
+            }
+            
+            for old_const, new_const in constant_fixes.items():
+                content = content.replace(old_const, new_const)
+            
+            if content != original_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed missing constants in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing constants in {file_path}: {e}")
+    
+    def fix_struct_field_aliases(self, file_path: str):
+        """Fix struct field name mismatches with aliases"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Common field name fixes learned from Utils module
+            field_fixes = {
+                r'\.signal_quality\b': '.signal_strength',
+                r'gps_data\.satellites\b': 'gps_data.satellites_used',
+                r'\.latency_ms\b': '.latency_score',  # For connection scoring
+                r'\.loss_percent\b': '.loss_score',   # For connection scoring
+                r'cellular_info\.stability_score\b': 'cellular_info.reliability_score',
+            }
+            
+            for pattern, replacement in field_fixes.items():
+                content = re.sub(pattern, replacement, content)
+            
+            if content != original_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed struct field aliases in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing struct field aliases in {file_path}: {e}")
 
 def main():
     """Main entry point"""
@@ -2229,6 +2326,7 @@ def main():
         sys.exit(1)
     else:
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

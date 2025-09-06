@@ -1,7 +1,7 @@
 #ifndef WIFI_MANAGEMENT_H
 #define WIFI_MANAGEMENT_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
@@ -126,6 +126,7 @@ typedef struct {
 // Main WiFi management structure
 typedef struct {
     // Configuration
+    bool enabled;                     // WiFi management enabled
     wifi_management_config_t config;  // WiFi management configuration
     wifi_scheduler_config_t scheduler; // Scheduler configuration
     wifi_gps_integration_t gps_integration; // GPS integration
@@ -135,6 +136,13 @@ typedef struct {
     int optimization_count;            // Total optimizations
     int successful_optimizations;     // Successful optimizations
     int failed_optimizations;         // Failed optimizations
+    // Additional configuration fields
+    double movement_threshold;         // Movement threshold in meters
+    int stationary_time;              // Stationary time in seconds
+    bool nightly_optimization;        // Enable nightly optimization
+    int nightly_time;                 // Nightly optimization time (seconds since midnight)
+    double min_improvement;           // Minimum improvement threshold
+    double optimization_cooldown_s;    // Optimization cooldown in seconds
     
     // Storage
     wifi_interface_t interfaces[10];  // WiFi interfaces

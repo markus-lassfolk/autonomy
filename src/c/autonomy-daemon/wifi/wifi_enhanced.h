@@ -1,13 +1,15 @@
 #ifndef WIFI_ENHANCED_H
 #define WIFI_ENHANCED_H
 
-#include "types.h"
-#include "gps_comprehensive.h"
+#include "../core/types.h"
+#include "../gps/gps_comprehensive.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
 #include <pthread.h>
 #include <math.h>
+#include <unistd.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -252,6 +254,9 @@ typedef struct {
     // State
     bool initialized;                      // Initialization status
 } wifi_enhanced_management_t;
+
+// Global variable declaration
+extern wifi_enhanced_management_t g_wifi_enhanced;
 
 // Function prototypes
 

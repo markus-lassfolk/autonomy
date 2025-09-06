@@ -27,14 +27,14 @@ int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct ubus_re
                                              const char *method, struct blob_attr *msg);
 
 // UBUS method definitions
-static const struct ubus_method_type autonomy_overlay_management_methods[] = {
-    UBUS_METHOD("status", autonomy_overlay_management_status, 0),
-    UBUS_METHOD("config", autonomy_overlay_management_config, 0),
-    UBUS_METHOD("set_config", autonomy_overlay_management_set_config, 0),
-    UBUS_METHOD("set_enabled", autonomy_overlay_management_set_enabled, 0),
-    UBUS_METHOD("reset", autonomy_overlay_management_reset, 0),
-    UBUS_METHOD("check", autonomy_overlay_management_check, 0),
-    UBUS_METHOD("cleanup", autonomy_overlay_management_cleanup, 0),
+static const struct ubus_method autonomy_overlay_management_methods[] = {
+    UBUS_METHOD_NOARG("status", autonomy_overlay_management_status),
+    UBUS_METHOD_NOARG("config", autonomy_overlay_management_config),
+    UBUS_METHOD_NOARG("set_config", autonomy_overlay_management_set_config),
+    UBUS_METHOD_NOARG("set_enabled", autonomy_overlay_management_set_enabled),
+    UBUS_METHOD_NOARG("reset", autonomy_overlay_management_reset),
+    UBUS_METHOD_NOARG("check", autonomy_overlay_management_check),
+    UBUS_METHOD_NOARG("cleanup", autonomy_overlay_management_cleanup),
 };
 
 // UBUS object type
