@@ -374,6 +374,12 @@ typedef struct {
     double confidence;                  // Confidence level (0.0-1.0)
     time_t calculation_time;            // When position was calculated
     int method;                         // Triangulation method used
+    int cells_used;                     // Number of cells used
+    bool timing_advance_applied;        // Whether timing advance was applied
+    double timing_advance_constraint;   // Timing advance constraint
+    void* primary_cell;                 // Primary cell (opencellid_cell_location_t)
+    void* contributing_cells[10];       // Contributing cells
+    int contributing_cell_count;        // Number of contributing cells
 } opencellid_triangulation_result_t;
 
 // Function declarations
