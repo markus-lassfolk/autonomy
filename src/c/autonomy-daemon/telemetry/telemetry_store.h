@@ -1,7 +1,7 @@
 #ifndef TELEMETRY_STORE_H
 #define TELEMETRY_STORE_H
 
-#include "../autonomy_types.h"
+#include "../core/types.h"
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
