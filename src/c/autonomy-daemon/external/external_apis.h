@@ -1,7 +1,7 @@
 #ifndef EXTERNAL_APIS_H
 #define EXTERNAL_APIS_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>

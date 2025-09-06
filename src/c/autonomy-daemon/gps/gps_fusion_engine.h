@@ -1,6 +1,7 @@
 #ifndef GPS_FUSION_ENGINE_H
 #define GPS_FUSION_ENGINE_H
 
+#include "../core/types.h"
 #include "gps_comprehensive.h"
 #include <stdbool.h>
 #include <stdint.h>

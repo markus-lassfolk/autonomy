@@ -1,5 +1,5 @@
 #include "gps_weather.h"
-#include "external_apis.h"
+#include "../external/external_apis.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
 #include <string.h>

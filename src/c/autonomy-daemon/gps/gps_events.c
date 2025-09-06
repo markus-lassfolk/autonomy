@@ -163,7 +163,7 @@ int gps_events_create_event(const char *name, gps_event_type_t event_type,
 }
 
 // Generate unique event ID
-static int generate_event_id(void) {
+int generate_event_id(void) {
     static int next_id = 2000;
     return next_id++;
 }

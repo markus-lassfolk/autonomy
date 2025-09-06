@@ -1,6 +1,7 @@
 #ifndef OPENCELLID_UBUS_H
 #define OPENCELLID_UBUS_H
 
+#include "../core/types.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 

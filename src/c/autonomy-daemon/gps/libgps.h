@@ -1,6 +1,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "../core/types.h"
 
 #pragma once
 
