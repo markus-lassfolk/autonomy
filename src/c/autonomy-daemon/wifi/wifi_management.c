@@ -22,6 +22,9 @@ static const int VHT40_THRESHOLD = -75;              // VHT40 threshold in dBm
 static const int STRONG_RSSI_THRESHOLD = -60;        // Strong interferer threshold
 static const int WEAK_RSSI_THRESHOLD = -80;          // Weak interferer threshold
 
+// Forward declarations
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+
 // Global WiFi management state
 static wifi_management_t g_wifi_management = {0};
 static bool g_wifi_management_initialized = false;
@@ -114,7 +117,7 @@ int wifi_management_init(void) {
 }
 
 // Discover WiFi interfaces
-static int wifi_management_discover_interfaces(void) {
+int wifi_management_discover_interfaces(void) {
     if (!g_wifi_management_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -164,7 +167,7 @@ static int wifi_management_discover_interfaces(void) {
 }
 
 // Scan WiFi channels for interference
-static int wifi_management_scan_channels(const char *interface_name) {
+int wifi_management_scan_channels(const char *interface_name) {
     if (!g_wifi_management_initialized || !interface_name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -235,7 +238,7 @@ int calculate_channel_score(const wifi_channel_score_t *score) {
 }
 
 // Aggregate scores for same channels
-static void aggregate_channel_scores(void) {
+void aggregate_channel_scores(void) {
     // Simple aggregation - in a real implementation, this would be more sophisticated
     for (int i = 0; i < g_wifi_management.channel_scores_count; i++) {
         for (int j = i + 1; j < g_wifi_management.channel_scores_count; j++) {
@@ -257,7 +260,7 @@ static void aggregate_channel_scores(void) {
 }
 
 // Optimize WiFi channels
-static int wifi_management_optimize_channels(const char *interface_name) {
+int wifi_management_optimize_channels(const char *interface_name) {
     if (!g_wifi_management_initialized || !interface_name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -494,7 +497,7 @@ int wifi_management_update_gps_location(double lat, double lon, double accuracy,
 }
 
 // Calculate distance between two GPS coordinates
-double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000; // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
@@ -533,7 +536,7 @@ int wifi_management_get_status(wifi_management_status_t *status) {
 }
 
 // Get WiFi interfaces
-static int wifi_management_get_interfaces(wifi_interface_t *interfaces, int max_interfaces) {
+int wifi_management_get_interfaces(wifi_interface_t *interfaces, int max_interfaces) {
     if (!g_wifi_management_initialized || !interfaces || max_interfaces <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -554,7 +557,7 @@ static int wifi_management_get_interfaces(wifi_interface_t *interfaces, int max_
 }
 
 // Get channel scores
-static int wifi_management_get_channel_scores(wifi_channel_score_t *scores, int max_scores) {
+int wifi_management_get_channel_scores(wifi_channel_score_t *scores, int max_scores) {
     if (!g_wifi_management_initialized || !scores || max_scores <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -573,7 +576,7 @@ static int wifi_management_get_channel_scores(wifi_channel_score_t *scores, int 
 }
 
 // Get scheduled tasks
-static int wifi_management_get_scheduled_tasks(wifi_scheduled_task_t *tasks, int max_tasks) {
+int wifi_management_get_scheduled_tasks(wifi_scheduled_task_t *tasks, int max_tasks) {
     if (!g_wifi_management_initialized || !tasks || max_tasks <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -623,7 +626,7 @@ int wifi_management_set_config(const wifi_management_config_t *config) {
 }
 
 // Enable/disable WiFi management
-static int wifi_management_set_enabled(bool enabled) {
+int wifi_management_set_enabled(bool enabled) {
     if (!g_wifi_management_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -637,7 +640,7 @@ static int wifi_management_set_enabled(bool enabled) {
 }
 
 // Reset WiFi management
-static int wifi_management_reset(void) {
+int wifi_management_reset(void) {
     if (!g_wifi_management_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }

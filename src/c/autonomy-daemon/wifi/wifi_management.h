@@ -7,6 +7,8 @@
 #include <pthread.h>
 #include <math.h>
 
+// WiFi management constants (defined in .c file)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -33,6 +35,7 @@ typedef struct {
     int bss_count;                    // Number of BSS on this channel
     int noise;                        // Noise floor in dBm
     int avg_rssi;                     // Average RSSI in dBm
+    int signal;                       // Signal strength in dBm
 } wifi_channel_score_t;
 
 // WiFi scheduler configuration
@@ -70,11 +73,17 @@ typedef struct {
 
 // WiFi GPS integration state
 typedef struct {
+    bool enabled;                         // GPS integration enabled
     wifi_gps_integration_config_t config; // GPS integration configuration
     wifi_gps_location_t last_location;    // Last known location
     time_t last_optimized;                // Last optimization time
     time_t stationary_start;              // When stationary state started
     bool is_stationary;                   // Whether currently stationary
+    double movement_threshold;            // Movement threshold in meters
+    int stationary_time;                  // Stationary time in seconds
+    int optimization_cooldown;            // Optimization cooldown in seconds
+    double gps_accuracy_threshold;        // GPS accuracy threshold in meters
+    bool location_logging;                // Enable location logging
 } wifi_gps_integration_t;
 
 // WiFi scheduled task
@@ -143,6 +152,21 @@ typedef struct {
     int nightly_time;                 // Nightly optimization time (seconds since midnight)
     double min_improvement;           // Minimum improvement threshold
     double optimization_cooldown_s;    // Optimization cooldown in seconds
+    int dwell_time;                   // Dwell time in seconds
+    int noise_default;                // Default noise floor
+    int vht80_threshold;              // VHT80 threshold
+    int vht40_threshold;              // VHT40 threshold
+    bool use_dfs;                     // Use DFS channels
+    bool dry_run;                     // Dry run mode
+    bool use_enhanced_scanner;        // Use enhanced scanner
+    int strong_rssi_threshold;        // Strong RSSI threshold
+    int weak_rssi_threshold;          // Weak RSSI threshold
+    double utilization_weight;        // Utilization weight
+    int excellent_threshold;          // Excellent score threshold
+    int good_threshold;               // Good score threshold
+    int fair_threshold;               // Fair score threshold
+    int poor_threshold;               // Poor score threshold
+    double overlap_penalty_ratio;     // Overlap penalty ratio
     
     // Storage
     wifi_interface_t interfaces[10];  // WiFi interfaces
