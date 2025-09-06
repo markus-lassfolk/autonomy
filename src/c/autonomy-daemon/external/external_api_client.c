@@ -12,6 +12,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <stdbool.h>
+#include <math.h>
 
 // Global external API client instance
 static external_api_client_t g_external_api_client;
@@ -24,10 +26,10 @@ static int g_api_socket = -1;
 static int api_send_request(const api_request_t* request, api_response_t* response);
 static int api_connect_to_endpoint(void);
 static int api_disconnect(void);
-static double calculate_response_time(time_t start_time);
+double calculate_response_time(time_t start_time);
 
 // Initialize external API client
-static int external_api_client_init(const api_endpoint_config_t* config) {
+int external_api_client_init(const api_endpoint_config_t* config) {
     if (g_external_api_client_initialized) {
         return 0; // Already initialized
     }
@@ -63,7 +65,7 @@ static int external_api_client_init(const api_endpoint_config_t* config) {
 }
 
 // Clean up external API client
-static void external_api_client_cleanup(void) {
+void external_api_client_cleanup(void) {
     if (!g_external_api_client_initialized) return;
     
     // Disconnect if connected
@@ -326,13 +328,13 @@ static int api_disconnect(void) {
 }
 
 // Calculate response time
-static double calculate_response_time(time_t start_time) {
+double calculate_response_time(time_t start_time) {
     time_t end_time = time(NULL);
     return difftime(end_time, start_time);
 }
 
 // Get API client status
-static void external_api_client_get_status(external_api_client_t* status) {
+void external_api_client_get_status(external_api_client_t* status) {
     if (!status || !g_external_api_client_initialized) return;
     
     pthread_mutex_lock(g_external_api_client.mutex);
@@ -341,7 +343,7 @@ static void external_api_client_get_status(external_api_client_t* status) {
 }
 
 // Check if API client is initialized
-static bool external_api_client_is_initialized(void) {
+bool external_api_client_is_initialized(void) {
     return g_external_api_client_initialized;
 }
 

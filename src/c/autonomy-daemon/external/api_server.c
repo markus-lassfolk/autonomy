@@ -1,7 +1,7 @@
 #include "api_server.h"
-#include "logx.h"
-#include "types.h"
-#include <microhttpd.h>
+#include "../utils/logx.h"
+#include "../core/types.h"
+// #include <microhttpd.h> // TODO: Missing microhttpd library in RUTOS SDK
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,6 +11,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <time.h>
+#include <stdbool.h>
 
 // Global HTTP daemon
 static struct MHD_Daemon *g_http_daemon = NULL;
@@ -235,7 +237,7 @@ static http_response_t* route_request(const char *path) {
 }
 
 // HTTP request handler
-static int http_request_handler(void *cls, struct MHD_Connection *connection,
+int http_request_handler(void *cls, struct MHD_Connection *connection,
                                const char *url, const char *method,
                                const char *version, const char *upload_data,
                                size_t *upload_data_size, void **con_cls) {
@@ -291,9 +293,9 @@ static int http_request_handler(void *cls, struct MHD_Connection *connection,
 }
 
 // Initialize API server
-static int api_server_init(int port, const char *bind_address) {
+int api_server_init(int port, const char *bind_address) {
     if (g_api_server_running) {
-        LOGX_WARN("API server already running");
+        LOGX_WARN_MSG("API server already running");
         return AUTONOMY_SUCCESS;
     }
     
@@ -312,34 +314,34 @@ static int api_server_init(int port, const char *bind_address) {
                                      MHD_OPTION_END);
     
     if (!g_http_daemon) {
-        LOGX_ERROR("Failed to start HTTP daemon on port %d", g_api_port);
+        LOGX_ERROR_MSG("Failed to start HTTP daemon on port %d", g_api_port);
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     g_api_server_running = true;
-    LOGX_INFO("API server started on %s:%d", g_api_bind_address, g_api_port);
+    LOGX_INFO_MSG("API server started on %s:%d", g_api_bind_address, g_api_port);
     
     return AUTONOMY_SUCCESS;
 }
 
 // Start API server with default settings
-static int api_server_start(void) {
+int api_server_start(void) {
     return api_server_init(8080, "0.0.0.0");
 }
 
 // Stop API server
-static void api_server_stop(void) {
+void api_server_stop(void) {
     if (g_http_daemon) {
         MHD_stop_daemon(g_http_daemon);
         g_http_daemon = NULL;
     }
     
     g_api_server_running = false;
-    LOGX_INFO("API server stopped");
+    LOGX_INFO_MSG("API server stopped");
 }
 
 // Check if API server is running
-static bool api_server_is_running(void) {
+bool api_server_is_running(void) {
     return g_api_server_running;
 }
 
@@ -354,9 +356,9 @@ const char* api_server_get_bind_address(void) {
 }
 
 // Set API server configuration
-static int api_server_set_config(int port, const char *bind_address) {
+int api_server_set_config(int port, const char *bind_address) {
     if (g_api_server_running) {
-        LOGX_WARN("Cannot change configuration while server is running");
+        LOGX_WARN_MSG("Cannot change configuration while server is running");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
@@ -373,8 +375,8 @@ static int api_server_set_config(int port, const char *bind_address) {
 }
 
 // Cleanup API server
-static void api_server_cleanup(void) {
+void api_server_cleanup(void) {
     api_server_stop();
     pthread_mutex_destroy(&g_api_mutex);
-    LOGX_INFO("API server cleaned up");
+    LOGX_INFO_MSG("API server cleaned up");
 }

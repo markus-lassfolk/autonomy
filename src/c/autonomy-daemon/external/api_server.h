@@ -1,8 +1,10 @@
 #ifndef API_SERVER_H
 #define API_SERVER_H
 
-#include "types.h"
-#include "logx.h"
+#include "../core/types.h"
+#include "../utils/logx.h"
+#include <stdbool.h>
+#include <sys/socket.h>
 
 // Initialize API server with custom settings
 int api_server_init(int port, const char *bind_address);
