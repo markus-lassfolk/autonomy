@@ -470,7 +470,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Get geofence status
-int gps_geofence_get_status(gps_geofence_status_t *status) {
+int gps_geofence_get_status(gps_geofence_system_status_t *status) {
     if (!g_geofence_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }

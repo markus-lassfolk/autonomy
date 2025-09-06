@@ -135,7 +135,7 @@ int gps_geofence_check_position(const gps_data_t *gps_data);
  * @param status Status structure to populate
  * @return AUTONOMY_SUCCESS on success, error code on failure
  */
-int gps_geofence_get_status(gps_geofence_status_t *status);
+int gps_geofence_get_status(gps_geofence_system_status_t *status);
 
 /**
  * Get geofence configuration

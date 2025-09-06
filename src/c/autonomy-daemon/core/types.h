@@ -194,7 +194,7 @@ typedef struct {
 #define MAX_WEATHER_CACHE 50
 #define MAX_TERRAIN_CACHE 50
 
-// GPS geofence status
+// GPS geofence system status
 typedef struct {
     bool enabled;                       // Geofencing enabled
     int geofence_count;                 // Total geofences
@@ -203,7 +203,7 @@ typedef struct {
     time_t last_check;                  // Last check timestamp
     int active_geofence_count;          // Number of active geofences
     void* geofences[20];                // Active geofences (gps_geofence_definition_t)
-} gps_geofence_status_t;
+} gps_geofence_system_status_t;
 
 // GPS validation result
 typedef struct {
