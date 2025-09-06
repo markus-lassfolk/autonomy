@@ -1,7 +1,7 @@
 #ifndef AUTONOMY_MODULES_H
 #define AUTONOMY_MODULES_H
 
-#include <ubus.h>
+#include <libubus.h>
 #include <blobmsg_json.h>
 #include <uci.h>
 #include "autonomy_types.h"

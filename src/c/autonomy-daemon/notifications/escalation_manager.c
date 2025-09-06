@@ -22,7 +22,7 @@ static double calculate_escalation_effectiveness(escalation_chain_t* chain, time
 static char* create_escalation_message(escalation_chain_t* chain, escalation_contact_t* contact);
 
 // Initialize escalation manager
-static int escalation_manager_init(const escalation_manager_config_t* config) {
+int escalation_manager_init(const escalation_manager_config_t* config) {
     if (g_escalation_manager_initialized) {
         return 0; // Already initialized
     }
@@ -82,7 +82,7 @@ static int escalation_manager_init(const escalation_manager_config_t* config) {
 }
 
 // Clean up escalation manager
-static void escalation_manager_cleanup(void) {
+void escalation_manager_cleanup(void) {
     if (!g_escalation_manager_initialized) return;
     
     // Stop escalation thread
@@ -319,7 +319,8 @@ static void send_escalation_notification(escalation_chain_t* chain, int level) {
     notification_event_t event;
     memset(&event, 0, sizeof(event));
     
-    snprintf(event.id, sizeof(event.id), "esc_%s_%d_%ld", chain->id, level, now);
+    // Note: notification_event_t doesn't have id field, using title for identification
+    snprintf(event.title, sizeof(event.title), "Escalation: %s Level %d", chain->id, level);
     snprintf(event.title, sizeof(event.title), "🚨 ESCALATION LEVEL %d: %s", 
              level, notification_type_to_string(chain->alert_type));
     
@@ -513,7 +514,7 @@ int escalation_manager_trigger_emergency_escalation(const char* incident_id,
 }
 
 // Acknowledge escalation
-static int escalation_manager_acknowledge_escalation(const char* escalation_id, const char* acknowledged_by) {
+int escalation_manager_acknowledge_escalation(const char* escalation_id, const char* acknowledged_by) {
     if (!g_escalation_manager_initialized || !escalation_id || !acknowledged_by) {
         return -1;
     }
@@ -556,7 +557,7 @@ static int escalation_manager_acknowledge_escalation(const char* escalation_id, 
 }
 
 // Cancel escalation
-static int escalation_manager_cancel_escalation(const char* escalation_id, const char* reason) {
+int escalation_manager_cancel_escalation(const char* escalation_id, const char* reason) {
     if (!g_escalation_manager_initialized || !escalation_id) {
         return -1;
     }
@@ -589,7 +590,7 @@ static int escalation_manager_cancel_escalation(const char* escalation_id, const
 }
 
 // Get active escalations
-static int escalation_manager_get_active_escalations(escalation_chain_t* escalations, int max_escalations) {
+int escalation_manager_get_active_escalations(escalation_chain_t* escalations, int max_escalations) {
     if (!g_escalation_manager_initialized || !escalations || max_escalations <= 0) {
         return -1;
     }
@@ -608,7 +609,7 @@ static int escalation_manager_get_active_escalations(escalation_chain_t* escalat
 }
 
 // Get escalation history
-static int escalation_manager_get_escalation_history(escalation_record_t* history, int max_history) {
+int escalation_manager_get_escalation_history(escalation_record_t* history, int max_history) {
     if (!g_escalation_manager_initialized || !history || max_history <= 0) {
         return -1;
     }
@@ -631,7 +632,7 @@ static int escalation_manager_get_escalation_history(escalation_record_t* histor
 }
 
 // Get escalation manager status
-static void escalation_manager_get_status(escalation_manager_status_t* status) {
+void escalation_manager_get_status(escalation_manager_status_t* status) {
     if (!status || !g_escalation_manager_initialized) return;
     
     pthread_mutex_lock(g_escalation_manager.mutex);
@@ -663,11 +664,11 @@ static void escalation_manager_get_status(escalation_manager_status_t* status) {
 }
 
 // Check if escalation manager is initialized
-static bool escalation_manager_is_initialized(void) {
+bool escalation_manager_is_initialized(void) {
     return g_escalation_manager_initialized;
 }
 
 // Get escalation manager instance
-static escalation_manager_t* escalation_manager_get_instance(void) {
+escalation_manager_t* escalation_manager_get_instance(void) {
     return g_escalation_manager_initialized ? &g_escalation_manager : NULL;
 }

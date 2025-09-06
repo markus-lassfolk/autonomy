@@ -22,7 +22,7 @@ static void generate_score_reason(notification_channel_t channel, double final_s
 static int compare_channel_scores(const void* a, const void* b);
 
 // Initialize channel intelligence
-static int channel_intelligence_init(const channel_intelligence_config_t* config) {
+int channel_intelligence_init(const channel_intelligence_config_t* config) {
     if (g_channel_intelligence_initialized) {
         return 0; // Already initialized
     }
@@ -85,7 +85,7 @@ static int channel_intelligence_init(const channel_intelligence_config_t* config
 }
 
 // Clean up channel intelligence
-static void channel_intelligence_cleanup(void) {
+void channel_intelligence_cleanup(void) {
     if (!g_channel_intelligence_initialized) return;
     
     if (g_channel_intelligence.mutex) {
@@ -188,7 +188,7 @@ static double calculate_context_adjustment(notification_channel_t channel, notif
             break;
             
         case NOTIFICATION_TYPE_DATA_LIMIT:
-        case NOTIFICATION_TYPE_OBSTRUCTION:
+        case NOTIFICATION_TYPE_PREDICTIVE:  // NOTIFICATION_TYPE_OBSTRUCTION not defined
             // Informational alerts can use any channel
             switch (channel) {
                 case NOTIFICATION_CHANNEL_EMAIL:
@@ -567,7 +567,7 @@ int channel_intelligence_update_effectiveness(notification_channel_t channel,
 }
 
 // Get channel effectiveness
-static double channel_intelligence_get_channel_effectiveness(notification_channel_t channel) {
+double channel_intelligence_get_channel_effectiveness(notification_channel_t channel) {
     if (!g_channel_intelligence_initialized) {
         return get_default_channel_effectiveness(channel);
     }
@@ -589,7 +589,7 @@ static double channel_intelligence_get_channel_effectiveness(notification_channe
 }
 
 // Get channel response time
-static time_t channel_intelligence_get_channel_response_time(notification_channel_t channel) {
+time_t channel_intelligence_get_channel_response_time(notification_channel_t channel) {
     if (!g_channel_intelligence_initialized) {
         return get_default_channel_response_time(channel);
     }
@@ -611,7 +611,7 @@ static time_t channel_intelligence_get_channel_response_time(notification_channe
 }
 
 // Get channel intelligence status
-static void channel_intelligence_get_status(channel_intelligence_status_t* status) {
+void channel_intelligence_get_status(channel_intelligence_status_t* status) {
     if (!status || !g_channel_intelligence_initialized) return;
     
     pthread_mutex_lock(g_channel_intelligence.mutex);
@@ -631,7 +631,7 @@ static void channel_intelligence_get_status(channel_intelligence_status_t* statu
 }
 
 // Get channel intelligence statistics
-static void channel_intelligence_get_stats(char* stats_json, size_t max_size) {
+void channel_intelligence_get_stats(char* stats_json, size_t max_size) {
     if (!stats_json || max_size == 0 || !g_channel_intelligence_initialized) return;
     
     pthread_mutex_lock(g_channel_intelligence.mutex);
@@ -657,11 +657,11 @@ static void channel_intelligence_get_stats(char* stats_json, size_t max_size) {
 }
 
 // Check if channel intelligence is initialized
-static bool channel_intelligence_is_initialized(void) {
+bool channel_intelligence_is_initialized(void) {
     return g_channel_intelligence_initialized;
 }
 
 // Get channel intelligence instance
-static channel_intelligence_t* channel_intelligence_get_instance(void) {
+channel_intelligence_t* channel_intelligence_get_instance(void) {
     return g_channel_intelligence_initialized ? &g_channel_intelligence : NULL;
 }

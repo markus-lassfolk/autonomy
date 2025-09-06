@@ -19,7 +19,7 @@ static double parse_json_double(const char* json, const char* key, double defaul
 static int parse_json_int(const char* json, const char* key, int default_value);
 
 // Initialize priority optimizer
-static int priority_optimizer_init(const priority_optimizer_config_t* config) {
+int priority_optimizer_init(const priority_optimizer_config_t* config) {
     if (g_priority_optimizer_initialized) {
         return 0; // Already initialized
     }
@@ -63,7 +63,7 @@ static int priority_optimizer_init(const priority_optimizer_config_t* config) {
 }
 
 // Clean up priority optimizer
-static void priority_optimizer_cleanup(void) {
+void priority_optimizer_cleanup(void) {
     if (!g_priority_optimizer_initialized) return;
     
     if (g_priority_optimizer.mutex) {
@@ -497,7 +497,7 @@ void priority_optimizer_get_priority_scores(notification_type_t alert_type,
 }
 
 // Get priority optimizer status
-static void priority_optimizer_get_status(priority_optimizer_status_t* status) {
+void priority_optimizer_get_status(priority_optimizer_status_t* status) {
     if (!status || !g_priority_optimizer_initialized) return;
     
     pthread_mutex_lock(g_priority_optimizer.mutex);
@@ -515,7 +515,7 @@ static void priority_optimizer_get_status(priority_optimizer_status_t* status) {
 }
 
 // Get optimization statistics
-static void priority_optimizer_get_stats(char* stats_json, size_t max_size) {
+void priority_optimizer_get_stats(char* stats_json, size_t max_size) {
     if (!stats_json || max_size == 0 || !g_priority_optimizer_initialized) return;
     
     pthread_mutex_lock(g_priority_optimizer.mutex);
@@ -545,11 +545,11 @@ static void priority_optimizer_get_stats(char* stats_json, size_t max_size) {
 }
 
 // Check if priority optimizer is initialized
-static bool priority_optimizer_is_initialized(void) {
+bool priority_optimizer_is_initialized(void) {
     return g_priority_optimizer_initialized;
 }
 
 // Get priority optimizer instance
-static priority_optimizer_t* priority_optimizer_get_instance(void) {
+priority_optimizer_t* priority_optimizer_get_instance(void) {
     return g_priority_optimizer_initialized ? &g_priority_optimizer : NULL;
 }
