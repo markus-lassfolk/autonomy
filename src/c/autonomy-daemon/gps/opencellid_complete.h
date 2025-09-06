@@ -42,7 +42,10 @@ typedef struct {
     opencellid_cell_identifier_t cell_id;   // Cell identifier
     double latitude;                        // Latitude in decimal degrees
     double longitude;                       // Longitude in decimal degrees
+    double lat;                             // Alias for latitude
+    double lon;                             // Alias for longitude
     double range;                           // Accuracy radius in meters
+    double accuracy;                        // Alias for range
     int samples;                            // Number of measurements used
     double confidence;                      // Confidence score (0.0-1.0)
     bool changeable;                        // Whether location can be updated
@@ -87,9 +90,36 @@ typedef struct {
     time_t measurement_time;                // When measurement was taken
 } opencellid_neighbor_cell_t;
 
-// Note: opencellid_cellular_environment_t is defined in ../core/types.h
+// Note: opencellid_serving_cell_t already defined above
 
-// Note: opencellid_triangulation_result_t is defined in ../core/types.h
+// Cellular environment (serving + neighbors)
+typedef struct {
+    opencellid_serving_cell_t serving_cell; // Serving cell
+    opencellid_neighbor_cell_t neighbors[32]; // Neighbor cells
+    int neighbor_count;                     // Number of neighbors
+    time_t scan_time;                       // When scan was performed
+    char environment_hash[65];              // SHA256 hash of environment
+    double gps_latitude;                    // GPS latitude when scanned
+    double gps_longitude;                   // GPS longitude when scanned
+    double gps_accuracy;                    // GPS accuracy when scanned
+    bool gps_valid;                         // Whether GPS was valid
+} opencellid_cellular_environment_t;
+
+// Triangulation result
+typedef struct {
+    double latitude;                        // Calculated latitude
+    double longitude;                       // Calculated longitude
+    double accuracy;                        // Estimated accuracy (meters)
+    double confidence;                      // Confidence score (0.0-1.0)
+    char method[32];                        // "single_cell", "weighted_centroid", "triangulation"
+    int cells_used;                         // Number of cells used
+    opencellid_cell_location_t primary_cell; // Primary cell used
+    opencellid_cell_location_t contributing_cells[10]; // Contributing cells
+    int contributing_cell_count;            // Number of contributing cells
+    time_t calculation_time;                // When calculation was performed
+    double timing_advance_constraint;       // TA constraint if applied
+    bool timing_advance_applied;            // Whether TA was applied
+} opencellid_triangulation_result_t;
 
 // Rate limiter configuration
 typedef struct {

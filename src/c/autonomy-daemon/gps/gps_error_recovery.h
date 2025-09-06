@@ -16,6 +16,8 @@ extern "C" {
 // GPS error types
 
 // Recovery strategies
+typedef enum {
+    RECOVERY_STRATEGY_NONE = 0,
     RECOVERY_STRATEGY_RETRY,
     RECOVERY_STRATEGY_FALLBACK,
     RECOVERY_STRATEGY_RESET,
@@ -24,7 +26,11 @@ extern "C" {
     RECOVERY_STRATEGY_MAX
 } gps_recovery_strategy_t;
 
+// Note: RECOVERY_STRATEGY_NONE defined in enum above
+
 // Source status
+typedef enum {
+    SOURCE_STATUS_ACTIVE = 0,
     SOURCE_STATUS_DEGRADED,
     SOURCE_STATUS_FAILED,
     SOURCE_STATUS_MAINTENANCE,
@@ -58,7 +64,7 @@ typedef struct {
     time_t last_retry;                  // Last retry timestamp
     time_t backoff_until;               // Backoff until timestamp
     source_status_t status;             // Source status
-} gps_source_error_t;
+}; // Note: Use gps_source_error_t from ../core/types.h
 
 // Error recovery configuration structure
 typedef struct {

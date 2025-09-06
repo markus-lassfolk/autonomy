@@ -84,7 +84,7 @@ static void cleanup_rate_limiter(void);
 static void cleanup_contribution_manager(void);
 static void cleanup_http_client(void);
 
-static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response);
+static size_t opencellid_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response);
 static int make_api_request(const char* url, const char* post_data, http_response_t* response);
 static int parse_cell_location_response(const char* json_data, opencellid_cell_location_t* location);
 static int cache_get_cell_location(const opencellid_cell_identifier_t* cell_id, opencellid_cell_location_t* location);
@@ -602,7 +602,7 @@ static void cleanup_http_client(void) {
 }
 
 // HTTP callback function for curl
-static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response) {
+static size_t opencellid_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response) {
     size_t total_size = size * nmemb;
     
     // Reallocate memory for the response data
@@ -641,7 +641,7 @@ static int make_api_request(const char* url, const char* post_data, http_respons
     curl_easy_setopt(curl, CURLOPT_URL, url);
     
     // Set write callback
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, opencellid_write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
     
     // Set timeout

@@ -117,6 +117,8 @@ struct autonomy_state {
 #define AUTONOMY_ERROR_NOT_ENABLED -21
 #define AUTONOMY_ERROR_INTERNAL -22
 #define AUTONOMY_ERROR_API_FAILED -23
+#define AUTONOMY_ERROR_CONFIG -24
+#define AUTONOMY_ERROR -25
 
 // GPS source types
 typedef enum {
@@ -301,6 +303,10 @@ typedef enum {
     GPS_ERROR_TIMEOUT,
     GPS_ERROR_COMMUNICATION,
     GPS_ERROR_INVALID_DATA,
+    GPS_ERROR_TYPE_UNKNOWN,
+    GPS_ERROR_TYPE_AUTHENTICATION_ERROR,
+    GPS_ERROR_TYPE_RATE_LIMIT,
+    GPS_ERROR_TYPE_SERVER_ERROR,
     GPS_ERROR_MAX
 } gps_error_type_t;
 
@@ -330,6 +336,7 @@ typedef struct {
     time_t last_error;
     double error_rate;
     bool needs_recovery;
+    int status;                         // Source status (source_status_t)
 } gps_source_error_t;
 
 // GPS recovery strategies
@@ -356,31 +363,9 @@ typedef enum {
 // Alias for compatibility
 typedef opencellid_radio_type_t opencellid_radio_t;
 
-// OpenCellID cellular environment for positioning
-typedef struct {
-    char mcc[8];                        // Mobile Country Code
-    char mnc[8];                        // Mobile Network Code
-    char lac[16];                       // Location Area Code
-    char cell_id[16];                   // Cell ID
-    int signal_strength;                // Signal strength
-    opencellid_radio_t radio_type;      // Radio technology
-} opencellid_cellular_environment_t;
+// Note: opencellid_cellular_environment_t is defined in gps/opencellid_complete.h
 
-// OpenCellID triangulation result
-typedef struct {
-    double latitude;                    // Calculated latitude
-    double longitude;                   // Calculated longitude
-    double accuracy;                    // Position accuracy in meters
-    double confidence;                  // Confidence level (0.0-1.0)
-    time_t calculation_time;            // When position was calculated
-    int method;                         // Triangulation method used
-    int cells_used;                     // Number of cells used
-    bool timing_advance_applied;        // Whether timing advance was applied
-    double timing_advance_constraint;   // Timing advance constraint
-    void* primary_cell;                 // Primary cell (opencellid_cell_location_t)
-    void* contributing_cells[10];       // Contributing cells
-    int contributing_cell_count;        // Number of contributing cells
-} opencellid_triangulation_result_t;
+// Note: opencellid_triangulation_result_t is defined in gps/opencellid_complete.h
 
 // Function declarations
 void log_message(log_level_t level, const char *format, ...);

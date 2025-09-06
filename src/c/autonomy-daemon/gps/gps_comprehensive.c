@@ -1,7 +1,7 @@
 #include "gps_comprehensive.h"
 #include "gps_rutos.h"
 #include "gps_starlink.h"
-#include "gps_opencellid.h"
+#include "opencellid_complete.h"
 #include "gps_google_api.h"
 #include "../utils/logx.h"
 #include <stdio.h>
