@@ -9,6 +9,11 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+// Forward declarations
+static void calculate_triangulated_position(void);
+static void calculate_single_tower_position(void);
+static void add_position_history(void);
+
 // Cell tower positioning configuration
 static const int MAX_CELL_TOWERS = 100;                     // Maximum cell towers to track
 static const int MAX_TOWER_DISTANCE = 50000;                // 50km maximum tower distance
