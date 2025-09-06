@@ -17,6 +17,17 @@ static const int FUSION_HISTORY_SIZE = 20;             // Number of fused positi
 
 // Fusion algorithms
 static const char* FUSION_ALGORITHM_NAMES[] = {
+
+// Forward declarations
+static void update_source_metrics(gps_fusion_source_t *source, const gps_data_t *gps_data);
+static void update_source_reliability(gps_fusion_source_t *source);
+static int perform_weighted_average_fusion(gps_data_t *fused_data);
+static int perform_kalman_filter_fusion(gps_data_t *fused_data);
+static int perform_least_squares_fusion(gps_data_t *fused_data);
+static double calculate_fusion_quality(void);
+static void add_fusion_history(const gps_data_t *fused_data);
+static int find_fusion_source_by_name(const char *source_name);
+
     "unknown", "weighted_average", "kalman_filter", "particle_filter", "least_squares"
 };
 

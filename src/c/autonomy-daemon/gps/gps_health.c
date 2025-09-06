@@ -29,6 +29,17 @@ static gps_health_t g_health_monitor = {0};
 static bool g_health_initialized = false;
 static pthread_mutex_t g_health_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Forward declarations
+static void update_source_health_scores(gps_source_health_t *source, const gps_data_t *gps_data);
+static double calculate_accuracy_score(double accuracy);
+static double calculate_freshness_score(time_t timestamp);
+static double calculate_reliability_score(const gps_source_health_t *source);
+static double calculate_consistency_score(const gps_source_health_t *source, const gps_data_t *gps_data);
+static void update_source_status(gps_source_health_t *source);
+static void add_health_history(time_t timestamp, double overall_score, int source_count, int healthy_sources);
+static int find_source_by_name(const char *source_name);
+
+
 // Initialize GPS health monitor
 int gps_health_init(void) {
     if (g_health_initialized) {

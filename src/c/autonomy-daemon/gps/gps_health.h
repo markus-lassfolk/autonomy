@@ -10,15 +10,7 @@
 extern "C" {
 #endif
 
-// GPS source status
-typedef enum {
-    GPS_SOURCE_STATUS_UNKNOWN = 0,
-    GPS_SOURCE_STATUS_EXCELLENT,
-    GPS_SOURCE_STATUS_GOOD,
-    GPS_SOURCE_STATUS_POOR,
-    GPS_SOURCE_STATUS_CRITICAL,
-    GPS_SOURCE_STATUS_FAILED
-} gps_source_status_t;
+// Note: gps_source_status_t is defined in ../core/types.h
 
 // GPS source health
 typedef struct {

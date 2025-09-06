@@ -10,6 +10,25 @@
 
 // NMEA sentence types
 static const char* NMEA_SENTENCE_TYPES[] = {
+
+// Forward declarations
+static bool validate_nmea_sentence(const char *sentence);
+static bool verify_nmea_checksum(const char *sentence);
+static bool extract_sentence_type(const char *sentence, char *type, size_t type_size);
+static int parse_gga_sentence(const char *sentence, gps_data_t *gps_data);
+static int parse_gll_sentence(const char *sentence, gps_data_t *gps_data);
+static int parse_gsa_sentence(const char *sentence, gps_data_t *gps_data);
+static int parse_gsv_sentence(const char *sentence, gps_data_t *gps_data);
+static int parse_rmc_sentence(const char *sentence, gps_data_t *gps_data);
+static int parse_vtg_sentence(const char *sentence, gps_data_t *gps_data);
+static int parse_zda_sentence(const char *sentence, gps_data_t *gps_data);
+static int split_nmea_fields(const char *sentence, char **fields, int max_fields);
+static double parse_nmea_coordinate(const char *coord_str, char direction);
+static time_t parse_nmea_time(const char *time_str);
+static time_t parse_nmea_datetime(const char *time_str, const char *date_str);
+static time_t parse_nmea_datetime(const char *time_str, const char *date_str);
+static double estimate_accuracy_from_hdop(double hdop);
+
     "GPGGA", "GPGLL", "GPGSA", "GPGSV", "GPRMC", "GPVTG", "GPZDA", "GPDTM"
 };
 

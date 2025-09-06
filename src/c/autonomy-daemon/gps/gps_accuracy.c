@@ -29,6 +29,18 @@ static const int VALIDATION_WINDOW = 300;                   // 5 minute validati
 static gps_accuracy_t g_accuracy_validator = {0};
 static bool g_accuracy_initialized = false;
 
+// Forward declarations
+static bool validate_basic_parameters(const gps_data_t *gps_data, gps_validation_result_t *result);
+static bool validate_accuracy_values(const gps_data_t *gps_data, gps_validation_result_t *result);
+static bool validate_satellite_data(const gps_data_t *gps_data, gps_validation_result_t *result);
+static bool validate_position_data(const gps_data_t *gps_data, gps_validation_result_t *result);
+static bool validate_temporal_data(const gps_data_t *gps_data, gps_validation_result_t *result);
+static bool validate_consistency(const gps_data_t *gps_data, gps_validation_result_t *result);
+static double estimate_expected_accuracy(int satellites, int fix_quality);
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+static void update_validation_statistics(const gps_validation_result_t *result);
+
+
 // Initialize GPS accuracy validator
 int gps_accuracy_init(void) {
     if (g_accuracy_initialized) {

@@ -31,6 +31,19 @@ static const int OLD_DATA_THRESHOLD = 300;             // 5 minutes
 static gps_confidence_t g_confidence_calc = {0};
 static bool g_confidence_initialized = false;
 
+// Forward declarations
+static double calculate_accuracy_confidence(double accuracy);
+static double calculate_satellite_confidence(int satellite_count);
+static double calculate_fix_quality_confidence(int fix_quality);
+static double calculate_freshness_confidence(time_t timestamp);
+static double calculate_consistency_confidence(const gps_data_t *current_gps, 
+                                            const gps_confidence_context_t *context);
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+static double calculate_expected_movement(int time_diff_seconds, const gps_confidence_context_t *context);
+static double calculate_position_consistency(double actual_distance, double expected_movement,
+                                          double current_accuracy, double previous_accuracy);
+
+
 // Initialize GPS confidence calculator
 int gps_confidence_init(void) {
     if (g_confidence_initialized) {
