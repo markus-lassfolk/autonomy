@@ -1,7 +1,7 @@
 #ifndef GPS_ACCURACY_H
 #define GPS_ACCURACY_H
 
-#include "../core/autonomy_types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <stdint.h>
