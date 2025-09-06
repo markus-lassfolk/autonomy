@@ -1,7 +1,7 @@
 #ifndef STARLINK_COMPREHENSIVE_H
 #define STARLINK_COMPREHENSIVE_H
 
-#include "starlink/starlink_types.h"
+#include "starlink_types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>

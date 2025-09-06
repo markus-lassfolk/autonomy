@@ -1,6 +1,6 @@
 #include "gps_manager.h"
 #include "gps_opencellid_enhanced.h"
-#include "starlink_tracker.h"
+#include "../starlink/starlink_tracker.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,7 +24,7 @@ typedef struct {
 static location_manager_state_t g_location_manager = {0};
 
 // Initialize location manager
-static int location_manager_init(const location_manager_config_t* config) {
+int location_manager_init(const location_manager_config_t* config) {
     if (!config) {
         return -1;
     }
@@ -47,7 +47,7 @@ static int location_manager_init(const location_manager_config_t* config) {
 }
 
 // Add location source
-static int location_manager_add_source(gps_source_type_t source_type, const char* name) {
+int location_manager_add_source(gps_source_type_t source_type, const char* name) {
     if (!g_location_manager.initialized || !name) {
         return -1;
     }
@@ -86,7 +86,7 @@ static int location_manager_add_source(gps_source_type_t source_type, const char
 }
 
 // Remove location source
-static int location_manager_remove_source(gps_source_type_t source_type) {
+int location_manager_remove_source(gps_source_type_t source_type) {
     if (!g_location_manager.initialized) {
         return -1;
     }
@@ -109,7 +109,7 @@ static int location_manager_remove_source(gps_source_type_t source_type) {
 }
 
 // Update location source data
-static int location_manager_update_source(gps_source_type_t source_type, const location_data_t* location) {
+int location_manager_update_source(gps_source_type_t source_type, const location_data_t* location) {
     if (!g_location_manager.initialized || !location) {
         return -1;
     }
@@ -139,7 +139,7 @@ static int location_manager_update_source(gps_source_type_t source_type, const l
 }
 
 // Validate location data
-static bool location_manager_validate_location(const location_data_t* location) {
+bool location_manager_validate_location(const location_data_t* location) {
     if (!location) {
         return false;
     }
@@ -178,7 +178,7 @@ static bool location_manager_validate_location(const location_data_t* location) 
 }
 
 // Fuse multiple location sources
-static int location_manager_fuse_sources(const location_data_t* sources, int source_count, location_data_t* fused_location) {
+int location_manager_fuse_sources(const location_data_t* sources, int source_count, location_data_t* fused_location) {
     if (!sources || !fused_location || source_count <= 0) {
         return -1;
     }
@@ -256,7 +256,7 @@ static int location_manager_fuse_sources(const location_data_t* sources, int sou
 }
 
 // Get location from specific source
-static int location_manager_get_location_from_source(gps_source_type_t source_type, location_data_t* location) {
+int location_manager_get_location_from_source(gps_source_type_t source_type, location_data_t* location) {
     if (!g_location_manager.initialized || !location) {
         return -1;
     }
@@ -285,7 +285,7 @@ static int location_manager_get_location_from_source(gps_source_type_t source_ty
 }
 
 // Get best location from all available sources
-static int location_manager_get_best_location(location_data_t* location) {
+int location_manager_get_best_location(location_data_t* location) {
     if (!g_location_manager.initialized || !location) {
         return -1;
     }
@@ -346,7 +346,7 @@ static int location_manager_get_best_location(location_data_t* location) {
 }
 
 // Get location manager status
-static int location_manager_get_status(gps_manager_status_t* status) {
+int location_manager_get_status(gps_manager_status_t* status) {
     if (!g_location_manager.initialized || !status) {
         return -1;
     }
@@ -378,7 +378,7 @@ static int location_manager_get_status(gps_manager_status_t* status) {
 }
 
 // Cleanup location manager
-static void location_manager_cleanup(void) {
+void location_manager_cleanup(void) {
     if (!g_location_manager.initialized) {
         return;
     }

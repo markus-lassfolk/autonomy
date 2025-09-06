@@ -27,6 +27,9 @@ static int calculate_source_weights(const standardized_gps_data_t* source_data, 
 static double calculate_weight_factor(const standardized_gps_data_t* data, const char* factor_type);
 static bool is_outlier(const standardized_gps_data_t* data, const standardized_gps_data_t* reference_data, 
                       int reference_count);
+static bool validate_gps_coordinates(double lat, double lon);
+static bool validate_gps_accuracy(double accuracy);
+static const char* gps_fusion_method_to_string(gps_fusion_method_t method);
 static double calculate_consensus_score(const standardized_gps_data_t* source_data, int source_count);
 static void update_kalman_state(const standardized_gps_data_t* measurement);
 static void predict_kalman_state(double dt);

@@ -17,16 +17,7 @@ extern "C" {
 #define OPENCELLID_MAX_URL_LEN 512
 #define OPENCELLID_MAX_RESPONSE_LEN 8192
 
-// Radio technology types
-typedef enum {
-    OPENCELLID_RADIO_UNKNOWN = 0,
-    OPENCELLID_RADIO_GSM,
-    OPENCELLID_RADIO_UMTS,
-    OPENCELLID_RADIO_LTE,
-    OPENCELLID_RADIO_NR,      // 5G
-    OPENCELLID_RADIO_CDMA,
-    OPENCELLID_RADIO_MAX
-} opencellid_radio_t;
+// Note: opencellid_radio_type_t and opencellid_radio_t are defined in ../core/types.h
 
 // Cell key for unique identification
 typedef struct {

@@ -32,6 +32,12 @@ static bool g_rutos_initialized = false;
 static pthread_t g_rutos_thread = 0;
 static bool g_rutos_thread_running = false;
 
+// Forward declarations
+void* rutos_monitor_thread(void *arg);
+int read_rutos_gps_data(gps_data_t *data);
+static bool validate_gps_data(const gps_data_t *data);
+static float calculate_reliability_score(void);
+
 // Initialize RUTOS GPS system
 int gps_rutos_init(void) {
     if (g_rutos_initialized) {
@@ -114,7 +120,7 @@ void gps_rutos_stop_monitoring(void) {
 }
 
 // RUTOS GPS monitoring thread
-static void* rutos_monitor_thread(void *arg) {
+void* rutos_monitor_thread(void *arg) {
     (void)arg;
     
     LOGX_INFO_MSG("RUTOS GPS monitoring thread started");
@@ -188,7 +194,7 @@ int gps_rutos_read_data(void) {
 }
 
 // Read GPS data from RUTOS files
-static int read_rutos_gps_data(gps_data_t *data) {
+int read_rutos_gps_data(gps_data_t *data) {
     if (!data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
