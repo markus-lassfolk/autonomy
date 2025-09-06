@@ -107,7 +107,7 @@ void mqtt_client_cleanup(void) {
 }
 
 // Connect to MQTT broker
-static int mqtt_client_connect(void) {
+int mqtt_client_connect(void) {
     if (!g_mqtt_client_initialized || g_mqtt_client.connected) {
         return -1;
     }
@@ -217,7 +217,7 @@ static int mqtt_client_connect(void) {
 }
 
 // Disconnect from MQTT broker
-static int mqtt_client_disconnect(void) {
+int mqtt_client_disconnect(void) {
     if (!g_mqtt_client_initialized || !g_mqtt_client.connected) {
         return -1;
     }
@@ -243,7 +243,7 @@ static int mqtt_client_disconnect(void) {
 }
 
 // Publish message
-static int mqtt_client_publish(const char* topic, const char* payload, int qos, bool retain) {
+int mqtt_client_publish(const char* topic, const char* payload, int qos, bool retain) {
     if (!g_mqtt_client_initialized || !g_mqtt_client.connected || !topic || !payload) {
         return -1;
     }
@@ -273,7 +273,7 @@ static int mqtt_client_publish(const char* topic, const char* payload, int qos, 
 }
 
 // Subscribe to topic
-static int mqtt_client_subscribe(const char* topic, int qos) {
+int mqtt_client_subscribe(const char* topic, int qos) {
     if (!g_mqtt_client_initialized || !g_mqtt_client.connected || !topic) {
         return -1;
     }
@@ -310,7 +310,7 @@ static int mqtt_client_subscribe(const char* topic, int qos) {
 }
 
 // Unsubscribe from topic
-static int mqtt_client_unsubscribe(const char* topic) {
+int mqtt_client_unsubscribe(const char* topic) {
     if (!g_mqtt_client_initialized || !g_mqtt_client.connected || !topic) {
         return -1;
     }
@@ -320,7 +320,7 @@ static int mqtt_client_unsubscribe(const char* topic) {
 }
 
 // Publish telemetry data
-static int mqtt_client_publish_telemetry(const telemetry_sample_t* sample) {
+int mqtt_client_publish_telemetry(const telemetry_sample_t* sample) {
     if (!sample) return -1;
     
     // Create JSON payload
@@ -341,7 +341,7 @@ static int mqtt_client_publish_telemetry(const telemetry_sample_t* sample) {
 }
 
 // Publish event data
-static int mqtt_client_publish_event(const telemetry_event_t* event) {
+int mqtt_client_publish_event(const telemetry_event_t* event) {
     if (!event) return -1;
     
     // Create JSON payload
@@ -359,7 +359,7 @@ static int mqtt_client_publish_event(const telemetry_event_t* event) {
 }
 
 // Publish system status
-static int mqtt_client_publish_system_status(void) {
+int mqtt_client_publish_system_status(void) {
     // Create system status payload
     char payload[1024];
     snprintf(payload, sizeof(payload),
@@ -578,11 +578,11 @@ bool mqtt_client_is_initialized(void) {
 }
 
 // Check if MQTT client is connected
-static bool mqtt_client_is_connected(void) {
+bool mqtt_client_is_connected(void) {
     return g_mqtt_client_initialized && g_mqtt_client.connected;
 }
 
 // Get MQTT client instance
-static mqtt_client_t* mqtt_client_get_instance(void) {
+mqtt_client_t* mqtt_client_get_instance(void) {
     return g_mqtt_client_initialized ? &g_mqtt_client : NULL;
 }

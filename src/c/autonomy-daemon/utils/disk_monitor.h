@@ -26,13 +26,19 @@ typedef struct {
 // Disk monitor configuration
 typedef struct {
     bool enabled;                           // Enable disk monitoring
-    double critical_threshold_gb;           // Critical disk space threshold
+    int check_interval;                     // Check interval in seconds
     double warning_threshold_gb;            // Warning disk space threshold
+    double critical_threshold_gb;           // Critical disk space threshold
     double cleanup_threshold_gb;            // Threshold to trigger cleanup
+    bool auto_cleanup;                      // Enable automatic cleanup
     int max_log_size_mb;                   // Maximum log file size in MB
     int max_temp_age_hours;                // Maximum age for temp files in hours
     const char *monitor_paths[10];         // Paths to monitor
     int monitor_paths_count;                // Number of monitor paths
+    // Aliases for UBUS compatibility
+    double warning_threshold;               // Alias for warning_threshold_gb
+    double critical_threshold;              // Alias for critical_threshold_gb
+    double cleanup_threshold;               // Alias for cleanup_threshold_gb
 } disk_monitor_config_t;
 
 // Disk monitor statistics
@@ -46,15 +52,28 @@ typedef struct {
 // Disk monitor status
 typedef struct {
     bool enabled;                           // Disk monitor enabled
+    int check_interval;                     // Check interval in seconds
     double critical_threshold_gb;           // Critical threshold
     double warning_threshold_gb;            // Warning threshold
     double cleanup_threshold_gb;            // Cleanup threshold
+    bool auto_cleanup;                      // Auto cleanup enabled
     int max_log_size_mb;                   // Max log size
     int max_temp_age_hours;                // Max temp age
     time_t last_check_time;                 // Last check time
     int cleanup_count;                      // Cleanup count
+    int total_cleanups;                     // Total cleanups (alias)
+    int total_emergency_cleanups;           // Total emergency cleanups
     int64_t total_bytes_freed;              // Total bytes freed
+    int64_t total_space_freed;              // Total space freed (alias)
+    double current_usage_percent;           // Current disk usage percentage
+    int64_t current_usage_bytes;            // Current disk usage in bytes
+    int64_t total_space_bytes;              // Total disk space in bytes
+    int64_t available_space_bytes;          // Available disk space in bytes
     time_t last_cleanup_time;               // Last cleanup time
+    // Aliases for UBUS compatibility
+    double warning_threshold;               // Alias for warning_threshold_gb
+    double critical_threshold;              // Alias for critical_threshold_gb
+    double cleanup_threshold;               // Alias for cleanup_threshold_gb
 } disk_monitor_status_t;
 
 // Main disk monitor structure

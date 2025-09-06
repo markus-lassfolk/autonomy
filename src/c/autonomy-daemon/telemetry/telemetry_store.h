@@ -97,6 +97,9 @@ typedef struct {
     char type[64];
     char member_name[128];
     char description[512];
+    char message[512];                      // Event message
+    char severity[32];                      // Event severity level
+    char data[1024];                        // Additional event data
     time_t timestamp;
     char details_json[1024];
 } telemetry_event_t;

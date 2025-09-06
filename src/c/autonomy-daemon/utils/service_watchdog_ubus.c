@@ -1,4 +1,5 @@
 #include "service_watchdog.h"
+#include "../core/types.h"
 #include <time.h>
 #include <libubus.h>
 #include <libubox/blobmsg.h>
@@ -11,28 +12,37 @@
 #include <math.h>
 #include <fcntl.h>
 
+// UBUS parameter enums for service watchdog
+enum {
+    SERVICE_WATCHDOG_CONFIG_ENABLED,
+    SERVICE_WATCHDOG_CONFIG_CHECK_INTERVAL,
+    SERVICE_WATCHDOG_CONFIG_AUTO_RESTART,
+    SERVICE_WATCHDOG_CONFIG_MAX_RESTARTS,
+    __SERVICE_WATCHDOG_CONFIG_MAX
+};
+
 // Forward declarations
-static int autonomy_service_watchdog_status(struct ubus_context *ctx, struct ubus_request_data *req,
-                                         const char *method, struct blob_attr *msg);
-static int autonomy_service_watchdog_config(struct ubus_context *ctx, struct ubus_request_data *req,
-                                          const char *method, struct blob_attr *msg);
-int autonomy_service_watchdog_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
-                                              const char *method, struct blob_attr *msg);
-static int autonomy_service_watchdog_set_enabled(struct ubus_context *ctx, struct ubus_request_data *req,
-                                               const char *method, struct blob_attr *msg);
-static int autonomy_service_watchdog_reset(struct ubus_context *ctx, struct ubus_request_data *req,
-                                         const char *method, struct blob_attr *msg);
-int autonomy_service_watchdog_check(struct ubus_context *ctx, struct ubus_request_data *req,
-                                         const char *method, struct blob_attr *msg);
+static int autonomy_service_watchdog_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                         struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+static int autonomy_service_watchdog_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                          struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+int autonomy_service_watchdog_set_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                               struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+static int autonomy_service_watchdog_set_enabled(struct ubus_context *ctx, struct ubus_object *obj,
+                                               struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+static int autonomy_service_watchdog_reset(struct ubus_context *ctx, struct ubus_object *obj,
+                                         struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+int autonomy_service_watchdog_check(struct ubus_context *ctx, struct ubus_object *obj,
+                                         struct ubus_request_data *req, const char *method, struct blob_attr *msg);
 
 // UBUS method definitions
-static const struct ubus_method_type autonomy_service_watchdog_methods[] = {
-    UBUS_METHOD("status", autonomy_service_watchdog_status, 0),
-    UBUS_METHOD("config", autonomy_service_watchdog_config, 0),
-    UBUS_METHOD("set_config", autonomy_service_watchdog_set_config, 0),
-    UBUS_METHOD("set_enabled", autonomy_service_watchdog_set_enabled, 0),
-    UBUS_METHOD("reset", autonomy_service_watchdog_reset, 0),
-    UBUS_METHOD("check", autonomy_service_watchdog_check, 0),
+static const struct ubus_method autonomy_service_watchdog_methods[] = {
+    UBUS_METHOD_NOARG("status", autonomy_service_watchdog_status),
+    UBUS_METHOD_NOARG("config", autonomy_service_watchdog_config),
+    UBUS_METHOD_NOARG("set_config", autonomy_service_watchdog_set_config),
+    UBUS_METHOD_NOARG("set_enabled", autonomy_service_watchdog_set_enabled),
+    UBUS_METHOD_NOARG("reset", autonomy_service_watchdog_reset),
+    UBUS_METHOD_NOARG("check", autonomy_service_watchdog_check),
 };
 
 // UBUS object type
@@ -43,7 +53,7 @@ static const struct ubus_object_type autonomy_service_watchdog_obj_type = {
 };
 
 // UBUS object
-static const struct ubus_object autonomy_service_watchdog_obj = {
+static struct ubus_object autonomy_service_watchdog_obj = {
     .name = "service_watchdog",
     .type = &autonomy_service_watchdog_obj_type,
     .methods = autonomy_service_watchdog_methods,
@@ -53,8 +63,9 @@ static const struct ubus_object autonomy_service_watchdog_obj = {
 /**
  * Get service watchdog status
  */
-static int autonomy_service_watchdog_status(struct ubus_context *ctx, struct ubus_request_data *req,
-                                         const char *method, struct blob_attr *msg) {
+static int autonomy_service_watchdog_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                         struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
@@ -99,8 +110,9 @@ static int autonomy_service_watchdog_status(struct ubus_context *ctx, struct ubu
 /**
  * Get service watchdog configuration
  */
-static int autonomy_service_watchdog_config(struct ubus_context *ctx, struct ubus_request_data *req,
-                                          const char *method, struct blob_attr *msg) {
+static int autonomy_service_watchdog_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                          struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
@@ -137,8 +149,9 @@ static int autonomy_service_watchdog_config(struct ubus_context *ctx, struct ubu
 /**
  * Set service watchdog configuration
  */
-int autonomy_service_watchdog_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
-                                              const char *method, struct blob_attr *msg) {
+int autonomy_service_watchdog_set_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                               struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
@@ -237,8 +250,9 @@ int autonomy_service_watchdog_set_config(struct ubus_context *ctx, struct ubus_r
 /**
  * Enable/disable service watchdog
  */
-static int autonomy_service_watchdog_set_enabled(struct ubus_context *ctx, struct ubus_request_data *req,
-                                               const char *method, struct blob_attr *msg) {
+static int autonomy_service_watchdog_set_enabled(struct ubus_context *ctx, struct ubus_object *obj,
+                                               struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
@@ -280,8 +294,9 @@ static int autonomy_service_watchdog_set_enabled(struct ubus_context *ctx, struc
 /**
  * Reset service watchdog statistics
  */
-static int autonomy_service_watchdog_reset(struct ubus_context *ctx, struct ubus_request_data *req,
-                                         const char *method, struct blob_attr *msg) {
+static int autonomy_service_watchdog_reset(struct ubus_context *ctx, struct ubus_object *obj,
+                                         struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
@@ -303,8 +318,9 @@ static int autonomy_service_watchdog_reset(struct ubus_context *ctx, struct ubus
 /**
  * Manually trigger service watchdog check
  */
-int autonomy_service_watchdog_check(struct ubus_context *ctx, struct ubus_request_data *req,
-                                         const char *method, struct blob_attr *msg) {
+int autonomy_service_watchdog_check(struct ubus_context *ctx, struct ubus_object *obj,
+                                         struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     

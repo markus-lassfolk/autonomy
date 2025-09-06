@@ -122,7 +122,7 @@ static void write_to_file(const char *message) {
 }
 
 // Rotate log files
-static void rotate_log_files(void) {
+void rotate_log_files(void) {
     char old_name[256];
     char new_name[256];
     
@@ -167,7 +167,7 @@ static void format_message(char *buffer, size_t size, logx_level_t level,
 }
 
 // Core logging function
-static void logx_log(logx_level_t level, const char *file, int line, const char *func, const char *format, ...) {
+void logx_log(logx_level_t level, const char *file, int line, const char *func, const char *format, ...) {
     if (level < g_logx_config.level) {
         return;
     }

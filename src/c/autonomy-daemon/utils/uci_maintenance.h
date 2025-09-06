@@ -27,11 +27,14 @@ typedef struct {
     int issues_found_count;                 // Number of issues found
     uci_issue_t **issues_fixed;             // Array of issues fixed
     int issues_fixed_count;                 // Number of issues fixed
+    int backups_created;                    // Number of backups created
+    int backups_restored;                   // Number of backups restored
     bool backup_created;                    // Whether backup was created
     char backup_path[256];                  // Path to backup file
     bool system_restart;                    // Whether system restart is needed
     bool success;                           // Whether maintenance was successful
     char error_message[256];                // Error message if failed
+    char details[512];                      // Additional details
 } uci_maintenance_result_t;
 
 // UCI maintenance statistics
@@ -46,10 +49,17 @@ typedef struct {
 // UCI maintenance status
 typedef struct {
     time_t last_check_time;                 // Last check time
+    time_t last_maintenance_time;           // Last maintenance time (alias)
     int issues_found;                       // Total issues found
     int issues_fixed;                       // Total issues fixed
+    int total_maintenance_runs;             // Total maintenance runs
+    int total_issues_fixed;                 // Total issues fixed (alias)
     int backups_created;                    // Number of backups created
+    int total_backups_created;              // Total backups created (alias)
+    int total_backups_restored;             // Total backups restored
     time_t last_backup_time;                // Last backup time
+    char last_result[256];                  // Last maintenance result
+    char last_details[512];                 // Last maintenance details
 } uci_maintenance_status_t;
 
 // Main UCI maintenance structure

@@ -8,19 +8,27 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+// UBUS parameter enums for UCI maintenance
+enum {
+    UCI_MAINTENANCE_OPTIONS_FORCE = 0,
+    UCI_MAINTENANCE_OPTIONS_AUTO_FIX,
+    UCI_MAINTENANCE_OPTIONS_CREATE_BACKUP,
+    __UCI_MAINTENANCE_OPTIONS_MAX
+};
+
 // Forward declarations
-static int autonomy_uci_maintenance_status(struct ubus_context *ctx, struct ubus_request_data *req,
-                                         const char *method, struct blob_attr *msg);
-static int autonomy_uci_maintenance_reset(struct ubus_context *ctx, struct ubus_request_data *req,
-                                         const char *method, struct blob_attr *msg);
-static int autonomy_uci_maintenance_perform(struct ubus_context *ctx, struct ubus_request_data *req,
-                                           const char *method, struct blob_attr *msg);
+static int autonomy_uci_maintenance_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                          struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+static int autonomy_uci_maintenance_reset(struct ubus_context *ctx, struct ubus_object *obj,
+                                         struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+static int autonomy_uci_maintenance_perform(struct ubus_context *ctx, struct ubus_object *obj,
+                                           struct ubus_request_data *req, const char *method, struct blob_attr *msg);
 
 // UBUS method definitions
-static const struct ubus_method_type autonomy_uci_maintenance_methods[] = {
-    UBUS_METHOD("status", autonomy_uci_maintenance_status, 0),
-    UBUS_METHOD("reset", autonomy_uci_maintenance_reset, 0),
-    UBUS_METHOD("perform", autonomy_uci_maintenance_perform, 0),
+static const struct ubus_method autonomy_uci_maintenance_methods[] = {
+    UBUS_METHOD_NOARG("status", autonomy_uci_maintenance_status),
+    UBUS_METHOD_NOARG("reset", autonomy_uci_maintenance_reset),
+    UBUS_METHOD_NOARG("perform", autonomy_uci_maintenance_perform),
 };
 
 // UBUS object type
@@ -31,7 +39,7 @@ static const struct ubus_object_type autonomy_uci_maintenance_obj_type = {
 };
 
 // UBUS object
-static const struct ubus_object autonomy_uci_maintenance_obj = {
+static struct ubus_object autonomy_uci_maintenance_obj = {
     .name = "uci_maintenance",
     .type = &autonomy_uci_maintenance_obj_type,
     .methods = autonomy_uci_maintenance_methods,
@@ -41,8 +49,9 @@ static const struct ubus_object autonomy_uci_maintenance_obj = {
 /**
  * Get UCI maintenance status
  */
-static int autonomy_uci_maintenance_status(struct ubus_context *ctx, struct ubus_request_data *req,
-                                         const char *method, struct blob_attr *msg) {
+static int autonomy_uci_maintenance_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                         struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
@@ -81,8 +90,9 @@ static int autonomy_uci_maintenance_status(struct ubus_context *ctx, struct ubus
 /**
  * Reset UCI maintenance statistics
  */
-static int autonomy_uci_maintenance_reset(struct ubus_context *ctx, struct ubus_request_data *req,
-                                         const char *method, struct blob_attr *msg) {
+static int autonomy_uci_maintenance_reset(struct ubus_context *ctx, struct ubus_object *obj,
+                                        struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
@@ -104,19 +114,15 @@ static int autonomy_uci_maintenance_reset(struct ubus_context *ctx, struct ubus_
 /**
  * Manually trigger UCI maintenance
  */
-static int autonomy_uci_maintenance_perform(struct ubus_context *ctx, struct ubus_request_data *req,
-                                           const char *method, struct blob_attr *msg) {
+static int autonomy_uci_maintenance_perform(struct ubus_context *ctx, struct ubus_object *obj,
+                                          struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
     // Parse message to determine maintenance options
     struct blob_attr *tb[__UCI_MAINTENANCE_OPTIONS_MAX];
-    enum {
-        UCI_MAINTENANCE_OPTIONS_FORCE = 0,
-        UCI_MAINTENANCE_OPTIONS_AUTO_FIX,
-        UCI_MAINTENANCE_OPTIONS_CREATE_BACKUP,
-        __UCI_MAINTENANCE_OPTIONS_MAX
-    };
+    // Enum defined at top of file
     
     static const struct blobmsg_policy policy[__UCI_MAINTENANCE_OPTIONS_MAX] = {
         [UCI_MAINTENANCE_OPTIONS_FORCE] = { .name = "force", .type = BLOBMSG_TYPE_BOOL },
