@@ -16,10 +16,11 @@
 #include <math.h>
 
 // Include our modular headers
-#include "autonomy_types.h"
+#include "../core/types.h"
 #include "autonomy_modules.h"
 #include "../starlink/starlink_modules.h"
 #include "../starlink/starlink_tracker.h"
+#include <sys/socket.h>
 
 // Global variables
 struct autonomy_config g_config = {
@@ -75,7 +76,7 @@ static struct ubus_context *ctx;
 struct uci_context *uci_ctx;
 
 // Signal handler
-static void handle_sig(int sig) {
+void handle_sig(int sig) {
     fprintf(stderr, "Received signal %d, shutting down...\n", sig);
     
     if (ctx) {

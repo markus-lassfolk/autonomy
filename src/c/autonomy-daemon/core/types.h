@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
+#include <math.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 // Common type definitions for autonomy daemon
 
@@ -126,13 +129,8 @@ typedef enum {
     GPS_SOURCE_RUTOS,
     GPS_SOURCE_STARLINK,
     GPS_SOURCE_OPENCELLID,
-    GPS_SOURCE_GOOGLE,
     GPS_SOURCE_EXTERNAL,
     GPS_SOURCE_SIMULATED,
-    GPS_SOURCE_WIFI,
-    GPS_SOURCE_CELLULAR,
-    GPS_SOURCE_COMBINED,
-    GPS_SOURCE_CUSTOM,
     GPS_SOURCE_MAX
 } gps_source_type_t;
 

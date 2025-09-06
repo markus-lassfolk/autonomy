@@ -1,4 +1,4 @@
-#include "autonomy_types.h"
+#include "../core/types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #define PID_FILE "/var/run/autonomy-daemon.pid"
 

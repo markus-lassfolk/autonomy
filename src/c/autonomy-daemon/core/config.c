@@ -1,8 +1,9 @@
-#include "autonomy_types.h"
+#include "../core/types.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <uci.h>
+#include <stdbool.h>
 
 extern struct autonomy_config g_config;
 extern struct uci_context *uci_ctx;
