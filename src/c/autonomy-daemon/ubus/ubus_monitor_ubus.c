@@ -25,13 +25,41 @@ int autonomy_ubus_monitor_check(struct ubus_context *ctx, struct ubus_object *ob
                                       struct ubus_request_data *req, const char *method, struct blob_attr *msg);
 
 // UBUS method definitions
+// UBUS policy for set_config method
+enum {
+    UBUS_MONITOR_CONFIG_ENABLED,
+    UBUS_MONITOR_CONFIG_CHECK_INTERVAL,
+    UBUS_MONITOR_CONFIG_AUTO_RESTART,
+    UBUS_MONITOR_CONFIG_MAX_FIX_ATTEMPTS,
+    UBUS_MONITOR_CONFIG_MONITOR_CRITICAL_SERVICES,
+    __UBUS_MONITOR_CONFIG_MAX
+};
+
+static const struct blobmsg_policy ubus_monitor_config_policy[] = {
+    [UBUS_MONITOR_CONFIG_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
+    [UBUS_MONITOR_CONFIG_CHECK_INTERVAL] = { .name = "check_interval", .type = BLOBMSG_TYPE_INT32 },
+    [UBUS_MONITOR_CONFIG_AUTO_RESTART] = { .name = "auto_restart", .type = BLOBMSG_TYPE_BOOL },
+    [UBUS_MONITOR_CONFIG_MAX_FIX_ATTEMPTS] = { .name = "max_fix_attempts", .type = BLOBMSG_TYPE_INT32 },
+    [UBUS_MONITOR_CONFIG_MONITOR_CRITICAL_SERVICES] = { .name = "monitor_critical_services", .type = BLOBMSG_TYPE_BOOL },
+};
+
+// UBUS policy for set_enabled method
+enum {
+    UBUS_MONITOR_ENABLED,
+    __UBUS_MONITOR_ENABLED_MAX
+};
+
+static const struct blobmsg_policy ubus_monitor_enabled_policy[] = {
+    [UBUS_MONITOR_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
+};
+
 static const struct ubus_method autonomy_ubus_monitor_methods[] = {
-    UBUS_METHOD("status", autonomy_ubus_monitor_status, 0),
-    UBUS_METHOD("config", autonomy_ubus_monitor_config, 0),
-    UBUS_METHOD("set_config", autonomy_ubus_monitor_set_config, 0),
-    UBUS_METHOD("set_enabled", autonomy_ubus_monitor_set_enabled, 0),
-    UBUS_METHOD("reset", autonomy_ubus_monitor_reset, 0),
-    UBUS_METHOD("check", autonomy_ubus_monitor_check, 0),
+    UBUS_METHOD_NOARG("status", autonomy_ubus_monitor_status),
+    UBUS_METHOD_NOARG("config", autonomy_ubus_monitor_config),
+    UBUS_METHOD("set_config", autonomy_ubus_monitor_set_config, ubus_monitor_config_policy),
+    UBUS_METHOD("set_enabled", autonomy_ubus_monitor_set_enabled, ubus_monitor_enabled_policy),
+    UBUS_METHOD_NOARG("reset", autonomy_ubus_monitor_reset),
+    UBUS_METHOD_NOARG("check", autonomy_ubus_monitor_check),
 };
 
 // UBUS object type
@@ -42,7 +70,7 @@ static const struct ubus_object_type autonomy_ubus_monitor_obj_type = {
 };
 
 // UBUS object
-static const struct ubus_object autonomy_ubus_monitor_obj = {
+static struct ubus_object autonomy_ubus_monitor_obj = {
     .name = "ubus_monitor",
     .type = &autonomy_ubus_monitor_obj_type,
     .methods = autonomy_ubus_monitor_methods,
@@ -273,7 +301,8 @@ int autonomy_ubus_monitor_check(struct ubus_context *ctx, struct ubus_object *ob
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
-    int result = ubus_monitor_check_ubus_health();
+    ubus_health_info_t health_info;
+    int result = ubus_monitor_check_ubus_health(&health_info);
     
     if (result != AUTONOMY_SUCCESS) {
         blobmsg_add_string(&bb, "error", "UBUS monitor check failed");

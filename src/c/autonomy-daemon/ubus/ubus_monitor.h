@@ -29,6 +29,8 @@ typedef struct {
     int check_interval;                     // Check interval in seconds
     int max_fix_attempts;                   // Maximum fix attempts per hour
     bool auto_fix;                          // Automatically fix UBUS issues
+    bool auto_restart;                      // Automatically restart services (alias for auto_fix)
+    bool monitor_critical_services;         // Monitor critical services
     int restart_timeout;                    // Timeout for service restarts in seconds
     int min_services_expected;              // Minimum expected UBUS services
     char critical_services[10][32];         // Critical services that must be available
@@ -41,12 +43,23 @@ typedef struct {
     int check_interval;                     // Check interval
     int max_fix_attempts;                   // Max fix attempts
     bool auto_fix;                          // Auto fix enabled
+    bool auto_restart;                      // Auto restart enabled (alias for auto_fix)
+    bool monitor_critical_services;         // Monitor critical services enabled
     int restart_timeout;                    // Restart timeout
     int min_services_expected;              // Min services expected
     int critical_services_count;            // Critical services count
     char critical_services[10][32];         // Critical services
     int fix_attempts;                       // Fix attempts
     time_t last_fix_time;                   // Last fix time
+    time_t last_check_time;                 // Last check time
+    int total_checks;                       // Total checks performed
+    int total_restarts;                     // Total restarts performed
+    int total_errors;                       // Total errors encountered
+    bool ubus_healthy;                      // UBUS health status
+    bool rpcd_running;                      // RPCD service running
+    int ubus_socket_accessible;             // UBUS socket accessibility
+    int available_services;                 // Number of available services
+    char last_error[256];                   // Last error message
 } ubus_monitor_status_t;
 
 // Main UBUS monitor structure
