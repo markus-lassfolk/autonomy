@@ -157,7 +157,7 @@ void analytics_engine_get_dashboard_metrics(dashboard_metrics_t* metrics);
 
 // Get member analytics
 int analytics_engine_get_member_analytics(const char* member_name, int hours,
-                                         performance_metrics_t* analytics);
+                                         member_performance_metrics_t* analytics);
 
 // Update analytics metrics
 int analytics_engine_update_metrics(void);
