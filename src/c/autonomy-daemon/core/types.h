@@ -245,6 +245,9 @@ typedef struct {
     time_t last_seen;                   // Last time interface was seen
     int index;                          // Interface index
     bool discovered;                    // Interface was discovered
+    char type[32];                      // Interface type (ethernet, wifi, cellular, etc.)
+    uint64_t rx_dropped;                // Dropped received packets
+    uint64_t tx_dropped;                // Dropped transmitted packets
 } network_interface_t;
 
 // GPS geofence system status
