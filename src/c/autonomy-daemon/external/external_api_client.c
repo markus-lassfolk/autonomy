@@ -88,7 +88,7 @@ void external_api_client_cleanup(void) {
 }
 
 // Send API request
-static int external_api_client_send_request(const api_request_t* request, api_response_t* response) {
+int external_api_client_send_request(const api_request_t* request, api_response_t* response) {
     if (!g_external_api_client_initialized || !request || !response) {
         return -1;
     }
@@ -133,7 +133,7 @@ static int external_api_client_send_request(const api_request_t* request, api_re
 }
 
 // Test API connection
-static int external_api_client_test_connection(void) {
+int external_api_client_test_connection(void) {
     if (!g_external_api_client_initialized) {
         return -1;
     }
@@ -348,11 +348,11 @@ bool external_api_client_is_initialized(void) {
 }
 
 // Check if API client is connected
-static bool external_api_client_is_connected(void) {
+bool external_api_client_is_connected(void) {
     return g_external_api_client_initialized && g_external_api_client.connected;
 }
 
 // Get API client instance
-static external_api_client_t* external_api_client_get_instance(void) {
+external_api_client_t* external_api_client_get_instance(void) {
     return g_external_api_client_initialized ? &g_external_api_client : NULL;
 }

@@ -16,6 +16,8 @@ typedef struct {
     int timeout_seconds;
     bool use_ssl;
     char ca_cert_path[256];
+    char client_cert_path[256];
+    char client_key_path[256];
 } api_endpoint_config_t;
 
 // API request
