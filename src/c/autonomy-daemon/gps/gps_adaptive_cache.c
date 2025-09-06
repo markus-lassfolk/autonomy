@@ -8,7 +8,7 @@
 #include <time.h>
 
 // GPS adaptive cache configuration
-static const int MAX_CACHE_ENTRIES = 2000;                 // Maximum cache entries
+// Note: MAX_CACHE_ENTRIES is defined in ../core/types.h
 static const int CACHE_CLEANUP_INTERVAL = 300;             // 5 minute cleanup interval
 static const double MIN_CACHE_HIT_RATIO = 0.1;             // Minimum cache hit ratio
 static const int MAX_CACHE_AGE = 86400;                    // 24 hour maximum cache age
@@ -24,6 +24,12 @@ static const char* CACHE_ENTRY_TYPE_NAMES[] = {
 static gps_adaptive_cache_t g_cache = {0};
 static bool g_cache_initialized = false;
 static pthread_mutex_t g_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// Forward declarations
+void perform_cache_cleanup(void);
+void perform_aggressive_cleanup(void);
+void perform_gentle_cleanup(void);
+static double calculate_eviction_score(const gps_cache_entry_t *entry);
 
 // Initialize GPS adaptive cache
 int gps_adaptive_cache_init(void) {
@@ -257,7 +263,7 @@ int gps_adaptive_cache_remove_entry(int entry_id) {
 }
 
 // Perform cache cleanup
-static void perform_cache_cleanup(void) {
+void perform_cache_cleanup(void) {
     time_t now = time(NULL);
     
     // Check if enough time has passed since last cleanup
@@ -293,7 +299,7 @@ static void perform_cache_cleanup(void) {
 }
 
 // Perform aggressive cache cleanup
-static void perform_aggressive_cleanup(void) {
+void perform_aggressive_cleanup(void) {
     // Sort entries by priority and age for eviction
     int eviction_candidates[MAX_CACHE_ENTRIES];
     int candidate_count = 0;
@@ -353,7 +359,7 @@ static void perform_aggressive_cleanup(void) {
 }
 
 // Perform gentle cache cleanup
-static void perform_gentle_cleanup(void) {
+void perform_gentle_cleanup(void) {
     time_t now = time(NULL);
     int expired_count = 0;
     

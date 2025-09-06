@@ -26,11 +26,11 @@ static bool g_location_services_initialized = false;
 static pthread_mutex_t g_location_services_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
-int find_location_in_cache(double lat, double lon, gps_location_info_t *location_info);
+int find_location_in_cache(double lat, double lon);
 void add_location_to_cache(const gps_location_info_t *location_info);
 int find_oldest_cache_entry(void);
 int perform_reverse_geocoding(double lat, double lon, gps_location_info_t *location_info);
-int try_reverse_geocoding_service(int service_index, double lat, double lon, gps_location_info_t *location_info);
+int try_reverse_geocoding_service(gps_location_service_t service, double lat, double lon, gps_location_info_t *location_info);
 void create_basic_location_info(double lat, double lon, gps_location_info_t *location_info);
 double calculate_distance(double lat1, double lon1, double lat2, double lon2);
 

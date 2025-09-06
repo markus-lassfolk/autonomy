@@ -270,20 +270,7 @@ typedef enum {
     GPS_ERROR_MAX
 } gps_error_type_t;
 
-// GPS clustering types
-typedef struct {
-    bool active;
-    int cluster_id;
-    int position_count;
-    time_t last_update;
-    double center_lat;
-    double center_lon;
-    double center_altitude;
-    double accuracy;
-    double confidence;
-    double radius;
-    time_t first_seen;
-} gps_cluster_t;
+// Note: gps_cluster_t is defined in gps/gps_clustering.h
 
 // GPS performance metrics
 typedef struct {

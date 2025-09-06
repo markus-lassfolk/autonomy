@@ -14,23 +14,8 @@ extern "C" {
 #define GPS_MAX_SOURCES 32
 
 // GPS error types
-typedef enum {
-    GPS_ERROR_TYPE_UNKNOWN = 0,
-    GPS_ERROR_TYPE_TIMEOUT,
-    GPS_ERROR_TYPE_CONNECTION_FAILED,
-    GPS_ERROR_TYPE_INVALID_DATA,
-    GPS_ERROR_TYPE_PARSE_ERROR,
-    GPS_ERROR_TYPE_API_ERROR,
-    GPS_ERROR_TYPE_NETWORK_ERROR,
-    GPS_ERROR_TYPE_AUTHENTICATION_ERROR,
-    GPS_ERROR_TYPE_RATE_LIMIT,
-    GPS_ERROR_TYPE_SERVER_ERROR,
-    GPS_ERROR_TYPE_MAX
-} gps_error_type_t;
 
 // Recovery strategies
-typedef enum {
-    RECOVERY_STRATEGY_NONE = 0,
     RECOVERY_STRATEGY_RETRY,
     RECOVERY_STRATEGY_FALLBACK,
     RECOVERY_STRATEGY_RESET,
@@ -40,8 +25,6 @@ typedef enum {
 } gps_recovery_strategy_t;
 
 // Source status
-typedef enum {
-    SOURCE_STATUS_ACTIVE = 0,
     SOURCE_STATUS_DEGRADED,
     SOURCE_STATUS_FAILED,
     SOURCE_STATUS_MAINTENANCE,
@@ -218,3 +201,4 @@ void gps_error_recovery_cleanup(void);
 #endif
 
 #endif // GPS_ERROR_RECOVERY_H
+// Note: gps_error_type_t, gps_recovery_strategy_t, and gps_source_error_t are defined in ../core/types.h

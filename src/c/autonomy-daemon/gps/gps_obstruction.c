@@ -25,6 +25,12 @@ static gps_obstruction_t g_obstruction = {0};
 static bool g_obstruction_initialized = false;
 static pthread_mutex_t g_obstruction_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Forward declarations
+static double calculate_signal_quality(const gps_data_t *gps_data);
+static gps_obstruction_type_t detect_obstruction_type(const gps_data_t *gps_data, double signal_quality, double *confidence);
+void record_obstruction(gps_obstruction_type_t obstruction_type, double confidence, double signal_quality, const gps_data_t *gps_data);
+void analyze_satellite_obstructions(const gps_data_t *gps_data);
+
 // Initialize GPS obstruction analysis
 int gps_obstruction_init(void) {
     if (g_obstruction_initialized) {
@@ -222,7 +228,7 @@ static gps_obstruction_type_t detect_obstruction_type(const gps_data_t *gps_data
 }
 
 // Record obstruction
-static void record_obstruction(gps_obstruction_type_t obstruction_type, double confidence, 
+void record_obstruction(gps_obstruction_type_t obstruction_type, double confidence, 
                               double signal_quality, const gps_data_t *gps_data) {
     // Shift obstruction records array
     for (int i = g_obstruction.max_records - 1; i > 0; i--) {
@@ -246,7 +252,7 @@ static void record_obstruction(gps_obstruction_type_t obstruction_type, double c
 }
 
 // Analyze satellite-specific obstructions
-static void analyze_satellite_obstructions(const gps_data_t *gps_data) {
+void analyze_satellite_obstructions(const gps_data_t *gps_data) {
     // This is a placeholder for satellite-specific obstruction analysis
     // In a full implementation, this would analyze individual satellite signals
     // and detect obstructions affecting specific satellites

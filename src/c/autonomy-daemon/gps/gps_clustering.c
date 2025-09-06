@@ -13,21 +13,22 @@ static const int MIN_CLUSTER_SIZE = 3;               // Minimum positions for va
 static const double CLUSTER_RADIUS = 50.0;           // 50 meter cluster radius
 static const double CLUSTER_TIMEOUT = 300;           // 5 minute cluster timeout
 static const double WEIGHT_DECAY_FACTOR = 0.95;      // Weight decay for older positions
-static const int MAX_CLUSTERS = 10;                  // Maximum number of active clusters
+// Note: MAX_CLUSTERS is defined in ../core/types.h
 static const double OUTLIER_THRESHOLD = 3.0;         // 3-sigma outlier threshold
 
 // Global clustering state
 
-// Forward declarations - auto-generated
-static void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success);
+// Forward declarations - clustering specific
 static int find_best_cluster(const gps_data_t *gps_data);
 static int create_new_cluster(const gps_data_t *gps_data);
-static bool check_event_conditions(const void *event, const gps_data_t *gps_data);
-static bool evaluate_condition(const void *condition, const gps_data_t *gps_data);
-static void execute_event_actions(const void *event, const gps_data_t *gps_data);
+void add_position_to_cluster(int cluster_index, const gps_data_t *gps_data);
+static double calculate_position_weight(time_t timestamp, double accuracy);
+static double calculate_cluster_confidence(const gps_cluster_t *cluster);
+void update_cluster_variances(int cluster_index, const gps_data_t *gps_data);
+static int find_oldest_cluster(void);
+void cleanup_expired_clusters(void);
+void perform_clustering_analysis(void);
 static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
-static void analyze_movement_pattern(void);
-static void update_source_error_tracking(int source_id, int error_type);
 
 static gps_clustering_t g_clustering = {0};
 static bool g_clustering_initialized = false;
@@ -199,7 +200,7 @@ static int create_new_cluster(const gps_data_t *gps_data) {
 }
 
 // Add position to existing cluster
-static void add_position_to_cluster(int cluster_index, const gps_data_t *gps_data) {
+void add_position_to_cluster(int cluster_index, const gps_data_t *gps_data) {
     gps_cluster_t *cluster = &g_clustering.clusters[cluster_index];
     
     // Calculate position weight
@@ -266,7 +267,7 @@ static double calculate_cluster_confidence(const gps_cluster_t *cluster) {
 }
 
 // Update cluster variances
-static void update_cluster_variances(int cluster_index, const gps_data_t *gps_data) {
+void update_cluster_variances(int cluster_index, const gps_data_t *gps_data) {
     gps_cluster_t *cluster = &g_clustering.clusters[cluster_index];
     
     if (cluster->position_count < 2) {
@@ -304,7 +305,7 @@ static int find_oldest_cluster(void) {
 }
 
 // Clean up expired clusters
-static void cleanup_expired_clusters(void) {
+void cleanup_expired_clusters(void) {
     time_t now = time(NULL);
     
     for (int i = 0; i < g_clustering.max_clusters; i++) {
@@ -321,7 +322,7 @@ static void cleanup_expired_clusters(void) {
 }
 
 // Perform clustering analysis
-static void perform_clustering_analysis(void) {
+void perform_clustering_analysis(void) {
     // Calculate overall clustering statistics
     double total_confidence = 0.0;
     int valid_clusters = 0;

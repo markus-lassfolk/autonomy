@@ -144,7 +144,7 @@ int gps_error_recovery_record_error(int source_id, gps_error_type_t error_type, 
 }
 
 // Add error history entry
-static void add_error_history_entry(int source_id, gps_error_type_t error_type, int error_code, const char *error_message) {
+void add_error_history_entry(int source_id, gps_error_type_t error_type, int error_code, const char *error_message) {
     // Find free history slot
     int slot_index = -1;
     for (int i = 0; i < g_error_recovery.max_error_history; i++) {
@@ -186,7 +186,7 @@ static void add_error_history_entry(int source_id, gps_error_type_t error_type, 
 }
 
 // Find oldest error entry
-static int find_oldest_error_entry(void) {
+int find_oldest_error_entry(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
