@@ -8,6 +8,11 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 // Global GPS location reference manager
 static gps_location_reference_manager_t g_location_ref_manager = {0};
@@ -49,8 +54,8 @@ static const char* LOCATION_REFERENCE_SCHEMA_SQL =
 static void* cleanup_thread_worker(void* arg);
 static int create_new_location_reference(double latitude, double longitude, double accuracy, 
                                         const char* gps_source, uint32_t* location_id);
-static int find_nearby_location_reference(double latitude, double longitude, uint32_t* location_id);
-static int init_location_database(void);
+int find_nearby_location_reference(double latitude, double longitude, uint32_t* location_id);
+int init_location_database(void);
 static void close_location_database(void);
 
 // Initialize GPS location reference system
@@ -359,7 +364,7 @@ static int create_new_location_reference(double latitude, double longitude, doub
 }
 
 // Find nearby location reference
-static int find_nearby_location_reference(double latitude, double longitude, uint32_t* location_id) {
+int find_nearby_location_reference(double latitude, double longitude, uint32_t* location_id) {
     if (!g_location_ref_manager.db || !location_id) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -502,7 +507,7 @@ bool gps_location_reference_is_initialized(void) {
 }
 
 // Initialize location database
-static int init_location_database(void) {
+int init_location_database(void) {
     // Use same database as telemetry but separate table
     const char* db_path = "/etc/autonomy/telemetry.db";
     

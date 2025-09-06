@@ -5,6 +5,9 @@
 #include <time.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
+#include <stdbool.h>
+#include <math.h>
+#include <unistd.h>
 
 // Global UnwiredLabs API state
 static unwiredlabs_config_t g_unwiredlabs_config = {0};
@@ -13,7 +16,7 @@ static bool g_unwiredlabs_initialized = false;
 static CURL* g_curl_handle = NULL;
 
 // HTTP response callback
-static size_t http_response_callback(void* contents, size_t size, size_t nmemb, void* userp) {
+size_t http_response_callback(void* contents, size_t size, size_t nmemb, void* userp) {
     size_t total_size = size * nmemb;
     char* response = (char*)userp;
     

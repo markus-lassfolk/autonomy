@@ -7,6 +7,8 @@
 #include <time.h>
 #include <math.h>
 #include <pthread.h>
+#include <stdbool.h>
+#include <fcntl.h>
 
 // Maximum number of location sources
 #define MAX_LOCATION_SOURCES 8

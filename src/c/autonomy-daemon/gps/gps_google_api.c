@@ -5,6 +5,9 @@
 #include <time.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
+#include <stdbool.h>
+#include <math.h>
+#include <unistd.h>
 
 // Global Google API state
 static google_api_config_t g_google_config = {0};
@@ -13,7 +16,7 @@ static bool g_google_initialized = false;
 static CURL* g_curl_handle = NULL;
 
 // HTTP response callback
-static size_t http_response_callback(void* contents, size_t size, size_t nmemb, void* userp) {
+size_t http_response_callback(void* contents, size_t size, size_t nmemb, void* userp) {
     size_t total_size = size * nmemb;
     char* response = (char*)userp;
     

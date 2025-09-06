@@ -7,10 +7,11 @@
 #include <math.h>
 #include <time.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 // Forward declarations
 static bool validate_nmea_sentence(const char *sentence);
-static bool verify_nmea_checksum(const char *sentence);
+bool verify_nmea_checksum(const char *sentence);
 static bool extract_sentence_type(const char *sentence, char *type, size_t type_size);
 static int parse_gga_sentence(const char *sentence, gps_data_t *gps_data);
 static int parse_gll_sentence(const char *sentence, gps_data_t *gps_data);
@@ -166,7 +167,7 @@ static bool validate_nmea_sentence(const char *sentence) {
 }
 
 // Verify NMEA checksum
-static bool verify_nmea_checksum(const char *sentence) {
+bool verify_nmea_checksum(const char *sentence) {
     if (!sentence) {
         return false;
     }

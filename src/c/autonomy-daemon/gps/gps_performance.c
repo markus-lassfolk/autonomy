@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // Performance tracking configuration
 // Note: MAX_PERFORMANCE_HISTORY is defined in ../core/types.h
@@ -25,15 +27,15 @@ static const double CONSISTENCY_WEIGHT = 0.20;               // Consistency weig
 // Forward declarations - performance specific
 void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success);
 void update_source_performance(int source_id, double accuracy, double response_time, bool success);
-static double calculate_source_reliability(const gps_source_performance_t *source);
-static double calculate_source_consistency(const gps_source_performance_t *source);
-static double calculate_accuracy_standard_deviation(const gps_source_performance_t *source);
-static double calculate_response_time_standard_deviation(const gps_source_performance_t *source);
-static double calculate_source_overall_score(const gps_source_performance_t *source);
-static int find_oldest_performance_entry(void);
-static double calculate_reliability_score(int source_id);
-static double calculate_consistency_score(int source_id);
-static double calculate_overall_score(double reliability, double consistency, double accuracy, double response_time);
+double calculate_source_reliability(const gps_source_performance_t *source);
+double calculate_source_consistency(const gps_source_performance_t *source);
+double calculate_accuracy_standard_deviation(const gps_source_performance_t *source);
+double calculate_response_time_standard_deviation(const gps_source_performance_t *source);
+double calculate_source_overall_score(const gps_source_performance_t *source);
+int find_oldest_performance_entry(void);
+double calculate_reliability_score(int source_id);
+double calculate_consistency_score(int source_id);
+double calculate_overall_score(double reliability, double consistency, double accuracy, double response_time);
 void calculate_overall_performance(void);
 
 static gps_performance_t g_performance = {0};
@@ -241,7 +243,7 @@ void update_source_performance(int source_id, double accuracy, double response_t
 }
 
 // Calculate reliability score for a source
-static double calculate_source_reliability(const gps_source_performance_t *source) {
+double calculate_source_reliability(const gps_source_performance_t *source) {
     if (source->total_measurements == 0) {
         return 0.0;
     }
@@ -278,7 +280,7 @@ static double calculate_source_reliability(const gps_source_performance_t *sourc
 }
 
 // Calculate consistency score for a source
-static double calculate_source_consistency(const gps_source_performance_t *source) {
+double calculate_source_consistency(const gps_source_performance_t *source) {
     if (source->total_measurements < 2) {
         return 0.0;
     }
@@ -306,7 +308,7 @@ static double calculate_source_consistency(const gps_source_performance_t *sourc
 }
 
 // Calculate accuracy standard deviation
-static double calculate_accuracy_standard_deviation(const gps_source_performance_t *source) {
+double calculate_accuracy_standard_deviation(const gps_source_performance_t *source) {
     if (source->total_measurements < 2) {
         return 0.0;
     }
@@ -332,7 +334,7 @@ static double calculate_accuracy_standard_deviation(const gps_source_performance
 }
 
 // Calculate response time standard deviation
-static double calculate_response_time_standard_deviation(const gps_source_performance_t *source) {
+double calculate_response_time_standard_deviation(const gps_source_performance_t *source) {
     if (source->total_measurements < 2) {
         return 0.0;
     }
@@ -358,7 +360,7 @@ static double calculate_response_time_standard_deviation(const gps_source_perfor
 }
 
 // Calculate source overall score
-static double calculate_source_overall_score(const gps_source_performance_t *source) {
+double calculate_source_overall_score(const gps_source_performance_t *source) {
     // Weighted combination of reliability, consistency, accuracy, and response time
     double accuracy_score = 1.0 - (source->average_accuracy / g_performance.max_accuracy_threshold);
     accuracy_score = fmin(1.0, fmax(0.0, accuracy_score));
@@ -375,7 +377,7 @@ static double calculate_source_overall_score(const gps_source_performance_t *sou
 }
 
 // Calculate reliability score for history entry
-static double calculate_reliability_score(int source_id) {
+double calculate_reliability_score(int source_id) {
     if (source_id < 0 || source_id >= GPS_MAX_SOURCES) {
         return 0.0;
     }
@@ -384,7 +386,7 @@ static double calculate_reliability_score(int source_id) {
 }
 
 // Calculate consistency score for history entry
-static double calculate_consistency_score(int source_id) {
+double calculate_consistency_score(int source_id) {
     if (source_id < 0 || source_id >= GPS_MAX_SOURCES) {
         return 0.0;
     }
@@ -393,7 +395,7 @@ static double calculate_consistency_score(int source_id) {
 }
 
 // Calculate overall score for history entry
-static double calculate_overall_score(double reliability, double consistency, double accuracy, double response_time) {
+double calculate_overall_score(double reliability, double consistency, double accuracy, double response_time) {
     double accuracy_score = 1.0 - (accuracy / g_performance.max_accuracy_threshold);
     accuracy_score = fmin(1.0, fmax(0.0, accuracy_score));
     

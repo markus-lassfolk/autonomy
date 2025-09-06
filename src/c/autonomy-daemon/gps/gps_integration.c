@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // GPS integration configuration
 // Note: MAX_GPS_SOURCES is defined in ../core/types.h
@@ -21,10 +23,10 @@ static pthread_mutex_t g_integration_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
 int find_source_by_id(int source_id);
-static double calculate_source_health_score(const gps_integration_source_t *source, const gps_data_t *gps_data);
-static double calculate_source_reliability(const gps_integration_source_t *source, const gps_data_t *gps_data);
+double calculate_source_health_score(const gps_integration_source_t *source, const gps_data_t *gps_data);
+double calculate_source_reliability(const gps_integration_source_t *source, const gps_data_t *gps_data);
 void add_gps_history(const gps_data_t *gps_data, int source_id, gps_source_type_t source_type, double health_score);
-static double calculate_gps_confidence(const gps_data_t *gps_data);
+double calculate_gps_confidence(const gps_data_t *gps_data);
 void perform_integration_checks(void);
 void check_gps_source_health(void);
 void update_best_gps_source(void);
@@ -220,7 +222,7 @@ int find_source_by_id(int source_id) {
 }
 
 // Calculate source health score
-static double calculate_source_health_score(const gps_integration_source_t *source, const gps_data_t *gps_data) {
+double calculate_source_health_score(const gps_integration_source_t *source, const gps_data_t *gps_data) {
     double health_score = 100.0;
     
     // Accuracy penalty
@@ -255,7 +257,7 @@ static double calculate_source_health_score(const gps_integration_source_t *sour
 }
 
 // Calculate source reliability
-static double calculate_source_reliability(const gps_integration_source_t *source, const gps_data_t *gps_data) {
+double calculate_source_reliability(const gps_integration_source_t *source, const gps_data_t *gps_data) {
     double reliability = 1.0;
     
     // Base reliability on update consistency
@@ -299,7 +301,7 @@ void add_gps_history(const gps_data_t *gps_data, int source_id,
 }
 
 // Calculate GPS confidence
-static double calculate_gps_confidence(const gps_data_t *gps_data) {
+double calculate_gps_confidence(const gps_data_t *gps_data) {
     double confidence = 1.0;
     
     // Accuracy confidence

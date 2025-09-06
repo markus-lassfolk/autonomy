@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // Cell tower positioning configuration
 static const int MAX_CELL_TOWERS = 100;                     // Maximum cell towers to track

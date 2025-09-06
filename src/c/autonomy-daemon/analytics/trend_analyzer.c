@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <math.h>
 #include <time.h>
+#include <stdbool.h>
 
 // Global trend analyzer instance
 static trend_analyzer_t g_trend_analyzer;

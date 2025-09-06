@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // GPS event configuration
 // Note: MAX_EVENTS is defined in ../core/types.h
@@ -38,7 +40,7 @@ static const char* ACTION_TYPE_NAMES[] = {
 // Global GPS events state
 
 // Forward declarations - auto-generated
-static void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success);
+void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success);
 // Removed old auto-generated forward declarations - using proper ones below
 
 static gps_events_t g_events = {0};
@@ -46,12 +48,12 @@ static bool g_events_initialized = false;
 static pthread_mutex_t g_events_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
-static bool check_event_conditions(const gps_event_definition_t *event, const gps_data_t *gps_data);
+bool check_event_conditions(const gps_event_definition_t *event, const gps_data_t *gps_data);
 static bool evaluate_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
-static bool check_location_in_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
-static bool check_location_out_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
-static bool check_time_after_condition(const gps_event_condition_t *condition);
-static bool check_time_before_condition(const gps_event_condition_t *condition);
+bool check_location_in_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
+bool check_location_out_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
+bool check_time_after_condition(const gps_event_condition_t *condition);
+bool check_time_before_condition(const gps_event_condition_t *condition);
 static bool evaluate_custom_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
 void execute_event_actions(const gps_event_definition_t *event, const gps_data_t *gps_data);
 void log_event_action(const gps_event_definition_t *event, const gps_data_t *gps_data, const gps_event_action_t *action);
@@ -62,7 +64,7 @@ void update_status_action(const gps_event_definition_t *event, const gps_data_t 
 void send_ubus_message_action(const gps_event_definition_t *event, const gps_data_t *gps_data, const gps_event_action_t *action);
 void execute_custom_action(const gps_event_definition_t *event, const gps_data_t *gps_data, const gps_event_action_t *action);
 void add_event_history(const gps_event_definition_t *event, const gps_data_t *gps_data, time_t timestamp);
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
 
 // Initialize GPS events system
 int gps_events_init(void) {
@@ -247,7 +249,7 @@ int gps_events_check_gps_data(const gps_data_t *gps_data) {
 }
 
 // Check if event conditions are met
-static bool check_event_conditions(const gps_event_definition_t *event, const gps_data_t *gps_data) {
+bool check_event_conditions(const gps_event_definition_t *event, const gps_data_t *gps_data) {
     for (int i = 0; i < event->condition_count; i++) {
         const gps_event_condition_t *condition = &event->conditions[i];
         
@@ -294,7 +296,7 @@ static bool evaluate_condition(const gps_event_condition_t *condition, const gps
 }
 
 // Check location in condition
-static bool check_location_in_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data) {
+bool check_location_in_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data) {
     // For now, implement a simple circular area check
     // In a full implementation, this could check against geofences or other defined areas
     
@@ -309,7 +311,7 @@ static bool check_location_in_condition(const gps_event_condition_t *condition, 
 }
 
 // Check location out condition
-static bool check_location_out_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data) {
+bool check_location_out_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data) {
     if (condition->location_data.lat == 0.0 && condition->location_data.lon == 0.0) {
         return false;
     }
@@ -321,7 +323,7 @@ static bool check_location_out_condition(const gps_event_condition_t *condition,
 }
 
 // Check time after condition
-static bool check_time_after_condition(const gps_event_condition_t *condition) {
+bool check_time_after_condition(const gps_event_condition_t *condition) {
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     
@@ -331,7 +333,7 @@ static bool check_time_after_condition(const gps_event_condition_t *condition) {
 }
 
 // Check time before condition
-static bool check_time_before_condition(const gps_event_condition_t *condition) {
+bool check_time_before_condition(const gps_event_condition_t *condition) {
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     
@@ -456,7 +458,7 @@ void add_event_history(const gps_event_definition_t *event, const gps_data_t *gp
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;

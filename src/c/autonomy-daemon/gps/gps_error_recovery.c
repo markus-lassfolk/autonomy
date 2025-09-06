@@ -7,6 +7,8 @@
 #include <math.h>
 #include <time.h>
 #include <pthread.h>
+#include <stdbool.h>
+#include <sys/socket.h>
 
 // Error recovery configuration
 static const int MAX_ERROR_HISTORY = 1000;                   // Maximum error history entries
@@ -32,7 +34,7 @@ static const char* RECOVERY_STRATEGY_NAMES[] = {
 // Forward declarations - error recovery specific
 void add_error_history_entry(int source_id, gps_error_type_t error_type, int error_code, const char *error_message);
 int find_oldest_error_entry(void);
-static void update_source_error_tracking(int source_id, gps_error_type_t error_type);
+void update_source_error_tracking(int source_id, gps_error_type_t error_type);
 void calculate_source_error_rate(gps_source_error_local_t *source);
 static bool should_retry_error(const gps_source_error_local_t *source, gps_error_type_t error_type);
 int calculate_backoff_delay(int retry_count);
@@ -208,7 +210,7 @@ int find_oldest_error_entry(void) {
 }
 
 // Update source error tracking
-static void update_source_error_tracking(int source_id, gps_error_type_t error_type) {
+void update_source_error_tracking(int source_id, gps_error_type_t error_type) {
     if (source_id < 0 || source_id >= GPS_MAX_SOURCES) {
         return;
     }

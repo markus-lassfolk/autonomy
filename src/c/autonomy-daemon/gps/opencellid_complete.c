@@ -14,6 +14,9 @@
 #include <sqlite3.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <fcntl.h>
 
 // Global OpenCellID system instance
 static opencellid_system_t g_opencellid_system = {0};
@@ -75,16 +78,16 @@ typedef struct {
 } opencellid_contribution_manager_t;
 
 // Forward declarations
-static int init_cache(void);
-static int init_rate_limiter(void);
-static int init_contribution_manager(void);
-static int init_http_client(void);
-static void cleanup_cache(void);
-static void cleanup_rate_limiter(void);
-static void cleanup_contribution_manager(void);
-static void cleanup_http_client(void);
+int init_cache(void);
+int init_rate_limiter(void);
+int init_contribution_manager(void);
+int init_http_client(void);
+void cleanup_cache(void);
+void cleanup_rate_limiter(void);
+void cleanup_contribution_manager(void);
+void cleanup_http_client(void);
 
-static size_t opencellid_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response);
+size_t opencellid_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response);
 static int make_api_request(const char* url, const char* post_data, http_response_t* response);
 static int parse_cell_location_response(const char* json_data, opencellid_cell_location_t* location);
 static int cache_get_cell_location(const opencellid_cell_identifier_t* cell_id, opencellid_cell_location_t* location);
@@ -101,7 +104,7 @@ static int perform_weighted_centroid_triangulation(const opencellid_cell_locatio
                                                   opencellid_triangulation_result_t* result);
 static int apply_timing_advance_constraint(const opencellid_serving_cell_t* serving_cell,
                                          opencellid_triangulation_result_t* result);
-static double calculate_tower_weight(const opencellid_cell_location_t* location,
+double calculate_tower_weight(const opencellid_cell_location_t* location,
                                    const opencellid_serving_cell_t* serving_cell,
                                    bool is_serving);
 
@@ -435,7 +438,7 @@ int opencellid_lookup_cells(const opencellid_cell_identifier_t* cell_ids, int ce
 }
 
 // Initialize cache subsystem
-static int init_cache(void) {
+int init_cache(void) {
     opencellid_cache_t* cache = malloc(sizeof(opencellid_cache_t));
     if (!cache) {
         return AUTONOMY_ERROR_SYSTEM;
@@ -561,23 +564,23 @@ bool opencellid_is_initialized(void) {
 }
 
 // Placeholder implementations for remaining functions
-static int init_rate_limiter(void) {
+int init_rate_limiter(void) {
     // Implementation would create rate limiter
     return AUTONOMY_SUCCESS;
 }
 
-static int init_contribution_manager(void) {
+int init_contribution_manager(void) {
     // Implementation would create contribution manager
     return AUTONOMY_SUCCESS;
 }
 
-static int init_http_client(void) {
+int init_http_client(void) {
     // Implementation would initialize CURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
     return AUTONOMY_SUCCESS;
 }
 
-static void cleanup_cache(void) {
+void cleanup_cache(void) {
     if (g_opencellid_system.cache) {
         opencellid_cache_t* cache = (opencellid_cache_t*)g_opencellid_system.cache;
         if (cache->db) {
@@ -589,20 +592,20 @@ static void cleanup_cache(void) {
     }
 }
 
-static void cleanup_rate_limiter(void) {
+void cleanup_rate_limiter(void) {
     // Cleanup rate limiter
 }
 
-static void cleanup_contribution_manager(void) {
+void cleanup_contribution_manager(void) {
     // Cleanup contribution manager
 }
 
-static void cleanup_http_client(void) {
+void cleanup_http_client(void) {
     curl_global_cleanup();
 }
 
 // HTTP callback function for curl
-static size_t opencellid_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response) {
+size_t opencellid_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response) {
     size_t total_size = size * nmemb;
     
     // Reallocate memory for the response data

@@ -7,6 +7,9 @@
 #include <time.h>
 #include <pthread.h>
 #include <sqlite3.h>
+#include <math.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 extern "C" {

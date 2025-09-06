@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <sys/socket.h>
 
 // GPS connector configuration
 static const int MAX_CONNECTED_MODULES = 20;             // Maximum connected modules

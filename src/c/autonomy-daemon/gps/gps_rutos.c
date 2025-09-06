@@ -11,6 +11,8 @@
 #include <errno.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // RUTOS GPS file paths
 static const char* RUTOS_GPS_FILES[] = {
@@ -36,7 +38,7 @@ static bool g_rutos_thread_running = false;
 void* rutos_monitor_thread(void *arg);
 int read_rutos_gps_data(gps_data_t *data);
 static bool validate_gps_data(const gps_data_t *data);
-static float calculate_reliability_score(void);
+float calculate_reliability_score(void);
 
 // Initialize RUTOS GPS system
 int gps_rutos_init(void) {
@@ -314,7 +316,7 @@ static bool validate_gps_data(const gps_data_t *data) {
 }
 
 // Calculate reliability score based on data quality
-static float calculate_reliability_score(void) {
+float calculate_reliability_score(void) {
     float score = 100.0f;
     
     // Reduce score for poor accuracy

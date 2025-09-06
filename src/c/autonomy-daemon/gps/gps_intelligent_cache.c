@@ -5,6 +5,9 @@
 #include <time.h>
 #include <math.h>
 #include <openssl/sha.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <fcntl.h>
 
 // Global intelligent cache instance
 static intelligent_cache_t g_intelligent_cache = {0};

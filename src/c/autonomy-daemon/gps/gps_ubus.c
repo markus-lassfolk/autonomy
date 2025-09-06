@@ -4,6 +4,9 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <fcntl.h>
 
 extern struct autonomy_state g_state;
 

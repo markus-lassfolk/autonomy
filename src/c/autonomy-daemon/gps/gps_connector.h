@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 extern "C" {

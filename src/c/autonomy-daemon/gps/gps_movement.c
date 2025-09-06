@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // Movement detection configuration
 static const int MOVEMENT_HISTORY_SIZE = 50;        // Number of positions to track
@@ -24,13 +26,13 @@ static const char* MOVEMENT_PATTERN_NAMES[] = {
 // Global movement detector state
 
 // Forward declarations - movement specific
-static movement_metrics_t calculate_movement_metrics(void);
+movement_metrics_t calculate_movement_metrics(void);
 static gps_movement_pattern_t determine_movement_pattern(const movement_metrics_t *metrics);
 static bool detect_turning_pattern(void);
 static bool detect_oscillation_pattern(void);
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
-static double calculate_bearing(double lat1, double lon1, double lat2, double lon2);
-static void analyze_movement_pattern(void);
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double calculate_bearing(double lat1, double lon1, double lat2, double lon2);
+void analyze_movement_pattern(void);
 
 static gps_movement_t g_movement_detector = {0};
 static bool g_movement_initialized = false;
@@ -113,7 +115,7 @@ int gps_movement_add_position(const gps_data_t *gps_data) {
 }
 
 // Analyze movement pattern
-static void analyze_movement_pattern(void) {
+void analyze_movement_pattern(void) {
     if (g_movement_detector.position_count < g_movement_detector.min_positions) {
         return;
     }
@@ -136,7 +138,7 @@ static void analyze_movement_pattern(void) {
 }
 
 // Calculate movement metrics
-static movement_metrics_t calculate_movement_metrics(void) {
+movement_metrics_t calculate_movement_metrics(void) {
     movement_metrics_t metrics = {0};
     
     if (g_movement_detector.position_count < 2) {
@@ -360,7 +362,7 @@ static bool detect_oscillation_pattern(void) {
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
@@ -378,7 +380,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Calculate bearing between two GPS coordinates
-static double calculate_bearing(double lat1, double lon1, double lat2, double lon2) {
+double calculate_bearing(double lat1, double lon1, double lat2, double lon2) {
     double lat1_rad = lat1 * M_PI / 180.0;
     double lat2_rad = lat2 * M_PI / 180.0;
     double delta_lon = (lon2 - lon1) * M_PI / 180.0;

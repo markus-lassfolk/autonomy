@@ -13,6 +13,9 @@
 #include <pthread.h>
 #include <time.h>
 #include <math.h>
+#include <stdbool.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 // GPS manager configuration
 static const int GPS_UPDATE_INTERVAL = 5;         // 5 seconds
@@ -38,10 +41,10 @@ void* gps_manager_monitor_thread(void *arg);
 void update_rutos_gps_source(void);
 void update_starlink_gps_source(void);
 int find_or_create_gps_source(gps_source_type_t source_type, const char *name);
-static double calculate_data_quality(const gps_data_t *data);
+double calculate_data_quality(const gps_data_t *data);
 void cleanup_stale_gps_sources(time_t now);
 int find_best_gps_source(void);
-static bool check_position_change(const gps_data_t *new_data);
+bool check_position_change(const gps_data_t *new_data);
 
 // Initialize GPS manager system
 int gps_manager_init(void) {
@@ -343,7 +346,7 @@ int find_or_create_gps_source(gps_source_type_t type, const char *name) {
 }
 
 // Calculate data quality score
-static double calculate_data_quality(const gps_data_t *gps_data) {
+double calculate_data_quality(const gps_data_t *gps_data) {
     if (!gps_data) {
         return 0.0;
     }
@@ -472,7 +475,7 @@ int find_best_gps_source(void) {
 }
 
 // Check if position has changed significantly
-static bool check_position_change(const gps_data_t *new_data) {
+bool check_position_change(const gps_data_t *new_data) {
     if (!new_data || g_gps_manager.unified_gps.timestamp == 0) {
         return true; // First data or no previous data
     }

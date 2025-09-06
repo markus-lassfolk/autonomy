@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // Location services configuration
 static const int MAX_LOCATION_CACHE = 1000;             // Maximum cached locations

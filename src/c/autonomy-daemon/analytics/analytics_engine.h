@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
+#include <math.h>
 
 // Note: health_thresholds_t is defined in health_analyzer.h
 
@@ -43,7 +44,7 @@ typedef struct {
     bool has_last_failover;
 } system_overview_t;
 
-// Performance metrics
+// Member performance metrics (different from system performance_metrics_t)
 typedef struct {
     double average_latency[16];
     double average_loss[16];
@@ -54,7 +55,7 @@ typedef struct {
     double availability[16];
     char member_names[16][128];
     int member_count;
-} performance_metrics_t;
+} member_performance_metrics_t;
 
 // Member health
 typedef struct {
@@ -102,7 +103,7 @@ typedef struct {
 typedef struct {
     time_t timestamp;
     system_overview_t overview;
-    performance_metrics_t performance;
+    member_performance_metrics_t performance;
     health_metrics_t health;
     analytics_alert_t alerts[16];
     int alert_count;

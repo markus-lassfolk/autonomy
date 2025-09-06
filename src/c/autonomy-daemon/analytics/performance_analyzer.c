@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <math.h>
 #include <time.h>
+#include <stdbool.h>
 
 // Global performance analyzer instance
 static performance_analyzer_t g_performance_analyzer;

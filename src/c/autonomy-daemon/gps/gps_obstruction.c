@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // GPS obstruction configuration
 static const int MAX_OBSTRUCTION_RECORDS = 1000;          // Maximum obstruction records
@@ -26,7 +28,7 @@ static bool g_obstruction_initialized = false;
 static pthread_mutex_t g_obstruction_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
-static double calculate_signal_quality(const gps_data_t *gps_data);
+double calculate_signal_quality(const gps_data_t *gps_data);
 static gps_obstruction_type_t detect_obstruction_type(const gps_data_t *gps_data, double signal_quality, double *confidence);
 void record_obstruction(gps_obstruction_type_t obstruction_type, double confidence, double signal_quality, const gps_data_t *gps_data);
 void analyze_satellite_obstructions(const gps_data_t *gps_data);
@@ -131,7 +133,7 @@ int gps_obstruction_analyze_gps_data(const gps_data_t *gps_data) {
 }
 
 // Calculate GPS signal quality
-static double calculate_signal_quality(const gps_data_t *gps_data) {
+double calculate_signal_quality(const gps_data_t *gps_data) {
     double signal_quality = 1.0;
     
     // Satellite count factor (0-1)

@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <sys/socket.h>
 
 // GPS system configuration
 static const int GPS_SYSTEM_INIT_TIMEOUT = 30;           // 30 second initialization timeout

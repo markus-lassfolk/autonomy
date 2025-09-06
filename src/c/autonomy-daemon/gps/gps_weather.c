@@ -8,6 +8,9 @@
 #include <math.h>
 #include <time.h>
 #include <curl/curl.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <fcntl.h>
 
 // Weather integration configuration
 static const int MAX_WEATHER_CACHE_ENTRIES = 1000;          // Maximum weather cache entries
@@ -30,13 +33,13 @@ static pthread_mutex_t g_weather_mutex = PTHREAD_MUTEX_INITIALIZER;
 static bool get_cached_weather(double lat, double lon, gps_weather_current_t *weather);
 void cache_weather_data(double lat, double lon, const gps_weather_current_t *weather);
 int find_oldest_weather_cache(void);
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
 void parse_current_weather_response(const gps_weather_api_response_t *response, gps_weather_current_t *weather);
 void parse_forecast_response(const gps_weather_api_response_t *response, gps_weather_forecast_t *forecast);
 void parse_air_quality_response(const gps_weather_api_response_t *response, gps_weather_air_quality_t *air_quality);
 
 // CURL write callback for weather API responses
-static size_t weather_write_callback(void *contents, size_t size, size_t nmemb, void *userp) {
+size_t weather_write_callback(void *contents, size_t size, size_t nmemb, void *userp) {
     size_t realsize = size * nmemb;
     gps_weather_api_response_t *response = (gps_weather_api_response_t *)userp;
     
@@ -391,7 +394,7 @@ int find_oldest_weather_cache(void) {
 }
 
 // Calculate distance between coordinates
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0; // Earth radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;

@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <math.h>
+#include <stdbool.h>
 
 // Global usage analyzer instance
 static usage_analyzer_t g_usage_analyzer;

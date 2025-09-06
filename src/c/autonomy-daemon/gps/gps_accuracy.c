@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <stdbool.h>
 
 // GPS accuracy validation configuration
 static const double MIN_ACCURACY = 0.1;            // Minimum accuracy in meters
@@ -37,8 +38,8 @@ static bool validate_position_data(const gps_data_t *gps_data, gps_validation_re
 static bool validate_temporal_data(const gps_data_t *gps_data, gps_validation_result_t *result);
 static bool validate_consistency(const gps_data_t *gps_data, gps_validation_result_t *result);
 static double estimate_expected_accuracy(int satellites, int fix_quality);
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
-static void update_validation_statistics(const gps_validation_result_t *result);
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+void update_validation_statistics(const gps_validation_result_t *result);
 
 
 // Initialize GPS accuracy validator
@@ -328,7 +329,7 @@ static double estimate_expected_accuracy(int satellites, int fix_quality) {
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
@@ -346,7 +347,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Update validation statistics
-static void update_validation_statistics(const gps_validation_result_t *result) {
+void update_validation_statistics(const gps_validation_result_t *result) {
     g_accuracy_validator.validation_count++;
     g_accuracy_validator.last_validation = time(NULL);
     

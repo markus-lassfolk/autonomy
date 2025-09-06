@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <stdbool.h>
 
 // Coordinate utilities configuration
 static const double EARTH_RADIUS_METERS = 6371000.0;      // Earth's radius in meters

@@ -6,6 +6,7 @@
 #include <math.h>
 #include <pthread.h>
 #include <time.h>
+#include <stdbool.h>
 
 // Global fusion engine instance
 static gps_fusion_engine_t g_fusion_engine = {0};
@@ -22,16 +23,16 @@ static int perform_weighted_average_fusion(const weighted_gps_data_t* weighted_d
                                          standardized_gps_data_t* result);
 static int perform_confidence_weighted_fusion(const weighted_gps_data_t* weighted_data, int count,
                                              standardized_gps_data_t* result);
-static int calculate_source_weights(const standardized_gps_data_t* source_data, int source_count,
+int calculate_source_weights(const standardized_gps_data_t* source_data, int source_count,
                                    weighted_gps_data_t* weighted_data);
-static double calculate_weight_factor(const standardized_gps_data_t* data, const char* factor_type);
+double calculate_weight_factor(const standardized_gps_data_t* data, const char* factor_type);
 static bool is_outlier(const standardized_gps_data_t* data, const standardized_gps_data_t* reference_data, 
                       int reference_count);
 static bool validate_gps_coordinates(double lat, double lon);
 static bool validate_gps_accuracy(double accuracy);
 static const char* gps_fusion_method_to_string(gps_fusion_method_t method);
-static double calculate_consensus_score(const standardized_gps_data_t* source_data, int source_count);
-static void update_kalman_state(const standardized_gps_data_t* measurement);
+double calculate_consensus_score(const standardized_gps_data_t* source_data, int source_count);
+void update_kalman_state(const standardized_gps_data_t* measurement);
 static void predict_kalman_state(double dt);
 
 // Initialize GPS fusion engine
@@ -437,7 +438,7 @@ static int perform_confidence_weighted_fusion(const weighted_gps_data_t* weighte
 }
 
 // Calculate weights for each GPS source
-static int calculate_source_weights(const standardized_gps_data_t* source_data, int source_count,
+int calculate_source_weights(const standardized_gps_data_t* source_data, int source_count,
                                    weighted_gps_data_t* weighted_data) {
     for (int i = 0; i < source_count; i++) {
         weighted_data[i].data = source_data[i];
@@ -478,7 +479,7 @@ static int calculate_source_weights(const standardized_gps_data_t* source_data, 
 }
 
 // Calculate weight factor for specific aspect
-static double calculate_weight_factor(const standardized_gps_data_t* data, const char* factor_type) {
+double calculate_weight_factor(const standardized_gps_data_t* data, const char* factor_type) {
     if (!data || !factor_type) return 0.0;
     
     if (strcmp(factor_type, "accuracy") == 0) {

@@ -10,6 +10,9 @@
 #include <sys/statvfs.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <math.h>
 
 // Global performance monitor instance
 static performance_monitor_t g_performance_monitor;

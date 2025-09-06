@@ -6,6 +6,7 @@ extern "C" {
 #pragma once
 
 #include <libubus.h>
+#include <stdint.h>
 
 typedef enum {
 	LGPS_SUCCESS,

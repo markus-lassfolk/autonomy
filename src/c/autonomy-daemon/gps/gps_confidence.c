@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <stdbool.h>
 
 // GPS confidence configuration
 static const double MIN_CONFIDENCE = 0.1;         // Minimum confidence threshold
@@ -32,15 +33,15 @@ static gps_confidence_t g_confidence_calc = {0};
 static bool g_confidence_initialized = false;
 
 // Forward declarations
-static double calculate_accuracy_confidence(double accuracy);
-static double calculate_satellite_confidence(int satellite_count);
-static double calculate_fix_quality_confidence(int fix_quality);
-static double calculate_freshness_confidence(time_t timestamp);
-static double calculate_consistency_confidence(const gps_data_t *current_gps, 
+double calculate_accuracy_confidence(double accuracy);
+double calculate_satellite_confidence(int satellite_count);
+double calculate_fix_quality_confidence(int fix_quality);
+double calculate_freshness_confidence(time_t timestamp);
+double calculate_consistency_confidence(const gps_data_t *current_gps, 
                                             const gps_confidence_context_t *context);
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
-static double calculate_expected_movement(int time_diff_seconds, const gps_confidence_context_t *context);
-static double calculate_position_consistency(double actual_distance, double expected_movement,
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double calculate_expected_movement(int time_diff_seconds, const gps_confidence_context_t *context);
+double calculate_position_consistency(double actual_distance, double expected_movement,
                                           double current_accuracy, double previous_accuracy);
 
 
@@ -109,7 +110,7 @@ double gps_confidence_calculate(const gps_data_t *gps_data, const gps_confidence
 }
 
 // Calculate accuracy-based confidence
-static double calculate_accuracy_confidence(double accuracy) {
+double calculate_accuracy_confidence(double accuracy) {
     if (accuracy <= 0) {
         return 0.0;
     }
@@ -131,7 +132,7 @@ static double calculate_accuracy_confidence(double accuracy) {
 }
 
 // Calculate satellite-based confidence
-static double calculate_satellite_confidence(int satellite_count) {
+double calculate_satellite_confidence(int satellite_count) {
     if (satellite_count <= 0) {
         return 0.0;
     }
@@ -153,7 +154,7 @@ static double calculate_satellite_confidence(int satellite_count) {
 }
 
 // Calculate fix quality confidence
-static double calculate_fix_quality_confidence(int fix_quality) {
+double calculate_fix_quality_confidence(int fix_quality) {
     switch (fix_quality) {
         case 0: return 0.0;   // No fix
         case 1: return 0.3;   // GPS fix
@@ -166,7 +167,7 @@ static double calculate_fix_quality_confidence(int fix_quality) {
 }
 
 // Calculate data freshness confidence
-static double calculate_freshness_confidence(time_t timestamp) {
+double calculate_freshness_confidence(time_t timestamp) {
     if (timestamp <= 0) {
         return 0.0;
     }
@@ -191,7 +192,7 @@ static double calculate_freshness_confidence(time_t timestamp) {
 }
 
 // Calculate position consistency confidence
-static double calculate_consistency_confidence(const gps_data_t *current_gps, 
+double calculate_consistency_confidence(const gps_data_t *current_gps, 
                                             const gps_confidence_context_t *context) {
     if (!context || !context->previous_positions || context->position_count == 0) {
         return 0.5;  // Neutral confidence if no context
@@ -234,7 +235,7 @@ static double calculate_consistency_confidence(const gps_data_t *current_gps,
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
@@ -252,7 +253,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Calculate expected movement based on time difference
-static double calculate_expected_movement(int time_diff_seconds, const gps_confidence_context_t *context) {
+double calculate_expected_movement(int time_diff_seconds, const gps_confidence_context_t *context) {
     if (!context || context->average_speed <= 0) {
         return 0.0;  // No speed information available
     }
@@ -262,7 +263,7 @@ static double calculate_expected_movement(int time_diff_seconds, const gps_confi
 }
 
 // Calculate position consistency score
-static double calculate_position_consistency(double actual_distance, double expected_movement,
+double calculate_position_consistency(double actual_distance, double expected_movement,
                                           double current_accuracy, double previous_accuracy) {
     // Calculate combined accuracy
     double combined_accuracy = sqrt(current_accuracy * current_accuracy + 

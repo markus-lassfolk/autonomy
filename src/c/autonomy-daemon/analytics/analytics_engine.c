@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <time.h>
+#include <stdbool.h>
+#include <math.h>
+#include <unistd.h>
 
 // Global analytics engine instance
 static analytics_engine_t g_analytics_engine;
@@ -15,7 +18,7 @@ static bool g_analytics_engine_initialized = false;
 // Forward declarations
 static void* analytics_thread(void* arg);
 int calculate_system_overview(system_overview_t* overview);
-int calculate_performance_metrics(performance_metrics_t* performance);
+int calculate_performance_metrics(member_performance_metrics_t* performance);
 int calculate_health_metrics(health_metrics_t* health);
 static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts);
 static int generate_analytics_recommendations(analytics_recommendation_t* recommendations, 
@@ -261,7 +264,7 @@ int calculate_system_overview(system_overview_t* overview) {
 }
 
 // Calculate performance metrics
-int calculate_performance_metrics(performance_metrics_t* performance) {
+int calculate_performance_metrics(member_performance_metrics_t* performance) {
     if (!performance) return -1;
     
     if (!performance_analyzer_is_initialized()) {
@@ -392,7 +395,7 @@ void analytics_engine_get_dashboard_metrics(dashboard_metrics_t* metrics) {
 
 // Get member analytics
 int analytics_engine_get_member_analytics(const char* member_name, int hours,
-                                         performance_metrics_t* analytics) {
+                                         member_performance_metrics_t* analytics) {
     if (!g_analytics_engine_initialized || !member_name || !analytics) {
         return -1;
     }

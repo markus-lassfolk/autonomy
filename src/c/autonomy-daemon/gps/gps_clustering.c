@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // Clustering configuration
 static const int MAX_CLUSTER_SIZE = 100;            // Maximum positions per cluster
@@ -19,16 +21,16 @@ static const double OUTLIER_THRESHOLD = 3.0;         // 3-sigma outlier threshol
 // Global clustering state
 
 // Forward declarations - clustering specific
-static int find_best_cluster(const gps_data_t *gps_data);
+int find_best_cluster(const gps_data_t *gps_data);
 static int create_new_cluster(const gps_data_t *gps_data);
 void add_position_to_cluster(int cluster_index, const gps_data_t *gps_data);
-static double calculate_position_weight(time_t timestamp, double accuracy);
-static double calculate_cluster_confidence(const gps_cluster_t *cluster);
+double calculate_position_weight(time_t timestamp, double accuracy);
+double calculate_cluster_confidence(const gps_cluster_t *cluster);
 void update_cluster_variances(int cluster_index, const gps_data_t *gps_data);
-static int find_oldest_cluster(void);
+int find_oldest_cluster(void);
 void cleanup_expired_clusters(void);
 void perform_clustering_analysis(void);
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
 
 static gps_clustering_t g_clustering = {0};
 static bool g_clustering_initialized = false;
@@ -126,7 +128,7 @@ int gps_clustering_add_position(const gps_data_t *gps_data) {
 }
 
 // Find best cluster for a position
-static int find_best_cluster(const gps_data_t *gps_data) {
+int find_best_cluster(const gps_data_t *gps_data) {
     int best_cluster = -1;
     double best_distance = g_clustering.cluster_radius;
     
@@ -233,7 +235,7 @@ void add_position_to_cluster(int cluster_index, const gps_data_t *gps_data) {
 }
 
 // Calculate position weight based on age and accuracy
-static double calculate_position_weight(time_t timestamp, double accuracy) {
+double calculate_position_weight(time_t timestamp, double accuracy) {
     time_t now = time(NULL);
     int age = now - timestamp;
     
@@ -248,7 +250,7 @@ static double calculate_position_weight(time_t timestamp, double accuracy) {
 }
 
 // Calculate cluster confidence
-static double calculate_cluster_confidence(const gps_cluster_t *cluster) {
+double calculate_cluster_confidence(const gps_cluster_t *cluster) {
     if (cluster->position_count < g_clustering.min_cluster_size) {
         return 0.0;
     }
@@ -289,7 +291,7 @@ void update_cluster_variances(int cluster_index, const gps_data_t *gps_data) {
 }
 
 // Find oldest cluster
-static int find_oldest_cluster(void) {
+int find_oldest_cluster(void) {
     int oldest_cluster = -1;
     time_t oldest_time = time(NULL);
     
@@ -530,7 +532,7 @@ int gps_clustering_reset(void) {
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 
 extern struct autonomy_state g_state;
 
@@ -72,7 +73,7 @@ static int discover_gps_sources(void) {
     return 0;
 }
 
-static int calculate_gps_confidence(struct gps_source *source) {
+int calculate_gps_confidence(struct gps_source *source) {
     int confidence = 100;
     
     // Deduct points for low accuracy
@@ -96,7 +97,7 @@ static int calculate_gps_confidence(struct gps_source *source) {
     return confidence;
 }
 
-static int perform_gps_health_check(void) {
+int perform_gps_health_check(void) {
     time_t now = time(NULL);
     
     for (int i = 0; i < g_state.gps_source_count; i++) {

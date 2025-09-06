@@ -5,6 +5,8 @@
 #include <time.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
+#include <stdbool.h>
+#include <fcntl.h>
 
 // Global OpenCellID state
 static opencellid_config_t g_opencellid_config = {0};
@@ -13,7 +15,7 @@ static bool g_opencellid_initialized = false;
 static CURL* g_curl_handle = NULL;
 
 // HTTP response callback
-static size_t http_response_callback(void* contents, size_t size, size_t nmemb, void* userp) {
+size_t http_response_callback(void* contents, size_t size, size_t nmemb, void* userp) {
     size_t total_size = size * nmemb;
     char* response = (char*)userp;
     
@@ -244,7 +246,7 @@ static int gps_opencellid_get_quota_remaining(void) {
 }
 
 // Start background contribution manager
-static int gps_opencellid_start_contribution_manager(void) {
+int gps_opencellid_start_contribution_manager(void) {
     if (!g_opencellid_initialized) {
         return -1;
     }
@@ -255,7 +257,7 @@ static int gps_opencellid_start_contribution_manager(void) {
 }
 
 // Stop background contribution manager
-static int gps_opencellid_stop_contribution_manager(void) {
+int gps_opencellid_stop_contribution_manager(void) {
     if (!g_opencellid_initialized) {
         return -1;
     }
@@ -266,7 +268,7 @@ static int gps_opencellid_stop_contribution_manager(void) {
 }
 
 // Perform health check
-static int gps_opencellid_health_check(void) {
+int gps_opencellid_health_check(void) {
     if (!g_opencellid_initialized) {
         return -1;
     }

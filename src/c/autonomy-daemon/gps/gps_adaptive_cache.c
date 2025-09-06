@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <unistd.h>
 
 // GPS adaptive cache configuration
 // Note: MAX_CACHE_ENTRIES is defined in ../core/types.h
@@ -29,7 +32,7 @@ static pthread_mutex_t g_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 void perform_cache_cleanup(void);
 void perform_aggressive_cleanup(void);
 void perform_gentle_cleanup(void);
-static double calculate_eviction_score(const gps_cache_entry_t *entry);
+double calculate_eviction_score(const gps_cache_entry_t *entry);
 
 // Initialize GPS adaptive cache
 int gps_adaptive_cache_init(void) {
@@ -400,7 +403,7 @@ void perform_gentle_cleanup(void) {
 }
 
 // Calculate eviction score for an entry
-static double calculate_eviction_score(const gps_cache_entry_t *entry) {
+double calculate_eviction_score(const gps_cache_entry_t *entry) {
     time_t now = time(NULL);
     
     // Priority factor (higher priority = lower eviction score)

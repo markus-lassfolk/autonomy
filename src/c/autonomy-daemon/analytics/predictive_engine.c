@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <math.h>
+#include <stdbool.h>
 
 // Global predictive engine instance
 static predictive_engine_t g_predictive_engine;

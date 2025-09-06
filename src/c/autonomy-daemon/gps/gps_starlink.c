@@ -15,6 +15,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <json-c/json.h>
+#include <stdbool.h>
 
 // Starlink GPS configuration
 static const int GPS_UPDATE_INTERVAL = 10;        // 10 seconds

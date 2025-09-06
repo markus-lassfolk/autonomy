@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <time.h>
+#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // Geofencing configuration
 // Note: MAX_GEOFENCES is defined in ../core/types.h
@@ -26,13 +28,13 @@ static pthread_mutex_t g_geofence_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
 int generate_geofence_id(void);
-static gps_geofence_status_t check_position_against_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
-static bool check_circle_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
-static bool check_rectangle_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
-static bool check_polygon_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
+gps_geofence_status_t check_position_against_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
+bool check_circle_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
+bool check_rectangle_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
+bool check_polygon_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
 static double distance_to_line_segment(double px, double py, double x1, double y1, double x2, double y2);
 void handle_geofence_event(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status, const gps_data_t *gps_data);
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
 
 // Initialize GPS geofencing system
 int gps_geofence_init(void) {
@@ -311,7 +313,7 @@ int gps_geofence_check_position(const gps_data_t *gps_data) {
 }
 
 // Check position against specific geofence
-static gps_geofence_status_t check_position_against_geofence(const gps_data_t *gps_data, 
+gps_geofence_status_t check_position_against_geofence(const gps_data_t *gps_data, 
                                                             const gps_geofence_definition_t *geofence) {
     bool inside = false;
     
@@ -337,7 +339,7 @@ static gps_geofence_status_t check_position_against_geofence(const gps_data_t *g
 }
 
 // Check circle geofence
-static bool check_circle_geofence(const gps_data_t *gps_data, 
+bool check_circle_geofence(const gps_data_t *gps_data, 
                                   const gps_geofence_definition_t *geofence) {
     double distance = calculate_distance(gps_data->lat, gps_data->lon,
                                        geofence->center_lat, geofence->center_lon);
@@ -348,7 +350,7 @@ static bool check_circle_geofence(const gps_data_t *gps_data,
 }
 
 // Check rectangle geofence
-static bool check_rectangle_geofence(const gps_data_t *gps_data, 
+bool check_rectangle_geofence(const gps_data_t *gps_data, 
                                     const gps_geofence_definition_t *geofence) {
     // Simple rectangle check with buffer
     double buffer_lat = geofence->buffer_distance / 111000.0; // Approximate meters to degrees
@@ -364,7 +366,7 @@ static bool check_rectangle_geofence(const gps_data_t *gps_data,
 }
 
 // Check polygon geofence using ray casting algorithm
-static bool check_polygon_geofence(const gps_data_t *gps_data, 
+bool check_polygon_geofence(const gps_data_t *gps_data, 
                                    const gps_geofence_definition_t *geofence) {
     int intersections = 0;
     int n = geofence->point_count;
@@ -460,7 +462,7 @@ void handle_geofence_event(gps_geofence_definition_t *geofence,
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     double lat1_rad = lat1 * M_PI / 180.0;
     double lat2_rad = lat2 * M_PI / 180.0;
     double delta_lat = (lat2 - lat1) * M_PI / 180.0;

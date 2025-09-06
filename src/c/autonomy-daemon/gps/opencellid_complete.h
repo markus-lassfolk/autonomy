@@ -6,6 +6,9 @@
 #include <stdint.h>
 #include <time.h>
 #include <pthread.h>
+#include <math.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -5,6 +5,7 @@
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <stdbool.h>
+#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {

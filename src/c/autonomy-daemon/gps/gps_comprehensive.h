@@ -8,6 +8,9 @@
 #include <pthread.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <math.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 extern "C" {

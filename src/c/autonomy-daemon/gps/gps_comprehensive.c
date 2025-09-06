@@ -11,6 +11,10 @@
 #include <pthread.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 // Global comprehensive GPS collector instance
 static gps_comprehensive_collector_t g_gps_collector = {0};
@@ -35,9 +39,9 @@ static const char* FIX_QUALITY_STRINGS[] = {
 static int collect_from_source(gps_source_type_t source_type, standardized_gps_data_t* data);
 static int perform_multi_source_fusion(gps_fusion_result_t* result);
 static int collect_with_hybrid_prioritization(standardized_gps_data_t* result);
-static double calculate_source_confidence(const standardized_gps_data_t* data, 
+double calculate_source_confidence(const standardized_gps_data_t* data, 
                                          const gps_source_health_t* health);
-static void update_source_health(gps_source_type_t source_type, bool success,
+void update_source_health(gps_source_type_t source_type, bool success,
                                 double collection_time_ms, const standardized_gps_data_t* data);
 static void finalize_gps_data(standardized_gps_data_t* data);
 static bool validate_gps_coordinates(double latitude, double longitude);
@@ -597,7 +601,7 @@ int gps_comprehensive_detect_movement(const standardized_gps_data_t* current_dat
 }
 
 // Calculate source confidence based on data quality and source health
-static double calculate_source_confidence(const standardized_gps_data_t* data, 
+double calculate_source_confidence(const standardized_gps_data_t* data, 
                                          const gps_source_health_t* health) {
     double confidence = 0.0;
     
@@ -668,7 +672,7 @@ static double calculate_source_confidence(const standardized_gps_data_t* data,
 }
 
 // Update source health statistics
-static void update_source_health(gps_source_type_t source_type, bool success,
+void update_source_health(gps_source_type_t source_type, bool success,
                                 double collection_time_ms, const standardized_gps_data_t* data) {
     if (source_type >= GPS_SOURCE_MAX) return;
     
