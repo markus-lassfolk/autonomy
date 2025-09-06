@@ -21,6 +21,48 @@ typedef struct {
     int rsrq;
     double throughput_mbps;
     double score;
+    // GPS fields
+    double latitude;
+    double longitude;
+    double accuracy;
+    int satellites;
+    double hdop;
+    double gps_accuracy;                    // Alias for accuracy
+    // Additional telemetry fields
+    char gps_source[32];                    // GPS source
+    double movement_kmh;                    // Movement speed
+    double packet_loss_percent;             // Packet loss percentage
+    double jitter_ms;                       // Jitter in milliseconds
+    char status[64];                        // Interface status
+    double obstruction_percent;             // Obstruction percentage
+    double snr_db;                          // Signal-to-noise ratio
+    double temperature_c;                   // Temperature in Celsius
+    int outage_count;                       // Number of outages
+    double pop_ping_drop_rate;              // PoP ping drop rate
+    double rsrp_dbm;                        // RSRP in dBm
+    double rsrq_db;                         // RSRQ in dB
+    double sinr_db;                         // SINR in dB
+    char carrier[64];                       // Cellular carrier
+    uint32_t cell_id;                       // Cell tower ID
+    uint32_t cell_changes;                  // Number of cell changes
+    double overall_score;                   // Overall performance score
+    double reliability_score;               // Reliability score
+    double predictive_risk;                 // Predictive risk score
+    bool is_active_interface;               // Whether this is the active interface
+    char collection_method[64];             // Collection method used
+    double collection_time_ms;              // Time taken to collect this sample
+    // WiFi fields
+    double wifi_rssi_dbm;                   // WiFi RSSI
+    int wifi_channel;                       // WiFi channel
+    char wifi_ssid[64];                     // WiFi SSID
+    double wifi_noise_floor;                // WiFi noise floor
+    // System fields
+    double cpu_usage_percent;               // CPU usage percentage
+    double memory_usage_percent;            // Memory usage percentage
+    double disk_usage_percent;              // Disk usage percentage
+    double load_avg_1min;                   // Load average (1 minute)
+    int64_t throughput_bps;                 // Throughput in bits per second
+    char interface_name[64];                // Interface name
     bool has_latency;
     bool has_loss;
     bool has_jitter;

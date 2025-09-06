@@ -93,6 +93,8 @@ typedef struct {
     uint32_t location_reference_id;        // Reference to GPS location table (0 = no GPS)
     double gps_accuracy;                   // GPS accuracy at decision time
     char gps_source[32];                   // GPS source
+    double gps_latitude;                   // GPS latitude at decision time
+    double gps_longitude;                  // GPS longitude at decision time
     
     // Performance context
     double from_score;                     // Source interface score

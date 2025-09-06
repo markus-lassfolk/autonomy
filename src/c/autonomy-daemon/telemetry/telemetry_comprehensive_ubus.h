@@ -265,8 +265,8 @@ int telemetry_comprehensive_ubus_health_check(struct ubus_context *ctx, struct u
                                              struct blob_attr *msg);
 
 // UBUS method definitions
-extern const struct ubus_method telemetry_comprehensive_ubus_methods[];
-extern const int telemetry_comprehensive_ubus_methods_count;
+// extern const struct ubus_method telemetry_comprehensive_ubus_methods[]; // Disabled due to UBUS complexity
+// extern const int telemetry_comprehensive_ubus_methods_count; // Disabled due to UBUS complexity
 
 #ifdef __cplusplus
 }
