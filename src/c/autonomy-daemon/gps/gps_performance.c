@@ -22,16 +22,19 @@ static const double CONSISTENCY_WEIGHT = 0.20;               // Consistency weig
 
 // Global performance tracking state
 
-// Forward declarations - auto-generated
-static void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success);
-static int find_best_cluster(const gps_data_t *gps_data);
-static int create_new_cluster(const gps_data_t *gps_data);
-static bool check_event_conditions(const void *event, const gps_data_t *gps_data);
-static bool evaluate_condition(const void *condition, const gps_data_t *gps_data);
-static void execute_event_actions(const void *event, const gps_data_t *gps_data);
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
-static void analyze_movement_pattern(void);
-static void update_source_error_tracking(int source_id, int error_type);
+// Forward declarations - performance specific
+void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success);
+void update_source_performance(int source_id, double accuracy, double response_time, bool success);
+static double calculate_source_reliability(const gps_source_performance_t *source);
+static double calculate_source_consistency(const gps_source_performance_t *source);
+static double calculate_accuracy_standard_deviation(const gps_source_performance_t *source);
+static double calculate_response_time_standard_deviation(const gps_source_performance_t *source);
+static double calculate_source_overall_score(const gps_source_performance_t *source);
+static int find_oldest_performance_entry(void);
+static double calculate_reliability_score(int source_id);
+static double calculate_consistency_score(int source_id);
+static double calculate_overall_score(double reliability, double consistency, double accuracy, double response_time);
+void calculate_overall_performance(void);
 
 static gps_performance_t g_performance = {0};
 static bool g_performance_initialized = false;
@@ -133,7 +136,7 @@ int gps_performance_record_measurement(int source_id, double accuracy, double re
 }
 
 // Add performance history entry
-static void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success) {
+void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success) {
     // Find free history slot
     int slot_index = -1;
     for (int i = 0; i < g_performance.max_history_entries; i++) {
@@ -190,7 +193,7 @@ int find_oldest_performance_entry(void) {
 }
 
 // Update source performance
-static void update_source_performance(int source_id, double accuracy, double response_time, bool success) {
+void update_source_performance(int source_id, double accuracy, double response_time, bool success) {
     if (source_id < 0 || source_id >= GPS_MAX_SOURCES) {
         return;
     }
@@ -406,7 +409,7 @@ static double calculate_overall_score(double reliability, double consistency, do
 }
 
 // Calculate overall performance metrics
-static void calculate_overall_performance(void) {
+void calculate_overall_performance(void) {
     if (g_performance.total_measurements == 0) {
         return;
     }
