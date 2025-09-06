@@ -33,6 +33,16 @@ static bool g_gps_manager_initialized = false;
 static pthread_t g_gps_manager_thread = 0;
 static bool g_gps_manager_thread_running = false;
 
+// Forward declarations
+void* gps_manager_monitor_thread(void *arg);
+void update_rutos_gps_source(void);
+void update_starlink_gps_source(void);
+int find_or_create_gps_source(gps_source_type_t source_type, const char *name);
+static double calculate_data_quality(const gps_data_t *data);
+void cleanup_stale_gps_sources(time_t now);
+int find_best_gps_source(void);
+static bool check_position_change(const gps_data_t *new_data);
+
 // Initialize GPS manager system
 int gps_manager_init(void) {
     if (g_gps_manager_initialized) {
@@ -191,7 +201,7 @@ void gps_manager_stop_monitoring(void) {
 }
 
 // GPS manager monitoring thread
-static void* gps_manager_monitor_thread(void *arg) {
+void* gps_manager_monitor_thread(void *arg) {
     (void)arg;
     
     LOGX_INFO_MSG("GPS manager monitoring thread started");
@@ -250,7 +260,7 @@ int gps_manager_update_all_sources(void) {
 }
 
 // Update RUTOS GPS source
-static void update_rutos_gps_source(void) {
+void update_rutos_gps_source(void) {
     // Check if RUTOS GPS is available
     if (!gps_rutos_is_available()) {
         return;
@@ -276,7 +286,7 @@ static void update_rutos_gps_source(void) {
 }
 
 // Update Starlink GPS source
-static void update_starlink_gps_source(void) {
+void update_starlink_gps_source(void) {
     // Check if Starlink GPS is available
     if (!gps_starlink_is_data_recent(300)) { // 5 minutes
         return;
@@ -302,7 +312,7 @@ static void update_starlink_gps_source(void) {
 }
 
 // Find or create GPS source
-static int find_or_create_gps_source(gps_source_type_t type, const char *name) {
+int find_or_create_gps_source(gps_source_type_t type, const char *name) {
     // First, try to find existing source
     for (int i = 0; i < g_gps_manager.source_count; i++) {
         if (g_gps_manager.sources[i].type == type) {
@@ -382,7 +392,7 @@ static double calculate_data_quality(const gps_data_t *gps_data) {
 }
 
 // Clean up stale GPS sources
-static void cleanup_stale_gps_sources(time_t now) {
+void cleanup_stale_gps_sources(time_t now) {
     for (int i = 0; i < g_gps_manager.source_count; i++) {
         if (g_gps_manager.sources[i].last_update > 0 &&
             (now - g_gps_manager.sources[i].last_update) > g_gps_manager.source_timeout) {
@@ -439,7 +449,7 @@ int gps_manager_calculate_unified_position(void) {
 }
 
 // Find the best GPS source
-static int find_best_gps_source(void) {
+int find_best_gps_source(void) {
     int best_source = -1;
     double best_score = 0.0;
     

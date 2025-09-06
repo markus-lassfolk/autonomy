@@ -8,7 +8,7 @@
 #include <time.h>
 
 // GPS event configuration
-static const int MAX_EVENTS = 50;                      // Maximum number of events
+// Note: MAX_EVENTS is defined in ../core/types.h
 static const int MAX_EVENT_CONDITIONS = 10;             // Maximum conditions per event
 static const int MAX_EVENT_ACTIONS = 5;                 // Maximum actions per event
 static const int EVENT_CHECK_INTERVAL = 2;              // 2 second event check interval
@@ -51,6 +51,15 @@ static void update_source_error_tracking(int source_id, int error_type);
 static gps_events_t g_events = {0};
 static bool g_events_initialized = false;
 static pthread_mutex_t g_events_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// Forward declarations
+static bool check_event_conditions(const gps_event_t *event, const gps_data_t *gps_data);
+static bool evaluate_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
+static bool check_location_in_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
+static bool check_location_out_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
+static bool check_time_after_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
+static bool check_time_before_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
+static bool evaluate_custom_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
 
 // Initialize GPS events system
 int gps_events_init(void) {
