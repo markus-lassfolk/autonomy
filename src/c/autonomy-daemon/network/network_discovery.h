@@ -1,7 +1,7 @@
 #ifndef NETWORK_DISCOVERY_H
 #define NETWORK_DISCOVERY_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 

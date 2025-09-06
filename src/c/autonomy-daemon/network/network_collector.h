@@ -1,11 +1,12 @@
 #ifndef NETWORK_COLLECTOR_H
 #define NETWORK_COLLECTOR_H
 
-#include "types.h"
-#include "logx.h"
+#include "../core/types.h"
+#include "../utils/logx.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
+#include <sys/socket.h>
 
 // Maximum number of interfaces
 #define MAX_INTERFACES 16
@@ -61,7 +62,7 @@ typedef struct {
     
     // Overall health
     float overall_health_score;   // Overall health score (0-100)
-} network_metrics_t;
+}; // Note: network_metrics_t defined in ../core/types.h
 
 // Network collector status
 typedef struct {

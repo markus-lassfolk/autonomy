@@ -1,8 +1,8 @@
 #ifndef NETWORK_FAILOVER_H
 #define NETWORK_FAILOVER_H
 
-#include "types.h"
-#include "logx.h"
+#include "../core/types.h"
+#include "../utils/logx.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>

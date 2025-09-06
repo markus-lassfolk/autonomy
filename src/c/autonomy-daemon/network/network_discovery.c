@@ -1,6 +1,6 @@
 #include "network_discovery.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -14,6 +14,9 @@
 #include <time.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <stdbool.h>
+#include <math.h>
+#include <fcntl.h>
 
 // Network discovery configuration
 static const int DISCOVERY_INTERVAL = 30;        // 30 seconds
@@ -31,9 +34,9 @@ static pthread_t g_discovery_thread = 0;
 static bool g_discovery_thread_running = false;
 
 // Initialize network discovery system
-static int network_discovery_init(void) {
+int network_discovery_init(void) {
     if (g_discovery_initialized) {
-        LOGX_WARN("Network discovery already initialized");
+        LOGX_WARN_MSG("Network discovery already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -52,37 +55,37 @@ static int network_discovery_init(void) {
     g_discovery_initialized = true;
     pthread_mutex_unlock(&g_discovery_mutex);
     
-    LOGX_INFO("Network discovery system initialized successfully");
+    LOGX_INFO_MSG("Network discovery system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Start network discovery monitoring thread
-static int network_discovery_start_monitoring(void) {
+int network_discovery_start_monitoring(void) {
     if (!g_discovery_initialized) {
-        LOGX_ERROR("Network discovery not initialized");
+        LOGX_ERROR_MSG("Network discovery not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     if (g_discovery_thread_running) {
-        LOGX_WARN("Network discovery monitoring already running");
+        LOGX_WARN_MSG("Network discovery monitoring already running");
         return AUTONOMY_SUCCESS;
     }
     
     // Create monitoring thread
     int ret = pthread_create(&g_discovery_thread, NULL, discovery_monitor_thread, NULL);
     if (ret != 0) {
-        LOGX_ERROR("Failed to create network discovery monitoring thread");
+        LOGX_ERROR_MSG("Failed to create network discovery monitoring thread");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     g_discovery_thread_running = true;
-    LOGX_INFO("Network discovery monitoring started");
+    LOGX_INFO_MSG("Network discovery monitoring started");
     
     return AUTONOMY_SUCCESS;
 }
 
 // Stop network discovery monitoring
-static void network_discovery_stop_monitoring(void) {
+void network_discovery_stop_monitoring(void) {
     if (!g_discovery_thread_running) {
         return;
     }
@@ -94,14 +97,14 @@ static void network_discovery_stop_monitoring(void) {
         g_discovery_thread = 0;
     }
     
-    LOGX_INFO("Network discovery monitoring stopped");
+    LOGX_INFO_MSG("Network discovery monitoring stopped");
 }
 
 // Network discovery monitoring thread
 static void* discovery_monitor_thread(void *arg) {
     (void)arg;
     
-    LOGX_INFO("Network discovery monitoring thread started");
+    LOGX_INFO_MSG("Network discovery monitoring thread started");
     
     while (g_discovery_thread_running) {
         // Perform network discovery
@@ -113,7 +116,7 @@ static void* discovery_monitor_thread(void *arg) {
         }
     }
     
-    LOGX_INFO("Network discovery monitoring thread stopped");
+    LOGX_INFO_MSG("Network discovery monitoring thread stopped");
     return NULL;
 }
 
@@ -134,7 +137,7 @@ static int network_discovery_scan_interfaces(void) {
         return AUTONOMY_SUCCESS;
     }
     
-    LOGX_DEBUG("Starting network interface discovery");
+    LOGX_DEBUG_MSG("Starting network interface discovery");
     
     // Discover system interfaces
     discover_system_interfaces();
@@ -150,7 +153,7 @@ static int network_discovery_scan_interfaces(void) {
     
     pthread_mutex_unlock(&g_discovery_mutex);
     
-    LOGX_DEBUG("Network interface discovery completed, found %d interfaces", g_discovery.interface_count);
+    LOGX_DEBUG_MSG("Network interface discovery completed, found %d interfaces", g_discovery.interface_count);
     return AUTONOMY_SUCCESS;
 }
 
@@ -160,13 +163,13 @@ static void discover_system_interfaces(void) {
     
     if_ni = if_nameindex();
     if (if_ni == NULL) {
-        LOGX_ERROR("Failed to get interface names");
+        LOGX_ERROR_MSG("Failed to get interface names");
         return;
     }
     
     for (i = if_ni; i->if_index != 0 || i->if_name != NULL; i++) {
         if (g_discovery.interface_count >= g_discovery.max_interfaces) {
-            LOGX_WARN("Maximum interface count reached, skipping %s", i->if_name);
+            LOGX_WARN_MSG("Maximum interface count reached, skipping %s", i->if_name);
             break;
         }
         
@@ -197,7 +200,7 @@ static void discover_system_interfaces(void) {
             
             g_discovery.interface_count++;
             
-            LOGX_DEBUG("Discovered interface: %s (index: %d)", iface->name, iface->index);
+            LOGX_DEBUG_MSG("Discovered interface: %s (index: %d)", iface->name, iface->index);
         }
     }
     
@@ -243,7 +246,7 @@ static void discover_uci_interfaces(void) {
                 
                 g_discovery.interface_count++;
                 
-                LOGX_DEBUG("Discovered UCI interface: %s", iface->name);
+                LOGX_DEBUG_MSG("Discovered UCI interface: %s", iface->name);
             }
         }
     }
@@ -413,12 +416,12 @@ static void get_interface_statistics(network_interface_t *iface) {
 }
 
 // Clean up stale interfaces
-static void cleanup_stale_interfaces(time_t now) {
+void cleanup_stale_interfaces(time_t now) {
     for (int i = 0; i < g_discovery.interface_count; i++) {
         if (g_discovery.interfaces[i].last_seen > 0 &&
             (now - g_discovery.interfaces[i].last_seen) > g_discovery.interface_timeout) {
             
-            LOGX_DEBUG("Removing stale interface: %s", g_discovery.interfaces[i].name);
+            LOGX_DEBUG_MSG("Removing stale interface: %s", g_discovery.interfaces[i].name);
             
             // Remove interface by shifting remaining interfaces
             for (int j = i; j < g_discovery.interface_count - 1; j++) {
@@ -472,7 +475,7 @@ static int network_discovery_get_interface(const char *interface_name, network_i
 }
 
 // Get discovery status
-static int network_discovery_get_status(network_discovery_status_t *status) {
+int network_discovery_get_status(network_discovery_status_t *status) {
     if (!g_discovery_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -493,7 +496,7 @@ static int network_discovery_get_status(network_discovery_status_t *status) {
 }
 
 // Set discovery configuration
-static int network_discovery_set_config(const network_discovery_config_t *config) {
+int network_discovery_set_config(const network_discovery_config_t *config) {
     if (!g_discovery_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -516,7 +519,7 @@ static int network_discovery_set_config(const network_discovery_config_t *config
     
     pthread_mutex_unlock(&g_discovery_mutex);
     
-    LOGX_INFO("Network discovery configuration updated");
+    LOGX_INFO_MSG("Network discovery configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -530,7 +533,7 @@ static int network_discovery_set_enabled(bool enabled) {
     g_discovery.enabled = enabled;
     pthread_mutex_unlock(&g_discovery_mutex);
     
-    LOGX_INFO("Network discovery system %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("Network discovery system %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -540,12 +543,12 @@ static int network_discovery_force_scan(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    LOGX_INFO("Forcing immediate network discovery");
+    LOGX_INFO_MSG("Forcing immediate network discovery");
     return network_discovery_scan_interfaces();
 }
 
 // Cleanup discovery system
-static void network_discovery_cleanup(void) {
+void network_discovery_cleanup(void) {
     if (!g_discovery_initialized) {
         return;
     }
@@ -559,5 +562,5 @@ static void network_discovery_cleanup(void) {
     
     pthread_mutex_destroy(&g_discovery_mutex);
     
-    LOGX_INFO("Network discovery system cleaned up");
+    LOGX_INFO_MSG("Network discovery system cleaned up");
 }

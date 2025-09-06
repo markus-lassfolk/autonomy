@@ -193,6 +193,56 @@ typedef struct {
 #define MAX_GEOFENCES 20
 #define MAX_WEATHER_CACHE 50
 #define MAX_TERRAIN_CACHE 50
+#define MAX_INTERFACES 32
+
+// Network metrics structure
+typedef struct {
+    char interface_name[32];            // Interface name
+    double ping_latency_ms;             // Ping latency in milliseconds
+    double ping_packet_loss;            // Ping packet loss percentage
+    double ping_jitter_ms;              // Ping jitter in milliseconds
+    uint64_t bytes_received;            // Bytes received
+    uint64_t bytes_transmitted;         // Bytes transmitted
+    uint64_t packets_received;          // Packets received
+    uint64_t packets_transmitted;       // Packets transmitted
+    uint64_t errors_received;           // Receive errors
+    uint64_t errors_transmitted;        // Transmit errors
+    double throughput_mbps;             // Throughput in Mbps
+    double utilization_percent;         // Interface utilization
+    double overall_health_score;        // Overall health score
+    time_t timestamp;                   // Metrics timestamp
+    float ping_success_rate;            // Ping success rate
+    float ping_average_latency;         // Average ping latency
+    float ping_min_latency;             // Minimum ping latency
+    float ping_max_latency;             // Maximum ping latency
+    float tcp_success_rate;             // TCP connection success rate
+    float tcp_average_connect_time;     // Average TCP connect time
+    bool dns_success;                   // DNS resolution success
+    double dns_resolve_time;            // DNS resolution time
+} network_metrics_t;
+
+// Network interface structure
+typedef struct {
+    char name[32];                      // Interface name (e.g., "eth0", "wlan0")
+    bool is_up;                         // Interface is up
+    bool is_default_route;              // Is default route
+    char ip_address[16];                // IP address
+    char netmask[16];                   // Netmask
+    char gateway[16];                   // Gateway
+    char mac_address[18];               // MAC address
+    int mtu;                            // MTU size
+    uint64_t rx_bytes;                  // Received bytes
+    uint64_t tx_bytes;                  // Transmitted bytes
+    uint64_t rx_packets;                // Received packets
+    uint64_t tx_packets;                // Transmitted packets
+    uint64_t rx_errors;                 // Receive errors
+    uint64_t tx_errors;                 // Transmit errors
+    double health_score;                // Interface health score
+    time_t last_check;                  // Last health check
+    network_metrics_t metrics;          // Current metrics
+    bool enabled;                       // Interface enabled for failover
+    bool up;                            // Interface is up (alias for is_up)
+} network_interface_t;
 
 // GPS geofence system status
 typedef struct {

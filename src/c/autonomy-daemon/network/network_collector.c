@@ -1,6 +1,6 @@
 #include "network_collector.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,6 +13,9 @@
 #include <errno.h>
 #include <pthread.h>
 #include <math.h>
+#include <time.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 // Global network collector state
 static network_collector_t g_collector = {0};
@@ -29,9 +32,9 @@ static const char* DEFAULT_TEST_TARGETS[] = {
 static const int DEFAULT_TEST_TARGET_COUNT = 4;
 
 // Initialize network collector
-static int network_collector_init(void) {
+int network_collector_init(void) {
     if (g_collector_initialized) {
-        LOGX_WARN("Network collector already initialized");
+        LOGX_WARN_MSG("Network collector already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -56,7 +59,7 @@ static int network_collector_init(void) {
     g_collector.metrics_history = malloc(sizeof(network_metrics_t) * g_collector.metrics_history_size);
     if (!g_collector.metrics_history) {
         pthread_mutex_unlock(&g_collector_mutex);
-        LOGX_ERROR("Failed to allocate metrics history");
+        LOGX_ERROR_MSG("Failed to allocate metrics history");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -65,7 +68,7 @@ static int network_collector_init(void) {
     g_collector_initialized = true;
     pthread_mutex_unlock(&g_collector_mutex);
     
-    LOGX_INFO("Network collector initialized successfully");
+    LOGX_INFO_MSG("Network collector initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -78,7 +81,7 @@ static int perform_ping_test(const char *target, int timeout_ms, ping_result_t *
     // Create raw socket for ICMP
     int sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sock < 0) {
-        LOGX_DEBUG("Failed to create ICMP socket: %s", strerror(errno));
+        LOGX_DEBUG_MSG("Failed to create ICMP socket: %s", strerror(errno));
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -381,14 +384,14 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
 }
 
 // Collect network metrics for all interfaces
-static int network_collector_collect_metrics(void) {
+int network_collector_collect_metrics(void) {
     if (!g_collector_initialized) {
-        LOGX_ERROR("Network collector not initialized");
+        LOGX_ERROR_MSG("Network collector not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     if (!g_collector.enabled) {
-        LOGX_DEBUG("Network collector disabled");
+        LOGX_DEBUG_MSG("Network collector disabled");
         return AUTONOMY_SUCCESS;
     }
     
@@ -404,7 +407,7 @@ static int network_collector_collect_metrics(void) {
         return AUTONOMY_SUCCESS;
     }
     
-    LOGX_DEBUG("Starting network metrics collection");
+    LOGX_DEBUG_MSG("Starting network metrics collection");
     
     // Collect metrics for each interface
     for (int i = 0; i < g_collector.interface_count && i < MAX_INTERFACES; i++) {
@@ -421,10 +424,10 @@ static int network_collector_collect_metrics(void) {
             // Update interface with latest metrics
             memcpy(&g_collector.interfaces[i].metrics, &metrics, sizeof(network_metrics_t));
             
-            LOGX_DEBUG("Collected metrics for interface %s: health=%.1f%%, ping_loss=%.1f%%", 
+            LOGX_DEBUG_MSG("Collected metrics for interface %s: health=%.1f%%, ping_loss=%.1f%%", 
                       metrics.interface_name, metrics.overall_health_score, metrics.ping_packet_loss);
         } else {
-            LOGX_WARN("Failed to collect metrics for interface %s", g_collector.interfaces[i].name);
+            LOGX_WARN_MSG("Failed to collect metrics for interface %s", g_collector.interfaces[i].name);
         }
     }
     
@@ -433,12 +436,12 @@ static int network_collector_collect_metrics(void) {
     
     pthread_mutex_unlock(&g_collector_mutex);
     
-    LOGX_DEBUG("Network metrics collection completed");
+    LOGX_DEBUG_MSG("Network metrics collection completed");
     return AUTONOMY_SUCCESS;
 }
 
 // Get latest metrics for an interface
-static int network_collector_get_interface_metrics(const char *interface_name, network_metrics_t *metrics) {
+int network_collector_get_interface_metrics(const char *interface_name, network_metrics_t *metrics) {
     if (!g_collector_initialized || !interface_name || !metrics) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -485,7 +488,7 @@ int network_collector_get_metrics_history(const char *interface_name, network_me
 }
 
 // Add test target
-static int network_collector_add_test_target(const char *target) {
+int network_collector_add_test_target(const char *target) {
     if (!g_collector_initialized || !target) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -512,12 +515,12 @@ static int network_collector_add_test_target(const char *target) {
     
     pthread_mutex_unlock(&g_collector_mutex);
     
-    LOGX_INFO("Added test target: %s", target);
+    LOGX_INFO_MSG("Added test target: %s", target);
     return AUTONOMY_SUCCESS;
 }
 
 // Remove test target
-static int network_collector_remove_test_target(const char *target) {
+int network_collector_remove_test_target(const char *target) {
     if (!g_collector_initialized || !target) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -533,7 +536,7 @@ static int network_collector_remove_test_target(const char *target) {
             g_collector.test_target_count--;
             
             pthread_mutex_unlock(&g_collector_mutex);
-            LOGX_INFO("Removed test target: %s", target);
+            LOGX_INFO_MSG("Removed test target: %s", target);
             return AUTONOMY_SUCCESS;
         }
     }
@@ -543,7 +546,7 @@ static int network_collector_remove_test_target(const char *target) {
 }
 
 // Set collection interval
-static int network_collector_set_interval(int interval_seconds) {
+int network_collector_set_interval(int interval_seconds) {
     if (!g_collector_initialized || interval_seconds < 5) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -552,12 +555,12 @@ static int network_collector_set_interval(int interval_seconds) {
     g_collector.collection_interval = interval_seconds;
     pthread_mutex_unlock(&g_collector_mutex);
     
-    LOGX_INFO("Network collection interval set to %d seconds", interval_seconds);
+    LOGX_INFO_MSG("Network collection interval set to %d seconds", interval_seconds);
     return AUTONOMY_SUCCESS;
 }
 
 // Set test timeout
-static int network_collector_set_timeout(int timeout_seconds) {
+int network_collector_set_timeout(int timeout_seconds) {
     if (!g_collector_initialized || timeout_seconds < 1) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -566,12 +569,12 @@ static int network_collector_set_timeout(int timeout_seconds) {
     g_collector.test_timeout = timeout_seconds;
     pthread_mutex_unlock(&g_collector_mutex);
     
-    LOGX_INFO("Network test timeout set to %d seconds", timeout_seconds);
+    LOGX_INFO_MSG("Network test timeout set to %d seconds", timeout_seconds);
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable collector
-static int network_collector_set_enabled(bool enabled) {
+int network_collector_set_enabled(bool enabled) {
     if (!g_collector_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -580,12 +583,12 @@ static int network_collector_set_enabled(bool enabled) {
     g_collector.enabled = enabled;
     pthread_mutex_unlock(&g_collector_mutex);
     
-    LOGX_INFO("Network collector %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("Network collector %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Get collector status
-static int network_collector_get_status(network_collector_status_t *status) {
+int network_collector_get_status(network_collector_status_t *status) {
     if (!g_collector_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -606,7 +609,7 @@ static int network_collector_get_status(network_collector_status_t *status) {
 }
 
 // Cleanup network collector
-static void network_collector_cleanup(void) {
+void network_collector_cleanup(void) {
     if (!g_collector_initialized) {
         return;
     }
@@ -623,5 +626,5 @@ static void network_collector_cleanup(void) {
     pthread_mutex_unlock(&g_collector_mutex);
     pthread_mutex_destroy(&g_collector_mutex);
     
-    LOGX_INFO("Network collector cleaned up");
+    LOGX_INFO_MSG("Network collector cleaned up");
 }
