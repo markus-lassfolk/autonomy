@@ -17,7 +17,7 @@
 // GPS manager configuration
 static const int GPS_UPDATE_INTERVAL = 5;         // 5 seconds
 static const int GPS_SOURCE_TIMEOUT = 60;         // 60 seconds
-static const int MAX_GPS_SOURCES = 8;             // Maximum GPS sources
+// Note: MAX_GPS_SOURCES is defined in ../core/types.h
 static const double MIN_RELIABILITY = 0.3;        // Minimum reliability threshold
 static const double POSITION_THRESHOLD = 50.0;    // 50 meters position change threshold
 

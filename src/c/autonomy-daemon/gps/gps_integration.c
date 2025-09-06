@@ -8,7 +8,7 @@
 #include <time.h>
 
 // GPS integration configuration
-static const int MAX_GPS_SOURCES = 10;                  // Maximum GPS sources
+// Note: MAX_GPS_SOURCES is defined in ../core/types.h
 static const int GPS_UPDATE_INTERVAL = 1;               // 1 second GPS update interval
 static const int INTEGRATION_CHECK_INTERVAL = 5;        // 5 second integration check interval
 static const double MIN_GPS_ACCURACY = 100.0;           // 100m minimum accuracy threshold

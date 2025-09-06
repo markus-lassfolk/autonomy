@@ -8,7 +8,7 @@
 #include <time.h>
 
 // GPS fusion configuration
-static const int MAX_FUSION_SOURCES = 8;              // Maximum sources to fuse
+// Note: MAX_FUSION_SOURCES is defined in ../core/types.h
 static const int MIN_FUSION_SOURCES = 2;               // Minimum sources for fusion
 static const double FUSION_UPDATE_INTERVAL = 5.0;      // 5 second fusion update interval
 static const double MAX_SOURCE_AGE = 60.0;             // 60 second maximum source age

@@ -8,7 +8,7 @@
 #include <time.h>
 
 // Performance tracking configuration
-static const int MAX_PERFORMANCE_HISTORY = 10000;           // Maximum performance history entries
+// Note: MAX_PERFORMANCE_HISTORY is defined in ../core/types.h
 static const int PERFORMANCE_UPDATE_INTERVAL = 60;           // 1 minute performance update interval
 static const int PERFORMANCE_WINDOW_SIZE = 3600;             // 1 hour performance window
 static const double MIN_ACCURACY_THRESHOLD = 1.0;            // Minimum accuracy threshold in meters
@@ -21,6 +21,18 @@ static const double SPEED_WEIGHT = 0.20;                     // Speed weight in 
 static const double CONSISTENCY_WEIGHT = 0.20;               // Consistency weight in scoring
 
 // Global performance tracking state
+
+// Forward declarations - auto-generated
+static void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success);
+static int find_best_cluster(const gps_data_t *gps_data);
+static int create_new_cluster(const gps_data_t *gps_data);
+static bool check_event_conditions(const void *event, const gps_data_t *gps_data);
+static bool evaluate_condition(const void *condition, const gps_data_t *gps_data);
+static void execute_event_actions(const void *event, const gps_data_t *gps_data);
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+static void analyze_movement_pattern(void);
+static void update_source_error_tracking(int source_id, int error_type);
+
 static gps_performance_t g_performance = {0};
 static bool g_performance_initialized = false;
 static pthread_mutex_t g_performance_mutex = PTHREAD_MUTEX_INITIALIZER;

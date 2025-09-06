@@ -11,19 +11,6 @@
 // These functions are implemented in the corresponding .c file
 
 // GPS data structure
-typedef struct {
-    bool valid;                  // Data is valid
-    double latitude;             // Latitude in decimal degrees
-    double longitude;            // Longitude in decimal degrees
-    double altitude;             // Altitude in meters
-    float accuracy;              // Accuracy in meters
-    float speed;                 // Speed in m/s
-    float heading;               // Heading in degrees
-    time_t timestamp;            // Timestamp
-    uint32_t satellites;         // Number of satellites
-    float hdop;                  // Horizontal dilution of precision
-    float vdop;                  // Vertical dilution of precision
-} gps_data_t;
 
 // RUTOS GPS configuration
 typedef struct {
@@ -95,3 +82,4 @@ bool gps_rutos_meets_accuracy(float required_accuracy);
 void gps_rutos_cleanup(void);
 
 #endif // GPS_RUTOS_H
+// Note: gps_data_t is defined in ../core/types.h

@@ -27,6 +27,18 @@ static const char* RECOVERY_STRATEGY_NAMES[] = {
 };
 
 // Global error recovery state
+
+// Forward declarations - auto-generated
+static void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success);
+static int find_best_cluster(const gps_data_t *gps_data);
+static int create_new_cluster(const gps_data_t *gps_data);
+static bool check_event_conditions(const void *event, const gps_data_t *gps_data);
+static bool evaluate_condition(const void *condition, const gps_data_t *gps_data);
+static void execute_event_actions(const void *event, const gps_data_t *gps_data);
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+static void analyze_movement_pattern(void);
+static void update_source_error_tracking(int source_id, int error_type);
+
 static gps_error_recovery_t g_error_recovery = {0};
 static bool g_error_recovery_initialized = false;
 static pthread_mutex_t g_error_recovery_mutex = PTHREAD_MUTEX_INITIALIZER;

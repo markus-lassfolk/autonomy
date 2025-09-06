@@ -108,6 +108,11 @@ struct autonomy_state {
 #define AUTONOMY_ERROR_NOT_SUPPORTED -12
 #define AUTONOMY_ERROR_NO_DATA -13
 #define AUTONOMY_ERROR_SYSTEM -14
+#define AUTONOMY_ERROR_PARSE_FAILED -15
+#define AUTONOMY_ERROR_CONNECTION_FAILED -16
+#define AUTONOMY_ERROR_API_LIMIT_EXCEEDED -17
+#define AUTONOMY_ERROR_INVALID_RESPONSE -18
+#define AUTONOMY_ERROR_SERVICE_UNAVAILABLE -19
 
 // GPS source types
 typedef enum {
@@ -124,6 +129,16 @@ typedef enum {
     GPS_SOURCE_CUSTOM,
     GPS_SOURCE_MAX
 } gps_source_type_t;
+
+// GPS integration source types (alternative naming)
+typedef enum {
+    GPS_SOURCE_TYPE_UNKNOWN = 0,
+    GPS_SOURCE_TYPE_RUTOS,
+    GPS_SOURCE_TYPE_STARLINK,
+    GPS_SOURCE_TYPE_EXTERNAL,
+    GPS_SOURCE_TYPE_SIMULATED,
+    GPS_SOURCE_TYPE_CUSTOM
+} gps_integration_source_type_t;
 
 // GPS data structure - comprehensive GPS information
 typedef struct {
@@ -162,6 +177,18 @@ typedef struct {
 
 // GPS constants
 #define MAX_GPS_SOURCES 10
+#define OPENCELLID_API_KEY_LEN 256
+#define OPENCELLID_MAX_API_KEY_LEN 256
+#define MAX_FUSION_SOURCES 10
+#define MAX_CLUSTERS 20
+#define MAX_EVENTS 50
+#define MAX_PERFORMANCE_HISTORY 100
+#define MAX_INTEGRATION_SOURCES 10
+#define DEFAULT_CACHE_SIZE 1000
+#define MAX_CACHE_ENTRIES 1000
+#define MAX_GEOFENCES 20
+#define MAX_WEATHER_CACHE 50
+#define MAX_TERRAIN_CACHE 50
 
 // GPS validation result
 typedef struct {
@@ -207,6 +234,105 @@ typedef enum {
     GPS_FIX_QUALITY_SIMULATED = 8,
     GPS_FIX_QUALITY_MAX
 } gps_fix_quality_t;
+
+// Comprehensive GPS type definitions for remaining files
+
+// GPS module types
+typedef enum {
+    GPS_MODULE_TYPE_UNKNOWN = 0,
+    GPS_MODULE_TYPE_INTEGRATION,
+    GPS_MODULE_TYPE_MANAGER,
+    GPS_MODULE_TYPE_RUTOS,
+    GPS_MODULE_TYPE_STARLINK,
+    GPS_MODULE_TYPE_CONFIDENCE,
+    GPS_MODULE_TYPE_ACCURACY,
+    GPS_MODULE_TYPE_NMEA,
+    GPS_MODULE_TYPE_MOVEMENT,
+    GPS_MODULE_TYPE_CLUSTERING,
+    GPS_MODULE_TYPE_HEALTH,
+    GPS_MODULE_TYPE_FUSION,
+    GPS_MODULE_TYPE_GEOFENCE,
+    GPS_MODULE_TYPE_EVENTS,
+    GPS_MODULE_TYPE_PERFORMANCE,
+    GPS_MODULE_TYPE_ERROR_RECOVERY,
+    GPS_MODULE_TYPE_MAX
+} gps_module_type_t;
+
+// GPS error types
+typedef enum {
+    GPS_ERROR_NONE = 0,
+    GPS_ERROR_NO_FIX,
+    GPS_ERROR_POOR_ACCURACY,
+    GPS_ERROR_TIMEOUT,
+    GPS_ERROR_COMMUNICATION,
+    GPS_ERROR_INVALID_DATA,
+    GPS_ERROR_MAX
+} gps_error_type_t;
+
+// GPS clustering types
+typedef struct {
+    bool active;
+    int cluster_id;
+    int position_count;
+    time_t last_update;
+    double center_lat;
+    double center_lon;
+    double center_altitude;
+    double accuracy;
+    double confidence;
+    double radius;
+    time_t first_seen;
+} gps_cluster_t;
+
+// GPS performance metrics
+typedef struct {
+    double avg_accuracy;
+    double avg_response_time;
+    int success_count;
+    int failure_count;
+    time_t measurement_time;
+} gps_performance_metrics_t;
+
+// Note: movement_metrics_t is defined in gps/gps_movement.h
+
+// Note: gps_movement_pattern_t is defined in gps/gps_movement.h
+
+// Note: gps_fusion_source_t is defined in gps/gps_fusion.h
+
+// GPS source error tracking
+typedef struct {
+    int source_id;
+    gps_error_type_t error_type;
+    int error_count;
+    time_t first_error;
+    time_t last_error;
+    double error_rate;
+    bool needs_recovery;
+} gps_source_error_t;
+
+// GPS recovery strategies
+typedef enum {
+    GPS_RECOVERY_NONE = 0,
+    GPS_RECOVERY_RETRY,
+    GPS_RECOVERY_FALLBACK,
+    GPS_RECOVERY_RESET,
+    GPS_RECOVERY_DEGRADE,
+    GPS_RECOVERY_SWITCH_SOURCE
+} gps_recovery_strategy_t;
+
+// OpenCellID radio types (unified)
+typedef enum {
+    OPENCELLID_RADIO_UNKNOWN = 0,
+    OPENCELLID_RADIO_GSM = 1,
+    OPENCELLID_RADIO_UMTS = 2,
+    OPENCELLID_RADIO_LTE = 3,
+    OPENCELLID_RADIO_NR = 4,
+    OPENCELLID_RADIO_CDMA = 5,
+    OPENCELLID_RADIO_MAX
+} opencellid_radio_type_t;
+
+// Alias for compatibility
+typedef opencellid_radio_type_t opencellid_radio_t;
 
 // Function declarations
 void log_message(log_level_t level, const char *format, ...);

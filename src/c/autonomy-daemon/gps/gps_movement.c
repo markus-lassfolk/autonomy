@@ -22,6 +22,16 @@ static const char* MOVEMENT_PATTERN_NAMES[] = {
 };
 
 // Global movement detector state
+
+// Forward declarations - movement specific
+static movement_metrics_t calculate_movement_metrics(void);
+static gps_movement_pattern_t determine_movement_pattern(const movement_metrics_t *metrics);
+static bool detect_turning_pattern(void);
+static bool detect_oscillation_pattern(void);
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+static double calculate_bearing(double lat1, double lon1, double lat2, double lon2);
+static void analyze_movement_pattern(void);
+
 static gps_movement_t g_movement_detector = {0};
 static bool g_movement_initialized = false;
 static pthread_mutex_t g_movement_mutex = PTHREAD_MUTEX_INITIALIZER;

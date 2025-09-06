@@ -11,12 +11,7 @@ extern "C" {
 #endif
 
 // GPS source types
-    GPS_SOURCE_TYPE_RUTOS,
-    GPS_SOURCE_TYPE_STARLINK,
-    GPS_SOURCE_TYPE_EXTERNAL,
-    GPS_SOURCE_TYPE_SIMULATED,
-    GPS_SOURCE_TYPE_CUSTOM
-} gps_source_type_t;
+// Note: gps_integration_source_type_t is defined in ../core/types.h
 
 // GPS integration source
 typedef struct {
