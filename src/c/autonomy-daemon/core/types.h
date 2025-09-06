@@ -205,6 +205,18 @@ typedef struct {
     void* geofences[20];                // Active geofences (gps_geofence_definition_t)
 } gps_geofence_system_status_t;
 
+// GPS connector status
+typedef struct {
+    bool enabled;                       // Connector enabled
+    int module_count;                   // Total modules
+    int active_modules;                 // Active modules
+    int total_operations;               // Total operations
+    time_t last_check;                  // Last check timestamp
+    double system_health;               // Overall system health
+    int active_module_count;            // Number of active modules
+    void* modules[20];                  // GPS modules (gps_connector_module_t)
+} gps_connector_status_t;
+
 // GPS validation result
 typedef struct {
     bool is_valid;
@@ -268,6 +280,14 @@ typedef enum {
     GPS_MODULE_TYPE_FUSION,
     GPS_MODULE_TYPE_GEOFENCE,
     GPS_MODULE_TYPE_EVENTS,
+    GPS_MODULE_TYPE_LOCATION_SERVICES,
+    GPS_MODULE_TYPE_COORDINATE_UTILS,
+    GPS_MODULE_TYPE_OBSTRUCTION,
+    GPS_MODULE_TYPE_ADAPTIVE_CACHE,
+    GPS_MODULE_TYPE_GOOGLE_API,
+    GPS_MODULE_TYPE_CELL_TOWER,
+    GPS_MODULE_TYPE_WEATHER,
+    GPS_MODULE_TYPE_TERRAIN,
     GPS_MODULE_TYPE_PERFORMANCE,
     GPS_MODULE_TYPE_ERROR_RECOVERY,
     GPS_MODULE_TYPE_MAX

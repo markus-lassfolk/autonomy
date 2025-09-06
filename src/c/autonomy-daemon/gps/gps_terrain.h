@@ -62,6 +62,8 @@ typedef struct {
     int water_bodies;                   // Presence of water bodies
     double difficulty_score;            // Overall difficulty score (0-100)
     terrain_difficulty_level_t difficulty_level; // Difficulty level classification
+    double slope;                       // Slope
+    double draination;                  // Drainage
 } gps_terrain_info_t;
 
 // Terrain cache entry

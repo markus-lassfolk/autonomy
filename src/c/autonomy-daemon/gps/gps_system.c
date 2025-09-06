@@ -190,7 +190,7 @@ int gps_system_init(void) {
 }
 
 // Register GPS modules with the connector
-static void register_gps_modules(void) {
+void register_gps_modules(void) {
     // Register GPS integration module
     int integration_id = gps_connector_register_module("GPS Integration", GPS_MODULE_TYPE_INTEGRATION);
     if (integration_id > 0) {
@@ -307,7 +307,7 @@ static void register_gps_modules(void) {
 }
 
 // Update module status
-static void update_module_status(gps_module_type_t module_type, bool initialized, bool enabled, double health_score) {
+void update_module_status(gps_module_type_t module_type, bool initialized, bool enabled, double health_score) {
     pthread_mutex_lock(&g_gps_system_mutex);
     
     // Find module in status array
@@ -378,7 +378,7 @@ int gps_system_health_check(void) {
 }
 
 // Check individual module health
-static void check_module_health(void) {
+void check_module_health(void) {
     for (int i = 0; i < GPS_MAX_MODULES; i++) {
         if (g_gps_system.module_status[i].module_type == GPS_MODULE_TYPE_UNKNOWN) {
             continue;
@@ -406,7 +406,7 @@ static void check_module_health(void) {
 }
 
 // Update overall system health
-static void update_system_health(void) {
+void update_system_health(void) {
     double total_health = 0.0;
     int active_count = 0;
     

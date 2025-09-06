@@ -35,17 +35,7 @@ typedef struct {
     double health_threshold;            // Module health threshold
 } gps_connector_config_t;
 
-// GPS connector status
-typedef struct {
-    bool enabled;                       // Connector enabled
-    int module_count;                   // Total modules
-    int active_modules;                 // Active modules
-    int total_operations;               // Total operations
-    time_t last_check;                  // Last check timestamp
-    double system_health;               // Overall system health
-    int active_module_count;            // Number of active modules
-    gps_connector_module_t modules[20]; // GPS modules
-} gps_connector_status_t;
+// Note: gps_connector_status_t is defined in ../core/types.h
 
 // GPS connector system state
 typedef struct {

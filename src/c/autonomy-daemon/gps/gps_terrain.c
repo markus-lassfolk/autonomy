@@ -27,10 +27,19 @@ static bool g_terrain_initialized = false;
 static pthread_mutex_t g_terrain_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
-void analyze_terrain_characteristics(gps_terrain_cache_entry_t *entry);
+void analyze_terrain_characteristics(double lat, double lon, gps_terrain_info_t *terrain_info);
 static double calculate_elevation_variance(const double *elevations, int count);
-void analyze_slope_and_gradient(gps_terrain_cache_entry_t *entry);
-static double calculate_slope_direction(double north_elevation, double south_elevation, double east_elevation, double west_elevation);
+void analyze_slope_and_gradient(double lat, double lon, gps_terrain_info_t *terrain_info);
+static double calculate_slope_direction(const double *slopes);
+void analyze_terrain_roughness(double lat, double lon, gps_terrain_info_t *terrain_info);
+void analyze_draination_patterns(double lat, double lon, gps_terrain_info_t *terrain_info);
+void analyze_vegetation_and_soil(double lat, double lon, gps_terrain_info_t *terrain_info);
+void determine_terrain_type(gps_terrain_info_t *terrain_info);
+void calculate_terrain_difficulty(gps_terrain_info_t *terrain_info);
+static bool get_cached_terrain(double lat, double lon, gps_terrain_info_t *terrain_info);
+void cache_terrain_data(double lat, double lon, const gps_terrain_info_t *terrain_info);
+int find_oldest_terrain_cache(void);
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
 static int perform_terrain_analysis(double lat, double lon, gps_terrain_info_t *terrain_info);
 static int get_real_elevation(double lat, double lon, double* elevation);
 static int get_elevation_from_google_api(double lat, double lon, double* elevation);
@@ -368,7 +377,7 @@ static double calculate_slope_direction(const double *slopes) {
 }
 
 // Analyze terrain roughness
-static void analyze_terrain_roughness(double lat, double lon, gps_terrain_info_t *terrain_info) {
+void analyze_terrain_roughness(double lat, double lon, gps_terrain_info_t *terrain_info) {
     // Sample elevation at fine intervals to calculate roughness
     double sample_elevations[25];
     int sample_index = 0;
@@ -399,7 +408,7 @@ static void analyze_terrain_roughness(double lat, double lon, gps_terrain_info_t
 }
 
 // Analyze draination patterns
-static void analyze_draination_patterns(double lat, double lon, gps_terrain_info_t *terrain_info) {
+void analyze_draination_patterns(double lat, double lon, gps_terrain_info_t *terrain_info) {
     // Simple draination analysis based on slope direction and elevation
     // In a real implementation, this would use hydrological models
     
@@ -424,12 +433,12 @@ static void analyze_draination_patterns(double lat, double lon, gps_terrain_info
         }
     }
     
-    terrain_info->draination_efficiency = flow_accumulation / 8.0;
+    terrain_info->drainage_efficiency = flow_accumulation / 8.0;
     terrain_info->water_flow_direction = calculate_slope_direction(&total_slope);
 }
 
 // Analyze vegetation and soil
-static void analyze_vegetation_and_soil(double lat, double lon, gps_terrain_info_t *terrain_info) {
+void analyze_vegetation_and_soil(double lat, double lon, gps_terrain_info_t *terrain_info) {
     // Simulate vegetation and soil analysis based on coordinates
     // In a real implementation, this would use satellite data and soil databases
     
@@ -446,13 +455,13 @@ static void analyze_vegetation_and_soil(double lat, double lon, gps_terrain_info
     // Water bodies detection (simplified)
     double water_probability = 0.1; // Base probability
     if (terrain_info->elevation < 200.0) water_probability += 0.3; // Low elevation
-    if (terrain_info->draination_efficiency > 0.5) water_probability += 0.2; // Good draination
+    if (terrain_info->drainage_efficiency > 0.5) water_probability += 0.2; // Good draination
     
     terrain_info->water_bodies = (water_probability > 0.3) ? 1 : 0;
 }
 
 // Determine terrain type
-static void determine_terrain_type(gps_terrain_info_t *terrain_info) {
+void determine_terrain_type(gps_terrain_info_t *terrain_info) {
     // Classify terrain based on characteristics
     if (terrain_info->elevation_range < 50.0) {
         terrain_info->terrain_type = TERRAIN_TYPE_FLAT;
@@ -480,7 +489,7 @@ static void determine_terrain_type(gps_terrain_info_t *terrain_info) {
 }
 
 // Calculate terrain difficulty
-static void calculate_terrain_difficulty(gps_terrain_info_t *terrain_info) {
+void calculate_terrain_difficulty(gps_terrain_info_t *terrain_info) {
     // Calculate overall terrain difficulty score (0-100)
     double difficulty = 0.0;
     
@@ -497,7 +506,7 @@ static void calculate_terrain_difficulty(gps_terrain_info_t *terrain_info) {
     difficulty += (1.0 - terrain_info->vegetation_density) * 15.0;
     
     // Drainage factor (10%)
-    difficulty += (1.0 - terrain_info->draination_efficiency) * 10.0;
+    difficulty += (1.0 - terrain_info->drainage_efficiency) * 10.0;
     
     terrain_info->difficulty_score = fmin(100.0, difficulty);
     
@@ -552,7 +561,7 @@ static bool get_cached_terrain(double lat, double lon, gps_terrain_info_t *terra
 }
 
 // Cache terrain data
-static void cache_terrain_data(double lat, double lon, const gps_terrain_info_t *terrain_info) {
+void cache_terrain_data(double lat, double lon, const gps_terrain_info_t *terrain_info) {
     // Find free cache slot
     int slot_index = -1;
     for (int i = 0; i < g_terrain.max_cache_entries; i++) {
@@ -596,7 +605,7 @@ static void cache_terrain_data(double lat, double lon, const gps_terrain_info_t 
 }
 
 // Find oldest terrain cache entry
-static int find_oldest_terrain_cache(void) {
+int find_oldest_terrain_cache(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
