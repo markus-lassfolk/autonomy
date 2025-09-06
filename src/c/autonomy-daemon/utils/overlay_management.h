@@ -45,6 +45,11 @@ typedef struct {
     int emergency_cleanup_count;            // Emergency cleanup count
     int64_t total_bytes_freed;              // Total bytes freed
     time_t last_cleanup_time;               // Last cleanup time
+    int check_interval;                      // Check interval in seconds
+    int cleanup_threshold;                   // Cleanup threshold
+    int emergency_threshold;                 // Emergency threshold
+    bool auto_cleanup;                       // Auto cleanup enabled
+    bool backup_before_cleanup;              // Backup before cleanup
 } overlay_management_status_t;
 
 // Main overlay management structure

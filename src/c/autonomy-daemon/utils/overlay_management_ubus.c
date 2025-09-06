@@ -11,19 +11,19 @@
 #include <math.h>
 
 // Forward declarations
-static int autonomy_overlay_management_status(struct ubus_context *ctx, struct ubus_request_data *req,
+static int autonomy_overlay_management_status(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg);
-static int autonomy_overlay_management_config(struct ubus_context *ctx, struct ubus_request_data *req,
+static int autonomy_overlay_management_config(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                             const char *method, struct blob_attr *msg);
-int autonomy_overlay_management_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_overlay_management_set_config(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                                 const char *method, struct blob_attr *msg);
-static int autonomy_overlay_management_set_enabled(struct ubus_context *ctx, struct ubus_request_data *req,
+static int autonomy_overlay_management_set_enabled(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                                  const char *method, struct blob_attr *msg);
-static int autonomy_overlay_management_reset(struct ubus_context *ctx, struct ubus_request_data *req,
+static int autonomy_overlay_management_reset(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg);
-int autonomy_overlay_management_check(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_overlay_management_check(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg);
-int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                              const char *method, struct blob_attr *msg);
 
 // UBUS method definitions
@@ -55,7 +55,7 @@ static const struct ubus_object autonomy_overlay_management_obj = {
 /**
  * Get overlay management status
  */
-static int autonomy_overlay_management_status(struct ubus_context *ctx, struct ubus_request_data *req,
+static int autonomy_overlay_management_status(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -98,7 +98,7 @@ static int autonomy_overlay_management_status(struct ubus_context *ctx, struct u
 /**
  * Get overlay management configuration
  */
-static int autonomy_overlay_management_config(struct ubus_context *ctx, struct ubus_request_data *req,
+static int autonomy_overlay_management_config(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                             const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -128,7 +128,7 @@ static int autonomy_overlay_management_config(struct ubus_context *ctx, struct u
 /**
  * Set overlay management configuration
  */
-int autonomy_overlay_management_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_overlay_management_set_config(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                                 const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -210,7 +210,7 @@ int autonomy_overlay_management_set_config(struct ubus_context *ctx, struct ubus
 /**
  * Enable/disable overlay management
  */
-static int autonomy_overlay_management_set_enabled(struct ubus_context *ctx, struct ubus_request_data *req,
+static int autonomy_overlay_management_set_enabled(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                                  const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -253,7 +253,7 @@ static int autonomy_overlay_management_set_enabled(struct ubus_context *ctx, str
 /**
  * Reset overlay management statistics
  */
-static int autonomy_overlay_management_reset(struct ubus_context *ctx, struct ubus_request_data *req,
+static int autonomy_overlay_management_reset(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -276,7 +276,7 @@ static int autonomy_overlay_management_reset(struct ubus_context *ctx, struct ub
 /**
  * Manually trigger overlay management check
  */
-int autonomy_overlay_management_check(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_overlay_management_check(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -299,7 +299,7 @@ int autonomy_overlay_management_check(struct ubus_context *ctx, struct ubus_requ
 /**
  * Manually trigger overlay management cleanup
  */
-int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                              const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
