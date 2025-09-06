@@ -26,7 +26,7 @@ static pthread_mutex_t g_geofence_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
 int generate_geofence_id(void);
-static gps_geofence_status_t check_position_against_geofence(const gps_geofence_definition_t *geofence, const gps_data_t *gps_data);
+static gps_geofence_status_t check_position_against_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
 
 // Initialize GPS geofencing system
 int gps_geofence_init(void) {
