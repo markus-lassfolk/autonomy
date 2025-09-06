@@ -5,6 +5,11 @@
 #include <libubox/blobmsg_json.h>
 #include <time.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <math.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 // Starlink UBUS method handlers
 int autonomy_starlink_status(struct ubus_context *uctx, struct ubus_object *obj,

@@ -4,6 +4,7 @@
 #include <time.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 
 // Starlink API configuration
 #define STARLINK_DEFAULT_HOST "192.168.100.1"

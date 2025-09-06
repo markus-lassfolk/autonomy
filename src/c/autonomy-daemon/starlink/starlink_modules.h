@@ -2,6 +2,9 @@
 #define STARLINK_MODULES_H
 
 #include "starlink_types.h"
+#include <stdbool.h>
+#include <math.h>
+#include <sys/socket.h>
 
 // Starlink client functions
 int starlink_client_init(const starlink_config_t *config);

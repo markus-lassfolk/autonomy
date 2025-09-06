@@ -1,11 +1,13 @@
 #include "starlink_obstruction.h"
-#include "logx.h"
+#include "../utils/logx.h"
 #include "types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // Obstruction analysis configuration
 static const int MAX_PATTERNS = 100;                        // Maximum environmental patterns
@@ -18,32 +20,32 @@ static const int MATCH_TIMEOUT_MINUTES = 30;                // Timeout for activ
 static const int HISTORY_SIZE = 100;                        // Number of match results to keep
 
 // Forward declarations for static functions
-static void add_trend_point(trend_point_array_t *history, time_t timestamp, double value, double quality);
-static int find_oldest_trend_point(const trend_point_array_t *history);
-static void update_movement_detection(const starlink_obstruction_sample_t *sample);
+void add_trend_point(trend_point_array_t *history, time_t timestamp, double value, double quality);
+int find_oldest_trend_point(const trend_point_array_t *history);
+void update_movement_detection(const starlink_obstruction_sample_t *sample);
 static void learn_patterns_from_observation(const starlink_obstruction_sample_t *sample);
 static void detect_time_patterns(const starlink_obstruction_sample_t *sample);
 static void detect_weather_patterns(const starlink_obstruction_sample_t *sample);
 static void detect_location_patterns(const starlink_obstruction_sample_t *sample);
-static void update_or_create_pattern(const char *name, const char *description, 
+void update_or_create_pattern(const char *name, const char *description, 
                                    const starlink_obstruction_sample_t *sample, double confidence);
-static int find_oldest_pattern(void);
+int find_oldest_pattern(void);
 static void match_patterns(const starlink_obstruction_sample_t *sample);
-static double calculate_pattern_similarity(const starlink_environmental_pattern_t *pattern, 
+double calculate_pattern_similarity(const starlink_environmental_pattern_t *pattern, 
                                         const starlink_obstruction_sample_t *sample);
-static double calculate_time_similarity(const starlink_environmental_pattern_t *pattern, 
+double calculate_time_similarity(const starlink_environmental_pattern_t *pattern, 
                                      const starlink_obstruction_sample_t *sample);
-static double calculate_location_similarity(const starlink_environmental_pattern_t *pattern, 
+double calculate_location_similarity(const starlink_environmental_pattern_t *pattern, 
                                          const starlink_obstruction_sample_t *sample);
-static void create_or_update_active_match(const starlink_environmental_pattern_t *pattern, 
+void create_or_update_active_match(const starlink_environmental_pattern_t *pattern, 
                                         const starlink_obstruction_sample_t *sample, 
                                         double similarity);
-static int find_oldest_active_match(void);
-static void cleanup_expired_matches(void);
-static void add_match_to_history(const starlink_active_match_t *match, const char *reason);
-static int find_oldest_match_history(void);
+int find_oldest_active_match(void);
+void cleanup_expired_matches(void);
+void add_match_to_history(const starlink_active_match_t *match, const char *reason);
+int find_oldest_match_history(void);
 static void perform_trend_analysis(void);
-static void analyze_trend(const trend_point_array_t *history, const char *metric_name);
+void analyze_trend(const trend_point_array_t *history, const char *metric_name);
 
 // Global obstruction analysis state
 static starlink_obstruction_t g_obstruction = {0};
@@ -51,9 +53,9 @@ static bool g_obstruction_initialized = false;
 static pthread_mutex_t g_obstruction_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize Starlink obstruction analysis
-static int starlink_obstruction_init(void) {
+int starlink_obstruction_init(void) {
     if (g_obstruction_initialized) {
-        LOGX_WARN("Starlink obstruction analysis already initialized");
+        LOGX_WARN_MSG("Starlink obstruction analysis already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -137,7 +139,7 @@ static int starlink_obstruction_init(void) {
     g_obstruction_initialized = true;
     pthread_mutex_unlock(&g_obstruction_mutex);
     
-    LOGX_INFO("Starlink obstruction analysis initialized successfully");
+    LOGX_INFO_MSG("Starlink obstruction analysis initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -177,7 +179,7 @@ static int starlink_obstruction_record_observation(const starlink_obstruction_sa
 }
 
 // Add trend point to history
-static void add_trend_point(trend_point_array_t *history, time_t timestamp, double value, double quality) {
+void add_trend_point(trend_point_array_t *history, time_t timestamp, double value, double quality) {
     // Find next available slot
     int slot_index = -1;
     for (int i = 0; i < history->max_points; i++) {
@@ -211,7 +213,7 @@ static void add_trend_point(trend_point_array_t *history, time_t timestamp, doub
 }
 
 // Find oldest trend point
-static int find_oldest_trend_point(const trend_point_array_t *history) {
+int find_oldest_trend_point(const trend_point_array_t *history) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
@@ -227,7 +229,7 @@ static int find_oldest_trend_point(const trend_point_array_t *history) {
 }
 
 // Update movement detection
-static void update_movement_detection(const starlink_obstruction_sample_t *sample) {
+void update_movement_detection(const starlink_obstruction_sample_t *sample) {
     // This would integrate with GPS location data
     // For now, we'll simulate movement detection based on obstruction changes
     
@@ -243,7 +245,7 @@ static void update_movement_detection(const starlink_obstruction_sample_t *sampl
             g_obstruction.movement_detector.is_moving = true;
             g_obstruction.movement_detector.last_movement_time = now;
             
-            LOGX_DEBUG("Movement detected based on obstruction change: %.2f%% -> %.2f%%", 
+            LOGX_DEBUG_MSG("Movement detected based on obstruction change: %.2f%% -> %.2f%%", 
                       last_obstruction * 100, sample->fraction_obstructed * 100);
         }
         last_movement_check = now;
@@ -337,7 +339,7 @@ static void detect_location_patterns(const starlink_obstruction_sample_t *sample
 }
 
 // Update or create pattern
-static void update_or_create_pattern(const char *name, const char *description, 
+void update_or_create_pattern(const char *name, const char *description, 
                                    const starlink_obstruction_sample_t *sample, double confidence) {
     // Look for existing pattern
     int pattern_index = -1;
@@ -385,13 +387,13 @@ static void update_or_create_pattern(const char *name, const char *description,
             pattern->first_seen = sample->timestamp;
         }
         
-        LOGX_DEBUG("Pattern updated/created: %s (confidence: %.2f, samples: %d)", 
+        LOGX_DEBUG_MSG("Pattern updated/created: %s (confidence: %.2f, samples: %d)", 
                   name, confidence, pattern->sample_count);
     }
 }
 
 // Find oldest pattern
-static int find_oldest_pattern(void) {
+int find_oldest_pattern(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
@@ -430,7 +432,7 @@ static void match_patterns(const starlink_obstruction_sample_t *sample) {
 }
 
 // Calculate pattern similarity
-static double calculate_pattern_similarity(const starlink_environmental_pattern_t *pattern, 
+double calculate_pattern_similarity(const starlink_environmental_pattern_t *pattern, 
                                         const starlink_obstruction_sample_t *sample) {
     double similarity = 0.0;
     
@@ -456,7 +458,7 @@ static double calculate_pattern_similarity(const starlink_environmental_pattern_
 }
 
 // Calculate time similarity
-static double calculate_time_similarity(const starlink_environmental_pattern_t *pattern, 
+double calculate_time_similarity(const starlink_environmental_pattern_t *pattern, 
                                      const starlink_obstruction_sample_t *sample) {
     // This would implement sophisticated time pattern matching
     // For now, return a base similarity
@@ -464,7 +466,7 @@ static double calculate_time_similarity(const starlink_environmental_pattern_t *
 }
 
 // Calculate location similarity
-static double calculate_location_similarity(const starlink_environmental_pattern_t *pattern, 
+double calculate_location_similarity(const starlink_environmental_pattern_t *pattern, 
                                          const starlink_obstruction_sample_t *sample) {
     // This would implement location-based similarity
     // For now, return a base similarity
@@ -472,7 +474,7 @@ static double calculate_location_similarity(const starlink_environmental_pattern
 }
 
 // Create or update active match
-static void create_or_update_active_match(const starlink_environmental_pattern_t *pattern, 
+void create_or_update_active_match(const starlink_environmental_pattern_t *pattern, 
                                         const starlink_obstruction_sample_t *sample, 
                                         double similarity) {
     // Look for existing active match
@@ -517,13 +519,13 @@ static void create_or_update_active_match(const starlink_environmental_pattern_t
         match->status = MATCH_STATUS_MATCHING;
         match->sample_count++;
         
-        LOGX_DEBUG("Active match updated: %s (similarity: %.2f, confidence: %.2f)", 
+        LOGX_DEBUG_MSG("Active match updated: %s (similarity: %.2f, confidence: %.2f)", 
                   pattern->name, similarity, pattern->confidence);
     }
 }
 
 // Find oldest active match
-static int find_oldest_active_match(void) {
+int find_oldest_active_match(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
@@ -539,7 +541,7 @@ static int find_oldest_active_match(void) {
 }
 
 // Clean up expired matches
-static void cleanup_expired_matches(void) {
+void cleanup_expired_matches(void) {
     time_t now = time(NULL);
     int timeout_seconds = g_obstruction.match_timeout_minutes * 60;
     
@@ -554,13 +556,13 @@ static void cleanup_expired_matches(void) {
             g_obstruction.active_matches[i].active = false;
             g_obstruction.active_match_count--;
             
-            LOGX_DEBUG("Active match expired: %s", g_obstruction.active_matches[i].pattern_name);
+            LOGX_DEBUG_MSG("Active match expired: %s", g_obstruction.active_matches[i].pattern_name);
         }
     }
 }
 
 // Add match to history
-static void add_match_to_history(const starlink_active_match_t *match, const char *reason) {
+void add_match_to_history(const starlink_active_match_t *match, const char *reason) {
     // Find next available slot
     int slot_index = -1;
     for (int i = 0; i < g_obstruction.history_size; i++) {
@@ -601,7 +603,7 @@ static void add_match_to_history(const starlink_active_match_t *match, const cha
 }
 
 // Find oldest match history entry
-static int find_oldest_match_history(void) {
+int find_oldest_match_history(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
@@ -626,7 +628,7 @@ static void perform_trend_analysis(void) {
 }
 
 // Analyze trend for a specific metric
-static void analyze_trend(const trend_point_array_t *history, const char *metric_name) {
+void analyze_trend(const trend_point_array_t *history, const char *metric_name) {
     if (history->point_count < g_obstruction.trend_analyzer.min_points_for_analysis) {
         return;
     }
@@ -657,18 +659,18 @@ static void analyze_trend(const trend_point_array_t *history, const char *metric
         if (history->points[i].active) {
             double deviation = fabs(history->points[i].value - mean);
             if (deviation > (g_obstruction.trend_analyzer.anomaly_threshold * std_dev)) {
-                LOGX_DEBUG("Anomaly detected in %s: value=%.2f, mean=%.2f, deviation=%.2f", 
+                LOGX_DEBUG_MSG("Anomaly detected in %s: value=%.2f, mean=%.2f, deviation=%.2f", 
                           metric_name, history->points[i].value, mean, deviation);
             }
         }
     }
     
-    LOGX_DEBUG("Trend analysis for %s: mean=%.2f, std_dev=%.2f, points=%d", 
+    LOGX_DEBUG_MSG("Trend analysis for %s: mean=%.2f, std_dev=%.2f, points=%d", 
               metric_name, mean, std_dev, valid_points);
 }
 
 // Get obstruction analysis status
-static int starlink_obstruction_get_status(starlink_obstruction_status_t *status) {
+int starlink_obstruction_get_status(starlink_obstruction_status_t *status) {
     if (!g_obstruction_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -752,7 +754,7 @@ static int starlink_obstruction_get_match_history(starlink_match_result_t *resul
 }
 
 // Get obstruction configuration
-static int starlink_obstruction_get_config(starlink_obstruction_config_t *config) {
+int starlink_obstruction_get_config(starlink_obstruction_config_t *config) {
     if (!g_obstruction_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -774,7 +776,7 @@ static int starlink_obstruction_get_config(starlink_obstruction_config_t *config
 }
 
 // Set obstruction configuration
-static int starlink_obstruction_set_config(const starlink_obstruction_config_t *config) {
+int starlink_obstruction_set_config(const starlink_obstruction_config_t *config) {
     if (!g_obstruction_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -792,7 +794,7 @@ static int starlink_obstruction_set_config(const starlink_obstruction_config_t *
     
     pthread_mutex_unlock(&g_obstruction_mutex);
     
-    LOGX_INFO("Starlink obstruction analysis configuration updated");
+    LOGX_INFO_MSG("Starlink obstruction analysis configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -806,7 +808,7 @@ static int starlink_obstruction_set_enabled(bool enabled) {
     g_obstruction.enabled = enabled;
     pthread_mutex_unlock(&g_obstruction_mutex);
     
-    LOGX_INFO("Starlink obstruction analysis %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("Starlink obstruction analysis %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -840,12 +842,12 @@ static int starlink_obstruction_reset(void) {
     
     pthread_mutex_unlock(&g_obstruction_mutex);
     
-    LOGX_INFO("Starlink obstruction analysis reset");
+    LOGX_INFO_MSG("Starlink obstruction analysis reset");
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup obstruction analysis
-static void starlink_obstruction_cleanup(void) {
+void starlink_obstruction_cleanup(void) {
     if (!g_obstruction_initialized) {
         return;
     }
@@ -853,5 +855,5 @@ static void starlink_obstruction_cleanup(void) {
     pthread_mutex_destroy(&g_obstruction_mutex);
     g_obstruction_initialized = false;
     
-    LOGX_INFO("Starlink obstruction analysis cleaned up");
+    LOGX_INFO_MSG("Starlink obstruction analysis cleaned up");
 }

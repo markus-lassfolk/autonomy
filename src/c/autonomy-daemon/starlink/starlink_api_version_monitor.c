@@ -1,7 +1,7 @@
 #include "starlink_api_version_monitor.h"
-#include "starlink_comprehensive.h"
-#include "notifications_comprehensive.h"
-#include "logx.h"
+#include "../starlink/starlink_comprehensive.h"
+#include "../notifications/notifications_comprehensive.h"
+#include "../utils/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +10,9 @@
 #include <time.h>
 #include <json-c/json.h>
 #include <curl/curl.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 // Global API version monitor
 static starlink_api_version_monitor_t g_api_version_monitor = {0};
@@ -41,14 +44,14 @@ static int save_version_to_storage(const starlink_api_version_t* version);
 static int load_version_from_storage(starlink_api_version_t* version);
 
 // Initialize Starlink API version monitor
-static int starlink_api_version_monitor_init(const starlink_api_version_monitor_config_t* config) {
+int starlink_api_version_monitor_init(const starlink_api_version_monitor_config_t* config) {
     if (g_api_version_monitor_initialized) {
-        LOGX_WARN("Starlink API version monitor already initialized");
+        LOGX_WARN_MSG("Starlink API version monitor already initialized");
         return AUTONOMY_SUCCESS;
     }
     
     if (!config) {
-        LOGX_ERROR("API version monitor config is NULL");
+        LOGX_ERROR_MSG("API version monitor config is NULL");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
@@ -57,7 +60,7 @@ static int starlink_api_version_monitor_init(const starlink_api_version_monitor_
     
     // Initialize mutex
     if (pthread_mutex_init(&g_api_version_monitor.mutex, NULL) != 0) {
-        LOGX_ERROR("Failed to initialize API version monitor mutex");
+        LOGX_ERROR_MSG("Failed to initialize API version monitor mutex");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -65,7 +68,7 @@ static int starlink_api_version_monitor_init(const starlink_api_version_monitor_
     g_api_version_monitor.version_history = calloc(config->max_version_history,
                                                   sizeof(starlink_api_version_t));
     if (!g_api_version_monitor.version_history) {
-        LOGX_ERROR("Failed to allocate memory for version history");
+        LOGX_ERROR_MSG("Failed to allocate memory for version history");
         pthread_mutex_destroy(&g_api_version_monitor.mutex);
         return AUTONOMY_ERROR_SYSTEM;
     }
@@ -74,7 +77,7 @@ static int starlink_api_version_monitor_init(const starlink_api_version_monitor_
     g_api_version_monitor.change_records = calloc(config->max_change_records,
                                                  sizeof(starlink_api_version_change_t));
     if (!g_api_version_monitor.change_records) {
-        LOGX_ERROR("Failed to allocate memory for change records");
+        LOGX_ERROR_MSG("Failed to allocate memory for change records");
         free(g_api_version_monitor.version_history);
         pthread_mutex_destroy(&g_api_version_monitor.mutex);
         return AUTONOMY_ERROR_SYSTEM;
@@ -86,7 +89,7 @@ static int starlink_api_version_monitor_init(const starlink_api_version_monitor_
     // Load previous version from storage if available
     if (load_version_from_storage(&g_api_version_monitor.current_version) == AUTONOMY_SUCCESS) {
         g_api_version_monitor.current_version_valid = true;
-        LOGX_INFO("Loaded previous Starlink API version from storage",
+        LOGX_INFO_MSG("Loaded previous Starlink API version from storage",
                  "version", g_api_version_monitor.current_version.software_version);
     }
     
@@ -96,7 +99,7 @@ static int starlink_api_version_monitor_init(const starlink_api_version_monitor_
         
         if (pthread_create(&g_api_version_monitor.monitor_thread, NULL, 
                           monitor_thread_worker, NULL) != 0) {
-            LOGX_ERROR("Failed to create API version monitor thread");
+            LOGX_ERROR_MSG("Failed to create API version monitor thread");
             free(g_api_version_monitor.version_history);
             free(g_api_version_monitor.change_records);
             pthread_mutex_destroy(&g_api_version_monitor.mutex);
@@ -106,7 +109,7 @@ static int starlink_api_version_monitor_init(const starlink_api_version_monitor_
     
     g_api_version_monitor_initialized = true;
     
-    LOGX_INFO("Starlink API version monitor initialized",
+    LOGX_INFO_MSG("Starlink API version monitor initialized",
               "enabled", config->enabled,
               "check_interval_s", config->check_interval_s,
               "notify_minor", config->notify_on_minor_changes,
@@ -116,7 +119,7 @@ static int starlink_api_version_monitor_init(const starlink_api_version_monitor_
 }
 
 // Cleanup API version monitor
-static void starlink_api_version_monitor_cleanup(void) {
+void starlink_api_version_monitor_cleanup(void) {
     if (!g_api_version_monitor_initialized) return;
     
     pthread_mutex_lock(&g_api_version_monitor.mutex);
@@ -143,11 +146,11 @@ static void starlink_api_version_monitor_cleanup(void) {
     
     g_api_version_monitor_initialized = false;
     
-    LOGX_INFO("Starlink API version monitor cleaned up");
+    LOGX_INFO_MSG("Starlink API version monitor cleaned up");
 }
 
 // Check for API version changes
-static int starlink_api_version_monitor_check_version(void) {
+int starlink_api_version_monitor_check_version(void) {
     if (!g_api_version_monitor_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -159,7 +162,7 @@ static int starlink_api_version_monitor_check_version(void) {
     // Get current Starlink status to extract version information
     starlink_comprehensive_status_t status;
     if (starlink_comprehensive_collect_all(&status) != AUTONOMY_SUCCESS) {
-        LOGX_WARN("Failed to collect Starlink status for version check");
+        LOGX_WARN_MSG("Failed to collect Starlink status for version check");
         pthread_mutex_unlock(&g_api_version_monitor.mutex);
         return AUTONOMY_ERROR_API_FAILED;
     }
@@ -177,7 +180,7 @@ static int starlink_api_version_monitor_check_version(void) {
     
     // Parse version components
     if (starlink_parse_software_version(detected_version.software_version, &detected_version) != AUTONOMY_SUCCESS) {
-        LOGX_WARN("Failed to parse Starlink software version",
+        LOGX_WARN_MSG("Failed to parse Starlink software version",
                  "version_string", detected_version.software_version);
     }
     
@@ -187,13 +190,13 @@ static int starlink_api_version_monitor_check_version(void) {
         if (strcmp(g_api_version_monitor.current_version.software_version, 
                   detected_version.software_version) != 0) {
             version_changed = true;
-            LOGX_INFO("Starlink API version change detected",
+            LOGX_INFO_MSG("Starlink API version change detected",
                      "old_version", g_api_version_monitor.current_version.software_version,
                      "new_version", detected_version.software_version);
         }
     } else {
         // First time detection
-        LOGX_INFO("Starlink API version detected for first time",
+        LOGX_INFO_MSG("Starlink API version detected for first time",
                  "version", detected_version.software_version);
         detected_version.first_detected = time(NULL);
     }
@@ -247,7 +250,7 @@ static int starlink_api_version_monitor_check_version(void) {
     
     pthread_mutex_unlock(&g_api_version_monitor.mutex);
     
-    LOGX_DEBUG("Starlink API version check completed",
+    LOGX_DEBUG_MSG("Starlink API version check completed",
               "version", detected_version.software_version,
               "changed", version_changed,
               "check_time_ms", check_time_ms);
@@ -306,7 +309,7 @@ static int starlink_parse_software_version(const char* version_str, starlink_api
     
     free(version_copy);
     
-    LOGX_DEBUG("Parsed Starlink version",
+    LOGX_DEBUG_MSG("Parsed Starlink version",
               "version_string", version_str,
               "major", version->major_version,
               "minor", version->minor_version,
@@ -370,7 +373,7 @@ static int detect_version_change(const starlink_api_version_t* new_version) {
             break;
     }
     
-    LOGX_WARN("Starlink API version change detected",
+    LOGX_WARN_MSG("Starlink API version change detected",
              "change_id", change->change_id,
              "old_version", change->old_version.software_version,
              "new_version", change->new_version.software_version,
@@ -560,12 +563,12 @@ static int send_version_change_notification(const starlink_api_version_change_t*
     );
     
     if (notification_id) {
-        LOGX_INFO("Starlink API version change notification sent",
+        LOGX_INFO_MSG("Starlink API version change notification sent",
                  "notification_id", notification_id,
                  "severity", starlink_api_version_change_severity_to_string(change->severity));
         return AUTONOMY_SUCCESS;
     } else {
-        LOGX_ERROR("Failed to send Starlink API version change notification");
+        LOGX_ERROR_MSG("Failed to send Starlink API version change notification");
         return AUTONOMY_ERROR_SYSTEM;
     }
 }
@@ -662,13 +665,13 @@ const char* starlink_api_endpoint_to_string(starlink_api_endpoint_t endpoint) {
     return "unknown";
 }
 
-static bool starlink_api_version_monitor_is_initialized(void) {
+bool starlink_api_version_monitor_is_initialized(void) {
     return g_api_version_monitor_initialized;
 }
 
 // Monitoring thread worker
 static void* monitor_thread_worker(void* arg) {
-    LOGX_INFO("Starlink API version monitor thread started",
+    LOGX_INFO_MSG("Starlink API version monitor thread started",
              "check_interval_s", g_api_version_monitor.config.check_interval_s);
     
     while (g_api_version_monitor_initialized && g_api_version_monitor.thread_running) {
@@ -678,11 +681,11 @@ static void* monitor_thread_worker(void* arg) {
         
         // Perform version check
         if (starlink_api_version_monitor_check_version() != AUTONOMY_SUCCESS) {
-            LOGX_WARN("API version check failed in background thread");
+            LOGX_WARN_MSG("API version check failed in background thread");
         }
     }
     
-    LOGX_INFO("Starlink API version monitor thread stopped");
+    LOGX_INFO_MSG("Starlink API version monitor thread stopped");
     return NULL;
 }
 
@@ -692,7 +695,7 @@ static int save_version_to_storage(const starlink_api_version_t* version) {
     
     FILE* fp = fopen(g_api_version_monitor.config.version_storage_file, "w");
     if (!fp) {
-        LOGX_WARN("Failed to open version storage file for writing",
+        LOGX_WARN_MSG("Failed to open version storage file for writing",
                  "file", g_api_version_monitor.config.version_storage_file);
         return AUTONOMY_ERROR_SYSTEM;
     }
@@ -711,7 +714,7 @@ static int save_version_to_storage(const starlink_api_version_t* version) {
     
     fclose(fp);
     
-    LOGX_DEBUG("Starlink API version saved to storage",
+    LOGX_DEBUG_MSG("Starlink API version saved to storage",
               "version", version->software_version,
               "file", g_api_version_monitor.config.version_storage_file);
     
@@ -765,7 +768,7 @@ static int load_version_from_storage(starlink_api_version_t* version) {
     
     // Validate loaded version
     if (strlen(version->software_version) > 0) {
-        LOGX_DEBUG("Starlink API version loaded from storage",
+        LOGX_DEBUG_MSG("Starlink API version loaded from storage",
                   "version", version->software_version);
         return AUTONOMY_SUCCESS;
     }

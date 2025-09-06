@@ -1,14 +1,17 @@
 #include "starlink_comprehensive_ubus.h"
-#include "starlink_comprehensive.h"
-#include "logx.h"
+#include "../starlink/starlink_comprehensive.h"
+#include "../utils/logx.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <fcntl.h>
 
 // Helper function to add comprehensive GPS data to blob
-static void add_starlink_gps_data_to_blob(struct blob_buf *bb, const char *name, 
+void add_starlink_gps_data_to_blob(struct blob_buf *bb, const char *name, 
                                           const starlink_comprehensive_gps_t *gps_data) {
     void *gps_table = blobmsg_open_table(bb, name);
     
@@ -41,7 +44,7 @@ static void add_starlink_gps_data_to_blob(struct blob_buf *bb, const char *name,
 }
 
 // Helper function to add events analysis to blob
-static void add_events_analysis_to_blob(struct blob_buf *bb, const char *name,
+void add_events_analysis_to_blob(struct blob_buf *bb, const char *name,
                                         const starlink_events_outages_analysis_t *analysis) {
     void *analysis_table = blobmsg_open_table(bb, name);
     

@@ -11,12 +11,13 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <stdbool.h>
 
 // Global Starlink cluster
 static starlink_cluster_t g_starlink_cluster = {0};
 
 // Initialize Starlink cluster
-static int starlink_cluster_init(void) {
+int starlink_cluster_init(void) {
     memset(&g_starlink_cluster, 0, sizeof(starlink_cluster_t));
     
     // Set default values
@@ -35,7 +36,7 @@ static int starlink_cluster_init(void) {
 }
 
 // Add a Starlink to the cluster
-static int starlink_cluster_add(const char *id, const starlink_config_t *config) {
+int starlink_cluster_add(const char *id, const starlink_config_t *config) {
     if (!id || !config || g_starlink_cluster.count >= MAX_STARLINKS) {
         return -1;
     }
@@ -69,7 +70,7 @@ static int starlink_cluster_add(const char *id, const starlink_config_t *config)
 }
 
 // Remove a Starlink from the cluster
-static int starlink_cluster_remove(const char *id) {
+int starlink_cluster_remove(const char *id) {
     if (!id) {
         return -1;
     }
@@ -111,7 +112,7 @@ static int starlink_cluster_remove(const char *id) {
 }
 
 // Find the best Starlink based on performance metrics
-static int starlink_cluster_find_best_starlink(void) {
+int starlink_cluster_find_best_starlink(void) {
     if (g_starlink_cluster.count == 0) {
         return -1;
     }
@@ -185,7 +186,7 @@ static int starlink_cluster_failover_to(int index, const char *reason) {
 }
 
 // Check if automatic failover is needed
-static int starlink_cluster_check_failover(void) {
+int starlink_cluster_check_failover(void) {
     if (!g_starlink_cluster.auto_failover_enabled || g_starlink_cluster.count < 2) {
         return 0;
     }
@@ -235,7 +236,7 @@ static int starlink_cluster_check_failover(void) {
 }
 
 // Update Starlink instance with new data
-static int starlink_cluster_update_instance(int index, const starlink_collection_result_t *result) {
+int starlink_cluster_update_instance(int index, const starlink_collection_result_t *result) {
     if (index < 0 || index >= g_starlink_cluster.count || !result) {
         return -1;
     }
@@ -288,7 +289,7 @@ static int starlink_cluster_update_instance(int index, const starlink_collection
 }
 
 // Get cluster status
-static int starlink_cluster_get_status(starlink_cluster_t *cluster) {
+int starlink_cluster_get_status(starlink_cluster_t *cluster) {
     if (!cluster) {
         return -1;
     }
@@ -329,14 +330,14 @@ const starlink_instance_t* starlink_cluster_get_by_index(int index) {
 }
 
 // Set cluster configuration
-static void starlink_cluster_set_config(bool auto_failover, int failover_threshold, float min_health_score) {
+void starlink_cluster_set_config(bool auto_failover, int failover_threshold, float min_health_score) {
     g_starlink_cluster.auto_failover_enabled = auto_failover;
     g_starlink_cluster.failover_threshold = failover_threshold;
     g_starlink_cluster.min_health_score = min_health_score;
 }
 
 // Cleanup cluster
-static void starlink_cluster_cleanup(void) {
+void starlink_cluster_cleanup(void) {
     // Cleanup Starlink obstruction analysis
     starlink_obstruction_cleanup();
     

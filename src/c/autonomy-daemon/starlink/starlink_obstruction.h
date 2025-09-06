@@ -1,10 +1,11 @@
 #ifndef STARLINK_OBSTRUCTION_H
 #define STARLINK_OBSTRUCTION_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
+#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {

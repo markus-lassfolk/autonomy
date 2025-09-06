@@ -6,6 +6,7 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <stdbool.h>
 
 // Starlink collector state
 static struct {
@@ -28,7 +29,7 @@ static struct {
 };
 
 // Initialize Starlink collector
-static int starlink_collector_init(int collection_interval) {
+int starlink_collector_init(int collection_interval) {
     if (collection_interval > 0) {
         g_collector_state.collection_interval = collection_interval;
     }
@@ -288,7 +289,7 @@ static int starlink_get_health(starlink_health_t *health) {
 }
 
 // Cleanup Starlink collector
-static void starlink_collector_cleanup(void) {
+void starlink_collector_cleanup(void) {
     starlink_client_cleanup();
     memset(&g_collector_state, 0, sizeof(g_collector_state));
 }
