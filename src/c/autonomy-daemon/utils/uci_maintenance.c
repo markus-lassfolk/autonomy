@@ -1,9 +1,6 @@
 #include "uci_maintenance.h"
 #include "../core/types.h"
-// Simple notification function for UCI maintenance
-static void send_uci_notification(const char* level, const char* message) {
-    printf("UCI MAINTENANCE [%s]: %s\n", level, message);
-}
+#include "../notifications/notification_types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,9 +47,9 @@ int uci_maintenance_init(void) {
 /**
  * Perform comprehensive UCI maintenance
  */
-static int uci_maintenance_perform_maintenance(uci_maintenance_result_t *result) {
+int uci_maintenance_perform_maintenance(uci_maintenance_result_t *result) {
     if (!result) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Initialize result structure
@@ -195,7 +192,7 @@ int check_uci_corruption(uci_maintenance_result_t *result) {
     const char *config_dir = "/etc/config";
     DIR *dir = opendir(config_dir);
     if (!dir) {
-        return AUTONOMY_ERROR_SYSTEM_CALL_FAILED;
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
     struct dirent *entry;
@@ -243,7 +240,7 @@ int check_unwanted_config_files(uci_maintenance_result_t *result) {
     const char *config_dir = "/etc/config";
     DIR *dir = opendir(config_dir);
     if (!dir) {
-        return AUTONOMY_ERROR_SYSTEM_CALL_FAILED;
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
     struct dirent *entry;
@@ -409,7 +406,7 @@ int remove_unwanted_files(void) {
     const char *config_dir = "/etc/config";
     DIR *dir = opendir(config_dir);
     if (!dir) {
-        return AUTONOMY_ERROR_SYSTEM_CALL_FAILED;
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
     int removed_count = 0;
@@ -448,12 +445,12 @@ static void send_notification(const char *type, const char *message) {
     strcpy(event.title, "UCI Maintenance Alert");
     strncpy(event.message, message, sizeof(event.message) - 1);
     event.message[sizeof(event.message) - 1] = '\0';
-    event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
+    event.type = NOTIFICATION_TYPE_SYSTEM_ALERT;
     event.timestamp = time(NULL);
     
     // Determine priority based on type
     if (strcmp(type, "critical") == 0) {
-        event.priority = NOTIFICATION_PRIORITY_EMERGENCY;
+        event.priority = NOTIFICATION_PRIORITY_CRITICAL;
     } else if (strcmp(type, "warning") == 0) {
         event.priority = NOTIFICATION_PRIORITY_HIGH;
     } else {
@@ -474,7 +471,7 @@ static void send_notification(const char *type, const char *message) {
  */
 int uci_maintenance_get_status(uci_maintenance_status_t *status) {
     if (!status) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     status->last_check_time = g_uci_maintenance.stats.last_check_time;
@@ -489,7 +486,7 @@ int uci_maintenance_get_status(uci_maintenance_status_t *status) {
 /**
  * Reset UCI maintenance
  */
-static int uci_maintenance_reset(void) {
+int uci_maintenance_reset(void) {
     memset(&g_uci_maintenance.stats, 0, sizeof(uci_maintenance_stats_t));
     return AUTONOMY_SUCCESS;
 }

@@ -94,7 +94,7 @@ void cellular_collector_cleanup(void) {
 }
 
 // Collect cellular metrics
-static int cellular_collector_collect(cellular_info_t* info) {
+int cellular_collector_collect(cellular_info_t* info) {
     if (!g_cellular_collector_initialized || !info) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -468,7 +468,7 @@ double cellular_collector_calculate_predictive_risk(const cellular_info_t* info)
 }
 
 // Get cellular collector statistics
-static int cellular_collector_get_stats(cellular_collector_stats_t* stats) {
+int cellular_collector_get_stats(cellular_collector_stats_t* stats) {
     if (!stats || !g_cellular_collector_initialized) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -505,7 +505,7 @@ int cellular_collector_set_config(const cellular_collector_config_t* config) {
 }
 
 // Enable/disable cellular collector
-static int cellular_collector_set_enabled(bool enabled) {
+int cellular_collector_set_enabled(bool enabled) {
     if (!g_cellular_collector_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -517,7 +517,7 @@ static int cellular_collector_set_enabled(bool enabled) {
 }
 
 // Reset cellular collector statistics
-static int cellular_collector_reset_stats(void) {
+int cellular_collector_reset_stats(void) {
     if (!g_cellular_collector_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -533,7 +533,7 @@ static int cellular_collector_reset_stats(void) {
 }
 
 // Force immediate collection
-static int cellular_collector_force_collect(cellular_info_t* info) {
+int cellular_collector_force_collect(cellular_info_t* info) {
     return cellular_collector_collect(info);
 }
 

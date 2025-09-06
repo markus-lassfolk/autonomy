@@ -97,6 +97,37 @@ typedef struct {
     char context[512];                     // Additional context
 } notification_event_t;
 
+// Channel configuration structure
+typedef struct {
+    bool webhook_enabled;
+    char webhook_url[512];
+    bool email_enabled;
+    char email_smtp_server[256];
+    int email_smtp_port;
+    char email_username[128];
+    char email_password[128];
+    char email_from[128];
+    bool pushover_enabled;
+    char pushover_token[128];
+    char pushover_user[128];
+    bool discord_enabled;
+    char discord_webhook_url[512];
+    bool slack_enabled;
+    char slack_webhook_url[512];
+} channel_config_t;
+
+// Notification statistics structure
+typedef struct {
+    int total_sent;
+    int total_delivered;
+    int total_failed;
+    int total_acknowledged;
+    double average_delivery_time_ms;
+    time_t last_sent;
+    time_t last_delivered;
+    time_t last_failed;
+} notification_stats_t;
+
 // Function declarations
 int notification_init(const notification_config_t *config);
 void notification_cleanup(void);

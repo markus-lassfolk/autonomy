@@ -1,9 +1,7 @@
 #include "overlay_management.h"
 #include "../core/types.h"
-// Simple notification function for overlay management
-static void send_overlay_notification(const char* level, const char* message) {
-    printf("OVERLAY MANAGEMENT [%s]: %s\n", level, message);
-}
+#include "../notifications/notification_manager.h"
+#include "../notifications/notification_types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,7 +34,7 @@ int64_t cleanup_system_cache(void);
 int64_t remove_file_recursive(const char *path);
 static int64_t get_file_size(const char *path);
 static int is_file_older_than(const char *path, int days);
-// send_overlay_notification is now implemented as send_overlay_notification above
+static void send_notification(const char *type, const char *message);
 
 /**
  * Initialize overlay management
@@ -89,7 +87,7 @@ int overlay_management_check(void) {
         if (g_overlay_manager.config.notifications_enabled && g_overlay_manager.config.notify_on_critical) {
             char message[256];
             snprintf(message, sizeof(message), "Critical overlay space usage: %d%%", usage);
-            send_overlay_notification("critical", message);
+            send_notification("critical", message);
         }
         
         int result = perform_emergency_cleanup();
@@ -102,7 +100,7 @@ int overlay_management_check(void) {
         if (g_overlay_manager.config.notifications_enabled && g_overlay_manager.config.notify_on_fixes) {
             char message[256];
             snprintf(message, sizeof(message), "High overlay space usage: %d%%", usage);
-            send_overlay_notification("warning", message);
+            send_notification("warning", message);
         }
         
         int result = perform_cleanup();
@@ -172,7 +170,7 @@ int perform_cleanup(void) {
         if (g_overlay_manager.config.notifications_enabled && g_overlay_manager.config.notify_on_fixes) {
             char message[256];
             snprintf(message, sizeof(message), "Overlay cleanup completed: freed %lld bytes", (long long)total_freed);
-            send_overlay_notification("fix", message);
+            send_notification("fix", message);
         }
     }
     
@@ -205,7 +203,7 @@ int perform_emergency_cleanup(void) {
         if (g_overlay_manager.config.notifications_enabled && g_overlay_manager.config.notify_on_critical) {
             char message[256];
             snprintf(message, sizeof(message), "Emergency overlay cleanup completed: freed %lld bytes", (long long)total_freed);
-            send_overlay_notification("critical", message);
+            send_notification("critical", message);
         }
     }
     
@@ -518,18 +516,18 @@ static int is_file_older_than(const char *path, int days) {
 /**
  * Send notification via notification manager
  */
-static void send_overlay_notification(const char *type, const char *message) {
+static void send_notification(const char *type, const char *message) {
     // Create notification event
     notification_event_t event = {0};
     strcpy(event.title, "Overlay Management Alert");
     strncpy(event.message, message, sizeof(event.message) - 1);
     event.message[sizeof(event.message) - 1] = '\0';
-    event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
+    event.type = NOTIFICATION_TYPE_SYSTEM_ALERT;
     event.timestamp = time(NULL);
     
     // Determine priority based on type
     if (strcmp(type, "critical") == 0) {
-        event.priority = NOTIFICATION_PRIORITY_EMERGENCY;
+        event.priority = NOTIFICATION_PRIORITY_CRITICAL;
     } else if (strcmp(type, "warning") == 0) {
         event.priority = NOTIFICATION_PRIORITY_HIGH;
     } else {
@@ -550,7 +548,7 @@ static void send_overlay_notification(const char *type, const char *message) {
  */
 int overlay_management_get_status(overlay_management_status_t *status) {
     if (!status) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     status->enabled = g_overlay_manager.config.enabled;
@@ -575,7 +573,7 @@ int overlay_management_get_status(overlay_management_status_t *status) {
  */
 int overlay_management_get_config(overlay_management_config_t *config) {
     if (!config) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     *config = g_overlay_manager.config;
@@ -587,7 +585,7 @@ int overlay_management_get_config(overlay_management_config_t *config) {
  */
 int overlay_management_set_config(const overlay_management_config_t *config) {
     if (!config) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     g_overlay_manager.config = *config;
@@ -597,7 +595,7 @@ int overlay_management_set_config(const overlay_management_config_t *config) {
 /**
  * Enable/disable overlay management
  */
-static int overlay_management_set_enabled(bool enabled) {
+int overlay_management_set_enabled(bool enabled) {
     g_overlay_manager.config.enabled = enabled;
     return AUTONOMY_SUCCESS;
 }
@@ -605,7 +603,7 @@ static int overlay_management_set_enabled(bool enabled) {
 /**
  * Reset overlay management
  */
-static int overlay_management_reset(void) {
+int overlay_management_reset(void) {
     memset(&g_overlay_manager.stats, 0, sizeof(overlay_management_stats_t));
     return AUTONOMY_SUCCESS;
 }

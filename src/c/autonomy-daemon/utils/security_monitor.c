@@ -79,7 +79,7 @@ void security_monitor_cleanup(void) {
 }
 
 // Perform security scan
-static int security_monitor_perform_scan(void) {
+int security_monitor_perform_scan(void) {
     if (!g_security_monitor_initialized || !g_security_monitor.config.enabled) {
         return -1;
     }
@@ -155,7 +155,7 @@ static int security_monitor_perform_scan(void) {
 }
 
 // Get security scan results
-static int security_monitor_get_scan_results(security_scan_result_t* results) {
+int security_monitor_get_scan_results(security_scan_result_t* results) {
     if (!g_security_monitor_initialized || !results) {
         return -1;
     }
@@ -168,7 +168,7 @@ static int security_monitor_get_scan_results(security_scan_result_t* results) {
 }
 
 // Get security events
-static int security_monitor_get_events(security_event_t* events, int max_events) {
+int security_monitor_get_events(security_event_t* events, int max_events) {
     if (!g_security_monitor_initialized || !events || max_events <= 0) {
         return -1;
     }
@@ -192,7 +192,7 @@ static int security_monitor_get_events(security_event_t* events, int max_events)
 }
 
 // Acknowledge security event
-static int security_monitor_acknowledge_event(const char* event_id) {
+int security_monitor_acknowledge_event(const char* event_id) {
     if (!g_security_monitor_initialized || !event_id) {
         return -1;
     }
@@ -389,6 +389,6 @@ bool security_monitor_is_initialized(void) {
 }
 
 // Get security monitor instance
-static security_monitor_t* security_monitor_get_instance(void) {
+security_monitor_t* security_monitor_get_instance(void) {
     return g_security_monitor_initialized ? &g_security_monitor : NULL;
 }
