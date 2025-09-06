@@ -24,7 +24,7 @@ static pthread_mutex_t g_clustering_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Initialize GPS clustering system
 int gps_clustering_init(void) {
     if (g_clustering_initialized) {
-        LOGX_WARN("GPS clustering system already initialized");
+        LOGX_WARN_MSG("GPS clustering system already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -69,7 +69,7 @@ int gps_clustering_init(void) {
     g_clustering_initialized = true;
     pthread_mutex_unlock(&g_clustering_mutex);
     
-    LOGX_INFO("GPS clustering system initialized successfully");
+    LOGX_INFO_MSG("GPS clustering system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -180,7 +180,7 @@ static int create_new_cluster(const gps_data_t *gps_data) {
     
     g_clustering.cluster_count++;
     
-    LOGX_DEBUG("Created new GPS cluster %d at (%.6f, %.6f)", 
+    LOGX_DEBUG_MSG("Created new GPS cluster %d at (%.6f, %.6f)", 
                cluster_index, gps_data->lat, gps_data->lon);
     
     return cluster_index;
@@ -216,7 +216,7 @@ static void add_position_to_cluster(int cluster_index, const gps_data_t *gps_dat
     // Update variances
     update_cluster_variances(cluster_index, gps_data);
     
-    LOGX_DEBUG("Added position to cluster %d, count: %d", cluster_index, cluster->position_count);
+    LOGX_DEBUG_MSG("Added position to cluster %d, count: %d", cluster_index, cluster->position_count);
 }
 
 // Calculate position weight based on age and accuracy
@@ -303,7 +303,7 @@ static void cleanup_expired_clusters(void) {
             g_clustering.clusters[i].active = false;
             g_clustering.cluster_count--;
             
-            LOGX_DEBUG("Removed expired cluster %d", i);
+            LOGX_DEBUG_MSG("Removed expired cluster %d", i);
         }
     }
 }
@@ -327,7 +327,7 @@ static void perform_clustering_analysis(void) {
         g_clustering.average_confidence = total_confidence / valid_clusters;
     }
     
-    LOGX_DEBUG("Clustering analysis: %d valid clusters, avg confidence: %.3f", 
+    LOGX_DEBUG_MSG("Clustering analysis: %d valid clusters, avg confidence: %.3f", 
                valid_clusters, g_clustering.average_confidence);
 }
 
@@ -441,7 +441,7 @@ int gps_clustering_set_config(const gps_clustering_config_t *config) {
     
     pthread_mutex_unlock(&g_clustering_mutex);
     
-    LOGX_INFO("GPS clustering configuration updated");
+    LOGX_INFO_MSG("GPS clustering configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -455,7 +455,7 @@ int gps_clustering_set_enabled(bool enabled) {
     g_clustering.enabled = enabled;
     pthread_mutex_unlock(&g_clustering_mutex);
     
-    LOGX_INFO("GPS clustering %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS clustering %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -472,7 +472,7 @@ int gps_clustering_force_analysis(void) {
     
     pthread_mutex_unlock(&g_clustering_mutex);
     
-    LOGX_INFO("Forced clustering analysis completed");
+    LOGX_INFO_MSG("Forced clustering analysis completed");
     return AUTONOMY_SUCCESS;
 }
 
@@ -512,7 +512,7 @@ int gps_clustering_reset(void) {
     
     pthread_mutex_unlock(&g_clustering_mutex);
     
-    LOGX_INFO("GPS clustering system reset");
+    LOGX_INFO_MSG("GPS clustering system reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -543,5 +543,5 @@ void gps_clustering_cleanup(void) {
     pthread_mutex_destroy(&g_clustering_mutex);
     g_clustering_initialized = false;
     
-    LOGX_INFO("GPS clustering system cleaned up");
+    LOGX_INFO_MSG("GPS clustering system cleaned up");
 }

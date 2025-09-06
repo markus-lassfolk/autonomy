@@ -32,7 +32,7 @@ static pthread_mutex_t g_health_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Initialize GPS health monitor
 int gps_health_init(void) {
     if (g_health_initialized) {
-        LOGX_WARN("GPS health monitor already initialized");
+        LOGX_WARN_MSG("GPS health monitor already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -67,7 +67,7 @@ int gps_health_init(void) {
     g_health_initialized = true;
     pthread_mutex_unlock(&g_health_mutex);
     
-    LOGX_INFO("GPS health monitor initialized successfully");
+    LOGX_INFO_MSG("GPS health monitor initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -83,7 +83,7 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
     int existing_index = find_source_by_name(source_name);
     if (existing_index >= 0) {
         pthread_mutex_unlock(&g_health_mutex);
-        LOGX_WARN("GPS source '%s' already registered", source_name);
+        LOGX_WARN_MSG("GPS source '%s' already registered", source_name);
         return AUTONOMY_ERROR_ALREADY_EXISTS;
     }
     
@@ -98,7 +98,7 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
     
     if (source_index < 0) {
         pthread_mutex_unlock(&g_health_mutex);
-        LOGX_ERROR("No free slots for GPS source registration");
+        LOGX_ERROR_MSG("No free slots for GPS source registration");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
@@ -125,7 +125,7 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
     
     pthread_mutex_unlock(&g_health_mutex);
     
-    LOGX_INFO("Registered GPS source '%s' (type: %d)", source_name, source_type);
+    LOGX_INFO_MSG("Registered GPS source '%s' (type: %d)", source_name, source_type);
     return AUTONOMY_SUCCESS;
 }
 
@@ -141,7 +141,7 @@ int gps_health_update_source(const char *source_name, const gps_data_t *gps_data
     int source_index = find_source_by_name(source_name);
     if (source_index < 0) {
         pthread_mutex_unlock(&g_health_mutex);
-        LOGX_WARN("GPS source '%s' not registered", source_name);
+        LOGX_WARN_MSG("GPS source '%s' not registered", source_name);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -345,7 +345,7 @@ int gps_health_perform_check(void) {
     
     pthread_mutex_unlock(&g_health_mutex);
     
-    LOGX_DEBUG("GPS health check completed: overall score=%.3f, healthy sources=%d/%d", 
+    LOGX_DEBUG_MSG("GPS health check completed: overall score=%.3f, healthy sources=%d/%d", 
                g_health_monitor.overall_health_score, healthy_sources, g_health_monitor.source_count);
     
     return AUTONOMY_SUCCESS;
@@ -452,7 +452,7 @@ int gps_health_set_config(const gps_health_config_t *config) {
     
     pthread_mutex_unlock(&g_health_mutex);
     
-    LOGX_INFO("GPS health monitor configuration updated");
+    LOGX_INFO_MSG("GPS health monitor configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -466,7 +466,7 @@ int gps_health_set_enabled(bool enabled) {
     g_health_monitor.enabled = enabled;
     pthread_mutex_unlock(&g_health_mutex);
     
-    LOGX_INFO("GPS health monitor %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS health monitor %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -511,7 +511,7 @@ int gps_health_unregister_source(const char *source_name) {
     
     pthread_mutex_unlock(&g_health_mutex);
     
-    LOGX_INFO("Unregistered GPS source '%s'", source_name);
+    LOGX_INFO_MSG("Unregistered GPS source '%s'", source_name);
     return AUTONOMY_SUCCESS;
 }
 
@@ -543,7 +543,7 @@ int gps_health_reset(void) {
     
     pthread_mutex_unlock(&g_health_mutex);
     
-    LOGX_INFO("GPS health monitor reset");
+    LOGX_INFO_MSG("GPS health monitor reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -556,5 +556,5 @@ void gps_health_cleanup(void) {
     pthread_mutex_destroy(&g_health_mutex);
     g_health_initialized = false;
     
-    LOGX_INFO("GPS health monitor cleaned up");
+    LOGX_INFO_MSG("GPS health monitor cleaned up");
 }

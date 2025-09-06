@@ -56,12 +56,12 @@ static void close_location_database(void);
 // Initialize GPS location reference system
 int gps_location_reference_init(const gps_location_reference_config_t* config) {
     if (g_location_ref_initialized) {
-        LOGX_WARN("GPS location reference already initialized");
+        LOGX_WARN_MSG("GPS location reference already initialized");
         return AUTONOMY_SUCCESS;
     }
     
     if (!config) {
-        LOGX_ERROR("GPS location reference config is NULL");
+        LOGX_ERROR_MSG("GPS location reference config is NULL");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
@@ -70,13 +70,13 @@ int gps_location_reference_init(const gps_location_reference_config_t* config) {
     
     // Initialize mutex
     if (pthread_mutex_init(&g_location_ref_manager.mutex, NULL) != 0) {
-        LOGX_ERROR("Failed to initialize GPS location reference mutex");
+        LOGX_ERROR_MSG("Failed to initialize GPS location reference mutex");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Initialize database
     if (init_location_database() != AUTONOMY_SUCCESS) {
-        LOGX_ERROR("Failed to initialize location reference database");
+        LOGX_ERROR_MSG("Failed to initialize location reference database");
         pthread_mutex_destroy(&g_location_ref_manager.mutex);
         return AUTONOMY_ERROR_SYSTEM;
     }
@@ -86,7 +86,7 @@ int gps_location_reference_init(const gps_location_reference_config_t* config) {
     g_location_ref_manager.location_cache = calloc(g_location_ref_manager.cache_size,
                                                   sizeof(gps_location_reference_t));
     if (!g_location_ref_manager.location_cache) {
-        LOGX_ERROR("Failed to allocate memory for location cache");
+        LOGX_ERROR_MSG("Failed to allocate memory for location cache");
         close_location_database();
         pthread_mutex_destroy(&g_location_ref_manager.mutex);
         return AUTONOMY_ERROR_SYSTEM;
@@ -102,7 +102,7 @@ int gps_location_reference_init(const gps_location_reference_config_t* config) {
         
         if (pthread_create(&g_location_ref_manager.cleanup_thread, NULL, 
                           cleanup_thread_worker, NULL) != 0) {
-            LOGX_ERROR("Failed to create location reference cleanup thread");
+            LOGX_ERROR_MSG("Failed to create location reference cleanup thread");
             free(g_location_ref_manager.location_cache);
             close_location_database();
             pthread_mutex_destroy(&g_location_ref_manager.mutex);
@@ -112,7 +112,7 @@ int gps_location_reference_init(const gps_location_reference_config_t* config) {
     
     g_location_ref_initialized = true;
     
-    LOGX_INFO("GPS location reference system initialized",
+    LOGX_INFO_MSG("GPS location reference system initialized",
               "enabled", config->enabled,
               "precision_reduction_m", config->precision_reduction_meters,
               "movement_threshold_m", config->movement_threshold_meters,
@@ -146,7 +146,7 @@ void gps_location_reference_cleanup(void) {
     
     g_location_ref_initialized = false;
     
-    LOGX_INFO("GPS location reference system cleaned up");
+    LOGX_INFO_MSG("GPS location reference system cleaned up");
 }
 
 // Get or create location reference for GPS coordinates
@@ -183,7 +183,7 @@ int gps_location_reference_get_or_create(double latitude, double longitude,
             // Update usage statistics
             gps_location_reference_update_usage(*location_id, 0.0, 0.0); // Basic usage update
             
-            LOGX_DEBUG("Using existing location reference",
+            LOGX_DEBUG_MSG("Using existing location reference",
                       "location_id", *location_id,
                       "distance_m", distance,
                       "threshold_m", g_location_ref_manager.config.movement_threshold_meters);
@@ -193,7 +193,7 @@ int gps_location_reference_get_or_create(double latitude, double longitude,
     if (create_new_location) {
         // Check for nearby existing location
         if (find_nearby_location_reference(latitude, longitude, location_id) == AUTONOMY_SUCCESS) {
-            LOGX_DEBUG("Found nearby location reference",
+            LOGX_DEBUG_MSG("Found nearby location reference",
                       "location_id", *location_id);
             create_new_location = false;
         }
@@ -204,7 +204,7 @@ int gps_location_reference_get_or_create(double latitude, double longitude,
         if (create_new_location_reference(latitude, longitude, accuracy, gps_source, location_id) == AUTONOMY_SUCCESS) {
             g_location_ref_manager.stats.total_locations++;
             
-            LOGX_INFO("Created new location reference",
+            LOGX_INFO_MSG("Created new location reference",
                      "location_id", *location_id,
                      "lat", latitude,
                      "lon", longitude,
@@ -295,7 +295,7 @@ static int create_new_location_reference(double latitude, double longitude, doub
     sqlite3_stmt* stmt;
     int result = sqlite3_prepare_v2(g_location_ref_manager.db, sql, -1, &stmt, NULL);
     if (result != SQLITE_OK) {
-        LOGX_ERROR("Failed to prepare location insert statement", 
+        LOGX_ERROR_MSG("Failed to prepare location insert statement", 
                   "error", sqlite3_errmsg(g_location_ref_manager.db));
         return AUTONOMY_ERROR_SYSTEM;
     }
@@ -340,7 +340,7 @@ static int create_new_location_reference(double latitude, double longitude, doub
         uint64_t space_saved = sizeof(double) * 2; // Two coordinates not stored per sample
         g_location_ref_manager.stats.space_saved_bytes += space_saved;
         
-        LOGX_DEBUG("Created new location reference",
+        LOGX_DEBUG_MSG("Created new location reference",
                   "location_id", *location_id,
                   "lat_original", latitude,
                   "lon_original", longitude,
@@ -348,7 +348,7 @@ static int create_new_location_reference(double latitude, double longitude, doub
                   "lon_reduced", lon_reduced,
                   "precision_reduction_m", g_location_ref_manager.config.precision_reduction_meters);
     } else {
-        LOGX_ERROR("Failed to insert location reference", 
+        LOGX_ERROR_MSG("Failed to insert location reference", 
                   "error", sqlite3_errmsg(g_location_ref_manager.db));
         sqlite3_finalize(stmt);
         return AUTONOMY_ERROR_SYSTEM;
@@ -468,7 +468,7 @@ int gps_location_reference_update_usage(uint32_t location_id, double signal_qual
     pthread_mutex_unlock(&g_location_ref_manager.mutex);
     
     if (result == SQLITE_DONE) {
-        LOGX_DEBUG("Updated location usage statistics",
+        LOGX_DEBUG_MSG("Updated location usage statistics",
                   "location_id", location_id,
                   "signal_quality", signal_quality,
                   "latency_ms", latency_ms);
@@ -515,7 +515,7 @@ static int init_location_database(void) {
     if (last_slash) {
         *last_slash = '\0';
         if (mkdir(db_dir, 0755) != 0 && errno != EEXIST) {
-            LOGX_ERROR("Failed to create database directory", "path", db_dir);
+            LOGX_ERROR_MSG("Failed to create database directory", "path", db_dir);
             return AUTONOMY_ERROR_SYSTEM;
         }
     }
@@ -523,7 +523,7 @@ static int init_location_database(void) {
     // Open database
     int result = sqlite3_open(db_path, &g_location_ref_manager.db);
     if (result != SQLITE_OK) {
-        LOGX_ERROR("Failed to open location reference database",
+        LOGX_ERROR_MSG("Failed to open location reference database",
                   "path", db_path,
                   "error", sqlite3_errmsg(g_location_ref_manager.db));
         return AUTONOMY_ERROR_SYSTEM;
@@ -533,7 +533,7 @@ static int init_location_database(void) {
     char* error_msg = NULL;
     result = sqlite3_exec(g_location_ref_manager.db, LOCATION_REFERENCE_SCHEMA_SQL, NULL, NULL, &error_msg);
     if (result != SQLITE_OK) {
-        LOGX_ERROR("Failed to create location reference schema", "error", error_msg);
+        LOGX_ERROR_MSG("Failed to create location reference schema", "error", error_msg);
         sqlite3_free(error_msg);
         sqlite3_close(g_location_ref_manager.db);
         return AUTONOMY_ERROR_SYSTEM;
@@ -541,14 +541,14 @@ static int init_location_database(void) {
     
     g_location_ref_manager.db_initialized = true;
     
-    LOGX_INFO("GPS location reference database initialized", "path", db_path);
+    LOGX_INFO_MSG("GPS location reference database initialized", "path", db_path);
     
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup thread worker
 static void* cleanup_thread_worker(void* arg) {
-    LOGX_INFO("GPS location reference cleanup thread started",
+    LOGX_INFO_MSG("GPS location reference cleanup thread started",
              "cleanup_interval_hours", g_location_ref_manager.config.cleanup_interval_hours);
     
     while (g_location_ref_initialized && g_location_ref_manager.thread_running) {
@@ -559,11 +559,11 @@ static void* cleanup_thread_worker(void* arg) {
         // Perform cleanup
         int cleaned_up = gps_location_reference_force_cleanup();
         if (cleaned_up > 0) {
-            LOGX_INFO("GPS location reference cleanup completed",
+            LOGX_INFO_MSG("GPS location reference cleanup completed",
                      "locations_cleaned", cleaned_up);
         }
     }
     
-    LOGX_INFO("GPS location reference cleanup thread stopped");
+    LOGX_INFO_MSG("GPS location reference cleanup thread stopped");
     return NULL;
 }

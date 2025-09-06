@@ -29,7 +29,7 @@ static pthread_mutex_t g_movement_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Initialize GPS movement detector
 int gps_movement_init(void) {
     if (g_movement_initialized) {
-        LOGX_WARN("GPS movement detector already initialized");
+        LOGX_WARN_MSG("GPS movement detector already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -64,7 +64,7 @@ int gps_movement_init(void) {
     g_movement_initialized = true;
     pthread_mutex_unlock(&g_movement_mutex);
     
-    LOGX_INFO("GPS movement detector initialized successfully");
+    LOGX_INFO_MSG("GPS movement detector initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -121,7 +121,7 @@ static void analyze_movement_pattern(void) {
     // Update current metrics
     memcpy(&g_movement_detector.current_metrics, &metrics, sizeof(movement_metrics_t));
     
-    LOGX_DEBUG("Movement analysis: pattern=%s, speed=%.2f m/s, distance=%.1fm", 
+    LOGX_DEBUG_MSG("Movement analysis: pattern=%s, speed=%.2f m/s, distance=%.1fm", 
                MOVEMENT_PATTERN_NAMES[pattern], metrics.current_speed, metrics.total_distance);
 }
 
@@ -450,7 +450,7 @@ int gps_movement_set_config(const gps_movement_config_t *config) {
     
     pthread_mutex_unlock(&g_movement_mutex);
     
-    LOGX_INFO("GPS movement detector configuration updated");
+    LOGX_INFO_MSG("GPS movement detector configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -464,7 +464,7 @@ int gps_movement_set_enabled(bool enabled) {
     g_movement_detector.enabled = enabled;
     pthread_mutex_unlock(&g_movement_mutex);
     
-    LOGX_INFO("GPS movement detector %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS movement detector %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -482,7 +482,7 @@ int gps_movement_force_analysis(void) {
         g_movement_detector.total_analyses++;
         pthread_mutex_unlock(&g_movement_mutex);
         
-        LOGX_INFO("Forced movement analysis completed");
+        LOGX_INFO_MSG("Forced movement analysis completed");
         return AUTONOMY_SUCCESS;
     }
     
@@ -515,7 +515,7 @@ int gps_movement_reset(void) {
     
     pthread_mutex_unlock(&g_movement_mutex);
     
-    LOGX_INFO("GPS movement detector reset");
+    LOGX_INFO_MSG("GPS movement detector reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -528,5 +528,5 @@ void gps_movement_cleanup(void) {
     pthread_mutex_destroy(&g_movement_mutex);
     g_movement_initialized = false;
     
-    LOGX_INFO("GPS movement detector cleaned up");
+    LOGX_INFO_MSG("GPS movement detector cleaned up");
 }

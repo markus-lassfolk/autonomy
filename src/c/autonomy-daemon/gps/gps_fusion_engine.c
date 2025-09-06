@@ -34,12 +34,12 @@ static void predict_kalman_state(double dt);
 // Initialize GPS fusion engine
 int gps_fusion_engine_init(const gps_fusion_config_t* config) {
     if (g_fusion_initialized) {
-        LOGX_WARN("GPS fusion engine already initialized");
+        LOGX_WARN_MSG("GPS fusion engine already initialized");
         return AUTONOMY_SUCCESS;
     }
     
     if (!config) {
-        LOGX_ERROR("GPS fusion config is NULL");
+        LOGX_ERROR_MSG("GPS fusion config is NULL");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
@@ -48,7 +48,7 @@ int gps_fusion_engine_init(const gps_fusion_config_t* config) {
     
     // Initialize mutex
     if (pthread_mutex_init(&g_fusion_engine.mutex, NULL) != 0) {
-        LOGX_ERROR("Failed to initialize fusion engine mutex");
+        LOGX_ERROR_MSG("Failed to initialize fusion engine mutex");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -71,7 +71,7 @@ int gps_fusion_engine_init(const gps_fusion_config_t* config) {
     
     g_fusion_initialized = true;
     
-    LOGX_INFO("GPS fusion engine initialized",
+    LOGX_INFO_MSG("GPS fusion engine initialized",
               "method", gps_fusion_method_to_string(config->default_method),
               "outlier_detection", config->enable_outlier_detection,
               "consensus_checking", config->enable_consensus_checking,
@@ -92,7 +92,7 @@ void gps_fusion_engine_cleanup(void) {
     
     g_fusion_initialized = false;
     
-    LOGX_INFO("GPS fusion engine cleaned up");
+    LOGX_INFO_MSG("GPS fusion engine cleaned up");
 }
 
 // Fuse GPS data from multiple sources
@@ -133,7 +133,7 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
     }
     
     if (valid_count == 0) {
-        LOGX_WARN("No valid GPS data for fusion");
+        LOGX_WARN_MSG("No valid GPS data for fusion");
         g_fusion_engine.stats.failed_fusions++;
         pthread_mutex_unlock(&g_fusion_engine.mutex);
         return AUTONOMY_ERROR_NOT_FOUND;
@@ -150,7 +150,7 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
             memcpy(valid_data, filtered_data, filtered_count * sizeof(standardized_gps_data_t));
             valid_count = filtered_count;
             
-            LOGX_DEBUG("Outlier detection completed",
+            LOGX_DEBUG_MSG("Outlier detection completed",
                       "original_count", source_count,
                       "filtered_count", filtered_count,
                       "outliers_removed", source_count - filtered_count);
@@ -160,7 +160,7 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
     // Consensus checking if enabled
     if (g_fusion_engine.config.enable_consensus_checking && valid_count > 1) {
         if (!gps_fusion_engine_check_consensus(valid_data, valid_count)) {
-            LOGX_WARN("GPS sources lack consensus");
+            LOGX_WARN_MSG("GPS sources lack consensus");
             g_fusion_engine.stats.consensus_failures++;
             // Continue with fusion anyway, but reduce confidence
         }
@@ -172,7 +172,7 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
         strcpy(result->source, "single_source");
         result->confidence *= 0.9; // Slight penalty for single source
         
-        LOGX_DEBUG("Single source GPS fusion", "source", result->source);
+        LOGX_DEBUG_MSG("Single source GPS fusion", "source", result->source);
         
         g_fusion_engine.stats.successful_fusions++;
         g_fusion_engine.stats.method_usage[GPS_FUSION_METHOD_SINGLE_SOURCE]++;
@@ -259,7 +259,7 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
     
     pthread_mutex_unlock(&g_fusion_engine.mutex);
     
-    LOGX_INFO("GPS fusion completed",
+    LOGX_INFO_MSG("GPS fusion completed",
              "method", gps_fusion_method_to_string(method),
              "sources_used", valid_count,
              "confidence", result->confidence,
@@ -323,7 +323,7 @@ static int perform_weighted_average_fusion(const weighted_gps_data_t* weighted_d
     result->fix_type = weighted_data[best_source_idx].data.fix_type;
     result->fix_quality = weighted_data[best_source_idx].data.fix_quality;
     
-    LOGX_DEBUG("Weighted average fusion completed",
+    LOGX_DEBUG_MSG("Weighted average fusion completed",
               "total_weight", total_weight,
               "sources", count,
               "lat", result->latitude,
@@ -419,7 +419,7 @@ static int perform_confidence_weighted_fusion(const weighted_gps_data_t* weighte
     result->fix_type = weighted_data[best_idx].data.fix_type;
     result->fix_quality = weighted_data[best_idx].data.fix_quality;
     
-    LOGX_INFO("Confidence-weighted fusion completed",
+    LOGX_INFO_MSG("Confidence-weighted fusion completed",
              "sources", count,
              "total_weight", total_weight,
              "spread_m", max_distance,
@@ -465,7 +465,7 @@ static int calculate_source_weights(const standardized_gps_data_t* source_data, 
                 weighted_data[i].freshness_factor, weighted_data[i].priority_factor,
                 weighted_data[i].weight);
         
-        LOGX_DEBUG("GPS source weight calculated",
+        LOGX_DEBUG_MSG("GPS source weight calculated",
                   "source", source_data[i].source,
                   "weight", weighted_data[i].weight,
                   "reasoning", weighted_data[i].weight_reasoning);

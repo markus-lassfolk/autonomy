@@ -28,7 +28,7 @@ static pthread_mutex_t g_performance_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Initialize GPS performance tracking
 int gps_performance_init(void) {
     if (g_performance_initialized) {
-        LOGX_WARN("GPS performance tracking already initialized");
+        LOGX_WARN_MSG("GPS performance tracking already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -85,7 +85,7 @@ int gps_performance_init(void) {
     g_performance_initialized = true;
     pthread_mutex_unlock(&g_performance_mutex);
     
-    LOGX_INFO("GPS performance tracking initialized successfully");
+    LOGX_INFO_MSG("GPS performance tracking initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -567,7 +567,7 @@ int gps_performance_set_config(const gps_performance_config_t *config) {
     
     pthread_mutex_unlock(&g_performance_mutex);
     
-    LOGX_INFO("GPS performance tracking configuration updated");
+    LOGX_INFO_MSG("GPS performance tracking configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -581,7 +581,7 @@ int gps_performance_set_enabled(bool enabled) {
     g_performance.enabled = enabled;
     pthread_mutex_unlock(&g_performance_mutex);
     
-    LOGX_INFO("GPS performance tracking %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS performance tracking %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -634,7 +634,7 @@ int gps_performance_reset(void) {
     
     pthread_mutex_unlock(&g_performance_mutex);
     
-    LOGX_INFO("GPS performance tracking reset");
+    LOGX_INFO_MSG("GPS performance tracking reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -647,5 +647,5 @@ void gps_performance_cleanup(void) {
     pthread_mutex_destroy(&g_performance_mutex);
     g_performance_initialized = false;
     
-    LOGX_INFO("GPS performance tracking cleaned up");
+    LOGX_INFO_MSG("GPS performance tracking cleaned up");
 }

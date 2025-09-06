@@ -32,7 +32,7 @@ static size_t weather_write_callback(void *contents, size_t size, size_t nmemb, 
     gps_weather_api_response_t *response = (gps_weather_api_response_t *)userp;
     
     if (response->data_size + realsize >= sizeof(response->data)) {
-        LOGX_WARN("Weather response too large, truncating");
+        LOGX_WARN_MSG("Weather response too large, truncating");
         return 0;
     }
     
@@ -46,7 +46,7 @@ static size_t weather_write_callback(void *contents, size_t size, size_t nmemb, 
 // Initialize GPS weather integration
 int gps_weather_init(const char *api_key) {
     if (g_weather_initialized) {
-        LOGX_WARN("GPS weather integration already initialized");
+        LOGX_WARN_MSG("GPS weather integration already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -94,7 +94,7 @@ int gps_weather_init(const char *api_key) {
     g_weather_initialized = true;
     pthread_mutex_unlock(&g_weather_mutex);
     
-    LOGX_INFO("GPS weather integration initialized successfully");
+    LOGX_INFO_MSG("GPS weather integration initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -120,7 +120,7 @@ static int perform_weather_api_request(const char *endpoint, const char *params,
     CURL *curl = curl_easy_init();
     if (!curl) {
         pthread_mutex_unlock(&g_weather_mutex);
-        LOGX_ERROR("Failed to initialize CURL for weather request");
+        LOGX_ERROR_MSG("Failed to initialize CURL for weather request");
         return AUTONOMY_ERROR_INTERNAL;
     }
     
@@ -144,14 +144,14 @@ static int perform_weather_api_request(const char *endpoint, const char *params,
         response->success = true;
         response->http_code = http_code;
         
-        LOGX_DEBUG("Weather API request successful: %s", endpoint);
+        LOGX_DEBUG_MSG("Weather API request successful: %s", endpoint);
     } else {
         g_weather.failed_requests++;
         response->success = false;
         response->http_code = http_code;
         response->error_code = res;
         
-        LOGX_ERROR("Weather API request failed: %s, HTTP: %ld, CURL: %d", 
+        LOGX_ERROR_MSG("Weather API request failed: %s, HTTP: %ld, CURL: %d", 
                    endpoint, http_code, res);
     }
     
@@ -195,7 +195,7 @@ int gps_weather_get_current(double lat, double lon, gps_weather_current_t *weath
             // Cache the result
             cache_weather_data(lat, lon, weather);
             
-            LOGX_INFO("Weather data obtained from external APIs manager",
+            LOGX_INFO_MSG("Weather data obtained from external APIs manager",
                      "lat", lat, "lon", lon,
                      "temperature", weather->temperature,
                      "description", weather->description,
@@ -311,7 +311,7 @@ static bool get_cached_weather(double lat, double lon, gps_weather_current_t *we
                 weather->weather_condition = cache->weather_condition;
                 weather->air_quality_index = cache->air_quality_index;
                 
-                LOGX_DEBUG("Weather data retrieved from cache for (%.6f, %.6f)", lat, lon);
+                LOGX_DEBUG_MSG("Weather data retrieved from cache for (%.6f, %.6f)", lat, lon);
                 return true;
             }
         }
@@ -361,7 +361,7 @@ static void cache_weather_data(double lat, double lon, const gps_weather_current
             g_weather.cache_entry_count = slot_index + 1;
         }
         
-        LOGX_DEBUG("Weather data cached for (%.6f, %.6f)", lat, lon);
+        LOGX_DEBUG_MSG("Weather data cached for (%.6f, %.6f)", lat, lon);
     }
 }
 
@@ -419,7 +419,7 @@ static void parse_current_weather_response(const gps_weather_api_response_t *res
     weather->weather_condition = WEATHER_CONDITION_PARTLY_CLOUDY;
     weather->air_quality_index = 50;    // Moderate
     
-    LOGX_DEBUG("Parsed current weather response");
+    LOGX_DEBUG_MSG("Parsed current weather response");
 }
 
 // Parse forecast response
@@ -431,7 +431,7 @@ static void parse_forecast_response(const gps_weather_api_response_t *response,
     forecast->forecast_count = 0;
     
     // This is a simplified parser - in a real implementation, you would use a JSON library
-    LOGX_DEBUG("Parsed forecast response");
+    LOGX_DEBUG_MSG("Parsed forecast response");
 }
 
 // Parse air quality response
@@ -442,7 +442,7 @@ static void parse_air_quality_response(const gps_weather_api_response_t *respons
     air_quality->timestamp = response->timestamp;
     
     // This is a simplified parser - in a real implementation, you would use a JSON library
-    LOGX_DEBUG("Parsed air quality response");
+    LOGX_DEBUG_MSG("Parsed air quality response");
 }
 
 // Get weather integration status
@@ -515,7 +515,7 @@ int gps_weather_set_config(const gps_weather_config_t *config) {
     
     pthread_mutex_unlock(&g_weather_mutex);
     
-    LOGX_INFO("GPS weather integration configuration updated");
+    LOGX_INFO_MSG("GPS weather integration configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -529,7 +529,7 @@ int gps_weather_set_enabled(bool enabled) {
     g_weather.enabled = enabled;
     pthread_mutex_unlock(&g_weather_mutex);
     
-    LOGX_INFO("GPS weather integration %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS weather integration %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -544,7 +544,7 @@ int gps_weather_force_update(void) {
     g_weather.last_update = 0;
     pthread_mutex_unlock(&g_weather_mutex);
     
-    LOGX_INFO("GPS weather update forced");
+    LOGX_INFO_MSG("GPS weather update forced");
     return AUTONOMY_SUCCESS;
 }
 
@@ -623,7 +623,7 @@ int gps_weather_reset(void) {
     
     pthread_mutex_unlock(&g_weather_mutex);
     
-    LOGX_INFO("GPS weather integration reset");
+    LOGX_INFO_MSG("GPS weather integration reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -637,5 +637,5 @@ void gps_weather_cleanup(void) {
     pthread_mutex_destroy(&g_weather_mutex);
     g_weather_initialized = false;
     
-    LOGX_INFO("GPS weather integration cleaned up");
+    LOGX_INFO_MSG("GPS weather integration cleaned up");
 }

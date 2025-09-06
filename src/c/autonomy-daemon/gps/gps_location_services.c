@@ -28,7 +28,7 @@ static pthread_mutex_t g_location_services_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Initialize GPS location services
 int gps_location_services_init(void) {
     if (g_location_services_initialized) {
-        LOGX_WARN("GPS location services already initialized");
+        LOGX_WARN_MSG("GPS location services already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -68,7 +68,7 @@ int gps_location_services_init(void) {
     g_location_services_initialized = true;
     pthread_mutex_unlock(&g_location_services_mutex);
     
-    LOGX_INFO("GPS location services initialized successfully");
+    LOGX_INFO_MSG("GPS location services initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -109,7 +109,7 @@ int gps_location_services_reverse_geocode(double lat, double lon, gps_location_i
         
         pthread_mutex_unlock(&g_location_services_mutex);
         
-        LOGX_DEBUG("Location cache hit for (%.6f, %.6f): %s", lat, lon, cache_entry->place_name);
+        LOGX_DEBUG_MSG("Location cache hit for (%.6f, %.6f): %s", lat, lon, cache_entry->place_name);
         return AUTONOMY_SUCCESS;
     }
     
@@ -199,7 +199,7 @@ static void add_location_to_cache(const gps_location_info_t *location_info) {
     cache_entry->postal_code[sizeof(cache_entry->postal_code) - 1] = '\0';
     cache_entry->service_used = location_info->service_used;
     
-    LOGX_DEBUG("Added location to cache: %s", location_info->place_name);
+    LOGX_DEBUG_MSG("Added location to cache: %s", location_info->place_name);
 }
 
 // Find oldest cache entry
@@ -283,7 +283,7 @@ static int try_nominatim_service(double lat, double lon, gps_location_info_t *lo
     snprintf(location_info->postal_code, sizeof(location_info->postal_code), 
              "");
     
-    LOGX_DEBUG("Nominatim service simulated response for (%.6f, %.6f)", lat, lon);
+    LOGX_DEBUG_MSG("Nominatim service simulated response for (%.6f, %.6f)", lat, lon);
     return AUTONOMY_SUCCESS;
 }
 
@@ -313,7 +313,7 @@ static int try_google_service(double lat, double lon, gps_location_info_t *locat
     snprintf(location_info->postal_code, sizeof(location_info->postal_code), 
              "12345");
     
-    LOGX_DEBUG("Google service simulated response for (%.6f, %.6f)", lat, lon);
+    LOGX_DEBUG_MSG("Google service simulated response for (%.6f, %.6f)", lat, lon);
     return AUTONOMY_SUCCESS;
 }
 
@@ -343,7 +343,7 @@ static int try_here_service(double lat, double lon, gps_location_info_t *locatio
     snprintf(location_info->postal_code, sizeof(location_info->postal_code), 
              "67890");
     
-    LOGX_DEBUG("HERE service simulated response for (%.6f, %.6f)", lat, lon);
+    LOGX_DEBUG_MSG("HERE service simulated response for (%.6f, %.6f)", lat, lon);
     return AUTONOMY_SUCCESS;
 }
 
@@ -373,7 +373,7 @@ static int try_custom_service(double lat, double lon, gps_location_info_t *locat
     snprintf(location_info->postal_code, sizeof(location_info->postal_code), 
              "CUSTOM");
     
-    LOGX_DEBUG("Custom service simulated response for (%.6f, %.6f)", lat, lon);
+    LOGX_DEBUG_MSG("Custom service simulated response for (%.6f, %.6f)", lat, lon);
     return AUTONOMY_SUCCESS;
 }
 
@@ -396,7 +396,7 @@ static void create_basic_location_info(double lat, double lon, gps_location_info
              "Unknown");
     location_info->postal_code[0] = '\0';
     
-    LOGX_WARN("All reverse geocoding services failed, created basic location info");
+    LOGX_WARN_MSG("All reverse geocoding services failed, created basic location info");
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
@@ -490,7 +490,7 @@ int gps_location_services_set_config(const gps_location_services_config_t *confi
     
     pthread_mutex_unlock(&g_location_services_mutex);
     
-    LOGX_INFO("GPS location services configuration updated");
+    LOGX_INFO_MSG("GPS location services configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -504,7 +504,7 @@ int gps_location_services_set_enabled(bool enabled) {
     g_location_services.enabled = enabled;
     pthread_mutex_unlock(&g_location_services_mutex);
     
-    LOGX_INFO("GPS location services %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS location services %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -522,7 +522,7 @@ int gps_location_services_clear_cache(void) {
     
     pthread_mutex_unlock(&g_location_services_mutex);
     
-    LOGX_INFO("GPS location services cache cleared");
+    LOGX_INFO_MSG("GPS location services cache cleared");
     return AUTONOMY_SUCCESS;
 }
 
@@ -548,7 +548,7 @@ int gps_location_services_reset(void) {
     
     pthread_mutex_unlock(&g_location_services_mutex);
     
-    LOGX_INFO("GPS location services reset");
+    LOGX_INFO_MSG("GPS location services reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -561,5 +561,5 @@ void gps_location_services_cleanup(void) {
     pthread_mutex_destroy(&g_location_services_mutex);
     g_location_services_initialized = false;
     
-    LOGX_INFO("GPS location services cleaned up");
+    LOGX_INFO_MSG("GPS location services cleaned up");
 }

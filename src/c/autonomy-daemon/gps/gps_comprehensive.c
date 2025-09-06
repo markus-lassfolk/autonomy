@@ -49,12 +49,12 @@ static void* health_monitor_thread_worker(void* arg);
 // Initialize comprehensive GPS collector
 int gps_comprehensive_init(const gps_comprehensive_config_t* config) {
     if (g_collector_initialized) {
-        LOGX_WARN("Comprehensive GPS collector already initialized");
+        LOGX_WARN_MSG("Comprehensive GPS collector already initialized");
         return AUTONOMY_SUCCESS;
     }
     
     if (!config) {
-        LOGX_ERROR("GPS comprehensive config is NULL");
+        LOGX_ERROR_MSG("GPS comprehensive config is NULL");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
@@ -63,7 +63,7 @@ int gps_comprehensive_init(const gps_comprehensive_config_t* config) {
     
     // Initialize mutex
     if (pthread_mutex_init(&g_gps_collector.mutex, NULL) != 0) {
-        LOGX_ERROR("Failed to initialize GPS collector mutex");
+        LOGX_ERROR_MSG("Failed to initialize GPS collector mutex");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -87,7 +87,7 @@ int gps_comprehensive_init(const gps_comprehensive_config_t* config) {
         
         if (pthread_create(&g_gps_collector.health_monitor_thread, NULL, 
                           health_monitor_thread_worker, NULL) != 0) {
-            LOGX_ERROR("Failed to create GPS health monitor thread");
+            LOGX_ERROR_MSG("Failed to create GPS health monitor thread");
             pthread_mutex_destroy(&g_gps_collector.mutex);
             return AUTONOMY_ERROR_SYSTEM;
         }
@@ -95,7 +95,7 @@ int gps_comprehensive_init(const gps_comprehensive_config_t* config) {
     
     g_collector_initialized = true;
     
-    LOGX_INFO("Comprehensive GPS collector initialized",
+    LOGX_INFO_MSG("Comprehensive GPS collector initialized",
               "movement_detection", config->enable_movement_detection,
               "hybrid_prioritization", config->enable_hybrid_prioritization,
               "data_fusion", config->enable_data_fusion,
@@ -124,7 +124,7 @@ void gps_comprehensive_cleanup(void) {
     
     g_collector_initialized = false;
     
-    LOGX_INFO("Comprehensive GPS collector cleaned up");
+    LOGX_INFO_MSG("Comprehensive GPS collector cleaned up");
 }
 
 // Collect GPS data from best available source
@@ -208,7 +208,7 @@ static int collect_with_hybrid_prioritization(standardized_gps_data_t* result) {
     standardized_gps_data_t all_source_data[GPS_SOURCE_MAX];
     int sources_collected = 0;
     
-    LOGX_DEBUG("Starting hybrid GPS collection",
+    LOGX_DEBUG_MSG("Starting hybrid GPS collection",
               "min_confidence", g_gps_collector.config.min_acceptable_confidence,
               "fallback_threshold", g_gps_collector.config.fallback_confidence_threshold);
     
@@ -224,7 +224,7 @@ static int collect_with_hybrid_prioritization(standardized_gps_data_t* result) {
             all_source_data[sources_collected] = data;
             sources_collected++;
             
-            LOGX_DEBUG("GPS source collected",
+            LOGX_DEBUG_MSG("GPS source collected",
                       "source", gps_source_type_to_string(source_type),
                       "confidence", data.confidence,
                       "accuracy", data.accuracy,
@@ -233,20 +233,20 @@ static int collect_with_hybrid_prioritization(standardized_gps_data_t* result) {
             // Apply hybrid logic
             if (i == 0) { // RUTOS (highest priority)
                 if (data.confidence >= g_gps_collector.config.fallback_confidence_threshold) {
-                    LOGX_INFO("GPS source selected",
+                    LOGX_INFO_MSG("GPS source selected",
                              "source", gps_source_type_to_string(source_type),
                              "reason", "high_confidence_primary",
                              "confidence", data.confidence);
                     *result = data;
                     return AUTONOMY_SUCCESS;
                 }
-                LOGX_DEBUG("GPS primary source low confidence",
+                LOGX_DEBUG_MSG("GPS primary source low confidence",
                           "source", gps_source_type_to_string(source_type),
                           "confidence", data.confidence,
                           "threshold", g_gps_collector.config.fallback_confidence_threshold);
             } else if (i == 1) { // Starlink (second priority)
                 if (data.confidence >= g_gps_collector.config.fallback_confidence_threshold) {
-                    LOGX_INFO("GPS source selected",
+                    LOGX_INFO_MSG("GPS source selected",
                              "source", gps_source_type_to_string(source_type),
                              "reason", "high_confidence_secondary",
                              "confidence", data.confidence);
@@ -255,7 +255,7 @@ static int collect_with_hybrid_prioritization(standardized_gps_data_t* result) {
                 }
             } else { // OpenCellID, Google, or other sources
                 if (data.confidence >= g_gps_collector.config.fallback_confidence_threshold) {
-                    LOGX_INFO("GPS source selected",
+                    LOGX_INFO_MSG("GPS source selected",
                              "source", gps_source_type_to_string(source_type),
                              "reason", "high_confidence_fallback",
                              "confidence", data.confidence);
@@ -290,7 +290,7 @@ static int collect_with_hybrid_prioritization(standardized_gps_data_t* result) {
             }
         }
         
-        LOGX_WARN("GPS using low confidence source",
+        LOGX_WARN_MSG("GPS using low confidence source",
                  "source", best_data->source,
                  "confidence", best_data->confidence,
                  "min_required", g_gps_collector.config.min_acceptable_confidence);
@@ -298,7 +298,7 @@ static int collect_with_hybrid_prioritization(standardized_gps_data_t* result) {
     
     *result = *best_data;
     
-    LOGX_INFO("GPS source selected",
+    LOGX_INFO_MSG("GPS source selected",
              "source", best_data->source,
              "reason", "best_available",
              "confidence", best_data->confidence,
@@ -459,7 +459,7 @@ static int perform_multi_source_fusion(gps_fusion_result_t* result) {
             total_weight += weight;
             total_confidence += data.confidence;
             
-            LOGX_DEBUG("GPS fusion source",
+            LOGX_DEBUG_MSG("GPS fusion source",
                       "source", data.source,
                       "weight", weight,
                       "confidence", data.confidence,
@@ -518,7 +518,7 @@ static int perform_multi_source_fusion(gps_fusion_result_t* result) {
     result->sources_used = sources_collected;
     result->fusion_confidence = result->fused_data.confidence;
     
-    LOGX_INFO("GPS fusion completed",
+    LOGX_INFO_MSG("GPS fusion completed",
              "method", result->fusion_method,
              "sources_used", sources_collected,
              "confidence", result->fusion_confidence,
@@ -570,7 +570,7 @@ int gps_comprehensive_detect_movement(const standardized_gps_data_t* current_dat
         g_gps_collector.movement_state.movement_events++;
         g_gps_collector.movement_state.last_movement_event = time(NULL);
         
-        LOGX_INFO("Movement detected",
+        LOGX_INFO_MSG("Movement detected",
                  "distance_m", distance,
                  "threshold_m", g_gps_collector.config.movement_threshold_m,
                  "speed_ms", g_gps_collector.movement_state.current_speed_ms,
@@ -584,7 +584,7 @@ int gps_comprehensive_detect_movement(const standardized_gps_data_t* current_dat
         g_gps_collector.movement_state.is_moving = false;
         g_gps_collector.movement_state.stationary_start = time(NULL);
         
-        LOGX_INFO("Movement stopped",
+        LOGX_INFO_MSG("Movement stopped",
                  "distance_m", distance,
                  "threshold_m", g_gps_collector.config.movement_threshold_m);
     }
@@ -738,7 +738,7 @@ static void update_source_health(gps_source_type_t source_type, bool success,
     health->healthy = (health->health_score > g_gps_collector.config.min_health_score);
     health->available = health->healthy && (health->consecutive_failures < g_gps_collector.config.max_consecutive_failures);
     
-    LOGX_DEBUG("GPS source health updated",
+    LOGX_DEBUG_MSG("GPS source health updated",
               "source", gps_source_type_to_string(source_type),
               "success", success,
               "health_score", health->health_score,
@@ -883,7 +883,7 @@ int gps_comprehensive_get_statistics(uint64_t* total_collections,
 
 // Health monitor thread worker
 static void* health_monitor_thread_worker(void* arg) {
-    LOGX_INFO("GPS health monitor thread started");
+    LOGX_INFO_MSG("GPS health monitor thread started");
     
     while (g_collector_initialized && g_gps_collector.threads_running) {
         sleep(g_gps_collector.config.health_check_interval_s);
@@ -894,6 +894,6 @@ static void* health_monitor_thread_worker(void* arg) {
         gps_comprehensive_health_check();
     }
     
-    LOGX_INFO("GPS health monitor thread stopped");
+    LOGX_INFO_MSG("GPS health monitor thread stopped");
     return NULL;
 }

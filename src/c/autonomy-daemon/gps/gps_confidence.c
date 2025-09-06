@@ -34,7 +34,7 @@ static bool g_confidence_initialized = false;
 // Initialize GPS confidence calculator
 int gps_confidence_init(void) {
     if (g_confidence_initialized) {
-        LOGX_WARN("GPS confidence calculator already initialized");
+        LOGX_WARN_MSG("GPS confidence calculator already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -51,7 +51,7 @@ int gps_confidence_init(void) {
     
     g_confidence_initialized = true;
     
-    LOGX_INFO("GPS confidence calculator initialized successfully");
+    LOGX_INFO_MSG("GPS confidence calculator initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -89,7 +89,7 @@ double gps_confidence_calculate(const gps_data_t *gps_data, const gps_confidence
     confidence = fmax(confidence, g_confidence_calc.min_confidence);
     confidence = fmin(confidence, g_confidence_calc.max_confidence);
     
-    LOGX_DEBUG("GPS confidence calculated: %.3f (acc:%.3f, sat:%.3f, fix:%.3f, fresh:%.3f)", 
+    LOGX_DEBUG_MSG("GPS confidence calculated: %.3f (acc:%.3f, sat:%.3f, fix:%.3f, fresh:%.3f)", 
                confidence, accuracy_confidence, satellite_confidence, fix_quality_confidence, freshness_confidence);
     
     return confidence;
@@ -303,7 +303,7 @@ int gps_confidence_set_config(const gps_confidence_config_t *config) {
                          config->consistency_weight;
     
     if (fabs(total_weight - 1.0) > 0.1) {
-        LOGX_WARN("GPS confidence weights should sum to 1.0, current sum: %.3f", total_weight);
+        LOGX_WARN_MSG("GPS confidence weights should sum to 1.0, current sum: %.3f", total_weight);
     }
     
     g_confidence_calc.enabled = config->enabled;
@@ -315,7 +315,7 @@ int gps_confidence_set_config(const gps_confidence_config_t *config) {
     g_confidence_calc.freshness_weight = config->freshness_weight;
     g_confidence_calc.consistency_weight = config->consistency_weight;
     
-    LOGX_INFO("GPS confidence calculator configuration updated");
+    LOGX_INFO_MSG("GPS confidence calculator configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -326,7 +326,7 @@ int gps_confidence_set_enabled(bool enabled) {
     }
     
     g_confidence_calc.enabled = enabled;
-    LOGX_INFO("GPS confidence calculator %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS confidence calculator %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -355,5 +355,5 @@ void gps_confidence_cleanup(void) {
     }
     
     g_confidence_initialized = false;
-    LOGX_INFO("GPS confidence calculator cleaned up");
+    LOGX_INFO_MSG("GPS confidence calculator cleaned up");
 }

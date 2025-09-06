@@ -28,7 +28,7 @@ static pthread_mutex_t g_fusion_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Initialize GPS fusion system
 int gps_fusion_init(void) {
     if (g_fusion_initialized) {
-        LOGX_WARN("GPS fusion system already initialized");
+        LOGX_WARN_MSG("GPS fusion system already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -64,7 +64,7 @@ int gps_fusion_init(void) {
     g_fusion_initialized = true;
     pthread_mutex_unlock(&g_fusion_mutex);
     
-    LOGX_INFO("GPS fusion system initialized successfully");
+    LOGX_INFO_MSG("GPS fusion system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -80,7 +80,7 @@ int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type
     int existing_index = find_fusion_source_by_name(source_name);
     if (existing_index >= 0) {
         pthread_mutex_unlock(&g_fusion_mutex);
-        LOGX_WARN("GPS fusion source '%s' already registered", source_name);
+        LOGX_WARN_MSG("GPS fusion source '%s' already registered", source_name);
         return AUTONOMY_ERROR_ALREADY_EXISTS;
     }
     
@@ -95,7 +95,7 @@ int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type
     
     if (source_index < 0) {
         pthread_mutex_unlock(&g_fusion_mutex);
-        LOGX_ERROR("No free slots for GPS fusion source");
+        LOGX_ERROR_MSG("No free slots for GPS fusion source");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
@@ -121,7 +121,7 @@ int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type
     
     pthread_mutex_unlock(&g_fusion_mutex);
     
-    LOGX_INFO("Added GPS fusion source '%s' (type: %d)", source_name, source_type);
+    LOGX_INFO_MSG("Added GPS fusion source '%s' (type: %d)", source_name, source_type);
     return AUTONOMY_SUCCESS;
 }
 
@@ -137,7 +137,7 @@ int gps_fusion_update_source(const char *source_name, const gps_data_t *gps_data
     int source_index = find_fusion_source_by_name(source_name);
     if (source_index < 0) {
         pthread_mutex_unlock(&g_fusion_mutex);
-        LOGX_WARN("GPS fusion source '%s' not found", source_name);
+        LOGX_WARN_MSG("GPS fusion source '%s' not found", source_name);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -280,7 +280,7 @@ int gps_fusion_perform_fusion(gps_data_t *fused_data) {
         // Calculate fusion quality
         g_fusion.fusion_quality = calculate_fusion_quality();
         
-        LOGX_DEBUG("GPS fusion completed: lat=%.6f, lon=%.6f, accuracy=%.1fm, quality=%.3f", 
+        LOGX_DEBUG_MSG("GPS fusion completed: lat=%.6f, lon=%.6f, accuracy=%.1fm, quality=%.3f", 
                    fused_data->lat, fused_data->lon, fused_data->accuracy, g_fusion.fusion_quality);
     }
     
@@ -490,7 +490,7 @@ int gps_fusion_set_config(const gps_fusion_config_t *config) {
     
     pthread_mutex_unlock(&g_fusion_mutex);
     
-    LOGX_INFO("GPS fusion configuration updated");
+    LOGX_INFO_MSG("GPS fusion configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -504,7 +504,7 @@ int gps_fusion_set_enabled(bool enabled) {
     g_fusion.enabled = enabled;
     pthread_mutex_unlock(&g_fusion_mutex);
     
-    LOGX_INFO("GPS fusion %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS fusion %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -518,7 +518,7 @@ int gps_fusion_force_update(void) {
     int result = gps_fusion_perform_fusion(&fused_data);
     
     if (result == AUTONOMY_SUCCESS) {
-        LOGX_INFO("Forced GPS fusion update completed");
+        LOGX_INFO_MSG("Forced GPS fusion update completed");
     }
     
     return result;
@@ -555,7 +555,7 @@ int gps_fusion_reset(void) {
     
     pthread_mutex_unlock(&g_fusion_mutex);
     
-    LOGX_INFO("GPS fusion system reset");
+    LOGX_INFO_MSG("GPS fusion system reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -568,5 +568,5 @@ void gps_fusion_cleanup(void) {
     pthread_mutex_destroy(&g_fusion_mutex);
     g_fusion_initialized = false;
     
-    LOGX_INFO("GPS fusion system cleaned up");
+    LOGX_INFO_MSG("GPS fusion system cleaned up");
 }

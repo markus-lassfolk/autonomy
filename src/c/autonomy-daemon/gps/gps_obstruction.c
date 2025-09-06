@@ -28,7 +28,7 @@ static pthread_mutex_t g_obstruction_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Initialize GPS obstruction analysis
 int gps_obstruction_init(void) {
     if (g_obstruction_initialized) {
-        LOGX_WARN("GPS obstruction analysis already initialized");
+        LOGX_WARN_MSG("GPS obstruction analysis already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -73,7 +73,7 @@ int gps_obstruction_init(void) {
     g_obstruction_initialized = true;
     pthread_mutex_unlock(&g_obstruction_mutex);
     
-    LOGX_INFO("GPS obstruction analysis initialized successfully");
+    LOGX_INFO_MSG("GPS obstruction analysis initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -110,7 +110,7 @@ int gps_obstruction_analyze_gps_data(const gps_data_t *gps_data) {
         g_obstruction.obstruction_detected = true;
         g_obstruction.obstruction_count++;
         
-        LOGX_INFO("GPS obstruction detected: type=%d, confidence=%.2f, signal_quality=%.2f", 
+        LOGX_INFO_MSG("GPS obstruction detected: type=%d, confidence=%.2f, signal_quality=%.2f", 
                    obstruction_type, confidence, signal_quality);
     } else {
         g_obstruction.obstruction_detected = false;
@@ -251,7 +251,7 @@ static void analyze_satellite_obstructions(const gps_data_t *gps_data) {
     // In a full implementation, this would analyze individual satellite signals
     // and detect obstructions affecting specific satellites
     
-    LOGX_DEBUG("Satellite obstruction analysis would be performed here");
+    LOGX_DEBUG_MSG("Satellite obstruction analysis would be performed here");
 }
 
 // Get obstruction analysis status
@@ -321,7 +321,7 @@ int gps_obstruction_set_config(const gps_obstruction_config_t *config) {
     
     pthread_mutex_unlock(&g_obstruction_mutex);
     
-    LOGX_INFO("GPS obstruction analysis configuration updated");
+    LOGX_INFO_MSG("GPS obstruction analysis configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -335,7 +335,7 @@ int gps_obstruction_set_enabled(bool enabled) {
     g_obstruction.enabled = enabled;
     pthread_mutex_unlock(&g_obstruction_mutex);
     
-    LOGX_INFO("GPS obstruction analysis %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS obstruction analysis %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -350,7 +350,7 @@ int gps_obstruction_force_analysis(void) {
     g_obstruction.last_analysis = 0;
     pthread_mutex_unlock(&g_obstruction_mutex);
     
-    LOGX_INFO("GPS obstruction analysis forced");
+    LOGX_INFO_MSG("GPS obstruction analysis forced");
     return AUTONOMY_SUCCESS;
 }
 
@@ -432,7 +432,7 @@ int gps_obstruction_reset(void) {
     
     pthread_mutex_unlock(&g_obstruction_mutex);
     
-    LOGX_INFO("GPS obstruction analysis reset");
+    LOGX_INFO_MSG("GPS obstruction analysis reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -445,5 +445,5 @@ void gps_obstruction_cleanup(void) {
     pthread_mutex_destroy(&g_obstruction_mutex);
     g_obstruction_initialized = false;
     
-    LOGX_INFO("GPS obstruction analysis cleaned up");
+    LOGX_INFO_MSG("GPS obstruction analysis cleaned up");
 }

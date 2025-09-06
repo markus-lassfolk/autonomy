@@ -29,7 +29,7 @@ static bool g_nmea_initialized = false;
 // Initialize NMEA parser
 int gps_nmea_init(void) {
     if (g_nmea_initialized) {
-        LOGX_WARN("NMEA parser already initialized");
+        LOGX_WARN_MSG("NMEA parser already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -55,7 +55,7 @@ int gps_nmea_init(void) {
     
     g_nmea_initialized = true;
     
-    LOGX_INFO("NMEA parser initialized successfully");
+    LOGX_INFO_MSG("NMEA parser initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -71,7 +71,7 @@ int gps_nmea_parse_sentence(const char *sentence, gps_data_t *gps_data) {
     // Validate sentence format
     if (!validate_nmea_sentence(sentence)) {
         g_nmea_parser.failed_parses++;
-        LOGX_WARN("Invalid NMEA sentence format: %s", sentence);
+        LOGX_WARN_MSG("Invalid NMEA sentence format: %s", sentence);
         return AUTONOMY_ERROR_INVALID_FORMAT;
     }
     
@@ -100,17 +100,17 @@ int gps_nmea_parse_sentence(const char *sentence, gps_data_t *gps_data) {
     } else if (strcmp(sentence_type, "GPZDA") == 0) {
         parse_result = parse_zda_sentence(sentence, gps_data);
     } else {
-        LOGX_DEBUG("Unsupported NMEA sentence type: %s", sentence_type);
+        LOGX_DEBUG_MSG("Unsupported NMEA sentence type: %s", sentence_type);
         g_nmea_parser.failed_parses++;
         return AUTONOMY_ERROR_NOT_SUPPORTED;
     }
     
     if (parse_result == AUTONOMY_SUCCESS) {
         g_nmea_parser.successful_parses++;
-        LOGX_DEBUG("Successfully parsed %s sentence", sentence_type);
+        LOGX_DEBUG_MSG("Successfully parsed %s sentence", sentence_type);
     } else {
         g_nmea_parser.failed_parses++;
-        LOGX_WARN("Failed to parse %s sentence: %s", sentence_type, sentence);
+        LOGX_WARN_MSG("Failed to parse %s sentence: %s", sentence_type, sentence);
     }
     
     return parse_result;
@@ -642,7 +642,7 @@ int gps_nmea_set_config(const gps_nmea_config_t *config) {
     g_nmea_parser.min_sentence_length = config->min_sentence_length;
     g_nmea_parser.max_satellites = config->max_satellites;
     
-    LOGX_INFO("NMEA parser configuration updated");
+    LOGX_INFO_MSG("NMEA parser configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -653,7 +653,7 @@ int gps_nmea_set_enabled(bool enabled) {
     }
     
     g_nmea_parser.enabled = enabled;
-    LOGX_INFO("NMEA parser %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("NMEA parser %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -668,7 +668,7 @@ int gps_nmea_reset_statistics(void) {
     g_nmea_parser.failed_parses = 0;
     g_nmea_parser.last_parse = 0;
     
-    LOGX_INFO("NMEA parser statistics reset");
+    LOGX_INFO_MSG("NMEA parser statistics reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -679,5 +679,5 @@ void gps_nmea_cleanup(void) {
     }
     
     g_nmea_initialized = false;
-    LOGX_INFO("NMEA parser cleaned up");
+    LOGX_INFO_MSG("NMEA parser cleaned up");
 }

@@ -35,7 +35,7 @@ static bool g_rutos_thread_running = false;
 // Initialize RUTOS GPS system
 int gps_rutos_init(void) {
     if (g_rutos_initialized) {
-        LOGX_WARN("RUTOS GPS already initialized");
+        LOGX_WARN_MSG("RUTOS GPS already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -68,31 +68,31 @@ int gps_rutos_init(void) {
     g_rutos_initialized = true;
     pthread_mutex_unlock(&g_rutos_mutex);
     
-    LOGX_INFO("RUTOS GPS system initialized successfully");
+    LOGX_INFO_MSG("RUTOS GPS system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Start RUTOS GPS monitoring thread
 int gps_rutos_start_monitoring(void) {
     if (!g_rutos_initialized) {
-        LOGX_ERROR("RUTOS GPS not initialized");
+        LOGX_ERROR_MSG("RUTOS GPS not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     if (g_rutos_thread_running) {
-        LOGX_WARN("RUTOS GPS monitoring already running");
+        LOGX_WARN_MSG("RUTOS GPS monitoring already running");
         return AUTONOMY_SUCCESS;
     }
     
     // Create monitoring thread
     int ret = pthread_create(&g_rutos_thread, NULL, rutos_monitor_thread, NULL);
     if (ret != 0) {
-        LOGX_ERROR("Failed to create RUTOS GPS monitoring thread");
+        LOGX_ERROR_MSG("Failed to create RUTOS GPS monitoring thread");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     g_rutos_thread_running = true;
-    LOGX_INFO("RUTOS GPS monitoring started");
+    LOGX_INFO_MSG("RUTOS GPS monitoring started");
     
     return AUTONOMY_SUCCESS;
 }
@@ -110,14 +110,14 @@ void gps_rutos_stop_monitoring(void) {
         g_rutos_thread = 0;
     }
     
-    LOGX_INFO("RUTOS GPS monitoring stopped");
+    LOGX_INFO_MSG("RUTOS GPS monitoring stopped");
 }
 
 // RUTOS GPS monitoring thread
 static void* rutos_monitor_thread(void *arg) {
     (void)arg;
     
-    LOGX_INFO("RUTOS GPS monitoring thread started");
+    LOGX_INFO_MSG("RUTOS GPS monitoring thread started");
     
     while (g_rutos_thread_running) {
         // Read GPS data
@@ -129,7 +129,7 @@ static void* rutos_monitor_thread(void *arg) {
         }
     }
     
-    LOGX_INFO("RUTOS GPS monitoring thread stopped");
+    LOGX_INFO_MSG("RUTOS GPS monitoring thread stopped");
     return NULL;
 }
 
@@ -150,7 +150,7 @@ int gps_rutos_read_data(void) {
         return AUTONOMY_SUCCESS;
     }
     
-    LOGX_DEBUG("Reading RUTOS GPS data");
+    LOGX_DEBUG_MSG("Reading RUTOS GPS data");
     
     // Read GPS data file
     gps_data_t new_data;
@@ -170,15 +170,15 @@ int gps_rutos_read_data(void) {
             // Calculate reliability score
             g_rutos_gps.reliability_score = calculate_reliability_score();
             
-            LOGX_DEBUG("RUTOS GPS data updated: lat=%.6f, lon=%.6f, acc=%.1fm, sats=%d",
+            LOGX_DEBUG_MSG("RUTOS GPS data updated: lat=%.6f, lon=%.6f, acc=%.1fm, sats=%d",
                       new_data.latitude, new_data.longitude, new_data.accuracy, new_data.satellites);
         } else {
-            LOGX_WARN("Invalid GPS data received from RUTOS");
+            LOGX_WARN_MSG("Invalid GPS data received from RUTOS");
             g_rutos_gps.consecutive_failures++;
             g_rutos_gps.consecutive_successes = 0;
         }
     } else {
-        LOGX_WARN("Failed to read RUTOS GPS data");
+        LOGX_WARN_MSG("Failed to read RUTOS GPS data");
         g_rutos_gps.consecutive_failures++;
         g_rutos_gps.consecutive_successes = 0;
     }
@@ -196,7 +196,7 @@ static int read_rutos_gps_data(gps_data_t *data) {
     // Read GPS data file
     FILE *fp = fopen(RUTOS_GPS_FILES[0], "r");
     if (!fp) {
-        LOGX_DEBUG("RUTOS GPS data file not found: %s", RUTOS_GPS_FILES[0]);
+        LOGX_DEBUG_MSG("RUTOS GPS data file not found: %s", RUTOS_GPS_FILES[0]);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -254,7 +254,7 @@ static int read_rutos_gps_data(gps_data_t *data) {
     
     if (!data_found) {
         // Production system requires real GPS data - no fallback
-        LOGX_ERROR("Failed to read RUTOS GPS data - no real data available");
+        LOGX_ERROR_MSG("Failed to read RUTOS GPS data - no real data available");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -271,36 +271,36 @@ static bool validate_gps_data(const gps_data_t *data) {
     
     // Check latitude range (-90 to 90)
     if (data->latitude < -90.0 || data->latitude > 90.0) {
-        LOGX_DEBUG("Invalid latitude: %.6f", data->latitude);
+        LOGX_DEBUG_MSG("Invalid latitude: %.6f", data->latitude);
         return false;
     }
     
     // Check longitude range (-180 to 180)
     if (data->longitude < -180.0 || data->longitude > 180.0) {
-        LOGX_DEBUG("Invalid longitude: %.6f", data->longitude);
+        LOGX_DEBUG_MSG("Invalid longitude: %.6f", data->longitude);
         return false;
     }
     
     // Check accuracy (must be positive and reasonable)
     if (data->accuracy < 0.0 || data->accuracy > 1000.0) {
-        LOGX_DEBUG("Invalid accuracy: %.1f", data->accuracy);
+        LOGX_DEBUG_MSG("Invalid accuracy: %.1f", data->accuracy);
         return false;
     }
     
     // Check satellite count (must be reasonable)
     if (data->satellites < 0 || data->satellites > 20) {
-        LOGX_DEBUG("Invalid satellite count: %d", data->satellites);
+        LOGX_DEBUG_MSG("Invalid satellite count: %d", data->satellites);
         return false;
     }
     
     // Check HDOP and VDOP (must be positive and reasonable)
     if (data->hdop < 0.0 || data->hdop > 100.0) {
-        LOGX_DEBUG("Invalid HDOP: %.1f", data->hdop);
+        LOGX_DEBUG_MSG("Invalid HDOP: %.1f", data->hdop);
         return false;
     }
     
     if (data->vdop < 0.0 || data->vdop > 100.0) {
-        LOGX_DEBUG("Invalid VDOP: %.1f", data->vdop);
+        LOGX_DEBUG_MSG("Invalid VDOP: %.1f", data->vdop);
         return false;
     }
     
@@ -401,7 +401,7 @@ int gps_rutos_set_config(const gps_rutos_config_t *config) {
     
     pthread_mutex_unlock(&g_rutos_mutex);
     
-    LOGX_INFO("RUTOS GPS configuration updated");
+    LOGX_INFO_MSG("RUTOS GPS configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -415,7 +415,7 @@ int gps_rutos_set_enabled(bool enabled) {
     g_rutos_gps.enabled = enabled;
     pthread_mutex_unlock(&g_rutos_mutex);
     
-    LOGX_INFO("RUTOS GPS %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("RUTOS GPS %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -463,5 +463,5 @@ void gps_rutos_cleanup(void) {
     
     pthread_mutex_destroy(&g_rutos_mutex);
     
-    LOGX_INFO("RUTOS GPS system cleaned up");
+    LOGX_INFO_MSG("RUTOS GPS system cleaned up");
 }

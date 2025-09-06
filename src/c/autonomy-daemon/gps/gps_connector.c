@@ -28,7 +28,7 @@ static pthread_mutex_t g_connector_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Initialize GPS connector system
 int gps_connector_init(void) {
     if (g_connector_initialized) {
-        LOGX_WARN("GPS connector already initialized");
+        LOGX_WARN_MSG("GPS connector already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -64,7 +64,7 @@ int gps_connector_init(void) {
     g_connector_initialized = true;
     pthread_mutex_unlock(&g_connector_mutex);
     
-    LOGX_INFO("GPS connector system initialized successfully");
+    LOGX_INFO_MSG("GPS connector system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -81,7 +81,7 @@ int gps_connector_register_module(const char *name, gps_module_type_t module_typ
         if (g_connector.modules[i].active && 
             strcmp(g_connector.modules[i].name, name) == 0) {
             pthread_mutex_unlock(&g_connector_mutex);
-            LOGX_WARN("GPS module '%s' already registered", name);
+            LOGX_WARN_MSG("GPS module '%s' already registered", name);
             return AUTONOMY_ERROR_ALREADY_EXISTS;
         }
     }
@@ -97,7 +97,7 @@ int gps_connector_register_module(const char *name, gps_module_type_t module_typ
     
     if (module_index < 0) {
         pthread_mutex_unlock(&g_connector_mutex);
-        LOGX_ERROR("No free slots for GPS module registration");
+        LOGX_ERROR_MSG("No free slots for GPS module registration");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
@@ -121,7 +121,7 @@ int gps_connector_register_module(const char *name, gps_module_type_t module_typ
     
     pthread_mutex_unlock(&g_connector_mutex);
     
-    LOGX_INFO("Registered GPS module '%s' (type: %d) with ID %d", 
+    LOGX_INFO_MSG("Registered GPS module '%s' (type: %d) with ID %d", 
                name, module_type, module->module_id);
     
     return module->module_id;
@@ -145,7 +145,7 @@ int gps_connector_update_module_operation(int module_id, bool operation_successf
     int module_index = find_module_by_id(module_id);
     if (module_index < 0) {
         pthread_mutex_unlock(&g_connector_mutex);
-        LOGX_ERROR("GPS module %d not found", module_id);
+        LOGX_ERROR_MSG("GPS module %d not found", module_id);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -172,7 +172,7 @@ int gps_connector_update_module_operation(int module_id, bool operation_successf
     // Trigger connector checks
     perform_connector_checks();
     
-    LOGX_DEBUG("Updated GPS module %d operation: %s, health: %.1f", 
+    LOGX_DEBUG_MSG("Updated GPS module %d operation: %s, health: %.1f", 
                module_id, operation_successful ? "success" : "failure", module->health_score);
     
     return AUTONOMY_SUCCESS;
@@ -209,7 +209,7 @@ static void perform_connector_checks(void) {
     // Perform module coordination
     perform_module_coordination();
     
-    LOGX_DEBUG("GPS connector checks completed");
+    LOGX_DEBUG_MSG("GPS connector checks completed");
 }
 
 // Check module health
@@ -226,7 +226,7 @@ static void check_module_health(void) {
         if (module->last_operation > 0 && 
             (now - module->last_operation) > g_connector.health_timeout) {
             module->health_score *= 0.9;  // Reduce health score
-            LOGX_WARN("GPS module '%s' is stale (last operation: %ld seconds ago)", 
+            LOGX_WARN_MSG("GPS module '%s' is stale (last operation: %ld seconds ago)", 
                       module->name, now - module->last_operation);
         }
         
@@ -234,7 +234,7 @@ static void check_module_health(void) {
         if (module->health_score < g_connector.health_threshold && module->enabled) {
             module->enabled = false;
             g_connector.active_modules--;
-            LOGX_WARN("GPS module '%s' disabled due to poor health (score: %.1f)", 
+            LOGX_WARN_MSG("GPS module '%s' disabled due to poor health (score: %.1f)", 
                       module->name, module->health_score);
         }
     }
@@ -268,7 +268,7 @@ static void perform_module_coordination(void) {
     // Example: Coordinate GPS events with location services
     // Example: Ensure GPS health monitoring is active
     
-    LOGX_DEBUG("GPS module coordination would be performed here");
+    LOGX_DEBUG_MSG("GPS module coordination would be performed here");
 }
 
 // Get connector status
@@ -337,7 +337,7 @@ int gps_connector_set_config(const gps_connector_config_t *config) {
     
     pthread_mutex_unlock(&g_connector_mutex);
     
-    LOGX_INFO("GPS connector configuration updated");
+    LOGX_INFO_MSG("GPS connector configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -351,7 +351,7 @@ int gps_connector_set_enabled(bool enabled) {
     g_connector.enabled = enabled;
     pthread_mutex_unlock(&g_connector_mutex);
     
-    LOGX_INFO("GPS connector %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS connector %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -382,7 +382,7 @@ int gps_connector_set_module_enabled(int module_id, bool enabled) {
     
     pthread_mutex_unlock(&g_connector_mutex);
     
-    LOGX_INFO("GPS module %d %s", module_id, enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS module %d %s", module_id, enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -411,7 +411,7 @@ int gps_connector_unregister_module(int module_id) {
     
     pthread_mutex_unlock(&g_connector_mutex);
     
-    LOGX_INFO("Unregistered GPS module %d", module_id);
+    LOGX_INFO_MSG("Unregistered GPS module %d", module_id);
     return AUTONOMY_SUCCESS;
 }
 
@@ -436,7 +436,7 @@ int gps_connector_reset(void) {
     
     pthread_mutex_unlock(&g_connector_mutex);
     
-    LOGX_INFO("GPS connector system reset");
+    LOGX_INFO_MSG("GPS connector system reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -449,5 +449,5 @@ void gps_connector_cleanup(void) {
     pthread_mutex_destroy(&g_connector_mutex);
     g_connector_initialized = false;
     
-    LOGX_INFO("GPS connector system cleaned up");
+    LOGX_INFO_MSG("GPS connector system cleaned up");
 }

@@ -37,7 +37,7 @@ static bool g_starlink_gps_thread_running = false;
 // Initialize Starlink GPS system
 int gps_starlink_init(void) {
     if (g_starlink_gps_initialized) {
-        LOGX_WARN("Starlink GPS already initialized");
+        LOGX_WARN_MSG("Starlink GPS already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -71,31 +71,31 @@ int gps_starlink_init(void) {
     g_starlink_gps_initialized = true;
     pthread_mutex_unlock(&g_starlink_gps_mutex);
     
-    LOGX_INFO("Starlink GPS system initialized successfully");
+    LOGX_INFO_MSG("Starlink GPS system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Start Starlink GPS monitoring thread
 int gps_starlink_start_monitoring(void) {
     if (!g_starlink_gps_initialized) {
-        LOGX_ERROR("Starlink GPS not initialized");
+        LOGX_ERROR_MSG("Starlink GPS not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     if (g_starlink_gps_thread_running) {
-        LOGX_WARN("Starlink GPS monitoring already running");
+        LOGX_WARN_MSG("Starlink GPS monitoring already running");
         return AUTONOMY_SUCCESS;
     }
     
     // Create monitoring thread
     int ret = pthread_create(&g_starlink_gps_thread, NULL, starlink_gps_monitor_thread, NULL);
     if (ret != 0) {
-        LOGX_ERROR("Failed to create Starlink GPS monitoring thread");
+        LOGX_ERROR_MSG("Failed to create Starlink GPS monitoring thread");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     g_starlink_gps_thread_running = true;
-    LOGX_INFO("Starlink GPS monitoring started");
+    LOGX_INFO_MSG("Starlink GPS monitoring started");
     
     return AUTONOMY_SUCCESS;
 }
@@ -113,14 +113,14 @@ void gps_starlink_stop_monitoring(void) {
         g_starlink_gps_thread = 0;
     }
     
-    LOGX_INFO("Starlink GPS monitoring stopped");
+    LOGX_INFO_MSG("Starlink GPS monitoring stopped");
 }
 
 // Starlink GPS monitoring thread
 static void* starlink_gps_monitor_thread(void *arg) {
     (void)arg;
     
-    LOGX_INFO("Starlink GPS monitoring thread started");
+    LOGX_INFO_MSG("Starlink GPS monitoring thread started");
     
     while (g_starlink_gps_thread_running) {
         // Extract GPS data from Starlink
@@ -132,7 +132,7 @@ static void* starlink_gps_monitor_thread(void *arg) {
         }
     }
     
-    LOGX_INFO("Starlink GPS monitoring thread stopped");
+    LOGX_INFO_MSG("Starlink GPS monitoring thread stopped");
     return NULL;
 }
 
@@ -153,18 +153,18 @@ int gps_starlink_extract_data(void) {
         return AUTONOMY_SUCCESS;
     }
     
-    LOGX_DEBUG("Extracting GPS data from Starlink dish");
+    LOGX_DEBUG_MSG("Extracting GPS data from Starlink dish");
     
     // Try to get GPS data from Starlink API
     if (extract_gps_from_starlink_api()) {
         g_starlink_gps.successful_updates++;
-        LOGX_DEBUG("Successfully extracted GPS data from Starlink API");
+        LOGX_DEBUG_MSG("Successfully extracted GPS data from Starlink API");
     } else {
         g_starlink_gps.failed_updates++;
-        LOGX_WARN("Failed to extract GPS data from Starlink API");
+        LOGX_WARN_MSG("Failed to extract GPS data from Starlink API");
         
         // No fallback - production system must use real data
-        LOGX_ERROR("Starlink GPS data extraction failed - no fallback available in production mode");
+        LOGX_ERROR_MSG("Starlink GPS data extraction failed - no fallback available in production mode");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -195,7 +195,7 @@ static bool extract_gps_from_starlink_api(void) {
     // Create socket connection
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
-        LOGX_ERROR("Failed to create socket for Starlink API");
+        LOGX_ERROR_MSG("Failed to create socket for Starlink API");
         return false;
     }
     
@@ -213,13 +213,13 @@ static bool extract_gps_from_starlink_api(void) {
     server_addr.sin_port = htons(g_starlink_gps.starlink_port);
     
     if (inet_pton(AF_INET, g_starlink_gps.starlink_ip, &server_addr.sin_addr) <= 0) {
-        LOGX_ERROR("Invalid Starlink IP address: %s", g_starlink_gps.starlink_ip);
+        LOGX_ERROR_MSG("Invalid Starlink IP address: %s", g_starlink_gps.starlink_ip);
         close(sock);
         return false;
     }
     
     if (connect(sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-        LOGX_ERROR("Failed to connect to Starlink dish at %s:%d", 
+        LOGX_ERROR_MSG("Failed to connect to Starlink dish at %s:%d", 
                    g_starlink_gps.starlink_ip, g_starlink_gps.starlink_port);
         close(sock);
         return false;
@@ -227,7 +227,7 @@ static bool extract_gps_from_starlink_api(void) {
     
     // Send HTTP request
     if (send(sock, request, strlen(request), 0) < 0) {
-        LOGX_ERROR("Failed to send request to Starlink dish");
+        LOGX_ERROR_MSG("Failed to send request to Starlink dish");
         close(sock);
         return false;
     }
@@ -238,7 +238,7 @@ static bool extract_gps_from_starlink_api(void) {
     close(sock);
     
     if (bytes_received <= 0) {
-        LOGX_ERROR("Failed to receive response from Starlink dish");
+        LOGX_ERROR_MSG("Failed to receive response from Starlink dish");
         return false;
     }
     
@@ -261,7 +261,7 @@ static bool parse_gps_from_response(const char *response) {
     }
     
     if (!json_start) {
-        LOGX_ERROR("No JSON data found in Starlink response");
+        LOGX_ERROR_MSG("No JSON data found in Starlink response");
         return false;
     }
     
@@ -270,7 +270,7 @@ static bool parse_gps_from_response(const char *response) {
     // Parse JSON response
     json_object *json = json_tokener_parse(json_start);
     if (!json) {
-        LOGX_ERROR("Failed to parse JSON response from Starlink");
+        LOGX_ERROR_MSG("Failed to parse JSON response from Starlink");
         return false;
     }
     
@@ -306,7 +306,7 @@ static bool parse_gps_from_response(const char *response) {
             g_starlink_gps.gps_data.timestamp = time(NULL);
             success = true;
             
-            LOGX_DEBUG("Extracted GPS: lat=%.6f, lon=%.6f, acc=%.1fm, sats=%d", 
+            LOGX_DEBUG_MSG("Extracted GPS: lat=%.6f, lon=%.6f, acc=%.1fm, sats=%d", 
                        g_starlink_gps.gps_data.lat, g_starlink_gps.gps_data.lon,
                        g_starlink_gps.gps_data.accuracy, g_starlink_gps.gps_data.satellites);
         }
@@ -315,7 +315,7 @@ static bool parse_gps_from_response(const char *response) {
     json_object_put(json);
     
     if (!success) {
-        LOGX_ERROR("Failed to extract GPS coordinates from Starlink response");
+        LOGX_ERROR_MSG("Failed to extract GPS coordinates from Starlink response");
     }
     
     return success;
@@ -396,7 +396,7 @@ int gps_starlink_get_data(gps_data_t *gps_data) {
             g_starlink_gps.last_update = time(NULL);
             g_starlink_gps.successful_updates++;
             
-            LOGX_INFO("Starlink GPS data from comprehensive collector",
+            LOGX_INFO_MSG("Starlink GPS data from comprehensive collector",
                      "sources", comprehensive_gps.data_sources,
                      "confidence", comprehensive_gps.confidence,
                      "quality", comprehensive_gps.quality_score);
@@ -469,7 +469,7 @@ int gps_starlink_set_config(const gps_starlink_config_t *config) {
     
     pthread_mutex_unlock(&g_starlink_gps_mutex);
     
-    LOGX_INFO("Starlink GPS configuration updated");
+    LOGX_INFO_MSG("Starlink GPS configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -483,7 +483,7 @@ int gps_starlink_set_enabled(bool enabled) {
     g_starlink_gps.enabled = enabled;
     pthread_mutex_unlock(&g_starlink_gps_mutex);
     
-    LOGX_INFO("Starlink GPS system %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("Starlink GPS system %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -526,7 +526,7 @@ int gps_starlink_force_update(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    LOGX_INFO("Forcing immediate Starlink GPS update");
+    LOGX_INFO_MSG("Forcing immediate Starlink GPS update");
     return gps_starlink_extract_data();
 }
 
@@ -545,5 +545,5 @@ void gps_starlink_cleanup(void) {
     
     pthread_mutex_destroy(&g_starlink_gps_mutex);
     
-    LOGX_INFO("Starlink GPS system cleaned up");
+    LOGX_INFO_MSG("Starlink GPS system cleaned up");
 }

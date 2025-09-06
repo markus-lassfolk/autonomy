@@ -113,22 +113,22 @@ static int send_contribution_batch(contribution_queue_entry_t* entries, int coun
 // Initialize the complete OpenCellID system
 int opencellid_system_init(const opencellid_config_t* config) {
     if (g_system_initialized) {
-        LOGX_WARN("OpenCellID system already initialized");
+        LOGX_WARN_MSG("OpenCellID system already initialized");
         return AUTONOMY_SUCCESS;
     }
     
     if (!config) {
-        LOGX_ERROR("OpenCellID config is NULL");
+        LOGX_ERROR_MSG("OpenCellID config is NULL");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     if (!config->enabled) {
-        LOGX_INFO("OpenCellID system disabled in configuration");
+        LOGX_INFO_MSG("OpenCellID system disabled in configuration");
         return AUTONOMY_SUCCESS;
     }
     
     if (strlen(config->api_key) == 0) {
-        LOGX_ERROR("OpenCellID API key not configured");
+        LOGX_ERROR_MSG("OpenCellID API key not configured");
         return AUTONOMY_ERROR_CONFIG;
     }
     
@@ -137,28 +137,28 @@ int opencellid_system_init(const opencellid_config_t* config) {
     
     // Initialize mutex
     if (pthread_mutex_init(&g_opencellid_system.mutex, NULL) != 0) {
-        LOGX_ERROR("Failed to initialize OpenCellID system mutex");
+        LOGX_ERROR_MSG("Failed to initialize OpenCellID system mutex");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Initialize components
     if (init_cache() != AUTONOMY_SUCCESS) {
-        LOGX_ERROR("Failed to initialize OpenCellID cache");
+        LOGX_ERROR_MSG("Failed to initialize OpenCellID cache");
         goto cleanup;
     }
     
     if (init_rate_limiter() != AUTONOMY_SUCCESS) {
-        LOGX_ERROR("Failed to initialize OpenCellID rate limiter");
+        LOGX_ERROR_MSG("Failed to initialize OpenCellID rate limiter");
         goto cleanup;
     }
     
     if (init_contribution_manager() != AUTONOMY_SUCCESS) {
-        LOGX_ERROR("Failed to initialize OpenCellID contribution manager");
+        LOGX_ERROR_MSG("Failed to initialize OpenCellID contribution manager");
         goto cleanup;
     }
     
     if (init_http_client() != AUTONOMY_SUCCESS) {
-        LOGX_ERROR("Failed to initialize OpenCellID HTTP client");
+        LOGX_ERROR_MSG("Failed to initialize OpenCellID HTTP client");
         goto cleanup;
     }
     
@@ -172,7 +172,7 @@ int opencellid_system_init(const opencellid_config_t* config) {
     if (config->contribution.enabled) {
         if (pthread_create(&g_opencellid_system.contribution_thread, NULL, 
                           contribution_thread_worker, NULL) != 0) {
-            LOGX_ERROR("Failed to create contribution thread");
+            LOGX_ERROR_MSG("Failed to create contribution thread");
             goto cleanup;
         }
     }
@@ -180,14 +180,14 @@ int opencellid_system_init(const opencellid_config_t* config) {
     if (config->health_monitoring_enabled) {
         if (pthread_create(&g_opencellid_system.health_thread, NULL, 
                           health_monitor_thread_worker, NULL) != 0) {
-            LOGX_ERROR("Failed to create health monitor thread");
+            LOGX_ERROR_MSG("Failed to create health monitor thread");
             goto cleanup;
         }
     }
     
     g_system_initialized = true;
     
-    LOGX_INFO("OpenCellID system initialized successfully",
+    LOGX_INFO_MSG("OpenCellID system initialized successfully",
               "api_key_configured", strlen(config->api_key) > 0,
               "cache_size_mb", config->cache.max_size_mb,
               "contribution_enabled", config->contribution.enabled,
@@ -234,7 +234,7 @@ void opencellid_system_cleanup(void) {
     
     g_system_initialized = false;
     
-    LOGX_INFO("OpenCellID system cleaned up");
+    LOGX_INFO_MSG("OpenCellID system cleaned up");
 }
 
 // Get current cellular environment
@@ -276,7 +276,7 @@ int opencellid_triangulate_position(const opencellid_cellular_environment_t* env
                                                  OPENCELLID_MAX_NEIGHBOR_CELLS + 1);
     
     if (locations_found <= 0) {
-        LOGX_WARN("No cell locations found for triangulation");
+        LOGX_WARN_MSG("No cell locations found for triangulation");
         pthread_mutex_unlock(&g_opencellid_system.mutex);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
@@ -295,7 +295,7 @@ int opencellid_triangulate_position(const opencellid_cellular_environment_t* env
         
         g_opencellid_system.stats.single_cell_positions++;
         
-        LOGX_DEBUG("Single cell positioning",
+        LOGX_DEBUG_MSG("Single cell positioning",
                   "lat", result->latitude,
                   "lon", result->longitude,
                   "accuracy", result->accuracy,
@@ -317,7 +317,7 @@ int opencellid_triangulate_position(const opencellid_cellular_environment_t* env
             apply_timing_advance_constraint(&environment->serving_cell, result);
         }
         
-        LOGX_INFO("Multi-cell triangulation completed",
+        LOGX_INFO_MSG("Multi-cell triangulation completed",
                  "method", result->method,
                  "cells_used", result->cells_used,
                  "lat", result->latitude,
@@ -369,7 +369,7 @@ int opencellid_lookup_cells(const opencellid_cell_identifier_t* cell_ids, int ce
         
         // Check rate limiter
         if (!rate_limiter_can_make_lookup()) {
-            LOGX_WARN("Rate limit exceeded for OpenCellID lookup");
+            LOGX_WARN_MSG("Rate limit exceeded for OpenCellID lookup");
             g_opencellid_system.stats.rate_limited_lookups++;
             continue;
         }
@@ -460,7 +460,7 @@ static int init_cache(void) {
     // Open SQLite database
     int ret = sqlite3_open(g_opencellid_system.config.cache.persistence_path, &cache->db);
     if (ret != SQLITE_OK) {
-        LOGX_ERROR("Failed to open cache database", "path", 
+        LOGX_ERROR_MSG("Failed to open cache database", "path", 
                   g_opencellid_system.config.cache.persistence_path,
                   "error", sqlite3_errmsg(cache->db));
         pthread_mutex_destroy(&cache->mutex);
@@ -494,7 +494,7 @@ static int init_cache(void) {
     
     ret = sqlite3_exec(cache->db, create_table_sql, NULL, NULL, NULL);
     if (ret != SQLITE_OK) {
-        LOGX_ERROR("Failed to create cache table", "error", sqlite3_errmsg(cache->db));
+        LOGX_ERROR_MSG("Failed to create cache table", "error", sqlite3_errmsg(cache->db));
         sqlite3_close(cache->db);
         pthread_mutex_destroy(&cache->mutex);
         free(cache);
@@ -507,7 +507,7 @@ static int init_cache(void) {
     
     g_opencellid_system.cache = cache;
     
-    LOGX_INFO("OpenCellID cache initialized", 
+    LOGX_INFO_MSG("OpenCellID cache initialized", 
              "database_path", g_opencellid_system.config.cache.persistence_path);
     
     return AUTONOMY_SUCCESS;

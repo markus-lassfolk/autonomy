@@ -28,7 +28,7 @@ static pthread_mutex_t g_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Initialize GPS adaptive cache
 int gps_adaptive_cache_init(void) {
     if (g_cache_initialized) {
-        LOGX_WARN("GPS adaptive cache already initialized");
+        LOGX_WARN_MSG("GPS adaptive cache already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -66,7 +66,7 @@ int gps_adaptive_cache_init(void) {
     g_cache_initialized = true;
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_INFO("GPS adaptive cache initialized successfully");
+    LOGX_INFO_MSG("GPS adaptive cache initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -101,7 +101,7 @@ int gps_adaptive_cache_add_entry(gps_cache_entry_type_t entry_type, const void *
     
     if (slot_index < 0) {
         pthread_mutex_unlock(&g_cache_mutex);
-        LOGX_ERROR("No free slots for cache entry");
+        LOGX_ERROR_MSG("No free slots for cache entry");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
@@ -109,7 +109,7 @@ int gps_adaptive_cache_add_entry(gps_cache_entry_type_t entry_type, const void *
     void *data_copy = malloc(data_size);
     if (!data_copy) {
         pthread_mutex_unlock(&g_cache_mutex);
-        LOGX_ERROR("Failed to allocate memory for cache entry");
+        LOGX_ERROR_MSG("Failed to allocate memory for cache entry");
         return AUTONOMY_ERROR_NO_MEMORY;
     }
     
@@ -133,7 +133,7 @@ int gps_adaptive_cache_add_entry(gps_cache_entry_type_t entry_type, const void *
     
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_DEBUG("Added cache entry %d: type=%d, size=%zu, priority=%.2f", 
+    LOGX_DEBUG_MSG("Added cache entry %d: type=%d, size=%zu, priority=%.2f", 
                entry->entry_id, entry_type, data_size, priority);
     
     return entry->entry_id;
@@ -172,7 +172,7 @@ int gps_adaptive_cache_find_entry(gps_cache_entry_type_t entry_type, const void 
             
             pthread_mutex_unlock(&g_cache_mutex);
             
-            LOGX_DEBUG("Cache hit for entry %d: type=%d, access_count=%d", 
+            LOGX_DEBUG_MSG("Cache hit for entry %d: type=%d, access_count=%d", 
                        entry->entry_id, entry_type, entry->access_count);
             
             return AUTONOMY_SUCCESS;
@@ -182,7 +182,7 @@ int gps_adaptive_cache_find_entry(gps_cache_entry_type_t entry_type, const void 
     g_cache.total_misses++;
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_DEBUG("Cache miss for entry type=%d", entry_type);
+    LOGX_DEBUG_MSG("Cache miss for entry type=%d", entry_type);
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -202,7 +202,7 @@ int gps_adaptive_cache_update_priority(int entry_id, double new_priority) {
             g_cache.cache_entries[i].priority = new_priority;
             pthread_mutex_unlock(&g_cache_mutex);
             
-            LOGX_DEBUG("Updated cache entry %d priority to %.2f", entry_id, new_priority);
+            LOGX_DEBUG_MSG("Updated cache entry %d priority to %.2f", entry_id, new_priority);
             return AUTONOMY_SUCCESS;
         }
     }
@@ -247,7 +247,7 @@ int gps_adaptive_cache_remove_entry(int entry_id) {
             
             pthread_mutex_unlock(&g_cache_mutex);
             
-            LOGX_DEBUG("Removed cache entry %d", entry_id);
+            LOGX_DEBUG_MSG("Removed cache entry %d", entry_id);
             return AUTONOMY_SUCCESS;
         }
     }
@@ -268,7 +268,7 @@ static void perform_cache_cleanup(void) {
     g_cache.last_cleanup = now;
     g_cache.total_cleanups++;
     
-    LOGX_DEBUG("Starting cache cleanup - entries: %d, memory: %zu bytes", 
+    LOGX_DEBUG_MSG("Starting cache cleanup - entries: %d, memory: %zu bytes", 
                g_cache.entry_count, g_cache.memory_usage);
     
     // Calculate cache hit ratio
@@ -288,7 +288,7 @@ static void perform_cache_cleanup(void) {
         perform_gentle_cleanup();
     }
     
-    LOGX_DEBUG("Cache cleanup completed - entries: %d, memory: %zu bytes", 
+    LOGX_DEBUG_MSG("Cache cleanup completed - entries: %d, memory: %zu bytes", 
                g_cache.entry_count, g_cache.memory_usage);
 }
 
@@ -349,7 +349,7 @@ static void perform_aggressive_cleanup(void) {
         g_cache.entry_count--;
     }
     
-    LOGX_INFO("Aggressive cache cleanup: evicted %d entries", entries_to_evict);
+    LOGX_INFO_MSG("Aggressive cache cleanup: evicted %d entries", entries_to_evict);
 }
 
 // Perform gentle cache cleanup
@@ -389,7 +389,7 @@ static void perform_gentle_cleanup(void) {
     }
     
     if (expired_count > 0) {
-        LOGX_INFO("Gentle cache cleanup: removed %d expired entries", expired_count);
+        LOGX_INFO_MSG("Gentle cache cleanup: removed %d expired entries", expired_count);
     }
 }
 
@@ -481,7 +481,7 @@ int gps_adaptive_cache_set_config(const gps_adaptive_cache_config_t *config) {
     
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_INFO("GPS adaptive cache configuration updated");
+    LOGX_INFO_MSG("GPS adaptive cache configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -495,7 +495,7 @@ int gps_adaptive_cache_set_enabled(bool enabled) {
     g_cache.enabled = enabled;
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_INFO("GPS adaptive cache %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS adaptive cache %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -515,7 +515,7 @@ int gps_adaptive_cache_force_cleanup(void) {
     
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_INFO("GPS adaptive cache cleanup forced");
+    LOGX_INFO_MSG("GPS adaptive cache cleanup forced");
     return AUTONOMY_SUCCESS;
 }
 
@@ -598,7 +598,7 @@ int gps_adaptive_cache_reset(void) {
     
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_INFO("GPS adaptive cache reset");
+    LOGX_INFO_MSG("GPS adaptive cache reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -622,5 +622,5 @@ void gps_adaptive_cache_cleanup(void) {
     pthread_mutex_destroy(&g_cache_mutex);
     g_cache_initialized = false;
     
-    LOGX_INFO("GPS adaptive cache cleaned up");
+    LOGX_INFO_MSG("GPS adaptive cache cleaned up");
 }
