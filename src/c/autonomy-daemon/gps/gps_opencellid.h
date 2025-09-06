@@ -42,6 +42,8 @@ typedef struct {
     char radio[16];                    // Radio technology
     char address[256];                 // Address (if available)
     char error[256];                   // Error message (if failed)
+    char error_message[256];           // Detailed error message
+    int error_code;                    // Error code
     time_t timestamp;                  // Response timestamp
 } opencellid_response_t;
 
@@ -90,8 +92,13 @@ typedef struct {
     int cache_misses;                   // Cache misses
     int contributions_sent;             // Data contributions sent
     time_t last_request;                // Last API request
+    time_t last_request_time;           // Last request timestamp
     time_t last_contribution;           // Last data contribution
     double success_rate;                // Success rate (0-1)
+    double average_accuracy;            // Average accuracy
+    int contribution_requests;          // Contribution requests
+    int contribution_successes;         // Contribution successes
+    int contribution_failures;          // Contribution failures
 } opencellid_stats_t;
 
 // OpenCellID cache entry

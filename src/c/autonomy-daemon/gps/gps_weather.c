@@ -26,6 +26,15 @@ static gps_weather_t g_weather = {0};
 static bool g_weather_initialized = false;
 static pthread_mutex_t g_weather_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Forward declarations
+static bool get_cached_weather(double lat, double lon, gps_weather_current_t *weather);
+void cache_weather_data(double lat, double lon, const gps_weather_current_t *weather);
+int find_oldest_weather_cache(void);
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+void parse_current_weather_response(const gps_weather_api_response_t *response, gps_weather_current_t *weather);
+void parse_forecast_response(const gps_weather_api_response_t *response, gps_weather_forecast_t *forecast);
+void parse_air_quality_response(const gps_weather_api_response_t *response, gps_weather_air_quality_t *air_quality);
+
 // CURL write callback for weather API responses
 static size_t weather_write_callback(void *contents, size_t size, size_t nmemb, void *userp) {
     size_t realsize = size * nmemb;
@@ -321,7 +330,7 @@ static bool get_cached_weather(double lat, double lon, gps_weather_current_t *we
 }
 
 // Cache weather data
-static void cache_weather_data(double lat, double lon, const gps_weather_current_t *weather) {
+void cache_weather_data(double lat, double lon, const gps_weather_current_t *weather) {
     // Find free cache slot
     int slot_index = -1;
     for (int i = 0; i < g_weather.max_cache_entries; i++) {
@@ -366,7 +375,7 @@ static void cache_weather_data(double lat, double lon, const gps_weather_current
 }
 
 // Find oldest weather cache entry
-static int find_oldest_weather_cache(void) {
+int find_oldest_weather_cache(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
@@ -399,7 +408,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Parse current weather response
-static void parse_current_weather_response(const gps_weather_api_response_t *response, 
+void parse_current_weather_response(const gps_weather_api_response_t *response, 
                                          gps_weather_current_t *weather) {
     // Initialize weather data
     memset(weather, 0, sizeof(gps_weather_current_t));
@@ -423,7 +432,7 @@ static void parse_current_weather_response(const gps_weather_api_response_t *res
 }
 
 // Parse forecast response
-static void parse_forecast_response(const gps_weather_api_response_t *response, 
+void parse_forecast_response(const gps_weather_api_response_t *response, 
                                   gps_weather_forecast_t *forecast) {
     // Initialize forecast data
     memset(forecast, 0, sizeof(gps_weather_forecast_t));
@@ -435,7 +444,7 @@ static void parse_forecast_response(const gps_weather_api_response_t *response,
 }
 
 // Parse air quality response
-static void parse_air_quality_response(const gps_weather_api_response_t *response, 
+void parse_air_quality_response(const gps_weather_api_response_t *response, 
                                      gps_weather_air_quality_t *air_quality) {
     // Initialize air quality data
     memset(air_quality, 0, sizeof(gps_weather_air_quality_t));

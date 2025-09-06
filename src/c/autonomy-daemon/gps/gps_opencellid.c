@@ -35,7 +35,7 @@ int gps_opencellid_init(const opencellid_config_t* config) {
     }
     
     // Copy configuration
-    memcpy(&g_opencellid_config, *config, sizeof(opencellid_config_t));
+    memcpy(&g_opencellid_config, config, sizeof(opencellid_config_t));
     
     // Initialize statistics
     memset(&g_opencellid_stats, 0, sizeof(opencellid_stats_t));
@@ -168,21 +168,21 @@ int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_resp
 }
 
 // Contribute cell tower data
-int gps_opencellid_contribute(const opencellid_cell_key_t* cell_key, double lat, double lon, int range) {
-    if (!g_opencellid_initialized || !cell_key) {
+int gps_opencellid_contribute(const opencellid_contribution_t* contribution) {
+    if (!g_opencellid_initialized || !contribution) {
         return -1;
     }
     
     // Build contribution URL
     char url[OPENCELLID_MAX_URL_LEN];
-    snprintf(url, sizeof(url), "%s/cell?key=%s&mcc=%s&mnc=%s&lac=%s&cellid=%s&lat=%.6f&lon=%.6f&range=%d&format=json",
+    snprintf(url, sizeof(url), "%s/cell?key=%s&mcc=%d&mnc=%d&lac=%d&cellid=%d&lat=%.6f&lon=%.6f&range=%d&format=json",
              OPENCELLID_BASE_URL,
              g_opencellid_config.api_key,
-             cell_key->mcc,
-             cell_key->mnc,
-             cell_key->lac,
-             cell_key->cell_id,
-             lat, lon, range);
+             contribution->mcc,
+             contribution->mnc,
+             contribution->lac,
+             contribution->cell_id,
+             contribution->lat, contribution->lon, (int)contribution->rating);
     
     opencellid_response_t response;
     int result = make_opencellid_request(url, &response);

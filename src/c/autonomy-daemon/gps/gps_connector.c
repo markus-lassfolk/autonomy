@@ -128,7 +128,7 @@ int gps_connector_register_module(const char *name, gps_module_type_t module_typ
 }
 
 // Generate unique module ID
-static int generate_module_id(void) {
+int generate_module_id(void) {
     static int next_id = 4000;
     return next_id++;
 }
@@ -179,7 +179,7 @@ int gps_connector_update_module_operation(int module_id, bool operation_successf
 }
 
 // Find module by ID
-static int find_module_by_id(int module_id) {
+int find_module_by_id(int module_id) {
     for (int i = 0; i < MAX_CONNECTED_MODULES; i++) {
         if (g_connector.modules[i].active && 
             g_connector.modules[i].module_id == module_id) {
@@ -190,7 +190,7 @@ static int find_module_by_id(int module_id) {
 }
 
 // Perform connector checks
-static void perform_connector_checks(void) {
+void perform_connector_checks(void) {
     time_t now = time(NULL);
     
     // Check if enough time has passed since last connector check
@@ -213,7 +213,7 @@ static void perform_connector_checks(void) {
 }
 
 // Check module health
-static void check_module_health(void) {
+void check_module_health(void) {
     for (int i = 0; i < MAX_CONNECTED_MODULES; i++) {
         if (!g_connector.modules[i].active) {
             continue;
@@ -241,7 +241,7 @@ static void check_module_health(void) {
 }
 
 // Update system health
-static void update_system_health(void) {
+void update_system_health(void) {
     double total_health = 0.0;
     int active_count = 0;
     
@@ -260,7 +260,7 @@ static void update_system_health(void) {
 }
 
 // Perform module coordination
-static void perform_module_coordination(void) {
+void perform_module_coordination(void) {
     // This is a placeholder for module coordination
     // In a full implementation, this would coordinate between different GPS modules
     
