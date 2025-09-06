@@ -134,7 +134,7 @@ int gps_integration_register_source(const char *name, gps_source_type_t source_t
 }
 
 // Generate unique source ID
-static int generate_source_id(void) {
+int generate_source_id(void) {
     static int next_id = 3000;
     return next_id++;
 }

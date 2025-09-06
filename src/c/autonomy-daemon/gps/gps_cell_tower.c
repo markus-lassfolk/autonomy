@@ -170,13 +170,13 @@ int gps_cell_tower_add_tower(const gps_cell_tower_info_t *tower_info) {
 }
 
 // Generate unique tower ID
-static int generate_tower_id(void) {
+int generate_tower_id(void) {
     static int next_id = 6000;
     return next_id++;
 }
 
 // Find oldest tower
-static int find_oldest_tower(void) {
+int find_oldest_tower(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
@@ -234,7 +234,7 @@ int gps_cell_tower_update_position(void) {
 }
 
 // Calculate position using triangulation
-static void calculate_triangulated_position(void) {
+void calculate_triangulated_position(void) {
     double total_weight = 0.0;
     double weighted_lat = 0.0;
     double weighted_lon = 0.0;
@@ -274,7 +274,7 @@ static void calculate_triangulated_position(void) {
 }
 
 // Calculate position using single tower
-static void calculate_single_tower_position(void) {
+void calculate_single_tower_position(void) {
     // Find the tower with the strongest signal
     int best_tower_index = -1;
     double best_signal = g_cell_tower.min_signal_strength;
@@ -305,7 +305,7 @@ static void calculate_single_tower_position(void) {
 }
 
 // Add position to history
-static void add_position_history(void) {
+void add_position_history(void) {
     // Shift position history array
     for (int i = g_cell_tower.max_position_history - 1; i > 0; i--) {
         memcpy(&g_cell_tower.position_history[i], &g_cell_tower.position_history[i-1], 

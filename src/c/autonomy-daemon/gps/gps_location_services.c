@@ -25,6 +25,15 @@ static gps_location_services_t g_location_services = {0};
 static bool g_location_services_initialized = false;
 static pthread_mutex_t g_location_services_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Forward declarations
+int find_location_in_cache(double lat, double lon, gps_location_info_t *location_info);
+void add_location_to_cache(const gps_location_info_t *location_info);
+int find_oldest_cache_entry(void);
+int perform_reverse_geocoding(double lat, double lon, gps_location_info_t *location_info);
+int try_reverse_geocoding_service(int service_index, double lat, double lon, gps_location_info_t *location_info);
+void create_basic_location_info(double lat, double lon, gps_location_info_t *location_info);
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+
 // Initialize GPS location services
 int gps_location_services_init(void) {
     if (g_location_services_initialized) {
@@ -134,7 +143,7 @@ int gps_location_services_reverse_geocode(double lat, double lon, gps_location_i
 }
 
 // Find location in cache
-static int find_location_in_cache(double lat, double lon) {
+int find_location_in_cache(double lat, double lon) {
     time_t now = time(NULL);
     
     for (int i = 0; i < MAX_LOCATION_CACHE; i++) {
@@ -161,7 +170,7 @@ static int find_location_in_cache(double lat, double lon) {
 }
 
 // Add location to cache
-static void add_location_to_cache(const gps_location_info_t *location_info) {
+void add_location_to_cache(const gps_location_info_t *location_info) {
     // Find free cache slot
     int cache_index = -1;
     for (int i = 0; i < MAX_LOCATION_CACHE; i++) {
@@ -203,7 +212,7 @@ static void add_location_to_cache(const gps_location_info_t *location_info) {
 }
 
 // Find oldest cache entry
-static int find_oldest_cache_entry(void) {
+int find_oldest_cache_entry(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
@@ -219,7 +228,7 @@ static int find_oldest_cache_entry(void) {
 }
 
 // Perform reverse geocoding
-static int perform_reverse_geocoding(double lat, double lon, gps_location_info_t *location_info) {
+int perform_reverse_geocoding(double lat, double lon, gps_location_info_t *location_info) {
     // Try different services in order of preference
     gps_location_service_t services[] = {
         g_location_services.default_service,
@@ -241,7 +250,7 @@ static int perform_reverse_geocoding(double lat, double lon, gps_location_info_t
 }
 
 // Try reverse geocoding with specific service
-static int try_reverse_geocoding_service(gps_location_service_t service, double lat, double lon, 
+int try_reverse_geocoding_service(gps_location_service_t service, double lat, double lon, 
                                         gps_location_info_t *location_info) {
     switch (service) {
         case LOCATION_SERVICE_NOMINATIM:
@@ -258,7 +267,7 @@ static int try_reverse_geocoding_service(gps_location_service_t service, double 
 }
 
 // Try Nominatim service (OpenStreetMap)
-static int try_nominatim_service(double lat, double lon, gps_location_info_t *location_info) {
+int try_nominatim_service(double lat, double lon, gps_location_info_t *location_info) {
     // For now, implement a simulated response
     // In a full implementation, this would make HTTP requests to Nominatim API
     
@@ -288,7 +297,7 @@ static int try_nominatim_service(double lat, double lon, gps_location_info_t *lo
 }
 
 // Try Google service
-static int try_google_service(double lat, double lon, gps_location_info_t *location_info) {
+int try_google_service(double lat, double lon, gps_location_info_t *location_info) {
     // For now, implement a simulated response
     // In a full implementation, this would make HTTP requests to Google Geocoding API
     
@@ -318,7 +327,7 @@ static int try_google_service(double lat, double lon, gps_location_info_t *locat
 }
 
 // Try HERE service
-static int try_here_service(double lat, double lon, gps_location_info_t *location_info) {
+int try_here_service(double lat, double lon, gps_location_info_t *location_info) {
     // For now, implement a simulated response
     // In a full implementation, this would make HTTP requests to HERE Geocoding API
     
@@ -348,7 +357,7 @@ static int try_here_service(double lat, double lon, gps_location_info_t *locatio
 }
 
 // Try custom service
-static int try_custom_service(double lat, double lon, gps_location_info_t *location_info) {
+int try_custom_service(double lat, double lon, gps_location_info_t *location_info) {
     // For now, implement a simulated response
     // In a full implementation, this would call user-defined functions or scripts
     
@@ -378,7 +387,7 @@ static int try_custom_service(double lat, double lon, gps_location_info_t *locat
 }
 
 // Create basic location info when services fail
-static void create_basic_location_info(double lat, double lon, gps_location_info_t *location_info) {
+void create_basic_location_info(double lat, double lon, gps_location_info_t *location_info) {
     location_info->lat = lat;
     location_info->lon = lon;
     location_info->service_used = LOCATION_SERVICE_UNKNOWN;
@@ -400,7 +409,7 @@ static void create_basic_location_info(double lat, double lon, gps_location_info
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;

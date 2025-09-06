@@ -174,7 +174,7 @@ static void add_performance_history_entry(int source_id, double accuracy, double
 }
 
 // Find oldest performance entry
-static int find_oldest_performance_entry(void) {
+int find_oldest_performance_entry(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     

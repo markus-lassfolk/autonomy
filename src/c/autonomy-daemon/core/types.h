@@ -113,6 +113,7 @@ struct autonomy_state {
 #define AUTONOMY_ERROR_API_LIMIT_EXCEEDED -17
 #define AUTONOMY_ERROR_INVALID_RESPONSE -18
 #define AUTONOMY_ERROR_SERVICE_UNAVAILABLE -19
+#define AUTONOMY_ERROR_NO_MEMORY -20
 
 // GPS source types
 typedef enum {
