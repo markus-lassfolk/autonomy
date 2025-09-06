@@ -26,7 +26,7 @@ typedef enum {
     RECOVERY_STRATEGY_MAX
 } gps_recovery_strategy_t;
 
-// Note: RECOVERY_STRATEGY_NONE defined in enum above
+// Recovery strategy constants now defined in enum above
 
 // Source status
 typedef enum {
