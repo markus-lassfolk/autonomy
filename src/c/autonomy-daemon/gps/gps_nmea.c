@@ -23,6 +23,7 @@ static int split_nmea_fields(const char *sentence, char **fields, int max_fields
 static double parse_nmea_coordinate(const char *coord_str, char direction);
 static time_t parse_nmea_time(const char *time_str);
 static time_t parse_nmea_datetime(const char *time_str, const char *date_str);
+static time_t parse_nmea_datetime_zda(const char *time_str, const char *day_str, const char *month_str, const char *year_str);
 static double estimate_accuracy_from_hdop(double hdop);
 
 // NMEA sentence types
@@ -458,7 +459,7 @@ static int parse_zda_sentence(const char *sentence, gps_data_t *gps_data) {
     if (fields[1] && fields[2] && fields[3] && fields[4] && 
         strlen(fields[1]) > 0 && strlen(fields[2]) > 0 && 
         strlen(fields[3]) > 0 && strlen(fields[4]) > 0) {
-        gps_data->timestamp = parse_nmea_datetime(fields[1], fields[2], fields[3], fields[4]);
+        gps_data->timestamp = parse_nmea_datetime_zda(fields[1], fields[2], fields[3], fields[4]);
     }
     
     return AUTONOMY_SUCCESS;
@@ -575,7 +576,7 @@ static time_t parse_nmea_datetime(const char *time_str, const char *date_str) {
 }
 
 // Parse NMEA date and time with separate components
-static time_t parse_nmea_datetime(const char *time_str, const char *day_str, 
+static time_t parse_nmea_datetime_zda(const char *time_str, const char *day_str, 
                                  const char *month_str, const char *year_str) {
     if (!time_str || !day_str || !month_str || !year_str) {
         return 0;

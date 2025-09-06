@@ -15,9 +15,6 @@ static const double MAX_SOURCE_AGE = 60.0;             // 60 second maximum sour
 static const double FUSION_WEIGHT_THRESHOLD = 0.3;     // Minimum weight for source inclusion
 static const int FUSION_HISTORY_SIZE = 20;             // Number of fused positions to track
 
-// Fusion algorithms
-static const char* FUSION_ALGORITHM_NAMES[] = {
-
 // Forward declarations
 static void update_source_metrics(gps_fusion_source_t *source, const gps_data_t *gps_data);
 static void update_source_reliability(gps_fusion_source_t *source);
@@ -28,6 +25,8 @@ static double calculate_fusion_quality(void);
 static void add_fusion_history(const gps_data_t *fused_data);
 static int find_fusion_source_by_name(const char *source_name);
 
+// Fusion algorithms
+static const char* FUSION_ALGORITHM_NAMES[] = {
     "unknown", "weighted_average", "kalman_filter", "particle_filter", "least_squares"
 };
 
@@ -302,6 +301,7 @@ int gps_fusion_perform_fusion(gps_data_t *fused_data) {
 
 // Perform weighted average fusion
 static int perform_weighted_average_fusion(gps_data_t *fused_data) {
+    time_t now = time(NULL);
     double total_weight = 0.0;
     double weighted_lat = 0.0;
     double weighted_lon = 0.0;

@@ -107,6 +107,7 @@ struct autonomy_state {
 #define AUTONOMY_ERROR_INVALID_FORMAT -11
 #define AUTONOMY_ERROR_NOT_SUPPORTED -12
 #define AUTONOMY_ERROR_NO_DATA -13
+#define AUTONOMY_ERROR_SYSTEM -14
 
 // GPS source types
 typedef enum {

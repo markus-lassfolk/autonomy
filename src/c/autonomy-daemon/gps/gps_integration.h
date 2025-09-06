@@ -11,8 +11,6 @@ extern "C" {
 #endif
 
 // GPS source types
-typedef enum {
-    GPS_SOURCE_TYPE_UNKNOWN = 0,
     GPS_SOURCE_TYPE_RUTOS,
     GPS_SOURCE_TYPE_STARLINK,
     GPS_SOURCE_TYPE_EXTERNAL,
