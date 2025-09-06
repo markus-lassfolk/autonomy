@@ -1,6 +1,6 @@
 #include "opencellid_complete.h"
 #include "../utils/logx.h"
-#include "collectors/cellular_collector.h"
+// #include "../collectors/cellular_collector.h" // TODO: Missing collectors directory
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

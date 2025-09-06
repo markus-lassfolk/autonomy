@@ -23,16 +23,7 @@ extern "C" {
 #define OPENCELLID_MAX_CONTRIBUTION_BATCH_SIZE 50
 #define OPENCELLID_MIN_GPS_ACCURACY_FOR_CONTRIBUTION 20.0
 
-// Radio technology types (matching OpenCellID standards)
-typedef enum {
-    OPENCELLID_RADIO_UNKNOWN = 0,
-    OPENCELLID_RADIO_GSM = 1,
-    OPENCELLID_RADIO_UMTS = 2,
-    OPENCELLID_RADIO_LTE = 3,
-    OPENCELLID_RADIO_NR = 4,      // 5G New Radio
-    OPENCELLID_RADIO_CDMA = 5,
-    OPENCELLID_RADIO_MAX
-} opencellid_radio_type_t;
+// Note: opencellid_radio_type_t is defined in ../core/types.h
 
 // Cell tower identifier (global unique identifier)
 typedef struct {
@@ -96,34 +87,9 @@ typedef struct {
     time_t measurement_time;                // When measurement was taken
 } opencellid_neighbor_cell_t;
 
-// Cellular environment (serving + neighbors)
-typedef struct {
-    opencellid_serving_cell_t serving_cell; // Serving cell
-    opencellid_neighbor_cell_t neighbors[OPENCELLID_MAX_NEIGHBOR_CELLS]; // Neighbor cells
-    int neighbor_count;                     // Number of neighbors
-    time_t scan_time;                       // When scan was performed
-    char environment_hash[65];              // SHA256 hash of environment
-    double gps_latitude;                    // GPS latitude when scanned
-    double gps_longitude;                   // GPS longitude when scanned
-    double gps_accuracy;                    // GPS accuracy when scanned
-    bool gps_valid;                         // Whether GPS was valid
-} opencellid_cellular_environment_t;
+// Note: opencellid_cellular_environment_t is defined in ../core/types.h
 
-// Triangulation result
-typedef struct {
-    double latitude;                        // Calculated latitude
-    double longitude;                       // Calculated longitude
-    double accuracy;                        // Estimated accuracy (meters)
-    double confidence;                      // Confidence score (0.0-1.0)
-    char method[32];                        // "single_cell", "weighted_centroid", "triangulation"
-    int cells_used;                         // Number of cells used
-    opencellid_cell_location_t primary_cell; // Primary cell used
-    opencellid_cell_location_t contributing_cells[10]; // Contributing cells
-    int contributing_cell_count;            // Number of contributing cells
-    time_t calculation_time;                // When calculation was performed
-    double timing_advance_constraint;       // TA constraint if applied
-    bool timing_advance_applied;            // Whether TA was applied
-} opencellid_triangulation_result_t;
+// Note: opencellid_triangulation_result_t is defined in ../core/types.h
 
 // Rate limiter configuration
 typedef struct {

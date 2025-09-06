@@ -8,7 +8,7 @@
 #include <time.h>
 
 // Geofencing configuration
-static const int MAX_GEOFENCES = 20;                  // Maximum number of geofences
+// Note: MAX_GEOFENCES is defined in ../core/types.h
 static const int MAX_GEOFENCE_POINTS = 100;           // Maximum points per geofence
 static const double DEFAULT_BUFFER_DISTANCE = 10.0;    // 10 meter default buffer
 static const int GEOFENCE_CHECK_INTERVAL = 5;          // 5 second check interval
@@ -23,6 +23,10 @@ static const char* GEOFENCE_TYPE_NAMES[] = {
 static gps_geofence_t g_geofence = {0};
 static bool g_geofence_initialized = false;
 static pthread_mutex_t g_geofence_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// Forward declarations
+int generate_geofence_id(void);
+static gps_geofence_status_t check_position_against_geofence(const gps_geofence_definition_t *geofence, const gps_data_t *gps_data);
 
 // Initialize GPS geofencing system
 int gps_geofence_init(void) {
@@ -52,7 +56,7 @@ int gps_geofence_init(void) {
         g_geofence.geofences[i].geofence_id = 0;
         g_geofence.geofences[i].geofence_type = GEOFENCE_TYPE_UNKNOWN;
         g_geofence.geofences[i].point_count = 0;
-        g_geofence.geofence.geofences[i].buffer_distance = 0.0;
+        g_geofence.geofences[i].buffer_distance = 0.0;
         g_geofence.geofences[i].enabled = false;
         g_geofence.geofences[i].last_event = 0;
         g_geofence.geofences[i].event_count = 0;
@@ -254,7 +258,7 @@ int gps_geofence_create_polygon(const char *name, const gps_coordinate_t *points
 }
 
 // Generate unique geofence ID
-static int generate_geofence_id(void) {
+int generate_geofence_id(void) {
     static int next_id = 1000;
     return next_id++;
 }
@@ -295,7 +299,7 @@ int gps_geofence_check_position(const gps_data_t *gps_data) {
         }
     }
     
-    pthread_mutex_unlock(&g_fusion_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex);
     
     return AUTONOMY_SUCCESS;
 }

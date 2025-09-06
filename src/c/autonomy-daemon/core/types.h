@@ -322,6 +322,26 @@ typedef enum {
 // Alias for compatibility
 typedef opencellid_radio_type_t opencellid_radio_t;
 
+// OpenCellID cellular environment for positioning
+typedef struct {
+    char mcc[8];                        // Mobile Country Code
+    char mnc[8];                        // Mobile Network Code
+    char lac[16];                       // Location Area Code
+    char cell_id[16];                   // Cell ID
+    int signal_strength;                // Signal strength
+    opencellid_radio_t radio_type;      // Radio technology
+} opencellid_cellular_environment_t;
+
+// OpenCellID triangulation result
+typedef struct {
+    double latitude;                    // Calculated latitude
+    double longitude;                   // Calculated longitude
+    double accuracy;                    // Position accuracy in meters
+    double confidence;                  // Confidence level (0.0-1.0)
+    time_t calculation_time;            // When position was calculated
+    int method;                         // Triangulation method used
+} opencellid_triangulation_result_t;
+
 // Function declarations
 void log_message(log_level_t level, const char *format, ...);
 

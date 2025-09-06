@@ -27,6 +27,10 @@ static bool g_terrain_initialized = false;
 static pthread_mutex_t g_terrain_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
+void analyze_terrain_characteristics(gps_terrain_cache_entry_t *entry);
+static double calculate_elevation_variance(const double *elevations, int count);
+void analyze_slope_and_gradient(gps_terrain_cache_entry_t *entry);
+static double calculate_slope_direction(double north_elevation, double south_elevation, double east_elevation, double west_elevation);
 static int perform_terrain_analysis(double lat, double lon, gps_terrain_info_t *terrain_info);
 static int get_real_elevation(double lat, double lon, double* elevation);
 static int get_elevation_from_google_api(double lat, double lon, double* elevation);
@@ -67,7 +71,7 @@ int gps_terrain_init(void) {
         g_terrain.terrain_cache[i].terrain_type = TERRAIN_TYPE_UNKNOWN;
         g_terrain.terrain_cache[i].slope = 0.0;
         g_terrain.terrain_cache[i].roughness = 0.0;
-        g_terrain.terrain_cache[i].drainage = 0.0;
+        g_terrain.terrain_cache[i].draination = 0.0;
         g_terrain.terrain_cache[i].vegetation_density = 0.0;
         g_terrain.terrain_cache[i].soil_type = 0;
         g_terrain.terrain_cache[i].water_bodies = 0;
@@ -143,8 +147,8 @@ static int perform_terrain_analysis(double lat, double lon, gps_terrain_info_t *
     // Analyze terrain roughness
     analyze_terrain_roughness(lat, lon, terrain_info);
     
-    // Analyze drainage patterns
-    analyze_drainage_patterns(lat, lon, terrain_info);
+    // Analyze draination patterns
+    analyze_draination_patterns(lat, lon, terrain_info);
     
     // Analyze vegetation and soil
     analyze_vegetation_and_soil(lat, lon, terrain_info);
@@ -258,7 +262,7 @@ static int get_elevation_from_local_srtm(double lat, double lon, double* elevati
 }
 
 // Analyze terrain characteristics
-static void analyze_terrain_characteristics(double lat, double lon, gps_terrain_info_t *terrain_info) {
+void analyze_terrain_characteristics(double lat, double lon, gps_terrain_info_t *terrain_info) {
     // Analyze elevation patterns in surrounding area
     double surrounding_elevations[8];
     double distances[8] = {100.0, 200.0, 500.0, 1000.0, 2000.0, 5000.0, 10000.0, 20000.0};
@@ -309,7 +313,7 @@ static double calculate_elevation_variance(const double *elevations, int count) 
 }
 
 // Analyze slope and gradient
-static void analyze_slope_and_gradient(double lat, double lon, gps_terrain_info_t *terrain_info) {
+void analyze_slope_and_gradient(double lat, double lon, gps_terrain_info_t *terrain_info) {
     // Calculate slope in multiple directions
     double slopes[8];
     double distances[8] = {100.0, 200.0, 500.0, 1000.0, 2000.0, 5000.0, 10000.0, 20000.0};
@@ -394,9 +398,9 @@ static void analyze_terrain_roughness(double lat, double lon, gps_terrain_info_t
     terrain_info->roughness = sqrt(total_diff_squared / 24.0);
 }
 
-// Analyze drainage patterns
-static void analyze_drainage_patterns(double lat, double lon, gps_terrain_info_t *terrain_info) {
-    // Simple drainage analysis based on slope direction and elevation
+// Analyze draination patterns
+static void analyze_draination_patterns(double lat, double lon, gps_terrain_info_t *terrain_info) {
+    // Simple draination analysis based on slope direction and elevation
     // In a real implementation, this would use hydrological models
     
     // Calculate flow accumulation based on slope
@@ -413,14 +417,14 @@ static void analyze_drainage_patterns(double lat, double lon, gps_terrain_info_t
         }
         
         if (offset_elevation < terrain_info->elevation) {
-            // Downhill direction - contributes to drainage
+            // Downhill direction - contributes to draination
             double slope = (terrain_info->elevation - offset_elevation) / 1000.0;
             flow_accumulation += slope;
             total_slope += slope;
         }
     }
     
-    terrain_info->drainage_efficiency = flow_accumulation / 8.0;
+    terrain_info->draination_efficiency = flow_accumulation / 8.0;
     terrain_info->water_flow_direction = calculate_slope_direction(&total_slope);
 }
 
@@ -442,7 +446,7 @@ static void analyze_vegetation_and_soil(double lat, double lon, gps_terrain_info
     // Water bodies detection (simplified)
     double water_probability = 0.1; // Base probability
     if (terrain_info->elevation < 200.0) water_probability += 0.3; // Low elevation
-    if (terrain_info->drainage_efficiency > 0.5) water_probability += 0.2; // Good drainage
+    if (terrain_info->draination_efficiency > 0.5) water_probability += 0.2; // Good draination
     
     terrain_info->water_bodies = (water_probability > 0.3) ? 1 : 0;
 }
@@ -493,7 +497,7 @@ static void calculate_terrain_difficulty(gps_terrain_info_t *terrain_info) {
     difficulty += (1.0 - terrain_info->vegetation_density) * 15.0;
     
     // Drainage factor (10%)
-    difficulty += (1.0 - terrain_info->drainage_efficiency) * 10.0;
+    difficulty += (1.0 - terrain_info->draination_efficiency) * 10.0;
     
     terrain_info->difficulty_score = fmin(100.0, difficulty);
     
@@ -533,7 +537,7 @@ static bool get_cached_terrain(double lat, double lon, gps_terrain_info_t *terra
                 terrain_info->terrain_type = cache->terrain_type;
                 terrain_info->slope = cache->slope;
                 terrain_info->roughness = cache->roughness;
-                terrain_info->drainage = cache->draination;
+                terrain_info->draination = cache->draination;
                 terrain_info->vegetation_density = cache->vegetation_density;
                 terrain_info->soil_type = cache->soil_type;
                 terrain_info->water_bodies = cache->water_bodies;
@@ -578,7 +582,7 @@ static void cache_terrain_data(double lat, double lon, const gps_terrain_info_t 
         cache->terrain_type = terrain_info->terrain_type;
         cache->slope = terrain_info->slope;
         cache->roughness = terrain_info->roughness;
-        cache->draination = terrain_info->drainage;
+        cache->draination = terrain_info->draination;
         cache->vegetation_density = terrain_info->vegetation_density;
         cache->soil_type = terrain_info->soil_type;
         cache->water_bodies = terrain_info->water_bodies;
