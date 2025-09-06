@@ -10,6 +10,23 @@
 #include <string.h>
 #include <math.h>
 
+// UBUS policy enums
+enum {
+    OVERLAY_MANAGEMENT_CONFIG_ENABLED,
+    OVERLAY_MANAGEMENT_CONFIG_OVERLAY_SPACE_THRESHOLD,
+    OVERLAY_MANAGEMENT_CONFIG_OVERLAY_CRITICAL_THRESHOLD,
+    OVERLAY_MANAGEMENT_CONFIG_CLEANUP_RETENTION_DAYS,
+    OVERLAY_MANAGEMENT_CONFIG_NOTIFICATIONS_ENABLED,
+    OVERLAY_MANAGEMENT_CONFIG_NOTIFY_ON_FIXES,
+    OVERLAY_MANAGEMENT_CONFIG_NOTIFY_ON_CRITICAL,
+    OVERLAY_MANAGEMENT_CONFIG_CHECK_INTERVAL,
+    OVERLAY_MANAGEMENT_CONFIG_CLEANUP_THRESHOLD,
+    OVERLAY_MANAGEMENT_CONFIG_EMERGENCY_THRESHOLD,
+    OVERLAY_MANAGEMENT_CONFIG_AUTO_CLEANUP,
+    OVERLAY_MANAGEMENT_CONFIG_BACKUP_BEFORE_CLEANUP,
+    __OVERLAY_MANAGEMENT_CONFIG_MAX
+};
+
 // Forward declarations
 static int autonomy_overlay_management_status(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg);
@@ -45,7 +62,7 @@ static const struct ubus_object_type autonomy_overlay_management_obj_type = {
 };
 
 // UBUS object
-static const struct ubus_object autonomy_overlay_management_obj = {
+static struct ubus_object autonomy_overlay_management_obj = {
     .name = "overlay_management",
     .type = &autonomy_overlay_management_obj_type,
     .methods = autonomy_overlay_management_methods,

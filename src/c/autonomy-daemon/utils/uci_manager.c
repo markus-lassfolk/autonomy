@@ -14,6 +14,31 @@
 static struct uci_context *g_uci_ctx = NULL;
 static bool g_uci_initialized = false;
 
+// Utility functions
+static const char* get_log_level_string(int log_level) {
+    switch(log_level) {
+        case 0: return "trace";
+        case 1: return "debug";
+        case 2: return "info";
+        case 3: return "warn";
+        case 4: return "error";
+        case 5: return "fatal";
+        default: return "info";
+    }
+}
+
+static char* int_to_string(int value) {
+    static char buffer[32];
+    snprintf(buffer, sizeof(buffer), "%d", value);
+    return buffer;
+}
+
+static char* double_to_string(double value) {
+    static char buffer[32];
+    snprintf(buffer, sizeof(buffer), "%.2f", value);
+    return buffer;
+}
+
 // Default configuration values
 static const autonomy_config_t DEFAULT_CONFIG = {
     .config_file = "/etc/config/autonomy",
@@ -72,7 +97,7 @@ int uci_manager_init(void) {
 }
 
 // Load configuration from UCI
-static int uci_manager_load_config(autonomy_config_t *config) {
+int uci_manager_load_config(autonomy_config_t *config) {
     if (!g_uci_initialized || !config) {
         LOGX_ERROR_MSG("UCI manager not initialized or invalid config pointer");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
@@ -289,7 +314,7 @@ static int uci_manager_load_config(autonomy_config_t *config) {
 }
 
 // Save configuration to UCI
-static int uci_manager_save_config(const autonomy_config_t *config) {
+int uci_manager_save_config(const autonomy_config_t *config) {
     if (!g_uci_initialized || !config) {
         LOGX_ERROR_MSG("UCI manager not initialized or invalid config pointer");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
@@ -304,13 +329,30 @@ static int uci_manager_save_config(const autonomy_config_t *config) {
     }
     
     // Create general section
-    struct uci_section *general = uci_add_section(g_uci_ctx, pkg, "general", "general");
+    struct uci_section *general = NULL;
+    uci_add_section(g_uci_ctx, pkg, "general", &general);
     if (general) {
-        uci_set(g_uci_ctx, general, "daemon_mode", config->daemon_mode ? "1" : "0");
-        uci_set(g_uci_ctx, general);
-        uci_set(g_uci_ctx, general, "log_level", get_log_level_string(config->log_level));
-        uci_set(g_uci_ctx, general);
-        uci_set(g_uci_ctx, general, "pid_file_timeout", int_to_string(config->pid_file_timeout));
+        struct uci_ptr ptr;
+        memset(&ptr, 0, sizeof(ptr));
+        ptr.package = "autonomy";
+        ptr.section = "general";
+        
+        // Set daemon_mode
+        ptr.option = "daemon_mode";
+        ptr.value = config->daemon_mode ? "1" : "0";
+        uci_set(g_uci_ctx, &ptr);
+        
+        // Set log_level
+        ptr.option = "log_level";
+        ptr.value = get_log_level_string(config->log_level);
+        uci_set(g_uci_ctx, &ptr);
+        
+        // Set pid_file_timeout
+        ptr.option = "pid_file_timeout";
+        char pid_timeout_str[32];
+        snprintf(pid_timeout_str, sizeof(pid_timeout_str), "%d", config->pid_file_timeout);
+        ptr.value = pid_timeout_str;
+        uci_set(g_uci_ctx, &ptr);
     }
     
     // Create network section
@@ -410,7 +452,7 @@ static char* float_to_string(float value) {
 }
 
 // Validate configuration
-static int uci_manager_validate_config(const autonomy_config_t *config) {
+int uci_manager_validate_config(const autonomy_config_t *config) {
     if (!config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -466,7 +508,7 @@ const autonomy_config_t* uci_manager_get_default_config(void) {
 }
 
 // Check if UCI is available
-static bool uci_manager_is_available(void) {
+bool uci_manager_is_available(void) {
     return g_uci_initialized && g_uci_ctx != NULL;
 }
 

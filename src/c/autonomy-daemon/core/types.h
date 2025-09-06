@@ -468,6 +468,51 @@ typedef struct {
     double gps_health_score;            // GPS health score
 } autonomy_state_t;
 
+// Autonomy daemon configuration
+typedef struct {
+    // Daemon settings
+    char config_file[256];                   // Configuration file path
+    bool daemon_mode;                        // Run as daemon
+    bool debug_mode;                         // Debug mode enabled
+    int log_level;                           // Log level
+    char log_file[256];                      // Log file path
+    int pid_file_timeout;                    // PID file timeout
+    
+    // Network settings
+    int network_check_interval;              // Network check interval
+    int failover_timeout;                    // Failover timeout
+    bool auto_failover;                      // Auto failover enabled
+    int min_interface_health;                // Minimum interface health
+    bool mwan3_integration;                  // MWAN3 integration
+    
+    // GPS settings
+    int gps_update_interval;                 // GPS update interval
+    int gps_timeout;                         // GPS timeout
+    bool gps_fusion;                         // GPS fusion enabled
+    int gps_cache_timeout;                   // GPS cache timeout
+    double min_gps_accuracy;                 // Minimum GPS accuracy
+    
+    // Starlink settings
+    int starlink_check_interval;             // Starlink check interval
+    bool starlink_health_monitoring;         // Starlink health monitoring
+    char starlink_host[256];                 // Starlink host
+    int starlink_port;                       // Starlink port
+    int starlink_timeout;                    // Starlink timeout
+    
+    // System monitoring
+    int system_check_interval;               // System check interval
+    bool resource_monitoring;                // Resource monitoring enabled
+    bool service_monitoring;                 // Service monitoring enabled
+    int alert_threshold;                     // Alert threshold
+    
+    // Notifications
+    bool notifications_enabled;              // Notifications enabled
+    char email_from[256];                    // Email from address
+    char email_to[256];                      // Email to address
+    char email_smtp[256];                    // SMTP server
+    char webhook_url[512];                   // Webhook URL
+} autonomy_config_t;
+
 // Function declarations
 void log_message(log_level_t level, const char *format, ...);
 
