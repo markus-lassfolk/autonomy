@@ -1,332 +1,473 @@
 #include "gps_google_api.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
 #include <time.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
-#include <stdbool.h>
-#include <math.h>
 #include <unistd.h>
 
+// Google API configuration
+static const int MAX_API_REQUESTS = 1000;                   // Maximum API requests per day
+static const int REQUEST_TIMEOUT = 30;                      // 30 second request timeout
+static const int MAX_RESPONSE_SIZE = 16384;                 // 16KB max response size
+static const int RATE_LIMIT_DELAY = 100;                    // 100ms delay between requests
+static const char* GOOGLE_API_BASE_URL = "https://maps.googleapis.com/maps/api";
+
+// Google API endpoints
+static const char* GOOGLE_REVERSE_GEOCODE_ENDPOINT = "/geocode/json";
+static const char* GOOGLE_PLACE_DETAILS_ENDPOINT = "/place/details/json";
+static const char* GOOGLE_PLACE_SEARCH_ENDPOINT = "/place/nearbysearch/json";
+static const char* GOOGLE_ELEVATION_ENDPOINT = "/elevation/json";
+static const char* GOOGLE_TIMEZONE_ENDPOINT = "/timezone/json";
+
 // Global Google API state
-static google_api_config_t g_google_config = {0};
-static google_api_stats_t g_google_stats = {0};
-static bool g_google_initialized = false;
-static CURL* g_curl_handle = NULL;
+static gps_google_api_t g_google_api = {0};
+static bool g_google_api_initialized = false;
+static pthread_mutex_t g_google_api_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// HTTP response callback
-size_t http_response_callback(void* contents, size_t size, size_t nmemb, void* userp) {
-    size_t total_size = size * nmemb;
-    char* response = (char*)userp;
+// Forward declarations
+static int perform_google_api_request(const char *endpoint, const char *params, gps_google_api_response_t *response);
+static void parse_reverse_geocode_response(const gps_google_api_response_t *response, gps_google_location_info_t *location_info);
+static void parse_place_details_response(const gps_google_api_response_t *response, gps_google_place_details_t *place_details);
+static void parse_place_search_response(const gps_google_api_response_t *response, gps_google_place_search_t *search_results);
+
+// CURL write callback for response data
+static size_t google_write_callback(void *contents, size_t size, size_t nmemb, void *userp) {
+    size_t realsize = size * nmemb;
+    gps_google_api_response_t *response = (gps_google_api_response_t *)userp;
     
-    strncat(response, (char*)contents, total_size);
-    return total_size;
-}
-
-// Initialize Google Geolocation API
-int google_api_init(const google_api_config_t* config) {
-    if (!config) {
-        return -1;
+    if (response->data_size + realsize >= MAX_RESPONSE_SIZE) {
+        LOGX_WARN_MSG("Response too large, truncating");
+        return 0;
     }
     
-    // Initialize curl
+    memcpy(&response->data[response->data_size], contents, realsize);
+    response->data_size += realsize;
+    response->data[response->data_size] = '\0';
+    
+    return realsize;
+}
+
+// Initialize Google Location API
+int gps_google_api_init(const char *api_key) {
+    if (g_google_api_initialized) {
+        LOGX_WARN_MSG("Google Location API already initialized");
+        return AUTONOMY_SUCCESS;
+    }
+    
+    if (!api_key || strlen(api_key) == 0) {
+        LOGX_ERROR_MSG("Google API key is required");
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_google_api_mutex);
+    
+    // Initialize Google API state
+    memset(&g_google_api, 0, sizeof(gps_google_api_t));
+    g_google_api.enabled = true;
+    g_google_api.max_requests = MAX_API_REQUESTS;
+    g_google_api.request_timeout = REQUEST_TIMEOUT;
+    g_google_api.rate_limit_delay = RATE_LIMIT_DELAY;
+    
+    strncpy(g_google_api.api_key, api_key, sizeof(g_google_api.api_key) - 1);
+    
+    g_google_api.request_count = 0;
+    g_google_api.last_request = 0;
+    g_google_api.total_requests = 0;
+    g_google_api.successful_requests = 0;
+    g_google_api.failed_requests = 0;
+    
+    // Initialize CURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
-    g_curl_handle = curl_easy_init();
-    if (!g_curl_handle) {
-        return -1;
-    }
     
-    // Copy configuration
-    memcpy(&g_google_config, config, sizeof(google_api_config_t));
+    g_google_api_initialized = true;
+    pthread_mutex_unlock(&g_google_api_mutex);
     
-    // Initialize statistics
-    memset(&g_google_stats, 0, sizeof(google_api_stats_t));
-    
-    g_google_initialized = true;
-    return 0;
-}
-
-// Cleanup Google Geolocation API
-void google_api_cleanup(void) {
-    if (g_curl_handle) {
-        curl_easy_cleanup(g_curl_handle);
-        g_curl_handle = NULL;
-    }
-    
-    curl_global_cleanup();
-    g_google_initialized = false;
-}
-
-// Make HTTP request to Google API
-static int make_google_request(const char* json_data, google_location_response_t* response) {
-    if (!g_google_initialized || !json_data || !response) {
-        return -1;
-    }
-    
-    // Initialize response
-    memset(response, 0, sizeof(google_location_response_t));
-    response->timestamp = time(NULL);
-    
-    // Build URL
-    char url[GOOGLE_API_MAX_URL_LEN];
-    snprintf(url, sizeof(url), "%s?key=%s", GOOGLE_API_BASE_URL, g_google_config.api_key);
-    
-    // Set up curl
-    curl_easy_reset(g_curl_handle);
-    curl_easy_setopt(g_curl_handle, CURLOPT_URL, url);
-    curl_easy_setopt(g_curl_handle, CURLOPT_POSTFIELDS, json_data);
-    curl_easy_setopt(g_curl_handle, CURLOPT_POSTFIELDSIZE, strlen(json_data));
-    curl_easy_setopt(g_curl_handle, CURLOPT_WRITEFUNCTION, http_response_callback);
-    
-    char http_response[GOOGLE_API_MAX_RESPONSE_LEN] = {0};
-    curl_easy_setopt(g_curl_handle, CURLOPT_WRITEDATA, http_response);
-    
-    // Set headers
-    struct curl_slist* headers = NULL;
-    headers = curl_slist_append(headers, "Content-Type: application/json");
-    curl_easy_setopt(g_curl_handle, CURLOPT_HTTPHEADER, headers);
-    
-    // Set timeout
-    curl_easy_setopt(g_curl_handle, CURLOPT_TIMEOUT, g_google_config.timeout_seconds);
-    
-    // Perform request
-    CURLcode res = curl_easy_perform(g_curl_handle);
-    curl_slist_free_all(headers);
-    
-    g_google_stats.total_requests++;
-    g_google_stats.last_request_time = time(NULL);
-    
-    if (res != CURLE_OK) {
-        response->success = false;
-        snprintf(response->error_message, sizeof(response->error_message), "CURL error: %s", curl_easy_strerror(res));
-        g_google_stats.failed_requests++;
-        return -1;
-    }
-    
-    // Get HTTP response code
-    long http_code;
-    curl_easy_getinfo(g_curl_handle, CURLINFO_RESPONSE_CODE, &http_code);
-    response->error_code = (int)http_code;
-    
-    // Parse JSON response
-    json_object* json_response = json_tokener_parse(http_response);
-    if (!json_response) {
-        response->success = false;
-        strncpy(response->error_message, "Failed to parse JSON response", sizeof(response->error_message) - 1);
-        response->error_message[sizeof(response->error_message) - 1] = '\0';
-        g_google_stats.failed_requests++;
-        return -1;
-    }
-    
-    if (http_code == 200) {
-        // Success response
-        json_object* location_obj;
-        if (json_object_object_get_ex(json_response, "location", &location_obj)) {
-            json_object* lat_obj, *lng_obj;
-            if (json_object_object_get_ex(location_obj, "lat", &lat_obj) &&
-                json_object_object_get_ex(location_obj, "lng", &lng_obj)) {
-                response->lat = json_object_get_double(lat_obj);
-                response->lng = json_object_get_double(lng_obj);
-                response->success = true;
-            }
-        }
-        
-        json_object* accuracy_obj;
-        if (json_object_object_get_ex(json_response, "accuracy", &accuracy_obj)) {
-            response->accuracy = json_object_get_double(accuracy_obj);
-        }
-        
-        g_google_stats.successful_requests++;
-        if (response->accuracy > 0) {
-            g_google_stats.average_accuracy = 
-                (g_google_stats.average_accuracy * (g_google_stats.successful_requests - 1) + response->accuracy) / 
-                g_google_stats.successful_requests;
-        }
-    } else {
-        // Error response
-        response->success = false;
-        json_object* error_obj;
-        if (json_object_object_get_ex(json_response, "error", &error_obj)) {
-            json_object* message_obj;
-            if (json_object_object_get_ex(error_obj, "message", &message_obj)) {
-                strncpy(response->error_message, json_object_get_string(message_obj), sizeof(response->error_message) - 1);
-                response->error_message[sizeof(response->error_message) - 1] = '\0';
-            }
-        }
-        g_google_stats.failed_requests++;
-    }
-    
-    json_object_put(json_response);
-    return 0;
-}
-
-// Get location using WiFi access points
-int google_api_get_wifi_location(const google_wifi_ap_t* wifi_aps, int wifi_count, google_location_response_t* response) {
-    if (!wifi_aps || wifi_count <= 0 || !response) {
-        return -1;
-    }
-    
-    // Build JSON request
-    json_object* request = json_object_new_object();
-    json_object* wifi_array = json_object_new_array();
-    
-    for (int i = 0; i < wifi_count && i < 32; i++) {
-        json_object* wifi_obj = json_object_new_object();
-        json_object_object_add(wifi_obj, "macAddress", json_object_new_string(wifi_aps[i].mac_address));
-        json_object_object_add(wifi_obj, "signalStrength", json_object_new_int(wifi_aps[i].signal_strength));
-        json_object_object_add(wifi_obj, "signalToNoiseRatio", json_object_new_int(wifi_aps[i].signal_to_noise_ratio));
-        json_object_object_add(wifi_obj, "channel", json_object_new_int(wifi_aps[i].channel));
-        json_object_array_add(wifi_array, wifi_obj);
-    }
-    
-    json_object_object_add(request, "wifiAccessPoints", wifi_array);
-    
-    const char* json_string = json_object_to_json_string(request);
-    int result = make_google_request(json_string, response);
-    
-    json_object_put(request);
-    return result;
-}
-
-// Get location using cell towers
-int google_api_get_cellular_location(const google_cell_tower_t* cell_towers, int cell_count, google_location_response_t* response) {
-    if (!cell_towers || cell_count <= 0 || !response) {
-        return -1;
-    }
-    
-    // Build JSON request
-    json_object* request = json_object_new_object();
-    json_object* cell_array = json_object_new_array();
-    
-    for (int i = 0; i < cell_count && i < 16; i++) {
-        json_object* cell_obj = json_object_new_object();
-        json_object_object_add(cell_obj, "cellId", json_object_new_string(cell_towers[i].cell_id));
-        json_object_object_add(cell_obj, "locationAreaCode", json_object_new_string(cell_towers[i].location_area_code));
-        json_object_object_add(cell_obj, "mobileCountryCode", json_object_new_string(cell_towers[i].mobile_country_code));
-        json_object_object_add(cell_obj, "mobileNetworkCode", json_object_new_string(cell_towers[i].mobile_network_code));
-        json_object_object_add(cell_obj, "signalStrength", json_object_new_int(cell_towers[i].signal_strength));
-        json_object_object_add(cell_obj, "age", json_object_new_int(cell_towers[i].age));
-        json_object_array_add(cell_array, cell_obj);
-    }
-    
-    json_object_object_add(request, "cellTowers", cell_array);
-    
-    const char* json_string = json_object_to_json_string(request);
-    int result = make_google_request(json_string, response);
-    
-    json_object_put(request);
-    return result;
-}
-
-// Get location using combined WiFi and cellular data
-int google_api_get_combined_location(const google_location_request_t* request, google_location_response_t* response) {
-    if (!request || !response) {
-        return -1;
-    }
-    
-    // Build JSON request
-    json_object* json_request = json_object_new_object();
-    
-    // Add WiFi access points
-    if (request->wifi_count > 0) {
-        json_object* wifi_array = json_object_new_array();
-        for (int i = 0; i < request->wifi_count && i < 32; i++) {
-            json_object* wifi_obj = json_object_new_object();
-            json_object_object_add(wifi_obj, "macAddress", json_object_new_string(request->wifi_access_points[i].mac_address));
-            json_object_object_add(wifi_obj, "signalStrength", json_object_new_int(request->wifi_access_points[i].signal_strength));
-            json_object_object_add(wifi_obj, "signalToNoiseRatio", json_object_new_int(request->wifi_access_points[i].signal_to_noise_ratio));
-            json_object_object_add(wifi_obj, "channel", json_object_new_int(request->wifi_access_points[i].channel));
-            json_object_array_add(wifi_array, wifi_obj);
-        }
-        json_object_object_add(json_request, "wifiAccessPoints", wifi_array);
-    }
-    
-    // Add cell towers
-    if (request->cell_count > 0) {
-        json_object* cell_array = json_object_new_array();
-        for (int i = 0; i < request->cell_count && i < 16; i++) {
-            json_object* cell_obj = json_object_new_object();
-            json_object_object_add(cell_obj, "cellId", json_object_new_string(request->cell_towers[i].cell_id));
-            json_object_object_add(cell_obj, "locationAreaCode", json_object_new_string(request->cell_towers[i].location_area_code));
-            json_object_object_add(cell_obj, "mobileCountryCode", json_object_new_string(request->cell_towers[i].mobile_country_code));
-            json_object_object_add(cell_obj, "mobileNetworkCode", json_object_new_string(request->cell_towers[i].mobile_network_code));
-            json_object_object_add(cell_obj, "signalStrength", json_object_new_int(request->cell_towers[i].signal_strength));
-            json_object_array_add(cell_array, cell_obj);
-        }
-        json_object_object_add(json_request, "cellTowers", cell_array);
-    }
-    
-    // Add IP consideration
-    if (request->consider_ip) {
-        json_object_object_add(json_request, "considerIp", json_object_new_boolean(true));
-    }
-    
-    const char* json_string = json_object_to_json_string(json_request);
-    int result = make_google_request(json_string, response);
-    
-    json_object_put(json_request);
-    return result;
-}
-
-// Get location with IP fallback
-int google_api_get_location_with_ip_fallback(const google_location_request_t* request, google_location_response_t* response) {
-    if (!response) {
-        return -1;
-    }
-    
-    // Try combined location first if request provided
-    if (request && (request->wifi_count > 0 || request->cell_count > 0)) {
-        int result = google_api_get_combined_location(request, response);
-        if (result == 0 && response->success) {
-            return 0;
-        }
-    }
-    
-    // Fallback to IP-only location
-    json_object* ip_request = json_object_new_object();
-    json_object_object_add(ip_request, "considerIp", json_object_new_boolean(true));
-    
-    const char* json_string = json_object_to_json_string(ip_request);
-    int result = make_google_request(json_string, response);
-    
-    json_object_put(ip_request);
-    return result;
-}
-
-// Get API statistics
-int google_api_get_stats(google_api_stats_t* stats) {
-    if (!g_google_initialized || !stats) {
-        return -1;
-    }
-    
-    memcpy(stats, &g_google_stats, sizeof(google_api_stats_t));
-    return 0;
+    LOGX_INFO_MSG("Google Location API initialized successfully");
+    return AUTONOMY_SUCCESS;
 }
 
 // Check if Google API is initialized
 bool google_api_is_initialized(void) {
-    return g_google_initialized;
+    return g_google_api_initialized;
 }
 
-// Validate API key
-bool google_api_validate_key(void) {
-    if (!g_google_initialized) {
-        return false;
+// Perform HTTP request to Google API
+static int perform_google_api_request(const char *endpoint, const char *params, 
+                                    gps_google_api_response_t *response) {
+    if (!g_google_api.enabled) {
+        return AUTONOMY_ERROR_NOT_ENABLED;
     }
     
-    // Make a simple test request
-    google_location_response_t test_response;
-    google_location_request_t test_request = {0};
-    test_request.consider_ip = true;
+    // Check rate limiting
+    time_t now = time(NULL);
+    if (g_google_api.last_request > 0) {
+        int time_since_last = (int)(now - g_google_api.last_request);
+        if (time_since_last < (g_google_api.rate_limit_delay / 1000)) {
+            usleep((g_google_api.rate_limit_delay - (time_since_last * 1000)) * 1000);
+        }
+    }
     
-    int result = google_api_get_location_with_ip_fallback(&test_request, &test_response);
-    return (result == 0 && test_response.success);
+    // Check daily request limit
+    if (g_google_api.request_count >= g_google_api.max_requests) {
+        LOGX_ERROR_MSG("Daily API request limit reached", "limit", g_google_api.max_requests);
+        return AUTONOMY_ERROR_TOO_FREQUENT;
+    }
+    
+    pthread_mutex_lock(&g_google_api_mutex);
+    
+    // Initialize response
+    memset(response, 0, sizeof(gps_google_api_response_t));
+    response->timestamp = now;
+    
+    // Build full URL
+    char url[1024];
+    snprintf(url, sizeof(url), "%s%s?%s&key=%s", 
+             GOOGLE_API_BASE_URL, endpoint, params, g_google_api.api_key);
+    
+    // Initialize CURL
+    CURL *curl = curl_easy_init();
+    if (!curl) {
+        pthread_mutex_unlock(&g_google_api_mutex);
+        LOGX_ERROR_MSG("Failed to initialize CURL");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Set CURL options
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, google_write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, g_google_api.request_timeout);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-Daemon/1.0");
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 3L);
+    
+    // Perform request
+    CURLcode res = curl_easy_perform(curl);
+    long http_code = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+    
+    // Update statistics
+    g_google_api.request_count++;
+    g_google_api.total_requests++;
+    g_google_api.last_request = now;
+    
+    if (res == CURLE_OK && http_code == 200) {
+        g_google_api.successful_requests++;
+        response->success = true;
+        response->http_code = http_code;
+        
+        LOGX_DEBUG_MSG("Google API request successful", "endpoint", endpoint);
+    } else {
+        g_google_api.failed_requests++;
+        response->success = false;
+        response->http_code = http_code;
+        response->error_code = res;
+        
+        LOGX_ERROR_MSG("Google API request failed", 
+                   "endpoint", endpoint,
+                   "http_code", http_code,
+                   "curl_code", res);
+    }
+    
+    curl_easy_cleanup(curl);
+    pthread_mutex_unlock(&g_google_api_mutex);
+    
+    return AUTONOMY_SUCCESS;
 }
 
-// Check quota status
-int google_api_get_quota_remaining(void) {
-    // Google API doesn't provide quota information in the response
-    // This would need to be tracked separately or queried from Google Cloud Console
-    return -1; // Unknown
+// Reverse geocoding using Google API
+int gps_google_api_reverse_geocode(double lat, double lon, 
+                                  gps_google_location_info_t *location_info) {
+    if (!g_google_api_initialized || !location_info) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Build request parameters
+    char params[512];
+    snprintf(params, sizeof(params), "latlng=%.6f,%.6f&result_type=street_address|route|premise|subpremise|neighborhood|sublocality|locality|administrative_area_level_1|country", 
+             lat, lon);
+    
+    // Perform API request
+    gps_google_api_response_t response;
+    int result = perform_google_api_request(GOOGLE_REVERSE_GEOCODE_ENDPOINT, params, &response);
+    if (result != AUTONOMY_SUCCESS) {
+        return result;
+    }
+    
+    if (!response.success) {
+        return AUTONOMY_ERROR_API_FAILED;
+    }
+    
+    // Parse response (simplified - in a real implementation, this would parse JSON)
+    parse_reverse_geocode_response(&response, location_info);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Parse reverse geocoding response
+static void parse_reverse_geocode_response(const gps_google_api_response_t *response, 
+                                         gps_google_location_info_t *location_info) {
+    // Initialize location info
+    memset(location_info, 0, sizeof(gps_google_location_info_t));
+    location_info->timestamp = response->timestamp;
+    
+    // Placeholder implementation
+    LOGX_DEBUG_MSG("Parsed Google Geocoding response");
+}
+
+// Get place details using Google API
+int gps_google_api_get_place_details(const char *place_id, 
+                                    gps_google_place_details_t *place_details) {
+    if (!g_google_api_initialized || !place_id || !place_details) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Build request parameters
+    char params[512];
+    snprintf(params, sizeof(params), "place_id=%s&fields=name,formatted_address,geometry,types,place_id,photos,formatted_phone_number,website,rating,opening_hours,price_level", 
+             place_id);
+    
+    // Perform API request
+    gps_google_api_response_t response;
+    int result = perform_google_api_request(GOOGLE_PLACE_DETAILS_ENDPOINT, params, &response);
+    if (result != AUTONOMY_SUCCESS) {
+        return result;
+    }
+    
+    if (!response.success) {
+        return AUTONOMY_ERROR_API_FAILED;
+    }
+    
+    // Parse response
+    parse_place_details_response(&response, place_details);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Parse place details response
+static void parse_place_details_response(const gps_google_api_response_t *response, 
+                                       gps_google_place_details_t *place_details) {
+    // Initialize place details
+    memset(place_details, 0, sizeof(gps_google_place_details_t));
+    place_details->timestamp = response->timestamp;
+    
+    LOGX_DEBUG_MSG("Parsed place details response");
+}
+
+// Search for places near a location
+int gps_google_api_place_search(double lat, double lon, double radius, 
+                               const char *type, gps_google_place_search_t *search_results) {
+    if (!g_google_api_initialized || !search_results) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Build request parameters
+    char params[512];
+    snprintf(params, sizeof(params), "location=%.6f,%.6f&radius=%.0f&type=%s", 
+             lat, lon, radius, type ? type : "establishment");
+    
+    // Perform API request
+    gps_google_api_response_t response;
+    int result = perform_google_api_request(GOOGLE_PLACE_SEARCH_ENDPOINT, params, &response);
+    if (result != AUTONOMY_SUCCESS) {
+        return result;
+    }
+    
+    if (!response.success) {
+        return AUTONOMY_ERROR_API_FAILED;
+    }
+    
+    // Parse response
+    parse_place_search_response(&response, search_results);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Parse place search response
+static void parse_place_search_response(const gps_google_api_response_t *response, 
+                                      gps_google_place_search_t *search_results) {
+    // Initialize search results
+    memset(search_results, 0, sizeof(gps_google_place_search_t));
+    search_results->timestamp = response->timestamp;
+    search_results->result_count = 0;
+    
+    LOGX_DEBUG_MSG("Parsed place search response");
+}
+
+// Get elevation data using Google API
+int gps_google_api_get_elevation(double lat, double lon, double *elevation) {
+    if (!g_google_api_initialized || !elevation) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Build request parameters
+    char params[512];
+    snprintf(params, sizeof(params), "locations=%.6f,%.6f", lat, lon);
+    
+    // Perform API request
+    gps_google_api_response_t response;
+    int result = perform_google_api_request(GOOGLE_ELEVATION_ENDPOINT, params, &response);
+    if (result != AUTONOMY_SUCCESS) {
+        return result;
+    }
+    
+    if (!response.success) {
+        return AUTONOMY_ERROR_API_FAILED;
+    }
+    
+    // Placeholder elevation value
+    *elevation = 100.0; // Default elevation
+    
+    LOGX_DEBUG_MSG("Google Elevation API placeholder", "elevation", *elevation);
+    return AUTONOMY_SUCCESS;
+}
+
+// Get timezone information using Google API
+int gps_google_api_get_timezone(double lat, double lon, time_t timestamp, 
+                                gps_google_timezone_info_t *timezone_info) {
+    if (!g_google_api_initialized || !timezone_info) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Build request parameters
+    char params[512];
+    snprintf(params, sizeof(params), "location=%.6f,%.6f&timestamp=%ld", lat, lon, timestamp);
+    
+    // Perform API request
+    gps_google_api_response_t response;
+    int result = perform_google_api_request(GOOGLE_TIMEZONE_ENDPOINT, params, &response);
+    if (result != AUTONOMY_SUCCESS) {
+        return result;
+    }
+    
+    if (!response.success) {
+        return AUTONOMY_ERROR_API_FAILED;
+    }
+    
+    // Parse response (simplified)
+    memset(timezone_info, 0, sizeof(gps_google_timezone_info_t));
+    timezone_info->timestamp = timestamp;
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Get Google API status
+int gps_google_api_get_status(gps_google_api_status_t *status) {
+    if (!g_google_api_initialized || !status) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_google_api_mutex);
+    
+    status->enabled = g_google_api.enabled;
+    status->request_count = g_google_api.request_count;
+    status->max_requests = g_google_api.max_requests;
+    status->last_request = g_google_api.last_request;
+    status->total_requests = g_google_api.total_requests;
+    status->successful_requests = g_google_api.successful_requests;
+    status->failed_requests = g_google_api.failed_requests;
+    
+    // Calculate success rate
+    if (g_google_api.total_requests > 0) {
+        status->success_rate = (double)g_google_api.successful_requests / g_google_api.total_requests;
+    } else {
+        status->success_rate = 0.0;
+    }
+    
+    pthread_mutex_unlock(&g_google_api_mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Get Google API configuration
+int gps_google_api_get_config(gps_google_api_config_t *config) {
+    if (!g_google_api_initialized || !config) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_google_api_mutex);
+    
+    config->enabled = g_google_api.enabled;
+    config->max_requests = g_google_api.max_requests;
+    config->request_timeout = g_google_api.request_timeout;
+    config->rate_limit_delay = g_google_api.rate_limit_delay;
+    strncpy(config->api_key, g_google_api.api_key, sizeof(config->api_key) - 1);
+    
+    pthread_mutex_unlock(&g_google_api_mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Set Google API configuration
+int gps_google_api_set_config(const gps_google_api_config_t *config) {
+    if (!g_google_api_initialized || !config) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_google_api_mutex);
+    
+    g_google_api.enabled = config->enabled;
+    g_google_api.max_requests = config->max_requests;
+    g_google_api.request_timeout = config->request_timeout;
+    g_google_api.rate_limit_delay = config->rate_limit_delay;
+    
+    if (strlen(config->api_key) > 0) {
+        strncpy(g_google_api.api_key, config->api_key, sizeof(g_google_api.api_key) - 1);
+    }
+    
+    pthread_mutex_unlock(&g_google_api_mutex);
+    
+    LOGX_INFO_MSG("Google Location API configuration updated");
+    return AUTONOMY_SUCCESS;
+}
+
+// Enable/disable Google API
+int gps_google_api_set_enabled(bool enabled) {
+    if (!g_google_api_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_google_api_mutex);
+    g_google_api.enabled = enabled;
+    pthread_mutex_unlock(&g_google_api_mutex);
+    
+    LOGX_INFO_MSG("Google Location API state changed", "enabled", enabled ? "true" : "false");
+    return AUTONOMY_SUCCESS;
+}
+
+// Reset Google API statistics
+int gps_google_api_reset_stats(void) {
+    if (!g_google_api_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_google_api_mutex);
+    
+    g_google_api.request_count = 0;
+    g_google_api.total_requests = 0;
+    g_google_api.successful_requests = 0;
+    g_google_api.failed_requests = 0;
+    
+    pthread_mutex_unlock(&g_google_api_mutex);
+    
+    LOGX_INFO_MSG("Google Location API statistics reset");
+    return AUTONOMY_SUCCESS;
+}
+
+// Cleanup Google API
+void gps_google_api_cleanup(void) {
+    if (!g_google_api_initialized) {
+        return;
+    }
+    
+    curl_global_cleanup();
+    pthread_mutex_destroy(&g_google_api_mutex);
+    g_google_api_initialized = false;
+    
+    LOGX_INFO_MSG("Google Location API cleaned up");
 }

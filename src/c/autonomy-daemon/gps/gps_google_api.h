@@ -3,135 +3,112 @@
 
 #include "../core/types.h"
 #include <stdbool.h>
-#include <stdint.h>
 #include <time.h>
-#include <math.h>
-#include <unistd.h>
+#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// Google Geolocation API constants
-#define GOOGLE_API_BASE_URL "https://www.googleapis.com/geolocation/v1/geolocate"
-#define GOOGLE_API_MAX_KEY_LEN 256
-#define GOOGLE_API_MAX_URL_LEN 512
-#define GOOGLE_API_MAX_RESPONSE_LEN 8192
-
-// WiFi access point information
+// Google API response
 typedef struct {
-    char mac_address[18];          // MAC address (e.g., "00:11:22:33:44:55")
-    int signal_strength;           // Signal strength in dBm
-    int signal_to_noise_ratio;     // Signal to noise ratio
-    int channel;                   // WiFi channel
-    int frequency;                 // Frequency in MHz
-} google_wifi_ap_t;
+    bool success;                       // Whether request was successful
+    time_t timestamp;                   // Response timestamp
+    long http_code;                     // HTTP response code
+    int error_code;                     // CURL error code
+    char data[16384];                   // Response data
+    size_t data_size;                   // Size of response data
+} gps_google_api_response_t;
 
-// Cell tower information for Google API
+// Google location information
 typedef struct {
-    char cell_id[32];              // Cell ID
-    char location_area_code[16];   // Location Area Code
-    char mobile_country_code[8];   // Mobile Country Code
-    char mobile_network_code[8];   // Mobile Network Code
-    int signal_strength;           // Signal strength in dBm
-    int age;                       // Age of the reading in seconds
-    int timing_advance;            // Timing advance
-} google_cell_tower_t;
+    time_t timestamp;                   // Information timestamp
+    char formatted_address[512];        // Formatted address
+    char street_number[64];             // Street number
+    char route[128];                    // Street name/route
+    char locality[128];                 // City/locality
+    char administrative_area[128];      // State/province
+    char country[64];                   // Country
+    char postal_code[32];               // Postal code
+    char place_id[128];                 // Google Place ID
+} gps_google_location_info_t;
 
-// Google API request structure
+// Google place details
 typedef struct {
-    google_wifi_ap_t wifi_access_points[32];  // Up to 32 WiFi APs
-    int wifi_count;
-    google_cell_tower_t cell_towers[16];      // Up to 16 cell towers
-    int cell_count;
-    bool consider_ip;                          // Consider IP address
-} google_location_request_t;
+    time_t timestamp;                   // Details timestamp
+    char name[256];                     // Place name
+    char formatted_address[512];        // Formatted address
+    char place_id[128];                 // Google Place ID
+    char types[512];                    // Place types
+    char phone_number[64];              // Phone number
+    char website[256];                  // Website URL
+    double rating;                      // Place rating
+    int price_level;                    // Price level
+    bool open_now;                      // Whether place is open now
+} gps_google_place_details_t;
 
-// Google API response structure
+// Google place search results
 typedef struct {
-    bool success;                   // Whether API call was successful
-    double lat;                     // Latitude
-    double lng;                     // Longitude
-    double accuracy;                // Accuracy in meters
-    char error_message[256];        // Error message if failed
-    int error_code;                 // HTTP error code
-    time_t timestamp;               // Response timestamp
-} google_location_response_t;
+    time_t timestamp;                   // Search timestamp
+    int result_count;                   // Number of results
+    char next_page_token[256];          // Next page token
+    char results[20][256];              // Place IDs (up to 20)
+} gps_google_place_search_t;
+
+// Google timezone information
+typedef struct {
+    time_t timestamp;                   // Timezone timestamp
+    char timezone_id[128];              // Timezone ID
+    char timezone_name[128];            // Timezone name
+    int raw_offset;                     // Raw offset in seconds
+    int dst_offset;                     // DST offset in seconds
+} gps_google_timezone_info_t;
 
 // Google API configuration
 typedef struct {
-    char api_key[GOOGLE_API_MAX_KEY_LEN];
-    int timeout_seconds;
-    int max_retries;
-    bool enable_wifi;
-    bool enable_cellular;
-    bool enable_ip_fallback;
-    double min_accuracy_threshold;  // Minimum accuracy threshold in meters
-} google_api_config_t;
+    bool enabled;                       // Enable/disable API
+    int max_requests;                   // Maximum daily requests
+    int request_timeout;                // Request timeout in seconds
+    int rate_limit_delay;               // Rate limit delay in milliseconds
+    char api_key[256];                  // Google API key
+} gps_google_api_config_t;
 
-// Google API statistics
+// Google API status
 typedef struct {
-    int total_requests;
-    int successful_requests;
-    int failed_requests;
-    double average_accuracy;
-    double average_response_time_ms;
-    time_t last_request_time;
-    int quota_remaining;
-} google_api_stats_t;
+    bool enabled;                       // API enabled
+    int request_count;                  // Current daily request count
+    int max_requests;                   // Maximum daily requests
+    time_t last_request;                // Last request timestamp
+    int total_requests;                 // Total requests made
+    int successful_requests;            // Successful requests
+    int failed_requests;                // Failed requests
+    double success_rate;                // Success rate (0-1)
+} gps_google_api_status_t;
+
+// Google API system state
+typedef struct {
+    bool enabled;                       // API enabled
+    int max_requests;                   // Maximum requests
+    int request_timeout;                // Request timeout
+    int rate_limit_delay;               // Rate limit delay
+    char api_key[256];                  // API key
+    
+    // State
+    int request_count;                  // Request count
+    time_t last_request;                // Last request
+    int total_requests;                 // Total requests
+    int successful_requests;            // Successful requests
+    int failed_requests;                // Failed requests
+} gps_google_api_t;
+
+// Function prototypes
 
 /**
- * Initialize Google Geolocation API
- * @param config API configuration
+ * Initialize Google Location API
+ * @param api_key Google API key
  * @return AUTONOMY_SUCCESS on success, error code on failure
  */
-int google_api_init(const google_api_config_t* config);
-
-/**
- * Cleanup Google Geolocation API
- */
-void google_api_cleanup(void);
-
-/**
- * Get location using WiFi access points
- * @param wifi_aps Array of WiFi access points
- * @param wifi_count Number of WiFi access points
- * @param response Response structure to fill
- * @return AUTONOMY_SUCCESS on success, error code on failure
- */
-int google_api_get_wifi_location(const google_wifi_ap_t* wifi_aps, int wifi_count, google_location_response_t* response);
-
-/**
- * Get location using cell towers
- * @param cell_towers Array of cell towers
- * @param cell_count Number of cell towers
- * @param response Response structure to fill
- * @return AUTONOMY_SUCCESS on success, error code on failure
- */
-int google_api_get_cellular_location(const google_cell_tower_t* cell_towers, int cell_count, google_location_response_t* response);
-
-/**
- * Get location using combined WiFi and cellular data
- * @param request Combined request structure
- * @param response Response structure to fill
- * @return AUTONOMY_SUCCESS on success, error code on failure
- */
-int google_api_get_combined_location(const google_location_request_t* request, google_location_response_t* response);
-
-/**
- * Get location with IP fallback
- * @param request Request structure (can be NULL for IP-only)
- * @param response Response structure to fill
- * @return AUTONOMY_SUCCESS on success, error code on failure
- */
-int google_api_get_location_with_ip_fallback(const google_location_request_t* request, google_location_response_t* response);
-
-/**
- * Get API statistics
- * @param stats Statistics structure to fill
- * @return AUTONOMY_SUCCESS on success, error code on failure
- */
-int google_api_get_stats(google_api_stats_t* stats);
+int gps_google_api_init(const char *api_key);
 
 /**
  * Check if Google API is initialized
@@ -140,16 +117,94 @@ int google_api_get_stats(google_api_stats_t* stats);
 bool google_api_is_initialized(void);
 
 /**
- * Validate API key
- * @return true if valid, false otherwise
+ * Reverse geocoding using Google API
+ * @param lat Latitude
+ * @param lon Longitude
+ * @param location_info Location information (output)
+ * @return AUTONOMY_SUCCESS on success, error code on failure
  */
-bool google_api_validate_key(void);
+int gps_google_api_reverse_geocode(double lat, double lon, 
+                                  gps_google_location_info_t *location_info);
 
 /**
- * Check quota status
- * @return remaining quota or -1 if unknown
+ * Get place details using Google API
+ * @param place_id Google Place ID
+ * @param place_details Place details (output)
+ * @return AUTONOMY_SUCCESS on success, error code on failure
  */
-int google_api_get_quota_remaining(void);
+int gps_google_api_get_place_details(const char *place_id, 
+                                    gps_google_place_details_t *place_details);
+
+/**
+ * Search for places near a location
+ * @param lat Latitude
+ * @param lon Longitude
+ * @param radius Search radius in meters
+ * @param type Place type (optional)
+ * @param search_results Search results (output)
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_google_api_place_search(double lat, double lon, double radius, 
+                               const char *type, gps_google_place_search_t *search_results);
+
+/**
+ * Get elevation data using Google API
+ * @param lat Latitude
+ * @param lon Longitude
+ * @param elevation Elevation in meters (output)
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_google_api_get_elevation(double lat, double lon, double *elevation);
+
+/**
+ * Get timezone information using Google API
+ * @param lat Latitude
+ * @param lon Longitude
+ * @param timestamp Timestamp for timezone calculation
+ * @param timezone_info Timezone information (output)
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_google_api_get_timezone(double lat, double lon, time_t timestamp, 
+                                gps_google_timezone_info_t *timezone_info);
+
+/**
+ * Get Google API status
+ * @param status Status structure to populate
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_google_api_get_status(gps_google_api_status_t *status);
+
+/**
+ * Get Google API configuration
+ * @param config Configuration structure to populate
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_google_api_get_config(gps_google_api_config_t *config);
+
+/**
+ * Set Google API configuration
+ * @param config Configuration to apply
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_google_api_set_config(const gps_google_api_config_t *config);
+
+/**
+ * Enable/disable Google API
+ * @param enabled True to enable, false to disable
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_google_api_set_enabled(bool enabled);
+
+/**
+ * Reset Google API statistics
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_google_api_reset_stats(void);
+
+/**
+ * Cleanup Google API
+ */
+void gps_google_api_cleanup(void);
 
 #ifdef __cplusplus
 }

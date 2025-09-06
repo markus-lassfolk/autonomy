@@ -302,6 +302,10 @@ typedef enum {
 
 // Note: gps_source_health_t and gps_movement_state_t are defined in gps/gps_comprehensive.h
 
+// Forward declarations for OpenCellID types (defined in gps/opencellid_complete.h)
+typedef struct opencellid_cellular_environment opencellid_cellular_environment_t;
+typedef struct opencellid_triangulation_result opencellid_triangulation_result_t;
+
 // GPS fix types
 typedef enum {
     GPS_FIX_TYPE_NONE = 0,
