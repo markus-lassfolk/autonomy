@@ -1,7 +1,7 @@
 #ifndef GPS_GOOGLE_API_H
 #define GPS_GOOGLE_API_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>

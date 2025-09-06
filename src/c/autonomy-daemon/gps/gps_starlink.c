@@ -1,7 +1,7 @@
 #include "gps_starlink.h"
 #include "starlink_comprehensive.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

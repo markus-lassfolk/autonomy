@@ -1,7 +1,7 @@
 #ifndef GPS_ACCURACY_H
 #define GPS_ACCURACY_H
 
-#include "types.h"
+#include "../core/autonomy_types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <stdint.h>
@@ -17,15 +17,7 @@ extern "C" {
 #define GPS_VALIDATION_POSITION_JUMP        0x0008
 #define GPS_VALIDATION_OLD_DATA             0x0010
 
-// GPS validation result
-typedef struct {
-    time_t timestamp;                    // Validation timestamp
-    bool is_valid;                       // Overall validation result
-    double confidence;                   // Confidence score (0.0-1.0)
-    uint32_t flags;                      // Validation flags
-    char error_message[256];             // Error message if validation failed
-    char warning_message[256];           // Warning message if issues detected
-} gps_validation_result_t;
+// Note: gps_validation_result_t is defined in ../core/autonomy_types.h
 
 // GPS accuracy configuration
 typedef struct {

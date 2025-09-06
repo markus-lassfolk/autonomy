@@ -1,7 +1,7 @@
 #ifndef GPS_OPENCELLID_H
 #define GPS_OPENCELLID_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>

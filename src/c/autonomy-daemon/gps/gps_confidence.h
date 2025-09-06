@@ -1,7 +1,7 @@
 #ifndef GPS_CONFIDENCE_H
 #define GPS_CONFIDENCE_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 

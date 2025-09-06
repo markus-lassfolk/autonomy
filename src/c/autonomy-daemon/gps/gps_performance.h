@@ -1,7 +1,7 @@
 #ifndef GPS_PERFORMANCE_H
 #define GPS_PERFORMANCE_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>

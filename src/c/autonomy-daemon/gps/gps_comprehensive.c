@@ -3,7 +3,7 @@
 #include "gps_starlink.h"
 #include "gps_opencellid.h"
 #include "gps_google_api.h"
-#include "logx.h"
+#include "../utils/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

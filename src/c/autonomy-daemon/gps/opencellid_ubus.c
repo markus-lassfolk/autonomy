@@ -1,6 +1,6 @@
 #include "opencellid_ubus.h"
 #include "opencellid_complete.h"
-#include "logx.h"
+#include "../utils/logx.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>

@@ -1,5 +1,5 @@
 #include "gps_location_reference.h"
-#include "logx.h"
+#include "../utils/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

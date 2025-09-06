@@ -1,7 +1,7 @@
 #ifndef GPS_MANAGER_H
 #define GPS_MANAGER_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 

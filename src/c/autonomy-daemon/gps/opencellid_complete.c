@@ -1,5 +1,5 @@
 #include "opencellid_complete.h"
-#include "logx.h"
+#include "../utils/logx.h"
 #include "collectors/cellular_collector.h"
 #include <stdio.h>
 #include <stdlib.h>

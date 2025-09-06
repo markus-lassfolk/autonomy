@@ -1,7 +1,7 @@
 #ifndef GPS_ADAPTIVE_CACHE_H
 #define GPS_ADAPTIVE_CACHE_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>

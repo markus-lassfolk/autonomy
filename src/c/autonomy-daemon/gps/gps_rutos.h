@@ -1,8 +1,8 @@
 #ifndef GPS_RUTOS_H
 #define GPS_RUTOS_H
 
-#include "types.h"
-#include "logx.h"
+#include "../core/types.h"
+#include "../utils/logx.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>

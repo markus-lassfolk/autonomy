@@ -2,8 +2,8 @@
 #include "gps_comprehensive.h"
 #include "gps_fusion_engine.h"
 #include "opencellid_complete.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include "gps_rutos.h"
 #include "gps_starlink.h"
 #include <string.h>
