@@ -1,10 +1,11 @@
 #ifndef DISK_MONITOR_H
 #define DISK_MONITOR_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,6 +25,7 @@ typedef struct {
 
 // Disk monitor configuration
 typedef struct {
+    bool enabled;                           // Enable disk monitoring
     double critical_threshold_gb;           // Critical disk space threshold
     double warning_threshold_gb;            // Warning disk space threshold
     double cleanup_threshold_gb;            // Threshold to trigger cleanup

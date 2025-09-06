@@ -1,10 +1,11 @@
 #ifndef OVERLAY_MANAGEMENT_H
 #define OVERLAY_MANAGEMENT_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {

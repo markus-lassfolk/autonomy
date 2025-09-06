@@ -3,19 +3,25 @@
 #include <libubox/blobmsg.h>
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <math.h>
+#include <fcntl.h>
 
 // Forward declarations
 static int autonomy_service_watchdog_status(struct ubus_context *ctx, struct ubus_request_data *req,
                                          const char *method, struct blob_attr *msg);
 static int autonomy_service_watchdog_config(struct ubus_context *ctx, struct ubus_request_data *req,
                                           const char *method, struct blob_attr *msg);
-static int autonomy_service_watchdog_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_service_watchdog_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
                                               const char *method, struct blob_attr *msg);
 static int autonomy_service_watchdog_set_enabled(struct ubus_context *ctx, struct ubus_request_data *req,
                                                const char *method, struct blob_attr *msg);
 static int autonomy_service_watchdog_reset(struct ubus_context *ctx, struct ubus_request_data *req,
                                          const char *method, struct blob_attr *msg);
-static int autonomy_service_watchdog_check(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_service_watchdog_check(struct ubus_context *ctx, struct ubus_request_data *req,
                                          const char *method, struct blob_attr *msg);
 
 // UBUS method definitions
@@ -130,7 +136,7 @@ static int autonomy_service_watchdog_config(struct ubus_context *ctx, struct ubu
 /**
  * Set service watchdog configuration
  */
-static int autonomy_service_watchdog_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_service_watchdog_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
                                               const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -296,7 +302,7 @@ static int autonomy_service_watchdog_reset(struct ubus_context *ctx, struct ubus
 /**
  * Manually trigger service watchdog check
  */
-static int autonomy_service_watchdog_check(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_service_watchdog_check(struct ubus_context *ctx, struct ubus_request_data *req,
                                          const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -319,7 +325,7 @@ static int autonomy_service_watchdog_check(struct ubus_context *ctx, struct ubus
 /**
  * Register service watchdog UBUS object
  */
-static int service_watchdog_ubus_register(struct ubus_context *ctx) {
+int service_watchdog_ubus_register(struct ubus_context *ctx) {
     int ret = ubus_add_object(ctx, &autonomy_service_watchdog_obj);
     if (ret) {
         fprintf(stderr, "Failed to add service watchdog object: %s\n", ubus_strerror(ret));
@@ -333,7 +339,7 @@ static int service_watchdog_ubus_register(struct ubus_context *ctx) {
 /**
  * Unregister service watchdog UBUS object
  */
-static void service_watchdog_ubus_unregister(struct ubus_context *ctx) {
+void service_watchdog_ubus_unregister(struct ubus_context *ctx) {
     ubus_remove_object(ctx, &autonomy_service_watchdog_obj);
     fprintf(stderr, "Service watchdog UBUS object unregistered\n");
 }

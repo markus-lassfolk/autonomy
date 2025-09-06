@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <time.h>
 #include <stdint.h>
+#include <pthread.h>
+#include <math.h>
+#include <sys/socket.h>
 
 // Data usage thresholds
 typedef struct {

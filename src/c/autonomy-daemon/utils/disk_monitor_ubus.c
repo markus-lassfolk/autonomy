@@ -3,32 +3,37 @@
 #include <libubox/blobmsg.h>
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
 
 // Forward declarations
 static int autonomy_disk_monitor_status(struct ubus_context *ctx, struct ubus_request_data *req,
                                       const char *method, struct blob_attr *msg);
 static int autonomy_disk_monitor_config(struct ubus_context *ctx, struct ubus_request_data *req,
                                        const char *method, struct blob_attr *msg);
-static int autonomy_disk_monitor_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_disk_monitor_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg);
 static int autonomy_disk_monitor_set_enabled(struct ubus_context *ctx, struct ubus_request_data *req,
                                             const char *method, struct blob_attr *msg);
 static int autonomy_disk_monitor_reset(struct ubus_context *ctx, struct ubus_request_data *req,
                                       const char *method, struct blob_attr *msg);
-static int autonomy_disk_monitor_check(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_disk_monitor_check(struct ubus_context *ctx, struct ubus_request_data *req,
                                       const char *method, struct blob_attr *msg);
-static int autonomy_disk_monitor_cleanup(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_disk_monitor_cleanup(struct ubus_context *ctx, struct ubus_request_data *req,
                                         const char *method, struct blob_attr *msg);
 
 // UBUS method definitions
-static const struct ubus_method_type autonomy_disk_monitor_methods[] = {
-    UBUS_METHOD("status", autonomy_disk_monitor_status, 0),
-    UBUS_METHOD("config", autonomy_disk_monitor_config, 0),
-    UBUS_METHOD("set_config", autonomy_disk_monitor_set_config, 0),
-    UBUS_METHOD("set_enabled", autonomy_disk_monitor_set_enabled, 0),
-    UBUS_METHOD("reset", autonomy_disk_monitor_reset, 0),
-    UBUS_METHOD("check", autonomy_disk_monitor_check, 0),
-    UBUS_METHOD("cleanup", autonomy_disk_monitor_cleanup, 0),
+static const struct ubus_method autonomy_disk_monitor_methods[] = {
+    UBUS_METHOD_NOARG("status", autonomy_disk_monitor_status),
+    UBUS_METHOD_NOARG("config", autonomy_disk_monitor_config),
+    UBUS_METHOD_NOARG("set_config", autonomy_disk_monitor_set_config),
+    UBUS_METHOD_NOARG("set_enabled", autonomy_disk_monitor_set_enabled),
+    UBUS_METHOD_NOARG("reset", autonomy_disk_monitor_reset),
+    UBUS_METHOD_NOARG("check", autonomy_disk_monitor_check),
+    UBUS_METHOD_NOARG("cleanup", autonomy_disk_monitor_cleanup),
 };
 
 // UBUS object type
@@ -123,7 +128,7 @@ static int autonomy_disk_monitor_config(struct ubus_context *ctx, struct ubus_re
 /**
  * Set disk monitor configuration
  */
-static int autonomy_disk_monitor_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_disk_monitor_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -271,7 +276,7 @@ static int autonomy_disk_monitor_reset(struct ubus_context *ctx, struct ubus_req
 /**
  * Manually trigger disk monitor check
  */
-static int autonomy_disk_monitor_check(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_disk_monitor_check(struct ubus_context *ctx, struct ubus_request_data *req,
                                       const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -294,7 +299,7 @@ static int autonomy_disk_monitor_check(struct ubus_context *ctx, struct ubus_req
 /**
  * Manually trigger disk monitor cleanup
  */
-static int autonomy_disk_monitor_cleanup(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_disk_monitor_cleanup(struct ubus_context *ctx, struct ubus_request_data *req,
                                         const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -341,7 +346,7 @@ static int autonomy_disk_monitor_cleanup(struct ubus_context *ctx, struct ubus_r
 /**
  * Register disk monitor UBUS object
  */
-static int disk_monitor_ubus_register(struct ubus_context *ctx) {
+int disk_monitor_ubus_register(struct ubus_context *ctx) {
     int ret = ubus_add_object(ctx, &autonomy_disk_monitor_obj);
     if (ret) {
         fprintf(stderr, "Failed to add disk monitor object: %s\n", ubus_strerror(ret));
@@ -355,7 +360,7 @@ static int disk_monitor_ubus_register(struct ubus_context *ctx) {
 /**
  * Unregister disk monitor UBUS object
  */
-static void disk_monitor_ubus_unregister(struct ubus_context *ctx) {
+void disk_monitor_ubus_unregister(struct ubus_context *ctx) {
     ubus_remove_object(ctx, &autonomy_disk_monitor_obj);
     fprintf(stderr, "Disk monitor UBUS object unregistered\n");
 }

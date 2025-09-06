@@ -1,4 +1,4 @@
-#include "logx.h"
+#include "../utils/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +54,7 @@ static const char* LOGX_LEVEL_COLORS[] = {
 static const char* LOGX_RESET_COLOR = "\033[0m";
 
 // Initialize logx system
-static int logx_init(const logx_config_t *config) {
+int logx_init(const logx_config_t *config) {
     if (config) {
         memcpy(&g_logx_config, config, sizeof(logx_config_t));
     }
@@ -269,7 +269,7 @@ static logx_output_t logx_get_output(void) {
 }
 
 // Cleanup logx system
-static void logx_cleanup(void) {
+void logx_cleanup(void) {
     if (g_logx_config.output & LOGX_OUTPUT_SYSLOG) {
         closelog();
     }

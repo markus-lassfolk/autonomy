@@ -1,7 +1,7 @@
 #include "overlay_management.h"
-#include "types.h"
-#include "notifications/notification_manager.h"
-#include "notifications/notification_types.h"
+#include "../core/types.h"
+#include "../notifications/notification_manager.h"
+#include "../notifications/notification_types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,23 +11,27 @@
 #include <dirent.h>
 #include <time.h>
 #include <errno.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <math.h>
+#include <fcntl.h>
 
 // Global overlay management instance
 static overlay_management_t g_overlay_manager;
 
 // Forward declarations
 static int get_overlay_usage(void);
-static int perform_cleanup(void);
-static int perform_emergency_cleanup(void);
-static int64_t cleanup_stale_backups(void);
-static int64_t cleanup_old_logs(void);
-static int64_t cleanup_temp_files(void);
-static int64_t cleanup_maintenance_logs(void);
-static int64_t cleanup_all_backups(void);
-static int64_t cleanup_all_logs(void);
-static int64_t cleanup_all_temp_files(void);
-static int64_t cleanup_system_cache(void);
-static int64_t remove_file_recursive(const char *path);
+int perform_cleanup(void);
+int perform_emergency_cleanup(void);
+int64_t cleanup_stale_backups(void);
+int64_t cleanup_old_logs(void);
+int64_t cleanup_temp_files(void);
+int64_t cleanup_maintenance_logs(void);
+int64_t cleanup_all_backups(void);
+int64_t cleanup_all_logs(void);
+int64_t cleanup_all_temp_files(void);
+int64_t cleanup_system_cache(void);
+int64_t remove_file_recursive(const char *path);
 static int64_t get_file_size(const char *path);
 static int is_file_older_than(const char *path, int days);
 static void send_notification(const char *type, const char *message);
@@ -35,7 +39,7 @@ static void send_notification(const char *type, const char *message);
 /**
  * Initialize overlay management
  */
-static int overlay_management_init(void) {
+int overlay_management_init(void) {
     memset(&g_overlay_manager, 0, sizeof(overlay_management_t));
     
     // Set default configuration
@@ -60,7 +64,7 @@ static int overlay_management_init(void) {
 /**
  * Check overlay space and perform cleanup if needed
  */
-static int overlay_management_check(void) {
+int overlay_management_check(void) {
     if (!g_overlay_manager.config.enabled) {
         return AUTONOMY_SUCCESS;
     }
@@ -140,7 +144,7 @@ static int get_overlay_usage(void) {
 /**
  * Perform routine cleanup of stale files
  */
-static int perform_cleanup(void) {
+int perform_cleanup(void) {
     int64_t total_freed = 0;
     
     // Cleanup stale backup files
@@ -176,7 +180,7 @@ static int perform_cleanup(void) {
 /**
  * Perform aggressive cleanup for critical space situations
  */
-static int perform_emergency_cleanup(void) {
+int perform_emergency_cleanup(void) {
     int64_t total_freed = 0;
     
     // More aggressive cleanup for emergency situations
@@ -209,7 +213,7 @@ static int perform_emergency_cleanup(void) {
 /**
  * Cleanup stale backup files
  */
-static int64_t cleanup_stale_backups(void) {
+int64_t cleanup_stale_backups(void) {
     int64_t total_freed = 0;
     const char *backup_dirs[] = {"/etc/config", "/root", "/tmp"};
     
@@ -241,7 +245,7 @@ static int64_t cleanup_stale_backups(void) {
 /**
  * Cleanup old log files
  */
-static int64_t cleanup_old_logs(void) {
+int64_t cleanup_old_logs(void) {
     int64_t total_freed = 0;
     const char *log_dirs[] = {"/var/log", "/tmp", "/root"};
     
@@ -273,7 +277,7 @@ static int64_t cleanup_old_logs(void) {
 /**
  * Cleanup temporary files
  */
-static int64_t cleanup_temp_files(void) {
+int64_t cleanup_temp_files(void) {
     int64_t total_freed = 0;
     const char *temp_dirs[] = {"/tmp", "/var/tmp", "/root/tmp"};
     
@@ -305,7 +309,7 @@ static int64_t cleanup_temp_files(void) {
 /**
  * Cleanup maintenance logs
  */
-static int64_t cleanup_maintenance_logs(void) {
+int64_t cleanup_maintenance_logs(void) {
     int64_t total_freed = 0;
     const char *maintenance_logs[] = {"/var/log/maintenance.log", "/tmp/maintenance.log"};
     
@@ -324,7 +328,7 @@ static int64_t cleanup_maintenance_logs(void) {
 /**
  * Cleanup all backup files (emergency mode)
  */
-static int64_t cleanup_all_backups(void) {
+int64_t cleanup_all_backups(void) {
     int64_t total_freed = 0;
     const char *backup_dirs[] = {"/etc/config", "/root", "/tmp"};
     
@@ -354,7 +358,7 @@ static int64_t cleanup_all_backups(void) {
 /**
  * Cleanup all log files (emergency mode)
  */
-static int64_t cleanup_all_logs(void) {
+int64_t cleanup_all_logs(void) {
     int64_t total_freed = 0;
     const char *log_dirs[] = {"/var/log", "/tmp", "/root"};
     
@@ -384,7 +388,7 @@ static int64_t cleanup_all_logs(void) {
 /**
  * Cleanup all temporary files (emergency mode)
  */
-static int64_t cleanup_all_temp_files(void) {
+int64_t cleanup_all_temp_files(void) {
     int64_t total_freed = 0;
     const char *temp_dirs[] = {"/tmp", "/var/tmp", "/root/tmp"};
     
@@ -414,7 +418,7 @@ static int64_t cleanup_all_temp_files(void) {
 /**
  * Cleanup system cache (emergency mode)
  */
-static int64_t cleanup_system_cache(void) {
+int64_t cleanup_system_cache(void) {
     int64_t total_freed = 0;
     const char *cache_dirs[] = {"/tmp", "/var/cache", "/root/.cache"};
     
@@ -443,7 +447,7 @@ static int64_t cleanup_system_cache(void) {
 /**
  * Remove file or directory recursively
  */
-static int64_t remove_file_recursive(const char *path) {
+int64_t remove_file_recursive(const char *path) {
     struct stat st;
     if (lstat(path, &st) != 0) {
         return 0;
@@ -542,7 +546,7 @@ static void send_notification(const char *type, const char *message) {
 /**
  * Get overlay management status
  */
-static int overlay_management_get_status(overlay_management_status_t *status) {
+int overlay_management_get_status(overlay_management_status_t *status) {
     if (!status) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -567,7 +571,7 @@ static int overlay_management_get_status(overlay_management_status_t *status) {
 /**
  * Get overlay management configuration
  */
-static int overlay_management_get_config(overlay_management_config_t *config) {
+int overlay_management_get_config(overlay_management_config_t *config) {
     if (!config) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -579,7 +583,7 @@ static int overlay_management_get_config(overlay_management_config_t *config) {
 /**
  * Set overlay management configuration
  */
-static int overlay_management_set_config(const overlay_management_config_t *config) {
+int overlay_management_set_config(const overlay_management_config_t *config) {
     if (!config) {
         return AUTONOMY_ERROR_INVALID_PARAMETER;
     }
@@ -607,6 +611,6 @@ static int overlay_management_reset(void) {
 /**
  * Cleanup overlay management
  */
-static void overlay_management_cleanup(void) {
+void overlay_management_cleanup(void) {
     // Nothing to cleanup for this module
 }

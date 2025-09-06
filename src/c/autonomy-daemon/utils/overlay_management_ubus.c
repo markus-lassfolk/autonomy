@@ -3,21 +3,26 @@
 #include <libubox/blobmsg.h>
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
 
 // Forward declarations
 static int autonomy_overlay_management_status(struct ubus_context *ctx, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg);
 static int autonomy_overlay_management_config(struct ubus_context *ctx, struct ubus_request_data *req,
                                             const char *method, struct blob_attr *msg);
-static int autonomy_overlay_management_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_overlay_management_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
                                                 const char *method, struct blob_attr *msg);
 static int autonomy_overlay_management_set_enabled(struct ubus_context *ctx, struct ubus_request_data *req,
                                                  const char *method, struct blob_attr *msg);
 static int autonomy_overlay_management_reset(struct ubus_context *ctx, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg);
-static int autonomy_overlay_management_check(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_overlay_management_check(struct ubus_context *ctx, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg);
-static int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct ubus_request_data *req,
                                              const char *method, struct blob_attr *msg);
 
 // UBUS method definitions
@@ -122,7 +127,7 @@ static int autonomy_overlay_management_config(struct ubus_context *ctx, struct u
 /**
  * Set overlay management configuration
  */
-static int autonomy_overlay_management_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_overlay_management_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
                                                 const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -270,7 +275,7 @@ static int autonomy_overlay_management_reset(struct ubus_context *ctx, struct ub
 /**
  * Manually trigger overlay management check
  */
-static int autonomy_overlay_management_check(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_overlay_management_check(struct ubus_context *ctx, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -293,7 +298,7 @@ static int autonomy_overlay_management_check(struct ubus_context *ctx, struct ub
 /**
  * Manually trigger overlay management cleanup
  */
-static int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct ubus_request_data *req,
+int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct ubus_request_data *req,
                                              const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
@@ -340,7 +345,7 @@ static int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct 
 /**
  * Register overlay management UBUS object
  */
-static int overlay_management_ubus_register(struct ubus_context *ctx) {
+int overlay_management_ubus_register(struct ubus_context *ctx) {
     int ret = ubus_add_object(ctx, &autonomy_overlay_management_obj);
     if (ret) {
         fprintf(stderr, "Failed to add overlay management object: %s\n", ubus_strerror(ret));
@@ -354,7 +359,7 @@ static int overlay_management_ubus_register(struct ubus_context *ctx) {
 /**
  * Unregister overlay management UBUS object
  */
-static void overlay_management_ubus_unregister(struct ubus_context *ctx) {
+void overlay_management_ubus_unregister(struct ubus_context *ctx) {
     ubus_remove_object(ctx, &autonomy_overlay_management_obj);
     fprintf(stderr, "Overlay management UBUS object unregistered\n");
 }

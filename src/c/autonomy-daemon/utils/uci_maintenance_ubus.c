@@ -3,6 +3,9 @@
 #include <libubox/blobmsg.h>
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 // Forward declarations
 static int autonomy_uci_maintenance_status(struct ubus_context *ctx, struct ubus_request_data *req,
@@ -173,7 +176,7 @@ static int autonomy_uci_maintenance_perform(struct ubus_context *ctx, struct ubu
 /**
  * Register UCI maintenance UBUS object
  */
-static int uci_maintenance_ubus_register(struct ubus_context *ctx) {
+int uci_maintenance_ubus_register(struct ubus_context *ctx) {
     int ret = ubus_add_object(ctx, &autonomy_uci_maintenance_obj);
     if (ret) {
         fprintf(stderr, "Failed to add UCI maintenance object: %s\n", ubus_strerror(ret));
@@ -187,7 +190,7 @@ static int uci_maintenance_ubus_register(struct ubus_context *ctx) {
 /**
  * Unregister UCI maintenance UBUS object
  */
-static void uci_maintenance_ubus_unregister(struct ubus_context *ctx) {
+void uci_maintenance_ubus_unregister(struct ubus_context *ctx) {
     ubus_remove_object(ctx, &autonomy_uci_maintenance_obj);
     fprintf(stderr, "UCI maintenance UBUS object unregistered\n");
 }

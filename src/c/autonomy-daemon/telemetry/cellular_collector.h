@@ -14,6 +14,7 @@ typedef struct {
     double signal_quality;          // Signal quality percentage (0-100)
     double reliability_score;       // Reliability score (0-1)
     double predictive_risk;         // Predictive risk score (0-1)
+    bool roaming;                   // Whether device is roaming
 } cellular_info_t;
 
 // Function declarations

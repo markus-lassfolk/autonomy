@@ -1,10 +1,11 @@
 #ifndef UCI_MAINTENANCE_H
 #define UCI_MAINTENANCE_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
+#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {

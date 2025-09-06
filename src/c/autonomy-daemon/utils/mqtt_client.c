@@ -11,6 +11,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <time.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <math.h>
 
 // Global MQTT client instance
 static mqtt_client_t g_mqtt_client;
@@ -41,7 +45,7 @@ static int mqtt_parse_suback(const uint8_t* packet, int length);
 static void* mqtt_keepalive_thread(void* arg);
 
 // Initialize MQTT client
-static int mqtt_client_init(const mqtt_config_t* config) {
+int mqtt_client_init(const mqtt_config_t* config) {
     if (g_mqtt_client_initialized) {
         return 0; // Already initialized
     }
@@ -80,7 +84,7 @@ static int mqtt_client_init(const mqtt_config_t* config) {
 }
 
 // Clean up MQTT client
-static void mqtt_client_cleanup(void) {
+void mqtt_client_cleanup(void) {
     if (!g_mqtt_client_initialized) return;
     
     // Disconnect if connected
@@ -560,7 +564,7 @@ static int mqtt_parse_suback(const uint8_t* packet, int length) {
 }
 
 // Get MQTT client status
-static void mqtt_client_get_status(mqtt_client_t* status) {
+void mqtt_client_get_status(mqtt_client_t* status) {
     if (!status || !g_mqtt_client_initialized) return;
     
     pthread_mutex_lock(g_mqtt_client.mutex);
@@ -569,7 +573,7 @@ static void mqtt_client_get_status(mqtt_client_t* status) {
 }
 
 // Check if MQTT client is initialized
-static bool mqtt_client_is_initialized(void) {
+bool mqtt_client_is_initialized(void) {
     return g_mqtt_client_initialized;
 }
 
