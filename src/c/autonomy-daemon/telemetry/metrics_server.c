@@ -2,35 +2,40 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <pthread.h>
+#include <time.h>
+#include <stdbool.h>
+#include <math.h>
+#include <sys/socket.h>
 
 // Global metrics server instance
 static metrics_server_t g_metrics_server;
 static bool g_metrics_server_initialized = false;
 
 // HTTP request handler
-static enum MHD_Result handle_request(void* cls, struct MHD_Connection* connection,
+enum MHD_Result handle_request(void* cls, struct MHD_Connection* connection,
                                      const char* url, const char* method,
                                      const char* version, const char* upload_data,
                                      size_t* upload_data_size, void** con_cls);
 
 // Handle GET /metrics endpoint
-static enum MHD_Result handle_metrics_endpoint(struct MHD_Connection* connection);
+enum MHD_Result handle_metrics_endpoint(struct MHD_Connection* connection);
 
 // Handle GET /health endpoint
-static enum MHD_Result handle_health_endpoint(struct MHD_Connection* connection);
+enum MHD_Result handle_health_endpoint(struct MHD_Connection* connection);
 
 // Handle GET /status endpoint
-static enum MHD_Result handle_status_endpoint(struct MHD_Connection* connection);
+enum MHD_Result handle_status_endpoint(struct MHD_Connection* connection);
 
 // Send JSON response
 static enum MHD_Result send_json_response(struct MHD_Connection* connection, 
                                          const char* json_data, int status_code);
 
 // Check authentication
-static bool check_authentication(struct MHD_Connection* connection, const char* required_token);
+bool check_authentication(struct MHD_Connection* connection, const char* required_token);
 
 // Initialize metrics server
-static int metrics_server_init(const metrics_server_config_t* config) {
+int metrics_server_init(const metrics_server_config_t* config) {
     if (g_metrics_server_initialized) {
         return 0; // Already initialized
     }
@@ -68,7 +73,7 @@ static int metrics_server_init(const metrics_server_config_t* config) {
 }
 
 // Clean up metrics server
-static void metrics_server_cleanup(void) {
+void metrics_server_cleanup(void) {
     if (!g_metrics_server_initialized) return;
     
     // Stop server if running
@@ -88,7 +93,7 @@ static void metrics_server_cleanup(void) {
 }
 
 // Start metrics server
-static int metrics_server_start(void) {
+int metrics_server_start(void) {
     if (!g_metrics_server_initialized || !g_metrics_server.config.enabled) {
         return -1;
     }
@@ -122,7 +127,7 @@ static int metrics_server_start(void) {
 }
 
 // Stop metrics server
-static int metrics_server_stop(void) {
+int metrics_server_stop(void) {
     if (!g_metrics_server_initialized || !g_metrics_server.status.running) {
         return -1;
     }
@@ -141,7 +146,7 @@ static int metrics_server_stop(void) {
 }
 
 // HTTP request handler
-static enum MHD_Result handle_request(void* cls, struct MHD_Connection* connection,
+enum MHD_Result handle_request(void* cls, struct MHD_Connection* connection,
                                      const char* url, const char* method,
                                      const char* version, const char* upload_data,
                                      size_t* upload_data_size, void** con_cls) {
@@ -188,7 +193,7 @@ static enum MHD_Result handle_request(void* cls, struct MHD_Connection* connecti
 }
 
 // Handle /metrics endpoint
-static enum MHD_Result handle_metrics_endpoint(struct MHD_Connection* connection) {
+enum MHD_Result handle_metrics_endpoint(struct MHD_Connection* connection) {
     char json_response[4096];
     
     if (telemetry_store_is_initialized()) {
@@ -206,7 +211,7 @@ static enum MHD_Result handle_metrics_endpoint(struct MHD_Connection* connection
 }
 
 // Handle /health endpoint
-static enum MHD_Result handle_health_endpoint(struct MHD_Connection* connection) {
+enum MHD_Result handle_health_endpoint(struct MHD_Connection* connection) {
     char json_response[1024];
     
     bool telemetry_healthy = telemetry_store_is_initialized();
@@ -234,7 +239,7 @@ static enum MHD_Result handle_health_endpoint(struct MHD_Connection* connection)
 }
 
 // Handle /status endpoint
-static enum MHD_Result handle_status_endpoint(struct MHD_Connection* connection) {
+enum MHD_Result handle_status_endpoint(struct MHD_Connection* connection) {
     char json_response[1024];
     
     pthread_mutex_lock(g_metrics_server.mutex);
@@ -292,7 +297,7 @@ static enum MHD_Result send_json_response(struct MHD_Connection* connection,
 }
 
 // Check authentication
-static bool check_authentication(struct MHD_Connection* connection, const char* required_token) {
+bool check_authentication(struct MHD_Connection* connection, const char* required_token) {
     if (!required_token || strlen(required_token) == 0) {
         return true; // No auth required
     }
@@ -312,7 +317,7 @@ static bool check_authentication(struct MHD_Connection* connection, const char* 
 }
 
 // Get metrics server status
-static void metrics_server_get_status(metrics_server_status_t* status) {
+void metrics_server_get_status(metrics_server_status_t* status) {
     if (!status || !g_metrics_server_initialized) return;
     
     pthread_mutex_lock(g_metrics_server.mutex);
@@ -321,12 +326,12 @@ static void metrics_server_get_status(metrics_server_status_t* status) {
 }
 
 // Check if metrics server is initialized
-static bool metrics_server_is_initialized(void) {
+bool metrics_server_is_initialized(void) {
     return g_metrics_server_initialized;
 }
 
 // Check if metrics server is running
-static bool metrics_server_is_running(void) {
+bool metrics_server_is_running(void) {
     return g_metrics_server_initialized && g_metrics_server.status.running;
 }
 

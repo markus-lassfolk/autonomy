@@ -5,7 +5,10 @@
 #include <stdint.h>
 #include <time.h>
 #include <pthread.h>
-#include <sqlite3.h>
+// #include <sqlite3.h> // Not available in current toolchain
+#include <math.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -186,7 +189,7 @@ typedef struct {
     telemetry_collection_statistics_t stats; // Statistics
     
     // Database connection
-    sqlite3* db;                           // SQLite database connection
+    void* db;                              // Database connection (sqlite3 not available)
     bool db_initialized;                   // Database initialization status
     
     // In-memory ring buffers (for performance)

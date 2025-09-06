@@ -86,6 +86,17 @@ typedef struct {
     int max_retries;
 } notification_config_t;
 
+// Notification event structure
+typedef struct {
+    char id[64];                           // Event ID
+    char title[256];                       // Event title
+    char message[1024];                    // Event message
+    notification_type_t type;              // Event type
+    notification_priority_t priority;      // Event priority
+    time_t timestamp;                      // Event timestamp
+    char context[512];                     // Additional context
+} notification_event_t;
+
 // Function declarations
 int notification_init(const notification_config_t *config);
 void notification_cleanup(void);

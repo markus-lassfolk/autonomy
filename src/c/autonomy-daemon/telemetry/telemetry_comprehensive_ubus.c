@@ -1,11 +1,16 @@
 #include "telemetry_comprehensive_ubus.h"
 #include "telemetry_comprehensive.h"
-#include "logx.h"
+#include "../utils/logx.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <math.h>
+#include <fcntl.h>
 
 // UBUS parameter policies
 enum {
@@ -43,7 +48,7 @@ static const struct blobmsg_policy telemetry_location_policy[] = {
 };
 
 // Helper function to add telemetry sample to blob
-static void add_telemetry_sample_to_blob(struct blob_buf *bb, const telemetry_sample_t *sample) {
+void add_telemetry_sample_to_blob(struct blob_buf *bb, const telemetry_sample_t *sample) {
     void *sample_table = blobmsg_open_table(bb, NULL);
     
     blobmsg_add_u64(bb, "id", sample->id);
@@ -112,7 +117,7 @@ static void add_telemetry_sample_to_blob(struct blob_buf *bb, const telemetry_sa
 }
 
 // Helper function to add decision record to blob
-static void add_decision_record_to_blob(struct blob_buf *bb, const decision_record_t *decision) {
+void add_decision_record_to_blob(struct blob_buf *bb, const decision_record_t *decision) {
     void *decision_table = blobmsg_open_table(bb, NULL);
     
     blobmsg_add_u64(bb, "id", decision->id);

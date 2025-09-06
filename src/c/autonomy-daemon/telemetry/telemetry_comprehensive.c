@@ -1,11 +1,11 @@
 #include "telemetry_comprehensive.h"
-#include "gps_comprehensive.h"
-#include "gps_location_reference.h"
-#include "cellular_collector.h"
-#include "wifi_enhanced.h"
-#include "starlink_comprehensive.h"
-#include "performance/performance_monitor.h"
-#include "logx.h"
+#include "../gps/gps_comprehensive.h"
+#include "../gps/gps_location_reference.h"
+// #include "cellular_collector.h" // Not available
+// #include "wifi_enhanced.h" // Not available
+#include "../starlink/starlink_comprehensive.h"
+#include "../analytics/performance_monitor.h"
+#include "../utils/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +14,11 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 // Global telemetry comprehensive system
 static telemetry_comprehensive_t g_telemetry_comprehensive = {0};
@@ -115,19 +120,19 @@ static void* export_thread_worker(void* arg);
 static int collect_current_telemetry(void);
 static int insert_sample_to_database(const telemetry_sample_t* sample);
 static int insert_decision_to_database(const decision_record_t* decision);
-static int perform_database_cleanup(void);
+int perform_database_cleanup(void);
 static int export_ml_dataset(void);
-static double calculate_distance_meters(double lat1, double lon1, double lat2, double lon2);
+double calculate_distance_meters(double lat1, double lon1, double lat2, double lon2);
 
 // Initialize comprehensive telemetry collection system
-static int telemetry_comprehensive_init(const telemetry_collection_config_t* config) {
+int telemetry_comprehensive_init(const telemetry_collection_config_t* config) {
     if (g_telemetry_comprehensive_initialized) {
-        LOGX_WARN("Comprehensive telemetry already initialized");
+        LOGX_WARN_MSG("Comprehensive telemetry already initialized");
         return AUTONOMY_SUCCESS;
     }
     
     if (!config) {
-        LOGX_ERROR("Telemetry comprehensive config is NULL");
+        LOGX_ERROR_MSG("Telemetry comprehensive config is NULL");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
@@ -136,14 +141,14 @@ static int telemetry_comprehensive_init(const telemetry_collection_config_t* con
     
     // Initialize mutex
     if (pthread_mutex_init(&g_telemetry_comprehensive.mutex, NULL) != 0) {
-        LOGX_ERROR("Failed to initialize telemetry comprehensive mutex");
+        LOGX_ERROR_MSG("Failed to initialize telemetry comprehensive mutex");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Initialize database if persistent storage is enabled
     if (config->enable_persistent_storage) {
         if (telemetry_db_init() != AUTONOMY_SUCCESS) {
-            LOGX_ERROR("Failed to initialize telemetry database");
+            LOGX_ERROR_MSG("Failed to initialize telemetry database");
             pthread_mutex_destroy(&g_telemetry_comprehensive.mutex);
             return AUTONOMY_ERROR_SYSTEM;
         }
@@ -166,7 +171,7 @@ static int telemetry_comprehensive_init(const telemetry_collection_config_t* con
         };
         
         if (gps_location_reference_init(&location_config) != AUTONOMY_SUCCESS) {
-            LOGX_ERROR("Failed to initialize GPS location reference system");
+            LOGX_ERROR_MSG("Failed to initialize GPS location reference system");
             telemetry_db_close();
             pthread_mutex_destroy(&g_telemetry_comprehensive.mutex);
             return AUTONOMY_ERROR_SYSTEM;
@@ -178,7 +183,7 @@ static int telemetry_comprehensive_init(const telemetry_collection_config_t* con
     g_telemetry_comprehensive.samples_buffer = calloc(g_telemetry_comprehensive.samples_buffer_size,
                                                      sizeof(telemetry_sample_t));
     if (!g_telemetry_comprehensive.samples_buffer) {
-        LOGX_ERROR("Failed to allocate memory for samples buffer");
+        LOGX_ERROR_MSG("Failed to allocate memory for samples buffer");
         if (g_telemetry_comprehensive.db_initialized) telemetry_db_close();
         pthread_mutex_destroy(&g_telemetry_comprehensive.mutex);
         return AUTONOMY_ERROR_SYSTEM;
@@ -188,7 +193,7 @@ static int telemetry_comprehensive_init(const telemetry_collection_config_t* con
     g_telemetry_comprehensive.decisions_buffer = calloc(g_telemetry_comprehensive.decisions_buffer_size,
                                                        sizeof(decision_record_t));
     if (!g_telemetry_comprehensive.decisions_buffer) {
-        LOGX_ERROR("Failed to allocate memory for decisions buffer");
+        LOGX_ERROR_MSG("Failed to allocate memory for decisions buffer");
         free(g_telemetry_comprehensive.samples_buffer);
         if (g_telemetry_comprehensive.db_initialized) telemetry_db_close();
         pthread_mutex_destroy(&g_telemetry_comprehensive.mutex);
@@ -207,7 +212,7 @@ static int telemetry_comprehensive_init(const telemetry_collection_config_t* con
         // Collection thread
         if (pthread_create(&g_telemetry_comprehensive.collection_thread, NULL, 
                           collection_thread_worker, NULL) != 0) {
-            LOGX_ERROR("Failed to create telemetry collection thread");
+            LOGX_ERROR_MSG("Failed to create telemetry collection thread");
             free(g_telemetry_comprehensive.samples_buffer);
             free(g_telemetry_comprehensive.decisions_buffer);
             if (g_telemetry_comprehensive.db_initialized) telemetry_db_close();
@@ -218,7 +223,7 @@ static int telemetry_comprehensive_init(const telemetry_collection_config_t* con
         // Cleanup thread
         if (pthread_create(&g_telemetry_comprehensive.cleanup_thread, NULL, 
                           cleanup_thread_worker, NULL) != 0) {
-            LOGX_ERROR("Failed to create telemetry cleanup thread");
+            LOGX_ERROR_MSG("Failed to create telemetry cleanup thread");
             g_telemetry_comprehensive.threads_running = false;
             pthread_cancel(g_telemetry_comprehensive.collection_thread);
             pthread_join(g_telemetry_comprehensive.collection_thread, NULL);
@@ -233,14 +238,14 @@ static int telemetry_comprehensive_init(const telemetry_collection_config_t* con
         if (config->enable_ml_dataset_export) {
             if (pthread_create(&g_telemetry_comprehensive.export_thread, NULL, 
                               export_thread_worker, NULL) != 0) {
-                LOGX_WARN("Failed to create ML export thread, continuing without ML export");
+                LOGX_WARN_MSG("Failed to create ML export thread, continuing without ML export");
             }
         }
     }
     
     g_telemetry_comprehensive_initialized = true;
     
-    LOGX_INFO("Comprehensive telemetry collection initialized",
+    LOGX_INFO_MSG("Comprehensive telemetry collection initialized",
               "enabled", config->enabled,
               "persistent_storage", config->enable_persistent_storage,
               "collection_interval_s", config->collection_interval_s,
@@ -251,7 +256,7 @@ static int telemetry_comprehensive_init(const telemetry_collection_config_t* con
 }
 
 // Cleanup comprehensive telemetry collection system
-static void telemetry_comprehensive_cleanup(void) {
+void telemetry_comprehensive_cleanup(void) {
     if (!g_telemetry_comprehensive_initialized) return;
     
     pthread_mutex_lock(&g_telemetry_comprehensive.mutex);
@@ -287,7 +292,7 @@ static void telemetry_comprehensive_cleanup(void) {
     
     g_telemetry_comprehensive_initialized = false;
     
-    LOGX_INFO("Comprehensive telemetry collection cleaned up");
+    LOGX_INFO_MSG("Comprehensive telemetry collection cleaned up");
 }
 
 // Collect telemetry sample with GPS positioning
@@ -332,7 +337,7 @@ int telemetry_comprehensive_collect_sample(const char* member_name,
                 // Update location usage with performance metrics
                 gps_location_reference_update_usage(location_id, sample->signal_quality, sample->latency_ms);
                 
-                LOGX_DEBUG("Using GPS location reference",
+                LOGX_DEBUG_MSG("Using GPS location reference",
                           "location_id", location_id,
                           "lat", gps_data.latitude,
                           "lon", gps_data.longitude);
@@ -378,7 +383,7 @@ int telemetry_comprehensive_collect_sample(const char* member_name,
     
     pthread_mutex_unlock(&g_telemetry_comprehensive.mutex);
     
-    LOGX_DEBUG("Telemetry sample collected",
+    LOGX_DEBUG_MSG("Telemetry sample collected",
               "id", buffer_sample->id,
               "member", member_name,
               "interface", interface_name,
@@ -426,7 +431,7 @@ static int telemetry_comprehensive_log_decision(const decision_record_t* decisio
     
     pthread_mutex_unlock(&g_telemetry_comprehensive.mutex);
     
-    LOGX_INFO("Failover decision logged",
+    LOGX_INFO_MSG("Failover decision logged",
              "id", buffer_decision->id,
              "decision_id", decision->decision_id,
              "type", decision->decision_type,
@@ -440,7 +445,7 @@ static int telemetry_comprehensive_log_decision(const decision_record_t* decisio
 }
 
 // Initialize SQLite database with proper schema
-static int telemetry_db_init(void) {
+int telemetry_db_init(void) {
     // Ensure database directory exists
     char db_dir[256];
     strncpy(db_dir, g_telemetry_comprehensive.config.database_path, sizeof(db_dir) - 1);
@@ -450,7 +455,7 @@ static int telemetry_db_init(void) {
     if (last_slash) {
         *last_slash = '\0';
         if (mkdir(db_dir, 0755) != 0 && errno != EEXIST) {
-            LOGX_ERROR("Failed to create database directory", "path", db_dir, "error", strerror(errno));
+            LOGX_ERROR_MSG("Failed to create database directory", "path", db_dir, "error", strerror(errno));
             return AUTONOMY_ERROR_SYSTEM;
         }
     }
@@ -458,7 +463,7 @@ static int telemetry_db_init(void) {
     // Open database
     int result = sqlite3_open(g_telemetry_comprehensive.config.database_path, &g_telemetry_comprehensive.db);
     if (result != SQLITE_OK) {
-        LOGX_ERROR("Failed to open telemetry database",
+        LOGX_ERROR_MSG("Failed to open telemetry database",
                   "path", g_telemetry_comprehensive.config.database_path,
                   "error", sqlite3_errmsg(g_telemetry_comprehensive.db));
         return AUTONOMY_ERROR_SYSTEM;
@@ -468,7 +473,7 @@ static int telemetry_db_init(void) {
     char* error_msg = NULL;
     result = sqlite3_exec(g_telemetry_comprehensive.db, TELEMETRY_SCHEMA_SQL, NULL, NULL, &error_msg);
     if (result != SQLITE_OK) {
-        LOGX_ERROR("Failed to create telemetry database schema",
+        LOGX_ERROR_MSG("Failed to create telemetry database schema",
                   "error", error_msg);
         sqlite3_free(error_msg);
         sqlite3_close(g_telemetry_comprehensive.db);
@@ -478,11 +483,11 @@ static int telemetry_db_init(void) {
     // Enable WAL mode for better performance
     result = sqlite3_exec(g_telemetry_comprehensive.db, "PRAGMA journal_mode=WAL;", NULL, NULL, &error_msg);
     if (result != SQLITE_OK) {
-        LOGX_WARN("Failed to enable WAL mode", "error", error_msg);
+        LOGX_WARN_MSG("Failed to enable WAL mode", "error", error_msg);
         sqlite3_free(error_msg);
     }
     
-    LOGX_INFO("Telemetry database initialized",
+    LOGX_INFO_MSG("Telemetry database initialized",
              "path", g_telemetry_comprehensive.config.database_path);
     
     return AUTONOMY_SUCCESS;
@@ -490,7 +495,7 @@ static int telemetry_db_init(void) {
 
 // Background collection thread
 static void* collection_thread_worker(void* arg) {
-    LOGX_INFO("Telemetry collection thread started",
+    LOGX_INFO_MSG("Telemetry collection thread started",
              "interval_s", g_telemetry_comprehensive.config.collection_interval_s);
     
     while (g_telemetry_comprehensive_initialized && g_telemetry_comprehensive.threads_running) {
@@ -500,13 +505,13 @@ static void* collection_thread_worker(void* arg) {
         
         // Collect current telemetry from all sources
         if (collect_current_telemetry() == AUTONOMY_SUCCESS) {
-            LOGX_DEBUG("Background telemetry collection successful");
+            LOGX_DEBUG_MSG("Background telemetry collection successful");
         } else {
-            LOGX_WARN("Background telemetry collection failed");
+            LOGX_WARN_MSG("Background telemetry collection failed");
         }
     }
     
-    LOGX_INFO("Telemetry collection thread stopped");
+    LOGX_INFO_MSG("Telemetry collection thread stopped");
     return NULL;
 }
 
@@ -651,7 +656,7 @@ static int insert_sample_to_database(const telemetry_sample_t* sample) {
     sqlite3_stmt* stmt;
     int result = sqlite3_prepare_v2(g_telemetry_comprehensive.db, sql, -1, &stmt, NULL);
     if (result != SQLITE_OK) {
-        LOGX_ERROR("Failed to prepare telemetry insert statement", "error", sqlite3_errmsg(g_telemetry_comprehensive.db));
+        LOGX_ERROR_MSG("Failed to prepare telemetry insert statement", "error", sqlite3_errmsg(g_telemetry_comprehensive.db));
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -704,14 +709,14 @@ static int insert_sample_to_database(const telemetry_sample_t* sample) {
     sqlite3_finalize(stmt);
     
     if (result != SQLITE_DONE) {
-        LOGX_ERROR("Failed to insert telemetry sample", "error", sqlite3_errmsg(g_telemetry_comprehensive.db));
+        LOGX_ERROR_MSG("Failed to insert telemetry sample", "error", sqlite3_errmsg(g_telemetry_comprehensive.db));
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     return AUTONOMY_SUCCESS;
 }
 
-static bool telemetry_comprehensive_is_initialized(void) {
+bool telemetry_comprehensive_is_initialized(void) {
     return g_telemetry_comprehensive_initialized;
 }
 

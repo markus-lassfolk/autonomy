@@ -1,10 +1,11 @@
 #ifndef UBUS_MONITOR_H
 #define UBUS_MONITOR_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 extern "C" {

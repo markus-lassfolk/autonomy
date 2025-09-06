@@ -5,6 +5,8 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
+#include <stdint.h>
+#include <math.h>
 
 // Telemetry sample
 typedef struct {

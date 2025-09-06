@@ -2,9 +2,12 @@
 #define METRICS_SERVER_H
 
 #include "telemetry_store.h"
-#include <microhttpd.h>
+// #include <microhttpd.h> // Not available in current toolchain
 #include <stdbool.h>
 #include <time.h>
+#include <pthread.h>
+#include <math.h>
+#include <sys/socket.h>
 
 // Metrics server configuration
 typedef struct {

@@ -1,8 +1,18 @@
 #ifndef TELEMETRY_COMPREHENSIVE_UBUS_H
 #define TELEMETRY_COMPREHENSIVE_UBUS_H
 
-#include <libubus.h>
-#include <libubox/blobmsg_json.h>
+// #include <libubus.h> // Not available in current toolchain
+// #include <libubox/blobmsg_json.h> // Not available in current toolchain
+
+// Forward declarations for UBUS types
+struct ubus_context;
+struct ubus_object;
+struct ubus_request_data;
+struct blob_attr;
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 extern "C" {
