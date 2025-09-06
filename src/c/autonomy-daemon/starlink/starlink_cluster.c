@@ -1,6 +1,6 @@
 #include "starlink_types.h"
 #include "starlink_modules.h"
-#include "../starlink_obstruction.h"
+#include "starlink_obstruction.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -160,7 +160,7 @@ int starlink_cluster_find_best_starlink(void) {
 }
 
 // Perform failover to a specific Starlink
-static int starlink_cluster_failover_to(int index, const char *reason) {
+int starlink_cluster_failover_to(int index, const char *reason) {
     if (index < 0 || index >= g_starlink_cluster.count) {
         return -1;
     }

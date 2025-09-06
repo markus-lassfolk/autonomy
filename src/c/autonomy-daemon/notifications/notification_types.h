@@ -7,9 +7,23 @@
 
 // Notification types and structures
 
+// Notification types
+typedef enum {
+    NOTIFICATION_TYPE_INFO = 0,
+    NOTIFICATION_TYPE_WARNING,
+    NOTIFICATION_TYPE_ERROR,
+    NOTIFICATION_TYPE_CRITICAL,
+    NOTIFICATION_TYPE_SYSTEM_ALERT,
+    NOTIFICATION_TYPE_PREDICTIVE,
+    NOTIFICATION_TYPE_HEALTH,
+    NOTIFICATION_TYPE_PERFORMANCE,
+    NOTIFICATION_TYPE_SECURITY
+} notification_type_t;
+
 // Notification priority levels
 typedef enum {
     NOTIFICATION_PRIORITY_LOW = 0,
+    NOTIFICATION_PRIORITY_NORMAL,
     NOTIFICATION_PRIORITY_MEDIUM,
     NOTIFICATION_PRIORITY_HIGH,
     NOTIFICATION_PRIORITY_CRITICAL
@@ -38,6 +52,7 @@ typedef struct {
     char id[64];
     char title[256];
     char message[1024];
+    notification_type_t type;
     notification_priority_t priority;
     notification_method_t method;
     notification_status_t status;

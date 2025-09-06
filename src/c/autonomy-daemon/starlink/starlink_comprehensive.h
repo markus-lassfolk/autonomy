@@ -211,6 +211,9 @@ typedef struct {
     time_t last_analysis;                  // Last analysis time
 } starlink_comprehensive_collector_t;
 
+// Global variable declaration
+extern starlink_comprehensive_collector_t g_starlink_comprehensive;
+
 // Function prototypes
 
 /**

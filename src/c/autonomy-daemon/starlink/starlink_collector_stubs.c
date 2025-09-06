@@ -77,12 +77,13 @@ int starlink_get_cached_data(starlink_collection_result_t *result) {
     return starlink_collect_data(result);
 }
 
-void starlink_get_collector_stats(int *cache_hits_out, int *cache_misses_out, int *errors_out, int *successes_out) {
+int starlink_get_collector_stats(int *cache_hits_out, int *cache_misses_out, int *errors_out, int *successes_out) {
     // Stub implementation
     if (cache_hits_out) *cache_hits_out = cache_hits;
     if (cache_misses_out) *cache_misses_out = cache_misses;
     if (errors_out) *errors_out = errors;
     if (successes_out) *successes_out = successes;
+    return 0; // Success
 }
 
 void starlink_set_collection_interval(int interval_seconds) {

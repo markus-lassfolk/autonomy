@@ -1,5 +1,6 @@
 #include "starlink_api_version_monitor_ubus.h"
 #include "starlink_api_version_monitor.h"
+#include "../core/types.h"
 #include "../utils/logx.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>

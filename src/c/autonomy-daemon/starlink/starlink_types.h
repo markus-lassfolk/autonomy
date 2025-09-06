@@ -79,6 +79,12 @@ typedef struct {
     int32_t last_outage_s;
     int32_t outage_count;
     int32_t outage_duration;
+    int cause;                          // Outage cause code
+    uint64_t start_timestamp_ns;        // Start timestamp in nanoseconds
+    uint64_t duration_ns;               // Duration in nanoseconds
+    bool did_switch;                    // Whether failover occurred
+    char cause_description[256];        // Human-readable cause description
+    time_t recorded_at;                 // When this outage was recorded
 } starlink_outage_t;
 
 // Network Performance

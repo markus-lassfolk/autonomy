@@ -2,9 +2,16 @@
 #define STARLINK_MODULES_H
 
 #include "starlink_types.h"
+#include "starlink_obstruction.h"
 #include <stdbool.h>
 #include <math.h>
 #include <sys/socket.h>
+
+// Forward declarations for UBUS types
+struct ubus_context;
+struct ubus_object;
+struct ubus_request_data;
+struct blob_attr;
 
 // Starlink client functions
 int starlink_client_init(const starlink_config_t *config);

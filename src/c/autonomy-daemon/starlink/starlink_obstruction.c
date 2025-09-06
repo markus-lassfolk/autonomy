@@ -1,6 +1,6 @@
 #include "starlink_obstruction.h"
 #include "../utils/logx.h"
-#include "types.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -144,7 +144,7 @@ int starlink_obstruction_init(void) {
 }
 
 // Record obstruction observation
-static int starlink_obstruction_record_observation(const starlink_obstruction_sample_t *sample) {
+int starlink_obstruction_record_observation(const starlink_obstruction_sample_t *sample) {
     if (!g_obstruction_initialized || !sample) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -154,9 +154,9 @@ static int starlink_obstruction_record_observation(const starlink_obstruction_sa
     g_obstruction.total_observations++;
     
     // Add to trend analysis history
-    add_trend_point(&g_obstruction.trend_analyzer.obstruction_history, 
+    add_trend_point(&g_obstruction.obstruction_history, 
                    sample->timestamp, sample->fraction_obstructed, 1.0);
-    add_trend_point(&g_obstruction.trend_analyzer.snr_history, 
+    add_trend_point(&g_obstruction.snr_history, 
                    sample->timestamp, sample->snr, 1.0);
     
     // Update movement detection
@@ -242,8 +242,8 @@ void update_movement_detection(const starlink_obstruction_sample_t *sample) {
     if (fabs(sample->fraction_obstructed - last_obstruction) > 0.05) { // 5% change
         if (now - last_movement_check > 60) { // Check every minute
             // Simulate movement detection
-            g_obstruction.movement_detector.is_moving = true;
-            g_obstruction.movement_detector.last_movement_time = now;
+            g_obstruction.is_moving = true;
+            g_obstruction.last_movement_time = now;
             
             LOGX_DEBUG_MSG("Movement detected based on obstruction change: %.2f%% -> %.2f%%", 
                       last_obstruction * 100, sample->fraction_obstructed * 100);
@@ -376,8 +376,8 @@ void update_or_create_pattern(const char *name, const char *description,
         // Update pattern data
         pattern->obstruction_data.typical_obstruction = sample->fraction_obstructed;
         pattern->obstruction_data.typical_snr = sample->snr;
-        pattern->obstruction_data.severity = (sample->fraction_obstructed > 0.15) ? "severe" : 
-                                           (sample->fraction_obstructed > 0.08) ? "moderate" : "minor";
+        pattern->obstruction_data.severity = (sample->fraction_obstructed > 0.15) ? OBSTRUCTION_SEVERITY_SEVERE : 
+                                           (sample->fraction_obstructed > 0.08) ? OBSTRUCTION_SEVERITY_MODERATE : OBSTRUCTION_SEVERITY_MINOR;
         
         pattern->confidence = confidence;
         pattern->sample_count++;
@@ -621,10 +621,10 @@ int find_oldest_match_history(void) {
 // Perform trend analysis
 static void perform_trend_analysis(void) {
     // Analyze obstruction trends
-    analyze_trend(&g_obstruction.trend_analyzer.obstruction_history, "obstruction");
+    analyze_trend(&g_obstruction.obstruction_history, "obstruction");
     
     // Analyze SNR trends
-    analyze_trend(&g_obstruction.trend_analyzer.snr_history, "snr");
+    analyze_trend(&g_obstruction.snr_history, "snr");
 }
 
 // Analyze trend for a specific metric
@@ -691,7 +691,7 @@ int starlink_obstruction_get_status(starlink_obstruction_status_t *status) {
 }
 
 // Get environmental patterns
-static int starlink_obstruction_get_patterns(starlink_environmental_pattern_t *patterns, int max_patterns) {
+int starlink_obstruction_get_patterns(starlink_environmental_pattern_t *patterns, int max_patterns) {
     if (!g_obstruction_initialized || !patterns || max_patterns <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -712,7 +712,7 @@ static int starlink_obstruction_get_patterns(starlink_environmental_pattern_t *p
 }
 
 // Get active matches
-static int starlink_obstruction_get_active_matches(starlink_active_match_t *matches, int max_matches) {
+int starlink_obstruction_get_active_matches(starlink_active_match_t *matches, int max_matches) {
     if (!g_obstruction_initialized || !matches || max_matches <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -733,7 +733,7 @@ static int starlink_obstruction_get_active_matches(starlink_active_match_t *matc
 }
 
 // Get match history
-static int starlink_obstruction_get_match_history(starlink_match_result_t *results, int max_results) {
+int starlink_obstruction_get_match_history(starlink_match_result_t *results, int max_results) {
     if (!g_obstruction_initialized || !results || max_results <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -799,7 +799,7 @@ int starlink_obstruction_set_config(const starlink_obstruction_config_t *config)
 }
 
 // Enable/disable obstruction analysis
-static int starlink_obstruction_set_enabled(bool enabled) {
+int starlink_obstruction_set_enabled(bool enabled) {
     if (!g_obstruction_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -813,7 +813,7 @@ static int starlink_obstruction_set_enabled(bool enabled) {
 }
 
 // Reset obstruction analysis
-static int starlink_obstruction_reset(void) {
+int starlink_obstruction_reset(void) {
     if (!g_obstruction_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }

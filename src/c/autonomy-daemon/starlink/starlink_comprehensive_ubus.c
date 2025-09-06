@@ -1,5 +1,6 @@
 #include "starlink_comprehensive_ubus.h"
 #include "../starlink/starlink_comprehensive.h"
+#include "../core/types.h"
 #include "../utils/logx.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>

@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 // Global comprehensive Starlink collector
-static starlink_comprehensive_collector_t g_starlink_comprehensive = {0};
+starlink_comprehensive_collector_t g_starlink_comprehensive = {0};
 static bool g_starlink_comprehensive_initialized = false;
 
 // Event severity strings
@@ -37,7 +37,7 @@ static const char* OUTAGE_CAUSE_STRINGS[] = {
 static int collect_from_location_api(starlink_comprehensive_gps_t* gps_data);
 static int collect_from_status_api(starlink_comprehensive_gps_t* gps_data, starlink_comprehensive_status_t* status);
 static int collect_from_diagnostics_api(starlink_comprehensive_gps_t* gps_data);
-static int collect_from_history_api(starlink_events_outages_analysis_t* analysis);
+int collect_from_history_api(starlink_events_outages_analysis_t* analysis);
 static int parse_events_from_response(const char* json_response, starlink_event_t* events, int max_events);
 static int parse_outages_from_response(const char* json_response, starlink_outage_t* outages, int max_outages);
 void analyze_events_and_outages(starlink_events_outages_analysis_t* analysis);
@@ -154,7 +154,7 @@ void starlink_comprehensive_cleanup(void) {
 }
 
 // Collect comprehensive Starlink data from all APIs
-static int starlink_comprehensive_collect_all(starlink_comprehensive_status_t* status) {
+int starlink_comprehensive_collect_all(starlink_comprehensive_status_t* status) {
     if (!g_starlink_comprehensive_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -177,7 +177,7 @@ static int starlink_comprehensive_collect_all(starlink_comprehensive_status_t* s
         status->device_info = basic_status.device_info;
         status->device_state = basic_status.device_state;
         status->obstruction_stats = basic_status.obstruction_stats;
-        status->pop_ping_latency_ms = basic_status.network_performance.pop_ping_latency_ms;
+        status->pop_ping_latency_ms = basic_status.network_perf.pop_ping_latency_ms;
         
         LOGX_DEBUG_MSG("Basic Starlink status collected",
                   "uptime", status->device_state.uptime_s,
@@ -249,7 +249,7 @@ static int starlink_comprehensive_collect_all(starlink_comprehensive_status_t* s
 }
 
 // Collect comprehensive GPS data from multiple Starlink APIs
-static int starlink_comprehensive_collect_gps(starlink_comprehensive_gps_t* gps_data) {
+int starlink_comprehensive_collect_gps(starlink_comprehensive_gps_t* gps_data) {
     if (!gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -715,6 +715,30 @@ static void* analysis_thread_worker(void* arg) {
     
     LOGX_INFO_MSG("Starlink events/outages analysis thread stopped");
     return NULL;
+}
+
+// Collect historical data from Starlink API
+int collect_from_history_api(starlink_events_outages_analysis_t* analysis) {
+    if (!analysis) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Placeholder implementation - would make actual API call to get history
+    LOGX_INFO_MSG("Collecting historical data from Starlink API - placeholder implementation");
+    
+    // Initialize analysis with default values
+    analysis->event_count = 0;
+    analysis->critical_events_24h = 0;
+    analysis->warning_events_24h = 0;
+    analysis->outage_count = 0;
+    analysis->total_outages_24h = 0;
+    analysis->avg_outage_duration_s = 0.0;
+    analysis->outage_frequency_per_hour = 0.0;
+    analysis->outage_pattern_detected = false;
+    analysis->event_escalation_detected = false;
+    analysis->stability_score = 0.90;   // Default good stability
+    
+    return AUTONOMY_SUCCESS;
 }
 
 // Additional functions would be implemented here...

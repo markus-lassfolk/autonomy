@@ -143,6 +143,9 @@ typedef struct {
     time_t last_check;                     // Last check time
 } starlink_api_version_monitor_t;
 
+// Global variable declaration
+extern starlink_api_version_monitor_t g_api_version_monitor;
+
 // Function prototypes
 
 /**

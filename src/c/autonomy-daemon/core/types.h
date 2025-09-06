@@ -422,12 +422,7 @@ typedef opencellid_radio_type_t opencellid_radio_t;
 // Note: opencellid_triangulation_result_t is defined in gps/opencellid_complete.h
 
 // Forward declarations for Starlink obstruction types (Core module pattern)
-typedef struct starlink_obstruction_sample starlink_obstruction_sample_t;
-typedef struct starlink_obstruction_status starlink_obstruction_status_t;
-typedef struct starlink_environmental_pattern starlink_environmental_pattern_t;
-typedef struct starlink_active_match starlink_active_match_t;
-typedef struct starlink_match_result starlink_match_result_t;
-typedef struct starlink_obstruction_config starlink_obstruction_config_t;
+// Forward declarations for complex Starlink obstruction types (removed - full definitions in starlink_obstruction.h)
 
 // System health structure
 typedef struct {

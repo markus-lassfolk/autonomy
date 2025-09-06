@@ -1,4 +1,5 @@
 #include "starlink_api_version_monitor.h"
+#include "../core/types.h"
 #include "../starlink/starlink_comprehensive.h"
 #include "../notifications/notifications_comprehensive.h"
 #include "../utils/logx.h"
@@ -15,7 +16,7 @@
 #include <fcntl.h>
 
 // Global API version monitor
-static starlink_api_version_monitor_t g_api_version_monitor = {0};
+starlink_api_version_monitor_t g_api_version_monitor = {0};
 static bool g_api_version_monitor_initialized = false;
 
 // Change severity strings
@@ -39,7 +40,7 @@ static void* monitor_thread_worker(void* arg);
 static int extract_version_from_starlink_response(const char* json_response, starlink_api_version_t* version);
 static int detect_version_change(const starlink_api_version_t* new_version);
 static int send_version_change_notification(const starlink_api_version_change_t* change);
-static int validate_api_after_change(const starlink_api_version_change_t* change);
+int validate_api_after_change(const starlink_api_version_change_t* change);
 static int save_version_to_storage(const starlink_api_version_t* version);
 static int load_version_from_storage(starlink_api_version_t* version);
 
@@ -259,7 +260,7 @@ int starlink_api_version_monitor_check_version(void) {
 }
 
 // Parse Starlink software version string
-static int starlink_parse_software_version(const char* version_str, starlink_api_version_t* version) {
+int starlink_parse_software_version(const char* version_str, starlink_api_version_t* version) {
     if (!version_str || !version) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -574,7 +575,7 @@ static int send_version_change_notification(const starlink_api_version_change_t*
 }
 
 // Generate impact assessment
-static int starlink_generate_impact_assessment(const starlink_api_version_change_t* change, char* assessment_buffer) {
+int starlink_generate_impact_assessment(const starlink_api_version_change_t* change, char* assessment_buffer) {
     if (!change || !assessment_buffer) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -609,7 +610,7 @@ static int starlink_generate_impact_assessment(const starlink_api_version_change
 }
 
 // Generate recommended actions
-static int starlink_generate_recommended_actions(const starlink_api_version_change_t* change, char* actions_buffer) {
+int starlink_generate_recommended_actions(const starlink_api_version_change_t* change, char* actions_buffer) {
     if (!change || !actions_buffer) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -774,4 +775,16 @@ static int load_version_from_storage(starlink_api_version_t* version) {
     }
     
     return AUTONOMY_ERROR_NOT_FOUND;
+}
+
+// Validate API functionality after version change
+int validate_api_after_change(const starlink_api_version_change_t* change) {
+    if (!change) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Simple validation - just return success for now
+    // In a real implementation, this would test key API endpoints
+    LOGX_INFO_MSG("API validation after version change - placeholder implementation");
+    return AUTONOMY_SUCCESS;
 }
