@@ -88,11 +88,11 @@ struct autonomy_state {
     float current_accuracy;
     int current_confidence;
     time_t last_gps_update;
-    int gps_enabled;
     float gps_health_score;
     char location_status[16];
     int movement_detected;
     time_t last_movement_check;
+    int gps_enabled;
 };
 
 // Return codes
@@ -516,6 +516,7 @@ typedef struct {
     char email_smtp[256];                    // SMTP server
     char webhook_url[512];                   // Webhook URL
 } autonomy_config_t;
+
 
 // Function declarations
 void log_message(log_level_t level, const char *format, ...);

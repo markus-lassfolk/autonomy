@@ -6,8 +6,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
-#include <pthread.h>
-#include <stdbool.h>
 
 // GPS health configuration
 static const int HEALTH_CHECK_INTERVAL = 60;         // 1 minute health check interval
@@ -26,21 +24,20 @@ static const double GOOD_HEALTH = 0.6;               // Good health threshold
 static const double POOR_HEALTH = 0.4;               // Poor health threshold
 static const double CRITICAL_HEALTH = 0.2;           // Critical health threshold
 
+// Forward declarations
+static void update_source_health_scores(gps_source_health_t *source, const gps_data_t *gps_data);
+static double calculate_accuracy_score(double accuracy);
+static double calculate_freshness_score(time_t timestamp);
+static double calculate_reliability_score(const gps_source_health_t *source);
+static double calculate_consistency_score(const gps_source_health_t *source, const gps_data_t *gps_data);
+static void update_source_status(gps_source_health_t *source);
+static void add_health_history(time_t timestamp, double overall_score, int source_count, int healthy_sources);
+static int find_source_by_name(const char *source_name);
+
 // Global GPS health monitor state
 static gps_health_t g_health_monitor = {0};
 static bool g_health_initialized = false;
 static pthread_mutex_t g_health_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-// Forward declarations
-void update_source_health_scores(gps_source_health_t *source, const gps_data_t *gps_data);
-double calculate_accuracy_score(double accuracy);
-double calculate_freshness_score(time_t timestamp);
-double calculate_reliability_score(const gps_source_health_t *source);
-double calculate_consistency_score(const gps_source_health_t *source, const gps_data_t *gps_data);
-void update_source_status(gps_source_health_t *source);
-void add_health_history(time_t timestamp, double overall_score, int source_count, int healthy_sources);
-int find_source_by_name(const char *source_name);
-
 
 // Initialize GPS health monitor
 int gps_health_init(void) {
@@ -96,7 +93,7 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
     int existing_index = find_source_by_name(source_name);
     if (existing_index >= 0) {
         pthread_mutex_unlock(&g_health_mutex);
-        LOGX_WARN_MSG("GPS source '%s' already registered", source_name);
+        LOGX_WARN_MSG("GPS source already registered", "source", source_name);
         return AUTONOMY_ERROR_ALREADY_EXISTS;
     }
     
@@ -119,7 +116,6 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
     gps_source_health_t *source = &g_health_monitor.sources[source_index];
     source->active = true;
     strncpy(source->name, source_name, sizeof(source->name) - 1);
-    source->name[sizeof(source->name) - 1] = '\0';
     source->source_type = source_type;
     source->registration_time = time(NULL);
     source->last_update = 0;
@@ -138,7 +134,7 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
     
     pthread_mutex_unlock(&g_health_mutex);
     
-    LOGX_INFO_MSG("Registered GPS source '%s' (type: %d)", source_name, source_type);
+    LOGX_INFO_MSG("Registered GPS source", "source", source_name, "type", source_type);
     return AUTONOMY_SUCCESS;
 }
 
@@ -154,7 +150,7 @@ int gps_health_update_source(const char *source_name, const gps_data_t *gps_data
     int source_index = find_source_by_name(source_name);
     if (source_index < 0) {
         pthread_mutex_unlock(&g_health_mutex);
-        LOGX_WARN_MSG("GPS source '%s' not registered", source_name);
+        LOGX_WARN_MSG("GPS source not registered", "source", source_name);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -182,7 +178,7 @@ int gps_health_update_source(const char *source_name, const gps_data_t *gps_data
 }
 
 // Update source health scores
-void update_source_health_scores(gps_source_health_t *source, const gps_data_t *gps_data) {
+static void update_source_health_scores(gps_source_health_t *source, const gps_data_t *gps_data) {
     // Calculate accuracy score
     source->accuracy_score = calculate_accuracy_score(gps_data->accuracy);
     
@@ -208,7 +204,7 @@ void update_source_health_scores(gps_source_health_t *source, const gps_data_t *
 }
 
 // Calculate accuracy score
-double calculate_accuracy_score(double accuracy) {
+static double calculate_accuracy_score(double accuracy) {
     if (accuracy <= 0) {
         return 0.0;
     }
@@ -227,7 +223,7 @@ double calculate_accuracy_score(double accuracy) {
 }
 
 // Calculate freshness score
-double calculate_freshness_score(time_t timestamp) {
+static double calculate_freshness_score(time_t timestamp) {
     if (timestamp <= 0) {
         return 0.0;
     }
@@ -249,7 +245,7 @@ double calculate_freshness_score(time_t timestamp) {
 }
 
 // Calculate reliability score
-double calculate_reliability_score(const gps_source_health_t *source) {
+static double calculate_reliability_score(const gps_source_health_t *source) {
     if (source->total_updates == 0) {
         return 1.0; // No updates yet
     }
@@ -268,7 +264,7 @@ double calculate_reliability_score(const gps_source_health_t *source) {
 }
 
 // Calculate consistency score
-double calculate_consistency_score(const gps_source_health_t *source, const gps_data_t *gps_data) {
+static double calculate_consistency_score(const gps_source_health_t *source, const gps_data_t *gps_data) {
     // For now, use a simple approach based on data validity
     if (gps_data->lat == 0.0 && gps_data->lon == 0.0) {
         return 0.0; // Invalid coordinates
@@ -286,7 +282,7 @@ double calculate_consistency_score(const gps_source_health_t *source, const gps_
 }
 
 // Update source status
-void update_source_status(gps_source_health_t *source) {
+static void update_source_status(gps_source_health_t *source) {
     if (source->health_score >= EXCELLENT_HEALTH) {
         source->status = GPS_SOURCE_STATUS_EXCELLENT;
     } else if (source->health_score >= GOOD_HEALTH) {
@@ -358,14 +354,16 @@ int gps_health_perform_check(void) {
     
     pthread_mutex_unlock(&g_health_mutex);
     
-    LOGX_DEBUG_MSG("GPS health check completed: overall score=%.3f, healthy sources=%d/%d", 
-               g_health_monitor.overall_health_score, healthy_sources, g_health_monitor.source_count);
+    LOGX_DEBUG_MSG("GPS health check completed", 
+                   "overall_score", g_health_monitor.overall_health_score,
+                   "healthy_sources", healthy_sources,
+                   "total_sources", g_health_monitor.source_count);
     
     return AUTONOMY_SUCCESS;
 }
 
 // Add health history record
-void add_health_history(time_t timestamp, double overall_score, int source_count, int healthy_sources) {
+static void add_health_history(time_t timestamp, double overall_score, int source_count, int healthy_sources) {
     // Shift history array
     for (int i = g_health_monitor.health_history_size - 1; i > 0; i--) {
         memcpy(&g_health_monitor.health_history[i], &g_health_monitor.health_history[i-1], 
@@ -380,7 +378,7 @@ void add_health_history(time_t timestamp, double overall_score, int source_count
 }
 
 // Find source by name
-int find_source_by_name(const char *source_name) {
+static int find_source_by_name(const char *source_name) {
     for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         if (g_health_monitor.sources[i].active && 
             strcmp(g_health_monitor.sources[i].name, source_name) == 0) {
@@ -479,7 +477,7 @@ int gps_health_set_enabled(bool enabled) {
     g_health_monitor.enabled = enabled;
     pthread_mutex_unlock(&g_health_mutex);
     
-    LOGX_INFO_MSG("GPS health monitor %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS health monitor state changed", "enabled", enabled ? "true" : "false");
     return AUTONOMY_SUCCESS;
 }
 
@@ -524,7 +522,7 @@ int gps_health_unregister_source(const char *source_name) {
     
     pthread_mutex_unlock(&g_health_mutex);
     
-    LOGX_INFO_MSG("Unregistered GPS source '%s'", source_name);
+    LOGX_INFO_MSG("Unregistered GPS source", "source", source_name);
     return AUTONOMY_SUCCESS;
 }
 
