@@ -19,6 +19,19 @@ static gps_integration_t g_integration = {0};
 static bool g_integration_initialized = false;
 static pthread_mutex_t g_integration_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Forward declarations
+int find_source_by_id(int source_id);
+static double calculate_source_health_score(const gps_integration_source_t *source, const gps_data_t *gps_data);
+static double calculate_source_reliability(const gps_integration_source_t *source, const gps_data_t *gps_data);
+void add_gps_history(const gps_data_t *gps_data, int source_id, gps_source_type_t source_type, double health_score);
+static double calculate_gps_confidence(const gps_data_t *gps_data);
+void perform_integration_checks(void);
+void check_gps_source_health(void);
+void update_best_gps_source(void);
+void perform_gps_data_fusion(void);
+void check_gps_events(void);
+void check_location_services_update(void);
+
 // Initialize GPS integration system
 int gps_integration_init(void) {
     if (g_integration_initialized) {
@@ -196,7 +209,7 @@ int gps_integration_update_source(int source_id, const gps_data_t *gps_data) {
 }
 
 // Find source by ID
-static int find_source_by_id(int source_id) {
+int find_source_by_id(int source_id) {
     for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         if (g_integration.gps_sources[i].active && 
             g_integration.gps_sources[i].source_id == source_id) {
@@ -265,7 +278,7 @@ static double calculate_source_reliability(const gps_integration_source_t *sourc
 }
 
 // Add GPS data to history
-static void add_gps_history(const gps_data_t *gps_data, int source_id, 
+void add_gps_history(const gps_data_t *gps_data, int source_id, 
                            gps_source_type_t source_type, double health_score) {
     // Shift history array
     for (int i = g_integration.history_size - 1; i > 0; i--) {
@@ -322,7 +335,7 @@ static double calculate_gps_confidence(const gps_data_t *gps_data) {
 }
 
 // Perform integration checks
-static void perform_integration_checks(void) {
+void perform_integration_checks(void) {
     time_t now = time(NULL);
     
     // Check if enough time has passed since last integration check
@@ -353,7 +366,7 @@ static void perform_integration_checks(void) {
 }
 
 // Check GPS source health
-static void check_gps_source_health(void) {
+void check_gps_source_health(void) {
     for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         if (!g_integration.gps_sources[i].active) {
             continue;
@@ -381,7 +394,7 @@ static void check_gps_source_health(void) {
 }
 
 // Update best GPS source
-static void update_best_gps_source(void) {
+void update_best_gps_source(void) {
     int best_source_index = -1;
     double best_score = -1.0;
     
@@ -408,21 +421,21 @@ static void update_best_gps_source(void) {
 }
 
 // Perform GPS data fusion
-static void perform_gps_data_fusion(void) {
+void perform_gps_data_fusion(void) {
     // This is a placeholder for GPS data fusion
     // In a full implementation, this would call the gps_fusion module
     LOGX_DEBUG_MSG("GPS data fusion would be performed here");
 }
 
 // Check GPS events
-static void check_gps_events(void) {
+void check_gps_events(void) {
     // This is a placeholder for GPS event checking
     // In a full implementation, this would call the gps_events module
     LOGX_DEBUG_MSG("GPS events would be checked here");
 }
 
 // Check location services update
-static void check_location_services_update(void) {
+void check_location_services_update(void) {
     // This is a placeholder for location services updates
     // In a full implementation, this would call the gps_location_services module
     LOGX_DEBUG_MSG("Location services would be updated here");
