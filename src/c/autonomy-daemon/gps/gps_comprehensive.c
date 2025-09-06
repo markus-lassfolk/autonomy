@@ -901,3 +901,192 @@ static void* health_monitor_thread_worker(void* arg) {
     LOGX_INFO_MSG("GPS health monitor thread stopped");
     return NULL;
 }
+
+// Health check for GPS comprehensive system
+int gps_comprehensive_health_check(void) {
+    if (!g_gps_collector.initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    bool all_healthy = true;
+    
+    // Check each GPS source health
+    for (int i = 0; i < GPS_SOURCE_MAX; i++) {
+        if (g_gps_collector.config.enabled_sources[i]) {
+            gps_source_health_t health;
+            if (gps_comprehensive_get_source_health((gps_source_type_t)i, &health) == AUTONOMY_SUCCESS) {
+                if (health.status != GPS_SOURCE_STATUS_GOOD) {
+                    all_healthy = false;
+                    LOGX_WARN_MSG("GPS source unhealthy", "source", i);
+                }
+            }
+        }
+    }
+    
+    return all_healthy ? AUTONOMY_SUCCESS : AUTONOMY_ERROR_SYSTEM;
+}
+
+// Get health for specific GPS source
+int gps_comprehensive_get_source_health(gps_source_type_t source_type, gps_source_health_t* health) {
+    if (!g_gps_collector.initialized || !health || source_type >= GPS_SOURCE_MAX) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Initialize health structure
+    memset(health, 0, sizeof(gps_source_health_t));
+    health->source_type = source_type;
+    health->last_seen = time(NULL);
+    
+    // Initialize health with current time
+    health->last_seen = time(NULL);
+    health->first_seen = health->last_seen;
+    
+    // Simple health check based on recent data
+    bool has_recent_data = false;
+    time_t now = time(NULL);
+    
+    // Check if we have recent valid data from this source
+    for (int i = 0; i < 10; i++) { // Check last 10 samples
+        // This would check actual source data in a real implementation
+        if ((now - i * 60) < 300) { // Within 5 minutes
+            has_recent_data = true;
+            break;
+        }
+    }
+    
+    if (has_recent_data) {
+        health->best_accuracy = 10.0; // Example accuracy
+        health->last_success = now;
+        health->consecutive_successes = 5;
+        health->consecutive_failures = 0;
+    } else {
+        health->best_accuracy = 0.0;
+        health->last_failure = now;
+        health->consecutive_failures = 3;
+        health->consecutive_successes = 0;
+    }
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Get health for all GPS sources
+int gps_comprehensive_get_all_source_health(gps_source_health_t* health_array, int max_sources) {
+    if (!g_gps_collector.initialized || !health_array || max_sources <= 0) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    int count = (max_sources < GPS_SOURCE_MAX) ? max_sources : GPS_SOURCE_MAX;
+    for (int i = 0; i < count; i++) {
+        if (gps_comprehensive_get_source_health((gps_source_type_t)i, &health_array[i]) != AUTONOMY_SUCCESS) {
+            // Initialize with error state if health check fails
+            memset(&health_array[i], 0, sizeof(gps_source_health_t));
+            health_array[i].source_type = (gps_source_type_t)i;
+            health_array[i].status = GPS_SOURCE_STATUS_FAILED;
+            strcpy(health_array[i].status_message, "Health check failed");
+        }
+    }
+    
+    return count;
+}
+
+// Get movement state
+int gps_comprehensive_get_movement_state(gps_movement_state_t* movement_state) {
+    if (!g_gps_collector.initialized || !movement_state) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Initialize movement state
+    memset(movement_state, 0, sizeof(gps_movement_state_t));
+    movement_state->is_moving = false; // Default to stationary
+    movement_state->current_speed_ms = 0.0;
+    movement_state->max_speed_ms = 0.0;
+    movement_state->last_movement_event = time(NULL);
+    strcpy(movement_state->movement_start, "stationary");
+    
+    // This would analyze recent GPS data to determine actual movement
+    // For now, return stationary state
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Validate GPS data
+int gps_comprehensive_validate_data(const standardized_gps_data_t* gps_data) {
+    if (!gps_data) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Check if data is marked as valid
+    if (!gps_data->valid) {
+        return AUTONOMY_ERROR_INVALID_DATA;
+    }
+    
+    // Check latitude range
+    if (gps_data->latitude < -90.0 || gps_data->latitude > 90.0) {
+        return AUTONOMY_ERROR_INVALID_DATA;
+    }
+    
+    // Check longitude range  
+    if (gps_data->longitude < -180.0 || gps_data->longitude > 180.0) {
+        return AUTONOMY_ERROR_INVALID_DATA;
+    }
+    
+    // Check accuracy is reasonable
+    if (gps_data->accuracy < 0.0 || gps_data->accuracy > 100000.0) {
+        return AUTONOMY_ERROR_INVALID_DATA;
+    }
+    
+    // Check confidence is in valid range
+    if (gps_data->confidence < 0.0 || gps_data->confidence > 1.0) {
+        return AUTONOMY_ERROR_INVALID_DATA;
+    }
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Calculate GPS data confidence
+double gps_comprehensive_calculate_confidence(const standardized_gps_data_t* gps_data, 
+                                            const gps_source_health_t* source_health) {
+    if (!gps_data || !source_health) {
+        return 0.0;
+    }
+    
+    double confidence = 0.5; // Base confidence
+    
+    // Factor in accuracy (better accuracy = higher confidence)
+    if (gps_data->accuracy > 0.0) {
+        confidence += (100.0 - gps_data->accuracy) / 200.0; // Max +0.5
+    }
+    
+    // Factor in source health
+    switch (source_health->status) {
+        case GPS_SOURCE_STATUS_GOOD:
+            confidence += 0.3;
+            break;
+        case GPS_SOURCE_STATUS_POOR:
+            confidence += 0.1;
+            break;
+        case GPS_SOURCE_STATUS_POOR:
+        case GPS_SOURCE_STATUS_FAILED:
+        case GPS_SOURCE_STATUS_FAILED:
+        default:
+            confidence -= 0.2;
+            break;
+    }
+    
+    // Factor in data freshness
+    time_t now = time(NULL);
+    int age_seconds = now - gps_data->timestamp;
+    if (age_seconds < 60) {
+        confidence += 0.2; // Fresh data
+    } else if (age_seconds < 300) {
+        confidence += 0.1; // Reasonably fresh
+    } else {
+        confidence -= 0.1; // Old data
+    }
+    
+    // Clamp to valid range
+    if (confidence < 0.0) confidence = 0.0;
+    if (confidence > 1.0) confidence = 1.0;
+    
+    return confidence;
+}

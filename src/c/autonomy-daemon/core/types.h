@@ -300,6 +300,8 @@ typedef enum {
     GPS_SOURCE_STATUS_FAILED
 } gps_source_status_t;
 
+// Note: gps_source_health_t and gps_movement_state_t are defined in gps/gps_comprehensive.h
+
 // GPS fix types
 typedef enum {
     GPS_FIX_TYPE_NONE = 0,
