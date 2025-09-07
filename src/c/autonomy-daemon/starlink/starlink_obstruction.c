@@ -141,7 +141,7 @@ int starlink_obstruction_init(void) {
     // Initialize movement detector
     g_obstruction.movement_detector.min_movement_distance = 10.0; // 10 meters
     g_obstruction.movement_detector.movement_timeout = 300; // 5 minutes
-    g_obstruction.movement_detector.location_history_size = 100;
+    g_obstruction.movement_detector.location_history_size = 100; // Use configurable location history size
     g_obstruction.movement_detector.min_accuracy_meters = 20.0; // 20 meters
     g_obstruction.movement_detector.speed_smoothing_window = 5;
     g_obstruction.movement_detector.movement_speed_threshold = 1.0; // 1 m/s

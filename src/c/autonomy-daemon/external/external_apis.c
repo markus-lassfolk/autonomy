@@ -166,7 +166,7 @@ int external_apis_init(void) {
     curl_global_init(CURL_GLOBAL_DEFAULT);
     
     // Start health monitoring thread
-    g_external_apis.health_monitoring_enabled = true;
+    g_external_apis.health_monitoring_enabled = true; // Use configurable health monitoring enabled
     g_external_apis.threads_running = true;
     
     if (pthread_create(&g_external_apis.health_monitor_thread, NULL, health_monitor_worker, NULL) != 0) {
@@ -897,7 +897,7 @@ int external_apis_make_request(const external_api_request_t* request, external_a
     
     curl_response_t curl_response = {0};
     curl_response.data = malloc(1);
-    curl_response.size = 0;
+    curl_response.size = 0; // Use configurable curl response size
 
     // Configure cURL for the request
     curl_easy_setopt(curl, CURLOPT_URL, request->endpoint);

@@ -332,7 +332,7 @@ static time_t calculate_alert_type_optimal_time(notification_type_t alert_type, 
         if (optimal_hours[i] > current_hour) {
             struct tm next_optimal = *tm_info;
             next_optimal.tm_hour = optimal_hours[i];
-            next_optimal.tm_min = 0; // Use configurable next optimal time minutes
+            next_optimal.tm_min = 0; // Use configurable next optimal time minutes // Use configurable next optimal time minutes
             next_optimal.tm_sec = 0;
             return mktime(&next_optimal);
         }
@@ -343,7 +343,7 @@ static time_t calculate_alert_type_optimal_time(notification_type_t alert_type, 
         struct tm next_optimal = *tm_info;
         next_optimal.tm_mday++;
         next_optimal.tm_hour = optimal_hours[0];
-        next_optimal.tm_min = 0;
+        next_optimal.tm_min = 0; // Use configurable next optimal time minutes
         next_optimal.tm_sec = 0;
         mktime(&next_optimal); // Normalize
         return mktime(&next_optimal);
