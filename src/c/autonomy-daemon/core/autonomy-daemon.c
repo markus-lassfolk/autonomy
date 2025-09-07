@@ -20,16 +20,11 @@
 #include "autonomy_modules.h"
 #include "../starlink/starlink_modules.h"
 #include "../starlink/starlink_tracker.h"
+#include "../utils/uci_manager.h"
 #include <sys/socket.h>
 
 // Global variables
-struct autonomy_config g_config = {
-    .log_level = "info",
-    .enable_gps = 1,
-    .enable_notifications = 1,
-    .health_check_interval = 30,
-    .config_file = "/etc/config/autonomy"
-};
+autonomy_config_t g_config;
 
 autonomy_state_t g_state = {
     .running = 0,
@@ -85,6 +80,10 @@ void handle_sig(int sig) {
     if (uci_ctx) {
         uci_free_context(uci_ctx);
     }
+    
+    // Cleanup UCI manager
+    uci_manager_cleanup();
+    
     remove_pid_file();
     uloop_done();
     exit(0);
@@ -146,6 +145,22 @@ int main(int argc, char **argv)
     signal(SIGTERM, handle_sig);
     signal(SIGINT, handle_sig);
     fprintf(stderr, "Signal handlers set\n");
+
+    // Initialize UCI manager and load configuration
+    if (uci_manager_init() != AUTONOMY_SUCCESS) {
+        fprintf(stderr, "Failed to initialize UCI manager\n");
+        return 1;
+    }
+    
+    if (uci_manager_load_config(&g_config) != AUTONOMY_SUCCESS) {
+        fprintf(stderr, "Failed to load configuration from UCI, using defaults\n");
+        // Use default configuration if UCI loading fails
+        const autonomy_config_t *default_config = uci_manager_get_default_config();
+        if (default_config) {
+            g_config = *default_config;
+        }
+    }
+    fprintf(stderr, "Configuration loaded from UCI\n");
 
     // Check if another instance is running
     if (check_pid_file() == -1) {

@@ -506,6 +506,16 @@ typedef struct {
     char email_to[256];                      // Email to address
     char email_smtp[256];                    // SMTP server
     char webhook_url[512];                   // Webhook URL
+    
+    // Snow detection settings
+    bool snow_detection_enabled;             // Snow detection enabled
+    int snow_detection_samples;              // Samples needed for detection
+    double snow_obstruction_threshold;       // Obstruction increase threshold
+    double snow_snr_degradation_threshold;   // SNR degradation threshold
+    double snow_temperature_threshold;       // Temperature threshold for snow
+    int snow_verification_time;              // Verification time in seconds
+    int snow_melt_timeout;                   // Maximum melt time in seconds
+    char snow_weather_api_key[64];           // OpenWeatherMap API key
 } autonomy_config_t;
 
 

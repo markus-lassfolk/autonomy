@@ -59,7 +59,17 @@ static const autonomy_config_t DEFAULT_CONFIG = {
     .email_from = "",
     .email_to = "",
     .email_smtp = "",
-    .webhook_url = ""
+    .webhook_url = "",
+    
+    // Snow detection settings
+    .snow_detection_enabled = true,
+    .snow_detection_samples = 5,
+    .snow_obstruction_threshold = 0.05,
+    .snow_snr_degradation_threshold = 0.02,
+    .snow_temperature_threshold = 2.0,
+    .snow_verification_time = 300,
+    .snow_melt_timeout = 1800,
+    .snow_weather_api_key = ""
 };
 
 // Initialize UCI manager using Teltonika's library
@@ -199,6 +209,39 @@ int uci_manager_load_config(autonomy_config_t *config) {
     if (value) {
         strncpy(config->webhook_url, value, sizeof(config->webhook_url) - 1);
         config->webhook_url[sizeof(config->webhook_url) - 1] = '\0';
+        free(value);
+    }
+    
+    // Snow detection settings
+    config->snow_detection_enabled = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "enabled", 1) != 0;
+    config->snow_detection_samples = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "detection_samples", 5);
+    config->snow_verification_time = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "verification_time", 300);
+    config->snow_melt_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "melt_timeout", 1800);
+    
+    // Snow detection thresholds (double values)
+    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "obstruction_threshold");
+    if (value) {
+        config->snow_obstruction_threshold = atof(value);
+        free(value);
+    }
+    
+    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "snr_degradation_threshold");
+    if (value) {
+        config->snow_snr_degradation_threshold = atof(value);
+        free(value);
+    }
+    
+    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "temperature_threshold");
+    if (value) {
+        config->snow_temperature_threshold = atof(value);
+        free(value);
+    }
+    
+    // Weather API key
+    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "weather_api_key");
+    if (value) {
+        strncpy(config->snow_weather_api_key, value, sizeof(config->snow_weather_api_key) - 1);
+        config->snow_weather_api_key[sizeof(config->snow_weather_api_key) - 1] = '\0';
         free(value);
     }
     
@@ -400,6 +443,62 @@ int uci_manager_save_config(const autonomy_config_t *config) {
         return AUTONOMY_ERROR_SYSTEM;
     }
     
+    // Save snow detection settings
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "enabled", config->snow_detection_enabled ? 1 : 0);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save snow_detection enabled to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "detection_samples", config->snow_detection_samples);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save snow_detection_samples to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "verification_time", config->snow_verification_time);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save snow_verification_time to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "melt_timeout", config->snow_melt_timeout);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save snow_melt_timeout to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Save snow detection thresholds as strings
+    char obstruction_str[32];
+    snprintf(obstruction_str, sizeof(obstruction_str), "%.3f", config->snow_obstruction_threshold);
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "obstruction_threshold", obstruction_str);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save snow_obstruction_threshold to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    char snr_str[32];
+    snprintf(snr_str, sizeof(snr_str), "%.3f", config->snow_snr_degradation_threshold);
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "snr_degradation_threshold", snr_str);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save snow_snr_degradation_threshold to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    char temp_str[32];
+    snprintf(temp_str, sizeof(temp_str), "%.1f", config->snow_temperature_threshold);
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "temperature_threshold", temp_str);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save snow_temperature_threshold to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "weather_api_key", config->snow_weather_api_key);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save snow_weather_api_key to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
     // Commit all changes using Teltonika's logged commit (includes logging)
     ret = ucix_logged_commit(g_uci_ctx, UCI_PACKAGE);
     if (ret != 0) {
@@ -466,4 +565,42 @@ const autonomy_config_t* uci_manager_get_default_config(void) {
 // Check if UCI manager is available
 bool uci_manager_is_available(void) {
     return g_uci_initialized && g_uci_ctx != NULL;
+}
+
+// Convert autonomy config to snow detection config
+void uci_manager_convert_to_snow_config(const autonomy_config_t *autonomy_config, 
+                                       starlink_snow_detection_config_t *snow_config) {
+    if (!autonomy_config || !snow_config) {
+        return;
+    }
+    
+    snow_config->enabled = autonomy_config->snow_detection_enabled;
+    snow_config->detection_samples = autonomy_config->snow_detection_samples;
+    snow_config->obstruction_threshold = autonomy_config->snow_obstruction_threshold;
+    snow_config->snr_degradation_threshold = autonomy_config->snow_snr_degradation_threshold;
+    snow_config->temperature_threshold = autonomy_config->snow_temperature_threshold;
+    snow_config->verification_time = autonomy_config->snow_verification_time;
+    snow_config->melt_timeout = autonomy_config->snow_melt_timeout;
+    strncpy(snow_config->weather_api_key, autonomy_config->snow_weather_api_key, 
+            sizeof(snow_config->weather_api_key) - 1);
+    snow_config->weather_api_key[sizeof(snow_config->weather_api_key) - 1] = '\0';
+}
+
+// Convert snow detection config to autonomy config
+void uci_manager_convert_from_snow_config(const starlink_snow_detection_config_t *snow_config,
+                                         autonomy_config_t *autonomy_config) {
+    if (!snow_config || !autonomy_config) {
+        return;
+    }
+    
+    autonomy_config->snow_detection_enabled = snow_config->enabled;
+    autonomy_config->snow_detection_samples = snow_config->detection_samples;
+    autonomy_config->snow_obstruction_threshold = snow_config->obstruction_threshold;
+    autonomy_config->snow_snr_degradation_threshold = snow_config->snr_degradation_threshold;
+    autonomy_config->snow_temperature_threshold = snow_config->temperature_threshold;
+    autonomy_config->snow_verification_time = snow_config->verification_time;
+    autonomy_config->snow_melt_timeout = snow_config->melt_timeout;
+    strncpy(autonomy_config->snow_weather_api_key, snow_config->weather_api_key,
+            sizeof(autonomy_config->snow_weather_api_key) - 1);
+    autonomy_config->snow_weather_api_key[sizeof(autonomy_config->snow_weather_api_key) - 1] = '\0';
 }

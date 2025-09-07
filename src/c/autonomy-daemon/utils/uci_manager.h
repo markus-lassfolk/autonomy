@@ -27,4 +27,12 @@ bool uci_manager_is_available(void);
 // Cleanup UCI system
 void uci_manager_cleanup(void);
 
+// Convert autonomy config to snow detection config
+void uci_manager_convert_to_snow_config(const autonomy_config_t *autonomy_config, 
+                                       starlink_snow_detection_config_t *snow_config);
+
+// Convert snow detection config to autonomy config
+void uci_manager_convert_from_snow_config(const starlink_snow_detection_config_t *snow_config,
+                                         autonomy_config_t *autonomy_config);
+
 #endif // UCI_MANAGER_H
