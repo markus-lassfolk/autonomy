@@ -307,7 +307,7 @@ int autonomy_starlink_cluster_config(struct ubus_context *uctx, struct ubus_obje
     // Optional parameters
     if (tb[0]) auto_failover = blobmsg_get_u8(tb[0]);
     if (tb[1]) failover_threshold = blobmsg_get_u32(tb[1]);
-    if (tb[2]) min_health_score = blobmsg_get_u32(tb[2]);
+    if (tb[2]) min_health_score = blobmsg_get_double(tb[2]);
     
     // Set cluster configuration
     starlink_cluster_set_config(auto_failover, failover_threshold, min_health_score);
