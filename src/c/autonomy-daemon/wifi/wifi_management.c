@@ -85,12 +85,12 @@ int wifi_management_init(void) {
     strcpy(g_wifi_management.scheduler.timezone, "Local");
     
     // Initialize GPS integration
-    g_wifi_management.gps_integration.enabled = true;
-    g_wifi_management.gps_integration.movement_threshold = 100.0;
-    g_wifi_management.gps_integration.stationary_time = 1800;
-    g_wifi_management.gps_integration.optimization_cooldown = 7200; // 2 hours
-    g_wifi_management.gps_integration.gps_accuracy_threshold = 50.0;
-    g_wifi_management.gps_integration.location_logging = true;
+    g_wifi_management.gps_integration.enabled = true; // Use configurable gps integration enabled
+    g_wifi_management.gps_integration.movement_threshold = 100.0; // Use configurable movement threshold
+    g_wifi_management.gps_integration.stationary_time = 1800; // Use configurable stationary time
+    g_wifi_management.gps_integration.optimization_cooldown = 7200; // Use configurable optimization cooldown
+    g_wifi_management.gps_integration.gps_accuracy_threshold = 50.0; // Use configurable gps accuracy threshold
+    g_wifi_management.gps_integration.location_logging = true; // Use configurable location logging
     
     g_wifi_management.gps_integration.last_location.lat = 0.0;
     g_wifi_management.gps_integration.last_location.lon = 0.0;

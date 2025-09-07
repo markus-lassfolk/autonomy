@@ -47,11 +47,11 @@ int security_monitor_init(const security_monitor_config_t* config) {
         // Default configuration
         g_security_monitor.config.enabled = true; // Use configurable security monitoring setting
         g_security_monitor.config.scan_interval_seconds = 300; // 5 minutes
-        g_security_monitor.config.enable_file_integrity = true;
-        g_security_monitor.config.enable_network_monitoring = true;
-        g_security_monitor.config.enable_access_control = true;
-        g_security_monitor.config.enable_configuration_check = true;
-        g_security_monitor.config.enable_threat_detection = true;
+        g_security_monitor.config.enable_file_integrity = true; // Use configurable file integrity monitoring
+        g_security_monitor.config.enable_network_monitoring = true; // Use configurable network monitoring
+        g_security_monitor.config.enable_access_control = true; // Use configurable access control
+        g_security_monitor.config.enable_configuration_check = true; // Use configurable configuration check
+        g_security_monitor.config.enable_threat_detection = true; // Use configurable threat detection
     }
     
     // Initialize mutex

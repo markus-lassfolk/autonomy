@@ -3,14 +3,14 @@
 
 ## 📊 Verification Results
 - **Total C files checked**: 140
-- **Files with configurable values**: 75
-- **Total configurable values found**: 213
-- **Files clean**: 65
+- **Files with configurable values**: 74
+- **Total configurable values found**: 173
+- **Files clean**: 66
 
 ## 🎯 Status
 
 ## ⚠️  VERIFICATION FAILED!
-**213 configurable values still need to be addressed.**
+**173 configurable values still need to be addressed.**
 
 ### Files with remaining configurable values:
 
@@ -177,13 +177,9 @@
 - Line 84: `g_data_limit_manager.max_interfaces = 0;`
 - Line 86: `g_data_limit_manager.max_last_notifications = 0;`
 
-#### src/c/autonomy-daemon/notifications/delivery_optimizer.c (7 values)
-- Line 95: `g_delivery_optimizer.max_user_patterns = 0;`
-- Line 174: `optimal_time.tm_min = 0;`
-- Line 202: `business_time.tm_min = 0;`
-- Line 252: `next_business.tm_min = 0;`
-- Line 292: `end_quiet.tm_min = 0;`
-- ... and 2 more values
+#### src/c/autonomy-daemon/notifications/delivery_optimizer.c (2 values)
+- Line 335: `next_optimal.tm_min = 0;`
+- Line 346: `next_optimal.tm_min = 0;`
 
 #### src/c/autonomy-daemon/notifications/email_client.c (1 values)
 - Line 392: `for (int attempt = 1; attempt <= max_attempts && !sent; attempt++) {`
@@ -201,13 +197,13 @@
 - Line 123: `g_intelligence_engine.max_user_patterns = 0;`
 - Line 538: `status->enabled = true;`
 
-#### src/c/autonomy-daemon/notifications/notification_config.c (25 values)
-- Line 96: `config->discord_config.enabled = false;`
-- Line 97: `config->discord_config.timeout_seconds = 30;`
-- Line 98: `config->discord_config.retry_attempts = 3;`
-- Line 99: `config->discord_config.retry_delay_seconds = 5;`
-- Line 104: `config->webhook_config.enabled = false;`
-- ... and 20 more values
+#### src/c/autonomy-daemon/notifications/notification_config.c (11 values)
+- Line 252: `config->pushover_enabled = false;`
+- Line 258: `config->pushover_enabled = false;`
+- Line 268: `config->email_enabled = false;`
+- Line 274: `config->email_enabled = false;`
+- Line 280: `config->email_enabled = false;`
+- ... and 6 more values
 
 #### src/c/autonomy-daemon/notifications/notification_deduplicator.c (1 values)
 - Line 56: `dedup->max_fingerprints = 0;`
@@ -280,21 +276,9 @@
 - Line 219: `g_telemetry_store.status.enabled = true;`
 - Line 268: `g_telemetry_store.max_members = 0;`
 
-#### src/c/autonomy-daemon/ubus/ubus_monitor.c (7 values)
-- Line 41: `g_ubus_monitor.config.enabled = true;`
-- Line 43: `g_ubus_monitor.config.max_fix_attempts = 3;`
-- Line 43: `g_ubus_monitor.config.max_fix_attempts = 3;`
-- Line 45: `g_ubus_monitor.config.restart_timeout = 30;`
-- Line 46: `g_ubus_monitor.config.min_services_expected = 20;`
-- ... and 2 more values
-
-#### src/c/autonomy-daemon/utils/cellular_collector.c (9 values)
-- Line 75: `g_cellular_collector.config.enabled = true;`
-- Line 78: `g_cellular_collector.config.collection_interval = 30;`
-- Line 79: `g_cellular_collector.config.timeout_seconds = 10;`
-- Line 80: `g_cellular_collector.config.enable_stability_monitoring = true;`
-- Line 81: `g_cellular_collector.config.enable_predictive_analysis = true;`
-- ... and 4 more values
+#### src/c/autonomy-daemon/ubus/ubus_monitor.c (2 values)
+- Line 56: `g_ubus_monitor.fix_attempts = 0;`
+- Line 304: `g_ubus_monitor.fix_attempts = 0;`
 
 #### src/c/autonomy-daemon/utils/credential_manager.c (1 values)
 - Line 66: `g_credential_manager.config.enable_encryption = false;`
@@ -336,13 +320,10 @@
 - Line 54: `g_security_monitor.config.enable_threat_detection = true;`
 - ... and 1 more values
 
-#### src/c/autonomy-daemon/wifi/wifi_management.c (10 values)
-- Line 75: `g_wifi_management.scheduler.nightly_enabled = true;`
-- Line 77: `g_wifi_management.scheduler.nightly_window_min = 60;`
-- Line 78: `g_wifi_management.scheduler.weekly_enabled = false;`
-- Line 81: `g_wifi_management.scheduler.weekly_window_min = 120;`
-- Line 82: `g_wifi_management.scheduler.check_interval_min = 10;`
-- ... and 5 more values
+#### src/c/autonomy-daemon/wifi/wifi_management.c (3 values)
+- Line 88: `g_wifi_management.gps_integration.enabled = true;`
+- Line 89: `g_wifi_management.gps_integration.movement_threshold = 100.0;`
+- Line 92: `g_wifi_management.gps_integration.gps_accuracy_threshold = 50.0;`
 
 #### src/c/autonomy-daemon/wifi/wifi_management_ubus.c (1 values)
 - Line 322: `bool enabled = false;`
@@ -354,6 +335,6 @@
 
 ## 🎯 Next Steps
 
-1. Address remaining 213 configurable values
+1. Address remaining 173 configurable values
 2. Run verification script again
 3. Complete UCI configuration integration

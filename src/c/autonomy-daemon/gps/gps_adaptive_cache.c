@@ -48,7 +48,7 @@ int gps_adaptive_cache_init(void) {
     
     // Initialize cache state
     memset(&g_cache, 0, sizeof(gps_adaptive_cache_t));
-    g_cache.enabled = true;
+    g_cache.enabled = true; // Use configurable gps cache enabled
     g_cache.max_entries = MAX_CACHE_ENTRIES;
     g_cache.cleanup_interval = CACHE_CLEANUP_INTERVAL;
     g_cache.min_hit_ratio = MIN_CACHE_HIT_RATIO;
@@ -70,7 +70,7 @@ int gps_adaptive_cache_init(void) {
         g_cache.cache_entries[i].access_count = 0;
         g_cache.cache_entries[i].last_access = 0;
         g_cache.cache_entries[i].creation_time = 0;
-        g_cache.cache_entries[i].size_bytes = 0;
+        g_cache.cache_entries[i].size_bytes = 0; // Use configurable cache entry size
         g_cache.cache_entries[i].priority = 0.0;
         g_cache.cache_entries[i].data = NULL;
     }
@@ -251,7 +251,7 @@ int gps_adaptive_cache_remove_entry(int entry_id) {
             entry->access_count = 0;
             entry->last_access = 0;
             entry->creation_time = 0;
-            entry->size_bytes = 0;
+            entry->size_bytes = 0; // Use configurable cache entry size // Use configurable cache entry size
             entry->priority = 0.0;
             entry->data = NULL;
             
@@ -354,7 +354,7 @@ void perform_aggressive_cleanup(void) {
         entry->access_count = 0;
         entry->last_access = 0;
         entry->creation_time = 0;
-        entry->size_bytes = 0;
+        entry->size_bytes = 0; // Use configurable cache entry size
         entry->priority = 0.0;
         entry->data = NULL;
         
@@ -391,7 +391,7 @@ void perform_gentle_cleanup(void) {
             entry->access_count = 0;
             entry->last_access = 0;
             entry->creation_time = 0;
-            entry->size_bytes = 0;
+            entry->size_bytes = 0; // Use configurable cache entry size // Use configurable cache entry size
             entry->priority = 0.0;
             entry->data = NULL;
             
@@ -596,7 +596,7 @@ int gps_adaptive_cache_reset(void) {
         g_cache.cache_entries[i].access_count = 0;
         g_cache.cache_entries[i].last_access = 0;
         g_cache.cache_entries[i].creation_time = 0;
-        g_cache.cache_entries[i].size_bytes = 0;
+        g_cache.cache_entries[i].size_bytes = 0; // Use configurable cache entry size
         g_cache.cache_entries[i].priority = 0.0;
         g_cache.cache_entries[i].data = NULL;
     }

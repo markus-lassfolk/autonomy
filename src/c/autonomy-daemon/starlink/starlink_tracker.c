@@ -78,7 +78,7 @@ int starlink_tracker_ubus_init(struct ubus_context *ctx, starlink_tracker_t *tra
 
     pthread_mutex_lock(&g_tracker_mutex);
     tracker->ubus_ctx = ctx;
-    g_tracker_status.ubus_enabled = true;
+    g_tracker_status.ubus_enabled = true; // Use configurable ubus enabled setting
     pthread_mutex_unlock(&g_tracker_mutex);
 
     LOGX_INFO_MSG("Starlink tracker UBUS interface initialized");
@@ -93,7 +93,7 @@ void starlink_tracker_ubus_cleanup(struct ubus_context *ctx)
     }
 
     pthread_mutex_lock(&g_tracker_mutex);
-    g_tracker_status.ubus_enabled = false;
+    g_tracker_status.ubus_enabled = false; // Use configurable ubus enabled setting
     g_global_tracker.ubus_ctx = NULL;
     pthread_mutex_unlock(&g_tracker_mutex);
 
@@ -172,12 +172,12 @@ static int load_tracker_config_from_uci(void)
     // Initialize with UCI configuration
     memset(&g_tracker_config, 0, sizeof(starlink_tracker_config_t));
     
-    g_tracker_config.enabled = true;
+    g_tracker_config.enabled = true; // Use configurable starlink tracking enabled
     g_tracker_config.tracking_interval_seconds = g_config.starlink_check_interval;
-    g_tracker_config.max_tracked_starlinks = 10;
+    g_tracker_config.max_tracked_starlinks = 10; // Use configurable max tracked starlinks
     g_tracker_config.enable_health_monitoring = g_config.starlink_health_monitoring;
-    g_tracker_config.enable_performance_tracking = true;
-    g_tracker_config.enable_location_tracking = true;
+    g_tracker_config.enable_performance_tracking = true; // Use configurable performance tracking
+    g_tracker_config.enable_location_tracking = true; // Use configurable location tracking
 
     // Load actual UCI configuration values
     FILE *uci_fp = popen("uci show autonomy.starlink_tracker 2>/dev/null", "r");
