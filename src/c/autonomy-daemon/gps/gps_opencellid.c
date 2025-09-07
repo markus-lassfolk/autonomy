@@ -53,11 +53,11 @@ int gps_opencellid_init(const opencellid_config_t* config) {
         g_opencellid.config.enabled = false; // Disabled by default (requires API key)
         strcpy(g_opencellid.config.base_url, OPENCELLID_BASE_URL);
         g_opencellid.config.timeout_seconds = 30;
-        g_opencellid.config.contribution = false;
-        g_opencellid.config.retry_count = 3;
-        g_opencellid.config.rate_limiter = 1000;
-        g_opencellid.config.max_cache_size = 1000;
-        g_opencellid.config.timeout_seconds = 86400; // 24 hours
+        g_opencellid.config.contribution.enabled = false;
+        g_opencellid.config.contribution.retry_attempts = 3;
+        g_opencellid.config.rate_limiter.max_lookups_per_hour = 100;
+        g_opencellid.config.cache.max_size_mb = 10;
+        g_opencellid.config.cache.ttl_hours = 24; // 24 hours
     }
     
     // Initialize mutex
@@ -67,8 +67,8 @@ int gps_opencellid_init(const opencellid_config_t* config) {
     }
     
     // Allocate cache
-    g_opencellid.max_cache_size = g_opencellid.config.max_cache_size;
-    g_opencellid.cache = calloc(g_opencellid.max_cache_size, sizeof(opencellid_cache_entry_t));
+    g_opencellid.max_cache_entries = 1000; // Default cache size
+    g_opencellid.cache = calloc(g_opencellid.max_cache_entries, sizeof(opencellid_cache_entry_t));
     if (!g_opencellid.cache) {
         pthread_mutex_destroy(&g_opencellid.mutex);
         LOGX_ERROR_MSG("Failed to allocate OpenCellID cache");
@@ -84,7 +84,7 @@ int gps_opencellid_init(const opencellid_config_t* config) {
               "enabled", g_opencellid.config.enabled,
               "api_key_configured", strlen(g_opencellid.config.api_key) > 0,
               "contribution", g_opencellid.config.contribution,
-              "cache_size", g_opencellid.config.max_cache_size);
+               "cache_size", g_opencellid.max_cache_entries);
     
     return AUTONOMY_SUCCESS;
 }
@@ -216,7 +216,7 @@ int gps_opencellid_contribute(const opencellid_contribution_t* contribution) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    if (!g_opencellid.config.enabled || !g_opencellid.config.contribution) {
+    if (!g_opencellid.config.enabled || !g_opencellid.config.contribution.enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
@@ -423,7 +423,7 @@ static int add_cache_entry(const opencellid_cell_key_t* cell_key, double lat, do
     int index = -1;
     
     // Find empty slot or replace oldest entry
-    if (g_opencellid.cache_count < g_opencellid.max_cache_size) {
+    if (g_opencellid.cache_count < g_opencellid.max_cache_entries) {
         index = g_opencellid.cache_count++;
     } else {
         index = find_oldest_cache_entry();
@@ -437,7 +437,7 @@ static int add_cache_entry(const opencellid_cell_key_t* cell_key, double lat, do
         entry->lon = lon;
         entry->range = range;
         entry->timestamp = time(NULL);
-        entry->ttl = entry->timestamp + g_opencellid.config.timeout_seconds;
+        entry->ttl = entry->timestamp + (g_opencellid.config.cache.ttl_hours * 3600);
         
         LOGX_DEBUG_MSG("Added OpenCellID cache entry", "index", index, "cell_id", cell_key->cell_id);
     }
@@ -516,7 +516,7 @@ int gps_opencellid_get_status(opencellid_status_t* status) {
     status->timeout_seconds = g_opencellid.config.timeout_seconds;
     status->contribution = g_opencellid.config.contribution;
     status->cache_entries = g_opencellid.cache_count;
-    status->max_cache_size = g_opencellid.max_cache_size;
+    status->max_cache_entries = g_opencellid.max_cache_entries;
     status->stats = g_opencellid.stats;
     
     pthread_mutex_unlock(&g_opencellid.mutex);

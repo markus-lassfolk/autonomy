@@ -4,6 +4,7 @@
 #include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
+#include <uci.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,8 +33,13 @@ typedef struct {
 
 // Function prototypes
 
-// Starlink tracker structure (forward declaration)
-typedef struct starlink_tracker starlink_tracker_t;
+// Starlink tracker structure
+typedef struct starlink_tracker {
+    starlink_tracker_config_t config;
+    starlink_tracker_status_t status;
+    bool initialized;
+    struct ubus_context *ubus_ctx;
+} starlink_tracker_t;
 
 // Initialize starlink tracker from UCI configuration
 starlink_tracker_t* starlink_tracker_init_from_uci(struct uci_context *uci_ctx);

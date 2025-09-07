@@ -22,14 +22,6 @@ static void cleanup_tracker_modules(void);
 // Global tracker instance
 static starlink_tracker_t g_global_tracker = {0};
 
-// Starlink tracker structure definition
-struct starlink_tracker {
-    starlink_tracker_config_t config;
-    starlink_tracker_status_t status;
-    bool initialized;
-    struct ubus_context *ubus_ctx;
-};
-
 // Initialize starlink tracker from UCI configuration
 starlink_tracker_t* starlink_tracker_init_from_uci(struct uci_context *uci_ctx)
 {

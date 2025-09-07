@@ -1,4 +1,5 @@
 #include "performance_monitor.h"
+#include "../utils/logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
