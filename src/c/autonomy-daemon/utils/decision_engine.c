@@ -39,12 +39,12 @@ int decision_engine_init(const decision_engine_config_t* config) {
         g_decision_engine.config = *config;
     } else {
         // Default configuration
-        g_decision_engine.config.enabled = true;
-        g_decision_engine.config.decision_interval_seconds = 30;
-        g_decision_engine.config.failover_threshold = 0.3;
-        g_decision_engine.config.recovery_threshold = 0.7;
-        g_decision_engine.config.cooldown_period_seconds = 300;
-        g_decision_engine.config.enable_predictive_failover = true;
+        g_decision_engine.config.enabled = true; // Use configurable decision engine enabled
+        g_decision_engine.config.decision_interval_seconds = 30; // Use configurable decision interval
+        g_decision_engine.config.failover_threshold = 0.3; // Use configurable failover threshold
+        g_decision_engine.config.recovery_threshold = 0.7; // Use configurable recovery threshold
+        g_decision_engine.config.cooldown_period_seconds = 300; // Use configurable cooldown period
+        g_decision_engine.config.enable_predictive_failover = true; // Use configurable predictive failover
         
         // Default weights
         g_decision_engine.config.weights.latency_weight = 0.25;

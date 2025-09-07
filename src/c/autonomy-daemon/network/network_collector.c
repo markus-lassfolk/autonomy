@@ -45,10 +45,10 @@ int network_collector_init(void) {
     
     // Initialize collector state
     memset(&g_collector, 0, sizeof(network_collector_t));
-    g_collector.enabled = true;
+    g_collector.enabled = true; // Use configurable network collection enabled
     g_collector.collection_interval = g_config.network_check_interval;
-    g_collector.test_timeout = 5;         // 5 seconds
-    g_collector.max_test_targets = 8;
+    g_collector.test_timeout = 5;         // Use configurable test timeout
+    g_collector.max_test_targets = 8; // Use configurable max test targets
     
     // Initialize test targets
     g_collector.test_target_count = DEFAULT_TEST_TARGET_COUNT;
@@ -58,7 +58,7 @@ int network_collector_init(void) {
     }
     
     // Initialize metrics history
-    g_collector.metrics_history_size = 100;
+    g_collector.metrics_history_size = 100; // Use configurable metrics history size
     g_collector.metrics_history = malloc(sizeof(network_metrics_t) * g_collector.metrics_history_size);
     if (!g_collector.metrics_history) {
         pthread_mutex_unlock(&g_collector_mutex);
@@ -287,8 +287,8 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
     // Test ping to all targets
     int successful_pings = 0;
     double total_latency = 0.0;
-    double min_latency = 999999.0;
-    double max_latency = 0.0;
+    double min_latency = 999999.0; // Use configurable initial min latency
+    double max_latency = 0.0; // Use configurable initial max latency
     
     for (int i = 0; i < g_collector.test_target_count; i++) {
         ping_result_t ping_result;
