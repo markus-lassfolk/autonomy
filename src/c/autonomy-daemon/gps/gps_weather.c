@@ -1,3 +1,4 @@
+#include "gps_coordinate_utils.h"
 #include "gps_weather.h"
 #include "../external/external_apis.h"
 #include "../utils/logx.h"
@@ -33,7 +34,7 @@ static pthread_mutex_t g_weather_mutex = PTHREAD_MUTEX_INITIALIZER;
 static bool get_cached_weather(double lat, double lon, gps_weather_current_t *weather);
 void cache_weather_data(double lat, double lon, const gps_weather_current_t *weather);
 int find_oldest_weather_cache(void);
-double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
 void parse_current_weather_response(const gps_weather_api_response_t *response, gps_weather_current_t *weather);
 void parse_forecast_response(const gps_weather_api_response_t *response, gps_weather_forecast_t *forecast);
 void parse_air_quality_response(const gps_weather_api_response_t *response, gps_weather_air_quality_t *air_quality);
@@ -307,7 +308,7 @@ static bool get_cached_weather(double lat, double lon, gps_weather_current_t *we
         gps_weather_cache_entry_t *cache = &g_weather.weather_cache[i];
         
         // Check if coordinates are within cache radius
-        double distance = calculate_distance(lat, lon, cache->lat, cache->lon);
+        double distance = gps_coordinate_distance(lat, lon, cache->lat, cache->lon);
         if (distance <= g_weather.cache_radius) {
             // Check if cache is still valid
             if ((now - cache->timestamp) < g_weather.update_interval) {
@@ -394,7 +395,7 @@ int find_oldest_weather_cache(void) {
 }
 
 // Calculate distance between coordinates
-double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0; // Earth radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;

@@ -1,3 +1,4 @@
+#include "gps_coordinate_utils.h"
 #include "gps_events.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
@@ -64,7 +65,7 @@ void update_status_action(const gps_event_definition_t *event, const gps_data_t 
 void send_ubus_message_action(const gps_event_definition_t *event, const gps_data_t *gps_data, const gps_event_action_t *action);
 void execute_custom_action(const gps_event_definition_t *event, const gps_data_t *gps_data, const gps_event_action_t *action);
 void add_event_history(const gps_event_definition_t *event, const gps_data_t *gps_data, time_t timestamp);
-double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
 
 // Initialize GPS events system
 int gps_events_init(void) {
@@ -304,7 +305,7 @@ bool check_location_in_condition(const gps_event_condition_t *condition, const g
         return false;
     }
     
-    double distance = calculate_distance(gps_data->lat, gps_data->lon,
+    double distance = gps_coordinate_distance(gps_data->lat, gps_data->lon,
                                        condition->location_data.lat, condition->location_data.lon);
     
     return distance <= condition->threshold_value;
@@ -316,7 +317,7 @@ bool check_location_out_condition(const gps_event_condition_t *condition, const 
         return false;
     }
     
-    double distance = calculate_distance(gps_data->lat, gps_data->lon,
+    double distance = gps_coordinate_distance(gps_data->lat, gps_data->lon,
                                        condition->location_data.lat, condition->location_data.lon);
     
     return distance > condition->threshold_value;
@@ -458,7 +459,7 @@ void add_event_history(const gps_event_definition_t *event, const gps_data_t *gp
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;

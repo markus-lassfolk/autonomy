@@ -1,3 +1,4 @@
+#include "gps_coordinate_utils.h"
 #include "gps_performance.h"
 #include "../utils/logx.h"
 #include "../core/types.h"

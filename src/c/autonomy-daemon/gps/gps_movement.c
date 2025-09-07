@@ -1,3 +1,4 @@
+#include "gps_coordinate_utils.h"
 #include "gps_movement.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
@@ -30,7 +31,7 @@ movement_metrics_t calculate_movement_metrics(void);
 static gps_movement_pattern_t determine_movement_pattern(const movement_metrics_t *metrics);
 static bool detect_turning_pattern(void);
 static bool detect_oscillation_pattern(void);
-double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
 double calculate_bearing(double lat1, double lon1, double lat2, double lon2);
 void analyze_movement_pattern(void);
 
@@ -176,7 +177,7 @@ movement_metrics_t calculate_movement_metrics(void) {
             curr->lat != 0.0 && curr->lon != 0.0) {
             
             // Calculate distance
-            double distance = calculate_distance(prev->lat, prev->lon, curr->lat, curr->lon);
+            double distance = gps_coordinate_distance(prev->lat, prev->lon, curr->lat, curr->lon);
             total_distance += distance;
             
             // Calculate time difference
@@ -211,7 +212,7 @@ movement_metrics_t calculate_movement_metrics(void) {
         const position_data_t *curr = &g_movement_detector.position_history[valid_positions-1];
         
         if (prev->timestamp > 0 && curr->timestamp > 0) {
-            double distance = calculate_distance(prev->lat, prev->lon, curr->lat, curr->lon);
+            double distance = gps_coordinate_distance(prev->lat, prev->lon, curr->lat, curr->lon);
             int time_diff = curr->timestamp - prev->timestamp;
             
             if (time_diff > 0) {
@@ -342,7 +343,7 @@ static bool detect_oscillation_pattern(void) {
             prev->lat != 0.0 && prev->lon != 0.0 &&
             curr->lat != 0.0 && curr->lon != 0.0) {
             
-            double distance = calculate_distance(prev->lat, prev->lon, curr->lat, curr->lon);
+            double distance = gps_coordinate_distance(prev->lat, prev->lon, curr->lat, curr->lon);
             
             if (!first_distance) {
                 // Check if distance is decreasing after increasing (or vice versa)
@@ -362,7 +363,7 @@ static bool detect_oscillation_pattern(void) {
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;

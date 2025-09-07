@@ -1,3 +1,4 @@
+#include "gps_coordinate_utils.h"
 #include "gps_accuracy.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
@@ -38,7 +39,7 @@ static bool validate_position_data(const gps_data_t *gps_data, gps_validation_re
 static bool validate_temporal_data(const gps_data_t *gps_data, gps_validation_result_t *result);
 static bool validate_consistency(const gps_data_t *gps_data, gps_validation_result_t *result);
 static double estimate_expected_accuracy(int satellites, int fix_quality);
-double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
 void update_validation_statistics(const gps_validation_result_t *result);
 
 
@@ -238,7 +239,7 @@ static bool validate_position_data(const gps_data_t *gps_data, gps_validation_re
     
     // Check for position jumps (if we have previous data)
     if (g_accuracy_validator.last_position.timestamp > 0) {
-        double distance = calculate_distance(gps_data->lat, gps_data->lon,
+        double distance = gps_coordinate_distance(gps_data->lat, gps_data->lon,
                                           g_accuracy_validator.last_position.lat,
                                           g_accuracy_validator.last_position.lon);
         
@@ -329,7 +330,7 @@ static double estimate_expected_accuracy(int satellites, int fix_quality) {
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;

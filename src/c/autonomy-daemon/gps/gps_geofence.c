@@ -1,3 +1,4 @@
+#include "gps_coordinate_utils.h"
 #include "gps_geofence.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
@@ -34,7 +35,7 @@ bool check_rectangle_geofence(const gps_data_t *gps_data, const gps_geofence_def
 bool check_polygon_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
 static double distance_to_line_segment(double px, double py, double x1, double y1, double x2, double y2);
 void handle_geofence_event(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status, const gps_data_t *gps_data);
-double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
 
 // Initialize GPS geofencing system
 int gps_geofence_init(void) {
@@ -341,7 +342,7 @@ gps_geofence_status_t check_position_against_geofence(const gps_data_t *gps_data
 // Check circle geofence
 bool check_circle_geofence(const gps_data_t *gps_data, 
                                   const gps_geofence_definition_t *geofence) {
-    double distance = calculate_distance(gps_data->lat, gps_data->lon,
+    double distance = gps_coordinate_distance(gps_data->lat, gps_data->lon,
                                        geofence->center_lat, geofence->center_lon);
     
     double effective_radius = geofence->radius_meters + geofence->buffer_distance;
@@ -420,7 +421,7 @@ static double distance_to_line_segment(double px, double py, double x1, double y
     double len_sq = C * C + D * D;
     
     if (len_sq == 0) {
-        return calculate_distance(px, py, x1, y1);
+        return gps_coordinate_distance(px, py, x1, y1);
     }
     
     double param = dot / len_sq;
@@ -437,7 +438,7 @@ static double distance_to_line_segment(double px, double py, double x1, double y
         yy = y1 + param * D;
     }
     
-    return calculate_distance(px, py, xx, yy);
+    return gps_coordinate_distance(px, py, xx, yy);
 }
 
 // Handle geofence event
@@ -462,7 +463,7 @@ void handle_geofence_event(gps_geofence_definition_t *geofence,
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
     double lat1_rad = lat1 * M_PI / 180.0;
     double lat2_rad = lat2 * M_PI / 180.0;
     double delta_lat = (lat2 - lat1) * M_PI / 180.0;
