@@ -366,7 +366,7 @@ static void send_notification(const char *type, const char *message) {
     
     // Determine priority based on type
     if (strcmp(type, "critical") == 0) {
-        event.priority = NOTIFICATION_PRIORITY_CRITICAL;
+        event.priority = NOTIFICATION_PRIORITY_HIGH;
     } else if (strcmp(type, "warning") == 0) {
         event.priority = NOTIFICATION_PRIORITY_HIGH;
     } else {
