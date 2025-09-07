@@ -1,3 +1,4 @@
+#include "../notifications/notification_manager.h"
 #include "disk_monitor.h"
 #include "../core/types.h"
 #include "../notifications/notification_types.h"
