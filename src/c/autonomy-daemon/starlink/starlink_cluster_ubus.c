@@ -89,7 +89,7 @@ int autonomy_starlink_cluster_add(struct ubus_context *uctx, struct ubus_object 
     
     // Parse request parameters
     const struct blob_attr *tb[8];
-    blobmsg_parse(blob_data, 7, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(blob_data, 7, tb, blobmsg_data(msg), blobmsg_len(msg));
     
     if (!tb[0] || !tb[1] || !tb[2]) {
         blobmsg_add_string(&bb, "result", "invalid_parameters");
