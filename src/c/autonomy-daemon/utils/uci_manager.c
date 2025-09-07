@@ -1,6 +1,10 @@
 #include "uci_manager.h"
 #include "../core/types.h"
 #include "../utils/logx.h"
+#include <uci.h>
+#include <libtlt_uci.h> 
+#include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
