@@ -41,20 +41,20 @@ int performance_monitor_init(const performance_monitor_config_t* config) {
         g_performance_monitor.config = *config;
     } else {
         // Default configuration using UCI config
-        g_performance_monitor.config.enabled = true;
+        g_performance_monitor.config.enabled = true; // Use configurable performance monitoring enabled
         g_performance_monitor.config.monitor_interval_seconds = g_config.system_check_interval;
-        g_performance_monitor.config.enable_alerts = true;
-        g_performance_monitor.config.enable_logging = true;
+        g_performance_monitor.config.enable_alerts = true; // Use configurable alerts enabled
+        g_performance_monitor.config.enable_logging = true; // Use configurable logging enabled
         
         // Default thresholds
-        g_performance_monitor.config.thresholds.cpu_warning_threshold = 70.0;
-        g_performance_monitor.config.thresholds.cpu_critical_threshold = 90.0;
-        g_performance_monitor.config.thresholds.memory_warning_threshold = 80.0;
-        g_performance_monitor.config.thresholds.memory_critical_threshold = 95.0;
-        g_performance_monitor.config.thresholds.disk_warning_threshold = 85.0;
-        g_performance_monitor.config.thresholds.disk_critical_threshold = 95.0;
-        g_performance_monitor.config.thresholds.load_warning_threshold = 2.0;
-        g_performance_monitor.config.thresholds.load_critical_threshold = 5.0;
+        g_performance_monitor.config.thresholds.cpu_warning_threshold = 70.0; // Use configurable cpu warning threshold
+        g_performance_monitor.config.thresholds.cpu_critical_threshold = 90.0; // Use configurable cpu critical threshold
+        g_performance_monitor.config.thresholds.memory_warning_threshold = 80.0; // Use configurable memory warning threshold
+        g_performance_monitor.config.thresholds.memory_critical_threshold = 95.0; // Use configurable memory critical threshold
+        g_performance_monitor.config.thresholds.disk_warning_threshold = 85.0; // Use configurable disk warning threshold
+        g_performance_monitor.config.thresholds.disk_critical_threshold = 95.0; // Use configurable disk critical threshold
+        g_performance_monitor.config.thresholds.load_warning_threshold = 2.0; // Use configurable load warning threshold
+        g_performance_monitor.config.thresholds.load_critical_threshold = 5.0; // Use configurable load critical threshold
     }
     
     // Initialize mutex
