@@ -1,0 +1,5 @@
+config autonomy 'main'
+	option log_level 'info'
+	option enable_gps '1'
+	option enable_notifications '1'
+	option health_check_interval '30'

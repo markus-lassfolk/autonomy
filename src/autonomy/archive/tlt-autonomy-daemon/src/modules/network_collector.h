@@ -1,0 +1,131 @@
+#ifndef NETWORK_COLLECTOR_H
+#define NETWORK_COLLECTOR_H
+
+#include "types.h"
+#include "logx.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include <time.h>
+
+// Maximum number of interfaces
+#define MAX_INTERFACES 16
+
+// Maximum number of test targets
+#define MAX_TEST_TARGETS 8
+
+// Ping test result
+typedef struct {
+    char target[64];
+    double latency_ms;
+    bool success;
+    time_t timestamp;
+} ping_result_t;
+
+// TCP connectivity test result
+typedef struct {
+    char target[64];
+    int port;
+    double connect_time_ms;
+    bool success;
+    time_t timestamp;
+} tcp_result_t;
+
+// DNS resolution test result
+typedef struct {
+    char domain[64];
+    char resolved_ip[16];
+    double resolve_time_ms;
+    bool success;
+    time_t timestamp;
+} dns_result_t;
+
+// Network metrics for an interface
+typedef struct {
+    char interface_name[32];
+    time_t timestamp;
+    
+    // Ping metrics
+    float ping_success_rate;      // Percentage of successful pings
+    double ping_average_latency;  // Average latency in ms
+    double ping_min_latency;      // Minimum latency in ms
+    double ping_max_latency;      // Maximum latency in ms
+    float ping_packet_loss;       // Packet loss percentage
+    
+    // TCP metrics
+    float tcp_success_rate;       // Percentage of successful TCP connections
+    double tcp_average_connect_time; // Average connection time in ms
+    
+    // DNS metrics
+    bool dns_success;             // DNS resolution success
+    double dns_resolve_time;      // DNS resolution time in ms
+    
+    // Overall health
+    float overall_health_score;   // Overall health score (0-100)
+} network_metrics_t;
+
+// Network collector status
+typedef struct {
+    bool enabled;
+    int collection_interval;
+    int test_timeout;
+    int test_target_count;
+    int interface_count;
+    uint64_t total_collections;
+    time_t last_collection;
+} network_collector_status_t;
+
+// Network collector state
+typedef struct {
+    bool enabled;
+    int collection_interval;
+    int test_timeout;
+    int max_test_targets;
+    int test_target_count;
+    char test_targets[MAX_TEST_TARGETS][64];
+    
+    network_interface_t interfaces[MAX_INTERFACES];
+    int interface_count;
+    
+    network_metrics_t *metrics_history;
+    int metrics_history_size;
+    int metrics_history_index;
+    
+    uint64_t total_collections;
+    time_t last_collection;
+} network_collector_t;
+
+// Initialize network collector
+int network_collector_init(void);
+
+// Collect network metrics for all interfaces
+int network_collector_collect_metrics(void);
+
+// Get latest metrics for an interface
+int network_collector_get_interface_metrics(const char *interface_name, network_metrics_t *metrics);
+
+// Get metrics history for an interface
+int network_collector_get_metrics_history(const char *interface_name, network_metrics_t *history, 
+                                        int max_count, int *actual_count);
+
+// Add test target
+int network_collector_add_test_target(const char *target);
+
+// Remove test target
+int network_collector_remove_test_target(const char *target);
+
+// Set collection interval
+int network_collector_set_interval(int interval_seconds);
+
+// Set test timeout
+int network_collector_set_timeout(int timeout_seconds);
+
+// Enable/disable collector
+int network_collector_set_enabled(bool enabled);
+
+// Get collector status
+int network_collector_get_status(network_collector_status_t *status);
+
+// Cleanup network collector
+void network_collector_cleanup(void);
+
+#endif // NETWORK_COLLECTOR_H

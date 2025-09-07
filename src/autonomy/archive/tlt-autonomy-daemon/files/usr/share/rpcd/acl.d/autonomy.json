@@ -1,0 +1,15 @@
+{
+    "autonomy": {
+        "description": "Autonomy daemon UBUS access",
+        "read": {
+            "ubus": {
+                "autonomy": [ "status", "health", "config", "pid_status", "log_status", "config_status" ]
+            }
+        },
+        "write": {
+            "ubus": {
+                "autonomy": [ "start", "stop", "restart" ]
+            }
+        }
+    }
+}

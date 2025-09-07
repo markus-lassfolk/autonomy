@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomy Cellular Tower Map - Demo</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Bootstrap CSS for styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .cellular-map {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .status-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #dee2e6;
+        }
+        
+        .metric-card {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 15px;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .cell-info-card {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: white;
+        }
+        
+        .serving-cell {
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        
+        .neighbor-cell {
+            border-left: 4px solid #28a745;
+        }
+        
+        .cell-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .cell-id {
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .signal-badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .signal-badge.serving {
+            background-color: #007bff;
+        }
+        
+        .signal-badge.neighbor {
+            background-color: #28a745;
+        }
+        
+        .signal-strength-excellent { color: #28a745; font-weight: bold; }
+        .signal-strength-good { color: #6f42c1; font-weight: bold; }
+        .signal-strength-fair { color: #fd7e14; font-weight: bold; }
+        .signal-strength-poor { color: #dc3545; font-weight: bold; }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .legend-marker {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        .legend-marker.serving { background-color: #007bff; }
+        .legend-marker.neighbor { background-color: #28a745; }
+        .legend-marker.cached { background-color: #6c757d; }
+        
+        .controls-row {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .demo-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff6b35;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Demo Badge -->
+        <div class="demo-badge">
+            🚧 DEMO MODE
+        </div>
+        
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">📡 Cellular Tower Map - Demo</h1>
+            <div>
+                <button class="btn btn-outline-primary btn-sm" onclick="window.history.back()">
+                    ← Back to Autonomy
+                </button>
+            </div>
+        </div>
+        
+        <!-- Position Status Card -->
+        <div class="status-card">
+            <h5 class="mb-3">📍 Current Position</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Method:</strong>
+                    <span class="ms-2 text-success">Triangulation</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Accuracy:</strong>
+                    <span class="ms-2 text-warning">185 m</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Confidence:</strong>
+                    <span class="ms-2 text-success">78%</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Cells Used:</strong>
+                    <span class="ms-2">4</span>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-6">
+                    <strong>Coordinates:</strong>
+                    <span class="ms-2">59.329444, 18.068611</span>
+                </div>
+                <div class="col-md-6">
+                    <strong>Last Update:</strong>
+                    <span class="ms-2">Just now</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="controls-row">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <label class="form-label mb-1">Search Radius:</label>
+                    <select id="radius-select" class="form-select form-select-sm" onchange="updateDemo()">
+                        <option value="1000">1 km</option>
+                        <option value="2000" selected>2 km</option>
+                        <option value="5000">5 km</option>
+                        <option value="10000">10 km</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label mb-1">Max Towers:</label>
+                    <select id="towers-select" class="form-select form-select-sm" onchange="updateDemo()">
+                        <option value="5">5 towers</option>
+                        <option value="10" selected>10 towers</option>
+                        <option value="20">20 towers</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-marker serving"></div>
+                            <span>Serving Cell</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-marker neighbor"></div>
+                            <span>Neighbor Cell</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-marker cached"></div>
+                            <span>Cached Cell</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-12">
+                    <button class="btn btn-primary btn-sm me-2" onclick="updateDemo()">
+                        🔄 Refresh Demo
+                    </button>
+                    <button class="btn btn-success btn-sm me-2" onclick="alert('Demo mode - contribution simulated!')">
+                        📤 Contribute Data
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="centerOnPosition()">
+                        📍 Center Map
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Map Container -->
+        <div class="status-card">
+            <div style="position: relative;">
+                <div id="cellular-map" class="cellular-map"></div>
+            </div>
+        </div>
+        
+        <!-- Tower Details -->
+        <div class="row">
+            <!-- Serving Cell -->
+            <div class="col-md-6">
+                <div class="status-card">
+                    <h5 class="mb-3">🎯 Serving Cell</h5>
+                    <div class="cell-info-card serving-cell">
+                        <div class="cell-header">
+                            <span class="cell-id">240-1-12345-67890</span>
+                            <span class="signal-badge serving">-85 dBm</span>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <small><strong>Operator:</strong> Telia</small><br>
+                                <small><strong>Technology:</strong> LTE</small><br>
+                                <small><strong>PCI:</strong> 123</small>
+                            </div>
+                            <div class="col-6">
+                                <small><strong>RSRP:</strong> <span class="signal-strength-good">-85 dBm</span></small><br>
+                                <small><strong>RSRQ:</strong> <span class="signal-strength-good">-12 dB</span></small><br>
+                                <small><strong>Distance:</strong> 750 m</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Neighbor Cells -->
+            <div class="col-md-6">
+                <div class="status-card">
+                    <h5 class="mb-3">📶 Neighbor Cells</h5>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        <div class="cell-info-card neighbor-cell">
+                            <div class="cell-header">
+                                <span class="cell-id">240-1-12346-67891</span>
+                                <span class="signal-badge neighbor">-95 dBm</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small>LTE</small>
+                                <small class="signal-strength-fair">-95 dBm</small>
+                                <small class="text-muted">intra</small>
+                            </div>
+                        </div>
+                        
+                        <div class="cell-info-card neighbor-cell">
+                            <div class="cell-header">
+                                <span class="cell-id">240-1-12347-67892</span>
+                                <span class="signal-badge neighbor">-102 dBm</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small>LTE</small>
+                                <small class="signal-strength-poor">-102 dBm</small>
+                                <small class="text-muted">inter</small>
+                            </div>
+                        </div>
+                        
+                        <div class="cell-info-card neighbor-cell">
+                            <div class="cell-header">
+                                <span class="cell-id">240-2-12348-67893</span>
+                                <span class="signal-badge neighbor">-98 dBm</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small>LTE</small>
+                                <small class="signal-strength-fair">-98 dBm</small>
+                                <small class="text-muted">inter</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="status-card">
+            <h5 class="mb-3">📊 OpenCellID Statistics</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-value">1,247</div>
+                        <div class="metric-label">API Lookups</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-value">82%</div>
+                        <div class="metric-label">Cache Hit Rate</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-value">456</div>
+                        <div class="metric-label">Triangulations</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-value">89</div>
+                        <div class="metric-label">Contributions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Demo JavaScript with sample data -->
+    <script>
+        let map = null;
+        let accuracyCircle = null;
+        let towerMarkers = [];
+        
+        // Sample data for demo
+        const currentPosition = {
+            latitude: 59.329444,
+            longitude: 18.068611,
+            accuracy: 185,
+            confidence: 0.78
+        };
+        
+        const sampleTowers = [
+            // Serving cell
+            {
+                latitude: 59.329444,
+                longitude: 18.068611,
+                mcc: 240, mnc: 1, lac: 12345, cell_id: 67890,
+                radio: 'LTE', rsrp: -85, rsrq: -12,
+                range: 500, confidence: 0.9, samples: 150,
+                distance: 0, is_serving: true, is_neighbor: false,
+                source: 'opencellid'
+            },
+            // Neighbor cells
+            {
+                latitude: 59.331444,
+                longitude: 18.065611,
+                mcc: 240, mnc: 1, lac: 12346, cell_id: 67891,
+                radio: 'LTE', rsrp: -95, rsrq: -15,
+                range: 600, confidence: 0.85, samples: 120,
+                distance: 350, is_serving: false, is_neighbor: true,
+                source: 'opencellid'
+            },
+            {
+                latitude: 59.327444,
+                longitude: 18.071611,
+                mcc: 240, mnc: 1, lac: 12347, cell_id: 67892,
+                radio: 'LTE', rsrp: -102, rsrq: -18,
+                range: 800, confidence: 0.75, samples: 95,
+                distance: 480, is_serving: false, is_neighbor: true,
+                source: 'cache'
+            },
+            {
+                latitude: 59.325444,
+                longitude: 18.063611,
+                mcc: 240, mnc: 2, lac: 12348, cell_id: 67893,
+                radio: 'LTE', rsrp: -98, rsrq: -16,
+                range: 700, confidence: 0.8, samples: 110,
+                distance: 620, is_serving: false, is_neighbor: true,
+                source: 'opencellid'
+            },
+            // Cached cells
+            {
+                latitude: 59.333444,
+                longitude: 18.072611,
+                mcc: 240, mnc: 1, lac: 12349, cell_id: 67894,
+                radio: 'LTE', rsrp: null, rsrq: null,
+                range: 900, confidence: 0.7, samples: 80,
+                distance: 890, is_serving: false, is_neighbor: false,
+                source: 'cache'
+            },
+            {
+                latitude: 59.323444,
+                longitude: 18.058611,
+                mcc: 240, mnc: 3, lac: 12350, cell_id: 67895,
+                radio: 'UMTS', rsrp: null, rsrq: null,
+                range: 1200, confidence: 0.6, samples: 45,
+                distance: 1150, is_serving: false, is_neighbor: false,
+                source: 'cache'
+            }
+        ];
+        
+        // Initialize map
+        function initMap() {
+            map = L.map('cellular-map').setView([currentPosition.latitude, currentPosition.longitude], 13);
+            
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Initialize accuracy circle
+            accuracyCircle = L.circle([currentPosition.latitude, currentPosition.longitude], {
+                color: '#ffc107',
+                fillColor: '#ffc107',
+                fillOpacity: 0.15,
+                weight: 2,
+                radius: currentPosition.accuracy
+            }).addTo(map);
+            
+            // Add demo towers
+            updateMapWithSampleData();
+        }
+        
+        // Update map with sample towers
+        function updateMapWithSampleData() {
+            if (!map) return;
+            
+            // Clear existing markers
+            towerMarkers.forEach(marker => map.removeLayer(marker));
+            towerMarkers = [];
+            
+            // Add tower markers
+            sampleTowers.forEach(tower => {
+                let markerColor = '#6c757d'; // Gray for cached towers
+                let markerSize = 8;
+                let zIndex = 100;
+                
+                if (tower.is_serving) {
+                    markerColor = '#007bff'; // Blue for serving cell
+                    markerSize = 14;
+                    zIndex = 300;
+                } else if (tower.is_neighbor) {
+                    markerColor = '#28a745'; // Green for neighbor cells
+                    markerSize = 11;
+                    zIndex = 200;
+                }
+                
+                const marker = L.circleMarker([tower.latitude, tower.longitude], {
+                    color: markerColor,
+                    fillColor: markerColor,
+                    fillOpacity: 0.8,
+                    radius: markerSize,
+                    weight: 2
+                }).addTo(map);
+                
+                // Create popup content
+                const signalInfo = tower.rsrp ? 
+                    `<div><strong>RSRP:</strong> <span class="${getSignalClass(tower.rsrp)}">${tower.rsrp} dBm</span></div>` +
+                    (tower.rsrq ? `<div><strong>RSRQ:</strong> <span class="${getSignalClass(tower.rsrq, 'rsrq')}">${tower.rsrq} dB</span></div>` : '')
+                    : '<div><em>No signal data (cached)</em></div>';
+                
+                const popupContent = `
+                    <div class="tower-popup">
+                        <h6 style="color: ${markerColor}; margin-bottom: 8px;">
+                            ${tower.is_serving ? '🎯 Serving Cell' : (tower.is_neighbor ? '📶 Neighbor Cell' : '📡 Cell Tower')}
+                        </h6>
+                        <div><strong>Cell ID:</strong> ${tower.mcc}-${tower.mnc}-${tower.lac}-${tower.cell_id}</div>
+                        <div><strong>Technology:</strong> ${tower.radio}</div>
+                        <div><strong>Distance:</strong> ${formatDistance(tower.distance)}</div>
+                        <div><strong>Range:</strong> ${formatDistance(tower.range)}</div>
+                        <div><strong>Confidence:</strong> ${formatPercentage(tower.confidence)}</div>
+                        ${signalInfo}
+                        <div><strong>Samples:</strong> ${tower.samples || 0}</div>
+                        <div><strong>Source:</strong> ${tower.source}</div>
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">
+                            <small><em>Demo data - In production, this shows real cellular towers</em></small>
+                        </div>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent);
+                marker.setZIndexOffset(zIndex);
+                
+                towerMarkers.push(marker);
+            });
+        }
+        
+        function updateDemo() {
+            console.log('Demo updated - in production this would refresh real data');
+            updateMapWithSampleData();
+        }
+        
+        function centerOnPosition() {
+            if (map) {
+                map.setView([currentPosition.latitude, currentPosition.longitude], 15);
+            }
+        }
+        
+        // Utility functions
+        function formatDistance(distance) {
+            if (!distance) return 'Unknown';
+            if (distance < 1000) return `${Math.round(distance)} m`;
+            return `${(distance / 1000).toFixed(1)} km`;
+        }
+        
+        function formatPercentage(value) {
+            if (!value) return '0%';
+            return `${Math.round(value * 100)}%`;
+        }
+        
+        function getSignalClass(signal, type = 'rsrp') {
+            if (!signal) return 'text-muted';
+            
+            if (type === 'rsrp') {
+                if (signal > -80) return 'signal-strength-excellent';
+                if (signal > -90) return 'signal-strength-good';
+                if (signal > -100) return 'signal-strength-fair';
+                return 'signal-strength-poor';
+            } else if (type === 'rsrq') {
+                if (signal > -10) return 'signal-strength-excellent';
+                if (signal > -15) return 'signal-strength-good';
+                if (signal > -20) return 'signal-strength-fair';
+                return 'signal-strength-poor';
+            }
+            
+            return 'text-muted';
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing Cellular Tower Map Demo...');
+            initMap();
+            console.log('Demo initialized successfully');
+        });
+    </script>
+</body>
+</html>
