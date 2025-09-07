@@ -6,7 +6,6 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
-#include <stdbool.h>
 
 // Starlink collector state
 static struct {
@@ -209,7 +208,7 @@ int starlink_get_collector_stats(int *cache_hits, int *cache_misses, int *errors
     if (cache_misses) *cache_misses = g_collector_state.cache_miss_count;
     if (errors) *errors = g_collector_state.error_count;
     if (successes) *successes = g_collector_state.success_count;
-    return 0; // Success
+    return AUTONOMY_SUCCESS;
 }
 
 // Set collection interval

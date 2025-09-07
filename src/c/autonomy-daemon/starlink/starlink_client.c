@@ -10,8 +10,6 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/time.h>
-#include <stdbool.h>
-#include <math.h>
 
 // Global Starlink client configuration
 static starlink_config_t g_starlink_config = {
@@ -49,19 +47,8 @@ int starlink_client_init(const starlink_config_t *config) {
     return 0;
 }
 
-// Cleanup Starlink client
-void starlink_client_cleanup(void) {
-    if (g_starlink_state.socket_fd >= 0) {
-        close(g_starlink_state.socket_fd);
-        g_starlink_state.socket_fd = -1;
-    }
-    
-    g_starlink_state.initialized = false;
-    g_starlink_state.connection_healthy = false;
-}
-
 // Create TCP connection to Starlink dish
-static int starlink_connect(void) {
+int starlink_connect(void) {
     if (g_starlink_state.socket_fd >= 0) {
         close(g_starlink_state.socket_fd);
         g_starlink_state.socket_fd = -1;
@@ -119,7 +106,7 @@ static int starlink_connect(void) {
 }
 
 // Disconnect from Starlink dish
-static void starlink_disconnect(void) {
+void starlink_disconnect(void) {
     if (g_starlink_state.socket_fd >= 0) {
         close(g_starlink_state.socket_fd);
         g_starlink_state.socket_fd = -1;
@@ -128,7 +115,7 @@ static void starlink_disconnect(void) {
 }
 
 // Send gRPC request to Starlink
-static int starlink_send_request(starlink_method_t method, char *response, size_t response_size) {
+int starlink_send_request(starlink_method_t method, char *response, size_t response_size) {
     if (!g_starlink_state.connection_healthy || g_starlink_state.socket_fd < 0) {
         if (starlink_connect() < 0) {
             return -1;
@@ -176,7 +163,7 @@ static int starlink_send_request(starlink_method_t method, char *response, size_
 }
 
 // Parse JSON response from Starlink (simplified parser)
-static int starlink_parse_response(const char *json_response, starlink_status_response_t *status) {
+int starlink_parse_response(const char *json_response, starlink_status_response_t *status) {
     if (!json_response || !status) {
         return -1;
     }
@@ -211,7 +198,7 @@ static int starlink_parse_response(const char *json_response, starlink_status_re
     // Extract numeric fields
     const char *uptime = strstr(json_response, "\"uptimeS\":");
     if (uptime) {
-        sscanf(uptime, "\"uptimeS\": %llu", &status->device_state.uptime_s);
+        sscanf(uptime, "\"uptimeS\": %lu", &status->device_state.uptime_s);
     }
     
     const char *gps_valid = strstr(json_response, "\"gpsValid\":");
@@ -253,7 +240,7 @@ int starlink_get_status(starlink_status_response_t *status) {
 }
 
 // Get Starlink device info
-static int starlink_get_device_info(starlink_device_info_t *device_info) {
+int starlink_get_device_info(starlink_device_info_t *device_info) {
     if (!device_info) {
         return -1;
     }
@@ -274,7 +261,7 @@ static int starlink_get_device_info(starlink_device_info_t *device_info) {
 }
 
 // Get Starlink location
-static int starlink_get_location(starlink_lla_position_t *location) {
+int starlink_get_location(starlink_lla_position_t *location) {
     if (!location) {
         return -1;
     }
@@ -298,7 +285,7 @@ static int starlink_get_location(starlink_lla_position_t *location) {
 }
 
 // Check Starlink connection health
-static bool starlink_is_healthy(void) {
+bool starlink_is_healthy(void) {
     return g_starlink_state.connection_healthy && g_starlink_state.socket_fd >= 0;
 }
 
@@ -307,4 +294,8 @@ const starlink_config_t* starlink_get_config(void) {
     return &g_starlink_config;
 }
 
-// Note: starlink_client_cleanup already defined above
+// Cleanup Starlink client
+void starlink_client_cleanup(void) {
+    starlink_disconnect();
+    g_starlink_state.initialized = false;
+}
