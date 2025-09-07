@@ -50,28 +50,7 @@ typedef struct {
     time_t timestamp;                  // Response timestamp
 } opencellid_response_t;
 
-// OpenCellID contribution data
-typedef struct {
-    int mcc;                           // Mobile Country Code
-    int mnc;                           // Mobile Network Code
-    int lac;                           // Location Area Code
-    int cell_id;                       // Cell ID
-    double lat;                        // Latitude
-    double lon;                        // Longitude
-    int signal;                        // Signal strength in dBm
-    int64_t measured_at;               // Unix timestamp in milliseconds
-    double rating;                     // GPS accuracy in meters
-    double speed;                      // Speed in m/s
-    double direction;                  // Heading in degrees
-    char act[16];                      // Radio technology
-    int ta;                            // Timing Advance (LTE)
-    int pci;                           // Physical Cell ID (LTE/NR)
-    int psc;                           // Primary Scrambling Code (UMTS)
-    int tac;                           // Tracking Area Code (LTE/NR)
-    int sid;                           // System ID (CDMA)
-    int nid;                           // Network ID (CDMA)
-    int bid;                           // Base ID (CDMA)
-} opencellid_contribution_t;
+// Note: opencellid_contribution_t defined in opencellid_complete.h
 
 // Note: opencellid_config_t defined in opencellid_complete.h
 

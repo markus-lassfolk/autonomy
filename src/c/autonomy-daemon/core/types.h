@@ -112,6 +112,9 @@ struct autonomy_state {
 #define AUTONOMY_ERROR_NO_DATA -13
 #define AUTONOMY_ERROR_SYSTEM -14
 #define AUTONOMY_ERROR_PARSE_FAILED -15
+#define AUTONOMY_ERROR_PARSE -15           // Alias for consistency
+#define AUTONOMY_ERROR_EXTERNAL_API -16   // External API error
+#define AUTONOMY_ERROR_CALCULATION -17    // Calculation error
 #define AUTONOMY_ERROR_CONNECTION_FAILED -16
 #define AUTONOMY_ERROR_API_LIMIT_EXCEEDED -17
 #define AUTONOMY_ERROR_INVALID_RESPONSE -18
