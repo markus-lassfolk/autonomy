@@ -14,13 +14,15 @@
 #include <libubus.h>
 #include <libubox/blobmsg.h>
 
-// Snow detection configuration
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
+// Snow detection configuration - now uses UCI config values
+// Configuration values are loaded from g_config (UCI system)
 static const int SNOW_DETECTION_SAMPLES = 5;              // Samples needed for detection
-static const double SNOW_OBSTRUCTION_THRESHOLD = 0.05;    // 5% obstruction increase
-static const double SNOW_SNR_DEGRADATION_THRESHOLD = 0.02; // 2% SNR degradation
+// Thresholds now use configurable values from UCI
 static const double SNOW_TEMPERATURE_THRESHOLD = 2.0;     // Below 2°C
-static const int SNOW_VERIFICATION_TIME = 300;            // 5 minutes verification
-static const int SNOW_MELT_TIMEOUT = 1800;                // 30 minutes max melt time
+// Timeouts now use configurable values from UCI
 
 // Global snow detection state
 static starlink_snow_detection_t g_snow_detection = {0};
@@ -53,11 +55,11 @@ int starlink_snow_detection_init(void) {
     memset(&g_snow_detection, 0, sizeof(starlink_snow_detection_t));
     g_snow_detection.enabled = true;
     g_snow_detection.detection_samples = SNOW_DETECTION_SAMPLES;
-    g_snow_detection.obstruction_threshold = SNOW_OBSTRUCTION_THRESHOLD;
-    g_snow_detection.snr_degradation_threshold = SNOW_SNR_DEGRADATION_THRESHOLD;
-    g_snow_detection.temperature_threshold = SNOW_TEMPERATURE_THRESHOLD;
-    g_snow_detection.verification_time = SNOW_VERIFICATION_TIME;
-    g_snow_detection.melt_timeout = SNOW_MELT_TIMEOUT;
+    g_snow_detection.obstruction_threshold = g_config.snow_obstruction_threshold;
+    g_snow_detection.snr_degradation_threshold = g_config.snow_snr_degradation_threshold;
+    g_snow_detection.temperature_threshold = g_config.snow_temperature_threshold;
+    g_snow_detection.verification_time = g_config.snow_verification_time;
+    g_snow_detection.melt_timeout = g_config.snow_melt_timeout;
     // Initialize with empty API key - will be loaded from UCI
     memset(g_snow_detection.weather_api_key, 0, sizeof(g_snow_detection.weather_api_key));
     

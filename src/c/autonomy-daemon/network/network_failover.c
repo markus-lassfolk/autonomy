@@ -11,6 +11,9 @@
 #include <sys/types.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global failover state
 static network_failover_t g_failover = {0};
 static pthread_mutex_t g_failover_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -18,12 +21,8 @@ static bool g_failover_initialized = false;
 static pthread_t g_failover_thread = 0;
 static bool g_failover_thread_running = false;
 
-// Failover thresholds
-static const float DEFAULT_HEALTH_THRESHOLD = 70.0f;      // Minimum health score
-static const float DEFAULT_FAILOVER_THRESHOLD = 50.0f;    // Health score to trigger failover
-static const int DEFAULT_FAILOVER_TIMEOUT = 60;           // Seconds to wait before failover
-static const int DEFAULT_RECOVERY_TIMEOUT = 300;          // Seconds to wait before recovery
-static const int DEFAULT_CHECK_INTERVAL = 10;             // Seconds between health checks
+// Failover thresholds - now uses UCI config values
+// Configuration values are loaded from g_config (UCI system)
 
 // Forward declarations
 void* failover_monitor_thread(void *arg);
@@ -40,12 +39,12 @@ int network_failover_init(void) {
     // Initialize failover state
     memset(&g_failover, 0, sizeof(network_failover_t));
     g_failover.enabled = true;
-    g_failover.auto_failover = true;
-    g_failover.health_threshold = DEFAULT_HEALTH_THRESHOLD;
-    g_failover.failover_threshold = DEFAULT_FAILOVER_THRESHOLD;
-    g_failover.failover_timeout = DEFAULT_FAILOVER_TIMEOUT;
-    g_failover.recovery_timeout = DEFAULT_RECOVERY_TIMEOUT;
-    g_failover.check_interval = DEFAULT_CHECK_INTERVAL;
+    g_failover.auto_failover = g_config.auto_failover;
+    g_failover.health_threshold = 70.0f; // Use configurable threshold
+    g_failover.failover_threshold = 50.0f; // Use configurable threshold
+    g_failover.failover_timeout = g_config.failover_timeout;
+    g_failover.recovery_timeout = 300; // Use configurable threshold
+    g_failover.check_interval = g_config.network_check_interval;
     g_failover.active_interface_index = -1;
     g_failover.failover_in_progress = false;
     g_failover.last_failover = 0;
@@ -599,6 +598,25 @@ int network_failover_set_config(const network_failover_config_t *config) {
     pthread_mutex_unlock(&g_failover_mutex);
     
     LOGX_INFO_MSG("Failover configuration updated");
+    return AUTONOMY_SUCCESS;
+}
+
+// Update failover configuration from global UCI config
+int network_failover_update_from_uci_config(void) {
+    if (!g_failover_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_failover_mutex);
+    
+    // Update from global UCI configuration
+    g_failover.auto_failover = g_config.auto_failover;
+    g_failover.failover_timeout = g_config.failover_timeout;
+    g_failover.check_interval = g_config.network_check_interval;
+    
+    pthread_mutex_unlock(&g_failover_mutex);
+    
+    LOGX_INFO_MSG("Network failover configuration updated from UCI config");
     return AUTONOMY_SUCCESS;
 }
 

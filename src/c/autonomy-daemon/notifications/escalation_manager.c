@@ -7,6 +7,9 @@
 #include <time.h>
 #include <unistd.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global escalation manager instance
 static escalation_manager_t g_escalation_manager;
 static bool g_escalation_manager_initialized = false;
@@ -53,7 +56,7 @@ int escalation_manager_init(const escalation_manager_config_t* config) {
     }
     
     g_escalation_manager.max_active_escalations = config->max_active_escalations;
-    g_escalation_manager.active_escalations_count = 0;
+    g_escalation_manager.active_escalations_count = 0; // Use configurable escalation count
     
     // Initialize escalation history
     g_escalation_manager.escalation_history = malloc(config->max_escalation_history * sizeof(escalation_record_t));

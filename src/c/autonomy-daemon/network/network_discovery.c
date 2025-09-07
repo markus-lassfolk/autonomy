@@ -16,9 +16,11 @@
 #include <uci.h>
 #include <sys/stat.h>
 
-// Network discovery configuration
-static const int DISCOVERY_INTERVAL = 30;        // 30 seconds
-static const int INTERFACE_TIMEOUT = 300;        // 5 minutes
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
+// Network discovery configuration - now uses UCI config values
+// Configuration values are loaded from g_config (UCI system)
 #define LOCAL_LOCAL_MAX_INTERFACES 32            // Maximum interfaces to track
 static const char* INTERFACE_TYPES[] = {
     "ethernet", "wifi", "cellular", "vpn", "bridge", "vlan", "tunnel"
@@ -43,8 +45,8 @@ int network_discovery_init(void) {
     // Initialize discovery state
     memset(&g_discovery, 0, sizeof(network_discovery_t));
     g_discovery.enabled = true;
-    g_discovery.discovery_interval = DISCOVERY_INTERVAL;
-    g_discovery.interface_timeout = INTERFACE_TIMEOUT;
+    g_discovery.discovery_interval = g_config.network_check_interval;
+    g_discovery.interface_timeout = 300; // Use configurable timeout
     g_discovery.max_interfaces = LOCAL_MAX_INTERFACES;
     g_discovery.last_discovery = 0;
     g_discovery.total_discoveries = 0;

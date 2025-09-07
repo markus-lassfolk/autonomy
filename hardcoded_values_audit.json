@@ -1,0 +1,4836 @@
+{
+  "summary": {
+    "total_files_audited": 90,
+    "files_with_hardcoded_values": 90,
+    "total_hardcoded_values": 614
+  },
+  "files": {
+    "src/c/autonomy-daemon/analytics/analytics_engine.c": [
+      {
+        "line": 39,
+        "content": "g_analytics_engine.config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 40,
+        "content": "g_analytics_engine.config.update_interval_seconds = 300; // 5 minutes",
+        "match": "= 300;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 40,
+        "content": "g_analytics_engine.config.update_interval_seconds = 300; // 5 minutes",
+        "match": "interval_seconds = 300",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 45,
+        "content": "g_analytics_engine.config.health_thresholds.excellent = 80.0;",
+        "match": "= 80.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 46,
+        "content": "g_analytics_engine.config.health_thresholds.good = 60.0;",
+        "match": "= 60.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 47,
+        "content": "g_analytics_engine.config.health_thresholds.fair = 40.0;",
+        "match": "= 40.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 48,
+        "content": "g_analytics_engine.config.health_thresholds.poor = 20.0;",
+        "match": "= 20.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 49,
+        "content": "g_analytics_engine.config.health_thresholds.critical = 0.0;",
+        "match": "= 0.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/analytics/performance_analyzer.c": [
+      {
+        "line": 37,
+        "content": "g_performance_analyzer.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/analytics/performance_monitor.c": [
+      {
+        "line": 41,
+        "content": "g_performance_monitor.config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 42,
+        "content": "g_performance_monitor.config.monitor_interval_seconds = 60;",
+        "match": "= 60;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 42,
+        "content": "g_performance_monitor.config.monitor_interval_seconds = 60;",
+        "match": "interval_seconds = 60",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 47,
+        "content": "g_performance_monitor.config.thresholds.cpu_warning_threshold = 70.0;",
+        "match": "= 70.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 48,
+        "content": "g_performance_monitor.config.thresholds.cpu_critical_threshold = 90.0;",
+        "match": "= 90.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 49,
+        "content": "g_performance_monitor.config.thresholds.memory_warning_threshold = 80.0;",
+        "match": "= 80.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 50,
+        "content": "g_performance_monitor.config.thresholds.memory_critical_threshold = 95.0;",
+        "match": "= 95.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 51,
+        "content": "g_performance_monitor.config.thresholds.disk_warning_threshold = 85.0;",
+        "match": "= 85.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 52,
+        "content": "g_performance_monitor.config.thresholds.disk_critical_threshold = 95.0;",
+        "match": "= 95.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 53,
+        "content": "g_performance_monitor.config.thresholds.load_warning_threshold = 2.0;",
+        "match": "= 2.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 54,
+        "content": "g_performance_monitor.config.thresholds.load_critical_threshold = 5.0;",
+        "match": "= 5.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/analytics/predictive_engine.c": [
+      {
+        "line": 34,
+        "content": "g_predictive_engine.config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 36,
+        "content": "g_predictive_engine.config.confidence_threshold = 0.7;",
+        "match": "= 0.7;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 39,
+        "content": "g_predictive_engine.config.update_interval_seconds = 3600;",
+        "match": "= 3600;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 39,
+        "content": "g_predictive_engine.config.update_interval_seconds = 3600;",
+        "match": "interval_seconds = 3600",
+        "pattern": "interval.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/analytics/trend_analyzer.c": [
+      {
+        "line": 41,
+        "content": "g_trend_analyzer.config.confidence_threshold = 0.7;",
+        "match": "= 0.7;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/analytics/usage_analyzer.c": [
+      {
+        "line": 42,
+        "content": "g_usage_analyzer.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/external/external_apis.c": [
+      {
+        "line": 95,
+        "content": "config->enabled = false; // Disabled by default (requires configuration)",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 97,
+        "content": "config->timeout_seconds = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 97,
+        "content": "config->timeout_seconds = 30;",
+        "match": "timeout_seconds = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 101,
+        "content": "config->retry_delay_seconds = 5;",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 105,
+        "content": "config->health_check_interval_minutes = 60;",
+        "match": "= 60;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 105,
+        "content": "config->health_check_interval_minutes = 60;",
+        "match": "interval_minutes = 60",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 166,
+        "content": "g_external_apis.health_monitoring_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 644,
+        "content": "sleep(300); // Check every 5 minutes",
+        "match": "sleep(300)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      }
+    ],
+    "src/c/autonomy-daemon/external/external_apis_ubus.c": [
+      {
+        "line": 270,
+        "content": "int healthy = 0, degraded = 0, failed = 0, disabled = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/external/external_api_client.c": [
+      {
+        "line": 50,
+        "content": "g_external_api_client.config.timeout_seconds = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 50,
+        "content": "g_external_api_client.config.timeout_seconds = 30;",
+        "match": "timeout_seconds = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps.c": [
+      {
+        "line": 34,
+        "content": "g_state.gps_sources[0].enabled = 1;",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 49,
+        "content": "g_state.gps_sources[1].enabled = 1;",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 64,
+        "content": "g_state.gps_sources[2].enabled = 1;",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 83,
+        "content": "g_state.gps_enabled = 1;",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 222,
+        "content": "g_state.gps_enabled = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_accuracy.c": [
+      {
+        "line": 15,
+        "content": "static const double SUSPICIOUS_ACCURACY = 1.0;     // Suspiciously good accuracy threshold",
+        "match": "= 1.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 15,
+        "content": "static const double SUSPICIOUS_ACCURACY = 1.0;     // Suspiciously good accuracy threshold",
+        "match": "static const double SUSPICIOUS_ACCURACY = 1",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 16,
+        "content": "static const double POOR_ACCURACY = 100.0;         // Poor accuracy threshold",
+        "match": "= 100.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 16,
+        "content": "static const double POOR_ACCURACY = 100.0;         // Poor accuracy threshold",
+        "match": "static const double POOR_ACCURACY = 100",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 24,
+        "content": "static const double ACCURACY_IMPROVEMENT_THRESHOLD = 0.5;  // 50% improvement threshold",
+        "match": "= 0.5;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 24,
+        "content": "static const double ACCURACY_IMPROVEMENT_THRESHOLD = 0.5;  // 50% improvement threshold",
+        "match": "static const double ACCURACY_IMPROVEMENT_THRESHOLD = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 25,
+        "content": "static const double ACCURACY_DEGRADATION_THRESHOLD = 2.0;  // 2x degradation threshold",
+        "match": "= 2.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 25,
+        "content": "static const double ACCURACY_DEGRADATION_THRESHOLD = 2.0;  // 2x degradation threshold",
+        "match": "static const double ACCURACY_DEGRADATION_THRESHOLD = 2",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 27,
+        "content": "static const double POSITION_JUMP_THRESHOLD = 1000.0;      // 1km position jump threshold",
+        "match": "= 1000.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 27,
+        "content": "static const double POSITION_JUMP_THRESHOLD = 1000.0;      // 1km position jump threshold",
+        "match": "static const double POSITION_JUMP_THRESHOLD = 1000",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 55,
+        "content": "g_accuracy_validator.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_adaptive_cache.c": [
+      {
+        "line": 15,
+        "content": "static const int CACHE_CLEANUP_INTERVAL = 300;             // 5 minute cleanup interval",
+        "match": "= 300;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 15,
+        "content": "static const int CACHE_CLEANUP_INTERVAL = 300;             // 5 minute cleanup interval",
+        "match": "static const int CACHE_CLEANUP_INTERVAL = 300",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 15,
+        "content": "static const int CACHE_CLEANUP_INTERVAL = 300;             // 5 minute cleanup interval",
+        "match": "INTERVAL = 300",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 18,
+        "content": "static const double CACHE_EVICTION_THRESHOLD = 0.8;        // 80% cache usage threshold",
+        "match": "= 0.8;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 18,
+        "content": "static const double CACHE_EVICTION_THRESHOLD = 0.8;        // 80% cache usage threshold",
+        "match": "static const double CACHE_EVICTION_THRESHOLD = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 48,
+        "content": "g_cache.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_cell_tower.c": [
+      {
+        "line": 21,
+        "content": "static const int POSITION_UPDATE_INTERVAL = 60;              // 60 second position update interval",
+        "match": "= 60;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 21,
+        "content": "static const int POSITION_UPDATE_INTERVAL = 60;              // 60 second position update interval",
+        "match": "static const int POSITION_UPDATE_INTERVAL = 60",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 21,
+        "content": "static const int POSITION_UPDATE_INTERVAL = 60;              // 60 second position update interval",
+        "match": "INTERVAL = 60",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 45,
+        "content": "g_cell_tower.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_clustering.c": [
+      {
+        "line": 17,
+        "content": "static const double CLUSTER_TIMEOUT = 300;           // 5 minute cluster timeout",
+        "match": "= 300;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 17,
+        "content": "static const double CLUSTER_TIMEOUT = 300;           // 5 minute cluster timeout",
+        "match": "static const double CLUSTER_TIMEOUT = 300",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 17,
+        "content": "static const double CLUSTER_TIMEOUT = 300;           // 5 minute cluster timeout",
+        "match": "TIMEOUT = 300",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 20,
+        "content": "static const double OUTLIER_THRESHOLD = 3.0;         // 3-sigma outlier threshold",
+        "match": "= 3.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 20,
+        "content": "static const double OUTLIER_THRESHOLD = 3.0;         // 3-sigma outlier threshold",
+        "match": "static const double OUTLIER_THRESHOLD = 3",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 51,
+        "content": "g_clustering.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_comprehensive.c": [
+      {
+        "line": 453,
+        "content": "request_config.timeout_seconds = 5;",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 453,
+        "content": "request_config.timeout_seconds = 5;",
+        "match": "timeout_seconds = 5",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_confidence.c": [
+      {
+        "line": 13,
+        "content": "static const double MIN_CONFIDENCE = 0.1;         // Minimum confidence threshold",
+        "match": "= 0.1;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 13,
+        "content": "static const double MIN_CONFIDENCE = 0.1;         // Minimum confidence threshold",
+        "match": "static const double MIN_CONFIDENCE = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 14,
+        "content": "static const double MAX_CONFIDENCE = 1.0;          // Maximum confidence threshold",
+        "match": "= 1.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 14,
+        "content": "static const double MAX_CONFIDENCE = 1.0;          // Maximum confidence threshold",
+        "match": "static const double MAX_CONFIDENCE = 1",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 22,
+        "content": "static const double HIGH_ACCURACY_THRESHOLD = 10.0;    // 10 meters",
+        "match": "= 10.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 22,
+        "content": "static const double HIGH_ACCURACY_THRESHOLD = 10.0;    // 10 meters",
+        "match": "static const double HIGH_ACCURACY_THRESHOLD = 10",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 23,
+        "content": "static const double MEDIUM_ACCURACY_THRESHOLD = 50.0;  // 50 meters",
+        "match": "= 50.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 23,
+        "content": "static const double MEDIUM_ACCURACY_THRESHOLD = 50.0;  // 50 meters",
+        "match": "static const double MEDIUM_ACCURACY_THRESHOLD = 50",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 24,
+        "content": "static const double LOW_ACCURACY_THRESHOLD = 100.0;    // 100 meters",
+        "match": "= 100.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 24,
+        "content": "static const double LOW_ACCURACY_THRESHOLD = 100.0;    // 100 meters",
+        "match": "static const double LOW_ACCURACY_THRESHOLD = 100",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 28,
+        "content": "static const int FRESH_DATA_THRESHOLD = 30;            // 30 seconds",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 28,
+        "content": "static const int FRESH_DATA_THRESHOLD = 30;            // 30 seconds",
+        "match": "static const int FRESH_DATA_THRESHOLD = 30",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 29,
+        "content": "static const int RECENT_DATA_THRESHOLD = 60;           // 60 seconds",
+        "match": "= 60;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 29,
+        "content": "static const int RECENT_DATA_THRESHOLD = 60;           // 60 seconds",
+        "match": "static const int RECENT_DATA_THRESHOLD = 60",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 30,
+        "content": "static const int OLD_DATA_THRESHOLD = 300;             // 5 minutes",
+        "match": "= 300;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 30,
+        "content": "static const int OLD_DATA_THRESHOLD = 300;             // 5 minutes",
+        "match": "static const int OLD_DATA_THRESHOLD = 300",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 58,
+        "content": "g_confidence_calc.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_connector.c": [
+      {
+        "line": 15,
+        "content": "static const int CONNECTOR_CHECK_INTERVAL = 2;           // 2 second connector check interval",
+        "match": "= 2;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 15,
+        "content": "static const int CONNECTOR_CHECK_INTERVAL = 2;           // 2 second connector check interval",
+        "match": "static const int CONNECTOR_CHECK_INTERVAL = 2",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 15,
+        "content": "static const int CONNECTOR_CHECK_INTERVAL = 2;           // 2 second connector check interval",
+        "match": "INTERVAL = 2",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 16,
+        "content": "static const int MODULE_HEALTH_TIMEOUT = 60;             // 60 second module health timeout",
+        "match": "= 60;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 16,
+        "content": "static const int MODULE_HEALTH_TIMEOUT = 60;             // 60 second module health timeout",
+        "match": "static const int MODULE_HEALTH_TIMEOUT = 60",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 16,
+        "content": "static const int MODULE_HEALTH_TIMEOUT = 60;             // 60 second module health timeout",
+        "match": "TIMEOUT = 60",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 17,
+        "content": "static const double MODULE_HEALTH_THRESHOLD = 50.0;      // 50% module health threshold",
+        "match": "= 50.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 17,
+        "content": "static const double MODULE_HEALTH_THRESHOLD = 50.0;      // 50% module health threshold",
+        "match": "static const double MODULE_HEALTH_THRESHOLD = 50",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 42,
+        "content": "g_connector.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 59,
+        "content": "g_connector.modules[i].enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 112,
+        "content": "module->enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 238,
+        "content": "module->enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_discovery_simple.c": [
+      {
+        "line": 22,
+        "content": "g_state.gps_sources[g_state.gps_source_count].enabled = 1;",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 40,
+        "content": "g_state.gps_sources[g_state.gps_source_count].enabled = 1;",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 57,
+        "content": "g_state.gps_sources[g_state.gps_source_count].enabled = 1;",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 103,
+        "content": "g_state.gps_enabled = 1;",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_error_recovery.c": [
+      {
+        "line": 21,
+        "content": "static const int RETRY_DELAY_BASE = 1000;                    // Base retry delay in milliseconds",
+        "match": "= 1000;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 21,
+        "content": "static const int RETRY_DELAY_BASE = 1000;                    // Base retry delay in milliseconds",
+        "match": "static const int RETRY_DELAY_BASE = 1000",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 22,
+        "content": "static const int MAX_RETRY_DELAY = 30000;                    // Maximum retry delay in milliseconds",
+        "match": "= 30000;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 22,
+        "content": "static const int MAX_RETRY_DELAY = 30000;                    // Maximum retry delay in milliseconds",
+        "match": "static const int MAX_RETRY_DELAY = 30000",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 24,
+        "content": "static const double ERROR_THRESHOLD_RATIO = 0.3;             // Error threshold ratio (30%)",
+        "match": "= 0.3;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 24,
+        "content": "static const double ERROR_THRESHOLD_RATIO = 0.3;             // Error threshold ratio (30%)",
+        "match": "static const double ERROR_THRESHOLD_RATIO = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 80,
+        "content": "g_error_recovery.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 545,
+        "content": "config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 546,
+        "content": "config.update_interval = 10; // Increase interval to 10 seconds (degraded)",
+        "match": "= 10;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 546,
+        "content": "config.update_interval = 10; // Increase interval to 10 seconds (degraded)",
+        "match": "interval = 10",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 547,
+        "content": "config.timeout = 15;         // Increase timeout",
+        "match": "= 15;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 547,
+        "content": "config.timeout = 15;         // Increase timeout",
+        "match": "timeout = 15",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 876,
+        "content": "sleep(2);",
+        "match": "sleep(2)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 936,
+        "content": "sleep(5);",
+        "match": "sleep(5)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 972,
+        "content": "sleep(3);",
+        "match": "sleep(3)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 981,
+        "content": "sleep(10);",
+        "match": "sleep(10)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 998,
+        "content": "system(\"uci set starlink.gps.update_interval=30 2>/dev/null\");",
+        "match": "interval=30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 999,
+        "content": "system(\"uci set starlink.gps.timeout=60 2>/dev/null\");",
+        "match": "timeout=60",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 1011,
+        "content": "sleep(3);",
+        "match": "sleep(3)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 1036,
+        "content": "sleep(2);",
+        "match": "sleep(2)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 1096,
+        "content": "sleep(5);",
+        "match": "sleep(5)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 1132,
+        "content": "sleep(10);",
+        "match": "sleep(10)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 1149,
+        "content": "system(\"uci set external.gps.update_interval=30 2>/dev/null\");",
+        "match": "interval=30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 1150,
+        "content": "system(\"uci set external.gps.timeout=60 2>/dev/null\");",
+        "match": "timeout=60",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 1162,
+        "content": "sleep(3);",
+        "match": "sleep(3)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_events.c": [
+      {
+        "line": 23,
+        "content": "static const int EVENT_CHECK_INTERVAL = 2;              // 2 second event check interval",
+        "match": "= 2;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 23,
+        "content": "static const int EVENT_CHECK_INTERVAL = 2;              // 2 second event check interval",
+        "match": "static const int EVENT_CHECK_INTERVAL = 2",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 23,
+        "content": "static const int EVENT_CHECK_INTERVAL = 2;              // 2 second event check interval",
+        "match": "INTERVAL = 2",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 25,
+        "content": "static const double DEFAULT_SPEED_THRESHOLD = 5.0;      // 5 m/s default speed threshold",
+        "match": "= 5.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 25,
+        "content": "static const double DEFAULT_SPEED_THRESHOLD = 5.0;      // 5 m/s default speed threshold",
+        "match": "static const double DEFAULT_SPEED_THRESHOLD = 5",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 26,
+        "content": "static const double DEFAULT_ACCURACY_THRESHOLD = 50.0;  // 50m default accuracy threshold",
+        "match": "= 50.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 26,
+        "content": "static const double DEFAULT_ACCURACY_THRESHOLD = 50.0;  // 50m default accuracy threshold",
+        "match": "static const double DEFAULT_ACCURACY_THRESHOLD = 50",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 87,
+        "content": "g_events.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 106,
+        "content": "g_events.events[i].enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 168,
+        "content": "event->enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_fusion.c": [
+      {
+        "line": 15,
+        "content": "static const double FUSION_UPDATE_INTERVAL = 5.0;      // 5 second fusion update interval",
+        "match": "= 5.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 15,
+        "content": "static const double FUSION_UPDATE_INTERVAL = 5.0;      // 5 second fusion update interval",
+        "match": "static const double FUSION_UPDATE_INTERVAL = 5",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 15,
+        "content": "static const double FUSION_UPDATE_INTERVAL = 5.0;      // 5 second fusion update interval",
+        "match": "INTERVAL = 5",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 17,
+        "content": "static const double FUSION_WEIGHT_THRESHOLD = 0.3;     // Minimum weight for source inclusion",
+        "match": "= 0.3;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 17,
+        "content": "static const double FUSION_WEIGHT_THRESHOLD = 0.3;     // Minimum weight for source inclusion",
+        "match": "static const double FUSION_WEIGHT_THRESHOLD = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 51,
+        "content": "g_fusion.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_geofence.c": [
+      {
+        "line": 17,
+        "content": "static const int GEOFENCE_CHECK_INTERVAL = 5;          // 5 second check interval",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 17,
+        "content": "static const int GEOFENCE_CHECK_INTERVAL = 5;          // 5 second check interval",
+        "match": "static const int GEOFENCE_CHECK_INTERVAL = 5",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 17,
+        "content": "static const int GEOFENCE_CHECK_INTERVAL = 5;          // 5 second check interval",
+        "match": "INTERVAL = 5",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 51,
+        "content": "g_geofence.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 69,
+        "content": "g_geofence.geofences[i].enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 113,
+        "content": "geofence->enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 171,
+        "content": "geofence->enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 238,
+        "content": "geofence->enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_google_api.c": [
+      {
+        "line": 16,
+        "content": "static const int REQUEST_TIMEOUT = 30;                      // 30 second request timeout",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 16,
+        "content": "static const int REQUEST_TIMEOUT = 30;                      // 30 second request timeout",
+        "match": "static const int REQUEST_TIMEOUT = 30",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 16,
+        "content": "static const int REQUEST_TIMEOUT = 30;                      // 30 second request timeout",
+        "match": "TIMEOUT = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 18,
+        "content": "static const int RATE_LIMIT_DELAY = 100;                    // 100ms delay between requests",
+        "match": "= 100;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 18,
+        "content": "static const int RATE_LIMIT_DELAY = 100;                    // 100ms delay between requests",
+        "match": "static const int RATE_LIMIT_DELAY = 100",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 72,
+        "content": "g_google_api.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_health.c": [
+      {
+        "line": 11,
+        "content": "static const int HEALTH_CHECK_INTERVAL = 60;         // 1 minute health check interval",
+        "match": "= 60;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 11,
+        "content": "static const int HEALTH_CHECK_INTERVAL = 60;         // 1 minute health check interval",
+        "match": "static const int HEALTH_CHECK_INTERVAL = 60",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 11,
+        "content": "static const int HEALTH_CHECK_INTERVAL = 60;         // 1 minute health check interval",
+        "match": "INTERVAL = 60",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 15,
+        "content": "static const int SOURCE_TIMEOUT = 300;                // 5 minute source timeout",
+        "match": "= 300;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 15,
+        "content": "static const int SOURCE_TIMEOUT = 300;                // 5 minute source timeout",
+        "match": "static const int SOURCE_TIMEOUT = 300",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 15,
+        "content": "static const int SOURCE_TIMEOUT = 300;                // 5 minute source timeout",
+        "match": "TIMEOUT = 300",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 22,
+        "content": "static const double EXCELLENT_HEALTH = 0.8;          // Excellent health threshold",
+        "match": "= 0.8;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 22,
+        "content": "static const double EXCELLENT_HEALTH = 0.8;          // Excellent health threshold",
+        "match": "static const double EXCELLENT_HEALTH = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 23,
+        "content": "static const double GOOD_HEALTH = 0.6;               // Good health threshold",
+        "match": "= 0.6;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 23,
+        "content": "static const double GOOD_HEALTH = 0.6;               // Good health threshold",
+        "match": "static const double GOOD_HEALTH = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 24,
+        "content": "static const double POOR_HEALTH = 0.4;               // Poor health threshold",
+        "match": "= 0.4;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 24,
+        "content": "static const double POOR_HEALTH = 0.4;               // Poor health threshold",
+        "match": "static const double POOR_HEALTH = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 25,
+        "content": "static const double CRITICAL_HEALTH = 0.2;           // Critical health threshold",
+        "match": "= 0.2;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 25,
+        "content": "static const double CRITICAL_HEALTH = 0.2;           // Critical health threshold",
+        "match": "static const double CRITICAL_HEALTH = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 53,
+        "content": "g_health_monitor.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_integration.c": [
+      {
+        "line": 14,
+        "content": "static const int GPS_UPDATE_INTERVAL = 1;               // 1 second GPS update interval",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 14,
+        "content": "static const int GPS_UPDATE_INTERVAL = 1;               // 1 second GPS update interval",
+        "match": "static const int GPS_UPDATE_INTERVAL = 1",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 14,
+        "content": "static const int GPS_UPDATE_INTERVAL = 1;               // 1 second GPS update interval",
+        "match": "INTERVAL = 1",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 15,
+        "content": "static const int INTEGRATION_CHECK_INTERVAL = 5;        // 5 second integration check interval",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 15,
+        "content": "static const int INTEGRATION_CHECK_INTERVAL = 5;        // 5 second integration check interval",
+        "match": "static const int INTEGRATION_CHECK_INTERVAL = 5",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 15,
+        "content": "static const int INTEGRATION_CHECK_INTERVAL = 5;        // 5 second integration check interval",
+        "match": "INTERVAL = 5",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 16,
+        "content": "static const double MIN_GPS_ACCURACY = 100.0;           // 100m minimum accuracy threshold",
+        "match": "= 100.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 16,
+        "content": "static const double MIN_GPS_ACCURACY = 100.0;           // 100m minimum accuracy threshold",
+        "match": "static const double MIN_GPS_ACCURACY = 100",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 48,
+        "content": "g_integration.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 66,
+        "content": "g_integration.gps_sources[i].enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 131,
+        "content": "source->enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 390,
+        "content": "source->enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_location_manager.c": [
+      {
+        "line": 74,
+        "content": "source->enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_location_services.c": [
+      {
+        "line": 65,
+        "content": "g_location_services.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_manager.c": [
+      {
+        "line": 21,
+        "content": "static const int GPS_UPDATE_INTERVAL = 5;         // 5 seconds",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 21,
+        "content": "static const int GPS_UPDATE_INTERVAL = 5;         // 5 seconds",
+        "match": "static const int GPS_UPDATE_INTERVAL = 5",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 21,
+        "content": "static const int GPS_UPDATE_INTERVAL = 5;         // 5 seconds",
+        "match": "INTERVAL = 5",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 22,
+        "content": "static const int GPS_SOURCE_TIMEOUT = 60;         // 60 seconds",
+        "match": "= 60;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 22,
+        "content": "static const int GPS_SOURCE_TIMEOUT = 60;         // 60 seconds",
+        "match": "static const int GPS_SOURCE_TIMEOUT = 60",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 22,
+        "content": "static const int GPS_SOURCE_TIMEOUT = 60;         // 60 seconds",
+        "match": "TIMEOUT = 60",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 24,
+        "content": "static const double MIN_RELIABILITY = 0.3;        // Minimum reliability threshold",
+        "match": "= 0.3;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 24,
+        "content": "static const double MIN_RELIABILITY = 0.3;        // Minimum reliability threshold",
+        "match": "static const double MIN_RELIABILITY = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 25,
+        "content": "static const double POSITION_THRESHOLD = 50.0;    // 50 meters position change threshold",
+        "match": "= 50.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 25,
+        "content": "static const double POSITION_THRESHOLD = 50.0;    // 50 meters position change threshold",
+        "match": "static const double POSITION_THRESHOLD = 50",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 60,
+        "content": "g_gps_manager.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 70,
+        "content": "g_gps_manager.sources[i].enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 84,
+        "content": ".collection_timeout_s = 30,",
+        "match": "timeout_s = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 95,
+        "content": ".movement_detection_interval_s = 30.0,",
+        "match": "interval_s = 30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 100,
+        "content": ".health_check_interval_s = 60,",
+        "match": "interval_s = 60",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 220,
+        "content": "for (int i = 0; i < g_gps_manager.update_interval && g_gps_manager_thread_running; i++) {",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 221,
+        "content": "sleep(1);",
+        "match": "sleep(1)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 329,
+        "content": "g_gps_manager.sources[index].enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_movement.c": [
+      {
+        "line": 15,
+        "content": "static const double STATIONARY_THRESHOLD = 5.0;     // 5 meters - stationary threshold",
+        "match": "= 5.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 15,
+        "content": "static const double STATIONARY_THRESHOLD = 5.0;     // 5 meters - stationary threshold",
+        "match": "static const double STATIONARY_THRESHOLD = 5",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 16,
+        "content": "static const double MOVEMENT_THRESHOLD = 10.0;      // 10 meters - movement threshold",
+        "match": "= 10.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 16,
+        "content": "static const double MOVEMENT_THRESHOLD = 10.0;      // 10 meters - movement threshold",
+        "match": "static const double MOVEMENT_THRESHOLD = 10",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 17,
+        "content": "static const double SPEED_THRESHOLD = 0.5;          // 0.5 m/s - speed threshold",
+        "match": "= 0.5;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 17,
+        "content": "static const double SPEED_THRESHOLD = 0.5;          // 0.5 m/s - speed threshold",
+        "match": "static const double SPEED_THRESHOLD = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 19,
+        "content": "static const int ANALYSIS_INTERVAL = 10;             // 10 seconds between analyses",
+        "match": "= 10;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 19,
+        "content": "static const int ANALYSIS_INTERVAL = 10;             // 10 seconds between analyses",
+        "match": "static const int ANALYSIS_INTERVAL = 10",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 19,
+        "content": "static const int ANALYSIS_INTERVAL = 10;             // 10 seconds between analyses",
+        "match": "INTERVAL = 10",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 53,
+        "content": "g_movement_detector.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_nmea.c": [
+      {
+        "line": 57,
+        "content": "g_nmea_parser.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_obstruction.c": [
+      {
+        "line": 14,
+        "content": "static const int OBSTRUCTION_ANALYSIS_INTERVAL = 30;       // 30 second analysis interval",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 14,
+        "content": "static const int OBSTRUCTION_ANALYSIS_INTERVAL = 30;       // 30 second analysis interval",
+        "match": "static const int OBSTRUCTION_ANALYSIS_INTERVAL = 30",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 14,
+        "content": "static const int OBSTRUCTION_ANALYSIS_INTERVAL = 30;       // 30 second analysis interval",
+        "match": "INTERVAL = 30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 15,
+        "content": "static const double MIN_SIGNAL_QUALITY = 0.3;              // Minimum signal quality threshold",
+        "match": "= 0.3;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 15,
+        "content": "static const double MIN_SIGNAL_QUALITY = 0.3;              // Minimum signal quality threshold",
+        "match": "static const double MIN_SIGNAL_QUALITY = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 16,
+        "content": "static const double OBSTRUCTION_DETECTION_THRESHOLD = 0.5; // Obstruction detection threshold",
+        "match": "= 0.5;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 16,
+        "content": "static const double OBSTRUCTION_DETECTION_THRESHOLD = 0.5; // Obstruction detection threshold",
+        "match": "static const double OBSTRUCTION_DETECTION_THRESHOLD = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 47,
+        "content": "g_obstruction.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_opencellid.c": [
+      {
+        "line": 53,
+        "content": "g_opencellid.config.enabled = false; // Disabled by default (requires API key)",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 55,
+        "content": "g_opencellid.config.timeout_seconds = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 55,
+        "content": "g_opencellid.config.timeout_seconds = 30;",
+        "match": "timeout_seconds = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 56,
+        "content": "g_opencellid.config.contribution.enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_performance.c": [
+      {
+        "line": 15,
+        "content": "static const int PERFORMANCE_UPDATE_INTERVAL = 60;           // 1 minute performance update interval",
+        "match": "= 60;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 15,
+        "content": "static const int PERFORMANCE_UPDATE_INTERVAL = 60;           // 1 minute performance update interval",
+        "match": "static const int PERFORMANCE_UPDATE_INTERVAL = 60",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 15,
+        "content": "static const int PERFORMANCE_UPDATE_INTERVAL = 60;           // 1 minute performance update interval",
+        "match": "INTERVAL = 60",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 17,
+        "content": "static const double MIN_ACCURACY_THRESHOLD = 1.0;            // Minimum accuracy threshold in meters",
+        "match": "= 1.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 17,
+        "content": "static const double MIN_ACCURACY_THRESHOLD = 1.0;            // Minimum accuracy threshold in meters",
+        "match": "static const double MIN_ACCURACY_THRESHOLD = 1",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 18,
+        "content": "static const double MAX_ACCURACY_THRESHOLD = 100.0;          // Maximum accuracy threshold in meters",
+        "match": "= 100.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 18,
+        "content": "static const double MAX_ACCURACY_THRESHOLD = 100.0;          // Maximum accuracy threshold in meters",
+        "match": "static const double MAX_ACCURACY_THRESHOLD = 100",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 57,
+        "content": "g_performance.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_rutos.c": [
+      {
+        "line": 25,
+        "content": "static const int RUTOS_GPS_UPDATE_INTERVAL = 1;  // 1 second",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 25,
+        "content": "static const int RUTOS_GPS_UPDATE_INTERVAL = 1;  // 1 second",
+        "match": "static const int RUTOS_GPS_UPDATE_INTERVAL = 1",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 25,
+        "content": "static const int RUTOS_GPS_UPDATE_INTERVAL = 1;  // 1 second",
+        "match": "INTERVAL = 1",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 26,
+        "content": "static const int RUTOS_GPS_TIMEOUT = 5;          // 5 seconds",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 26,
+        "content": "static const int RUTOS_GPS_TIMEOUT = 5;          // 5 seconds",
+        "match": "static const int RUTOS_GPS_TIMEOUT = 5",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 26,
+        "content": "static const int RUTOS_GPS_TIMEOUT = 5;          // 5 seconds",
+        "match": "TIMEOUT = 5",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 53,
+        "content": "g_rutos_gps.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 139,
+        "content": "for (int i = 0; i < g_rutos_gps.update_interval && g_rutos_thread_running; i++) {",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 140,
+        "content": "sleep(1);",
+        "match": "sleep(1)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_starlink.c": [
+      {
+        "line": 19,
+        "content": "static const int GPS_UPDATE_INTERVAL = 10;        // 10 seconds",
+        "match": "= 10;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 19,
+        "content": "static const int GPS_UPDATE_INTERVAL = 10;        // 10 seconds",
+        "match": "static const int GPS_UPDATE_INTERVAL = 10",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 19,
+        "content": "static const int GPS_UPDATE_INTERVAL = 10;        // 10 seconds",
+        "match": "INTERVAL = 10",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 20,
+        "content": "static const int GPS_TIMEOUT = 30;                // 30 seconds",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 20,
+        "content": "static const int GPS_TIMEOUT = 30;                // 30 seconds",
+        "match": "static const int GPS_TIMEOUT = 30",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 20,
+        "content": "static const int GPS_TIMEOUT = 30;                // 30 seconds",
+        "match": "TIMEOUT = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 28,
+        "content": "static const double CONFIDENCE_THRESHOLD = 0.7;   // 70% confidence",
+        "match": "= 0.7;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 28,
+        "content": "static const double CONFIDENCE_THRESHOLD = 0.7;   // 70% confidence",
+        "match": "static const double CONFIDENCE_THRESHOLD = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 54,
+        "content": "g_starlink_gps.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 184,
+        "content": "for (int i = 0; i < g_starlink_gps.update_interval && g_starlink_gps_thread_running; i++) {",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 185,
+        "content": "sleep(1);",
+        "match": "sleep(1)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 246,
+        "content": "request_config.timeout_seconds = 5;",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 246,
+        "content": "request_config.timeout_seconds = 5;",
+        "match": "timeout_seconds = 5",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_system.c": [
+      {
+        "line": 14,
+        "content": "static const int GPS_SYSTEM_INIT_TIMEOUT = 30;           // 30 second initialization timeout",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 14,
+        "content": "static const int GPS_SYSTEM_INIT_TIMEOUT = 30;           // 30 second initialization timeout",
+        "match": "static const int GPS_SYSTEM_INIT_TIMEOUT = 30",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 14,
+        "content": "static const int GPS_SYSTEM_INIT_TIMEOUT = 30;           // 30 second initialization timeout",
+        "match": "TIMEOUT = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 15,
+        "content": "static const int GPS_SYSTEM_HEALTH_CHECK_INTERVAL = 10;   // 10 second health check interval",
+        "match": "= 10;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 15,
+        "content": "static const int GPS_SYSTEM_HEALTH_CHECK_INTERVAL = 10;   // 10 second health check interval",
+        "match": "static const int GPS_SYSTEM_HEALTH_CHECK_INTERVAL = 10",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 15,
+        "content": "static const int GPS_SYSTEM_HEALTH_CHECK_INTERVAL = 10;   // 10 second health check interval",
+        "match": "INTERVAL = 10",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 34,
+        "content": "g_gps_system.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 50,
+        "content": "g_gps_system.module_status[i].enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 471,
+        "content": "module->enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 601,
+        "content": "g_gps_system.module_status[i].enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_terrain.c": [
+      {
+        "line": 18,
+        "content": "static const int TERRAIN_UPDATE_INTERVAL = 3600;             // 1 hour terrain update interval",
+        "match": "= 3600;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 18,
+        "content": "static const int TERRAIN_UPDATE_INTERVAL = 3600;             // 1 hour terrain update interval",
+        "match": "static const int TERRAIN_UPDATE_INTERVAL = 3600",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 18,
+        "content": "static const int TERRAIN_UPDATE_INTERVAL = 3600;             // 1 hour terrain update interval",
+        "match": "INTERVAL = 3600",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 65,
+        "content": "g_terrain.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/gps_weather.c": [
+      {
+        "line": 19,
+        "content": "static const int WEATHER_UPDATE_INTERVAL = 1800;             // 30 minute weather update interval",
+        "match": "= 1800;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 19,
+        "content": "static const int WEATHER_UPDATE_INTERVAL = 1800;             // 30 minute weather update interval",
+        "match": "static const int WEATHER_UPDATE_INTERVAL = 1800",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 19,
+        "content": "static const int WEATHER_UPDATE_INTERVAL = 1800;             // 30 minute weather update interval",
+        "match": "INTERVAL = 1800",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 71,
+        "content": "g_weather.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 497,
+        "content": "air_config.timeout = 10;",
+        "match": "= 10;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 497,
+        "content": "air_config.timeout = 10;",
+        "match": "timeout = 10",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/gps/opencellid_complete.c": [
+      {
+        "line": 1140,
+        "content": "sleep(60); // Sleep for 1 minute",
+        "match": "sleep(60)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 1156,
+        "content": "sleep(300); // Sleep for 5 minutes",
+        "match": "sleep(300)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      }
+    ],
+    "src/c/autonomy-daemon/network/cellular_collector.c": [
+      {
+        "line": 91,
+        "content": "g_cellular_collector.config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 94,
+        "content": "g_cellular_collector.config.collection_interval = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 94,
+        "content": "g_cellular_collector.config.collection_interval = 30;",
+        "match": "interval = 30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 95,
+        "content": "g_cellular_collector.config.timeout_seconds = 10;",
+        "match": "= 10;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 95,
+        "content": "g_cellular_collector.config.timeout_seconds = 10;",
+        "match": "timeout_seconds = 10",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 99,
+        "content": "g_cellular_collector.config.stability_threshold = 80.0;",
+        "match": "= 80.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 101,
+        "content": "g_cellular_collector.config.signal_variance_threshold = 10.0;",
+        "match": "= 10.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 450,
+        "content": "if (select(fd + 1, &readfds, NULL, NULL, &timeout) <= 0) {",
+        "match": "timeout) <= 0",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 508,
+        "content": "tty.c_oflag = 0;                              // no remapping, no delays",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 510,
+        "content": "tty.c_cc[VTIME] = 5;                          // 0.5 seconds read timeout",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/network/network.c": [
+      {
+        "line": 120,
+        "content": "g_state.failover_enabled = 1;",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/network/network_collector.c": [
+      {
+        "line": 45,
+        "content": "g_collector.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 46,
+        "content": "g_collector.collection_interval = 30; // 30 seconds",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 46,
+        "content": "g_collector.collection_interval = 30; // 30 seconds",
+        "match": "interval = 30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 47,
+        "content": "g_collector.test_timeout = 5;         // 5 seconds",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 47,
+        "content": "g_collector.test_timeout = 5;         // 5 seconds",
+        "match": "timeout = 5",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/network/network_collector_archive.c": [
+      {
+        "line": 42,
+        "content": "g_collector.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 43,
+        "content": "g_collector.collection_interval = 30; // 30 seconds",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 43,
+        "content": "g_collector.collection_interval = 30; // 30 seconds",
+        "match": "interval = 30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 44,
+        "content": "g_collector.test_timeout = 5;         // 5 seconds",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 44,
+        "content": "g_collector.test_timeout = 5;         // 5 seconds",
+        "match": "timeout = 5",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/network/network_controller.c": [
+      {
+        "line": 47,
+        "content": "g_network_controller.config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 52,
+        "content": "g_network_controller.config.switch_timeout_seconds = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 52,
+        "content": "g_network_controller.config.switch_timeout_seconds = 30;",
+        "match": "timeout_seconds = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 53,
+        "content": "g_network_controller.config.validation_timeout_seconds = 10;",
+        "match": "= 10;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 53,
+        "content": "g_network_controller.config.validation_timeout_seconds = 10;",
+        "match": "timeout_seconds = 10",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 539,
+        "content": "if (execute_command_with_timeout(command, 5, output, sizeof(output)) == 0) {",
+        "match": "timeout(command, 5, output, sizeof(output)) == 0",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/network/network_discovery.c": [
+      {
+        "line": 20,
+        "content": "static const int DISCOVERY_INTERVAL = 30;        // 30 seconds",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 20,
+        "content": "static const int DISCOVERY_INTERVAL = 30;        // 30 seconds",
+        "match": "static const int DISCOVERY_INTERVAL = 30",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 20,
+        "content": "static const int DISCOVERY_INTERVAL = 30;        // 30 seconds",
+        "match": "INTERVAL = 30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 21,
+        "content": "static const int INTERFACE_TIMEOUT = 300;        // 5 minutes",
+        "match": "= 300;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 21,
+        "content": "static const int INTERFACE_TIMEOUT = 300;        // 5 minutes",
+        "match": "static const int INTERFACE_TIMEOUT = 300",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 21,
+        "content": "static const int INTERFACE_TIMEOUT = 300;        // 5 minutes",
+        "match": "TIMEOUT = 300",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 45,
+        "content": "g_discovery.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 112,
+        "content": "for (int i = 0; i < g_discovery.discovery_interval && g_discovery_thread_running; i++) {",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 113,
+        "content": "sleep(1);",
+        "match": "sleep(1)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 385,
+        "content": "iface->enabled = (ifr.ifr_flags & IFF_UP) != 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/network/network_discovery_simple.c": [
+      {
+        "line": 19,
+        "content": "g_state.interfaces[0].enabled = 1;",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 31,
+        "content": "g_state.interfaces[1].enabled = 1;",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 43,
+        "content": "g_state.interfaces[2].enabled = 1;",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 54,
+        "content": "g_state.failover_enabled = 1;",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/network/network_failover.c": [
+      {
+        "line": 22,
+        "content": "static const float DEFAULT_HEALTH_THRESHOLD = 70.0f;      // Minimum health score",
+        "match": "static const float DEFAULT_HEALTH_THRESHOLD = 70",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 23,
+        "content": "static const float DEFAULT_FAILOVER_THRESHOLD = 50.0f;    // Health score to trigger failover",
+        "match": "static const float DEFAULT_FAILOVER_THRESHOLD = 50",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 24,
+        "content": "static const int DEFAULT_FAILOVER_TIMEOUT = 60;           // Seconds to wait before failover",
+        "match": "= 60;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 24,
+        "content": "static const int DEFAULT_FAILOVER_TIMEOUT = 60;           // Seconds to wait before failover",
+        "match": "static const int DEFAULT_FAILOVER_TIMEOUT = 60",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 24,
+        "content": "static const int DEFAULT_FAILOVER_TIMEOUT = 60;           // Seconds to wait before failover",
+        "match": "TIMEOUT = 60",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 25,
+        "content": "static const int DEFAULT_RECOVERY_TIMEOUT = 300;          // Seconds to wait before recovery",
+        "match": "= 300;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 25,
+        "content": "static const int DEFAULT_RECOVERY_TIMEOUT = 300;          // Seconds to wait before recovery",
+        "match": "static const int DEFAULT_RECOVERY_TIMEOUT = 300",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 25,
+        "content": "static const int DEFAULT_RECOVERY_TIMEOUT = 300;          // Seconds to wait before recovery",
+        "match": "TIMEOUT = 300",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 26,
+        "content": "static const int DEFAULT_CHECK_INTERVAL = 10;             // Seconds between health checks",
+        "match": "= 10;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 26,
+        "content": "static const int DEFAULT_CHECK_INTERVAL = 10;             // Seconds between health checks",
+        "match": "static const int DEFAULT_CHECK_INTERVAL = 10",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 26,
+        "content": "static const int DEFAULT_CHECK_INTERVAL = 10;             // Seconds between health checks",
+        "match": "INTERVAL = 10",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 42,
+        "content": "g_failover.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 113,
+        "content": "for (int i = 0; i < g_failover.check_interval && g_failover_thread_running; i++) {",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 114,
+        "content": "sleep(1);",
+        "match": "sleep(1)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/alert_templates.c": [
+      {
+        "line": 100,
+        "content": "template->enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/contextual_alerts.c": [
+      {
+        "line": 349,
+        "content": "status->enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/delivery_optimizer.c": [
+      {
+        "line": 69,
+        "content": "g_delivery_optimizer.deliveries_delayed = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 70,
+        "content": "g_delivery_optimizer.total_delay_seconds = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 94,
+        "content": "g_delivery_optimizer.deliveries_delayed = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 95,
+        "content": "g_delivery_optimizer.total_delay_seconds = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 527,
+        "content": "plan->delay_delivery = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 530,
+        "content": "plan->estimated_delay_seconds = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 543,
+        "content": "plan->delay_delivery = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 546,
+        "content": "plan->estimated_delay_seconds = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 599,
+        "content": "plan->delay_delivery = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 641,
+        "content": "time_t max_delay = 3600; // Default 1 hour",
+        "match": "= 3600;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 645,
+        "content": "max_delay = 14400; // 4 hours - can wait for business hours",
+        "match": "= 14400;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 648,
+        "content": "max_delay = 7200; // 2 hours - moderate delay acceptable",
+        "match": "= 7200;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 651,
+        "content": "max_delay = 1800; // 30 minutes - health issues shouldn't wait long",
+        "match": "= 1800;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 654,
+        "content": "max_delay = 3600; // 1 hour for unknown types",
+        "match": "= 3600;",
+        "pattern": "=\\s*\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/discord_client.c": [
+      {
+        "line": 242,
+        "content": "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "match": "= 30000;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 242,
+        "content": "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "match": "timeout_ms = 30000",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/escalation_manager.c": [
+      {
+        "line": 122,
+        "content": "sleep(30); // Check every 30 seconds",
+        "match": "sleep(30)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 194,
+        "content": "contact->response_timeout_seconds = 300; // 5 minutes",
+        "match": "= 300;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 194,
+        "content": "contact->response_timeout_seconds = 300; // 5 minutes",
+        "match": "timeout_seconds = 300",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 208,
+        "content": "contact->response_timeout_seconds = 600; // 10 minutes",
+        "match": "= 600;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 208,
+        "content": "contact->response_timeout_seconds = 600; // 10 minutes",
+        "match": "timeout_seconds = 600",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 223,
+        "content": "contact->response_timeout_seconds = 900; // 15 minutes",
+        "match": "= 900;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 223,
+        "content": "contact->response_timeout_seconds = 900; // 15 minutes",
+        "match": "timeout_seconds = 900",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 238,
+        "content": "contact->response_timeout_seconds = 1200; // 20 minutes",
+        "match": "= 1200;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 238,
+        "content": "contact->response_timeout_seconds = 1200; // 20 minutes",
+        "match": "timeout_seconds = 1200",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/intelligence_engine.c": [
+      {
+        "line": 131,
+        "content": "sleep(60); // Run every minute",
+        "match": "sleep(60)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 535,
+        "content": "status->enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/multi_channel.c": [
+      {
+        "line": 36,
+        "content": "notifier->config.webhook_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 43,
+        "content": "notifier->config.email_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 48,
+        "content": "notifier->status.enabled_channels_count = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 58,
+        "content": "notifier->status.channel_enabled[i] = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 66,
+        "content": "notifier->status.channel_enabled[NOTIFICATION_CHANNEL_WEBHOOK] = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 70,
+        "content": "notifier->status.channel_enabled[NOTIFICATION_CHANNEL_EMAIL] = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 74,
+        "content": "notifier->status.channel_enabled[NOTIFICATION_CHANNEL_PUSHOVER] = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 78,
+        "content": "notifier->status.channel_enabled[NOTIFICATION_CHANNEL_SLACK] = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 82,
+        "content": "notifier->status.channel_enabled[NOTIFICATION_CHANNEL_DISCORD] = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 86,
+        "content": "notifier->status.channel_enabled[NOTIFICATION_CHANNEL_TELEGRAM] = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 90,
+        "content": "notifier->status.channel_enabled[NOTIFICATION_CHANNEL_SMS] = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 94,
+        "content": "notifier->status.channel_enabled[NOTIFICATION_CHANNEL_SYSLOG] = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 98,
+        "content": "notifier->status.channel_enabled[NOTIFICATION_CHANNEL_UBUS] = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 270,
+        "content": "result = 0; // Skip disabled channel",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 280,
+        "content": "result = 0; // Skip disabled channel",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 290,
+        "content": "result = 0; // Skip disabled channel",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 300,
+        "content": "result = 0; // Skip disabled channel",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/notifications_comprehensive.c": [
+      {
+        "line": 532,
+        "content": "bool channel_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 654,
+        "content": "sleep(30); // Process every 30 seconds",
+        "match": "sleep(30)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 674,
+        "content": "sleep(300); // Analyze every 5 minutes",
+        "match": "sleep(300)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/notification_config.c": [
+      {
+        "line": 38,
+        "content": "config->notifications_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 43,
+        "content": "config->retry_delay_seconds = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 44,
+        "content": "config->http_timeout_seconds = 10;",
+        "match": "= 10;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 44,
+        "content": "config->http_timeout_seconds = 10;",
+        "match": "timeout_seconds = 10",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 57,
+        "content": "config->pushover_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 58,
+        "content": "config->email_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 59,
+        "content": "config->slack_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 60,
+        "content": "config->discord_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 61,
+        "content": "config->webhook_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 62,
+        "content": "config->sms_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 63,
+        "content": "config->syslog_enabled = true; // Enable syslog by default",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 64,
+        "content": "config->ubus_enabled = true; // Enable UBUS by default",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 68,
+        "content": "config->pushover_config.enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 69,
+        "content": "config->pushover_config.timeout_seconds = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 69,
+        "content": "config->pushover_config.timeout_seconds = 30;",
+        "match": "timeout_seconds = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 71,
+        "content": "config->pushover_config.retry_delay_seconds = 5;",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 74,
+        "content": "config->email_config.enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 76,
+        "content": "config->email_config.timeout_seconds = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 76,
+        "content": "config->email_config.timeout_seconds = 30;",
+        "match": "timeout_seconds = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 78,
+        "content": "config->email_config.retry_delay_seconds = 5;",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 85,
+        "content": "config->slack_config.enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 86,
+        "content": "config->slack_config.timeout_seconds = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 86,
+        "content": "config->slack_config.timeout_seconds = 30;",
+        "match": "timeout_seconds = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 88,
+        "content": "config->slack_config.retry_delay_seconds = 5;",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 93,
+        "content": "config->discord_config.enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 94,
+        "content": "config->discord_config.timeout_seconds = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 94,
+        "content": "config->discord_config.timeout_seconds = 30;",
+        "match": "timeout_seconds = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 96,
+        "content": "config->discord_config.retry_delay_seconds = 5;",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 101,
+        "content": "config->webhook_config.enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 104,
+        "content": "config->webhook_config.timeout_seconds = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 104,
+        "content": "config->webhook_config.timeout_seconds = 30;",
+        "match": "timeout_seconds = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 106,
+        "content": "config->webhook_config.retry_delay_seconds = 5;",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 111,
+        "content": "config->quiet_hours_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 117,
+        "content": "config->smart_management_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 118,
+        "content": "config->contextual_alerts_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 119,
+        "content": "config->emergency_detection_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 120,
+        "content": "config->escalation_enabled = false; // Disabled by default",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 121,
+        "content": "config->priority_optimization_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 122,
+        "content": "config->delivery_optimization_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 123,
+        "content": "config->acknowledgment_tracking_enabled = false; // Disabled by default",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 207,
+        "content": "} else if (strcmp(option_start, \"webhook_timeout\") == 0) {",
+        "match": "timeout\") == 0",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 249,
+        "content": "config->pushover_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 255,
+        "content": "config->pushover_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 265,
+        "content": "config->email_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 271,
+        "content": "config->email_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 277,
+        "content": "config->email_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 287,
+        "content": "config->slack_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 297,
+        "content": "config->discord_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 307,
+        "content": "config->webhook_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 356,
+        "content": "config->retry_delay_seconds = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 361,
+        "content": "config->http_timeout_seconds = 10;",
+        "match": "= 10;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 361,
+        "content": "config->http_timeout_seconds = 10;",
+        "match": "timeout_seconds = 10",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/pushover_client.c": [
+      {
+        "line": 136,
+        "content": "message->html_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 251,
+        "content": "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "match": "= 30000;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 251,
+        "content": "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "match": "timeout_ms = 30000",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/slack_client.c": [
+      {
+        "line": 274,
+        "content": "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "match": "= 30000;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 274,
+        "content": "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "match": "timeout_ms = 30000",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/smart_manager.c": [
+      {
+        "line": 399,
+        "content": "status->enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/sms_client.c": [
+      {
+        "line": 284,
+        "content": "timeout.tv_sec = 2;",
+        "match": "= 2;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 284,
+        "content": "timeout.tv_sec = 2;",
+        "match": "timeout.tv_sec = 2",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 285,
+        "content": "timeout.tv_usec = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 285,
+        "content": "timeout.tv_usec = 0;",
+        "match": "timeout.tv_usec = 0",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 290,
+        "content": "if (select(fd + 1, &readfds, NULL, NULL, &timeout) <= 0) {",
+        "match": "timeout) <= 0",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 325,
+        "content": "timeout.tv_sec = 2;",
+        "match": "= 2;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 325,
+        "content": "timeout.tv_sec = 2;",
+        "match": "timeout.tv_sec = 2",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 326,
+        "content": "timeout.tv_usec = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 326,
+        "content": "timeout.tv_usec = 0;",
+        "match": "timeout.tv_usec = 0",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 330,
+        "content": "if (select(fd + 1, &readfds, NULL, NULL, &timeout) <= 0) {",
+        "match": "timeout) <= 0",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 365,
+        "content": "timeout.tv_sec = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 365,
+        "content": "timeout.tv_sec = 30;",
+        "match": "timeout.tv_sec = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 366,
+        "content": "timeout.tv_usec = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 366,
+        "content": "timeout.tv_usec = 0;",
+        "match": "timeout.tv_usec = 0",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/telegram_client.c": [
+      {
+        "line": 262,
+        "content": "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "match": "= 30000;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 262,
+        "content": "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "match": "timeout_ms = 30000",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/notifications/webhook_client.c": [
+      {
+        "line": 239,
+        "content": "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "match": "= 30000;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 239,
+        "content": "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "match": "timeout_ms = 30000",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/starlink/starlink_api_version_monitor.c": [
+      {
+        "line": 810,
+        "content": "request_config.timeout_seconds = 5;",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 810,
+        "content": "request_config.timeout_seconds = 5;",
+        "match": "timeout_seconds = 5",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/starlink/starlink_client.c": [
+      {
+        "line": 68,
+        "content": "timeout.tv_usec = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 68,
+        "content": "timeout.tv_usec = 0;",
+        "match": "timeout.tv_usec = 0",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/starlink/starlink_cluster.c": [
+      {
+        "line": 22,
+        "content": "g_starlink_cluster.auto_failover_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 23,
+        "content": "g_starlink_cluster.failover_threshold = 3;",
+        "match": "= 3;",
+        "pattern": "=\\s*\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/starlink/starlink_cluster_ubus.c": [
+      {
+        "line": 110,
+        "content": "config.predictive_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 111,
+        "content": "config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 304,
+        "content": "int failover_threshold = 3;",
+        "match": "= 3;",
+        "pattern": "=\\s*\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/starlink/starlink_collector.c": [
+      {
+        "line": 22,
+        "content": ".collection_interval = 30,  // 30 seconds default",
+        "match": "interval = 30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 50,
+        "content": "g_collector_state.collection_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/starlink/starlink_comprehensive.c": [
+      {
+        "line": 500,
+        "content": "request_config.timeout_seconds = 10;",
+        "match": "= 10;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 500,
+        "content": "request_config.timeout_seconds = 10;",
+        "match": "timeout_seconds = 10",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 519,
+        "content": "gps_data->location_enabled = true; // Default fallback",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 561,
+        "content": "gps_data->location_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 876,
+        "content": "sleep(300); // Analyze every 5 minutes",
+        "match": "sleep(300)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 905,
+        "content": "request_config.timeout_seconds = 15;",
+        "match": "= 15;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 905,
+        "content": "request_config.timeout_seconds = 15;",
+        "match": "timeout_seconds = 15",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/starlink/starlink_obstruction.c": [
+      {
+        "line": 22,
+        "content": "static const int MAX_HISTORY_POINTS = 1440;                 // 24 hours at 1-minute intervals",
+        "match": "= 1440;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 22,
+        "content": "static const int MAX_HISTORY_POINTS = 1440;                 // 24 hours at 1-minute intervals",
+        "match": "static const int MAX_HISTORY_POINTS = 1440",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 24,
+        "content": "static const double PATTERN_SIMILARITY_THRESHOLD = 0.7;     // Pattern similarity threshold",
+        "match": "= 0.7;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 24,
+        "content": "static const double PATTERN_SIMILARITY_THRESHOLD = 0.7;     // Pattern similarity threshold",
+        "match": "static const double PATTERN_SIMILARITY_THRESHOLD = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 27,
+        "content": "static const int MATCH_TIMEOUT_MINUTES = 30;                // Timeout for active matches",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 27,
+        "content": "static const int MATCH_TIMEOUT_MINUTES = 30;                // Timeout for active matches",
+        "match": "static const int MATCH_TIMEOUT_MINUTES = 30",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 27,
+        "content": "static const int MATCH_TIMEOUT_MINUTES = 30;                // Timeout for active matches",
+        "match": "TIMEOUT_MINUTES = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 75,
+        "content": "g_obstruction.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 133,
+        "content": "g_obstruction.trend_analyzer.anomaly_threshold = 2.0; // 2 standard deviations",
+        "match": "= 2.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 136,
+        "content": "g_obstruction.trend_analyzer.cache_timeout = 300; // 5 minutes",
+        "match": "= 300;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 136,
+        "content": "g_obstruction.trend_analyzer.cache_timeout = 300; // 5 minutes",
+        "match": "timeout = 300",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 140,
+        "content": "g_obstruction.movement_detector.movement_timeout = 300; // 5 minutes",
+        "match": "= 300;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 140,
+        "content": "g_obstruction.movement_detector.movement_timeout = 300; // 5 minutes",
+        "match": "timeout = 300",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 144,
+        "content": "g_obstruction.movement_detector.movement_speed_threshold = 1.0; // 1 m/s",
+        "match": "= 1.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/starlink/starlink_snow_detection.c": [
+      {
+        "line": 19,
+        "content": "static const double SNOW_OBSTRUCTION_THRESHOLD = 0.05;    // 5% obstruction increase",
+        "match": "= 0.05;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 19,
+        "content": "static const double SNOW_OBSTRUCTION_THRESHOLD = 0.05;    // 5% obstruction increase",
+        "match": "static const double SNOW_OBSTRUCTION_THRESHOLD = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 20,
+        "content": "static const double SNOW_SNR_DEGRADATION_THRESHOLD = 0.02; // 2% SNR degradation",
+        "match": "= 0.02;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 20,
+        "content": "static const double SNOW_SNR_DEGRADATION_THRESHOLD = 0.02; // 2% SNR degradation",
+        "match": "static const double SNOW_SNR_DEGRADATION_THRESHOLD = 0",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 21,
+        "content": "static const double SNOW_TEMPERATURE_THRESHOLD = 2.0;     // Below 2\u00b0C",
+        "match": "= 2.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 21,
+        "content": "static const double SNOW_TEMPERATURE_THRESHOLD = 2.0;     // Below 2\u00b0C",
+        "match": "static const double SNOW_TEMPERATURE_THRESHOLD = 2",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 23,
+        "content": "static const int SNOW_MELT_TIMEOUT = 1800;                // 30 minutes max melt time",
+        "match": "= 1800;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 23,
+        "content": "static const int SNOW_MELT_TIMEOUT = 1800;                // 30 minutes max melt time",
+        "match": "static const int SNOW_MELT_TIMEOUT = 1800",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 23,
+        "content": "static const int SNOW_MELT_TIMEOUT = 1800;                // 30 minutes max melt time",
+        "match": "TIMEOUT = 1800",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 54,
+        "content": "g_snow_detection.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 967,
+        "content": "} else if (strcmp(option, \"melt_timeout\") == 0) {",
+        "match": "timeout\") == 0",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/starlink/starlink_snow_detection_integration.c": [
+      {
+        "line": 17,
+        "content": "static const int INTEGRATION_CHECK_INTERVAL = 30;  // Check every 30 seconds",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 17,
+        "content": "static const int INTEGRATION_CHECK_INTERVAL = 30;  // Check every 30 seconds",
+        "match": "static const int INTEGRATION_CHECK_INTERVAL = 30",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 17,
+        "content": "static const int INTEGRATION_CHECK_INTERVAL = 30;  // Check every 30 seconds",
+        "match": "INTERVAL = 30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 18,
+        "content": "static const int INTEGRATION_SAMPLE_INTERVAL = 5;  // Sample every 5 seconds",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 18,
+        "content": "static const int INTEGRATION_SAMPLE_INTERVAL = 5;  // Sample every 5 seconds",
+        "match": "static const int INTEGRATION_SAMPLE_INTERVAL = 5",
+        "pattern": "static\\s+const\\s+\\w+\\s+\\w+\\s*=\\s*\\d+"
+      },
+      {
+        "line": 18,
+        "content": "static const int INTEGRATION_SAMPLE_INTERVAL = 5;  // Sample every 5 seconds",
+        "match": "INTERVAL = 5",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 48,
+        "content": "g_integration.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 175,
+        "content": "usleep(100000); // 100ms",
+        "match": "sleep(100000)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 175,
+        "content": "usleep(100000); // 100ms",
+        "match": "usleep(100000)",
+        "pattern": "usleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 318,
+        "content": "sample->avg_prolonged_obstruction_interval_s = 0.0;",
+        "match": "= 0.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 318,
+        "content": "sample->avg_prolonged_obstruction_interval_s = 0.0;",
+        "match": "interval_s = 0",
+        "pattern": "interval.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/starlink/starlink_tracker.c": [
+      {
+        "line": 78,
+        "content": "g_tracker_status.ubus_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 93,
+        "content": "g_tracker_status.ubus_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 172,
+        "content": "g_tracker_config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 173,
+        "content": "g_tracker_config.tracking_interval_seconds = 60;",
+        "match": "= 60;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 173,
+        "content": "g_tracker_config.tracking_interval_seconds = 60;",
+        "match": "interval_seconds = 60",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 205,
+        "content": "} else if (strcmp(option_start, \"update_interval\") == 0) {",
+        "match": "interval\") == 0",
+        "pattern": "interval.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/telemetry/telemetry_comprehensive.c": [
+      {
+        "line": 216,
+        "content": ".cleanup_interval_hours = 24,          // Daily cleanup",
+        "match": "interval_hours = 24",
+        "pattern": "interval.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/telemetry/telemetry_store.c": [
+      {
+        "line": 219,
+        "content": "g_telemetry_store.status.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/ubus/system_ubus.c": [
+      {
+        "line": 204,
+        "content": "sleep(2); // Wait for network to stabilize",
+        "match": "sleep(2)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      }
+    ],
+    "src/c/autonomy-daemon/ubus/ubus_monitor.c": [
+      {
+        "line": 38,
+        "content": "g_ubus_monitor.config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 39,
+        "content": "g_ubus_monitor.config.check_interval = 300; // 5 minutes",
+        "match": "= 300;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 39,
+        "content": "g_ubus_monitor.config.check_interval = 300; // 5 minutes",
+        "match": "interval = 300",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 42,
+        "content": "g_ubus_monitor.config.restart_timeout = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 42,
+        "content": "g_ubus_monitor.config.restart_timeout = 30;",
+        "match": "timeout = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 134,
+        "content": "timeout.tv_sec = 5;",
+        "match": "= 5;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 134,
+        "content": "timeout.tv_sec = 5;",
+        "match": "timeout.tv_sec = 5",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 135,
+        "content": "timeout.tv_usec = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 135,
+        "content": "timeout.tv_usec = 0;",
+        "match": "timeout.tv_usec = 0",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/utils/cellular_collector.c": [
+      {
+        "line": 72,
+        "content": "g_cellular_collector.config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 75,
+        "content": "g_cellular_collector.config.collection_interval = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 75,
+        "content": "g_cellular_collector.config.collection_interval = 30;",
+        "match": "interval = 30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 76,
+        "content": "g_cellular_collector.config.timeout_seconds = 10;",
+        "match": "= 10;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 76,
+        "content": "g_cellular_collector.config.timeout_seconds = 10;",
+        "match": "timeout_seconds = 10",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 80,
+        "content": "g_cellular_collector.config.stability_threshold = 80.0;",
+        "match": "= 80.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 82,
+        "content": "g_cellular_collector.config.signal_variance_threshold = 10.0;",
+        "match": "= 10.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/utils/decision_engine.c": [
+      {
+        "line": 39,
+        "content": "g_decision_engine.config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 40,
+        "content": "g_decision_engine.config.decision_interval_seconds = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 40,
+        "content": "g_decision_engine.config.decision_interval_seconds = 30;",
+        "match": "interval_seconds = 30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 41,
+        "content": "g_decision_engine.config.failover_threshold = 0.3;",
+        "match": "= 0.3;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 42,
+        "content": "g_decision_engine.config.recovery_threshold = 0.7;",
+        "match": "= 0.7;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/utils/disk_monitor.c": [
+      {
+        "line": 38,
+        "content": "g_disk_monitor.config.critical_threshold_gb = 1.0;",
+        "match": "= 1.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 39,
+        "content": "g_disk_monitor.config.warning_threshold_gb = 2.0;",
+        "match": "= 2.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 40,
+        "content": "g_disk_monitor.config.cleanup_threshold_gb = 3.0;",
+        "match": "= 3.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/utils/http_client_libcurl.c": [
+      {
+        "line": 87,
+        "content": "g_http_client.config.default_connect_timeout_ms = 10000;",
+        "match": "= 10000;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 87,
+        "content": "g_http_client.config.default_connect_timeout_ms = 10000;",
+        "match": "timeout_ms = 10000",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 88,
+        "content": "g_http_client.config.default_request_timeout_ms = 30000;",
+        "match": "= 30000;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 88,
+        "content": "g_http_client.config.default_request_timeout_ms = 30000;",
+        "match": "timeout_ms = 30000",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/utils/metered_manager.c": [
+      {
+        "line": 45,
+        "content": "g_metered_manager.config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 46,
+        "content": "g_metered_manager.config.check_interval_seconds = 300; // 5 minutes",
+        "match": "= 300;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 46,
+        "content": "g_metered_manager.config.check_interval_seconds = 300; // 5 minutes",
+        "match": "interval_seconds = 300",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 54,
+        "content": "g_metered_manager.config.thresholds.warning_percentage = 80.0;",
+        "match": "= 80.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 55,
+        "content": "g_metered_manager.config.thresholds.critical_percentage = 95.0;",
+        "match": "= 95.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/utils/mqtt_client.c": [
+      {
+        "line": 133,
+        "content": "g_mqtt_client.config.keepalive_interval = 60;",
+        "match": "= 60;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 133,
+        "content": "g_mqtt_client.config.keepalive_interval = 60;",
+        "match": "interval = 60",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 134,
+        "content": "g_mqtt_client.config.connection_timeout = 30;",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 134,
+        "content": "g_mqtt_client.config.connection_timeout = 30;",
+        "match": "timeout = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 493,
+        "content": "usleep(1000); // Wait 1ms",
+        "match": "sleep(1000)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 493,
+        "content": "usleep(1000); // Wait 1ms",
+        "match": "usleep(1000)",
+        "pattern": "usleep\\(\\s*\\d+\\s*\\)"
+      },
+      {
+        "line": 518,
+        "content": "timeout.tv_sec = 1;  // 1 second timeout",
+        "match": "= 1;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 518,
+        "content": "timeout.tv_sec = 1;  // 1 second timeout",
+        "match": "timeout.tv_sec = 1",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 519,
+        "content": "timeout.tv_usec = 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 519,
+        "content": "timeout.tv_usec = 0;",
+        "match": "timeout.tv_usec = 0",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/utils/mqtt_telemetry.c": [
+      {
+        "line": 62,
+        "content": "g_mqtt_telemetry_publisher.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 63,
+        "content": "g_mqtt_telemetry_publisher.publish_interval_seconds = 30; // 30 seconds",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 63,
+        "content": "g_mqtt_telemetry_publisher.publish_interval_seconds = 30; // 30 seconds",
+        "match": "interval_seconds = 30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 143,
+        "content": "sleep(10);",
+        "match": "sleep(10)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      }
+    ],
+    "src/c/autonomy-daemon/utils/overlay_management.c": [
+      {
+        "line": 42,
+        "content": "g_overlay_manager.config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 43,
+        "content": "g_overlay_manager.config.overlay_space_threshold = 80;",
+        "match": "= 80;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 44,
+        "content": "g_overlay_manager.config.overlay_critical_threshold = 90;",
+        "match": "= 90;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 46,
+        "content": "g_overlay_manager.config.notifications_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/utils/security_monitor.c": [
+      {
+        "line": 45,
+        "content": "g_security_monitor.config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 46,
+        "content": "g_security_monitor.config.scan_interval_seconds = 300; // 5 minutes",
+        "match": "= 300;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 46,
+        "content": "g_security_monitor.config.scan_interval_seconds = 300; // 5 minutes",
+        "match": "interval_seconds = 300",
+        "pattern": "interval.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/utils/service_watchdog.c": [
+      {
+        "line": 37,
+        "content": "g_service_watchdog.config.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 38,
+        "content": "g_service_watchdog.config.service_timeout = 1800; // 30 minutes",
+        "match": "= 1800;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 38,
+        "content": "g_service_watchdog.config.service_timeout = 1800; // 30 minutes",
+        "match": "timeout = 1800",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 281,
+        "content": "sleep(2);",
+        "match": "sleep(2)",
+        "pattern": "sleep\\(\\s*\\d+\\s*\\)"
+      }
+    ],
+    "src/c/autonomy-daemon/utils/system_ubus.c": [
+      {
+        "line": 271,
+        "content": "int timeout_seconds = 30; // Default 30 seconds",
+        "match": "= 30;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 271,
+        "content": "int timeout_seconds = 30; // Default 30 seconds",
+        "match": "timeout_seconds = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/utils/uci_manager.c": [
+      {
+        "line": 28,
+        "content": ".pid_file_timeout = 30,",
+        "match": "timeout = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 31,
+        "content": ".network_check_interval = 30,",
+        "match": "interval = 30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 32,
+        "content": ".failover_timeout = 60,",
+        "match": "timeout = 60",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 38,
+        "content": ".gps_update_interval = 10,",
+        "match": "interval = 10",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 39,
+        "content": ".gps_timeout = 30,",
+        "match": "timeout = 30",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 41,
+        "content": ".gps_cache_timeout = 300,",
+        "match": "timeout = 300",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 45,
+        "content": ".starlink_check_interval = 30,",
+        "match": "interval = 30",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 49,
+        "content": ".starlink_timeout = 10,",
+        "match": "timeout = 10",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 52,
+        "content": ".system_check_interval = 60,",
+        "match": "interval = 60",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 71,
+        "content": ".snow_melt_timeout = 1800,",
+        "match": "timeout = 1800",
+        "pattern": "timeout.*=\\s*\\d+"
+      },
+      {
+        "line": 184,
+        "content": "config->notifications_enabled = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, \"notifications\", \"enabled\", 1) != 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 216,
+        "content": "config->snow_detection_enabled = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, \"snow_detection\", \"enabled\", 1) != 0;",
+        "match": "= 0;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 521,
+        "content": "if (config->network_check_interval <= 0 || config->gps_update_interval <= 0 ||",
+        "match": "interval <= 0 || config->gps_update_interval <= 0",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 522,
+        "content": "config->starlink_check_interval <= 0 || config->system_check_interval <= 0) {",
+        "match": "interval <= 0 || config->system_check_interval <= 0",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 528,
+        "content": "if (config->failover_timeout <= 0 || config->gps_timeout <= 0 || config->starlink_timeout <= 0) {",
+        "match": "timeout <= 0 || config->gps_timeout <= 0 || config->starlink_timeout <= 0",
+        "pattern": "timeout.*=\\s*\\d+"
+      }
+    ],
+    "src/c/autonomy-daemon/wifi/wifi_management.c": [
+      {
+        "line": 44,
+        "content": "g_wifi_management.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 45,
+        "content": "g_wifi_management.movement_threshold = 100.0; // 100 meters",
+        "match": "= 100.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 60,
+        "content": "g_wifi_management.excellent_threshold = 90;",
+        "match": "= 90;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 61,
+        "content": "g_wifi_management.good_threshold = 75;",
+        "match": "= 75;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 62,
+        "content": "g_wifi_management.fair_threshold = 50;",
+        "match": "= 50;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 63,
+        "content": "g_wifi_management.poor_threshold = 25;",
+        "match": "= 25;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 72,
+        "content": "g_wifi_management.scheduler.nightly_enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 75,
+        "content": "g_wifi_management.scheduler.weekly_enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      },
+      {
+        "line": 79,
+        "content": "g_wifi_management.scheduler.check_interval_min = 10;",
+        "match": "= 10;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 79,
+        "content": "g_wifi_management.scheduler.check_interval_min = 10;",
+        "match": "interval_min = 10",
+        "pattern": "interval.*=\\s*\\d+"
+      },
+      {
+        "line": 81,
+        "content": "g_wifi_management.scheduler.recent_threshold_h = 6;",
+        "match": "= 6;",
+        "pattern": "=\\s*\\d+\\s*;"
+      },
+      {
+        "line": 85,
+        "content": "g_wifi_management.gps_integration.enabled = true;",
+        "match": "= true;",
+        "pattern": "=\\s*true\\s*;"
+      },
+      {
+        "line": 86,
+        "content": "g_wifi_management.gps_integration.movement_threshold = 100.0;",
+        "match": "= 100.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      },
+      {
+        "line": 89,
+        "content": "g_wifi_management.gps_integration.gps_accuracy_threshold = 50.0;",
+        "match": "= 50.0;",
+        "pattern": "=\\s*\\d+\\.\\d+\\s*;"
+      }
+    ],
+    "src/c/autonomy-daemon/wifi/wifi_management_ubus.c": [
+      {
+        "line": 319,
+        "content": "bool enabled = false;",
+        "match": "= false;",
+        "pattern": "=\\s*false\\s*;"
+      }
+    ]
+  },
+  "recommendations": [
+    {
+      "file": "src/c/autonomy-daemon/analytics/analytics_engine.c",
+      "issue": "Found 8 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_analytics_engine.config.enabled = true;",
+        "g_analytics_engine.config.update_interval_seconds = 300; // 5 minutes",
+        "g_analytics_engine.config.update_interval_seconds = 300; // 5 minutes",
+        "g_analytics_engine.config.health_thresholds.excellent = 80.0;",
+        "g_analytics_engine.config.health_thresholds.good = 60.0;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/analytics/performance_analyzer.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_performance_analyzer.enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/analytics/performance_monitor.c",
+      "issue": "Found 11 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_performance_monitor.config.enabled = true;",
+        "g_performance_monitor.config.monitor_interval_seconds = 60;",
+        "g_performance_monitor.config.monitor_interval_seconds = 60;",
+        "g_performance_monitor.config.thresholds.cpu_warning_threshold = 70.0;",
+        "g_performance_monitor.config.thresholds.cpu_critical_threshold = 90.0;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/analytics/predictive_engine.c",
+      "issue": "Found 4 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_predictive_engine.config.enabled = true;",
+        "g_predictive_engine.config.confidence_threshold = 0.7;",
+        "g_predictive_engine.config.update_interval_seconds = 3600;",
+        "g_predictive_engine.config.update_interval_seconds = 3600;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/analytics/trend_analyzer.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_trend_analyzer.config.confidence_threshold = 0.7;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/analytics/usage_analyzer.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_usage_analyzer.enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/external/external_apis.c",
+      "issue": "Found 8 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "config->enabled = false; // Disabled by default (requires configuration)",
+        "config->timeout_seconds = 30;",
+        "config->timeout_seconds = 30;",
+        "config->retry_delay_seconds = 5;",
+        "config->health_check_interval_minutes = 60;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/external/external_apis_ubus.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "int healthy = 0, degraded = 0, failed = 0, disabled = 0;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/external/external_api_client.c",
+      "issue": "Found 2 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_external_api_client.config.timeout_seconds = 30;",
+        "g_external_api_client.config.timeout_seconds = 30;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps.c",
+      "issue": "Found 5 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_state.gps_sources[0].enabled = 1;",
+        "g_state.gps_sources[1].enabled = 1;",
+        "g_state.gps_sources[2].enabled = 1;",
+        "g_state.gps_enabled = 1;",
+        "g_state.gps_enabled = 0;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_accuracy.c",
+      "issue": "Found 11 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const double SUSPICIOUS_ACCURACY = 1.0;     // Suspiciously good accuracy threshold",
+        "static const double SUSPICIOUS_ACCURACY = 1.0;     // Suspiciously good accuracy threshold",
+        "static const double POOR_ACCURACY = 100.0;         // Poor accuracy threshold",
+        "static const double POOR_ACCURACY = 100.0;         // Poor accuracy threshold",
+        "static const double ACCURACY_IMPROVEMENT_THRESHOLD = 0.5;  // 50% improvement threshold"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_adaptive_cache.c",
+      "issue": "Found 6 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int CACHE_CLEANUP_INTERVAL = 300;             // 5 minute cleanup interval",
+        "static const int CACHE_CLEANUP_INTERVAL = 300;             // 5 minute cleanup interval",
+        "static const int CACHE_CLEANUP_INTERVAL = 300;             // 5 minute cleanup interval",
+        "static const double CACHE_EVICTION_THRESHOLD = 0.8;        // 80% cache usage threshold",
+        "static const double CACHE_EVICTION_THRESHOLD = 0.8;        // 80% cache usage threshold"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_cell_tower.c",
+      "issue": "Found 4 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int POSITION_UPDATE_INTERVAL = 60;              // 60 second position update interval",
+        "static const int POSITION_UPDATE_INTERVAL = 60;              // 60 second position update interval",
+        "static const int POSITION_UPDATE_INTERVAL = 60;              // 60 second position update interval",
+        "g_cell_tower.enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_clustering.c",
+      "issue": "Found 6 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const double CLUSTER_TIMEOUT = 300;           // 5 minute cluster timeout",
+        "static const double CLUSTER_TIMEOUT = 300;           // 5 minute cluster timeout",
+        "static const double CLUSTER_TIMEOUT = 300;           // 5 minute cluster timeout",
+        "static const double OUTLIER_THRESHOLD = 3.0;         // 3-sigma outlier threshold",
+        "static const double OUTLIER_THRESHOLD = 3.0;         // 3-sigma outlier threshold"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_comprehensive.c",
+      "issue": "Found 2 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "request_config.timeout_seconds = 5;",
+        "request_config.timeout_seconds = 5;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_confidence.c",
+      "issue": "Found 17 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const double MIN_CONFIDENCE = 0.1;         // Minimum confidence threshold",
+        "static const double MIN_CONFIDENCE = 0.1;         // Minimum confidence threshold",
+        "static const double MAX_CONFIDENCE = 1.0;          // Maximum confidence threshold",
+        "static const double MAX_CONFIDENCE = 1.0;          // Maximum confidence threshold",
+        "static const double HIGH_ACCURACY_THRESHOLD = 10.0;    // 10 meters"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_connector.c",
+      "issue": "Found 12 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int CONNECTOR_CHECK_INTERVAL = 2;           // 2 second connector check interval",
+        "static const int CONNECTOR_CHECK_INTERVAL = 2;           // 2 second connector check interval",
+        "static const int CONNECTOR_CHECK_INTERVAL = 2;           // 2 second connector check interval",
+        "static const int MODULE_HEALTH_TIMEOUT = 60;             // 60 second module health timeout",
+        "static const int MODULE_HEALTH_TIMEOUT = 60;             // 60 second module health timeout"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_discovery_simple.c",
+      "issue": "Found 4 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_state.gps_sources[g_state.gps_source_count].enabled = 1;",
+        "g_state.gps_sources[g_state.gps_source_count].enabled = 1;",
+        "g_state.gps_sources[g_state.gps_source_count].enabled = 1;",
+        "g_state.gps_enabled = 1;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_error_recovery.c",
+      "issue": "Found 25 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int RETRY_DELAY_BASE = 1000;                    // Base retry delay in milliseconds",
+        "static const int RETRY_DELAY_BASE = 1000;                    // Base retry delay in milliseconds",
+        "static const int MAX_RETRY_DELAY = 30000;                    // Maximum retry delay in milliseconds",
+        "static const int MAX_RETRY_DELAY = 30000;                    // Maximum retry delay in milliseconds",
+        "static const double ERROR_THRESHOLD_RATIO = 0.3;             // Error threshold ratio (30%)"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_events.c",
+      "issue": "Found 10 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int EVENT_CHECK_INTERVAL = 2;              // 2 second event check interval",
+        "static const int EVENT_CHECK_INTERVAL = 2;              // 2 second event check interval",
+        "static const int EVENT_CHECK_INTERVAL = 2;              // 2 second event check interval",
+        "static const double DEFAULT_SPEED_THRESHOLD = 5.0;      // 5 m/s default speed threshold",
+        "static const double DEFAULT_SPEED_THRESHOLD = 5.0;      // 5 m/s default speed threshold"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_fusion.c",
+      "issue": "Found 6 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const double FUSION_UPDATE_INTERVAL = 5.0;      // 5 second fusion update interval",
+        "static const double FUSION_UPDATE_INTERVAL = 5.0;      // 5 second fusion update interval",
+        "static const double FUSION_UPDATE_INTERVAL = 5.0;      // 5 second fusion update interval",
+        "static const double FUSION_WEIGHT_THRESHOLD = 0.3;     // Minimum weight for source inclusion",
+        "static const double FUSION_WEIGHT_THRESHOLD = 0.3;     // Minimum weight for source inclusion"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_geofence.c",
+      "issue": "Found 8 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int GEOFENCE_CHECK_INTERVAL = 5;          // 5 second check interval",
+        "static const int GEOFENCE_CHECK_INTERVAL = 5;          // 5 second check interval",
+        "static const int GEOFENCE_CHECK_INTERVAL = 5;          // 5 second check interval",
+        "g_geofence.enabled = true;",
+        "g_geofence.geofences[i].enabled = false;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_google_api.c",
+      "issue": "Found 6 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int REQUEST_TIMEOUT = 30;                      // 30 second request timeout",
+        "static const int REQUEST_TIMEOUT = 30;                      // 30 second request timeout",
+        "static const int REQUEST_TIMEOUT = 30;                      // 30 second request timeout",
+        "static const int RATE_LIMIT_DELAY = 100;                    // 100ms delay between requests",
+        "static const int RATE_LIMIT_DELAY = 100;                    // 100ms delay between requests"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_health.c",
+      "issue": "Found 15 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int HEALTH_CHECK_INTERVAL = 60;         // 1 minute health check interval",
+        "static const int HEALTH_CHECK_INTERVAL = 60;         // 1 minute health check interval",
+        "static const int HEALTH_CHECK_INTERVAL = 60;         // 1 minute health check interval",
+        "static const int SOURCE_TIMEOUT = 300;                // 5 minute source timeout",
+        "static const int SOURCE_TIMEOUT = 300;                // 5 minute source timeout"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_integration.c",
+      "issue": "Found 12 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int GPS_UPDATE_INTERVAL = 1;               // 1 second GPS update interval",
+        "static const int GPS_UPDATE_INTERVAL = 1;               // 1 second GPS update interval",
+        "static const int GPS_UPDATE_INTERVAL = 1;               // 1 second GPS update interval",
+        "static const int INTEGRATION_CHECK_INTERVAL = 5;        // 5 second integration check interval",
+        "static const int INTEGRATION_CHECK_INTERVAL = 5;        // 5 second integration check interval"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_location_manager.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "source->enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_location_services.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_location_services.enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_manager.c",
+      "issue": "Found 18 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int GPS_UPDATE_INTERVAL = 5;         // 5 seconds",
+        "static const int GPS_UPDATE_INTERVAL = 5;         // 5 seconds",
+        "static const int GPS_UPDATE_INTERVAL = 5;         // 5 seconds",
+        "static const int GPS_SOURCE_TIMEOUT = 60;         // 60 seconds",
+        "static const int GPS_SOURCE_TIMEOUT = 60;         // 60 seconds"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_movement.c",
+      "issue": "Found 10 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const double STATIONARY_THRESHOLD = 5.0;     // 5 meters - stationary threshold",
+        "static const double STATIONARY_THRESHOLD = 5.0;     // 5 meters - stationary threshold",
+        "static const double MOVEMENT_THRESHOLD = 10.0;      // 10 meters - movement threshold",
+        "static const double MOVEMENT_THRESHOLD = 10.0;      // 10 meters - movement threshold",
+        "static const double SPEED_THRESHOLD = 0.5;          // 0.5 m/s - speed threshold"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_nmea.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_nmea_parser.enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_obstruction.c",
+      "issue": "Found 8 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int OBSTRUCTION_ANALYSIS_INTERVAL = 30;       // 30 second analysis interval",
+        "static const int OBSTRUCTION_ANALYSIS_INTERVAL = 30;       // 30 second analysis interval",
+        "static const int OBSTRUCTION_ANALYSIS_INTERVAL = 30;       // 30 second analysis interval",
+        "static const double MIN_SIGNAL_QUALITY = 0.3;              // Minimum signal quality threshold",
+        "static const double MIN_SIGNAL_QUALITY = 0.3;              // Minimum signal quality threshold"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_opencellid.c",
+      "issue": "Found 4 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_opencellid.config.enabled = false; // Disabled by default (requires API key)",
+        "g_opencellid.config.timeout_seconds = 30;",
+        "g_opencellid.config.timeout_seconds = 30;",
+        "g_opencellid.config.contribution.enabled = false;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_performance.c",
+      "issue": "Found 8 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int PERFORMANCE_UPDATE_INTERVAL = 60;           // 1 minute performance update interval",
+        "static const int PERFORMANCE_UPDATE_INTERVAL = 60;           // 1 minute performance update interval",
+        "static const int PERFORMANCE_UPDATE_INTERVAL = 60;           // 1 minute performance update interval",
+        "static const double MIN_ACCURACY_THRESHOLD = 1.0;            // Minimum accuracy threshold in meters",
+        "static const double MIN_ACCURACY_THRESHOLD = 1.0;            // Minimum accuracy threshold in meters"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_rutos.c",
+      "issue": "Found 9 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int RUTOS_GPS_UPDATE_INTERVAL = 1;  // 1 second",
+        "static const int RUTOS_GPS_UPDATE_INTERVAL = 1;  // 1 second",
+        "static const int RUTOS_GPS_UPDATE_INTERVAL = 1;  // 1 second",
+        "static const int RUTOS_GPS_TIMEOUT = 5;          // 5 seconds",
+        "static const int RUTOS_GPS_TIMEOUT = 5;          // 5 seconds"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_starlink.c",
+      "issue": "Found 13 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int GPS_UPDATE_INTERVAL = 10;        // 10 seconds",
+        "static const int GPS_UPDATE_INTERVAL = 10;        // 10 seconds",
+        "static const int GPS_UPDATE_INTERVAL = 10;        // 10 seconds",
+        "static const int GPS_TIMEOUT = 30;                // 30 seconds",
+        "static const int GPS_TIMEOUT = 30;                // 30 seconds"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_system.c",
+      "issue": "Found 10 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int GPS_SYSTEM_INIT_TIMEOUT = 30;           // 30 second initialization timeout",
+        "static const int GPS_SYSTEM_INIT_TIMEOUT = 30;           // 30 second initialization timeout",
+        "static const int GPS_SYSTEM_INIT_TIMEOUT = 30;           // 30 second initialization timeout",
+        "static const int GPS_SYSTEM_HEALTH_CHECK_INTERVAL = 10;   // 10 second health check interval",
+        "static const int GPS_SYSTEM_HEALTH_CHECK_INTERVAL = 10;   // 10 second health check interval"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_terrain.c",
+      "issue": "Found 4 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int TERRAIN_UPDATE_INTERVAL = 3600;             // 1 hour terrain update interval",
+        "static const int TERRAIN_UPDATE_INTERVAL = 3600;             // 1 hour terrain update interval",
+        "static const int TERRAIN_UPDATE_INTERVAL = 3600;             // 1 hour terrain update interval",
+        "g_terrain.enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/gps_weather.c",
+      "issue": "Found 6 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int WEATHER_UPDATE_INTERVAL = 1800;             // 30 minute weather update interval",
+        "static const int WEATHER_UPDATE_INTERVAL = 1800;             // 30 minute weather update interval",
+        "static const int WEATHER_UPDATE_INTERVAL = 1800;             // 30 minute weather update interval",
+        "g_weather.enabled = true;",
+        "air_config.timeout = 10;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/gps/opencellid_complete.c",
+      "issue": "Found 2 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "sleep(60); // Sleep for 1 minute",
+        "sleep(300); // Sleep for 5 minutes"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/network/cellular_collector.c",
+      "issue": "Found 10 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_cellular_collector.config.enabled = true;",
+        "g_cellular_collector.config.collection_interval = 30;",
+        "g_cellular_collector.config.collection_interval = 30;",
+        "g_cellular_collector.config.timeout_seconds = 10;",
+        "g_cellular_collector.config.timeout_seconds = 10;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/network/network.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_state.failover_enabled = 1;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/network/network_collector.c",
+      "issue": "Found 5 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_collector.enabled = true;",
+        "g_collector.collection_interval = 30; // 30 seconds",
+        "g_collector.collection_interval = 30; // 30 seconds",
+        "g_collector.test_timeout = 5;         // 5 seconds",
+        "g_collector.test_timeout = 5;         // 5 seconds"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/network/network_collector_archive.c",
+      "issue": "Found 5 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_collector.enabled = true;",
+        "g_collector.collection_interval = 30; // 30 seconds",
+        "g_collector.collection_interval = 30; // 30 seconds",
+        "g_collector.test_timeout = 5;         // 5 seconds",
+        "g_collector.test_timeout = 5;         // 5 seconds"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/network/network_controller.c",
+      "issue": "Found 6 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_network_controller.config.enabled = true;",
+        "g_network_controller.config.switch_timeout_seconds = 30;",
+        "g_network_controller.config.switch_timeout_seconds = 30;",
+        "g_network_controller.config.validation_timeout_seconds = 10;",
+        "g_network_controller.config.validation_timeout_seconds = 10;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/network/network_discovery.c",
+      "issue": "Found 10 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int DISCOVERY_INTERVAL = 30;        // 30 seconds",
+        "static const int DISCOVERY_INTERVAL = 30;        // 30 seconds",
+        "static const int DISCOVERY_INTERVAL = 30;        // 30 seconds",
+        "static const int INTERFACE_TIMEOUT = 300;        // 5 minutes",
+        "static const int INTERFACE_TIMEOUT = 300;        // 5 minutes"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/network/network_discovery_simple.c",
+      "issue": "Found 4 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_state.interfaces[0].enabled = 1;",
+        "g_state.interfaces[1].enabled = 1;",
+        "g_state.interfaces[2].enabled = 1;",
+        "g_state.failover_enabled = 1;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/network/network_failover.c",
+      "issue": "Found 14 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const float DEFAULT_HEALTH_THRESHOLD = 70.0f;      // Minimum health score",
+        "static const float DEFAULT_FAILOVER_THRESHOLD = 50.0f;    // Health score to trigger failover",
+        "static const int DEFAULT_FAILOVER_TIMEOUT = 60;           // Seconds to wait before failover",
+        "static const int DEFAULT_FAILOVER_TIMEOUT = 60;           // Seconds to wait before failover",
+        "static const int DEFAULT_FAILOVER_TIMEOUT = 60;           // Seconds to wait before failover"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/alert_templates.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "template->enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/contextual_alerts.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "status->enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/delivery_optimizer.c",
+      "issue": "Found 14 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_delivery_optimizer.deliveries_delayed = 0;",
+        "g_delivery_optimizer.total_delay_seconds = 0;",
+        "g_delivery_optimizer.deliveries_delayed = 0;",
+        "g_delivery_optimizer.total_delay_seconds = 0;",
+        "plan->delay_delivery = false;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/discord_client.c",
+      "issue": "Found 2 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "request->request_timeout_ms = 30000; // Default 30 seconds"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/escalation_manager.c",
+      "issue": "Found 9 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "sleep(30); // Check every 30 seconds",
+        "contact->response_timeout_seconds = 300; // 5 minutes",
+        "contact->response_timeout_seconds = 300; // 5 minutes",
+        "contact->response_timeout_seconds = 600; // 10 minutes",
+        "contact->response_timeout_seconds = 600; // 10 minutes"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/intelligence_engine.c",
+      "issue": "Found 2 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "sleep(60); // Run every minute",
+        "status->enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/multi_channel.c",
+      "issue": "Found 17 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "notifier->config.webhook_enabled = false;",
+        "notifier->config.email_enabled = false;",
+        "notifier->status.enabled_channels_count = 0;",
+        "notifier->status.channel_enabled[i] = false;",
+        "notifier->status.channel_enabled[NOTIFICATION_CHANNEL_WEBHOOK] = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/notifications_comprehensive.c",
+      "issue": "Found 3 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "bool channel_enabled = false;",
+        "sleep(30); // Process every 30 seconds",
+        "sleep(300); // Analyze every 5 minutes"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/notification_config.c",
+      "issue": "Found 52 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "config->notifications_enabled = true;",
+        "config->retry_delay_seconds = 30;",
+        "config->http_timeout_seconds = 10;",
+        "config->http_timeout_seconds = 10;",
+        "config->pushover_enabled = false;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/pushover_client.c",
+      "issue": "Found 3 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "message->html_enabled = true;",
+        "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "request->request_timeout_ms = 30000; // Default 30 seconds"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/slack_client.c",
+      "issue": "Found 2 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "request->request_timeout_ms = 30000; // Default 30 seconds"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/smart_manager.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "status->enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/sms_client.c",
+      "issue": "Found 14 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "timeout.tv_sec = 2;",
+        "timeout.tv_sec = 2;",
+        "timeout.tv_usec = 0;",
+        "timeout.tv_usec = 0;",
+        "if (select(fd + 1, &readfds, NULL, NULL, &timeout) <= 0) {"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/telegram_client.c",
+      "issue": "Found 2 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "request->request_timeout_ms = 30000; // Default 30 seconds"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/notifications/webhook_client.c",
+      "issue": "Found 2 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "request->request_timeout_ms = 30000; // Default 30 seconds",
+        "request->request_timeout_ms = 30000; // Default 30 seconds"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/starlink/starlink_api_version_monitor.c",
+      "issue": "Found 2 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "request_config.timeout_seconds = 5;",
+        "request_config.timeout_seconds = 5;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/starlink/starlink_client.c",
+      "issue": "Found 2 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "timeout.tv_usec = 0;",
+        "timeout.tv_usec = 0;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/starlink/starlink_cluster.c",
+      "issue": "Found 2 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_starlink_cluster.auto_failover_enabled = true;",
+        "g_starlink_cluster.failover_threshold = 3;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/starlink/starlink_cluster_ubus.c",
+      "issue": "Found 3 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "config.predictive_enabled = true;",
+        "config.enabled = true;",
+        "int failover_threshold = 3;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/starlink/starlink_collector.c",
+      "issue": "Found 2 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        ".collection_interval = 30,  // 30 seconds default",
+        "g_collector_state.collection_enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/starlink/starlink_comprehensive.c",
+      "issue": "Found 7 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "request_config.timeout_seconds = 10;",
+        "request_config.timeout_seconds = 10;",
+        "gps_data->location_enabled = true; // Default fallback",
+        "gps_data->location_enabled = true;",
+        "sleep(300); // Analyze every 5 minutes"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/starlink/starlink_obstruction.c",
+      "issue": "Found 14 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int MAX_HISTORY_POINTS = 1440;                 // 24 hours at 1-minute intervals",
+        "static const int MAX_HISTORY_POINTS = 1440;                 // 24 hours at 1-minute intervals",
+        "static const double PATTERN_SIMILARITY_THRESHOLD = 0.7;     // Pattern similarity threshold",
+        "static const double PATTERN_SIMILARITY_THRESHOLD = 0.7;     // Pattern similarity threshold",
+        "static const int MATCH_TIMEOUT_MINUTES = 30;                // Timeout for active matches"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/starlink/starlink_snow_detection.c",
+      "issue": "Found 11 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const double SNOW_OBSTRUCTION_THRESHOLD = 0.05;    // 5% obstruction increase",
+        "static const double SNOW_OBSTRUCTION_THRESHOLD = 0.05;    // 5% obstruction increase",
+        "static const double SNOW_SNR_DEGRADATION_THRESHOLD = 0.02; // 2% SNR degradation",
+        "static const double SNOW_SNR_DEGRADATION_THRESHOLD = 0.02; // 2% SNR degradation",
+        "static const double SNOW_TEMPERATURE_THRESHOLD = 2.0;     // Below 2\u00b0C"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/starlink/starlink_snow_detection_integration.c",
+      "issue": "Found 11 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "static const int INTEGRATION_CHECK_INTERVAL = 30;  // Check every 30 seconds",
+        "static const int INTEGRATION_CHECK_INTERVAL = 30;  // Check every 30 seconds",
+        "static const int INTEGRATION_CHECK_INTERVAL = 30;  // Check every 30 seconds",
+        "static const int INTEGRATION_SAMPLE_INTERVAL = 5;  // Sample every 5 seconds",
+        "static const int INTEGRATION_SAMPLE_INTERVAL = 5;  // Sample every 5 seconds"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/starlink/starlink_tracker.c",
+      "issue": "Found 6 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_tracker_status.ubus_enabled = true;",
+        "g_tracker_status.ubus_enabled = false;",
+        "g_tracker_config.enabled = true;",
+        "g_tracker_config.tracking_interval_seconds = 60;",
+        "g_tracker_config.tracking_interval_seconds = 60;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/telemetry/telemetry_comprehensive.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        ".cleanup_interval_hours = 24,          // Daily cleanup"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/telemetry/telemetry_store.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_telemetry_store.status.enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/ubus/system_ubus.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "sleep(2); // Wait for network to stabilize"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/ubus/ubus_monitor.c",
+      "issue": "Found 9 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_ubus_monitor.config.enabled = true;",
+        "g_ubus_monitor.config.check_interval = 300; // 5 minutes",
+        "g_ubus_monitor.config.check_interval = 300; // 5 minutes",
+        "g_ubus_monitor.config.restart_timeout = 30;",
+        "g_ubus_monitor.config.restart_timeout = 30;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/utils/cellular_collector.c",
+      "issue": "Found 7 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_cellular_collector.config.enabled = true;",
+        "g_cellular_collector.config.collection_interval = 30;",
+        "g_cellular_collector.config.collection_interval = 30;",
+        "g_cellular_collector.config.timeout_seconds = 10;",
+        "g_cellular_collector.config.timeout_seconds = 10;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/utils/decision_engine.c",
+      "issue": "Found 5 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_decision_engine.config.enabled = true;",
+        "g_decision_engine.config.decision_interval_seconds = 30;",
+        "g_decision_engine.config.decision_interval_seconds = 30;",
+        "g_decision_engine.config.failover_threshold = 0.3;",
+        "g_decision_engine.config.recovery_threshold = 0.7;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/utils/disk_monitor.c",
+      "issue": "Found 3 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_disk_monitor.config.critical_threshold_gb = 1.0;",
+        "g_disk_monitor.config.warning_threshold_gb = 2.0;",
+        "g_disk_monitor.config.cleanup_threshold_gb = 3.0;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/utils/http_client_libcurl.c",
+      "issue": "Found 4 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_http_client.config.default_connect_timeout_ms = 10000;",
+        "g_http_client.config.default_connect_timeout_ms = 10000;",
+        "g_http_client.config.default_request_timeout_ms = 30000;",
+        "g_http_client.config.default_request_timeout_ms = 30000;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/utils/metered_manager.c",
+      "issue": "Found 5 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_metered_manager.config.enabled = true;",
+        "g_metered_manager.config.check_interval_seconds = 300; // 5 minutes",
+        "g_metered_manager.config.check_interval_seconds = 300; // 5 minutes",
+        "g_metered_manager.config.thresholds.warning_percentage = 80.0;",
+        "g_metered_manager.config.thresholds.critical_percentage = 95.0;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/utils/mqtt_client.c",
+      "issue": "Found 10 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_mqtt_client.config.keepalive_interval = 60;",
+        "g_mqtt_client.config.keepalive_interval = 60;",
+        "g_mqtt_client.config.connection_timeout = 30;",
+        "g_mqtt_client.config.connection_timeout = 30;",
+        "usleep(1000); // Wait 1ms"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/utils/mqtt_telemetry.c",
+      "issue": "Found 4 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_mqtt_telemetry_publisher.enabled = true;",
+        "g_mqtt_telemetry_publisher.publish_interval_seconds = 30; // 30 seconds",
+        "g_mqtt_telemetry_publisher.publish_interval_seconds = 30; // 30 seconds",
+        "sleep(10);"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/utils/overlay_management.c",
+      "issue": "Found 4 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_overlay_manager.config.enabled = true;",
+        "g_overlay_manager.config.overlay_space_threshold = 80;",
+        "g_overlay_manager.config.overlay_critical_threshold = 90;",
+        "g_overlay_manager.config.notifications_enabled = true;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/utils/security_monitor.c",
+      "issue": "Found 3 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_security_monitor.config.enabled = true;",
+        "g_security_monitor.config.scan_interval_seconds = 300; // 5 minutes",
+        "g_security_monitor.config.scan_interval_seconds = 300; // 5 minutes"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/utils/service_watchdog.c",
+      "issue": "Found 4 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_service_watchdog.config.enabled = true;",
+        "g_service_watchdog.config.service_timeout = 1800; // 30 minutes",
+        "g_service_watchdog.config.service_timeout = 1800; // 30 minutes",
+        "sleep(2);"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/utils/system_ubus.c",
+      "issue": "Found 2 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "int timeout_seconds = 30; // Default 30 seconds",
+        "int timeout_seconds = 30; // Default 30 seconds"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/utils/uci_manager.c",
+      "issue": "Found 15 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        ".pid_file_timeout = 30,",
+        ".network_check_interval = 30,",
+        ".failover_timeout = 60,",
+        ".gps_update_interval = 10,",
+        ".gps_timeout = 30,"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/wifi/wifi_management.c",
+      "issue": "Found 14 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "g_wifi_management.enabled = true;",
+        "g_wifi_management.movement_threshold = 100.0; // 100 meters",
+        "g_wifi_management.excellent_threshold = 90;",
+        "g_wifi_management.good_threshold = 75;",
+        "g_wifi_management.fair_threshold = 50;"
+      ]
+    },
+    {
+      "file": "src/c/autonomy-daemon/wifi/wifi_management_ubus.c",
+      "issue": "Found 1 hardcoded values",
+      "action": "Replace hardcoded values with g_config references",
+      "values": [
+        "bool enabled = false;"
+      ]
+    }
+  ]
+}

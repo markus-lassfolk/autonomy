@@ -17,6 +17,9 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global network controller instance
 static network_controller_t g_network_controller = {0};
 static bool g_network_controller_initialized = false;
@@ -45,11 +48,11 @@ int network_controller_init(const network_controller_config_t* config) {
     } else {
         // Default configuration
         g_network_controller.config.enabled = true;
-        g_network_controller.config.use_mwan3 = true;
+        g_network_controller.config.use_mwan3 = g_config.mwan3_integration;
         g_network_controller.config.dry_run = false;
         strcpy(g_network_controller.config.mwan3_path, "mwan3");
         strcpy(g_network_controller.config.ubus_path, "ubus");
-        g_network_controller.config.switch_timeout_seconds = 30;
+        g_network_controller.config.switch_timeout_seconds = g_config.failover_timeout;
         g_network_controller.config.validation_timeout_seconds = 10;
         g_network_controller.config.enable_callbacks = true;
     }

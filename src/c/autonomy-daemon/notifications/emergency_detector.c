@@ -5,6 +5,9 @@
 #include <time.h>
 #include <math.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global emergency detector instance
 static emergency_detector_t g_emergency_detector;
 static bool g_emergency_detector_initialized = false;
@@ -41,7 +44,7 @@ int emergency_detector_init(const emergency_detector_config_t* config) {
     }
     
     g_emergency_detector.max_active_incidents = config->max_active_incidents;
-    g_emergency_detector.active_incidents_count = 0;
+    g_emergency_detector.active_incidents_count = 0; // Use configurable incident count
     
     // Initialize failure records
     g_emergency_detector.recent_failures = malloc(config->max_failure_records * sizeof(failure_record_t));

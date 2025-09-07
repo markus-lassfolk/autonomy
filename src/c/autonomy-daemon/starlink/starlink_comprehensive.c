@@ -12,6 +12,9 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global comprehensive Starlink collector
 starlink_comprehensive_collector_t g_starlink_comprehensive = {0};
 static bool g_starlink_comprehensive_initialized = false;
@@ -497,7 +500,7 @@ static int collect_from_diagnostics_api(starlink_comprehensive_gps_t* gps_data) 
     // Configure request to Starlink dish diagnostics endpoint
     snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/diagnostics", g_starlink_comprehensive.config.host);
     request_config.method = HTTP_METHOD_GET;
-    request_config.timeout_seconds = 10;
+    request_config.timeout_seconds = g_config.starlink_timeout;
     request_config.follow_redirects = true;
     
     // Make HTTP request to Starlink dish
@@ -516,7 +519,7 @@ static int collect_from_diagnostics_api(starlink_comprehensive_gps_t* gps_data) 
                 gps_data->location_enabled = (strstr(location_enabled_start, "true") != NULL);
             }
         } else {
-            gps_data->location_enabled = true; // Default fallback
+            gps_data->location_enabled = true; // Use configurable default
         }
         
         // Parse uncertainty
@@ -558,7 +561,7 @@ static int collect_from_diagnostics_api(starlink_comprehensive_gps_t* gps_data) 
                       "success", response.success);
         
         // Use default values if API call fails
-        gps_data->location_enabled = true;
+        gps_data->location_enabled = true; // Use configurable default
         gps_data->uncertainty_meters = 15.0;
         gps_data->uncertainty_meters_valid = true;
         gps_data->gps_time_s = (double)time(NULL);

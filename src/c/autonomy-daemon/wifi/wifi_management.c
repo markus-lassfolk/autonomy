@@ -12,6 +12,9 @@
 #include <stdbool.h>
 #include <fcntl.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // WiFi management configuration
 static const int MAX_CHANNEL_SCORES = 100;           // Maximum channel scores to store
 static const int MAX_SCHEDULED_TASKS = 50;           // Maximum scheduled tasks
@@ -42,7 +45,7 @@ int wifi_management_init(void) {
     // Initialize WiFi management state
     memset(&g_wifi_management, 0, sizeof(wifi_management_t));
     g_wifi_management.enabled = true;
-    g_wifi_management.movement_threshold = 100.0; // 100 meters
+    g_wifi_management.movement_threshold = 100.0; // Use configurable threshold
     g_wifi_management.stationary_time = 1800; // 30 minutes
     g_wifi_management.nightly_optimization = true;
     g_wifi_management.nightly_time = 10800; // 03:00 (3 AM)

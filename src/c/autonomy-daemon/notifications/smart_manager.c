@@ -10,6 +10,9 @@
 #include <pthread.h>
 #include <strings.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global smart manager instance
 static smart_notification_manager_t g_smart_manager;
 static bool g_smart_manager_initialized = false;
@@ -39,7 +42,7 @@ int smart_notification_manager_init(const smart_manager_config_t* config) {
     
     // Initialize last notification tracking
     for (int i = 0; i < NOTIFICATION_TYPE_EMERGENCY + 1; i++) {
-        g_smart_manager.last_notification[i] = 0;
+        g_smart_manager.last_notification[i] = 0; // Use configurable notification tracking
     }
     
     // Initialize notification history

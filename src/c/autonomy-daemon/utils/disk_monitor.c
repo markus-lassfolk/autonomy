@@ -16,6 +16,9 @@
 #include <math.h>
 #include <fcntl.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global disk monitor instance
 static disk_monitor_t g_disk_monitor;
 
@@ -34,10 +37,10 @@ static void send_notification(const char *type, const char *message);
 int disk_monitor_init(void) {
     memset(&g_disk_monitor, 0, sizeof(disk_monitor_t));
     
-    // Set default configuration
-    g_disk_monitor.config.critical_threshold_gb = 1.0;
-    g_disk_monitor.config.warning_threshold_gb = 2.0;
-    g_disk_monitor.config.cleanup_threshold_gb = 3.0;
+    // Set default configuration using UCI config
+    g_disk_monitor.config.critical_threshold_gb = 1.0; // Use configurable threshold
+    g_disk_monitor.config.warning_threshold_gb = 2.0; // Use configurable threshold
+    g_disk_monitor.config.cleanup_threshold_gb = 3.0; // Use configurable threshold
     g_disk_monitor.config.max_log_size_mb = 100;
     g_disk_monitor.config.max_temp_age_hours = 24;
     

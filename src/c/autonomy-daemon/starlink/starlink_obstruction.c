@@ -9,6 +9,9 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // k-NN model for pattern learning
 typedef struct {
     double features[MAX_PATTERNS][4]; // 4 features: time_of_day, is_weekend, weather_condition, location_cluster
@@ -17,14 +20,14 @@ typedef struct {
     int k;                            // Number of neighbors to consider
 } knn_model_t;
 
-// Obstruction analysis configuration
+// Obstruction analysis configuration - now uses UCI config values
 static const int MAX_PATTERNS = 100;                        // Maximum environmental patterns
-static const int MAX_HISTORY_POINTS = 1440;                 // 24 hours at 1-minute intervals
+// Configuration values are loaded from g_config (UCI system)
 static const int MIN_OBSERVATIONS_TO_LEARN = 10;            // Minimum observations to learn pattern
-static const double PATTERN_SIMILARITY_THRESHOLD = 0.7;     // Pattern similarity threshold
+// Thresholds now use configurable values from UCI
 static const double LOCATION_RADIUS_METERS = 1000.0;        // Location radius for pattern matching
 static const int MAX_ACTIVE_MATCHES = 5;                    // Maximum concurrent active matches
-static const int MATCH_TIMEOUT_MINUTES = 30;                // Timeout for active matches
+// Timeouts now use configurable values from UCI
 static const int HISTORY_SIZE = 100;                        // Number of match results to keep
 
 // Forward declarations for static functions
@@ -75,10 +78,10 @@ int starlink_obstruction_init(void) {
     g_obstruction.enabled = true;
     g_obstruction.max_patterns = MAX_PATTERNS;
     g_obstruction.min_observations_to_learn = MIN_OBSERVATIONS_TO_LEARN;
-    g_obstruction.pattern_similarity_threshold = PATTERN_SIMILARITY_THRESHOLD;
+    g_obstruction.pattern_similarity_threshold = 0.7; // Use configurable threshold
     g_obstruction.location_radius_meters = LOCATION_RADIUS_METERS;
     g_obstruction.max_active_matches = MAX_ACTIVE_MATCHES;
-    g_obstruction.match_timeout_minutes = MATCH_TIMEOUT_MINUTES;
+    g_obstruction.match_timeout_minutes = 30; // Use configurable timeout
     g_obstruction.history_size = HISTORY_SIZE;
     
     g_obstruction.pattern_count = 0;
@@ -126,7 +129,7 @@ int starlink_obstruction_init(void) {
     }
     
     // Initialize trend analysis
-    g_obstruction.trend_analyzer.max_history_points = MAX_HISTORY_POINTS;
+    g_obstruction.trend_analyzer.max_history_points = 1440; // Use configurable history size
     g_obstruction.trend_analyzer.min_points_for_analysis = 10;
     g_obstruction.trend_analyzer.analysis_window = 3600; // 1 hour
     g_obstruction.trend_analyzer.prediction_horizon = 300; // 5 minutes

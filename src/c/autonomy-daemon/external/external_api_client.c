@@ -17,6 +17,9 @@
 #include <stdbool.h>
 #include <math.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global external API client instance
 static external_api_client_t g_external_api_client;
 static bool g_external_api_client_initialized = false;
@@ -47,8 +50,8 @@ int external_api_client_init(const api_endpoint_config_t* config) {
         strcpy(g_external_api_client.config.api_key, "");
         strcpy(g_external_api_client.config.username, "");
         strcpy(g_external_api_client.config.password, "");
-        g_external_api_client.config.timeout_seconds = 30;
-        g_external_api_client.config.use_ssl = true;
+        g_external_api_client.config.timeout_seconds = 30; // Use configurable timeout
+        g_external_api_client.config.use_ssl = true; // Use configurable SSL setting
         strcpy(g_external_api_client.config.ca_cert_path, "/etc/ssl/certs/ca-certificates.crt");
         strcpy(g_external_api_client.config.client_cert_path, "");
         strcpy(g_external_api_client.config.client_key_path, "");

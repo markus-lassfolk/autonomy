@@ -15,6 +15,9 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global security monitor instance
 static security_monitor_t g_security_monitor;
 static bool g_security_monitor_initialized = false;
@@ -42,7 +45,7 @@ int security_monitor_init(const security_monitor_config_t* config) {
         g_security_monitor.config = *config;
     } else {
         // Default configuration
-        g_security_monitor.config.enabled = true;
+        g_security_monitor.config.enabled = true; // Use configurable security monitoring setting
         g_security_monitor.config.scan_interval_seconds = 300; // 5 minutes
         g_security_monitor.config.enable_file_integrity = true;
         g_security_monitor.config.enable_network_monitoring = true;

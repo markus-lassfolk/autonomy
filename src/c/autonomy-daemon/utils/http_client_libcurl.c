@@ -9,6 +9,9 @@
 #include <errno.h>
 #include <sys/stat.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global HTTP client state
 static struct {
     http_client_config_t config;
@@ -84,8 +87,8 @@ int http_client_init(const http_client_config_t* config) {
         // Set default configuration
         strncpy(g_http_client.config.default_user_agent, "AutonomyDaemon/1.0", 
                 sizeof(g_http_client.config.default_user_agent) - 1);
-        g_http_client.config.default_connect_timeout_ms = 10000;
-        g_http_client.config.default_request_timeout_ms = 30000;
+        g_http_client.config.default_connect_timeout_ms = 10000; // Use configurable timeout
+        g_http_client.config.default_request_timeout_ms = g_config.network_check_interval * 1000;
         g_http_client.config.default_max_redirects = 5;
         g_http_client.config.default_verify_ssl = true;
         g_http_client.config.enable_compression = true;

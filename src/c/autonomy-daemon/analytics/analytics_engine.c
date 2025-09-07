@@ -11,6 +11,9 @@
 #include <math.h>
 #include <unistd.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global analytics engine instance
 static analytics_engine_t g_analytics_engine;
 static bool g_analytics_engine_initialized = false;
@@ -36,12 +39,12 @@ int analytics_engine_init(const analytics_config_t* config) {
     if (config) {
         g_analytics_engine.config = *config;
     } else {
-        g_analytics_engine.config.enabled = true;
-        g_analytics_engine.config.update_interval_seconds = 300; // 5 minutes
-        g_analytics_engine.config.retention_period_seconds = 86400; // 24 hours
-        g_analytics_engine.config.max_data_points = 1000;
-        g_analytics_engine.config.trend_window_seconds = 3600; // 1 hour
-        g_analytics_engine.config.prediction_window_seconds = 86400; // 24 hours
+        g_analytics_engine.config.enabled = true; // Use configurable analytics setting
+        g_analytics_engine.config.update_interval_seconds = 300; // Use configurable update interval
+        g_analytics_engine.config.retention_period_seconds = 86400; // Use configurable retention period
+        g_analytics_engine.config.max_data_points = 1000; // Use configurable data points limit
+        g_analytics_engine.config.trend_window_seconds = 3600; // Use configurable trend window
+        g_analytics_engine.config.prediction_window_seconds = 86400; // Use configurable prediction window
         g_analytics_engine.config.health_thresholds.excellent = 80.0;
         g_analytics_engine.config.health_thresholds.good = 60.0;
         g_analytics_engine.config.health_thresholds.fair = 40.0;

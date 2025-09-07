@@ -13,6 +13,9 @@
 #include <time.h>
 #include <unistd.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global comprehensive GPS collector instance
 static gps_comprehensive_collector_t g_gps_collector = {0};
 static bool g_collector_initialized = false;
@@ -450,7 +453,7 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
             }
             snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/status", starlink_host);
             request_config.method = HTTP_METHOD_GET;
-            request_config.timeout_seconds = 5;
+            request_config.timeout_seconds = g_config.gps_timeout;
             request_config.follow_redirects = true;
             
             int result = http_client_make_request(&request_config, &response);

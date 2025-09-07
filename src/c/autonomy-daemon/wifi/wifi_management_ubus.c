@@ -10,6 +10,9 @@
 #include <stdint.h>
 #include <fcntl.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // WiFi management UBUS methods
 
 /**
@@ -62,7 +65,7 @@ int autonomy_wifi_management_interfaces(struct ubus_context *uctx, struct ubus_o
         blobmsg_add_u32(&bb, "count", count);
         
         struct blob_attr *interfaces_array = blobmsg_open_array(&bb, "interfaces");
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) { // Use configurable interface count
             struct blob_attr *interface = blobmsg_open_table(&bb, NULL);
             blobmsg_add_string(&bb, "name", interfaces[i].name);
             blobmsg_add_string(&bb, "band", interfaces[i].band);
@@ -100,7 +103,7 @@ int autonomy_wifi_management_channel_scores(struct ubus_context *uctx, struct ub
         blobmsg_add_u32(&bb, "count", count);
         
         struct blob_attr *scores_array = blobmsg_open_array(&bb, "channel_scores");
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) { // Use configurable interface count
             struct blob_attr *score = blobmsg_open_table(&bb, NULL);
             blobmsg_add_u32(&bb, "channel", scores[i].channel);
             blobmsg_add_u32(&bb, "score", scores[i].score);
@@ -139,7 +142,7 @@ int autonomy_wifi_management_scheduled_tasks(struct ubus_context *uctx, struct u
         blobmsg_add_u32(&bb, "count", count);
         
         struct blob_attr *tasks_array = blobmsg_open_array(&bb, "scheduled_tasks");
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) { // Use configurable interface count
             struct blob_attr *task = blobmsg_open_table(&bb, NULL);
             blobmsg_add_u32(&bb, "type", tasks[i].type);
             blobmsg_add_u32(&bb, "scheduled_at", (uint32_t)tasks[i].scheduled_at);

@@ -12,6 +12,9 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global performance monitor instance
 static performance_monitor_t g_performance_monitor;
 static bool g_performance_monitor_initialized = false;
@@ -37,9 +40,9 @@ int performance_monitor_init(const performance_monitor_config_t* config) {
     if (config) {
         g_performance_monitor.config = *config;
     } else {
-        // Default configuration
+        // Default configuration using UCI config
         g_performance_monitor.config.enabled = true;
-        g_performance_monitor.config.monitor_interval_seconds = 60;
+        g_performance_monitor.config.monitor_interval_seconds = g_config.system_check_interval;
         g_performance_monitor.config.enable_alerts = true;
         g_performance_monitor.config.enable_logging = true;
         

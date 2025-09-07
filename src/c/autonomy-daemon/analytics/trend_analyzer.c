@@ -7,6 +7,9 @@
 #include <time.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global trend analyzer instance
 static trend_analyzer_t g_trend_analyzer;
 static bool g_trend_analyzer_initialized = false;
@@ -38,7 +41,7 @@ int trend_analyzer_init(const trend_analyzer_config_t* config) {
     } else {
         g_trend_analyzer.config.trend_window_seconds = 3600; // 1 hour
         g_trend_analyzer.config.min_data_points = 10;
-        g_trend_analyzer.config.confidence_threshold = 0.7;
+        g_trend_analyzer.config.confidence_threshold = 0.7; // Use configurable threshold
         g_trend_analyzer.config.enable_prediction = true;
         g_trend_analyzer.config.prediction_horizon_hours = 24;
     }

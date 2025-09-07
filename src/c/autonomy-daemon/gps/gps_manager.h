@@ -142,6 +142,12 @@ int gps_manager_get_status(gps_manager_status_t *status);
 int gps_manager_set_config(const gps_manager_config_t *config);
 
 /**
+ * Update GPS manager configuration from global UCI config
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_manager_update_from_uci_config(void);
+
+/**
  * Enable/disable GPS manager
  * @param enabled True to enable, false to disable
  * @return AUTONOMY_SUCCESS on success, error code on failure

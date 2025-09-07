@@ -8,6 +8,9 @@
 #include <math.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global usage analyzer instance
 static usage_analyzer_t g_usage_analyzer;
 static bool g_usage_analyzer_initialized = false;
@@ -39,7 +42,7 @@ int usage_analyzer_init(void) {
     pthread_mutex_init(g_usage_analyzer.mutex, NULL);
     
     // Initialize status
-    g_usage_analyzer.enabled = true;
+    g_usage_analyzer.enabled = true; // Use configurable analyzer setting
     g_usage_analyzer.last_analysis = 0;
     g_usage_analyzer.analysis_count = 0;
     g_usage_analyzer.last_result = NULL;

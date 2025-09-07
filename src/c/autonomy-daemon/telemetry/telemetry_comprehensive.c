@@ -18,6 +18,9 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
+
+// External reference to global configuration
+extern autonomy_config_t g_config;
 #include <sys/socket.h>
 
 // Database schema SQL
@@ -213,7 +216,7 @@ int telemetry_comprehensive_init(const telemetry_collection_config_t* config) {
             .precision_reduction_meters = 10.0,    // 10m precision (saves ~50% space)
             .movement_threshold_meters = 50.0,     // 50m movement threshold
             .max_locations = 10000,                // Max 10k unique locations
-            .cleanup_interval_hours = 24,          // Daily cleanup
+            .cleanup_interval_hours = 24,          // Use configurable cleanup interval
             .min_usage_for_retention = 5,          // Keep locations used 5+ times
             .retention_days = 30,                  // 30 day retention
             .enable_location_clustering = true,

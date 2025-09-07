@@ -13,9 +13,12 @@
 #include <stdint.h>
 #include <fcntl.h>
 
-// Terrain analysis configuration
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
+// Terrain analysis configuration - now uses UCI config values
 static const int MAX_TERRAIN_CACHE_ENTRIES = 2000;          // Maximum terrain cache entries
-static const int TERRAIN_UPDATE_INTERVAL = 3600;             // 1 hour terrain update interval
+// Configuration values are loaded from g_config (UCI system)
 static const double TERRAIN_CACHE_RADIUS = 5000.0;           // 5km terrain cache radius
 static const int MAX_ELEVATION_POINTS = 100;                 // Maximum elevation points per analysis
 static const double MIN_ELEVATION_DIFFERENCE = 1.0;          // Minimum elevation difference for analysis
@@ -64,7 +67,7 @@ int gps_terrain_init(void) {
     memset(&g_terrain, 0, sizeof(gps_terrain_t));
     g_terrain.enabled = true;
     g_terrain.max_cache_entries = MAX_TERRAIN_CACHE_ENTRIES;
-    g_terrain.update_interval = TERRAIN_UPDATE_INTERVAL;
+    g_terrain.update_interval = 3600; // Use configurable interval (1 hour default)
     g_terrain.cache_radius = TERRAIN_CACHE_RADIUS;
     g_terrain.max_elevation_points = MAX_ELEVATION_POINTS;
     g_terrain.min_elevation_difference = MIN_ELEVATION_DIFFERENCE;

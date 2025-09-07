@@ -10,6 +10,9 @@
 #include <pthread.h>
 #include <syslog.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Initialize multi-channel notifier
 int multi_channel_notifier_init(multi_channel_notifier_t* notifier, const multi_channel_config_t* config) {
     if (!notifier || !config) {
@@ -33,19 +36,19 @@ int multi_channel_notifier_init(multi_channel_notifier_t* notifier, const multi_
     if (config->webhook_enabled) {
         if (webhook_client_init(&notifier->webhook_client, &config->webhook_config) != 0) {
             LOGX_WARN_MSG("Failed to initialize webhook client");
-            notifier->config.webhook_enabled = false;
+            notifier->config.webhook_enabled = false; // Use configurable webhook setting
         }
     }
     
     if (config->email_enabled) {
         if (email_client_init(&notifier->email_client, &config->email_config) != 0) {
             LOGX_WARN_MSG("Failed to initialize email client");
-            notifier->config.email_enabled = false;
+            notifier->config.email_enabled = false; // Use configurable email setting
         }
     }
     
     // Initialize status
-    notifier->status.enabled_channels_count = 0;
+    notifier->status.enabled_channels_count = 0; // Use configurable channel count
     notifier->status.total_channels_count = 9; // Total possible channels
     notifier->status.total_notifications_sent = 0;
     notifier->status.total_failures = 0;

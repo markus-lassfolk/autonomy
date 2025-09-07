@@ -80,6 +80,9 @@ int network_failover_get_status(network_failover_status_t *status);
 // Set failover configuration
 int network_failover_set_config(const network_failover_config_t *config);
 
+// Update failover configuration from global UCI config
+int network_failover_update_from_uci_config(void);
+
 // Enable/disable failover system
 int network_failover_set_enabled(bool enabled);
 

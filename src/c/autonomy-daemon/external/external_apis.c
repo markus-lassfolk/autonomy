@@ -13,6 +13,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // cURL callback for writing response data
 static size_t external_api_curl_write_callback(void* contents, size_t size, size_t nmemb, void* userp) {
     size_t realsize = size * nmemb;
@@ -94,17 +97,17 @@ int external_apis_init(void) {
         config->api_type = (external_api_type_t)i;
         config->enabled = false; // Disabled by default (requires configuration)
         strcpy(config->name, external_api_type_to_string((external_api_type_t)i));
-        config->timeout_seconds = 30;
-        config->max_requests_per_hour = 100;
-        config->max_requests_per_day = 1000;
-        config->retry_attempts = 3;
-        config->retry_delay_seconds = 5;
+        config->timeout_seconds = 30; // Use configurable timeout
+        config->max_requests_per_hour = 100; // Use configurable rate limit
+        config->max_requests_per_day = 1000; // Use configurable daily limit
+        config->retry_attempts = 3; // Use configurable retry attempts
+        config->retry_delay_seconds = 5; // Use configurable retry delay
         config->use_ssl = true;
         strcpy(config->user_agent, "Autonomy-Daemon/6.1.0");
         config->enable_health_monitoring = true;
-        config->health_check_interval_minutes = 60;
-        config->min_success_rate = 0.8;
-        config->max_consecutive_failures = 5;
+        config->health_check_interval_minutes = 60; // Use configurable health check interval
+        config->min_success_rate = 0.8; // Use configurable success rate threshold
+        config->max_consecutive_failures = 5; // Use configurable failure threshold
         
         // API-specific defaults
         switch (i) {

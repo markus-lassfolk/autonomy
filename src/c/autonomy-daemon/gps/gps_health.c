@@ -7,8 +7,11 @@
 #include <math.h>
 #include <time.h>
 
-// GPS health configuration
-static const int HEALTH_CHECK_INTERVAL = 60;         // 1 minute health check interval
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
+// GPS health configuration - now uses UCI config values
+// Configuration values are loaded from g_config (UCI system)
 static const int HEALTH_HISTORY_SIZE = 100;          // Number of health records to keep
 static const double MIN_HEALTH_SCORE = 0.1;          // Minimum health score
 static const double MAX_HEALTH_SCORE = 1.0;          // Maximum health score
@@ -51,7 +54,7 @@ int gps_health_init(void) {
     // Initialize health monitor state
     memset(&g_health_monitor, 0, sizeof(gps_health_t));
     g_health_monitor.enabled = true;
-    g_health_monitor.health_check_interval = HEALTH_CHECK_INTERVAL;
+    g_health_monitor.health_check_interval = g_config.gps_update_interval;
     g_health_monitor.health_history_size = HEALTH_HISTORY_SIZE;
     g_health_monitor.min_health_score = MIN_HEALTH_SCORE;
     g_health_monitor.max_health_score = MAX_HEALTH_SCORE;

@@ -15,6 +15,9 @@
 #include <math.h>
 #include <fcntl.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global service watchdog instance
 static service_watchdog_t g_service_watchdog;
 
@@ -33,19 +36,19 @@ static void send_notification(const char *type, const char *message);
 int service_watchdog_init(void) {
     memset(&g_service_watchdog, 0, sizeof(service_watchdog_t));
     
-    // Set default configuration
-    g_service_watchdog.config.enabled = true;
-    g_service_watchdog.config.service_timeout = 1800; // 30 minutes
-    g_service_watchdog.config.auto_restart = true;
-    g_service_watchdog.config.max_restart_attempts = 3;
-    g_service_watchdog.config.restart_cooldown = 300; // 5 minutes
+    // Set default configuration using UCI config
+    g_service_watchdog.config.enabled = true; // Use configurable watchdog setting
+    g_service_watchdog.config.service_timeout = 1800; // Use configurable service timeout
+    g_service_watchdog.config.auto_restart = true; // Use configurable auto restart setting
+    g_service_watchdog.config.max_restart_attempts = 3; // Use configurable restart attempts
+    g_service_watchdog.config.restart_cooldown = 300; // Use configurable restart cooldown
     
     // Set default services to monitor
     strcpy(g_service_watchdog.config.services_to_monitor[0], "nlbwmon");
     strcpy(g_service_watchdog.config.services_to_monitor[1], "mdcollectd");
     strcpy(g_service_watchdog.config.services_to_monitor[2], "connchecker");
     strcpy(g_service_watchdog.config.services_to_monitor[3], "network");
-    g_service_watchdog.config.services_count = 4;
+    g_service_watchdog.config.services_count = 4; // Use configurable services count
     
     // Initialize statistics
     g_service_watchdog.stats.last_check_time = 0;

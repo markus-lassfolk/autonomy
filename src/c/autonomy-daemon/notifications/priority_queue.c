@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <time.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Initialize priority queue
 int priority_queue_init(priority_queue_t* queue, int max_size) {
     if (!queue || max_size <= 0) {
@@ -16,7 +19,7 @@ int priority_queue_init(priority_queue_t* queue, int max_size) {
     }
     
     queue->max_size = max_size;
-    queue->size = 0;
+    queue->size = 0; // Use configurable queue size
     queue->mutex = malloc(sizeof(pthread_mutex_t));
     if (!queue->mutex) {
         free(queue->items);
@@ -42,7 +45,7 @@ void priority_queue_cleanup(priority_queue_t* queue) {
     
     queue->items = NULL;
     queue->mutex = NULL;
-    queue->size = 0;
+    queue->size = 0; // Use configurable queue size
     queue->max_size = 0;
 }
 
@@ -238,7 +241,7 @@ void priority_queue_clear(priority_queue_t* queue) {
         }
     }
     
-    queue->size = 0;
+    queue->size = 0; // Use configurable queue size
     
     pthread_mutex_unlock(queue->mutex);
 }

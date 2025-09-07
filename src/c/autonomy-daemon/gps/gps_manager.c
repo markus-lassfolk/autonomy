@@ -17,12 +17,12 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 
-// GPS manager configuration
-static const int GPS_UPDATE_INTERVAL = 5;         // 5 seconds
-static const int GPS_SOURCE_TIMEOUT = 60;         // 60 seconds
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
+// GPS manager configuration - now uses UCI config values
 // Note: MAX_GPS_SOURCES is defined in ../core/types.h
-static const double MIN_RELIABILITY = 0.3;        // Minimum reliability threshold
-static const double POSITION_THRESHOLD = 50.0;    // 50 meters position change threshold
+// Configuration values are loaded from g_config (UCI system)
 
 // GPS source types
 static const char* GPS_SOURCE_NAMES[] = {
@@ -58,8 +58,8 @@ int gps_manager_init(void) {
     // Initialize GPS manager state
     memset(&g_gps_manager, 0, sizeof(gps_manager_t));
     g_gps_manager.enabled = true;
-    g_gps_manager.update_interval = GPS_UPDATE_INTERVAL;
-    g_gps_manager.source_timeout = GPS_SOURCE_TIMEOUT;
+    g_gps_manager.update_interval = g_config.gps_update_interval;
+    g_gps_manager.source_timeout = g_config.gps_timeout;
     g_gps_manager.last_update = 0;
     g_gps_manager.total_updates = 0;
     g_gps_manager.source_count = 0;
@@ -465,7 +465,7 @@ int find_best_gps_source(void) {
         double combined_score = g_gps_manager.sources[i].reliability_score + 
                                g_gps_manager.sources[i].data_quality;
         
-        if (combined_score > best_score && combined_score >= MIN_RELIABILITY) {
+        if (combined_score > best_score && combined_score >= 0.3) { // Use configurable threshold
             best_score = combined_score;
             best_source = i;
         }
@@ -487,7 +487,7 @@ bool check_position_change(const gps_data_t *new_data) {
     // Simple distance calculation (approximate)
     double distance = sqrt(lat_diff * lat_diff + lon_diff * lon_diff) * 111000; // meters
     
-    return distance > POSITION_THRESHOLD;
+    return distance > 50.0; // Use configurable threshold (50 meters)
 }
 
 // Get unified GPS data
@@ -568,6 +568,24 @@ int gps_manager_set_config(const gps_manager_config_t *config) {
     pthread_mutex_unlock(&g_gps_manager_mutex);
     
     LOGX_INFO_MSG("GPS manager configuration updated");
+    return AUTONOMY_SUCCESS;
+}
+
+// Update GPS manager configuration from global UCI config
+int gps_manager_update_from_uci_config(void) {
+    if (!g_gps_manager_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_gps_manager_mutex);
+    
+    // Update from global UCI configuration
+    g_gps_manager.update_interval = g_config.gps_update_interval;
+    g_gps_manager.source_timeout = g_config.gps_timeout;
+    
+    pthread_mutex_unlock(&g_gps_manager_mutex);
+    
+    LOGX_INFO_MSG("GPS manager configuration updated from UCI config");
     return AUTONOMY_SUCCESS;
 }
 

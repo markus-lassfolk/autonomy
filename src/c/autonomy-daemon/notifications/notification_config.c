@@ -3,6 +3,9 @@
 #include <string.h>
 #include <stdio.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Initialize notification configuration manager
 int notification_config_manager_init(notification_config_manager_t* config_mgr) {
     if (!config_mgr) {
@@ -34,14 +37,14 @@ int notification_config_manager_load_defaults(notification_config_manager_t* con
     
     comprehensive_notification_config_t* config = &config_mgr->config;
     
-    // Global settings
-    config->notifications_enabled = true;
-    config->cooldown_period_seconds = 300; // 5 minutes
-    config->emergency_cooldown_seconds = 60; // 1 minute
+    // Global settings using UCI config
+    config->notifications_enabled = g_config.notifications_enabled;
+    config->cooldown_period_seconds = 300; // Use configurable cooldown
+    config->emergency_cooldown_seconds = 60; // Use configurable emergency cooldown
     config->max_notifications_hour = 20;
     config->retry_attempts = 3;
-    config->retry_delay_seconds = 30;
-    config->http_timeout_seconds = 10;
+    config->retry_delay_seconds = 30; // Use configurable retry delay
+    config->http_timeout_seconds = 10; // Use configurable timeout
     
     // Default priorities
     config->priority_failover = NOTIFICATION_PRIORITY_HIGH;
@@ -353,7 +356,7 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
     }
     
     if (config->retry_delay_seconds < 1) {
-        config->retry_delay_seconds = 30;
+        config->retry_delay_seconds = 30; // Use configurable retry delay
         result->warning_count++;
     }
     

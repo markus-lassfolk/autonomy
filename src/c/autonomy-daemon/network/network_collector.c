@@ -17,6 +17,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global network collector state
 static network_collector_t g_collector = {0};
 static pthread_mutex_t g_collector_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -43,7 +46,7 @@ int network_collector_init(void) {
     // Initialize collector state
     memset(&g_collector, 0, sizeof(network_collector_t));
     g_collector.enabled = true;
-    g_collector.collection_interval = 30; // 30 seconds
+    g_collector.collection_interval = g_config.network_check_interval;
     g_collector.test_timeout = 5;         // 5 seconds
     g_collector.max_test_targets = 8;
     

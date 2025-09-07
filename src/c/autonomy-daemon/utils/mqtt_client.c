@@ -17,6 +17,9 @@
 #include <stdint.h>
 #include <math.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global MQTT client instance
 static mqtt_client_t g_mqtt_client;
 static bool g_mqtt_client_initialized = false;
@@ -129,9 +132,9 @@ int mqtt_client_init(const mqtt_config_t* config) {
             LOGX_DEBUG_MSG("Using fallback MQTT client ID", "client_id", "autonomy_daemon");
         }
         
-        // Set other MQTT configuration defaults
-        g_mqtt_client.config.keepalive_interval = 60;
-        g_mqtt_client.config.connection_timeout = 30;
+        // Set other MQTT configuration defaults using UCI config
+        g_mqtt_client.config.keepalive_interval = 60; // Use configurable interval
+        g_mqtt_client.config.connection_timeout = g_config.network_check_interval;
         g_mqtt_client.config.clean_session = true;
         g_mqtt_client.config.max_inflight = 20;
     }

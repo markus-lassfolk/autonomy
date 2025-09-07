@@ -19,6 +19,9 @@
 #include <sys/select.h>
 #include <sys/time.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // GSM UBUS response parsing policy
 enum {
     GSM_STATUS_SIGNAL,
@@ -87,11 +90,11 @@ int cellular_collector_init(const cellular_collector_config_t* config) {
     if (config) {
         g_cellular_collector.config = *config;
     } else {
-        // Default configuration
+        // Default configuration using UCI config
         g_cellular_collector.config.enabled = true;
         strcpy(g_cellular_collector.config.modem_device, "/dev/ttyUSB0");
         strcpy(g_cellular_collector.config.interface_name, "mob1s1a1");
-        g_cellular_collector.config.collection_interval = 30;
+        g_cellular_collector.config.collection_interval = g_config.network_check_interval;
         g_cellular_collector.config.timeout_seconds = 10;
         g_cellular_collector.config.enable_stability_monitoring = true;
         g_cellular_collector.config.enable_predictive_analysis = true;

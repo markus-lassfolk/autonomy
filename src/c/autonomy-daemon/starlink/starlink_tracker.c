@@ -8,6 +8,9 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global starlink tracker state
 static bool g_starlink_tracker_initialized = false;
 static pthread_mutex_t g_tracker_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -166,13 +169,13 @@ bool starlink_tracker_is_initialized(void)
 // Load tracker configuration from UCI
 static int load_tracker_config_from_uci(void)
 {
-    // Initialize with default configuration
+    // Initialize with UCI configuration
     memset(&g_tracker_config, 0, sizeof(starlink_tracker_config_t));
     
     g_tracker_config.enabled = true;
-    g_tracker_config.tracking_interval_seconds = 60;
+    g_tracker_config.tracking_interval_seconds = g_config.starlink_check_interval;
     g_tracker_config.max_tracked_starlinks = 10;
-    g_tracker_config.enable_health_monitoring = true;
+    g_tracker_config.enable_health_monitoring = g_config.starlink_health_monitoring;
     g_tracker_config.enable_performance_tracking = true;
     g_tracker_config.enable_location_tracking = true;
 
