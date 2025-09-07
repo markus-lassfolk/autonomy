@@ -12,7 +12,6 @@
 #include <math.h>
 #include <time.h>
 #include <pthread.h>
-#include <stdbool.h>
 
 // RUTOS GPS file paths
 static const char* RUTOS_GPS_FILES[] = {
@@ -35,10 +34,10 @@ static pthread_t g_rutos_thread = 0;
 static bool g_rutos_thread_running = false;
 
 // Forward declarations
-void* rutos_monitor_thread(void *arg);
-int read_rutos_gps_data(gps_data_t *data);
+static void* rutos_monitor_thread(void *arg);
+static int read_rutos_gps_data(gps_data_t *data);
 static bool validate_gps_data(const gps_data_t *data);
-float calculate_reliability_score(void);
+static float calculate_reliability_score(void);
 
 // Initialize RUTOS GPS system
 int gps_rutos_init(void) {
@@ -78,6 +77,11 @@ int gps_rutos_init(void) {
     
     LOGX_INFO_MSG("RUTOS GPS system initialized successfully");
     return AUTONOMY_SUCCESS;
+}
+
+// Check if RUTOS GPS is initialized
+bool gps_rutos_is_initialized(void) {
+    return g_rutos_initialized;
 }
 
 // Start RUTOS GPS monitoring thread
@@ -122,7 +126,7 @@ void gps_rutos_stop_monitoring(void) {
 }
 
 // RUTOS GPS monitoring thread
-void* rutos_monitor_thread(void *arg) {
+static void* rutos_monitor_thread(void *arg) {
     (void)arg;
     
     LOGX_INFO_MSG("RUTOS GPS monitoring thread started");
@@ -178,8 +182,11 @@ int gps_rutos_read_data(void) {
             // Calculate reliability score
             g_rutos_gps.reliability_score = calculate_reliability_score();
             
-            LOGX_DEBUG_MSG("RUTOS GPS data updated: lat=%.6f, lon=%.6f, acc=%.1fm, sats=%d",
-                      new_data.latitude, new_data.longitude, new_data.accuracy, new_data.satellites);
+            LOGX_DEBUG_MSG("RUTOS GPS data updated",
+                      "lat", new_data.latitude,
+                      "lon", new_data.longitude,
+                      "accuracy", new_data.accuracy,
+                      "satellites", new_data.satellites);
         } else {
             LOGX_WARN_MSG("Invalid GPS data received from RUTOS");
             g_rutos_gps.consecutive_failures++;
@@ -196,7 +203,7 @@ int gps_rutos_read_data(void) {
 }
 
 // Read GPS data from RUTOS files
-int read_rutos_gps_data(gps_data_t *data) {
+static int read_rutos_gps_data(gps_data_t *data) {
     if (!data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -204,7 +211,7 @@ int read_rutos_gps_data(gps_data_t *data) {
     // Read GPS data file
     FILE *fp = fopen(RUTOS_GPS_FILES[0], "r");
     if (!fp) {
-        LOGX_DEBUG_MSG("RUTOS GPS data file not found: %s", RUTOS_GPS_FILES[0]);
+        LOGX_DEBUG_MSG("RUTOS GPS data file not found", "path", RUTOS_GPS_FILES[0]);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -269,8 +276,6 @@ int read_rutos_gps_data(gps_data_t *data) {
     return AUTONOMY_SUCCESS;
 }
 
-// Simulation fallback removed - production system uses only real data
-
 // Validate GPS data
 static bool validate_gps_data(const gps_data_t *data) {
     if (!data || !data->valid) {
@@ -279,36 +284,36 @@ static bool validate_gps_data(const gps_data_t *data) {
     
     // Check latitude range (-90 to 90)
     if (data->latitude < -90.0 || data->latitude > 90.0) {
-        LOGX_DEBUG_MSG("Invalid latitude: %.6f", data->latitude);
+        LOGX_DEBUG_MSG("Invalid latitude", "value", data->latitude);
         return false;
     }
     
     // Check longitude range (-180 to 180)
     if (data->longitude < -180.0 || data->longitude > 180.0) {
-        LOGX_DEBUG_MSG("Invalid longitude: %.6f", data->longitude);
+        LOGX_DEBUG_MSG("Invalid longitude", "value", data->longitude);
         return false;
     }
     
     // Check accuracy (must be positive and reasonable)
     if (data->accuracy < 0.0 || data->accuracy > 1000.0) {
-        LOGX_DEBUG_MSG("Invalid accuracy: %.1f", data->accuracy);
+        LOGX_DEBUG_MSG("Invalid accuracy", "value", data->accuracy);
         return false;
     }
     
     // Check satellite count (must be reasonable)
     if (data->satellites < 0 || data->satellites > 20) {
-        LOGX_DEBUG_MSG("Invalid satellite count: %d", data->satellites);
+        LOGX_DEBUG_MSG("Invalid satellite count", "value", data->satellites);
         return false;
     }
     
     // Check HDOP and VDOP (must be positive and reasonable)
     if (data->hdop < 0.0 || data->hdop > 100.0) {
-        LOGX_DEBUG_MSG("Invalid HDOP: %.1f", data->hdop);
+        LOGX_DEBUG_MSG("Invalid HDOP", "value", data->hdop);
         return false;
     }
     
     if (data->vdop < 0.0 || data->vdop > 100.0) {
-        LOGX_DEBUG_MSG("Invalid VDOP: %.1f", data->vdop);
+        LOGX_DEBUG_MSG("Invalid VDOP", "value", data->vdop);
         return false;
     }
     
@@ -316,7 +321,7 @@ static bool validate_gps_data(const gps_data_t *data) {
 }
 
 // Calculate reliability score based on data quality
-float calculate_reliability_score(void) {
+static float calculate_reliability_score(void) {
     float score = 100.0f;
     
     // Reduce score for poor accuracy
@@ -423,7 +428,7 @@ int gps_rutos_set_enabled(bool enabled) {
     g_rutos_gps.enabled = enabled;
     pthread_mutex_unlock(&g_rutos_mutex);
     
-    LOGX_INFO_MSG("RUTOS GPS %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("RUTOS GPS state changed", "enabled", enabled ? "true" : "false");
     return AUTONOMY_SUCCESS;
 }
 

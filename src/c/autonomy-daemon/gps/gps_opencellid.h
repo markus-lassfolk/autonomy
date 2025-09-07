@@ -2,6 +2,7 @@
 #define GPS_OPENCELLID_H
 
 #include "../core/types.h"
+#include "opencellid_complete.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
@@ -19,7 +20,7 @@ extern "C" {
 #define OPENCELLID_MAX_URL_LEN 512
 #define OPENCELLID_MAX_RESPONSE_LEN 8192
 
-// Note: opencellid_radio_type_t and opencellid_radio_t are defined in ../core/types.h
+// Note: opencellid_radio_type_type_t and opencellid_radio_type_t are defined in ../core/types.h
 
 // Cell key for unique identification
 typedef struct {
@@ -27,7 +28,7 @@ typedef struct {
     char mnc[8];                        // Mobile Network Code
     char lac[16];                       // Location Area Code
     char cell_id[32];                   // Cell ID
-    opencellid_radio_t radio;           // Radio technology
+    opencellid_radio_type_t radio;           // Radio technology
 } opencellid_cell_key_t;
 
 // OpenCellID API response
@@ -72,18 +73,7 @@ typedef struct {
     int bid;                           // Base ID (CDMA)
 } opencellid_contribution_t;
 
-// OpenCellID configuration
-typedef struct {
-    bool enabled;                       // Enable OpenCellID integration
-    char api_key[OPENCELLID_MAX_API_KEY_LEN]; // API key
-    char base_url[OPENCELLID_MAX_URL_LEN]; // Base URL
-    int timeout_seconds;                // Request timeout
-    bool contribute_data;               // Enable data contribution
-    int max_retries;                    // Maximum retry attempts
-    int rate_limit_delay_ms;            // Rate limit delay in milliseconds
-    int max_cache_entries;              // Maximum cache entries
-    int cache_ttl_seconds;              // Cache TTL
-} opencellid_config_t;
+// Note: opencellid_config_t defined in opencellid_complete.h
 
 // OpenCellID statistics
 typedef struct {
@@ -233,21 +223,21 @@ bool gps_opencellid_is_initialized(void);
  * @return AUTONOMY_SUCCESS on success, error code on failure
  */
 int gps_opencellid_create_cell_key(int mcc, int mnc, int lac, int cell_id, 
-                                   opencellid_radio_t radio, opencellid_cell_key_t* cell_key);
+                                   opencellid_radio_type_t radio, opencellid_cell_key_t* cell_key);
 
 /**
  * Convert radio technology string to enum
  * @param radio_str Radio technology string
  * @return Radio technology enum
  */
-opencellid_radio_t gps_opencellid_parse_radio_type(const char* radio_str);
+opencellid_radio_type_t gps_opencellid_parse_radio_type(const char* radio_str);
 
 /**
  * Convert radio technology enum to string
  * @param radio Radio technology enum
  * @return Radio technology string
  */
-const char* gps_opencellid_radio_to_string(opencellid_radio_t radio);
+const char* gps_opencellid_radio_type_to_string(opencellid_radio_type_t radio);
 
 #ifdef __cplusplus
 }

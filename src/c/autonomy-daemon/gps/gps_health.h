@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-// Note: gps_source_status_t is defined in ../core/types.h
+#define MAX_GPS_SOURCES 8
 
 // GPS source health
 typedef struct {
@@ -61,7 +61,7 @@ typedef struct {
     int total_health_checks;            // Total health checks performed
     time_t last_health_check;           // Last health check timestamp
     int active_source_count;            // Number of active sources
-    gps_source_health_t sources[8];     // Active source health information
+    gps_source_health_t sources[MAX_GPS_SOURCES];     // Active source health information
 } gps_health_status_t;
 
 // GPS health monitor state
@@ -84,7 +84,7 @@ typedef struct {
     double overall_health_score;        // Overall health score
     
     // Sources array
-    gps_source_health_t sources[8];     // GPS sources
+    gps_source_health_t sources[MAX_GPS_SOURCES];     // GPS sources
     
     // Health history
     gps_health_record_t health_history[100]; // Health history records

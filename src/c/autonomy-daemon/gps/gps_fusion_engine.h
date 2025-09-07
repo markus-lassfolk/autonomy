@@ -1,13 +1,9 @@
 #ifndef GPS_FUSION_ENGINE_H
 #define GPS_FUSION_ENGINE_H
 
-#include "../core/types.h"
 #include "gps_comprehensive.h"
 #include <stdbool.h>
 #include <stdint.h>
-#include <pthread.h>
-#include <time.h>
-#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -217,6 +213,13 @@ int gps_fusion_engine_get_config(gps_fusion_config_t* config);
  * @return AUTONOMY_SUCCESS on success, error code on failure
  */
 int gps_fusion_engine_set_config(const gps_fusion_config_t* config);
+
+/**
+ * Convert fusion method to string
+ * @param method Fusion method
+ * @return Method string
+ */
+const char* gps_fusion_method_to_string(gps_fusion_method_t method);
 
 #ifdef __cplusplus
 }

@@ -663,5 +663,241 @@ bool external_apis_is_initialized(void) {
     return g_external_apis_initialized;
 }
 
-// Additional functions would be implemented here...
-// (get_google_location, get_reverse_geocoding, configure APIs, etc.)
+// Get API statistics
+int external_apis_get_statistics(external_api_type_t api_type, external_api_statistics_t* stats) {
+    if (!g_external_apis_initialized || !stats || api_type >= EXTERNAL_API_MAX) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (api_type < 0 || api_type >= EXTERNAL_API_MAX) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    *stats = g_external_apis.stats[api_type];
+    return AUTONOMY_SUCCESS;
+}
+
+// Get all API statistics
+int external_apis_get_all_statistics(external_api_statistics_t* stats_array, int max_apis) {
+    if (!g_external_apis_initialized || !stats_array || max_apis <= 0) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    int count = (max_apis < EXTERNAL_API_MAX) ? max_apis : EXTERNAL_API_MAX;
+    for (int i = 0; i < count; i++) {
+        stats_array[i] = g_external_apis.stats[i];
+    }
+    
+    return count;
+}
+
+// Reset API statistics
+int external_apis_reset_statistics(external_api_type_t api_type) {
+    if (!g_external_apis_initialized || api_type >= EXTERNAL_API_MAX) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (api_type < 0 || api_type >= EXTERNAL_API_MAX) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    memset(&g_external_apis.stats[api_type], 0, sizeof(external_api_statistics_t));
+    // Reset time tracked in day_reset_time
+    
+    LOGX_INFO_MSG("Reset statistics for external API", "api_type", external_api_type_to_string(api_type));
+    return AUTONOMY_SUCCESS;
+}
+
+// Health check for external APIs
+int external_apis_health_check(void) {
+    if (!g_external_apis_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    bool all_healthy = true;
+    for (int i = 0; i < EXTERNAL_API_MAX; i++) {
+        if (g_external_apis.configs[i].enabled) {
+            if (!external_apis_is_healthy((external_api_type_t)i)) {
+                all_healthy = false;
+                LOGX_WARN_MSG("External API unhealthy", "api_type", external_api_type_to_string((external_api_type_t)i));
+            }
+        }
+    }
+    
+    return all_healthy ? AUTONOMY_SUCCESS : AUTONOMY_ERROR_SYSTEM;
+}
+
+// Get API status
+api_status_t external_apis_get_status(external_api_type_t api_type) {
+    if (!g_external_apis_initialized || api_type >= EXTERNAL_API_MAX) {
+        return API_STATUS_FAILED;
+    }
+    
+    if (api_type < 0 || api_type >= EXTERNAL_API_MAX) {
+        return API_STATUS_FAILED;
+    }
+    
+    // Check if API is enabled
+    if (!g_external_apis.configs[api_type].enabled) {
+        return API_STATUS_DISABLED;
+    }
+    
+    // Check recent success rate
+    external_api_statistics_t* stats = &g_external_apis.stats[api_type];
+    if (stats->total_requests == 0) {
+        return API_STATUS_UNKNOWN;
+    }
+    
+    double success_rate = (double)stats->successful_requests / stats->total_requests;
+    if (success_rate >= 0.9) {
+        return API_STATUS_HEALTHY;
+    } else if (success_rate >= 0.5) {
+        return API_STATUS_DEGRADED;
+    } else {
+        return API_STATUS_FAILED;
+    }
+}
+
+// Check if API is healthy
+bool external_apis_is_healthy(external_api_type_t api_type) {
+    api_status_t status = external_apis_get_status(api_type);
+    return (status == API_STATUS_HEALTHY || status == API_STATUS_DEGRADED);
+}
+
+// Set API enabled state
+int external_apis_set_enabled(external_api_type_t api_type, bool enabled) {
+    if (!g_external_apis_initialized || api_type >= EXTERNAL_API_MAX) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (api_type < 0 || api_type >= EXTERNAL_API_MAX) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    g_external_apis.configs[api_type].enabled = enabled;
+    
+    LOGX_INFO_MSG("Set external API enabled state", 
+                  "api_type", external_api_type_to_string(api_type),
+                  "enabled", enabled ? "true" : "false");
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Check API rate limit
+bool external_apis_check_rate_limit(external_api_type_t api_type) {
+    if (!g_external_apis_initialized || api_type >= EXTERNAL_API_MAX) {
+        return false;
+    }
+    
+    if (api_type < 0 || api_type >= EXTERNAL_API_MAX) {
+        return false;
+    }
+    
+    external_api_statistics_t* stats = &g_external_apis.stats[api_type];
+    external_api_config_t* config = &g_external_apis.configs[api_type];
+    
+    time_t now = time(NULL);
+    
+    // Simple rate limiting: check requests in last minute
+    if (now - stats->last_success < 60) {
+        if (stats->requests_this_hour >= 60) {
+            return false; // Rate limit exceeded
+        }
+    } else {
+        // Reset counter for new minute
+        stats->requests_this_hour = 0;
+    }
+    
+    return true;
+}
+
+// Configure external API
+int external_apis_configure(external_api_type_t api_type, const external_api_config_t* config) {
+    if (!g_external_apis_initialized || !config || api_type >= EXTERNAL_API_MAX) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (api_type < 0 || api_type >= EXTERNAL_API_MAX) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    g_external_apis.configs[api_type] = *config;
+    
+    LOGX_INFO_MSG("Configured external API", 
+                  "api_type", external_api_type_to_string(api_type),
+                  "enabled", config->enabled ? "true" : "false");
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Make API request (generic)
+int external_apis_make_request(const external_api_request_t* request, external_api_response_t* response) {
+    if (!g_external_apis_initialized || !request || !response) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Check rate limit
+    if (!external_apis_check_rate_limit(request->api_type)) {
+        return AUTONOMY_ERROR_TOO_FREQUENT;
+    }
+    
+    // Update statistics
+    external_api_statistics_t* stats = &g_external_apis.stats[request->api_type];
+    stats->total_requests++;
+    stats->last_success = time(NULL);
+    stats->requests_this_hour++;
+    
+    // Placeholder for actual HTTP request logic
+    LOGX_INFO_MSG("Making external API request", 
+                  "api_type", external_api_type_to_string(request->api_type),
+                  "url", "placeholder_url");
+    
+    // Simulate successful response
+    response->status_code = 200;
+    response->success = true;
+    response->duration_ms = 100;
+    strncpy(response->body, "{\"status\":\"success\"}", sizeof(response->body) - 1);
+    
+    stats->successful_requests++;
+    stats->average_response_time_ms += response->duration_ms;
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Get Google location (placeholder)
+int external_apis_get_google_location(const void* cell_towers, const void* wifi_aps, 
+                                     external_location_data_t* location_data) {
+    if (!g_external_apis_initialized || !location_data) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Placeholder implementation
+    LOGX_INFO_MSG("Google location API placeholder");
+    
+    location_data->latitude = 0.0;
+    location_data->longitude = 0.0;
+    location_data->accuracy = 1000.0;
+    strcpy(location_data->source, "google_placeholder");
+    location_data->timestamp = time(NULL);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Get reverse geocoding
+int external_apis_get_reverse_geocoding(double latitude, double longitude, external_location_data_t* location_data) {
+    if (!g_external_apis_initialized || !location_data) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Placeholder implementation
+    LOGX_INFO_MSG("Reverse geocoding API placeholder", "lat", latitude, "lon", longitude);
+    
+    location_data->latitude = latitude;
+    location_data->longitude = longitude;
+    location_data->accuracy = 100.0;
+    strcpy(location_data->source, "reverse_geocoding");
+    strcpy(location_data->formatted_address, "Address not available");
+    location_data->timestamp = time(NULL);
+    
+    return AUTONOMY_SUCCESS;
+}

@@ -6,9 +6,6 @@
 #include <stdint.h>
 #include <time.h>
 #include <pthread.h>
-#include <math.h>
-#include <unistd.h>
-#include <fcntl.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,7 +23,16 @@ extern "C" {
 #define OPENCELLID_MAX_CONTRIBUTION_BATCH_SIZE 50
 #define OPENCELLID_MIN_GPS_ACCURACY_FOR_CONTRIBUTION 20.0
 
-// Note: opencellid_radio_type_t is defined in ../core/types.h
+// Radio technology types (matching OpenCellID standards)
+typedef enum {
+    OPENCELLID_RADIO_UNKNOWN = 0,
+    OPENCELLID_RADIO_GSM = 1,
+    OPENCELLID_RADIO_UMTS = 2,
+    OPENCELLID_RADIO_LTE = 3,
+    OPENCELLID_RADIO_NR = 4,      // 5G New Radio
+    OPENCELLID_RADIO_CDMA = 5,
+    OPENCELLID_RADIO_MAX
+} opencellid_radio_type_t;
 
 // Cell tower identifier (global unique identifier)
 typedef struct {
@@ -45,10 +51,7 @@ typedef struct {
     opencellid_cell_identifier_t cell_id;   // Cell identifier
     double latitude;                        // Latitude in decimal degrees
     double longitude;                       // Longitude in decimal degrees
-    double lat;                             // Alias for latitude
-    double lon;                             // Alias for longitude
     double range;                           // Accuracy radius in meters
-    double accuracy;                        // Alias for range
     int samples;                            // Number of measurements used
     double confidence;                      // Confidence score (0.0-1.0)
     bool changeable;                        // Whether location can be updated
@@ -93,12 +96,10 @@ typedef struct {
     time_t measurement_time;                // When measurement was taken
 } opencellid_neighbor_cell_t;
 
-// Note: opencellid_serving_cell_t already defined above
-
 // Cellular environment (serving + neighbors)
 typedef struct {
     opencellid_serving_cell_t serving_cell; // Serving cell
-    opencellid_neighbor_cell_t neighbors[32]; // Neighbor cells
+    opencellid_neighbor_cell_t neighbors[OPENCELLID_MAX_NEIGHBOR_CELLS]; // Neighbor cells
     int neighbor_count;                     // Number of neighbors
     time_t scan_time;                       // When scan was performed
     char environment_hash[65];              // SHA256 hash of environment

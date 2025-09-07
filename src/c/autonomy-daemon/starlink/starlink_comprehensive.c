@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 // Global comprehensive Starlink collector
-starlink_comprehensive_collector_t g_starlink_comprehensive = {0};
+static starlink_comprehensive_collector_t g_starlink_comprehensive = {0};
 static bool g_starlink_comprehensive_initialized = false;
 
 // Event severity strings

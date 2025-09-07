@@ -88,11 +88,11 @@ struct autonomy_state {
     float current_accuracy;
     int current_confidence;
     time_t last_gps_update;
-    int gps_enabled;
     float gps_health_score;
     char location_status[16];
     int movement_detected;
     time_t last_movement_check;
+    int gps_enabled;
 };
 
 // Return codes
@@ -134,6 +134,8 @@ typedef enum {
     GPS_SOURCE_RUTOS,
     GPS_SOURCE_STARLINK,
     GPS_SOURCE_OPENCELLID,
+    GPS_SOURCE_GOOGLE,
+    GPS_SOURCE_COMBINED,
     GPS_SOURCE_EXTERNAL,
     GPS_SOURCE_SIMULATED,
     GPS_SOURCE_MAX
@@ -298,6 +300,10 @@ typedef enum {
     GPS_SOURCE_STATUS_FAILED
 } gps_source_status_t;
 
+// Note: gps_source_health_t and gps_movement_state_t are defined in gps/gps_comprehensive.h
+
+// Note: OpenCellID types defined in gps/opencellid_complete.h
+
 // GPS fix types
 typedef enum {
     GPS_FIX_TYPE_NONE = 0,
@@ -408,19 +414,7 @@ typedef enum {
     GPS_RECOVERY_SWITCH_SOURCE
 } gps_recovery_strategy_t;
 
-// OpenCellID radio types (unified)
-typedef enum {
-    OPENCELLID_RADIO_UNKNOWN = 0,
-    OPENCELLID_RADIO_GSM = 1,
-    OPENCELLID_RADIO_UMTS = 2,
-    OPENCELLID_RADIO_LTE = 3,
-    OPENCELLID_RADIO_NR = 4,
-    OPENCELLID_RADIO_CDMA = 5,
-    OPENCELLID_RADIO_MAX
-} opencellid_radio_type_t;
-
-// Alias for compatibility
-typedef opencellid_radio_type_t opencellid_radio_t;
+// Note: OpenCellID radio types defined in gps/opencellid_complete.h
 
 // Note: opencellid_cellular_environment_t is defined in gps/opencellid_complete.h
 
@@ -512,6 +506,7 @@ typedef struct {
     char email_smtp[256];                    // SMTP server
     char webhook_url[512];                   // Webhook URL
 } autonomy_config_t;
+
 
 // Function declarations
 void log_message(log_level_t level, const char *format, ...);

@@ -8,7 +8,7 @@
 extern struct autonomy_state g_state;
 
 // GPS discovery and management
-static int discover_gps_sources(void) {
+int discover_gps_sources(void) {
     // Initialize GPS sources
     g_state.gps_source_count = 0;
     

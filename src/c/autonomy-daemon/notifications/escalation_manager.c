@@ -320,7 +320,6 @@ static void send_escalation_notification(escalation_chain_t* chain, int level) {
     memset(&event, 0, sizeof(event));
     
     // Note: notification_event_t doesn't have id field, using title for identification
-    snprintf(event.title, sizeof(event.title), "Escalation: %s Level %d", chain->id, level);
     snprintf(event.title, sizeof(event.title), "🚨 ESCALATION LEVEL %d: %s", 
              level, notification_type_to_string(chain->alert_type));
     
