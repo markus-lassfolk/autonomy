@@ -6,12 +6,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <math.h>
-#include <fcntl.h>
-#include <sys/socket.h>
 
 // UBUS parameter policies
 enum {
@@ -54,7 +48,7 @@ static const struct blobmsg_policy wifi_config_policy[] = {
 };
 
 // Helper function to add WiFi interface to blob
-void add_wifi_interface_to_blob(struct blob_buf *bb, const wifi_interface_t *interface) {
+static void add_wifi_interface_to_blob(struct blob_buf *bb, const wifi_interface_t *interface) {
     void *interface_table = blobmsg_open_table(bb, NULL);
     
     blobmsg_add_string(bb, "name", interface->name);
@@ -91,7 +85,7 @@ void add_wifi_interface_to_blob(struct blob_buf *bb, const wifi_interface_t *int
 }
 
 // Helper function to add channel score to blob
-void add_channel_score_to_blob(struct blob_buf *bb, const wifi_enhanced_channel_score_t *score) {
+static void add_channel_score_to_blob(struct blob_buf *bb, const wifi_enhanced_channel_score_t *score) {
     void *channel_table = blobmsg_open_table(bb, NULL);
     
     blobmsg_add_u32(bb, "channel", score->channel);

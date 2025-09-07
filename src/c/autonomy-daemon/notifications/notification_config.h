@@ -9,7 +9,6 @@
 #include "slack_client.h"
 #include <stdbool.h>
 #include <time.h>
-#include <stdint.h>
 
 // Comprehensive notification configuration
 typedef struct {

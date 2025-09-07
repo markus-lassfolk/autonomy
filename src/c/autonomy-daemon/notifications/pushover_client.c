@@ -55,7 +55,7 @@ static char* url_encode(const char* str) {
 }
 
 // Initialize pushover client
-static int pushover_client_init(pushover_client_t* client, const pushover_config_t* config) {
+int pushover_client_init(pushover_client_t* client, const pushover_config_t* config) {
     if (!client || !config) {
         return -1;
     }
@@ -68,9 +68,7 @@ static int pushover_client_init(pushover_client_t* client, const pushover_config
     // Initialize status
     client->status.enabled = config->enabled;
     strncpy(client->status.token, config->token, sizeof(client->status.token) - 1);
-    client->status.token[sizeof(client->status.token) - 1] = '\0';
     strncpy(client->status.user, config->user, sizeof(client->status.user) - 1);
-    client->status.user[sizeof(client->status.user) - 1] = '\0';
     client->status.total_sent = 0;
     client->status.total_failed = 0;
     client->status.last_response_code = 0;
@@ -82,7 +80,7 @@ static int pushover_client_init(pushover_client_t* client, const pushover_config
 }
 
 // Clean up pushover client
-static void pushover_client_cleanup(pushover_client_t* client) {
+void pushover_client_cleanup(pushover_client_t* client) {
     if (!client) return;
     
     // Clear sensitive data
@@ -116,13 +114,9 @@ void pushover_client_create_message(pushover_client_t* client, const notificatio
     
     // Copy basic fields
     strncpy(message->token, client->config.token, sizeof(message->token) - 1);
-    message->token[sizeof(message->token) - 1] = '\0';
     strncpy(message->user, client->config.user, sizeof(message->user) - 1);
-    message->user[sizeof(message->user) - 1] = '\0';
     strncpy(message->message, event->message, sizeof(message->message) - 1);
-    message->message[sizeof(message->message) - 1] = '\0';
     strncpy(message->title, event->title, sizeof(message->title) - 1);
-    message->title[sizeof(message->title) - 1] = '\0';
     
     // Map priority (Pushover uses -2 to 2, our enum is different)
     switch (event->priority) {
@@ -151,16 +145,13 @@ void pushover_client_create_message(pushover_client_t* client, const notificatio
     // Set sound
     if (strlen(client->config.default_sound) > 0) {
         strncpy(message->sound, client->config.default_sound, sizeof(message->sound) - 1);
-        message->sound[sizeof(message->sound) - 1] = '\0';
     } else {
         strncpy(message->sound, pushover_client_get_priority_sound(event->priority), sizeof(message->sound) - 1);
-        message->sound[sizeof(message->sound) - 1] = '\0';
     }
     
     // Set device if configured
     if (strlen(client->config.device) > 0) {
         strncpy(message->device, client->config.device, sizeof(message->device) - 1);
-        message->device[sizeof(message->device) - 1] = '\0';
     }
     
     message->timestamp = event->timestamp;
@@ -169,9 +160,7 @@ void pushover_client_create_message(pushover_client_t* client, const notificatio
     // Add dashboard URL if available in context
     if (strstr(event->details_json, "dashboard_url")) {
         strncpy(message->url, "http://router.local", sizeof(message->url) - 1);
-        message->url[sizeof(message->url) - 1] = '\0';
         strncpy(message->url_title, "View Dashboard", sizeof(message->url_title) - 1);
-        message->url_title[sizeof(message->url_title) - 1] = '\0';
     }
 }
 
@@ -255,7 +244,6 @@ static int send_pushover_request(pushover_client_t* client, pushover_message_t* 
     CURL* curl = curl_easy_init();
     if (!curl) {
         strncpy(client->status.last_error, "Failed to initialize curl", sizeof(client->status.last_error) - 1);
-        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
         return -1;
     }
     
@@ -268,7 +256,6 @@ static int send_pushover_request(pushover_client_t* client, pushover_message_t* 
     if (!form_data) {
         curl_easy_cleanup(curl);
         strncpy(client->status.last_error, "Failed to create form data", sizeof(client->status.last_error) - 1);
-        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
         return -1;
     }
     
@@ -333,10 +320,8 @@ static int send_pushover_request(pushover_client_t* client, pushover_message_t* 
             char* error_start = strstr(response.data, "\"errors\":");
             if (error_start) {
                 strncpy(client->status.last_error, "Pushover API error", sizeof(client->status.last_error) - 1);
-                client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
             } else {
                 strncpy(client->status.last_error, "Pushover API returned error", sizeof(client->status.last_error) - 1);
-                client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
             }
             client->status.last_error_time = time(NULL);
             free(response.data);
@@ -348,14 +333,13 @@ static int send_pushover_request(pushover_client_t* client, pushover_message_t* 
 }
 
 // Send notification via Pushover with retry logic
-static int pushover_client_send(pushover_client_t* client, const notification_event_t* event) {
+int pushover_client_send(pushover_client_t* client, const notification_event_t* event) {
     if (!client || !event || !client->config.enabled) {
         return -1;
     }
     
     if (strlen(client->config.token) == 0 || strlen(client->config.user) == 0) {
         strncpy(client->status.last_error, "Pushover token and user are required", sizeof(client->status.last_error) - 1);
-        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
         client->status.last_error_time = time(NULL);
         client->status.total_failed++;
         return -1;
@@ -395,7 +379,7 @@ static int pushover_client_send(pushover_client_t* client, const notification_ev
 }
 
 // Get pushover client status
-static void pushover_client_get_status(pushover_client_t* client, pushover_client_status_t* status) {
+void pushover_client_get_status(pushover_client_t* client, pushover_client_status_t* status) {
     if (!client || !status) return;
     
     *status = client->status;

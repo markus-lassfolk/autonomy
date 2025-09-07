@@ -11,11 +11,8 @@
 extern "C" {
 #endif
 
-// GPS coordinate structure
-typedef struct {
-    double lat;                         // Latitude
-    double lon;                         // Longitude
-} gps_coordinate_t;
+// GPS coordinate structure - defined in gps_coordinate_utils.h
+#include "gps_coordinate_utils.h"
 
 // Geofence types
 typedef enum {

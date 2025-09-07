@@ -1,7 +1,7 @@
 #include "starlink_api_version_monitor.h"
 #include "../core/types.h"
 #include "../starlink/starlink_comprehensive.h"
-#include "../notifications/notifications_comprehensive.h"
+#include "../notifications/notification_types.h"
 #include "../utils/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -555,7 +555,7 @@ static int send_version_change_notification(const starlink_api_version_change_t*
     
     // Send notification
     const char* notification_id = notifications_comprehensive_send(
-        NOTIFICATION_TYPE_SYSTEM_ALERT,
+        NOTIFICATION_TYPE_SYSTEM_HEALTH,
         priority,
         title,
         message,

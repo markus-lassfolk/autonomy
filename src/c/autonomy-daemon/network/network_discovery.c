@@ -14,14 +14,11 @@
 #include <time.h>
 #include <dirent.h>
 #include <sys/stat.h>
-#include <stdbool.h>
-#include <math.h>
-#include <fcntl.h>
 
 // Network discovery configuration
 static const int DISCOVERY_INTERVAL = 30;        // 30 seconds
 static const int INTERFACE_TIMEOUT = 300;        // 5 minutes
-// Note: MAX_INTERFACES is defined in ../core/types.h
+#define LOCAL_LOCAL_MAX_INTERFACES 32            // Maximum interfaces to track
 static const char* INTERFACE_TYPES[] = {
     "ethernet", "wifi", "cellular", "vpn", "bridge", "vlan", "tunnel"
 };
@@ -32,16 +29,6 @@ static pthread_mutex_t g_discovery_mutex = PTHREAD_MUTEX_INITIALIZER;
 static bool g_discovery_initialized = false;
 static pthread_t g_discovery_thread = 0;
 static bool g_discovery_thread_running = false;
-
-// Forward declarations
-void* discovery_monitor_thread(void *arg);
-void discover_system_interfaces(void);
-void discover_uci_interfaces(void);
-bool interface_exists_in_system(const char *interface_name);
-void get_interface_details(network_interface_t *iface);
-void determine_interface_type(network_interface_t *iface);
-void get_interface_statistics(network_interface_t *iface);
-void cleanup_stale_interfaces(time_t now);
 
 // Initialize network discovery system
 int network_discovery_init(void) {
@@ -57,7 +44,7 @@ int network_discovery_init(void) {
     g_discovery.enabled = true;
     g_discovery.discovery_interval = DISCOVERY_INTERVAL;
     g_discovery.interface_timeout = INTERFACE_TIMEOUT;
-    g_discovery.max_interfaces = MAX_INTERFACES;
+    g_discovery.max_interfaces = LOCAL_MAX_INTERFACES;
     g_discovery.last_discovery = 0;
     g_discovery.total_discoveries = 0;
     g_discovery.interface_count = 0;
@@ -82,7 +69,7 @@ int network_discovery_start_monitoring(void) {
     }
     
     // Create monitoring thread
-    int ret = pthread_create(&g_discovery_thread, NULL, discovery_monitor_thread, NULL);
+    int ret = pthread_create(&g_discovery_thread, NULL, discovery_monitor_thread_func, NULL);
     if (ret != 0) {
         LOGX_ERROR_MSG("Failed to create network discovery monitoring thread");
         return AUTONOMY_ERROR_SYSTEM;
@@ -111,7 +98,7 @@ void network_discovery_stop_monitoring(void) {
 }
 
 // Network discovery monitoring thread
-void* discovery_monitor_thread(void *arg) {
+static void* discovery_monitor_thread_func(void *arg) {
     (void)arg;
     
     LOGX_INFO_MSG("Network discovery monitoring thread started");
@@ -168,7 +155,7 @@ int network_discovery_scan_interfaces(void) {
 }
 
 // Discover system network interfaces
-void discover_system_interfaces(void) {
+static void discover_system_interfaces(void) {
     struct if_nameindex *if_ni, *i;
     
     if_ni = if_nameindex();
@@ -200,7 +187,6 @@ void discover_system_interfaces(void) {
             memset(iface, 0, sizeof(network_interface_t));
             
             strncpy(iface->name, i->if_name, sizeof(iface->name) - 1);
-            iface->name[sizeof(iface->name) - 1] = '\0';
             iface->index = i->if_index;
             iface->last_seen = time(NULL);
             iface->discovered = true;
@@ -218,7 +204,7 @@ void discover_system_interfaces(void) {
 }
 
 // Discover UCI network interfaces
-void discover_uci_interfaces(void) {
+static void discover_uci_interfaces(void) {
     // This would integrate with UCI to discover configured network interfaces
     // For now, we'll simulate the discovery of common interface types
     
@@ -247,7 +233,6 @@ void discover_uci_interfaces(void) {
                 memset(iface, 0, sizeof(network_interface_t));
                 
                 strncpy(iface->name, common_interfaces[i], sizeof(iface->name) - 1);
-                iface->name[sizeof(iface->name) - 1] = '\0';
                 iface->last_seen = time(NULL);
                 iface->discovered = true;
                 
@@ -263,7 +248,7 @@ void discover_uci_interfaces(void) {
 }
 
 // Check if interface exists in system
-bool interface_exists_in_system(const char *interface_name) {
+static bool interface_exists_in_system(const char *interface_name) {
     if (!interface_name) {
         return false;
     }
@@ -288,7 +273,7 @@ bool interface_exists_in_system(const char *interface_name) {
 }
 
 // Get detailed interface information
-void get_interface_details(network_interface_t *iface) {
+static void get_interface_details(network_interface_t *iface) {
     if (!iface) {
         return;
     }
@@ -344,7 +329,7 @@ void get_interface_details(network_interface_t *iface) {
 }
 
 // Determine interface type based on name and characteristics
-void determine_interface_type(network_interface_t *iface) {
+static void determine_interface_type(network_interface_t *iface) {
     if (!iface) {
         return;
     }
@@ -352,30 +337,23 @@ void determine_interface_type(network_interface_t *iface) {
     // Check interface name patterns
     if (strncmp(iface->name, "eth", 3) == 0) {
         strncpy(iface->type, "ethernet", sizeof(iface->type) - 1);
-        iface->type[sizeof(iface->type) - 1] = '\0';
     } else if (strncmp(iface->name, "wlan", 4) == 0) {
         strncpy(iface->type, "wifi", sizeof(iface->type) - 1);
-        iface->type[sizeof(iface->type) - 1] = '\0';
     } else if (strncmp(iface->name, "wwan", 4) == 0) {
         strncpy(iface->type, "cellular", sizeof(iface->type) - 1);
-        iface->type[sizeof(iface->type) - 1] = '\0';
     } else if (strncmp(iface->name, "tun", 3) == 0 || strncmp(iface->name, "tap", 3) == 0) {
         strncpy(iface->type, "vpn", sizeof(iface->type) - 1);
-        iface->type[sizeof(iface->type) - 1] = '\0';
     } else if (strncmp(iface->name, "br", 2) == 0) {
         strncpy(iface->type, "bridge", sizeof(iface->type) - 1);
-        iface->type[sizeof(iface->type) - 1] = '\0';
     } else if (strncmp(iface->name, "vlan", 4) == 0) {
         strncpy(iface->type, "vlan", sizeof(iface->type) - 1);
-        iface->type[sizeof(iface->type) - 1] = '\0';
     } else {
         strncpy(iface->type, "unknown", sizeof(iface->type) - 1);
-        iface->type[sizeof(iface->type) - 1] = '\0';
     }
 }
 
 // Get interface statistics
-void get_interface_statistics(network_interface_t *iface) {
+static void get_interface_statistics(network_interface_t *iface) {
     if (!iface) {
         return;
     }
@@ -426,7 +404,7 @@ void get_interface_statistics(network_interface_t *iface) {
 }
 
 // Clean up stale interfaces
-void cleanup_stale_interfaces(time_t now) {
+static void cleanup_stale_interfaces(time_t now) {
     for (int i = 0; i < g_discovery.interface_count; i++) {
         if (g_discovery.interfaces[i].last_seen > 0 &&
             (now - g_discovery.interfaces[i].last_seen) > g_discovery.interface_timeout) {

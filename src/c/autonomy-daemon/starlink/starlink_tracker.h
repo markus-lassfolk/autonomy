@@ -1,54 +1,69 @@
 #ifndef STARLINK_TRACKER_H
 #define STARLINK_TRACKER_H
 
-#include <time.h>
-#include <stdint.h>
+#include "../core/types.h"
 #include <stdbool.h>
-#include "starlink_types.h"
+#include <time.h>
+#include <uci.h>
 
-// Forward declarations for UCI and UBUS types
-struct uci_context;
-struct ubus_context;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Starlink tracker configuration
 typedef struct {
-    char space_track_username[64];
-    char space_track_password[64];
-    char tle_file_path[256];
-    int update_interval_minutes;
-    bool predictive_enabled;
-    double prediction_horizon_hours;
+    bool enabled;
+    int tracking_interval_seconds;
+    int max_tracked_starlinks;
+    bool enable_health_monitoring;
+    bool enable_performance_tracking;
+    bool enable_location_tracking;
 } starlink_tracker_config_t;
 
-// Starlink tracker state
+// Starlink tracker status
 typedef struct {
     bool initialized;
-    time_t last_tle_update;
-    time_t last_prediction_update;
-    int satellite_count;
-    bool tracking_active;
-    char current_location[64];
-    double current_lat;
-    double current_lon;
-    double current_alt;
-} starlink_tracker_state_t;
+    bool ubus_enabled;
+    int tracked_starlink_count;
+    int active_connections;
+    int total_tracking_sessions;
+    time_t start_time;
+    time_t last_tracking_update;
+} starlink_tracker_status_t;
 
-// Main starlink tracker structure
+// Function prototypes
+
+// Starlink tracker structure
 typedef struct starlink_tracker {
     starlink_tracker_config_t config;
-    starlink_tracker_state_t state;
-    void *satellite_data;  // Opaque pointer to satellite tracking data
-    void *prediction_engine;  // Opaque pointer to prediction engine
+    starlink_tracker_status_t status;
+    bool initialized;
+    struct ubus_context *ubus_ctx;
 } starlink_tracker_t;
 
-// Function declarations
-int starlink_tracker_init(starlink_tracker_t *tracker, const starlink_tracker_config_t *config);
-void starlink_tracker_cleanup(starlink_tracker_t *tracker);
-int starlink_tracker_update_tle(starlink_tracker_t *tracker);
-int starlink_tracker_update_predictions(starlink_tracker_t *tracker);
-int starlink_tracker_get_visibility(starlink_tracker_t *tracker, double lat, double lon, double alt, time_t timestamp);
+// Initialize starlink tracker from UCI configuration
 starlink_tracker_t* starlink_tracker_init_from_uci(struct uci_context *uci_ctx);
+
+// Initialize starlink tracker UBUS interface
 int starlink_tracker_ubus_init(struct ubus_context *ctx, starlink_tracker_t *tracker);
-void starlink_tracker_ubus_cleanup(void *ctx);
+
+// Cleanup starlink tracker UBUS interface
+void starlink_tracker_ubus_cleanup(struct ubus_context *ctx);
+
+// Cleanup starlink tracker
+void starlink_tracker_cleanup(starlink_tracker_t *tracker);
+
+// Get starlink tracker status
+int starlink_tracker_get_status(starlink_tracker_status_t* status);
+
+// Get starlink tracker configuration
+int starlink_tracker_get_config(starlink_tracker_config_t* config);
+
+// Check if starlink tracker is initialized
+bool starlink_tracker_is_initialized(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // STARLINK_TRACKER_H

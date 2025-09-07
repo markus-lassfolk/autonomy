@@ -11,27 +11,23 @@
 #include <dirent.h>
 #include <time.h>
 #include <errno.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <math.h>
-#include <fcntl.h>
 
 // Global overlay management instance
 static overlay_management_t g_overlay_manager;
 
 // Forward declarations
 static int get_overlay_usage(void);
-int perform_cleanup(void);
-int perform_emergency_cleanup(void);
-int64_t cleanup_stale_backups(void);
-int64_t cleanup_old_logs(void);
-int64_t cleanup_temp_files(void);
-int64_t cleanup_maintenance_logs(void);
-int64_t cleanup_all_backups(void);
-int64_t cleanup_all_logs(void);
-int64_t cleanup_all_temp_files(void);
-int64_t cleanup_system_cache(void);
-int64_t remove_file_recursive(const char *path);
+static int perform_cleanup(void);
+static int perform_emergency_cleanup(void);
+static int64_t cleanup_stale_backups(void);
+static int64_t cleanup_old_logs(void);
+static int64_t cleanup_temp_files(void);
+static int64_t cleanup_maintenance_logs(void);
+static int64_t cleanup_all_backups(void);
+static int64_t cleanup_all_logs(void);
+static int64_t cleanup_all_temp_files(void);
+static int64_t cleanup_system_cache(void);
+static int64_t remove_file_recursive(const char *path);
 static int64_t get_file_size(const char *path);
 static int is_file_older_than(const char *path, int days);
 static void send_notification(const char *type, const char *message);
@@ -144,7 +140,7 @@ static int get_overlay_usage(void) {
 /**
  * Perform routine cleanup of stale files
  */
-int perform_cleanup(void) {
+static int perform_cleanup(void) {
     int64_t total_freed = 0;
     
     // Cleanup stale backup files
@@ -180,7 +176,7 @@ int perform_cleanup(void) {
 /**
  * Perform aggressive cleanup for critical space situations
  */
-int perform_emergency_cleanup(void) {
+static int perform_emergency_cleanup(void) {
     int64_t total_freed = 0;
     
     // More aggressive cleanup for emergency situations
@@ -213,7 +209,7 @@ int perform_emergency_cleanup(void) {
 /**
  * Cleanup stale backup files
  */
-int64_t cleanup_stale_backups(void) {
+static int64_t cleanup_stale_backups(void) {
     int64_t total_freed = 0;
     const char *backup_dirs[] = {"/etc/config", "/root", "/tmp"};
     
@@ -245,7 +241,7 @@ int64_t cleanup_stale_backups(void) {
 /**
  * Cleanup old log files
  */
-int64_t cleanup_old_logs(void) {
+static int64_t cleanup_old_logs(void) {
     int64_t total_freed = 0;
     const char *log_dirs[] = {"/var/log", "/tmp", "/root"};
     
@@ -277,7 +273,7 @@ int64_t cleanup_old_logs(void) {
 /**
  * Cleanup temporary files
  */
-int64_t cleanup_temp_files(void) {
+static int64_t cleanup_temp_files(void) {
     int64_t total_freed = 0;
     const char *temp_dirs[] = {"/tmp", "/var/tmp", "/root/tmp"};
     
@@ -309,7 +305,7 @@ int64_t cleanup_temp_files(void) {
 /**
  * Cleanup maintenance logs
  */
-int64_t cleanup_maintenance_logs(void) {
+static int64_t cleanup_maintenance_logs(void) {
     int64_t total_freed = 0;
     const char *maintenance_logs[] = {"/var/log/maintenance.log", "/tmp/maintenance.log"};
     
@@ -328,7 +324,7 @@ int64_t cleanup_maintenance_logs(void) {
 /**
  * Cleanup all backup files (emergency mode)
  */
-int64_t cleanup_all_backups(void) {
+static int64_t cleanup_all_backups(void) {
     int64_t total_freed = 0;
     const char *backup_dirs[] = {"/etc/config", "/root", "/tmp"};
     
@@ -358,7 +354,7 @@ int64_t cleanup_all_backups(void) {
 /**
  * Cleanup all log files (emergency mode)
  */
-int64_t cleanup_all_logs(void) {
+static int64_t cleanup_all_logs(void) {
     int64_t total_freed = 0;
     const char *log_dirs[] = {"/var/log", "/tmp", "/root"};
     
@@ -388,7 +384,7 @@ int64_t cleanup_all_logs(void) {
 /**
  * Cleanup all temporary files (emergency mode)
  */
-int64_t cleanup_all_temp_files(void) {
+static int64_t cleanup_all_temp_files(void) {
     int64_t total_freed = 0;
     const char *temp_dirs[] = {"/tmp", "/var/tmp", "/root/tmp"};
     
@@ -418,7 +414,7 @@ int64_t cleanup_all_temp_files(void) {
 /**
  * Cleanup system cache (emergency mode)
  */
-int64_t cleanup_system_cache(void) {
+static int64_t cleanup_system_cache(void) {
     int64_t total_freed = 0;
     const char *cache_dirs[] = {"/tmp", "/var/cache", "/root/.cache"};
     
@@ -447,7 +443,7 @@ int64_t cleanup_system_cache(void) {
 /**
  * Remove file or directory recursively
  */
-int64_t remove_file_recursive(const char *path) {
+static int64_t remove_file_recursive(const char *path) {
     struct stat st;
     if (lstat(path, &st) != 0) {
         return 0;
@@ -521,13 +517,12 @@ static void send_notification(const char *type, const char *message) {
     notification_event_t event = {0};
     strcpy(event.title, "Overlay Management Alert");
     strncpy(event.message, message, sizeof(event.message) - 1);
-    event.message[sizeof(event.message) - 1] = '\0';
-    event.type = NOTIFICATION_TYPE_SYSTEM_ALERT;
+    event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
     event.timestamp = time(NULL);
     
     // Determine priority based on type
     if (strcmp(type, "critical") == 0) {
-        event.priority = NOTIFICATION_PRIORITY_CRITICAL;
+        event.priority = NOTIFICATION_PRIORITY_HIGH;
     } else if (strcmp(type, "warning") == 0) {
         event.priority = NOTIFICATION_PRIORITY_HIGH;
     } else {

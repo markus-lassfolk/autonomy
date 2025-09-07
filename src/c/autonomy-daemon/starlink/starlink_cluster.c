@@ -1,5 +1,4 @@
 #include "starlink_types.h"
-#include "starlink_modules.h"
 #include "starlink_obstruction.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +10,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <stdbool.h>
 
 // Global Starlink cluster
 static starlink_cluster_t g_starlink_cluster = {0};
@@ -47,7 +45,6 @@ int starlink_cluster_add(const char *id, const starlink_config_t *config) {
     // Initialize instance
     memset(instance, 0, sizeof(starlink_instance_t));
     strncpy(instance->id, id, sizeof(instance->id) - 1);
-    instance->id[sizeof(instance->id) - 1] = '\0';
     memcpy(&instance->config, config, sizeof(starlink_config_t));
     
     // Set default values

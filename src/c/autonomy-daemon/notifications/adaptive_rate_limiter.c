@@ -6,7 +6,7 @@
 #include <math.h>
 
 // Initialize rate limiter
-static int adaptive_rate_limiter_init(adaptive_rate_limiter_t* limiter, const rate_limiter_config_t* config) {
+int adaptive_rate_limiter_init(adaptive_rate_limiter_t* limiter, const rate_limiter_config_t* config) {
     if (!limiter || !config) {
         return -1;
     }
@@ -85,7 +85,7 @@ bool adaptive_rate_limiter_allow_request(adaptive_rate_limiter_t* limiter,
 }
 
 // Record successful request
-static void adaptive_rate_limiter_record_success(adaptive_rate_limiter_t* limiter) {
+void adaptive_rate_limiter_record_success(adaptive_rate_limiter_t* limiter) {
     if (!limiter) return;
     
     limiter->success_count++;
@@ -99,7 +99,7 @@ static void adaptive_rate_limiter_record_success(adaptive_rate_limiter_t* limite
 }
 
 // Record failed request
-static void adaptive_rate_limiter_record_failure(adaptive_rate_limiter_t* limiter) {
+void adaptive_rate_limiter_record_failure(adaptive_rate_limiter_t* limiter) {
     if (!limiter) return;
     
     limiter->failure_count++;
@@ -113,7 +113,7 @@ static void adaptive_rate_limiter_record_failure(adaptive_rate_limiter_t* limite
 }
 
 // Adjust rate based on success/failure
-static void adaptive_rate_limiter_adjust_rate(adaptive_rate_limiter_t* limiter, bool success) {
+void adaptive_rate_limiter_adjust_rate(adaptive_rate_limiter_t* limiter, bool success) {
     if (!limiter) return;
     
     time_t now = time(NULL);
@@ -181,12 +181,12 @@ static int get_priority_cooldown(adaptive_rate_limiter_t* limiter, notification_
 }
 
 // Get current rate limit
-static int adaptive_rate_limiter_get_current_rate(const adaptive_rate_limiter_t* limiter) {
+int adaptive_rate_limiter_get_current_rate(const adaptive_rate_limiter_t* limiter) {
     return limiter ? limiter->current_rate : 0;
 }
 
 // Set rate limit manually
-static void adaptive_rate_limiter_set_rate(adaptive_rate_limiter_t* limiter, int new_rate) {
+void adaptive_rate_limiter_set_rate(adaptive_rate_limiter_t* limiter, int new_rate) {
     if (!limiter) return;
     
     if (new_rate >= limiter->min_rate && new_rate <= limiter->max_rate) {
@@ -218,7 +218,7 @@ void adaptive_rate_limiter_get_stats(const adaptive_rate_limiter_t* limiter,
 }
 
 // Reset rate limiter
-static void adaptive_rate_limiter_reset(adaptive_rate_limiter_t* limiter) {
+void adaptive_rate_limiter_reset(adaptive_rate_limiter_t* limiter) {
     if (!limiter) return;
     
     limiter->current_rate = limiter->config.initial_rate;
@@ -236,7 +236,7 @@ static void adaptive_rate_limiter_reset(adaptive_rate_limiter_t* limiter) {
 }
 
 // Check if rate limiter is in emergency mode
-static bool adaptive_rate_limiter_is_emergency_mode(const adaptive_rate_limiter_t* limiter) {
+bool adaptive_rate_limiter_is_emergency_mode(const adaptive_rate_limiter_t* limiter) {
     if (!limiter) return false;
     
     // Emergency mode if we're at minimum rate and have recent failures
@@ -260,7 +260,7 @@ int adaptive_rate_limiter_get_wait_time(const adaptive_rate_limiter_t* limiter,
 }
 
 // Clean up rate limiter
-static void adaptive_rate_limiter_cleanup(adaptive_rate_limiter_t* limiter) {
+void adaptive_rate_limiter_cleanup(adaptive_rate_limiter_t* limiter) {
     if (!limiter) return;
     
     // Reset all counters

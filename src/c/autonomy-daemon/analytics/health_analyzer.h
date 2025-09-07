@@ -4,8 +4,6 @@
 #include "../telemetry/telemetry_store.h"
 #include <stdbool.h>
 #include <time.h>
-#include <pthread.h>
-#include <math.h>
 
 // Health thresholds
 typedef struct {

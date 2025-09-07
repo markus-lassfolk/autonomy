@@ -1,3 +1,4 @@
+#include "gps_coordinate_utils.h"
 #include "gps_clustering.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
@@ -30,7 +31,7 @@ void update_cluster_variances(int cluster_index, const gps_data_t *gps_data);
 int find_oldest_cluster(void);
 void cleanup_expired_clusters(void);
 void perform_clustering_analysis(void);
-double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
 
 static gps_clustering_t g_clustering = {0};
 static bool g_clustering_initialized = false;
@@ -137,7 +138,7 @@ int find_best_cluster(const gps_data_t *gps_data) {
             continue;
         }
         
-        double distance = calculate_distance(gps_data->lat, gps_data->lon,
+        double distance = gps_coordinate_distance(gps_data->lat, gps_data->lon,
                                           g_clustering.clusters[i].center_lat,
                                           g_clustering.clusters[i].center_lon);
         
@@ -532,7 +533,7 @@ int gps_clustering_reset(void) {
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;

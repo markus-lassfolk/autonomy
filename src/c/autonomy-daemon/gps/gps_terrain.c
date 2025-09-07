@@ -1,3 +1,4 @@
+#include "gps_coordinate_utils.h"
 #include "gps_terrain.h"
 #include "../external/external_apis.h"
 #include "../utils/logx.h"
@@ -43,7 +44,7 @@ void calculate_terrain_difficulty(gps_terrain_info_t *terrain_info);
 static bool get_cached_terrain(double lat, double lon, gps_terrain_info_t *terrain_info);
 void cache_terrain_data(double lat, double lon, const gps_terrain_info_t *terrain_info);
 int find_oldest_terrain_cache(void);
-double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
 static int perform_terrain_analysis(double lat, double lon, gps_terrain_info_t *terrain_info);
 static int get_real_elevation(double lat, double lon, double* elevation);
 static int get_elevation_from_google_api(double lat, double lon, double* elevation);
@@ -540,7 +541,7 @@ static bool get_cached_terrain(double lat, double lon, gps_terrain_info_t *terra
         gps_terrain_cache_entry_t *cache = &g_terrain.terrain_cache[i];
         
         // Check if coordinates are within cache radius
-        double distance = calculate_distance(lat, lon, cache->lat, cache->lon);
+        double distance = gps_coordinate_distance(lat, lon, cache->lat, cache->lon);
         if (distance <= g_terrain.cache_radius) {
             // Check if cache is still valid
             if ((now - cache->timestamp) < g_terrain.update_interval) {
@@ -625,7 +626,7 @@ int find_oldest_terrain_cache(void) {
 }
 
 // Calculate distance between coordinates
-double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0; // Earth radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;

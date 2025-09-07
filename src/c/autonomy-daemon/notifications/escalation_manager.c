@@ -188,7 +188,6 @@ static void get_escalation_contacts(notification_type_t alert_type, int severity
     escalation_contact_t* contact = &contacts[(*contact_count)++];
     contact->level = 1;
     strncpy(contact->name, "On-Call Engineer", sizeof(contact->name) - 1);
-    contact->name[sizeof(contact->name) - 1] = '\0';
     contact->channels[0] = NOTIFICATION_CHANNEL_PUSHOVER;
     contact->channels[1] = NOTIFICATION_CHANNEL_SLACK;
     contact->channel_count = 2;
@@ -202,7 +201,6 @@ static void get_escalation_contacts(notification_type_t alert_type, int severity
     contact = &contacts[(*contact_count)++];
     contact->level = 2;
     strncpy(contact->name, "Team Lead", sizeof(contact->name) - 1);
-    contact->name[sizeof(contact->name) - 1] = '\0';
     contact->channels[0] = NOTIFICATION_CHANNEL_PUSHOVER;
     contact->channels[1] = NOTIFICATION_CHANNEL_EMAIL;
     contact->channels[2] = NOTIFICATION_CHANNEL_SLACK;
@@ -217,7 +215,6 @@ static void get_escalation_contacts(notification_type_t alert_type, int severity
     contact = &contacts[(*contact_count)++];
     contact->level = 3;
     strncpy(contact->name, "Engineering Manager", sizeof(contact->name) - 1);
-    contact->name[sizeof(contact->name) - 1] = '\0';
     contact->channels[0] = NOTIFICATION_CHANNEL_PUSHOVER;
     contact->channels[1] = NOTIFICATION_CHANNEL_EMAIL;
     contact->channels[2] = NOTIFICATION_CHANNEL_SLACK;
@@ -234,7 +231,6 @@ static void get_escalation_contacts(notification_type_t alert_type, int severity
         contact = &contacts[(*contact_count)++];
         contact->level = 4;
         strncpy(contact->name, "VP Engineering", sizeof(contact->name) - 1);
-        contact->name[sizeof(contact->name) - 1] = '\0';
         contact->channels[0] = NOTIFICATION_CHANNEL_PUSHOVER;
         contact->channels[1] = NOTIFICATION_CHANNEL_EMAIL;
         contact->channels[2] = NOTIFICATION_CHANNEL_TELEGRAM;
@@ -319,13 +315,12 @@ static void send_escalation_notification(escalation_chain_t* chain, int level) {
     notification_event_t event;
     memset(&event, 0, sizeof(event));
     
-    // Note: notification_event_t doesn't have id field, using title for identification
+    snprintf(event.id, sizeof(event.id), "esc_%s_%d_%ld", chain->id, level, now);
     snprintf(event.title, sizeof(event.title), "🚨 ESCALATION LEVEL %d: %s", 
              level, notification_type_to_string(chain->alert_type));
     
     char* message = create_escalation_message(chain, contact);
     strncpy(event.message, message, sizeof(event.message) - 1);
-    event.message[sizeof(event.message) - 1] = '\0';
     
     event.type = chain->alert_type;
     event.priority = NOTIFICATION_PRIORITY_EMERGENCY;
@@ -365,9 +360,7 @@ static void record_escalation_completion(escalation_chain_t* chain) {
         escalation_record_t* record = &g_escalation_manager.escalation_history[index];
         
         strncpy(record->id, chain->id, sizeof(record->id) - 1);
-        record->id[sizeof(record->id) - 1] = '\0';
         strncpy(record->incident_id, chain->incident_id, sizeof(record->incident_id) - 1);
-        record->incident_id[sizeof(record->incident_id) - 1] = '\0';
         record->alert_type = chain->alert_type;
         record->start_time = chain->start_time;
         record->end_time = end_time;
@@ -389,9 +382,7 @@ static void record_escalation_completion(escalation_chain_t* chain) {
         escalation_record_t* record = &g_escalation_manager.escalation_history[index];
         
         strncpy(record->id, chain->id, sizeof(record->id) - 1);
-        record->id[sizeof(record->id) - 1] = '\0';
         strncpy(record->incident_id, chain->incident_id, sizeof(record->incident_id) - 1);
-        record->incident_id[sizeof(record->incident_id) - 1] = '\0';
         record->alert_type = chain->alert_type;
         record->start_time = chain->start_time;
         record->end_time = end_time;
@@ -478,7 +469,6 @@ int escalation_manager_trigger_emergency_escalation(const char* incident_id,
     time_t now = time(NULL);
     snprintf(chain->id, sizeof(chain->id), "esc_%s_%ld", incident_id, now);
     strncpy(chain->incident_id, incident_id, sizeof(chain->incident_id) - 1);
-    chain->incident_id[sizeof(chain->incident_id) - 1] = '\0';
     chain->alert_type = alert_type;
     chain->start_time = now;
     chain->current_level = 1;
@@ -491,7 +481,6 @@ int escalation_manager_trigger_emergency_escalation(const char* incident_id,
     
     if (context_json) {
         strncpy(chain->context_json, context_json, sizeof(chain->context_json) - 1);
-        chain->context_json[sizeof(chain->context_json) - 1] = '\0';
     } else {
         chain->context_json[0] = '\0';
     }
@@ -542,7 +531,6 @@ int escalation_manager_acknowledge_escalation(const char* escalation_id, const c
     time_t now = time(NULL);
     chain->acknowledged = true;
     strncpy(chain->acknowledged_by, acknowledged_by, sizeof(chain->acknowledged_by) - 1);
-    chain->acknowledged_by[sizeof(chain->acknowledged_by) - 1] = '\0';
     chain->acknowledged_at = now;
     chain->status = ESCALATION_STATUS_PAUSED;
     

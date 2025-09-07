@@ -10,7 +10,7 @@ static emergency_detector_t g_emergency_detector;
 static bool g_emergency_detector_initialized = false;
 
 // Initialize emergency detector
-static int emergency_detector_init(const emergency_detector_config_t* config) {
+int emergency_detector_init(const emergency_detector_config_t* config) {
     if (g_emergency_detector_initialized) {
         return 0; // Already initialized
     }
@@ -60,7 +60,7 @@ static int emergency_detector_init(const emergency_detector_config_t* config) {
 }
 
 // Clean up emergency detector
-static void emergency_detector_cleanup(void) {
+void emergency_detector_cleanup(void) {
     if (!g_emergency_detector_initialized) return;
     
     if (g_emergency_detector.mutex) {
@@ -348,7 +348,7 @@ emergency_level_t emergency_detector_detect_emergency(const system_state_t* syst
 }
 
 // Add active incident
-static int emergency_detector_add_incident(const active_incident_t* incident) {
+int emergency_detector_add_incident(const active_incident_t* incident) {
     if (!g_emergency_detector_initialized || !incident) {
         return -1;
     }
@@ -372,7 +372,7 @@ static int emergency_detector_add_incident(const active_incident_t* incident) {
 }
 
 // Add failure record
-static int emergency_detector_add_failure(const failure_record_t* failure) {
+int emergency_detector_add_failure(const failure_record_t* failure) {
     if (!g_emergency_detector_initialized || !failure) {
         return -1;
     }
@@ -396,7 +396,7 @@ static int emergency_detector_add_failure(const failure_record_t* failure) {
 }
 
 // Get emergency detector status
-static void emergency_detector_get_status(emergency_detector_status_t* status) {
+void emergency_detector_get_status(emergency_detector_status_t* status) {
     if (!status || !g_emergency_detector_initialized) return;
     
     pthread_mutex_lock(g_emergency_detector.mutex);
@@ -411,11 +411,11 @@ static void emergency_detector_get_status(emergency_detector_status_t* status) {
 }
 
 // Check if emergency detector is initialized
-static bool emergency_detector_is_initialized(void) {
+bool emergency_detector_is_initialized(void) {
     return g_emergency_detector_initialized;
 }
 
 // Get emergency detector instance
-static emergency_detector_t* emergency_detector_get_instance(void) {
+emergency_detector_t* emergency_detector_get_instance(void) {
     return g_emergency_detector_initialized ? &g_emergency_detector : NULL;
 }

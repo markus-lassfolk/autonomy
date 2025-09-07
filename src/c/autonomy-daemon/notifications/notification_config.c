@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 // Initialize notification configuration manager
-static int notification_config_manager_init(notification_config_manager_t* config_mgr) {
+int notification_config_manager_init(notification_config_manager_t* config_mgr) {
     if (!config_mgr) {
         return -1;
     }
@@ -16,7 +16,7 @@ static int notification_config_manager_init(notification_config_manager_t* confi
 }
 
 // Clean up notification configuration manager
-static void notification_config_manager_cleanup(notification_config_manager_t* config_mgr) {
+void notification_config_manager_cleanup(notification_config_manager_t* config_mgr) {
     if (!config_mgr) return;
     
     // Clear sensitive data
@@ -27,7 +27,7 @@ static void notification_config_manager_cleanup(notification_config_manager_t* c
 }
 
 // Load default configuration
-static int notification_config_manager_load_defaults(notification_config_manager_t* config_mgr) {
+int notification_config_manager_load_defaults(notification_config_manager_t* config_mgr) {
     if (!config_mgr) {
         return -1;
     }
@@ -100,9 +100,7 @@ static int notification_config_manager_load_defaults(notification_config_manager
     memset(&config->webhook_config, 0, sizeof(webhook_config_t));
     config->webhook_config.enabled = false;
     strncpy(config->webhook_config.method, "POST", sizeof(config->webhook_config.method) - 1);
-    config->webhook_config.method[sizeof(config->webhook_config.method) - 1] = '\0';
     strncpy(config->webhook_config.content_type, "application/json", sizeof(config->webhook_config.content_type) - 1);
-    config->webhook_config.content_type[sizeof(config->webhook_config.content_type) - 1] = '\0';
     config->webhook_config.timeout_seconds = 30;
     config->webhook_config.retry_attempts = 3;
     config->webhook_config.retry_delay_seconds = 5;
@@ -112,9 +110,7 @@ static int notification_config_manager_load_defaults(notification_config_manager
     // Quiet hours settings
     config->quiet_hours_enabled = false;
     strncpy(config->quiet_hours_start, "22:00", sizeof(config->quiet_hours_start) - 1);
-    config->quiet_hours_start[sizeof(config->quiet_hours_start) - 1] = '\0';
     strncpy(config->quiet_hours_end, "08:00", sizeof(config->quiet_hours_end) - 1);
-    config->quiet_hours_end[sizeof(config->quiet_hours_end) - 1] = '\0';
     config->suppress_low_priority_weekends = false;
     
     // Intelligence settings
@@ -135,7 +131,7 @@ static int notification_config_manager_load_defaults(notification_config_manager
 }
 
 // Load configuration from UCI (placeholder implementation)
-static int notification_config_manager_load_from_uci(notification_config_manager_t* config_mgr) {
+int notification_config_manager_load_from_uci(notification_config_manager_t* config_mgr) {
     if (!config_mgr) {
         return -1;
     }
@@ -454,7 +450,7 @@ void notification_config_manager_get_json(notification_config_manager_t* config_
 }
 
 // Reload configuration from UCI
-static int notification_config_manager_reload(notification_config_manager_t* config_mgr) {
+int notification_config_manager_reload(notification_config_manager_t* config_mgr) {
     if (!config_mgr) {
         return -1;
     }
@@ -464,7 +460,7 @@ static int notification_config_manager_reload(notification_config_manager_t* con
 }
 
 // Check if configuration is valid
-static bool notification_config_manager_is_valid(notification_config_manager_t* config_mgr) {
+bool notification_config_manager_is_valid(notification_config_manager_t* config_mgr) {
     if (!config_mgr) {
         return false;
     }

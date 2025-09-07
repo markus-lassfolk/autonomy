@@ -29,7 +29,7 @@ static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, cur
 }
 
 // Initialize telegram client
-static int telegram_client_init(telegram_client_t* client, const telegram_config_t* config) {
+int telegram_client_init(telegram_client_t* client, const telegram_config_t* config) {
     if (!client || !config) {
         return -1;
     }
@@ -42,7 +42,6 @@ static int telegram_client_init(telegram_client_t* client, const telegram_config
     // Initialize status
     client->status.enabled = config->enabled;
     strncpy(client->status.chat_id, config->chat_id, sizeof(client->status.chat_id) - 1);
-    client->status.chat_id[sizeof(client->status.chat_id) - 1] = '\0';
     client->status.total_sent = 0;
     client->status.total_failed = 0;
     client->status.last_response_code = 0;
@@ -54,7 +53,7 @@ static int telegram_client_init(telegram_client_t* client, const telegram_config
 }
 
 // Clean up telegram client
-static void telegram_client_cleanup(telegram_client_t* client) {
+void telegram_client_cleanup(telegram_client_t* client) {
     if (!client) return;
     
     // Clear sensitive data
@@ -99,7 +98,7 @@ const char* telegram_client_get_priority_text(notification_priority_t priority) 
 }
 
 // Escape markdown special characters
-static void telegram_client_escape_markdown(const char* input, char* output, size_t max_size) {
+void telegram_client_escape_markdown(const char* input, char* output, size_t max_size) {
     if (!input || !output || max_size == 0) return;
     
     const char* src = input;
@@ -140,12 +139,10 @@ void telegram_client_create_message(telegram_client_t* client, const notificatio
     
     // Set chat ID
     strncpy(message->chat_id, client->config.chat_id, sizeof(message->chat_id) - 1);
-    message->chat_id[sizeof(message->chat_id) - 1] = '\0';
     
     // Set parse mode
     if (client->config.use_markdown) {
         strncpy(message->parse_mode, "Markdown", sizeof(message->parse_mode) - 1);
-        message->parse_mode[sizeof(message->parse_mode) - 1] = '\0';
     }
     
     // Format message
@@ -157,9 +154,7 @@ void telegram_client_create_message(telegram_client_t* client, const notificatio
         telegram_client_escape_markdown(event->message, escaped_message, sizeof(escaped_message));
     } else {
         strncpy(escaped_title, event->title, sizeof(escaped_title) - 1);
-        escaped_title[sizeof(escaped_title) - 1] = '\0';
         strncpy(escaped_message, event->message, sizeof(escaped_message) - 1);
-        escaped_message[sizeof(escaped_message) - 1] = '\0';
     }
     
     // Get priority emoji and text
@@ -254,7 +249,6 @@ static int send_telegram_request(telegram_client_t* client, telegram_message_t* 
     CURL* curl = curl_easy_init();
     if (!curl) {
         strncpy(client->status.last_error, "Failed to initialize curl", sizeof(client->status.last_error) - 1);
-        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
         return -1;
     }
     
@@ -271,7 +265,6 @@ static int send_telegram_request(telegram_client_t* client, telegram_message_t* 
     if (!json_payload) {
         curl_easy_cleanup(curl);
         strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error) - 1);
-        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
         return -1;
     }
     
@@ -343,19 +336,15 @@ static int send_telegram_request(telegram_client_t* client, telegram_message_t* 
                     size_t desc_len = desc_end - desc_start;
                     if (desc_len < sizeof(client->status.last_error) - 20) {
                         strncpy(client->status.last_error, "Telegram API: ", sizeof(client->status.last_error) - 1);
-                        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
                         strncat(client->status.last_error, desc_start, desc_len);
                     } else {
                         strncpy(client->status.last_error, "Telegram API error", sizeof(client->status.last_error) - 1);
-                        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
                     }
                 } else {
                     strncpy(client->status.last_error, "Telegram API error", sizeof(client->status.last_error) - 1);
-                    client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
                 }
             } else {
                 strncpy(client->status.last_error, "Telegram API error", sizeof(client->status.last_error) - 1);
-                client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
             }
             client->status.last_error_time = time(NULL);
             free(response.data);
@@ -368,14 +357,13 @@ static int send_telegram_request(telegram_client_t* client, telegram_message_t* 
 }
 
 // Send notification via Telegram with retry logic
-static int telegram_client_send(telegram_client_t* client, const notification_event_t* event) {
+int telegram_client_send(telegram_client_t* client, const notification_event_t* event) {
     if (!client || !event || !client->config.enabled) {
         return -1;
     }
     
     if (strlen(client->config.token) == 0 || strlen(client->config.chat_id) == 0) {
         strncpy(client->status.last_error, "Telegram token and chat ID are required", sizeof(client->status.last_error) - 1);
-        client->status.last_error[sizeof(client->status.last_error) - 1] = '\0';
         client->status.last_error_time = time(NULL);
         client->status.total_failed++;
         return -1;
@@ -415,7 +403,7 @@ static int telegram_client_send(telegram_client_t* client, const notification_ev
 }
 
 // Get telegram client status
-static void telegram_client_get_status(telegram_client_t* client, telegram_client_status_t* status) {
+void telegram_client_get_status(telegram_client_t* client, telegram_client_status_t* status) {
     if (!client || !status) return;
     
     *status = client->status;

@@ -76,7 +76,7 @@ const char* notification_priority_to_string(notification_priority_t priority) {
 }
 
 // String to notification priority conversion
-static notification_priority_t string_to_notification_priority(const char* str) {
+notification_priority_t string_to_notification_priority(const char* str) {
     if (!str) return NOTIFICATION_PRIORITY_NORMAL;
     
     if (strcmp(str, "lowest") == 0) return NOTIFICATION_PRIORITY_LOWEST;

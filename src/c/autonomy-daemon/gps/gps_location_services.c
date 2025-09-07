@@ -1,3 +1,4 @@
+#include "gps_coordinate_utils.h"
 #include "gps_location_services.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
@@ -34,7 +35,7 @@ int find_oldest_cache_entry(void);
 int perform_reverse_geocoding(double lat, double lon, gps_location_info_t *location_info);
 int try_reverse_geocoding_service(gps_location_service_t service, double lat, double lon, gps_location_info_t *location_info);
 void create_basic_location_info(double lat, double lon, gps_location_info_t *location_info);
-double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
 
 // Initialize GPS location services
 int gps_location_services_init(void) {
@@ -162,7 +163,7 @@ int find_location_in_cache(double lat, double lon) {
         }
         
         // Check if coordinates are within cache radius
-        double distance = calculate_distance(lat, lon, cache_entry->lat, cache_entry->lon);
+        double distance = gps_coordinate_distance(lat, lon, cache_entry->lat, cache_entry->lon);
         if (distance <= g_location_services.cache_radius) {
             return i;
         }
@@ -411,7 +412,7 @@ void create_basic_location_info(double lat, double lon, gps_location_info_t *loc
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;

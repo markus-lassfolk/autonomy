@@ -16,7 +16,7 @@ static int check_pending_limits(notification_type_t type, notification_priority_
 static void generate_acknowledgment_id(const notification_event_t* event, char* id, size_t max_size);
 
 // Initialize acknowledgment tracker
-static int acknowledgment_tracker_init(const acknowledgment_config_t* config) {
+int acknowledgment_tracker_init(const acknowledgment_config_t* config) {
     if (g_acknowledgment_tracker_initialized) {
         return 0; // Already initialized
     }
@@ -69,7 +69,7 @@ static int acknowledgment_tracker_init(const acknowledgment_config_t* config) {
 }
 
 // Clean up acknowledgment tracker
-static void acknowledgment_tracker_cleanup(void) {
+void acknowledgment_tracker_cleanup(void) {
     if (!g_acknowledgment_tracker_initialized) return;
     
     // Stop cleanup thread
@@ -216,10 +216,8 @@ int acknowledgment_tracker_create_acknowledgment(const notification_event_t* eve
     
     generate_acknowledgment_id(event, ack->id, sizeof(ack->id));
     strncpy(ack->notification_id, event->id, sizeof(ack->notification_id) - 1);
-    ack->notification_id[sizeof(ack->notification_id) - 1] = '\0';
     ack->type = event->type;
     strncpy(ack->message, event->message, sizeof(ack->message) - 1);
-    ack->message[sizeof(ack->message) - 1] = '\0';
     ack->priority = event->priority;
     ack->status = ACKNOWLEDGMENT_STATUS_PENDING;
     ack->created_at = time(NULL);
@@ -230,7 +228,6 @@ int acknowledgment_tracker_create_acknowledgment(const notification_event_t* eve
     
     if (strlen(event->details_json) > 0) {
         strncpy(ack->context_json, event->details_json, sizeof(ack->context_json) - 1);
-        ack->context_json[sizeof(ack->context_json) - 1] = '\0';
     } else {
         ack->context_json[0] = '\0';
     }
@@ -258,7 +255,7 @@ int acknowledgment_tracker_create_acknowledgment(const notification_event_t* eve
 }
 
 // Acknowledge notification
-static int acknowledgment_tracker_acknowledge(const char* acknowledgment_id, const char* acknowledged_by) {
+int acknowledgment_tracker_acknowledge(const char* acknowledgment_id, const char* acknowledged_by) {
     if (!g_acknowledgment_tracker_initialized || !acknowledgment_id || !acknowledged_by) {
         return -1;
     }
@@ -293,7 +290,6 @@ static int acknowledgment_tracker_acknowledge(const char* acknowledgment_id, con
     ack->status = ACKNOWLEDGMENT_STATUS_ACKNOWLEDGED;
     ack->acknowledged_at = now;
     strncpy(ack->acknowledged_by, acknowledged_by, sizeof(ack->acknowledged_by) - 1);
-    ack->acknowledged_by[sizeof(ack->acknowledged_by) - 1] = '\0';
     
     // Update statistics
     g_acknowledgment_tracker.stats.pending_count--;
@@ -320,7 +316,7 @@ static int acknowledgment_tracker_acknowledge(const char* acknowledgment_id, con
 }
 
 // Resolve acknowledgment
-static int acknowledgment_tracker_resolve(const char* acknowledgment_id) {
+int acknowledgment_tracker_resolve(const char* acknowledgment_id) {
     if (!g_acknowledgment_tracker_initialized || !acknowledgment_id) {
         return -1;
     }
@@ -370,7 +366,7 @@ static int acknowledgment_tracker_resolve(const char* acknowledgment_id) {
 }
 
 // Get acknowledgment by ID
-static int acknowledgment_tracker_get_acknowledgment(const char* acknowledgment_id, acknowledgment_t* acknowledgment) {
+int acknowledgment_tracker_get_acknowledgment(const char* acknowledgment_id, acknowledgment_t* acknowledgment) {
     if (!g_acknowledgment_tracker_initialized || !acknowledgment_id || !acknowledgment) {
         return -1;
     }
@@ -390,7 +386,7 @@ static int acknowledgment_tracker_get_acknowledgment(const char* acknowledgment_
 }
 
 // Get pending acknowledgment for type
-static int acknowledgment_tracker_get_pending_for_type(notification_type_t type, acknowledgment_t* acknowledgment) {
+int acknowledgment_tracker_get_pending_for_type(notification_type_t type, acknowledgment_t* acknowledgment) {
     if (!g_acknowledgment_tracker_initialized || !acknowledgment) {
         return -1;
     }
@@ -414,7 +410,7 @@ static int acknowledgment_tracker_get_pending_for_type(notification_type_t type,
 }
 
 // Check if notification should be sent
-static bool acknowledgment_tracker_should_send_notification(const notification_event_t* event) {
+bool acknowledgment_tracker_should_send_notification(const notification_event_t* event) {
     if (!g_acknowledgment_tracker_initialized || !event) {
         return true; // Send if not initialized
     }
@@ -438,7 +434,7 @@ static bool acknowledgment_tracker_should_send_notification(const notification_e
 }
 
 // Get acknowledgment statistics
-static void acknowledgment_tracker_get_stats(acknowledgment_stats_t* stats) {
+void acknowledgment_tracker_get_stats(acknowledgment_stats_t* stats) {
     if (!stats || !g_acknowledgment_tracker_initialized) return;
     
     pthread_mutex_lock(g_acknowledgment_tracker.mutex);
@@ -447,7 +443,7 @@ static void acknowledgment_tracker_get_stats(acknowledgment_stats_t* stats) {
 }
 
 // Get acknowledgment tracker status
-static void acknowledgment_tracker_get_status(acknowledgment_tracker_status_t* status) {
+void acknowledgment_tracker_get_status(acknowledgment_tracker_status_t* status) {
     if (!status || !g_acknowledgment_tracker_initialized) return;
     
     pthread_mutex_lock(g_acknowledgment_tracker.mutex);
@@ -503,11 +499,11 @@ int acknowledgment_tracker_list_acknowledgments(acknowledgment_t* acknowledgment
 }
 
 // Check if acknowledgment tracker is initialized
-static bool acknowledgment_tracker_is_initialized(void) {
+bool acknowledgment_tracker_is_initialized(void) {
     return g_acknowledgment_tracker_initialized;
 }
 
 // Get acknowledgment tracker instance
-static acknowledgment_tracker_t* acknowledgment_tracker_get_instance(void) {
+acknowledgment_tracker_t* acknowledgment_tracker_get_instance(void) {
     return g_acknowledgment_tracker_initialized ? &g_acknowledgment_tracker : NULL;
 }

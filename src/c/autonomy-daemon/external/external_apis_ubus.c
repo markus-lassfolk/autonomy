@@ -1,5 +1,5 @@
 #include "external_apis_ubus.h"
-#include "../external/external_apis.h"
+#include "external_apis.h"
 #include "../utils/logx.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
@@ -7,11 +7,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <math.h>
-#include <fcntl.h>
-#include <sys/socket.h>
 
 // UBUS parameter policies
 enum {

@@ -1,4 +1,5 @@
 #include "performance_monitor.h"
+#include "../utils/logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -10,9 +11,6 @@
 #include <sys/statvfs.h>
 #include <sys/resource.h>
 #include <unistd.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <math.h>
 
 // Global performance monitor instance
 static performance_monitor_t g_performance_monitor;
@@ -24,8 +22,8 @@ static int collect_memory_metrics(performance_metrics_t* metrics);
 static int collect_disk_metrics(performance_metrics_t* metrics);
 static int collect_load_metrics(performance_metrics_t* metrics);
 static int collect_file_descriptor_metrics(performance_metrics_t* metrics);
-void update_metrics_history(performance_metrics_t* metrics);
-bool check_thresholds(const performance_metrics_t* metrics);
+static void update_metrics_history(performance_metrics_t* metrics);
+static bool check_thresholds(const performance_metrics_t* metrics);
 
 // Initialize performance monitor
 int performance_monitor_init(const performance_monitor_config_t* config) {
@@ -335,7 +333,7 @@ static int collect_file_descriptor_metrics(performance_metrics_t* metrics) {
 }
 
 // Update metrics history
-void update_metrics_history(performance_metrics_t* metrics) {
+static void update_metrics_history(performance_metrics_t* metrics) {
     if (!metrics) return;
     
     g_performance_monitor.metrics_history[g_performance_monitor.history_index] = *metrics;
@@ -348,7 +346,7 @@ void update_metrics_history(performance_metrics_t* metrics) {
 }
 
 // Check performance thresholds
-bool check_thresholds(const performance_metrics_t* metrics) {
+static bool check_thresholds(const performance_metrics_t* metrics) {
     if (!metrics) return false;
     
     const performance_thresholds_t* thresholds = &g_performance_monitor.config.thresholds;

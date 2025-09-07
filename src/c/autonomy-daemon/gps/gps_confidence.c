@@ -1,3 +1,4 @@
+#include "gps_coordinate_utils.h"
 #include "gps_confidence.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
@@ -39,7 +40,7 @@ double calculate_fix_quality_confidence(int fix_quality);
 double calculate_freshness_confidence(time_t timestamp);
 double calculate_consistency_confidence(const gps_data_t *current_gps, 
                                             const gps_confidence_context_t *context);
-double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
 double calculate_expected_movement(int time_diff_seconds, const gps_confidence_context_t *context);
 double calculate_position_consistency(double actual_distance, double expected_movement,
                                           double current_accuracy, double previous_accuracy);
@@ -210,7 +211,7 @@ double calculate_consistency_confidence(const gps_data_t *current_gps,
         }
         
         // Calculate distance between current and previous position
-        double distance = calculate_distance(current_gps->lat, current_gps->lon,
+        double distance = gps_coordinate_distance(current_gps->lat, current_gps->lon,
                                           prev_gps->lat, prev_gps->lon);
         
         // Calculate time difference
@@ -235,7 +236,7 @@ double calculate_consistency_confidence(const gps_data_t *current_gps,
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
