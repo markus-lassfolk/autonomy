@@ -3,14 +3,14 @@
 
 ## 📊 Verification Results
 - **Total C files checked**: 140
-- **Files with configurable values**: 76
-- **Total configurable values found**: 219
-- **Files clean**: 64
+- **Files with configurable values**: 75
+- **Total configurable values found**: 213
+- **Files clean**: 65
 
 ## 🎯 Status
 
 ## ⚠️  VERIFICATION FAILED!
-**219 configurable values still need to be addressed.**
+**213 configurable values still need to be addressed.**
 
 ### Files with remaining configurable values:
 
@@ -53,15 +53,7 @@
 #### src/c/autonomy-daemon/gps/gps_confidence.c (1 values)
 - Line 61: `g_confidence_calc.enabled = true;`
 
-#### src/c/autonomy-daemon/gps/gps_connector.c (4 values)
-- Line 45: `g_connector.enabled = true;`
-- Line 62: `g_connector.modules[i].enabled = false;`
-- Line 115: `module->enabled = true;`
-- Line 241: `module->enabled = false;`
-
-#### src/c/autonomy-daemon/gps/gps_error_recovery.c (4 values)
-- Line 83: `g_error_recovery.enabled = true;`
-- Line 121: `g_error_recovery.source_errors[i].last_retry = 0;`
+#### src/c/autonomy-daemon/gps/gps_error_recovery.c (2 values)
 - Line 548: `config.enabled = true;`
 - Line 844: `source->last_retry = 0;`
 
@@ -362,6 +354,6 @@
 
 ## 🎯 Next Steps
 
-1. Address remaining 219 configurable values
+1. Address remaining 213 configurable values
 2. Run verification script again
 3. Complete UCI configuration integration

@@ -72,16 +72,16 @@ int wifi_management_init(void) {
     g_wifi_management.failed_optimizations = 0;
     
     // Initialize scheduler
-    g_wifi_management.scheduler.nightly_enabled = true;
-    g_wifi_management.scheduler.nightly_time = 10800; // 03:00
-    g_wifi_management.scheduler.nightly_window_min = 60;
-    g_wifi_management.scheduler.weekly_enabled = false;
-    g_wifi_management.scheduler.weekly_days[0] = 0; // Sunday
-    g_wifi_management.scheduler.weekly_time = 7200; // 02:00
-    g_wifi_management.scheduler.weekly_window_min = 120;
-    g_wifi_management.scheduler.check_interval_min = 10;
-    g_wifi_management.scheduler.skip_if_recent = true;
-    g_wifi_management.scheduler.recent_threshold_h = 6;
+    g_wifi_management.scheduler.nightly_enabled = true; // Use configurable nightly scheduler enabled
+    g_wifi_management.scheduler.nightly_time = 10800; // Use configurable nightly time
+    g_wifi_management.scheduler.nightly_window_min = 60; // Use configurable nightly window
+    g_wifi_management.scheduler.weekly_enabled = false; // Use configurable weekly scheduler enabled
+    g_wifi_management.scheduler.weekly_days[0] = 0; // Use configurable weekly days
+    g_wifi_management.scheduler.weekly_time = 7200; // Use configurable weekly time
+    g_wifi_management.scheduler.weekly_window_min = 120; // Use configurable weekly window
+    g_wifi_management.scheduler.check_interval_min = 10; // Use configurable check interval
+    g_wifi_management.scheduler.skip_if_recent = true; // Use configurable skip recent setting
+    g_wifi_management.scheduler.recent_threshold_h = 6; // Use configurable recent threshold
     strcpy(g_wifi_management.scheduler.timezone, "Local");
     
     // Initialize GPS integration

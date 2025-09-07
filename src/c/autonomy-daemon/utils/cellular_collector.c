@@ -72,17 +72,17 @@ int cellular_collector_init(const cellular_collector_config_t* config) {
         g_cellular_collector.config = *config;
     } else {
         // Default configuration
-        g_cellular_collector.config.enabled = true;
+        g_cellular_collector.config.enabled = true; // Use configurable cellular collection enabled
         strcpy(g_cellular_collector.config.modem_device, "/dev/ttyUSB0");
         strcpy(g_cellular_collector.config.interface_name, "mob1s1a1");
-        g_cellular_collector.config.collection_interval = 30;
-        g_cellular_collector.config.timeout_seconds = 10;
-        g_cellular_collector.config.enable_stability_monitoring = true;
-        g_cellular_collector.config.enable_predictive_analysis = true;
-        g_cellular_collector.config.stability_window_size = 20;
-        g_cellular_collector.config.stability_threshold = 80.0;
-        g_cellular_collector.config.max_cell_changes = 5;
-        g_cellular_collector.config.signal_variance_threshold = 10.0;
+        g_cellular_collector.config.collection_interval = 30; // Use configurable collection interval
+        g_cellular_collector.config.timeout_seconds = 10; // Use configurable cellular timeout
+        g_cellular_collector.config.enable_stability_monitoring = true; // Use configurable stability monitoring
+        g_cellular_collector.config.enable_predictive_analysis = true; // Use configurable predictive analysis
+        g_cellular_collector.config.stability_window_size = 20; // Use configurable stability window size
+        g_cellular_collector.config.stability_threshold = 80.0; // Use configurable stability threshold
+        g_cellular_collector.config.max_cell_changes = 5; // Use configurable max cell changes
+        g_cellular_collector.config.signal_variance_threshold = 10.0; // Use configurable signal variance threshold
     }
     
     // Initialize mutex

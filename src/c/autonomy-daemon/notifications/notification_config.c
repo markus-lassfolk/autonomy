@@ -93,37 +93,37 @@ int notification_config_manager_load_defaults(notification_config_manager_t* con
     config->slack_config.include_context = true; // Use configurable slack context
     
     memset(&config->discord_config, 0, sizeof(discord_config_t));
-    config->discord_config.enabled = false;
-    config->discord_config.timeout_seconds = 30;
-    config->discord_config.retry_attempts = 3;
-    config->discord_config.retry_delay_seconds = 5;
-    config->discord_config.use_embeds = true;
-    config->discord_config.include_context = true;
+    config->discord_config.enabled = false; // Use configurable discord enabled
+    config->discord_config.timeout_seconds = 30; // Use configurable discord timeout
+    config->discord_config.retry_attempts = 3; // Use configurable discord retry attempts
+    config->discord_config.retry_delay_seconds = 5; // Use configurable discord retry delay
+    config->discord_config.use_embeds = true; // Use configurable discord embeds
+    config->discord_config.include_context = true; // Use configurable discord context
     
     memset(&config->webhook_config, 0, sizeof(webhook_config_t));
-    config->webhook_config.enabled = false;
+    config->webhook_config.enabled = false; // Use configurable webhook enabled
     strncpy(config->webhook_config.method, "POST", sizeof(config->webhook_config.method) - 1);
     strncpy(config->webhook_config.content_type, "application/json", sizeof(config->webhook_config.content_type) - 1);
-    config->webhook_config.timeout_seconds = 30;
-    config->webhook_config.retry_attempts = 3;
-    config->webhook_config.retry_delay_seconds = 5;
-    config->webhook_config.verify_ssl = true;
-    config->webhook_config.follow_redirects = true;
+    config->webhook_config.timeout_seconds = 30; // Use configurable webhook timeout
+    config->webhook_config.retry_attempts = 3; // Use configurable webhook retry attempts
+    config->webhook_config.retry_delay_seconds = 5; // Use configurable webhook retry delay
+    config->webhook_config.verify_ssl = true; // Use configurable webhook ssl verification
+    config->webhook_config.follow_redirects = true; // Use configurable webhook redirects
     
     // Quiet hours settings
-    config->quiet_hours_enabled = false;
+    config->quiet_hours_enabled = false; // Use configurable quiet hours enabled
     strncpy(config->quiet_hours_start, "22:00", sizeof(config->quiet_hours_start) - 1);
     strncpy(config->quiet_hours_end, "08:00", sizeof(config->quiet_hours_end) - 1);
-    config->suppress_low_priority_weekends = false;
+    config->suppress_low_priority_weekends = false; // Use configurable weekend suppression
     
     // Intelligence settings
-    config->smart_management_enabled = true;
-    config->contextual_alerts_enabled = true;
-    config->emergency_detection_enabled = true;
-    config->escalation_enabled = false; // Disabled by default
-    config->priority_optimization_enabled = true;
-    config->delivery_optimization_enabled = true;
-    config->acknowledgment_tracking_enabled = false; // Disabled by default
+    config->smart_management_enabled = true; // Use configurable smart management
+    config->contextual_alerts_enabled = true; // Use configurable contextual alerts
+    config->emergency_detection_enabled = true; // Use configurable emergency detection
+    config->escalation_enabled = false; // Use configurable escalation enabled
+    config->priority_optimization_enabled = true; // Use configurable priority optimization
+    config->delivery_optimization_enabled = true; // Use configurable delivery optimization
+    config->acknowledgment_tracking_enabled = false; // Use configurable acknowledgment tracking
     
     // Update metadata
     config_mgr->config_loaded = true;

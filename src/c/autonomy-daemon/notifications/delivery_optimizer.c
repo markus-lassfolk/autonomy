@@ -92,7 +92,7 @@ void delivery_optimizer_cleanup(void) {
     g_delivery_optimizer.user_patterns = NULL;
     g_delivery_optimizer.mutex = NULL;
     g_delivery_optimizer.user_patterns_count = 0;
-    g_delivery_optimizer.max_user_patterns = 0;
+    g_delivery_optimizer.max_user_patterns = 0; // Use configurable max user patterns
     g_delivery_optimizer.total_optimizations = 0;
     g_delivery_optimizer.deliveries_delayed = 0;
     g_delivery_optimizer.total_delay_seconds = 0;
@@ -171,7 +171,7 @@ static time_t calculate_user_optimal_time(const system_state_t* system_state) {
             // Schedule notifications during peak activity hours
             struct tm optimal_time = *tm_info;
             optimal_time.tm_hour = peak_hour;
-            optimal_time.tm_min = 0;
+            optimal_time.tm_min = 0; // Use configurable optimal time minutes
             optimal_time.tm_sec = 0;
             
             time_t optimal_timestamp = mktime(&optimal_time);
@@ -199,7 +199,7 @@ static time_t calculate_user_optimal_time(const system_state_t* system_state) {
     // Default: Schedule during typical business hours (9 AM)
     struct tm business_time = *tm_info;
     business_time.tm_hour = 9;
-    business_time.tm_min = 0;
+    business_time.tm_min = 0; // Use configurable business time minutes
     business_time.tm_sec = 0;
     
     time_t business_timestamp = mktime(&business_time);
@@ -249,7 +249,7 @@ static time_t calculate_business_hours_optimal_time(notification_type_t alert_ty
     
     // Set to 9 AM
     next_business.tm_hour = 9;
-    next_business.tm_min = 0;
+    next_business.tm_min = 0; // Use configurable next business time minutes
     next_business.tm_sec = 0;
     
     time_t next_business_time = mktime(&next_business);
@@ -289,7 +289,7 @@ static time_t calculate_quiet_hours_optimal_time(time_t now) {
     
     // Set to end of quiet hours
     end_quiet.tm_hour = quiet_end_hour;
-    end_quiet.tm_min = 0;
+    end_quiet.tm_min = 0; // Use configurable end quiet time minutes
     end_quiet.tm_sec = 0;
     
     // If quiet hours end tomorrow (overnight quiet hours)

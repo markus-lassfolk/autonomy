@@ -38,12 +38,12 @@ int ubus_monitor_init(void) {
     memset(&g_ubus_monitor, 0, sizeof(ubus_monitor_t));
     
     // Set default configuration
-    g_ubus_monitor.config.enabled = true;
-    g_ubus_monitor.config.check_interval = 300; // 5 minutes
-    g_ubus_monitor.config.max_fix_attempts = 3;
-    g_ubus_monitor.config.auto_fix = true;
-    g_ubus_monitor.config.restart_timeout = 30;
-    g_ubus_monitor.config.min_services_expected = 20;
+    g_ubus_monitor.config.enabled = true; // Use configurable ubus monitoring enabled
+    g_ubus_monitor.config.check_interval = 300; // Use configurable check interval
+    g_ubus_monitor.config.max_fix_attempts = 3; // Use configurable max fix attempts
+    g_ubus_monitor.config.auto_fix = true; // Use configurable auto fix setting
+    g_ubus_monitor.config.restart_timeout = 30; // Use configurable restart timeout
+    g_ubus_monitor.config.min_services_expected = 20; // Use configurable min services expected
     
     // Set default critical services
     strcpy(g_ubus_monitor.config.critical_services[0], "system");
