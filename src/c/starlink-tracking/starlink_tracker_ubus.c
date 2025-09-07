@@ -374,8 +374,63 @@ starlink_tracker_t* starlink_tracker_init_from_uci(struct uci_context *uci_ctx) 
     config.cache_duration_hours = 24;
     config.rate_limit_requests_per_minute = 15;
     
-    // TODO: Load actual configuration from UCI
-    // This would read from /etc/config/autonomy or similar
+    // Load configuration from UCI
+    FILE *uci_fp = popen("uci show autonomy.starlink_tracking 2>/dev/null", "r");
+    if (uci_fp) {
+        char line[512];
+        while (fgets(line, sizeof(line), uci_fp)) {
+            // Parse UCI output format: autonomy.starlink_tracking.option='value'
+            char *option_start = strchr(line, '.');
+            if (!option_start) continue;
+            option_start++; // Skip the dot
+            
+            char *value_start = strchr(option_start, '=');
+            if (!value_start) continue;
+            *value_start = '\0';
+            value_start++;
+            
+            // Remove quotes and newline
+            char *value_end = strchr(value_start, '\'');
+            if (value_end) {
+                *value_end = '\0';
+            }
+            value_end = strchr(value_start, '\n');
+            if (value_end) {
+                *value_end = '\0';
+            }
+            
+            // Map UCI options to configuration
+            if (strcmp(option_start, "enabled") == 0) {
+                config.enabled = (strcmp(value_start, "1") == 0);
+            } else if (strcmp(option_start, "api_endpoint") == 0) {
+                strncpy(config.api_endpoint, value_start, sizeof(config.api_endpoint) - 1);
+            } else if (strcmp(option_start, "username") == 0) {
+                strncpy(config.username, value_start, sizeof(config.username) - 1);
+            } else if (strcmp(option_start, "password") == 0) {
+                strncpy(config.password, value_start, sizeof(config.password) - 1);
+            } else if (strcmp(option_start, "update_interval_seconds") == 0) {
+                config.update_interval_seconds = atoi(value_start);
+            } else if (strcmp(option_start, "cache_duration_hours") == 0) {
+                config.cache_duration_hours = atoi(value_start);
+            } else if (strcmp(option_start, "rate_limit_requests_per_minute") == 0) {
+                config.rate_limit_requests_per_minute = atoi(value_start);
+            } else if (strcmp(option_start, "dish_latitude") == 0) {
+                config.dish_latitude = atof(value_start);
+            } else if (strcmp(option_start, "dish_longitude") == 0) {
+                config.dish_longitude = atof(value_start);
+            } else if (strcmp(option_start, "dish_altitude") == 0) {
+                config.dish_altitude = atof(value_start);
+            }
+        }
+        pclose(uci_fp);
+        
+        LOGX_INFO_MSG("Starlink tracking configuration loaded from UCI", 
+                      "enabled", config.enabled,
+                      "update_interval", config.update_interval_seconds,
+                      "cache_duration", config.cache_duration_hours);
+    } else {
+        LOGX_WARN_MSG("Failed to read UCI configuration, using defaults");
+    }
     
     // Try to get credentials from environment
     const char *username = getenv("SPACE_TRACK_USERNAME");

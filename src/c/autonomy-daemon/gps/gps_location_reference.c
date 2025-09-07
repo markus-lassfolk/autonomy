@@ -307,16 +307,85 @@ int gps_location_reference_get_or_create(double latitude, double longitude,
     return AUTONOMY_SUCCESS;
 }
 
-// Placeholder implementations for remaining functions
+// Location reference management functions
 int gps_location_reference_get_by_id(uint32_t location_id, gps_location_reference_t* location) {
     if (!g_location_ref_initialized || !location || location_id == 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    // Placeholder implementation
-    memset(location, 0, sizeof(gps_location_reference_t));
-    location->location_id = location_id;
-    return AUTONOMY_SUCCESS;
+    pthread_mutex_lock(&g_location_ref_manager.mutex);
+    
+    // First check cache
+    for (int i = 0; i < g_location_ref_manager.cache_count; i++) {
+        if (g_location_ref_manager.location_cache[i].location_id == location_id) {
+            *location = g_location_ref_manager.location_cache[i];
+            g_location_ref_manager.stats.cache_hits++;
+            pthread_mutex_unlock(&g_location_ref_manager.mutex);
+            return AUTONOMY_SUCCESS;
+        }
+    }
+    
+    // Not in cache, check database
+    if (g_location_ref_manager.db) {
+        sqlite3_stmt* stmt;
+        const char* sql = "SELECT location_id, latitude_reduced, longitude_reduced, "
+                         "latitude_original, longitude_original, accuracy_meters, gps_source, "
+                         "first_recorded, last_used, usage_count, telemetry_samples, "
+                         "location_name, is_stationary_location, avg_movement_speed_kmh, "
+                         "avg_signal_quality, avg_latency_ms, location_score "
+                         "FROM location_references WHERE location_id = ?";
+        
+        if (sqlite3_prepare_v2(g_location_ref_manager.db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+            sqlite3_bind_int64(stmt, 1, location_id);
+            
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                location->location_id = sqlite3_column_int64(stmt, 0);
+                location->latitude_reduced = sqlite3_column_double(stmt, 1);
+                location->longitude_reduced = sqlite3_column_double(stmt, 2);
+                location->latitude_original = sqlite3_column_double(stmt, 3);
+                location->longitude_original = sqlite3_column_double(stmt, 4);
+                location->accuracy_meters = sqlite3_column_double(stmt, 5);
+                
+                const char* gps_source = (const char*)sqlite3_column_text(stmt, 6);
+                if (gps_source) {
+                    strncpy(location->gps_source, gps_source, sizeof(location->gps_source) - 1);
+                    location->gps_source[sizeof(location->gps_source) - 1] = '\0';
+                }
+                
+                location->first_recorded = sqlite3_column_int64(stmt, 7);
+                location->last_used = sqlite3_column_int64(stmt, 8);
+                location->usage_count = sqlite3_column_int64(stmt, 9);
+                location->telemetry_samples = sqlite3_column_int64(stmt, 10);
+                
+                const char* location_name = (const char*)sqlite3_column_text(stmt, 11);
+                if (location_name) {
+                    strncpy(location->location_name, location_name, sizeof(location->location_name) - 1);
+                    location->location_name[sizeof(location->location_name) - 1] = '\0';
+                }
+                
+                location->is_stationary_location = sqlite3_column_int(stmt, 12) != 0;
+                location->avg_movement_speed_kmh = sqlite3_column_double(stmt, 13);
+                location->avg_signal_quality = sqlite3_column_double(stmt, 14);
+                location->avg_latency_ms = sqlite3_column_double(stmt, 15);
+                location->location_score = sqlite3_column_double(stmt, 16);
+                
+                // Add to cache if there's space
+                if (g_location_ref_manager.cache_count < g_location_ref_manager.cache_size) {
+                    g_location_ref_manager.location_cache[g_location_ref_manager.cache_count] = *location;
+                    g_location_ref_manager.cache_count++;
+                }
+                
+                sqlite3_finalize(stmt);
+                g_location_ref_manager.stats.cache_misses++;
+                pthread_mutex_unlock(&g_location_ref_manager.mutex);
+                return AUTONOMY_SUCCESS;
+            }
+            sqlite3_finalize(stmt);
+        }
+    }
+    
+    pthread_mutex_unlock(&g_location_ref_manager.mutex);
+    return AUTONOMY_ERROR_NOT_FOUND;
 }
 
 int gps_location_reference_update_usage(uint32_t location_id, double signal_quality, double latency_ms) {
@@ -324,10 +393,61 @@ int gps_location_reference_update_usage(uint32_t location_id, double signal_qual
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    // Placeholder implementation
-    (void)signal_quality;
-    (void)latency_ms;
-    return AUTONOMY_SUCCESS;
+    pthread_mutex_lock(&g_location_ref_manager.mutex);
+    
+    // Update database
+    if (g_location_ref_manager.db) {
+        sqlite3_stmt* stmt;
+        const char* sql = "UPDATE location_references SET "
+                         "last_used = ?, usage_count = usage_count + 1, "
+                         "avg_signal_quality = (avg_signal_quality * usage_count + ?) / (usage_count + 1), "
+                         "avg_latency_ms = (avg_latency_ms * usage_count + ?) / (usage_count + 1), "
+                         "location_score = (avg_signal_quality * 0.6 + (100.0 - avg_latency_ms) * 0.4) / 100.0 "
+                         "WHERE location_id = ?";
+        
+        if (sqlite3_prepare_v2(g_location_ref_manager.db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+            time_t now = time(NULL);
+            sqlite3_bind_int64(stmt, 1, now);
+            sqlite3_bind_double(stmt, 2, signal_quality);
+            sqlite3_bind_double(stmt, 3, latency_ms);
+            sqlite3_bind_int64(stmt, 4, location_id);
+            
+            if (sqlite3_step(stmt) == SQLITE_DONE) {
+                sqlite3_finalize(stmt);
+                
+                // Update cache if location is cached
+                for (int i = 0; i < g_location_ref_manager.cache_count; i++) {
+                    if (g_location_ref_manager.location_cache[i].location_id == location_id) {
+                        g_location_ref_manager.location_cache[i].last_used = now;
+                        g_location_ref_manager.location_cache[i].usage_count++;
+                        
+                        // Update running averages
+                        uint32_t old_count = g_location_ref_manager.location_cache[i].usage_count - 1;
+                        g_location_ref_manager.location_cache[i].avg_signal_quality = 
+                            (g_location_ref_manager.location_cache[i].avg_signal_quality * old_count + signal_quality) / 
+                            g_location_ref_manager.location_cache[i].usage_count;
+                        g_location_ref_manager.location_cache[i].avg_latency_ms = 
+                            (g_location_ref_manager.location_cache[i].avg_latency_ms * old_count + latency_ms) / 
+                            g_location_ref_manager.location_cache[i].usage_count;
+                        
+                        // Update location score
+                        g_location_ref_manager.location_cache[i].location_score = 
+                            (g_location_ref_manager.location_cache[i].avg_signal_quality * 0.6 + 
+                             (100.0 - g_location_ref_manager.location_cache[i].avg_latency_ms) * 0.4) / 100.0;
+                        break;
+                    }
+                }
+                
+                g_location_ref_manager.stats.total_references++;
+                pthread_mutex_unlock(&g_location_ref_manager.mutex);
+                return AUTONOMY_SUCCESS;
+            }
+            sqlite3_finalize(stmt);
+        }
+    }
+    
+    pthread_mutex_unlock(&g_location_ref_manager.mutex);
+    return AUTONOMY_ERROR_NOT_FOUND;
 }
 
 int gps_location_reference_force_cleanup(void) {
@@ -335,8 +455,74 @@ int gps_location_reference_force_cleanup(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    // Placeholder implementation
-    return 0; // No locations cleaned up
+    pthread_mutex_lock(&g_location_ref_manager.mutex);
+    
+    int locations_cleaned = 0;
+    time_t now = time(NULL);
+    time_t cutoff_time = now - (g_location_ref_manager.config.retention_days * 24 * 3600);
+    
+    if (g_location_ref_manager.db) {
+        // Clean up old unused locations
+        sqlite3_stmt* stmt;
+        const char* sql = "DELETE FROM location_references WHERE "
+                         "(last_used < ? AND usage_count < ?) OR "
+                         "(first_recorded < ? AND usage_count = 0)";
+        
+        if (sqlite3_prepare_v2(g_location_ref_manager.db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+            sqlite3_bind_int64(stmt, 1, cutoff_time);
+            sqlite3_bind_int(stmt, 2, g_location_ref_manager.config.min_usage_for_retention);
+            sqlite3_bind_int64(stmt, 3, cutoff_time);
+            
+            if (sqlite3_step(stmt) == SQLITE_DONE) {
+                locations_cleaned = sqlite3_changes(g_location_ref_manager.db);
+            }
+            sqlite3_finalize(stmt);
+        }
+        
+        // Clean up cache entries for deleted locations
+        for (int i = g_location_ref_manager.cache_count - 1; i >= 0; i--) {
+            uint32_t location_id = g_location_ref_manager.location_cache[i].location_id;
+            
+            // Check if location still exists in database
+            sqlite3_stmt* check_stmt;
+            const char* check_sql = "SELECT 1 FROM location_references WHERE location_id = ?";
+            
+            if (sqlite3_prepare_v2(g_location_ref_manager.db, check_sql, -1, &check_stmt, NULL) == SQLITE_OK) {
+                sqlite3_bind_int64(check_stmt, 1, location_id);
+                
+                if (sqlite3_step(check_stmt) != SQLITE_ROW) {
+                    // Location no longer exists, remove from cache
+                    for (int j = i; j < g_location_ref_manager.cache_count - 1; j++) {
+                        g_location_ref_manager.location_cache[j] = g_location_ref_manager.location_cache[j + 1];
+                    }
+                    g_location_ref_manager.cache_count--;
+                }
+                sqlite3_finalize(check_stmt);
+            }
+        }
+        
+        // Update statistics
+        g_location_ref_manager.stats.last_cleanup = now;
+        
+        // Get updated location count
+        sqlite3_stmt* count_stmt;
+        const char* count_sql = "SELECT COUNT(*) FROM location_references";
+        
+        if (sqlite3_prepare_v2(g_location_ref_manager.db, count_sql, -1, &count_stmt, NULL) == SQLITE_OK) {
+            if (sqlite3_step(count_stmt) == SQLITE_ROW) {
+                g_location_ref_manager.stats.total_locations = sqlite3_column_int64(count_stmt, 0);
+            }
+            sqlite3_finalize(count_stmt);
+        }
+    }
+    
+    pthread_mutex_unlock(&g_location_ref_manager.mutex);
+    
+    LOGX_INFO_MSG("Location reference cleanup completed", 
+                  "locations_cleaned", locations_cleaned,
+                  "total_locations", g_location_ref_manager.stats.total_locations);
+    
+    return locations_cleaned;
 }
 
 double gps_calculate_distance_meters(double lat1, double lon1, double lat2, double lon2) {
@@ -366,9 +552,77 @@ static int create_new_location_reference(double latitude, double longitude, doub
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    // Placeholder implementation
-    *location_id = g_location_ref_manager.next_location_id++;
-    return AUTONOMY_SUCCESS;
+    time_t now = time(NULL);
+    double reduced_lat = gps_reduce_coordinate_precision(latitude, g_location_ref_manager.config.precision_reduction_meters);
+    double reduced_lon = gps_reduce_coordinate_precision(longitude, g_location_ref_manager.config.precision_reduction_meters);
+    
+    sqlite3_stmt* stmt;
+    const char* sql = "INSERT INTO location_references ("
+                     "location_id, latitude_reduced, longitude_reduced, latitude_original, longitude_original, "
+                     "accuracy_meters, gps_source, first_recorded, last_used, usage_count, telemetry_samples, "
+                     "location_name, is_stationary_location, avg_movement_speed_kmh, "
+                     "avg_signal_quality, avg_latency_ms, location_score) "
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, '', 0, 0.0, 0.0, 0.0, 0.0)";
+    
+    if (sqlite3_prepare_v2(g_location_ref_manager.db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+        *location_id = g_location_ref_manager.next_location_id++;
+        
+        sqlite3_bind_int64(stmt, 1, *location_id);
+        sqlite3_bind_double(stmt, 2, reduced_lat);
+        sqlite3_bind_double(stmt, 3, reduced_lon);
+        sqlite3_bind_double(stmt, 4, latitude);
+        sqlite3_bind_double(stmt, 5, longitude);
+        sqlite3_bind_double(stmt, 6, accuracy);
+        sqlite3_bind_text(stmt, 7, gps_source, -1, SQLITE_STATIC);
+        sqlite3_bind_int64(stmt, 8, now);
+        sqlite3_bind_int64(stmt, 9, now);
+        
+        if (sqlite3_step(stmt) == SQLITE_DONE) {
+            sqlite3_finalize(stmt);
+            
+            // Add to cache if there's space
+            if (g_location_ref_manager.cache_count < g_location_ref_manager.cache_size) {
+                gps_location_reference_t new_location;
+                memset(&new_location, 0, sizeof(new_location));
+                
+                new_location.location_id = *location_id;
+                new_location.latitude_reduced = reduced_lat;
+                new_location.longitude_reduced = reduced_lon;
+                new_location.latitude_original = latitude;
+                new_location.longitude_original = longitude;
+                new_location.accuracy_meters = accuracy;
+                strncpy(new_location.gps_source, gps_source, sizeof(new_location.gps_source) - 1);
+                new_location.gps_source[sizeof(new_location.gps_source) - 1] = '\0';
+                new_location.first_recorded = now;
+                new_location.last_used = now;
+                new_location.usage_count = 1;
+                new_location.telemetry_samples = 0;
+                new_location.is_stationary_location = false;
+                new_location.avg_movement_speed_kmh = 0.0;
+                new_location.avg_signal_quality = 0.0;
+                new_location.avg_latency_ms = 0.0;
+                new_location.location_score = 0.0;
+                
+                g_location_ref_manager.location_cache[g_location_ref_manager.cache_count] = new_location;
+                g_location_ref_manager.cache_count++;
+            }
+            
+            g_location_ref_manager.stats.total_locations++;
+            g_location_ref_manager.stats.total_references++;
+            
+            LOGX_DEBUG_MSG("Created new location reference", 
+                          "location_id", *location_id,
+                          "latitude", latitude,
+                          "longitude", longitude,
+                          "accuracy", accuracy,
+                          "gps_source", gps_source);
+            
+            return AUTONOMY_SUCCESS;
+        }
+        sqlite3_finalize(stmt);
+    }
+    
+    return AUTONOMY_ERROR_DATABASE;
 }
 
 // Find nearby location reference
@@ -377,9 +631,45 @@ static int find_nearby_location_reference(double latitude, double longitude, uin
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    // Placeholder implementation
-    (void)latitude;
-    (void)longitude;
+    double search_radius = g_location_ref_manager.config.movement_threshold_meters;
+    
+    // First check cache for nearby locations
+    for (int i = 0; i < g_location_ref_manager.cache_count; i++) {
+        double distance = gps_calculate_distance_meters(
+            latitude, longitude,
+            g_location_ref_manager.location_cache[i].latitude_original,
+            g_location_ref_manager.location_cache[i].longitude_original
+        );
+        
+        if (distance <= search_radius) {
+            *location_id = g_location_ref_manager.location_cache[i].location_id;
+            g_location_ref_manager.stats.cache_hits++;
+            return AUTONOMY_SUCCESS;
+        }
+    }
+    
+    // Not in cache, search database
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT location_id, latitude_original, longitude_original FROM location_references";
+    
+    if (sqlite3_prepare_v2(g_location_ref_manager.db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            uint32_t id = sqlite3_column_int64(stmt, 0);
+            double lat = sqlite3_column_double(stmt, 1);
+            double lon = sqlite3_column_double(stmt, 2);
+            
+            double distance = gps_calculate_distance_meters(latitude, longitude, lat, lon);
+            
+            if (distance <= search_radius) {
+                *location_id = id;
+                sqlite3_finalize(stmt);
+                g_location_ref_manager.stats.cache_misses++;
+                return AUTONOMY_SUCCESS;
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+    
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 

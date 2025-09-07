@@ -644,10 +644,16 @@ const space_track_stats_t* space_track_get_stats(const space_track_connector_t *
     stats.successful_requests = connector->successful_requests;
     stats.rate_limited_requests = connector->rate_limited_requests;
     stats.auth_failures = connector->auth_failures;
-    stats.cache_hits = 0; // TODO: Implement cache hit tracking
-    stats.cache_misses = 0; // TODO: Implement cache miss tracking
-    stats.last_request_time = time(NULL); // TODO: Track actual last request time
-    stats.average_response_time = 0.0; // TODO: Implement response time tracking
+    stats.cache_hits = connector->cache_hits;
+    stats.cache_misses = connector->cache_misses;
+    stats.last_request_time = connector->last_request_time;
+    
+    // Calculate average response time
+    if (connector->total_requests > 0) {
+        stats.average_response_time = connector->total_response_time / connector->total_requests;
+    } else {
+        stats.average_response_time = 0.0;
+    }
     
     return &stats;
 }

@@ -35,5 +35,31 @@ install: $(TARGET)
 	install -d $(DESTDIR)/usr/bin
 	install -m 755 $(TARGET) $(DESTDIR)/usr/bin/
 
+# Linting and verification targets
+lint-cppcheck:
+	@echo "Running Cppcheck static analysis..."
+	cppcheck --enable=all --inconclusive --std=c99 --suppress=missingIncludeSystem \
+		--suppress=unusedFunction --suppress=unmatchedSuppression \
+		--xml --xml-version=2 $(SOURCES) 2> cppcheck-report.xml || true
+	@echo "Cppcheck analysis complete. Report saved to cppcheck-report.xml"
+
+lint-clang-tidy:
+	@echo "Running Clang-tidy analysis..."
+	clang-tidy $(SOURCES) -- $(CFLAGS) -I. || true
+	@echo "Clang-tidy analysis complete"
+
+lint-splint:
+	@echo "Running Splint analysis..."
+	splint +posixlib -warnposix -preproc -nullret -nullassign -nullstate \
+		$(SOURCES) || true
+	@echo "Splint analysis complete"
+
+lint-all: lint-cppcheck lint-clang-tidy lint-splint
+	@echo "All linting tools completed"
+
+verify-code:
+	@echo "Running custom C code verification..."
+	python3 ../../tools/verify_c_code.py --verbose .
+
 # Phony targets
-.PHONY: all clean install
+.PHONY: all clean install lint-cppcheck lint-clang-tidy lint-splint lint-all verify-code

@@ -383,21 +383,86 @@ static int verify_fixes(uci_maintenance_result_t *result) {
 }
 
 /**
- * Create UCI backup (placeholder)
+ * Create UCI backup
  */
 static int create_uci_backup(const char *backup_path) {
-    // This would create a backup of the UCI configuration
-    // For now, just return success
-    return AUTONOMY_SUCCESS;
+    if (!backup_path) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Create backup directory if it doesn't exist
+    char backup_dir[256];
+    strncpy(backup_dir, backup_path, sizeof(backup_dir) - 1);
+    char *last_slash = strrchr(backup_dir, '/');
+    if (last_slash) {
+        *last_slash = '\0';
+        struct stat st = {0};
+        if (stat(backup_dir, &st) == -1) {
+            mkdir(backup_dir, 0755);
+        }
+    }
+    
+    // Create backup using UCI export
+    char uci_cmd[512];
+    snprintf(uci_cmd, sizeof(uci_cmd), "uci export > %s", backup_path);
+    
+    int result = system(uci_cmd);
+    if (result == 0) {
+        LOGX_INFO_MSG("UCI backup created successfully", "path", backup_path);
+        return AUTONOMY_SUCCESS;
+    } else {
+        LOGX_ERROR_MSG("Failed to create UCI backup", "path", backup_path, "result", result);
+        return AUTONOMY_ERROR_SYSTEM;
+    }
 }
 
 /**
- * Restore UCI backup (placeholder)
+ * Restore UCI backup
  */
 static int restore_uci_backup(const char *backup_path) {
-    // This would restore from a backup
-    // For now, just return success
-    return AUTONOMY_SUCCESS;
+    if (!backup_path) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Check if backup file exists
+    struct stat st;
+    if (stat(backup_path, &st) != 0) {
+        LOGX_ERROR_MSG("Backup file does not exist", "path", backup_path);
+        return AUTONOMY_ERROR_NOT_FOUND;
+    }
+    
+    // Create a temporary backup before restoring
+    char temp_backup[256];
+    snprintf(temp_backup, sizeof(temp_backup), "%s.pre_restore", backup_path);
+    
+    int backup_result = create_uci_backup(temp_backup);
+    if (backup_result != AUTONOMY_SUCCESS) {
+        LOGX_WARN_MSG("Failed to create pre-restore backup", "path", temp_backup);
+    }
+    
+    // Restore from backup using UCI import
+    char uci_cmd[512];
+    snprintf(uci_cmd, sizeof(uci_cmd), "uci import < %s", backup_path);
+    
+    int result = system(uci_cmd);
+    if (result == 0) {
+        // Commit the changes
+        system("uci commit");
+        LOGX_INFO_MSG("UCI backup restored successfully", "path", backup_path);
+        return AUTONOMY_SUCCESS;
+    } else {
+        LOGX_ERROR_MSG("Failed to restore UCI backup", "path", backup_path, "result", result);
+        
+        // Try to restore from the temporary backup if available
+        if (backup_result == AUTONOMY_SUCCESS) {
+            LOGX_INFO_MSG("Attempting to restore from pre-restore backup");
+            snprintf(uci_cmd, sizeof(uci_cmd), "uci import < %s", temp_backup);
+            system(uci_cmd);
+            system("uci commit");
+        }
+        
+        return AUTONOMY_ERROR_SYSTEM;
+    }
 }
 
 /**

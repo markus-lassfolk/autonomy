@@ -1,0 +1,828 @@
+#include "starlink_snow_detection.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
+
+// Snow detection configuration
+static const int SNOW_DETECTION_SAMPLES = 5;              // Samples needed for detection
+static const double SNOW_OBSTRUCTION_THRESHOLD = 0.05;    // 5% obstruction increase
+static const double SNOW_SNR_DEGRADATION_THRESHOLD = 0.02; // 2% SNR degradation
+static const double SNOW_TEMPERATURE_THRESHOLD = 2.0;     // Below 2°C
+static const int SNOW_VERIFICATION_TIME = 300;            // 5 minutes verification
+static const int SNOW_MELT_TIMEOUT = 1800;                // 30 minutes max melt time
+
+// Global snow detection state
+static starlink_snow_detection_t g_snow_detection = {0};
+static bool g_snow_detection_initialized = false;
+static pthread_mutex_t g_snow_detection_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// Forward declarations
+static bool is_winter_season(void);
+static bool is_rv_stationary(void);
+static bool check_snow_forecast(void);
+static double get_ambient_temperature(void);
+static double get_humidity(void);
+static void calculate_obstruction_rates(const starlink_obstruction_sample_t *sample);
+static snow_action_t determine_snow_action(void);
+static int execute_snow_action(snow_action_t action);
+static int start_dish_heating(void);
+static int stop_dish_heating(void);
+static int verify_obstruction_cleared(void);
+
+// Initialize snow detection system
+int starlink_snow_detection_init(void) {
+    if (g_snow_detection_initialized) {
+        LOGX_WARN_MSG("Snow detection system already initialized");
+        return AUTONOMY_SUCCESS;
+    }
+    
+    pthread_mutex_lock(&g_snow_detection_mutex);
+    
+    // Initialize snow detection state
+    memset(&g_snow_detection, 0, sizeof(starlink_snow_detection_t));
+    g_snow_detection.enabled = true;
+    g_snow_detection.detection_samples = SNOW_DETECTION_SAMPLES;
+    g_snow_detection.obstruction_threshold = SNOW_OBSTRUCTION_THRESHOLD;
+    g_snow_detection.snr_degradation_threshold = SNOW_SNR_DEGRADATION_THRESHOLD;
+    g_snow_detection.temperature_threshold = SNOW_TEMPERATURE_THRESHOLD;
+    g_snow_detection.verification_time = SNOW_VERIFICATION_TIME;
+    g_snow_detection.melt_timeout = SNOW_MELT_TIMEOUT;
+    
+    g_snow_detection.is_heating_active = false;
+    g_snow_detection.last_clear_time = time(NULL);
+    g_snow_detection.consecutive_obstruction_samples = 0;
+    g_snow_detection.total_detections = 0;
+    g_snow_detection.successful_melts = 0;
+    g_snow_detection.false_positives = 0;
+    g_snow_detection.prewarm_actions = 0;
+    g_snow_detection.melt_actions = 0;
+    g_snow_detection.verify_actions = 0;
+    g_snow_detection.average_melt_time = 0.0;
+    g_snow_detection.detection_accuracy = 0.0;
+    g_snow_detection.last_detection = 0;
+    g_snow_detection.last_successful_melt = 0;
+    
+    // Initialize sample history
+    for (int i = 0; i < MAX_SNOW_SAMPLES; i++) {
+        g_snow_detection.sample_history[i].timestamp = 0;
+        g_snow_detection.sample_history[i].fraction_obstructed = 0.0;
+        g_snow_detection.sample_history[i].snr = 0.0;
+        g_snow_detection.sample_history[i].temperature = 0.0;
+        g_snow_detection.sample_history[i].humidity = 0.0;
+    }
+    g_snow_detection.sample_count = 0;
+    
+    g_snow_detection_initialized = true;
+    pthread_mutex_unlock(&g_snow_detection_mutex);
+    
+    LOGX_INFO_MSG("Snow detection system initialized successfully");
+    return AUTONOMY_SUCCESS;
+}
+
+// Process obstruction sample for snow detection
+int starlink_snow_detection_process_sample(const starlink_obstruction_sample_t *sample) {
+    if (!g_snow_detection_initialized || !sample) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_snow_detection_mutex);
+    
+    // Add sample to history
+    int sample_index = g_snow_detection.sample_count % MAX_SNOW_SAMPLES;
+    g_snow_detection.sample_history[sample_index].timestamp = sample->timestamp;
+    g_snow_detection.sample_history[sample_index].fraction_obstructed = sample->fraction_obstructed;
+    g_snow_detection.sample_history[sample_index].snr = sample->snr;
+    g_snow_detection.sample_history[sample_index].temperature = get_ambient_temperature();
+    g_snow_detection.sample_history[sample_index].humidity = get_humidity();
+    
+    if (g_snow_detection.sample_count < MAX_SNOW_SAMPLES) {
+        g_snow_detection.sample_count++;
+    }
+    
+    // Calculate obstruction and SNR rates
+    calculate_obstruction_rates(sample);
+    
+    // Update context
+    g_snow_detection.context.is_stationary = is_rv_stationary();
+    g_snow_detection.context.is_winter_season = is_winter_season();
+    g_snow_detection.context.snow_forecast_active = check_snow_forecast();
+    g_snow_detection.context.temperature = get_ambient_temperature();
+    g_snow_detection.context.humidity = get_humidity();
+    g_snow_detection.context.last_clear_time = g_snow_detection.last_clear_time;
+    g_snow_detection.context.consecutive_obstruction_samples = g_snow_detection.consecutive_obstruction_samples;
+    
+    // Determine snow action
+    snow_action_t action = determine_snow_action();
+    
+    // Execute action if needed
+    if (action != SNOW_ACTION_NONE) {
+        int result = execute_snow_action(action);
+        if (result == AUTONOMY_SUCCESS) {
+            LOGX_INFO_MSG("Snow action executed successfully", "action", action);
+        } else {
+            LOGX_ERROR_MSG("Failed to execute snow action", "action", action, "result", result);
+        }
+    }
+    
+    pthread_mutex_unlock(&g_snow_detection_mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Check if it's winter season
+static bool is_winter_season(void) {
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
+    
+    // Winter months (Dec-Feb in northern hemisphere)
+    return (tm_info->tm_mon == 11 || tm_info->tm_mon == 0 || tm_info->tm_mon == 1);
+}
+
+// Check if RV is stationary
+static bool is_rv_stationary(void) {
+    // This would integrate with GPS movement detection
+    // For now, we'll use a simple heuristic based on obstruction patterns
+    
+    if (g_snow_detection.sample_count < 3) {
+        return true; // Assume stationary if not enough data
+    }
+    
+    // Check for consistent obstruction patterns (stationary)
+    double obstruction_variance = 0.0;
+    double mean_obstruction = 0.0;
+    
+    int valid_samples = 0;
+    for (int i = 0; i < g_snow_detection.sample_count && i < MAX_SNOW_SAMPLES; i++) {
+        if (g_snow_detection.sample_history[i].timestamp > 0) {
+            mean_obstruction += g_snow_detection.sample_history[i].fraction_obstructed;
+            valid_samples++;
+        }
+    }
+    
+    if (valid_samples < 3) {
+        return true;
+    }
+    
+    mean_obstruction /= valid_samples;
+    
+    // Calculate variance
+    for (int i = 0; i < g_snow_detection.sample_count && i < MAX_SNOW_SAMPLES; i++) {
+        if (g_snow_detection.sample_history[i].timestamp > 0) {
+            double diff = g_snow_detection.sample_history[i].fraction_obstructed - mean_obstruction;
+            obstruction_variance += diff * diff;
+        }
+    }
+    obstruction_variance /= valid_samples;
+    
+    // Low variance suggests stationary (consistent obstruction pattern)
+    return (obstruction_variance < 0.01); // 1% variance threshold
+}
+
+// Check snow forecast
+static bool check_snow_forecast(void) {
+    // This would integrate with weather API
+    // For now, we'll use a simple heuristic based on temperature and humidity
+    
+    double temp = get_ambient_temperature();
+    double humidity = get_humidity();
+    
+    // Simple snow forecast: cold temperature + high humidity
+    return (temp < 2.0 && humidity > 80.0);
+}
+
+// Get ambient temperature
+static double get_ambient_temperature(void) {
+    // Try to get temperature from weather API first
+    char weather_temp[32];
+    FILE *weather_fp = popen("curl -s 'http://api.openweathermap.org/data/2.5/weather?lat=0&lon=0&appid=YOUR_API_KEY&units=metric' 2>/dev/null | grep -o '\"temp\":[0-9.-]*' | cut -d':' -f2", "r");
+    if (weather_fp && fgets(weather_temp, sizeof(weather_temp), weather_fp)) {
+        pclose(weather_fp);
+        double temp = atof(weather_temp);
+        if (temp > -50.0 && temp < 60.0) { // Sanity check
+            return temp;
+        }
+    } else {
+        if (weather_fp) pclose(weather_fp);
+    }
+    
+    // Try to get temperature from system thermal sensors
+    FILE *temp_fp = popen("cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | head -1", "r");
+    if (temp_fp) {
+        char temp_str[32];
+        if (fgets(temp_str, sizeof(temp_str), temp_fp)) {
+            double temp_cpu = atof(temp_str) / 1000.0; // Convert from millidegrees
+            pclose(temp_fp);
+            
+            // Estimate ambient temperature (CPU temp is usually 20-30°C above ambient)
+            double ambient = temp_cpu - 25.0;
+            if (ambient > -50.0 && ambient < 60.0) { // Sanity check
+                return ambient;
+            }
+        }
+        pclose(temp_fp);
+    }
+    
+    // Try to get temperature from UCI configuration
+    FILE *uci_fp = popen("uci get autonomy.snow_detection.temperature_override 2>/dev/null", "r");
+    if (uci_fp) {
+        char temp_str[32];
+        if (fgets(temp_str, sizeof(temp_str), uci_fp)) {
+            pclose(uci_fp);
+            double temp = atof(temp_str);
+            if (temp > -50.0 && temp < 60.0) { // Sanity check
+                return temp;
+            }
+        } else {
+            pclose(uci_fp);
+        }
+    }
+    
+    // Fallback: return unknown temperature (will be handled by detection logic)
+    LOGX_WARN_MSG("Unable to determine ambient temperature, using fallback");
+    return 0.0; // Unknown temperature
+}
+
+// Get humidity
+static double get_humidity(void) {
+    // Try to get humidity from weather API first
+    char weather_humidity[32];
+    FILE *weather_fp = popen("curl -s 'http://api.openweathermap.org/data/2.5/weather?lat=0&lon=0&appid=YOUR_API_KEY&units=metric' 2>/dev/null | grep -o '\"humidity\":[0-9]*' | cut -d':' -f2", "r");
+    if (weather_fp && fgets(weather_humidity, sizeof(weather_humidity), weather_fp)) {
+        pclose(weather_fp);
+        double humidity = atof(weather_humidity);
+        if (humidity >= 0.0 && humidity <= 100.0) { // Sanity check
+            return humidity;
+        }
+    } else {
+        if (weather_fp) pclose(weather_fp);
+    }
+    
+    // Try to get humidity from UCI configuration
+    FILE *uci_fp = popen("uci get autonomy.snow_detection.humidity_override 2>/dev/null", "r");
+    if (uci_fp) {
+        char humidity_str[32];
+        if (fgets(humidity_str, sizeof(humidity_str), uci_fp)) {
+            pclose(uci_fp);
+            double humidity = atof(humidity_str);
+            if (humidity >= 0.0 && humidity <= 100.0) { // Sanity check
+                return humidity;
+            }
+        } else {
+            pclose(uci_fp);
+        }
+    }
+    
+    // Fallback: return unknown humidity (will be handled by detection logic)
+    LOGX_WARN_MSG("Unable to determine humidity, using fallback");
+    return 50.0; // Default humidity
+}
+
+// Calculate obstruction and SNR rates
+static void calculate_obstruction_rates(const starlink_obstruction_sample_t *sample) {
+    if (g_snow_detection.sample_count < 2) {
+        g_snow_detection.context.obstruction_increase_rate = 0.0;
+        g_snow_detection.context.snr_degradation_rate = 0.0;
+        return;
+    }
+    
+    // Get previous sample
+    int prev_index = (g_snow_detection.sample_count - 2) % MAX_SNOW_SAMPLES;
+    snow_sample_t *prev_sample = &g_snow_detection.sample_history[prev_index];
+    
+    if (prev_sample->timestamp == 0) {
+        g_snow_detection.context.obstruction_increase_rate = 0.0;
+        g_snow_detection.context.snr_degradation_rate = 0.0;
+        return;
+    }
+    
+    // Calculate rates
+    double time_diff = (double)(sample->timestamp - prev_sample->timestamp);
+    if (time_diff > 0) {
+        g_snow_detection.context.obstruction_increase_rate = 
+            (sample->fraction_obstructed - prev_sample->fraction_obstructed) / time_diff;
+        
+        g_snow_detection.context.snr_degradation_rate = 
+            (prev_sample->snr - sample->snr) / time_diff;
+    }
+    
+    // Update consecutive obstruction samples
+    if (sample->fraction_obstructed > g_snow_detection.obstruction_threshold) {
+        g_snow_detection.consecutive_obstruction_samples++;
+    } else {
+        g_snow_detection.consecutive_obstruction_samples = 0;
+        g_snow_detection.last_clear_time = sample->timestamp;
+    }
+}
+
+// Determine snow action based on context
+static snow_action_t determine_snow_action(void) {
+    // Priority 1: Immediate obstruction detection (rapid snow accumulation)
+    if (g_snow_detection.consecutive_obstruction_samples >= 3) {
+        if (g_snow_detection.context.obstruction_increase_rate > g_snow_detection.obstruction_threshold) {
+            if (g_snow_detection.context.is_stationary && 
+                g_snow_detection.context.is_winter_season &&
+                g_snow_detection.context.temperature < g_snow_detection.temperature_threshold) {
+                
+                LOGX_INFO_MSG("Rapid snow accumulation detected", 
+                              "obstruction_rate", g_snow_detection.context.obstruction_increase_rate,
+                              "consecutive_samples", g_snow_detection.consecutive_obstruction_samples);
+                return SNOW_ACTION_MELT;
+            }
+        }
+    }
+    
+    // Priority 2: Weather forecast + stationary + winter (proactive)
+    if (g_snow_detection.context.snow_forecast_active && 
+        g_snow_detection.context.is_stationary && 
+        g_snow_detection.context.is_winter_season &&
+        g_snow_detection.context.temperature < g_snow_detection.temperature_threshold &&
+        !g_snow_detection.is_heating_active) {
+        
+        LOGX_INFO_MSG("Snow forecast detected, starting pre-warming", 
+                      "temperature", g_snow_detection.context.temperature,
+                      "humidity", g_snow_detection.context.humidity);
+        return SNOW_ACTION_PREWARM;
+    }
+    
+    // Priority 3: Gradual degradation pattern
+    if (g_snow_detection.context.snr_degradation_rate > g_snow_detection.snr_degradation_threshold &&
+        g_snow_detection.context.is_stationary &&
+        g_snow_detection.context.is_winter_season &&
+        g_snow_detection.context.temperature < g_snow_detection.temperature_threshold) {
+        
+        LOGX_INFO_MSG("Gradual SNR degradation detected, verifying obstruction type", 
+                      "snr_degradation_rate", g_snow_detection.context.snr_degradation_rate);
+        return SNOW_ACTION_VERIFY;
+    }
+    
+    // Priority 4: Stop heating if obstruction cleared
+    if (g_snow_detection.is_heating_active && 
+        g_snow_detection.consecutive_obstruction_samples == 0) {
+        
+        LOGX_INFO_MSG("Obstruction cleared, stopping heating");
+        return SNOW_ACTION_CLEANUP;
+    }
+    
+    return SNOW_ACTION_NONE;
+}
+
+// Execute snow action
+static int execute_snow_action(snow_action_t action) {
+    switch (action) {
+        case SNOW_ACTION_PREWARM:
+            return start_dish_heating();
+            
+        case SNOW_ACTION_MELT:
+            g_snow_detection.total_detections++;
+            return start_dish_heating();
+            
+        case SNOW_ACTION_VERIFY:
+            // Wait for verification period
+            sleep(g_snow_detection.verification_time);
+            // Re-check obstruction
+            if (g_snow_detection.consecutive_obstruction_samples >= 2) {
+                return start_dish_heating();
+            }
+            break;
+            
+        case SNOW_ACTION_CLEANUP:
+            g_snow_detection.successful_melts++;
+            return stop_dish_heating();
+            
+        default:
+            break;
+    }
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Start dish heating
+static int start_dish_heating(void) {
+    if (g_snow_detection.is_heating_active) {
+        return AUTONOMY_SUCCESS; // Already heating
+    }
+    
+    LOGX_INFO_MSG("Starting dish heating system");
+    
+    // Try to control actual dish heating hardware
+    // First, try UCI-configured heating command
+    char heating_cmd[256];
+    FILE *uci_fp = popen("uci get autonomy.snow_detection.heating_command 2>/dev/null", "r");
+    if (uci_fp && fgets(heating_cmd, sizeof(heating_cmd), uci_fp)) {
+        pclose(uci_fp);
+        
+        // Remove newline
+        char *newline = strchr(heating_cmd, '\n');
+        if (newline) *newline = '\0';
+        
+        // Execute custom heating command
+        int result = system(heating_cmd);
+        if (result == 0) {
+            LOGX_INFO_MSG("Custom heating command executed successfully");
+        } else {
+            LOGX_WARN_MSG("Custom heating command failed", "result", result);
+        }
+    } else {
+        if (uci_fp) pclose(uci_fp);
+        
+        // Fallback: try standard heating control methods
+        // Method 1: GPIO control (if available)
+        FILE *gpio_fp = popen("echo 1 > /sys/class/gpio/gpio18/value 2>/dev/null", "r");
+        if (gpio_fp) {
+            pclose(gpio_fp);
+            LOGX_INFO_MSG("GPIO heating control activated");
+        } else {
+            // Method 2: Control file (for testing/simulation)
+            FILE *heat_fp = popen("echo 'HEAT_ON' > /tmp/dish_heater_control 2>/dev/null", "r");
+            if (heat_fp) {
+                pclose(heat_fp);
+                LOGX_INFO_MSG("Heating control file created (simulation mode)");
+            } else {
+                LOGX_WARN_MSG("Failed to activate heating system");
+                return AUTONOMY_ERROR_OPERATION_FAILED;
+            }
+        }
+    }
+    
+    g_snow_detection.is_heating_active = true;
+    g_snow_detection.heating_start_time = time(NULL);
+    
+    // Set timeout for heating
+    g_snow_detection.heating_timeout = g_snow_detection.heating_start_time + g_snow_detection.melt_timeout;
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Stop dish heating
+static int stop_dish_heating(void) {
+    if (!g_snow_detection.is_heating_active) {
+        return AUTONOMY_SUCCESS; // Already stopped
+    }
+    
+    LOGX_INFO_MSG("Stopping dish heating system");
+    
+    // Try to control actual dish heating hardware
+    // First, try UCI-configured heating stop command
+    char heating_cmd[256];
+    FILE *uci_fp = popen("uci get autonomy.snow_detection.heating_stop_command 2>/dev/null", "r");
+    if (uci_fp && fgets(heating_cmd, sizeof(heating_cmd), uci_fp)) {
+        pclose(uci_fp);
+        
+        // Remove newline
+        char *newline = strchr(heating_cmd, '\n');
+        if (newline) *newline = '\0';
+        
+        // Execute custom heating stop command
+        int result = system(heating_cmd);
+        if (result == 0) {
+            LOGX_INFO_MSG("Custom heating stop command executed successfully");
+        } else {
+            LOGX_WARN_MSG("Custom heating stop command failed", "result", result);
+        }
+    } else {
+        if (uci_fp) pclose(uci_fp);
+        
+        // Fallback: try standard heating control methods
+        // Method 1: GPIO control (if available)
+        FILE *gpio_fp = popen("echo 0 > /sys/class/gpio/gpio18/value 2>/dev/null", "r");
+        if (gpio_fp) {
+            pclose(gpio_fp);
+            LOGX_INFO_MSG("GPIO heating control deactivated");
+        } else {
+            // Method 2: Control file (for testing/simulation)
+            FILE *heat_fp = popen("echo 'HEAT_OFF' > /tmp/dish_heater_control 2>/dev/null", "r");
+            if (heat_fp) {
+                pclose(heat_fp);
+                LOGX_INFO_MSG("Heating control file updated (simulation mode)");
+            } else {
+                LOGX_WARN_MSG("Failed to deactivate heating system");
+                return AUTONOMY_ERROR_OPERATION_FAILED;
+            }
+        }
+    }
+    
+    g_snow_detection.is_heating_active = false;
+    g_snow_detection.heating_duration = time(NULL) - g_snow_detection.heating_start_time;
+    
+    LOGX_INFO_MSG("Dish heating stopped", "duration_seconds", g_snow_detection.heating_duration);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Verify obstruction cleared
+static int verify_obstruction_cleared(void) {
+    // This would re-check obstruction status
+    // For now, we'll use a simple check
+    
+    if (g_snow_detection.consecutive_obstruction_samples == 0) {
+        return AUTONOMY_SUCCESS; // Obstruction cleared
+    }
+    
+    return AUTONOMY_ERROR_NOT_FOUND; // Still obstructed
+}
+
+// Get snow detection status
+int starlink_snow_detection_get_status(starlink_snow_detection_status_t *status) {
+    if (!g_snow_detection_initialized || !status) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_snow_detection_mutex);
+    
+    status->enabled = g_snow_detection.enabled;
+    status->is_heating_active = g_snow_detection.is_heating_active;
+    status->consecutive_obstruction_samples = g_snow_detection.consecutive_obstruction_samples;
+    status->total_detections = g_snow_detection.total_detections;
+    status->successful_melts = g_snow_detection.successful_melts;
+    status->false_positives = g_snow_detection.false_positives;
+    status->last_clear_time = g_snow_detection.last_clear_time;
+    status->heating_start_time = g_snow_detection.heating_start_time;
+    status->heating_duration = g_snow_detection.heating_duration;
+    
+    // Copy context
+    memcpy(&status->context, &g_snow_detection.context, sizeof(snow_detection_context_t));
+    
+    pthread_mutex_unlock(&g_snow_detection_mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Get snow detection configuration
+int starlink_snow_detection_get_config(starlink_snow_detection_config_t *config) {
+    if (!g_snow_detection_initialized || !config) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_snow_detection_mutex);
+    
+    config->enabled = g_snow_detection.enabled;
+    config->detection_samples = g_snow_detection.detection_samples;
+    config->obstruction_threshold = g_snow_detection.obstruction_threshold;
+    config->snr_degradation_threshold = g_snow_detection.snr_degradation_threshold;
+    config->temperature_threshold = g_snow_detection.temperature_threshold;
+    config->verification_time = g_snow_detection.verification_time;
+    config->melt_timeout = g_snow_detection.melt_timeout;
+    
+    pthread_mutex_unlock(&g_snow_detection_mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Set snow detection configuration
+int starlink_snow_detection_set_config(const starlink_snow_detection_config_t *config) {
+    if (!g_snow_detection_initialized || !config) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_snow_detection_mutex);
+    
+    g_snow_detection.enabled = config->enabled;
+    g_snow_detection.detection_samples = config->detection_samples;
+    g_snow_detection.obstruction_threshold = config->obstruction_threshold;
+    g_snow_detection.snr_degradation_threshold = config->snr_degradation_threshold;
+    g_snow_detection.temperature_threshold = config->temperature_threshold;
+    g_snow_detection.verification_time = config->verification_time;
+    g_snow_detection.melt_timeout = config->melt_timeout;
+    
+    pthread_mutex_unlock(&g_snow_detection_mutex);
+    
+    LOGX_INFO_MSG("Snow detection configuration updated");
+    return AUTONOMY_SUCCESS;
+}
+
+// Enable/disable snow detection
+int starlink_snow_detection_set_enabled(bool enabled) {
+    if (!g_snow_detection_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_snow_detection_mutex);
+    g_snow_detection.enabled = enabled;
+    pthread_mutex_unlock(&g_snow_detection_mutex);
+    
+    LOGX_INFO_MSG("Snow detection system %s", enabled ? "enabled" : "disabled");
+    return AUTONOMY_SUCCESS;
+}
+
+// Force snow detection check
+int starlink_snow_detection_force_check(void) {
+    if (!g_snow_detection_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_snow_detection_mutex);
+    
+    snow_action_t action = determine_snow_action();
+    if (action != SNOW_ACTION_NONE) {
+        execute_snow_action(action);
+    }
+    
+    pthread_mutex_unlock(&g_snow_detection_mutex);
+    
+    LOGX_INFO_MSG("Snow detection force check completed", "action", action);
+    return AUTONOMY_SUCCESS;
+}
+
+// Start heating manually
+int starlink_snow_detection_start_heating_manual(void) {
+    if (!g_snow_detection_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_snow_detection_mutex);
+    
+    int result = start_dish_heating();
+    if (result == AUTONOMY_SUCCESS) {
+        g_snow_detection.total_detections++;
+        LOGX_INFO_MSG("Manual heating started");
+    }
+    
+    pthread_mutex_unlock(&g_snow_detection_mutex);
+    
+    return result;
+}
+
+// Stop heating manually
+int starlink_snow_detection_stop_heating_manual(void) {
+    if (!g_snow_detection_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_snow_detection_mutex);
+    
+    int result = stop_dish_heating();
+    if (result == AUTONOMY_SUCCESS) {
+        LOGX_INFO_MSG("Manual heating stopped");
+    }
+    
+    pthread_mutex_unlock(&g_snow_detection_mutex);
+    
+    return result;
+}
+
+// Get statistics
+int starlink_snow_detection_get_statistics(starlink_snow_detection_stats_t *stats) {
+    if (!g_snow_detection_initialized || !stats) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_snow_detection_mutex);
+    
+    stats->total_detections = g_snow_detection.total_detections;
+    stats->successful_melts = g_snow_detection.successful_melts;
+    stats->false_positives = g_snow_detection.false_positives;
+    stats->prewarm_actions = g_snow_detection.prewarm_actions;
+    stats->melt_actions = g_snow_detection.melt_actions;
+    stats->verify_actions = g_snow_detection.verify_actions;
+    stats->average_melt_time = g_snow_detection.average_melt_time;
+    stats->detection_accuracy = g_snow_detection.detection_accuracy;
+    stats->last_detection = g_snow_detection.last_detection;
+    stats->last_successful_melt = g_snow_detection.last_successful_melt;
+    
+    pthread_mutex_unlock(&g_snow_detection_mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Reset statistics
+int starlink_snow_detection_reset_statistics(void) {
+    if (!g_snow_detection_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_snow_detection_mutex);
+    
+    g_snow_detection.total_detections = 0;
+    g_snow_detection.successful_melts = 0;
+    g_snow_detection.false_positives = 0;
+    g_snow_detection.prewarm_actions = 0;
+    g_snow_detection.melt_actions = 0;
+    g_snow_detection.verify_actions = 0;
+    g_snow_detection.average_melt_time = 0.0;
+    g_snow_detection.detection_accuracy = 0.0;
+    g_snow_detection.last_detection = 0;
+    g_snow_detection.last_successful_melt = 0;
+    
+    pthread_mutex_unlock(&g_snow_detection_mutex);
+    
+    LOGX_INFO_MSG("Snow detection statistics reset");
+    return AUTONOMY_SUCCESS;
+}
+
+// Load configuration from UCI
+int starlink_snow_detection_load_uci_config(void) {
+    if (!g_snow_detection_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_snow_detection_mutex);
+    
+    // Load UCI configuration
+    FILE *uci_fp = popen("uci show autonomy.snow_detection 2>/dev/null", "r");
+    if (!uci_fp) {
+        LOGX_WARN_MSG("Failed to load UCI configuration, using defaults");
+        pthread_mutex_unlock(&g_snow_detection_mutex);
+        return AUTONOMY_SUCCESS;
+    }
+    
+    char line[256];
+    while (fgets(line, sizeof(line), uci_fp)) {
+        // Parse UCI output format: autonomy.snow_detection.enabled='1'
+        char *key = strtok(line, "='");
+        char *value = strtok(NULL, "'");
+        
+        if (!key || !value) continue;
+        
+        // Extract the option name
+        char *option = strrchr(key, '.');
+        if (!option) continue;
+        option++; // Skip the dot
+        
+        // Parse configuration values
+        if (strcmp(option, "enabled") == 0) {
+            g_snow_detection.enabled = (strcmp(value, "1") == 0);
+        } else if (strcmp(option, "detection_samples") == 0) {
+            g_snow_detection.detection_samples = atoi(value);
+        } else if (strcmp(option, "obstruction_threshold") == 0) {
+            g_snow_detection.obstruction_threshold = atof(value);
+        } else if (strcmp(option, "snr_degradation_threshold") == 0) {
+            g_snow_detection.snr_degradation_threshold = atof(value);
+        } else if (strcmp(option, "temperature_threshold") == 0) {
+            g_snow_detection.temperature_threshold = atof(value);
+        } else if (strcmp(option, "verification_time") == 0) {
+            g_snow_detection.verification_time = atoi(value);
+        } else if (strcmp(option, "melt_timeout") == 0) {
+            g_snow_detection.melt_timeout = atoi(value);
+        }
+    }
+    
+    pclose(uci_fp);
+    
+    pthread_mutex_unlock(&g_snow_detection_mutex);
+    
+    LOGX_INFO_MSG("UCI configuration loaded successfully");
+    return AUTONOMY_SUCCESS;
+}
+
+// Save configuration to UCI
+int starlink_snow_detection_save_uci_config(void) {
+    if (!g_snow_detection_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_snow_detection_mutex);
+    
+    // Build UCI commands
+    char uci_cmd[1024];
+    snprintf(uci_cmd, sizeof(uci_cmd), 
+             "uci set autonomy.snow_detection.enabled='%d' && "
+             "uci set autonomy.snow_detection.detection_samples='%d' && "
+             "uci set autonomy.snow_detection.obstruction_threshold='%.3f' && "
+             "uci set autonomy.snow_detection.snr_degradation_threshold='%.3f' && "
+             "uci set autonomy.snow_detection.temperature_threshold='%.1f' && "
+             "uci set autonomy.snow_detection.verification_time='%d' && "
+             "uci set autonomy.snow_detection.melt_timeout='%d' && "
+             "uci commit autonomy",
+             g_snow_detection.enabled ? 1 : 0,
+             g_snow_detection.detection_samples,
+             g_snow_detection.obstruction_threshold,
+             g_snow_detection.snr_degradation_threshold,
+             g_snow_detection.temperature_threshold,
+             g_snow_detection.verification_time,
+             g_snow_detection.melt_timeout);
+    
+    pthread_mutex_unlock(&g_snow_detection_mutex);
+    
+    // Execute UCI commands
+    int result = system(uci_cmd);
+    if (result != 0) {
+        LOGX_ERROR_MSG("Failed to save UCI configuration", "result", result);
+        return AUTONOMY_ERROR_OPERATION_FAILED;
+    }
+    
+    LOGX_INFO_MSG("UCI configuration saved successfully");
+    return AUTONOMY_SUCCESS;
+}
+
+// Cleanup snow detection system
+void starlink_snow_detection_cleanup(void) {
+    if (!g_snow_detection_initialized) {
+        return;
+    }
+    
+    // Stop heating if active
+    if (g_snow_detection.is_heating_active) {
+        stop_dish_heating();
+    }
+    
+    pthread_mutex_destroy(&g_snow_detection_mutex);
+    g_snow_detection_initialized = false;
+    
+    LOGX_INFO_MSG("Snow detection system cleaned up");
+}

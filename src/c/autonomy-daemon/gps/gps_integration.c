@@ -424,23 +424,229 @@ void update_best_gps_source(void) {
 
 // Perform GPS data fusion
 void perform_gps_data_fusion(void) {
-    // This is a placeholder for GPS data fusion
-    // In a full implementation, this would call the gps_fusion module
-    LOGX_DEBUG_MSG("GPS data fusion would be performed here");
+    if (!g_integration_initialized || g_integration.active_sources < 2) {
+        return; // Need at least 2 sources for fusion
+    }
+    
+    // Collect GPS data from all active sources
+    standardized_gps_data_t source_data[10];
+    int source_count = 0;
+    
+    for (int i = 0; i < g_integration.source_count && source_count < 10; i++) {
+        if (g_integration.gps_sources[i].active && g_integration.gps_sources[i].enabled) {
+            // Convert gps_data_t to standardized_gps_data_t
+            source_data[source_count].latitude = g_integration.current_gps.latitude;
+            source_data[source_count].longitude = g_integration.current_gps.longitude;
+            source_data[source_count].accuracy = g_integration.current_gps.accuracy;
+            source_data[source_count].confidence = g_integration.current_gps.confidence;
+            source_data[source_count].timestamp = g_integration.current_gps.timestamp;
+            source_data[source_count].source_type = g_integration.gps_sources[i].source_type;
+            source_data[source_count].speed = g_integration.current_gps.speed;
+            source_data[source_count].heading = g_integration.current_gps.heading;
+            source_data[source_count].altitude = g_integration.current_gps.altitude;
+            source_count++;
+        }
+    }
+    
+    if (source_count >= 2) {
+        // Check if fusion engine is available
+        if (gps_fusion_engine_is_initialized()) {
+            standardized_gps_data_t fused_result;
+            
+            if (gps_fusion_engine_fuse(source_data, source_count, &fused_result) == AUTONOMY_SUCCESS) {
+                // Update current GPS with fused result
+                g_integration.current_gps.latitude = fused_result.latitude;
+                g_integration.current_gps.longitude = fused_result.longitude;
+                g_integration.current_gps.accuracy = fused_result.accuracy;
+                g_integration.current_gps.confidence = fused_result.confidence;
+                g_integration.current_gps.speed = fused_result.speed;
+                g_integration.current_gps.heading = fused_result.heading;
+                g_integration.current_gps.altitude = fused_result.altitude;
+                
+                LOGX_DEBUG_MSG("GPS data fusion completed", 
+                              "source_count", source_count,
+                              "fused_lat", fused_result.latitude,
+                              "fused_lon", fused_result.longitude,
+                              "fused_accuracy", fused_result.accuracy);
+            }
+        } else {
+            // Fallback to weighted average if fusion engine not available
+            double total_weight = 0.0;
+            double weighted_lat = 0.0;
+            double weighted_lon = 0.0;
+            double weighted_accuracy = 0.0;
+            double weighted_confidence = 0.0;
+            
+            for (int i = 0; i < source_count; i++) {
+                double weight = 1.0 / (source_data[i].accuracy + 1.0); // Weight by inverse accuracy
+                total_weight += weight;
+                weighted_lat += source_data[i].latitude * weight;
+                weighted_lon += source_data[i].longitude * weight;
+                weighted_accuracy += source_data[i].accuracy * weight;
+                weighted_confidence += source_data[i].confidence * weight;
+            }
+            
+            if (total_weight > 0.0) {
+                g_integration.current_gps.latitude = weighted_lat / total_weight;
+                g_integration.current_gps.longitude = weighted_lon / total_weight;
+                g_integration.current_gps.accuracy = weighted_accuracy / total_weight;
+                g_integration.current_gps.confidence = weighted_confidence / total_weight;
+                
+                LOGX_DEBUG_MSG("GPS weighted average completed", 
+                              "source_count", source_count,
+                              "weighted_lat", g_integration.current_gps.latitude,
+                              "weighted_lon", g_integration.current_gps.longitude);
+            }
+        }
+    }
 }
 
 // Check GPS events
 void check_gps_events(void) {
-    // This is a placeholder for GPS event checking
-    // In a full implementation, this would call the gps_events module
-    LOGX_DEBUG_MSG("GPS events would be checked here");
+    if (!g_integration_initialized) {
+        return;
+    }
+    
+    time_t now = time(NULL);
+    static time_t last_event_check = 0;
+    
+    // Check events every 5 seconds
+    if (now - last_event_check < 5) {
+        return;
+    }
+    last_event_check = now;
+    
+    // Check for GPS source failures
+    for (int i = 0; i < g_integration.source_count; i++) {
+        if (g_integration.gps_sources[i].enabled) {
+            time_t time_since_update = now - g_integration.gps_sources[i].last_update;
+            
+            // Mark source as inactive if no update for 30 seconds
+            if (time_since_update > 30 && g_integration.gps_sources[i].active) {
+                g_integration.gps_sources[i].active = false;
+                g_integration.active_sources--;
+                
+                LOGX_WARN_MSG("GPS source marked as inactive", 
+                             "source_id", g_integration.gps_sources[i].source_id,
+                             "source_name", g_integration.gps_sources[i].name,
+                             "time_since_update", time_since_update);
+                
+                // Update best source if this was the best one
+                if (g_integration.best_source_id == g_integration.gps_sources[i].source_id) {
+                    update_best_gps_source();
+                }
+            }
+            // Mark source as active if it has recent updates
+            else if (time_since_update <= 30 && !g_integration.gps_sources[i].active) {
+                g_integration.gps_sources[i].active = true;
+                g_integration.active_sources++;
+                
+                LOGX_INFO_MSG("GPS source marked as active", 
+                             "source_id", g_integration.gps_sources[i].source_id,
+                             "source_name", g_integration.gps_sources[i].name);
+                
+                update_best_gps_source();
+            }
+        }
+    }
+    
+    // Check for accuracy degradation
+    if (g_integration.current_gps.accuracy > g_integration.min_accuracy * 2.0) {
+        LOGX_WARN_MSG("GPS accuracy degraded", 
+                     "current_accuracy", g_integration.current_gps.accuracy,
+                     "min_accuracy", g_integration.min_accuracy);
+    }
+    
+    // Check for low confidence
+    if (g_integration.current_gps.confidence < 0.5) {
+        LOGX_WARN_MSG("GPS confidence low", 
+                     "confidence", g_integration.current_gps.confidence);
+    }
+    
+    // Check for no active sources
+    if (g_integration.active_sources == 0) {
+        LOGX_ERROR_MSG("No active GPS sources available");
+    }
+    
+    // Check for single source (potential reliability issue)
+    else if (g_integration.active_sources == 1) {
+        LOGX_WARN_MSG("Only one GPS source active", 
+                     "active_sources", g_integration.active_sources);
+    }
+    
+    // Update integration check timestamp
+    g_integration.last_integration_check = now;
 }
 
 // Check location services update
 void check_location_services_update(void) {
-    // This is a placeholder for location services updates
-    // In a full implementation, this would call the gps_location_services module
-    LOGX_DEBUG_MSG("Location services would be updated here");
+    if (!g_integration_initialized) {
+        return;
+    }
+    
+    time_t now = time(NULL);
+    static time_t last_location_services_check = 0;
+    
+    // Check location services every 10 seconds
+    if (now - last_location_services_check < 10) {
+        return;
+    }
+    last_location_services_check = now;
+    
+    // Check if location reference system is available
+    if (gps_location_reference_is_initialized()) {
+        uint32_t location_id;
+        
+        // Get or create location reference for current GPS position
+        int result = gps_location_reference_get_or_create(
+            g_integration.current_gps.latitude,
+            g_integration.current_gps.longitude,
+            g_integration.current_gps.accuracy,
+            "gps_integration",
+            &location_id
+        );
+        
+        if (result == AUTONOMY_SUCCESS) {
+            // Update location usage statistics
+            double signal_quality = g_integration.current_gps.confidence * 100.0;
+            double latency_ms = 0.0; // Would be measured from actual GPS response time
+            
+            gps_location_reference_update_usage(location_id, signal_quality, latency_ms);
+            
+            LOGX_DEBUG_MSG("Location services updated", 
+                          "location_id", location_id,
+                          "latitude", g_integration.current_gps.latitude,
+                          "longitude", g_integration.current_gps.longitude,
+                          "accuracy", g_integration.current_gps.accuracy);
+        }
+    }
+    
+    // Check for significant location changes
+    static double last_latitude = 0.0;
+    static double last_longitude = 0.0;
+    static bool first_update = true;
+    
+    if (!first_update) {
+        double distance = gps_calculate_distance_meters(
+            last_latitude, last_longitude,
+            g_integration.current_gps.latitude,
+            g_integration.current_gps.longitude
+        );
+        
+        // Log significant location changes (> 100 meters)
+        if (distance > 100.0) {
+            LOGX_INFO_MSG("Significant location change detected", 
+                         "distance_meters", distance,
+                         "from_lat", last_latitude,
+                         "from_lon", last_longitude,
+                         "to_lat", g_integration.current_gps.latitude,
+                         "to_lon", g_integration.current_gps.longitude);
+        }
+    }
+    
+    last_latitude = g_integration.current_gps.latitude;
+    last_longitude = g_integration.current_gps.longitude;
+    first_update = false;
 }
 
 // Get GPS integration status

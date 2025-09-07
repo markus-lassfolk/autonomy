@@ -134,8 +134,42 @@ int gps_system_init(void) {
         return result;
     }
     
-    // Initialize GPS Google API (with placeholder API key)
-    result = gps_google_api_init("YOUR_GOOGLE_API_KEY_HERE");
+    // Initialize GPS Google API with proper API key loading
+    const char* google_api_key = NULL;
+    
+    // Try to get from environment variable first
+    google_api_key = getenv("GOOGLE_API_KEY");
+    
+    // If not found in environment, try to get from UCI configuration
+    if (!google_api_key) {
+        FILE *uci_fp = popen("uci get autonomy.gps.google_api_key 2>/dev/null", "r");
+        if (uci_fp) {
+            char key_buffer[256];
+            if (fgets(key_buffer, sizeof(key_buffer), uci_fp)) {
+                // Remove newline
+                char *newline = strchr(key_buffer, '\n');
+                if (newline) *newline = '\0';
+                
+                // Remove quotes if present
+                if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
+                    key_buffer[strlen(key_buffer)-1] = '\0';
+                    google_api_key = key_buffer + 1;
+                } else {
+                    google_api_key = key_buffer;
+                }
+            }
+            pclose(uci_fp);
+        }
+    }
+    
+    // Check if API key is configured
+    if (!google_api_key || strlen(google_api_key) == 0) {
+        LOGX_ERROR_MSG("Google API key not configured - GPS Google API services will be disabled");
+        // Don't initialize Google API if no key is available
+        return AUTONOMY_ERROR_CONFIGURATION;
+    }
+    
+    result = gps_google_api_init(google_api_key);
     if (result != AUTONOMY_SUCCESS) {
         LOGX_ERROR_MSG("Failed to initialize GPS Google API: %d", result);
         return result;
@@ -148,8 +182,42 @@ int gps_system_init(void) {
         return result;
     }
     
-    // Initialize GPS Weather integration (with placeholder API key)
-    result = gps_weather_init("YOUR_WEATHER_API_KEY_HERE");
+    // Initialize GPS Weather integration with proper API key loading
+    const char* weather_api_key = NULL;
+    
+    // Try to get from environment variable first
+    weather_api_key = getenv("WEATHER_API_KEY");
+    
+    // If not found in environment, try to get from UCI configuration
+    if (!weather_api_key) {
+        FILE *uci_fp = popen("uci get autonomy.gps.weather_api_key 2>/dev/null", "r");
+        if (uci_fp) {
+            char key_buffer[256];
+            if (fgets(key_buffer, sizeof(key_buffer), uci_fp)) {
+                // Remove newline
+                char *newline = strchr(key_buffer, '\n');
+                if (newline) *newline = '\0';
+                
+                // Remove quotes if present
+                if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
+                    key_buffer[strlen(key_buffer)-1] = '\0';
+                    weather_api_key = key_buffer + 1;
+                } else {
+                    weather_api_key = key_buffer;
+                }
+            }
+            pclose(uci_fp);
+        }
+    }
+    
+    // Check if API key is configured
+    if (!weather_api_key || strlen(weather_api_key) == 0) {
+        LOGX_ERROR_MSG("Weather API key not configured - GPS weather services will be disabled");
+        // Don't initialize weather API if no key is available
+        return AUTONOMY_ERROR_CONFIGURATION;
+    }
+    
+    result = gps_weather_init(weather_api_key);
     if (result != AUTONOMY_SUCCESS) {
         LOGX_ERROR_MSG("Failed to initialize GPS Weather integration: %d", result);
         return result;

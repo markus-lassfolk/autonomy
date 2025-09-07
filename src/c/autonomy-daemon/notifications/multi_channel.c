@@ -149,7 +149,46 @@ static int send_to_syslog(const notification_event_t* event) {
     return 0;
 }
 
-// Send to UBUS channel (placeholder)
+        // Send to UBUS channel
+        if (strcmp(channel->name, "ubus") == 0) {
+            // Create UBUS message
+            struct ubus_context *ctx = ubus_connect(NULL);
+            if (ctx) {
+                struct blob_buf b;
+                blob_buf_init(&b, 0);
+                
+                // Add notification data to blob
+                blobmsg_add_string(&b, "title", notification->title);
+                blobmsg_add_string(&b, "message", notification->message);
+                blobmsg_add_string(&b, "type", notification->type);
+                blobmsg_add_string(&b, "severity", notification->severity);
+                blobmsg_add_u32(&b, "timestamp", notification->timestamp);
+                blobmsg_add_u32(&b, "id", notification->id);
+                
+                // Send to autonomy.notifications UBUS object
+                uint32_t id;
+                int ret = ubus_lookup_id(ctx, "autonomy.notifications", &id);
+                if (ret == 0) {
+                    ret = ubus_invoke(ctx, id, "send_notification", b.head, NULL, NULL, 1000);
+                    if (ret == 0) {
+                        LOGX_DEBUG_MSG("Notification sent via UBUS", 
+                                      "notification_id", notification->id,
+                                      "title", notification->title);
+                    } else {
+                        LOGX_ERROR_MSG("Failed to send notification via UBUS", 
+                                      "error", ret,
+                                      "notification_id", notification->id);
+                    }
+                } else {
+                    LOGX_WARN_MSG("UBUS object autonomy.notifications not found");
+                }
+                
+                blob_buf_free(&b);
+                ubus_free(ctx);
+            } else {
+                LOGX_ERROR_MSG("Failed to connect to UBUS");
+            }
+        }
 static int send_to_ubus(const notification_event_t* event) {
     if (!event) return -1;
     

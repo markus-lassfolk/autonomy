@@ -255,11 +255,86 @@ void record_obstruction(gps_obstruction_type_t obstruction_type, double confiden
 
 // Analyze satellite-specific obstructions
 void analyze_satellite_obstructions(const gps_data_t *gps_data) {
-    // This is a placeholder for satellite-specific obstruction analysis
-    // In a full implementation, this would analyze individual satellite signals
-    // and detect obstructions affecting specific satellites
+    if (!gps_data) {
+        return;
+    }
     
-    LOGX_DEBUG_MSG("Satellite obstruction analysis would be performed here");
+    // Analyze individual satellite signals for obstruction patterns
+    int obstructed_satellites = 0;
+    int total_satellites = 0;
+    double avg_signal_strength = 0.0;
+    double min_signal_strength = 100.0;
+    double max_signal_strength = 0.0;
+    
+    // Check each satellite for obstruction indicators
+    for (int i = 0; i < gps_data->satellite_count && i < MAX_SATELLITES; i++) {
+        const gps_satellite_t *sat = &gps_data->satellites[i];
+        total_satellites++;
+        
+        // Calculate signal strength metrics
+        double signal_strength = sat->signal_strength;
+        avg_signal_strength += signal_strength;
+        
+        if (signal_strength < min_signal_strength) {
+            min_signal_strength = signal_strength;
+        }
+        if (signal_strength > max_signal_strength) {
+            max_signal_strength = signal_strength;
+        }
+        
+        // Detect obstruction indicators
+        bool is_obstructed = false;
+        
+        // Low signal strength (below threshold)
+        if (signal_strength < OBSTRUCTION_SIGNAL_THRESHOLD) {
+            is_obstructed = true;
+        }
+        
+        // High elevation but low signal (indicates obstruction)
+        if (sat->elevation > 30.0 && signal_strength < (OBSTRUCTION_SIGNAL_THRESHOLD + 5.0)) {
+            is_obstructed = true;
+        }
+        
+        // Signal quality degradation
+        if (sat->signal_quality < 0.5) {
+            is_obstructed = true;
+        }
+        
+        if (is_obstructed) {
+            obstructed_satellites++;
+            LOGX_DEBUG_MSG("Satellite obstruction detected", 
+                          "satellite_id", sat->satellite_id,
+                          "elevation", sat->elevation,
+                          "azimuth", sat->azimuth,
+                          "signal_strength", signal_strength,
+                          "signal_quality", sat->signal_quality);
+        }
+    }
+    
+    if (total_satellites > 0) {
+        avg_signal_strength /= total_satellites;
+        
+        // Calculate obstruction percentage
+        double obstruction_percentage = (double)obstructed_satellites / total_satellites * 100.0;
+        
+        // Log obstruction analysis results
+        LOGX_DEBUG_MSG("Satellite obstruction analysis completed", 
+                      "total_satellites", total_satellites,
+                      "obstructed_satellites", obstructed_satellites,
+                      "obstruction_percentage", obstruction_percentage,
+                      "avg_signal_strength", avg_signal_strength,
+                      "min_signal_strength", min_signal_strength,
+                      "max_signal_strength", max_signal_strength);
+        
+        // Issue warnings for significant obstructions
+        if (obstruction_percentage > 50.0) {
+            LOGX_WARN_MSG("High satellite obstruction detected", 
+                          "obstruction_percentage", obstruction_percentage);
+        } else if (obstruction_percentage > 25.0) {
+            LOGX_INFO_MSG("Moderate satellite obstruction detected", 
+                          "obstruction_percentage", obstruction_percentage);
+        }
+    }
 }
 
 // Get obstruction analysis status

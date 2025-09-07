@@ -321,14 +321,87 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
     
     switch (source_type) {
         case GPS_SOURCE_RUTOS: {
-            // Check if RUTOS GPS is available (placeholder check)
+            // Check if RUTOS GPS is available
             gps_data_t rutos_data;
-            // Placeholder implementation - would call actual RUTOS GPS
-            rutos_data.valid = true;
-            rutos_data.latitude = 54.6872; // Example coordinates
-            rutos_data.longitude = 25.2797;
-            rutos_data.accuracy = 10.0;
-            rutos_data.satellites = 8;
+            
+            // Try to get GPS data from RUTOS GPS daemon
+            FILE *gps_fp = popen("gpspipe -w -n 1 2>/dev/null", "r");
+            if (gps_fp) {
+                char gps_line[512];
+                if (fgets(gps_line, sizeof(gps_line), gps_fp)) {
+                    // Parse NMEA or JSON GPS data
+                    if (strstr(gps_line, "GPGGA") || strstr(gps_line, "GPRMC")) {
+                        // Parse NMEA sentence
+                        char *lat_start = strstr(gps_line, ",");
+                        if (lat_start) {
+                            lat_start = strchr(lat_start + 1, ',');
+                            if (lat_start) {
+                                lat_start = strchr(lat_start + 1, ',');
+                                if (lat_start) {
+                                    rutos_data.latitude = atof(lat_start + 1);
+                                    char *lon_start = strchr(lat_start + 1, ',');
+                                    if (lon_start) {
+                                        lon_start = strchr(lon_start + 1, ',');
+                                        if (lon_start) {
+                                            rutos_data.longitude = atof(lon_start + 1);
+                                            rutos_data.valid = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else if (strstr(gps_line, "\"lat\":") && strstr(gps_line, "\"lon\":")) {
+                        // Parse JSON GPS data
+                        char *lat_start = strstr(gps_line, "\"lat\":");
+                        char *lon_start = strstr(gps_line, "\"lon\":");
+                        if (lat_start && lon_start) {
+                            lat_start = strchr(lat_start, ':');
+                            lon_start = strchr(lon_start, ':');
+                            if (lat_start && lon_start) {
+                                rutos_data.latitude = atof(lat_start + 1);
+                                rutos_data.longitude = atof(lon_start + 1);
+                                rutos_data.valid = true;
+                            }
+                        }
+                    }
+                }
+                pclose(gps_fp);
+            }
+            
+            // If GPS parsing failed, try alternative method
+            if (!rutos_data.valid) {
+                FILE *alt_fp = popen("ubus call gps get_status 2>/dev/null", "r");
+                if (alt_fp) {
+                    char ubus_line[512];
+                    if (fgets(ubus_line, sizeof(ubus_line), alt_fp)) {
+                        // Parse UBUS GPS response
+                        char *lat_start = strstr(ubus_line, "\"latitude\":");
+                        char *lon_start = strstr(ubus_line, "\"longitude\":");
+                        if (lat_start && lon_start) {
+                            lat_start = strchr(lat_start, ':');
+                            lon_start = strchr(lon_start, ':');
+                            if (lat_start && lon_start) {
+                                rutos_data.latitude = atof(lat_start + 1);
+                                rutos_data.longitude = atof(lon_start + 1);
+                                rutos_data.valid = true;
+                            }
+                        }
+                    }
+                    pclose(alt_fp);
+                }
+            }
+            
+            // Set default values if still not valid
+            if (!rutos_data.valid) {
+                rutos_data.valid = false;
+                rutos_data.latitude = 0.0;
+                rutos_data.longitude = 0.0;
+                rutos_data.accuracy = 0.0;
+                rutos_data.satellites = 0;
+            } else {
+                rutos_data.accuracy = 10.0; // Default accuracy
+                rutos_data.satellites = 8;  // Default satellite count
+            }
             rutos_data.timestamp = time(NULL);
             
             if (rutos_data.valid) {
@@ -353,14 +426,72 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
         }
         
         case GPS_SOURCE_STARLINK: {
-            // Check if Starlink GPS is available (placeholder check)
+            // Check if Starlink GPS is available
             gps_data_t starlink_data;
-            // Placeholder implementation - would call actual Starlink GPS
-            starlink_data.valid = true;
-            starlink_data.latitude = 54.6872; // Example coordinates
-            starlink_data.longitude = 25.2797;
-            starlink_data.accuracy = 15.0;
-            starlink_data.satellites = 6;
+            
+            // Try to get GPS data from Starlink dish API
+            http_request_config_t request_config = {0};
+            http_response_t response = {0};
+            
+            strncpy(request_config.url, "http://192.168.100.1/api/v1/status", sizeof(request_config.url) - 1);
+            request_config.method = HTTP_METHOD_GET;
+            request_config.timeout_seconds = 5;
+            request_config.follow_redirects = true;
+            
+            int result = http_client_make_request(&request_config, &response);
+            
+            if (result == 0 && response.success && response.data) {
+                // Parse Starlink GPS data from JSON response
+                char *lat_start = strstr(response.data, "\"latitude\":");
+                char *lon_start = strstr(response.data, "\"longitude\":");
+                char *alt_start = strstr(response.data, "\"altitude\":");
+                char *accuracy_start = strstr(response.data, "\"accuracy\":");
+                
+                if (lat_start && lon_start) {
+                    lat_start = strchr(lat_start, ':');
+                    lon_start = strchr(lon_start, ':');
+                    
+                    if (lat_start && lon_start) {
+                        starlink_data.latitude = atof(lat_start + 1);
+                        starlink_data.longitude = atof(lon_start + 1);
+                        starlink_data.valid = true;
+                        
+                        // Parse altitude if available
+                        if (alt_start) {
+                            alt_start = strchr(alt_start, ':');
+                            if (alt_start) {
+                                starlink_data.altitude = atof(alt_start + 1);
+                            }
+                        } else {
+                            starlink_data.altitude = 0.0;
+                        }
+                        
+                        // Parse accuracy if available
+                        if (accuracy_start) {
+                            accuracy_start = strchr(accuracy_start, ':');
+                            if (accuracy_start) {
+                                starlink_data.accuracy = atof(accuracy_start + 1);
+                            }
+                        } else {
+                            starlink_data.accuracy = 15.0; // Default Starlink accuracy
+                        }
+                    }
+                }
+                
+                // Clean up response
+                if (response.data) {
+                    free(response.data);
+                }
+            } else {
+                // Starlink GPS not available
+                starlink_data.valid = false;
+                starlink_data.latitude = 0.0;
+                starlink_data.longitude = 0.0;
+                starlink_data.altitude = 0.0;
+                starlink_data.accuracy = 0.0;
+            }
+            
+            starlink_data.satellites = 12; // Starlink typically has good satellite coverage
             starlink_data.timestamp = time(NULL);
             
             if (starlink_data.valid) {

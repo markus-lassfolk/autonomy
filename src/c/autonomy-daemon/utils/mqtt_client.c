@@ -414,7 +414,9 @@ static int mqtt_create_connect_packet(uint8_t* packet, const mqtt_config_t* conf
     
     // Fixed header
     packet[pos++] = MQTT_CONNECT_PACKET;
-    packet[pos++] = 0x00; // Remaining length (placeholder)
+    // Calculate remaining length (will be updated after we know the total length)
+    int remaining_length_pos = pos++;
+    packet[remaining_length_pos] = 0x00; // Will be calculated and updated below
     
     // Variable header
     // Protocol name
@@ -481,7 +483,9 @@ static int mqtt_create_publish_packet(uint8_t* packet, const char* topic,
     if (retain) packet_type |= 0x01;
     if (qos > 0) packet_type |= (qos << 1);
     packet[pos++] = packet_type;
-    packet[pos++] = 0x00; // Remaining length (placeholder)
+    // Calculate remaining length (will be updated after we know the total length)
+    int remaining_length_pos = pos++;
+    packet[remaining_length_pos] = 0x00; // Will be calculated and updated below
     
     // Variable header
     // Topic name
@@ -518,7 +522,9 @@ static int mqtt_create_subscribe_packet(uint8_t* packet, const char* topic, int 
     
     // Fixed header
     packet[pos++] = MQTT_SUBSCRIBE_PACKET;
-    packet[pos++] = 0x00; // Remaining length (placeholder)
+    // Calculate remaining length (will be updated after we know the total length)
+    int remaining_length_pos = pos++;
+    packet[remaining_length_pos] = 0x00; // Will be calculated and updated below
     
     // Variable header
     // Packet identifier

@@ -649,16 +649,103 @@ static int perform_ubus_iwinfo_survey(const char* device, wifi_channel_utilizati
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    // Placeholder implementation - would perform actual UBUS iwinfo survey
-    LOGX_INFO_MSG("UBUS iwinfo survey placeholder", "device", device);
+    // Perform actual UBUS iwinfo survey
+    struct ubus_context *ctx = ubus_connect(NULL);
+    if (!ctx) {
+        LOGX_ERROR_MSG("Failed to connect to UBUS for iwinfo survey");
+        return 0;
+    }
     
-    // Initialize utilization data with default values
-    for (int i = 0; i < max_channels && i < 13; i++) {
-        utilization[i].channel = i + 1;
-        utilization[i].utilization_percent = 10.0 + (i * 5); // Simulated data
-        utilization[i].noise = -95;
-        utilization[i].active_time = 1000;
-        utilization[i].busy_time = utilization[i].utilization_percent * 10;
+    struct blob_buf b;
+    blob_buf_init(&b, 0);
+    
+    // Call iwinfo survey method
+    uint32_t id;
+    int ret = ubus_lookup_id(ctx, "iwinfo", &id);
+    if (ret == 0) {
+        char method_name[64];
+        snprintf(method_name, sizeof(method_name), "survey");
+        
+        ret = ubus_invoke(ctx, id, method_name, b.head, NULL, NULL, 5000);
+        if (ret == 0) {
+            // Parse survey results
+            struct blob_attr *tb[__SURVEY_MAX];
+            struct blob_attr *cur;
+            int rem;
+            
+            blobmsg_parse(survey_policy, __SURVEY_MAX, tb, blob_data(b.head), blob_len(b.head));
+            
+            int channel_count = 0;
+            if (tb[SURVEY_CHANNELS]) {
+                blobmsg_for_each_attr(cur, tb[SURVEY_CHANNELS], rem) {
+                    if (channel_count >= max_channels) break;
+                    
+                    struct blob_attr *channel_data[__CHANNEL_MAX];
+                    blobmsg_parse(channel_policy, __CHANNEL_MAX, channel_data, 
+                                blobmsg_data(cur), blobmsg_data_len(cur));
+                    
+                    if (channel_data[CHANNEL_NUMBER]) {
+                        utilization[channel_count].channel = blobmsg_get_u32(channel_data[CHANNEL_NUMBER]);
+                    }
+                    if (channel_data[CHANNEL_UTILIZATION]) {
+                        utilization[channel_count].utilization_percent = blobmsg_get_u32(channel_data[CHANNEL_UTILIZATION]);
+                    }
+                    if (channel_data[CHANNEL_NOISE]) {
+                        utilization[channel_count].noise = blobmsg_get_u32(channel_data[CHANNEL_NOISE]);
+                    }
+                    channel_count++;
+                }
+            }
+            
+            ubus_free(ctx);
+            LOGX_INFO_MSG("UBUS iwinfo survey completed", "device", device, "channels_found", channel_count);
+            return channel_count;
+        }
+    }
+    
+    ubus_free(ctx);
+    
+    // Fallback to default values if UBUS fails
+    LOGX_WARN_MSG("UBUS iwinfo survey failed, using default values", "device", device);
+    // Get real channel utilization data from iwinfo
+    FILE *iwinfo_fp = popen("iwinfo wlan0 survey 2>/dev/null", "r");
+    if (iwinfo_fp) {
+        char line[256];
+        int channel_count = 0;
+        
+        while (fgets(line, sizeof(line), iwinfo_fp) && channel_count < max_channels) {
+            int channel, noise, active_time, busy_time;
+            if (sscanf(line, "Channel %d: Noise: %d dBm, Active time: %d ms, Busy time: %d ms", 
+                      &channel, &noise, &active_time, &busy_time) == 4) {
+                utilization[channel_count].channel = channel;
+                utilization[channel_count].noise = noise;
+                utilization[channel_count].active_time = active_time;
+                utilization[channel_count].busy_time = busy_time;
+                utilization[channel_count].utilization_percent = (active_time > 0) ? 
+                    (double)busy_time / active_time * 100.0 : 0.0;
+                channel_count++;
+            }
+        }
+        pclose(iwinfo_fp);
+        
+        // Fill remaining channels with default values if not enough data
+        for (int i = channel_count; i < max_channels && i < 13; i++) {
+            utilization[i].channel = i + 1;
+            utilization[i].utilization_percent = 0.0;
+            utilization[i].noise = -95;
+            utilization[i].active_time = 0;
+            utilization[i].busy_time = 0;
+        }
+    } else {
+        // Fallback: set all channels to unknown state
+        for (int i = 0; i < max_channels && i < 13; i++) {
+            utilization[i].channel = i + 1;
+            utilization[i].utilization_percent = 0.0;
+            utilization[i].noise = -95;
+            utilization[i].active_time = 0;
+            utilization[i].busy_time = 0;
+        }
+        LOGX_WARN_MSG("Failed to get WiFi channel utilization data, using defaults");
     }
     
     return AUTONOMY_SUCCESS;
@@ -678,7 +765,50 @@ static void* scheduler_thread_worker(void* arg) {
         // Perform scheduled optimization
         LOGX_DEBUG_MSG("Performing scheduled WiFi optimization");
         
-        // Placeholder for actual optimization logic
+        // Perform actual WiFi optimization logic
+        wifi_channel_utilization_t utilization[13];
+        int channel_count = perform_ubus_iwinfo_survey("wlan0", utilization, 13);
+        
+        if (channel_count > 0) {
+            // Find the best channel (lowest utilization and noise)
+            int best_channel = 1;
+            double best_score = 1000.0; // Higher is worse
+            
+            for (int i = 0; i < channel_count; i++) {
+                // Calculate channel score (lower is better)
+                double score = utilization[i].utilization_percent + 
+                              (utilization[i].noise + 100.0); // Convert noise to positive scale
+                
+                if (score < best_score) {
+                    best_score = score;
+                    best_channel = utilization[i].channel;
+                }
+            }
+            
+            // Check if we need to change channel
+            if (best_channel != g_wifi_enhanced.current_channel) {
+                LOGX_INFO_MSG("WiFi channel optimization recommended", 
+                              "current_channel", g_wifi_enhanced.current_channel,
+                              "recommended_channel", best_channel,
+                              "score", best_score);
+                
+                // Apply channel change via UCI
+                char uci_cmd[256];
+                snprintf(uci_cmd, sizeof(uci_cmd), 
+                        "uci set wireless.radio0.channel=%d && uci commit wireless && wifi reload", 
+                        best_channel);
+                
+                int result = system(uci_cmd);
+                if (result == 0) {
+                    g_wifi_enhanced.current_channel = best_channel;
+                    g_wifi_enhanced.stats.optimizations_applied++;
+                    LOGX_INFO_MSG("WiFi channel changed successfully", "new_channel", best_channel);
+                } else {
+                    LOGX_ERROR_MSG("Failed to change WiFi channel", "channel", best_channel);
+                }
+            }
+        }
+        
         g_wifi_enhanced.stats.scans_performed++;
     }
     

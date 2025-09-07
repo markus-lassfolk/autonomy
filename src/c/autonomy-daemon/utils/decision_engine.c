@@ -230,7 +230,40 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                 scores[score_count].latency_score = fmax(0.0, fmin(1.0, 1.0 - (metrics.ping_average_latency / 1000.0)));
                 scores[score_count].loss_score = fmax(0.0, fmin(1.0, 1.0 - (metrics.ping_packet_loss / 100.0)));
                 scores[score_count].signal_score = fmax(0.0, fmin(1.0, metrics.overall_health_score / 100.0));
-                scores[score_count].throughput_score = 0.7; // TODO: Add throughput measurement
+                // Calculate throughput score based on interface speed and utilization
+                double throughput_score = 0.7; // Default
+                
+                // Try to get interface statistics
+                char speed_cmd[256];
+                snprintf(speed_cmd, sizeof(speed_cmd), "cat /sys/class/net/%s/speed 2>/dev/null", members[i].interface);
+                FILE *speed_fp = popen(speed_cmd, "r");
+                if (speed_fp) {
+                    int speed_mbps;
+                    if (fscanf(speed_fp, "%d", &speed_mbps) == 1 && speed_mbps > 0) {
+                        // Normalize speed score (1000 Mbps = 1.0, 100 Mbps = 0.8, 10 Mbps = 0.6)
+                        throughput_score = fmax(0.3, fmin(1.0, (double)speed_mbps / 1000.0 + 0.3));
+                    }
+                    pclose(speed_fp);
+                }
+                
+                // Adjust based on interface utilization if available
+                char util_cmd[256];
+                snprintf(util_cmd, sizeof(util_cmd), "cat /sys/class/net/%s/statistics/rx_bytes /sys/class/net/%s/statistics/tx_bytes 2>/dev/null", 
+                        members[i].interface, members[i].interface);
+                FILE *util_fp = popen(util_cmd, "r");
+                if (util_fp) {
+                    unsigned long rx_bytes, tx_bytes;
+                    if (fscanf(util_fp, "%lu %lu", &rx_bytes, &tx_bytes) == 2) {
+                        // Simple utilization check - if interface is very active, it might be congested
+                        unsigned long total_bytes = rx_bytes + tx_bytes;
+                        if (total_bytes > 1000000000) { // More than 1GB transferred
+                            throughput_score *= 0.9; // Slight penalty for high utilization
+                        }
+                    }
+                    pclose(util_fp);
+                }
+                
+                scores[score_count].throughput_score = throughput_score;
                 
                 // Class-specific scoring
                 if (strcmp(members[i].class, "starlink") == 0) {
@@ -255,7 +288,51 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                     scores[score_count].reliability_score = 0.9; // Very reliable
                 }
                 
-                scores[score_count].historical_score = 0.7; // TODO: Add historical tracking
+                // Calculate historical score based on past performance
+                double historical_score = 0.7; // Default
+                
+                // Check for historical data files
+                char hist_file[256];
+                snprintf(hist_file, sizeof(hist_file), "/var/lib/autonomy/decision_history_%s.json", members[i].interface);
+                
+                FILE *hist_fp = fopen(hist_file, "r");
+                if (hist_fp) {
+                    // Simple historical analysis - count successful vs failed decisions
+                    char line[512];
+                    int total_decisions = 0;
+                    int successful_decisions = 0;
+                    
+                    while (fgets(line, sizeof(line), hist_fp)) {
+                        if (strstr(line, "\"success\": true")) {
+                            successful_decisions++;
+                        }
+                        if (strstr(line, "\"success\":")) {
+                            total_decisions++;
+                        }
+                    }
+                    fclose(hist_fp);
+                    
+                    if (total_decisions > 0) {
+                        double success_rate = (double)successful_decisions / total_decisions;
+                        historical_score = success_rate;
+                        
+                        // Boost score for interfaces with good history
+                        if (success_rate > 0.8) {
+                            historical_score = fmin(1.0, success_rate + 0.1);
+                        }
+                    }
+                } else {
+                    // No historical data - use interface type defaults
+                    if (strcmp(members[i].class, "starlink") == 0) {
+                        historical_score = 0.8; // Starlink generally reliable
+                    } else if (strcmp(members[i].class, "cellular") == 0) {
+                        historical_score = 0.6; // Cellular can be variable
+                    } else if (strcmp(members[i].class, "wifi") == 0) {
+                        historical_score = 0.7; // WiFi depends on environment
+                    }
+                }
+                
+                scores[score_count].historical_score = historical_score;
                 scores[score_count].last_update = time(NULL);
                 scores[score_count].is_available = true;
                 scores[score_count].overall_score = decision_engine_calculate_score(&scores[score_count]);

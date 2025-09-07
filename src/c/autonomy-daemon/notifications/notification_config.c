@@ -130,22 +130,102 @@ int notification_config_manager_load_defaults(notification_config_manager_t* con
     return 0;
 }
 
-// Load configuration from UCI (placeholder implementation)
+// Load configuration from UCI
 int notification_config_manager_load_from_uci(notification_config_manager_t* config_mgr) {
     if (!config_mgr) {
         return -1;
     }
     
-    // This would integrate with the UCI system to load actual configuration
-    // For now, load defaults and mark as UCI-loaded
+    // Start with defaults
     int result = notification_config_manager_load_defaults(config_mgr);
-    
-    if (result == 0) {
-        config_mgr->last_loaded = time(NULL);
-        printf("NOTIFICATION_CONFIG: Configuration loaded from UCI (placeholder)\n");
+    if (result != 0) {
+        return result;
     }
     
-    return result;
+    // Load UCI configuration
+    FILE *uci_fp = popen("uci show autonomy.notifications 2>/dev/null", "r");
+    if (!uci_fp) {
+        LOGX_WARN_MSG("Failed to read UCI configuration, using defaults");
+        config_mgr->last_loaded = time(NULL);
+        return 0;
+    }
+    
+    char line[512];
+    while (fgets(line, sizeof(line), uci_fp)) {
+        // Parse UCI output format: autonomy.notifications.option='value'
+        char *option_start = strchr(line, '.');
+        if (!option_start) continue;
+        option_start++; // Skip the dot
+        
+        char *value_start = strchr(option_start, '=');
+        if (!value_start) continue;
+        *value_start = '\0';
+        value_start++;
+        
+        // Remove quotes and newline
+        char *value_end = strchr(value_start, '\'');
+        if (value_end) {
+            *value_end = '\0';
+        }
+        value_end = strchr(value_start, '\n');
+        if (value_end) {
+            *value_end = '\0';
+        }
+        
+        // Map UCI options to configuration
+        if (strcmp(option_start, "enabled") == 0) {
+            config_mgr->config.enabled = (strcmp(value_start, "1") == 0);
+        } else if (strcmp(option_start, "email_enabled") == 0) {
+            config_mgr->config.email_enabled = (strcmp(value_start, "1") == 0);
+        } else if (strcmp(option_start, "email_smtp_server") == 0) {
+            strncpy(config_mgr->config.email_smtp_server, value_start, 
+                   sizeof(config_mgr->config.email_smtp_server) - 1);
+        } else if (strcmp(option_start, "email_smtp_port") == 0) {
+            config_mgr->config.email_smtp_port = atoi(value_start);
+        } else if (strcmp(option_start, "email_username") == 0) {
+            strncpy(config_mgr->config.email_username, value_start, 
+                   sizeof(config_mgr->config.email_username) - 1);
+        } else if (strcmp(option_start, "email_password") == 0) {
+            strncpy(config_mgr->config.email_password, value_start, 
+                   sizeof(config_mgr->config.email_password) - 1);
+        } else if (strcmp(option_start, "email_recipients") == 0) {
+            strncpy(config_mgr->config.email_recipients, value_start, 
+                   sizeof(config_mgr->config.email_recipients) - 1);
+        } else if (strcmp(option_start, "telegram_enabled") == 0) {
+            config_mgr->config.telegram_enabled = (strcmp(value_start, "1") == 0);
+        } else if (strcmp(option_start, "telegram_bot_token") == 0) {
+            strncpy(config_mgr->config.telegram_bot_token, value_start, 
+                   sizeof(config_mgr->config.telegram_bot_token) - 1);
+        } else if (strcmp(option_start, "telegram_chat_id") == 0) {
+            strncpy(config_mgr->config.telegram_chat_id, value_start, 
+                   sizeof(config_mgr->config.telegram_chat_id) - 1);
+        } else if (strcmp(option_start, "webhook_enabled") == 0) {
+            config_mgr->config.webhook_enabled = (strcmp(value_start, "1") == 0);
+        } else if (strcmp(option_start, "webhook_url") == 0) {
+            strncpy(config_mgr->config.webhook_url, value_start, 
+                   sizeof(config_mgr->config.webhook_url) - 1);
+        } else if (strcmp(option_start, "webhook_timeout") == 0) {
+            config_mgr->config.webhook_timeout = atoi(value_start);
+        } else if (strcmp(option_start, "rate_limit_enabled") == 0) {
+            config_mgr->config.rate_limit_enabled = (strcmp(value_start, "1") == 0);
+        } else if (strcmp(option_start, "rate_limit_max_per_hour") == 0) {
+            config_mgr->config.rate_limit_max_per_hour = atoi(value_start);
+        } else if (strcmp(option_start, "rate_limit_max_per_day") == 0) {
+            config_mgr->config.rate_limit_max_per_day = atoi(value_start);
+        }
+    }
+    
+    pclose(uci_fp);
+    
+    config_mgr->last_loaded = time(NULL);
+    
+    LOGX_INFO_MSG("Notification configuration loaded from UCI", 
+                  "enabled", config_mgr->config.enabled,
+                  "email_enabled", config_mgr->config.email_enabled,
+                  "telegram_enabled", config_mgr->config.telegram_enabled,
+                  "webhook_enabled", config_mgr->config.webhook_enabled);
+    
+    return 0;
 }
 
 // Validate notification configuration

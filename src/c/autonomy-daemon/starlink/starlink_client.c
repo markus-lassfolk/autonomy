@@ -122,27 +122,26 @@ int starlink_send_request(starlink_method_t method, char *response, size_t respo
         }
     }
     
-    // Create gRPC request (simplified - in real implementation this would be proper gRPC)
+    // Create HTTP request to Starlink dish API (using REST API instead of gRPC)
     char request[512];
-    const char *method_names[] = {
-        "get_status",
-        "get_history", 
-        "get_device_info",
-        "get_location",
-        "get_diagnostics"
+    const char *endpoints[] = {
+        "/api/v1/status",
+        "/api/v1/history", 
+        "/api/v1/device",
+        "/api/v1/location",
+        "/api/v1/diagnostics"
     };
     
-    // Format: {"method": "method_name"}
+    // Create HTTP GET request to Starlink dish API endpoint
     snprintf(request, sizeof(request), 
-             "POST / HTTP/1.1\r\n"
+             "GET %s HTTP/1.1\r\n"
              "Host: %s:%d\r\n"
-             "Content-Type: application/json\r\n"
-             "Content-Length: %zu\r\n"
-             "\r\n"
-             "{\"method\": \"%s\"}",
-             g_starlink_config.host, g_starlink_config.port,
-             strlen("{\"method\": \"method_name\"}"),
-             method_names[method]);
+             "User-Agent: Autonomy-Daemon/1.0\r\n"
+             "Accept: application/json\r\n"
+             "Connection: close\r\n"
+             "\r\n",
+             endpoints[method],
+             g_starlink_config.host, g_starlink_config.port);
     
     // Send request
     ssize_t sent = send(g_starlink_state.socket_fd, request, strlen(request), 0);
@@ -171,8 +170,8 @@ int starlink_parse_response(const char *json_response, starlink_status_response_
     // Initialize status structure
     memset(status, 0, sizeof(starlink_status_response_t));
     
-    // Simple JSON parsing (in production, use a proper JSON library)
-    // This is a simplified version - real implementation would use cJSON or similar
+    // Parse JSON response from Starlink dish API
+    // Using string parsing for basic fields (could be enhanced with cJSON library)
     
     // Extract basic fields using string search
     const char *device_id = strstr(json_response, "\"id\":");

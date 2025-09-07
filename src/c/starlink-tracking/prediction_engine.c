@@ -377,8 +377,33 @@ int prediction_engine_eci_to_topocentric(
     
     topo->elevation = atan2(zenith, sqrt(south*south + east*east)) * RAD_TO_DEG;
     
-    // Calculate range rate (simplified)
-    topo->range_rate = 0.0; // TODO: Implement proper range rate calculation
+    // Calculate range rate using velocity components
+    // Range rate = (satellite_velocity - observer_velocity) · unit_range_vector
+    double range_rate = 0.0;
+    
+    if (satellite && observer) {
+        // Calculate unit vector from observer to satellite
+        double dx = satellite->position.x - observer->position.x;
+        double dy = satellite->position.y - observer->position.y;
+        double dz = satellite->position.z - observer->position.z;
+        double range_magnitude = sqrt(dx*dx + dy*dy + dz*dz);
+        
+        if (range_magnitude > 0.0) {
+            double unit_x = dx / range_magnitude;
+            double unit_y = dy / range_magnitude;
+            double unit_z = dz / range_magnitude;
+            
+            // Calculate velocity difference
+            double vel_x = satellite->velocity.x - observer->velocity.x;
+            double vel_y = satellite->velocity.y - observer->velocity.y;
+            double vel_z = satellite->velocity.z - observer->velocity.z;
+            
+            // Dot product gives range rate
+            range_rate = vel_x * unit_x + vel_y * unit_y + vel_z * unit_z;
+        }
+    }
+    
+    topo->range_rate = range_rate;
     
     return PREDICTION_SUCCESS;
 }
@@ -566,7 +591,35 @@ int prediction_engine_detect_outage_windows(
             outage->risk_level = prediction_engine_calculate_risk_level(
                 min_available, 0.0, outage->duration_seconds);
             outage->predicted_available_sats = min_available;
-            outage->confidence_score = 0.8; // TODO: Calculate actual confidence
+            // Calculate confidence score based on multiple factors
+            double confidence = 0.5; // Base confidence
+            
+            // Factor 1: Number of satellites available (more satellites = higher confidence)
+            if (min_available >= 4) {
+                confidence += 0.2; // Good satellite coverage
+            } else if (min_available >= 2) {
+                confidence += 0.1; // Adequate coverage
+            }
+            
+            // Factor 2: Duration of outage (shorter outages are more predictable)
+            if (outage->duration_seconds <= 60) {
+                confidence += 0.2; // Short outages are more predictable
+            } else if (outage->duration_seconds <= 300) {
+                confidence += 0.1; // Medium duration
+            }
+            
+            // Factor 3: Historical accuracy (if available)
+            if (engine && engine->historical_accuracy > 0.0) {
+                confidence += engine->historical_accuracy * 0.3; // Weight historical accuracy
+            }
+            
+            // Factor 4: Risk level (higher risk = lower confidence in prediction)
+            if (outage->risk_level >= RISK_LEVEL_CRITICAL) {
+                confidence -= 0.1; // Critical situations are harder to predict
+            }
+            
+            // Clamp confidence to valid range [0.0, 1.0]
+            outage->confidence_score = fmax(0.0, fmin(1.0, confidence));
             
             snprintf(outage->description, sizeof(outage->description), 
                     "Predicted outage: %d satellites available, %d second duration", 

@@ -421,12 +421,73 @@ void parse_current_weather_response(const gps_weather_api_response_t *response,
     // This is a simplified parser - in a real implementation, you would use a JSON library
     // to properly parse the OpenWeatherMap API response
     
-    // For now, set placeholder values
-    weather->temperature = 20.0;        // 20°C
-    weather->humidity = 65.0;           // 65%
-    weather->pressure = 1013.25;        // 1013.25 hPa
-    weather->wind_speed = 5.0;          // 5 m/s
-    weather->wind_direction = 180.0;    // 180° (South)
+    // Parse weather data from JSON response
+    // This is a simplified parser - in production, use a proper JSON library
+    char *temp_start = strstr(response->data, "\"temp\":");
+    char *humidity_start = strstr(response->data, "\"humidity\":");
+    char *pressure_start = strstr(response->data, "\"pressure\":");
+    char *wind_speed_start = strstr(response->data, "\"speed\":");
+    char *wind_dir_start = strstr(response->data, "\"deg\":");
+    
+    // Parse temperature
+    if (temp_start) {
+        temp_start = strchr(temp_start, ':');
+        if (temp_start) {
+            weather->temperature = atof(temp_start + 1);
+        } else {
+            weather->temperature = 20.0; // Default fallback
+        }
+    } else {
+        weather->temperature = 20.0; // Default fallback
+    }
+    
+    // Parse humidity
+    if (humidity_start) {
+        humidity_start = strchr(humidity_start, ':');
+        if (humidity_start) {
+            weather->humidity = atof(humidity_start + 1);
+        } else {
+            weather->humidity = 65.0; // Default fallback
+        }
+    } else {
+        weather->humidity = 65.0; // Default fallback
+    }
+    
+    // Parse pressure
+    if (pressure_start) {
+        pressure_start = strchr(pressure_start, ':');
+        if (pressure_start) {
+            weather->pressure = atof(pressure_start + 1);
+        } else {
+            weather->pressure = 1013.25; // Default fallback
+        }
+    } else {
+        weather->pressure = 1013.25; // Default fallback
+    }
+    
+    // Parse wind speed
+    if (wind_speed_start) {
+        wind_speed_start = strchr(wind_speed_start, ':');
+        if (wind_speed_start) {
+            weather->wind_speed = atof(wind_speed_start + 1);
+        } else {
+            weather->wind_speed = 5.0; // Default fallback
+        }
+    } else {
+        weather->wind_speed = 5.0; // Default fallback
+    }
+    
+    // Parse wind direction
+    if (wind_dir_start) {
+        wind_dir_start = strchr(wind_dir_start, ':');
+        if (wind_dir_start) {
+            weather->wind_direction = atof(wind_dir_start + 1);
+        } else {
+            weather->wind_direction = 180.0; // Default fallback
+        }
+    } else {
+        weather->wind_direction = 180.0; // Default fallback
+    }
     weather->visibility = 10000.0;      // 10km
     weather->cloud_cover = 30.0;        // 30%
     weather->weather_condition = WEATHER_CONDITION_PARTLY_CLOUDY;

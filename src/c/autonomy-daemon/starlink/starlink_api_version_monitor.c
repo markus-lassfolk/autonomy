@@ -783,8 +783,78 @@ int validate_api_after_change(const starlink_api_version_change_t* change) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    // Simple validation - just return success for now
-    // In a real implementation, this would test key API endpoints
-    LOGX_INFO_MSG("API validation after version change - placeholder implementation");
-    return AUTONOMY_SUCCESS;
+    // Test key API endpoints to validate the new version
+    http_request_config_t request_config = {0};
+    http_response_t response = {0};
+    int validation_passed = 0;
+    int total_tests = 0;
+    
+    // Test 1: Status endpoint
+    strncpy(request_config.url, "http://192.168.100.1/api/v1/status", sizeof(request_config.url) - 1);
+    request_config.method = HTTP_METHOD_GET;
+    request_config.timeout_seconds = 5;
+    request_config.follow_redirects = true;
+    
+    total_tests++;
+    int result = http_client_make_request(&request_config, &response);
+    if (result == 0 && response.success && response.data) {
+        // Check if response contains expected fields
+        if (strstr(response.data, "\"status\":") || strstr(response.data, "\"connected\":") || 
+            strstr(response.data, "\"uptime\":")) {
+            validation_passed++;
+            LOGX_DEBUG_MSG("Status endpoint validation passed");
+        }
+        if (response.data) free(response.data);
+    } else {
+        LOGX_WARN_MSG("Status endpoint validation failed", "result", result);
+    }
+    
+    // Test 2: Diagnostics endpoint
+    strncpy(request_config.url, "http://192.168.100.1/api/v1/diagnostics", sizeof(request_config.url) - 1);
+    total_tests++;
+    result = http_client_make_request(&request_config, &response);
+    if (result == 0 && response.success && response.data) {
+        // Check if response contains expected diagnostic fields
+        if (strstr(response.data, "\"location_enabled\":") || strstr(response.data, "\"uncertainty_meters\":") ||
+            strstr(response.data, "\"gps_time_s\":")) {
+            validation_passed++;
+            LOGX_DEBUG_MSG("Diagnostics endpoint validation passed");
+        }
+        if (response.data) free(response.data);
+    } else {
+        LOGX_WARN_MSG("Diagnostics endpoint validation failed", "result", result);
+    }
+    
+    // Test 3: History endpoint
+    strncpy(request_config.url, "http://192.168.100.1/api/v1/history", sizeof(request_config.url) - 1);
+    total_tests++;
+    result = http_client_make_request(&request_config, &response);
+    if (result == 0 && response.success && response.data) {
+        // Check if response contains expected historical data fields
+        if (strstr(response.data, "\"event_count\":") || strstr(response.data, "\"critical_events_24h\":") ||
+            strstr(response.data, "\"outage_count_24h\":")) {
+            validation_passed++;
+            LOGX_DEBUG_MSG("History endpoint validation passed");
+        }
+        if (response.data) free(response.data);
+    } else {
+        LOGX_WARN_MSG("History endpoint validation failed", "result", result);
+    }
+    
+    // Calculate validation success rate
+    double success_rate = (double)validation_passed / total_tests;
+    
+    if (success_rate >= 0.67) { // At least 2 out of 3 tests must pass
+        LOGX_INFO_MSG("API validation after version change completed successfully", 
+                      "tests_passed", validation_passed,
+                      "total_tests", total_tests,
+                      "success_rate", success_rate);
+        return AUTONOMY_SUCCESS;
+    } else {
+        LOGX_ERROR_MSG("API validation after version change failed", 
+                       "tests_passed", validation_passed,
+                       "total_tests", total_tests,
+                       "success_rate", success_rate);
+        return AUTONOMY_ERROR_API_FAILED;
+    }
 }

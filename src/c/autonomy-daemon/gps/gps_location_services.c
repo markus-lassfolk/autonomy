@@ -396,8 +396,39 @@ int try_here_service(double lat, double lon, gps_location_info_t *location_info)
     char url[1024];
     int result;
     
-    // TODO: Add HERE API key configuration
-    const char* here_api_key = "YOUR_HERE_API_KEY_HERE";
+    // Get HERE API key from configuration or environment
+    const char* here_api_key = NULL;
+    
+    // First try to get from environment variable
+    here_api_key = getenv("HERE_API_KEY");
+    
+    // If not found in environment, try to get from UCI configuration
+    if (!here_api_key) {
+        FILE *uci_fp = popen("uci get autonomy.gps.here_api_key 2>/dev/null", "r");
+        if (uci_fp) {
+            char key_buffer[256];
+            if (fgets(key_buffer, sizeof(key_buffer), uci_fp)) {
+                // Remove newline
+                char *newline = strchr(key_buffer, '\n');
+                if (newline) *newline = '\0';
+                
+                // Remove quotes if present
+                if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
+                    key_buffer[strlen(key_buffer)-1] = '\0';
+                    here_api_key = key_buffer + 1;
+                } else {
+                    here_api_key = key_buffer;
+                }
+            }
+            pclose(uci_fp);
+        }
+    }
+    
+    // If still no API key, use a default or return error
+    if (!here_api_key || strlen(here_api_key) == 0) {
+        LOGX_WARN_MSG("HERE API key not configured, skipping reverse geocoding");
+        return AUTONOMY_ERROR_NOT_CONFIGURED;
+    }
     
     // Build HERE reverse geocoding URL
     snprintf(url, sizeof(url), 
@@ -464,31 +495,91 @@ int try_here_service(double lat, double lon, gps_location_info_t *location_info)
 
 // Try custom service
 int try_custom_service(double lat, double lon, gps_location_info_t *location_info) {
-    // For now, implement a simulated response
-    // In a full implementation, this would call user-defined functions or scripts
+    // Check if custom service script is configured
+    char custom_script[256];
+    FILE *uci_fp = popen("uci get autonomy.gps.custom_location_script 2>/dev/null", "r");
+    if (uci_fp && fgets(custom_script, sizeof(custom_script), uci_fp)) {
+        pclose(uci_fp);
+        
+        // Remove newline
+        char *newline = strchr(custom_script, '\n');
+        if (newline) *newline = '\0';
+        
+        // Execute custom script with coordinates
+        char cmd[512];
+        snprintf(cmd, sizeof(cmd), "%s %.6f %.6f 2>/dev/null", custom_script, lat, lon);
+        
+        FILE *script_fp = popen(cmd, "r");
+        if (script_fp) {
+            char response[1024];
+            if (fgets(response, sizeof(response), script_fp)) {
+                // Parse script response (expected format: "place_name|address|city|state|country")
+                char *tokens[5];
+                int token_count = 0;
+                char *token = strtok(response, "|");
+                while (token && token_count < 5) {
+                    tokens[token_count++] = token;
+                    token = strtok(NULL, "|");
+                }
+                pclose(script_fp);
+                
+                if (token_count >= 1) {
+                    strncpy(location_info->place_name, tokens[0], sizeof(location_info->place_name) - 1);
+                    location_info->place_name[sizeof(location_info->place_name) - 1] = '\0';
+                    
+                    if (token_count >= 2) {
+                        strncpy(location_info->address, tokens[1], sizeof(location_info->address) - 1);
+                        location_info->address[sizeof(location_info->address) - 1] = '\0';
+                    }
+                    if (token_count >= 3) {
+                        strncpy(location_info->city, tokens[2], sizeof(location_info->city) - 1);
+                        location_info->city[sizeof(location_info->city) - 1] = '\0';
+                    }
+                    if (token_count >= 4) {
+                        strncpy(location_info->state, tokens[3], sizeof(location_info->state) - 1);
+                        location_info->state[sizeof(location_info->state) - 1] = '\0';
+                    }
+                    if (token_count >= 5) {
+                        strncpy(location_info->country, tokens[4], sizeof(location_info->country) - 1);
+                        location_info->country[sizeof(location_info->country) - 1] = '\0';
+                    }
+                    
+                    location_info->lat = lat;
+                    location_info->lon = lon;
+                    location_info->service_used = LOCATION_SERVICE_CUSTOM;
+                    location_info->timestamp = time(NULL);
+                    
+                    return AUTONOMY_SUCCESS;
+                }
+            }
+            pclose(script_fp);
+        }
+    } else {
+        if (uci_fp) pclose(uci_fp);
+    }
     
+    // Fallback: create basic location info
     location_info->lat = lat;
     location_info->lon = lon;
     location_info->service_used = LOCATION_SERVICE_CUSTOM;
     location_info->timestamp = time(NULL);
     
-    // Simulate place name based on coordinates
     snprintf(location_info->place_name, sizeof(location_info->place_name), 
-             "Custom Location at %.4f, %.4f", lat, lon);
+             "Location at %.4f, %.4f", lat, lon);
     
-    // Simulate address components
-    snprintf(location_info->address, sizeof(location_info->address), 
-             "Custom Address");
-    snprintf(location_info->country, sizeof(location_info->country), 
-             "Custom Country");
-    snprintf(location_info->state, sizeof(location_info->state), 
-             "Custom State");
-    snprintf(location_info->city, sizeof(location_info->city), 
-             "Custom City");
-    snprintf(location_info->postal_code, sizeof(location_info->postal_code), 
-             "CUSTOM");
+    // Set default address components
+    strncpy(location_info->address, "Unknown Address", sizeof(location_info->address) - 1);
+    location_info->address[sizeof(location_info->address) - 1] = '\0';
+    strncpy(location_info->country, "Unknown Country", sizeof(location_info->country) - 1);
+    location_info->country[sizeof(location_info->country) - 1] = '\0';
+    strncpy(location_info->state, "Unknown State", sizeof(location_info->state) - 1);
+    location_info->state[sizeof(location_info->state) - 1] = '\0';
+    strncpy(location_info->city, "Unknown City", sizeof(location_info->city) - 1);
+    location_info->city[sizeof(location_info->city) - 1] = '\0';
+    strncpy(location_info->postal_code, "00000", sizeof(location_info->postal_code) - 1);
+    location_info->postal_code[sizeof(location_info->postal_code) - 1] = '\0';
     
-    LOGX_DEBUG_MSG("Custom service simulated response for (%.6f, %.6f)", lat, lon);
+    LOGX_DEBUG_MSG("Custom service fallback response for (%.6f, %.6f)", lat, lon);
     return AUTONOMY_SUCCESS;
 }
 

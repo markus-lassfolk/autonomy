@@ -34,3 +34,4 @@ int http_client_get(const char* url, int timeout_seconds, http_response_t* respo
 int http_client_post_json(const char* url, const char* json_data, int timeout_seconds, http_response_t* response);
 
 #endif // HTTP_CLIENT_H
+

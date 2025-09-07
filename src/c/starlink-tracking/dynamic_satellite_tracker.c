@@ -764,8 +764,27 @@ static void* dynamic_tracker_thread_main(void *arg) {
     dynamic_satellite_tracker_t *tracker = (dynamic_satellite_tracker_t*)arg;
     
     while (!tracker->should_stop) {
-        // TODO: Get constellation and dish location from main tracker
-        // For now, this is a placeholder that would integrate with the main system
+        // Get constellation and dish location from main tracker
+        starlink_constellation_t *constellation = NULL;
+        dish_location_t dish_location = {0};
+        
+        // Try to get constellation from main tracker if available
+        if (tracker->main_tracker) {
+            constellation = starlink_tracker_get_constellation(tracker->main_tracker);
+        }
+        
+        // Get dish location from configuration or GPS
+        if (tracker->config.dish_latitude != 0.0 && tracker->config.dish_longitude != 0.0) {
+            dish_location.latitude = tracker->config.dish_latitude;
+            dish_location.longitude = tracker->config.dish_longitude;
+            dish_location.altitude = tracker->config.dish_altitude;
+        } else {
+            // Try to get current GPS location as fallback
+            // This would integrate with the GPS system
+            dish_location.latitude = 0.0;  // Would get from GPS
+            dish_location.longitude = 0.0; // Would get from GPS
+            dish_location.altitude = 0.0;  // Would get from GPS
+        }
         
         // Run identification cycle
         // int result = dynamic_tracker_run_identification_cycle(tracker, constellation, dish_location);

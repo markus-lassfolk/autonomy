@@ -548,41 +548,390 @@ int gps_fusion_engine_reset_statistics(void) {
     return AUTONOMY_SUCCESS;
 }
 
-// Placeholder implementations for remaining functions
+// Outlier detection and filtering functions
 int gps_fusion_engine_detect_outliers(const standardized_gps_data_t* source_data, int source_count,
                                      standardized_gps_data_t* filtered_data, int max_filtered) {
-    // Placeholder implementation - copy all data (no outlier detection)
-    int copy_count = (source_count < max_filtered) ? source_count : max_filtered;
-    for (int i = 0; i < copy_count; i++) {
-        filtered_data[i] = source_data[i];
+    if (!source_data || !filtered_data || source_count <= 0 || max_filtered <= 0) {
+        return 0;
     }
-    return copy_count;
+    
+    if (!g_fusion_engine_initialized || !g_fusion_engine.config.enable_outlier_detection) {
+        // If outlier detection is disabled, copy all data
+        int copy_count = (source_count < max_filtered) ? source_count : max_filtered;
+        for (int i = 0; i < copy_count; i++) {
+            filtered_data[i] = source_data[i];
+        }
+        return copy_count;
+    }
+    
+    int filtered_count = 0;
+    double threshold = g_fusion_engine.config.outlier_detection_threshold;
+    
+    // Calculate centroid of all points
+    double centroid_lat = 0.0, centroid_lon = 0.0;
+    for (int i = 0; i < source_count; i++) {
+        centroid_lat += source_data[i].latitude;
+        centroid_lon += source_data[i].longitude;
+    }
+    centroid_lat /= source_count;
+    centroid_lon /= source_count;
+    
+    // Calculate distances from centroid and identify outliers
+    double* distances = malloc(source_count * sizeof(double));
+    if (!distances) {
+        return 0;
+    }
+    
+    for (int i = 0; i < source_count; i++) {
+        distances[i] = gps_calculate_distance_meters(
+            source_data[i].latitude, source_data[i].longitude,
+            centroid_lat, centroid_lon
+        );
+    }
+    
+    // Calculate median distance for outlier detection
+    double* sorted_distances = malloc(source_count * sizeof(double));
+    if (!sorted_distances) {
+        free(distances);
+        return 0;
+    }
+    
+    memcpy(sorted_distances, distances, source_count * sizeof(double));
+    
+    // Simple bubble sort for small arrays
+    for (int i = 0; i < source_count - 1; i++) {
+        for (int j = 0; j < source_count - i - 1; j++) {
+            if (sorted_distances[j] > sorted_distances[j + 1]) {
+                double temp = sorted_distances[j];
+                sorted_distances[j] = sorted_distances[j + 1];
+                sorted_distances[j + 1] = temp;
+            }
+        }
+    }
+    
+    double median_distance = sorted_distances[source_count / 2];
+    double outlier_threshold = median_distance * threshold;
+    
+    // Filter out outliers
+    for (int i = 0; i < source_count && filtered_count < max_filtered; i++) {
+        if (distances[i] <= outlier_threshold) {
+            filtered_data[filtered_count] = source_data[i];
+            filtered_count++;
+        } else {
+            g_fusion_engine.stats.outliers_detected++;
+        }
+    }
+    
+    free(distances);
+    free(sorted_distances);
+    
+    LOGX_DEBUG_MSG("Outlier detection completed", 
+                  "original_count", source_count,
+                  "filtered_count", filtered_count,
+                  "outliers_removed", source_count - filtered_count);
+    
+    return filtered_count;
 }
 
 bool gps_fusion_engine_check_consensus(const standardized_gps_data_t* source_data, int source_count) {
-    // Placeholder implementation - always return true
-    (void)source_data;
-    (void)source_count;
-    return true;
+    if (!source_data || source_count <= 0) {
+        return false;
+    }
+    
+    if (!g_fusion_engine_initialized || !g_fusion_engine.config.enable_consensus_checking) {
+        return true; // If consensus checking is disabled, assume consensus
+    }
+    
+    if (source_count < 2) {
+        return true; // Single source always has consensus
+    }
+    
+    double consensus_threshold = g_fusion_engine.config.consensus_threshold;
+    double max_distance = g_fusion_engine.config.max_distance_difference;
+    
+    // Calculate pairwise distances between all sources
+    int consensus_count = 0;
+    int total_pairs = 0;
+    
+    for (int i = 0; i < source_count; i++) {
+        for (int j = i + 1; j < source_count; j++) {
+            double distance = gps_calculate_distance_meters(
+                source_data[i].latitude, source_data[i].longitude,
+                source_data[j].latitude, source_data[j].longitude
+            );
+            
+            total_pairs++;
+            
+            if (distance <= max_distance) {
+                consensus_count++;
+            }
+        }
+    }
+    
+    if (total_pairs == 0) {
+        return true;
+    }
+    
+    double consensus_ratio = (double)consensus_count / total_pairs;
+    bool has_consensus = consensus_ratio >= consensus_threshold;
+    
+    if (!has_consensus) {
+        g_fusion_engine.stats.consensus_failures++;
+    }
+    
+    LOGX_DEBUG_MSG("Consensus check completed", 
+                  "source_count", source_count,
+                  "consensus_ratio", consensus_ratio,
+                  "has_consensus", has_consensus);
+    
+    return has_consensus;
 }
 
 int gps_fusion_engine_apply_smoothing(const standardized_gps_data_t* current_data,
                                      standardized_gps_data_t* smoothed_result) {
-    // Placeholder implementation - copy data without smoothing
     if (!current_data || !smoothed_result) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
-    *smoothed_result = *current_data;
+    
+    if (!g_fusion_engine_initialized || !g_fusion_engine.config.enable_temporal_smoothing) {
+        // If smoothing is disabled, copy data as-is
+        *smoothed_result = *current_data;
+        return AUTONOMY_SUCCESS;
+    }
+    
+    pthread_mutex_lock(&g_fusion_engine.mutex);
+    
+    // Add current data to history
+    if (g_fusion_engine.smoothing_history_count < 10) {
+        g_fusion_engine.smoothing_history[g_fusion_engine.smoothing_history_count] = *current_data;
+        g_fusion_engine.smoothing_history_count++;
+    } else {
+        // Shift history and add new data
+        for (int i = 0; i < 9; i++) {
+            g_fusion_engine.smoothing_history[i] = g_fusion_engine.smoothing_history[i + 1];
+        }
+        g_fusion_engine.smoothing_history[9] = *current_data;
+    }
+    
+    // Apply exponential moving average smoothing
+    double alpha = 0.3; // Smoothing factor (0.0 = no smoothing, 1.0 = no history)
+    
+    if (g_fusion_engine.smoothing_history_count == 1) {
+        *smoothed_result = *current_data;
+    } else {
+        // Initialize with first data point
+        *smoothed_result = g_fusion_engine.smoothing_history[0];
+        
+        // Apply exponential moving average
+        for (int i = 1; i < g_fusion_engine.smoothing_history_count; i++) {
+            smoothed_result->latitude = alpha * g_fusion_engine.smoothing_history[i].latitude + 
+                                      (1.0 - alpha) * smoothed_result->latitude;
+            smoothed_result->longitude = alpha * g_fusion_engine.smoothing_history[i].longitude + 
+                                       (1.0 - alpha) * smoothed_result->longitude;
+            smoothed_result->accuracy = alpha * g_fusion_engine.smoothing_history[i].accuracy + 
+                                      (1.0 - alpha) * smoothed_result->accuracy;
+            smoothed_result->confidence = alpha * g_fusion_engine.smoothing_history[i].confidence + 
+                                        (1.0 - alpha) * smoothed_result->confidence;
+        }
+        
+        // Copy other fields from current data
+        smoothed_result->timestamp = current_data->timestamp;
+        smoothed_result->source_type = current_data->source_type;
+        smoothed_result->speed = current_data->speed;
+        smoothed_result->heading = current_data->heading;
+        smoothed_result->altitude = current_data->altitude;
+    }
+    
+    pthread_mutex_unlock(&g_fusion_engine.mutex);
+    
+    LOGX_DEBUG_MSG("GPS smoothing applied", 
+                  "history_count", g_fusion_engine.smoothing_history_count,
+                  "original_lat", current_data->latitude,
+                  "smoothed_lat", smoothed_result->latitude,
+                  "original_lon", current_data->longitude,
+                  "smoothed_lon", smoothed_result->longitude);
+    
     return AUTONOMY_SUCCESS;
 }
 
 int gps_fusion_engine_apply_kalman_filter(const standardized_gps_data_t* measurement,
                                          standardized_gps_data_t* filtered_result) {
-    // Placeholder implementation - copy data without Kalman filtering
     if (!measurement || !filtered_result) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
-    *filtered_result = *measurement;
+    
+    if (!g_fusion_engine_initialized || !g_fusion_engine.config.enable_kalman_filtering) {
+        // If Kalman filtering is disabled, copy data as-is
+        *filtered_result = *measurement;
+        return AUTONOMY_SUCCESS;
+    }
+    
+    pthread_mutex_lock(&g_fusion_engine.mutex);
+    
+    // Initialize Kalman filter if not already done
+    if (!g_fusion_engine.kalman_initialized) {
+        // Initialize state vector [lat, lon, lat_velocity, lon_velocity]
+        g_fusion_engine.kalman_state[0] = measurement->latitude;
+        g_fusion_engine.kalman_state[1] = measurement->longitude;
+        g_fusion_engine.kalman_state[2] = 0.0; // lat_velocity
+        g_fusion_engine.kalman_state[3] = 0.0; // lon_velocity
+        
+        // Initialize covariance matrix (4x4 identity matrix scaled by initial uncertainty)
+        double initial_uncertainty = g_fusion_engine.config.initial_uncertainty;
+        for (int i = 0; i < 16; i++) {
+            g_fusion_engine.kalman_covariance[i] = 0.0;
+        }
+        g_fusion_engine.kalman_covariance[0] = initial_uncertainty;  // lat variance
+        g_fusion_engine.kalman_covariance[5] = initial_uncertainty;  // lon variance
+        g_fusion_engine.kalman_covariance[10] = initial_uncertainty; // lat_vel variance
+        g_fusion_engine.kalman_covariance[15] = initial_uncertainty; // lon_vel variance
+        
+        g_fusion_engine.kalman_initialized = true;
+    }
+    
+    // Kalman filter prediction step
+    double dt = 1.0; // Assume 1 second time step
+    double process_noise = g_fusion_engine.config.process_noise_covariance;
+    double measurement_noise = g_fusion_engine.config.measurement_noise_covariance;
+    
+    // State transition matrix F (constant velocity model)
+    double F[16] = {
+        1.0, 0.0, dt,  0.0,
+        0.0, 1.0, 0.0, dt,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    };
+    
+    // Process noise matrix Q
+    double Q[16] = {
+        process_noise * dt * dt * dt * dt / 4, 0.0, process_noise * dt * dt * dt / 2, 0.0,
+        0.0, process_noise * dt * dt * dt * dt / 4, 0.0, process_noise * dt * dt * dt / 2,
+        process_noise * dt * dt * dt / 2, 0.0, process_noise * dt * dt, 0.0,
+        0.0, process_noise * dt * dt * dt / 2, 0.0, process_noise * dt * dt
+    };
+    
+    // Predict state: x_pred = F * x
+    double state_pred[4];
+    for (int i = 0; i < 4; i++) {
+        state_pred[i] = 0.0;
+        for (int j = 0; j < 4; j++) {
+            state_pred[i] += F[i * 4 + j] * g_fusion_engine.kalman_state[j];
+        }
+    }
+    
+    // Predict covariance: P_pred = F * P * F^T + Q
+    double cov_pred[16];
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            cov_pred[i * 4 + j] = Q[i * 4 + j];
+            for (int k = 0; k < 4; k++) {
+                for (int l = 0; l < 4; l++) {
+                    cov_pred[i * 4 + j] += F[i * 4 + k] * g_fusion_engine.kalman_covariance[k * 4 + l] * F[j * 4 + l];
+                }
+            }
+        }
+    }
+    
+    // Measurement matrix H (we only observe position, not velocity)
+    double H[8] = {
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0
+    };
+    
+    // Measurement noise matrix R
+    double R[4] = {
+        measurement_noise, 0.0,
+        0.0, measurement_noise
+    };
+    
+    // Innovation: y = z - H * x_pred
+    double innovation[2];
+    innovation[0] = measurement->latitude - state_pred[0];
+    innovation[1] = measurement->longitude - state_pred[1];
+    
+    // Innovation covariance: S = H * P_pred * H^T + R
+    double S[4];
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            S[i * 2 + j] = R[i * 2 + j];
+            for (int k = 0; k < 4; k++) {
+                for (int l = 0; l < 4; l++) {
+                    S[i * 2 + j] += H[i * 4 + k] * cov_pred[k * 4 + l] * H[j * 4 + l];
+                }
+            }
+        }
+    }
+    
+    // Kalman gain: K = P_pred * H^T * S^(-1)
+    double K[8];
+    double S_det = S[0] * S[3] - S[1] * S[2];
+    if (fabs(S_det) < 1e-10) {
+        // Singular matrix, use identity
+        S_det = 1.0;
+        S[0] = S[3] = 1.0;
+        S[1] = S[2] = 0.0;
+    }
+    
+    double S_inv[4] = {
+        S[3] / S_det, -S[1] / S_det,
+        -S[2] / S_det, S[0] / S_det
+    };
+    
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 2; j++) {
+            K[i * 2 + j] = 0.0;
+            for (int k = 0; k < 4; k++) {
+                K[i * 2 + j] += cov_pred[i * 4 + k] * H[j * 4 + k];
+            }
+            double temp = 0.0;
+            for (int l = 0; l < 2; l++) {
+                temp += K[i * 2 + l] * S_inv[l * 2 + j];
+            }
+            K[i * 2 + j] = temp;
+        }
+    }
+    
+    // Update state: x = x_pred + K * y
+    for (int i = 0; i < 4; i++) {
+        g_fusion_engine.kalman_state[i] = state_pred[i];
+        for (int j = 0; j < 2; j++) {
+            g_fusion_engine.kalman_state[i] += K[i * 2 + j] * innovation[j];
+        }
+    }
+    
+    // Update covariance: P = (I - K * H) * P_pred
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            double I_KH = (i == j) ? 1.0 : 0.0;
+            for (int k = 0; k < 2; k++) {
+                I_KH -= K[i * 2 + k] * H[k * 4 + j];
+            }
+            g_fusion_engine.kalman_covariance[i * 4 + j] = 0.0;
+            for (int l = 0; l < 4; l++) {
+                g_fusion_engine.kalman_covariance[i * 4 + j] += I_KH * cov_pred[l * 4 + j];
+            }
+        }
+    }
+    
+    // Set filtered result
+    filtered_result->latitude = g_fusion_engine.kalman_state[0];
+    filtered_result->longitude = g_fusion_engine.kalman_state[1];
+    filtered_result->accuracy = measurement->accuracy; // Keep original accuracy
+    filtered_result->confidence = measurement->confidence; // Keep original confidence
+    filtered_result->timestamp = measurement->timestamp;
+    filtered_result->source_type = measurement->source_type;
+    filtered_result->speed = measurement->speed;
+    filtered_result->heading = measurement->heading;
+    filtered_result->altitude = measurement->altitude;
+    
+    pthread_mutex_unlock(&g_fusion_engine.mutex);
+    
+    LOGX_DEBUG_MSG("Kalman filter applied", 
+                  "original_lat", measurement->latitude,
+                  "filtered_lat", filtered_result->latitude,
+                  "original_lon", measurement->longitude,
+                  "filtered_lon", filtered_result->longitude);
+    
     return AUTONOMY_SUCCESS;
 }
 

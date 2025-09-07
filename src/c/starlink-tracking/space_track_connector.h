@@ -51,6 +51,10 @@ typedef struct space_track_connector {
     int successful_requests;
     int rate_limited_requests;
     int auth_failures;
+    int cache_hits;
+    int cache_misses;
+    time_t last_request_time;
+    double total_response_time;
     
     // Logging callback
     void (*log_callback)(int level, const char *message, void *user_data);

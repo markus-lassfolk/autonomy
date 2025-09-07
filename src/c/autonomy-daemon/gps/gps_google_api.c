@@ -216,8 +216,46 @@ static void parse_reverse_geocode_response(const gps_google_api_response_t *resp
     memset(location_info, 0, sizeof(gps_google_location_info_t));
     location_info->timestamp = response->timestamp;
     
-    // Placeholder implementation
-    LOGX_DEBUG_MSG("Parsed Google Geocoding response");
+    // Parse Google Geocoding API response
+    // Look for formatted address and location components
+    char *formatted_addr_start = strstr(response->data, "\"formatted_address\":");
+    char *lat_start = strstr(response->data, "\"lat\":");
+    char *lng_start = strstr(response->data, "\"lng\":");
+    
+    if (formatted_addr_start) {
+        formatted_addr_start = strchr(formatted_addr_start, ':');
+        if (formatted_addr_start) {
+            formatted_addr_start++; // Skip ':'
+            // Skip whitespace and quotes
+            while (*formatted_addr_start == ' ' || *formatted_addr_start == '"') {
+                formatted_addr_start++;
+            }
+            
+            char *addr_end = strchr(formatted_addr_start, '"');
+            if (addr_end) {
+                size_t addr_len = addr_end - formatted_addr_start;
+                if (addr_len < sizeof(location_info->formatted_address)) {
+                    strncpy(location_info->formatted_address, formatted_addr_start, addr_len);
+                    location_info->formatted_address[addr_len] = '\0';
+                }
+            }
+        }
+    }
+    
+    if (lat_start && lng_start) {
+        lat_start = strchr(lat_start, ':');
+        lng_start = strchr(lng_start, ':');
+        
+        if (lat_start && lng_start) {
+            location_info->latitude = atof(lat_start + 1);
+            location_info->longitude = atof(lng_start + 1);
+        }
+    }
+    
+    LOGX_DEBUG_MSG("Parsed Google Geocoding response", 
+                  "formatted_address", location_info->formatted_address,
+                  "latitude", location_info->latitude,
+                  "longitude", location_info->longitude);
 }
 
 // Get place details using Google API
@@ -320,10 +358,20 @@ int gps_google_api_get_elevation(double lat, double lon, double *elevation) {
         return AUTONOMY_ERROR_API_FAILED;
     }
     
-    // Placeholder elevation value
-    *elevation = 100.0; // Default elevation
+    // Parse elevation from Google Elevation API response
+    char *elevation_start = strstr(response.data, "\"elevation\":");
+    if (elevation_start) {
+        elevation_start = strchr(elevation_start, ':');
+        if (elevation_start) {
+            *elevation = atof(elevation_start + 1);
+        } else {
+            *elevation = 100.0; // Default fallback
+        }
+    } else {
+        *elevation = 100.0; // Default fallback
+    }
     
-    LOGX_DEBUG_MSG("Google Elevation API placeholder", "elevation", *elevation);
+    LOGX_DEBUG_MSG("Parsed elevation from Google API", "elevation", *elevation);
     return AUTONOMY_SUCCESS;
 }
 

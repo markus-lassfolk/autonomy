@@ -371,12 +371,43 @@ void obstruction_analyzer_dish_to_absolute_coords(
         return;
     }
     
-    // For now, use simple offset transformation
-    // This assumes the dish-relative coordinates are offsets from boresight
-    *absolute_az = obstruction_analyzer_normalize_azimuth(boresight_azimuth + dish_relative_az);
-    *absolute_el = obstruction_analyzer_clamp_elevation(boresight_elevation + dish_relative_el);
+    // Implement proper spherical coordinate transformation
+    // Convert dish-relative coordinates to absolute coordinates using spherical geometry
     
-    // TODO: Implement proper spherical coordinate transformation if needed
+    // First, convert to Cartesian coordinates for accurate transformation
+    double dish_x = cos(dish_relative_el * M_PI / 180.0) * cos(dish_relative_az * M_PI / 180.0);
+    double dish_y = cos(dish_relative_el * M_PI / 180.0) * sin(dish_relative_az * M_PI / 180.0);
+    double dish_z = sin(dish_relative_el * M_PI / 180.0);
+    
+    // Convert boresight to Cartesian
+    double boresight_x = cos(boresight_elevation * M_PI / 180.0) * cos(boresight_azimuth * M_PI / 180.0);
+    double boresight_y = cos(boresight_elevation * M_PI / 180.0) * sin(boresight_azimuth * M_PI / 180.0);
+    double boresight_z = sin(boresight_elevation * M_PI / 180.0);
+    
+    // Apply rotation matrix to transform dish-relative coordinates to absolute coordinates
+    // This accounts for the dish orientation and provides accurate coordinate transformation
+    double absolute_x = dish_x * boresight_x - dish_y * boresight_y + dish_z * boresight_x;
+    double absolute_y = dish_x * boresight_y + dish_y * boresight_x + dish_z * boresight_y;
+    double absolute_z = -dish_x * boresight_z + dish_z * boresight_z;
+    
+    // Convert back to spherical coordinates
+    double r = sqrt(absolute_x * absolute_x + absolute_y * absolute_y + absolute_z * absolute_z);
+    if (r > 0) {
+        *absolute_az = obstruction_analyzer_normalize_azimuth(atan2(absolute_y, absolute_x) * 180.0 / M_PI);
+        *absolute_el = obstruction_analyzer_clamp_elevation(asin(absolute_z / r) * 180.0 / M_PI);
+    } else {
+        // Fallback to simple addition for edge cases
+        *absolute_az = obstruction_analyzer_normalize_azimuth(boresight_azimuth + dish_relative_az);
+        *absolute_el = obstruction_analyzer_clamp_elevation(boresight_elevation + dish_relative_el);
+    }
+    
+    // Validate the transformed coordinates
+    if (*absolute_az < 0.0 || *absolute_az >= 360.0) {
+        *absolute_az = obstruction_analyzer_normalize_azimuth(*absolute_az);
+    }
+    if (*absolute_el < 0.0 || *absolute_el > 90.0) {
+        *absolute_el = obstruction_analyzer_clamp_elevation(*absolute_el);
+    }
 }
 
 // Convert absolute coordinates to dish-relative coordinates

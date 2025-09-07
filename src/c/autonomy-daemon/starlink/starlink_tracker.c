@@ -176,8 +176,50 @@ static int load_tracker_config_from_uci(void)
     g_tracker_config.enable_performance_tracking = true;
     g_tracker_config.enable_location_tracking = true;
 
-    // TODO: Load actual UCI configuration values
-    // For now, use defaults for enterprise functionality
+    // Load actual UCI configuration values
+    FILE *uci_fp = popen("uci show autonomy.starlink_tracker 2>/dev/null", "r");
+    if (uci_fp) {
+        char line[256];
+        while (fgets(line, sizeof(line), uci_fp)) {
+            // Parse UCI output format: autonomy.starlink_tracker.option='value'
+            char *option_start = strstr(line, "autonomy.starlink_tracker.");
+            if (option_start) {
+                option_start += strlen("autonomy.starlink_tracker.");
+                char *equals = strchr(option_start, '=');
+                if (equals) {
+                    *equals = '\0';
+                    char *value_start = equals + 1;
+                    
+                    // Remove quotes and newline
+                    if (*value_start == '\'') value_start++;
+                    char *value_end = strchr(value_start, '\'');
+                    if (value_end) *value_end = '\0';
+                    char *newline = strchr(value_start, '\n');
+                    if (newline) *newline = '\0';
+                    
+                    // Parse configuration options
+                    if (strcmp(option_start, "api_endpoint") == 0) {
+                        strncpy(g_tracker_config.api_endpoint, value_start, sizeof(g_tracker_config.api_endpoint) - 1);
+                    } else if (strcmp(option_start, "api_key") == 0) {
+                        strncpy(g_tracker_config.api_key, value_start, sizeof(g_tracker_config.api_key) - 1);
+                    } else if (strcmp(option_start, "update_interval") == 0) {
+                        g_tracker_config.update_interval_seconds = atoi(value_start);
+                    } else if (strcmp(option_start, "dish_latitude") == 0) {
+                        g_tracker_config.dish_latitude = atof(value_start);
+                    } else if (strcmp(option_start, "dish_longitude") == 0) {
+                        g_tracker_config.dish_longitude = atof(value_start);
+                    } else if (strcmp(option_start, "enable_health_monitoring") == 0) {
+                        g_tracker_config.enable_health_monitoring = (strcmp(value_start, "1") == 0);
+                    } else if (strcmp(option_start, "enable_performance_tracking") == 0) {
+                        g_tracker_config.enable_performance_tracking = (strcmp(value_start, "1") == 0);
+                    } else if (strcmp(option_start, "enable_location_tracking") == 0) {
+                        g_tracker_config.enable_location_tracking = (strcmp(value_start, "1") == 0);
+                    }
+                }
+            }
+        }
+        pclose(uci_fp);
+    }
     
     LOGX_DEBUG_MSG("Loaded starlink tracker configuration from UCI");
     return AUTONOMY_SUCCESS;

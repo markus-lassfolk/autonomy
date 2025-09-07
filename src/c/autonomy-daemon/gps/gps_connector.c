@@ -264,14 +264,81 @@ void update_system_health(void) {
 
 // Perform module coordination
 void perform_module_coordination(void) {
-    // This is a placeholder for module coordination
-    // In a full implementation, this would coordinate between different GPS modules
+    if (!g_gps_connector_initialized) {
+        return;
+    }
     
-    // Example: Ensure GPS integration is working with other modules
-    // Example: Coordinate GPS events with location services
-    // Example: Ensure GPS health monitoring is active
+    // Coordinate between different GPS modules
+    static time_t last_coordination = 0;
+    time_t now = time(NULL);
     
-    LOGX_DEBUG_MSG("GPS module coordination would be performed here");
+    // Perform coordination every 30 seconds
+    if (now - last_coordination < 30) {
+        return;
+    }
+    last_coordination = now;
+    
+    // 1. Ensure GPS integration is working with other modules
+    gps_integration_status_t integration_status;
+    if (gps_integration_get_status(&integration_status) == AUTONOMY_SUCCESS) {
+        if (!integration_status.gps_fusion_active) {
+            LOGX_WARN_MSG("GPS fusion not active, attempting to restart");
+            gps_fusion_engine_init();
+        }
+        
+        if (integration_status.active_sources < 2) {
+            LOGX_WARN_MSG("Low GPS source count", "active_sources", integration_status.active_sources);
+        }
+    }
+    
+    // 2. Coordinate GPS events with location services
+    gps_location_reference_status_t location_status;
+    if (gps_location_reference_get_status(&location_status) == AUTONOMY_SUCCESS) {
+        if (location_status.cache_size > location_status.max_cache_size * 0.9) {
+            LOGX_INFO_MSG("GPS location cache near capacity, performing cleanup");
+            gps_location_reference_force_cleanup();
+        }
+    }
+    
+    // 3. Ensure GPS health monitoring is active
+    gps_health_status_t health_status;
+    if (gps_health_get_status(&health_status) == AUTONOMY_SUCCESS) {
+        if (health_status.overall_health < 0.7) {
+            LOGX_WARN_MSG("GPS health degraded", "overall_health", health_status.overall_health);
+            
+            // Attempt to restart problematic modules
+            if (health_status.google_api_health < 0.5) {
+                LOGX_INFO_MSG("Restarting Google API module");
+                gps_google_api_cleanup();
+                gps_google_api_init(NULL); // Will use configured API key
+            }
+            
+            if (health_status.weather_api_health < 0.5) {
+                LOGX_INFO_MSG("Restarting Weather API module");
+                gps_weather_cleanup();
+                gps_weather_init(NULL); // Will use configured API key
+            }
+        }
+    }
+    
+    // 4. Coordinate with Starlink GPS if available
+    gps_starlink_status_t starlink_status;
+    if (gps_starlink_get_status(&starlink_status) == AUTONOMY_SUCCESS) {
+        if (starlink_status.connected && starlink_status.data_valid) {
+            // Starlink GPS is available, ensure it's integrated
+            LOGX_DEBUG_MSG("Starlink GPS available and integrated", 
+                          "latitude", starlink_status.latitude,
+                          "longitude", starlink_status.longitude,
+                          "accuracy", starlink_status.accuracy);
+        }
+    }
+    
+    // 5. Update coordination statistics
+    g_gps_connector_stats.coordination_cycles++;
+    g_gps_connector_stats.last_coordination = now;
+    
+    LOGX_DEBUG_MSG("GPS module coordination completed", 
+                  "coordination_cycles", g_gps_connector_stats.coordination_cycles);
 }
 
 // Get connector status

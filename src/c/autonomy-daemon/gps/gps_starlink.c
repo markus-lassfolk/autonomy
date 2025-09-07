@@ -192,11 +192,38 @@ int gps_starlink_extract_data(void) {
 
 // Extract GPS data from Starlink API
 static bool extract_gps_from_starlink_api(void) {
-    // Placeholder implementation - would connect to actual Starlink dish
-    LOGX_DEBUG_MSG("Starlink GPS API extraction placeholder");
+    // Try to connect to Starlink dish API
+    http_request_config_t request_config = {0};
+    http_response_t response = {0};
     
-    // In production, this would make HTTP request to Starlink dish
-    // For now, return false to indicate no data available
+    // Configure request to Starlink dish
+    strncpy(request_config.url, "http://192.168.100.1/api/v1/status", sizeof(request_config.url) - 1);
+    request_config.method = HTTP_METHOD_GET;
+    request_config.timeout_seconds = 5;
+    request_config.follow_redirects = true;
+    
+    // Make HTTP request to Starlink dish
+    int result = http_client_make_request(&request_config, &response);
+    
+    if (result == 0 && response.success && response.data) {
+        // Parse the response
+        bool parse_result = parse_gps_from_response(response.data);
+        
+        // Clean up response
+        if (response.data) {
+            free(response.data);
+        }
+        
+        if (parse_result) {
+            LOGX_DEBUG_MSG("Successfully extracted GPS data from Starlink API");
+            return true;
+        }
+    } else {
+        LOGX_DEBUG_MSG("Failed to connect to Starlink dish API", 
+                      "result", result,
+                      "success", response.success);
+    }
+    
     return false;
 }
 
@@ -206,8 +233,64 @@ static bool parse_gps_from_response(const char *response) {
         return false;
     }
     
-    // Placeholder implementation
-    LOGX_DEBUG_MSG("Starlink GPS response parsing placeholder");
+    // Parse JSON response from Starlink dish
+    // Look for GPS-related fields in the status response
+    char *lat_start = strstr(response, "\"latitude\":");
+    char *lon_start = strstr(response, "\"longitude\":");
+    char *alt_start = strstr(response, "\"altitude\":");
+    char *accuracy_start = strstr(response, "\"accuracy\":");
+    
+    if (lat_start && lon_start) {
+        // Extract latitude
+        lat_start = strchr(lat_start, ':');
+        if (lat_start) {
+            double latitude = atof(lat_start + 1);
+            
+            // Extract longitude
+            lon_start = strchr(lon_start, ':');
+            if (lon_start) {
+                double longitude = atof(lon_start + 1);
+                
+                // Extract altitude if available
+                double altitude = 0.0;
+                if (alt_start) {
+                    alt_start = strchr(alt_start, ':');
+                    if (alt_start) {
+                        altitude = atof(alt_start + 1);
+                    }
+                }
+                
+                // Extract accuracy if available
+                double accuracy = 10.0; // Default accuracy
+                if (accuracy_start) {
+                    accuracy_start = strchr(accuracy_start, ':');
+                    if (accuracy_start) {
+                        accuracy = atof(accuracy_start + 1);
+                    }
+                }
+                
+                // Update global GPS data
+                pthread_mutex_lock(&g_starlink_gps_mutex);
+                g_starlink_gps_data.latitude = latitude;
+                g_starlink_gps_data.longitude = longitude;
+                g_starlink_gps_data.altitude = altitude;
+                g_starlink_gps_data.accuracy = accuracy;
+                g_starlink_gps_data.timestamp = time(NULL);
+                g_starlink_gps_data.valid = true;
+                pthread_mutex_unlock(&g_starlink_gps_mutex);
+                
+                LOGX_DEBUG_MSG("Parsed GPS data from Starlink API", 
+                              "latitude", latitude,
+                              "longitude", longitude,
+                              "altitude", altitude,
+                              "accuracy", accuracy);
+                
+                return true;
+            }
+        }
+    }
+    
+    LOGX_DEBUG_MSG("Failed to parse GPS data from Starlink API response");
     return false;
 }
 

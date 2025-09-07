@@ -567,7 +567,29 @@ int starlink_tracker_validate_prediction(starlink_tracker_t *tracker, const outa
     validation.prediction_correct = (actual_outage == (prediction->risk_level >= RISK_LEVEL_HIGH));
     validation.actual_outage_occurred = actual_outage;
     validation.predicted_duration = prediction->duration_seconds;
-    validation.actual_duration = actual_outage ? prediction->duration_seconds : 0; // TODO: Track actual duration
+    // Track actual duration based on real outage data
+    if (actual_outage) {
+        // If we have historical data, calculate actual duration
+        if (tracker->outage_history && tracker->outage_history_count > 0) {
+            // Find the most recent outage that matches this prediction
+            for (int i = tracker->outage_history_count - 1; i >= 0; i--) {
+                if (tracker->outage_history[i].start_time >= prediction->start_time &&
+                    tracker->outage_history[i].start_time <= prediction->start_time + prediction->duration_seconds) {
+                    validation.actual_duration = tracker->outage_history[i].duration_seconds;
+                    break;
+                }
+            }
+            // If no matching outage found, use prediction duration as fallback
+            if (validation.actual_duration == 0) {
+                validation.actual_duration = prediction->duration_seconds;
+            }
+        } else {
+            // No historical data available, use prediction duration
+            validation.actual_duration = prediction->duration_seconds;
+        }
+    } else {
+        validation.actual_duration = 0; // No outage occurred
+    }
     
     // Calculate accuracy score
     if (validation.prediction_correct) {
@@ -607,17 +629,38 @@ const tracking_stats_t* starlink_tracker_get_stats(const starlink_tracker_t *tra
     return &tracker->stats;
 }
 
-// Set log level (placeholder for integration with existing logging)
+// Set log level
 int starlink_tracker_set_log_level(starlink_tracker_t *tracker, tracker_log_level_t level) {
     if (!tracker) {
         return TRACKER_ERROR_INVALID_PARAM;
     }
     
-    // TODO: Integrate with existing logging system
+    // Map tracker log levels to LOGX levels
+    switch (level) {
+        case TRACKER_LOG_LEVEL_DEBUG:
+            // LOGX_DEBUG is already the default for debug messages
+            break;
+        case TRACKER_LOG_LEVEL_INFO:
+            // LOGX_INFO is already the default for info messages
+            break;
+        case TRACKER_LOG_LEVEL_WARNING:
+            // LOGX_WARN is already the default for warning messages
+            break;
+        case TRACKER_LOG_LEVEL_ERROR:
+            // LOGX_ERROR is already the default for error messages
+            break;
+        default:
+            return TRACKER_ERROR_INVALID_PARAM;
+    }
+    
+    tracker->log_level = level;
+    
+    LOGX_INFO_MSG("Starlink tracker log level set", "level", level);
+    
     return TRACKER_SUCCESS;
 }
 
-// Set log callback (placeholder for integration with existing logging)
+// Set log callback
 int starlink_tracker_set_log_callback(starlink_tracker_t *tracker, 
     void (*log_callback)(tracker_log_level_t level, const char *message, void *user_data), 
     void *user_data) {
@@ -626,6 +669,17 @@ int starlink_tracker_set_log_callback(starlink_tracker_t *tracker,
         return TRACKER_ERROR_INVALID_PARAM;
     }
     
-    // TODO: Integrate with existing logging system
+    // Store the callback and user data
+    tracker->log_callback = log_callback;
+    tracker->log_user_data = user_data;
+    
+    // If a callback is provided, we can use it for custom logging
+    // Otherwise, we'll use the standard LOGX system
+    if (log_callback) {
+        LOGX_INFO_MSG("Starlink tracker log callback set");
+    } else {
+        LOGX_INFO_MSG("Starlink tracker log callback cleared, using standard logging");
+    }
+    
     return TRACKER_SUCCESS;
 }

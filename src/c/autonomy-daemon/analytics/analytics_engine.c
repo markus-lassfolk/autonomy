@@ -250,15 +250,99 @@ int analytics_engine_update_metrics(void) {
 int calculate_system_overview(system_overview_t* overview) {
     if (!overview) return -1;
     
-    // Placeholder implementation - would integrate with actual system data
+    // Get system uptime
+    time_t uptime_seconds = get_system_uptime();
+    int hours = uptime_seconds / 3600;
+    int minutes = (uptime_seconds % 3600) / 60;
+    snprintf(overview->uptime, sizeof(overview->uptime), "%dh %dm", hours, minutes);
+    
+    // Get network information
     overview->total_members = 0;
     overview->active_members = 0;
-    overview->overall_health = 0.0;
-    strcpy(overview->uptime, "0h 0m");
-    overview->last_failover = 0;
-    overview->has_last_failover = false;
-    overview->failover_count = 0;
-    overview->success_rate = 0.0;
+    
+    // Check network interfaces and count active connections
+    FILE *fp = popen("ip link show | grep -c 'state UP'", "r");
+    if (fp) {
+        char buffer[128];
+        if (fgets(buffer, sizeof(buffer), fp)) {
+            overview->active_members = atoi(buffer);
+        }
+        pclose(fp);
+    }
+    
+    // Get total network interfaces
+    fp = popen("ip link show | grep -c '^[0-9]'", "r");
+    if (fp) {
+        char buffer[128];
+        if (fgets(buffer, sizeof(buffer), fp)) {
+            overview->total_members = atoi(buffer);
+        }
+        pclose(fp);
+    }
+    
+    // Calculate overall health based on system metrics
+    double health_score = 0.0;
+    int health_factors = 0;
+    
+    // Check memory usage
+    unsigned long total_mem, free_mem;
+    if (get_memory_usage(&total_mem, &free_mem) == 0) {
+        double memory_usage = (double)(total_mem - free_mem) / total_mem;
+        health_score += (1.0 - memory_usage) * 100.0; // Higher is better
+        health_factors++;
+    }
+    
+    // Check disk usage
+    if (check_disk_space_available()) {
+        health_score += 100.0; // Disk space available
+        health_factors++;
+    } else {
+        health_score += 50.0; // Disk space low
+        health_factors++;
+    }
+    
+    // Check network connectivity
+    if (check_network_connectivity()) {
+        health_score += 100.0; // Network connected
+        health_factors++;
+    } else {
+        health_score += 0.0; // Network disconnected
+        health_factors++;
+    }
+    
+    // Check system load
+    double load1, load5, load15;
+    if (get_system_load(&load1, &load5, &load15) == 0) {
+        double load_factor = 1.0 - (load1 / 4.0); // Assume 4 cores max
+        if (load_factor < 0.0) load_factor = 0.0;
+        health_score += load_factor * 100.0;
+        health_factors++;
+    }
+    
+    if (health_factors > 0) {
+        overview->overall_health = health_score / health_factors;
+    } else {
+        overview->overall_health = 50.0; // Default if no metrics available
+    }
+    
+    // Get failover information (would integrate with actual failover system)
+    overview->last_failover = 0; // Would get from failover system
+    overview->has_last_failover = false; // Would check failover history
+    overview->failover_count = 0; // Would count from failover logs
+    
+    // Calculate success rate based on system health and uptime
+    if (uptime_seconds > 3600) { // System running for more than 1 hour
+        overview->success_rate = overview->overall_health;
+    } else {
+        overview->success_rate = 50.0; // Default for new systems
+    }
+    
+    LOGX_DEBUG_MSG("System overview calculated", 
+                  "total_members", overview->total_members,
+                  "active_members", overview->active_members,
+                  "overall_health", overview->overall_health,
+                  "uptime", overview->uptime,
+                  "success_rate", overview->success_rate);
     
     return 0;
 }
@@ -326,24 +410,134 @@ int calculate_health_metrics(health_metrics_t* health) {
 static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) {
     if (!alerts || max_alerts <= 0) return 0;
     
-    // Placeholder implementation - would generate alerts based on analysis
     int alert_count = 0;
     
-    // Example alert for low overall health
-    if (g_analytics_engine.dashboard_metrics && 
-        g_analytics_engine.dashboard_metrics->health.overall_health < 50.0) {
-        
+    if (!g_analytics_engine.dashboard_metrics) {
+        return 0;
+    }
+    
+    // Check system health alerts
+    if (g_analytics_engine.dashboard_metrics->health.overall_health < 30.0) {
+        if (alert_count < max_alerts) {
+            strcpy(alerts[alert_count].id, "critical_health");
+            strcpy(alerts[alert_count].type, "health");
+            strcpy(alerts[alert_count].severity, "critical");
+            strcpy(alerts[alert_count].title, "Critical System Health");
+            snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
+                    "System health is %.1f%% (critical level)", 
+                    g_analytics_engine.dashboard_metrics->health.overall_health);
+            alerts[alert_count].timestamp = time(NULL);
+            alerts[alert_count].acknowledged = false;
+            alert_count++;
+        }
+    } else if (g_analytics_engine.dashboard_metrics->health.overall_health < 50.0) {
         if (alert_count < max_alerts) {
             strcpy(alerts[alert_count].id, "low_health");
             strcpy(alerts[alert_count].type, "health");
             strcpy(alerts[alert_count].severity, "warning");
-            strcpy(alerts[alert_count].title, "Low Overall Health");
-            strcpy(alerts[alert_count].message, "System overall health is below 50%");
+            strcpy(alerts[alert_count].title, "Low System Health");
+            snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
+                    "System health is %.1f%% (below 50%%)", 
+                    g_analytics_engine.dashboard_metrics->health.overall_health);
             alerts[alert_count].timestamp = time(NULL);
             alerts[alert_count].acknowledged = false;
             alert_count++;
         }
     }
+    
+    // Check memory usage alerts
+    unsigned long total_mem, free_mem;
+    if (get_memory_usage(&total_mem, &free_mem) == 0) {
+        double memory_usage = (double)(total_mem - free_mem) / total_mem * 100.0;
+        if (memory_usage > 90.0) {
+            if (alert_count < max_alerts) {
+                strcpy(alerts[alert_count].id, "critical_memory");
+                strcpy(alerts[alert_count].type, "resource");
+                strcpy(alerts[alert_count].severity, "critical");
+                strcpy(alerts[alert_count].title, "Critical Memory Usage");
+                snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
+                        "Memory usage is %.1f%% (critical level)", memory_usage);
+                alerts[alert_count].timestamp = time(NULL);
+                alerts[alert_count].acknowledged = false;
+                alert_count++;
+            }
+        } else if (memory_usage > 80.0) {
+            if (alert_count < max_alerts) {
+                strcpy(alerts[alert_count].id, "high_memory");
+                strcpy(alerts[alert_count].type, "resource");
+                strcpy(alerts[alert_count].severity, "warning");
+                strcpy(alerts[alert_count].title, "High Memory Usage");
+                snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
+                        "Memory usage is %.1f%% (high level)", memory_usage);
+                alerts[alert_count].timestamp = time(NULL);
+                alerts[alert_count].acknowledged = false;
+                alert_count++;
+            }
+        }
+    }
+    
+    // Check disk space alerts
+    if (!check_disk_space_available()) {
+        if (alert_count < max_alerts) {
+            strcpy(alerts[alert_count].id, "low_disk_space");
+            strcpy(alerts[alert_count].type, "resource");
+            strcpy(alerts[alert_count].severity, "warning");
+            strcpy(alerts[alert_count].title, "Low Disk Space");
+            strcpy(alerts[alert_count].message, "Disk space is running low");
+            alerts[alert_count].timestamp = time(NULL);
+            alerts[alert_count].acknowledged = false;
+            alert_count++;
+        }
+    }
+    
+    // Check network connectivity alerts
+    if (!check_network_connectivity()) {
+        if (alert_count < max_alerts) {
+            strcpy(alerts[alert_count].id, "network_disconnected");
+            strcpy(alerts[alert_count].type, "network");
+            strcpy(alerts[alert_count].severity, "critical");
+            strcpy(alerts[alert_count].title, "Network Disconnected");
+            strcpy(alerts[alert_count].message, "Network connectivity has been lost");
+            alerts[alert_count].timestamp = time(NULL);
+            alerts[alert_count].acknowledged = false;
+            alert_count++;
+        }
+    }
+    
+    // Check system load alerts
+    double load1, load5, load15;
+    if (get_system_load(&load1, &load5, &load15) == 0) {
+        if (load1 > 3.0) { // High load on 4-core system
+            if (alert_count < max_alerts) {
+                strcpy(alerts[alert_count].id, "high_load");
+                strcpy(alerts[alert_count].type, "performance");
+                strcpy(alerts[alert_count].severity, "warning");
+                strcpy(alerts[alert_count].title, "High System Load");
+                snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
+                        "System load is %.2f (high level)", load1);
+                alerts[alert_count].timestamp = time(NULL);
+                alerts[alert_count].acknowledged = false;
+                alert_count++;
+            }
+        }
+    }
+    
+    // Check uptime alerts (system restarted recently)
+    time_t uptime = get_system_uptime();
+    if (uptime < 300) { // Less than 5 minutes
+        if (alert_count < max_alerts) {
+            strcpy(alerts[alert_count].id, "recent_restart");
+            strcpy(alerts[alert_count].type, "system");
+            strcpy(alerts[alert_count].severity, "info");
+            strcpy(alerts[alert_count].title, "System Restarted");
+            strcpy(alerts[alert_count].message, "System was recently restarted");
+            alerts[alert_count].timestamp = time(NULL);
+            alerts[alert_count].acknowledged = false;
+            alert_count++;
+        }
+    }
+    
+    LOGX_DEBUG_MSG("Analytics alerts generated", "alert_count", alert_count);
     
     return alert_count;
 }
@@ -353,26 +547,117 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
                                              int max_recommendations) {
     if (!recommendations || max_recommendations <= 0) return 0;
     
-    // Placeholder implementation - would generate recommendations based on analysis
     int recommendation_count = 0;
     
-    // Example recommendation for performance improvement
-    if (g_analytics_engine.dashboard_metrics && 
-        g_analytics_engine.dashboard_metrics->performance.member_count > 0) {
-        
+    if (!g_analytics_engine.dashboard_metrics) {
+        return 0;
+    }
+    
+    // Memory optimization recommendations
+    unsigned long total_mem, free_mem;
+    if (get_memory_usage(&total_mem, &free_mem) == 0) {
+        double memory_usage = (double)(total_mem - free_mem) / total_mem * 100.0;
+        if (memory_usage > 70.0) {
+            if (recommendation_count < max_recommendations) {
+                strcpy(recommendations[recommendation_count].id, "memory_optimization");
+                strcpy(recommendations[recommendation_count].type, "resource");
+                strcpy(recommendations[recommendation_count].priority, "high");
+                strcpy(recommendations[recommendation_count].title, "Memory Optimization");
+                strcpy(recommendations[recommendation_count].description, 
+                       "Memory usage is high. Consider restarting services or optimizing memory usage.");
+                strcpy(recommendations[recommendation_count].impact, "high");
+                strcpy(recommendations[recommendation_count].effort, "medium");
+                recommendations[recommendation_count].timestamp = time(NULL);
+                recommendation_count++;
+            }
+        }
+    }
+    
+    // Disk space recommendations
+    if (!check_disk_space_available()) {
         if (recommendation_count < max_recommendations) {
-            strcpy(recommendations[recommendation_count].id, "perf_improve");
-            strcpy(recommendations[recommendation_count].type, "performance");
-            strcpy(recommendations[recommendation_count].priority, "medium");
-            strcpy(recommendations[recommendation_count].title, "Performance Optimization");
+            strcpy(recommendations[recommendation_count].id, "disk_cleanup");
+            strcpy(recommendations[recommendation_count].type, "maintenance");
+            strcpy(recommendations[recommendation_count].priority, "high");
+            strcpy(recommendations[recommendation_count].title, "Disk Space Cleanup");
             strcpy(recommendations[recommendation_count].description, 
-                   "Consider optimizing network configuration for better performance");
+                   "Disk space is low. Clean up log files, temporary files, and unused packages.");
+                strcpy(recommendations[recommendation_count].impact, "high");
+                strcpy(recommendations[recommendation_count].effort, "low");
+                recommendations[recommendation_count].timestamp = time(NULL);
+                recommendation_count++;
+        }
+    }
+    
+    // System load recommendations
+    double load1, load5, load15;
+    if (get_system_load(&load1, &load5, &load15) == 0) {
+        if (load1 > 2.0) {
+            if (recommendation_count < max_recommendations) {
+                strcpy(recommendations[recommendation_count].id, "load_optimization");
+                strcpy(recommendations[recommendation_count].type, "performance");
+                strcpy(recommendations[recommendation_count].priority, "medium");
+                strcpy(recommendations[recommendation_count].title, "System Load Optimization");
+                strcpy(recommendations[recommendation_count].description, 
+                       "System load is high. Consider optimizing processes or upgrading hardware.");
+                strcpy(recommendations[recommendation_count].impact, "medium");
+                strcpy(recommendations[recommendation_count].effort, "high");
+                recommendations[recommendation_count].timestamp = time(NULL);
+                recommendation_count++;
+            }
+        }
+    }
+    
+    // Network optimization recommendations
+    if (g_analytics_engine.dashboard_metrics->health.overall_health < 60.0) {
+        if (recommendation_count < max_recommendations) {
+            strcpy(recommendations[recommendation_count].id, "network_optimization");
+            strcpy(recommendations[recommendation_count].type, "network");
+            strcpy(recommendations[recommendation_count].priority, "medium");
+            strcpy(recommendations[recommendation_count].title, "Network Optimization");
+            strcpy(recommendations[recommendation_count].description, 
+                   "System health is below optimal. Check network configuration and connectivity.");
+            strcpy(recommendations[recommendation_count].impact, "medium");
+            strcpy(recommendations[recommendation_count].effort, "medium");
+            recommendations[recommendation_count].timestamp = time(NULL);
+            recommendation_count++;
+        }
+    }
+    
+    // Security recommendations
+    time_t uptime = get_system_uptime();
+    if (uptime > 86400 * 30) { // System running for more than 30 days
+        if (recommendation_count < max_recommendations) {
+            strcpy(recommendations[recommendation_count].id, "security_update");
+            strcpy(recommendations[recommendation_count].type, "security");
+            strcpy(recommendations[recommendation_count].priority, "medium");
+            strcpy(recommendations[recommendation_count].title, "Security Updates");
+            strcpy(recommendations[recommendation_count].description, 
+                   "System has been running for a long time. Consider applying security updates.");
+            strcpy(recommendations[recommendation_count].impact, "high");
+            strcpy(recommendations[recommendation_count].effort, "medium");
+            recommendations[recommendation_count].timestamp = time(NULL);
+            recommendation_count++;
+        }
+    }
+    
+    // Performance monitoring recommendations
+    if (g_analytics_engine.dashboard_metrics->performance.member_count > 0) {
+        if (recommendation_count < max_recommendations) {
+            strcpy(recommendations[recommendation_count].id, "performance_monitoring");
+            strcpy(recommendations[recommendation_count].type, "monitoring");
+            strcpy(recommendations[recommendation_count].priority, "low");
+            strcpy(recommendations[recommendation_count].title, "Enhanced Monitoring");
+            strcpy(recommendations[recommendation_count].description, 
+                   "Consider implementing additional performance monitoring for better insights.");
             strcpy(recommendations[recommendation_count].impact, "medium");
             strcpy(recommendations[recommendation_count].effort, "low");
             recommendations[recommendation_count].timestamp = time(NULL);
             recommendation_count++;
         }
     }
+    
+    LOGX_DEBUG_MSG("Analytics recommendations generated", "recommendation_count", recommendation_count);
     
     return recommendation_count;
 }

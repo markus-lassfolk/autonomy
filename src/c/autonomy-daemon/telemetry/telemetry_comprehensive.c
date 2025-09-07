@@ -865,9 +865,36 @@ static int insert_decision_to_database(const decision_record_t* decision) {
     sqlite3_bind_double(stmt, param++, decision->gps_accuracy);
     sqlite3_bind_text(stmt, param++, decision->gps_source, -1, SQLITE_STATIC);
     // Continue with remaining fields...
-    for (int i = param; i <= 33; i++) {
-        sqlite3_bind_null(stmt, i); // Placeholder for remaining fields
-    }
+    sqlite3_bind_double(stmt, param++, decision->network_latency);
+    sqlite3_bind_double(stmt, param++, decision->network_throughput);
+    sqlite3_bind_double(stmt, param++, decision->network_packet_loss);
+    sqlite3_bind_double(stmt, param++, decision->network_jitter);
+    sqlite3_bind_double(stmt, param++, decision->signal_strength);
+    sqlite3_bind_double(stmt, param++, decision->signal_quality);
+    sqlite3_bind_double(stmt, param++, decision->battery_level);
+    sqlite3_bind_double(stmt, param++, decision->cpu_usage);
+    sqlite3_bind_double(stmt, param++, decision->memory_usage);
+    sqlite3_bind_double(stmt, param++, decision->disk_usage);
+    sqlite3_bind_double(stmt, param++, decision->temperature);
+    sqlite3_bind_double(stmt, param++, decision->uptime);
+    sqlite3_bind_double(stmt, param++, decision->load_average);
+    sqlite3_bind_double(stmt, param++, decision->network_errors);
+    sqlite3_bind_double(stmt, param++, decision->connection_attempts);
+    sqlite3_bind_double(stmt, param++, decision->success_rate);
+    sqlite3_bind_double(stmt, param++, decision->cost_score);
+    sqlite3_bind_double(stmt, param++, decision->reliability_score);
+    sqlite3_bind_double(stmt, param++, decision->performance_score);
+    sqlite3_bind_double(stmt, param++, decision->overall_score);
+    sqlite3_bind_text(stmt, param++, decision->selected_interface, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, param++, decision->decision_reason, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, param++, decision->fallback_interface, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, param++, decision->failover_count);
+    sqlite3_bind_int(stmt, param++, decision->retry_count);
+    sqlite3_bind_int(stmt, param++, decision->timeout_count);
+    sqlite3_bind_int(stmt, param++, decision->error_count);
+    sqlite3_bind_int(stmt, param++, decision->warning_count);
+    sqlite3_bind_int(stmt, param++, decision->info_count);
+    sqlite3_bind_text(stmt, param++, decision->metadata, -1, SQLITE_STATIC);
     
     // Execute statement
     result = sqlite3_step(stmt);
@@ -918,9 +945,80 @@ static int export_ml_dataset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    // Placeholder implementation
-    LOGX_INFO_MSG("ML dataset export placeholder");
-    g_telemetry_comprehensive.stats.last_ml_export = time(NULL);
+    // Export telemetry data for ML training
+    if (!g_telemetry_comprehensive.db) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    // Create export directory if it doesn't exist
+    char export_dir[256];
+    snprintf(export_dir, sizeof(export_dir), "%s/ml_exports", g_telemetry_comprehensive.config.data_directory);
+    
+    struct stat st = {0};
+    if (stat(export_dir, &st) == -1) {
+        mkdir(export_dir, 0755);
+    }
+    
+    // Generate export filename with timestamp
+    char export_file[512];
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
+    strftime(export_file, sizeof(export_file), "%Y%m%d_%H%M%S_telemetry_export.csv", tm_info);
+    
+    char full_path[768];
+    snprintf(full_path, sizeof(full_path), "%s/%s", export_dir, export_file);
+    
+    // Export data to CSV format
+    FILE *export_fp = fopen(full_path, "w");
+    if (!export_fp) {
+        LOGX_ERROR_MSG("Failed to create ML export file", "file", full_path);
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Write CSV header
+    fprintf(export_fp, "timestamp,interface,latency,throughput,packet_loss,signal_strength,"
+                      "gps_latitude,gps_longitude,gps_accuracy,decision_score,selected_interface\n");
+    
+    // Query and export recent telemetry data
+    const char* export_sql = "SELECT timestamp, interface, network_latency, network_throughput, "
+                            "network_packet_loss, signal_strength, gps_latitude, gps_longitude, "
+                            "gps_accuracy, overall_score, selected_interface "
+                            "FROM telemetry_samples WHERE timestamp > ? ORDER BY timestamp DESC LIMIT 10000";
+    
+    sqlite3_stmt* stmt;
+    int result = sqlite3_prepare_v2(g_telemetry_comprehensive.db, export_sql, -1, &stmt, NULL);
+    if (result == SQLITE_OK) {
+        time_t cutoff_time = now - (7 * 24 * 3600); // Last 7 days
+        sqlite3_bind_int64(stmt, 1, cutoff_time);
+        
+        int exported_count = 0;
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            fprintf(export_fp, "%lld,%s,%.3f,%.3f,%.3f,%.3f,%.6f,%.6f,%.3f,%.3f,%s\n",
+                   sqlite3_column_int64(stmt, 0), // timestamp
+                   sqlite3_column_text(stmt, 1),  // interface
+                   sqlite3_column_double(stmt, 2), // latency
+                   sqlite3_column_double(stmt, 3), // throughput
+                   sqlite3_column_double(stmt, 4), // packet_loss
+                   sqlite3_column_double(stmt, 5), // signal_strength
+                   sqlite3_column_double(stmt, 6), // gps_latitude
+                   sqlite3_column_double(stmt, 7), // gps_longitude
+                   sqlite3_column_double(stmt, 8), // gps_accuracy
+                   sqlite3_column_double(stmt, 9), // overall_score
+                   sqlite3_column_text(stmt, 10)); // selected_interface
+            exported_count++;
+        }
+        sqlite3_finalize(stmt);
+        
+        LOGX_INFO_MSG("ML dataset export completed", 
+                      "file", full_path,
+                      "records_exported", exported_count);
+    } else {
+        LOGX_ERROR_MSG("Failed to prepare ML export query");
+        sqlite3_finalize(stmt);
+    }
+    
+    fclose(export_fp);
+    g_telemetry_comprehensive.stats.last_ml_export = now;
     
     return AUTONOMY_SUCCESS;
 }// Close telemetry database
