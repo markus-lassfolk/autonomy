@@ -3,14 +3,14 @@
 
 ## 📊 Verification Results
 - **Total C files checked**: 140
-- **Files with configurable values**: 68
-- **Total configurable values found**: 138
-- **Files clean**: 72
+- **Files with configurable values**: 65
+- **Total configurable values found**: 127
+- **Files clean**: 75
 
 ## 🎯 Status
 
 ## ⚠️  VERIFICATION FAILED!
-**138 configurable values still need to be addressed.**
+**127 configurable values still need to be addressed.**
 
 ### Files with remaining configurable values:
 
@@ -49,11 +49,6 @@
 - Line 548: `config.enabled = true;`
 - Line 844: `source->last_retry = 0;`
 
-#### src/c/autonomy-daemon/gps/gps_events.c (3 values)
-- Line 90: `g_events.enabled = true;`
-- Line 109: `g_events.events[i].enabled = false;`
-- Line 171: `event->enabled = true;`
-
 #### src/c/autonomy-daemon/gps/gps_fusion.c (1 values)
 - Line 54: `g_fusion.enabled = true;`
 
@@ -65,12 +60,6 @@
 
 #### src/c/autonomy-daemon/gps/gps_health.c (1 values)
 - Line 56: `g_health_monitor.enabled = true;`
-
-#### src/c/autonomy-daemon/gps/gps_integration.c (4 values)
-- Line 51: `g_integration.enabled = true;`
-- Line 69: `g_integration.gps_sources[i].enabled = false;`
-- Line 134: `source->enabled = true;`
-- Line 393: `source->enabled = false;`
 
 #### src/c/autonomy-daemon/gps/gps_location_manager.c (1 values)
 - Line 77: `source->enabled = true;`
@@ -269,12 +258,6 @@
 #### src/c/autonomy-daemon/utils/metered_manager.c (1 values)
 - Line 48: `g_metered_manager.config.enabled = true;`
 
-#### src/c/autonomy-daemon/utils/overlay_management.c (4 values)
-- Line 45: `g_overlay_manager.config.enabled = true;`
-- Line 46: `g_overlay_manager.config.overlay_space_threshold = 80;`
-- Line 47: `g_overlay_manager.config.overlay_critical_threshold = 90;`
-- Line 49: `g_overlay_manager.config.notifications_enabled = true;`
-
 #### src/c/autonomy-daemon/utils/security_monitor.c (1 values)
 - Line 683: `int failed_attempts = 0;`
 
@@ -288,6 +271,6 @@
 
 ## 🎯 Next Steps
 
-1. Address remaining 138 configurable values
+1. Address remaining 127 configurable values
 2. Run verification script again
 3. Complete UCI configuration integration

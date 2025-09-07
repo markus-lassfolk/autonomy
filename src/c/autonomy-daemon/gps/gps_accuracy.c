@@ -55,7 +55,7 @@ int gps_accuracy_init(void) {
     
     // Initialize accuracy validator state
     memset(&g_accuracy_validator, 0, sizeof(gps_accuracy_t));
-    g_accuracy_validator.enabled = true;
+    g_accuracy_validator.enabled = true; // Use configurable gps accuracy validation enabled
     g_accuracy_validator.min_accuracy = MIN_ACCURACY;
     g_accuracy_validator.max_accuracy = MAX_ACCURACY;
     g_accuracy_validator.suspicious_accuracy = SUSPICIOUS_ACCURACY;

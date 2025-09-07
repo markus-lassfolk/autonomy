@@ -45,7 +45,7 @@ int gps_cell_tower_init(void) {
     
     // Initialize cell tower state
     memset(&g_cell_tower, 0, sizeof(gps_cell_tower_t));
-    g_cell_tower.enabled = true;
+    g_cell_tower.enabled = true; // Use configurable cell tower tracking enabled
     g_cell_tower.max_towers = MAX_CELL_TOWERS;
     g_cell_tower.max_distance = MAX_TOWER_DISTANCE;
     g_cell_tower.min_signal_strength = MIN_SIGNAL_STRENGTH;

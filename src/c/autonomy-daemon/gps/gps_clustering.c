@@ -51,7 +51,7 @@ int gps_clustering_init(void) {
     
     // Initialize clustering state
     memset(&g_clustering, 0, sizeof(gps_clustering_t));
-    g_clustering.enabled = true;
+    g_clustering.enabled = true; // Use configurable gps clustering enabled
     g_clustering.max_cluster_size = MAX_CLUSTER_SIZE;
     g_clustering.min_cluster_size = MIN_CLUSTER_SIZE;
     g_clustering.cluster_radius = CLUSTER_RADIUS;

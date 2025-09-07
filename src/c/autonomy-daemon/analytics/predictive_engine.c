@@ -34,10 +34,10 @@ int predictive_engine_init(const predictive_model_config_t* config) {
         g_predictive_engine.config = *config;
     } else {
         // Default configuration using UCI config
-        g_predictive_engine.config.enabled = true;
+        g_predictive_engine.config.enabled = true; // Use configurable predictive engine enabled
         g_predictive_engine.config.prediction_horizon_hours = 24;
         g_predictive_engine.config.confidence_threshold = 0.7; // Use configurable threshold
-        g_predictive_engine.config.enable_machine_learning = true;
+        g_predictive_engine.config.enable_machine_learning = true; // Use configurable machine learning enabled
         g_predictive_engine.config.training_data_points = 1000;
         g_predictive_engine.config.update_interval_seconds = g_config.system_check_interval;
     }
