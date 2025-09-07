@@ -1,6 +1,8 @@
 #include "gps_coordinate_utils.h"
 #include "gps_location_services.h"
+#include "gps_google_api.h"
 #include "../utils/logx.h"
+#include "../utils/http_client.h"
 #include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
@@ -9,6 +11,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <json-c/json.h>
 
 // Location services configuration
 static const int MAX_LOCATION_CACHE = 1000;             // Maximum cached locations
@@ -37,11 +40,22 @@ int try_reverse_geocoding_service(gps_location_service_t service, double lat, do
 void create_basic_location_info(double lat, double lon, gps_location_info_t *location_info);
 double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
 
+// JSON parsing functions
+static int parse_nominatim_response(const char* json_data, gps_location_info_t *location_info);
+static int parse_google_response(const char* json_data, gps_location_info_t *location_info);
+static int parse_here_response(const char* json_data, gps_location_info_t *location_info);
+
 // Initialize GPS location services
 int gps_location_services_init(void) {
     if (g_location_services_initialized) {
         LOGX_WARN_MSG("GPS location services already initialized");
         return AUTONOMY_SUCCESS;
+    }
+    
+    // Initialize HTTP client first
+    if (http_client_init() != 0) {
+        LOGX_ERROR_MSG("Failed to initialize HTTP client for location services");
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
     pthread_mutex_lock(&g_location_services_mutex);
@@ -271,91 +285,180 @@ int try_reverse_geocoding_service(gps_location_service_t service, double lat, do
 
 // Try Nominatim service (OpenStreetMap)
 int try_nominatim_service(double lat, double lon, gps_location_info_t *location_info) {
-    // For now, implement a simulated response
-    // In a full implementation, this would make HTTP requests to Nominatim API
+    http_response_t response;
+    char url[1024];
+    int result;
     
+    // Build Nominatim reverse geocoding URL
+    snprintf(url, sizeof(url), 
+             "https://nominatim.openstreetmap.org/reverse?format=json&lat=%.6f&lon=%.6f&zoom=18&addressdetails=1",
+             lat, lon);
+    
+    // Make HTTP request using shared HTTP client
+    result = http_client_get(url, 30, &response);
+    if (result != 0 || !response.success) {
+        LOGX_ERROR_MSG("Nominatim API request failed for (%.6f, %.6f)", lat, lon);
+        http_response_cleanup(&response);
+        return AUTONOMY_ERROR_NETWORK;
+    }
+    
+    // Initialize location info
     location_info->lat = lat;
     location_info->lon = lon;
     location_info->service_used = LOCATION_SERVICE_NOMINATIM;
     location_info->timestamp = time(NULL);
     
-    // Simulate place name based on coordinates
-    snprintf(location_info->place_name, sizeof(location_info->place_name), 
-             "Location at %.4f, %.4f", lat, lon);
+    // Clear all fields first
+    memset(location_info->place_name, 0, sizeof(location_info->place_name));
+    memset(location_info->address, 0, sizeof(location_info->address));
+    memset(location_info->country, 0, sizeof(location_info->country));
+    memset(location_info->state, 0, sizeof(location_info->state));
+    memset(location_info->city, 0, sizeof(location_info->city));
+    memset(location_info->postal_code, 0, sizeof(location_info->postal_code));
     
-    // Simulate address components
-    snprintf(location_info->address, sizeof(location_info->address), 
-             "Unknown Address");
-    snprintf(location_info->country, sizeof(location_info->country), 
-             "Unknown Country");
-    snprintf(location_info->state, sizeof(location_info->state), 
-             "Unknown State");
-    snprintf(location_info->city, sizeof(location_info->city), 
-             "Unknown City");
-    snprintf(location_info->postal_code, sizeof(location_info->postal_code), 
-             "");
+    // Parse JSON response
+    result = parse_nominatim_response(response.data, location_info);
+    if (result != AUTONOMY_SUCCESS) {
+        LOGX_ERROR_MSG("Failed to parse Nominatim response for (%.6f, %.6f)", lat, lon);
+        http_response_cleanup(&response);
+        return result;
+    }
     
-    LOGX_DEBUG_MSG("Nominatim service simulated response for (%.6f, %.6f)", lat, lon);
+    // Fallback to basic info if parsing failed to populate fields
+    if (strlen(location_info->place_name) == 0) {
+        snprintf(location_info->place_name, sizeof(location_info->place_name), 
+                 "Location at %.4f, %.4f", lat, lon);
+    }
+    if (strlen(location_info->address) == 0) {
+        snprintf(location_info->address, sizeof(location_info->address), 
+                 "Unknown Address");
+    }
+    if (strlen(location_info->country) == 0) {
+        snprintf(location_info->country, sizeof(location_info->country), 
+                 "Unknown Country");
+    }
+    if (strlen(location_info->state) == 0) {
+        snprintf(location_info->state, sizeof(location_info->state), 
+                 "Unknown State");
+    }
+    if (strlen(location_info->city) == 0) {
+        snprintf(location_info->city, sizeof(location_info->city), 
+                 "Unknown City");
+    }
+    
+    http_response_cleanup(&response);
+    
+    LOGX_DEBUG_MSG("Nominatim service response for (%.6f, %.6f): %s", lat, lon, location_info->place_name);
     return AUTONOMY_SUCCESS;
 }
 
 // Try Google service
 int try_google_service(double lat, double lon, gps_location_info_t *location_info) {
-    // For now, implement a simulated response
-    // In a full implementation, this would make HTTP requests to Google Geocoding API
+    gps_google_location_info_t google_location;
+    int result;
     
+    // Use the existing Google API implementation
+    result = gps_google_api_reverse_geocode(lat, lon, &google_location);
+    if (result != AUTONOMY_SUCCESS) {
+        LOGX_ERROR_MSG("Google API reverse geocoding failed for (%.6f, %.6f)", lat, lon);
+        return result;
+    }
+    
+    // Convert Google API response to our location info format
     location_info->lat = lat;
     location_info->lon = lon;
     location_info->service_used = LOCATION_SERVICE_GOOGLE;
     location_info->timestamp = time(NULL);
     
-    // Simulate place name based on coordinates
-    snprintf(location_info->place_name, sizeof(location_info->place_name), 
-             "Google Location at %.4f, %.4f", lat, lon);
+    // Copy Google API response data
+    strncpy(location_info->place_name, google_location.formatted_address, sizeof(location_info->place_name) - 1);
+    strncpy(location_info->address, google_location.formatted_address, sizeof(location_info->address) - 1);
+    strncpy(location_info->country, google_location.country, sizeof(location_info->country) - 1);
+    strncpy(location_info->state, google_location.administrative_area_level_1, sizeof(location_info->state) - 1);
+    strncpy(location_info->city, google_location.locality, sizeof(location_info->city) - 1);
+    strncpy(location_info->postal_code, google_location.postal_code, sizeof(location_info->postal_code) - 1);
     
-    // Simulate address components
-    snprintf(location_info->address, sizeof(location_info->address), 
-             "Google Address");
-    snprintf(location_info->country, sizeof(location_info->country), 
-             "Google Country");
-    snprintf(location_info->state, sizeof(location_info->state), 
-             "Google State");
-    snprintf(location_info->city, sizeof(location_info->city), 
-             "Google City");
-    snprintf(location_info->postal_code, sizeof(location_info->postal_code), 
-             "12345");
+    // Ensure null termination
+    location_info->place_name[sizeof(location_info->place_name) - 1] = '\0';
+    location_info->address[sizeof(location_info->address) - 1] = '\0';
+    location_info->country[sizeof(location_info->country) - 1] = '\0';
+    location_info->state[sizeof(location_info->state) - 1] = '\0';
+    location_info->city[sizeof(location_info->city) - 1] = '\0';
+    location_info->postal_code[sizeof(location_info->postal_code) - 1] = '\0';
     
-    LOGX_DEBUG_MSG("Google service simulated response for (%.6f, %.6f)", lat, lon);
+    LOGX_DEBUG_MSG("Google service response for (%.6f, %.6f): %s", lat, lon, location_info->place_name);
     return AUTONOMY_SUCCESS;
 }
 
 // Try HERE service
 int try_here_service(double lat, double lon, gps_location_info_t *location_info) {
-    // For now, implement a simulated response
-    // In a full implementation, this would make HTTP requests to HERE Geocoding API
+    http_response_t response;
+    char url[1024];
+    int result;
     
+    // TODO: Add HERE API key configuration
+    const char* here_api_key = "YOUR_HERE_API_KEY_HERE";
+    
+    // Build HERE reverse geocoding URL
+    snprintf(url, sizeof(url), 
+             "https://revgeocode.search.hereapi.com/v1/revgeocode?at=%.6f,%.6f&apikey=%s",
+             lat, lon, here_api_key);
+    
+    // Make HTTP request using shared HTTP client
+    result = http_client_get(url, 30, &response);
+    if (result != 0 || !response.success) {
+        LOGX_ERROR_MSG("HERE API request failed for (%.6f, %.6f)", lat, lon);
+        http_response_cleanup(&response);
+        return AUTONOMY_ERROR_NETWORK;
+    }
+    
+    // Initialize location info
     location_info->lat = lat;
     location_info->lon = lon;
     location_info->service_used = LOCATION_SERVICE_HERE;
     location_info->timestamp = time(NULL);
     
-    // Simulate place name based on coordinates
-    snprintf(location_info->place_name, sizeof(location_info->place_name), 
-             "HERE Location at %.4f, %.4f", lat, lon);
+    // Clear all fields first
+    memset(location_info->place_name, 0, sizeof(location_info->place_name));
+    memset(location_info->address, 0, sizeof(location_info->address));
+    memset(location_info->country, 0, sizeof(location_info->country));
+    memset(location_info->state, 0, sizeof(location_info->state));
+    memset(location_info->city, 0, sizeof(location_info->city));
+    memset(location_info->postal_code, 0, sizeof(location_info->postal_code));
     
-    // Simulate address components
-    snprintf(location_info->address, sizeof(location_info->address), 
-             "HERE Address");
-    snprintf(location_info->country, sizeof(location_info->country), 
-             "HERE Country");
-    snprintf(location_info->state, sizeof(location_info->state), 
-             "HERE State");
-    snprintf(location_info->city, sizeof(location_info->city), 
-             "HERE City");
-    snprintf(location_info->postal_code, sizeof(location_info->postal_code), 
-             "67890");
+    // Parse JSON response
+    result = parse_here_response(response.data, location_info);
+    if (result != AUTONOMY_SUCCESS) {
+        LOGX_ERROR_MSG("Failed to parse HERE response for (%.6f, %.6f)", lat, lon);
+        http_response_cleanup(&response);
+        return result;
+    }
     
-    LOGX_DEBUG_MSG("HERE service simulated response for (%.6f, %.6f)", lat, lon);
+    // Fallback to basic info if parsing failed to populate fields
+    if (strlen(location_info->place_name) == 0) {
+        snprintf(location_info->place_name, sizeof(location_info->place_name), 
+                 "Location at %.4f, %.4f", lat, lon);
+    }
+    if (strlen(location_info->address) == 0) {
+        snprintf(location_info->address, sizeof(location_info->address), 
+                 "Unknown Address");
+    }
+    if (strlen(location_info->country) == 0) {
+        snprintf(location_info->country, sizeof(location_info->country), 
+                 "Unknown Country");
+    }
+    if (strlen(location_info->state) == 0) {
+        snprintf(location_info->state, sizeof(location_info->state), 
+                 "Unknown State");
+    }
+    if (strlen(location_info->city) == 0) {
+        snprintf(location_info->city, sizeof(location_info->city), 
+                 "Unknown City");
+    }
+    
+    http_response_cleanup(&response);
+    
+    LOGX_DEBUG_MSG("HERE service response for (%.6f, %.6f): %s", lat, lon, location_info->place_name);
     return AUTONOMY_SUCCESS;
 }
 
@@ -573,5 +676,183 @@ void gps_location_services_cleanup(void) {
     pthread_mutex_destroy(&g_location_services_mutex);
     g_location_services_initialized = false;
     
+    // Cleanup HTTP client
+    http_client_cleanup();
+    
     LOGX_INFO_MSG("GPS location services cleaned up");
+}
+
+// JSON parsing functions (HTTP requests now handled by shared http_client)
+
+// Parse Nominatim API response
+static int parse_nominatim_response(const char* json_data, gps_location_info_t *location_info) {
+    json_object* root = json_tokener_parse(json_data);
+    if (!root) {
+        LOGX_ERROR_MSG("Failed to parse Nominatim JSON response");
+        return AUTONOMY_ERROR_INVALID_DATA;
+    }
+    
+    // Nominatim returns an array, get the first result
+    json_object* results = NULL;
+    if (json_object_object_get_ex(root, "results", &results) && json_object_is_type(results, json_type_array)) {
+        json_object* first_result = json_object_array_get_idx(results, 0);
+        if (first_result) {
+            // Parse address components
+            json_object* address = NULL;
+            if (json_object_object_get_ex(first_result, "address", &address)) {
+                json_object* country = NULL;
+                json_object* state = NULL;
+                json_object* city = NULL;
+                json_object* postcode = NULL;
+                
+                if (json_object_object_get_ex(address, "country", &country)) {
+                    snprintf(location_info->country, sizeof(location_info->country), "%s", json_object_get_string(country));
+                }
+                if (json_object_object_get_ex(address, "state", &state)) {
+                    snprintf(location_info->state, sizeof(location_info->state), "%s", json_object_get_string(state));
+                }
+                if (json_object_object_get_ex(address, "city", &city)) {
+                    snprintf(location_info->city, sizeof(location_info->city), "%s", json_object_get_string(city));
+                }
+                if (json_object_object_get_ex(address, "postcode", &postcode)) {
+                    snprintf(location_info->postal_code, sizeof(location_info->postal_code), "%s", json_object_get_string(postcode));
+                }
+            }
+            
+            // Get display name (place name)
+            json_object* display_name = NULL;
+            if (json_object_object_get_ex(first_result, "display_name", &display_name)) {
+                snprintf(location_info->place_name, sizeof(location_info->place_name), "%s", json_object_get_string(display_name));
+            }
+            
+            // Get formatted address
+            json_object* formatted = NULL;
+            if (json_object_object_get_ex(first_result, "formatted", &formatted)) {
+                snprintf(location_info->address, sizeof(location_info->address), "%s", json_object_get_string(formatted));
+            }
+        }
+    }
+    
+    json_object_put(root);
+    return AUTONOMY_SUCCESS;
+}
+
+// Parse Google Geocoding API response
+static int parse_google_response(const char* json_data, gps_location_info_t *location_info) {
+    json_object* root = json_tokener_parse(json_data);
+    if (!root) {
+        LOGX_ERROR_MSG("Failed to parse Google JSON response");
+        return AUTONOMY_ERROR_INVALID_DATA;
+    }
+    
+    // Check for errors
+    json_object* error = NULL;
+    if (json_object_object_get_ex(root, "error", &error)) {
+        LOGX_ERROR_MSG("Google API returned error");
+        json_object_put(root);
+        return AUTONOMY_ERROR_INVALID_DATA;
+    }
+    
+    // Get results array
+    json_object* results = NULL;
+    if (json_object_object_get_ex(root, "results", &results) && json_object_is_type(results, json_type_array)) {
+        json_object* first_result = json_object_array_get_idx(results, 0);
+        if (first_result) {
+            // Parse address components
+            json_object* address_components = NULL;
+            if (json_object_object_get_ex(first_result, "address_components", &address_components) && 
+                json_object_is_type(address_components, json_type_array)) {
+                
+                int num_components = json_object_array_length(address_components);
+                for (int i = 0; i < num_components; i++) {
+                    json_object* component = json_object_array_get_idx(address_components, i);
+                    json_object* types = NULL;
+                    json_object* long_name = NULL;
+                    
+                    if (json_object_object_get_ex(component, "types", &types) &&
+                        json_object_object_get_ex(component, "long_name", &long_name)) {
+                        
+                        // Check component types
+                        int num_types = json_object_array_length(types);
+                        for (int j = 0; j < num_types; j++) {
+                            json_object* type = json_object_array_get_idx(types, j);
+                            const char* type_str = json_object_get_string(type);
+                            
+                            if (strcmp(type_str, "country") == 0) {
+                                snprintf(location_info->country, sizeof(location_info->country), "%s", json_object_get_string(long_name));
+                            } else if (strcmp(type_str, "administrative_area_level_1") == 0) {
+                                snprintf(location_info->state, sizeof(location_info->state), "%s", json_object_get_string(long_name));
+                            } else if (strcmp(type_str, "locality") == 0 || strcmp(type_str, "administrative_area_level_2") == 0) {
+                                snprintf(location_info->city, sizeof(location_info->city), "%s", json_object_get_string(long_name));
+                            } else if (strcmp(type_str, "postal_code") == 0) {
+                                snprintf(location_info->postal_code, sizeof(location_info->postal_code), "%s", json_object_get_string(long_name));
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Get formatted address
+            json_object* formatted_address = NULL;
+            if (json_object_object_get_ex(first_result, "formatted_address", &formatted_address)) {
+                snprintf(location_info->address, sizeof(location_info->address), "%s", json_object_get_string(formatted_address));
+            }
+            
+            // Use formatted address as place name if no specific place name
+            if (strlen(location_info->place_name) == 0) {
+                snprintf(location_info->place_name, sizeof(location_info->place_name), "%s", location_info->address);
+            }
+        }
+    }
+    
+    json_object_put(root);
+    return AUTONOMY_SUCCESS;
+}
+
+// Parse HERE Geocoding API response
+static int parse_here_response(const char* json_data, gps_location_info_t *location_info) {
+    json_object* root = json_tokener_parse(json_data);
+    if (!root) {
+        LOGX_ERROR_MSG("Failed to parse HERE JSON response");
+        return AUTONOMY_ERROR_INVALID_DATA;
+    }
+    
+    // Get results array
+    json_object* results = NULL;
+    if (json_object_object_get_ex(root, "results", &results) && json_object_is_type(results, json_type_array)) {
+        json_object* first_result = json_object_array_get_idx(results, 0);
+        if (first_result) {
+            // Parse address components
+            json_object* address = NULL;
+            if (json_object_object_get_ex(first_result, "address", &address)) {
+                json_object* country = NULL;
+                json_object* state = NULL;
+                json_object* city = NULL;
+                json_object* postal_code = NULL;
+                
+                if (json_object_object_get_ex(address, "country", &country)) {
+                    snprintf(location_info->country, sizeof(location_info->country), "%s", json_object_get_string(country));
+                }
+                if (json_object_object_get_ex(address, "state", &state)) {
+                    snprintf(location_info->state, sizeof(location_info->state), "%s", json_object_get_string(state));
+                }
+                if (json_object_object_get_ex(address, "city", &city)) {
+                    snprintf(location_info->city, sizeof(location_info->city), "%s", json_object_get_string(city));
+                }
+                if (json_object_object_get_ex(address, "postalCode", &postal_code)) {
+                    snprintf(location_info->postal_code, sizeof(location_info->postal_code), "%s", json_object_get_string(postal_code));
+                }
+            }
+            
+            // Get label (formatted address)
+            json_object* label = NULL;
+            if (json_object_object_get_ex(first_result, "label", &label)) {
+                snprintf(location_info->address, sizeof(location_info->address), "%s", json_object_get_string(label));
+                snprintf(location_info->place_name, sizeof(location_info->place_name), "%s", json_object_get_string(label));
+            }
+        }
+    }
+    
+    json_object_put(root);
+    return AUTONOMY_SUCCESS;
 }
