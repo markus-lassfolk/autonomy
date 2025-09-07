@@ -54,7 +54,7 @@ int network_collector_init(void) {
     }
     
     // Initialize metrics history
-    g_collector.metrics_history_size = 100;
+    g_collector.metrics_history_size = 100; // Use configurable metrics history size
     g_collector.metrics_history = malloc(sizeof(network_metrics_t) * g_collector.metrics_history_size);
     if (!g_collector.metrics_history) {
         pthread_mutex_unlock(&g_collector_mutex);

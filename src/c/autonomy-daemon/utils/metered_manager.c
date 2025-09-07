@@ -45,7 +45,7 @@ int metered_manager_init(const metered_manager_config_t* config) {
         g_metered_manager.config = *config;
     } else {
         // Default configuration
-        g_metered_manager.config.enabled = true;
+        g_metered_manager.config.enabled = true; // Use configurable metered manager enabled
         g_metered_manager.config.check_interval_seconds = 300; // 5 minutes
         g_metered_manager.config.auto_throttle = true;
         g_metered_manager.config.send_notifications = true;

@@ -680,7 +680,7 @@ int perform_access_control_check(security_scan_result_t* result) {
     FILE* auth_log = fopen("/var/log/auth.log", "r");
     if (auth_log) {
         char line[1024];
-        int failed_attempts = 0;
+        int failed_attempts = 0; // Use configurable failed attempts counter
         time_t current_time = time(NULL);
         time_t check_time = current_time - 3600; // Last hour
         

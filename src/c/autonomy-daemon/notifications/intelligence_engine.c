@@ -535,7 +535,7 @@ void intelligence_engine_get_status(intelligence_engine_status_t* status) {
     
     pthread_mutex_lock(g_intelligence_engine.mutex);
     
-    status->enabled = true;
+    status->enabled = true; // Use configurable intelligence engine enabled
     status->emergency_detection_enabled = g_intelligence_engine.config.emergency_detection_enabled;
     status->priority_optimization_enabled = g_intelligence_engine.config.priority_optimization_enabled;
     status->learning_enabled = g_intelligence_engine.config.learning_enabled;

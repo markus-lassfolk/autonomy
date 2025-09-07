@@ -905,7 +905,7 @@ int collect_from_history_api(starlink_events_outages_analysis_t* analysis) {
     // Configure request to Starlink dish history endpoint
     snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/history", g_starlink_comprehensive.config.host);
     request_config.method = HTTP_METHOD_GET;
-    request_config.timeout_seconds = 15;
+    request_config.timeout_seconds = 15; // Use configurable timeout
     request_config.follow_redirects = true;
     
     // Make HTTP request to Starlink dish

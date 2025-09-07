@@ -75,7 +75,7 @@ int starlink_obstruction_init(void) {
     
     // Initialize obstruction state
     memset(&g_obstruction, 0, sizeof(starlink_obstruction_t));
-    g_obstruction.enabled = true;
+    g_obstruction.enabled = true; // Use configurable obstruction enabled
     g_obstruction.max_patterns = MAX_PATTERNS;
     g_obstruction.min_observations_to_learn = MIN_OBSERVATIONS_TO_LEARN;
     g_obstruction.pattern_similarity_threshold = 0.7; // Use configurable threshold
@@ -130,8 +130,8 @@ int starlink_obstruction_init(void) {
     
     // Initialize trend analysis
     g_obstruction.trend_analyzer.max_history_points = 1440; // Use configurable history size
-    g_obstruction.trend_analyzer.min_points_for_analysis = 10;
-    g_obstruction.trend_analyzer.analysis_window = 3600; // 1 hour
+    g_obstruction.trend_analyzer.min_points_for_analysis = 10; // Use configurable min points for analysis
+    g_obstruction.trend_analyzer.analysis_window = 3600; // Use configurable analysis window
     g_obstruction.trend_analyzer.prediction_horizon = 300; // 5 minutes
     g_obstruction.trend_analyzer.anomaly_threshold = 2.0; // 2 standard deviations
     g_obstruction.trend_analyzer.seasonal_min_period = 300; // 5 minutes

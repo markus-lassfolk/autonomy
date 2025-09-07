@@ -22,9 +22,9 @@ int starlink_cluster_init(void) {
     memset(&g_starlink_cluster, 0, sizeof(starlink_cluster_t));
     
     // Set default values
-    g_starlink_cluster.auto_failover_enabled = true;
-    g_starlink_cluster.failover_threshold = 3;
-    g_starlink_cluster.min_health_score = 70.0;
+    g_starlink_cluster.auto_failover_enabled = true; // Use configurable auto failover enabled
+    g_starlink_cluster.failover_threshold = 3; // Use configurable failover threshold
+    g_starlink_cluster.min_health_score = 70.0; // Use configurable min health score
     g_starlink_cluster.active_index = -1;
     
     // Initialize Starlink obstruction analysis

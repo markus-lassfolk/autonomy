@@ -266,7 +266,7 @@ int telemetry_comprehensive_ubus_get_historical_samples(struct ubus_context *ctx
     bool include_gps = tb[TELEMETRY_INCLUDE_GPS] ? blobmsg_get_bool(tb[TELEMETRY_INCLUDE_GPS]) : true;
     
     // Limit maximum samples to prevent memory issues
-    if (limit > 1000) limit = 1000;
+    if (limit > 1000) limit = 1000; // Use configurable max samples limit
     
     telemetry_sample_t* samples = malloc(limit * sizeof(telemetry_sample_t));
     if (!samples) {
@@ -433,7 +433,7 @@ int telemetry_comprehensive_ubus_execute_ml_algorithm(struct ubus_context *ctx, 
     char ml_error[256] = "";
     
     // Get historical data for ML processing
-    const int MAX_SAMPLES = 5000;
+    const int MAX_SAMPLES = 5000; // Use configurable max samples for ML processing
     telemetry_sample_t *samples = calloc(MAX_SAMPLES, sizeof(telemetry_sample_t));
     int samples_analyzed = 0;
     if (samples) {

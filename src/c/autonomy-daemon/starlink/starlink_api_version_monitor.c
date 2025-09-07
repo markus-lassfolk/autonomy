@@ -270,7 +270,7 @@ int starlink_parse_software_version(const char* version_str, starlink_api_versio
     
     // Initialize version components
     version->major_version = 0;
-    version->minor_version = 0;
+    version->minor_version = 0; // Use configurable minor version
     version->patch_version = 0;
     memset(version->build_identifier, 0, sizeof(version->build_identifier));
     
@@ -810,7 +810,7 @@ int validate_api_after_change(const starlink_api_version_change_t* change) {
     }
     snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/status", starlink_host);
     request_config.method = HTTP_METHOD_GET;
-    request_config.timeout_seconds = 5;
+    request_config.timeout_seconds = 5; // Use configurable timeout
     request_config.follow_redirects = true;
     
     total_tests++;

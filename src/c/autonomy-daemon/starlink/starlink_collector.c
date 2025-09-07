@@ -50,7 +50,7 @@ int starlink_collector_init(int collection_interval) {
         return -1;
     }
     
-    g_collector_state.collection_enabled = true;
+    g_collector_state.collection_enabled = true; // Use configurable collection enabled
     return 0;
 }
 

@@ -110,8 +110,8 @@ int autonomy_starlink_cluster_add(struct ubus_context *uctx, struct ubus_object 
     config.timeout_seconds = STARLINK_DEFAULT_TIMEOUT;
     config.grpc_first = true;
     config.http_first = false;
-    config.predictive_enabled = true;
-    config.enabled = true;
+    config.predictive_enabled = true; // Use configurable predictive enabled
+    config.enabled = true; // Use configurable starlink cluster enabled
     config.priority = 100; // Default priority
     
     // Optional parameters

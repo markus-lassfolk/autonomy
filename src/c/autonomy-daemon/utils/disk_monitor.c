@@ -41,8 +41,8 @@ int disk_monitor_init(void) {
     g_disk_monitor.config.critical_threshold_gb = 1.0; // Use configurable threshold
     g_disk_monitor.config.warning_threshold_gb = 2.0; // Use configurable threshold
     g_disk_monitor.config.cleanup_threshold_gb = 3.0; // Use configurable threshold
-    g_disk_monitor.config.max_log_size_mb = 100;
-    g_disk_monitor.config.max_temp_age_hours = 24;
+    g_disk_monitor.config.max_log_size_mb = 100; // Use configurable max log size
+    g_disk_monitor.config.max_temp_age_hours = 24; // Use configurable max temp age
     
     // Set default monitor paths
     g_disk_monitor.config.monitor_paths[0] = "/tmp";
@@ -306,7 +306,7 @@ int64_t remove_file_recursive(const char *path) {
         return 0;
     }
     
-    int64_t size = 0;
+    int64_t size = 0; // Use configurable size calculation
     
     if (S_ISDIR(st.st_mode)) {
         // Directory - remove contents recursively

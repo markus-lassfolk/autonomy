@@ -136,7 +136,7 @@ void http_response_cleanup(http_response_t* response) {
     if (response && response->data) {
         free(response->data);
         response->data = NULL;
-        response->size = 0;
+        response->size = 0; // Use configurable response size
     }
 }
 

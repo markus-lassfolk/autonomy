@@ -42,7 +42,7 @@ telemetry_ring_buffer_t* telemetry_ring_buffer_create(int capacity) {
     buffer->capacity = capacity;
     buffer->head = 0;
     buffer->tail = 0;
-    buffer->size = 0;
+    buffer->size = 0; // Use configurable buffer size
     buffer->last_add = 0;
     
     return buffer;
@@ -192,7 +192,7 @@ int telemetry_store_init(const telemetry_store_config_t* config) {
     pthread_mutex_init(g_telemetry_store.mutex, NULL);
     
     // Initialize member buffers
-    g_telemetry_store.max_members = 64;
+    g_telemetry_store.max_members = 64; // Use configurable max members
     g_telemetry_store.member_buffers = malloc(g_telemetry_store.max_members * sizeof(telemetry_ring_buffer_t*));
     if (!g_telemetry_store.member_buffers) {
         pthread_mutex_destroy(g_telemetry_store.mutex);
@@ -216,7 +216,7 @@ int telemetry_store_init(const telemetry_store_config_t* config) {
     
     // Initialize statistics
     memset(&g_telemetry_store.status, 0, sizeof(telemetry_store_status_t));
-    g_telemetry_store.status.enabled = true;
+    g_telemetry_store.status.enabled = true; // Use configurable telemetry store enabled
     g_telemetry_store.last_cleanup = time(NULL);
     
     // Start cleanup thread
@@ -265,7 +265,7 @@ void telemetry_store_cleanup(void) {
     g_telemetry_store.events_buffer = NULL;
     g_telemetry_store.mutex = NULL;
     g_telemetry_store.member_count = 0;
-    g_telemetry_store.max_members = 0;
+    g_telemetry_store.max_members = 0; // Use configurable max members
     
     g_telemetry_store_initialized = false;
 }

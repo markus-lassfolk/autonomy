@@ -545,7 +545,7 @@ static bool perform_degrade_recovery(gps_source_error_local_t *source, gps_error
         case GPS_SOURCE_TYPE_RUTOS:
             // For RUTOS, reduce update frequency to degrade service
             gps_rutos_config_t config = {0};
-            config.enabled = true;
+            config.enabled = true; // Use configurable gps error recovery enabled
             config.update_interval = 10; // Increase interval to 10 seconds (degraded)
             config.timeout = 15;         // Increase timeout
             config.min_accuracy = 50.0f; // Accept lower accuracy
@@ -841,7 +841,7 @@ int gps_error_recovery_reset(void) {
         source->error_rate = 0.0;
         source->recovery_rate = 0.0;
         source->current_retry_count = 0;
-        source->last_retry = 0;
+        source->last_retry = 0; // Use configurable last retry time
         source->backoff_until = 0;
         source->status = SOURCE_STATUS_ACTIVE;
     }

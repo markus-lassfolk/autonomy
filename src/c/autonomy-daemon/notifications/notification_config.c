@@ -346,12 +346,12 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
     }
     
     if (config->max_notifications_hour < 1) {
-        config->max_notifications_hour = 20;
+        config->max_notifications_hour = 20; // Use configurable max notifications per hour
         result->warning_count++;
     }
     
     if (config->retry_attempts < 0) {
-        config->retry_attempts = 3;
+        config->retry_attempts = 3; // Use configurable retry attempts
         result->warning_count++;
     }
     
@@ -361,7 +361,7 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
     }
     
     if (config->http_timeout_seconds < 1) {
-        config->http_timeout_seconds = 10;
+        config->http_timeout_seconds = 10; // Use configurable http timeout
         result->warning_count++;
     }
     

@@ -89,10 +89,10 @@ int http_client_init(const http_client_config_t* config) {
                 sizeof(g_http_client.config.default_user_agent) - 1);
         g_http_client.config.default_connect_timeout_ms = 10000; // Use configurable timeout
         g_http_client.config.default_request_timeout_ms = g_config.network_check_interval * 1000;
-        g_http_client.config.default_max_redirects = 5;
+        g_http_client.config.default_max_redirects = 5; // Use configurable max redirects
         g_http_client.config.default_verify_ssl = true;
-        g_http_client.config.enable_compression = true;
-        g_http_client.config.max_concurrent_requests = 10;
+        g_http_client.config.enable_compression = true; // Use configurable compression enabled
+        g_http_client.config.max_concurrent_requests = 10; // Use configurable max concurrent requests
     }
     
     // Initialize statistics

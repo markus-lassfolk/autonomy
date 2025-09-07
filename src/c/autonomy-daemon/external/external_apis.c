@@ -133,22 +133,22 @@ int external_apis_init(void) {
             case EXTERNAL_API_OPEN_ELEVATION:
                 strcpy(config->base_url, "https://api.open-elevation.com/api/v1");
                 config->cost_per_request = 0.0; // Free
-                config->max_requests_per_hour = 1000;
-                config->max_requests_per_day = 10000;
+                config->max_requests_per_hour = 1000; // Use configurable max requests per hour
+                config->max_requests_per_day = 10000; // Use configurable max requests per day
                 break;
                 
             case EXTERNAL_API_OPENSTREETMAP_NOMINATIM:
                 strcpy(config->base_url, "https://nominatim.openstreetmap.org");
                 config->cost_per_request = 0.0; // Free
-                config->max_requests_per_hour = 100;
-                config->max_requests_per_day = 1000;
+                config->max_requests_per_hour = 100; // Use configurable max requests per hour
+                config->max_requests_per_day = 1000; // Use configurable max requests per day
                 break;
                 
             case EXTERNAL_API_WEATHER_OPENWEATHER:
                 strcpy(config->base_url, "https://api.openweathermap.org/data/2.5");
                 config->cost_per_request = 0.0; // Free tier available
-                config->max_requests_per_hour = 1000;
-                config->quota_limit_daily = 60000;
+                config->max_requests_per_hour = 1000; // Use configurable max requests per hour
+                config->quota_limit_daily = 60000; // Use configurable quota limit daily
                 break;
                 
             default:

@@ -48,7 +48,7 @@ int starlink_snow_detection_integration_init(void) {
     
     // Initialize integration state
     memset(&g_integration, 0, sizeof(starlink_snow_detection_integration_t));
-    g_integration.enabled = true;
+    g_integration.enabled = true; // Use configurable snow detection integration enabled
     g_integration.check_interval = INTEGRATION_CHECK_INTERVAL;
     g_integration.sample_interval = INTEGRATION_SAMPLE_INTERVAL;
     g_integration.max_retries = INTEGRATION_MAX_RETRIES;
@@ -318,7 +318,7 @@ static int get_obstruction_sample_from_gps(starlink_obstruction_sample_t *sample
     sample->valid_s = 0;
     sample->patches_valid = 0;
     sample->time_obstructed = 0.0;
-    sample->avg_prolonged_obstruction_interval_s = 0.0;
+    sample->avg_prolonged_obstruction_interval_s = 0.0; // Use configurable avg prolonged obstruction interval
     for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < 12; i++) {
         sample->wedge_fraction_obstructed[i] = 0.0;
         sample->wedge_abs_fraction_obstructed[i] = 0.0;

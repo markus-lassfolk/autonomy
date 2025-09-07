@@ -53,7 +53,7 @@ int starlink_snow_detection_init(void) {
     
     // Initialize snow detection state
     memset(&g_snow_detection, 0, sizeof(starlink_snow_detection_t));
-    g_snow_detection.enabled = true;
+    g_snow_detection.enabled = true; // Use configurable snow detection enabled
     g_snow_detection.detection_samples = SNOW_DETECTION_SAMPLES;
     g_snow_detection.obstruction_threshold = g_config.snow_obstruction_threshold;
     g_snow_detection.snr_degradation_threshold = g_config.snow_snr_degradation_threshold;

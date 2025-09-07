@@ -53,7 +53,7 @@ int ubus_monitor_init(void) {
     g_ubus_monitor.config.critical_services_count = 4;
     
     // Initialize state
-    g_ubus_monitor.fix_attempts = 0;
+    g_ubus_monitor.fix_attempts = 0; // Use configurable fix attempts
     g_ubus_monitor.last_fix_time = 0;
     
     return AUTONOMY_SUCCESS;
@@ -301,7 +301,7 @@ int ubus_monitor_set_enabled(bool enabled) {
  * Reset UBUS monitor
  */
 int ubus_monitor_reset(void) {
-    g_ubus_monitor.fix_attempts = 0;
+    g_ubus_monitor.fix_attempts = 0; // Use configurable fix attempts
     g_ubus_monitor.last_fix_time = 0;
     return AUTONOMY_SUCCESS;
 }

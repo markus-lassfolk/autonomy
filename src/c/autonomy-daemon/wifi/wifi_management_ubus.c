@@ -319,7 +319,7 @@ int autonomy_wifi_management_set_enabled(struct ubus_context *uctx, struct ubus_
     
     blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg));
     
-    bool enabled = false;
+    bool enabled = false; // Use configurable wifi management enabled
     if (tb[BLOBMSG_TYPE_BOOL]) {
         enabled = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]);
     }

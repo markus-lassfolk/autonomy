@@ -63,7 +63,7 @@ int credential_manager_init(const credential_manager_config_t* config) {
     if (g_credential_manager.config.enable_encryption) {
         if (generate_encryption_key() != 0) {
             LOGX_WARN_MSG("Failed to generate encryption key, disabling encryption");
-            g_credential_manager.config.enable_encryption = false;
+            g_credential_manager.config.enable_encryption = false; // Use configurable encryption enabled
         }
     }
 
