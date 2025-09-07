@@ -55,7 +55,7 @@ space_track_connector_t* space_track_connector_init(const space_track_config_t *
     pthread_mutex_init(&connector->rate_limiter.rate_limit_mutex, NULL);
     
     // Setup cache directory
-    snprintf(connector->cache_directory, sizeof(connector->cache_directory), "/tmp/starlink_tracker_cache");
+    snprintf(connector->cache_directory, sizeof(connector->cache_directory), "/var/lib/autonomy/starlink_tracker_cache");
     mkdir(connector->cache_directory, 0755); // Create if doesn't exist
     
     return connector;

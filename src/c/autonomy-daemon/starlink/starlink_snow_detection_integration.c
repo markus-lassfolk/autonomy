@@ -2,6 +2,7 @@
 #include "starlink_snow_detection.h"
 #include "starlink_snow_detection_ubus.h"
 #include "../utils/logx.h"
+#include "../utils/http_client_libcurl.h"
 #include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
@@ -261,26 +262,53 @@ static int get_obstruction_sample_from_starlink(starlink_obstruction_sample_t *s
     // This would integrate with the existing Starlink obstruction system
     // For now, we'll simulate getting data from the Starlink API
     
-    FILE *starlink_fp = popen("curl -s http://192.168.100.1/api/v1/status 2>/dev/null", "r");
-    if (!starlink_fp) {
+    // Get Starlink host from UCI configuration
+    char starlink_host[64] = "192.168.100.1"; // Default fallback
+    FILE *uci_fp = popen("uci get autonomy.starlink.host 2>/dev/null", "r");
+    if (uci_fp) {
+        char uci_host[64];
+        if (fgets(uci_host, sizeof(uci_host), uci_fp)) {
+            // Remove newline
+            char *newline = strchr(uci_host, '\n');
+            if (newline) *newline = '\0';
+            if (strlen(uci_host) > 0) {
+                strncpy(starlink_host, uci_host, sizeof(starlink_host) - 1);
+                starlink_host[sizeof(starlink_host) - 1] = '\0';
+            }
+        }
+        pclose(uci_fp);
+    }
+    
+    // Use HTTP client instead of curl system command for security
+    char starlink_url[256];
+    snprintf(starlink_url, sizeof(starlink_url), "http://%s/api/v1/status", starlink_host);
+    
+    http_request_t* request = http_request_create(starlink_url, HTTP_METHOD_GET);
+    if (!request) {
         return AUTONOMY_ERROR_OPERATION_FAILED;
     }
     
-    char response[4096];
-    size_t response_len = fread(response, 1, sizeof(response) - 1, starlink_fp);
-    response[response_len] = '\0';
-    pclose(starlink_fp);
-    
-    if (response_len == 0) {
+    http_response_t* response = http_request(request);
+    if (!response || !response->success || !response->data) {
+        if (response) http_response_free(response);
+        http_request_free(request);
         return AUTONOMY_ERROR_OPERATION_FAILED;
     }
+    
+    // Copy response data for processing
+    char response_data[4096];
+    strncpy(response_data, response->data, sizeof(response_data) - 1);
+    response_data[sizeof(response_data) - 1] = '\0';
+    
+    http_response_free(response);
+    http_request_free(request);
     
     // Parse JSON response using json-c
     sample->timestamp = time(NULL);
     sample->fraction_obstructed = 0.0;
     sample->snr = 0.0;
 
-    json_object *root = json_tokener_parse(response);
+    json_object *root = json_tokener_parse(response_data);
     if (!root) {
         return AUTONOMY_ERROR_OPERATION_FAILED;
     }

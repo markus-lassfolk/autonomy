@@ -10,12 +10,12 @@
 extern "C" {
 #endif
 
-// GPS validation flags
-#define GPS_VALIDATION_SUSPICIOUS_ACCURACY  0x0001
-#define GPS_VALIDATION_POOR_ACCURACY        0x0002
-#define GPS_VALIDATION_SUSPICIOUS_ALTITUDE  0x0004
-#define GPS_VALIDATION_POSITION_JUMP        0x0008
-#define GPS_VALIDATION_OLD_DATA             0x0010
+// GPS validation flags (bit flags for validation results)
+#define GPS_VALIDATION_SUSPICIOUS_ACCURACY  0x0001  // Accuracy value seems suspicious
+#define GPS_VALIDATION_POOR_ACCURACY        0x0002  // Accuracy is below acceptable threshold
+#define GPS_VALIDATION_SUSPICIOUS_ALTITUDE  0x0004  // Altitude value seems suspicious
+#define GPS_VALIDATION_POSITION_JUMP        0x0008  // Position jumped too far from previous
+#define GPS_VALIDATION_OLD_DATA             0x0010  // GPS data is too old
 
 // Note: gps_validation_result_t is defined in ../core/autonomy_types.h
 

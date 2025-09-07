@@ -1,32 +1,12 @@
 #include "webhook_client.h"
+#include "../utils/http_client_libcurl.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <curl/curl.h>
 #include <unistd.h>
+#include <json-c/json.h>
 
-// Response data structure for curl
-typedef struct {
-    char* data;
-    size_t size;
-} curl_response_t;
-
-// Callback function for curl to write response data
-static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, curl_response_t* response) {
-    size_t total_size = size * nmemb;
-    char* new_data = realloc(response->data, response->size + total_size + 1);
-    
-    if (!new_data) {
-        return 0; // Out of memory
-    }
-    
-    response->data = new_data;
-    memcpy(&(response->data[response->size]), contents, total_size);
-    response->size += total_size;
-    response->data[response->size] = '\0';
-    
-    return total_size;
-}
+// Webhook client now uses HTTP client library
 
 // Initialize webhook client
 int webhook_client_init(webhook_client_t* client, const webhook_config_t* config) {
@@ -131,8 +111,14 @@ void webhook_client_create_payload(webhook_client_t* client, const notification_
     strncpy(payload->source, "autonomy", sizeof(payload->source) - 1);
     strncpy(payload->version, "1.0.0", sizeof(payload->version) - 1);
     
-    // Add hostname (simplified - could get from system)
-    strncpy(payload->hostname, "router", sizeof(payload->hostname) - 1);
+    // Get actual hostname from system
+    char hostname[256];
+    if (gethostname(hostname, sizeof(hostname)) == 0) {
+        strncpy(payload->hostname, hostname, sizeof(payload->hostname) - 1);
+        payload->hostname[sizeof(payload->hostname) - 1] = '\0';
+    } else {
+        strncpy(payload->hostname, "unknown", sizeof(payload->hostname) - 1);
+    }
 }
 
 // Create JSON payload string
@@ -144,25 +130,29 @@ static char* create_json_payload(webhook_payload_t* payload) {
     char* json = malloc(buffer_size);
     if (!json) return NULL;
     
-    // Create JSON manually (simplified - in production would use JSON library)
-    snprintf(json, buffer_size,
-             "{"
-             "\"type\":\"%s\","
-             "\"title\":\"%s\","
-             "\"message\":\"%s\","
-             "\"priority\":%d,"
-             "\"timestamp\":\"%s\","
-             "\"source\":\"%s\","
-             "\"version\":\"%s\","
-             "\"hostname\":\"%s\"",
-             payload->type,
-             payload->title,
-             payload->message,
-             payload->priority,
-             payload->timestamp,
-             payload->source,
-             payload->version,
-             payload->hostname);
+    // Create JSON using json-c library for better reliability
+    json_object* root = json_object_new_object();
+    if (!root) {
+        free(json);
+        return NULL;
+    }
+    
+    json_object_object_add(root, "type", json_object_new_string(payload->type));
+    json_object_object_add(root, "title", json_object_new_string(payload->title));
+    json_object_object_add(root, "message", json_object_new_string(payload->message));
+    json_object_object_add(root, "priority", json_object_new_int(payload->priority));
+    json_object_object_add(root, "timestamp", json_object_new_string(payload->timestamp));
+    json_object_object_add(root, "source", json_object_new_string(payload->source));
+    json_object_object_add(root, "version", json_object_new_string(payload->version));
+    json_object_object_add(root, "hostname", json_object_new_string(payload->hostname));
+    
+    // Convert to string and copy to our buffer
+    const char* json_string = json_object_to_json_string(root);
+    strncpy(json, json_string, buffer_size - 1);
+    json[buffer_size - 1] = '\0';
+    
+    // Clean up
+    json_object_put(root);
     
     // Add context if available
     if (strlen(payload->context_json) > 0) {
@@ -181,129 +171,106 @@ static int send_webhook_request(webhook_client_t* client, const char* payload_da
         return -1;
     }
     
-    CURL* curl = curl_easy_init();
-    if (!curl) {
-        strncpy(client->status.last_error, "Failed to initialize curl", sizeof(client->status.last_error) - 1);
+    // Determine HTTP method
+    http_method_t method = HTTP_METHOD_POST; // Default
+    if (strcmp(client->config.method, "GET") == 0) {
+        method = HTTP_METHOD_GET;
+    } else if (strcmp(client->config.method, "PUT") == 0) {
+        method = HTTP_METHOD_PUT;
+    } else if (strcmp(client->config.method, "DELETE") == 0) {
+        method = HTTP_METHOD_DELETE;
+    }
+    
+    // Create HTTP request
+    http_request_t* request = http_request_create(client->config.url, method);
+    if (!request) {
+        strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error) - 1);
         return -1;
     }
     
-    curl_response_t response = {0};
-    CURLcode res;
-    long response_code = 0;
-    
-    // Set URL
-    curl_easy_setopt(curl, CURLOPT_URL, client->config.url);
-    
-    // Set HTTP method
-    if (strcmp(client->config.method, "GET") == 0) {
-        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-    } else if (strcmp(client->config.method, "PUT") == 0) {
-        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload_data);
-    } else {
-        // Default to POST
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload_data);
+    // Set body for non-GET requests
+    if (method != HTTP_METHOD_GET) {
+        const char* content_type = strlen(client->config.content_type) > 0 ? 
+                                  client->config.content_type : "application/json";
+        if (http_request_set_body(request, payload_data, content_type) != 0) {
+            http_request_free(request);
+            strncpy(client->status.last_error, "Failed to set request body", sizeof(client->status.last_error) - 1);
+            return -1;
+        }
     }
     
-    // Set content type
-    struct curl_slist* headers = NULL;
-    char content_type_header[128];
-    snprintf(content_type_header, sizeof(content_type_header), "Content-Type: %s", 
-             strlen(client->config.content_type) > 0 ? client->config.content_type : "application/json");
-    headers = curl_slist_append(headers, content_type_header);
-    
     // Add User-Agent
-    headers = curl_slist_append(headers, "User-Agent: autonomy/1.0.0");
+    http_request_add_header(request, "User-Agent: autonomy/1.0.0");
     
     // Add authentication
     switch (client->config.auth_type) {
         case WEBHOOK_AUTH_BEARER:
             if (strlen(client->config.auth_token) > 0) {
-                char auth_header[384];
-                snprintf(auth_header, sizeof(auth_header), "Authorization: Bearer %s", client->config.auth_token);
-                headers = curl_slist_append(headers, auth_header);
+                http_request_set_auth_bearer(request, client->config.auth_token);
             }
             break;
         case WEBHOOK_AUTH_BASIC:
             if (strlen(client->config.auth_username) > 0 && strlen(client->config.auth_password) > 0) {
-                curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-                curl_easy_setopt(curl, CURLOPT_USERNAME, client->config.auth_username);
-                curl_easy_setopt(curl, CURLOPT_PASSWORD, client->config.auth_password);
+                http_request_set_auth_basic(request, client->config.auth_username, client->config.auth_password);
             }
             break;
         case WEBHOOK_AUTH_API_KEY:
             if (strlen(client->config.auth_token) > 0) {
-                char auth_header[384];
                 const char* header_name = strlen(client->config.auth_header) > 0 ? 
                                          client->config.auth_header : "X-API-Key";
+                char auth_header[384];
                 snprintf(auth_header, sizeof(auth_header), "%s: %s", header_name, client->config.auth_token);
-                headers = curl_slist_append(headers, auth_header);
+                http_request_add_header(request, auth_header);
             }
             break;
         default:
             break;
     }
     
-    // Add custom headers (simplified parsing)
+    // Add custom headers
     if (strlen(client->config.custom_headers) > 0) {
-        // In a real implementation, would properly parse custom headers
-        headers = curl_slist_append(headers, client->config.custom_headers);
+        http_request_add_header(request, client->config.custom_headers);
     }
-    
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     
     // Set timeout
     if (client->config.timeout_seconds > 0) {
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, client->config.timeout_seconds);
+        request->request_timeout_ms = client->config.timeout_seconds * 1000;
     } else {
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L); // Default 30 seconds
+        request->request_timeout_ms = 30000; // Default 30 seconds
     }
     
     // SSL configuration
-    if (!client->config.verify_ssl) {
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-    }
+    request->verify_ssl = client->config.verify_ssl;
     
     // Follow redirects
-    if (client->config.follow_redirects) {
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    }
-    
-    // Set response callback
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+    request->follow_redirects = client->config.follow_redirects;
     
     // Perform request
-    res = curl_easy_perform(curl);
+    http_response_t* response = http_request(request);
     
-    // Get response code
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-    client->status.last_response_code = (int)response_code;
+    // Clean up request
+    http_request_free(request);
     
-    // Clean up
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
-    
-    if (response.data) {
-        free(response.data);
+    if (!response) {
+        strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error) - 1);
+        client->status.last_error_time = time(NULL);
+        return -1;
     }
+    
+    // Store response code
+    client->status.last_response_code = (int)response->status_code;
     
     // Check result
-    if (res != CURLE_OK) {
+    if (!http_response_is_success(response)) {
         snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "curl error: %s", curl_easy_strerror(res));
+                "HTTP error: %ld - %s", response->status_code, response->error_message);
         client->status.last_error_time = time(NULL);
+        http_response_free(response);
         return -1;
     }
     
-    if (response_code < 200 || response_code >= 300) {
-        snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "HTTP error: %ld", response_code);
-        client->status.last_error_time = time(NULL);
-        return -1;
-    }
-    
+    // Clean up response
+    http_response_free(response);
     return 0;
 }
 

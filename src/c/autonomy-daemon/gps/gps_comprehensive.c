@@ -433,7 +433,22 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
             http_request_config_t request_config = {0};
             http_response_t response = {0};
             
-            strncpy(request_config.url, "http://192.168.100.1/api/v1/status", sizeof(request_config.url) - 1);
+            // Get Starlink host from UCI configuration
+            char starlink_host[64] = "192.168.100.1"; // Default fallback
+            FILE *uci_fp = popen("uci get autonomy.starlink.host 2>/dev/null", "r");
+            if (uci_fp) {
+                char uci_host[64];
+                if (fgets(uci_host, sizeof(uci_host), uci_fp)) {
+                    char *newline = strchr(uci_host, '\n');
+                    if (newline) *newline = '\0';
+                    if (strlen(uci_host) > 0) {
+                        strncpy(starlink_host, uci_host, sizeof(starlink_host) - 1);
+                        starlink_host[sizeof(starlink_host) - 1] = '\0';
+                    }
+                }
+                pclose(uci_fp);
+            }
+            snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/status", starlink_host);
             request_config.method = HTTP_METHOD_GET;
             request_config.timeout_seconds = 5;
             request_config.follow_redirects = true;

@@ -157,9 +157,27 @@ int dynamic_tracker_clear_obstruction_map(dynamic_satellite_tracker_t *tracker) 
     }
     
     // Execute gRPC command to clear obstruction map
+    // Get Starlink host from UCI configuration
+    char starlink_host[64] = "192.168.100.1"; // Default fallback
+    int starlink_port = 9200; // Default port
+    FILE *uci_fp = popen("uci get autonomy.starlink.host 2>/dev/null", "r");
+    if (uci_fp) {
+        char uci_host[64];
+        if (fgets(uci_host, sizeof(uci_host), uci_fp)) {
+            char *newline = strchr(uci_host, '\n');
+            if (newline) *newline = '\0';
+            if (strlen(uci_host) > 0) {
+                strncpy(starlink_host, uci_host, sizeof(starlink_host) - 1);
+                starlink_host[sizeof(starlink_host) - 1] = '\0';
+            }
+        }
+        pclose(uci_fp);
+    }
+    
     char grpc_command[512];
     snprintf(grpc_command, sizeof(grpc_command), 
-            "grpcurl -plaintext -d '{\"dishClearObstructionMap\":{}}' 192.168.100.1:9200 SpaceX.API.Device.Device/Handle");
+            "grpcurl -plaintext -d '{\"dishClearObstructionMap\":{}}' %s:%d SpaceX.API.Device.Device/Handle",
+            starlink_host, starlink_port);
     
     FILE *fp = popen(grpc_command, "r");
     if (!fp) {
@@ -263,9 +281,27 @@ int dynamic_tracker_get_current_obstruction_map(dynamic_satellite_tracker_t *tra
     }
     
     // Execute gRPC command to get obstruction map
+    // Get Starlink host from UCI configuration (reuse from previous call)
+    char starlink_host[64] = "192.168.100.1"; // Default fallback
+    int starlink_port = 9200; // Default port
+    FILE *uci_fp = popen("uci get autonomy.starlink.host 2>/dev/null", "r");
+    if (uci_fp) {
+        char uci_host[64];
+        if (fgets(uci_host, sizeof(uci_host), uci_fp)) {
+            char *newline = strchr(uci_host, '\n');
+            if (newline) *newline = '\0';
+            if (strlen(uci_host) > 0) {
+                strncpy(starlink_host, uci_host, sizeof(starlink_host) - 1);
+                starlink_host[sizeof(starlink_host) - 1] = '\0';
+            }
+        }
+        pclose(uci_fp);
+    }
+    
     char grpc_command[512];
     snprintf(grpc_command, sizeof(grpc_command), 
-            "grpcurl -plaintext -d '{\"dishGetObstructionMap\":{}}' 192.168.100.1:9200 SpaceX.API.Device.Device/Handle");
+            "grpcurl -plaintext -d '{\"dishGetObstructionMap\":{}}' %s:%d SpaceX.API.Device.Device/Handle",
+            starlink_host, starlink_port);
     
     FILE *fp = popen(grpc_command, "r");
     if (!fp) {

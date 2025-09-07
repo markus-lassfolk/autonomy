@@ -1,9 +1,11 @@
 #include "priority_optimizer.h"
+#include "../utils/logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
 #include <pthread.h>
+#include <json-c/json.h>
 
 // Global priority optimizer instance
 static priority_optimizer_t g_priority_optimizer;
@@ -25,6 +27,7 @@ int priority_optimizer_init(const priority_optimizer_config_t* config) {
     }
     
     if (!config) {
+        LOGX_ERROR_MSG("Priority optimizer initialization failed: invalid configuration");
         return -1;
     }
     
@@ -36,6 +39,7 @@ int priority_optimizer_init(const priority_optimizer_config_t* config) {
     // Initialize mutex
     g_priority_optimizer.mutex = malloc(sizeof(pthread_mutex_t));
     if (!g_priority_optimizer.mutex) {
+        LOGX_ERROR_MSG("Priority optimizer initialization failed: memory allocation error");
         return -1;
     }
     
@@ -45,6 +49,7 @@ int priority_optimizer_init(const priority_optimizer_config_t* config) {
     if (config->learning_enabled && config->max_learning_entries > 0) {
         g_priority_optimizer.learning_data = malloc(config->max_learning_entries * sizeof(priority_learning_data_t));
         if (!g_priority_optimizer.learning_data) {
+            LOGX_ERROR_MSG("Priority optimizer initialization failed: learning data allocation error");
             pthread_mutex_destroy(g_priority_optimizer.mutex);
             free(g_priority_optimizer.mutex);
             return -1;
@@ -85,38 +90,48 @@ void priority_optimizer_cleanup(void) {
     g_priority_optimizer_initialized = false;
 }
 
-// Parse JSON double value (simplified JSON parsing)
+// Parse JSON double value using json-c library
 static double parse_json_double(const char* json, const char* key, double default_value) {
     if (!json || !key) return default_value;
     
-    char search_pattern[128];
-    snprintf(search_pattern, sizeof(search_pattern), "\"%s\":", key);
+    json_object* root = json_tokener_parse(json);
+    if (!root) return default_value;
     
-    char* found = strstr(json, search_pattern);
-    if (!found) return default_value;
+    json_object* value_obj;
+    double result = default_value;
     
-    found += strlen(search_pattern);
-    while (*found == ' ' || *found == '\t') found++; // Skip whitespace
+    if (json_object_object_get_ex(root, key, &value_obj)) {
+        if (json_object_is_type(value_obj, json_type_double)) {
+            result = json_object_get_double(value_obj);
+        } else if (json_object_is_type(value_obj, json_type_int)) {
+            result = (double)json_object_get_int(value_obj);
+        }
+    }
     
-    double value = strtod(found, NULL);
-    return value;
+    json_object_put(root);
+    return result;
 }
 
-// Parse JSON int value (simplified JSON parsing)
+// Parse JSON int value using json-c library
 static int parse_json_int(const char* json, const char* key, int default_value) {
     if (!json || !key) return default_value;
     
-    char search_pattern[128];
-    snprintf(search_pattern, sizeof(search_pattern), "\"%s\":", key);
+    json_object* root = json_tokener_parse(json);
+    if (!root) return default_value;
     
-    char* found = strstr(json, search_pattern);
-    if (!found) return default_value;
+    json_object* value_obj;
+    int result = default_value;
     
-    found += strlen(search_pattern);
-    while (*found == ' ' || *found == '\t') found++; // Skip whitespace
+    if (json_object_object_get_ex(root, key, &value_obj)) {
+        if (json_object_is_type(value_obj, json_type_int)) {
+            result = json_object_get_int(value_obj);
+        } else if (json_object_is_type(value_obj, json_type_double)) {
+            result = (int)json_object_get_double(value_obj);
+        }
+    }
     
-    int value = (int)strtol(found, NULL, 10);
-    return value;
+    json_object_put(root);
+    return result;
 }
 
 // Calculate context score based on current system state

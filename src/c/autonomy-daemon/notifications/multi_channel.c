@@ -1,4 +1,8 @@
 #include "multi_channel.h"
+#include "slack_client.h"
+#include "discord_client.h"
+#include "telegram_client.h"
+#include "sms_client.h"
 #include "../utils/logx.h"
 #include <stdlib.h>
 #include <string.h>
@@ -258,13 +262,43 @@ static int send_to_channel(multi_channel_notifier_t* notifier,
             
         case NOTIFICATION_CHANNEL_PUSHOVER:
         case NOTIFICATION_CHANNEL_SLACK:
+            // Use existing Slack client
+            if (notifier->config.slack_enabled) {
+                result = slack_client_send_notification(&notifier->config.slack_config, event);
+            } else {
+                LOGX_DEBUG_MSG("CHANNEL SLACK: Disabled - %s", event->title);
+                result = 0; // Skip disabled channel
+            }
+            break;
+            
         case NOTIFICATION_CHANNEL_DISCORD:
+            // Use existing Discord client
+            if (notifier->config.discord_enabled) {
+                result = discord_client_send_notification(&notifier->config.discord_config, event);
+            } else {
+                LOGX_DEBUG_MSG("CHANNEL DISCORD: Disabled - %s", event->title);
+                result = 0; // Skip disabled channel
+            }
+            break;
+            
         case NOTIFICATION_CHANNEL_TELEGRAM:
+            // Use existing Telegram client
+            if (notifier->config.telegram_enabled) {
+                result = telegram_client_send_notification(&notifier->config.telegram_config, event);
+            } else {
+                LOGX_DEBUG_MSG("CHANNEL TELEGRAM: Disabled - %s", event->title);
+                result = 0; // Skip disabled channel
+            }
+            break;
+            
         case NOTIFICATION_CHANNEL_SMS:
-            // These would be implemented as separate clients
-            LOGX_DEBUG_MSG("CHANNEL %s: Not yet implemented - %s", 
-                   notification_channel_to_string(channel), event->title);
-            result = 0; // Pretend success for now
+            // Use existing SMS client
+            if (notifier->config.sms_enabled) {
+                result = sms_client_send_notification(&notifier->config.sms_config, event);
+            } else {
+                LOGX_DEBUG_MSG("CHANNEL SMS: Disabled - %s", event->title);
+                result = 0; // Skip disabled channel
+            }
             break;
             
         default:

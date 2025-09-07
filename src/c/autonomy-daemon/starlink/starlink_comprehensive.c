@@ -387,7 +387,7 @@ static int collect_from_diagnostics_api(starlink_comprehensive_gps_t* gps_data) 
     http_response_t response = {0};
     
     // Configure request to Starlink dish diagnostics endpoint
-    strncpy(request_config.url, "http://192.168.100.1/api/v1/diagnostics", sizeof(request_config.url) - 1);
+    snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/diagnostics", g_starlink_comprehensive.config.host);
     request_config.method = HTTP_METHOD_GET;
     request_config.timeout_seconds = 10;
     request_config.follow_redirects = true;
@@ -792,7 +792,7 @@ int collect_from_history_api(starlink_events_outages_analysis_t* analysis) {
     http_response_t response = {0};
     
     // Configure request to Starlink dish history endpoint
-    strncpy(request_config.url, "http://192.168.100.1/api/v1/history", sizeof(request_config.url) - 1);
+    snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/history", g_starlink_comprehensive.config.host);
     request_config.method = HTTP_METHOD_GET;
     request_config.timeout_seconds = 15;
     request_config.follow_redirects = true;

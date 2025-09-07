@@ -175,7 +175,7 @@ int telemetry_comprehensive_ubus_analyze_trends(struct ubus_context *ctx, struct
  * Returns: {
  *   "success": true,
  *   "ml_export": {
- *     "export_path": "/tmp/autonomy_ml_dataset_20231220.csv",
+ *     "export_path": "/var/lib/autonomy/autonomy_ml_dataset_20231220.csv",
  *     "samples_exported": 15420, "decisions_exported": 45,
  *     "file_size_mb": 12.5, "export_time_ms": 2500.5,
  *     "columns": ["timestamp", "member_name", "latitude", "longitude", ...]

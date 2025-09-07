@@ -19,8 +19,40 @@ void standalone_config_init_defaults(standalone_config_t *config) {
     memset(config, 0, sizeof(standalone_config_t));
     
     // Default values
-    strncpy(config->starlink_dish_ip, "192.168.100.1", sizeof(config->starlink_dish_ip) - 1);
-    config->starlink_dish_port = 9200;
+    // Load Starlink configuration from UCI
+    FILE *uci_fp = popen("uci show autonomy.starlink 2>/dev/null", "r");
+    if (uci_fp) {
+        char line[512];
+        while (fgets(line, sizeof(line), uci_fp)) {
+            // Parse UCI output format: autonomy.starlink.option='value'
+            char *option_start = strchr(line, '.');
+            if (!option_start) continue;
+            option_start++; // Skip the dot
+            
+            char *value_start = strchr(option_start, '=');
+            if (!value_start) continue;
+            *value_start = '\0';
+            value_start++;
+            
+            // Remove quotes and newline
+            char *value_end = strchr(value_start, '\'');
+            if (value_end) *value_end = '\0';
+            char *newline = strchr(value_start, '\n');
+            if (newline) *newline = '\0';
+            
+            if (strcmp(option_start, "host") == 0) {
+                strncpy(config->starlink_dish_ip, value_start, sizeof(config->starlink_dish_ip) - 1);
+                config->starlink_dish_ip[sizeof(config->starlink_dish_ip) - 1] = '\0';
+            } else if (strcmp(option_start, "port") == 0) {
+                config->starlink_dish_port = atoi(value_start);
+            }
+        }
+        pclose(uci_fp);
+    } else {
+        // Fallback to defaults
+        strncpy(config->starlink_dish_ip, "192.168.100.1", sizeof(config->starlink_dish_ip) - 1);
+        config->starlink_dish_port = 9200;
+    }
     config->update_interval_minutes = 60;
     config->prediction_horizon_hours = 24;
     config->min_elevation_degrees = 25.0;
@@ -30,9 +62,9 @@ void standalone_config_init_defaults(standalone_config_t *config) {
     config->rate_limit_requests_per_minute = 15;
     
     // Standalone-specific defaults
-    strncpy(config->config_file, "/tmp/starlink_tracker.conf", sizeof(config->config_file) - 1);
-    strncpy(config->log_file, "/tmp/starlink_tracker.log", sizeof(config->log_file) - 1);
-    strncpy(config->cache_directory, "/tmp/starlink_cache", sizeof(config->cache_directory) - 1);
+    strncpy(config->config_file, "/var/lib/autonomy/starlink_tracker.conf", sizeof(config->config_file) - 1);
+    strncpy(config->log_file, "/var/log/autonomy/starlink_tracker.log", sizeof(config->log_file) - 1);
+    strncpy(config->cache_directory, "/var/lib/autonomy/starlink_cache", sizeof(config->cache_directory) - 1);
     config->http_api_port = 8080;
     config->enable_web_interface = true;
     config->log_level = 1; // Info level

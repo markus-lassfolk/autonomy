@@ -196,8 +196,8 @@ static bool extract_gps_from_starlink_api(void) {
     http_request_config_t request_config = {0};
     http_response_t response = {0};
     
-    // Configure request to Starlink dish
-    strncpy(request_config.url, "http://192.168.100.1/api/v1/status", sizeof(request_config.url) - 1);
+    // Configure request to Starlink dish using configured host
+    snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/status", g_starlink_gps.starlink_ip);
     request_config.method = HTTP_METHOD_GET;
     request_config.timeout_seconds = 5;
     request_config.follow_redirects = true;

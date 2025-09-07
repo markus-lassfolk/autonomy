@@ -362,7 +362,7 @@ starlink_tracker_t* starlink_tracker_init_from_uci(struct uci_context *uci_ctx) 
     // Load configuration from UCI
     starlink_tracker_config_t config = {0};
     
-    // Set defaults
+    // Set defaults - will be overridden by UCI config if available
     strncpy(config.starlink_dish_ip, "192.168.100.1", sizeof(config.starlink_dish_ip) - 1);
     config.starlink_dish_ip[sizeof(config.starlink_dish_ip) - 1] = '\0';
     config.starlink_dish_port = 9200;

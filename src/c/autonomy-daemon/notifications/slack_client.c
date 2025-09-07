@@ -1,36 +1,18 @@
 #include "slack_client.h"
+#include "../utils/logx.h"
+#include "../utils/http_client_libcurl.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <curl/curl.h>
 #include <unistd.h>
+#include <json-c/json.h>
 
-// Response data structure for curl
-typedef struct {
-    char* data;
-    size_t size;
-} curl_response_t;
-
-// Callback function for curl to write response data
-static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, curl_response_t* response) {
-    size_t total_size = size * nmemb;
-    char* new_data = realloc(response->data, response->size + total_size + 1);
-    
-    if (!new_data) {
-        return 0; // Out of memory
-    }
-    
-    response->data = new_data;
-    memcpy(&(response->data[response->size]), contents, total_size);
-    response->size += total_size;
-    response->data[response->size] = '\0';
-    
-    return total_size;
-}
+// Slack client now uses HTTP client library
 
 // Initialize slack client
 int slack_client_init(slack_client_t* client, const slack_config_t* config) {
     if (!client || !config) {
+        LOGX_ERROR_MSG("Slack client initialization failed: invalid parameters");
         return -1;
     }
     
@@ -149,12 +131,28 @@ void slack_client_create_message(slack_client_t* client, const notification_even
         
         // Add context fields if enabled and available
         if (client->config.include_context && strlen(event->details_json) > 0) {
-            // Parse simple JSON context (simplified parsing)
-            if (strstr(event->details_json, "latency")) {
-                slack_field_t* latency_field = &attachment->fields[attachment->field_count++];
-                strncpy(latency_field->title, "Details", sizeof(latency_field->title) - 1);
-                strncpy(latency_field->value, "See context", sizeof(latency_field->value) - 1);
-                latency_field->short_field = true;
+            // Parse JSON context using json-c library
+            json_object* context_obj = json_tokener_parse(event->details_json);
+            if (context_obj) {
+                json_object* latency_obj;
+                if (json_object_object_get_ex(context_obj, "latency", &latency_obj)) {
+                    slack_field_t* latency_field = &attachment->fields[attachment->field_count++];
+                    strncpy(latency_field->title, "Latency", sizeof(latency_field->title) - 1);
+                    snprintf(latency_field->value, sizeof(latency_field->value), "%.2f ms", 
+                            json_object_get_double(latency_obj));
+                    latency_field->short_field = true;
+                }
+                
+                json_object* error_obj;
+                if (json_object_object_get_ex(context_obj, "error", &error_obj)) {
+                    slack_field_t* error_field = &attachment->fields[attachment->field_count++];
+                    strncpy(error_field->title, "Error", sizeof(error_field->title) - 1);
+                    strncpy(error_field->value, json_object_get_string(error_obj), 
+                            sizeof(error_field->value) - 1);
+                    error_field->short_field = true;
+                }
+                
+                json_object_put(context_obj);
             }
         }
     } else {
@@ -243,78 +241,66 @@ static int send_slack_request(slack_client_t* client, slack_message_t* message) 
         return -1;
     }
     
-    CURL* curl = curl_easy_init();
-    if (!curl) {
-        strncpy(client->status.last_error, "Failed to initialize curl", sizeof(client->status.last_error) - 1);
-        return -1;
-    }
-    
-    curl_response_t response = {0};
-    CURLcode res;
-    long response_code = 0;
-    
     // Create JSON payload
     char* json_payload = create_slack_json(message);
     if (!json_payload) {
-        curl_easy_cleanup(curl);
         strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error) - 1);
         return -1;
     }
     
-    // Set URL
-    curl_easy_setopt(curl, CURLOPT_URL, client->config.webhook_url);
+    // Create HTTP request
+    http_request_t* request = http_request_create(client->config.webhook_url, HTTP_METHOD_POST);
+    if (!request) {
+        free(json_payload);
+        strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error) - 1);
+        return -1;
+    }
     
-    // Set POST data
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_payload);
+    // Set JSON body
+    if (http_request_set_json_body(request, json_payload) != 0) {
+        http_request_free(request);
+        free(json_payload);
+        strncpy(client->status.last_error, "Failed to set JSON body", sizeof(client->status.last_error) - 1);
+        return -1;
+    }
     
     // Set headers
-    struct curl_slist* headers = NULL;
-    headers = curl_slist_append(headers, "Content-Type: application/json");
-    headers = curl_slist_append(headers, "User-Agent: autonomy/1.0.0");
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    http_request_add_header(request, "User-Agent: autonomy/1.0.0");
     
     // Set timeout
     if (client->config.timeout_seconds > 0) {
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, client->config.timeout_seconds);
+        request->request_timeout_ms = client->config.timeout_seconds * 1000;
     } else {
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L); // Default 30 seconds
+        request->request_timeout_ms = 30000; // Default 30 seconds
     }
-    
-    // Set response callback
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
     
     // Perform request
-    res = curl_easy_perform(curl);
+    http_response_t* response = http_request(request);
     
-    // Get response code
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-    client->status.last_response_code = (int)response_code;
-    
-    // Clean up
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
+    // Clean up request
+    http_request_free(request);
     free(json_payload);
     
-    if (response.data) {
-        free(response.data);
+    if (!response) {
+        strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error) - 1);
+        client->status.last_error_time = time(NULL);
+        return -1;
     }
+    
+    // Store response code
+    client->status.last_response_code = (int)response->status_code;
     
     // Check result
-    if (res != CURLE_OK) {
+    if (!http_response_is_success(response)) {
         snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "curl error: %s", curl_easy_strerror(res));
+                "HTTP error: %ld - %s", response->status_code, response->error_message);
         client->status.last_error_time = time(NULL);
+        http_response_free(response);
         return -1;
     }
     
-    if (response_code != 200) {
-        snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "HTTP error: %ld", response_code);
-        client->status.last_error_time = time(NULL);
-        return -1;
-    }
-    
+    // Clean up response
+    http_response_free(response);
     return 0;
 }
 

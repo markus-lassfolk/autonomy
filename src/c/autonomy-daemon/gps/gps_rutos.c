@@ -15,10 +15,10 @@
 
 // RUTOS GPS file paths
 static const char* RUTOS_GPS_FILES[] = {
-    "/tmp/gps_data",           // GPS data file
-    "/tmp/gps_status",         // GPS status file
-    "/tmp/gps_satellites",     // Satellite information
-    "/tmp/gps_accuracy"        // GPS accuracy data
+    "/var/lib/autonomy/gps_data",           // GPS data file
+    "/var/lib/autonomy/gps_status",         // GPS status file
+    "/var/lib/autonomy/gps_satellites",     // Satellite information
+    "/var/lib/autonomy/gps_accuracy"        // GPS accuracy data
 };
 
 // RUTOS GPS configuration

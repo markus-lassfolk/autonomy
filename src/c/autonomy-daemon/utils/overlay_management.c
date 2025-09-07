@@ -307,7 +307,7 @@ static int64_t cleanup_temp_files(void) {
  */
 static int64_t cleanup_maintenance_logs(void) {
     int64_t total_freed = 0;
-    const char *maintenance_logs[] = {"/var/log/maintenance.log", "/tmp/maintenance.log"};
+    const char *maintenance_logs[] = {"/var/log/maintenance.log", "/var/lib/autonomy/maintenance.log"};
     
     for (int i = 0; i < sizeof(maintenance_logs) / sizeof(maintenance_logs[0]); i++) {
         if (access(maintenance_logs[i], F_OK) == 0) {

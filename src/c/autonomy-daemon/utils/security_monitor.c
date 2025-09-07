@@ -12,6 +12,8 @@
 #include <stdbool.h>
 #include <math.h>
 #include <sys/socket.h>
+#include <openssl/evp.h>
+#include <openssl/sha.h>
 
 // Global security monitor instance
 static security_monitor_t g_security_monitor;
@@ -228,28 +230,53 @@ static int calculate_file_checksum(const char* filepath, char* checksum, size_t 
     FILE* fp = fopen(filepath, "rb");
     if (!fp) return -1;
     
-    // Use openssl for SHA256 calculation (simplified approach using command)
+    // Use OpenSSL directly for SHA256 calculation (secure approach)
     fclose(fp);
     
-    char cmd[512];
-    snprintf(cmd, sizeof(cmd), "sha256sum '%s' 2>/dev/null", filepath);
+    FILE* file = fopen(filepath, "rb");
+    if (!file) return -1;
     
-    FILE* pipe = popen(cmd, "r");
-    if (!pipe) return -1;
-    
-    char buffer[256];
-    if (fgets(buffer, sizeof(buffer), pipe)) {
-        // Extract checksum (first 64 characters)
-        if (strlen(buffer) >= 64) {
-            strncpy(checksum, buffer, checksum_size - 1);
-            checksum[64] = '\0'; // SHA256 is 64 hex chars
-            pclose(pipe);
-            return 0;
-        }
+    // Initialize OpenSSL SHA256 context
+    EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
+    if (!mdctx) {
+        fclose(file);
+        return -1;
     }
     
-    pclose(pipe);
-    return -1;
+    if (EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL) != 1) {
+        EVP_MD_CTX_free(mdctx);
+        fclose(file);
+        return -1;
+    }
+    
+    // Read file and update digest
+    unsigned char buffer[8192];
+    size_t bytes_read;
+    while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+        if (EVP_DigestUpdate(mdctx, buffer, bytes_read) != 1) {
+            EVP_MD_CTX_free(mdctx);
+            fclose(file);
+            return -1;
+        }
+    }
+    fclose(file);
+    
+    // Finalize digest
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    unsigned int hash_len;
+    if (EVP_DigestFinal_ex(mdctx, hash, &hash_len) != 1) {
+        EVP_MD_CTX_free(mdctx);
+        return -1;
+    }
+    
+    EVP_MD_CTX_free(mdctx);
+    
+    // Convert to hex string
+    for (unsigned int i = 0; i < hash_len && i < (checksum_size - 1) / 2; i++) {
+        snprintf(&checksum[i * 2], 3, "%02x", hash[i]);
+    }
+    checksum[hash_len * 2] = '\0';
+    return 0;
 }
 
 // Perform file integrity check
@@ -478,15 +505,21 @@ int perform_network_security_check(security_scan_result_t* result) {
             char foreign_addr[64];
             int foreign_port;
             
-            // Parse foreign address (simplified parsing)
-            char* foreign_start = strstr(line, " ");
-            if (foreign_start) {
-                foreign_start = strstr(foreign_start + 1, " ");
-                if (foreign_start) {
-                    foreign_start = strstr(foreign_start + 1, " ");
-                    if (foreign_start) {
-                        foreign_start = strstr(foreign_start + 1, " ");
-                        if (foreign_start && sscanf(foreign_start, " %63[^:]:%d", foreign_addr, &foreign_port) == 2) {
+            // Parse foreign address (robust parsing)
+            // netstat format: Proto Recv-Q Send-Q Local Address Foreign Address State
+            char* tokens[6];
+            int token_count = 0;
+            char* line_copy = strdup(line);
+            char* token = strtok(line_copy, " \t");
+            
+            while (token && token_count < 6) {
+                tokens[token_count++] = token;
+                token = strtok(NULL, " \t");
+            }
+            
+            if (token_count >= 5 && tokens[4]) {
+                // Parse foreign address:port from tokens[4]
+                if (sscanf(tokens[4], "%63[^:]:%d", foreign_addr, &foreign_port) == 2) {
                             // Check for connections to common malware C&C ports
                             const int suspicious_ports[] = {4444, 5555, 6666, 7777, 8888, 9999, 31337};
                             for (int i = 0; i < sizeof(suspicious_ports)/sizeof(suspicious_ports[0]); i++) {
@@ -503,6 +536,7 @@ int perform_network_security_check(security_scan_result_t* result) {
                     }
                 }
             }
+            free(line_copy);
         }
         pclose(conn_pipe);
     }

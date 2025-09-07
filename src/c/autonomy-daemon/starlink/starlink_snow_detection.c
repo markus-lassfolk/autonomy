@@ -1,6 +1,7 @@
 #include "starlink_snow_detection.h"
 #include "../starlink/starlink_comprehensive.h"
 #include "../utils/logx.h"
+#include "../utils/http_client_libcurl.h"
 #include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
@@ -291,20 +292,29 @@ static double get_ambient_temperature(void) {
             char weather_cmd[512];
             char weather_temp[32];
 
-            // Build weather API command with real coordinates and configured API key
-            snprintf(weather_cmd, sizeof(weather_cmd),
-                     "curl -s 'http://api.openweathermap.org/data/2.5/weather?lat=%.6f&lon=%.6f&appid=%s&units=metric' 2>/dev/null | grep -o '\"temp\":[0-9.-]*' | cut -d':' -f2",
+            // Use HTTP client instead of system command for security
+            char weather_url[512];
+            snprintf(weather_url, sizeof(weather_url),
+                     "http://api.openweathermap.org/data/2.5/weather?lat=%.6f&lon=%.6f&appid=%s&units=metric",
                      gps_data.latitude, gps_data.longitude, g_snow_detection.weather_api_key);
-
-            FILE *weather_fp = popen(weather_cmd, "r");
-            if (weather_fp && fgets(weather_temp, sizeof(weather_temp), weather_fp)) {
-                pclose(weather_fp);
-                double temp = atof(weather_temp);
-                if (temp > -50.0 && temp < 60.0) { // Sanity check
-                    return temp;
+            
+            http_request_t* request = http_request_create(weather_url, HTTP_METHOD_GET);
+            if (request) {
+                http_response_t* response = http_request(request);
+                if (response && response->success && response->data) {
+                    // Parse temperature from JSON response
+                    char* temp_start = strstr(response->data, "\"temp\":");
+                    if (temp_start) {
+                        double temp = atof(temp_start + 7); // Skip "temp":
+                        if (temp > -50.0 && temp < 60.0) { // Sanity check
+                            http_response_free(response);
+                            http_request_free(request);
+                            return temp;
+                        }
+                    }
+                    http_response_free(response);
                 }
-            } else {
-                if (weather_fp) pclose(weather_fp);
+                http_request_free(request);
             }
         } else {
             LOGX_WARN_MSG("Weather API key not configured, skipping weather API temperature lookup");
@@ -362,20 +372,29 @@ static double get_humidity(void) {
             char weather_cmd[512];
             char weather_humidity[32];
 
-            // Build weather API command with real coordinates and configured API key
-            snprintf(weather_cmd, sizeof(weather_cmd),
-                     "curl -s 'http://api.openweathermap.org/data/2.5/weather?lat=%.6f&lon=%.6f&appid=%s&units=metric' 2>/dev/null | grep -o '\"humidity\":[0-9]*' | cut -d':' -f2",
+            // Use HTTP client instead of system command for security
+            char weather_url[512];
+            snprintf(weather_url, sizeof(weather_url),
+                     "http://api.openweathermap.org/data/2.5/weather?lat=%.6f&lon=%.6f&appid=%s&units=metric",
                      gps_data.latitude, gps_data.longitude, g_snow_detection.weather_api_key);
-
-            FILE *weather_fp = popen(weather_cmd, "r");
-            if (weather_fp && fgets(weather_humidity, sizeof(weather_humidity), weather_fp)) {
-                pclose(weather_fp);
-                double humidity = atof(weather_humidity);
-                if (humidity >= 0.0 && humidity <= 100.0) { // Sanity check
-                    return humidity;
+            
+            http_request_t* request = http_request_create(weather_url, HTTP_METHOD_GET);
+            if (request) {
+                http_response_t* response = http_request(request);
+                if (response && response->success && response->data) {
+                    // Parse humidity from JSON response
+                    char* humidity_start = strstr(response->data, "\"humidity\":");
+                    if (humidity_start) {
+                        double humidity = atof(humidity_start + 11); // Skip "humidity":
+                        if (humidity >= 0.0 && humidity <= 100.0) { // Sanity check
+                            http_response_free(response);
+                            http_request_free(request);
+                            return humidity;
+                        }
+                    }
+                    http_response_free(response);
                 }
-            } else {
-                if (weather_fp) pclose(weather_fp);
+                http_request_free(request);
             }
         } else {
             LOGX_WARN_MSG("Weather API key not configured, skipping weather API humidity lookup");
@@ -564,7 +583,7 @@ static int start_dish_heating(void) {
             LOGX_INFO_MSG("GPIO heating control activated");
         } else {
             // Method 2: Control file (for testing/simulation)
-            FILE *heat_fp = popen("echo 'HEAT_ON' > /tmp/dish_heater_control 2>/dev/null", "r");
+            FILE *heat_fp = popen("echo 'HEAT_ON' > /var/lib/autonomy/dish_heater_control 2>/dev/null", "r");
             if (heat_fp) {
                 pclose(heat_fp);
                 LOGX_INFO_MSG("Heating control file created (simulation mode)");
@@ -625,7 +644,7 @@ static int stop_dish_heating(void) {
             LOGX_INFO_MSG("GPIO heating control deactivated");
         } else {
             // Method 2: Control file (for testing/simulation)
-            FILE *heat_fp = popen("echo 'HEAT_OFF' > /tmp/dish_heater_control 2>/dev/null", "r");
+            FILE *heat_fp = popen("echo 'HEAT_OFF' > /var/lib/autonomy/dish_heater_control 2>/dev/null", "r");
             if (heat_fp) {
                 pclose(heat_fp);
                 LOGX_INFO_MSG("Heating control file updated (simulation mode)");

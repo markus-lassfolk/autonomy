@@ -1,4 +1,5 @@
 #include "mqtt_client.h"
+#include "logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -69,6 +70,7 @@ int mqtt_client_init(const mqtt_config_t* config) {
     // Initialize mutex
     g_mqtt_client.mutex = malloc(sizeof(pthread_mutex_t));
     if (!g_mqtt_client.mutex) {
+        LOGX_ERROR_MSG("Failed to allocate memory for MQTT client mutex");
         return -1;
     }
     
@@ -688,7 +690,18 @@ static int mqtt_create_unsubscribe_packet(const char* topic, uint8_t* packet, in
     
     // Fixed header
     packet[pos++] = 0xA2; // UNSUBSCRIBE packet type with flags
-    packet[pos++] = packet_len; // Remaining length (simplified - assumes < 127)
+    // Encode remaining length properly (MQTT variable length encoding)
+    if (packet_len < 128) {
+        packet[pos++] = packet_len;
+    } else if (packet_len < 16384) {
+        packet[pos++] = (packet_len & 0x7F) | 0x80;
+        packet[pos++] = (packet_len >> 7) & 0x7F;
+    } else {
+        // For larger packets, use full encoding
+        packet[pos++] = (packet_len & 0x7F) | 0x80;
+        packet[pos++] = ((packet_len >> 7) & 0x7F) | 0x80;
+        packet[pos++] = (packet_len >> 14) & 0x7F;
+    }
     
     // Variable header - Packet identifier
     static uint16_t packet_id = 1;
@@ -722,7 +735,17 @@ static int mqtt_create_subscribe_packet(const char* topic, int qos, uint8_t* pac
     
     // Fixed header
     packet[pos++] = 0x82; // SUBSCRIBE packet type with flags
-    packet[pos++] = packet_len; // Remaining length (simplified)
+    // Encode remaining length properly (MQTT variable length encoding)
+    if (packet_len < 128) {
+        packet[pos++] = packet_len;
+    } else if (packet_len < 16384) {
+        packet[pos++] = (packet_len & 0x7F) | 0x80;
+        packet[pos++] = (packet_len >> 7) & 0x7F;
+    } else {
+        packet[pos++] = (packet_len & 0x7F) | 0x80;
+        packet[pos++] = ((packet_len >> 7) & 0x7F) | 0x80;
+        packet[pos++] = (packet_len >> 14) & 0x7F;
+    }
     
     // Variable header - Packet identifier
     static uint16_t packet_id = 1;
@@ -767,7 +790,17 @@ static int mqtt_create_publish_packet(const char* topic, const char* payload, in
     else if (qos == 2) flags |= 0x04;
     
     packet[pos++] = flags;
-    packet[pos++] = packet_len; // Remaining length (simplified)
+    // Encode remaining length properly (MQTT variable length encoding)
+    if (packet_len < 128) {
+        packet[pos++] = packet_len;
+    } else if (packet_len < 16384) {
+        packet[pos++] = (packet_len & 0x7F) | 0x80;
+        packet[pos++] = (packet_len >> 7) & 0x7F;
+    } else {
+        packet[pos++] = (packet_len & 0x7F) | 0x80;
+        packet[pos++] = ((packet_len >> 7) & 0x7F) | 0x80;
+        packet[pos++] = (packet_len >> 14) & 0x7F;
+    }
     
     // Variable header - Topic name
     packet[pos++] = (topic_len >> 8) & 0xFF;

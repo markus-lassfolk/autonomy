@@ -103,7 +103,7 @@ int starlink_api_version_ubus_force_check(struct ubus_context *ctx, struct ubus_
  *     },
  *     "storage": {
  *       "max_version_history": 20, "max_change_records": 50,
- *       "version_storage_file": "/tmp/starlink_api_versions.txt"
+ *       "version_storage_file": "/var/lib/autonomy/starlink_api_versions.txt"
  *     }
  *   }
  * }

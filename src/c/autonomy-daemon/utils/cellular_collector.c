@@ -257,9 +257,95 @@ static int collect_via_gsmctl(cellular_info_t* info) {
 
 // Collect cellular data via AT commands
 static int collect_via_at_commands(cellular_info_t* info) {
-    // This would implement direct AT command communication
-    // For now, return error since it's complex to implement properly
-    LOGX_DEBUG_MSG("AT command collection not yet implemented");
+    if (!info) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Try to find available modem devices
+    const char* modem_devices[] = {
+        "/dev/ttyUSB0", "/dev/ttyUSB1", "/dev/ttyUSB2", "/dev/ttyUSB3",
+        "/dev/ttyACM0", "/dev/ttyACM1", "/dev/ttyACM2", "/dev/ttyACM3",
+        "/dev/cdc-wdm0", "/dev/cdc-wdm1", "/dev/cdc-wdm2", "/dev/cdc-wdm3"
+    };
+    
+    for (int i = 0; i < sizeof(modem_devices) / sizeof(modem_devices[0]); i++) {
+        if (access(modem_devices[i], R_OK | W_OK) == 0) {
+            LOGX_DEBUG_MSG("Found modem device: %s", modem_devices[i]);
+            
+            // Try to get basic cellular info via AT commands
+            char at_command[256];
+            char response[1024];
+            
+            // Get signal strength
+            snprintf(at_command, sizeof(at_command), "echo 'AT+CSQ' > %s && timeout 5 cat %s", 
+                    modem_devices[i], modem_devices[i]);
+            FILE* fp = popen(at_command, "r");
+            if (fp) {
+                if (fgets(response, sizeof(response), fp)) {
+                    // Parse CSQ response (format: +CSQ: <rssi>,<ber>)
+                    char* csq_start = strstr(response, "+CSQ:");
+                    if (csq_start) {
+                        int rssi, ber;
+                        if (sscanf(csq_start, "+CSQ: %d,%d", &rssi, &ber) == 2) {
+                            if (rssi != 99) { // 99 means unknown
+                                info->signal_strength = rssi;
+                                info->signal_quality = (rssi >= 20) ? 5 : (rssi >= 15) ? 4 : 
+                                                     (rssi >= 10) ? 3 : (rssi >= 5) ? 2 : 1;
+                            }
+                        }
+                    }
+                }
+                pclose(fp);
+            }
+            
+            // Get operator info
+            snprintf(at_command, sizeof(at_command), "echo 'AT+COPS?' > %s && timeout 5 cat %s", 
+                    modem_devices[i], modem_devices[i]);
+            fp = popen(at_command, "r");
+            if (fp) {
+                if (fgets(response, sizeof(response), fp)) {
+                    // Parse COPS response (format: +COPS: <mode>,<format>,<oper>)
+                    char* cops_start = strstr(response, "+COPS:");
+                    if (cops_start) {
+                        char operator_name[64];
+                        if (sscanf(cops_start, "+COPS: %*d,%*d,\"%63[^\"]\"", operator_name) == 1) {
+                            strncpy(info->operator_name, operator_name, sizeof(info->operator_name) - 1);
+                            info->operator_name[sizeof(info->operator_name) - 1] = '\0';
+                        }
+                    }
+                }
+                pclose(fp);
+            }
+            
+            // Get network registration status
+            snprintf(at_command, sizeof(at_command), "echo 'AT+CREG?' > %s && timeout 5 cat %s", 
+                    modem_devices[i], modem_devices[i]);
+            fp = popen(at_command, "r");
+            if (fp) {
+                if (fgets(response, sizeof(response), fp)) {
+                    // Parse CREG response (format: +CREG: <n>,<stat>)
+                    char* creg_start = strstr(response, "+CREG:");
+                    if (creg_start) {
+                        int stat;
+                        if (sscanf(creg_start, "+CREG: %*d,%d", &stat) == 1) {
+                            info->network_registered = (stat == 1 || stat == 5); // 1=registered, 5=registered roaming
+                        }
+                    }
+                }
+                pclose(fp);
+            }
+            
+            // Set basic info
+            strcpy(info->device_path, modem_devices[i]);
+            info->collection_method = CELLULAR_COLLECTION_AT_COMMANDS;
+            info->timestamp = time(NULL);
+            
+            LOGX_DEBUG_MSG("AT command collection successful via %s", modem_devices[i]);
+            return AUTONOMY_SUCCESS;
+        }
+    }
+    
+    LOGX_DEBUG_MSG("No accessible modem devices found for AT command collection");
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 

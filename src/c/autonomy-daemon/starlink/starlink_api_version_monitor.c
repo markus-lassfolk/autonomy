@@ -790,7 +790,22 @@ int validate_api_after_change(const starlink_api_version_change_t* change) {
     int total_tests = 0;
     
     // Test 1: Status endpoint
-    strncpy(request_config.url, "http://192.168.100.1/api/v1/status", sizeof(request_config.url) - 1);
+    // Get Starlink host from UCI configuration
+    char starlink_host[64] = "192.168.100.1"; // Default fallback
+    FILE *uci_fp = popen("uci get autonomy.starlink.host 2>/dev/null", "r");
+    if (uci_fp) {
+        char uci_host[64];
+        if (fgets(uci_host, sizeof(uci_host), uci_fp)) {
+            char *newline = strchr(uci_host, '\n');
+            if (newline) *newline = '\0';
+            if (strlen(uci_host) > 0) {
+                strncpy(starlink_host, uci_host, sizeof(starlink_host) - 1);
+                starlink_host[sizeof(starlink_host) - 1] = '\0';
+            }
+        }
+        pclose(uci_fp);
+    }
+    snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/status", starlink_host);
     request_config.method = HTTP_METHOD_GET;
     request_config.timeout_seconds = 5;
     request_config.follow_redirects = true;
@@ -810,7 +825,7 @@ int validate_api_after_change(const starlink_api_version_change_t* change) {
     }
     
     // Test 2: Diagnostics endpoint
-    strncpy(request_config.url, "http://192.168.100.1/api/v1/diagnostics", sizeof(request_config.url) - 1);
+    snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/diagnostics", starlink_host);
     total_tests++;
     result = http_client_make_request(&request_config, &response);
     if (result == 0 && response.success && response.data) {
@@ -826,7 +841,7 @@ int validate_api_after_change(const starlink_api_version_change_t* change) {
     }
     
     // Test 3: History endpoint
-    strncpy(request_config.url, "http://192.168.100.1/api/v1/history", sizeof(request_config.url) - 1);
+    snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/history", starlink_host);
     total_tests++;
     result = http_client_make_request(&request_config, &response);
     if (result == 0 && response.success && response.data) {

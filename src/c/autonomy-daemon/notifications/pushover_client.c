@@ -1,55 +1,33 @@
 #include "pushover_client.h"
+#include "../utils/http_client_libcurl.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <curl/curl.h>
 #include <unistd.h>
 
-// Response data structure for curl
-typedef struct {
-    char* data;
-    size_t size;
-} curl_response_t;
+// Pushover client now uses HTTP client library
 
-// Callback function for curl to write response data
-static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, curl_response_t* response) {
-    size_t total_size = size * nmemb;
-    char* new_data = realloc(response->data, response->size + total_size + 1);
-    
-    if (!new_data) {
-        return 0; // Out of memory
-    }
-    
-    response->data = new_data;
-    memcpy(&(response->data[response->size]), contents, total_size);
-    response->size += total_size;
-    response->data[response->size] = '\0';
-    
-    return total_size;
-}
-
-// URL encode string
+// URL encode string (simple implementation)
 static char* url_encode(const char* str) {
     if (!str) return NULL;
     
-    CURL* curl = curl_easy_init();
-    if (!curl) return NULL;
+    size_t len = strlen(str);
+    char* result = malloc(len * 3 + 1); // Worst case: every char becomes %XX
+    if (!result) return NULL;
     
-    char* encoded = curl_easy_escape(curl, str, 0);
-    if (!encoded) {
-        curl_easy_cleanup(curl);
-        return NULL;
+    char* out = result;
+    for (size_t i = 0; i < len; i++) {
+        unsigned char c = (unsigned char)str[i];
+        if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || 
+            c == '-' || c == '_' || c == '.' || c == '~') {
+            *out++ = c;
+        } else {
+            *out++ = '%';
+            *out++ = "0123456789ABCDEF"[c >> 4];
+            *out++ = "0123456789ABCDEF"[c & 15];
+        }
     }
-    
-    // Copy to our own buffer
-    size_t len = strlen(encoded);
-    char* result = malloc(len + 1);
-    if (result) {
-        strcpy(result, encoded);
-    }
-    
-    curl_free(encoded);
-    curl_easy_cleanup(curl);
+    *out = '\0';
     
     return result;
 }
@@ -241,93 +219,85 @@ static int send_pushover_request(pushover_client_t* client, pushover_message_t* 
         return -1;
     }
     
-    CURL* curl = curl_easy_init();
-    if (!curl) {
-        strncpy(client->status.last_error, "Failed to initialize curl", sizeof(client->status.last_error) - 1);
-        return -1;
-    }
-    
-    curl_response_t response = {0};
-    CURLcode res;
-    long response_code = 0;
+    // Create HTTP request using HTTP client library
     
     // Create form data
     char* form_data = create_form_data(message);
     if (!form_data) {
-        curl_easy_cleanup(curl);
         strncpy(client->status.last_error, "Failed to create form data", sizeof(client->status.last_error) - 1);
         return -1;
     }
     
-    // Set URL
-    curl_easy_setopt(curl, CURLOPT_URL, "https://api.pushover.net/1/messages.json");
-    
-    // Set POST data
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, form_data);
-    
-    // Set content type
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, 
-                     curl_slist_append(NULL, "Content-Type: application/x-www-form-urlencoded"));
-    
-    // Set timeout
-    if (client->config.timeout_seconds > 0) {
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, client->config.timeout_seconds);
-    } else {
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L); // Default 30 seconds
-    }
-    
-    // Set response callback
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-    
-    // Perform request
-    res = curl_easy_perform(curl);
-    
-    // Get response code
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-    client->status.last_response_code = (int)response_code;
-    
-    // Clean up
-    curl_easy_cleanup(curl);
-    free(form_data);
-    
-    // Check result
-    if (res != CURLE_OK) {
-        snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "curl error: %s", curl_easy_strerror(res));
-        client->status.last_error_time = time(NULL);
-        if (response.data) free(response.data);
+    // Create HTTP request
+    http_request_t* request = http_request_create("https://api.pushover.net/1/messages.json", HTTP_METHOD_POST);
+    if (!request) {
+        free(form_data);
+        strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error) - 1);
         return -1;
     }
     
-    // Check response code
-    if (response_code != 200) {
-        snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "HTTP error: %ld", response_code);
+    // Set form data body
+    if (http_request_set_body(request, form_data, "application/x-www-form-urlencoded") != 0) {
+        http_request_free(request);
+        free(form_data);
+        strncpy(client->status.last_error, "Failed to set form data body", sizeof(client->status.last_error) - 1);
+        return -1;
+    }
+    
+    // Set timeout
+    if (client->config.timeout_seconds > 0) {
+        request->request_timeout_ms = client->config.timeout_seconds * 1000;
+    } else {
+        request->request_timeout_ms = 30000; // Default 30 seconds
+    }
+    
+    // Perform request
+    http_response_t* response = http_request(request);
+    
+    // Clean up request
+    http_request_free(request);
+    free(form_data);
+    
+    if (!response) {
+        strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error) - 1);
         client->status.last_error_time = time(NULL);
-        if (response.data) free(response.data);
+        return -1;
+    }
+    
+    // Store response code
+    client->status.last_response_code = (int)response->status_code;
+    
+    // Check HTTP result
+    if (!http_response_is_success(response)) {
+        snprintf(client->status.last_error, sizeof(client->status.last_error), 
+                "HTTP error: %ld - %s", response->status_code, response->error_message);
+        client->status.last_error_time = time(NULL);
+        http_response_free(response);
         return -1;
     }
     
     // Parse response (simplified - in production would parse JSON)
-    if (response.data) {
-        if (strstr(response.data, "\"status\":1")) {
+    if (response->body) {
+        if (strstr(response->body, "\"status\":1")) {
             // Success
-            if (response.data) free(response.data);
+            http_response_free(response);
             return 0;
         } else {
             // Extract error message if possible
-            char* error_start = strstr(response.data, "\"errors\":");
+            char* error_start = strstr(response->body, "\"errors\":");
             if (error_start) {
                 strncpy(client->status.last_error, "Pushover API error", sizeof(client->status.last_error) - 1);
             } else {
                 strncpy(client->status.last_error, "Pushover API returned error", sizeof(client->status.last_error) - 1);
             }
             client->status.last_error_time = time(NULL);
-            free(response.data);
+            http_response_free(response);
             return -1;
         }
     }
+    
+    // Clean up response
+    http_response_free(response);
     
     return 0;
 }
