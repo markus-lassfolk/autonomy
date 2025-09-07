@@ -268,21 +268,68 @@ int activate_interface_routing(int interface_index) {
     
     network_interface_t *iface = &g_failover.interfaces[interface_index];
     
-    // This would integrate with MWAN3 to set the interface as active
-    // For now, we'll simulate the integration
+    // Real MWAN3 integration
+    int ret = AUTONOMY_SUCCESS;
     
-    char command[256];
-    snprintf(command, sizeof(command), 
+    // 1. Set interface online in MWAN3
+    char mwan3_cmd[256];
+    snprintf(mwan3_cmd, sizeof(mwan3_cmd), 
              "ubus call mwan3 set_status '{\"interface\":\"%s\",\"status\":\"online\"}'", 
              iface->name);
     
-    LOGX_DEBUG_MSG("Executing MWAN3 command: %s", command);
+    LOGX_DEBUG_MSG("Executing MWAN3 command: %s", mwan3_cmd);
+    int mwan3_ret = system(mwan3_cmd);
+    if (mwan3_ret != 0) {
+        LOGX_WARN_MSG("MWAN3 command failed for interface: %s", iface->name);
+        ret = AUTONOMY_ERROR_NETWORK;
+    }
     
-    // In a real implementation, this would execute the MWAN3 command
-    // For now, we'll just log it
-    LOGX_INFO_MSG("Would execute MWAN3 command to activate interface: %s", iface->name);
+    // 2. Bring interface up
+    char ifup_cmd[256];
+    snprintf(ifup_cmd, sizeof(ifup_cmd), "ifup %s", iface->name);
+    int ifup_ret = system(ifup_cmd);
+    if (ifup_ret != 0) {
+        LOGX_WARN_MSG("Failed to bring up interface: %s", iface->name);
+        ret = AUTONOMY_ERROR_NETWORK;
+    }
     
-    return AUTONOMY_SUCCESS;
+    // 3. Set interface as default route
+    char route_cmd[256];
+    snprintf(route_cmd, sizeof(route_cmd), 
+             "ip route add default dev %s metric 100", iface->name);
+    int route_ret = system(route_cmd);
+    if (route_ret != 0) {
+        LOGX_DEBUG_MSG("Default route already exists for interface: %s", iface->name);
+    }
+    
+    // 4. Update UCI configuration
+    char uci_cmd[256];
+    snprintf(uci_cmd, sizeof(uci_cmd), 
+             "uci set network.%s.enabled=1 && uci commit network", iface->name);
+    int uci_ret = system(uci_cmd);
+    if (uci_ret != 0) {
+        LOGX_WARN_MSG("Failed to update UCI configuration for interface: %s", iface->name);
+    }
+    
+    // 5. Reload network configuration
+    int reload_ret = system("/etc/init.d/network reload");
+    if (reload_ret != 0) {
+        LOGX_WARN_MSG("Failed to reload network configuration");
+    }
+    
+    // 6. Verify interface is active
+    char verify_cmd[256];
+    snprintf(verify_cmd, sizeof(verify_cmd), 
+             "ip link show %s | grep -q 'state UP'", iface->name);
+    int verify_ret = system(verify_cmd);
+    if (verify_ret == 0) {
+        LOGX_INFO_MSG("Interface %s activated successfully", iface->name);
+    } else {
+        LOGX_ERROR_MSG("Interface %s activation verification failed", iface->name);
+        ret = AUTONOMY_ERROR_NETWORK;
+    }
+    
+    return ret;
 }
 
 // Deactivate interface routing (MWAN3 integration)
@@ -293,21 +340,76 @@ int deactivate_interface_routing(int interface_index) {
     
     network_interface_t *iface = &g_failover.interfaces[interface_index];
     
-    // This would integrate with MWAN3 to set the interface as offline
-    // For now, we'll simulate the integration
+    // Real MWAN3 integration
+    int ret = AUTONOMY_SUCCESS;
     
-    char command[256];
-    snprintf(command, sizeof(command), 
+    // 1. Set interface offline in MWAN3
+    char mwan3_cmd[256];
+    snprintf(mwan3_cmd, sizeof(mwan3_cmd), 
              "ubus call mwan3 set_status '{\"interface\":\"%s\",\"status\":\"offline\"}'", 
              iface->name);
     
-    LOGX_DEBUG_MSG("Executing MWAN3 command: %s", command);
+    LOGX_DEBUG_MSG("Executing MWAN3 command: %s", mwan3_cmd);
+    int mwan3_ret = system(mwan3_cmd);
+    if (mwan3_ret != 0) {
+        LOGX_WARN_MSG("MWAN3 command failed for interface: %s", iface->name);
+        ret = AUTONOMY_ERROR_NETWORK;
+    }
     
-    // In a real implementation, this would execute the MWAN3 command
-    // For now, we'll just log it
-    LOGX_INFO_MSG("Would execute MWAN3 command to deactivate interface: %s", iface->name);
+    // 2. Remove default route for this interface
+    char route_cmd[256];
+    snprintf(route_cmd, sizeof(route_cmd), 
+             "ip route del default dev %s metric 100", iface->name);
+    int route_ret = system(route_cmd);
+    if (route_ret != 0) {
+        LOGX_DEBUG_MSG("No default route to remove for interface: %s", iface->name);
+    }
     
-    return AUTONOMY_SUCCESS;
+    // 3. Bring interface down
+    char ifdown_cmd[256];
+    snprintf(ifdown_cmd, sizeof(ifdown_cmd), "ifdown %s", iface->name);
+    int ifdown_ret = system(ifdown_cmd);
+    if (ifdown_ret != 0) {
+        LOGX_WARN_MSG("Failed to bring down interface: %s", iface->name);
+        ret = AUTONOMY_ERROR_NETWORK;
+    }
+    
+    // 4. Update UCI configuration
+    char uci_cmd[256];
+    snprintf(uci_cmd, sizeof(uci_cmd), 
+             "uci set network.%s.enabled=0 && uci commit network", iface->name);
+    int uci_ret = system(uci_cmd);
+    if (uci_ret != 0) {
+        LOGX_WARN_MSG("Failed to update UCI configuration for interface: %s", iface->name);
+    }
+    
+    // 5. Flush interface routes
+    char flush_cmd[256];
+    snprintf(flush_cmd, sizeof(flush_cmd), "ip route flush dev %s", iface->name);
+    int flush_ret = system(flush_cmd);
+    if (flush_ret != 0) {
+        LOGX_DEBUG_MSG("No routes to flush for interface: %s", iface->name);
+    }
+    
+    // 6. Reload network configuration
+    int reload_ret = system("/etc/init.d/network reload");
+    if (reload_ret != 0) {
+        LOGX_WARN_MSG("Failed to reload network configuration");
+    }
+    
+    // 7. Verify interface is inactive
+    char verify_cmd[256];
+    snprintf(verify_cmd, sizeof(verify_cmd), 
+             "ip link show %s | grep -q 'state DOWN'", iface->name);
+    int verify_ret = system(verify_cmd);
+    if (verify_ret == 0) {
+        LOGX_INFO_MSG("Interface %s deactivated successfully", iface->name);
+    } else {
+        LOGX_ERROR_MSG("Interface %s deactivation verification failed", iface->name);
+        ret = AUTONOMY_ERROR_NETWORK;
+    }
+    
+    return ret;
 }
 
 // Add interface to failover system

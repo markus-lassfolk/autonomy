@@ -57,10 +57,79 @@ int mqtt_client_init(const mqtt_config_t* config) {
     if (config) {
         g_mqtt_client.config = *config;
     } else {
-        // Default configuration
-        strcpy(g_mqtt_client.config.broker_host, "localhost");
-        g_mqtt_client.config.broker_port = 1883;
-        strcpy(g_mqtt_client.config.client_id, "autonomy_daemon");
+        // Get MQTT configuration from UCI
+        FILE *uci_fp = popen("uci get autonomy.mqtt.broker_host 2>/dev/null", "r");
+        if (uci_fp) {
+            char uci_host[128];
+            if (fgets(uci_host, sizeof(uci_host), uci_fp)) {
+                char *newline = strchr(uci_host, '\n');
+                if (newline) *newline = '\0';
+                if (strlen(uci_host) > 0) {
+                    strcpy(g_mqtt_client.config.broker_host, uci_host);
+                    LOGX_DEBUG_MSG("Using UCI configured MQTT broker host", "host", uci_host);
+                } else {
+                    strcpy(g_mqtt_client.config.broker_host, "localhost");
+                    LOGX_DEBUG_MSG("Using fallback MQTT broker host", "host", "localhost");
+                }
+            } else {
+                strcpy(g_mqtt_client.config.broker_host, "localhost");
+                LOGX_DEBUG_MSG("Using fallback MQTT broker host", "host", "localhost");
+            }
+            pclose(uci_fp);
+        } else {
+            strcpy(g_mqtt_client.config.broker_host, "localhost");
+            LOGX_DEBUG_MSG("Using fallback MQTT broker host", "host", "localhost");
+        }
+        
+        // Get MQTT port from UCI
+        FILE *uci_port_fp = popen("uci get autonomy.mqtt.broker_port 2>/dev/null", "r");
+        if (uci_port_fp) {
+            char uci_port[16];
+            if (fgets(uci_port, sizeof(uci_port), uci_port_fp)) {
+                char *newline = strchr(uci_port, '\n');
+                if (newline) *newline = '\0';
+                if (strlen(uci_port) > 0) {
+                    g_mqtt_client.config.broker_port = atoi(uci_port);
+                    LOGX_DEBUG_MSG("Using UCI configured MQTT broker port", "port", g_mqtt_client.config.broker_port);
+                } else {
+                    g_mqtt_client.config.broker_port = 1883;
+                    LOGX_DEBUG_MSG("Using fallback MQTT broker port", "port", 1883);
+                }
+            } else {
+                g_mqtt_client.config.broker_port = 1883;
+                LOGX_DEBUG_MSG("Using fallback MQTT broker port", "port", 1883);
+            }
+            pclose(uci_port_fp);
+        } else {
+            g_mqtt_client.config.broker_port = 1883;
+            LOGX_DEBUG_MSG("Using fallback MQTT broker port", "port", 1883);
+        }
+        
+        // Get MQTT client ID from UCI
+        FILE *uci_client_fp = popen("uci get autonomy.mqtt.client_id 2>/dev/null", "r");
+        if (uci_client_fp) {
+            char uci_client_id[128];
+            if (fgets(uci_client_id, sizeof(uci_client_id), uci_client_fp)) {
+                char *newline = strchr(uci_client_id, '\n');
+                if (newline) *newline = '\0';
+                if (strlen(uci_client_id) > 0) {
+                    strcpy(g_mqtt_client.config.client_id, uci_client_id);
+                    LOGX_DEBUG_MSG("Using UCI configured MQTT client ID", "client_id", uci_client_id);
+                } else {
+                    strcpy(g_mqtt_client.config.client_id, "autonomy_daemon");
+                    LOGX_DEBUG_MSG("Using fallback MQTT client ID", "client_id", "autonomy_daemon");
+                }
+            } else {
+                strcpy(g_mqtt_client.config.client_id, "autonomy_daemon");
+                LOGX_DEBUG_MSG("Using fallback MQTT client ID", "client_id", "autonomy_daemon");
+            }
+            pclose(uci_client_fp);
+        } else {
+            strcpy(g_mqtt_client.config.client_id, "autonomy_daemon");
+            LOGX_DEBUG_MSG("Using fallback MQTT client ID", "client_id", "autonomy_daemon");
+        }
+        
+        // Set other MQTT configuration defaults
         g_mqtt_client.config.keepalive_interval = 60;
         g_mqtt_client.config.connection_timeout = 30;
         g_mqtt_client.config.clean_session = true;
@@ -436,14 +505,132 @@ static int mqtt_send_packet(const uint8_t* packet, int length) {
 static int mqtt_receive_packet(uint8_t* packet, int max_length) {
     if (g_mqtt_socket < 0 || !packet || max_length <= 0) return -1;
     
-    // Simple receive for now
+    // Set socket to non-blocking mode for timeout handling
+    int flags = fcntl(g_mqtt_socket, F_GETFL, 0);
+    fcntl(g_mqtt_socket, F_SETFL, flags | O_NONBLOCK);
+    
+    // Use select for timeout handling
+    fd_set read_fds;
+    struct timeval timeout;
+    
+    FD_ZERO(&read_fds);
+    FD_SET(g_mqtt_socket, &read_fds);
+    timeout.tv_sec = 1;  // 1 second timeout
+    timeout.tv_usec = 0;
+    
+    int select_result = select(g_mqtt_socket + 1, &read_fds, NULL, NULL, &timeout);
+    if (select_result < 0) {
+        LOGX_ERROR_MSG("MQTT select error: %s", strerror(errno));
+        return -1;
+    } else if (select_result == 0) {
+        // Timeout - no data available
+        return 0;
+    }
+    
+    // Data is available, receive it
     int received = recv(g_mqtt_socket, packet, max_length, 0);
     if (received < 0) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             return 0; // No data available
         }
+        LOGX_ERROR_MSG("MQTT receive error: %s", strerror(errno));
+        return -1;
+    } else if (received == 0) {
+        LOGX_WARN_MSG("MQTT connection closed by server");
         return -1;
     }
+    
+    // Validate MQTT packet structure
+    if (received < 2) {
+        LOGX_WARN_MSG("Received incomplete MQTT packet");
+        return -1;
+    }
+    
+    // Check MQTT packet type and flags
+    uint8_t packet_type = (packet[0] >> 4) & 0x0F;
+    uint8_t packet_flags = packet[0] & 0x0F;
+    
+    // Validate packet type
+    if (packet_type < 1 || packet_type > 14) {
+        LOGX_WARN_MSG("Invalid MQTT packet type: %d", packet_type);
+        return -1;
+    }
+    
+    // Validate packet flags for specific packet types
+    switch (packet_type) {
+        case 1: // CONNECT
+            if (packet_flags != 0) {
+                LOGX_WARN_MSG("Invalid CONNECT packet flags: %d", packet_flags);
+                return -1;
+            }
+            break;
+        case 2: // CONNACK
+            if (packet_flags != 0) {
+                LOGX_WARN_MSG("Invalid CONNACK packet flags: %d", packet_flags);
+                return -1;
+            }
+            break;
+        case 3: // PUBLISH
+            // PUBLISH flags are valid (QoS, retain, dup)
+            break;
+        case 4: // PUBACK
+        case 5: // PUBREC
+        case 6: // PUBREL
+        case 7: // PUBCOMP
+            if (packet_flags != 0) {
+                LOGX_WARN_MSG("Invalid PUBACK/PUBREC/PUBREL/PUBCOMP packet flags: %d", packet_flags);
+                return -1;
+            }
+            break;
+        case 8: // SUBSCRIBE
+            if (packet_flags != 2) {
+                LOGX_WARN_MSG("Invalid SUBSCRIBE packet flags: %d", packet_flags);
+                return -1;
+            }
+            break;
+        case 9: // SUBACK
+        case 10: // UNSUBSCRIBE
+        case 11: // UNSUBACK
+        case 12: // PINGREQ
+        case 13: // PINGRESP
+        case 14: // DISCONNECT
+            if (packet_flags != 0) {
+                LOGX_WARN_MSG("Invalid packet flags for type %d: %d", packet_type, packet_flags);
+                return -1;
+            }
+            break;
+    }
+    
+    // Parse remaining length
+    int remaining_length = 0;
+    int multiplier = 1;
+    int pos = 1;
+    
+    while (pos < received && pos < 5) {
+        uint8_t byte = packet[pos++];
+        remaining_length += (byte & 0x7F) * multiplier;
+        multiplier *= 128;
+        
+        if ((byte & 0x80) == 0) {
+            break;
+        }
+    }
+    
+    // Validate remaining length
+    if (remaining_length < 0 || remaining_length > max_length - pos) {
+        LOGX_WARN_MSG("Invalid MQTT remaining length: %d", remaining_length);
+        return -1;
+    }
+    
+    // Check if we have the complete packet
+    if (pos + remaining_length > received) {
+        LOGX_DEBUG_MSG("Incomplete MQTT packet, need %d more bytes", 
+                       pos + remaining_length - received);
+        return 0; // Need more data
+    }
+    
+    LOGX_DEBUG_MSG("Received MQTT packet: type=%d, flags=%d, length=%d", 
+                   packet_type, packet_flags, received);
     
     return received;
 }

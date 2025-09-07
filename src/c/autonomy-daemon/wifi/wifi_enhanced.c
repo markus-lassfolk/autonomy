@@ -16,6 +16,12 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 
+// UBUS policy definitions
+enum {
+    DEVICES_DEVICES,
+    __DEVICES_MAX
+};
+
 // Global enhanced WiFi management instance
 wifi_enhanced_management_t g_wifi_enhanced = {0};
 static bool g_wifi_enhanced_initialized = false;
@@ -160,43 +166,82 @@ int wifi_enhanced_discover_interfaces(void) {
     // Query wireless devices via UBUS
     uint32_t id;
     if (ubus_lookup_id(ctx, "iwinfo", &id) == 0) {
-        // Get device list
+        // Get device list via UBUS
         struct blob_buf bb = {0};
         blob_buf_init(&bb, 0);
         
-        // This would need proper UBUS response parsing
-        // For now, use iwinfo command line as fallback
-        ubus_free(ctx);
-        
-        // Use iwinfo command to discover interfaces
-        FILE* fp = popen("iwinfo | grep -E '^[a-zA-Z0-9]+' | awk '{print $1}'", "r");
-        if (fp) {
-            char line[256];
-            while (fgets(line, sizeof(line), fp) && g_wifi_enhanced.interface_count < 16) {
-                // Remove newline
-                line[strcspn(line, "\n")] = 0;
+        // Call UBUS iwinfo.devices method
+        int ret = ubus_invoke(ctx, id, "devices", bb.head, NULL, NULL, 1000);
+        if (ret == 0) {
+            // Parse UBUS response to get device list
+            struct blob_attr *tb[__DEVICES_MAX];
+            static const struct blobmsg_policy policy[__DEVICES_MAX] = {
+                [DEVICES_DEVICES] = { .name = "devices", .type = BLOBMSG_TYPE_ARRAY },
+            };
+            
+            blobmsg_parse(policy, __DEVICES_MAX, tb, blob_data(bb.head), blob_len(bb.head));
+            
+            if (tb[DEVICES_DEVICES]) {
+                struct blob_attr *cur;
+                int rem;
                 
-                if (strlen(line) > 0) {
-                    wifi_interface_t* interface = &g_wifi_enhanced.interfaces[g_wifi_enhanced.interface_count];
+                blobmsg_for_each_attr(cur, tb[DEVICES_DEVICES], rem) {
+                    if (g_wifi_enhanced.interface_count >= 16) break;
                     
-                    strncpy(interface->name, line, sizeof(interface->name) - 1);
-                    interface->name[sizeof(interface->name) - 1] = '\0';
-                    
-                    // Get detailed interface information via UBUS
-                    if (wifi_enhanced_get_interface_info(line, interface) == AUTONOMY_SUCCESS) {
-                        interface->active = true;
-                        interface->last_update = time(NULL);
-                        g_wifi_enhanced.interface_count++;
+                    const char* device_name = blobmsg_get_string(cur);
+                    if (device_name && strlen(device_name) > 0) {
+                        wifi_interface_t* interface = &g_wifi_enhanced.interfaces[g_wifi_enhanced.interface_count];
                         
-                        LOGX_INFO_MSG("Discovered WiFi interface",
-                                 "name", interface->name,
-                                 "band", wifi_band_to_string(interface->band),
-                                 "channel", interface->current_channel,
-                                 "enabled", interface->enabled);
+                        strncpy(interface->name, device_name, sizeof(interface->name) - 1);
+                        interface->name[sizeof(interface->name) - 1] = '\0';
+                        
+                        // Get detailed interface information via UBUS
+                        if (wifi_enhanced_get_interface_info(device_name, interface) == AUTONOMY_SUCCESS) {
+                            interface->active = true;
+                            interface->last_update = time(NULL);
+                            g_wifi_enhanced.interface_count++;
+                            
+                            LOGX_INFO_MSG("Discovered WiFi interface via UBUS",
+                                     "name", interface->name,
+                                     "band", wifi_band_to_string(interface->band),
+                                     "channel", interface->current_channel,
+                                     "enabled", interface->enabled);
+                        }
                     }
                 }
             }
-            pclose(fp);
+        } else {
+            LOGX_WARN_MSG("UBUS iwinfo.devices call failed, falling back to command line");
+            
+            // Fallback to command line if UBUS fails
+            FILE* fp = popen("iwinfo | grep -E '^[a-zA-Z0-9]+' | awk '{print $1}'", "r");
+            if (fp) {
+                char line[256];
+                while (fgets(line, sizeof(line), fp) && g_wifi_enhanced.interface_count < 16) {
+                    // Remove newline
+                    line[strcspn(line, "\n")] = 0;
+                    
+                    if (strlen(line) > 0) {
+                        wifi_interface_t* interface = &g_wifi_enhanced.interfaces[g_wifi_enhanced.interface_count];
+                        
+                        strncpy(interface->name, line, sizeof(interface->name) - 1);
+                        interface->name[sizeof(interface->name) - 1] = '\0';
+                        
+                        // Get detailed interface information via UBUS
+                        if (wifi_enhanced_get_interface_info(line, interface) == AUTONOMY_SUCCESS) {
+                            interface->active = true;
+                            interface->last_update = time(NULL);
+                            g_wifi_enhanced.interface_count++;
+                            
+                            LOGX_INFO_MSG("Discovered WiFi interface via fallback",
+                                     "name", interface->name,
+                                     "band", wifi_band_to_string(interface->band),
+                                     "channel", interface->current_channel,
+                                     "enabled", interface->enabled);
+                        }
+                    }
+                }
+                pclose(fp);
         }
     } else {
         ubus_free(ctx);
@@ -377,9 +422,61 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
         band = wifi_get_band_from_channel(utilization[0].channel);
     }
     
-    // Get regulatory domain channels
-    char country_code[4] = "US"; // Default to US, would be detected from system
+    // Get regulatory domain channels - detect real country code
+    char country_code[4] = {0};
     int channels[64];
+    
+    // Try to get real country code from regulatory database
+    FILE *reg_file = fopen("/lib/wifi/regulatory.db", "r");
+    if (reg_file) {
+        char buffer[256];
+        while (fgets(buffer, sizeof(buffer), reg_file)) {
+            if (strstr(buffer, "country")) {
+                char *country_start = strstr(buffer, "country");
+                if (country_start) {
+                    sscanf(country_start, "country %3s", country_code);
+                    break;
+                }
+            }
+        }
+        fclose(reg_file);
+    }
+    
+    // Fallback: try to get from UCI configuration
+    if (country_code[0] == '\0') {
+        FILE *uci_fp = popen("uci get wireless.radio0.country 2>/dev/null", "r");
+        if (uci_fp) {
+            if (fgets(country_code, sizeof(country_code), uci_fp)) {
+                // Remove newline
+                country_code[strcspn(country_code, "\n")] = '\0';
+            }
+            pclose(uci_fp);
+        }
+    }
+    
+    // Final fallback: try to detect from system
+    if (country_code[0] == '\0') {
+        FILE *sys_fp = popen("iw reg get 2>/dev/null | grep country | head -1", "r");
+        if (sys_fp) {
+            char buffer[256];
+            if (fgets(buffer, sizeof(buffer), sys_fp)) {
+                char *country_start = strstr(buffer, "country");
+                if (country_start) {
+                    sscanf(country_start, "country %3s", country_code);
+                }
+            }
+            pclose(sys_fp);
+        }
+    }
+    
+    // Ultimate fallback to US if nothing else works
+    if (country_code[0] == '\0') {
+        strcpy(country_code, "US");
+        LOGX_WARN_MSG("Could not detect country code, defaulting to US");
+    }
+    
+    LOGX_DEBUG_MSG("Using country code for regulatory channels", "country", country_code);
+    
     int channel_count = wifi_get_regulatory_channels(country_code, band, channels, 64);
     
     if (channel_count <= 0) {

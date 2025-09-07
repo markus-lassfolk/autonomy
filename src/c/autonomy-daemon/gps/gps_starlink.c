@@ -18,7 +18,7 @@
 // Starlink GPS configuration
 static const int GPS_UPDATE_INTERVAL = 10;        // 10 seconds
 static const int GPS_TIMEOUT = 30;                // 30 seconds
-static const char* DEFAULT_STARLINK_IP = "192.168.100.1";
+static const char* DEFAULT_STARLINK_IP = "192.168.100.1"; // Fallback only
 static const int DEFAULT_STARLINK_PORT = 80;
 static const char* GPS_ENDPOINT = "/api/v1/gps";
 
@@ -59,9 +59,53 @@ int gps_starlink_init(void) {
     g_starlink_gps.successful_updates = 0;
     g_starlink_gps.failed_updates = 0;
     
-    // Set default Starlink IP
-    strncpy(g_starlink_gps.starlink_ip, DEFAULT_STARLINK_IP, sizeof(g_starlink_gps.starlink_ip) - 1);
-    g_starlink_gps.starlink_port = DEFAULT_STARLINK_PORT;
+    // Get Starlink IP from UCI configuration
+    FILE *uci_fp = popen("uci get autonomy.starlink.host 2>/dev/null", "r");
+    if (uci_fp) {
+        char uci_host[64];
+        if (fgets(uci_host, sizeof(uci_host), uci_fp)) {
+            char *newline = strchr(uci_host, '\n');
+            if (newline) *newline = '\0';
+            if (strlen(uci_host) > 0) {
+                strncpy(g_starlink_gps.starlink_ip, uci_host, sizeof(g_starlink_gps.starlink_ip) - 1);
+                LOGX_DEBUG_MSG("Using UCI configured Starlink host", "host", uci_host);
+            } else {
+                strncpy(g_starlink_gps.starlink_ip, DEFAULT_STARLINK_IP, sizeof(g_starlink_gps.starlink_ip) - 1);
+                LOGX_DEBUG_MSG("Using fallback Starlink host", "host", DEFAULT_STARLINK_IP);
+            }
+        } else {
+            strncpy(g_starlink_gps.starlink_ip, DEFAULT_STARLINK_IP, sizeof(g_starlink_gps.starlink_ip) - 1);
+            LOGX_DEBUG_MSG("Using fallback Starlink host", "host", DEFAULT_STARLINK_IP);
+        }
+        pclose(uci_fp);
+    } else {
+        strncpy(g_starlink_gps.starlink_ip, DEFAULT_STARLINK_IP, sizeof(g_starlink_gps.starlink_ip) - 1);
+        LOGX_DEBUG_MSG("Using fallback Starlink host", "host", DEFAULT_STARLINK_IP);
+    }
+    
+    // Get Starlink port from UCI configuration
+    FILE *uci_port_fp = popen("uci get autonomy.starlink.port 2>/dev/null", "r");
+    if (uci_port_fp) {
+        char uci_port[16];
+        if (fgets(uci_port, sizeof(uci_port), uci_port_fp)) {
+            char *newline = strchr(uci_port, '\n');
+            if (newline) *newline = '\0';
+            if (strlen(uci_port) > 0) {
+                g_starlink_gps.starlink_port = atoi(uci_port);
+                LOGX_DEBUG_MSG("Using UCI configured Starlink port", "port", g_starlink_gps.starlink_port);
+            } else {
+                g_starlink_gps.starlink_port = DEFAULT_STARLINK_PORT;
+                LOGX_DEBUG_MSG("Using fallback Starlink port", "port", DEFAULT_STARLINK_PORT);
+            }
+        } else {
+            g_starlink_gps.starlink_port = DEFAULT_STARLINK_PORT;
+            LOGX_DEBUG_MSG("Using fallback Starlink port", "port", DEFAULT_STARLINK_PORT);
+        }
+        pclose(uci_port_fp);
+    } else {
+        g_starlink_gps.starlink_port = DEFAULT_STARLINK_PORT;
+        LOGX_DEBUG_MSG("Using fallback Starlink port", "port", DEFAULT_STARLINK_PORT);
+    }
     
     // Initialize GPS data
     g_starlink_gps.gps_data.timestamp = 0;

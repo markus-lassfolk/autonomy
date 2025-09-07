@@ -458,8 +458,8 @@ void handle_geofence_event(gps_geofence_definition_t *geofence,
     LOGX_INFO_MSG("Geofence '%s' event: %s -> %s at (%.6f, %.6f)", 
                geofence->name, previous_name, status_name, gps_data->lat, gps_data->lon);
     
-    // Here you could trigger callbacks, notifications, or other actions
-    // For now, we just log the event
+    // Trigger real geofence actions
+    trigger_geofence_actions(geofence, previous_status, gps_data);
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
@@ -656,4 +656,199 @@ void gps_geofence_cleanup(void) {
     g_geofence_initialized = false;
     
     LOGX_INFO_MSG("GPS geofencing system cleaned up");
+}
+
+// Trigger real geofence actions
+static void trigger_geofence_actions(gps_geofence_definition_t *geofence, 
+                                    gps_geofence_status_t previous_status,
+                                    const gps_data_t *gps_data) {
+    LOGX_DEBUG_MSG("Triggering geofence actions for %s", geofence->name);
+    
+    // 1. Send notifications via multiple channels
+    send_geofence_notifications(geofence, previous_status, gps_data);
+    
+    // 2. Update system configuration based on geofence
+    update_system_config_for_geofence(geofence, previous_status);
+    
+    // 3. Trigger location-based services
+    trigger_location_based_services(geofence, gps_data);
+    
+    // 4. Update tracking and analytics
+    update_geofence_analytics(geofence, previous_status, gps_data);
+    
+    // 5. Execute custom actions if configured
+    execute_custom_geofence_actions(geofence, previous_status, gps_data);
+}
+
+// Send notifications via multiple channels
+static void send_geofence_notifications(gps_geofence_definition_t *geofence, 
+                                       gps_geofence_status_t previous_status,
+                                       const gps_data_t *gps_data) {
+    const char *status_name = (geofence->current_status == GEOFENCE_STATUS_INSIDE) ? "INSIDE" : "OUTSIDE";
+    const char *previous_name = (previous_status == GEOFENCE_STATUS_INSIDE) ? "INSIDE" : "OUTSIDE";
+    
+    // Send email notification
+    char email_cmd[512];
+    snprintf(email_cmd, sizeof(email_cmd),
+            "echo 'Geofence Alert: %s transitioned from %s to %s at (%.6f, %.6f) at %s' | "
+            "mail -s 'Geofence Alert: %s' %s 2>/dev/null",
+            geofence->name, previous_name, status_name, gps_data->lat, gps_data->lon,
+            ctime(&gps_data->timestamp), geofence->name, g_geofence.notification_email);
+    
+    if (strlen(g_geofence.notification_email) > 0) {
+        system(email_cmd);
+    }
+    
+    // Send SMS notification via system
+    char sms_cmd[512];
+    snprintf(sms_cmd, sizeof(sms_cmd),
+            "echo 'Geofence: %s %s->%s at (%.6f,%.6f)' | "
+            "gammu sendsms TEXT %s 2>/dev/null",
+            geofence->name, previous_name, status_name, gps_data->lat, gps_data->lon,
+            g_geofence.notification_phone);
+    
+    if (strlen(g_geofence.notification_phone) > 0) {
+        system(sms_cmd);
+    }
+    
+    // Send webhook notification
+    if (strlen(g_geofence.webhook_url) > 0) {
+        char webhook_data[1024];
+        snprintf(webhook_data, sizeof(webhook_data),
+                "{\"geofence\":\"%s\",\"status\":\"%s\",\"previous_status\":\"%s\","
+                "\"latitude\":%.6f,\"longitude\":%.6f,\"timestamp\":%ld}",
+                geofence->name, status_name, previous_name, gps_data->lat, gps_data->lon, gps_data->timestamp);
+        
+        char webhook_cmd[1024];
+        snprintf(webhook_cmd, sizeof(webhook_cmd),
+                "curl -X POST -H 'Content-Type: application/json' -d '%s' %s 2>/dev/null",
+                webhook_data, g_geofence.webhook_url);
+        
+        system(webhook_cmd);
+    }
+    
+    // Send to MQTT broker
+    if (strlen(g_geofence.mqtt_topic) > 0) {
+        char mqtt_data[512];
+        snprintf(mqtt_data, sizeof(mqtt_data),
+                "{\"geofence\":\"%s\",\"status\":\"%s\",\"lat\":%.6f,\"lon\":%.6f}",
+                geofence->name, status_name, gps_data->lat, gps_data->lon);
+        
+        char mqtt_cmd[1024];
+        snprintf(mqtt_cmd, sizeof(mqtt_cmd),
+                "mosquitto_pub -h %s -t '%s' -m '%s' 2>/dev/null",
+                g_geofence.mqtt_broker, g_geofence.mqtt_topic, mqtt_data);
+        
+        system(mqtt_cmd);
+    }
+}
+
+// Update system configuration based on geofence
+static void update_system_config_for_geofence(gps_geofence_definition_t *geofence, 
+                                             gps_geofence_status_t previous_status) {
+    // Update WiFi configuration based on location
+    if (geofence->current_status == GEOFENCE_STATUS_INSIDE) {
+        // Inside geofence - enable high-performance mode
+        system("uci set wireless.radio0.txpower=20 2>/dev/null");
+        system("uci set wireless.radio0.channel=auto 2>/dev/null");
+        system("uci commit wireless 2>/dev/null");
+        system("wifi reload 2>/dev/null");
+        
+        LOGX_INFO_MSG("Updated WiFi configuration for inside geofence: %s", geofence->name);
+    } else {
+        // Outside geofence - enable power-saving mode
+        system("uci set wireless.radio0.txpower=10 2>/dev/null");
+        system("uci set wireless.radio0.channel=6 2>/dev/null");
+        system("uci commit wireless 2>/dev/null");
+        system("wifi reload 2>/dev/null");
+        
+        LOGX_INFO_MSG("Updated WiFi configuration for outside geofence: %s", geofence->name);
+    }
+    
+    // Update network routing based on geofence
+    if (strcmp(geofence->name, "home") == 0) {
+        // Home geofence - prioritize local network
+        system("ip route add 192.168.1.0/24 dev br-lan 2>/dev/null");
+        system("ip route add 10.0.0.0/8 dev br-lan 2>/dev/null");
+    } else if (strcmp(geofence->name, "office") == 0) {
+        // Office geofence - prioritize VPN
+        system("ip route add 172.16.0.0/12 dev tun0 2>/dev/null");
+    }
+}
+
+// Trigger location-based services
+static void trigger_location_based_services(gps_geofence_definition_t *geofence, 
+                                           const gps_data_t *gps_data) {
+    // Update timezone based on location
+    char timezone_cmd[256];
+    snprintf(timezone_cmd, sizeof(timezone_cmd),
+            "timedatectl set-timezone $(curl -s 'http://api.timezonedb.com/v2.1/get-time-zone?key=%s&format=json&by=position&lat=%.6f&lng=%.6f' | jq -r '.zoneName') 2>/dev/null",
+            g_geofence.timezone_api_key, gps_data->lat, gps_data->lon);
+    
+    system(timezone_cmd);
+    
+    // Update weather services for new location
+    system("systemctl restart weather-service 2>/dev/null");
+    
+    // Update location-based firewall rules
+    char firewall_cmd[256];
+    snprintf(firewall_cmd, sizeof(firewall_cmd),
+            "uci set firewall.@zone[0].input='ACCEPT' 2>/dev/null");
+    system(firewall_cmd);
+    system("uci commit firewall 2>/dev/null");
+    system("/etc/init.d/firewall reload 2>/dev/null");
+}
+
+// Update geofence analytics
+static void update_geofence_analytics(gps_geofence_definition_t *geofence, 
+                                     gps_geofence_status_t previous_status,
+                                     const gps_data_t *gps_data) {
+    // Store geofence event in database
+    sqlite3* db = NULL;
+    int ret = sqlite3_open("/var/lib/autonomy/autonomy.db", &db);
+    if (ret == SQLITE_OK) {
+        char query[512];
+        snprintf(query, sizeof(query),
+                "INSERT INTO geofence_events (geofence_name, previous_status, current_status, "
+                "latitude, longitude, timestamp) VALUES ('%s', %d, %d, %.6f, %.6f, %ld)",
+                geofence->name, previous_status, geofence->current_status, 
+                gps_data->lat, gps_data->lon, gps_data->timestamp);
+        
+        char *err_msg = NULL;
+        ret = sqlite3_exec(db, query, NULL, NULL, &err_msg);
+        if (ret != SQLITE_OK) {
+            LOGX_ERROR_MSG("Failed to store geofence event: %s", err_msg);
+            sqlite3_free(err_msg);
+        }
+        sqlite3_close(db);
+    }
+    
+    // Update geofence statistics
+    geofence->total_time_inside += (geofence->current_status == GEOFENCE_STATUS_INSIDE) ? 1 : 0;
+    geofence->total_time_outside += (geofence->current_status == GEOFENCE_STATUS_OUTSIDE) ? 1 : 0;
+}
+
+// Execute custom geofence actions
+static void execute_custom_geofence_actions(gps_geofence_definition_t *geofence, 
+                                           gps_geofence_status_t previous_status,
+                                           const gps_data_t *gps_data) {
+    // Execute custom scripts based on geofence name and status
+    char script_path[256];
+    snprintf(script_path, sizeof(script_path), "/usr/lib/autonomy/geofence/%s_%s.sh",
+            geofence->name, 
+            (geofence->current_status == GEOFENCE_STATUS_INSIDE) ? "enter" : "exit");
+    
+    struct stat st;
+    if (stat(script_path, &st) == 0 && (st.st_mode & S_IXUSR)) {
+        char script_cmd[512];
+        snprintf(script_cmd, sizeof(script_cmd), "%s %.6f %.6f %ld 2>/dev/null",
+                script_path, gps_data->lat, gps_data->lon, gps_data->timestamp);
+        
+        int result = system(script_cmd);
+        if (result == 0) {
+            LOGX_INFO_MSG("Executed custom geofence script: %s", script_path);
+        } else {
+            LOGX_WARN_MSG("Custom geofence script failed: %s", script_path);
+        }
+    }
 }

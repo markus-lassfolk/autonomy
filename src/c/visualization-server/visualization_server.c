@@ -165,7 +165,28 @@ static enum MHD_Result viz_request_handler(void *cls,
     
     // Handle upload data if present
     if (*upload_data_size != 0) {
-        // For now, we don't support POST data
+        // Real POST data handling
+        if (strcmp(method, "POST") == 0) {
+            // Store POST data in context
+            if (context->post_data == NULL) {
+                context->post_data = malloc(*upload_data_size + 1);
+                if (context->post_data) {
+                    memcpy(context->post_data, upload_data, *upload_data_size);
+                    context->post_data[*upload_data_size] = '\0';
+                    context->post_data_size = *upload_data_size;
+                }
+            } else {
+                // Append to existing data
+                char* new_data = realloc(context->post_data, context->post_data_size + *upload_data_size + 1);
+                if (new_data) {
+                    context->post_data = new_data;
+                    memcpy(context->post_data + context->post_data_size, upload_data, *upload_data_size);
+                    context->post_data_size += *upload_data_size;
+                    context->post_data[context->post_data_size] = '\0';
+                }
+            }
+        }
+        
         *upload_data_size = 0;
         return MHD_YES;
     }

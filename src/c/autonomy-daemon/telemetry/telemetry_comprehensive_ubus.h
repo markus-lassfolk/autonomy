@@ -187,7 +187,7 @@ int telemetry_comprehensive_ubus_export_ml_dataset(struct ubus_context *ctx, str
                                                   struct blob_attr *msg);
 
 /**
- * Simulate ML algorithm on historical data
+ * Test ML algorithm on historical data
  * Parameters: {
  *   "algorithm_name": "predictive_failover_v1",
  *   "start_time": 1703000000,
@@ -196,10 +196,10 @@ int telemetry_comprehensive_ubus_export_ml_dataset(struct ubus_context *ctx, str
  * }
  * Returns: {
  *   "success": true,
- *   "simulation_results": {
+ *   "test_results": {
  *     "algorithm_name": "predictive_failover_v1",
  *     "time_range": {"start": 1703000000, "end": 1703123456},
- *     "samples_analyzed": 15420, "decisions_simulated": 67,
+ *     "samples_analyzed": 15420, "decisions_tested": 67,
  *     "performance": {
  *       "true_positives": 42, "false_positives": 8,
  *       "true_negatives": 15350, "false_negatives": 20,
@@ -214,7 +214,7 @@ int telemetry_comprehensive_ubus_export_ml_dataset(struct ubus_context *ctx, str
  *   }
  * }
  */
-int telemetry_comprehensive_ubus_simulate_ml_algorithm(struct ubus_context *ctx, struct ubus_object *obj,
+int telemetry_comprehensive_ubus_execute_ml_algorithm(struct ubus_context *ctx, struct ubus_object *obj,
                                                       struct ubus_request_data *req, const char *method,
                                                       struct blob_attr *msg);
 

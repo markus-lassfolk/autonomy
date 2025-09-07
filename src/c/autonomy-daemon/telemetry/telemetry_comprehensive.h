@@ -287,17 +287,17 @@ int telemetry_comprehensive_force_cleanup(void);
 // Utility functions for ML simulation support
 
 /**
- * Simulate ML algorithm performance on historical data
- * @param algorithm_name Algorithm name for logging
- * @param start_time Start time for simulation
- * @param end_time End time for simulation
+ * Test ML algorithm performance on historical data
+ * @param algorithm_name Algorithm name for testing
+ * @param start_time Start time for test period
+ * @param end_time End time for test period
  * @param results_json JSON buffer for results (min 2048 bytes)
  * @return AUTONOMY_SUCCESS on success, error code on failure
  */
-int telemetry_comprehensive_simulate_ml_algorithm(const char* algorithm_name,
-                                                 time_t start_time,
-                                                 time_t end_time,
-                                                 char* results_json);
+int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
+                                             time_t start_time,
+                                             time_t end_time,
+                                             char* results_json);
 
 /**
  * Get performance correlation with GPS location

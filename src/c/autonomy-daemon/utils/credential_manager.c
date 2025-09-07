@@ -10,6 +10,8 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/aes.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
 
 // Global credential manager state
 static struct {
@@ -323,17 +325,32 @@ int credential_encrypt(const char* plaintext, char* ciphertext, size_t cipher_si
         return -1;
     }
 
-    // For now, store as hex (simpler than base64)
-    if (total_len * 2 >= cipher_size) {
+    // Use proper base64 encoding for encrypted data
+    int base64_len = ((total_len + 2) / 3) * 4 + 1; // Base64 encoding size
+    if (base64_len >= cipher_size) {
         free(encrypted);
         free(combined);
         EVP_CIPHER_CTX_free(ctx);
         return -1;
     }
-
-    for (size_t i = 0; i < total_len; i++) {
-        snprintf(ciphertext + i * 2, 3, "%02x", combined[i]);
-    }
+    
+    // Encode to base64
+    BIO *bio, *b64;
+    BUF_MEM *bufferPtr;
+    
+    b64 = BIO_new(BIO_f_base64());
+    bio = BIO_new(BIO_s_mem());
+    bio = BIO_push(b64, bio);
+    
+    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); // No newlines in output
+    BIO_write(bio, combined, total_len);
+    BIO_flush(bio);
+    
+    BIO_get_mem_ptr(bio, &bufferPtr);
+    memcpy(ciphertext, bufferPtr->data, bufferPtr->length);
+    ciphertext[bufferPtr->length] = '\0';
+    
+    BIO_free_all(bio);
 
     free(encrypted);
     free(combined);

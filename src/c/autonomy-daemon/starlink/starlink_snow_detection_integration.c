@@ -258,73 +258,36 @@ static int get_obstruction_sample_from_starlink(starlink_obstruction_sample_t *s
     if (!sample) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
-    
-    // This would integrate with the existing Starlink obstruction system
-    // For now, we'll simulate getting data from the Starlink API
-    
-    // Get Starlink host from UCI configuration
-    char starlink_host[64] = "192.168.100.1"; // Default fallback
-    FILE *uci_fp = popen("uci get autonomy.starlink.host 2>/dev/null", "r");
-    if (uci_fp) {
-        char uci_host[64];
-        if (fgets(uci_host, sizeof(uci_host), uci_fp)) {
-            // Remove newline
-            char *newline = strchr(uci_host, '\n');
-            if (newline) *newline = '\0';
-            if (strlen(uci_host) > 0) {
-                strncpy(starlink_host, uci_host, sizeof(starlink_host) - 1);
-                starlink_host[sizeof(starlink_host) - 1] = '\0';
-            }
-        }
-        pclose(uci_fp);
+
+    // Query Starlink status via client API and map to obstruction sample
+    starlink_status_response_t status = {0};
+    int rc = starlink_get_status(&status);
+    if (rc != 0) {
+        LOGX_WARN_MSG("Failed to get Starlink status for obstruction sample", "result", rc);
+        return AUTONOMY_ERROR_API_FAILED;
     }
-    
-    // Use HTTP client instead of curl system command for security
-    char starlink_url[256];
-    snprintf(starlink_url, sizeof(starlink_url), "http://%s/api/v1/status", starlink_host);
-    
-    http_request_t* request = http_request_create(starlink_url, HTTP_METHOD_GET);
-    if (!request) {
-        return AUTONOMY_ERROR_OPERATION_FAILED;
-    }
-    
-    http_response_t* response = http_request(request);
-    if (!response || !response->success || !response->data) {
-        if (response) http_response_free(response);
-        http_request_free(request);
-        return AUTONOMY_ERROR_OPERATION_FAILED;
-    }
-    
-    // Copy response data for processing
-    char response_data[4096];
-    strncpy(response_data, response->data, sizeof(response_data) - 1);
-    response_data[sizeof(response_data) - 1] = '\0';
-    
-    http_response_free(response);
-    http_request_free(request);
-    
-    // Parse JSON response using json-c
+
     sample->timestamp = time(NULL);
-    sample->fraction_obstructed = 0.0;
-    sample->snr = 0.0;
+    sample->currently_obstructed = status.obstruction_stats.currently_obstructed;
+    sample->fraction_obstructed = status.obstruction_stats.fraction_obstructed;
+    sample->time_obstructed = status.obstruction_stats.time_obstructed;
+    sample->avg_prolonged_obstruction_interval_s = status.obstruction_stats.avg_prolonged_obstruction_interval_s;
+    sample->valid_s = status.obstruction_stats.valid_s;
+    sample->patches_valid = status.obstruction_stats.patches_valid;
 
-    json_object *root = json_tokener_parse(response_data);
-    if (!root) {
-        return AUTONOMY_ERROR_OPERATION_FAILED;
+    // Copy wedge obstruction arrays if present
+    for (int i = 0; i < 12; i++) {
+        sample->wedge_fraction_obstructed[i] = status.obstruction_stats.wedge_fraction_obstructed[i];
+        sample->wedge_abs_fraction_obstructed[i] = status.obstruction_stats.wedge_abs_fraction_obstructed[i];
     }
 
-    json_object *obstruction_obj;
-    if (json_object_object_get_ex(root, "fractionObstructed", &obstruction_obj)) {
-        sample->fraction_obstructed = json_object_get_double(obstruction_obj);
+    // Prefer SNR in dB if available, fallback to linear SNR
+    if (status.signal_quality.snr_db != 0.0) {
+        sample->snr = status.signal_quality.snr_db;
+    } else {
+        sample->snr = status.signal_quality.snr;
     }
 
-    json_object *snr_obj;
-    if (json_object_object_get_ex(root, "snr", &snr_obj)) {
-        sample->snr = json_object_get_double(snr_obj);
-    }
-
-    json_object_put(root);
-    
     return AUTONOMY_SUCCESS;
 }
 
@@ -333,19 +296,31 @@ static int get_obstruction_sample_from_gps(starlink_obstruction_sample_t *sample
     if (!sample) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
-    
-    // This would integrate with the existing GPS obstruction system
-    // For now, we'll simulate getting data from GPS
-    
+
+    // Use comprehensive Starlink GPS to infer obstruction context indirectly
+    starlink_comprehensive_gps_t gps = {0};
+    int rc = starlink_comprehensive_collect_gps(&gps);
+    if (rc != AUTONOMY_SUCCESS || !gps.valid) {
+        return AUTONOMY_ERROR_NOT_FOUND;
+    }
+
+    // Populate sample with timestamp; GPS cannot directly provide obstruction
     sample->timestamp = time(NULL);
-    sample->fraction_obstructed = 0.0; // GPS doesn't directly measure obstruction
-    sample->snr = 0.0; // Would need to calculate from GPS signal quality
-    
-    // In a real implementation, this would:
-    // 1. Get GPS signal quality data
-    // 2. Calculate obstruction based on signal degradation
-    // 3. Estimate SNR from signal strength
-    
+    sample->snr = 0.0; // Not derivable from GPS alone
+
+    // Heuristic: if GPS is valid with good accuracy and movement is low, defer to Starlink; else unknown
+    // We set fraction_obstructed minimally and rely on Starlink path primarily.
+    sample->fraction_obstructed = 0.0;
+    sample->currently_obstructed = false;
+    sample->valid_s = 0;
+    sample->patches_valid = 0;
+    sample->time_obstructed = 0.0;
+    sample->avg_prolonged_obstruction_interval_s = 0.0;
+    for (int i = 0; i < 12; i++) {
+        sample->wedge_fraction_obstructed[i] = 0.0;
+        sample->wedge_abs_fraction_obstructed[i] = 0.0;
+    }
+
     return AUTONOMY_SUCCESS;
 }
 

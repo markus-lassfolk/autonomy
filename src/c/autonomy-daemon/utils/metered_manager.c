@@ -335,11 +335,78 @@ static int collect_data_usage(void) {
     uint64_t total_usage = total_rx_bytes + total_tx_bytes;
     g_metered_manager.usage_stats.current_usage_bytes = total_usage;
     
-    // For daily/monthly usage, we would need persistent storage
-    // For now, use current usage as baseline
-    g_metered_manager.usage_stats.daily_usage_bytes = total_usage;
-    g_metered_manager.usage_stats.monthly_usage_bytes = total_usage;
-    g_metered_manager.usage_stats.total_usage_bytes = total_usage;
+    // Get real persistent usage data from database
+    sqlite3* db = NULL;
+    int ret = sqlite3_open("/var/lib/autonomy/autonomy.db", &db);
+    if (ret == SQLITE_OK) {
+        // Get daily usage
+        char daily_query[256];
+        snprintf(daily_query, sizeof(daily_query),
+                "SELECT SUM(rx_bytes + tx_bytes) FROM network_usage WHERE date = date('now')");
+        
+        sqlite3_stmt* stmt;
+        ret = sqlite3_prepare_v2(db, daily_query, -1, &stmt, NULL);
+        if (ret == SQLITE_OK) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                g_metered_manager.usage_stats.daily_usage_bytes = sqlite3_column_int64(stmt, 0);
+            } else {
+                g_metered_manager.usage_stats.daily_usage_bytes = total_usage;
+            }
+            sqlite3_finalize(stmt);
+        }
+        
+        // Get monthly usage
+        char monthly_query[256];
+        snprintf(monthly_query, sizeof(monthly_query),
+                "SELECT SUM(rx_bytes + tx_bytes) FROM network_usage WHERE strftime('%%Y-%%m', date) = strftime('%%Y-%%m', 'now')");
+        
+        ret = sqlite3_prepare_v2(db, monthly_query, -1, &stmt, NULL);
+        if (ret == SQLITE_OK) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                g_metered_manager.usage_stats.monthly_usage_bytes = sqlite3_column_int64(stmt, 0);
+            } else {
+                g_metered_manager.usage_stats.monthly_usage_bytes = total_usage;
+            }
+            sqlite3_finalize(stmt);
+        }
+        
+        // Get total usage
+        char total_query[256];
+        snprintf(total_query, sizeof(total_query),
+                "SELECT SUM(rx_bytes + tx_bytes) FROM network_usage");
+        
+        ret = sqlite3_prepare_v2(db, total_query, -1, &stmt, NULL);
+        if (ret == SQLITE_OK) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                g_metered_manager.usage_stats.total_usage_bytes = sqlite3_column_int64(stmt, 0);
+            } else {
+                g_metered_manager.usage_stats.total_usage_bytes = total_usage;
+            }
+            sqlite3_finalize(stmt);
+        }
+        
+        // Store current usage
+        char insert_query[512];
+        snprintf(insert_query, sizeof(insert_query),
+                "INSERT OR REPLACE INTO network_usage (date, rx_bytes, tx_bytes, interface) "
+                "VALUES (date('now'), %llu, %llu, '%s')",
+                total_rx_bytes, total_tx_bytes, g_metered_manager.connection_status.interface_name);
+        
+        char *err_msg = NULL;
+        ret = sqlite3_exec(db, insert_query, NULL, NULL, &err_msg);
+        if (ret != SQLITE_OK) {
+            LOGX_ERROR_MSG("Failed to store network usage: %s", err_msg);
+            sqlite3_free(err_msg);
+        }
+        
+        sqlite3_close(db);
+    } else {
+        // Fallback: use current usage as baseline
+        g_metered_manager.usage_stats.daily_usage_bytes = total_usage;
+        g_metered_manager.usage_stats.monthly_usage_bytes = total_usage;
+        g_metered_manager.usage_stats.total_usage_bytes = total_usage;
+        LOGX_WARN_MSG("Could not access database for usage statistics, using current usage as baseline");
+    }
     
     // Calculate percentages
     if (g_metered_manager.connection_status.plan_limit_bytes > 0) {

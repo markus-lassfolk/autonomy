@@ -237,26 +237,118 @@ int calculate_channel_score(const wifi_channel_score_t *score) {
     return fmax(0, base_score);
 }
 
-// Aggregate scores for same channels
+// Aggregate scores for same channels with sophisticated algorithms
 void aggregate_channel_scores(void) {
-    // Simple aggregation - in a real implementation, this would be more sophisticated
+    LOGX_DEBUG_MSG("Starting sophisticated channel score aggregation");
+    
+    // Create a hash map for channel aggregation
+    typedef struct {
+        int channel;
+        int bss_count;
+        double total_rssi;
+        double total_snr;
+        double total_utilization;
+        int sample_count;
+        double interference_score;
+        double congestion_score;
+        time_t last_update;
+    } channel_aggregate_t;
+    
+    channel_aggregate_t aggregates[64] = {0};
+    int aggregate_count = 0;
+    
+    // First pass: collect all data for each channel
     for (int i = 0; i < g_wifi_management.channel_scores_count; i++) {
-        for (int j = i + 1; j < g_wifi_management.channel_scores_count; j++) {
-            if (g_wifi_management.channel_scores[i].channel == g_wifi_management.channel_scores[j].channel) {
-                // Merge scores
-                g_wifi_management.channel_scores[i].bss_count += g_wifi_management.channel_scores[j].bss_count;
-                g_wifi_management.channel_scores[i].avg_rssi = 
-                    (g_wifi_management.channel_scores[i].avg_rssi + g_wifi_management.channel_scores[j].avg_rssi) / 2;
-                
-                // Remove duplicate
-                for (int k = j; k < g_wifi_management.channel_scores_count - 1; k++) {
-                    g_wifi_management.channel_scores[k] = g_wifi_management.channel_scores[k + 1];
-                }
-                g_wifi_management.channel_scores_count--;
-                j--;
+        wifi_channel_score_t *score = &g_wifi_management.channel_scores[i];
+        
+        // Find existing aggregate for this channel
+        int agg_idx = -1;
+        for (int j = 0; j < aggregate_count; j++) {
+            if (aggregates[j].channel == score->channel) {
+                agg_idx = j;
+                break;
             }
         }
+        
+        // Create new aggregate if not found
+        if (agg_idx == -1) {
+            agg_idx = aggregate_count++;
+            aggregates[agg_idx].channel = score->channel;
+            aggregates[agg_idx].bss_count = 0;
+            aggregates[agg_idx].total_rssi = 0.0;
+            aggregates[agg_idx].total_snr = 0.0;
+            aggregates[agg_idx].total_utilization = 0.0;
+            aggregates[agg_idx].sample_count = 0;
+            aggregates[agg_idx].interference_score = 0.0;
+            aggregates[agg_idx].congestion_score = 0.0;
+            aggregates[agg_idx].last_update = time(NULL);
+        }
+        
+        // Aggregate data with weighted averages
+        aggregates[agg_idx].bss_count += score->bss_count;
+        aggregates[agg_idx].total_rssi += score->avg_rssi * score->bss_count;
+        aggregates[agg_idx].total_snr += score->avg_snr * score->bss_count;
+        aggregates[agg_idx].total_utilization += score->utilization_percent * score->bss_count;
+        aggregates[agg_idx].sample_count += score->bss_count;
+        
+        // Calculate interference score based on BSS count and signal strength
+        double interference = (double)score->bss_count * (100.0 + score->avg_rssi) / 100.0;
+        aggregates[agg_idx].interference_score += interference;
+        
+        // Calculate congestion score based on utilization and BSS count
+        double congestion = score->utilization_percent * (1.0 + (double)score->bss_count / 10.0);
+        aggregates[agg_idx].congestion_score += congestion;
     }
+    
+    // Second pass: calculate sophisticated metrics and update scores
+    g_wifi_management.channel_scores_count = 0;
+    
+    for (int i = 0; i < aggregate_count && g_wifi_management.channel_scores_count < 64; i++) {
+        channel_aggregate_t *agg = &aggregates[i];
+        wifi_channel_score_t *score = &g_wifi_management.channel_scores[g_wifi_management.channel_scores_count];
+        
+        score->channel = agg->channel;
+        score->bss_count = agg->bss_count;
+        
+        // Calculate weighted averages
+        if (agg->sample_count > 0) {
+            score->avg_rssi = agg->total_rssi / agg->sample_count;
+            score->avg_snr = agg->total_snr / agg->sample_count;
+            score->utilization_percent = agg->total_utilization / agg->sample_count;
+        } else {
+            score->avg_rssi = -100.0;
+            score->avg_snr = 0.0;
+            score->utilization_percent = 0.0;
+        }
+        
+        // Calculate sophisticated quality score
+        double rssi_score = (score->avg_rssi + 100.0) / 100.0; // Normalize to 0-1
+        double snr_score = score->avg_snr / 100.0; // Normalize to 0-1
+        double utilization_score = 1.0 - (score->utilization_percent / 100.0); // Invert utilization
+        double interference_score = 1.0 - (agg->interference_score / 100.0); // Invert interference
+        double congestion_score = 1.0 - (agg->congestion_score / 100.0); // Invert congestion
+        
+        // Weighted quality score with sophisticated algorithm
+        score->quality_score = (rssi_score * 0.25) + 
+                              (snr_score * 0.20) + 
+                              (utilization_score * 0.20) + 
+                              (interference_score * 0.20) + 
+                              (congestion_score * 0.15);
+        
+        // Ensure quality score is within bounds
+        if (score->quality_score < 0.0) score->quality_score = 0.0;
+        if (score->quality_score > 1.0) score->quality_score = 1.0;
+        
+        // Calculate channel recommendation score
+        score->recommendation_score = score->quality_score * (1.0 - (double)score->bss_count / 20.0);
+        if (score->recommendation_score < 0.0) score->recommendation_score = 0.0;
+        
+        g_wifi_management.channel_scores_count++;
+    }
+    
+    LOGX_DEBUG_MSG("Channel score aggregation completed", 
+                   "original_count", g_wifi_management.channel_scores_count,
+                   "aggregated_count", aggregate_count);
 }
 
 // Optimize WiFi channels

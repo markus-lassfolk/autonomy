@@ -484,8 +484,81 @@ void parse_current_weather_response(const gps_weather_api_response_t *response,
             weather->weather_condition = WEATHER_CONDITION_PARTLY_CLOUDY;
         }
         
-        // Air quality would typically come from a separate API call
-        weather->air_quality_index = 50; // Default moderate for now
+        // Get real air quality data from OpenWeatherMap Air Pollution API
+        char air_quality_url[512];
+        snprintf(air_quality_url, sizeof(air_quality_url),
+                "http://api.openweathermap.org/data/2.5/air_pollution?lat=%.6f&lon=%.6f&appid=%s",
+                weather->latitude, weather->longitude, g_weather_config.api_key);
+        
+        // Make air quality API call
+        http_client_config_t air_config = {0};
+        air_config.url = air_quality_url;
+        air_config.method = HTTP_METHOD_GET;
+        air_config.timeout = 10;
+        air_config.follow_redirects = true;
+        
+        http_client_response_t air_response = {0};
+        int air_result = http_client_make_request(&air_config, &air_response);
+        
+        if (air_result == 0 && air_response.success && air_response.data) {
+            // Parse air quality data from JSON
+            json_document_t *air_doc = json_document_parse(air_response.data);
+            if (air_doc && air_doc->root) {
+                json_object_t *air_obj = json_object_get(air_doc->root, "list");
+                if (air_obj && json_array_size(air_obj) > 0) {
+                    json_object_t *air_item = json_array_get(air_obj, 0);
+                    if (air_item) {
+                        json_object_t *main_obj = json_object_get(air_item, "main");
+                        if (main_obj) {
+                            json_object_t *aqi_obj = json_object_get(main_obj, "aqi");
+                            if (aqi_obj) {
+                                weather->air_quality_index = json_integer_value(aqi_obj);
+                            }
+                        }
+                        
+                        // Get detailed air quality components
+                        json_object_t *components_obj = json_object_get(air_item, "components");
+                        if (components_obj) {
+                            json_object_t *pm25_obj = json_object_get(components_obj, "pm2_5");
+                            json_object_t *pm10_obj = json_object_get(components_obj, "pm10");
+                            json_object_t *no2_obj = json_object_get(components_obj, "no2");
+                            json_object_t *o3_obj = json_object_get(components_obj, "o3");
+                            
+                            if (pm25_obj) weather->pm25 = json_number_value(pm25_obj);
+                            if (pm10_obj) weather->pm10 = json_number_value(pm10_obj);
+                            if (no2_obj) weather->no2 = json_number_value(no2_obj);
+                            if (o3_obj) weather->o3 = json_number_value(o3_obj);
+                        }
+                    }
+                }
+                json_document_free(air_doc);
+            }
+        } else {
+            // Fallback: try to get air quality from local sensors or cached data
+            FILE *air_file = fopen("/var/lib/autonomy/weather/air_quality.json", "r");
+            if (air_file) {
+                char buffer[1024];
+                if (fgets(buffer, sizeof(buffer), air_file)) {
+                    json_document_t *air_doc = json_document_parse(buffer);
+                    if (air_doc && air_doc->root) {
+                        json_object_t *aqi_obj = json_object_get(air_doc->root, "aqi");
+                        if (aqi_obj) {
+                            weather->air_quality_index = json_integer_value(aqi_obj);
+                        }
+                    }
+                    json_document_free(air_doc);
+                }
+                fclose(air_file);
+            } else {
+                // Final fallback to moderate air quality
+                weather->air_quality_index = 50;
+                LOGX_WARN_MSG("Could not get air quality data, using default moderate value");
+            }
+        }
+        
+        if (air_response.data) {
+            free(air_response.data);
+        }
         
         json_document_free(doc);
     } else {
@@ -605,13 +678,82 @@ void parse_air_quality_response(const gps_weather_api_response_t *response,
     // Use proper JSON parser
     json_document_t* doc = json_parse_string(response->data);
     if (!doc || !doc->valid) {
-        LOGX_WARN_MSG("Failed to parse air quality JSON response");
-        // Set default values
-        air_quality->aqi = 50;  // Moderate default
-        air_quality->co = 233.65;
-        air_quality->no = 0.0;
-        air_quality->no2 = 1.87;
-        air_quality->o3 = 38.85;
+        LOGX_WARN_MSG("Failed to parse air quality JSON response, trying fallback methods");
+        
+        // Try to get air quality from local sensors
+        FILE *sensor_file = fopen("/var/lib/autonomy/sensors/air_quality.txt", "r");
+        if (sensor_file) {
+            char buffer[256];
+            if (fgets(buffer, sizeof(buffer), sensor_file)) {
+                sscanf(buffer, "AQI:%d CO:%.2f NO:%.2f NO2:%.2f O3:%.2f PM25:%.2f PM10:%.2f",
+                       &air_quality->aqi, &air_quality->co, &air_quality->no, 
+                       &air_quality->no2, &air_quality->o3, &air_quality->pm25, &air_quality->pm10);
+                fclose(sensor_file);
+                LOGX_INFO_MSG("Using air quality data from local sensors");
+                return;
+            }
+            fclose(sensor_file);
+        }
+        
+        // Try to get from cached weather data
+        FILE *cache_file = fopen("/var/lib/autonomy/weather/cached_air_quality.json", "r");
+        if (cache_file) {
+            char buffer[1024];
+            if (fgets(buffer, sizeof(buffer), cache_file)) {
+                json_document_t *cache_doc = json_document_parse(buffer);
+                if (cache_doc && cache_doc->root) {
+                    json_object_t *aqi_obj = json_object_get(cache_doc->root, "aqi");
+                    json_object_t *co_obj = json_object_get(cache_doc->root, "co");
+                    json_object_t *no_obj = json_object_get(cache_doc->root, "no");
+                    json_object_t *no2_obj = json_object_get(cache_doc->root, "no2");
+                    json_object_t *o3_obj = json_object_get(cache_doc->root, "o3");
+                    json_object_t *pm25_obj = json_object_get(cache_doc->root, "pm25");
+                    json_object_t *pm10_obj = json_object_get(cache_doc->root, "pm10");
+                    
+                    if (aqi_obj) air_quality->aqi = json_integer_value(aqi_obj);
+                    if (co_obj) air_quality->co = json_number_value(co_obj);
+                    if (no_obj) air_quality->no = json_number_value(no_obj);
+                    if (no2_obj) air_quality->no2 = json_number_value(no2_obj);
+                    if (o3_obj) air_quality->o3 = json_number_value(o3_obj);
+                    if (pm25_obj) air_quality->pm25 = json_number_value(pm25_obj);
+                    if (pm10_obj) air_quality->pm10 = json_number_value(pm10_obj);
+                    
+                    fclose(cache_file);
+                    json_document_free(cache_doc);
+                    LOGX_INFO_MSG("Using cached air quality data");
+                    return;
+                }
+                json_document_free(cache_doc);
+            }
+            fclose(cache_file);
+        }
+        
+        // Final fallback: try to estimate from weather conditions
+        if (response->data && strlen(response->data) > 0) {
+            // Try to extract any available data from the response
+            char *aqi_start = strstr(response->data, "\"aqi\":");
+            if (aqi_start) {
+                air_quality->aqi = atoi(aqi_start + 6);
+            } else {
+                air_quality->aqi = 50;  // Moderate default
+            }
+            
+            // Estimate other values based on AQI
+            air_quality->co = 233.65 * (air_quality->aqi / 50.0);
+            air_quality->no = 0.0;
+            air_quality->no2 = 1.87 * (air_quality->aqi / 50.0);
+            air_quality->o3 = 38.85 * (air_quality->aqi / 50.0);
+            air_quality->pm25 = 15.0 * (air_quality->aqi / 50.0);
+            air_quality->pm10 = 25.0 * (air_quality->aqi / 50.0);
+            
+            LOGX_WARN_MSG("Using estimated air quality values based on partial data");
+        } else {
+            // Ultimate fallback to moderate values
+            air_quality->aqi = 50;  // Moderate default
+            air_quality->co = 233.65;
+            air_quality->no = 0.0;
+            air_quality->no2 = 1.87;
+            air_quality->o3 = 38.85;
         air_quality->so2 = 0.64;
         air_quality->pm2_5 = 8.63;
         air_quality->pm10 = 10.2;

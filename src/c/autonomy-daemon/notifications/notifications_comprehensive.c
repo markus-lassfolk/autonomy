@@ -678,8 +678,58 @@ static void* analytics_thread_worker(void* arg) {
         // Update channel effectiveness based on recent performance
         pthread_mutex_lock(&g_notifications_comprehensive.mutex);
         
-        // This would analyze delivery success rates and update effectiveness scores
-        // For now, maintain current effectiveness scores
+        // Analyze real delivery success rates and update effectiveness scores
+        for (int i = 0; i < g_notifications_comprehensive.channel_count; i++) {
+            notification_channel_t* channel = &g_notifications_comprehensive.channels[i];
+            
+            // Calculate effectiveness based on recent delivery statistics
+            time_t now = time(NULL);
+            time_t analysis_window = 3600; // 1 hour window
+            
+            int total_attempts = 0;
+            int successful_deliveries = 0;
+            int failed_deliveries = 0;
+            
+            // Analyze recent delivery history
+            for (int j = 0; j < channel->delivery_history_count; j++) {
+                delivery_record_t* record = &channel->delivery_history[j];
+                
+                if (now - record->timestamp <= analysis_window) {
+                    total_attempts++;
+                    if (record->success) {
+                        successful_deliveries++;
+                    } else {
+                        failed_deliveries++;
+                    }
+                }
+            }
+            
+            // Update effectiveness score based on real data
+            if (total_attempts > 0) {
+                double success_rate = (double)successful_deliveries / total_attempts;
+                double failure_rate = (double)failed_deliveries / total_attempts;
+                
+                // Calculate new effectiveness score (0-100)
+                double new_effectiveness = success_rate * 100.0;
+                
+                // Apply weighted average to smooth changes
+                double weight = 0.3; // 30% weight for new data
+                channel->effectiveness_score = (channel->effectiveness_score * (1.0 - weight)) + 
+                                             (new_effectiveness * weight);
+                
+                // Update channel statistics
+                channel->total_attempts += total_attempts;
+                channel->successful_deliveries += successful_deliveries;
+                channel->failed_deliveries += failed_deliveries;
+                channel->last_effectiveness_update = now;
+                
+                LOGX_DEBUG_MSG("Updated channel effectiveness based on real delivery data",
+                              "channel", channel->name,
+                              "success_rate", success_rate,
+                              "new_effectiveness", new_effectiveness,
+                              "total_attempts", total_attempts);
+            }
+        }
         
         g_notifications_comprehensive.last_analytics_update = time(NULL);
         

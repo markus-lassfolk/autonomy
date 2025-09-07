@@ -3,55 +3,123 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <linux/if_link.h>
+#include <linux/ethtool.h>
+#include <linux/sockios.h>
 
 extern struct autonomy_state g_state;
 
 // Network discovery and management
 int discover_network_interfaces(void) {
-    // Initialize with some default interfaces
+    // Real network interface discovery
     g_state.interface_count = 0;
     
-    // Add common interface types
-    strcpy(g_state.interfaces[0].name, "eth0");
-    strcpy(g_state.interfaces[0].type, "ethernet");
-    g_state.interfaces[0].enabled = 1;
-    g_state.interfaces[0].latency = 5.0;
-    g_state.interfaces[0].loss = 0.1;
-    g_state.interfaces[0].signal_strength = 100;
-    g_state.interfaces[0].bandwidth = 1000;
-    g_state.interfaces[0].last_check = time(NULL);
-    g_state.interfaces[0].health_score = 95;
-    strcpy(g_state.interfaces[0].status, "active");
-    g_state.interface_count++;
+    struct ifaddrs *ifaddr, *ifa;
+    if (getifaddrs(&ifaddr) == -1) {
+        return -1;
+    }
     
-    strcpy(g_state.interfaces[1].name, "wlan0");
-    strcpy(g_state.interfaces[1].type, "wifi");
-    g_state.interfaces[1].enabled = 1;
-    g_state.interfaces[1].latency = 15.0;
-    g_state.interfaces[1].loss = 2.0;
-    g_state.interfaces[1].signal_strength = 85;
-    g_state.interfaces[1].bandwidth = 300;
-    g_state.interfaces[1].last_check = time(NULL);
-    g_state.interfaces[1].health_score = 80;
-    strcpy(g_state.interfaces[1].status, "active");
-    g_state.interface_count++;
+    // First pass: collect all interfaces
+    for (ifa = ifaddr; ifa != NULL && g_state.interface_count < MAX_INTERFACES; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == NULL) continue;
+        
+        // Skip loopback interface
+        if (strcmp(ifa->ifa_name, "lo") == 0) continue;
+        
+        // Check if we already have this interface
+        bool interface_exists = false;
+        for (int i = 0; i < g_state.interface_count; i++) {
+            if (strcmp(g_state.interfaces[i].name, ifa->ifa_name) == 0) {
+                interface_exists = true;
+                break;
+            }
+        }
+        
+        if (!interface_exists) {
+            struct network_interface *iface = &g_state.interfaces[g_state.interface_count];
+            
+            // Copy interface name
+            strncpy(iface->name, ifa->ifa_name, sizeof(iface->name) - 1);
+            iface->name[sizeof(iface->name) - 1] = '\0';
+            
+            // Determine interface type
+            if (strncmp(ifa->ifa_name, "eth", 3) == 0 || strncmp(ifa->ifa_name, "en", 2) == 0) {
+                strcpy(iface->type, "ethernet");
+            } else if (strncmp(ifa->ifa_name, "wlan", 4) == 0 || strncmp(ifa->ifa_name, "wl", 2) == 0) {
+                strcpy(iface->type, "wifi");
+            } else if (strncmp(ifa->ifa_name, "wwan", 4) == 0 || strncmp(ifa->ifa_name, "usb", 3) == 0) {
+                strcpy(iface->type, "cellular");
+            } else if (strncmp(ifa->ifa_name, "ppp", 3) == 0) {
+                strcpy(iface->type, "ppp");
+            } else {
+                strcpy(iface->type, "unknown");
+            }
+            
+            // Check if interface is up
+            iface->enabled = (ifa->ifa_flags & IFF_UP) ? 1 : 0;
+            iface->last_check = time(NULL);
+            
+            // Initialize metrics (will be updated by real measurements)
+            iface->latency = 0.0;
+            iface->loss = 0.0;
+            iface->signal_strength = 0;
+            iface->bandwidth = 0;
+            iface->health_score = 0;
+            
+            // Set initial status
+            if (iface->enabled) {
+                strcpy(iface->status, "active");
+            } else {
+                strcpy(iface->status, "inactive");
+            }
+            
+            g_state.interface_count++;
+        }
+    }
     
-    strcpy(g_state.interfaces[2].name, "wwan0");
-    strcpy(g_state.interfaces[2].type, "cellular");
-    g_state.interfaces[2].enabled = 1;
-    g_state.interfaces[2].latency = 50.0;
-    g_state.interfaces[2].loss = 5.0;
-    g_state.interfaces[2].signal_strength = 70;
-    g_state.interfaces[2].bandwidth = 100;
-    g_state.interfaces[2].last_check = time(NULL);
-    g_state.interfaces[2].health_score = 65;
-    strcpy(g_state.interfaces[2].status, "active");
-    g_state.interface_count++;
+    freeifaddrs(ifaddr);
     
-    strcpy(g_state.active_interface, "eth0");
+    // Set default active interface (prefer ethernet, then wifi, then cellular)
+    strcpy(g_state.active_interface, "");
+    for (int i = 0; i < g_state.interface_count; i++) {
+        if (g_state.interfaces[i].enabled) {
+            if (strcmp(g_state.interfaces[i].type, "ethernet") == 0) {
+                strcpy(g_state.active_interface, g_state.interfaces[i].name);
+                break;
+            }
+        }
+    }
+    
+    if (strlen(g_state.active_interface) == 0) {
+        for (int i = 0; i < g_state.interface_count; i++) {
+            if (g_state.interfaces[i].enabled) {
+                if (strcmp(g_state.interfaces[i].type, "wifi") == 0) {
+                    strcpy(g_state.active_interface, g_state.interfaces[i].name);
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (strlen(g_state.active_interface) == 0) {
+        for (int i = 0; i < g_state.interface_count; i++) {
+            if (g_state.interfaces[i].enabled) {
+                strcpy(g_state.active_interface, g_state.interfaces[i].name);
+                break;
+            }
+        }
+    }
+    
     g_state.failover_enabled = 1;
     g_state.last_network_check = time(NULL);
-    g_state.network_health_score = 85.0;
+    g_state.network_health_score = 0.0; // Will be calculated by real measurements
     
     return 0;
 }
@@ -84,36 +152,124 @@ int perform_network_health_check(void) {
     time_t now = time(NULL);
     
     for (int i = 0; i < g_state.interface_count; i++) {
-        // Simulate network metrics update
+        // Real network metrics update
         if (now - g_state.interfaces[i].last_check > 30) {
-            // Update latency (simulate variation)
-            g_state.interfaces[i].latency += (rand() % 10 - 5) * 0.1;
-            if (g_state.interfaces[i].latency < 1.0) g_state.interfaces[i].latency = 1.0;
+            struct network_interface *iface = &g_state.interfaces[i];
             
-            // Update packet loss (simulate variation)
-            g_state.interfaces[i].loss += (rand() % 6 - 3) * 0.1;
-            if (g_state.interfaces[i].loss < 0.0) g_state.interfaces[i].loss = 0.0;
+            // Measure real latency using ping
+            char ping_cmd[256];
+            snprintf(ping_cmd, sizeof(ping_cmd), 
+                    "ping -c 3 -W 2 -I %s 8.8.8.8 2>/dev/null | grep 'rtt' | awk '{print $4}' | cut -d'/' -f2", 
+                    iface->name);
             
-            // Update signal strength (simulate variation)
-            g_state.interfaces[i].signal_strength += (rand() % 6 - 3);
-            if (g_state.interfaces[i].signal_strength > 100) g_state.interfaces[i].signal_strength = 100;
-            if (g_state.interfaces[i].signal_strength < 10) g_state.interfaces[i].signal_strength = 10;
+            FILE *fp = popen(ping_cmd, "r");
+            if (fp) {
+                char buffer[32];
+                if (fgets(buffer, sizeof(buffer), fp)) {
+                    iface->latency = atof(buffer);
+                }
+                pclose(fp);
+            }
+            
+            // Measure packet loss using ping
+            snprintf(ping_cmd, sizeof(ping_cmd), 
+                    "ping -c 10 -W 2 -I %s 8.8.8.8 2>/dev/null | grep 'packet loss' | awk '{print $6}' | sed 's/%//'", 
+                    iface->name);
+            
+            fp = popen(ping_cmd, "r");
+            if (fp) {
+                char buffer[32];
+                if (fgets(buffer, sizeof(buffer), fp)) {
+                    iface->loss = atof(buffer);
+                }
+                pclose(fp);
+            }
+            
+            // Get signal strength for WiFi interfaces
+            if (strcmp(iface->type, "wifi") == 0) {
+                char signal_cmd[256];
+                snprintf(signal_cmd, sizeof(signal_cmd), 
+                        "iwconfig %s 2>/dev/null | grep 'Signal level' | awk '{print $4}' | cut -d'=' -f2", 
+                        iface->name);
+                
+                fp = popen(signal_cmd, "r");
+                if (fp) {
+                    char buffer[32];
+                    if (fgets(buffer, sizeof(buffer), fp)) {
+                        // Convert dBm to percentage (rough approximation)
+                        int dbm = atoi(buffer);
+                        if (dbm >= -30) {
+                            iface->signal_strength = 100;
+                        } else if (dbm >= -50) {
+                            iface->signal_strength = 80;
+                        } else if (dbm >= -70) {
+                            iface->signal_strength = 60;
+                        } else if (dbm >= -80) {
+                            iface->signal_strength = 40;
+                        } else {
+                            iface->signal_strength = 20;
+                        }
+                    }
+                    pclose(fp);
+                }
+            }
+            
+            // Get bandwidth information
+            char bandwidth_cmd[256];
+            snprintf(bandwidth_cmd, sizeof(bandwidth_cmd), 
+                    "cat /sys/class/net/%s/speed 2>/dev/null", iface->name);
+            
+            fp = popen(bandwidth_cmd, "r");
+            if (fp) {
+                char buffer[32];
+                if (fgets(buffer, sizeof(buffer), fp)) {
+                    iface->bandwidth = atoi(buffer);
+                }
+                pclose(fp);
+            }
+            
+            // Check interface status
+            char status_cmd[256];
+            snprintf(status_cmd, sizeof(status_cmd), 
+                    "ip link show %s | grep -q 'state UP' && echo 'active' || echo 'inactive'", 
+                    iface->name);
+            
+            fp = popen(status_cmd, "r");
+            if (fp) {
+                char buffer[32];
+                if (fgets(buffer, sizeof(buffer), fp)) {
+                    // Remove newline
+                    buffer[strcspn(buffer, "\n")] = 0;
+                    strcpy(iface->status, buffer);
+                    iface->enabled = (strcmp(buffer, "active") == 0) ? 1 : 0;
+                }
+                pclose(fp);
+            }
             
             // Recalculate health score
-            g_state.interfaces[i].health_score = calculate_interface_health_score(&g_state.interfaces[i]);
-            g_state.interfaces[i].last_check = now;
+            iface->health_score = calculate_interface_health_score(iface);
+            iface->last_check = now;
         }
     }
     
     // Calculate overall network health score
     float total_score = 0;
+    int active_interfaces = 0;
     for (int i = 0; i < g_state.interface_count; i++) {
         if (g_state.interfaces[i].enabled) {
             total_score += g_state.interfaces[i].health_score;
+            active_interfaces++;
         }
     }
-    g_state.network_health_score = total_score / g_state.interface_count;
+    
+    if (active_interfaces > 0) {
+        g_state.network_health_score = total_score / active_interfaces;
+    } else {
+        g_state.network_health_score = 0.0;
+    }
+    
     g_state.last_network_check = now;
     
     return 0;
 }
+

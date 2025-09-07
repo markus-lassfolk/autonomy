@@ -26,7 +26,7 @@ static const double POSITION_THRESHOLD = 50.0;    // 50 meters position change t
 
 // GPS source types
 static const char* GPS_SOURCE_NAMES[] = {
-    "unknown", "rutos", "starlink", "external", "simulated"
+    "unknown", "rutos", "starlink", "external"
 };
 
 // Global GPS manager state

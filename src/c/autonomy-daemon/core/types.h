@@ -141,7 +141,6 @@ typedef enum {
     GPS_SOURCE_GOOGLE,
     GPS_SOURCE_COMBINED,
     GPS_SOURCE_EXTERNAL,
-    GPS_SOURCE_SIMULATED,
     GPS_SOURCE_MAX
 } gps_source_type_t;
 
@@ -151,7 +150,6 @@ typedef enum {
     GPS_SOURCE_TYPE_RUTOS,
     GPS_SOURCE_TYPE_STARLINK,
     GPS_SOURCE_TYPE_EXTERNAL,
-    GPS_SOURCE_TYPE_SIMULATED,
     GPS_SOURCE_TYPE_CUSTOM
 } gps_integration_source_type_t;
 
@@ -329,7 +327,6 @@ typedef enum {
     GPS_FIX_QUALITY_RTK_FLOAT = 5,
     GPS_FIX_QUALITY_ESTIMATED = 6,
     GPS_FIX_QUALITY_MANUAL = 7,
-    GPS_FIX_QUALITY_SIMULATED = 8,
     GPS_FIX_QUALITY_MAX
 } gps_fix_quality_t;
 

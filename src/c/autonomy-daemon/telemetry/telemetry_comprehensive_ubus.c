@@ -369,37 +369,43 @@ int telemetry_comprehensive_ubus_get_decision_history(struct ubus_context *ctx, 
 
 // Additional UBUS method implementations would continue here...
 
-// Simulate ML algorithm on historical data
-int telemetry_comprehensive_ubus_simulate_ml_algorithm(struct ubus_context *ctx, struct ubus_object *obj,
+// Execute real ML algorithm on historical data
+int telemetry_comprehensive_ubus_execute_ml_algorithm(struct ubus_context *ctx, struct ubus_object *obj,
                                                       struct ubus_request_data *req, const char *method,
                                                       struct blob_attr *msg)
 {
-    // Parse optional inputs: algorithm_name, start_time, end_time
+    // Parse ML algorithm execution parameters
     enum {
-        SIM_ALG_NAME,
-        SIM_START,
-        SIM_END,
-        __SIM_MAX
+        ML_ALG_NAME,
+        ML_START,
+        ML_END,
+        ML_FEATURES,
+        ML_MODEL_PATH,
+        __ML_MAX
     };
-    static const struct blobmsg_policy policy[__SIM_MAX] = {
-        [SIM_ALG_NAME] = { .name = "algorithm_name", .type = BLOBMSG_TYPE_STRING },
-        [SIM_START]    = { .name = "start_time",     .type = BLOBMSG_TYPE_INT64  },
-        [SIM_END]      = { .name = "end_time",       .type = BLOBMSG_TYPE_INT64  },
+    static const struct blobmsg_policy policy[__ML_MAX] = {
+        [ML_ALG_NAME] = { .name = "algorithm_name", .type = BLOBMSG_TYPE_STRING },
+        [ML_START]    = { .name = "start_time",     .type = BLOBMSG_TYPE_INT64  },
+        [ML_END]      = { .name = "end_time",       .type = BLOBMSG_TYPE_INT64  },
+        [ML_FEATURES] = { .name = "features",       .type = BLOBMSG_TYPE_ARRAY  },
+        [ML_MODEL_PATH] = { .name = "model_path",   .type = BLOBMSG_TYPE_STRING },
     };
 
-    struct blob_attr *tb[__SIM_MAX];
+    struct blob_attr *tb[__ML_MAX];
     const char *algorithm_name = "predictive_failover_v1";
     int64_t start_time = 0;
     int64_t end_time = 0;
+    const char *model_path = "/var/lib/autonomy/ml_models/";
 
     if (msg) {
-        blobmsg_parse(policy, __SIM_MAX, tb, blob_data(msg), blob_len(msg));
-        if (tb[SIM_ALG_NAME]) algorithm_name = blobmsg_get_string(tb[SIM_ALG_NAME]);
-        if (tb[SIM_START])    start_time     = (int64_t)blobmsg_get_u64(tb[SIM_START]);
-        if (tb[SIM_END])      end_time       = (int64_t)blobmsg_get_u64(tb[SIM_END]);
+        blobmsg_parse(policy, __ML_MAX, tb, blob_data(msg), blob_len(msg));
+        if (tb[ML_ALG_NAME]) algorithm_name = blobmsg_get_string(tb[ML_ALG_NAME]);
+        if (tb[ML_START])    start_time     = (int64_t)blobmsg_get_u64(tb[ML_START]);
+        if (tb[ML_END])      end_time       = (int64_t)blobmsg_get_u64(tb[ML_END]);
+        if (tb[ML_MODEL_PATH]) model_path = blobmsg_get_string(tb[ML_MODEL_PATH]);
     }
 
-    // Basic input sanity
+    // Basic input validation
     if (end_time != 0 && start_time != 0 && end_time < start_time) {
         int64_t tmp = start_time; start_time = end_time; end_time = tmp;
     }
@@ -407,9 +413,87 @@ int telemetry_comprehensive_ubus_simulate_ml_algorithm(struct ubus_context *ctx,
     struct blob_buf bb = {0};
     blob_buf_init(&bb, 0);
 
-    blobmsg_add_bool(&bb, "success", true);
-    void *root = blobmsg_open_table(&bb, "simulation_results");
+    // Check if ML model exists
+    char model_file[512];
+    snprintf(model_file, sizeof(model_file), "%s%s.model", model_path, algorithm_name);
+    
+    FILE *model_fp = fopen(model_file, "r");
+    if (!model_fp) {
+        blobmsg_add_bool(&bb, "success", false);
+        blobmsg_add_string(&bb, "error", "ML model not found");
+        blobmsg_add_string(&bb, "model_path", model_file);
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    fclose(model_fp);
+
+    // Load and execute real ML algorithm
+    bool ml_success = true;
+    char ml_error[256] = "";
+    
+    // Get historical data for ML processing
+    const int MAX_SAMPLES = 5000;
+    telemetry_sample_t *samples = calloc(MAX_SAMPLES, sizeof(telemetry_sample_t));
+    int samples_analyzed = 0;
+    if (samples) {
+        samples_analyzed = telemetry_comprehensive_get_historical_samples(NULL, (time_t)start_time, (time_t)end_time, samples, MAX_SAMPLES);
+    }
+    
+    // Execute ML algorithm using Python/ML framework
+    char ml_command[1024];
+    snprintf(ml_command, sizeof(ml_command), 
+            "python3 /usr/lib/autonomy/ml_executor.py --algorithm %s --model %s --start %ld --end %ld --samples %d 2>&1",
+            algorithm_name, model_file, (long)start_time, (long)end_time, samples_analyzed);
+    
+    FILE *ml_fp = popen(ml_command, "r");
+    if (!ml_fp) {
+        ml_success = false;
+        strcpy(ml_error, "Failed to execute ML algorithm");
+    } else {
+        char ml_output[4096];
+        char *result = fgets(ml_output, sizeof(ml_output), ml_fp);
+        int exit_code = pclose(ml_fp);
+        
+        if (exit_code != 0 || !result) {
+            ml_success = false;
+            strcpy(ml_error, "ML algorithm execution failed");
+        } else {
+            // Parse ML results from JSON output
+            json_object *ml_results = json_tokener_parse(ml_output);
+            if (ml_results) {
+                // Extract ML results from JSON
+                json_object *predictions, *accuracy, *confidence;
+                if (json_object_object_get_ex(ml_results, "predictions", &predictions) &&
+                    json_object_object_get_ex(ml_results, "accuracy", &accuracy) &&
+                    json_object_object_get_ex(ml_results, "confidence", &confidence)) {
+                    
+                    // ML execution successful
+                    ml_success = true;
+                } else {
+                    ml_success = false;
+                    strcpy(ml_error, "Invalid ML results format");
+                }
+                json_object_put(ml_results);
+            } else {
+                ml_success = false;
+                strcpy(ml_error, "Failed to parse ML results");
+            }
+        }
+    }
+
+    blobmsg_add_bool(&bb, "success", ml_success);
+    void *root = blobmsg_open_table(&bb, "ml_results");
     blobmsg_add_string(&bb, "algorithm_name", algorithm_name);
+    
+    if (!ml_success) {
+        blobmsg_add_string(&bb, "error", ml_error);
+        blobmsg_close_table(&bb, root);
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        if (samples) free(samples);
+        return UBUS_STATUS_OK;
+    }
 
     // time_range
     void *tr = blobmsg_open_table(&bb, "time_range");
@@ -417,33 +501,83 @@ int telemetry_comprehensive_ubus_simulate_ml_algorithm(struct ubus_context *ctx,
     blobmsg_add_u64(&bb, "end", (uint64_t)end_time);
     blobmsg_close_table(&bb, tr);
 
-    // For now, produce deterministic counts based on inputs
-    uint32_t samples_analyzed = 15000;
-    uint32_t decisions_simulated = 64;
-    blobmsg_add_u32(&bb, "samples_analyzed", samples_analyzed);
-    blobmsg_add_u32(&bb, "decisions_simulated", decisions_simulated);
+    blobmsg_add_u32(&bb, "samples_analyzed", (uint32_t)samples_analyzed);
 
-    // performance
+    // Get real ML performance metrics from results
+    double ml_accuracy = 0.0, ml_precision = 0.0, ml_recall = 0.0, ml_f1 = 0.0;
+    double ml_confidence = 0.0;
+    int ml_predictions = 0;
+    
+    // Parse ML results from the executed algorithm
+    json_object *ml_results = json_tokener_parse(ml_output);
+    if (ml_results) {
+        json_object *accuracy, *precision, *recall, *f1, *confidence, *predictions;
+        
+        if (json_object_object_get_ex(ml_results, "accuracy", &accuracy)) {
+            ml_accuracy = json_object_get_double(accuracy);
+        }
+        if (json_object_object_get_ex(ml_results, "precision", &precision)) {
+            ml_precision = json_object_get_double(precision);
+        }
+        if (json_object_object_get_ex(ml_results, "recall", &recall)) {
+            ml_recall = json_object_get_double(recall);
+        }
+        if (json_object_object_get_ex(ml_results, "f1_score", &f1)) {
+            ml_f1 = json_object_get_double(f1);
+        }
+        if (json_object_object_get_ex(ml_results, "confidence", &confidence)) {
+            ml_confidence = json_object_get_double(confidence);
+        }
+        if (json_object_object_get_ex(ml_results, "predictions", &predictions)) {
+            ml_predictions = json_object_array_length(predictions);
+        }
+        
+        json_object_put(ml_results);
+    }
+    
+    // Add ML performance metrics
     void *perf = blobmsg_open_table(&bb, "performance");
-    blobmsg_add_u32(&bb, "true_positives", 42);
-    blobmsg_add_u32(&bb, "false_positives", 8);
-    blobmsg_add_u32(&bb, "true_negatives", 15350);
-    blobmsg_add_u32(&bb, "false_negatives", 20);
-    blobmsg_add_double(&bb, "precision", 0.84);
-    blobmsg_add_double(&bb, "recall", 0.68);
-    blobmsg_add_double(&bb, "f1_score", 0.75);
+    blobmsg_add_double(&bb, "accuracy", ml_accuracy);
+    blobmsg_add_double(&bb, "precision", ml_precision);
+    blobmsg_add_double(&bb, "recall", ml_recall);
+    blobmsg_add_double(&bb, "f1_score", ml_f1);
+    blobmsg_add_double(&bb, "confidence", ml_confidence);
+    blobmsg_add_u32(&bb, "predictions_count", ml_predictions);
     blobmsg_close_table(&bb, perf);
 
-    // decisions
-    void *decisions = blobmsg_open_array(&bb, "decisions");
-    for (int i = 0; i < 3; i++) {
-        void *d = blobmsg_open_table(&bb, NULL);
-        blobmsg_add_string(&bb, "type", (i == 0) ? "failover" : "evaluation");
-        blobmsg_add_double(&bb, "confidence", 0.70 + (i * 0.05));
-        blobmsg_add_bool(&bb, "predicted_outage", i == 0);
-        blobmsg_close_table(&bb, d);
+    // Add ML predictions (up to 5 recent)
+    void *predictions = blobmsg_open_array(&bb, "predictions");
+    if (ml_results && ml_predictions > 0) {
+        json_object *predictions_array;
+        if (json_object_object_get_ex(ml_results, "predictions", &predictions_array)) {
+            int to_emit = (ml_predictions > 5) ? 5 : ml_predictions;
+            for (int i = 0; i < to_emit; i++) {
+                json_object *prediction = json_object_array_get_idx(predictions_array, i);
+                if (prediction) {
+                    void *p = blobmsg_open_table(&bb, NULL);
+                    
+                    json_object *type, *confidence, *timestamp, *outcome;
+                    if (json_object_object_get_ex(prediction, "type", &type)) {
+                        blobmsg_add_string(&bb, "type", json_object_get_string(type));
+                    }
+                    if (json_object_object_get_ex(prediction, "confidence", &confidence)) {
+                        blobmsg_add_double(&bb, "confidence", json_object_get_double(confidence));
+                    }
+                    if (json_object_object_get_ex(prediction, "timestamp", &timestamp)) {
+                        blobmsg_add_u64(&bb, "timestamp", json_object_get_int64(timestamp));
+                    }
+                    if (json_object_object_get_ex(prediction, "outcome", &outcome)) {
+                        blobmsg_add_string(&bb, "outcome", json_object_get_string(outcome));
+                    }
+                    
+                    blobmsg_close_table(&bb, p);
+                }
+            }
+        }
     }
-    blobmsg_close_array(&bb, decisions);
+    blobmsg_close_array(&bb, predictions);
+
+    if (samples) free(samples);
 
     blobmsg_close_table(&bb, root);
 
@@ -460,7 +594,7 @@ const struct ubus_method telemetry_comprehensive_ubus_methods[] = {
     UBUS_METHOD("get_samples_by_location", telemetry_comprehensive_ubus_get_samples_by_location, telemetry_location_policy),
     UBUS_METHOD("analyze_trends", telemetry_comprehensive_ubus_analyze_trends, NULL),
     UBUS_METHOD("export_ml_dataset", telemetry_comprehensive_ubus_export_ml_dataset, NULL),
-    UBUS_METHOD("simulate_ml_algorithm", telemetry_comprehensive_ubus_simulate_ml_algorithm, NULL),
+    UBUS_METHOD("execute_ml_algorithm", telemetry_comprehensive_ubus_execute_ml_algorithm, NULL),
     UBUS_METHOD_NOARG("force_collection", telemetry_comprehensive_ubus_force_collection),
     UBUS_METHOD_NOARG("force_cleanup", telemetry_comprehensive_ubus_force_cleanup),
     UBUS_METHOD_NOARG("health_check", telemetry_comprehensive_ubus_health_check),

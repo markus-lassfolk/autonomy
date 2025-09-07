@@ -1,4 +1,5 @@
 #include "../external/external_apis.h"
+#include "../wifi/wifi_enhanced.h"
 #include "../utils/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -1001,8 +1002,30 @@ int external_apis_get_google_location(const void* cell_towers, const void* wifi_
     // Add WiFi access points if available
     if (wifi_aps) {
         json_object* wifi_array = json_object_new_array();
-        // For now, we'll implement basic WiFi scanning
-        // This would integrate with actual WiFi scan results
+        
+        // Get real WiFi scan results from enhanced WiFi system
+        wifi_access_point_t access_points[32];
+        int ap_count = wifi_enhanced_ubus_scan("radio0", access_points, 32);
+        
+        if (ap_count > 0) {
+            LOGX_DEBUG_MSG("Found %d WiFi access points for location request", ap_count);
+            
+            for (int i = 0; i < ap_count && i < 32; i++) {
+                json_object* ap_obj = json_object_new_object();
+                
+                // Add WiFi AP data in Google Location Services format
+                json_object_object_add(ap_obj, "macAddress", json_object_new_string(access_points[i].bssid));
+                json_object_object_add(ap_obj, "signalStrength", json_object_new_int(access_points[i].signal));
+                json_object_object_add(ap_obj, "age", json_object_new_int(0)); // Real-time data
+                json_object_object_add(ap_obj, "channel", json_object_new_int(access_points[i].channel));
+                json_object_object_add(ap_obj, "signalToNoiseRatio", json_object_new_int(access_points[i].signal - access_points[i].noise_floor));
+                
+                json_object_array_add(wifi_array, ap_obj);
+            }
+        } else {
+            LOGX_DEBUG_MSG("No WiFi access points found for location request");
+        }
+        
         json_object_object_add(request_json, "wifiAccessPoints", wifi_array);
     }
     

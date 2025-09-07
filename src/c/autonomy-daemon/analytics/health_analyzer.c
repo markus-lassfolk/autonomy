@@ -7,6 +7,14 @@
 #include <pthread.h>
 #include <time.h>
 #include <math.h>
+#include <libubus.h>
+#include <libubox/blobmsg.h>
+
+// UBUS policy definitions
+enum {
+    INTERFACE_INTERFACE,
+    __INTERFACE_MAX
+};
 
 // Global health analyzer instance
 static health_analyzer_t g_health_analyzer = {0};
@@ -85,17 +93,80 @@ int health_analyzer_analyze(health_analysis_t* result)
     memset(result, 0, sizeof(health_analysis_t));
     result->analysis_timestamp = time(NULL);
 
-    // Get list of available network members (interfaces)
-    // For now, use a simple approach - analyze common interface names
-    const char* common_interfaces[] = {"mob1s1a1", "wwan0", "eth0", "wlan0"};
-    int interface_count = 4;
+    // Get real network interfaces via UBUS network.interface
+    struct ubus_context* ctx = ubus_connect(NULL);
+    if (!ctx) {
+        LOGX_ERROR_MSG("Failed to connect to UBUS for network health analysis");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    uint32_t id;
+    int ret = ubus_lookup_id(ctx, "network.interface", &id);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("UBUS network.interface not found");
+        ubus_free(ctx);
+        return AUTONOMY_ERROR_NOT_FOUND;
+    }
+    
+    // Get interface list via UBUS
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    ret = ubus_invoke(ctx, id, "dump", bb.head, NULL, NULL, 1000);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to get network interfaces via UBUS");
+        blob_buf_free(&bb);
+        ubus_free(ctx);
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Parse UBUS response to get interface names
+    char interface_names[16][32];
+    int interface_count = 0;
+    
+    struct blob_attr *tb[__INTERFACE_MAX];
+    static const struct blobmsg_policy policy[__INTERFACE_MAX] = {
+        [INTERFACE_INTERFACE] = { .name = "interface", .type = BLOBMSG_TYPE_ARRAY },
+    };
+    
+    blobmsg_parse(policy, __INTERFACE_MAX, tb, blob_data(bb.head), blob_len(bb.head));
+    
+    if (tb[INTERFACE_INTERFACE]) {
+        struct blob_attr *cur;
+        int rem;
+        
+        blobmsg_for_each_attr(cur, tb[INTERFACE_INTERFACE], rem) {
+            if (interface_count >= 16) break;
+            
+            const char* interface_name = blobmsg_get_string(cur);
+            if (interface_name && strlen(interface_name) > 0) {
+                strncpy(interface_names[interface_count], interface_name, sizeof(interface_names[interface_count]) - 1);
+                interface_names[interface_count][sizeof(interface_names[interface_count]) - 1] = '\0';
+                interface_count++;
+            }
+        }
+    }
+    
+    blob_buf_free(&bb);
+    ubus_free(ctx);
+    
+    if (interface_count == 0) {
+        LOGX_WARN_MSG("No network interfaces found via UBUS, using fallback");
+        // Fallback to common interface names
+        const char* common_interfaces[] = {"mob1s1a1", "wwan0", "eth0", "wlan0"};
+        interface_count = 4;
+        for (int i = 0; i < interface_count; i++) {
+            strncpy(interface_names[i], common_interfaces[i], sizeof(interface_names[i]) - 1);
+            interface_names[i][sizeof(interface_names[i]) - 1] = '\0';
+        }
+    }
 
     double total_health = 0.0;
     int healthy_members = 0;
     int total_issues = 0;
 
     for (int i = 0; i < interface_count && i < 16; i++) {
-        const char* member_name = common_interfaces[i];
+        const char* member_name = interface_names[i];
         
         // Analyze member health
         member_health_t* member_health = &result->member_health[i];
@@ -241,15 +312,95 @@ static int analyze_telemetry_data(const char* member_name, member_health_t* heal
     telemetry_sample_t samples[100];
     int sample_count = 0;
 
-    // Try to get telemetry data (this might fail if telemetry isn't available)
-    // For now, use a simple heuristic approach
+    // Real telemetry data analysis
+    double signal_health = 0.0;
+    double latency_health = 0.0;
+    double reliability_health = 0.0;
     
-    // Calculate health components
-    double signal_health = 75.0;  // Default moderate health
-    double latency_health = 80.0; // Default good health
-    double reliability_health = 85.0; // Default good health
+    // Get real telemetry data from database
+    sqlite3* db = NULL;
+    int ret = sqlite3_open("/var/lib/autonomy/autonomy.db", &db);
+    if (ret == SQLITE_OK) {
+        char query[512];
+        snprintf(query, sizeof(query),
+                "SELECT signal_strength, latency, packet_loss, uptime FROM telemetry_data "
+                "WHERE member_name = '%s' AND timestamp > %ld ORDER BY timestamp DESC LIMIT 100",
+                member_name, time(NULL) - 3600); // Last hour
+        
+        sqlite3_stmt* stmt;
+        ret = sqlite3_prepare_v2(db, query, -1, &stmt, NULL);
+        if (ret == SQLITE_OK) {
+            double total_signal = 0.0;
+            double total_latency = 0.0;
+            double total_reliability = 0.0;
+            int sample_count = 0;
+            
+            while (sqlite3_step(stmt) == SQLITE_ROW) {
+                double signal = sqlite3_column_double(stmt, 0);
+                double latency = sqlite3_column_double(stmt, 1);
+                double packet_loss = sqlite3_column_double(stmt, 2);
+                double uptime = sqlite3_column_double(stmt, 3);
+                
+                total_signal += signal;
+                total_latency += latency;
+                total_reliability += (100.0 - packet_loss); // Convert packet loss to reliability
+                
+                sample_count++;
+            }
+            
+            if (sample_count > 0) {
+                signal_health = total_signal / sample_count;
+                latency_health = 100.0 - (total_latency / sample_count); // Convert latency to health score
+                reliability_health = total_reliability / sample_count;
+            }
+            
+            sqlite3_finalize(stmt);
+        }
+        sqlite3_close(db);
+    }
+    
+    // Fallback to system metrics if database is unavailable
+    if (signal_health == 0.0 && latency_health == 0.0 && reliability_health == 0.0) {
+        // Get real-time system metrics
+        FILE *metrics_file = fopen("/var/lib/autonomy/telemetry/current_metrics.json", "r");
+        if (metrics_file) {
+            char buffer[1024];
+            if (fgets(buffer, sizeof(buffer), metrics_file)) {
+                // Parse JSON metrics (simplified)
+                char *signal_start = strstr(buffer, "\"signal_strength\":");
+                char *latency_start = strstr(buffer, "\"latency\":");
+                char *loss_start = strstr(buffer, "\"packet_loss\":");
+                
+                if (signal_start) {
+                    signal_health = atof(signal_start + 17);
+                }
+                if (latency_start) {
+                    double latency = atof(latency_start + 10);
+                    latency_health = 100.0 - (latency / 10.0); // Convert to health score
+                }
+                if (loss_start) {
+                    double loss = atof(loss_start + 13);
+                    reliability_health = 100.0 - loss;
+                }
+            }
+            fclose(metrics_file);
+        }
+        
+        // Final fallback to reasonable defaults
+        if (signal_health == 0.0) signal_health = 75.0;
+        if (latency_health == 0.0) latency_health = 80.0;
+        if (reliability_health == 0.0) reliability_health = 85.0;
+    }
+    
+    // Ensure health scores are within valid range
+    if (signal_health < 0.0) signal_health = 0.0;
+    if (signal_health > 100.0) signal_health = 100.0;
+    if (latency_health < 0.0) latency_health = 0.0;
+    if (latency_health > 100.0) latency_health = 100.0;
+    if (reliability_health < 0.0) reliability_health = 0.0;
+    if (reliability_health > 100.0) reliability_health = 100.0;
 
-    // Combine health scores
+    // Combine health scores with weighted average
     health->score = (signal_health * 0.4 + latency_health * 0.3 + reliability_health * 0.3);
 
     // Update status based on score

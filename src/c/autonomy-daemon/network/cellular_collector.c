@@ -317,14 +317,38 @@ static int collect_via_ubus(cellular_info_t* info) {
             strncpy(info->ip_address, blobmsg_get_string(tb[GSM_STATUS_IP]),
                     sizeof(info->ip_address) - 1);
         } else {
-            strcpy(info->ip_address, "0.0.0.0");
+            // Try to get real IP address from network interface
+            FILE *ip_fp = popen("ip addr show wwan0 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1", "r");
+            if (ip_fp) {
+                if (fgets(info->ip_address, sizeof(info->ip_address), ip_fp)) {
+                    // Remove newline
+                    info->ip_address[strcspn(info->ip_address, "\n")] = '\0';
+                } else {
+                    strcpy(info->ip_address, "0.0.0.0");
+                }
+                pclose(ip_fp);
+            } else {
+                strcpy(info->ip_address, "0.0.0.0");
+            }
         }
 
         if (tb[GSM_STATUS_GATEWAY]) {
             strncpy(info->gateway, blobmsg_get_string(tb[GSM_STATUS_GATEWAY]),
                     sizeof(info->gateway) - 1);
         } else {
-            strcpy(info->gateway, "0.0.0.0");
+            // Try to get real gateway from routing table
+            FILE *gw_fp = popen("ip route show dev wwan0 2>/dev/null | grep default | awk '{print $3}' | head -1", "r");
+            if (gw_fp) {
+                if (fgets(info->gateway, sizeof(info->gateway), gw_fp)) {
+                    // Remove newline
+                    info->gateway[strcspn(info->gateway, "\n")] = '\0';
+                } else {
+                    strcpy(info->gateway, "0.0.0.0");
+                }
+                pclose(gw_fp);
+            } else {
+                strcpy(info->gateway, "0.0.0.0");
+            }
         }
 
         if (tb[GSM_STATUS_CONNECTED]) {
@@ -705,9 +729,100 @@ static int parse_gsmctl_output(const char* output, cellular_info_t* info) {
         }
     }
     
-    // Set some default values for other metrics
-    info->network_type = CELLULAR_NETWORK_TYPE_LTE;
-    info->connection_state = CELLULAR_STATE_CONNECTED;
+    // Get real network type and connection state
+    char* net_type_line = strstr(output, "+COPS:");
+    if (net_type_line) {
+        // Parse network type from COPS response
+        char* tech_start = strstr(net_type_line, "(");
+        if (tech_start) {
+            char* tech_end = strstr(tech_start, ")");
+            if (tech_end) {
+                char tech[16] = {0};
+                strncpy(tech, tech_start + 1, tech_end - tech_start - 1);
+                
+                if (strstr(tech, "LTE") || strstr(tech, "4G")) {
+                    info->network_type = CELLULAR_NETWORK_TYPE_LTE;
+                } else if (strstr(tech, "UMTS") || strstr(tech, "3G")) {
+                    info->network_type = CELLULAR_NETWORK_TYPE_UMTS;
+                } else if (strstr(tech, "GSM") || strstr(tech, "2G")) {
+                    info->network_type = CELLULAR_NETWORK_TYPE_GSM;
+                } else if (strstr(tech, "5G") || strstr(tech, "NR")) {
+                    info->network_type = CELLULAR_NETWORK_TYPE_5G;
+                } else {
+                    info->network_type = CELLULAR_NETWORK_TYPE_LTE; // Default fallback
+                }
+            }
+        }
+    } else {
+        // Try to get network type from system
+        FILE *net_fp = popen("cat /sys/class/net/wwan0/operstate 2>/dev/null", "r");
+        if (net_fp) {
+            char state[16];
+            if (fgets(state, sizeof(state), net_fp)) {
+                if (strstr(state, "up")) {
+                    info->connection_state = CELLULAR_STATE_CONNECTED;
+                } else {
+                    info->connection_state = CELLULAR_STATE_DISCONNECTED;
+                }
+            }
+            pclose(net_fp);
+        } else {
+            info->connection_state = CELLULAR_STATE_UNKNOWN;
+        }
+        
+        // Try to get network type from modem info
+        FILE *modem_fp = popen("mmcli -m 0 --command='AT+QNWINFO' 2>/dev/null | grep -E '(LTE|UMTS|GSM|5G)'", "r");
+        if (modem_fp) {
+            char net_info[64];
+            if (fgets(net_info, sizeof(net_info), modem_fp)) {
+                if (strstr(net_info, "LTE") || strstr(net_info, "4G")) {
+                    info->network_type = CELLULAR_NETWORK_TYPE_LTE;
+                } else if (strstr(net_info, "UMTS") || strstr(net_info, "3G")) {
+                    info->network_type = CELLULAR_NETWORK_TYPE_UMTS;
+                } else if (strstr(net_info, "GSM") || strstr(net_info, "2G")) {
+                    info->network_type = CELLULAR_NETWORK_TYPE_GSM;
+                } else if (strstr(net_info, "5G") || strstr(net_info, "NR")) {
+                    info->network_type = CELLULAR_NETWORK_TYPE_5G;
+                } else {
+                    info->network_type = CELLULAR_NETWORK_TYPE_LTE; // Default fallback
+                }
+            }
+            pclose(modem_fp);
+        } else {
+            info->network_type = CELLULAR_NETWORK_TYPE_LTE; // Default fallback
+        }
+    }
+    
+    // Get real connection state
+    char* reg_line = strstr(output, "+CREG:");
+    if (reg_line) {
+        int reg_status;
+        if (sscanf(reg_line, "+CREG: %*d,%d", &reg_status) == 1) {
+            switch (reg_status) {
+                case 1:
+                case 5:
+                    info->connection_state = CELLULAR_STATE_CONNECTED;
+                    break;
+                case 2:
+                    info->connection_state = CELLULAR_STATE_SEARCHING;
+                    break;
+                case 3:
+                case 4:
+                    info->connection_state = CELLULAR_STATE_DENIED;
+                    break;
+                default:
+                    info->connection_state = CELLULAR_STATE_UNKNOWN;
+                    break;
+            }
+        }
+    } else {
+        // Fallback: check if we have an IP address
+        if (strcmp(info->ip_address, "0.0.0.0") != 0) {
+            info->connection_state = CELLULAR_STATE_CONNECTED;
+        } else {
+            info->connection_state = CELLULAR_STATE_DISCONNECTED;
+        }
+    }
     
     return AUTONOMY_SUCCESS;
 }

@@ -365,21 +365,90 @@ bool unwiredlabs_api_validate_token(void) {
         return false;
     }
     
-    // Make a simple test request with minimal data
-    unwiredlabs_response_t test_response;
-    unwiredlabs_cell_t test_cell = {0};
-    strncpy(test_cell.lac, "1", sizeof(test_cell.lac) - 1);
-    test_cell.lac[sizeof(test_cell.lac) - 1] = '\0';
-    strncpy(test_cell.cid, "1", sizeof(test_cell.cid) - 1);
-    test_cell.cid[sizeof(test_cell.cid) - 1] = '\0';
-    test_cell.mcc = 1;
-    test_cell.mnc = 1;
-    strncpy(test_cell.radio, "lte", sizeof(test_cell.radio) - 1);
-    test_cell.radio[sizeof(test_cell.radio) - 1] = '\0';
-    test_cell.signal = -100;
+    // Validate API token with real cellular data
+    unwiredlabs_response_t validation_response;
     
-    int result = unwiredlabs_api_get_cellular_location(&test_cell, 1, &test_response);
-    return (result == 0 && test_response.success);
+    // Get real cellular data from system
+    unwiredlabs_cell_t real_cell = {0};
+    
+    // Try to get real cellular information from modem
+    FILE *cell_fp = popen("mmcli -m 0 --command='AT+QCELLINFO' 2>/dev/null", "r");
+    if (cell_fp) {
+        char cell_info[256];
+        if (fgets(cell_info, sizeof(cell_info), cell_fp)) {
+            // Parse real cell information
+            int mcc, mnc, lac, cid, signal;
+            if (sscanf(cell_info, "+QCELLINFO: %d,%d,%d,%d,%d", &mcc, &mnc, &lac, &cid, &signal) >= 4) {
+                real_cell.mcc = mcc;
+                real_cell.mnc = mnc;
+                snprintf(real_cell.lac, sizeof(real_cell.lac), "%d", lac);
+                snprintf(real_cell.cid, sizeof(real_cell.cid), "%d", cid);
+                real_cell.signal = signal;
+                strncpy(real_cell.radio, "lte", sizeof(real_cell.radio) - 1);
+                real_cell.radio[sizeof(real_cell.radio) - 1] = '\0';
+            }
+        }
+        pclose(cell_fp);
+    }
+    
+    // Fallback: try gsmctl for cellular data
+    if (real_cell.mcc == 0) {
+        FILE *gsmctl_fp = popen("gsmctl -A 'AT+QCELLINFO' 2>/dev/null", "r");
+        if (gsmctl_fp) {
+            char gsmctl_info[256];
+            if (fgets(gsmctl_info, sizeof(gsmctl_info), gsmctl_fp)) {
+                // Parse gsmctl cell information
+                int mcc, mnc, lac, cid, signal;
+                if (sscanf(gsmctl_info, "+QCELLINFO: %d,%d,%d,%d,%d", &mcc, &mnc, &lac, &cid, &signal) >= 4) {
+                    real_cell.mcc = mcc;
+                    real_cell.mnc = mnc;
+                    snprintf(real_cell.lac, sizeof(real_cell.lac), "%d", lac);
+                    snprintf(real_cell.cid, sizeof(real_cell.cid), "%d", cid);
+                    real_cell.signal = signal;
+                    strncpy(real_cell.radio, "lte", sizeof(real_cell.radio) - 1);
+                    real_cell.radio[sizeof(real_cell.radio) - 1] = '\0';
+                }
+            }
+            pclose(gsmctl_fp);
+        }
+    }
+    
+    // If we have real cellular data, use it for validation
+    if (real_cell.mcc > 0) {
+        int result = unwiredlabs_api_get_cellular_location(&real_cell, 1, &validation_response);
+        if (result == 0 && validation_response.success) {
+            LOGX_DEBUG_MSG("UnwiredLabs API validation successful with real cellular data");
+            return true;
+        }
+    }
+    
+    // Fallback: validate API token with HTTP request
+    char validation_url[512];
+    snprintf(validation_url, sizeof(validation_url),
+            "https://us1.unwiredlabs.com/v2/balance.php?token=%s", 
+            g_unwiredlabs_config.api_token);
+    
+    FILE *http_fp = popen("curl -s --connect-timeout 10 --max-time 30", "w");
+    if (http_fp) {
+        fprintf(http_fp, "GET %s HTTP/1.1\r\nHost: us1.unwiredlabs.com\r\n\r\n", validation_url);
+        pclose(http_fp);
+        
+        // Check response
+        char http_response[256];
+        FILE *http_resp = popen("curl -s --connect-timeout 10 --max-time 30", "r");
+        if (http_resp && fgets(http_response, sizeof(http_response), http_resp)) {
+            // Check if response contains valid balance or error message
+            if (strstr(http_response, "balance") || strstr(http_response, "credits")) {
+                LOGX_DEBUG_MSG("UnwiredLabs API token validation successful via HTTP");
+                pclose(http_resp);
+                return true;
+            }
+        }
+        if (http_resp) pclose(http_resp);
+    }
+    
+    LOGX_WARN_MSG("UnwiredLabs API token validation failed");
+    return false;
 }
 
 // Check quota status

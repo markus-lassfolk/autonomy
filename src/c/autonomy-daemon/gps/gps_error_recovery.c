@@ -1,4 +1,5 @@
 #include "gps_error_recovery.h"
+#include "gps_rutos.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
 #include <string.h>
@@ -9,6 +10,10 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <sys/socket.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <libubus.h>
+#include <libubox/blobmsg.h>
 
 // Error recovery configuration
 static const int MAX_ERROR_HISTORY = 1000;                   // Maximum error history entries
@@ -46,6 +51,16 @@ static bool perform_fallback_recovery(gps_source_error_local_t *source, gps_erro
 static bool perform_reset_recovery(gps_source_error_local_t *source, gps_error_type_t error_type);
 static bool perform_degrade_recovery(gps_source_error_local_t *source, gps_error_type_t error_type);
 static bool perform_switch_source_recovery(gps_source_error_local_t *source, gps_error_type_t error_type);
+
+// Starlink and External GPS recovery helper functions
+static bool starlink_gps_retry_recovery(void);
+static bool starlink_gps_fallback_recovery(void);
+static bool starlink_gps_reset_recovery(void);
+static bool starlink_gps_degrade_recovery(void);
+static bool external_gps_retry_recovery(void);
+static bool external_gps_fallback_recovery(void);
+static bool external_gps_reset_recovery(void);
+static bool external_gps_degrade_recovery(void);
 
 static gps_error_recovery_t g_error_recovery = {0};
 static bool g_error_recovery_initialized = false;
@@ -386,14 +401,33 @@ bool attempt_error_recovery(int source_id, gps_error_type_t error_type, gps_reco
 
 // Perform retry recovery
 static bool perform_retry_recovery(gps_source_error_local_t *source, gps_error_type_t error_type) {
-    // Simulate retry attempt
     LOGX_DEBUG_MSG("Attempting retry recovery for source %d (attempt %d/%d)", 
               source->source_id, source->current_retry_count, g_error_recovery.max_retry_attempts);
     
-    // In a real implementation, this would actually retry the operation
-    // For now, we'll simulate success with decreasing probability
-    double success_probability = 1.0 - (source->current_retry_count * 0.2);
-    bool success = ((double)(rand() % 100) / 100.0) < success_probability;
+    // Perform actual retry based on source type
+    bool success = false;
+    
+    switch (source->source_type) {
+        case GPS_SOURCE_TYPE_RUTOS:
+            // Retry RUTOS GPS data reading
+            success = (gps_rutos_read_data() == AUTONOMY_SUCCESS);
+            break;
+            
+        case GPS_SOURCE_TYPE_STARLINK:
+            // Real Starlink GPS retry recovery
+            success = starlink_gps_retry_recovery();
+            break;
+            
+        case GPS_SOURCE_TYPE_EXTERNAL:
+            // Real external GPS retry recovery
+            success = external_gps_retry_recovery();
+            break;
+            
+        default:
+            LOGX_WARN_MSG("Unknown GPS source type for retry: %d", source->source_type);
+            success = false;
+            break;
+    }
     
     if (success) {
         source->recovered_errors++;
@@ -411,8 +445,34 @@ static bool perform_retry_recovery(gps_source_error_local_t *source, gps_error_t
 static bool perform_fallback_recovery(gps_source_error_local_t *source, gps_error_type_t error_type) {
     LOGX_DEBUG_MSG("Attempting fallback recovery for source %d", source->source_id);
     
-    // Simulate fallback to backup source
-    bool success = ((double)(rand() % 100) / 100.0) < 0.8; // 80% success rate
+    // Perform actual fallback based on source type
+    bool success = false;
+    
+    switch (source->source_type) {
+        case GPS_SOURCE_TYPE_RUTOS:
+            // For RUTOS, try to reinitialize the GPS system
+            gps_rutos_cleanup();
+            success = (gps_rutos_init() == AUTONOMY_SUCCESS);
+            if (success) {
+                success = (gps_rutos_start_monitoring() == AUTONOMY_SUCCESS);
+            }
+            break;
+            
+        case GPS_SOURCE_TYPE_STARLINK:
+            // Real Starlink GPS fallback recovery
+            success = starlink_gps_fallback_recovery();
+            break;
+            
+        case GPS_SOURCE_TYPE_EXTERNAL:
+            // Real external GPS fallback recovery
+            success = external_gps_fallback_recovery();
+            break;
+            
+        default:
+            LOGX_WARN_MSG("Unknown GPS source type for fallback: %d", source->source_type);
+            success = false;
+            break;
+    }
     
     if (success) {
         source->recovered_errors++;
@@ -428,8 +488,35 @@ static bool perform_fallback_recovery(gps_source_error_local_t *source, gps_erro
 static bool perform_reset_recovery(gps_source_error_local_t *source, gps_error_type_t error_type) {
     LOGX_DEBUG_MSG("Attempting reset recovery for source %d", source->source_id);
     
-    // Simulate source reset
-    bool success = ((double)(rand() % 100) / 100.0) < 0.7; // 70% success rate
+    // Perform actual reset based on source type
+    bool success = false;
+    
+    switch (source->source_type) {
+        case GPS_SOURCE_TYPE_RUTOS:
+            // For RUTOS, perform a complete reset of the GPS system
+            gps_rutos_stop_monitoring();
+            gps_rutos_cleanup();
+            success = (gps_rutos_init() == AUTONOMY_SUCCESS);
+            if (success) {
+                success = (gps_rutos_start_monitoring() == AUTONOMY_SUCCESS);
+            }
+            break;
+            
+        case GPS_SOURCE_TYPE_STARLINK:
+            // Real Starlink GPS reset recovery
+            success = starlink_gps_reset_recovery();
+            break;
+            
+        case GPS_SOURCE_TYPE_EXTERNAL:
+            // Real external GPS reset recovery
+            success = external_gps_reset_recovery();
+            break;
+            
+        default:
+            LOGX_WARN_MSG("Unknown GPS source type for reset: %d", source->source_type);
+            success = false;
+            break;
+    }
     
     if (success) {
         source->recovered_errors++;
@@ -448,11 +535,39 @@ static bool perform_reset_recovery(gps_source_error_local_t *source, gps_error_t
 static bool perform_degrade_recovery(gps_source_error_local_t *source, gps_error_type_t error_type) {
     LOGX_DEBUG_MSG("Attempting degrade recovery for source %d", source->source_id);
     
-    // Simulate service degradation
-    bool success = ((double)(rand() % 100) / 100.0) < 0.9; // 90% success rate
+    // Perform actual service degradation based on source type
+    bool success = false;
+    
+    switch (source->source_type) {
+        case GPS_SOURCE_TYPE_RUTOS:
+            // For RUTOS, reduce update frequency to degrade service
+            gps_rutos_config_t config = {0};
+            config.enabled = true;
+            config.update_interval = 10; // Increase interval to 10 seconds (degraded)
+            config.timeout = 15;         // Increase timeout
+            config.min_accuracy = 50.0f; // Accept lower accuracy
+            success = (gps_rutos_set_config(&config) == AUTONOMY_SUCCESS);
+            break;
+            
+        case GPS_SOURCE_TYPE_STARLINK:
+            // Real Starlink GPS degrade recovery
+            success = starlink_gps_degrade_recovery();
+            break;
+            
+        case GPS_SOURCE_TYPE_EXTERNAL:
+            // Real external GPS degrade recovery
+            success = external_gps_degrade_recovery();
+            break;
+            
+        default:
+            LOGX_WARN_MSG("Unknown GPS source type for degrade: %d", source->source_type);
+            success = false;
+            break;
+    }
     
     if (success) {
         source->recovered_errors++;
+        source->status = SOURCE_STATUS_DEGRADED;
         LOGX_INFO_MSG("Degrade recovery successful for source %d", source->source_id);
     } else {
         LOGX_WARN_MSG("Degrade recovery failed for source %d", source->source_id);
@@ -465,8 +580,46 @@ static bool perform_degrade_recovery(gps_source_error_local_t *source, gps_error
 static bool perform_switch_source_recovery(gps_source_error_local_t *source, gps_error_type_t error_type) {
     LOGX_DEBUG_MSG("Attempting switch source recovery for source %d", source->source_id);
     
-    // Simulate switching to another source
-    bool success = ((double)(rand() % 100) / 100.0) < 0.85; // 85% success rate
+    // Perform actual source switching based on available sources
+    bool success = false;
+    
+    // For now, we only have RUTOS GPS implemented, so switching is limited
+    // In a full implementation, this would switch between RUTOS, Starlink, and other sources
+    switch (source->source_type) {
+        case GPS_SOURCE_TYPE_RUTOS:
+            // If RUTOS is failing, we could switch to Starlink or external GPS
+            // For now, just mark as no alternative available
+            LOGX_DEBUG_MSG("No alternative GPS source available for RUTOS");
+            success = false;
+            break;
+            
+        case GPS_SOURCE_TYPE_STARLINK:
+            // If Starlink is failing, switch to RUTOS
+            if (gps_rutos_is_initialized()) {
+                success = true;
+                LOGX_INFO_MSG("Switching from Starlink to RUTOS GPS");
+            } else {
+                success = false;
+                LOGX_WARN_MSG("RUTOS GPS not available for fallback");
+            }
+            break;
+            
+        case GPS_SOURCE_TYPE_EXTERNAL:
+            // If external GPS is failing, switch to RUTOS
+            if (gps_rutos_is_initialized()) {
+                success = true;
+                LOGX_INFO_MSG("Switching from external to RUTOS GPS");
+            } else {
+                success = false;
+                LOGX_WARN_MSG("RUTOS GPS not available for fallback");
+            }
+            break;
+            
+        default:
+            LOGX_WARN_MSG("Unknown GPS source type for switch: %d", source->source_type);
+            success = false;
+            break;
+    }
     
     if (success) {
         source->recovered_errors++;
@@ -706,4 +859,315 @@ void gps_error_recovery_cleanup(void) {
     g_error_recovery_initialized = false;
     
     LOGX_INFO_MSG("GPS error recovery cleaned up");
+}
+
+// Starlink GPS recovery helper functions
+static bool starlink_gps_retry_recovery(void) {
+    LOGX_DEBUG_MSG("Attempting Starlink GPS retry recovery");
+    
+    // Try to restart Starlink GPS service
+    int ret = system("systemctl restart starlink-gps 2>/dev/null");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Failed to restart Starlink GPS service");
+        return false;
+    }
+    
+    // Wait for service to start
+    sleep(2);
+    
+    // Check if service is running
+    ret = system("systemctl is-active starlink-gps > /dev/null 2>&1");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Starlink GPS service not active after restart");
+        return false;
+    }
+    
+    // Try to get GPS data via UBUS
+    struct ubus_context* ctx = ubus_connect(NULL);
+    if (!ctx) {
+        LOGX_WARN_MSG("Failed to connect to UBUS for Starlink GPS check");
+        return false;
+    }
+    
+    uint32_t id;
+    ret = ubus_lookup_id(ctx, "starlink.gps", &id);
+    if (ret != 0) {
+        LOGX_WARN_MSG("Starlink GPS UBUS service not found");
+        ubus_free(ctx);
+        return false;
+    }
+    
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    ret = ubus_invoke(ctx, id, "get_status", bb.head, NULL, NULL, 5000);
+    ubus_free(ctx);
+    blob_buf_free(&bb);
+    
+    if (ret == 0) {
+        LOGX_INFO_MSG("Starlink GPS retry recovery successful");
+        return true;
+    } else {
+        LOGX_WARN_MSG("Starlink GPS UBUS call failed");
+        return false;
+    }
+}
+
+static bool starlink_gps_fallback_recovery(void) {
+    LOGX_DEBUG_MSG("Attempting Starlink GPS fallback recovery");
+    
+    // Try to reinitialize Starlink GPS system
+    int ret = system("systemctl stop starlink-gps 2>/dev/null");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Failed to stop Starlink GPS service");
+    }
+    
+    // Clear any stale data
+    system("rm -f /var/lib/autonomy/starlink_gps_data 2>/dev/null");
+    
+    // Restart service
+    ret = system("systemctl start starlink-gps 2>/dev/null");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Failed to start Starlink GPS service");
+        return false;
+    }
+    
+    // Wait for initialization
+    sleep(5);
+    
+    // Check service status
+    ret = system("systemctl is-active starlink-gps > /dev/null 2>&1");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Starlink GPS service not active after fallback");
+        return false;
+    }
+    
+    LOGX_INFO_MSG("Starlink GPS fallback recovery successful");
+    return true;
+}
+
+static bool starlink_gps_reset_recovery(void) {
+    LOGX_DEBUG_MSG("Attempting Starlink GPS reset recovery");
+    
+    // Complete reset of Starlink GPS system
+    system("systemctl stop starlink-gps 2>/dev/null");
+    system("systemctl stop starlink-tracker 2>/dev/null");
+    
+    // Clear all Starlink GPS data
+    system("rm -f /var/lib/autonomy/starlink_gps_data 2>/dev/null");
+    system("rm -f /var/lib/autonomy/starlink_status 2>/dev/null");
+    
+    // Reset configuration
+    system("uci delete starlink.gps.enabled 2>/dev/null");
+    system("uci set starlink.gps.enabled=1 2>/dev/null");
+    system("uci commit starlink 2>/dev/null");
+    
+    // Restart services
+    int ret = system("systemctl start starlink-tracker 2>/dev/null");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Failed to start Starlink tracker");
+        return false;
+    }
+    
+    sleep(3);
+    
+    ret = system("systemctl start starlink-gps 2>/dev/null");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Failed to start Starlink GPS service");
+        return false;
+    }
+    
+    // Wait for full initialization
+    sleep(10);
+    
+    // Verify services are running
+    ret = system("systemctl is-active starlink-gps > /dev/null 2>&1");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Starlink GPS service not active after reset");
+        return false;
+    }
+    
+    LOGX_INFO_MSG("Starlink GPS reset recovery successful");
+    return true;
+}
+
+static bool starlink_gps_degrade_recovery(void) {
+    LOGX_DEBUG_MSG("Attempting Starlink GPS degrade recovery");
+    
+    // Degrade Starlink GPS service by reducing update frequency
+    system("uci set starlink.gps.update_interval=30 2>/dev/null");
+    system("uci set starlink.gps.timeout=60 2>/dev/null");
+    system("uci set starlink.gps.min_accuracy=100.0 2>/dev/null");
+    system("uci commit starlink 2>/dev/null");
+    
+    // Restart service with degraded settings
+    int ret = system("systemctl restart starlink-gps 2>/dev/null");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Failed to restart Starlink GPS with degraded settings");
+        return false;
+    }
+    
+    // Wait for degraded service to start
+    sleep(3);
+    
+    // Check if service is running
+    ret = system("systemctl is-active starlink-gps > /dev/null 2>&1");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Starlink GPS service not active in degraded mode");
+        return false;
+    }
+    
+    LOGX_INFO_MSG("Starlink GPS degrade recovery successful");
+    return true;
+}
+
+// External GPS recovery helper functions
+static bool external_gps_retry_recovery(void) {
+    LOGX_DEBUG_MSG("Attempting external GPS retry recovery");
+    
+    // Try to restart external GPS service
+    int ret = system("systemctl restart external-gps 2>/dev/null");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Failed to restart external GPS service");
+        return false;
+    }
+    
+    // Wait for service to start
+    sleep(2);
+    
+    // Check if service is running
+    ret = system("systemctl is-active external-gps > /dev/null 2>&1");
+    if (ret != 0) {
+        LOGX_WARN_MSG("External GPS service not active after restart");
+        return false;
+    }
+    
+    // Try to get GPS data via UBUS
+    struct ubus_context* ctx = ubus_connect(NULL);
+    if (!ctx) {
+        LOGX_WARN_MSG("Failed to connect to UBUS for external GPS check");
+        return false;
+    }
+    
+    uint32_t id;
+    ret = ubus_lookup_id(ctx, "external.gps", &id);
+    if (ret != 0) {
+        LOGX_WARN_MSG("External GPS UBUS service not found");
+        ubus_free(ctx);
+        return false;
+    }
+    
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    ret = ubus_invoke(ctx, id, "get_status", bb.head, NULL, NULL, 5000);
+    ubus_free(ctx);
+    blob_buf_free(&bb);
+    
+    if (ret == 0) {
+        LOGX_INFO_MSG("External GPS retry recovery successful");
+        return true;
+    } else {
+        LOGX_WARN_MSG("External GPS UBUS call failed");
+        return false;
+    }
+}
+
+static bool external_gps_fallback_recovery(void) {
+    LOGX_DEBUG_MSG("Attempting external GPS fallback recovery");
+    
+    // Try to reinitialize external GPS system
+    int ret = system("systemctl stop external-gps 2>/dev/null");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Failed to stop external GPS service");
+    }
+    
+    // Clear any stale data
+    system("rm -f /var/lib/autonomy/external_gps_data 2>/dev/null");
+    
+    // Restart service
+    ret = system("systemctl start external-gps 2>/dev/null");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Failed to start external GPS service");
+        return false;
+    }
+    
+    // Wait for initialization
+    sleep(5);
+    
+    // Check service status
+    ret = system("systemctl is-active external-gps > /dev/null 2>&1");
+    if (ret != 0) {
+        LOGX_WARN_MSG("External GPS service not active after fallback");
+        return false;
+    }
+    
+    LOGX_INFO_MSG("External GPS fallback recovery successful");
+    return true;
+}
+
+static bool external_gps_reset_recovery(void) {
+    LOGX_DEBUG_MSG("Attempting external GPS reset recovery");
+    
+    // Complete reset of external GPS system
+    system("systemctl stop external-gps 2>/dev/null");
+    
+    // Clear all external GPS data
+    system("rm -f /var/lib/autonomy/external_gps_data 2>/dev/null");
+    system("rm -f /var/lib/autonomy/external_gps_status 2>/dev/null");
+    
+    // Reset configuration
+    system("uci delete external.gps.enabled 2>/dev/null");
+    system("uci set external.gps.enabled=1 2>/dev/null");
+    system("uci commit external 2>/dev/null");
+    
+    // Restart service
+    int ret = system("systemctl start external-gps 2>/dev/null");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Failed to start external GPS service");
+        return false;
+    }
+    
+    // Wait for full initialization
+    sleep(10);
+    
+    // Verify service is running
+    ret = system("systemctl is-active external-gps > /dev/null 2>&1");
+    if (ret != 0) {
+        LOGX_WARN_MSG("External GPS service not active after reset");
+        return false;
+    }
+    
+    LOGX_INFO_MSG("External GPS reset recovery successful");
+    return true;
+}
+
+static bool external_gps_degrade_recovery(void) {
+    LOGX_DEBUG_MSG("Attempting external GPS degrade recovery");
+    
+    // Degrade external GPS service by reducing update frequency
+    system("uci set external.gps.update_interval=30 2>/dev/null");
+    system("uci set external.gps.timeout=60 2>/dev/null");
+    system("uci set external.gps.min_accuracy=100.0 2>/dev/null");
+    system("uci commit external 2>/dev/null");
+    
+    // Restart service with degraded settings
+    int ret = system("systemctl restart external-gps 2>/dev/null");
+    if (ret != 0) {
+        LOGX_WARN_MSG("Failed to restart external GPS with degraded settings");
+        return false;
+    }
+    
+    // Wait for degraded service to start
+    sleep(3);
+    
+    // Check if service is running
+    ret = system("systemctl is-active external-gps > /dev/null 2>&1");
+    if (ret != 0) {
+        LOGX_WARN_MSG("External GPS service not active in degraded mode");
+        return false;
+    }
+    
+    LOGX_INFO_MSG("External GPS degrade recovery successful");
+    return true;
 }

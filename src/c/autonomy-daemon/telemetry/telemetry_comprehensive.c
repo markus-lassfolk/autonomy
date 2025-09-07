@@ -1030,3 +1030,152 @@ void telemetry_db_close(void) {
         LOGX_INFO_MSG("Telemetry database closed");
     }
 }
+
+// Test ML algorithm performance on historical data
+int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
+                                             time_t start_time,
+                                             time_t end_time,
+                                             char* results_json) {
+    if (!algorithm_name || !results_json || start_time >= end_time) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    LOGX_DEBUG_MSG("Testing ML algorithm on historical data", 
+                   "algorithm", algorithm_name,
+                   "start_time", start_time,
+                   "end_time", end_time);
+    
+    // Initialize results JSON
+    snprintf(results_json, 2048, 
+             "{\"success\": false, \"algorithm_name\": \"%s\", \"error\": \"\"}", 
+             algorithm_name);
+    
+    // Check if database is available
+    if (!g_telemetry_comprehensive.db_initialized) {
+        snprintf(results_json, 2048, 
+                 "{\"success\": false, \"algorithm_name\": \"%s\", \"error\": \"Database not initialized\"}", 
+                 algorithm_name);
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    // Query historical data for the specified time range
+    char query[512];
+    snprintf(query, sizeof(query),
+             "SELECT COUNT(*) as sample_count, "
+             "AVG(latency_ms) as avg_latency, "
+             "AVG(packet_loss_percent) as avg_packet_loss, "
+             "AVG(signal_strength) as avg_signal_strength, "
+             "AVG(throughput_bps) as avg_throughput, "
+             "COUNT(CASE WHEN status = 'connected' THEN 1 END) as connected_count, "
+             "COUNT(CASE WHEN status = 'disconnected' THEN 1 END) as disconnected_count "
+             "FROM telemetry_samples "
+             "WHERE timestamp BETWEEN %ld AND %ld",
+             start_time, end_time);
+    
+    sqlite3_stmt* stmt;
+    int ret = sqlite3_prepare_v2(g_telemetry_comprehensive.db, query, -1, &stmt, NULL);
+    if (ret != SQLITE_OK) {
+        snprintf(results_json, 2048, 
+                 "{\"success\": false, \"algorithm_name\": \"%s\", \"error\": \"Database query failed\"}", 
+                 algorithm_name);
+        return AUTONOMY_ERROR_DATABASE;
+    }
+    
+    int sample_count = 0;
+    double avg_latency = 0.0;
+    double avg_packet_loss = 0.0;
+    double avg_signal_strength = 0.0;
+    double avg_throughput = 0.0;
+    int connected_count = 0;
+    int disconnected_count = 0;
+    
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        sample_count = sqlite3_column_int(stmt, 0);
+        avg_latency = sqlite3_column_double(stmt, 1);
+        avg_packet_loss = sqlite3_column_double(stmt, 2);
+        avg_signal_strength = sqlite3_column_double(stmt, 3);
+        avg_throughput = sqlite3_column_double(stmt, 4);
+        connected_count = sqlite3_column_int(stmt, 5);
+        disconnected_count = sqlite3_column_int(stmt, 6);
+    }
+    sqlite3_finalize(stmt);
+    
+    if (sample_count == 0) {
+        snprintf(results_json, 2048, 
+                 "{\"success\": false, \"algorithm_name\": \"%s\", \"error\": \"No data found for time range\"}", 
+                 algorithm_name);
+        return AUTONOMY_ERROR_NOT_FOUND;
+    }
+    
+    // Execute real ML algorithm testing
+    char test_script[512];
+    snprintf(test_script, sizeof(test_script),
+             "python3 /usr/lib/autonomy/ml/test_algorithm.py "
+             "--algorithm %s --start-time %ld --end-time %ld "
+             "--data-dir /var/lib/autonomy/telemetry "
+             "--output /tmp/ml_test_results.json 2>/dev/null",
+             algorithm_name, start_time, end_time);
+    
+    int test_result = system(test_script);
+    
+    // Read test results from Python script
+    FILE* results_file = fopen("/tmp/ml_test_results.json", "r");
+    if (results_file) {
+        char test_results[1024] = {0};
+        if (fgets(test_results, sizeof(test_results), results_file)) {
+            // Parse and enhance results with real data
+            snprintf(results_json, 2048,
+                     "{\"success\": true, "
+                     "\"algorithm_name\": \"%s\", "
+                     "\"time_range\": {\"start\": %ld, \"end\": %ld}, "
+                     "\"samples_analyzed\": %d, "
+                     "\"data_quality\": {"
+                     "\"avg_latency\": %.2f, "
+                     "\"avg_packet_loss\": %.2f, "
+                     "\"avg_signal_strength\": %.2f, "
+                     "\"avg_throughput\": %.0f, "
+                     "\"connected_samples\": %d, "
+                     "\"disconnected_samples\": %d"
+                     "}, "
+                     "\"test_results\": %s}",
+                     algorithm_name, start_time, end_time, sample_count,
+                     avg_latency, avg_packet_loss, avg_signal_strength, avg_throughput,
+                     connected_count, disconnected_count, test_results);
+        } else {
+            snprintf(results_json, 2048, 
+                     "{\"success\": false, \"algorithm_name\": \"%s\", \"error\": \"Failed to read test results\"}", 
+                     algorithm_name);
+        }
+        fclose(results_file);
+        unlink("/tmp/ml_test_results.json");
+    } else {
+        // Fallback: perform basic statistical analysis
+        double connection_rate = (double)connected_count / sample_count;
+        double avg_quality_score = (avg_signal_strength + (100.0 - avg_packet_loss) + (1000.0 - avg_latency) / 10.0) / 3.0;
+        
+        snprintf(results_json, 2048,
+                 "{\"success\": true, "
+                 "\"algorithm_name\": \"%s\", "
+                 "\"time_range\": {\"start\": %ld, \"end\": %ld}, "
+                 "\"samples_analyzed\": %d, "
+                 "\"statistical_analysis\": {"
+                 "\"connection_rate\": %.3f, "
+                 "\"avg_quality_score\": %.2f, "
+                 "\"avg_latency\": %.2f, "
+                 "\"avg_packet_loss\": %.2f, "
+                 "\"avg_signal_strength\": %.2f, "
+                 "\"avg_throughput\": %.0f"
+                 "}, "
+                 "\"test_method\": \"statistical_fallback\"}",
+                 algorithm_name, start_time, end_time, sample_count,
+                 connection_rate, avg_quality_score,
+                 avg_latency, avg_packet_loss, avg_signal_strength, avg_throughput);
+    }
+    
+    LOGX_INFO_MSG("ML algorithm testing completed", 
+                   "algorithm", algorithm_name,
+                   "samples", sample_count,
+                   "success", test_result == 0);
+    
+    return AUTONOMY_SUCCESS;
+}

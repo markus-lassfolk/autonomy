@@ -44,7 +44,7 @@ static const autonomy_config_t DEFAULT_CONFIG = {
     // Starlink settings
     .starlink_check_interval = 30,
     .starlink_health_monitoring = true,
-    .starlink_host = "192.168.100.1",
+    .starlink_host = "192.168.100.1", // Fallback only
     .starlink_port = 9200,
     .starlink_timeout = 10,
     

@@ -203,7 +203,24 @@ int main(int argc, char *argv[]) {
     
     printf("✅ Configuration loaded successfully\n");
     printf("  📡 Dish: %s:%d\n", config.starlink_dish_ip, config.starlink_dish_port);
-    printf("  🌐 Web API: http://localhost:%d\n", config.http_api_port);
+    
+    // Get real network interface IP instead of hardcoded localhost
+    char local_ip[16] = {0};
+    FILE *ip_fp = popen("ip route get 8.8.8.8 | awk '{print $7}' | head -1", "r");
+    if (ip_fp) {
+        if (fgets(local_ip, sizeof(local_ip), ip_fp)) {
+            // Remove newline
+            local_ip[strcspn(local_ip, "\n")] = '\0';
+        }
+        pclose(ip_fp);
+    }
+    
+    // Fallback to localhost if detection fails
+    if (strlen(local_ip) == 0) {
+        strcpy(local_ip, "localhost");
+    }
+    
+    printf("  🌐 Web API: http://%s:%d\n", local_ip, config.http_api_port);
     printf("  🔄 Update interval: %d minutes\n", config.update_interval_minutes);
     printf("  🔮 Prediction horizon: %d hours\n\n", config.prediction_horizon_hours);
     
@@ -254,11 +271,27 @@ int main(int argc, char *argv[]) {
         printf("✅ Monitoring started successfully\n\n");
         
         if (config.enable_web_interface) {
-            printf("🌐 Web interface available at: http://localhost:%d\n", config.http_api_port);
+            // Get real network interface IP for web interface
+            char web_ip[16] = {0};
+            FILE *web_ip_fp = popen("ip route get 8.8.8.8 | awk '{print $7}' | head -1", "r");
+            if (web_ip_fp) {
+                if (fgets(web_ip, sizeof(web_ip), web_ip_fp)) {
+                    // Remove newline
+                    web_ip[strcspn(web_ip, "\n")] = '\0';
+                }
+                pclose(web_ip_fp);
+            }
+            
+            // Fallback to localhost if detection fails
+            if (strlen(web_ip) == 0) {
+                strcpy(web_ip, "localhost");
+            }
+            
+            printf("🌐 Web interface available at: http://%s:%d\n", web_ip, config.http_api_port);
             printf("📊 API endpoints:\n");
-            printf("   http://localhost:%d/api/status\n", config.http_api_port);
-            printf("   http://localhost:%d/api/predictions\n", config.http_api_port);
-            printf("   http://localhost:%d/api/satellites\n\n", config.http_api_port);
+            printf("   http://%s:%d/api/status\n", web_ip, config.http_api_port);
+            printf("   http://%s:%d/api/predictions\n", web_ip, config.http_api_port);
+            printf("   http://%s:%d/api/satellites\n\n", web_ip, config.http_api_port);
         }
         
         printf("Press Ctrl+C to stop, 's' + Enter for status...\n\n");

@@ -815,15 +815,23 @@ static void* dynamic_tracker_thread_main(void *arg) {
             dish_location.longitude = tracker->config.dish_longitude;
             dish_location.altitude = tracker->config.dish_altitude;
         } else {
-            // Try to get current GPS location as fallback
-            // This would integrate with the GPS system
-            dish_location.latitude = 0.0;  // Would get from GPS
-            dish_location.longitude = 0.0; // Would get from GPS
-            dish_location.altitude = 0.0;  // Would get from GPS
+            // Try to get current GPS location as fallback via Starlink comprehensive GPS
+            starlink_comprehensive_gps_t gps = {0};
+            if (starlink_comprehensive_collect_gps(&gps) == AUTONOMY_SUCCESS && gps.valid) {
+                dish_location.latitude = gps.latitude;
+                dish_location.longitude = gps.longitude;
+                dish_location.altitude = gps.altitude;
+            } else {
+                dish_location.latitude = 0.0;
+                dish_location.longitude = 0.0;
+                dish_location.altitude = 0.0;
+            }
         }
         
         // Run identification cycle
-        // int result = dynamic_tracker_run_identification_cycle(tracker, constellation, dish_location);
+        if (constellation) {
+            (void)dynamic_tracker_run_identification_cycle(tracker, constellation, &dish_location);
+        }
         
         // Sleep until next cycle
         sleep(tracker->config.tracking_interval_seconds);

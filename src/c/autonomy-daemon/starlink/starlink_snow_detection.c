@@ -11,6 +11,8 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <sys/wait.h>
+#include <libubus.h>
+#include <libubox/blobmsg.h>
 
 // Snow detection configuration
 static const int SNOW_DETECTION_SAMPLES = 5;              // Samples needed for detection
@@ -151,17 +153,20 @@ static bool is_winter_season(void) {
 
 // Check if RV is stationary
 static bool is_rv_stationary(void) {
-    // This would integrate with GPS movement detection
-    // For now, we'll use a simple heuristic based on obstruction patterns
-    
-    if (g_snow_detection.sample_count < 3) {
-        return true; // Assume stationary if not enough data
+    // Use comprehensive GPS collection to determine movement based on speed and accuracy
+    starlink_comprehensive_gps_t gps = {0};
+    if (starlink_comprehensive_collect_gps(&gps) == AUTONOMY_SUCCESS && gps.valid) {
+        // If accuracy is poor, be conservative and consider stationary only when speed is very low
+        double speed_threshold = (gps.accuracy <= 20.0) ? 0.5 : 0.2; // m/s
+        return fabs(gps.horizontal_speed_mps) <= speed_threshold;
     }
-    
-    // Check for consistent obstruction patterns (stationary)
+
+    // Fallback: infer from obstruction variance
+    if (g_snow_detection.sample_count < 3) {
+        return true;
+    }
     double obstruction_variance = 0.0;
     double mean_obstruction = 0.0;
-    
     int valid_samples = 0;
     for (int i = 0; i < g_snow_detection.sample_count && i < MAX_SNOW_SAMPLES; i++) {
         if (g_snow_detection.sample_history[i].timestamp > 0) {
@@ -169,14 +174,10 @@ static bool is_rv_stationary(void) {
             valid_samples++;
         }
     }
-    
     if (valid_samples < 3) {
         return true;
     }
-    
     mean_obstruction /= valid_samples;
-    
-    // Calculate variance
     for (int i = 0; i < g_snow_detection.sample_count && i < MAX_SNOW_SAMPLES; i++) {
         if (g_snow_detection.sample_history[i].timestamp > 0) {
             double diff = g_snow_detection.sample_history[i].fraction_obstructed - mean_obstruction;
@@ -184,9 +185,7 @@ static bool is_rv_stationary(void) {
         }
     }
     obstruction_variance /= valid_samples;
-    
-    // Low variance suggests stationary (consistent obstruction pattern)
-    return (obstruction_variance < 0.01); // 1% variance threshold
+    return (obstruction_variance < 0.01);
 }
 
 // Enhanced snow forecast algorithm
@@ -582,14 +581,42 @@ static int start_dish_heating(void) {
             pclose(gpio_fp);
             LOGX_INFO_MSG("GPIO heating control activated");
         } else {
-            // Method 2: Control file (for testing/simulation)
-            FILE *heat_fp = popen("echo 'HEAT_ON' > /var/lib/autonomy/dish_heater_control 2>/dev/null", "r");
-            if (heat_fp) {
-                pclose(heat_fp);
-                LOGX_INFO_MSG("Heating control file created (simulation mode)");
+            // Method 2: Real hardware control via UCI/UBUS
+            struct ubus_context* ctx = ubus_connect(NULL);
+            if (ctx) {
+                uint32_t id;
+                int ret = ubus_lookup_id(ctx, "starlink.dish", &id);
+                if (ret == 0) {
+                    struct blob_buf bb = {0};
+                    blob_buf_init(&bb, 0);
+                    blobmsg_add_string(&bb, "action", "heater_on");
+                    blobmsg_add_u32(&bb, "temperature", g_snow_detection.current_temperature);
+                    
+                    ret = ubus_invoke(ctx, id, "control_heater", bb.head, NULL, NULL, 1000);
+                    if (ret == 0) {
+                        LOGX_INFO_MSG("Starlink dish heater activated via UBUS");
+                    } else {
+                        LOGX_WARN_MSG("Failed to activate heater via UBUS", "error", ret);
+                        ubus_free(ctx);
+                        blob_buf_free(&bb);
+                        return AUTONOMY_ERROR_OPERATION_FAILED;
+                    }
+                    
+                    blob_buf_free(&bb);
+                } else {
+                    LOGX_WARN_MSG("Starlink dish UBUS service not found");
+                }
+                ubus_free(ctx);
             } else {
-                LOGX_WARN_MSG("Failed to activate heating system");
-                return AUTONOMY_ERROR_OPERATION_FAILED;
+                // Fallback: Direct GPIO control
+                FILE *gpio_fp = popen("echo 1 > /sys/class/gpio/gpio18/value 2>/dev/null", "r");
+                if (gpio_fp) {
+                    pclose(gpio_fp);
+                    LOGX_INFO_MSG("Starlink dish heater activated via GPIO");
+                } else {
+                    LOGX_WARN_MSG("Failed to activate heating system via all methods");
+                    return AUTONOMY_ERROR_OPERATION_FAILED;
+                }
             }
         }
     }
@@ -643,14 +670,42 @@ static int stop_dish_heating(void) {
             pclose(gpio_fp);
             LOGX_INFO_MSG("GPIO heating control deactivated");
         } else {
-            // Method 2: Control file (for testing/simulation)
-            FILE *heat_fp = popen("echo 'HEAT_OFF' > /var/lib/autonomy/dish_heater_control 2>/dev/null", "r");
-            if (heat_fp) {
-                pclose(heat_fp);
-                LOGX_INFO_MSG("Heating control file updated (simulation mode)");
+            // Method 2: Real hardware control via UCI/UBUS
+            struct ubus_context* ctx = ubus_connect(NULL);
+            if (ctx) {
+                uint32_t id;
+                int ret = ubus_lookup_id(ctx, "starlink.dish", &id);
+                if (ret == 0) {
+                    struct blob_buf bb = {0};
+                    blob_buf_init(&bb, 0);
+                    blobmsg_add_string(&bb, "action", "heater_off");
+                    blobmsg_add_u32(&bb, "temperature", g_snow_detection.current_temperature);
+                    
+                    ret = ubus_invoke(ctx, id, "control_heater", bb.head, NULL, NULL, 1000);
+                    if (ret == 0) {
+                        LOGX_INFO_MSG("Starlink dish heater deactivated via UBUS");
+                    } else {
+                        LOGX_WARN_MSG("Failed to deactivate heater via UBUS", "error", ret);
+                        ubus_free(ctx);
+                        blob_buf_free(&bb);
+                        return AUTONOMY_ERROR_OPERATION_FAILED;
+                    }
+                    
+                    blob_buf_free(&bb);
+                } else {
+                    LOGX_WARN_MSG("Starlink dish UBUS service not found");
+                }
+                ubus_free(ctx);
             } else {
-                LOGX_WARN_MSG("Failed to deactivate heating system");
-                return AUTONOMY_ERROR_OPERATION_FAILED;
+                // Fallback: Direct GPIO control
+                FILE *gpio_fp = popen("echo 0 > /sys/class/gpio/gpio18/value 2>/dev/null", "r");
+                if (gpio_fp) {
+                    pclose(gpio_fp);
+                    LOGX_INFO_MSG("Starlink dish heater deactivated via GPIO");
+                } else {
+                    LOGX_WARN_MSG("Failed to deactivate heating system via all methods");
+                    return AUTONOMY_ERROR_OPERATION_FAILED;
+                }
             }
         }
     }
@@ -665,14 +720,18 @@ static int stop_dish_heating(void) {
 
 // Verify obstruction cleared
 static int verify_obstruction_cleared(void) {
-    // This would re-check obstruction status
-    // For now, we'll use a simple check
-    
-    if (g_snow_detection.consecutive_obstruction_samples == 0) {
-        return AUTONOMY_SUCCESS; // Obstruction cleared
+    // Re-check current obstruction using Starlink status
+    starlink_status_response_t status = {0};
+    int rc = starlink_get_status(&status);
+    if (rc != 0) {
+        LOGX_WARN_MSG("verify_obstruction_cleared: failed to query Starlink status", "result", rc);
+        // Fall back to internal counter as best effort
+        return (g_snow_detection.consecutive_obstruction_samples == 0) ? AUTONOMY_SUCCESS : AUTONOMY_ERROR_NOT_FOUND;
     }
-    
-    return AUTONOMY_ERROR_NOT_FOUND; // Still obstructed
+
+    double frac = status.obstruction_stats.fraction_obstructed;
+    bool obstructed_now = status.obstruction_stats.currently_obstructed || (frac > g_snow_detection.obstruction_threshold);
+    return obstructed_now ? AUTONOMY_ERROR_NOT_FOUND : AUTONOMY_SUCCESS;
 }
 
 // Get snow detection status

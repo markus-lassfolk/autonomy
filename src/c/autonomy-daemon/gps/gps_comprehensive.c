@@ -29,7 +29,7 @@ static const char* FIX_TYPE_STRINGS[] = {
 
 // Fix quality strings
 static const char* FIX_QUALITY_STRINGS[] = {
-    "invalid", "gps", "dgps", "pps", "rtk", "rtk_float", "estimated", "manual", "simulated"
+    "invalid", "gps", "dgps", "pps", "rtk", "rtk_float", "estimated", "manual"
 };
 
 // Forward declarations
@@ -549,9 +549,23 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
         }
         
         case GPS_SOURCE_GOOGLE: {
-            // Google API implementation would go here
-            // For now, return not found
-            ret = AUTONOMY_ERROR_NOT_FOUND;
+            // Use Google Geolocation API via external_apis if configured
+            google_location_data_t location_data = {0};
+            int gl_rc = external_apis_google_geolocate(NULL, NULL, &location_data);
+            if (gl_rc == AUTONOMY_SUCCESS) {
+                data->latitude = location_data.latitude;
+                data->longitude = location_data.longitude;
+                data->accuracy = location_data.accuracy;
+                data->confidence = fmax(0.0, fmin(1.0, 1.0 - (location_data.accuracy / 1000.0))); // map 0-1000m
+                data->timestamp = location_data.timestamp;
+                data->valid = true;
+                data->source_priority = 4; // Lower priority than Starlink/OpenCell
+                strncpy(data->gps_source, "google_geolocation", sizeof(data->gps_source) - 1);
+                strncpy(data->raw_json, location_data.source, sizeof(data->raw_json) - 1);
+                ret = AUTONOMY_SUCCESS;
+            } else {
+                ret = AUTONOMY_ERROR_NOT_FOUND;
+            }
             break;
         }
         

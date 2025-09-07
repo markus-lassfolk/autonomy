@@ -1,5 +1,7 @@
 #include "gps_coordinate_utils.h"
 #include "gps_events.h"
+#include "gps_geofence.h"
+#include "../notifications/notifications_comprehensive.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
 #include <string.h>
@@ -9,6 +11,10 @@
 #include <time.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <libubus.h>
+#include <libubox/blobmsg.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 // GPS event configuration
 // Note: MAX_EVENTS is defined in ../core/types.h
@@ -296,19 +302,47 @@ static bool evaluate_condition(const gps_event_condition_t *condition, const gps
     }
 }
 
-// Check location in condition
+// Check location in condition using real geofence integration
 bool check_location_in_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data) {
-    // For now, implement a simple circular area check
-    // In a full implementation, this could check against geofences or other defined areas
-    
     if (condition->location_data.lat == 0.0 && condition->location_data.lon == 0.0) {
         return false;
     }
     
+    // Check against active geofences first
+    gps_geofence_t geofences[32];
+    int geofence_count = gps_geofence_get_active_geofences(geofences, 32);
+    
+    if (geofence_count > 0) {
+        for (int i = 0; i < geofence_count; i++) {
+            if (gps_geofence_is_point_inside(&geofences[i], gps_data->lat, gps_data->lon)) {
+                // Check if this geofence matches our condition
+                if (strcmp(geofences[i].name, condition->location_data.name) == 0 ||
+                    (geofences[i].center_lat == condition->location_data.lat &&
+                     geofences[i].center_lon == condition->location_data.lon)) {
+                    LOGX_DEBUG_MSG("GPS event triggered: location inside geofence",
+                                  "geofence", geofences[i].name,
+                                  "lat", gps_data->lat,
+                                  "lon", gps_data->lon);
+                    return true;
+                }
+            }
+        }
+    }
+    
+    // Fallback to circular area check if no matching geofence found
     double distance = gps_coordinate_distance(gps_data->lat, gps_data->lon,
                                        condition->location_data.lat, condition->location_data.lon);
     
-    return distance <= condition->threshold_value;
+    bool result = distance <= condition->threshold_value;
+    if (result) {
+        LOGX_DEBUG_MSG("GPS event triggered: location inside circular area",
+                      "distance", distance,
+                      "threshold", condition->threshold_value,
+                      "lat", gps_data->lat,
+                      "lon", gps_data->lon);
+    }
+    
+    return result;
 }
 
 // Check location out condition
@@ -343,11 +377,40 @@ bool check_time_before_condition(const gps_event_condition_t *condition) {
     return current_time <= condition->time_value;
 }
 
-// Evaluate custom condition
+// Evaluate custom condition using real user-defined functions or scripts
 static bool evaluate_custom_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data) {
-    // For now, return true for custom conditions
-    // In a full implementation, this could call user-defined functions or scripts
-    return true;
+    if (!condition || !condition->custom_script_path || strlen(condition->custom_script_path) == 0) {
+        LOGX_WARN_MSG("Custom condition has no script path defined");
+        return false;
+    }
+    
+    // Check if custom script exists and is executable
+    if (access(condition->custom_script_path, F_OK | X_OK) != 0) {
+        LOGX_WARN_MSG("Custom condition script not found or not executable",
+                     "script_path", condition->custom_script_path);
+        return false;
+    }
+    
+    // Prepare script arguments with GPS data
+    char script_args[1024];
+    snprintf(script_args, sizeof(script_args), 
+             "%s %.6f %.6f %.1f %d %s",
+             condition->custom_script_path,
+             gps_data->lat, gps_data->lon, gps_data->accuracy,
+             gps_data->satellites, condition->custom_parameters);
+    
+    // Execute custom script
+    int result = system(script_args);
+    
+    // Script should return 0 for true, non-zero for false
+    bool condition_result = (result == 0);
+    
+    LOGX_DEBUG_MSG("Custom condition evaluation completed",
+                  "script_path", condition->custom_script_path,
+                  "result", condition_result ? "true" : "false",
+                  "exit_code", result);
+    
+    return condition_result;
 }
 
 // Execute event actions
@@ -391,52 +454,314 @@ void log_event_action(const gps_event_definition_t *event, const gps_data_t *gps
                event->name, gps_data->lat, gps_data->lon, gps_data->accuracy, gps_data->speed);
 }
 
-// Send notification action
+// Send notification action using real notification system
 void send_notification_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
                                    const gps_event_action_t *action) {
-    // For now, just log the notification
-    // In a full implementation, this would integrate with the notification system
-    LOGX_INFO_MSG("GPS EVENT NOTIFICATION: '%s' - %s", event->name, action->action_data);
+    // Create notification message
+    notification_message_t notification = {0};
+    notification.type = NOTIFICATION_TYPE_GPS_EVENT;
+    notification.priority = NOTIFICATION_PRIORITY_MEDIUM;
+    notification.timestamp = time(NULL);
+    
+    // Format notification title and message
+    snprintf(notification.title, sizeof(notification.title), "GPS Event: %s", event->name);
+    snprintf(notification.message, sizeof(notification.message), 
+             "GPS Event triggered: %s\nLocation: %.6f, %.6f\nAccuracy: %.1fm\nAction: %s",
+             event->description, gps_data->lat, gps_data->lon, gps_data->accuracy, action->action_data);
+    
+    // Add GPS data to notification metadata
+    snprintf(notification.metadata, sizeof(notification.metadata),
+             "{\"event_name\":\"%s\",\"lat\":%.6f,\"lon\":%.6f,\"accuracy\":%.1f,\"satellites\":%d,\"action\":\"%s\"}",
+             event->name, gps_data->lat, gps_data->lon, gps_data->accuracy, gps_data->satellites, action->action_data);
+    
+    // Send notification through comprehensive notification system
+    int ret = notifications_comprehensive_send(&notification);
+    if (ret == AUTONOMY_SUCCESS) {
+        LOGX_INFO_MSG("GPS event notification sent successfully",
+                     "event", event->name,
+                     "action", action->action_data);
+    } else {
+        LOGX_ERROR_MSG("Failed to send GPS event notification",
+                      "event", event->name,
+                      "error", ret);
+    }
 }
 
-// Trigger callback action
+// Trigger callback action using real callback system
 void trigger_callback_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
                                   const gps_event_action_t *action) {
-    // For now, just log the callback
-    // In a full implementation, this would call registered callback functions
-    LOGX_INFO_MSG("GPS EVENT CALLBACK: '%s' - %s", event->name, action->action_data);
+    // Parse callback function name from action data
+    char callback_name[128];
+    char callback_args[512];
+    
+    if (sscanf(action->action_data, "%127s %511[^\n]", callback_name, callback_args) < 1) {
+        LOGX_ERROR_MSG("Invalid callback action format", "action_data", action->action_data);
+        return;
+    }
+    
+    // Look up registered callback function
+    gps_event_callback_t* callback = gps_events_find_callback(callback_name);
+    if (!callback) {
+        LOGX_WARN_MSG("GPS event callback not found", "callback_name", callback_name);
+        return;
+    }
+    
+    // Prepare callback data
+    gps_event_callback_data_t callback_data = {0};
+    callback_data.event_name = event->name;
+    callback_data.event_description = event->description;
+    callback_data.gps_data = *gps_data;
+    callback_data.action_data = action->action_data;
+    callback_data.callback_args = callback_args;
+    callback_data.timestamp = time(NULL);
+    
+    // Execute callback function
+    int ret = callback->function(&callback_data, callback->user_data);
+    if (ret == 0) {
+        LOGX_INFO_MSG("GPS event callback executed successfully",
+                     "event", event->name,
+                     "callback", callback_name);
+    } else {
+        LOGX_ERROR_MSG("GPS event callback execution failed",
+                      "event", event->name,
+                      "callback", callback_name,
+                      "error", ret);
+    }
 }
 
-// Execute command action
+// Execute command action using real system command execution
 void execute_command_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
                                  const gps_event_action_t *action) {
-    // For now, just log the command
-    // In a full implementation, this would execute system commands
-    LOGX_INFO_MSG("GPS EVENT COMMAND: '%s' - %s", event->name, action->action_data);
+    if (!action->action_data || strlen(action->action_data) == 0) {
+        LOGX_ERROR_MSG("GPS event command action has no command specified");
+        return;
+    }
+    
+    // Prepare command with GPS data substitution
+    char command[1024];
+    char* cmd_ptr = command;
+    const char* action_ptr = action->action_data;
+    
+    // Substitute GPS data placeholders in command
+    while (*action_ptr && (cmd_ptr - command) < (sizeof(command) - 1)) {
+        if (strncmp(action_ptr, "${LAT}", 6) == 0) {
+            cmd_ptr += snprintf(cmd_ptr, sizeof(command) - (cmd_ptr - command), "%.6f", gps_data->lat);
+            action_ptr += 6;
+        } else if (strncmp(action_ptr, "${LON}", 6) == 0) {
+            cmd_ptr += snprintf(cmd_ptr, sizeof(command) - (cmd_ptr - command), "%.6f", gps_data->lon);
+            action_ptr += 6;
+        } else if (strncmp(action_ptr, "${ACCURACY}", 10) == 0) {
+            cmd_ptr += snprintf(cmd_ptr, sizeof(command) - (cmd_ptr - command), "%.1f", gps_data->accuracy);
+            action_ptr += 10;
+        } else if (strncmp(action_ptr, "${SATELLITES}", 12) == 0) {
+            cmd_ptr += snprintf(cmd_ptr, sizeof(command) - (cmd_ptr - command), "%d", gps_data->satellites);
+            action_ptr += 12;
+        } else {
+            *cmd_ptr++ = *action_ptr++;
+        }
+    }
+    *cmd_ptr = '\0';
+    
+    // Execute command
+    LOGX_INFO_MSG("Executing GPS event command", "event", event->name, "command", command);
+    
+    int result = system(command);
+    if (result == 0) {
+        LOGX_INFO_MSG("GPS event command executed successfully",
+                     "event", event->name,
+                     "command", command);
+    } else {
+        LOGX_ERROR_MSG("GPS event command execution failed",
+                      "event", event->name,
+                      "command", command,
+                      "exit_code", result);
+    }
 }
 
-// Update status action
+// Update status action using real system status updates
 void update_status_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
                                const gps_event_action_t *action) {
-    // For now, just log the status update
-    // In a full implementation, this would update system status
-    LOGX_INFO_MSG("GPS EVENT STATUS UPDATE: '%s' - %s", event->name, action->action_data);
+    if (!action->action_data || strlen(action->action_data) == 0) {
+        LOGX_ERROR_MSG("GPS event status update action has no status specified");
+        return;
+    }
+    
+    // Parse status update format: "status_key=status_value"
+    char status_key[128];
+    char status_value[256];
+    
+    if (sscanf(action->action_data, "%127[^=]=%255[^\n]", status_key, status_value) != 2) {
+        LOGX_ERROR_MSG("Invalid status update format", "action_data", action->action_data);
+        return;
+    }
+    
+    // Update system status via UCI or status file
+    char status_file[256];
+    snprintf(status_file, sizeof(status_file), "/var/lib/autonomy/status/%s", status_key);
+    
+    FILE* fp = fopen(status_file, "w");
+    if (fp) {
+        fprintf(fp, "%s\n", status_value);
+        fclose(fp);
+        
+        LOGX_INFO_MSG("GPS event status updated successfully",
+                     "event", event->name,
+                     "status_key", status_key,
+                     "status_value", status_value);
+    } else {
+        LOGX_ERROR_MSG("Failed to update GPS event status",
+                      "event", event->name,
+                      "status_key", status_key,
+                      "error", strerror(errno));
+    }
 }
 
-// Send UBUS message action
+// Send UBUS message action using real UBUS messaging
 void send_ubus_message_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
                                     const gps_event_action_t *action) {
-    // For now, just log the UBUS message
-    // In a full implementation, this would send UBUS messages
-    LOGX_INFO_MSG("GPS EVENT UBUS MESSAGE: '%s' - %s", event->name, action->action_data);
+    if (!action->action_data || strlen(action->action_data) == 0) {
+        LOGX_ERROR_MSG("GPS event UBUS message action has no message specified");
+        return;
+    }
+    
+    // Parse UBUS message format: "object.method key1=value1 key2=value2"
+    char ubus_object[64];
+    char ubus_method[64];
+    char message_data[512];
+    
+    if (sscanf(action->action_data, "%63[^.].%63s %511[^\n]", ubus_object, ubus_method, message_data) != 3) {
+        LOGX_ERROR_MSG("Invalid UBUS message format", "action_data", action->action_data);
+        return;
+    }
+    
+    // Connect to UBUS
+    struct ubus_context* ctx = ubus_connect(NULL);
+    if (!ctx) {
+        LOGX_ERROR_MSG("Failed to connect to UBUS for GPS event message");
+        return;
+    }
+    
+    // Look up UBUS object
+    uint32_t obj_id;
+    int ret = ubus_lookup_id(ctx, ubus_object, &obj_id);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("UBUS object not found", "object", ubus_object);
+        ubus_free(ctx);
+        return;
+    }
+    
+    // Prepare message data with GPS information
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    // Add GPS data to message
+    blobmsg_add_string(&bb, "event_name", event->name);
+    blobmsg_add_double(&bb, "latitude", gps_data->lat);
+    blobmsg_add_double(&bb, "longitude", gps_data->lon);
+    blobmsg_add_double(&bb, "accuracy", gps_data->accuracy);
+    blobmsg_add_u32(&bb, "satellites", gps_data->satellites);
+    blobmsg_add_string(&bb, "action_data", action->action_data);
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    
+    // Parse additional message data
+    char* token = strtok(message_data, " ");
+    while (token) {
+        char* eq = strchr(token, '=');
+        if (eq) {
+            *eq = '\0';
+            blobmsg_add_string(&bb, token, eq + 1);
+        }
+        token = strtok(NULL, " ");
+    }
+    
+    // Send UBUS message
+    ret = ubus_invoke(ctx, obj_id, ubus_method, bb.head, NULL, NULL, 1000);
+    if (ret == 0) {
+        LOGX_INFO_MSG("GPS event UBUS message sent successfully",
+                     "event", event->name,
+                     "object", ubus_object,
+                     "method", ubus_method);
+    } else {
+        LOGX_ERROR_MSG("Failed to send GPS event UBUS message",
+                      "event", event->name,
+                      "object", ubus_object,
+                      "method", ubus_method,
+                      "error", ret);
+    }
+    
+    blob_buf_free(&bb);
+    ubus_free(ctx);
 }
 
-// Execute custom action
+// Execute custom action using real user-defined action execution
 void execute_custom_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
                                 const gps_event_action_t *action) {
-    // For now, just log the custom action
-    // In a full implementation, this would execute user-defined actions
-    LOGX_INFO_MSG("GPS EVENT CUSTOM ACTION: '%s' - %s", event->name, action->action_data);
+    if (!action->action_data || strlen(action->action_data) == 0) {
+        LOGX_ERROR_MSG("GPS event custom action has no action specified");
+        return;
+    }
+    
+    // Parse custom action format: "action_type:action_data"
+    char action_type[64];
+    char action_data[512];
+    
+    if (sscanf(action->action_data, "%63[^:]:%511[^\n]", action_type, action_data) != 2) {
+        LOGX_ERROR_MSG("Invalid custom action format", "action_data", action->action_data);
+        return;
+    }
+    
+    // Execute based on action type
+    if (strcmp(action_type, "script") == 0) {
+        // Execute custom script
+        char script_path[256];
+        snprintf(script_path, sizeof(script_path), "/var/lib/autonomy/scripts/%s", action_data);
+        
+        if (access(script_path, F_OK | X_OK) == 0) {
+            char script_cmd[512];
+            snprintf(script_cmd, sizeof(script_cmd), "%s %.6f %.6f %.1f %d \"%s\"",
+                     script_path, gps_data->lat, gps_data->lon, gps_data->accuracy, 
+                     gps_data->satellites, event->name);
+            
+            int result = system(script_cmd);
+            if (result == 0) {
+                LOGX_INFO_MSG("GPS event custom script executed successfully",
+                             "event", event->name,
+                             "script", action_data);
+            } else {
+                LOGX_ERROR_MSG("GPS event custom script execution failed",
+                              "event", event->name,
+                              "script", action_data,
+                              "exit_code", result);
+            }
+        } else {
+            LOGX_ERROR_MSG("GPS event custom script not found or not executable",
+                          "script_path", script_path);
+        }
+    } else if (strcmp(action_type, "file") == 0) {
+        // Write to custom file
+        char file_path[256];
+        snprintf(file_path, sizeof(file_path), "/var/lib/autonomy/actions/%s", action_data);
+        
+        FILE* fp = fopen(file_path, "a");
+        if (fp) {
+            fprintf(fp, "%ld:GPS_EVENT:%s:%.6f,%.6f,%.1f,%d\n",
+                    time(NULL), event->name, gps_data->lat, gps_data->lon, 
+                    gps_data->accuracy, gps_data->satellites);
+            fclose(fp);
+            
+            LOGX_INFO_MSG("GPS event custom file action completed",
+                         "event", event->name,
+                         "file", action_data);
+        } else {
+            LOGX_ERROR_MSG("Failed to write GPS event custom file action",
+                          "event", event->name,
+                          "file", action_data,
+                          "error", strerror(errno));
+        }
+    } else {
+        LOGX_ERROR_MSG("Unknown GPS event custom action type",
+                      "action_type", action_type);
+    }
 }
 
 // Add event to history

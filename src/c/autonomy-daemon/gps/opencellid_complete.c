@@ -624,12 +624,27 @@ static int parse_cell_location_response(const char* json_data, opencellid_cell_l
         location->range = 1000.0; // Default accuracy
     }
 
-    // Parse radio type (store as string in source field for now)
+    // Parse radio type and set proper source
     json_object* radio_obj;
     if (json_object_object_get_ex(root, "radio", &radio_obj)) {
         const char* radio_str = json_object_get_string(radio_obj);
+        
+        // Set proper radio type based on string
+        if (strcmp(radio_str, "LTE") == 0) {
+            location->radio_type = CELLULAR_RADIO_TYPE_LTE;
+        } else if (strcmp(radio_str, "UMTS") == 0) {
+            location->radio_type = CELLULAR_RADIO_TYPE_UMTS;
+        } else if (strcmp(radio_str, "GSM") == 0) {
+            location->radio_type = CELLULAR_RADIO_TYPE_GSM;
+        } else if (strcmp(radio_str, "5G") == 0 || strcmp(radio_str, "NR") == 0) {
+            location->radio_type = CELLULAR_RADIO_TYPE_5G;
+        } else {
+            location->radio_type = CELLULAR_RADIO_TYPE_UNKNOWN;
+        }
+        
         snprintf(location->source, sizeof(location->source), "opencellid_%s", radio_str);
     } else {
+        location->radio_type = CELLULAR_RADIO_TYPE_UNKNOWN;
         strcpy(location->source, "opencellid");
     }
 
@@ -854,7 +869,81 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
         pclose(fp);
     }
 
-    environment->neighbor_count = 0; // Only serving cell for now
+    // Collect neighbor cells
+    environment->neighbor_count = 0;
+    
+    // Get neighbor cell information via AT commands
+    fp = popen("gsmctl -A 'AT+QNEIGHBORCELLS' 2>/dev/null", "r");
+    if (fp) {
+        char line[256];
+        while (fgets(line, sizeof(line), fp) && environment->neighbor_count < MAX_NEIGHBOR_CELLS) {
+            // Parse neighbor cell response: +QNEIGHBORCELLS: <cell_id>,<lac>,<rssi>,<radio_type>
+            if (strstr(line, "+QNEIGHBORCELLS:")) {
+                int neighbor_cell_id, neighbor_lac, neighbor_rssi;
+                char radio_type[16];
+                
+                if (sscanf(line, "+QNEIGHBORCELLS: %d,%d,%d,%15s", 
+                          &neighbor_cell_id, &neighbor_lac, &neighbor_rssi, radio_type) >= 3) {
+                    
+                    opencellid_cell_identifier_t neighbor_id = {
+                        .mcc = mcc,
+                        .mnc = mnc,
+                        .lac = neighbor_lac,
+                        .cell_id = neighbor_cell_id
+                    };
+                    
+                    environment->neighbor_cells[environment->neighbor_count].cell_id = neighbor_id;
+                    environment->neighbor_cells[environment->neighbor_count].metrics.rssi = neighbor_rssi;
+                    environment->neighbor_cells[environment->neighbor_count].metrics.rsrp = neighbor_rssi - 113;
+                    
+                    // Set radio type
+                    if (strcmp(radio_type, "LTE") == 0) {
+                        environment->neighbor_cells[environment->neighbor_count].radio_type = CELLULAR_RADIO_TYPE_LTE;
+                    } else if (strcmp(radio_type, "UMTS") == 0) {
+                        environment->neighbor_cells[environment->neighbor_count].radio_type = CELLULAR_RADIO_TYPE_UMTS;
+                    } else if (strcmp(radio_type, "GSM") == 0) {
+                        environment->neighbor_cells[environment->neighbor_count].radio_type = CELLULAR_RADIO_TYPE_GSM;
+                    } else {
+                        environment->neighbor_cells[environment->neighbor_count].radio_type = CELLULAR_RADIO_TYPE_UNKNOWN;
+                    }
+                    
+                    environment->neighbor_count++;
+                }
+            }
+        }
+        pclose(fp);
+    }
+    
+    // Fallback: try to get neighbor cells from system
+    if (environment->neighbor_count == 0) {
+        fp = popen("mmcli -m 0 --command='AT+QNEIGHBORCELLS' 2>/dev/null", "r");
+        if (fp) {
+            char line[256];
+            while (fgets(line, sizeof(line), fp) && environment->neighbor_count < MAX_NEIGHBOR_CELLS) {
+                // Parse mmcli neighbor cell response
+                if (strstr(line, "neighbor")) {
+                    int neighbor_cell_id, neighbor_lac, neighbor_rssi;
+                    
+                    if (sscanf(line, "neighbor %d %d %d", &neighbor_cell_id, &neighbor_lac, &neighbor_rssi) == 3) {
+                        opencellid_cell_identifier_t neighbor_id = {
+                            .mcc = mcc,
+                            .mnc = mnc,
+                            .lac = neighbor_lac,
+                            .cell_id = neighbor_cell_id
+                        };
+                        
+                        environment->neighbor_cells[environment->neighbor_count].cell_id = neighbor_id;
+                        environment->neighbor_cells[environment->neighbor_count].metrics.rssi = neighbor_rssi;
+                        environment->neighbor_cells[environment->neighbor_count].metrics.rsrp = neighbor_rssi - 113;
+                        environment->neighbor_cells[environment->neighbor_count].radio_type = CELLULAR_RADIO_TYPE_LTE; // Assume LTE
+                        
+                        environment->neighbor_count++;
+                    }
+                }
+            }
+            pclose(fp);
+        }
+    }
 
     LOGX_DEBUG_MSG("Collected cellular environment", "mcc", mcc, "mnc", mnc, "lac", lac, "cell_id", cell_id, "rsrp", environment->serving_cell.metrics.rsrp);
     return AUTONOMY_SUCCESS;

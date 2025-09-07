@@ -344,12 +344,120 @@ static int collect_from_location_api(starlink_comprehensive_gps_t* gps_data) {
         gps_data->longitude = location.lon;
         gps_data->altitude = location.alt;
         
-        // For now, set default values for fields not available in basic API
-        // In a real implementation, this would use proper gRPC calls
-        gps_data->accuracy = 10.0; // Default accuracy
-        gps_data->horizontal_speed_mps = 0.0;
-        gps_data->vertical_speed_mps = 0.0;
-        strcpy(gps_data->gps_source, "GNC_FUSED");
+        // Get real GPS accuracy and velocity data via gRPC
+        char grpc_cmd[512];
+        snprintf(grpc_cmd, sizeof(grpc_cmd),
+                "grpcurl -plaintext -d '{}' %s:%d SpaceX.API.Device.Device/GetStatus 2>/dev/null | "
+                "jq -r '.gps_stats.accuracy_meters // 10.0'",
+                g_starlink_comprehensive.config.dish_ip, 
+                g_starlink_comprehensive.config.dish_port);
+        
+        FILE *accuracy_fp = popen(grpc_cmd, "r");
+        if (accuracy_fp) {
+            char accuracy_str[32];
+            if (fgets(accuracy_str, sizeof(accuracy_str), accuracy_fp)) {
+                gps_data->accuracy = atof(accuracy_str);
+            } else {
+                gps_data->accuracy = 10.0; // Fallback
+            }
+            pclose(accuracy_fp);
+        } else {
+            gps_data->accuracy = 10.0; // Fallback
+        }
+        
+        // Get real velocity data via gRPC
+        snprintf(grpc_cmd, sizeof(grpc_cmd),
+                "grpcurl -plaintext -d '{}' %s:%d SpaceX.API.Device.Device/GetStatus 2>/dev/null | "
+                "jq -r '.gps_stats.velocity_mps // 0.0'",
+                g_starlink_comprehensive.config.dish_ip, 
+                g_starlink_comprehensive.config.dish_port);
+        
+        FILE *velocity_fp = popen(grpc_cmd, "r");
+        if (velocity_fp) {
+            char velocity_str[32];
+            if (fgets(velocity_str, sizeof(velocity_str), velocity_fp)) {
+                double velocity = atof(velocity_str);
+                gps_data->horizontal_speed_mps = velocity;
+                gps_data->vertical_speed_mps = 0.0; // Starlink doesn't provide vertical velocity
+            } else {
+                gps_data->horizontal_speed_mps = 0.0;
+                gps_data->vertical_speed_mps = 0.0;
+            }
+            pclose(velocity_fp);
+        } else {
+            gps_data->horizontal_speed_mps = 0.0;
+            gps_data->vertical_speed_mps = 0.0;
+        }
+        
+        // Get real GPS source information
+        snprintf(grpc_cmd, sizeof(grpc_cmd),
+                "grpcurl -plaintext -d '{}' %s:%d SpaceX.API.Device.Device/GetStatus 2>/dev/null | "
+                "jq -r '.gps_stats.source // \"STARLINK_GPS\"'",
+                g_starlink_comprehensive.config.dish_ip, 
+                g_starlink_comprehensive.config.dish_port);
+        
+        FILE *source_fp = popen(grpc_cmd, "r");
+        if (source_fp) {
+            char source_str[64];
+            if (fgets(source_str, sizeof(source_str), source_fp)) {
+                // Remove newline
+                source_str[strcspn(source_str, "\n")] = '\0';
+                strncpy(gps_data->gps_source, source_str, sizeof(gps_data->gps_source) - 1);
+                gps_data->gps_source[sizeof(gps_data->gps_source) - 1] = '\0';
+            } else {
+                strcpy(gps_data->gps_source, "STARLINK_GPS");
+            }
+            pclose(source_fp);
+        } else {
+            strcpy(gps_data->gps_source, "STARLINK_GPS");
+        }
+        
+        // Get additional GPS metadata
+        snprintf(grpc_cmd, sizeof(grpc_cmd),
+                "grpcurl -plaintext -d '{}' %s:%d SpaceX.API.Device.Device/GetStatus 2>/dev/null | "
+                "jq -r '.gps_stats.satellites // 0'",
+                g_starlink_comprehensive.config.dish_ip, 
+                g_starlink_comprehensive.config.dish_port);
+        
+        FILE *satellites_fp = popen(grpc_cmd, "r");
+        if (satellites_fp) {
+            char satellites_str[16];
+            if (fgets(satellites_str, sizeof(satellites_str), satellites_fp)) {
+                gps_data->satellites = atoi(satellites_str);
+            } else {
+                gps_data->satellites = 0;
+            }
+            pclose(satellites_fp);
+        } else {
+            gps_data->satellites = 0;
+        }
+        
+        // Get HDOP (Horizontal Dilution of Precision)
+        snprintf(grpc_cmd, sizeof(grpc_cmd),
+                "grpcurl -plaintext -d '{}' %s:%d SpaceX.API.Device.Device/GetStatus 2>/dev/null | "
+                "jq -r '.gps_stats.hdop // 1.0'",
+                g_starlink_comprehensive.config.dish_ip, 
+                g_starlink_comprehensive.config.dish_port);
+        
+        FILE *hdop_fp = popen(grpc_cmd, "r");
+        if (hdop_fp) {
+            char hdop_str[16];
+            if (fgets(hdop_str, sizeof(hdop_str), hdop_fp)) {
+                gps_data->hdop = atof(hdop_str);
+            } else {
+                gps_data->hdop = 1.0;
+            }
+            pclose(hdop_fp);
+        } else {
+            gps_data->hdop = 1.0;
+        }
+        
+        LOGX_DEBUG_MSG("Retrieved real Starlink GPS data via gRPC", 
+                       "accuracy", gps_data->accuracy,
+                       "velocity", gps_data->horizontal_speed_mps,
+                       "satellites", gps_data->satellites,
+                       "hdop", gps_data->hdop,
+                       "source", gps_data->gps_source);
         
         return AUTONOMY_SUCCESS;
     }

@@ -3,6 +3,15 @@
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <libubus.h>
+#include <libubox/blobmsg.h>
+
+// UBUS policy definitions
+enum {
+    MAINTENANCE_END_TIME,
+    MAINTENANCE_DURATION,
+    __MAINTENANCE_MAX
+};
 
 // Global delivery optimizer instance
 static delivery_optimizer_t g_delivery_optimizer;
@@ -118,11 +127,87 @@ static bool is_quiet_hours(time_t timestamp) {
 
 // Calculate user optimal time
 static time_t calculate_user_optimal_time(const system_state_t* system_state) {
-    (void)system_state; // May be used for user presence data in the future
+    // Analyze real user behavior patterns from system logs and activity
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
     
-    // For now, return 0 (no specific user optimal time)
-    // In a full implementation, this would analyze user behavior patterns
-    return 0;
+    // Analyze user activity patterns from system logs
+    FILE* log_fp = fopen("/var/log/autonomy/user_activity.log", "r");
+    if (log_fp) {
+        char line[512];
+        int activity_counts[24] = {0}; // Activity count per hour
+        int total_activities = 0;
+        
+        // Parse user activity log to find patterns
+        while (fgets(line, sizeof(line), log_fp)) {
+            if (strstr(line, "user_activity")) {
+                // Extract hour from timestamp
+                struct tm log_time;
+                if (sscanf(line, "%d-%d-%d %d:%d:%d", 
+                          &log_time.tm_year, &log_time.tm_mon, &log_time.tm_mday,
+                          &log_time.tm_hour, &log_time.tm_min, &log_time.tm_sec) == 6) {
+                    activity_counts[log_time.tm_hour]++;
+                    total_activities++;
+                }
+            }
+        }
+        fclose(log_fp);
+        
+        // Find peak activity hours
+        int peak_hour = 0;
+        int max_activity = 0;
+        for (int i = 0; i < 24; i++) {
+            if (activity_counts[i] > max_activity) {
+                max_activity = activity_counts[i];
+                peak_hour = i;
+            }
+        }
+        
+        // Calculate optimal time based on user activity patterns
+        if (total_activities > 10) { // Only if we have enough data
+            // Schedule notifications during peak activity hours
+            struct tm optimal_time = *tm_info;
+            optimal_time.tm_hour = peak_hour;
+            optimal_time.tm_min = 0;
+            optimal_time.tm_sec = 0;
+            
+            time_t optimal_timestamp = mktime(&optimal_time);
+            
+            // If optimal time has passed today, schedule for tomorrow
+            if (optimal_timestamp <= now) {
+                optimal_timestamp += 24 * 3600; // Add 24 hours
+            }
+            
+            LOGX_DEBUG_MSG("Calculated user optimal time from activity patterns",
+                          "peak_hour", peak_hour,
+                          "total_activities", total_activities,
+                          "optimal_timestamp", optimal_timestamp);
+            
+            return optimal_timestamp;
+        }
+    }
+    
+    // Fallback: Use system state for user presence detection
+    if (system_state && system_state->user_presence_detected) {
+        // User is currently active, schedule notification soon
+        return now + 300; // 5 minutes from now
+    }
+    
+    // Default: Schedule during typical business hours (9 AM)
+    struct tm business_time = *tm_info;
+    business_time.tm_hour = 9;
+    business_time.tm_min = 0;
+    business_time.tm_sec = 0;
+    
+    time_t business_timestamp = mktime(&business_time);
+    if (business_timestamp <= now) {
+        business_timestamp += 24 * 3600; // Add 24 hours
+    }
+    
+    LOGX_DEBUG_MSG("Using default business hours for user optimal time",
+                  "business_timestamp", business_timestamp);
+    
+    return business_timestamp;
 }
 
 // Calculate business hours optimal time
@@ -268,9 +353,126 @@ static time_t calculate_alert_type_optimal_time(notification_type_t alert_type, 
 static time_t calculate_maintenance_optimal_time(time_t now, const system_state_t* system_state) {
     (void)system_state; // May be used for maintenance status in the future
     
-    // For now, assume maintenance lasts 2 hours if in maintenance mode
-    // In a real implementation, this would check actual maintenance schedules
-    return now + (2 * 3600); // 2 hours from now
+    // Check real maintenance schedules from system configuration
+    FILE* maintenance_fp = fopen("/var/lib/autonomy/maintenance_schedule.conf", "r");
+    if (maintenance_fp) {
+        char line[256];
+        time_t next_maintenance_end = 0;
+        
+        // Parse maintenance schedule file
+        while (fgets(line, sizeof(line), maintenance_fp)) {
+            if (strstr(line, "maintenance_end")) {
+                // Parse maintenance end time
+                struct tm maintenance_time;
+                if (sscanf(line, "maintenance_end=%d-%d-%d %d:%d:%d", 
+                          &maintenance_time.tm_year, &maintenance_time.tm_mon, &maintenance_time.tm_mday,
+                          &maintenance_time.tm_hour, &maintenance_time.tm_min, &maintenance_time.tm_sec) == 6) {
+                    maintenance_time.tm_year -= 1900; // Adjust year
+                    maintenance_time.tm_mon -= 1;     // Adjust month
+                    next_maintenance_end = mktime(&maintenance_time);
+                    
+                    if (next_maintenance_end > now) {
+                        fclose(maintenance_fp);
+                        LOGX_DEBUG_MSG("Found scheduled maintenance end time",
+                                      "maintenance_end", next_maintenance_end);
+                        return next_maintenance_end;
+                    }
+                }
+            }
+        }
+        fclose(maintenance_fp);
+    }
+    
+    // Check UCI maintenance configuration
+    struct ubus_context* ctx = ubus_connect(NULL);
+    if (ctx) {
+        uint32_t id;
+        int ret = ubus_lookup_id(ctx, "system.maintenance", &id);
+        if (ret == 0) {
+            struct blob_buf bb = {0};
+            blob_buf_init(&bb, 0);
+            
+            ret = ubus_invoke(ctx, id, "get_schedule", bb.head, NULL, NULL, 1000);
+            if (ret == 0) {
+                // Parse UBUS response for maintenance schedule
+                struct blob_attr *tb[__MAINTENANCE_MAX];
+                static const struct blobmsg_policy policy[__MAINTENANCE_MAX] = {
+                    [MAINTENANCE_END_TIME] = { .name = "end_time", .type = BLOBMSG_TYPE_INT32 },
+                    [MAINTENANCE_DURATION] = { .name = "duration", .type = BLOBMSG_TYPE_INT32 },
+                };
+                
+                blobmsg_parse(policy, __MAINTENANCE_MAX, tb, blob_data(bb.head), blob_len(bb.head));
+                
+                if (tb[MAINTENANCE_END_TIME]) {
+                    time_t maintenance_end = blobmsg_get_u32(tb[MAINTENANCE_END_TIME]);
+                    if (maintenance_end > now) {
+                        blob_buf_free(&bb);
+                        ubus_free(ctx);
+                        LOGX_DEBUG_MSG("Found maintenance end time via UBUS",
+                                      "maintenance_end", maintenance_end);
+                        return maintenance_end;
+                    }
+                } else if (tb[MAINTENANCE_DURATION]) {
+                    int duration_minutes = blobmsg_get_u32(tb[MAINTENANCE_DURATION]);
+                    blob_buf_free(&bb);
+                    ubus_free(ctx);
+                    LOGX_DEBUG_MSG("Found maintenance duration via UBUS",
+                                  "duration_minutes", duration_minutes);
+                    return now + (duration_minutes * 60);
+                }
+            }
+            
+            blob_buf_free(&bb);
+        }
+        ubus_free(ctx);
+    }
+    
+    // Fallback: Estimate based on system state and typical maintenance patterns
+    if (system_state && system_state->maintenance_mode) {
+        // Check system logs for maintenance start time
+        FILE* log_fp = fopen("/var/log/autonomy/system.log", "r");
+        if (log_fp) {
+            char line[512];
+            time_t maintenance_start = 0;
+            
+            // Find maintenance start time in logs
+            while (fgets(line, sizeof(line), log_fp)) {
+                if (strstr(line, "maintenance_mode_entered")) {
+                    struct tm log_time;
+                    if (sscanf(line, "%d-%d-%d %d:%d:%d", 
+                              &log_time.tm_year, &log_time.tm_mon, &log_time.tm_mday,
+                              &log_time.tm_hour, &log_time.tm_min, &log_time.tm_sec) == 6) {
+                        log_time.tm_year -= 1900;
+                        log_time.tm_mon -= 1;
+                        maintenance_start = mktime(&log_time);
+                        break;
+                    }
+                }
+            }
+            fclose(log_fp);
+            
+            if (maintenance_start > 0) {
+                // Estimate duration based on elapsed time and typical patterns
+                time_t elapsed = now - maintenance_start;
+                time_t estimated_duration = elapsed * 1.5; // 50% buffer
+                
+                // Cap at reasonable maximum (4 hours)
+                if (estimated_duration > 4 * 3600) {
+                    estimated_duration = 4 * 3600;
+                }
+                
+                LOGX_DEBUG_MSG("Estimated maintenance duration from logs",
+                              "elapsed", elapsed,
+                              "estimated_duration", estimated_duration);
+                
+                return now + estimated_duration;
+            }
+        }
+    }
+    
+    // Final fallback: Default 2 hours
+    LOGX_DEBUG_MSG("Using default maintenance duration (2 hours)");
+    return now + (2 * 3600);
 }
 
 // Generate delay reason

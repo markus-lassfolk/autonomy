@@ -13,6 +13,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <dirent.h>
+#include <uci.h>
 #include <sys/stat.h>
 
 // Network discovery configuration
@@ -203,45 +204,135 @@ static void discover_system_interfaces(void) {
     if_freenameindex(if_ni);
 }
 
-// Discover UCI network interfaces
+// Discover UCI network interfaces using real UCI integration
 static void discover_uci_interfaces(void) {
-    // This would integrate with UCI to discover configured network interfaces
-    // For now, we'll simulate the discovery of common interface types
+    // Use UCI to discover configured network interfaces
+    struct uci_context *ctx = uci_alloc_context();
+    if (!ctx) {
+        LOGX_ERROR_MSG("Failed to allocate UCI context for network discovery");
+        return;
+    }
     
-    const char* common_interfaces[] = {
-        "eth0", "eth1", "wlan0", "wlan1", "wwan0", "wwan1", "tun0", "vpn0"
-    };
+    struct uci_package *pkg = NULL;
+    int ret = uci_load(ctx, "network", &pkg);
+    if (ret != UCI_OK || !pkg) {
+        LOGX_ERROR_MSG("Failed to load UCI network package");
+        uci_free_context(ctx);
+        return;
+    }
     
-    for (int i = 0; i < sizeof(common_interfaces) / sizeof(common_interfaces[0]); i++) {
+    // Iterate through UCI network sections
+    struct uci_element *e;
+    uci_foreach_element(&pkg->sections, e) {
         if (g_discovery.interface_count >= g_discovery.max_interfaces) {
             break;
         }
         
-        // Check if interface already exists
-        bool exists = false;
-        for (int j = 0; j < g_discovery.interface_count; j++) {
-            if (strcmp(g_discovery.interfaces[j].name, common_interfaces[i]) == 0) {
-                exists = true;
+        struct uci_section *s = uci_to_section(e);
+        const char *type = uci_lookup_option_string(ctx, s, "type");
+        const char *ifname = uci_lookup_option_string(ctx, s, "ifname");
+        const char *device = uci_lookup_option_string(ctx, s, "device");
+        
+        // Only process interface sections
+        if (type && strcmp(type, "interface") == 0 && ifname) {
+            // Check if interface already exists
+            bool exists = false;
+            for (int j = 0; j < g_discovery.interface_count; j++) {
+                if (strcmp(g_discovery.interfaces[j].name, ifname) == 0) {
+                    exists = true;
                 break;
             }
         }
         
-        if (!exists) {
-            // Check if interface actually exists in system
-            if (interface_exists_in_system(common_interfaces[i])) {
-                network_interface_t *iface = &g_discovery.interfaces[g_discovery.interface_count];
-                memset(iface, 0, sizeof(network_interface_t));
-                
-                strncpy(iface->name, common_interfaces[i], sizeof(iface->name) - 1);
-                iface->last_seen = time(NULL);
-                iface->discovered = true;
-                
-                // Get interface details
-                get_interface_details(iface);
-                
-                g_discovery.interface_count++;
-                
-                LOGX_DEBUG_MSG("Discovered UCI interface: %s", iface->name);
+            if (!exists) {
+                // Check if interface actually exists in system
+                if (interface_exists_in_system(ifname)) {
+                    network_interface_t *iface = &g_discovery.interfaces[g_discovery.interface_count];
+                    memset(iface, 0, sizeof(network_interface_t));
+                    
+                    strncpy(iface->name, ifname, sizeof(iface->name) - 1);
+                    iface->last_seen = time(NULL);
+                    iface->discovered = true;
+                    
+                    // Get UCI configuration details
+                    const char *proto = uci_lookup_option_string(ctx, s, "proto");
+                    const char *ipaddr = uci_lookup_option_string(ctx, s, "ipaddr");
+                    const char *netmask = uci_lookup_option_string(ctx, s, "netmask");
+                    const char *gateway = uci_lookup_option_string(ctx, s, "gateway");
+                    
+                    if (proto) {
+                        strncpy(iface->protocol, proto, sizeof(iface->protocol) - 1);
+                    }
+                    if (ipaddr) {
+                        strncpy(iface->ip_address, ipaddr, sizeof(iface->ip_address) - 1);
+                    }
+                    if (netmask) {
+                        strncpy(iface->netmask, netmask, sizeof(iface->netmask) - 1);
+                    }
+                    if (gateway) {
+                        strncpy(iface->gateway, gateway, sizeof(iface->gateway) - 1);
+                    }
+                    if (device) {
+                        strncpy(iface->device, device, sizeof(iface->device) - 1);
+                    }
+                    
+                    // Get additional interface details
+                    get_interface_details(iface);
+                    
+                    g_discovery.interface_count++;
+                    
+                    LOGX_DEBUG_MSG("Discovered UCI interface",
+                                  "name", iface->name,
+                                  "protocol", iface->protocol,
+                                  "ip", iface->ip_address,
+                                  "device", iface->device);
+                }
+            }
+        }
+    }
+    
+    uci_unload(ctx, pkg);
+    uci_free_context(ctx);
+    
+    // Fallback: Check for common interfaces if UCI discovery found none
+    if (g_discovery.interface_count == 0) {
+        LOGX_WARN_MSG("No interfaces found via UCI, using fallback discovery");
+        
+        const char* common_interfaces[] = {
+            "eth0", "eth1", "wlan0", "wlan1", "wwan0", "wwan1", "tun0", "vpn0"
+        };
+        
+        for (int i = 0; i < sizeof(common_interfaces) / sizeof(common_interfaces[0]); i++) {
+            if (g_discovery.interface_count >= g_discovery.max_interfaces) {
+                break;
+            }
+            
+            // Check if interface already exists
+            bool exists = false;
+            for (int j = 0; j < g_discovery.interface_count; j++) {
+                if (strcmp(g_discovery.interfaces[j].name, common_interfaces[i]) == 0) {
+                    exists = true;
+                    break;
+                }
+            }
+            
+            if (!exists) {
+                // Check if interface actually exists in system
+                if (interface_exists_in_system(common_interfaces[i])) {
+                    network_interface_t *iface = &g_discovery.interfaces[g_discovery.interface_count];
+                    memset(iface, 0, sizeof(network_interface_t));
+                    
+                    strncpy(iface->name, common_interfaces[i], sizeof(iface->name) - 1);
+                    iface->last_seen = time(NULL);
+                    iface->discovered = true;
+                    
+                    // Get interface details
+                    get_interface_details(iface);
+                    
+                    g_discovery.interface_count++;
+                    
+                    LOGX_DEBUG_MSG("Discovered fallback interface: %s", iface->name);
+                }
             }
         }
     }
