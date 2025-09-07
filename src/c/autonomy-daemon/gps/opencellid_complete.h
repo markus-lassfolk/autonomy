@@ -166,6 +166,19 @@ typedef struct {
     bool quality_filter_enabled;           // Enable quality filtering
 } opencellid_contribution_config_t;
 
+// OpenCellID contribution data structure
+typedef struct {
+    opencellid_cell_identifier_t cell_id;   // Cell identifier
+    double latitude;                        // GPS latitude
+    double longitude;                       // GPS longitude
+    double accuracy_meters;                 // GPS accuracy in meters
+    int rsrp_dbm;                          // Signal strength (RSRP)
+    int timing_advance;                     // Timing advance value
+    opencellid_radio_type_t radio_type;     // Radio technology
+    time_t timestamp;                       // Measurement timestamp
+    char source[32];                        // Data source identifier
+} opencellid_contribution_t;
+
 // Main OpenCellID configuration
 typedef struct {
     bool enabled;                           // Enable OpenCellID integration
