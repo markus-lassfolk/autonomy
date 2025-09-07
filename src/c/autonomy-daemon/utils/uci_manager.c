@@ -340,6 +340,7 @@ int uci_manager_save_config(const autonomy_config_t *config) {
     
     LOGX_INFO_MSG("Configuration save completed (placeholder implementation)");
     return AUTONOMY_SUCCESS;
+}
 
 int uci_manager_validate_config(const autonomy_config_t *config) {
     if (!config) {
@@ -409,5 +410,4 @@ void uci_manager_cleanup(void) {
     }
     g_uci_initialized = false;
     LOGX_INFO_MSG("UCI manager cleaned up");
-}
 }
