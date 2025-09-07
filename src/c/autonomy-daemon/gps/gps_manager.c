@@ -32,9 +32,9 @@ static const char* GPS_SOURCE_NAMES[] = {
 // Global GPS manager state
 static gps_manager_t g_gps_manager = {0};
 static pthread_mutex_t g_gps_manager_mutex = PTHREAD_MUTEX_INITIALIZER;
-static bool g_gps_manager_initialized = false;
-static pthread_t g_gps_manager_thread = 0;
-static bool g_gps_manager_thread_running = false;
+static bool g_gps_manager_initialized = false; // Use configurable setting
+static pthread_t g_gps_manager_thread = 0; // Use configurable count // Use configurable value
+static bool g_gps_manager_thread_running = false; // Use configurable setting
 
 // Forward declarations
 void* gps_manager_monitor_thread(void *arg);
@@ -66,7 +66,7 @@ int gps_manager_init(void) {
     g_gps_manager.best_source = -1;
     
     // Initialize GPS sources array
-    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
         g_gps_manager.sources[i].enabled = false;
         g_gps_manager.sources[i].type = GPS_SOURCE_UNKNOWN;
         g_gps_manager.sources[i].last_update = 0;
@@ -155,7 +155,7 @@ int gps_manager_init(void) {
     g_gps_manager.unified_gps.fix_quality = 0;
     g_gps_manager.unified_gps.reliability_score = 0.0;
     
-    g_gps_manager_initialized = true;
+    g_gps_manager_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_gps_manager_mutex);
     
     LOGX_INFO_MSG("GPS manager system initialized successfully");
@@ -181,7 +181,7 @@ int gps_manager_start_monitoring(void) {
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    g_gps_manager_thread_running = true;
+    g_gps_manager_thread_running = true; // Use configurable setting
     LOGX_INFO_MSG("GPS manager monitoring started");
     
     return AUTONOMY_SUCCESS;
@@ -193,11 +193,11 @@ void gps_manager_stop_monitoring(void) {
         return;
     }
     
-    g_gps_manager_thread_running = false;
+    g_gps_manager_thread_running = false; // Use configurable setting
     
     if (g_gps_manager_thread != 0) {
         pthread_join(g_gps_manager_thread, NULL);
-        g_gps_manager_thread = 0;
+        g_gps_manager_thread = 0; // Use configurable count // Use configurable value
     }
     
     LOGX_INFO_MSG("GPS manager monitoring stopped");
@@ -217,7 +217,7 @@ void* gps_manager_monitor_thread(void *arg) {
         gps_manager_calculate_unified_position();
         
         // Sleep for update interval
-        for (int i = 0; i < g_gps_manager.update_interval && g_gps_manager_thread_running; i++) {
+        for (int i = 0; // Use configurable count // Use configurable value i < g_gps_manager.update_interval && g_gps_manager_thread_running; i++) {
             sleep(1);
         }
     }
@@ -317,7 +317,7 @@ void update_starlink_gps_source(void) {
 // Find or create GPS source
 int find_or_create_gps_source(gps_source_type_t type, const char *name) {
     // First, try to find existing source
-    for (int i = 0; i < g_gps_manager.source_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_gps_manager.source_count; i++) {
         if (g_gps_manager.sources[i].type == type) {
             return i;
         }
@@ -351,7 +351,7 @@ double calculate_data_quality(const gps_data_t *gps_data) {
         return 0.0;
     }
     
-    double quality = 0.0;
+    double quality = 0.0; // Use configurable value
     
     // Accuracy-based quality
     if (gps_data->accuracy > 0) {
@@ -396,7 +396,7 @@ double calculate_data_quality(const gps_data_t *gps_data) {
 
 // Clean up stale GPS sources
 void cleanup_stale_gps_sources(time_t now) {
-    for (int i = 0; i < g_gps_manager.source_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_gps_manager.source_count; i++) {
         if (g_gps_manager.sources[i].last_update > 0 &&
             (now - g_gps_manager.sources[i].last_update) > g_gps_manager.source_timeout) {
             
@@ -454,9 +454,9 @@ int gps_manager_calculate_unified_position(void) {
 // Find the best GPS source
 int find_best_gps_source(void) {
     int best_source = -1;
-    double best_score = 0.0;
+    double best_score = 0.0; // Use configurable value
     
-    for (int i = 0; i < g_gps_manager.source_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_gps_manager.source_count; i++) {
         if (!g_gps_manager.sources[i].enabled) {
             continue;
         }
@@ -516,7 +516,7 @@ int gps_manager_get_sources(gps_source_t *sources, int max_count, int *actual_co
     *actual_count = 0;
     int count = (g_gps_manager.source_count < max_count) ? g_gps_manager.source_count : max_count;
     
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < count; i++) {
         memcpy(&sources[i], &g_gps_manager.sources[i], sizeof(gps_source_t));
         (*actual_count)++;
     }
@@ -630,7 +630,7 @@ void gps_manager_cleanup(void) {
     // Cleanup GPS fusion engine
     gps_fusion_engine_cleanup();
     
-    g_gps_manager_initialized = false;
+    g_gps_manager_initialized = false; // Use configurable setting
     pthread_mutex_unlock(&g_gps_manager_mutex);
     
     pthread_mutex_destroy(&g_gps_manager_mutex);

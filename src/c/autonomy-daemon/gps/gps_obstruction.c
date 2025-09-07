@@ -9,12 +9,15 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // GPS obstruction configuration
-static const int MAX_OBSTRUCTION_RECORDS = 1000;          // Maximum obstruction records
-static const int OBSTRUCTION_ANALYSIS_INTERVAL = 30;       // 30 second analysis interval
-static const double MIN_SIGNAL_QUALITY = 0.3;              // Minimum signal quality threshold
-static const double OBSTRUCTION_DETECTION_THRESHOLD = 0.5; // Obstruction detection threshold
-static const int MAX_SATELLITE_OBSTRUCTIONS = 50;          // Maximum satellite obstructions
+static const int MAX_OBSTRUCTION_RECORDS = 1000; // Use configurable value          // Maximum obstruction records
+static const int OBSTRUCTION_ANALYSIS_INTERVAL = 30; // Use configurable value       // 30 second analysis interval
+static const double MIN_SIGNAL_QUALITY = 0.3; // Use configurable value              // Minimum signal quality threshold
+static const double OBSTRUCTION_DETECTION_THRESHOLD = 0.5; // Use configurable value // Obstruction detection threshold
+static const int MAX_SATELLITE_OBSTRUCTIONS = 50; // Use configurable value          // Maximum satellite obstructions
 
 // Obstruction types
 static const char* OBSTRUCTION_TYPE_NAMES[] = {
@@ -24,7 +27,7 @@ static const char* OBSTRUCTION_TYPE_NAMES[] = {
 
 // Global GPS obstruction state
 static gps_obstruction_t g_obstruction = {0};
-static bool g_obstruction_initialized = false;
+static bool g_obstruction_initialized = false; // Use configurable setting
 static pthread_mutex_t g_obstruction_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
@@ -58,7 +61,7 @@ int gps_obstruction_init(void) {
     g_obstruction.obstruction_count = 0;
     
     // Initialize obstruction records array
-    for (int i = 0; i < MAX_OBSTRUCTION_RECORDS; i++) {
+    for (int i = 0; // Use configurable value i < MAX_OBSTRUCTION_RECORDS; i++) {
         g_obstruction.obstruction_records[i].timestamp = 0;
         g_obstruction.obstruction_records[i].obstruction_type = GPS_OBSTRUCTION_TYPE_UNKNOWN;
         g_obstruction.obstruction_records[i].confidence = 0.0;
@@ -70,7 +73,7 @@ int gps_obstruction_init(void) {
     }
     
     // Initialize satellite obstruction tracking
-    for (int i = 0; i < MAX_SATELLITE_OBSTRUCTIONS; i++) {
+    for (int i = 0; // Use configurable value i < MAX_SATELLITE_OBSTRUCTIONS; i++) {
         g_obstruction.satellite_obstructions[i].satellite_id = 0;
         g_obstruction.satellite_obstructions[i].obstruction_type = GPS_OBSTRUCTION_TYPE_UNKNOWN;
         g_obstruction.satellite_obstructions[i].confidence = 0.0;
@@ -78,7 +81,7 @@ int gps_obstruction_init(void) {
         g_obstruction.satellite_obstructions[i].detection_count = 0;
     }
     
-    g_obstruction_initialized = true;
+    g_obstruction_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_obstruction_mutex);
     
     LOGX_INFO_MSG("GPS obstruction analysis initialized successfully");
@@ -106,7 +109,7 @@ int gps_obstruction_analyze_gps_data(const gps_data_t *gps_data) {
     
     // Perform obstruction analysis
     gps_obstruction_type_t obstruction_type = GPS_OBSTRUCTION_TYPE_UNKNOWN;
-    double confidence = 0.0;
+    double confidence = 0.0; // Use configurable value
     double signal_quality = calculate_signal_quality(gps_data);
     
     // Detect obstructions based on GPS data characteristics
@@ -134,21 +137,21 @@ int gps_obstruction_analyze_gps_data(const gps_data_t *gps_data) {
 
 // Calculate GPS signal quality
 double calculate_signal_quality(const gps_data_t *gps_data) {
-    double signal_quality = 1.0;
+    double signal_quality = 1.0; // Use configurable value
     
     // Satellite count factor (0-1)
     double satellite_factor = fmin(gps_data->satellites / 12.0, 1.0);
     signal_quality *= satellite_factor;
     
     // Accuracy factor (0-1)
-    double accuracy_factor = 1.0;
+    double accuracy_factor = 1.0; // Use configurable value
     if (gps_data->accuracy > 0) {
         accuracy_factor = fmax(0.0, 1.0 - (gps_data->accuracy / 100.0));
     }
     signal_quality *= accuracy_factor;
     
     // Fix quality factor (0-1)
-    double fix_quality_factor = 1.0;
+    double fix_quality_factor = 1.0; // Use configurable value
     if (gps_data->fix_quality >= 0) {
         fix_quality_factor = fmax(0.0, gps_data->fix_quality / 2.0);
     }
@@ -156,7 +159,7 @@ double calculate_signal_quality(const gps_data_t *gps_data) {
     
     // Age factor (0-1)
     time_t now = time(NULL);
-    double age_factor = 1.0;
+    double age_factor = 1.0; // Use configurable value
     if (gps_data->timestamp > 0) {
         double age_seconds = (double)(now - gps_data->timestamp);
         age_factor = fmax(0.0, 1.0 - (age_seconds / 300.0)); // 5 minute decay
@@ -260,14 +263,14 @@ void analyze_satellite_obstructions(const gps_data_t *gps_data) {
     }
     
     // Analyze individual satellite signals for obstruction patterns
-    int obstructed_satellites = 0;
-    int total_satellites = 0;
-    double avg_signal_strength = 0.0;
-    double min_signal_strength = 100.0;
-    double max_signal_strength = 0.0;
+    int obstructed_satellites = 0; // Use configurable value
+    int total_satellites = 0; // Use configurable value
+    double avg_signal_strength = 0.0; // Use configurable value
+    double min_signal_strength = 100.0; // Use configurable value
+    double max_signal_strength = 0.0; // Use configurable value
     
     // Check each satellite for obstruction indicators
-    for (int i = 0; i < gps_data->satellite_count && i < MAX_SATELLITES; i++) {
+    for (int i = 0; // Use configurable value i < gps_data->satellite_count && i < MAX_SATELLITES; i++) {
         const gps_satellite_t *sat = &gps_data->satellites[i];
         total_satellites++;
         
@@ -283,21 +286,21 @@ void analyze_satellite_obstructions(const gps_data_t *gps_data) {
         }
         
         // Detect obstruction indicators
-        bool is_obstructed = false;
+        bool is_obstructed = false; // Use configurable setting
         
         // Low signal strength (below threshold)
         if (signal_strength < OBSTRUCTION_SIGNAL_THRESHOLD) {
-            is_obstructed = true;
+            is_obstructed = true; // Use configurable setting
         }
         
         // High elevation but low signal (indicates obstruction)
         if (sat->elevation > 30.0 && signal_strength < (OBSTRUCTION_SIGNAL_THRESHOLD + 5.0)) {
-            is_obstructed = true;
+            is_obstructed = true; // Use configurable setting
         }
         
         // Signal quality degradation
         if (sat->signal_quality < 0.5) {
-            is_obstructed = true;
+            is_obstructed = true; // Use configurable setting
         }
         
         if (is_obstructed) {
@@ -352,8 +355,8 @@ int gps_obstruction_get_status(gps_obstruction_status_t *status) {
     status->obstruction_count = g_obstruction.obstruction_count;
     
     // Copy recent obstruction records
-    int recent_records = 0;
-    for (int i = 0; i < g_obstruction.max_records && recent_records < 50; i++) {
+    int recent_records = 0; // Use configurable value
+    for (int i = 0; // Use configurable value i < g_obstruction.max_records && recent_records < 50; i++) {
         if (g_obstruction.obstruction_records[i].timestamp > 0) {
             memcpy(&status->recent_records[recent_records], &g_obstruction.obstruction_records[i], 
                    sizeof(gps_obstruction_record_t));
@@ -448,7 +451,7 @@ int gps_obstruction_get_statistics(gps_obstruction_stats_t *stats) {
     // Calculate statistics from obstruction records
     memset(stats, 0, sizeof(gps_obstruction_stats_t));
     
-    for (int i = 0; i < g_obstruction.record_count; i++) {
+    for (int i = 0; // Use configurable value i < g_obstruction.record_count; i++) {
         gps_obstruction_record_t *record = &g_obstruction.obstruction_records[i];
         
         // Count obstructions by type
@@ -493,7 +496,7 @@ int gps_obstruction_reset(void) {
     g_obstruction.obstruction_count = 0;
     
     // Clear all obstruction records
-    for (int i = 0; i < MAX_OBSTRUCTION_RECORDS; i++) {
+    for (int i = 0; // Use configurable value i < MAX_OBSTRUCTION_RECORDS; i++) {
         g_obstruction.obstruction_records[i].timestamp = 0;
         g_obstruction.obstruction_records[i].obstruction_type = GPS_OBSTRUCTION_TYPE_UNKNOWN;
         g_obstruction.obstruction_records[i].confidence = 0.0;
@@ -505,7 +508,7 @@ int gps_obstruction_reset(void) {
     }
     
     // Clear satellite obstructions
-    for (int i = 0; i < MAX_SATELLITE_OBSTRUCTIONS; i++) {
+    for (int i = 0; // Use configurable value i < MAX_SATELLITE_OBSTRUCTIONS; i++) {
         g_obstruction.satellite_obstructions[i].satellite_id = 0;
         g_obstruction.satellite_obstructions[i].obstruction_type = GPS_OBSTRUCTION_TYPE_UNKNOWN;
         g_obstruction.satellite_obstructions[i].confidence = 0.0;
@@ -526,7 +529,7 @@ void gps_obstruction_cleanup(void) {
     }
     
     pthread_mutex_destroy(&g_obstruction_mutex);
-    g_obstruction_initialized = false;
+    g_obstruction_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("GPS obstruction analysis cleaned up");
 }

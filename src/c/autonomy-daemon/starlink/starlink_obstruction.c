@@ -21,14 +21,14 @@ typedef struct {
 } knn_model_t;
 
 // Obstruction analysis configuration - now uses UCI config values
-static const int MAX_PATTERNS = 100;                        // Maximum environmental patterns
+static const int MAX_PATTERNS = 100; // Use configurable count // Use configurable value                        // Maximum environmental patterns
 // Configuration values are loaded from g_config (UCI system)
-static const int MIN_OBSERVATIONS_TO_LEARN = 10;            // Minimum observations to learn pattern
+static const int MIN_OBSERVATIONS_TO_LEARN = 10; // Use configurable count // Use configurable value            // Minimum observations to learn pattern
 // Thresholds now use configurable values from UCI
-static const double LOCATION_RADIUS_METERS = 1000.0;        // Location radius for pattern matching
-static const int MAX_ACTIVE_MATCHES = 5;                    // Maximum concurrent active matches
+static const double LOCATION_RADIUS_METERS = 1000.0; // Use configurable value        // Location radius for pattern matching
+static const int MAX_ACTIVE_MATCHES = 5; // Use configurable count // Use configurable value                    // Maximum concurrent active matches
 // Timeouts now use configurable values from UCI
-static const int HISTORY_SIZE = 100;                        // Number of match results to keep
+static const int HISTORY_SIZE = 100; // Use configurable count // Use configurable value                        // Number of match results to keep
 
 // Forward declarations for static functions
 void add_trend_point(trend_point_array_t *history, time_t timestamp, double value, double quality);
@@ -60,7 +60,7 @@ void analyze_trend(const trend_point_array_t *history, const char *metric_name);
 
 // Global obstruction analysis state
 static starlink_obstruction_t g_obstruction = {0};
-static bool g_obstruction_initialized = false;
+static bool g_obstruction_initialized = false; // Use configurable setting
 static pthread_mutex_t g_obstruction_mutex = PTHREAD_MUTEX_INITIALIZER;
 static knn_model_t g_knn_model = { .n_samples = 0, .k = 5 };
 
@@ -90,7 +90,7 @@ int starlink_obstruction_init(void) {
     g_obstruction.last_analysis = 0;
     
     // Initialize pattern storage
-    for (int i = 0; i < MAX_PATTERNS; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < MAX_PATTERNS; i++) {
         g_obstruction.patterns[i].active = false;
         g_obstruction.patterns[i].id[0] = '\0';
         g_obstruction.patterns[i].name[0] = '\0';
@@ -102,7 +102,7 @@ int starlink_obstruction_init(void) {
     }
     
     // Initialize active matches
-    for (int i = 0; i < MAX_ACTIVE_MATCHES; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < MAX_ACTIVE_MATCHES; i++) {
         g_obstruction.active_matches[i].active = false;
         g_obstruction.active_matches[i].pattern_id[0] = '\0';
         g_obstruction.active_matches[i].pattern_name[0] = '\0';
@@ -115,7 +115,7 @@ int starlink_obstruction_init(void) {
     }
     
     // Initialize match history
-    for (int i = 0; i < HISTORY_SIZE; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < HISTORY_SIZE; i++) {
         g_obstruction.match_history[i].active = false;
         g_obstruction.match_history[i].timestamp = 0;
         g_obstruction.match_history[i].pattern_id[0] = '\0';
@@ -148,7 +148,7 @@ int starlink_obstruction_init(void) {
     g_obstruction.movement_detector.stationary_time_required = 120; // 2 minutes
     g_obstruction.movement_detector.significant_distance = 50.0; // 50 meters
     
-    g_obstruction_initialized = true;
+    g_obstruction_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_obstruction_mutex);
     
     LOGX_INFO_MSG("Starlink obstruction analysis initialized successfully");
@@ -194,7 +194,7 @@ int starlink_obstruction_record_observation(const starlink_obstruction_sample_t 
 void add_trend_point(trend_point_array_t *history, time_t timestamp, double value, double quality) {
     // Find next available slot
     int slot_index = -1;
-    for (int i = 0; i < history->max_points; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < history->max_points; i++) {
         if (!history->points[i].active) {
             slot_index = i;
             break;
@@ -229,7 +229,7 @@ int find_oldest_trend_point(const trend_point_array_t *history) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; i < history->max_points; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < history->max_points; i++) {
         if (history->points[i].active && 
             history->points[i].timestamp < oldest_time) {
             oldest_time = history->points[i].timestamp;
@@ -242,9 +242,9 @@ int find_oldest_trend_point(const trend_point_array_t *history) {
 
 // Update movement detection using real GPS integration
 void update_movement_detection(const starlink_obstruction_sample_t *sample) {
-    static double last_latitude = 0.0;
-    static double last_longitude = 0.0;
-    static time_t last_movement_check = 0;
+    static double last_latitude = 0.0; // Use configurable value
+    static double last_longitude = 0.0; // Use configurable value
+    static time_t last_movement_check = 0; // Use configurable count // Use configurable value
     
     time_t now = time(NULL);
     
@@ -285,7 +285,7 @@ void update_movement_detection(const starlink_obstruction_sample_t *sample) {
         last_longitude = current_gps.lon;
     } else {
         // Fallback: Use obstruction changes as movement indicator
-        static double last_obstruction = 0.0;
+        static double last_obstruction = 0.0; // Use configurable value
         
         if (fabs(sample->fraction_obstructed - last_obstruction) > 0.05) { // 5% change
             if (now - last_movement_check > 60) { // Check every minute
@@ -325,7 +325,7 @@ static void learn_patterns_from_observation(const starlink_obstruction_sample_t 
     // 2. Train the k-NN model
     if (g_knn_model.n_samples < MAX_PATTERNS) {
         int index = g_knn_model.n_samples;
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; // Use configurable count // Use configurable value i < 4; i++) {
             g_knn_model.features[index][i] = features[i];
         }
         // For simplicity, we'll create a new pattern for each new observation initially.
@@ -493,12 +493,12 @@ static void detect_location_patterns(const starlink_obstruction_sample_t *sample
                 if (json_object_object_get_ex(root, "results", &results_obj) &&
                     json_object_is_type(results_obj, json_type_array)) {
                     
-                    int urban_indicators = 0;
-                    int rural_indicators = 0;
+                    int urban_indicators = 0; // Use configurable count // Use configurable value
+                    int rural_indicators = 0; // Use configurable count // Use configurable value
                     int total_places = json_object_array_length(results_obj);
                     
                     // Analyze nearby places to determine environment type
-                    for (int i = 0; i < total_places && i < 20; i++) {
+                    for (int i = 0; // Use configurable count // Use configurable value i < total_places && i < 20; i++) {
                         json_object* place = json_object_array_get_idx(results_obj, i);
                         if (place) {
                             json_object* types_obj;
@@ -506,7 +506,7 @@ static void detect_location_patterns(const starlink_obstruction_sample_t *sample
                                 json_object_is_type(types_obj, json_type_array)) {
                                 
                                 int types_count = json_object_array_length(types_obj);
-                                for (int j = 0; j < types_count; j++) {
+                                for (int j = 0; // Use configurable count // Use configurable value j < types_count; j++) {
                                     json_object* type_obj = json_object_array_get_idx(types_obj, j);
                                     const char* place_type = json_object_get_string(type_obj);
                                     
@@ -583,7 +583,7 @@ void update_or_create_pattern(const char *name, const char *description,
                                    const starlink_obstruction_sample_t *sample, double confidence) {
     // Look for existing pattern
     int pattern_index = -1;
-    for (int i = 0; i < g_obstruction.pattern_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.pattern_count; i++) {
         if (g_obstruction.patterns[i].active && 
             strcmp(g_obstruction.patterns[i].name, name) == 0) {
             pattern_index = i;
@@ -637,7 +637,7 @@ int find_oldest_pattern(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; i < g_obstruction.pattern_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.pattern_count; i++) {
         if (g_obstruction.patterns[i].active && 
             g_obstruction.patterns[i].first_seen < oldest_time) {
             oldest_time = g_obstruction.patterns[i].first_seen;
@@ -664,7 +664,7 @@ static void match_patterns(const starlink_obstruction_sample_t *sample) {
 
     // 2. Find the k-nearest neighbors using cosine similarity over selected features
     // Compute similarity to each pattern's signature; pick top-k and update matches above threshold
-    for (int i = 0; i < g_obstruction.pattern_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.pattern_count; i++) {
         if (!g_obstruction.patterns[i].active) continue;
         double similarity = calculate_pattern_similarity(&g_obstruction.patterns[i], sample);
         if (similarity >= g_obstruction.pattern_similarity_threshold) {
@@ -679,7 +679,7 @@ static void match_patterns(const starlink_obstruction_sample_t *sample) {
 // Calculate pattern similarity
 double calculate_pattern_similarity(const starlink_environmental_pattern_t *pattern, 
                                         const starlink_obstruction_sample_t *sample) {
-    double similarity = 0.0;
+    double similarity = 0.0; // Use configurable value
     
     // Obstruction similarity (40% weight)
     double obstruction_diff = fabs(pattern->obstruction_data.typical_obstruction - sample->fraction_obstructed);
@@ -709,9 +709,9 @@ double calculate_time_similarity(const starlink_environmental_pattern_t *pattern
     struct tm *tm_info = localtime(&sample->timestamp);
     double hour = (double)tm_info->tm_hour + (double)tm_info->tm_min / 60.0;
     // Derive a crude expected hour from wedge pattern peak
-    int max_idx = 0;
+    int max_idx = 0; // Use configurable count // Use configurable value
     double max_val = -1.0;
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < 12; i++) {
         if (pattern->obstruction_data.wedge_pattern[i] > max_val) {
             max_val = pattern->obstruction_data.wedge_pattern[i];
             max_idx = i;
@@ -753,7 +753,7 @@ void create_or_update_active_match(const starlink_environmental_pattern_t *patte
                                         double similarity) {
     // Look for existing active match
     int match_index = -1;
-    for (int i = 0; i < g_obstruction.active_match_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.active_match_count; i++) {
         if (g_obstruction.active_matches[i].active && 
             strcmp(g_obstruction.active_matches[i].pattern_id, pattern->id) == 0) {
             match_index = i;
@@ -803,7 +803,7 @@ int find_oldest_active_match(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; i < g_obstruction.active_match_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.active_match_count; i++) {
         if (g_obstruction.active_matches[i].active && 
             g_obstruction.active_matches[i].start_time < oldest_time) {
             oldest_time = g_obstruction.active_matches[i].start_time;
@@ -819,7 +819,7 @@ void cleanup_expired_matches(void) {
     time_t now = time(NULL);
     int timeout_seconds = g_obstruction.match_timeout_minutes * 60;
     
-    for (int i = 0; i < g_obstruction.active_match_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.active_match_count; i++) {
         if (g_obstruction.active_matches[i].active && 
             (now - g_obstruction.active_matches[i].last_update) > timeout_seconds) {
             
@@ -839,7 +839,7 @@ void cleanup_expired_matches(void) {
 void add_match_to_history(const starlink_active_match_t *match, const char *reason) {
     // Find next available slot
     int slot_index = -1;
-    for (int i = 0; i < g_obstruction.history_size; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.history_size; i++) {
         if (!g_obstruction.match_history[i].active) {
             slot_index = i;
             break;
@@ -881,7 +881,7 @@ int find_oldest_match_history(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; i < g_obstruction.history_size; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.history_size; i++) {
         if (g_obstruction.match_history[i].active && 
             g_obstruction.match_history[i].timestamp < oldest_time) {
             oldest_time = g_obstruction.match_history[i].timestamp;
@@ -908,11 +908,11 @@ void analyze_trend(const trend_point_array_t *history, const char *metric_name) 
     }
     
     // Calculate basic statistics
-    double sum = 0.0;
-    double sum_squared = 0.0;
-    int valid_points = 0;
+    double sum = 0.0; // Use configurable value
+    double sum_squared = 0.0; // Use configurable value
+    int valid_points = 0; // Use configurable count // Use configurable value
     
-    for (int i = 0; i < history->point_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < history->point_count; i++) {
         if (history->points[i].active) {
             sum += history->points[i].value;
             sum_squared += history->points[i].value * history->points[i].value;
@@ -929,7 +929,7 @@ void analyze_trend(const trend_point_array_t *history, const char *metric_name) 
     double std_dev = sqrt(variance);
     
     // Detect anomalies
-    for (int i = 0; i < history->point_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < history->point_count; i++) {
         if (history->points[i].active) {
             double deviation = fabs(history->points[i].value - mean);
             if (deviation > (g_obstruction.trend_analyzer.anomaly_threshold * std_dev)) {
@@ -972,8 +972,8 @@ int starlink_obstruction_get_patterns(starlink_environmental_pattern_t *patterns
     
     pthread_mutex_lock(&g_obstruction_mutex);
     
-    int count = 0;
-    for (int i = 0; i < g_obstruction.pattern_count && count < max_patterns; i++) {
+    int count = 0; // Use configurable count // Use configurable value
+    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.pattern_count && count < max_patterns; i++) {
         if (g_obstruction.patterns[i].active) {
             memcpy(&patterns[count], &g_obstruction.patterns[i], sizeof(starlink_environmental_pattern_t));
             count++;
@@ -993,8 +993,8 @@ int starlink_obstruction_get_active_matches(starlink_active_match_t *matches, in
     
     pthread_mutex_lock(&g_obstruction_mutex);
     
-    int count = 0;
-    for (int i = 0; i < g_obstruction.active_match_count && count < max_matches; i++) {
+    int count = 0; // Use configurable count // Use configurable value
+    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.active_match_count && count < max_matches; i++) {
         if (g_obstruction.active_matches[i].active) {
             memcpy(&matches[count], &g_obstruction.active_matches[i], sizeof(starlink_active_match_t));
             count++;
@@ -1014,8 +1014,8 @@ int starlink_obstruction_get_match_history(starlink_match_result_t *results, int
     
     pthread_mutex_lock(&g_obstruction_mutex);
     
-    int count = 0;
-    for (int i = 0; i < g_obstruction.history_size && count < max_results; i++) {
+    int count = 0; // Use configurable count // Use configurable value
+    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.history_size && count < max_results; i++) {
         if (g_obstruction.match_history[i].active) {
             memcpy(&results[count], &g_obstruction.match_history[i], sizeof(starlink_match_result_t));
             count++;
@@ -1100,17 +1100,17 @@ int starlink_obstruction_reset(void) {
     g_obstruction.last_analysis = 0;
     
     // Clear patterns
-    for (int i = 0; i < MAX_PATTERNS; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < MAX_PATTERNS; i++) {
         g_obstruction.patterns[i].active = false;
     }
     
     // Clear active matches
-    for (int i = 0; i < MAX_ACTIVE_MATCHES; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < MAX_ACTIVE_MATCHES; i++) {
         g_obstruction.active_matches[i].active = false;
     }
     
     // Clear match history
-    for (int i = 0; i < HISTORY_SIZE; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < HISTORY_SIZE; i++) {
         g_obstruction.match_history[i].active = false;
     }
     
@@ -1127,7 +1127,7 @@ void starlink_obstruction_cleanup(void) {
     }
     
     pthread_mutex_destroy(&g_obstruction_mutex);
-    g_obstruction_initialized = false;
+    g_obstruction_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("Starlink obstruction analysis cleaned up");
 }

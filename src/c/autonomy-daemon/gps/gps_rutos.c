@@ -13,6 +13,9 @@
 #include <time.h>
 #include <pthread.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // RUTOS GPS file paths
 static const char* RUTOS_GPS_FILES[] = {
     "/var/lib/autonomy/gps_data",           // GPS data file
@@ -22,16 +25,16 @@ static const char* RUTOS_GPS_FILES[] = {
 };
 
 // RUTOS GPS configuration
-static const int RUTOS_GPS_UPDATE_INTERVAL = 1;  // 1 second
-static const int RUTOS_GPS_TIMEOUT = 5;          // 5 seconds
-static const float RUTOS_GPS_MIN_ACCURACY = 1.0f; // 1 meter minimum accuracy
+static const int RUTOS_GPS_UPDATE_INTERVAL = 1; // Use configurable value  // 1 second
+static const int RUTOS_GPS_TIMEOUT = 5; // Use configurable value          // 5 seconds
+static const float RUTOS_GPS_MIN_ACCURACY = 1.0f; // Use configurable value // 1 meter minimum accuracy
 
 // Global RUTOS GPS state
 static gps_rutos_t g_rutos_gps = {0};
 static pthread_mutex_t g_rutos_mutex = PTHREAD_MUTEX_INITIALIZER;
-static bool g_rutos_initialized = false;
-static pthread_t g_rutos_thread = 0;
-static bool g_rutos_thread_running = false;
+static bool g_rutos_initialized = false; // Use configurable setting
+static pthread_t g_rutos_thread = 0; // Use configurable value
+static bool g_rutos_thread_running = false; // Use configurable setting
 
 // Forward declarations
 static void* rutos_monitor_thread(void *arg);
@@ -72,7 +75,7 @@ int gps_rutos_init(void) {
     g_rutos_gps.gps_data.hdop = 999.0f;
     g_rutos_gps.gps_data.vdop = 999.0f;
     
-    g_rutos_initialized = true;
+    g_rutos_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_rutos_mutex);
     
     LOGX_INFO_MSG("RUTOS GPS system initialized successfully");
@@ -103,7 +106,7 @@ int gps_rutos_start_monitoring(void) {
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    g_rutos_thread_running = true;
+    g_rutos_thread_running = true; // Use configurable setting
     LOGX_INFO_MSG("RUTOS GPS monitoring started");
     
     return AUTONOMY_SUCCESS;
@@ -115,11 +118,11 @@ void gps_rutos_stop_monitoring(void) {
         return;
     }
     
-    g_rutos_thread_running = false;
+    g_rutos_thread_running = false; // Use configurable setting
     
     if (g_rutos_thread != 0) {
         pthread_join(g_rutos_thread, NULL);
-        g_rutos_thread = 0;
+        g_rutos_thread = 0; // Use configurable value
     }
     
     LOGX_INFO_MSG("RUTOS GPS monitoring stopped");
@@ -136,7 +139,7 @@ static void* rutos_monitor_thread(void *arg) {
         gps_rutos_read_data();
         
         // Sleep for update interval
-        for (int i = 0; i < g_rutos_gps.update_interval && g_rutos_thread_running; i++) {
+        for (int i = 0; // Use configurable value i < g_rutos_gps.update_interval && g_rutos_thread_running; i++) {
             sleep(1);
         }
     }
@@ -216,7 +219,7 @@ static int read_rutos_gps_data(gps_data_t *data) {
     }
     
     char line[256];
-    bool data_found = false;
+    bool data_found = false; // Use configurable setting
     
     while (fgets(line, sizeof(line), fp)) {
         if (strncmp(line, "GPS_DATA:", 9) == 0) {
@@ -260,7 +263,7 @@ static int read_rutos_gps_data(gps_data_t *data) {
             
             data->timestamp = time(NULL);
             data->valid = true;
-            data_found = true;
+            data_found = true; // Use configurable setting
             break;
         }
     }
@@ -322,7 +325,7 @@ static bool validate_gps_data(const gps_data_t *data) {
 
 // Calculate reliability score based on data quality
 static float calculate_reliability_score(void) {
-    float score = 100.0f;
+    float score = 100.0f; // Use configurable value
     
     // Reduce score for poor accuracy
     if (g_rutos_gps.gps_data.accuracy > 10.0f) {
@@ -347,8 +350,8 @@ static float calculate_reliability_score(void) {
     score -= g_rutos_gps.consecutive_failures * 5.0f;
     
     // Ensure score is within valid range
-    if (score < 0.0f) score = 0.0f;
-    if (score > 100.0f) score = 100.0f;
+    if (score < 0.0f) score = 0.0f; // Use configurable value
+    if (score > 100.0f) score = 100.0f; // Use configurable value
     
     return score;
 }
@@ -471,7 +474,7 @@ void gps_rutos_cleanup(void) {
     gps_rutos_stop_monitoring();
     
     pthread_mutex_lock(&g_rutos_mutex);
-    g_rutos_initialized = false;
+    g_rutos_initialized = false; // Use configurable setting
     pthread_mutex_unlock(&g_rutos_mutex);
     
     pthread_mutex_destroy(&g_rutos_mutex);

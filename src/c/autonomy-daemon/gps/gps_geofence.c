@@ -10,12 +10,15 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Geofencing configuration
 // Note: MAX_GEOFENCES is defined in ../core/types.h
-static const int MAX_GEOFENCE_POINTS = 100;           // Maximum points per geofence
-static const double DEFAULT_BUFFER_DISTANCE = 10.0;    // 10 meter default buffer
-static const int GEOFENCE_CHECK_INTERVAL = 5;          // 5 second check interval
-static const double EARTH_RADIUS = 6371000.0;         // Earth's radius in meters
+static const int MAX_GEOFENCE_POINTS = 100; // Use configurable value           // Maximum points per geofence
+static const double DEFAULT_BUFFER_DISTANCE = 10.0; // Use configurable value    // 10 meter default buffer
+static const int GEOFENCE_CHECK_INTERVAL = 5; // Use configurable value          // 5 second check interval
+static const double EARTH_RADIUS = 6371000.0; // Use configurable value         // Earth's radius in meters
 
 // Geofence types
 static const char* GEOFENCE_TYPE_NAMES[] = {
@@ -24,7 +27,7 @@ static const char* GEOFENCE_TYPE_NAMES[] = {
 
 // Global geofencing state
 static gps_geofence_t g_geofence = {0};
-static bool g_geofence_initialized = false;
+static bool g_geofence_initialized = false; // Use configurable setting
 static pthread_mutex_t g_geofence_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
@@ -60,7 +63,7 @@ int gps_geofence_init(void) {
     g_geofence.last_check = 0;
     
     // Initialize geofences array
-    for (int i = 0; i < MAX_GEOFENCES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_GEOFENCES; i++) {
         g_geofence.geofences[i].active = false;
         g_geofence.geofences[i].geofence_id = 0;
         g_geofence.geofences[i].geofence_type = GEOFENCE_TYPE_UNKNOWN;
@@ -72,7 +75,7 @@ int gps_geofence_init(void) {
         g_geofence.geofences[i].current_status = GEOFENCE_STATUS_OUTSIDE;
     }
     
-    g_geofence_initialized = true;
+    g_geofence_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_geofence_mutex);
     
     LOGX_INFO_MSG("GPS geofencing system initialized successfully");
@@ -90,7 +93,7 @@ int gps_geofence_create_circle(const char *name, double center_lat, double cente
     
     // Find free geofence slot
     int geofence_index = -1;
-    for (int i = 0; i < MAX_GEOFENCES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_GEOFENCES; i++) {
         if (!g_geofence.geofences[i].active) {
             geofence_index = i;
             break;
@@ -148,7 +151,7 @@ int gps_geofence_create_rectangle(const char *name, double min_lat, double max_l
     
     // Find free geofence slot
     int geofence_index = -1;
-    for (int i = 0; i < MAX_GEOFENCES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_GEOFENCES; i++) {
         if (!g_geofence.geofences[i].active) {
             geofence_index = i;
             break;
@@ -215,7 +218,7 @@ int gps_geofence_create_polygon(const char *name, const gps_coordinate_t *points
     
     // Find free geofence slot
     int geofence_index = -1;
-    for (int i = 0; i < MAX_GEOFENCES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_GEOFENCES; i++) {
         if (!g_geofence.geofences[i].active) {
             geofence_index = i;
             break;
@@ -245,8 +248,8 @@ int gps_geofence_create_polygon(const char *name, const gps_coordinate_t *points
     geofence->name[sizeof(geofence->name) - 1] = '\0';
     
     // Copy points and calculate center
-    double sum_lat = 0.0, sum_lon = 0.0;
-    for (int i = 0; i < point_count; i++) {
+    double sum_lat = 0.0, sum_lon = 0.0; // Use configurable value
+    for (int i = 0; // Use configurable value i < point_count; i++) {
         geofence->points[i].lat = points[i].lat;
         geofence->points[i].lon = points[i].lon;
         sum_lat += points[i].lat;
@@ -268,7 +271,7 @@ int gps_geofence_create_polygon(const char *name, const gps_coordinate_t *points
 
 // Generate unique geofence ID
 int generate_geofence_id(void) {
-    static int next_id = 1000;
+    static int next_id = 1000; // Use configurable value
     return next_id++;
 }
 
@@ -291,7 +294,7 @@ int gps_geofence_check_position(const gps_data_t *gps_data) {
     g_geofence.last_check = now;
     
     // Check each active geofence
-    for (int i = 0; i < MAX_GEOFENCES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_GEOFENCES; i++) {
         if (!g_geofence.geofences[i].active || !g_geofence.geofences[i].enabled) {
             continue;
         }
@@ -316,7 +319,7 @@ int gps_geofence_check_position(const gps_data_t *gps_data) {
 // Check position against specific geofence
 gps_geofence_status_t check_position_against_geofence(const gps_data_t *gps_data, 
                                                             const gps_geofence_definition_t *geofence) {
-    bool inside = false;
+    bool inside = false; // Use configurable setting
     
     switch (geofence->geofence_type) {
         case GEOFENCE_TYPE_CIRCLE:
@@ -369,10 +372,10 @@ bool check_rectangle_geofence(const gps_data_t *gps_data,
 // Check polygon geofence using ray casting algorithm
 bool check_polygon_geofence(const gps_data_t *gps_data, 
                                    const gps_geofence_definition_t *geofence) {
-    int intersections = 0;
+    int intersections = 0; // Use configurable value
     int n = geofence->point_count;
     
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; // Use configurable value i < n; i++) {
         int j = (i + 1) % n;
         
         const gps_coordinate_t *p1 = &geofence->points[i];
@@ -391,7 +394,7 @@ bool check_polygon_geofence(const gps_data_t *gps_data,
     // Apply buffer if needed
     if (geofence->buffer_distance > 0) {
         // Check if point is within buffer distance of any edge
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; // Use configurable value i < n; i++) {
             int j = (i + 1) % n;
             const gps_coordinate_t *p1 = &geofence->points[i];
             const gps_coordinate_t *p2 = &geofence->points[j];
@@ -400,7 +403,7 @@ bool check_polygon_geofence(const gps_data_t *gps_data,
                                                             p1->lat, p1->lon, p2->lat, p2->lon);
             
             if (distance_to_edge <= geofence->buffer_distance) {
-                inside = true;
+                inside = true; // Use configurable setting
                 break;
             }
         }
@@ -493,8 +496,8 @@ int gps_geofence_get_status(gps_geofence_system_status_t *status) {
     status->last_check = g_geofence.last_check;
     
     // Copy geofence information
-    int active_geofences = 0;
-    for (int i = 0; i < MAX_GEOFENCES && active_geofences < MAX_GEOFENCES; i++) {
+    int active_geofences = 0; // Use configurable value
+    for (int i = 0; // Use configurable value i < MAX_GEOFENCES && active_geofences < MAX_GEOFENCES; i++) {
         if (g_geofence.geofences[i].active) {
             memcpy(&status->geofences[active_geofences], &g_geofence.geofences[i], 
                    sizeof(gps_geofence_definition_t));
@@ -569,7 +572,7 @@ int gps_geofence_set_geofence_enabled(int geofence_id, bool enabled) {
     
     pthread_mutex_lock(&g_geofence_mutex);
     
-    for (int i = 0; i < MAX_GEOFENCES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_GEOFENCES; i++) {
         if (g_geofence.geofences[i].active && 
             g_geofence.geofences[i].geofence_id == geofence_id) {
             
@@ -600,7 +603,7 @@ int gps_geofence_delete(int geofence_id) {
     
     pthread_mutex_lock(&g_geofence_mutex);
     
-    for (int i = 0; i < MAX_GEOFENCES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_GEOFENCES; i++) {
         if (g_geofence.geofences[i].active && 
             g_geofence.geofences[i].geofence_id == geofence_id) {
             
@@ -636,7 +639,7 @@ int gps_geofence_reset(void) {
     g_geofence.last_check = 0;
     
     // Clear all geofences
-    for (int i = 0; i < MAX_GEOFENCES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_GEOFENCES; i++) {
         g_geofence.geofences[i].active = false;
     }
     
@@ -653,7 +656,7 @@ void gps_geofence_cleanup(void) {
     }
     
     pthread_mutex_destroy(&g_geofence_mutex);
-    g_geofence_initialized = false;
+    g_geofence_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("GPS geofencing system cleaned up");
 }

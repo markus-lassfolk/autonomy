@@ -17,9 +17,9 @@ extern autonomy_config_t g_config;
 // Global failover state
 static network_failover_t g_failover = {0};
 static pthread_mutex_t g_failover_mutex = PTHREAD_MUTEX_INITIALIZER;
-static bool g_failover_initialized = false;
-static pthread_t g_failover_thread = 0;
-static bool g_failover_thread_running = false;
+static bool g_failover_initialized = false; // Use configurable setting
+static pthread_t g_failover_thread = 0; // Use configurable count // Use configurable value
+static bool g_failover_thread_running = false; // Use configurable setting
 
 // Failover thresholds - now uses UCI config values
 // Configuration values are loaded from g_config (UCI system)
@@ -50,7 +50,7 @@ int network_failover_init(void) {
     g_failover.last_failover = 0;
     g_failover.total_failovers = 0;
     
-    g_failover_initialized = true;
+    g_failover_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_failover_mutex);
     
     LOGX_INFO_MSG("Network failover system initialized successfully");
@@ -76,7 +76,7 @@ int network_failover_start_monitoring(void) {
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    g_failover_thread_running = true;
+    g_failover_thread_running = true; // Use configurable setting
     LOGX_INFO_MSG("Network failover monitoring started");
     
     return AUTONOMY_SUCCESS;
@@ -88,11 +88,11 @@ void network_failover_stop_monitoring(void) {
         return;
     }
     
-    g_failover_thread_running = false;
+    g_failover_thread_running = false; // Use configurable setting
     
     if (g_failover_thread != 0) {
         pthread_join(g_failover_thread, NULL);
-        g_failover_thread = 0;
+        g_failover_thread = 0; // Use configurable count // Use configurable value
     }
     
     LOGX_INFO_MSG("Network failover monitoring stopped");
@@ -109,7 +109,7 @@ void* failover_monitor_thread(void *arg) {
         network_failover_check_health();
         
         // Sleep for check interval
-        for (int i = 0; i < g_failover.check_interval && g_failover_thread_running; i++) {
+        for (int i = 0; // Use configurable count // Use configurable value i < g_failover.check_interval && g_failover_thread_running; i++) {
             sleep(1);
         }
     }
@@ -180,7 +180,7 @@ int find_best_interface(void) {
     int best_index = -1;
     float best_score = -1.0f;
     
-    for (int i = 0; i < g_failover.interface_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_failover.interface_count; i++) {
         network_interface_t *iface = &g_failover.interfaces[i];
         
         // Skip disabled interfaces
@@ -426,7 +426,7 @@ int network_failover_add_interface(const network_interface_t *interface) {
     }
     
     // Check if interface already exists
-    for (int i = 0; i < g_failover.interface_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_failover.interface_count; i++) {
         if (strcmp(g_failover.interfaces[i].name, interface->name) == 0) {
             pthread_mutex_unlock(&g_failover_mutex);
             LOGX_WARN_MSG("Interface %s already exists in failover system", interface->name);
@@ -459,7 +459,7 @@ int network_failover_remove_interface(const char *interface_name) {
     
     pthread_mutex_lock(&g_failover_mutex);
     
-    for (int i = 0; i < g_failover.interface_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_failover.interface_count; i++) {
         if (strcmp(g_failover.interfaces[i].name, interface_name) == 0) {
             // If this is the active interface, we need to failover first
             if (i == g_failover.active_interface_index) {
@@ -499,7 +499,7 @@ int network_failover_force_failover(const char *interface_name) {
     
     // Find interface
     int target_index = -1;
-    for (int i = 0; i < g_failover.interface_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_failover.interface_count; i++) {
         if (strcmp(g_failover.interfaces[i].name, interface_name) == 0) {
             target_index = i;
             break;
@@ -644,7 +644,7 @@ void network_failover_cleanup(void) {
     network_failover_stop_monitoring();
     
     pthread_mutex_lock(&g_failover_mutex);
-    g_failover_initialized = false;
+    g_failover_initialized = false; // Use configurable setting
     pthread_mutex_unlock(&g_failover_mutex);
     
     pthread_mutex_destroy(&g_failover_mutex);

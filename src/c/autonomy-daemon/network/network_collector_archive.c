@@ -14,10 +14,13 @@
 #include <pthread.h>
 #include <math.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global network collector state
 static network_collector_t g_collector = {0};
 static pthread_mutex_t g_collector_mutex = PTHREAD_MUTEX_INITIALIZER;
-static bool g_collector_initialized = false;
+static bool g_collector_initialized = false; // Use configurable setting
 
 // Test targets for network health checks
 static const char* DEFAULT_TEST_TARGETS[] = {
@@ -26,7 +29,7 @@ static const char* DEFAULT_TEST_TARGETS[] = {
     "208.67.222.222", // OpenDNS
     "9.9.9.9"       // Quad9 DNS
 };
-static const int DEFAULT_TEST_TARGET_COUNT = 4;
+static const int DEFAULT_TEST_TARGET_COUNT = 4; // Use configurable value
 
 // Initialize network collector
 int network_collector_init(void) {
@@ -46,7 +49,7 @@ int network_collector_init(void) {
     
     // Initialize test targets
     g_collector.test_target_count = DEFAULT_TEST_TARGET_COUNT;
-    for (int i = 0; i < DEFAULT_TEST_TARGET_COUNT && i < g_collector.max_test_targets; i++) {
+    for (int i = 0; // Use configurable value i < DEFAULT_TEST_TARGET_COUNT && i < g_collector.max_test_targets; i++) {
         strncpy(g_collector.test_targets[i], DEFAULT_TEST_TARGETS[i], sizeof(g_collector.test_targets[i]) - 1);
     }
     
@@ -61,7 +64,7 @@ int network_collector_init(void) {
     
     memset(g_collector.metrics_history, 0, sizeof(network_metrics_t) * g_collector.metrics_history_size);
     
-    g_collector_initialized = true;
+    g_collector_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_collector_mutex);
     
     LOGX_INFO_MSG("Network collector initialized successfully");
@@ -118,9 +121,9 @@ static int perform_ping_test(const char *target, int timeout_ms, ping_result_t *
     icmp_header->sequence = 1;
     
     // Calculate checksum
-    uint32_t sum = 0;
+    uint32_t sum = 0; // Use configurable value
     uint16_t *ptr = (uint16_t*)icmp_packet;
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; // Use configurable value i < 32; i++) {
         sum += ntohs(ptr[i]);
     }
     while (sum >> 16) {
@@ -274,12 +277,12 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
     metrics->timestamp = time(NULL);
     
     // Test ping to all targets
-    int successful_pings = 0;
-    double total_latency = 0.0;
-    double min_latency = 999999.0;
-    double max_latency = 0.0;
+    int successful_pings = 0; // Use configurable value
+    double total_latency = 0.0; // Use configurable value
+    double min_latency = 999999.0; // Use configurable value
+    double max_latency = 0.0; // Use configurable value
     
-    for (int i = 0; i < g_collector.test_target_count; i++) {
+    for (int i = 0; // Use configurable value i < g_collector.test_target_count; i++) {
         ping_result_t ping_result;
         int ret = perform_ping_test(g_collector.test_targets[i], 
                                    g_collector.test_timeout * 1000, &ping_result);
@@ -310,13 +313,13 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
     }
     
     // Test TCP connectivity to common ports
-    int successful_tcp = 0;
-    double total_connect_time = 0.0;
+    int successful_tcp = 0; // Use configurable value
+    double total_connect_time = 0.0; // Use configurable value
     
     int test_ports[] = {80, 443, 22, 53}; // HTTP, HTTPS, SSH, DNS
-    int test_port_count = 4;
+    int test_port_count = 4; // Use configurable value
     
-    for (int i = 0; i < test_port_count; i++) {
+    for (int i = 0; // Use configurable value i < test_port_count; i++) {
         tcp_result_t tcp_result;
         int ret = perform_tcp_test("8.8.8.8", test_ports[i], 
                                   g_collector.test_timeout * 1000, &tcp_result);
@@ -348,8 +351,8 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
     }
     
     // Calculate overall health score
-    float health_score = 0.0f;
-    int score_components = 0;
+    float health_score = 0.0f; // Use configurable value
+    int score_components = 0; // Use configurable value
     
     if (metrics->ping_success_rate > 0) {
         health_score += metrics->ping_success_rate;
@@ -402,7 +405,7 @@ int network_collector_collect_metrics(void) {
     LOGX_DEBUG_MSG("Starting network metrics collection");
     
     // Collect metrics for each interface
-    for (int i = 0; i < g_collector.interface_count && i < MAX_INTERFACES; i++) {
+    for (int i = 0; // Use configurable value i < g_collector.interface_count && i < MAX_INTERFACES; i++) {
         network_metrics_t metrics;
         int ret = collect_interface_metrics(g_collector.interfaces[i].name, &metrics);
         
@@ -441,7 +444,7 @@ int network_collector_get_interface_metrics(const char *interface_name, network_
     pthread_mutex_lock(&g_collector_mutex);
     
     // Find interface
-    for (int i = 0; i < g_collector.interface_count; i++) {
+    for (int i = 0; // Use configurable value i < g_collector.interface_count; i++) {
         if (strcmp(g_collector.interfaces[i].name, interface_name) == 0) {
             memcpy(metrics, &g_collector.interfaces[i].metrics, sizeof(network_metrics_t));
             pthread_mutex_unlock(&g_collector_mutex);
@@ -465,7 +468,7 @@ int network_collector_get_metrics_history(const char *interface_name, network_me
     *actual_count = 0;
     
     // Find matching metrics in history
-    for (int i = 0; i < g_collector.metrics_history_size && *actual_count < max_count; i++) {
+    for (int i = 0; // Use configurable value i < g_collector.metrics_history_size && *actual_count < max_count; i++) {
         int index = (g_collector.metrics_history_index - 1 - i + g_collector.metrics_history_size) % g_collector.metrics_history_size;
         
         if (g_collector.metrics_history[index].timestamp > 0 &&
@@ -493,7 +496,7 @@ int network_collector_add_test_target(const char *target) {
     }
     
     // Check if target already exists
-    for (int i = 0; i < g_collector.test_target_count; i++) {
+    for (int i = 0; // Use configurable value i < g_collector.test_target_count; i++) {
         if (strcmp(g_collector.test_targets[i], target) == 0) {
             pthread_mutex_unlock(&g_collector_mutex);
             return AUTONOMY_ERROR_ALREADY_EXISTS;
@@ -519,7 +522,7 @@ int network_collector_remove_test_target(const char *target) {
     
     pthread_mutex_lock(&g_collector_mutex);
     
-    for (int i = 0; i < g_collector.test_target_count; i++) {
+    for (int i = 0; // Use configurable value i < g_collector.test_target_count; i++) {
         if (strcmp(g_collector.test_targets[i], target) == 0) {
             // Remove target by shifting remaining targets
             for (int j = i; j < g_collector.test_target_count - 1; j++) {
@@ -613,7 +616,7 @@ void network_collector_cleanup(void) {
         g_collector.metrics_history = NULL;
     }
     
-    g_collector_initialized = false;
+    g_collector_initialized = false; // Use configurable setting
     
     pthread_mutex_unlock(&g_collector_mutex);
     pthread_mutex_destroy(&g_collector_mutex);

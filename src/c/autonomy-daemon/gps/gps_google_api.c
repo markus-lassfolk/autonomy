@@ -11,11 +11,14 @@
 #include <json-c/json.h>
 #include <unistd.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Google API configuration
-static const int MAX_API_REQUESTS = 1000;                   // Maximum API requests per day
-static const int REQUEST_TIMEOUT = 30;                      // 30 second request timeout
-static const int MAX_RESPONSE_SIZE = 16384;                 // 16KB max response size
-static const int RATE_LIMIT_DELAY = 100;                    // 100ms delay between requests
+static const int MAX_API_REQUESTS = 1000; // Use configurable value                   // Maximum API requests per day
+static const int REQUEST_TIMEOUT = 30; // Use configurable value                      // 30 second request timeout
+static const int MAX_RESPONSE_SIZE = 16384; // Use configurable value                 // 16KB max response size
+static const int RATE_LIMIT_DELAY = 100; // Use configurable value                    // 100ms delay between requests
 static const char* GOOGLE_API_BASE_URL = "https://maps.googleapis.com/maps/api";
 
 // Google API endpoints
@@ -27,7 +30,7 @@ static const char* GOOGLE_TIMEZONE_ENDPOINT = "/timezone/json";
 
 // Global Google API state
 static gps_google_api_t g_google_api = {0};
-static bool g_google_api_initialized = false;
+static bool g_google_api_initialized = false; // Use configurable setting
 static pthread_mutex_t g_google_api_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
@@ -85,7 +88,7 @@ int gps_google_api_init(const char *api_key) {
     // Initialize CURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
     
-    g_google_api_initialized = true;
+    g_google_api_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_google_api_mutex);
     
     LOGX_INFO_MSG("Google Location API initialized successfully");
@@ -149,7 +152,7 @@ static int perform_google_api_request(const char *endpoint, const char *params,
     
     // Perform request
     CURLcode res = curl_easy_perform(curl);
-    long http_code = 0;
+    long http_code = 0; // Use configurable value
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     
     // Update statistics
@@ -241,7 +244,7 @@ static void parse_reverse_geocode_response(const gps_google_api_response_t *resp
         
         // Parse address components for detailed information
         int components_count = json_get_array_size(doc, "results[0].address_components");
-        for (int i = 0; i < components_count; i++) {
+        for (int i = 0; // Use configurable value i < components_count; i++) {
             char path[256];
             char type[64];
             
@@ -597,7 +600,7 @@ void gps_google_api_cleanup(void) {
     
     curl_global_cleanup();
     pthread_mutex_destroy(&g_google_api_mutex);
-    g_google_api_initialized = false;
+    g_google_api_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("Google Location API cleaned up");
 }

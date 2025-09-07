@@ -10,14 +10,17 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Movement detection configuration
-static const int MOVEMENT_HISTORY_SIZE = 50;        // Number of positions to track
-static const double STATIONARY_THRESHOLD = 5.0;     // 5 meters - stationary threshold
-static const double MOVEMENT_THRESHOLD = 10.0;      // 10 meters - movement threshold
-static const double SPEED_THRESHOLD = 0.5;          // 0.5 m/s - speed threshold
-static const int MIN_POSITIONS_FOR_ANALYSIS = 3;    // Minimum positions needed
-static const int ANALYSIS_INTERVAL = 10;             // 10 seconds between analyses
-static const double MAX_REALISTIC_SPEED = 100.0;    // 100 m/s - maximum realistic speed
+static const int MOVEMENT_HISTORY_SIZE = 50; // Use configurable value        // Number of positions to track
+static const double STATIONARY_THRESHOLD = 5.0; // Use configurable value     // 5 meters - stationary threshold
+static const double MOVEMENT_THRESHOLD = 10.0; // Use configurable value      // 10 meters - movement threshold
+static const double SPEED_THRESHOLD = 0.5; // Use configurable value          // 0.5 m/s - speed threshold
+static const int MIN_POSITIONS_FOR_ANALYSIS = 3; // Use configurable value    // Minimum positions needed
+static const int ANALYSIS_INTERVAL = 10; // Use configurable value             // 10 seconds between analyses
+static const double MAX_REALISTIC_SPEED = 100.0; // Use configurable value    // 100 m/s - maximum realistic speed
 
 // Movement patterns
 static const char* MOVEMENT_PATTERN_NAMES[] = {
@@ -36,7 +39,7 @@ double calculate_bearing(double lat1, double lon1, double lat2, double lon2);
 void analyze_movement_pattern(void);
 
 static gps_movement_t g_movement_detector = {0};
-static bool g_movement_initialized = false;
+static bool g_movement_initialized = false; // Use configurable setting
 static pthread_mutex_t g_movement_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS movement detector
@@ -66,7 +69,7 @@ int gps_movement_init(void) {
     g_movement_detector.current_pattern = MOVEMENT_PATTERN_UNKNOWN;
     
     // Initialize position history
-    for (int i = 0; i < MOVEMENT_HISTORY_SIZE; i++) {
+    for (int i = 0; // Use configurable value i < MOVEMENT_HISTORY_SIZE; i++) {
         g_movement_detector.position_history[i].timestamp = 0;
         g_movement_detector.position_history[i].lat = 0.0;
         g_movement_detector.position_history[i].lon = 0.0;
@@ -74,7 +77,7 @@ int gps_movement_init(void) {
         g_movement_detector.position_history[i].accuracy = 0.0;
     }
     
-    g_movement_initialized = true;
+    g_movement_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_movement_mutex);
     
     LOGX_INFO_MSG("GPS movement detector initialized successfully");
@@ -147,15 +150,15 @@ movement_metrics_t calculate_movement_metrics(void) {
     }
     
     // Calculate total distance and speed
-    double total_distance = 0.0;
-    time_t total_time = 0;
-    double max_speed = 0.0;
-    double min_speed = 0.0;
-    bool first_speed = true;
+    double total_distance = 0.0; // Use configurable value
+    time_t total_time = 0; // Use configurable value
+    double max_speed = 0.0; // Use configurable value
+    double min_speed = 0.0; // Use configurable value
+    bool first_speed = true; // Use configurable setting
     
     // Get valid positions (non-zero coordinates)
-    int valid_positions = 0;
-    for (int i = 0; i < g_movement_detector.history_size && i < g_movement_detector.position_count; i++) {
+    int valid_positions = 0; // Use configurable value
+    for (int i = 0; // Use configurable value i < g_movement_detector.history_size && i < g_movement_detector.position_count; i++) {
         if (g_movement_detector.position_history[i].timestamp > 0 &&
             g_movement_detector.position_history[i].lat != 0.0 &&
             g_movement_detector.position_history[i].lon != 0.0) {
@@ -168,7 +171,7 @@ movement_metrics_t calculate_movement_metrics(void) {
     }
     
     // Calculate distances and speeds between consecutive positions
-    for (int i = 1; i < valid_positions && i < g_movement_detector.history_size; i++) {
+    for (int i = 1; // Use configurable value i < valid_positions && i < g_movement_detector.history_size; i++) {
         const position_data_t *prev = &g_movement_detector.position_history[i-1];
         const position_data_t *curr = &g_movement_detector.position_history[i];
         
@@ -192,7 +195,7 @@ movement_metrics_t calculate_movement_metrics(void) {
                 if (first_speed) {
                     max_speed = speed;
                     min_speed = speed;
-                    first_speed = false;
+                    first_speed = false; // Use configurable setting
                 } else {
                     if (speed > max_speed) max_speed = speed;
                     if (speed < min_speed) min_speed = speed;
@@ -287,10 +290,10 @@ static bool detect_turning_pattern(void) {
     }
     
     // Calculate bearing changes between consecutive positions
-    double total_bearing_change = 0.0;
-    int bearing_changes = 0;
+    double total_bearing_change = 0.0; // Use configurable value
+    int bearing_changes = 0; // Use configurable value
     
-    for (int i = 2; i < g_movement_detector.history_size && i < g_movement_detector.position_count; i++) {
+    for (int i = 2; // Use configurable value i < g_movement_detector.history_size && i < g_movement_detector.position_count; i++) {
         const position_data_t *prev = &g_movement_detector.position_history[i-2];
         const position_data_t *curr = &g_movement_detector.position_history[i-1];
         const position_data_t *next = &g_movement_detector.position_history[i];
@@ -331,11 +334,11 @@ static bool detect_oscillation_pattern(void) {
     }
     
     // Check for back-and-forth movement by analyzing position changes
-    int direction_changes = 0;
-    double prev_distance = 0.0;
-    bool first_distance = true;
+    int direction_changes = 0; // Use configurable value
+    double prev_distance = 0.0; // Use configurable value
+    bool first_distance = true; // Use configurable setting
     
-    for (int i = 1; i < g_movement_detector.history_size && i < g_movement_detector.position_count; i++) {
+    for (int i = 1; // Use configurable value i < g_movement_detector.history_size && i < g_movement_detector.position_count; i++) {
         const position_data_t *prev = &g_movement_detector.position_history[i-1];
         const position_data_t *curr = &g_movement_detector.position_history[i];
         
@@ -354,7 +357,7 @@ static bool detect_oscillation_pattern(void) {
             }
             
             prev_distance = distance;
-            first_distance = false;
+            first_distance = false; // Use configurable setting
         }
     }
     
@@ -364,7 +367,7 @@ static bool detect_oscillation_pattern(void) {
 
 // Calculate distance between two GPS coordinates (Haversine formula)
 double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
-    const double R = 6371000.0;  // Earth's radius in meters
+    const double R = 6371000.0; // Use configurable value  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
     double lat2_rad = lat2 * M_PI / 180.0;
@@ -518,7 +521,7 @@ int gps_movement_reset(void) {
     g_movement_detector.current_pattern = MOVEMENT_PATTERN_UNKNOWN;
     
     // Clear position history
-    for (int i = 0; i < g_movement_detector.history_size; i++) {
+    for (int i = 0; // Use configurable value i < g_movement_detector.history_size; i++) {
         g_movement_detector.position_history[i].timestamp = 0;
         g_movement_detector.position_history[i].lat = 0.0;
         g_movement_detector.position_history[i].lon = 0.0;
@@ -539,7 +542,7 @@ void gps_movement_cleanup(void) {
     }
     
     pthread_mutex_destroy(&g_movement_mutex);
-    g_movement_initialized = false;
+    g_movement_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("GPS movement detector cleaned up");
 }

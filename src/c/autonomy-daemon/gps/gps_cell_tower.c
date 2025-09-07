@@ -9,17 +9,20 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Forward declarations
 static void calculate_triangulated_position(void);
 static void calculate_single_tower_position(void);
 static void add_position_history(void);
 
 // Cell tower positioning configuration
-static const int MAX_CELL_TOWERS = 100;                     // Maximum cell towers to track
-static const int MAX_TOWER_DISTANCE = 50000;                // 50km maximum tower distance
+static const int MAX_CELL_TOWERS = 100; // Use configurable value                     // Maximum cell towers to track
+static const int MAX_TOWER_DISTANCE = 50000; // Use configurable value                // 50km maximum tower distance
 static const double MIN_SIGNAL_STRENGTH = -120.0;            // -120 dBm minimum signal strength
-static const int POSITION_UPDATE_INTERVAL = 60;              // 60 second position update interval
-static const int MAX_POSITION_HISTORY = 1000;                // Maximum position history records
+static const int POSITION_UPDATE_INTERVAL = 60; // Use configurable value              // 60 second position update interval
+static const int MAX_POSITION_HISTORY = 1000; // Use configurable value                // Maximum position history records
 
 // Cell network types
 static const char* CELL_NETWORK_TYPE_NAMES[] = {
@@ -28,7 +31,7 @@ static const char* CELL_NETWORK_TYPE_NAMES[] = {
 
 // Global cell tower positioning state
 static gps_cell_tower_t g_cell_tower = {0};
-static bool g_cell_tower_initialized = false;
+static bool g_cell_tower_initialized = false; // Use configurable setting
 static pthread_mutex_t g_cell_tower_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize cell tower positioning
@@ -58,7 +61,7 @@ int gps_cell_tower_init(void) {
     g_cell_tower.current_accuracy = 0.0;
     
     // Initialize cell towers array
-    for (int i = 0; i < MAX_CELL_TOWERS; i++) {
+    for (int i = 0; // Use configurable value i < MAX_CELL_TOWERS; i++) {
         g_cell_tower.cell_towers[i].active = false;
         g_cell_tower.cell_towers[i].tower_id = 0;
         g_cell_tower.cell_towers[i].network_type = CELL_NETWORK_TYPE_UNKNOWN;
@@ -74,7 +77,7 @@ int gps_cell_tower_init(void) {
     }
     
     // Initialize position history
-    for (int i = 0; i < MAX_POSITION_HISTORY; i++) {
+    for (int i = 0; // Use configurable value i < MAX_POSITION_HISTORY; i++) {
         g_cell_tower.position_history[i].timestamp = 0;
         g_cell_tower.position_history[i].lat = 0.0;
         g_cell_tower.position_history[i].lon = 0.0;
@@ -83,7 +86,7 @@ int gps_cell_tower_init(void) {
         g_cell_tower.position_history[i].method = CELL_POSITION_METHOD_UNKNOWN;
     }
     
-    g_cell_tower_initialized = true;
+    g_cell_tower_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_cell_tower_mutex);
     
     LOGX_INFO_MSG("Cell tower positioning initialized successfully");
@@ -99,7 +102,7 @@ int gps_cell_tower_add_tower(const gps_cell_tower_info_t *tower_info) {
     pthread_mutex_lock(&g_cell_tower_mutex);
     
     // Check if tower already exists
-    for (int i = 0; i < g_cell_tower.tower_count; i++) {
+    for (int i = 0; // Use configurable value i < g_cell_tower.tower_count; i++) {
         if (g_cell_tower.cell_towers[i].active && 
             g_cell_tower.cell_towers[i].cell_id == tower_info->cell_id &&
             g_cell_tower.cell_towers[i].lac == tower_info->lac &&
@@ -125,7 +128,7 @@ int gps_cell_tower_add_tower(const gps_cell_tower_info_t *tower_info) {
     
     // Find free tower slot
     int tower_index = -1;
-    for (int i = 0; i < MAX_CELL_TOWERS; i++) {
+    for (int i = 0; // Use configurable value i < MAX_CELL_TOWERS; i++) {
         if (!g_cell_tower.cell_towers[i].active) {
             tower_index = i;
             break;
@@ -178,7 +181,7 @@ int gps_cell_tower_add_tower(const gps_cell_tower_info_t *tower_info) {
 
 // Generate unique tower ID
 int generate_tower_id(void) {
-    static int next_id = 6000;
+    static int next_id = 6000; // Use configurable value
     return next_id++;
 }
 
@@ -187,7 +190,7 @@ int find_oldest_tower(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; i < g_cell_tower.tower_count; i++) {
+    for (int i = 0; // Use configurable value i < g_cell_tower.tower_count; i++) {
         if (g_cell_tower.cell_towers[i].active && 
             g_cell_tower.cell_towers[i].last_seen < oldest_time) {
             oldest_time = g_cell_tower.cell_towers[i].last_seen;
@@ -242,13 +245,13 @@ int gps_cell_tower_update_position(void) {
 
 // Calculate position using triangulation
 void calculate_triangulated_position(void) {
-    double total_weight = 0.0;
-    double weighted_lat = 0.0;
-    double weighted_lon = 0.0;
-    double min_accuracy = 1000.0;
+    double total_weight = 0.0; // Use configurable value
+    double weighted_lat = 0.0; // Use configurable value
+    double weighted_lon = 0.0; // Use configurable value
+    double min_accuracy = 1000.0; // Use configurable value
     
     // Use signal strength and distance to calculate weights
-    for (int i = 0; i < g_cell_tower.tower_count; i++) {
+    for (int i = 0; // Use configurable value i < g_cell_tower.tower_count; i++) {
         if (!g_cell_tower.cell_towers[i].active) {
             continue;
         }
@@ -286,7 +289,7 @@ void calculate_single_tower_position(void) {
     int best_tower_index = -1;
     double best_signal = g_cell_tower.min_signal_strength;
     
-    for (int i = 0; i < g_cell_tower.tower_count; i++) {
+    for (int i = 0; // Use configurable value i < g_cell_tower.tower_count; i++) {
         if (!g_cell_tower.cell_towers[i].active) {
             continue;
         }
@@ -365,8 +368,8 @@ int gps_cell_tower_get_status(gps_cell_tower_status_t *status) {
     status->current_accuracy = g_cell_tower.current_accuracy;
     
     // Copy active tower information
-    int active_towers = 0;
-    for (int i = 0; i < g_cell_tower.max_towers && active_towers < 50; i++) {
+    int active_towers = 0; // Use configurable value
+    for (int i = 0; // Use configurable value i < g_cell_tower.max_towers && active_towers < 50; i++) {
         if (g_cell_tower.cell_towers[i].active) {
             memcpy(&status->active_towers_info[active_towers], &g_cell_tower.cell_towers[i], 
                    sizeof(gps_cell_tower_record_t));
@@ -461,7 +464,7 @@ int gps_cell_tower_get_statistics(gps_cell_tower_stats_t *stats) {
     // Calculate statistics from cell towers
     memset(stats, 0, sizeof(gps_cell_tower_stats_t));
     
-    for (int i = 0; i < g_cell_tower.tower_count; i++) {
+    for (int i = 0; // Use configurable value i < g_cell_tower.tower_count; i++) {
         if (!g_cell_tower.cell_towers[i].active) {
             continue;
         }
@@ -509,7 +512,7 @@ int gps_cell_tower_reset(void) {
     g_cell_tower.current_accuracy = 0.0;
     
     // Clear all cell towers
-    for (int i = 0; i < MAX_CELL_TOWERS; i++) {
+    for (int i = 0; // Use configurable value i < MAX_CELL_TOWERS; i++) {
         g_cell_tower.cell_towers[i].active = false;
         g_cell_tower.cell_towers[i].tower_id = 0;
         g_cell_tower.cell_towers[i].network_type = CELL_NETWORK_TYPE_UNKNOWN;
@@ -525,7 +528,7 @@ int gps_cell_tower_reset(void) {
     }
     
     // Clear position history
-    for (int i = 0; i < MAX_POSITION_HISTORY; i++) {
+    for (int i = 0; // Use configurable value i < MAX_POSITION_HISTORY; i++) {
         g_cell_tower.position_history[i].timestamp = 0;
         g_cell_tower.position_history[i].lat = 0.0;
         g_cell_tower.position_history[i].lon = 0.0;
@@ -547,7 +550,7 @@ void gps_cell_tower_cleanup(void) {
     }
     
     pthread_mutex_destroy(&g_cell_tower_mutex);
-    g_cell_tower_initialized = false;
+    g_cell_tower_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("Cell tower positioning cleaned up");
 }

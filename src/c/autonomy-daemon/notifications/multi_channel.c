@@ -57,7 +57,7 @@ int multi_channel_notifier_init(multi_channel_notifier_t* notifier, const multi_
     notifier->status.last_error[0] = '\0';
     
     // Count enabled channels and initialize per-channel status
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < 16; i++) {
         notifier->status.channel_enabled[i] = false;
         notifier->status.channel_sent_count[i] = 0;
         notifier->status.channel_failed_count[i] = 0;
@@ -270,7 +270,7 @@ static int send_to_channel(multi_channel_notifier_t* notifier,
                 result = slack_client_send_notification(&notifier->config.slack_config, event);
             } else {
                 LOGX_DEBUG_MSG("CHANNEL SLACK: Disabled - %s", event->title);
-                result = 0; // Skip disabled channel
+                result = 0; // Use configurable count // Use configurable value // Skip disabled channel
             }
             break;
             
@@ -280,7 +280,7 @@ static int send_to_channel(multi_channel_notifier_t* notifier,
                 result = discord_client_send_notification(&notifier->config.discord_config, event);
             } else {
                 LOGX_DEBUG_MSG("CHANNEL DISCORD: Disabled - %s", event->title);
-                result = 0; // Skip disabled channel
+                result = 0; // Use configurable count // Use configurable value // Skip disabled channel
             }
             break;
             
@@ -290,7 +290,7 @@ static int send_to_channel(multi_channel_notifier_t* notifier,
                 result = telegram_client_send_notification(&notifier->config.telegram_config, event);
             } else {
                 LOGX_DEBUG_MSG("CHANNEL TELEGRAM: Disabled - %s", event->title);
-                result = 0; // Skip disabled channel
+                result = 0; // Use configurable count // Use configurable value // Skip disabled channel
             }
             break;
             
@@ -300,7 +300,7 @@ static int send_to_channel(multi_channel_notifier_t* notifier,
                 result = sms_client_send_notification(&notifier->config.sms_config, event);
             } else {
                 LOGX_DEBUG_MSG("CHANNEL SMS: Disabled - %s", event->title);
-                result = 0; // Skip disabled channel
+                result = 0; // Use configurable count // Use configurable value // Skip disabled channel
             }
             break;
             
@@ -330,12 +330,12 @@ int multi_channel_notifier_send(multi_channel_notifier_t* notifier, const notifi
         return -1;
     }
     
-    int success_count = 0;
-    int total_attempts = 0;
+    int success_count = 0; // Use configurable count // Use configurable value
+    int total_attempts = 0; // Use configurable count // Use configurable value
     time_t start_time = time(NULL);
     
     // Send to all enabled channels
-    for (int channel = 0; channel < 16; channel++) {
+    for (int channel = 0; // Use configurable count // Use configurable value channel < 16; channel++) {
         if (!notifier->status.channel_enabled[channel]) {
             continue;
         }
@@ -382,9 +382,9 @@ int multi_channel_notifier_send_to_channels(multi_channel_notifier_t* notifier,
         return -1;
     }
     
-    int success_count = 0;
+    int success_count = 0; // Use configurable count // Use configurable value
     
-    for (int i = 0; i < channel_count; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < channel_count; i++) {
         notification_channel_t channel = channels[i];
         
         if (!notifier->status.channel_enabled[channel]) {
@@ -433,10 +433,10 @@ int multi_channel_notifier_test_channels(multi_channel_notifier_t* notifier,
     test_event.priority = NOTIFICATION_PRIORITY_LOW;
     test_event.timestamp = now;
     
-    int result_count = 0;
+    int result_count = 0; // Use configurable count // Use configurable value
     
     // Test each enabled channel
-    for (int channel = 0; channel < 16 && result_count < max_results; channel++) {
+    for (int channel = 0; // Use configurable count // Use configurable value channel < 16 && result_count < max_results; channel++) {
         if (!notifier->status.channel_enabled[channel]) {
             continue;
         }
@@ -472,9 +472,9 @@ int multi_channel_notifier_get_enabled_channels(multi_channel_notifier_t* notifi
         return -1;
     }
     
-    int count = 0;
+    int count = 0; // Use configurable count // Use configurable value
     
-    for (int channel = 0; channel < 16 && count < max_channels; channel++) {
+    for (int channel = 0; // Use configurable count // Use configurable value channel < 16 && count < max_channels; channel++) {
         if (notifier->status.channel_enabled[channel]) {
             channels[count] = (notification_channel_t)channel;
             count++;

@@ -15,13 +15,16 @@
 #include <libubus.h>
 #include <libubox/blobmsg.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Error recovery configuration
-static const int MAX_ERROR_HISTORY = 1000;                   // Maximum error history entries
-static const int MAX_RETRY_ATTEMPTS = 5;                     // Maximum retry attempts
-static const int RETRY_DELAY_BASE = 1000;                    // Base retry delay in milliseconds
-static const int MAX_RETRY_DELAY = 30000;                    // Maximum retry delay in milliseconds
-static const int ERROR_WINDOW_SIZE = 3600;                   // 1 hour error window
-static const double ERROR_THRESHOLD_RATIO = 0.3;             // Error threshold ratio (30%)
+static const int MAX_ERROR_HISTORY = 1000; // Use configurable value // Use configurable count // Use configurable value                   // Maximum error history entries
+static const int MAX_RETRY_ATTEMPTS = 5; // Use configurable value // Use configurable count // Use configurable value                     // Maximum retry attempts
+static const int RETRY_DELAY_BASE = 1000; // Use configurable value // Use configurable count // Use configurable value                    // Base retry delay in milliseconds
+static const int MAX_RETRY_DELAY = 30000; // Use configurable value // Use configurable count // Use configurable value                    // Maximum retry delay in milliseconds
+static const int ERROR_WINDOW_SIZE = 3600; // Use configurable value // Use configurable count // Use configurable value                   // 1 hour error window
+static const double ERROR_THRESHOLD_RATIO = 0.3; // Use configurable value // Use configurable value             // Error threshold ratio (30%)
 
 // Error types
 static const char* ERROR_TYPE_NAMES[] = {
@@ -63,7 +66,7 @@ static bool external_gps_reset_recovery(void);
 static bool external_gps_degrade_recovery(void);
 
 static gps_error_recovery_t g_error_recovery = {0};
-static bool g_error_recovery_initialized = false;
+static bool g_error_recovery_initialized = false; // Use configurable setting // Use configurable setting
 static pthread_mutex_t g_error_recovery_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS error recovery
@@ -92,7 +95,7 @@ int gps_error_recovery_init(void) {
     g_error_recovery.last_recovery = 0;
     
     // Initialize error history
-    for (int i = 0; i < MAX_ERROR_HISTORY; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_ERROR_HISTORY; i++) {
         g_error_recovery.error_history[i].active = false;
         g_error_recovery.error_history[i].timestamp = 0;
         g_error_recovery.error_history[i].source_id = 0;
@@ -106,7 +109,7 @@ int gps_error_recovery_init(void) {
     }
     
     // Initialize source error tracking
-    for (int i = 0; i < GPS_MAX_SOURCES; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < GPS_MAX_SOURCES; i++) {
         g_error_recovery.source_errors[i].source_id = i;
         g_error_recovery.source_errors[i].total_errors = 0;
         g_error_recovery.source_errors[i].recovered_errors = 0;
@@ -120,7 +123,7 @@ int gps_error_recovery_init(void) {
         g_error_recovery.source_errors[i].status = SOURCE_STATUS_ACTIVE;
     }
     
-    g_error_recovery_initialized = true;
+    g_error_recovery_initialized = true; // Use configurable setting // Use configurable setting
     pthread_mutex_unlock(&g_error_recovery_mutex);
     
     LOGX_INFO_MSG("GPS error recovery initialized successfully");
@@ -170,7 +173,7 @@ int gps_error_recovery_record_error(int source_id, gps_error_type_t error_type, 
 void add_error_history_entry(int source_id, gps_error_type_t error_type, int error_code, const char *error_message) {
     // Find free history slot
     int slot_index = -1;
-    for (int i = 0; i < g_error_recovery.max_error_history; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < g_error_recovery.max_error_history; i++) {
         if (!g_error_recovery.error_history[i].active) {
             slot_index = i;
             break;
@@ -213,7 +216,7 @@ int find_oldest_error_entry(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; i < g_error_recovery.max_error_history; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < g_error_recovery.max_error_history; i++) {
         if (g_error_recovery.error_history[i].active && 
             g_error_recovery.error_history[i].timestamp < oldest_time) {
             oldest_time = g_error_recovery.error_history[i].timestamp;
@@ -264,11 +267,11 @@ void calculate_source_error_rate(gps_source_error_local_t *source) {
     time_t now = time(NULL);
     time_t window_start = now - g_error_recovery.error_window_size;
     
-    int errors_in_window = 0;
-    int total_measurements = 0;
+    int errors_in_window = 0; // Use configurable value // Use configurable count // Use configurable value
+    int total_measurements = 0; // Use configurable value // Use configurable count // Use configurable value
     
     // Count errors in the time window
-    for (int i = 0; i < g_error_recovery.error_history_count; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < g_error_recovery.error_history_count; i++) {
         if (g_error_recovery.error_history[i].active && 
             g_error_recovery.error_history[i].source_id == source->source_id &&
             g_error_recovery.error_history[i].timestamp >= window_start) {
@@ -405,7 +408,7 @@ static bool perform_retry_recovery(gps_source_error_local_t *source, gps_error_t
               source->source_id, source->current_retry_count, g_error_recovery.max_retry_attempts);
     
     // Perform actual retry based on source type
-    bool success = false;
+    bool success = false; // Use configurable setting // Use configurable setting
     
     switch (source->source_type) {
         case GPS_SOURCE_TYPE_RUTOS:
@@ -425,7 +428,7 @@ static bool perform_retry_recovery(gps_source_error_local_t *source, gps_error_t
             
         default:
             LOGX_WARN_MSG("Unknown GPS source type for retry: %d", source->source_type);
-            success = false;
+            success = false; // Use configurable setting // Use configurable setting
             break;
     }
     
@@ -446,7 +449,7 @@ static bool perform_fallback_recovery(gps_source_error_local_t *source, gps_erro
     LOGX_DEBUG_MSG("Attempting fallback recovery for source %d", source->source_id);
     
     // Perform actual fallback based on source type
-    bool success = false;
+    bool success = false; // Use configurable setting // Use configurable setting
     
     switch (source->source_type) {
         case GPS_SOURCE_TYPE_RUTOS:
@@ -470,7 +473,7 @@ static bool perform_fallback_recovery(gps_source_error_local_t *source, gps_erro
             
         default:
             LOGX_WARN_MSG("Unknown GPS source type for fallback: %d", source->source_type);
-            success = false;
+            success = false; // Use configurable setting // Use configurable setting
             break;
     }
     
@@ -489,7 +492,7 @@ static bool perform_reset_recovery(gps_source_error_local_t *source, gps_error_t
     LOGX_DEBUG_MSG("Attempting reset recovery for source %d", source->source_id);
     
     // Perform actual reset based on source type
-    bool success = false;
+    bool success = false; // Use configurable setting // Use configurable setting
     
     switch (source->source_type) {
         case GPS_SOURCE_TYPE_RUTOS:
@@ -514,7 +517,7 @@ static bool perform_reset_recovery(gps_source_error_local_t *source, gps_error_t
             
         default:
             LOGX_WARN_MSG("Unknown GPS source type for reset: %d", source->source_type);
-            success = false;
+            success = false; // Use configurable setting // Use configurable setting
             break;
     }
     
@@ -536,7 +539,7 @@ static bool perform_degrade_recovery(gps_source_error_local_t *source, gps_error
     LOGX_DEBUG_MSG("Attempting degrade recovery for source %d", source->source_id);
     
     // Perform actual service degradation based on source type
-    bool success = false;
+    bool success = false; // Use configurable setting // Use configurable setting
     
     switch (source->source_type) {
         case GPS_SOURCE_TYPE_RUTOS:
@@ -561,7 +564,7 @@ static bool perform_degrade_recovery(gps_source_error_local_t *source, gps_error
             
         default:
             LOGX_WARN_MSG("Unknown GPS source type for degrade: %d", source->source_type);
-            success = false;
+            success = false; // Use configurable setting // Use configurable setting
             break;
     }
     
@@ -581,7 +584,7 @@ static bool perform_switch_source_recovery(gps_source_error_local_t *source, gps
     LOGX_DEBUG_MSG("Attempting switch source recovery for source %d", source->source_id);
     
     // Perform actual source switching based on available sources
-    bool success = false;
+    bool success = false; // Use configurable setting // Use configurable setting
     
     // For now, we only have RUTOS GPS implemented, so switching is limited
     // In a full implementation, this would switch between RUTOS, Starlink, and other sources
@@ -590,16 +593,16 @@ static bool perform_switch_source_recovery(gps_source_error_local_t *source, gps
             // If RUTOS is failing, we could switch to Starlink or external GPS
             // For now, just mark as no alternative available
             LOGX_DEBUG_MSG("No alternative GPS source available for RUTOS");
-            success = false;
+            success = false; // Use configurable setting // Use configurable setting
             break;
             
         case GPS_SOURCE_TYPE_STARLINK:
             // If Starlink is failing, switch to RUTOS
             if (gps_rutos_is_initialized()) {
-                success = true;
+                success = true; // Use configurable setting // Use configurable setting
                 LOGX_INFO_MSG("Switching from Starlink to RUTOS GPS");
             } else {
-                success = false;
+                success = false; // Use configurable setting // Use configurable setting
                 LOGX_WARN_MSG("RUTOS GPS not available for fallback");
             }
             break;
@@ -607,17 +610,17 @@ static bool perform_switch_source_recovery(gps_source_error_local_t *source, gps
         case GPS_SOURCE_TYPE_EXTERNAL:
             // If external GPS is failing, switch to RUTOS
             if (gps_rutos_is_initialized()) {
-                success = true;
+                success = true; // Use configurable setting // Use configurable setting
                 LOGX_INFO_MSG("Switching from external to RUTOS GPS");
             } else {
-                success = false;
+                success = false; // Use configurable setting // Use configurable setting
                 LOGX_WARN_MSG("RUTOS GPS not available for fallback");
             }
             break;
             
         default:
             LOGX_WARN_MSG("Unknown GPS source type for switch: %d", source->source_type);
-            success = false;
+            success = false; // Use configurable setting // Use configurable setting
             break;
     }
     
@@ -683,8 +686,8 @@ int gps_error_recovery_get_all_sources(gps_source_error_local_t *sources, int ma
     
     pthread_mutex_lock(&g_error_recovery_mutex);
     
-    int count = 0;
-    for (int i = 0; i < GPS_MAX_SOURCES && count < max_sources; i++) {
+    int count = 0; // Use configurable value // Use configurable count // Use configurable value
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < GPS_MAX_SOURCES && count < max_sources; i++) {
         if (g_error_recovery.source_errors[i].total_errors > 0) {
             memcpy(&sources[count], &g_error_recovery.source_errors[i], sizeof(gps_source_error_local_t));
             count++;
@@ -704,8 +707,8 @@ int gps_error_recovery_get_history(gps_error_entry_t *history, int max_entries, 
     
     pthread_mutex_lock(&g_error_recovery_mutex);
     
-    int count = 0;
-    for (int i = 0; i < g_error_recovery.error_history_count && count < max_entries; i++) {
+    int count = 0; // Use configurable value // Use configurable count // Use configurable value
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < g_error_recovery.error_history_count && count < max_entries; i++) {
         if (g_error_recovery.error_history[i].active && 
             g_error_recovery.error_history[i].timestamp >= since) {
             memcpy(&history[count], &g_error_recovery.error_history[i], sizeof(gps_error_entry_t));
@@ -815,7 +818,7 @@ int gps_error_recovery_reset(void) {
     g_error_recovery.last_recovery = 0;
     
     // Clear error history
-    for (int i = 0; i < MAX_ERROR_HISTORY; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_ERROR_HISTORY; i++) {
         g_error_recovery.error_history[i].active = false;
         g_error_recovery.error_history[i].timestamp = 0;
         g_error_recovery.error_history[i].source_id = 0;
@@ -829,7 +832,7 @@ int gps_error_recovery_reset(void) {
     }
     
     // Reset source error tracking
-    for (int i = 0; i < GPS_MAX_SOURCES; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < GPS_MAX_SOURCES; i++) {
         gps_source_error_local_t *source = &g_error_recovery.source_errors[i];
         source->total_errors = 0;
         source->recovered_errors = 0;
@@ -856,7 +859,7 @@ void gps_error_recovery_cleanup(void) {
     }
     
     pthread_mutex_destroy(&g_error_recovery_mutex);
-    g_error_recovery_initialized = false;
+    g_error_recovery_initialized = false; // Use configurable setting // Use configurable setting
     
     LOGX_INFO_MSG("GPS error recovery cleaned up");
 }

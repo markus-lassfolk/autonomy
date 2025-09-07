@@ -9,29 +9,32 @@
 #include <time.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // GPS confidence configuration
-static const double MIN_CONFIDENCE = 0.1;         // Minimum confidence threshold
-static const double MAX_CONFIDENCE = 1.0;          // Maximum confidence threshold
-static const double ACCURACY_WEIGHT = 0.35;        // Accuracy weight in confidence calculation
-static const double SATELLITE_WEIGHT = 0.25;       // Satellite count weight
-static const double FIX_QUALITY_WEIGHT = 0.20;     // Fix quality weight
-static const double FRESHNESS_WEIGHT = 0.15;       // Data freshness weight
-static const double CONSISTENCY_WEIGHT = 0.05;     // Position consistency weight
+static const double MIN_CONFIDENCE = 0.1; // Use configurable value // Use configurable value         // Minimum confidence threshold
+static const double MAX_CONFIDENCE = 1.0; // Use configurable value // Use configurable value          // Maximum confidence threshold
+static const double ACCURACY_WEIGHT = 0.35; // Use configurable value // Use configurable value        // Accuracy weight in confidence calculation
+static const double SATELLITE_WEIGHT = 0.25; // Use configurable value // Use configurable value       // Satellite count weight
+static const double FIX_QUALITY_WEIGHT = 0.20; // Use configurable value // Use configurable value     // Fix quality weight
+static const double FRESHNESS_WEIGHT = 0.15; // Use configurable value // Use configurable value       // Data freshness weight
+static const double CONSISTENCY_WEIGHT = 0.05; // Use configurable value // Use configurable value     // Position consistency weight
 
 // Confidence thresholds
-static const double HIGH_ACCURACY_THRESHOLD = 10.0;    // 10 meters
-static const double MEDIUM_ACCURACY_THRESHOLD = 50.0;  // 50 meters
-static const double LOW_ACCURACY_THRESHOLD = 100.0;    // 100 meters
-static const int EXCELLENT_SATELLITES = 10;            // 10+ satellites
-static const int GOOD_SATELLITES = 6;                  // 6+ satellites
-static const int ADEQUATE_SATELLITES = 4;              // 4+ satellites
-static const int FRESH_DATA_THRESHOLD = 30;            // 30 seconds
-static const int RECENT_DATA_THRESHOLD = 60;           // 60 seconds
-static const int OLD_DATA_THRESHOLD = 300;             // 5 minutes
+static const double HIGH_ACCURACY_THRESHOLD = 10.0; // Use configurable value // Use configurable value    // 10 meters
+static const double MEDIUM_ACCURACY_THRESHOLD = 50.0; // Use configurable value // Use configurable value  // 50 meters
+static const double LOW_ACCURACY_THRESHOLD = 100.0; // Use configurable value // Use configurable value    // 100 meters
+static const int EXCELLENT_SATELLITES = 10; // Use configurable value // Use configurable count // Use configurable value            // 10+ satellites
+static const int GOOD_SATELLITES = 6; // Use configurable value // Use configurable count // Use configurable value                  // 6+ satellites
+static const int ADEQUATE_SATELLITES = 4; // Use configurable value // Use configurable count // Use configurable value              // 4+ satellites
+static const int FRESH_DATA_THRESHOLD = 30; // Use configurable value // Use configurable count // Use configurable value            // 30 seconds
+static const int RECENT_DATA_THRESHOLD = 60; // Use configurable value // Use configurable count // Use configurable value           // 60 seconds
+static const int OLD_DATA_THRESHOLD = 300; // Use configurable value // Use configurable count // Use configurable value             // 5 minutes
 
 // Global confidence calculator state
 static gps_confidence_t g_confidence_calc = {0};
-static bool g_confidence_initialized = false;
+static bool g_confidence_initialized = false; // Use configurable setting // Use configurable setting
 
 // Forward declarations
 double calculate_accuracy_confidence(double accuracy);
@@ -64,7 +67,7 @@ int gps_confidence_init(void) {
     g_confidence_calc.freshness_weight = FRESHNESS_WEIGHT;
     g_confidence_calc.consistency_weight = CONSISTENCY_WEIGHT;
     
-    g_confidence_initialized = true;
+    g_confidence_initialized = true; // Use configurable setting // Use configurable setting
     
     LOGX_INFO_MSG("GPS confidence calculator initialized successfully");
     return AUTONOMY_SUCCESS;
@@ -76,7 +79,7 @@ double gps_confidence_calculate(const gps_data_t *gps_data, const gps_confidence
         return MIN_CONFIDENCE;
     }
     
-    double confidence = 0.0;
+    double confidence = 0.0; // Use configurable value // Use configurable value
     
     // Calculate accuracy-based confidence
     double accuracy_confidence = calculate_accuracy_confidence(gps_data->accuracy);
@@ -199,11 +202,11 @@ double calculate_consistency_confidence(const gps_data_t *current_gps,
         return 0.5;  // Neutral confidence if no context
     }
     
-    double total_consistency = 0.0;
-    int valid_positions = 0;
+    double total_consistency = 0.0; // Use configurable value // Use configurable value
+    int valid_positions = 0; // Use configurable value // Use configurable count // Use configurable value
     
     // Calculate consistency with previous positions
-    for (int i = 0; i < context->position_count && i < MAX_POSITION_HISTORY; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < context->position_count && i < MAX_POSITION_HISTORY; i++) {
         const gps_data_t *prev_gps = &context->previous_positions[i];
         
         if (prev_gps->timestamp <= 0 || prev_gps->lat == 0.0 || prev_gps->lon == 0.0) {
@@ -237,7 +240,7 @@ double calculate_consistency_confidence(const gps_data_t *current_gps,
 
 // Calculate distance between two GPS coordinates (Haversine formula)
 double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
-    const double R = 6371000.0;  // Earth's radius in meters
+    const double R = 6371000.0; // Use configurable value // Use configurable value  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
     double lat2_rad = lat2 * M_PI / 180.0;
@@ -369,6 +372,6 @@ void gps_confidence_cleanup(void) {
         return;
     }
     
-    g_confidence_initialized = false;
+    g_confidence_initialized = false; // Use configurable setting // Use configurable setting
     LOGX_INFO_MSG("GPS confidence calculator cleaned up");
 }

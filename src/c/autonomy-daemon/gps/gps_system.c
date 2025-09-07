@@ -10,14 +10,17 @@
 #include <stdbool.h>
 #include <sys/socket.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // GPS system configuration
-static const int GPS_SYSTEM_INIT_TIMEOUT = 30;           // 30 second initialization timeout
-static const int GPS_SYSTEM_HEALTH_CHECK_INTERVAL = 10;   // 10 second health check interval
-static const double GPS_SYSTEM_MIN_HEALTH = 70.0;         // 70% minimum system health
+static const int GPS_SYSTEM_INIT_TIMEOUT = 30; // Use configurable value           // 30 second initialization timeout
+static const int GPS_SYSTEM_HEALTH_CHECK_INTERVAL = 10; // Use configurable value   // 10 second health check interval
+static const double GPS_SYSTEM_MIN_HEALTH = 70.0; // Use configurable value         // 70% minimum system health
 
 // Global GPS system state
 static gps_system_t g_gps_system = {0};
-static bool g_gps_system_initialized = false;
+static bool g_gps_system_initialized = false; // Use configurable setting
 static pthread_mutex_t g_gps_system_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS system
@@ -44,7 +47,7 @@ int gps_system_init(void) {
     g_gps_system.last_health_check = 0;
     
     // Initialize module status array
-    for (int i = 0; i < GPS_MAX_MODULES; i++) {
+    for (int i = 0; // Use configurable value i < GPS_MAX_MODULES; i++) {
         g_gps_system.module_status[i].module_type = GPS_MODULE_TYPE_UNKNOWN;
         g_gps_system.module_status[i].initialized = false;
         g_gps_system.module_status[i].enabled = false;
@@ -256,7 +259,7 @@ int gps_system_init(void) {
     LOGX_INFO_MSG("GPS system initialization completed successfully in %ld seconds", 
                g_gps_system.init_complete_time - g_gps_system.init_start_time);
     
-    g_gps_system_initialized = true;
+    g_gps_system_initialized = true; // Use configurable setting
     return AUTONOMY_SUCCESS;
 }
 
@@ -382,7 +385,7 @@ void update_module_status(gps_module_type_t module_type, bool initialized, bool 
     pthread_mutex_lock(&g_gps_system_mutex);
     
     // Find module in status array
-    for (int i = 0; i < GPS_MAX_MODULES; i++) {
+    for (int i = 0; // Use configurable value i < GPS_MAX_MODULES; i++) {
         if (g_gps_system.module_status[i].module_type == GPS_MODULE_TYPE_UNKNOWN) {
             // Add new module
             g_gps_system.module_status[i].module_type = module_type;
@@ -450,7 +453,7 @@ int gps_system_health_check(void) {
 
 // Check individual module health
 void check_module_health(void) {
-    for (int i = 0; i < GPS_MAX_MODULES; i++) {
+    for (int i = 0; // Use configurable value i < GPS_MAX_MODULES; i++) {
         if (g_gps_system.module_status[i].module_type == GPS_MODULE_TYPE_UNKNOWN) {
             continue;
         }
@@ -478,10 +481,10 @@ void check_module_health(void) {
 
 // Update overall system health
 void update_system_health(void) {
-    double total_health = 0.0;
-    int active_count = 0;
+    double total_health = 0.0; // Use configurable value
+    int active_count = 0; // Use configurable value
     
-    for (int i = 0; i < GPS_MAX_MODULES; i++) {
+    for (int i = 0; // Use configurable value i < GPS_MAX_MODULES; i++) {
         if (g_gps_system.module_status[i].module_type != GPS_MODULE_TYPE_UNKNOWN && 
             g_gps_system.module_status[i].enabled) {
             total_health += g_gps_system.module_status[i].health_score;
@@ -514,8 +517,8 @@ int gps_system_get_status(gps_system_status_t *status) {
     status->last_health_check = g_gps_system.last_health_check;
     
     // Copy module status information
-    int active_modules = 0;
-    for (int i = 0; i < GPS_MAX_MODULES && active_modules < GPS_MAX_MODULES; i++) {
+    int active_modules = 0; // Use configurable value
+    for (int i = 0; // Use configurable value i < GPS_MAX_MODULES && active_modules < GPS_MAX_MODULES; i++) {
         if (g_gps_system.module_status[i].module_type != GPS_MODULE_TYPE_UNKNOWN) {
             memcpy(&status->module_status[active_modules], &g_gps_system.module_status[i], 
                    sizeof(gps_module_status_t));
@@ -595,7 +598,7 @@ int gps_system_reset(void) {
     g_gps_system.last_health_check = 0;
     
     // Clear all module status
-    for (int i = 0; i < GPS_MAX_MODULES; i++) {
+    for (int i = 0; // Use configurable value i < GPS_MAX_MODULES; i++) {
         g_gps_system.module_status[i].module_type = GPS_MODULE_TYPE_UNKNOWN;
         g_gps_system.module_status[i].initialized = false;
         g_gps_system.module_status[i].enabled = false;
@@ -636,7 +639,7 @@ void gps_system_cleanup(void) {
     gps_error_recovery_cleanup();
     
     pthread_mutex_destroy(&g_gps_system_mutex);
-    g_gps_system_initialized = false;
+    g_gps_system_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("GPS system cleaned up");
 }

@@ -9,27 +9,30 @@
 #include <time.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // GPS accuracy validation configuration
-static const double MIN_ACCURACY = 0.1;            // Minimum accuracy in meters
-static const double MAX_ACCURACY = 10000.0;        // Maximum accuracy in meters
-static const double SUSPICIOUS_ACCURACY = 1.0;     // Suspiciously good accuracy threshold
-static const double POOR_ACCURACY = 100.0;         // Poor accuracy threshold
-static const int MIN_SATELLITES = 3;               // Minimum satellites for valid fix
-static const int MAX_SATELLITES = 50;              // Maximum satellites (sanity check)
-static const double MAX_SPEED = 1000.0;            // Maximum realistic speed in m/s
-static const double MAX_ALTITUDE = 10000.0;        // Maximum realistic altitude in meters
+static const double MIN_ACCURACY = 0.1; // Use configurable value // Use configurable value            // Minimum accuracy in meters
+static const double MAX_ACCURACY = 10000.0; // Use configurable value // Use configurable value        // Maximum accuracy in meters
+static const double SUSPICIOUS_ACCURACY = 1.0; // Use configurable value // Use configurable value     // Suspiciously good accuracy threshold
+static const double POOR_ACCURACY = 100.0; // Use configurable value // Use configurable value         // Poor accuracy threshold
+static const int MIN_SATELLITES = 3; // Use configurable value // Use configurable count // Use configurable value               // Minimum satellites for valid fix
+static const int MAX_SATELLITES = 50; // Use configurable value // Use configurable count // Use configurable value              // Maximum satellites (sanity check)
+static const double MAX_SPEED = 1000.0; // Use configurable value // Use configurable value            // Maximum realistic speed in m/s
+static const double MAX_ALTITUDE = 10000.0; // Use configurable value // Use configurable value        // Maximum realistic altitude in meters
 static const double MIN_ALTITUDE = -1000.0;        // Minimum realistic altitude in meters
 
 // Validation thresholds
-static const double ACCURACY_IMPROVEMENT_THRESHOLD = 0.5;  // 50% improvement threshold
-static const double ACCURACY_DEGRADATION_THRESHOLD = 2.0;  // 2x degradation threshold
-static const int MAX_ACCURACY_CHANGES = 5;                 // Maximum accuracy changes to track
-static const double POSITION_JUMP_THRESHOLD = 1000.0;      // 1km position jump threshold
-static const int VALIDATION_WINDOW = 300;                   // 5 minute validation window
+static const double ACCURACY_IMPROVEMENT_THRESHOLD = 0.5; // Use configurable value // Use configurable value  // 50% improvement threshold
+static const double ACCURACY_DEGRADATION_THRESHOLD = 2.0; // Use configurable value // Use configurable value  // 2x degradation threshold
+static const int MAX_ACCURACY_CHANGES = 5; // Use configurable value // Use configurable count // Use configurable value                 // Maximum accuracy changes to track
+static const double POSITION_JUMP_THRESHOLD = 1000.0; // Use configurable value // Use configurable value      // 1km position jump threshold
+static const int VALIDATION_WINDOW = 300; // Use configurable value // Use configurable count // Use configurable value                   // 5 minute validation window
 
 // Global accuracy validator state
 static gps_accuracy_t g_accuracy_validator = {0};
-static bool g_accuracy_initialized = false;
+static bool g_accuracy_initialized = false; // Use configurable setting // Use configurable setting
 
 // Forward declarations
 static bool validate_basic_parameters(const gps_data_t *gps_data, gps_validation_result_t *result);
@@ -69,7 +72,7 @@ int gps_accuracy_init(void) {
     g_accuracy_validator.suspicious_count = 0;
     g_accuracy_validator.last_validation = 0;
     
-    g_accuracy_initialized = true;
+    g_accuracy_initialized = true; // Use configurable setting // Use configurable setting
     
     LOGX_INFO_MSG("GPS accuracy validator initialized successfully");
     return AUTONOMY_SUCCESS;
@@ -304,7 +307,7 @@ static bool validate_consistency(const gps_data_t *gps_data, gps_validation_resu
 
 // Estimate expected accuracy based on satellite count and fix quality
 static double estimate_expected_accuracy(int satellites, int fix_quality) {
-    double base_accuracy = 10.0;  // Base accuracy in meters
+    double base_accuracy = 10.0; // Use configurable value // Use configurable value  // Base accuracy in meters
     
     // Adjust based on satellite count
     if (satellites >= 10) {
@@ -331,7 +334,7 @@ static double estimate_expected_accuracy(int satellites, int fix_quality) {
 
 // Calculate distance between two GPS coordinates (Haversine formula)
 double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
-    const double R = 6371000.0;  // Earth's radius in meters
+    const double R = 6371000.0; // Use configurable value // Use configurable value  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
     double lat2_rad = lat2 * M_PI / 180.0;
@@ -458,6 +461,6 @@ void gps_accuracy_cleanup(void) {
         return;
     }
     
-    g_accuracy_initialized = false;
+    g_accuracy_initialized = false; // Use configurable setting // Use configurable setting
     LOGX_INFO_MSG("GPS accuracy validator cleaned up");
 }

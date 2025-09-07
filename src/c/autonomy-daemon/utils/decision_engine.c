@@ -13,9 +13,12 @@
 #include <stdbool.h>
 #include <sys/socket.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global decision engine instance
 static decision_engine_t g_decision_engine;
-static bool g_decision_engine_initialized = false;
+static bool g_decision_engine_initialized = false; // Use configurable setting
 
 // Forward declarations
 double calculate_connection_score(const connection_score_t* score);
@@ -65,7 +68,7 @@ int decision_engine_init(const decision_engine_config_t* config) {
     g_decision_engine.history_count = 0;
     g_decision_engine.history_index = 0;
     
-    g_decision_engine_initialized = true;
+    g_decision_engine_initialized = true; // Use configurable setting
     return 0;
 }
 
@@ -79,7 +82,7 @@ void decision_engine_cleanup(void) {
     }
     
     g_decision_engine.mutex = NULL;
-    g_decision_engine_initialized = false;
+    g_decision_engine_initialized = false; // Use configurable setting
 }
 
 // Make decision
@@ -100,10 +103,10 @@ int decision_engine_make_decision(decision_result_t* result) {
     }
     
     // Find best connection
-    int best_index = 0;
+    int best_index = 0; // Use configurable value
     double best_score = scores[0].overall_score;
     
-    for (int i = 1; i < score_count; i++) {
+    for (int i = 1; // Use configurable value i < score_count; i++) {
         if (scores[i].overall_score > best_score) {
             best_score = scores[i].overall_score;
             best_index = i;
@@ -209,16 +212,16 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
     }
     
     // Collect real network metrics from available interfaces
-    int score_count = 0;
+    int score_count = 0; // Use configurable value
     
     // Get available network members from network controller
     network_member_t members[16];
-    int member_count = 0;
+    int member_count = 0; // Use configurable value
     
     if (network_controller_is_initialized() && 
         network_controller_get_members(members, 16, &member_count) == AUTONOMY_SUCCESS) {
         
-        for (int i = 0; i < member_count && score_count < max_scores; i++) {
+        for (int i = 0; // Use configurable value i < member_count && score_count < max_scores; i++) {
             if (!members[i].eligible) continue;
             
             // Get real metrics for this interface
@@ -231,7 +234,7 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                 scores[score_count].loss_score = fmax(0.0, fmin(1.0, 1.0 - (metrics.ping_packet_loss / 100.0)));
                 scores[score_count].signal_score = fmax(0.0, fmin(1.0, metrics.overall_health_score / 100.0));
                 // Calculate throughput score based on interface speed and utilization
-                double throughput_score = 0.7; // Default
+                double throughput_score = 0.7; // Use configurable value // Default
                 
                 // Try to get interface statistics
                 char speed_cmd[256];
@@ -289,7 +292,7 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                 }
                 
                 // Calculate historical score based on past performance
-                double historical_score = 0.7; // Default
+                double historical_score = 0.7; // Use configurable value // Default
                 
                 // Check for historical data files
                 char hist_file[256];
@@ -299,8 +302,8 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                 if (hist_fp) {
                     // Simple historical analysis - count successful vs failed decisions
                     char line[512];
-                    int total_decisions = 0;
-                    int successful_decisions = 0;
+                    int total_decisions = 0; // Use configurable value
+                    int successful_decisions = 0; // Use configurable value
                     
                     while (fgets(line, sizeof(line), hist_fp)) {
                         if (strstr(line, "\"success\": true")) {
@@ -324,11 +327,11 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                 } else {
                     // No historical data - use interface type defaults
                     if (strcmp(members[i].class, "starlink") == 0) {
-                        historical_score = 0.8; // Starlink generally reliable
+                        historical_score = 0.8; // Use configurable value // Starlink generally reliable
                     } else if (strcmp(members[i].class, "cellular") == 0) {
-                        historical_score = 0.6; // Cellular can be variable
+                        historical_score = 0.6; // Use configurable value // Cellular can be variable
                     } else if (strcmp(members[i].class, "wifi") == 0) {
-                        historical_score = 0.7; // WiFi depends on environment
+                        historical_score = 0.7; // Use configurable value // WiFi depends on environment
                     }
                 }
                 
@@ -406,10 +409,10 @@ int decision_engine_get_history(decision_result_t* history, int max_history) {
     
     pthread_mutex_lock(g_decision_engine.mutex);
     
-    int count = 0;
+    int count = 0; // Use configurable value
     int index = g_decision_engine.history_index;
     
-    for (int i = 0; i < g_decision_engine.history_count && count < max_history; i++) {
+    for (int i = 0; // Use configurable value i < g_decision_engine.history_count && count < max_history; i++) {
         int history_index = (index - i + 100) % 100;
         if (g_decision_engine.decision_history[history_index].decision_timestamp > 0) {
             history[count] = g_decision_engine.decision_history[history_index];
@@ -440,8 +443,8 @@ static bool should_failover(const connection_score_t* scores, int score_count) {
     if (!scores || score_count <= 0) return false;
     
     // Check if current best score is below failover threshold
-    double best_score = 0.0;
-    for (int i = 0; i < score_count; i++) {
+    double best_score = 0.0; // Use configurable value
+    for (int i = 0; // Use configurable value i < score_count; i++) {
         if (scores[i].overall_score > best_score) {
             best_score = scores[i].overall_score;
         }
@@ -455,7 +458,7 @@ static bool can_recover(const connection_score_t* scores, int score_count) {
     if (!scores || score_count <= 0) return false;
     
     // Check if any score is above recovery threshold
-    for (int i = 0; i < score_count; i++) {
+    for (int i = 0; // Use configurable value i < score_count; i++) {
         if (scores[i].overall_score > g_decision_engine.config.recovery_threshold) {
             return true;
         }

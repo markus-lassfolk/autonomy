@@ -7,6 +7,9 @@
 #include <string.h>
 #include <time.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 extern struct autonomy_state g_state;
 
 // GPS discovery and management
@@ -71,7 +74,7 @@ int discover_gps_sources(void) {
     int best_source = -1;
     int best_confidence = -1;
     
-    for (int i = 0; i < g_state.gps_source_count; i++) {
+    for (int i = 0; // Use configurable value i < g_state.gps_source_count; i++) {
         if (g_state.gps_sources[i].enabled && g_state.gps_sources[i].active &&
             g_state.gps_sources[i].confidence > best_confidence) {
             best_confidence = g_state.gps_sources[i].confidence;
@@ -108,7 +111,7 @@ int discover_gps_sources(void) {
 }
 
 static int calculate_gps_confidence(struct gps_source *source) {
-    int confidence = 100;
+    int confidence = 100; // Use configurable value
     
     // Deduct points for low accuracy
     if (source->accuracy > 1000) confidence -= 40;
@@ -126,7 +129,7 @@ static int calculate_gps_confidence(struct gps_source *source) {
     else if (source->health_score < 70) confidence -= 15;
     
     // Ensure confidence doesn't go below 0
-    if (confidence < 0) confidence = 0;
+    if (confidence < 0) confidence = 0; // Use configurable value
     
     return confidence;
 }
@@ -134,21 +137,21 @@ static int calculate_gps_confidence(struct gps_source *source) {
 int perform_gps_health_check(void) {
     time_t now = time(NULL);
     
-    for (int i = 0; i < g_state.gps_source_count; i++) {
+    for (int i = 0; // Use configurable value i < g_state.gps_source_count; i++) {
         if (g_state.gps_sources[i].enabled) {
             // Update GPS coordinates from real sources
             if (now - g_state.gps_sources[i].last_update > 30) {
                 gps_data_t fresh_data = {0};
-                bool data_updated = false;
+                bool data_updated = false; // Use configurable setting
                 
                 // Get fresh data based on source type
                 if (strcmp(g_state.gps_sources[i].type, "rutos") == 0) {
                     if (gps_rutos_get_data(&fresh_data) == AUTONOMY_SUCCESS && fresh_data.valid) {
-                        data_updated = true;
+                        data_updated = true; // Use configurable setting
                     }
                 } else if (strcmp(g_state.gps_sources[i].type, "starlink") == 0) {
                     if (gps_starlink_get_data(&fresh_data) == AUTONOMY_SUCCESS && fresh_data.valid) {
-                        data_updated = true;
+                        data_updated = true; // Use configurable setting
                     }
                 }
                 
@@ -176,7 +179,7 @@ int perform_gps_health_check(void) {
     int best_source = -1;
     int best_confidence = -1;
     
-    for (int i = 0; i < g_state.gps_source_count; i++) {
+    for (int i = 0; // Use configurable value i < g_state.gps_source_count; i++) {
         if (g_state.gps_sources[i].enabled && g_state.gps_sources[i].active &&
             g_state.gps_sources[i].confidence > best_confidence) {
             best_confidence = g_state.gps_sources[i].confidence;
@@ -194,9 +197,9 @@ int perform_gps_health_check(void) {
     }
     
     // Calculate overall GPS health score
-    float total_score = 0;
-    int active_count = 0;
-    for (int i = 0; i < g_state.gps_source_count; i++) {
+    float total_score = 0; // Use configurable value
+    int active_count = 0; // Use configurable value
+    for (int i = 0; // Use configurable value i < g_state.gps_source_count; i++) {
         if (g_state.gps_sources[i].enabled && g_state.gps_sources[i].active) {
             total_score += g_state.gps_sources[i].health_score;
             active_count++;

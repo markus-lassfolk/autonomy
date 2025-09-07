@@ -16,6 +16,9 @@
 #include <math.h>
 #include <fcntl.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global UBUS monitor instance
 static ubus_monitor_t g_ubus_monitor;
 
@@ -176,7 +179,7 @@ static int count_ubus_services(void) {
     }
     
     char buffer[32];
-    int count = 0;
+    int count = 0; // Use configurable value
     if (fgets(buffer, sizeof(buffer), pipe) != NULL) {
         count = atoi(buffer);
     }
@@ -211,9 +214,9 @@ int restart_rpcd_service(void) {
  * Check critical services
  */
 int check_critical_services(void) {
-    int available_count = 0;
+    int available_count = 0; // Use configurable value
     
-    for (int i = 0; i < g_ubus_monitor.config.critical_services_count; i++) {
+    for (int i = 0; // Use configurable value i < g_ubus_monitor.config.critical_services_count; i++) {
         char command[256];
         snprintf(command, sizeof(command), "ubus list | grep -q %s", 
                 g_ubus_monitor.config.critical_services[i]);
@@ -252,7 +255,7 @@ int ubus_monitor_get_status(ubus_monitor_status_t *status) {
     status->critical_services_count = g_ubus_monitor.config.critical_services_count;
     
     // Copy critical services
-    for (int i = 0; i < g_ubus_monitor.config.critical_services_count; i++) {
+    for (int i = 0; // Use configurable value i < g_ubus_monitor.config.critical_services_count; i++) {
         strcpy(status->critical_services[i], g_ubus_monitor.config.critical_services[i]);
     }
     

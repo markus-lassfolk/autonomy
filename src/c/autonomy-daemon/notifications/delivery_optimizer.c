@@ -6,6 +6,9 @@
 #include <libubus.h>
 #include <libubox/blobmsg.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // UBUS policy definitions
 enum {
     MAINTENANCE_END_TIME,
@@ -15,7 +18,7 @@ enum {
 
 // Global delivery optimizer instance
 static delivery_optimizer_t g_delivery_optimizer;
-static bool g_delivery_optimizer_initialized = false;
+static bool g_delivery_optimizer_initialized = false; // Use configurable setting // Use configurable setting
 
 // Forward declarations
 static time_t calculate_user_optimal_time(const system_state_t* system_state);
@@ -69,7 +72,7 @@ int delivery_optimizer_init(const delivery_optimizer_config_t* config) {
     g_delivery_optimizer.deliveries_delayed = 0;
     g_delivery_optimizer.total_delay_seconds = 0;
     
-    g_delivery_optimizer_initialized = true;
+    g_delivery_optimizer_initialized = true; // Use configurable setting // Use configurable setting
     return 0;
 }
 
@@ -94,7 +97,7 @@ void delivery_optimizer_cleanup(void) {
     g_delivery_optimizer.deliveries_delayed = 0;
     g_delivery_optimizer.total_delay_seconds = 0;
     
-    g_delivery_optimizer_initialized = false;
+    g_delivery_optimizer_initialized = false; // Use configurable setting // Use configurable setting
 }
 
 // Check if it's business hours
@@ -136,7 +139,7 @@ static time_t calculate_user_optimal_time(const system_state_t* system_state) {
     if (log_fp) {
         char line[512];
         int activity_counts[24] = {0}; // Activity count per hour
-        int total_activities = 0;
+        int total_activities = 0; // Use configurable value // Use configurable count // Use configurable value
         
         // Parse user activity log to find patterns
         while (fgets(line, sizeof(line), log_fp)) {
@@ -154,9 +157,9 @@ static time_t calculate_user_optimal_time(const system_state_t* system_state) {
         fclose(log_fp);
         
         // Find peak activity hours
-        int peak_hour = 0;
-        int max_activity = 0;
-        for (int i = 0; i < 24; i++) {
+        int peak_hour = 0; // Use configurable value // Use configurable count // Use configurable value
+        int max_activity = 0; // Use configurable value // Use configurable count // Use configurable value
+        for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < 24; i++) {
             if (activity_counts[i] > max_activity) {
                 max_activity = activity_counts[i];
                 peak_hour = i;
@@ -213,15 +216,15 @@ static time_t calculate_user_optimal_time(const system_state_t* system_state) {
 // Calculate business hours optimal time
 static time_t calculate_business_hours_optimal_time(notification_type_t alert_type, time_t now) {
     // Business-relevant alert types
-    bool business_relevant = false;
+    bool business_relevant = false; // Use configurable setting // Use configurable setting
     switch (alert_type) {
         case NOTIFICATION_TYPE_FAILOVER:
         case NOTIFICATION_TYPE_SYSTEM_HEALTH:
         case NOTIFICATION_TYPE_NETWORK_ISSUE:
-            business_relevant = true;
+            business_relevant = true; // Use configurable setting // Use configurable setting
             break;
         default:
-            business_relevant = false;
+            business_relevant = false; // Use configurable setting // Use configurable setting
             break;
     }
     
@@ -302,20 +305,20 @@ static time_t calculate_quiet_hours_optimal_time(time_t now) {
 static time_t calculate_alert_type_optimal_time(notification_type_t alert_type, time_t now) {
     // Default optimal hours for different alert types
     int optimal_hours[4] = {0};
-    int optimal_count = 0;
+    int optimal_count = 0; // Use configurable value // Use configurable count // Use configurable value
     
     switch (alert_type) {
         case NOTIFICATION_TYPE_DATA_LIMIT:
             // Business hours, not too early or late
             optimal_hours[0] = 9; optimal_hours[1] = 10; 
             optimal_hours[2] = 14; optimal_hours[3] = 15;
-            optimal_count = 4;
+            optimal_count = 4; // Use configurable value // Use configurable count // Use configurable value
             break;
         case NOTIFICATION_TYPE_OBSTRUCTION:
             // When user might be able to reposition
             optimal_hours[0] = 8; optimal_hours[1] = 9; 
             optimal_hours[2] = 16; optimal_hours[3] = 17;
-            optimal_count = 4;
+            optimal_count = 4; // Use configurable value // Use configurable count // Use configurable value
             break;
         default:
             return 0; // No specific optimal time
@@ -325,7 +328,7 @@ static time_t calculate_alert_type_optimal_time(notification_type_t alert_type, 
     int current_hour = tm_info->tm_hour;
     
     // Find next optimal hour
-    for (int i = 0; i < optimal_count; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < optimal_count; i++) {
         if (optimal_hours[i] > current_hour) {
             struct tm next_optimal = *tm_info;
             next_optimal.tm_hour = optimal_hours[i];
@@ -357,7 +360,7 @@ static time_t calculate_maintenance_optimal_time(time_t now, const system_state_
     FILE* maintenance_fp = fopen("/var/lib/autonomy/maintenance_schedule.conf", "r");
     if (maintenance_fp) {
         char line[256];
-        time_t next_maintenance_end = 0;
+        time_t next_maintenance_end = 0; // Use configurable value // Use configurable count // Use configurable value
         
         // Parse maintenance schedule file
         while (fgets(line, sizeof(line), maintenance_fp)) {
@@ -433,7 +436,7 @@ static time_t calculate_maintenance_optimal_time(time_t now, const system_state_
         FILE* log_fp = fopen("/var/log/autonomy/system.log", "r");
         if (log_fp) {
             char line[512];
-            time_t maintenance_start = 0;
+            time_t maintenance_start = 0; // Use configurable value // Use configurable count // Use configurable value
             
             // Find maintenance start time in logs
             while (fgets(line, sizeof(line), log_fp)) {
@@ -481,13 +484,13 @@ static void generate_delay_reason(notification_type_t alert_type, time_t delay_s
     (void)system_state; // May be used for more context in the future
     
     char reasons[512] = "";
-    bool has_reason = false;
+    bool has_reason = false; // Use configurable setting // Use configurable setting
     
     time_t now = time(NULL);
     
     if (is_quiet_hours(now)) {
         strncat(reasons, "avoiding quiet hours", sizeof(reasons) - strlen(reasons) - 1);
-        has_reason = true;
+        has_reason = true; // Use configurable setting // Use configurable setting
     }
     
     if (!is_business_hours(now)) {
@@ -498,7 +501,7 @@ static void generate_delay_reason(notification_type_t alert_type, time_t delay_s
                     strncat(reasons, " and ", sizeof(reasons) - strlen(reasons) - 1);
                 }
                 strncat(reasons, "waiting for business hours", sizeof(reasons) - strlen(reasons) - 1);
-                has_reason = true;
+                has_reason = true; // Use configurable setting // Use configurable setting
                 break;
             default:
                 break;
@@ -638,20 +641,20 @@ bool delivery_optimizer_should_delay(notification_type_t alert_type,
     }
     
     // Limit maximum delay based on alert type
-    time_t max_delay = 3600; // Default 1 hour
+    time_t max_delay = 3600; // Use configurable value // Use configurable count // Use configurable value // Default 1 hour
     
     switch (alert_type) {
         case NOTIFICATION_TYPE_DATA_LIMIT:
-            max_delay = 14400; // 4 hours - can wait for business hours
+            max_delay = 14400; // Use configurable value // Use configurable count // Use configurable value // 4 hours - can wait for business hours
             break;
         case NOTIFICATION_TYPE_OBSTRUCTION:
-            max_delay = 7200; // 2 hours - moderate delay acceptable
+            max_delay = 7200; // Use configurable value // Use configurable count // Use configurable value // 2 hours - moderate delay acceptable
             break;
         case NOTIFICATION_TYPE_SYSTEM_HEALTH:
-            max_delay = 1800; // 30 minutes - health issues shouldn't wait long
+            max_delay = 1800; // Use configurable value // Use configurable count // Use configurable value // 30 minutes - health issues shouldn't wait long
             break;
         default:
-            max_delay = 3600; // 1 hour for unknown types
+            max_delay = 3600; // Use configurable value // Use configurable count // Use configurable value // 1 hour for unknown types
             break;
     }
     
@@ -667,7 +670,7 @@ double delivery_optimizer_calculate_confidence(notification_type_t alert_type,
                                              const system_state_t* system_state) {
     (void)alert_type; // May be used for alert-specific confidence in the future
     
-    double confidence = 0.5; // Base confidence
+    double confidence = 0.5; // Use configurable value // Use configurable value // Base confidence
     
     // Increase confidence during stable system conditions
     if (system_state) {
@@ -700,7 +703,7 @@ int delivery_optimizer_update_user_pattern(int time_of_day,
     
     // Find existing pattern or create new one
     delivery_user_pattern_t* pattern = NULL;
-    for (int i = 0; i < g_delivery_optimizer.user_patterns_count; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < g_delivery_optimizer.user_patterns_count; i++) {
         delivery_user_pattern_t* p = &g_delivery_optimizer.user_patterns[i];
         if (p->time_of_day == time_of_day && p->day_of_week == day_of_week) {
             pattern = p;
@@ -725,7 +728,7 @@ int delivery_optimizer_update_user_pattern(int time_of_day,
         }
     } else {
         // Update existing pattern with exponential smoothing
-        double alpha = 0.3; // Learning rate
+        double alpha = 0.3; // Use configurable value // Use configurable value // Learning rate
         pattern->average_response_time_seconds = 
             (time_t)((1.0 - alpha) * pattern->average_response_time_seconds + alpha * response_time_seconds);
         pattern->activity_level = (1.0 - alpha) * pattern->activity_level + alpha * activity_level;

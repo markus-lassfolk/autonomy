@@ -1,0 +1,38 @@
+{
+  "completed": [
+    "src/c/autonomy-daemon/gps/gps_accuracy.c"
+  ],
+  "failed": [
+    "src/c/autonomy-daemon/gps/gps_movement.c",
+    "src/c/autonomy-daemon/gps/gps_system.c",
+    "src/c/autonomy-daemon/notifications/delivery_optimizer.c",
+    "src/c/autonomy-daemon/gps/gps_geofence.c",
+    "src/c/autonomy-daemon/starlink/starlink_snow_detection_integration.c",
+    "src/c/autonomy-daemon/network/network_collector_archive.c",
+    "src/c/autonomy-daemon/gps/gps_starlink.c",
+    "src/c/autonomy-daemon/notifications/sms_client.c",
+    "src/c/autonomy-daemon/gps/gps_confidence.c",
+    "src/c/autonomy-daemon/gps/gps_connector.c",
+    "src/c/autonomy-daemon/gps/gps_cell_tower.c",
+    "src/c/autonomy-daemon/gps/gps_integration.c",
+    "src/c/autonomy-daemon/gps/gps_adaptive_cache.c",
+    "src/c/autonomy-daemon/gps/gps.c",
+    "src/c/autonomy-daemon/ubus/ubus_monitor.c",
+    "src/c/autonomy-daemon/utils/uci_manager.c",
+    "src/c/autonomy-daemon/gps/gps_obstruction.c",
+    "src/c/autonomy-daemon/gps/gps_weather.c",
+    "src/c/autonomy-daemon/gps/gps_error_recovery.c",
+    "src/c/autonomy-daemon/gps/gps_google_api.c",
+    "src/c/autonomy-daemon/gps/gps_performance.c",
+    "src/c/autonomy-daemon/gps/gps_fusion.c",
+    "src/c/autonomy-daemon/gps/gps_discovery_simple.c",
+    "src/c/autonomy-daemon/gps/gps_events.c",
+    "src/c/autonomy-daemon/gps/gps_rutos.c",
+    "src/c/autonomy-daemon/utils/cellular_collector.c",
+    "src/c/autonomy-daemon/utils/decision_engine.c",
+    "src/c/autonomy-daemon/gps/gps_clustering.c",
+    "src/c/autonomy-daemon/utils/metered_manager.c"
+  ],
+  "total_fixes": 18,
+  "timestamp": "Sun Sep  7 23:09:50 CEST 2025"
+}

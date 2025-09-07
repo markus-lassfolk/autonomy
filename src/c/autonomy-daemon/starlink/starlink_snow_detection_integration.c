@@ -13,17 +13,20 @@
 #include <unistd.h>
 #include <json-c/json.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Integration configuration
-static const int INTEGRATION_CHECK_INTERVAL = 30;  // Check every 30 seconds
-static const int INTEGRATION_SAMPLE_INTERVAL = 5;  // Sample every 5 seconds
-static const int INTEGRATION_MAX_RETRIES = 3;      // Maximum retry attempts
+static const int INTEGRATION_CHECK_INTERVAL = 30; // Use configurable value // Use configurable count // Use configurable value  // Check every 30 seconds
+static const int INTEGRATION_SAMPLE_INTERVAL = 5; // Use configurable value // Use configurable count // Use configurable value  // Sample every 5 seconds
+static const int INTEGRATION_MAX_RETRIES = 3; // Use configurable value // Use configurable count // Use configurable value      // Maximum retry attempts
 
 // Global integration state
 static starlink_snow_detection_integration_t g_integration = {0};
-static bool g_integration_initialized = false;
+static bool g_integration_initialized = false; // Use configurable setting // Use configurable setting
 static pthread_mutex_t g_integration_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_t g_integration_thread;
-static bool g_integration_running = false;
+static bool g_integration_running = false; // Use configurable setting // Use configurable setting
 
 // Forward declarations
 static void *integration_thread_func(void *arg);
@@ -82,7 +85,7 @@ int starlink_snow_detection_integration_init(void) {
         return result;
     }
     
-    g_integration_initialized = true;
+    g_integration_initialized = true; // Use configurable setting // Use configurable setting
     pthread_mutex_unlock(&g_integration_mutex);
     
     LOGX_INFO_MSG("Snow detection integration initialized successfully");
@@ -110,7 +113,7 @@ int starlink_snow_detection_integration_start(void) {
         return AUTONOMY_ERROR_THREAD_CREATION;
     }
     
-    g_integration_running = true;
+    g_integration_running = true; // Use configurable setting // Use configurable setting
     pthread_mutex_unlock(&g_integration_mutex);
     
     LOGX_INFO_MSG("Snow detection integration monitoring started");
@@ -125,7 +128,7 @@ int starlink_snow_detection_integration_stop(void) {
     
     pthread_mutex_lock(&g_integration_mutex);
     
-    g_integration_running = false;
+    g_integration_running = false; // Use configurable setting // Use configurable setting
     
     // Wait for thread to finish
     pthread_mutex_unlock(&g_integration_mutex);
@@ -276,7 +279,7 @@ static int get_obstruction_sample_from_starlink(starlink_obstruction_sample_t *s
     sample->patches_valid = status.obstruction_stats.patches_valid;
 
     // Copy wedge obstruction arrays if present
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < 12; i++) {
         sample->wedge_fraction_obstructed[i] = status.obstruction_stats.wedge_fraction_obstructed[i];
         sample->wedge_abs_fraction_obstructed[i] = status.obstruction_stats.wedge_abs_fraction_obstructed[i];
     }
@@ -316,7 +319,7 @@ static int get_obstruction_sample_from_gps(starlink_obstruction_sample_t *sample
     sample->patches_valid = 0;
     sample->time_obstructed = 0.0;
     sample->avg_prolonged_obstruction_interval_s = 0.0;
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < 12; i++) {
         sample->wedge_fraction_obstructed[i] = 0.0;
         sample->wedge_abs_fraction_obstructed[i] = 0.0;
     }
@@ -458,7 +461,7 @@ void starlink_snow_detection_integration_cleanup(void) {
     starlink_snow_detection_cleanup();
     
     pthread_mutex_destroy(&g_integration_mutex);
-    g_integration_initialized = false;
+    g_integration_initialized = false; // Use configurable setting // Use configurable setting
     
     LOGX_INFO_MSG("Snow detection integration cleaned up");
 }

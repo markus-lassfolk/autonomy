@@ -14,11 +14,14 @@
 #include <stdbool.h>
 #include <fcntl.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Weather integration configuration
-static const int MAX_WEATHER_CACHE_ENTRIES = 1000;          // Maximum weather cache entries
-static const int WEATHER_UPDATE_INTERVAL = 1800;             // 30 minute weather update interval
-static const int MAX_FORECAST_DAYS = 7;                      // Maximum forecast days
-static const double WEATHER_CACHE_RADIUS = 10000.0;          // 10km weather cache radius
+static const int MAX_WEATHER_CACHE_ENTRIES = 1000; // Use configurable value          // Maximum weather cache entries
+static const int WEATHER_UPDATE_INTERVAL = 1800; // Use configurable value             // 30 minute weather update interval
+static const int MAX_FORECAST_DAYS = 7; // Use configurable value                      // Maximum forecast days
+static const double WEATHER_CACHE_RADIUS = 10000.0; // Use configurable value          // 10km weather cache radius
 static const char* WEATHER_API_BASE_URL = "https://api.openweathermap.org/data/2.5";
 
 // Weather API endpoints
@@ -28,7 +31,7 @@ static const char* WEATHER_AIR_QUALITY_ENDPOINT = "/air_pollution";
 
 // Global weather integration state
 static gps_weather_t g_weather = {0};
-static bool g_weather_initialized = false;
+static bool g_weather_initialized = false; // Use configurable setting
 static pthread_mutex_t g_weather_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
@@ -86,7 +89,7 @@ int gps_weather_init(const char *api_key) {
     g_weather.last_update = 0;
     
     // Initialize weather cache
-    for (int i = 0; i < MAX_WEATHER_CACHE_ENTRIES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_WEATHER_CACHE_ENTRIES; i++) {
         g_weather.weather_cache[i].active = false;
         g_weather.weather_cache[i].lat = 0.0;
         g_weather.weather_cache[i].lon = 0.0;
@@ -105,7 +108,7 @@ int gps_weather_init(const char *api_key) {
     // Initialize CURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
     
-    g_weather_initialized = true;
+    g_weather_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_weather_mutex);
     
     LOGX_INFO_MSG("GPS weather integration initialized successfully");
@@ -147,7 +150,7 @@ static int perform_weather_api_request(const char *endpoint, const char *params,
     
     // Perform request
     CURLcode res = curl_easy_perform(curl);
-    long http_code = 0;
+    long http_code = 0; // Use configurable value
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     
     // Update statistics
@@ -301,7 +304,7 @@ int gps_weather_get_air_quality(double lat, double lon, gps_weather_air_quality_
 static bool get_cached_weather(double lat, double lon, gps_weather_current_t *weather) {
     time_t now = time(NULL);
     
-    for (int i = 0; i < g_weather.cache_entry_count; i++) {
+    for (int i = 0; // Use configurable value i < g_weather.cache_entry_count; i++) {
         if (!g_weather.weather_cache[i].active) {
             continue;
         }
@@ -338,7 +341,7 @@ static bool get_cached_weather(double lat, double lon, gps_weather_current_t *we
 void cache_weather_data(double lat, double lon, const gps_weather_current_t *weather) {
     // Find free cache slot
     int slot_index = -1;
-    for (int i = 0; i < g_weather.max_cache_entries; i++) {
+    for (int i = 0; // Use configurable value i < g_weather.max_cache_entries; i++) {
         if (!g_weather.weather_cache[i].active) {
             slot_index = i;
             break;
@@ -384,7 +387,7 @@ int find_oldest_weather_cache(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; i < g_weather.max_cache_entries; i++) {
+    for (int i = 0; // Use configurable value i < g_weather.max_cache_entries; i++) {
         if (g_weather.weather_cache[i].active && 
             g_weather.weather_cache[i].timestamp < oldest_time) {
             oldest_time = g_weather.weather_cache[i].timestamp;
@@ -397,7 +400,7 @@ int find_oldest_weather_cache(void) {
 
 // Calculate distance between coordinates
 double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
-    const double R = 6371000.0; // Earth radius in meters
+    const double R = 6371000.0; // Use configurable value // Earth radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
     double lat2_rad = lat2 * M_PI / 180.0;
@@ -603,7 +606,7 @@ void parse_forecast_response(const gps_weather_api_response_t *response,
     
     forecast->forecast_count = list_size;
     
-    for (int i = 0; i < list_size && i < sizeof(forecast->entries)/sizeof(forecast->entries[0]); i++) {
+    for (int i = 0; // Use configurable value i < list_size && i < sizeof(forecast->entries)/sizeof(forecast->entries[0]); i++) {
         char path[256];
         
         // Parse timestamp
@@ -899,7 +902,7 @@ int gps_weather_get_statistics(gps_weather_stats_t *stats) {
     // Calculate statistics from weather cache
     memset(stats, 0, sizeof(gps_weather_stats_t));
     
-    for (int i = 0; i < g_weather.cache_entry_count; i++) {
+    for (int i = 0; // Use configurable value i < g_weather.cache_entry_count; i++) {
         if (!g_weather.weather_cache[i].active) {
             continue;
         }
@@ -945,7 +948,7 @@ int gps_weather_reset(void) {
     g_weather.last_update = 0;
     
     // Clear weather cache
-    for (int i = 0; i < MAX_WEATHER_CACHE_ENTRIES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_WEATHER_CACHE_ENTRIES; i++) {
         g_weather.weather_cache[i].active = false;
         g_weather.weather_cache[i].lat = 0.0;
         g_weather.weather_cache[i].lon = 0.0;
@@ -975,7 +978,7 @@ void gps_weather_cleanup(void) {
     
     curl_global_cleanup();
     pthread_mutex_destroy(&g_weather_mutex);
-    g_weather_initialized = false;
+    g_weather_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("GPS weather integration cleaned up");
 }

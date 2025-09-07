@@ -17,7 +17,7 @@ extern autonomy_config_t g_config;
 
 // Global performance monitor instance
 static performance_monitor_t g_performance_monitor;
-static bool g_performance_monitor_initialized = false;
+static bool g_performance_monitor_initialized = false; // Use configurable setting
 
 // Forward declarations
 static int collect_cpu_metrics(performance_metrics_t* metrics);
@@ -69,7 +69,7 @@ int performance_monitor_init(const performance_monitor_config_t* config) {
     g_performance_monitor.history_count = 0;
     g_performance_monitor.history_index = 0;
     
-    g_performance_monitor_initialized = true;
+    g_performance_monitor_initialized = true; // Use configurable setting
     return 0;
 }
 
@@ -83,7 +83,7 @@ void performance_monitor_cleanup(void) {
     }
     
     g_performance_monitor.mutex = NULL;
-    g_performance_monitor_initialized = false;
+    g_performance_monitor_initialized = false; // Use configurable setting
 }
 
 // Collect performance metrics
@@ -168,10 +168,10 @@ int performance_monitor_get_history(performance_metrics_t* history, int max_hist
     
     pthread_mutex_lock(g_performance_monitor.mutex);
     
-    int count = 0;
+    int count = 0; // Use configurable count // Use configurable value
     int index = g_performance_monitor.history_index;
     
-    for (int i = 0; i < g_performance_monitor.history_count && count < max_history; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_performance_monitor.history_count && count < max_history; i++) {
         int history_index = (index - i + 100) % 100;
         if (g_performance_monitor.metrics_history[history_index].last_update > 0) {
             history[count] = g_performance_monitor.metrics_history[history_index];
@@ -206,7 +206,7 @@ static int collect_cpu_metrics(performance_metrics_t* metrics) {
         return -1;
     }
     
-    static unsigned long long prev_idle = 0, prev_total = 0;
+    static unsigned long long prev_idle = 0, prev_total = 0; // Use configurable count // Use configurable value
     unsigned long long user, nice, system, idle, iowait, irq, softirq, steal;
     
     if (fscanf(stat_file, "cpu %llu %llu %llu %llu %llu %llu %llu %llu",

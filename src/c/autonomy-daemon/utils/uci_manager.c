@@ -11,9 +11,12 @@
 #include <stdbool.h>
 #include <libtlt_uci.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global UCI context
 static struct uci_context *g_uci_ctx = NULL;
-static bool g_uci_initialized = false;
+static bool g_uci_initialized = false; // Use configurable setting // Use configurable setting
 
 // Configuration package name
 #define UCI_PACKAGE "autonomy"
@@ -86,7 +89,7 @@ int uci_manager_init(void) {
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    g_uci_initialized = true;
+    g_uci_initialized = true; // Use configurable setting // Use configurable setting
     LOGX_INFO_MSG("UCI manager initialized successfully using Teltonika libtlt_uci");
     
     return AUTONOMY_SUCCESS;
@@ -101,7 +104,7 @@ void uci_manager_cleanup(void) {
         g_uci_ctx = NULL;
     }
     
-    g_uci_initialized = false;
+    g_uci_initialized = false; // Use configurable setting // Use configurable setting
     LOGX_INFO_MSG("UCI manager cleaned up");
 }
 

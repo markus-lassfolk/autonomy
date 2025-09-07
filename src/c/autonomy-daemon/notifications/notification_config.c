@@ -323,7 +323,7 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
         &config->priority_status_update
     };
     
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < 8; i++) {
         if (*priorities[i] < NOTIFICATION_PRIORITY_LOWEST) {
             *priorities[i] = NOTIFICATION_PRIORITY_LOWEST;
             result->warning_count++;

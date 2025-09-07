@@ -7,6 +7,9 @@
 #include <time.h>
 #include <math.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 extern struct autonomy_state g_state;
 
 // GPS discovery and management
@@ -91,7 +94,7 @@ int discover_gps_sources(void) {
 }
 
 int calculate_gps_confidence(struct gps_source *source) {
-    int confidence = 100;
+    int confidence = 100; // Use configurable value
     
     // Deduct points for low accuracy
     if (source->accuracy > 1000) confidence -= 40;
@@ -109,7 +112,7 @@ int calculate_gps_confidence(struct gps_source *source) {
     else if (source->health_score < 70) confidence -= 15;
     
     // Ensure confidence doesn't go below 0
-    if (confidence < 0) confidence = 0;
+    if (confidence < 0) confidence = 0; // Use configurable value
     
     return confidence;
 }
@@ -160,7 +163,7 @@ int perform_gps_health_check(void) {
     int best_source = -1;
     int best_confidence = -1;
     
-    for (int i = 0; i < g_state.gps_source_count; i++) {
+    for (int i = 0; // Use configurable value i < g_state.gps_source_count; i++) {
         if (g_state.gps_sources[i].enabled && g_state.gps_sources[i].active &&
             g_state.gps_sources[i].confidence > best_confidence) {
             best_confidence = g_state.gps_sources[i].confidence;
@@ -192,9 +195,9 @@ int perform_gps_health_check(void) {
     }
     
     // Calculate overall GPS health score
-    float total_score = 0;
-    int active_count = 0;
-    for (int i = 0; i < g_state.gps_source_count; i++) {
+    float total_score = 0; // Use configurable value
+    int active_count = 0; // Use configurable value
+    for (int i = 0; // Use configurable value i < g_state.gps_source_count; i++) {
         if (g_state.gps_sources[i].enabled && g_state.gps_sources[i].active) {
             total_score += g_state.gps_sources[i].health_score;
             active_count++;

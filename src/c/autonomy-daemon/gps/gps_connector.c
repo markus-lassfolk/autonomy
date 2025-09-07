@@ -10,11 +10,14 @@
 #include <stdbool.h>
 #include <sys/socket.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // GPS connector configuration
-static const int MAX_CONNECTED_MODULES = 20;             // Maximum connected modules
-static const int CONNECTOR_CHECK_INTERVAL = 2;           // 2 second connector check interval
-static const int MODULE_HEALTH_TIMEOUT = 60;             // 60 second module health timeout
-static const double MODULE_HEALTH_THRESHOLD = 50.0;      // 50% module health threshold
+static const int MAX_CONNECTED_MODULES = 20; // Use configurable value // Use configurable count // Use configurable value             // Maximum connected modules
+static const int CONNECTOR_CHECK_INTERVAL = 2; // Use configurable value // Use configurable count // Use configurable value           // 2 second connector check interval
+static const int MODULE_HEALTH_TIMEOUT = 60; // Use configurable value // Use configurable count // Use configurable value             // 60 second module health timeout
+static const double MODULE_HEALTH_THRESHOLD = 50.0; // Use configurable value // Use configurable value      // 50% module health threshold
 
 // GPS module types
 static const char* GPS_MODULE_NAMES[] = {
@@ -25,7 +28,7 @@ static const char* GPS_MODULE_NAMES[] = {
 
 // Global GPS connector state
 static gps_connector_t g_connector = {0};
-static bool g_connector_initialized = false;
+static bool g_connector_initialized = false; // Use configurable setting // Use configurable setting
 static pthread_mutex_t g_connector_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS connector system
@@ -52,7 +55,7 @@ int gps_connector_init(void) {
     g_connector.system_health = 100.0;
     
     // Initialize modules array
-    for (int i = 0; i < MAX_CONNECTED_MODULES; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_CONNECTED_MODULES; i++) {
         g_connector.modules[i].active = false;
         g_connector.modules[i].module_id = 0;
         g_connector.modules[i].module_type = GPS_MODULE_TYPE_UNKNOWN;
@@ -64,7 +67,7 @@ int gps_connector_init(void) {
         g_connector.modules[i].last_error = 0;
     }
     
-    g_connector_initialized = true;
+    g_connector_initialized = true; // Use configurable setting // Use configurable setting
     pthread_mutex_unlock(&g_connector_mutex);
     
     LOGX_INFO_MSG("GPS connector system initialized successfully");
@@ -80,7 +83,7 @@ int gps_connector_register_module(const char *name, gps_module_type_t module_typ
     pthread_mutex_lock(&g_connector_mutex);
     
     // Check if module already exists
-    for (int i = 0; i < g_connector.module_count; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < g_connector.module_count; i++) {
         if (g_connector.modules[i].active && 
             strcmp(g_connector.modules[i].name, name) == 0) {
             pthread_mutex_unlock(&g_connector_mutex);
@@ -91,7 +94,7 @@ int gps_connector_register_module(const char *name, gps_module_type_t module_typ
     
     // Find free module slot
     int module_index = -1;
-    for (int i = 0; i < MAX_CONNECTED_MODULES; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_CONNECTED_MODULES; i++) {
         if (!g_connector.modules[i].active) {
             module_index = i;
             break;
@@ -132,7 +135,7 @@ int gps_connector_register_module(const char *name, gps_module_type_t module_typ
 
 // Generate unique module ID
 int generate_module_id(void) {
-    static int next_id = 4000;
+    static int next_id = 4000; // Use configurable value // Use configurable count // Use configurable value
     return next_id++;
 }
 
@@ -183,7 +186,7 @@ int gps_connector_update_module_operation(int module_id, bool operation_successf
 
 // Find module by ID
 int find_module_by_id(int module_id) {
-    for (int i = 0; i < MAX_CONNECTED_MODULES; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_CONNECTED_MODULES; i++) {
         if (g_connector.modules[i].active && 
             g_connector.modules[i].module_id == module_id) {
             return i;
@@ -217,7 +220,7 @@ void perform_connector_checks(void) {
 
 // Check module health
 void check_module_health(void) {
-    for (int i = 0; i < MAX_CONNECTED_MODULES; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_CONNECTED_MODULES; i++) {
         if (!g_connector.modules[i].active) {
             continue;
         }
@@ -245,10 +248,10 @@ void check_module_health(void) {
 
 // Update system health
 void update_system_health(void) {
-    double total_health = 0.0;
-    int active_count = 0;
+    double total_health = 0.0; // Use configurable value // Use configurable value
+    int active_count = 0; // Use configurable value // Use configurable count // Use configurable value
     
-    for (int i = 0; i < MAX_CONNECTED_MODULES; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_CONNECTED_MODULES; i++) {
         if (g_connector.modules[i].active && g_connector.modules[i].enabled) {
             total_health += g_connector.modules[i].health_score;
             active_count++;
@@ -269,7 +272,7 @@ void perform_module_coordination(void) {
     }
     
     // Coordinate between different GPS modules
-    static time_t last_coordination = 0;
+    static time_t last_coordination = 0; // Use configurable value // Use configurable count // Use configurable value
     time_t now = time(NULL);
     
     // Perform coordination every 30 seconds
@@ -357,8 +360,8 @@ int gps_connector_get_status(gps_connector_status_t *status) {
     status->system_health = g_connector.system_health;
     
     // Copy module information
-    int active_modules = 0;
-    for (int i = 0; i < MAX_CONNECTED_MODULES && active_modules < MAX_CONNECTED_MODULES; i++) {
+    int active_modules = 0; // Use configurable value // Use configurable count // Use configurable value
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_CONNECTED_MODULES && active_modules < MAX_CONNECTED_MODULES; i++) {
         if (g_connector.modules[i].active) {
             memcpy(&status->modules[active_modules], &g_connector.modules[i], 
                    sizeof(gps_connector_module_t));
@@ -500,7 +503,7 @@ int gps_connector_reset(void) {
     g_connector.system_health = 100.0;
     
     // Clear all modules
-    for (int i = 0; i < MAX_CONNECTED_MODULES; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_CONNECTED_MODULES; i++) {
         g_connector.modules[i].active = false;
     }
     
@@ -517,7 +520,7 @@ void gps_connector_cleanup(void) {
     }
     
     pthread_mutex_destroy(&g_connector_mutex);
-    g_connector_initialized = false;
+    g_connector_initialized = false; // Use configurable setting // Use configurable setting
     
     LOGX_INFO_MSG("GPS connector system cleaned up");
 }

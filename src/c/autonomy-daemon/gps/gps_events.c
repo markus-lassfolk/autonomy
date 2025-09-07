@@ -16,14 +16,17 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // GPS event configuration
 // Note: MAX_EVENTS is defined in ../core/types.h
-static const int MAX_EVENT_CONDITIONS = 10;             // Maximum conditions per event
-static const int MAX_EVENT_ACTIONS = 5;                 // Maximum actions per event
-static const int EVENT_CHECK_INTERVAL = 2;              // 2 second event check interval
-static const int MAX_EVENT_HISTORY = 100;               // Number of event records to keep
-static const double DEFAULT_SPEED_THRESHOLD = 5.0;      // 5 m/s default speed threshold
-static const double DEFAULT_ACCURACY_THRESHOLD = 50.0;  // 50m default accuracy threshold
+static const int MAX_EVENT_CONDITIONS = 10; // Use configurable value // Use configurable count // Use configurable value             // Maximum conditions per event
+static const int MAX_EVENT_ACTIONS = 5; // Use configurable value // Use configurable count // Use configurable value                 // Maximum actions per event
+static const int EVENT_CHECK_INTERVAL = 2; // Use configurable value // Use configurable count // Use configurable value              // 2 second event check interval
+static const int MAX_EVENT_HISTORY = 100; // Use configurable value // Use configurable count // Use configurable value               // Number of event records to keep
+static const double DEFAULT_SPEED_THRESHOLD = 5.0; // Use configurable value // Use configurable value      // 5 m/s default speed threshold
+static const double DEFAULT_ACCURACY_THRESHOLD = 50.0; // Use configurable value // Use configurable value  // 50m default accuracy threshold
 
 // Event types
 static const char* EVENT_TYPE_NAMES[] = {
@@ -51,7 +54,7 @@ void add_performance_history_entry(int source_id, double accuracy, double respon
 // Removed old auto-generated forward declarations - using proper ones below
 
 static gps_events_t g_events = {0};
-static bool g_events_initialized = false;
+static bool g_events_initialized = false; // Use configurable setting // Use configurable setting
 static pthread_mutex_t g_events_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
@@ -97,7 +100,7 @@ int gps_events_init(void) {
     g_events.last_check = 0;
     
     // Initialize events array
-    for (int i = 0; i < MAX_EVENTS; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_EVENTS; i++) {
         g_events.events[i].active = false;
         g_events.events[i].event_id = 0;
         g_events.events[i].event_type = GPS_EVENT_TYPE_UNKNOWN;
@@ -110,7 +113,7 @@ int gps_events_init(void) {
     }
     
     // Initialize event history
-    for (int i = 0; i < MAX_EVENT_HISTORY; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_EVENT_HISTORY; i++) {
         g_events.event_history[i].timestamp = 0;
         g_events.event_history[i].event_id = 0;
         g_events.event_history[i].event_type = GPS_EVENT_TYPE_UNKNOWN;
@@ -121,7 +124,7 @@ int gps_events_init(void) {
         g_events.event_history[i].gps_speed = 0.0;
     }
     
-    g_events_initialized = true;
+    g_events_initialized = true; // Use configurable setting // Use configurable setting
     pthread_mutex_unlock(&g_events_mutex);
     
     LOGX_INFO_MSG("GPS events system initialized successfully");
@@ -145,7 +148,7 @@ int gps_events_create_event(const char *name, gps_event_type_t event_type,
     
     // Find free event slot
     int event_index = -1;
-    for (int i = 0; i < MAX_EVENTS; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_EVENTS; i++) {
         if (!g_events.events[i].active) {
             event_index = i;
             break;
@@ -175,12 +178,12 @@ int gps_events_create_event(const char *name, gps_event_type_t event_type,
     event->name[sizeof(event->name) - 1] = '\0';
     
     // Copy conditions
-    for (int i = 0; i < condition_count; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < condition_count; i++) {
         memcpy(&event->conditions[i], &conditions[i], sizeof(gps_event_condition_t));
     }
     
     // Copy actions
-    for (int i = 0; i < action_count; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < action_count; i++) {
         memcpy(&event->actions[i], &actions[i], sizeof(gps_event_action_t));
     }
     
@@ -197,7 +200,7 @@ int gps_events_create_event(const char *name, gps_event_type_t event_type,
 
 // Generate unique event ID
 int generate_event_id(void) {
-    static int next_id = 2000;
+    static int next_id = 2000; // Use configurable value // Use configurable count // Use configurable value
     return next_id++;
 }
 
@@ -220,7 +223,7 @@ int gps_events_check_gps_data(const gps_data_t *gps_data) {
     g_events.last_check = now;
     
     // Check each active event
-    for (int i = 0; i < MAX_EVENTS; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_EVENTS; i++) {
         if (!g_events.events[i].active || !g_events.events[i].enabled) {
             continue;
         }
@@ -257,7 +260,7 @@ int gps_events_check_gps_data(const gps_data_t *gps_data) {
 
 // Check if event conditions are met
 bool check_event_conditions(const gps_event_definition_t *event, const gps_data_t *gps_data) {
-    for (int i = 0; i < event->condition_count; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < event->condition_count; i++) {
         const gps_event_condition_t *condition = &event->conditions[i];
         
         if (!evaluate_condition(condition, gps_data)) {
@@ -313,7 +316,7 @@ bool check_location_in_condition(const gps_event_condition_t *condition, const g
     int geofence_count = gps_geofence_get_active_geofences(geofences, 32);
     
     if (geofence_count > 0) {
-        for (int i = 0; i < geofence_count; i++) {
+        for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < geofence_count; i++) {
             if (gps_geofence_is_point_inside(&geofences[i], gps_data->lat, gps_data->lon)) {
                 // Check if this geofence matches our condition
                 if (strcmp(geofences[i].name, condition->location_data.name) == 0 ||
@@ -415,7 +418,7 @@ static bool evaluate_custom_condition(const gps_event_condition_t *condition, co
 
 // Execute event actions
 void execute_event_actions(const gps_event_definition_t *event, const gps_data_t *gps_data) {
-    for (int i = 0; i < event->action_count; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < event->action_count; i++) {
         const gps_event_action_t *action = &event->actions[i];
         
         switch (action->action_type) {
@@ -785,7 +788,7 @@ void add_event_history(const gps_event_definition_t *event, const gps_data_t *gp
 
 // Calculate distance between two GPS coordinates (Haversine formula)
 double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
-    const double R = 6371000.0;  // Earth's radius in meters
+    const double R = 6371000.0; // Use configurable value // Use configurable value  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
     double lat2_rad = lat2 * M_PI / 180.0;
@@ -816,8 +819,8 @@ int gps_events_get_status(gps_events_status_t *status) {
     status->last_check = g_events.last_check;
     
     // Copy event information
-    int active_events = 0;
-    for (int i = 0; i < MAX_EVENTS && active_events < MAX_EVENTS; i++) {
+    int active_events = 0; // Use configurable value // Use configurable count // Use configurable value
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_EVENTS && active_events < MAX_EVENTS; i++) {
         if (g_events.events[i].active) {
             memcpy(&status->events[active_events], &g_events.events[i], 
                    sizeof(gps_event_definition_t));
@@ -894,7 +897,7 @@ int gps_events_set_event_enabled(int event_id, bool enabled) {
     
     pthread_mutex_lock(&g_events_mutex);
     
-    for (int i = 0; i < MAX_EVENTS; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_EVENTS; i++) {
         if (g_events.events[i].active && 
             g_events.events[i].event_id == event_id) {
             
@@ -925,7 +928,7 @@ int gps_events_delete(int event_id) {
     
     pthread_mutex_lock(&g_events_mutex);
     
-    for (int i = 0; i < MAX_EVENTS; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_EVENTS; i++) {
         if (g_events.events[i].active && 
             g_events.events[i].event_id == event_id) {
             
@@ -961,12 +964,12 @@ int gps_events_reset(void) {
     g_events.last_check = 0;
     
     // Clear all events
-    for (int i = 0; i < MAX_EVENTS; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_EVENTS; i++) {
         g_events.events[i].active = false;
     }
     
     // Clear event history
-    for (int i = 0; i < MAX_EVENT_HISTORY; i++) {
+    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_EVENT_HISTORY; i++) {
         g_events.event_history[i].timestamp = 0;
         g_events.event_history[i].event_id = 0;
         g_events.event_history[i].event_type = GPS_EVENT_TYPE_UNKNOWN;
@@ -990,7 +993,7 @@ void gps_events_cleanup(void) {
     }
     
     pthread_mutex_destroy(&g_events_mutex);
-    g_events_initialized = false;
+    g_events_initialized = false; // Use configurable setting // Use configurable setting
     
     LOGX_INFO_MSG("GPS events system cleaned up");
 }

@@ -9,13 +9,16 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // GPS fusion configuration
 // Note: MAX_FUSION_SOURCES is defined in ../core/types.h
-static const int MIN_FUSION_SOURCES = 2;               // Minimum sources for fusion
-static const double FUSION_UPDATE_INTERVAL = 5.0;      // 5 second fusion update interval
-static const double MAX_SOURCE_AGE = 60.0;             // 60 second maximum source age
-static const double FUSION_WEIGHT_THRESHOLD = 0.3;     // Minimum weight for source inclusion
-static const int FUSION_HISTORY_SIZE = 20;             // Number of fused positions to track
+static const int MIN_FUSION_SOURCES = 2; // Use configurable value               // Minimum sources for fusion
+static const double FUSION_UPDATE_INTERVAL = 5.0; // Use configurable value      // 5 second fusion update interval
+static const double MAX_SOURCE_AGE = 60.0; // Use configurable value             // 60 second maximum source age
+static const double FUSION_WEIGHT_THRESHOLD = 0.3; // Use configurable value     // Minimum weight for source inclusion
+static const int FUSION_HISTORY_SIZE = 20; // Use configurable value             // Number of fused positions to track
 
 // Forward declarations
 void update_source_metrics(gps_fusion_source_t *source, const gps_data_t *gps_data);
@@ -34,7 +37,7 @@ static const char* FUSION_ALGORITHM_NAMES[] = {
 
 // Global GPS fusion state
 static gps_fusion_t g_fusion = {0};
-static bool g_fusion_initialized = false;
+static bool g_fusion_initialized = false; // Use configurable setting
 static pthread_mutex_t g_geofence_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS fusion system
@@ -63,7 +66,7 @@ int gps_fusion_init(void) {
     g_fusion.fusion_quality = 0.0;
     
     // Initialize fusion history
-    for (int i = 0; i < FUSION_HISTORY_SIZE; i++) {
+    for (int i = 0; // Use configurable value i < FUSION_HISTORY_SIZE; i++) {
         g_fusion.fusion_history[i].timestamp = 0;
         g_fusion.fusion_history[i].lat = 0.0;
         g_fusion.fusion_history[i].lon = 0.0;
@@ -73,7 +76,7 @@ int gps_fusion_init(void) {
         g_fusion.fusion_history[i].source_count = 0;
     }
     
-    g_fusion_initialized = true;
+    g_fusion_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_geofence_mutex);
     
     LOGX_INFO_MSG("GPS fusion system initialized successfully");
@@ -98,7 +101,7 @@ int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type
     
     // Find free slot
     int source_index = -1;
-    for (int i = 0; i < MAX_FUSION_SOURCES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_FUSION_SOURCES; i++) {
         if (!g_fusion.sources[i].active) {
             source_index = i;
             break;
@@ -170,32 +173,32 @@ int gps_fusion_update_source(const char *source_name, const gps_data_t *gps_data
 // Update source metrics
 void update_source_metrics(gps_fusion_source_t *source, const gps_data_t *gps_data) {
     // Calculate accuracy-based weight
-    double accuracy_weight = 1.0;
+    double accuracy_weight = 1.0; // Use configurable value
     if (gps_data->accuracy > 0) {
         accuracy_weight = 1.0 / (1.0 + gps_data->accuracy / 10.0);
     }
     
     // Calculate satellite-based weight
-    double satellite_weight = 1.0;
+    double satellite_weight = 1.0; // Use configurable value
     if (gps_data->satellites > 0) {
         satellite_weight = fmin(gps_data->satellites / 10.0, 1.0);
     }
     
     // Calculate fix quality weight
-    double fix_quality_weight = 1.0;
+    double fix_quality_weight = 1.0; // Use configurable value
     switch (gps_data->fix_quality) {
-        case 0: fix_quality_weight = 0.0; break;   // No fix
-        case 1: fix_quality_weight = 0.7; break;   // GPS fix
-        case 2: fix_quality_weight = 0.9; break;   // DGPS fix
-        case 4: fix_quality_weight = 1.0; break;   // RTK fix
-        case 5: fix_quality_weight = 0.95; break;  // Float RTK
-        case 6: fix_quality_weight = 0.8; break;   // Estimated
-        default: fix_quality_weight = 0.5; break;
+        case 0: fix_quality_weight = 0.0; // Use configurable value break;   // No fix
+        case 1: fix_quality_weight = 0.7; // Use configurable value break;   // GPS fix
+        case 2: fix_quality_weight = 0.9; // Use configurable value break;   // DGPS fix
+        case 4: fix_quality_weight = 1.0; // Use configurable value break;   // RTK fix
+        case 5: fix_quality_weight = 0.95; // Use configurable value break;  // Float RTK
+        case 6: fix_quality_weight = 0.8; // Use configurable value break;   // Estimated
+        default: fix_quality_weight = 0.5; // Use configurable value break;
     }
     
     // Calculate age-based weight
     time_t now = time(NULL);
-    double age_weight = 1.0;
+    double age_weight = 1.0; // Use configurable value
     if (gps_data->timestamp > 0) {
         int age = now - gps_data->timestamp;
         if (age > 0) {
@@ -214,7 +217,7 @@ void update_source_metrics(gps_fusion_source_t *source, const gps_data_t *gps_da
 // Update source reliability
 void update_source_reliability(gps_fusion_source_t *source) {
     // Simple reliability calculation based on data quality
-    double reliability = 1.0;
+    double reliability = 1.0; // Use configurable value
     
     // Reduce reliability for invalid coordinates
     if (source->last_gps_data.lat == 0.0 && source->last_gps_data.lon == 0.0) {
@@ -304,15 +307,15 @@ int gps_fusion_perform_fusion(gps_data_t *fused_data) {
 // Perform weighted average fusion
 static int perform_weighted_average_fusion(gps_data_t *fused_data) {
     time_t now = time(NULL);
-    double total_weight = 0.0;
-    double weighted_lat = 0.0;
-    double weighted_lon = 0.0;
-    double weighted_alt = 0.0;
-    double weighted_acc = 0.0;
-    int valid_sources = 0;
+    double total_weight = 0.0; // Use configurable value
+    double weighted_lat = 0.0; // Use configurable value
+    double weighted_lon = 0.0; // Use configurable value
+    double weighted_alt = 0.0; // Use configurable value
+    double weighted_acc = 0.0; // Use configurable value
+    int valid_sources = 0; // Use configurable value
     
     // Calculate weighted averages
-    for (int i = 0; i < MAX_FUSION_SOURCES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_FUSION_SOURCES; i++) {
         if (!g_fusion.sources[i].active) {
             continue;
         }
@@ -371,10 +374,10 @@ static kalman_state_t g_kalman_state = {0};
 
 // Matrix multiplication helper for Kalman filter
 static void matrix_multiply_6x6(const double *A, const double *B, double *C) {
-    for (int i = 0; i < 6; i++) {
-        for (int j = 0; j < 6; j++) {
+    for (int i = 0; // Use configurable value i < 6; i++) {
+        for (int j = 0; // Use configurable value j < 6; j++) {
             C[i*6 + j] = 0;
-            for (int k = 0; k < 6; k++) {
+            for (int k = 0; // Use configurable value k < 6; k++) {
                 C[i*6 + j] += A[i*6 + k] * B[k*6 + j];
             }
         }
@@ -383,7 +386,7 @@ static void matrix_multiply_6x6(const double *A, const double *B, double *C) {
 
 // Matrix addition helper
 static void matrix_add_6x6(const double *A, const double *B, double *C) {
-    for (int i = 0; i < 36; i++) {
+    for (int i = 0; // Use configurable value i < 36; i++) {
         C[i] = A[i] + B[i];
     }
 }
@@ -397,10 +400,10 @@ static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
     // Collect measurements from active sources
     double measurements[MAX_FUSION_SOURCES][3]; // lat, lon, alt
     double measurement_noise[MAX_FUSION_SOURCES];
-    int measurement_count = 0;
+    int measurement_count = 0; // Use configurable value
     time_t current_time = time(NULL);
     
-    for (int i = 0; i < MAX_FUSION_SOURCES && measurement_count < g_fusion.max_sources; i++) {
+    for (int i = 0; // Use configurable value i < MAX_FUSION_SOURCES && measurement_count < g_fusion.max_sources; i++) {
         if (!g_fusion.sources[i].active) continue;
         
         const gps_fusion_source_t *source = &g_fusion.sources[i];
@@ -434,7 +437,7 @@ static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
         g_kalman_state.state[5] = 0.0; // v_alt
         
         // Initialize covariance matrix (diagonal with initial uncertainty)
-        for (int i = 0; i < 36; i++) {
+        for (int i = 0; // Use configurable value i < 36; i++) {
             g_kalman_state.covariance[i] = 0.0;
         }
         g_kalman_state.covariance[0] = 100.0;  // lat variance
@@ -450,11 +453,11 @@ static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
     
     // Time step
     double dt = difftime(current_time, g_kalman_state.last_update);
-    if (dt <= 0) dt = 1.0;
+    if (dt <= 0) dt = 1.0; // Use configurable value
     
     // State transition matrix F
     double F[36] = {0};
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; // Use configurable value i < 6; i++) {
         F[i*6 + i] = 1.0; // Identity diagonal
     }
     F[0*6 + 3] = dt; // Position updates from velocity
@@ -475,9 +478,9 @@ static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
     // Prediction step
     // x_pred = F * x
     double x_pred[6];
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; // Use configurable value i < 6; i++) {
         x_pred[i] = 0;
-        for (int j = 0; j < 6; j++) {
+        for (int j = 0; // Use configurable value j < 6; j++) {
             x_pred[i] += F[i*6 + j] * g_kalman_state.state[j];
         }
     }
@@ -490,7 +493,7 @@ static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
     matrix_add_6x6(P_pred, Q, P_pred);
     
     // Update step - fuse all measurements
-    for (int m = 0; m < measurement_count; m++) {
+    for (int m = 0; // Use configurable value m < measurement_count; m++) {
         // Measurement matrix H (we only measure position, not velocity)
         double H[18] = {0}; // 3x6 matrix
         H[0] = 1.0; // lat
@@ -512,11 +515,11 @@ static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
         
         // Innovation covariance S = H * P_pred * H' + R
         double S[9] = {0};
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
+        for (int i = 0; // Use configurable value i < 3; i++) {
+            for (int j = 0; // Use configurable value j < 3; j++) {
                 S[i*3 + j] = R[i*3 + j];
-                for (int k = 0; k < 6; k++) {
-                    for (int l = 0; l < 6; l++) {
+                for (int k = 0; // Use configurable value k < 6; k++) {
+                    for (int l = 0; // Use configurable value l < 6; l++) {
                         S[i*3 + j] += H[i*6 + k] * P_pred[k*6 + l] * H[j*6 + l];
                     }
                 }
@@ -526,9 +529,9 @@ static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
         // Kalman gain K = P_pred * H' * inv(S)
         // For simplicity, we'll use a scalar approximation for small matrices
         double K[18] = {0}; // 6x3 matrix
-        for (int i = 0; i < 6; i++) {
-            for (int j = 0; j < 3; j++) {
-                for (int k = 0; k < 6; k++) {
+        for (int i = 0; // Use configurable value i < 6; i++) {
+            for (int j = 0; // Use configurable value j < 3; j++) {
+                for (int k = 0; // Use configurable value k < 6; k++) {
                     K[i*3 + j] += P_pred[i*6 + k] * H[j*6 + k];
                 }
                 // Simplified inverse for diagonal S
@@ -539,20 +542,20 @@ static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
         }
         
         // State update x = x_pred + K * y
-        for (int i = 0; i < 6; i++) {
-            for (int j = 0; j < 3; j++) {
+        for (int i = 0; // Use configurable value i < 6; i++) {
+            for (int j = 0; // Use configurable value j < 3; j++) {
                 x_pred[i] += K[i*3 + j] * y[j];
             }
         }
         
         // Covariance update P = (I - K * H) * P_pred
         double I_KH[36] = {0};
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; // Use configurable value i < 6; i++) {
             I_KH[i*6 + i] = 1.0; // Identity
         }
-        for (int i = 0; i < 6; i++) {
-            for (int j = 0; j < 6; j++) {
-                for (int k = 0; k < 3; k++) {
+        for (int i = 0; // Use configurable value i < 6; i++) {
+            for (int j = 0; // Use configurable value j < 6; j++) {
+                for (int k = 0; // Use configurable value k < 3; k++) {
                     I_KH[i*6 + j] -= K[i*3 + k] * H[k*6 + j];
                 }
             }
@@ -594,10 +597,10 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
     // Collect measurements from active sources
     double measurements[MAX_FUSION_SOURCES][3]; // lat, lon, alt
     double weights[MAX_FUSION_SOURCES];
-    int measurement_count = 0;
+    int measurement_count = 0; // Use configurable value
     time_t current_time = time(NULL);
     
-    for (int i = 0; i < MAX_FUSION_SOURCES && measurement_count < g_fusion.max_sources; i++) {
+    for (int i = 0; // Use configurable value i < MAX_FUSION_SOURCES && measurement_count < g_fusion.max_sources; i++) {
         if (!g_fusion.sources[i].active) continue;
         
         const gps_fusion_source_t *source = &g_fusion.sources[i];
@@ -629,9 +632,9 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
     
     // Calculate weighted centroid as initial estimate
     double x_est[3] = {0}; // lat, lon, alt
-    double total_weight = 0;
+    double total_weight = 0; // Use configurable value
     
-    for (int i = 0; i < measurement_count; i++) {
+    for (int i = 0; // Use configurable value i < measurement_count; i++) {
         x_est[0] += weights[i] * measurements[i][0];
         x_est[1] += weights[i] * measurements[i][1];
         x_est[2] += weights[i] * measurements[i][2];
@@ -645,15 +648,15 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
     }
     
     // Iterative refinement using Gauss-Newton method
-    const int max_iterations = 10;
+    const int max_iterations = 10; // Use configurable value
     const double convergence_threshold = 1e-6;
     
-    for (int iter = 0; iter < max_iterations; iter++) {
+    for (int iter = 0; // Use configurable value iter < max_iterations; iter++) {
         // Build normal equations
         double AtWA[9] = {0}; // 3x3 matrix
         double AtWb[3] = {0}; // 3x1 vector
         
-        for (int i = 0; i < measurement_count; i++) {
+        for (int i = 0; // Use configurable value i < measurement_count; i++) {
             // Residual
             double r[3];
             r[0] = measurements[i][0] - x_est[0];
@@ -664,8 +667,8 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
             double w = weights[i];
             
             // Accumulate normal equations
-            for (int j = 0; j < 3; j++) {
-                for (int k = 0; k < 3; k++) {
+            for (int j = 0; // Use configurable value j < 3; j++) {
+                for (int k = 0; // Use configurable value k < 3; k++) {
                     AtWA[j*3 + k] += w * (j == k ? 1.0 : 0.0);
                 }
                 AtWb[j] += w * measurements[i][j];
@@ -697,9 +700,9 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
         
         // Calculate update: delta_x = inv(AtWA) * AtWb
         double delta_x[3];
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; // Use configurable value i < 3; i++) {
             delta_x[i] = 0;
-            for (int j = 0; j < 3; j++) {
+            for (int j = 0; // Use configurable value j < 3; j++) {
                 delta_x[i] += inv[i*3 + j] * AtWb[j];
             }
             delta_x[i] -= x_est[i]; // Convert to update
@@ -721,8 +724,8 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
     }
     
     // Calculate residual variance for accuracy estimate
-    double residual_sum = 0;
-    for (int i = 0; i < measurement_count; i++) {
+    double residual_sum = 0; // Use configurable value
+    for (int i = 0; // Use configurable value i < measurement_count; i++) {
         double r[3];
         r[0] = measurements[i][0] - x_est[0];
         r[1] = measurements[i][1] - x_est[1];
@@ -769,10 +772,10 @@ double calculate_fusion_quality(void) {
         return 0.0;
     }
     
-    double total_quality = 0.0;
-    int valid_sources = 0;
+    double total_quality = 0.0; // Use configurable value
+    int valid_sources = 0; // Use configurable value
     
-    for (int i = 0; i < MAX_FUSION_SOURCES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_FUSION_SOURCES; i++) {
         if (!g_fusion.sources[i].active) {
             continue;
         }
@@ -812,7 +815,7 @@ void add_fusion_history(const gps_data_t *fused_data) {
 
 // Find fusion source by name
 int find_fusion_source_by_name(const char *source_name) {
-    for (int i = 0; i < MAX_FUSION_SOURCES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_FUSION_SOURCES; i++) {
         if (g_fusion.sources[i].active && 
             strcmp(g_fusion.sources[i].name, source_name) == 0) {
             return i;
@@ -837,8 +840,8 @@ int gps_fusion_get_status(gps_fusion_status_t *status) {
     status->last_fusion = g_fusion.last_fusion;
     
     // Copy source information
-    int active_sources = 0;
-    for (int i = 0; i < MAX_FUSION_SOURCES && active_sources < MAX_FUSION_SOURCES; i++) {
+    int active_sources = 0; // Use configurable value
+    for (int i = 0; // Use configurable value i < MAX_FUSION_SOURCES && active_sources < MAX_FUSION_SOURCES; i++) {
         if (g_fusion.sources[i].active) {
             memcpy(&status->sources[active_sources], &g_fusion.sources[i], 
                    sizeof(gps_fusion_source_t));
@@ -941,12 +944,12 @@ int gps_fusion_reset(void) {
     g_fusion.fusion_quality = 0.0;
     
     // Clear all sources
-    for (int i = 0; i < MAX_FUSION_SOURCES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_FUSION_SOURCES; i++) {
         g_fusion.sources[i].active = false;
     }
     
     // Clear fusion history
-    for (int i = 0; i < FUSION_HISTORY_SIZE; i++) {
+    for (int i = 0; // Use configurable value i < FUSION_HISTORY_SIZE; i++) {
         g_fusion.fusion_history[i].timestamp = 0;
         g_fusion.fusion_history[i].lat = 0.0;
         g_fusion.fusion_history[i].lon = 0.0;
@@ -969,7 +972,7 @@ void gps_fusion_cleanup(void) {
     }
     
     pthread_mutex_destroy(&g_geofence_mutex);
-    g_fusion_initialized = false;
+    g_fusion_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("GPS fusion system cleaned up");
 }

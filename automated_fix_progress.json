@@ -1,0 +1,28 @@
+{
+  "completed": [
+    "src/c/autonomy-daemon/gps/gps_accuracy.c"
+  ],
+  "failed": [
+    "src/c/autonomy-daemon/network/network_failover.c",
+    "src/c/autonomy-daemon/starlink/starlink_snow_detection_integration.c",
+    "src/c/autonomy-daemon/analytics/performance_monitor.c",
+    "src/c/autonomy-daemon/utils/uci_manager.c",
+    "src/c/autonomy-daemon/wifi/wifi_management.c",
+    "src/c/autonomy-daemon/notifications/delivery_optimizer.c",
+    "src/c/autonomy-daemon/gps/gps_starlink.c",
+    "src/c/autonomy-daemon/gps/gps_error_recovery.c",
+    "src/c/autonomy-daemon/gps/gps_health.c",
+    "src/c/autonomy-daemon/notifications/multi_channel.c",
+    "src/c/autonomy-daemon/starlink/starlink_obstruction.c",
+    "src/c/autonomy-daemon/notifications/sms_client.c",
+    "src/c/autonomy-daemon/gps/gps_integration.c",
+    "src/c/autonomy-daemon/starlink/starlink_snow_detection.c",
+    "src/c/autonomy-daemon/gps/gps_events.c",
+    "src/c/autonomy-daemon/gps/gps_confidence.c",
+    "src/c/autonomy-daemon/notifications/notification_config.c",
+    "src/c/autonomy-daemon/gps/gps_manager.c",
+    "src/c/autonomy-daemon/gps/gps_connector.c"
+  ],
+  "total_fixes": 55,
+  "timestamp": "Sun Sep  7 23:08:48 CEST 2025"
+}

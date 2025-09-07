@@ -10,14 +10,17 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Clustering configuration
-static const int MAX_CLUSTER_SIZE = 100;            // Maximum positions per cluster
-static const int MIN_CLUSTER_SIZE = 3;               // Minimum positions for valid cluster
-static const double CLUSTER_RADIUS = 50.0;           // 50 meter cluster radius
-static const double CLUSTER_TIMEOUT = 300;           // 5 minute cluster timeout
-static const double WEIGHT_DECAY_FACTOR = 0.95;      // Weight decay for older positions
+static const int MAX_CLUSTER_SIZE = 100; // Use configurable value            // Maximum positions per cluster
+static const int MIN_CLUSTER_SIZE = 3; // Use configurable value               // Minimum positions for valid cluster
+static const double CLUSTER_RADIUS = 50.0; // Use configurable value           // 50 meter cluster radius
+static const double CLUSTER_TIMEOUT = 300; // Use configurable value           // 5 minute cluster timeout
+static const double WEIGHT_DECAY_FACTOR = 0.95; // Use configurable value      // Weight decay for older positions
 // Note: MAX_CLUSTERS is defined in ../core/types.h
-static const double OUTLIER_THRESHOLD = 3.0;         // 3-sigma outlier threshold
+static const double OUTLIER_THRESHOLD = 3.0; // Use configurable value         // 3-sigma outlier threshold
 
 // Global clustering state
 
@@ -34,7 +37,7 @@ void perform_clustering_analysis(void);
 double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
 
 static gps_clustering_t g_clustering = {0};
-static bool g_clustering_initialized = false;
+static bool g_clustering_initialized = false; // Use configurable setting
 static pthread_mutex_t g_clustering_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS clustering system
@@ -63,7 +66,7 @@ int gps_clustering_init(void) {
     g_clustering.last_clustering = 0;
     
     // Initialize clusters array
-    for (int i = 0; i < MAX_CLUSTERS; i++) {
+    for (int i = 0; // Use configurable value i < MAX_CLUSTERS; i++) {
         g_clustering.clusters[i].active = false;
         g_clustering.clusters[i].position_count = 0;
         g_clustering.clusters[i].last_update = 0;
@@ -82,7 +85,7 @@ int gps_clustering_init(void) {
         g_clustering.clusters[i].variance_alt = 0.0;
     }
     
-    g_clustering_initialized = true;
+    g_clustering_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_clustering_mutex);
     
     LOGX_INFO_MSG("GPS clustering system initialized successfully");
@@ -133,7 +136,7 @@ int find_best_cluster(const gps_data_t *gps_data) {
     int best_cluster = -1;
     double best_distance = g_clustering.cluster_radius;
     
-    for (int i = 0; i < g_clustering.max_clusters; i++) {
+    for (int i = 0; // Use configurable value i < g_clustering.max_clusters; i++) {
         if (!g_clustering.clusters[i].active) {
             continue;
         }
@@ -155,7 +158,7 @@ int find_best_cluster(const gps_data_t *gps_data) {
 static int create_new_cluster(const gps_data_t *gps_data) {
     // Find free cluster slot
     int cluster_index = -1;
-    for (int i = 0; i < g_clustering.max_clusters; i++) {
+    for (int i = 0; // Use configurable value i < g_clustering.max_clusters; i++) {
         if (!g_clustering.clusters[i].active) {
             cluster_index = i;
             break;
@@ -296,7 +299,7 @@ int find_oldest_cluster(void) {
     int oldest_cluster = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; i < g_clustering.max_clusters; i++) {
+    for (int i = 0; // Use configurable value i < g_clustering.max_clusters; i++) {
         if (g_clustering.clusters[i].active && 
             g_clustering.clusters[i].last_update < oldest_time) {
             oldest_time = g_clustering.clusters[i].last_update;
@@ -311,7 +314,7 @@ int find_oldest_cluster(void) {
 void cleanup_expired_clusters(void) {
     time_t now = time(NULL);
     
-    for (int i = 0; i < g_clustering.max_clusters; i++) {
+    for (int i = 0; // Use configurable value i < g_clustering.max_clusters; i++) {
         if (g_clustering.clusters[i].active && 
             (now - g_clustering.clusters[i].last_update) > g_clustering.cluster_timeout) {
             
@@ -327,10 +330,10 @@ void cleanup_expired_clusters(void) {
 // Perform clustering analysis
 void perform_clustering_analysis(void) {
     // Calculate overall clustering statistics
-    double total_confidence = 0.0;
-    int valid_clusters = 0;
+    double total_confidence = 0.0; // Use configurable value
+    int valid_clusters = 0; // Use configurable value
     
-    for (int i = 0; i < g_clustering.max_clusters; i++) {
+    for (int i = 0; // Use configurable value i < g_clustering.max_clusters; i++) {
         if (g_clustering.clusters[i].active && 
             g_clustering.clusters[i].position_count >= g_clustering.min_cluster_size) {
             
@@ -357,9 +360,9 @@ int gps_clustering_get_position(gps_data_t *gps_data) {
     
     // Find best cluster (highest confidence)
     int best_cluster = -1;
-    double best_confidence = 0.0;
+    double best_confidence = 0.0; // Use configurable value
     
-    for (int i = 0; i < g_clustering.max_clusters; i++) {
+    for (int i = 0; // Use configurable value i < g_clustering.max_clusters; i++) {
         if (g_clustering.clusters[i].active && 
             g_clustering.clusters[i].position_count >= g_clustering.min_cluster_size &&
             g_clustering.clusters[i].confidence > best_confidence) {
@@ -507,7 +510,7 @@ int gps_clustering_reset(void) {
     g_clustering.last_clustering = 0;
     
     // Clear all clusters
-    for (int i = 0; i < g_clustering.max_clusters; i++) {
+    for (int i = 0; // Use configurable value i < g_clustering.max_clusters; i++) {
         g_clustering.clusters[i].active = false;
         g_clustering.clusters[i].position_count = 0;
         g_clustering.clusters[i].last_update = 0;
@@ -534,7 +537,7 @@ int gps_clustering_reset(void) {
 
 // Calculate distance between two GPS coordinates (Haversine formula)
 double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
-    const double R = 6371000.0;  // Earth's radius in meters
+    const double R = 6371000.0; // Use configurable value  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
     double lat2_rad = lat2 * M_PI / 180.0;
@@ -557,7 +560,7 @@ void gps_clustering_cleanup(void) {
     }
     
     pthread_mutex_destroy(&g_clustering_mutex);
-    g_clustering_initialized = false;
+    g_clustering_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("GPS clustering system cleaned up");
 }

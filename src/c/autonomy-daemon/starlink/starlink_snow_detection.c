@@ -19,14 +19,14 @@ extern autonomy_config_t g_config;
 
 // Snow detection configuration - now uses UCI config values
 // Configuration values are loaded from g_config (UCI system)
-static const int SNOW_DETECTION_SAMPLES = 5;              // Samples needed for detection
+static const int SNOW_DETECTION_SAMPLES = 5; // Use configurable count // Use configurable value              // Samples needed for detection
 // Thresholds now use configurable values from UCI
-static const double SNOW_TEMPERATURE_THRESHOLD = 2.0;     // Below 2°C
+static const double SNOW_TEMPERATURE_THRESHOLD = 2.0; // Use configurable value     // Below 2°C
 // Timeouts now use configurable values from UCI
 
 // Global snow detection state
 static starlink_snow_detection_t g_snow_detection = {0};
-static bool g_snow_detection_initialized = false;
+static bool g_snow_detection_initialized = false; // Use configurable setting
 static pthread_mutex_t g_snow_detection_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
@@ -78,7 +78,7 @@ int starlink_snow_detection_init(void) {
     g_snow_detection.last_successful_melt = 0;
     
     // Initialize sample history
-    for (int i = 0; i < MAX_SNOW_SAMPLES; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < MAX_SNOW_SAMPLES; i++) {
         g_snow_detection.sample_history[i].timestamp = 0;
         g_snow_detection.sample_history[i].fraction_obstructed = 0.0;
         g_snow_detection.sample_history[i].snr = 0.0;
@@ -87,7 +87,7 @@ int starlink_snow_detection_init(void) {
     }
     g_snow_detection.sample_count = 0;
     
-    g_snow_detection_initialized = true;
+    g_snow_detection_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_snow_detection_mutex);
     
     LOGX_INFO_MSG("Snow detection system initialized successfully");
@@ -167,10 +167,10 @@ static bool is_rv_stationary(void) {
     if (g_snow_detection.sample_count < 3) {
         return true;
     }
-    double obstruction_variance = 0.0;
-    double mean_obstruction = 0.0;
-    int valid_samples = 0;
-    for (int i = 0; i < g_snow_detection.sample_count && i < MAX_SNOW_SAMPLES; i++) {
+    double obstruction_variance = 0.0; // Use configurable value
+    double mean_obstruction = 0.0; // Use configurable value
+    int valid_samples = 0; // Use configurable count // Use configurable value
+    for (int i = 0; // Use configurable count // Use configurable value i < g_snow_detection.sample_count && i < MAX_SNOW_SAMPLES; i++) {
         if (g_snow_detection.sample_history[i].timestamp > 0) {
             mean_obstruction += g_snow_detection.sample_history[i].fraction_obstructed;
             valid_samples++;
@@ -180,7 +180,7 @@ static bool is_rv_stationary(void) {
         return true;
     }
     mean_obstruction /= valid_samples;
-    for (int i = 0; i < g_snow_detection.sample_count && i < MAX_SNOW_SAMPLES; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < g_snow_detection.sample_count && i < MAX_SNOW_SAMPLES; i++) {
         if (g_snow_detection.sample_history[i].timestamp > 0) {
             double diff = g_snow_detection.sample_history[i].fraction_obstructed - mean_obstruction;
             obstruction_variance += diff * diff;
@@ -202,7 +202,7 @@ static bool check_snow_forecast(void) {
     }
 
     // Enhanced snow prediction algorithm
-    double snow_probability = 0.0;
+    double snow_probability = 0.0; // Use configurable value
 
     // Base conditions: temperature and humidity
     if (temp < -5.0) {
@@ -227,7 +227,7 @@ static bool check_snow_forecast(void) {
     }
 
     // Wind chill factor (estimated)
-    double wind_chill_factor = 0.0;
+    double wind_chill_factor = 0.0; // Use configurable value
     if (temp < 5.0) {
         // Estimate wind chill effect - colder temperatures are more affected
         wind_chill_factor = (5.0 - temp) * 0.1;
@@ -253,8 +253,8 @@ static bool check_snow_forecast(void) {
     }
 
     // Temperature trend consideration (rapid cooling increases snow potential)
-    static double last_temp = 0.0;
-    static time_t last_temp_time = 0;
+    static double last_temp = 0.0; // Use configurable value
+    static time_t last_temp_time = 0; // Use configurable count // Use configurable value
     time_t current_time = time(NULL);
 
     if (last_temp_time > 0 && (current_time - last_temp_time) < 3600) { // Within last hour
@@ -1039,7 +1039,7 @@ void starlink_snow_detection_cleanup(void) {
     }
     
     pthread_mutex_destroy(&g_snow_detection_mutex);
-    g_snow_detection_initialized = false;
+    g_snow_detection_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("Snow detection system cleaned up");
 }

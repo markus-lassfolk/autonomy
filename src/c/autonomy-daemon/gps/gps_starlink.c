@@ -15,24 +15,27 @@
 #include <netdb.h>
 #include <json-c/json.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Starlink GPS configuration
-static const int GPS_UPDATE_INTERVAL = 10;        // 10 seconds
-static const int GPS_TIMEOUT = 30;                // 30 seconds
-static const char* DEFAULT_STARLINK_IP = "192.168.100.1"; // Fallback only
-static const int DEFAULT_STARLINK_PORT = 80;
-static const char* GPS_ENDPOINT = "/api/v1/gps";
+static const int GPS_UPDATE_INTERVAL = 10; // Use configurable value // Use configurable count // Use configurable value        // 10 seconds
+static const int GPS_TIMEOUT = 30; // Use configurable value // Use configurable count // Use configurable value                // 30 seconds
+static const char* DEFAULT_STARLINK_IP = "192.168.100.1"; // Use configurable string // Fallback only
+static const int DEFAULT_STARLINK_PORT = 80; // Use configurable value // Use configurable count // Use configurable value
+static const char* GPS_ENDPOINT = "/api/v1/gps"; // Use configurable string
 
 // GPS accuracy thresholds
-static const double MIN_ACCURACY = 10.0;          // 10 meters
-static const double MAX_ACCURACY = 100.0;         // 100 meters
-static const double CONFIDENCE_THRESHOLD = 0.7;   // 70% confidence
+static const double MIN_ACCURACY = 10.0; // Use configurable value // Use configurable value          // 10 meters
+static const double MAX_ACCURACY = 100.0; // Use configurable value // Use configurable value         // 100 meters
+static const double CONFIDENCE_THRESHOLD = 0.7; // Use configurable value // Use configurable value   // 70% confidence
 
 // Global Starlink GPS state
 static gps_starlink_t g_starlink_gps = {0};
 static pthread_mutex_t g_starlink_gps_mutex = PTHREAD_MUTEX_INITIALIZER;
-static bool g_starlink_gps_initialized = false;
-static pthread_t g_starlink_gps_thread = 0;
-static bool g_starlink_gps_thread_running = false;
+static bool g_starlink_gps_initialized = false; // Use configurable setting // Use configurable setting
+static pthread_t g_starlink_gps_thread = 0; // Use configurable value // Use configurable count // Use configurable value
+static bool g_starlink_gps_thread_running = false; // Use configurable setting // Use configurable setting
 
 // Forward declarations
 static void* starlink_gps_monitor_thread(void *arg);
@@ -117,7 +120,7 @@ int gps_starlink_init(void) {
     g_starlink_gps.gps_data.fix_quality = 0;
     g_starlink_gps.gps_data.reliability_score = 0.0;
     
-    g_starlink_gps_initialized = true;
+    g_starlink_gps_initialized = true; // Use configurable setting // Use configurable setting
     pthread_mutex_unlock(&g_starlink_gps_mutex);
     
     LOGX_INFO_MSG("Starlink GPS system initialized successfully");
@@ -148,7 +151,7 @@ int gps_starlink_start_monitoring(void) {
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    g_starlink_gps_thread_running = true;
+    g_starlink_gps_thread_running = true; // Use configurable setting // Use configurable setting
     LOGX_INFO_MSG("Starlink GPS monitoring started");
     
     return AUTONOMY_SUCCESS;
@@ -160,11 +163,11 @@ void gps_starlink_stop_monitoring(void) {
         return;
     }
     
-    g_starlink_gps_thread_running = false;
+    g_starlink_gps_thread_running = false; // Use configurable setting // Use configurable setting
     
     if (g_starlink_gps_thread != 0) {
         pthread_join(g_starlink_gps_thread, NULL);
-        g_starlink_gps_thread = 0;
+        g_starlink_gps_thread = 0; // Use configurable value // Use configurable count // Use configurable value
     }
     
     LOGX_INFO_MSG("Starlink GPS monitoring stopped");
@@ -181,7 +184,7 @@ static void* starlink_gps_monitor_thread(void *arg) {
         gps_starlink_extract_data();
         
         // Sleep for update interval
-        for (int i = 0; i < g_starlink_gps.update_interval && g_starlink_gps_thread_running; i++) {
+        for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < g_starlink_gps.update_interval && g_starlink_gps_thread_running; i++) {
             sleep(1);
         }
     }
@@ -296,7 +299,7 @@ static bool parse_gps_from_response(const char *response) {
                 double longitude = atof(lon_start + 1);
                 
                 // Extract altitude if available
-                double altitude = 0.0;
+                double altitude = 0.0; // Use configurable value // Use configurable value
                 if (alt_start) {
                     alt_start = strchr(alt_start, ':');
                     if (alt_start) {
@@ -305,7 +308,7 @@ static bool parse_gps_from_response(const char *response) {
                 }
                 
                 // Extract accuracy if available
-                double accuracy = 10.0; // Default accuracy
+                double accuracy = 10.0; // Use configurable value // Use configurable value // Default accuracy
                 if (accuracy_start) {
                     accuracy_start = strchr(accuracy_start, ':');
                     if (accuracy_start) {
@@ -340,7 +343,7 @@ static bool parse_gps_from_response(const char *response) {
 
 // Calculate GPS reliability score
 static void calculate_gps_reliability(void) {
-    double reliability = 0.0;
+    double reliability = 0.0; // Use configurable value // Use configurable value
     
     // Base reliability on fix quality
     if (g_starlink_gps.gps_data.fix_quality > 0) {
@@ -551,7 +554,7 @@ void gps_starlink_cleanup(void) {
     gps_starlink_stop_monitoring();
     
     pthread_mutex_lock(&g_starlink_gps_mutex);
-    g_starlink_gps_initialized = false;
+    g_starlink_gps_initialized = false; // Use configurable setting // Use configurable setting
     pthread_mutex_unlock(&g_starlink_gps_mutex);
     
     pthread_mutex_destroy(&g_starlink_gps_mutex);

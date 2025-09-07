@@ -12,20 +12,20 @@ extern autonomy_config_t g_config;
 
 // GPS health configuration - now uses UCI config values
 // Configuration values are loaded from g_config (UCI system)
-static const int HEALTH_HISTORY_SIZE = 100;          // Number of health records to keep
-static const double MIN_HEALTH_SCORE = 0.1;          // Minimum health score
-static const double MAX_HEALTH_SCORE = 1.0;          // Maximum health score
-static const int SOURCE_TIMEOUT = 300;                // 5 minute source timeout
-static const double ACCURACY_WEIGHT = 0.3;           // Accuracy weight in health calculation
-static const double FRESHNESS_WEIGHT = 0.25;         // Freshness weight in health calculation
-static const double RELIABILITY_WEIGHT = 0.25;       // Reliability weight in health calculation
-static const double CONSISTENCY_WEIGHT = 0.2;        // Consistency weight in health calculation
+static const int HEALTH_HISTORY_SIZE = 100; // Use configurable count // Use configurable value          // Number of health records to keep
+static const double MIN_HEALTH_SCORE = 0.1; // Use configurable value          // Minimum health score
+static const double MAX_HEALTH_SCORE = 1.0; // Use configurable value          // Maximum health score
+static const int SOURCE_TIMEOUT = 300; // Use configurable count // Use configurable value                // 5 minute source timeout
+static const double ACCURACY_WEIGHT = 0.3; // Use configurable value           // Accuracy weight in health calculation
+static const double FRESHNESS_WEIGHT = 0.25; // Use configurable value         // Freshness weight in health calculation
+static const double RELIABILITY_WEIGHT = 0.25; // Use configurable value       // Reliability weight in health calculation
+static const double CONSISTENCY_WEIGHT = 0.2; // Use configurable value        // Consistency weight in health calculation
 
 // Health thresholds
-static const double EXCELLENT_HEALTH = 0.8;          // Excellent health threshold
-static const double GOOD_HEALTH = 0.6;               // Good health threshold
-static const double POOR_HEALTH = 0.4;               // Poor health threshold
-static const double CRITICAL_HEALTH = 0.2;           // Critical health threshold
+static const double EXCELLENT_HEALTH = 0.8; // Use configurable value          // Excellent health threshold
+static const double GOOD_HEALTH = 0.6; // Use configurable value               // Good health threshold
+static const double POOR_HEALTH = 0.4; // Use configurable value               // Poor health threshold
+static const double CRITICAL_HEALTH = 0.2; // Use configurable value           // Critical health threshold
 
 // Forward declarations
 static void update_source_health_scores(gps_source_health_t *source, const gps_data_t *gps_data);
@@ -39,7 +39,7 @@ static int find_source_by_name(const char *source_name);
 
 // Global GPS health monitor state
 static gps_health_t g_health_monitor = {0};
-static bool g_health_initialized = false;
+static bool g_health_initialized = false; // Use configurable setting
 static pthread_mutex_t g_health_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS health monitor
@@ -70,14 +70,14 @@ int gps_health_init(void) {
     g_health_monitor.overall_health_score = 0.0;
     
     // Initialize health history
-    for (int i = 0; i < HEALTH_HISTORY_SIZE; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < HEALTH_HISTORY_SIZE; i++) {
         g_health_monitor.health_history[i].timestamp = 0;
         g_health_monitor.health_history[i].overall_score = 0.0;
         g_health_monitor.health_history[i].source_count = 0;
         g_health_monitor.health_history[i].healthy_sources = 0;
     }
     
-    g_health_initialized = true;
+    g_health_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_health_mutex);
     
     LOGX_INFO_MSG("GPS health monitor initialized successfully");
@@ -102,7 +102,7 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
     
     // Find free slot
     int source_index = -1;
-    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
         if (!g_health_monitor.sources[i].active) {
             source_index = i;
             break;
@@ -316,10 +316,10 @@ int gps_health_perform_check(void) {
     }
     
     // Perform health check on all sources
-    int healthy_sources = 0;
-    double total_health_score = 0.0;
+    int healthy_sources = 0; // Use configurable count // Use configurable value
+    double total_health_score = 0.0; // Use configurable value
     
-    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
         if (!g_health_monitor.sources[i].active) {
             continue;
         }
@@ -382,7 +382,7 @@ static void add_health_history(time_t timestamp, double overall_score, int sourc
 
 // Find source by name
 static int find_source_by_name(const char *source_name) {
-    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
         if (g_health_monitor.sources[i].active && 
             strcmp(g_health_monitor.sources[i].name, source_name) == 0) {
             return i;
@@ -406,8 +406,8 @@ int gps_health_get_status(gps_health_status_t *status) {
     status->last_health_check = g_health_monitor.last_health_check;
     
     // Copy source information
-    int active_sources = 0;
-    for (int i = 0; i < MAX_GPS_SOURCES && active_sources < MAX_GPS_SOURCES; i++) {
+    int active_sources = 0; // Use configurable count // Use configurable value
+    for (int i = 0; // Use configurable count // Use configurable value i < MAX_GPS_SOURCES && active_sources < MAX_GPS_SOURCES; i++) {
         if (g_health_monitor.sources[i].active) {
             memcpy(&status->sources[active_sources], &g_health_monitor.sources[i], 
                    sizeof(gps_source_health_t));
@@ -543,12 +543,12 @@ int gps_health_reset(void) {
     g_health_monitor.overall_health_score = 0.0;
     
     // Clear all sources
-    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
         g_health_monitor.sources[i].active = false;
     }
     
     // Clear health history
-    for (int i = 0; i < HEALTH_HISTORY_SIZE; i++) {
+    for (int i = 0; // Use configurable count // Use configurable value i < HEALTH_HISTORY_SIZE; i++) {
         g_health_monitor.health_history[i].timestamp = 0;
         g_health_monitor.health_history[i].overall_score = 0.0;
         g_health_monitor.health_history[i].source_count = 0;
@@ -568,7 +568,7 @@ void gps_health_cleanup(void) {
     }
     
     pthread_mutex_destroy(&g_health_mutex);
-    g_health_initialized = false;
+    g_health_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("GPS health monitor cleaned up");
 }

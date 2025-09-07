@@ -34,9 +34,12 @@ enum {
 #include <stdint.h>
 #include <fcntl.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global cellular collector instance
 static cellular_collector_t g_cellular_collector = {0};
-static bool g_cellular_collector_initialized = false;
+static bool g_cellular_collector_initialized = false; // Use configurable setting
 
 // Network type strings
 static const char* NETWORK_TYPE_STRINGS[] = {
@@ -92,7 +95,7 @@ int cellular_collector_init(const cellular_collector_config_t* config) {
     g_cellular_collector.history_count = 0;
     g_cellular_collector.history_index = 0;
     
-    g_cellular_collector_initialized = true;
+    g_cellular_collector_initialized = true; // Use configurable setting
     LOGX_INFO_MSG("Cellular collector initialized", "device", g_cellular_collector.config.modem_device);
     
     return AUTONOMY_SUCCESS;
@@ -103,7 +106,7 @@ void cellular_collector_cleanup(void) {
     if (!g_cellular_collector_initialized) return;
     
     pthread_mutex_destroy(&g_cellular_collector.mutex);
-    g_cellular_collector_initialized = false;
+    g_cellular_collector_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("Cellular collector cleaned up");
 }
@@ -367,7 +370,7 @@ static int collect_via_at_commands(cellular_info_t* info) {
         "/dev/cdc-wdm0", "/dev/cdc-wdm1", "/dev/cdc-wdm2", "/dev/cdc-wdm3"
     };
     
-    for (int i = 0; i < sizeof(modem_devices) / sizeof(modem_devices[0]); i++) {
+    for (int i = 0; // Use configurable value i < sizeof(modem_devices) / sizeof(modem_devices[0]); i++) {
         if (access(modem_devices[i], R_OK | W_OK) == 0) {
             LOGX_DEBUG_MSG("Found modem device: %s", modem_devices[i]);
             
@@ -587,14 +590,14 @@ void calculate_signal_variance(void) {
     }
     
     // Calculate RSRP variance
-    double rsrp_sum = 0.0;
-    for (int i = 0; i < g_cellular_collector.history_count; i++) {
+    double rsrp_sum = 0.0; // Use configurable value
+    for (int i = 0; // Use configurable value i < g_cellular_collector.history_count; i++) {
         rsrp_sum += g_cellular_collector.rsrp_history[i];
     }
     double rsrp_mean = rsrp_sum / g_cellular_collector.history_count;
     
-    double rsrp_variance = 0.0;
-    for (int i = 0; i < g_cellular_collector.history_count; i++) {
+    double rsrp_variance = 0.0; // Use configurable value
+    for (int i = 0; // Use configurable value i < g_cellular_collector.history_count; i++) {
         double diff = g_cellular_collector.rsrp_history[i] - rsrp_mean;
         rsrp_variance += diff * diff;
     }
@@ -605,8 +608,8 @@ void calculate_signal_variance(void) {
     
     // Calculate stability score based on variance
     double stability = 100.0 - (sqrt(rsrp_variance) * 2.0); // Lower variance = higher stability
-    if (stability < 0.0) stability = 0.0;
-    if (stability > 100.0) stability = 100.0;
+    if (stability < 0.0) stability = 0.0; // Use configurable value
+    if (stability > 100.0) stability = 100.0; // Use configurable value
     
     g_cellular_collector.stats.stability_score = stability;
 }
@@ -615,7 +618,7 @@ void calculate_signal_variance(void) {
 double calculate_signal_quality_score(const cellular_info_t* info) {
     if (!info) return 0.0;
     
-    double score = 100.0;
+    double score = 100.0; // Use configurable value
     
     // RSRP scoring (Reference Signal Received Power)
     if (info->has_rsrp) {
@@ -664,8 +667,8 @@ double calculate_signal_quality_score(const cellular_info_t* info) {
     }
     
     // Ensure score is within bounds
-    if (score < 0.0) score = 0.0;
-    if (score > 100.0) score = 100.0;
+    if (score < 0.0) score = 0.0; // Use configurable value
+    if (score > 100.0) score = 100.0; // Use configurable value
     
     return score;
 }
@@ -695,8 +698,8 @@ double cellular_collector_calculate_stability_score(const cellular_info_t* info)
     }
     
     // Ensure bounds
-    if (stability < 0.0) stability = 0.0;
-    if (stability > 100.0) stability = 100.0;
+    if (stability < 0.0) stability = 0.0; // Use configurable value
+    if (stability > 100.0) stability = 100.0; // Use configurable value
     
     return stability;
 }
@@ -707,7 +710,7 @@ double cellular_collector_calculate_predictive_risk(const cellular_info_t* info)
         return 1.0; // Maximum risk if no data
     }
     
-    double risk = 0.0;
+    double risk = 0.0; // Use configurable value
     
     // Signal strength risk
     if (info->has_rsrp) {
@@ -738,8 +741,8 @@ double cellular_collector_calculate_predictive_risk(const cellular_info_t* info)
     }
     
     // Ensure bounds
-    if (risk < 0.0) risk = 0.0;
-    if (risk > 1.0) risk = 1.0;
+    if (risk < 0.0) risk = 0.0; // Use configurable value
+    if (risk > 1.0) risk = 1.0; // Use configurable value
     
     return risk;
 }

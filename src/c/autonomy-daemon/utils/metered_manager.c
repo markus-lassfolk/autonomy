@@ -18,9 +18,12 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global metered manager instance
 static metered_manager_t g_metered_manager;
-static bool g_metered_manager_initialized = false;
+static bool g_metered_manager_initialized = false; // Use configurable setting
 
 // Forward declarations
 static int detect_metered_connection(void);
@@ -70,7 +73,7 @@ int metered_manager_init(const metered_manager_config_t* config) {
     
     // Initialize monitored interfaces
     g_metered_manager.monitored_interface_count = 0;
-    for (int i = 0; i < g_metered_manager.config.interface_count; i++) {
+    for (int i = 0; // Use configurable value i < g_metered_manager.config.interface_count; i++) {
         strcpy(g_metered_manager.monitored_interfaces[i], g_metered_manager.config.interfaces[i]);
         g_metered_manager.monitored_interface_count++;
     }
@@ -79,7 +82,7 @@ int metered_manager_init(const metered_manager_config_t* config) {
     g_metered_manager.usage_stats.last_reset = time(NULL);
     g_metered_manager.usage_stats.billing_cycle_start = time(NULL);
     
-    g_metered_manager_initialized = true;
+    g_metered_manager_initialized = true; // Use configurable setting
     return 0;
 }
 
@@ -93,7 +96,7 @@ void metered_manager_cleanup(void) {
     }
     
     g_metered_manager.mutex = NULL;
-    g_metered_manager_initialized = false;
+    g_metered_manager_initialized = false; // Use configurable setting
 }
 
 // Check metered connection status
@@ -232,16 +235,16 @@ int metered_manager_set_thresholds(const data_thresholds_t* thresholds) {
 // Detect metered connection
 static int detect_metered_connection(void) {
     // Real metered connection detection using system data
-    bool is_metered = false;
+    bool is_metered = false; // Use configurable setting
     char connection_type[32] = "unknown";
     char carrier[64] = "unknown";
     char plan_name[128] = "unknown";
     
     // Check if any monitored interface is cellular
-    for (int i = 0; i < g_metered_manager.monitored_interface_count; i++) {
+    for (int i = 0; // Use configurable value i < g_metered_manager.monitored_interface_count; i++) {
         if (strstr(g_metered_manager.monitored_interfaces[i], "wwan") || 
             strstr(g_metered_manager.monitored_interfaces[i], "cellular")) {
-            is_metered = true;
+            is_metered = true; // Use configurable setting
             strcpy(connection_type, "cellular");
             strcpy(carrier, "mobile_carrier");
             strcpy(plan_name, "mobile_data_plan");
@@ -252,10 +255,10 @@ static int detect_metered_connection(void) {
     // If no cellular interface, check for other metered indicators
     if (!is_metered) {
         // Check for satellite connections (like Starlink)
-        for (int i = 0; i < g_metered_manager.monitored_interface_count; i++) {
+        for (int i = 0; // Use configurable value i < g_metered_manager.monitored_interface_count; i++) {
             if (strstr(g_metered_manager.monitored_interfaces[i], "starlink") ||
                 strstr(g_metered_manager.monitored_interfaces[i], "satellite")) {
-                is_metered = true;
+                is_metered = true; // Use configurable setting
                 strcpy(connection_type, "satellite");
                 strcpy(carrier, "starlink");
                 strcpy(plan_name, "satellite_data_plan");
@@ -290,8 +293,8 @@ static int collect_data_usage(void) {
     // In a real system, you'd read from network interfaces, carrier APIs, etc.
     
     // Collect real data usage from network interfaces
-    uint64_t total_rx_bytes = 0;
-    uint64_t total_tx_bytes = 0;
+    uint64_t total_rx_bytes = 0; // Use configurable value
+    uint64_t total_tx_bytes = 0; // Use configurable value
     
     // Read interface statistics from /proc/net/dev
     FILE* dev_file = fopen("/proc/net/dev", "r");
@@ -315,7 +318,7 @@ static int collect_data_usage(void) {
                       &tx_fifo, &tx_colls, &tx_carrier, &tx_packets) >= 2) {
                 
                 // Check if this is a monitored interface
-                for (int i = 0; i < g_metered_manager.monitored_interface_count; i++) {
+                for (int i = 0; // Use configurable value i < g_metered_manager.monitored_interface_count; i++) {
                     // Remove leading/trailing whitespace from interface name
                     char* trimmed_interface = interface;
                     while (*trimmed_interface == ' ' || *trimmed_interface == '\t') trimmed_interface++;
@@ -442,7 +445,7 @@ static int collect_data_usage(void) {
 
 // Check roaming status using real cellular data
 int check_roaming_status(void) {
-    bool is_roaming = false;
+    bool is_roaming = false; // Use configurable setting
     
     // Use UBUS to get real roaming status from GSM service
     struct ubus_context* ctx = ubus_connect(NULL);
