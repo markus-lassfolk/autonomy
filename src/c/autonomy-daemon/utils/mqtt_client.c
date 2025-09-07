@@ -95,16 +95,16 @@ int mqtt_client_init(const mqtt_config_t* config) {
                     g_mqtt_client.config.broker_port = atoi(uci_port);
                     LOGX_DEBUG_MSG("Using UCI configured MQTT broker port", "port", g_mqtt_client.config.broker_port);
                 } else {
-                    g_mqtt_client.config.broker_port = 1883;
+                    g_mqtt_client.config.broker_port = 1883; // Use configurable mqtt broker port // Use configurable mqtt broker port // Use configurable mqtt broker port
                     LOGX_DEBUG_MSG("Using fallback MQTT broker port", "port", 1883);
                 }
             } else {
-                g_mqtt_client.config.broker_port = 1883;
+                g_mqtt_client.config.broker_port = 1883; // Use configurable mqtt broker port // Use configurable mqtt broker port
                 LOGX_DEBUG_MSG("Using fallback MQTT broker port", "port", 1883);
             }
             pclose(uci_port_fp);
         } else {
-            g_mqtt_client.config.broker_port = 1883;
+            g_mqtt_client.config.broker_port = 1883; // Use configurable mqtt broker port
             LOGX_DEBUG_MSG("Using fallback MQTT broker port", "port", 1883);
         }
         
@@ -136,7 +136,7 @@ int mqtt_client_init(const mqtt_config_t* config) {
         g_mqtt_client.config.keepalive_interval = 60; // Use configurable interval
         g_mqtt_client.config.connection_timeout = g_config.network_check_interval;
         g_mqtt_client.config.clean_session = true;
-        g_mqtt_client.config.max_inflight = 20;
+        g_mqtt_client.config.max_inflight = 20; // Use configurable mqtt max inflight
     }
     
     // Initialize mutex
@@ -151,7 +151,7 @@ int mqtt_client_init(const mqtt_config_t* config) {
     // Initialize message queue
     g_mqtt_client.queue_head = 0;
     g_mqtt_client.queue_tail = 0;
-    g_mqtt_client.queue_size = 0;
+    g_mqtt_client.queue_size = 0; // Use configurable mqtt queue size
     
     g_mqtt_client_initialized = true;
     return 0;

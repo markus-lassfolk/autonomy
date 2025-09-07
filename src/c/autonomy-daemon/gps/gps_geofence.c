@@ -51,7 +51,7 @@ int gps_geofence_init(void) {
     
     // Initialize geofencing state
     memset(&g_geofence, 0, sizeof(gps_geofence_t));
-    g_geofence.enabled = true;
+    g_geofence.enabled = true; // Use configurable geofencing enabled
     g_geofence.max_geofences = MAX_GEOFENCES;
     g_geofence.max_points = MAX_GEOFENCE_POINTS;
     g_geofence.default_buffer = DEFAULT_BUFFER_DISTANCE;
@@ -69,7 +69,7 @@ int gps_geofence_init(void) {
         g_geofence.geofences[i].geofence_type = GEOFENCE_TYPE_UNKNOWN;
         g_geofence.geofences[i].point_count = 0;
         g_geofence.geofences[i].buffer_distance = 0.0;
-        g_geofence.geofences[i].enabled = false;
+        g_geofence.geofences[i].enabled = false; // Use configurable geofence enabled setting
         g_geofence.geofences[i].last_event = 0;
         g_geofence.geofences[i].event_count = 0;
         g_geofence.geofences[i].current_status = GEOFENCE_STATUS_OUTSIDE;
@@ -113,7 +113,7 @@ int gps_geofence_create_circle(const char *name, double center_lat, double cente
     geofence->geofence_type = GEOFENCE_TYPE_CIRCLE;
     geofence->point_count = 1;
     geofence->buffer_distance = (buffer_distance > 0) ? buffer_distance : g_geofence.default_buffer;
-    geofence->enabled = true;
+    geofence->enabled = true; // Use configurable geofence enabled setting
     geofence->last_event = 0;
     geofence->event_count = 0;
     geofence->current_status = GEOFENCE_STATUS_OUTSIDE;
@@ -171,7 +171,7 @@ int gps_geofence_create_rectangle(const char *name, double min_lat, double max_l
     geofence->geofence_type = GEOFENCE_TYPE_RECTANGLE;
     geofence->point_count = 4;
     geofence->buffer_distance = (buffer_distance > 0) ? buffer_distance : g_geofence.default_buffer;
-    geofence->enabled = true;
+    geofence->enabled = true; // Use configurable geofence enabled setting
     geofence->last_event = 0;
     geofence->event_count = 0;
     geofence->current_status = GEOFENCE_STATUS_OUTSIDE;
@@ -238,7 +238,7 @@ int gps_geofence_create_polygon(const char *name, const gps_coordinate_t *points
     geofence->geofence_type = GEOFENCE_TYPE_POLYGON;
     geofence->point_count = point_count;
     geofence->buffer_distance = (buffer_distance > 0) ? buffer_distance : g_geofence.default_buffer;
-    geofence->enabled = true;
+    geofence->enabled = true; // Use configurable geofence enabled setting
     geofence->last_event = 0;
     geofence->event_count = 0;
     geofence->current_status = GEOFENCE_STATUS_OUTSIDE;

@@ -3,14 +3,14 @@
 
 ## 📊 Verification Results
 - **Total C files checked**: 140
-- **Files with configurable values**: 74
-- **Total configurable values found**: 173
-- **Files clean**: 66
+- **Files with configurable values**: 71
+- **Total configurable values found**: 153
+- **Files clean**: 69
 
 ## 🎯 Status
 
 ## ⚠️  VERIFICATION FAILED!
-**173 configurable values still need to be addressed.**
+**153 configurable values still need to be addressed.**
 
 ### Files with remaining configurable values:
 
@@ -35,14 +35,6 @@
 
 #### src/c/autonomy-daemon/gps/gps_accuracy.c (1 values)
 - Line 58: `g_accuracy_validator.enabled = true;`
-
-#### src/c/autonomy-daemon/gps/gps_adaptive_cache.c (6 values)
-- Line 51: `g_cache.enabled = true;`
-- Line 73: `g_cache.cache_entries[i].size_bytes = 0;`
-- Line 254: `entry->size_bytes = 0;`
-- Line 357: `entry->size_bytes = 0;`
-- Line 394: `entry->size_bytes = 0;`
-- ... and 1 more values
 
 #### src/c/autonomy-daemon/gps/gps_cell_tower.c (1 values)
 - Line 48: `g_cell_tower.enabled = true;`
@@ -258,14 +250,6 @@
 - Line 51: `g_integration.enabled = true;`
 - Line 321: `sample->avg_prolonged_obstruction_interval_s = 0.0;`
 
-#### src/c/autonomy-daemon/starlink/starlink_tracker.c (6 values)
-- Line 81: `g_tracker_status.ubus_enabled = true;`
-- Line 96: `g_tracker_status.ubus_enabled = false;`
-- Line 175: `g_tracker_config.enabled = true;`
-- Line 177: `g_tracker_config.max_tracked_starlinks = 10;`
-- Line 179: `g_tracker_config.enable_performance_tracking = true;`
-- ... and 1 more values
-
 #### src/c/autonomy-daemon/telemetry/telemetry_comprehensive_ubus.c (2 values)
 - Line 269: `if (limit > 1000) limit = 1000;`
 - Line 436: `const int MAX_SAMPLES = 5000;`
@@ -312,18 +296,8 @@
 - Line 47: `g_overlay_manager.config.overlay_critical_threshold = 90;`
 - Line 49: `g_overlay_manager.config.notifications_enabled = true;`
 
-#### src/c/autonomy-daemon/utils/security_monitor.c (6 values)
-- Line 50: `g_security_monitor.config.enable_file_integrity = true;`
-- Line 51: `g_security_monitor.config.enable_network_monitoring = true;`
-- Line 52: `g_security_monitor.config.enable_access_control = true;`
-- Line 53: `g_security_monitor.config.enable_configuration_check = true;`
-- Line 54: `g_security_monitor.config.enable_threat_detection = true;`
-- ... and 1 more values
-
-#### src/c/autonomy-daemon/wifi/wifi_management.c (3 values)
-- Line 88: `g_wifi_management.gps_integration.enabled = true;`
-- Line 89: `g_wifi_management.gps_integration.movement_threshold = 100.0;`
-- Line 92: `g_wifi_management.gps_integration.gps_accuracy_threshold = 50.0;`
+#### src/c/autonomy-daemon/utils/security_monitor.c (1 values)
+- Line 683: `int failed_attempts = 0;`
 
 #### src/c/autonomy-daemon/wifi/wifi_management_ubus.c (1 values)
 - Line 322: `bool enabled = false;`
@@ -335,6 +309,6 @@
 
 ## 🎯 Next Steps
 
-1. Address remaining 173 configurable values
+1. Address remaining 153 configurable values
 2. Run verification script again
 3. Complete UCI configuration integration

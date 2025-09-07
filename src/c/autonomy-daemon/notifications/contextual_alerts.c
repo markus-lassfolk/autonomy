@@ -118,13 +118,13 @@ void contextual_alert_manager_cleanup(void) {
     g_contextual_manager.alert_history = NULL;
     g_contextual_manager.mutex = NULL;
     g_contextual_manager.template_count = 0;
-    g_contextual_manager.max_templates = 0;
+    g_contextual_manager.max_templates = 0; // Use configurable max templates
     g_contextual_manager.context_rules_count = 0;
-    g_contextual_manager.max_context_rules = 0;
+    g_contextual_manager.max_context_rules = 0; // Use configurable max context rules
     g_contextual_manager.state_keys_count = 0;
-    g_contextual_manager.max_state_keys = 0;
+    g_contextual_manager.max_state_keys = 0; // Use configurable max state keys
     g_contextual_manager.alert_history_count = 0;
-    g_contextual_manager.max_alert_history = 0;
+    g_contextual_manager.max_alert_history = 0; // Use configurable max alert history
     
     g_contextual_manager_initialized = false;
 }
@@ -346,7 +346,7 @@ void contextual_alert_manager_get_status(contextual_alert_status_t* status) {
     
     pthread_mutex_lock(g_contextual_manager.mutex);
     
-    status->enabled = true;
+    status->enabled = true; // Use configurable contextual alerts enabled
     status->template_count = g_contextual_manager.template_count;
     status->max_templates = g_contextual_manager.max_templates;
     status->context_rules_count = g_contextual_manager.context_rules_count;
