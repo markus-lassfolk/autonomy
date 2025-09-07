@@ -33,7 +33,7 @@ const char* notification_type_to_string(notification_type_t type) {
 }
 
 // String to notification type conversion
-notification_type_t string_to_notification_type(const char* str) {
+static notification_type_t string_to_notification_type(const char* str) {
     if (!str) return NOTIFICATION_TYPE_INFO;
     
     if (strcmp(str, "failover") == 0) return NOTIFICATION_TYPE_FAILOVER;
