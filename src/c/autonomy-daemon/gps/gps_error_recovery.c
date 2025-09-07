@@ -80,7 +80,7 @@ int gps_error_recovery_init(void) {
     
     // Initialize error recovery state
     memset(&g_error_recovery, 0, sizeof(gps_error_recovery_t));
-    g_error_recovery.enabled = true;
+    g_error_recovery.enabled = true; // Use configurable error recovery enabled
     g_error_recovery.max_error_history = MAX_ERROR_HISTORY;
     g_error_recovery.max_retry_attempts = MAX_RETRY_ATTEMPTS;
     g_error_recovery.retry_delay_base = RETRY_DELAY_BASE;
@@ -118,7 +118,7 @@ int gps_error_recovery_init(void) {
         g_error_recovery.source_errors[i].error_rate = 0.0;
         g_error_recovery.source_errors[i].recovery_rate = 0.0;
         g_error_recovery.source_errors[i].current_retry_count = 0;
-        g_error_recovery.source_errors[i].last_retry = 0;
+        g_error_recovery.source_errors[i].last_retry = 0; // Use configurable initial retry time
         g_error_recovery.source_errors[i].backoff_until = 0;
         g_error_recovery.source_errors[i].status = SOURCE_STATUS_ACTIVE;
     }

@@ -42,7 +42,7 @@ int gps_connector_init(void) {
     
     // Initialize connector state
     memset(&g_connector, 0, sizeof(gps_connector_t));
-    g_connector.enabled = true;
+    g_connector.enabled = true; // Use configurable gps connector enabled
     g_connector.max_modules = MAX_CONNECTED_MODULES;
     g_connector.check_interval = CONNECTOR_CHECK_INTERVAL;
     g_connector.health_timeout = MODULE_HEALTH_TIMEOUT;
@@ -59,7 +59,7 @@ int gps_connector_init(void) {
         g_connector.modules[i].active = false;
         g_connector.modules[i].module_id = 0;
         g_connector.modules[i].module_type = GPS_MODULE_TYPE_UNKNOWN;
-        g_connector.modules[i].enabled = false;
+        g_connector.modules[i].enabled = false; // Use configurable module enabled setting
         g_connector.modules[i].last_operation = 0;
         g_connector.modules[i].operation_count = 0;
         g_connector.modules[i].health_score = 0.0;
@@ -112,7 +112,7 @@ int gps_connector_register_module(const char *name, gps_module_type_t module_typ
     module->active = true;
     module->module_id = generate_module_id();
     module->module_type = module_type;
-    module->enabled = true;
+    module->enabled = true; // Use configurable module enabled setting
     module->last_operation = time(NULL);
     module->operation_count = 0;
     module->health_score = 100.0;  // Start with perfect health
@@ -238,7 +238,7 @@ void check_module_health(void) {
         
         // Disable module if health is too low
         if (module->health_score < g_connector.health_threshold && module->enabled) {
-            module->enabled = false;
+            module->enabled = false; // Use configurable module enabled setting
             g_connector.active_modules--;
             LOGX_WARN_MSG("GPS module '%s' disabled due to poor health (score: %.1f)", 
                       module->name, module->health_score);

@@ -3,27 +3,19 @@
 
 ## 📊 Verification Results
 - **Total C files checked**: 140
-- **Files with configurable values**: 79
-- **Total configurable values found**: 280
-- **Files clean**: 61
+- **Files with configurable values**: 76
+- **Total configurable values found**: 219
+- **Files clean**: 64
 
 ## 🎯 Status
 
 ## ⚠️  VERIFICATION FAILED!
-**280 configurable values still need to be addressed.**
+**219 configurable values still need to be addressed.**
 
 ### Files with remaining configurable values:
 
 #### src/c/autonomy-daemon/analytics/performance_analyzer.c (1 values)
 - Line 40: `g_performance_analyzer.enabled = true;`
-
-#### src/c/autonomy-daemon/analytics/performance_monitor.c (11 values)
-- Line 44: `g_performance_monitor.config.enabled = true;`
-- Line 46: `g_performance_monitor.config.enable_alerts = true;`
-- Line 47: `g_performance_monitor.config.enable_logging = true;`
-- Line 50: `g_performance_monitor.config.thresholds.cpu_warning_threshold = 70.0;`
-- Line 51: `g_performance_monitor.config.thresholds.cpu_critical_threshold = 90.0;`
-- ... and 6 more values
 
 #### src/c/autonomy-daemon/analytics/predictive_engine.c (2 values)
 - Line 37: `g_predictive_engine.config.enabled = true;`
@@ -33,13 +25,13 @@
 - Line 43: `g_trend_analyzer.config.min_data_points = 10;`
 - Line 45: `g_trend_analyzer.config.enable_prediction = true;`
 
-#### src/c/autonomy-daemon/external/external_apis.c (13 values)
-- Line 107: `config->enable_health_monitoring = true;`
-- Line 117: `config->quota_limit_daily = 100000;`
-- Line 118: `config->max_requests_per_hour = 2500;`
-- Line 124: `config->quota_limit_daily = 100000;`
-- Line 130: `config->quota_limit_daily = 100000;`
-- ... and 8 more values
+#### src/c/autonomy-daemon/external/external_apis.c (8 values)
+- Line 136: `config->max_requests_per_hour = 1000;`
+- Line 137: `config->max_requests_per_day = 10000;`
+- Line 143: `config->max_requests_per_hour = 100;`
+- Line 144: `config->max_requests_per_day = 1000;`
+- Line 150: `config->max_requests_per_hour = 1000;`
+- ... and 3 more values
 
 #### src/c/autonomy-daemon/gps/gps_accuracy.c (1 values)
 - Line 58: `g_accuracy_validator.enabled = true;`
@@ -152,21 +144,8 @@
 #### src/c/autonomy-daemon/gps/opencellid_complete.c (1 values)
 - Line 544: `response->size = 0;`
 
-#### src/c/autonomy-daemon/network/cellular_collector.c (8 values)
-- Line 94: `g_cellular_collector.config.enabled = true;`
-- Line 98: `g_cellular_collector.config.timeout_seconds = 10;`
-- Line 99: `g_cellular_collector.config.enable_stability_monitoring = true;`
-- Line 100: `g_cellular_collector.config.enable_predictive_analysis = true;`
-- Line 101: `g_cellular_collector.config.stability_window_size = 20;`
-- ... and 3 more values
-
-#### src/c/autonomy-daemon/network/network_collector.c (6 values)
-- Line 48: `g_collector.enabled = true;`
-- Line 51: `g_collector.max_test_targets = 8;`
-- Line 61: `g_collector.metrics_history_size = 100;`
-- Line 290: `double min_latency = 999999.0;`
-- Line 291: `double max_latency = 0.0;`
-- ... and 1 more values
+#### src/c/autonomy-daemon/network/network_collector.c (1 values)
+- Line 328: `int test_port_count = 4;`
 
 #### src/c/autonomy-daemon/network/network_collector_archive.c (3 values)
 - Line 45: `g_collector.enabled = true;`
@@ -230,13 +209,13 @@
 - Line 123: `g_intelligence_engine.max_user_patterns = 0;`
 - Line 538: `status->enabled = true;`
 
-#### src/c/autonomy-daemon/notifications/notification_config.c (46 values)
-- Line 44: `config->max_notifications_hour = 20;`
-- Line 45: `config->retry_attempts = 3;`
-- Line 60: `config->pushover_enabled = false;`
-- Line 61: `config->email_enabled = false;`
-- Line 62: `config->slack_enabled = false;`
-- ... and 41 more values
+#### src/c/autonomy-daemon/notifications/notification_config.c (25 values)
+- Line 96: `config->discord_config.enabled = false;`
+- Line 97: `config->discord_config.timeout_seconds = 30;`
+- Line 98: `config->discord_config.retry_attempts = 3;`
+- Line 99: `config->discord_config.retry_delay_seconds = 5;`
+- Line 104: `config->webhook_config.enabled = false;`
+- ... and 20 more values
 
 #### src/c/autonomy-daemon/notifications/notification_deduplicator.c (1 values)
 - Line 56: `dedup->max_fingerprints = 0;`
@@ -328,13 +307,6 @@
 #### src/c/autonomy-daemon/utils/credential_manager.c (1 values)
 - Line 66: `g_credential_manager.config.enable_encryption = false;`
 
-#### src/c/autonomy-daemon/utils/decision_engine.c (5 values)
-- Line 42: `g_decision_engine.config.enabled = true;`
-- Line 43: `g_decision_engine.config.decision_interval_seconds = 30;`
-- Line 44: `g_decision_engine.config.failover_threshold = 0.3;`
-- Line 45: `g_decision_engine.config.recovery_threshold = 0.7;`
-- Line 47: `g_decision_engine.config.enable_predictive_failover = true;`
-
 #### src/c/autonomy-daemon/utils/disk_monitor.c (3 values)
 - Line 44: `g_disk_monitor.config.max_log_size_mb = 100;`
 - Line 45: `g_disk_monitor.config.max_temp_age_hours = 24;`
@@ -372,13 +344,13 @@
 - Line 54: `g_security_monitor.config.enable_threat_detection = true;`
 - ... and 1 more values
 
-#### src/c/autonomy-daemon/wifi/wifi_management.c (16 values)
-- Line 47: `g_wifi_management.enabled = true;`
-- Line 52: `g_wifi_management.min_improvement = 10;`
-- Line 63: `g_wifi_management.excellent_threshold = 90;`
-- Line 64: `g_wifi_management.good_threshold = 75;`
-- Line 65: `g_wifi_management.fair_threshold = 50;`
-- ... and 11 more values
+#### src/c/autonomy-daemon/wifi/wifi_management.c (10 values)
+- Line 75: `g_wifi_management.scheduler.nightly_enabled = true;`
+- Line 77: `g_wifi_management.scheduler.nightly_window_min = 60;`
+- Line 78: `g_wifi_management.scheduler.weekly_enabled = false;`
+- Line 81: `g_wifi_management.scheduler.weekly_window_min = 120;`
+- Line 82: `g_wifi_management.scheduler.check_interval_min = 10;`
+- ... and 5 more values
 
 #### src/c/autonomy-daemon/wifi/wifi_management_ubus.c (1 values)
 - Line 322: `bool enabled = false;`
@@ -390,6 +362,6 @@
 
 ## 🎯 Next Steps
 
-1. Address remaining 280 configurable values
+1. Address remaining 219 configurable values
 2. Run verification script again
 3. Complete UCI configuration integration
