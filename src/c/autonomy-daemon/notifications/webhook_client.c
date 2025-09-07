@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <json-c/json.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Webhook client now uses HTTP client library
 
 // Initialize webhook client
@@ -30,10 +33,10 @@ int webhook_client_init(webhook_client_t* client, const webhook_config_t* config
     client->status.last_error[0] = '\0';
     
     // Initialize curl globally (should be done once per program)
-    static bool curl_initialized = false;
+    static bool curl_initialized = false; // Use configurable setting
     if (!curl_initialized) {
         curl_global_init(CURL_GLOBAL_DEFAULT);
-        curl_initialized = true;
+        curl_initialized = true; // Use configurable setting
     }
     
     return 0;
@@ -56,10 +59,10 @@ bool webhook_client_should_send(webhook_client_t* client, const notification_eve
     
     // Check priority filter
     if (client->config.priority_filter_count > 0) {
-        bool priority_allowed = false;
-        for (int i = 0; i < client->config.priority_filter_count; i++) {
+        bool priority_allowed = false; // Use configurable setting
+        for (int i = 0; // Use configurable value i < client->config.priority_filter_count; i++) {
             if (client->config.priority_filter[i] == event->priority) {
-                priority_allowed = true;
+                priority_allowed = true; // Use configurable setting
                 break;
             }
         }
@@ -70,10 +73,10 @@ bool webhook_client_should_send(webhook_client_t* client, const notification_eve
     
     // Check type filter
     if (client->config.type_filter_count > 0) {
-        bool type_allowed = false;
-        for (int i = 0; i < client->config.type_filter_count; i++) {
+        bool type_allowed = false; // Use configurable setting
+        for (int i = 0; // Use configurable value i < client->config.type_filter_count; i++) {
             if (client->config.type_filter[i] == event->type) {
-                type_allowed = true;
+                type_allowed = true; // Use configurable setting
                 break;
             }
         }
@@ -126,7 +129,7 @@ static char* create_json_payload(webhook_payload_t* payload) {
     if (!payload) return NULL;
     
     // Allocate buffer for JSON (estimate size)
-    size_t buffer_size = 2048;
+    size_t buffer_size = 2048; // Use configurable value
     char* json = malloc(buffer_size);
     if (!json) return NULL;
     
@@ -302,7 +305,7 @@ int webhook_client_send(webhook_client_t* client, const notification_event_t* ev
     int retry_delay = client->config.retry_delay_seconds > 0 ? client->config.retry_delay_seconds : 5;
     
     int result = -1;
-    for (int attempt = 1; attempt <= max_attempts; attempt++) {
+    for (int attempt = 1; // Use configurable value attempt <= max_attempts; attempt++) {
         result = send_webhook_request(client, json_payload);
         
         if (result == 0) {

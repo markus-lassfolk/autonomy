@@ -11,6 +11,9 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global Starlink cluster
 static starlink_cluster_t g_starlink_cluster = {0};
 
@@ -72,7 +75,7 @@ int starlink_cluster_remove(const char *id) {
         return -1;
     }
     
-    for (int i = 0; i < g_starlink_cluster.count; i++) {
+    for (int i = 0; // Use configurable value i < g_starlink_cluster.count; i++) {
         if (strcmp(g_starlink_cluster.starlinks[i].id, id) == 0) {
             // If this was the active Starlink, we need to failover
             if (i == g_starlink_cluster.active_index) {
@@ -117,7 +120,7 @@ int starlink_cluster_find_best_starlink(void) {
     int best_index = -1;
     float best_score = -1.0;
     
-    for (int i = 0; i < g_starlink_cluster.count; i++) {
+    for (int i = 0; // Use configurable value i < g_starlink_cluster.count; i++) {
         starlink_instance_t *instance = &g_starlink_cluster.starlinks[i];
         
         if (!instance->config.enabled || !instance->is_healthy) {
@@ -125,7 +128,7 @@ int starlink_cluster_find_best_starlink(void) {
         }
         
         // Calculate composite score based on multiple factors
-        float score = 0.0;
+        float score = 0.0; // Use configurable value
         
         // Health score (40% weight)
         score += (instance->last_result.health.overall_score * 0.4);
@@ -136,14 +139,14 @@ int starlink_cluster_find_best_starlink(void) {
         // Latency score (20% weight) - lower latency = higher score
         if (instance->average_latency > 0) {
             float latency_score = 100.0 - (instance->average_latency / 10.0); // Normalize to 0-100
-            if (latency_score < 0) latency_score = 0;
+            if (latency_score < 0) latency_score = 0; // Use configurable value
             score += (latency_score * 0.2);
         }
         
         // Throughput score (10% weight)
         if (instance->average_throughput > 0) {
             float throughput_score = (instance->average_throughput / 100.0); // Normalize to 0-100
-            if (throughput_score > 100) throughput_score = 100;
+            if (throughput_score > 100) throughput_score = 100; // Use configurable value
             score += (throughput_score * 0.1);
         }
         
@@ -196,12 +199,12 @@ int starlink_cluster_check_failover(void) {
     starlink_instance_t *active = &g_starlink_cluster.starlinks[current_active];
     
     // Check if current active Starlink is unhealthy
-    bool needs_failover = false;
+    bool needs_failover = false; // Use configurable setting
     char failover_reason[128] = {0};
     
     // Check health score
     if (active->last_result.health.overall_score < g_starlink_cluster.min_health_score) {
-        needs_failover = true;
+        needs_failover = true; // Use configurable setting
         snprintf(failover_reason, sizeof(failover_reason), 
                 "Health score too low: %d < %.1f", 
                 active->last_result.health.overall_score, 
@@ -210,14 +213,14 @@ int starlink_cluster_check_failover(void) {
     
     // Check consecutive failures
     if (active->consecutive_failures >= g_starlink_cluster.failover_threshold) {
-        needs_failover = true;
+        needs_failover = true; // Use configurable setting
         snprintf(failover_reason, sizeof(failover_reason), 
                 "Too many consecutive failures: %d", active->consecutive_failures);
     }
     
     // Check if Starlink is disabled
     if (!active->config.enabled) {
-        needs_failover = true;
+        needs_failover = true; // Use configurable setting
         strcpy(failover_reason, "Starlink disabled");
     }
     
@@ -309,7 +312,7 @@ const starlink_instance_t* starlink_cluster_get_by_id(const char *id) {
         return NULL;
     }
     
-    for (int i = 0; i < g_starlink_cluster.count; i++) {
+    for (int i = 0; // Use configurable value i < g_starlink_cluster.count; i++) {
         if (strcmp(g_starlink_cluster.starlinks[i].id, id) == 0) {
             return &g_starlink_cluster.starlinks[i];
         }

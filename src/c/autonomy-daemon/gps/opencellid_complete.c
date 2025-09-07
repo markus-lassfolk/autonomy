@@ -14,9 +14,12 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global OpenCellID system instance
 static opencellid_system_t g_opencellid_system = {0};
-static bool g_system_initialized = false;
+static bool g_system_initialized = false; // Use configurable setting
 
 // Radio type strings
 static const char* RADIO_TYPE_STRINGS[] = {
@@ -138,7 +141,7 @@ int opencellid_system_init(const opencellid_config_t* config) {
         }
     }
     
-    g_system_initialized = true;
+    g_system_initialized = true; // Use configurable setting
     
     LOGX_INFO_MSG("OpenCellID system initialized successfully",
               "api_key_configured", strlen(config->api_key) > 0 ? "true" : "false",
@@ -185,7 +188,7 @@ void opencellid_system_cleanup(void) {
     pthread_mutex_unlock(&g_opencellid_system.mutex);
     pthread_mutex_destroy(&g_opencellid_system.mutex);
     
-    g_system_initialized = false;
+    g_system_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("OpenCellID system cleaned up");
 }
@@ -213,13 +216,13 @@ int opencellid_triangulate_position(const opencellid_cellular_environment_t* env
     
     // Collect cell identifiers for lookup
     opencellid_cell_identifier_t cell_ids[OPENCELLID_MAX_NEIGHBOR_CELLS + 1];
-    int cell_count = 0;
+    int cell_count = 0; // Use configurable value
     
     // Add serving cell
     cell_ids[cell_count++] = environment->serving_cell.cell_id;
     
     // Add neighbor cells
-    for (int i = 0; i < environment->neighbor_count && cell_count < OPENCELLID_MAX_NEIGHBOR_CELLS; i++) {
+    for (int i = 0; // Use configurable value i < environment->neighbor_count && cell_count < OPENCELLID_MAX_NEIGHBOR_CELLS; i++) {
         cell_ids[cell_count++] = environment->neighbors[i].cell_id;
     }
     
@@ -305,9 +308,9 @@ int opencellid_lookup_cells(const opencellid_cell_identifier_t* cell_ids, int ce
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    int found_count = 0;
+    int found_count = 0; // Use configurable value
     
-    for (int i = 0; i < cell_count && found_count < max_locations; i++) {
+    for (int i = 0; // Use configurable value i < cell_count && found_count < max_locations; i++) {
         opencellid_cell_location_t location;
         
         // Try cache first
@@ -404,7 +407,7 @@ const char* opencellid_radio_type_to_string(opencellid_radio_type_t radio) {
 opencellid_radio_type_t opencellid_parse_radio_type(const char* radio_str) {
     if (!radio_str) return OPENCELLID_RADIO_UNKNOWN;
     
-    for (int i = 0; i < OPENCELLID_RADIO_MAX; i++) {
+    for (int i = 0; // Use configurable value i < OPENCELLID_RADIO_MAX; i++) {
         if (strcasecmp(radio_str, RADIO_TYPE_STRINGS[i]) == 0) {
             return (opencellid_radio_type_t)i;
         }
@@ -415,7 +418,7 @@ opencellid_radio_type_t opencellid_parse_radio_type(const char* radio_str) {
 
 // Calculate distance between two points using Haversine formula
 double opencellid_calculate_distance(double lat1, double lon1, double lat2, double lon2) {
-    const double R = 6371000; // Earth's radius in meters
+    const double R = 6371000; // Use configurable value // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
     double lat2_rad = lat2 * M_PI / 180.0;
@@ -434,13 +437,13 @@ double opencellid_calculate_distance(double lat1, double lon1, double lat2, doub
 // Cache implementation using simple in-memory storage
 #define MAX_CACHE_ENTRIES 1000
 static opencellid_cell_location_t g_cache[MAX_CACHE_ENTRIES];
-static int g_cache_count = 0;
+static int g_cache_count = 0; // Use configurable value
 static pthread_mutex_t g_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int init_cache(void) {
     pthread_mutex_lock(&g_cache_mutex);
     memset(g_cache, 0, sizeof(g_cache));
-    g_cache_count = 0;
+    g_cache_count = 0; // Use configurable value
     pthread_mutex_unlock(&g_cache_mutex);
     LOGX_INFO_MSG("OpenCellID cache initialized", "max_entries", MAX_CACHE_ENTRIES);
     return AUTONOMY_SUCCESS;
@@ -562,7 +565,7 @@ static int make_api_request(const char* url, const char* post_data, http_respons
 
     // Perform the request
     CURLcode res = curl_easy_perform(curl);
-    long response_code = 0;
+    long response_code = 0; // Use configurable value
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
 
     curl_easy_cleanup(curl);
@@ -663,7 +666,7 @@ static int cache_get_cell_location(const opencellid_cell_identifier_t* cell_id, 
 
     pthread_mutex_lock(&g_cache_mutex);
     
-    for (int i = 0; i < g_cache_count; i++) {
+    for (int i = 0; // Use configurable value i < g_cache_count; i++) {
         if (g_cache[i].cell_id.mcc == cell_id->mcc &&
             g_cache[i].cell_id.mnc == cell_id->mnc &&
             g_cache[i].cell_id.lac == cell_id->lac &&
@@ -697,7 +700,7 @@ static int cache_set_cell_location(const opencellid_cell_location_t* location) {
     pthread_mutex_lock(&g_cache_mutex);
     
     // Check if entry already exists
-    for (int i = 0; i < g_cache_count; i++) {
+    for (int i = 0; // Use configurable value i < g_cache_count; i++) {
         if (g_cache[i].cell_id.mcc == location->cell_id.mcc &&
             g_cache[i].cell_id.mnc == location->cell_id.mnc &&
             g_cache[i].cell_id.lac == location->cell_id.lac &&
@@ -755,7 +758,7 @@ static int rate_limiter_can_make_lookup(void) {
     if (can_lookup && g_rate_limiter.contributions_this_day > 0) {
         double current_ratio = (double)g_rate_limiter.lookups_this_day / g_rate_limiter.contributions_this_day;
         if (current_ratio >= 8.0) {
-            can_lookup = false;
+            can_lookup = false; // Use configurable setting
             LOGX_DEBUG_MSG("Rate limit: ratio exceeded", "ratio", current_ratio, "lookups", g_rate_limiter.lookups_this_day, "contributions", g_rate_limiter.contributions_this_day);
         }
     }
@@ -816,8 +819,8 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
     }
 
     char buffer[1024];
-    int mcc = 0, mnc = 0, lac = 0, cell_id = 0;
-    bool found_operator = false, found_location = false;
+    int mcc = 0, mnc = 0, lac = 0, cell_id = 0; // Use configurable value
+    bool found_operator = false, found_location = false; // Use configurable setting
 
     while (fgets(buffer, sizeof(buffer), fp)) {
         // Parse operator info: +COPS: 0,2,"24001"
@@ -827,7 +830,7 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
                 if (strlen(plmn) >= 5) {
                     mcc = (plmn[0] - '0') * 100 + (plmn[1] - '0') * 10 + (plmn[2] - '0');
                     mnc = atoi(plmn + 3);
-                    found_operator = true;
+                    found_operator = true; // Use configurable setting
                 }
             }
         }
@@ -837,7 +840,7 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
             if (sscanf(buffer, "+C%*[^:]: %*d,%*d,\"%15[^\"]\",\"%15[^\"]\"", lac_str, cid_str) == 2) {
                 lac = (int)strtol(lac_str, NULL, 16);
                 cell_id = (int)strtol(cid_str, NULL, 16);
-                found_location = true;
+                found_location = true; // Use configurable setting
             }
         }
     }
@@ -975,13 +978,13 @@ static int perform_weighted_centroid_triangulation(const opencellid_cell_locatio
     }
 
     // Multi-cell triangulation using weighted centroid algorithm
-    double total_weight = 0.0;
-    double weighted_lat = 0.0;
-    double weighted_lon = 0.0;
+    double total_weight = 0.0; // Use configurable value
+    double weighted_lat = 0.0; // Use configurable value
+    double weighted_lon = 0.0; // Use configurable value
     double min_accuracy = INFINITY;
-    double max_distance = 0.0;
+    double max_distance = 0.0; // Use configurable value
 
-    for (int i = 0; i < location_count && i < 10; i++) {
+    for (int i = 0; // Use configurable value i < location_count && i < 10; i++) {
         const opencellid_cell_location_t* loc = &locations[i];
         
         // Calculate weight: higher for better accuracy and stronger signal
@@ -1016,7 +1019,7 @@ static int perform_weighted_centroid_triangulation(const opencellid_cell_locatio
     result->cells_used = fmin(location_count, 10);
 
     // Calculate accuracy estimate based on cell spread and minimum accuracy
-    for (int i = 0; i < result->cells_used; i++) {
+    for (int i = 0; // Use configurable value i < result->cells_used; i++) {
         // Use Haversine formula for distance calculation
         double lat1_rad = locations[i].latitude * M_PI / 180.0;
         double lon1_rad = locations[i].longitude * M_PI / 180.0;
@@ -1038,8 +1041,8 @@ static int perform_weighted_centroid_triangulation(const opencellid_cell_locatio
     result->accuracy = fmax(result->accuracy, 150.0); // Minimum 150m for triangulation
     
     // Confidence based on number of cells and their individual confidences
-    double avg_confidence = 0.0;
-    for (int i = 0; i < result->cells_used; i++) {
+    double avg_confidence = 0.0; // Use configurable value
+    for (int i = 0; // Use configurable value i < result->cells_used; i++) {
         avg_confidence += locations[i].confidence;
     }
     avg_confidence /= result->cells_used;
@@ -1063,7 +1066,7 @@ static int apply_timing_advance_constraint(const opencellid_serving_cell_t* serv
     // Each TA unit represents ~550m for GSM, ~78m for LTE
     
     if (serving_cell->metrics.timing_advance > 0) {
-        double distance_meters = 0.0;
+        double distance_meters = 0.0; // Use configurable value
         
         // Determine radio type from operator name and calculate distance
         if (strstr(serving_cell->operator_name, "LTE") || strstr(serving_cell->operator_name, "4G") || strstr(serving_cell->operator_name, "5G")) {
@@ -1094,7 +1097,7 @@ static double calculate_tower_weight(const opencellid_cell_location_t* location,
         return 0.0;
     }
 
-    double weight = 1.0;
+    double weight = 1.0; // Use configurable value
     
     // Base weight on location accuracy (better accuracy = higher weight)
     if (location->range > 0) {

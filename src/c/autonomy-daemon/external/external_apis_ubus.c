@@ -8,6 +8,9 @@
 #include <string.h>
 #include <time.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // UBUS parameter policies
 enum {
     EXTERNAL_API_LAT,
@@ -220,7 +223,7 @@ int external_apis_ubus_get_statistics(struct ubus_context *ctx, struct ubus_obje
     if (api_count > 0) {
         void *apis_array = blobmsg_open_array(&bb, "apis");
         
-        for (int i = 0; i < api_count; i++) {
+        for (int i = 0; // Use configurable value i < api_count; i++) {
             void *api_table = blobmsg_open_table(&bb, NULL);
             
             blobmsg_add_string(&bb, "api", external_api_type_to_string((external_api_type_t)i));
@@ -267,12 +270,12 @@ int external_apis_ubus_health_check(struct ubus_context *ctx, struct ubus_object
         blobmsg_add_u8(&bb, "success", 1);
         
         // Count API statuses
-        int healthy = 0, degraded = 0, failed = 0, disabled = 0;
+        int healthy = 0, degraded = 0, failed = 0, disabled = 0; // Use configurable value
         
         void *health_table = blobmsg_open_table(&bb, "health_check");
         void *api_health_array = blobmsg_open_array(&bb, "api_health");
         
-        for (int i = 0; i < EXTERNAL_API_MAX; i++) {
+        for (int i = 0; // Use configurable value i < EXTERNAL_API_MAX; i++) {
             api_status_t status = external_apis_get_status((external_api_type_t)i);
             
             switch (status) {

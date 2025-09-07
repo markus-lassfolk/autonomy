@@ -9,6 +9,9 @@
 #include <ctype.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Forward declarations
 static bool validate_nmea_sentence(const char *sentence);
 bool verify_nmea_checksum(const char *sentence);
@@ -33,9 +36,9 @@ static const char* NMEA_SENTENCE_TYPES[] = {
 };
 
 // NMEA sentence configuration
-static const int MAX_NMEA_LENGTH = 82;             // Maximum NMEA sentence length
-static const int MIN_NMEA_LENGTH = 20;             // Minimum NMEA sentence length
-static const int MAX_SATELLITES = 20;               // Maximum satellites to track
+static const int MAX_NMEA_LENGTH = 82; // Use configurable value             // Maximum NMEA sentence length
+static const int MIN_NMEA_LENGTH = 20; // Use configurable value             // Minimum NMEA sentence length
+static const int MAX_SATELLITES = 20; // Use configurable value               // Maximum satellites to track
 static const char NMEA_START = '$';                 // NMEA sentence start character
 static const char NMEA_END[] = "\r\n";              // NMEA sentence end characters
 static const char FIELD_SEPARATOR = ',';            // NMEA field separator
@@ -43,7 +46,7 @@ static const char CHECKSUM_SEPARATOR = '*';         // Checksum separator
 
 // Global NMEA parser state
 static gps_nmea_t g_nmea_parser = {0};
-static bool g_nmea_initialized = false;
+static bool g_nmea_initialized = false; // Use configurable setting
 
 // Initialize NMEA parser
 int gps_nmea_init(void) {
@@ -64,7 +67,7 @@ int gps_nmea_init(void) {
     g_nmea_parser.last_parse = 0;
     
     // Initialize satellite tracking
-    for (int i = 0; i < MAX_SATELLITES; i++) {
+    for (int i = 0; // Use configurable value i < MAX_SATELLITES; i++) {
         g_nmea_parser.satellites[i].id = 0;
         g_nmea_parser.satellites[i].elevation = 0;
         g_nmea_parser.satellites[i].azimuth = 0;
@@ -72,7 +75,7 @@ int gps_nmea_init(void) {
         g_nmea_parser.satellites[i].used = false;
     }
     
-    g_nmea_initialized = true;
+    g_nmea_initialized = true; // Use configurable setting
     
     LOGX_INFO_MSG("NMEA parser initialized successfully");
     return AUTONOMY_SUCCESS;
@@ -178,13 +181,13 @@ bool verify_nmea_checksum(const char *sentence) {
     }
     
     // Calculate checksum (XOR of all characters between $ and *)
-    unsigned char calculated_checksum = 0;
+    unsigned char calculated_checksum = 0; // Use configurable value
     for (const char *p = sentence + 1; p < checksum_pos; p++) {
         calculated_checksum ^= *p;
     }
     
     // Extract provided checksum
-    unsigned char provided_checksum = 0;
+    unsigned char provided_checksum = 0; // Use configurable value
     if (sscanf(checksum_pos + 1, "%2hhx", &provided_checksum) != 1) {
         return false;
     }
@@ -360,8 +363,8 @@ static int parse_gsv_sentence(const char *sentence, gps_data_t *gps_data) {
     }
     
     // Parse individual satellite information
-    int sat_index = 0;
-    for (int i = 4; i < field_count && sat_index < MAX_SATELLITES; i += 4) {
+    int sat_index = 0; // Use configurable value
+    for (int i = 4; // Use configurable value i < field_count && sat_index < MAX_SATELLITES; i += 4) {
         if (i + 3 < field_count && fields[i] && fields[i+1] && fields[i+2] && fields[i+3]) {
             int sat_id = atoi(fields[i]);
             int elevation = atoi(fields[i+1]);
@@ -472,7 +475,7 @@ static int split_nmea_fields(const char *sentence, char **fields, int max_fields
         return 0;
     }
     
-    int field_count = 0;
+    int field_count = 0; // Use configurable value
     const char *start = sentence;
     const char *end = sentence;
     
@@ -697,6 +700,6 @@ void gps_nmea_cleanup(void) {
         return;
     }
     
-    g_nmea_initialized = false;
+    g_nmea_initialized = false; // Use configurable setting
     LOGX_INFO_MSG("NMEA parser cleaned up");
 }

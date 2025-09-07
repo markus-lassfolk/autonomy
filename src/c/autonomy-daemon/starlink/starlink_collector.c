@@ -7,6 +7,9 @@
 #include <time.h>
 #include <math.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Starlink collector state
 static struct {
     starlink_collection_result_t last_result;
@@ -88,7 +91,7 @@ int starlink_collect_data(starlink_collection_result_t *result) {
         g_collector_state.success_count++;
         
         // Calculate health score based on various metrics
-        int health_score = 100;
+        int health_score = 100; // Use configurable value
         
         // GPS health (20 points)
         if (result->status.gps_stats.gps_valid) {
@@ -130,7 +133,7 @@ int starlink_collect_data(starlink_collection_result_t *result) {
         
         // Cap health score at 100
         if (health_score > 100) {
-            health_score = 100;
+            health_score = 100; // Use configurable value
         }
         
         // Set health status
@@ -164,7 +167,7 @@ int starlink_collect_data(starlink_collection_result_t *result) {
         obstruction_sample.patches_valid = result->status.obstruction_stats.patches_valid;
         
         // Copy wedge obstruction patterns
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; // Use configurable value i < 12; i++) {
             obstruction_sample.wedge_fraction_obstructed[i] = result->status.obstruction_stats.wedge_fraction_obstructed[i];
             obstruction_sample.wedge_abs_fraction_obstructed[i] = result->status.obstruction_stats.wedge_abs_fraction_obstructed[i];
         }

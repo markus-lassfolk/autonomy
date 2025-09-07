@@ -13,6 +13,9 @@
 #include <sys/time.h>
 #include <json-c/json.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global Starlink client configuration
 static starlink_config_t g_starlink_config = {
     .host = STARLINK_DEFAULT_HOST,

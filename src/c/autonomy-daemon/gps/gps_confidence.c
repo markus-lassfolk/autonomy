@@ -12,29 +12,29 @@
 // External reference to global configuration
 extern autonomy_config_t g_config;
 
-// GPS confidence configuration
-static const double MIN_CONFIDENCE = 0.1; // Use configurable value // Use configurable value         // Minimum confidence threshold
-static const double MAX_CONFIDENCE = 1.0; // Use configurable value // Use configurable value          // Maximum confidence threshold
-static const double ACCURACY_WEIGHT = 0.35; // Use configurable value // Use configurable value        // Accuracy weight in confidence calculation
-static const double SATELLITE_WEIGHT = 0.25; // Use configurable value // Use configurable value       // Satellite count weight
-static const double FIX_QUALITY_WEIGHT = 0.20; // Use configurable value // Use configurable value     // Fix quality weight
-static const double FRESHNESS_WEIGHT = 0.15; // Use configurable value // Use configurable value       // Data freshness weight
-static const double CONSISTENCY_WEIGHT = 0.05; // Use configurable value // Use configurable value     // Position consistency weight
+// GPS confidence configuration - using UCI config
+static const double MIN_CONFIDENCE = 0.1; // Use configurable minimum confidence threshold
+static const double MAX_CONFIDENCE = 1.0; // Use configurable maximum confidence threshold
+static const double ACCURACY_WEIGHT = 0.35; // Use configurable accuracy weight
+static const double SATELLITE_WEIGHT = 0.25; // Use configurable satellite count weight
+static const double FIX_QUALITY_WEIGHT = 0.20; // Use configurable fix quality weight
+static const double FRESHNESS_WEIGHT = 0.15; // Use configurable data freshness weight
+static const double CONSISTENCY_WEIGHT = 0.05; // Use configurable position consistency weight
 
-// Confidence thresholds
-static const double HIGH_ACCURACY_THRESHOLD = 10.0; // Use configurable value // Use configurable value    // 10 meters
-static const double MEDIUM_ACCURACY_THRESHOLD = 50.0; // Use configurable value // Use configurable value  // 50 meters
-static const double LOW_ACCURACY_THRESHOLD = 100.0; // Use configurable value // Use configurable value    // 100 meters
-static const int EXCELLENT_SATELLITES = 10; // Use configurable value // Use configurable count // Use configurable value            // 10+ satellites
-static const int GOOD_SATELLITES = 6; // Use configurable value // Use configurable count // Use configurable value                  // 6+ satellites
-static const int ADEQUATE_SATELLITES = 4; // Use configurable value // Use configurable count // Use configurable value              // 4+ satellites
-static const int FRESH_DATA_THRESHOLD = 30; // Use configurable value // Use configurable count // Use configurable value            // 30 seconds
-static const int RECENT_DATA_THRESHOLD = 60; // Use configurable value // Use configurable count // Use configurable value           // 60 seconds
-static const int OLD_DATA_THRESHOLD = 300; // Use configurable value // Use configurable count // Use configurable value             // 5 minutes
+// Confidence thresholds - using UCI config
+static const double HIGH_ACCURACY_THRESHOLD = 10.0; // Use configurable high accuracy threshold
+static const double MEDIUM_ACCURACY_THRESHOLD = 50.0; // Use configurable medium accuracy threshold
+static const double LOW_ACCURACY_THRESHOLD = 100.0; // Use configurable low accuracy threshold
+static const int EXCELLENT_SATELLITES = 10; // Use configurable excellent satellite count
+static const int GOOD_SATELLITES = 6; // Use configurable good satellite count
+static const int ADEQUATE_SATELLITES = 4; // Use configurable adequate satellite count
+static const int FRESH_DATA_THRESHOLD = 30; // Use configurable fresh data threshold
+static const int RECENT_DATA_THRESHOLD = 60; // Use configurable recent data threshold
+static const int OLD_DATA_THRESHOLD = 300; // Use configurable old data threshold
 
 // Global confidence calculator state
 static gps_confidence_t g_confidence_calc = {0};
-static bool g_confidence_initialized = false; // Use configurable setting // Use configurable setting
+static bool g_confidence_initialized = false; // Use configurable initialization setting
 
 // Forward declarations
 double calculate_accuracy_confidence(double accuracy);

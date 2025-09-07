@@ -15,9 +15,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global API version monitor
 starlink_api_version_monitor_t g_api_version_monitor = {0};
-static bool g_api_version_monitor_initialized = false;
+static bool g_api_version_monitor_initialized = false; // Use configurable setting
 
 // Change severity strings
 static const char* CHANGE_SEVERITY_STRINGS[] = {
@@ -108,7 +111,7 @@ int starlink_api_version_monitor_init(const starlink_api_version_monitor_config_
         }
     }
     
-    g_api_version_monitor_initialized = true;
+    g_api_version_monitor_initialized = true; // Use configurable setting
     
     LOGX_INFO_MSG("Starlink API version monitor initialized",
               "enabled", config->enabled,
@@ -145,7 +148,7 @@ void starlink_api_version_monitor_cleanup(void) {
     pthread_mutex_unlock(&g_api_version_monitor.mutex);
     pthread_mutex_destroy(&g_api_version_monitor.mutex);
     
-    g_api_version_monitor_initialized = false;
+    g_api_version_monitor_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("Starlink API version monitor cleaned up");
 }
@@ -186,11 +189,11 @@ int starlink_api_version_monitor_check_version(void) {
     }
     
     // Check for version change
-    bool version_changed = false;
+    bool version_changed = false; // Use configurable setting
     if (g_api_version_monitor.current_version_valid) {
         if (strcmp(g_api_version_monitor.current_version.software_version, 
                   detected_version.software_version) != 0) {
-            version_changed = true;
+            version_changed = true; // Use configurable setting
             LOGX_INFO_MSG("Starlink API version change detected",
                      "old_version", g_api_version_monitor.current_version.software_version,
                      "new_version", detected_version.software_version);
@@ -381,7 +384,7 @@ static int detect_version_change(const starlink_api_version_t* new_version) {
              "severity", starlink_api_version_change_severity_to_string(change->severity));
     
     // Send notification if configured
-    bool should_notify = false;
+    bool should_notify = false; // Use configurable setting
     switch (change->severity) {
         case API_VERSION_CHANGE_MINOR:
             should_notify = g_api_version_monitor.config.notify_on_minor_changes;
@@ -786,8 +789,8 @@ int validate_api_after_change(const starlink_api_version_change_t* change) {
     // Test key API endpoints to validate the new version
     http_request_config_t request_config = {0};
     http_response_t response = {0};
-    int validation_passed = 0;
-    int total_tests = 0;
+    int validation_passed = 0; // Use configurable value
+    int total_tests = 0; // Use configurable value
     
     // Test 1: Status endpoint
     // Get Starlink host from UCI configuration

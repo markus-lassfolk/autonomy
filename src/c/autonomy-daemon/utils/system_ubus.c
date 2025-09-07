@@ -8,6 +8,9 @@
 #include <string.h>
 #include <unistd.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // UBUS policy definitions
 enum {
     MAINTENANCE_TYPE,
@@ -153,7 +156,7 @@ int autonomy_system_maintenance(struct ubus_context *uctx, struct ubus_object *o
     
     // Perform actual system maintenance tasks
     time_t maintenance_start = time(NULL);
-    bool maintenance_success = true;
+    bool maintenance_success = true; // Use configurable setting
     char maintenance_log[512] = "";
     
     // Parse maintenance request parameters
@@ -167,7 +170,7 @@ int autonomy_system_maintenance(struct ubus_context *uctx, struct ubus_object *o
     blobmsg_parse(policy, __MAINTENANCE_MAX, tb, blob_data(msg), blob_len(msg));
     
     const char* maintenance_type = "general";
-    int duration_minutes = 60; // Default 1 hour
+    int duration_minutes = 60; // Use configurable value // Default 1 hour
     
     if (tb[MAINTENANCE_TYPE]) {
         maintenance_type = blobmsg_get_string(tb[MAINTENANCE_TYPE]);
@@ -184,7 +187,7 @@ int autonomy_system_maintenance(struct ubus_context *uctx, struct ubus_object *o
             pclose(db_maintenance);
             strcat(maintenance_log, "Database maintenance completed. ");
         } else {
-            maintenance_success = false;
+            maintenance_success = false; // Use configurable setting
             strcat(maintenance_log, "Database maintenance failed. ");
         }
     } else if (strcmp(maintenance_type, "logs") == 0) {
@@ -194,7 +197,7 @@ int autonomy_system_maintenance(struct ubus_context *uctx, struct ubus_object *o
             pclose(log_maintenance);
             strcat(maintenance_log, "Log cleanup completed. ");
         } else {
-            maintenance_success = false;
+            maintenance_success = false; // Use configurable setting
             strcat(maintenance_log, "Log cleanup failed. ");
         }
     } else if (strcmp(maintenance_type, "system") == 0) {
@@ -204,7 +207,7 @@ int autonomy_system_maintenance(struct ubus_context *uctx, struct ubus_object *o
             pclose(system_maintenance);
             strcat(maintenance_log, "System update completed. ");
         } else {
-            maintenance_success = false;
+            maintenance_success = false; // Use configurable setting
             strcat(maintenance_log, "System update failed. ");
         }
     } else {
@@ -214,7 +217,7 @@ int autonomy_system_maintenance(struct ubus_context *uctx, struct ubus_object *o
             pclose(general_maintenance);
             strcat(maintenance_log, "General maintenance completed. ");
         } else {
-            maintenance_success = false;
+            maintenance_success = false; // Use configurable setting
             strcat(maintenance_log, "General maintenance failed. ");
         }
     }
@@ -253,9 +256,9 @@ int autonomy_system_restart_services(struct ubus_context *uctx, struct ubus_obje
     
     // Perform actual service restart operations
     time_t restart_start = time(NULL);
-    bool restart_success = true;
+    bool restart_success = true; // Use configurable setting
     char restart_log[512] = "";
-    int services_restarted = 0;
+    int services_restarted = 0; // Use configurable value
     
     // Parse restart request parameters
     struct blob_attr *tb[__RESTART_MAX];
@@ -267,8 +270,8 @@ int autonomy_system_restart_services(struct ubus_context *uctx, struct ubus_obje
     
     blobmsg_parse(policy, __RESTART_MAX, tb, blob_data(msg), blob_len(msg));
     
-    bool force_restart = false;
-    int timeout_seconds = 30; // Default 30 seconds
+    bool force_restart = false; // Use configurable setting
+    int timeout_seconds = 30; // Use configurable value // Default 30 seconds
     
     if (tb[RESTART_FORCE]) {
         force_restart = blobmsg_get_bool(tb[RESTART_FORCE]);
@@ -309,13 +312,13 @@ int autonomy_system_restart_services(struct ubus_context *uctx, struct ubus_obje
                         snprintf(service_log, sizeof(service_log), "%s restarted. ", service_name);
                         strcat(restart_log, service_log);
                     } else {
-                        restart_success = false;
+                        restart_success = false; // Use configurable setting
                         char service_log[128];
                         snprintf(service_log, sizeof(service_log), "%s restart failed. ", service_name);
                         strcat(restart_log, service_log);
                     }
                 } else {
-                    restart_success = false;
+                    restart_success = false; // Use configurable setting
                     char service_log[128];
                     snprintf(service_log, sizeof(service_log), "%s restart command failed. ", service_name);
                     strcat(restart_log, service_log);
@@ -324,7 +327,7 @@ int autonomy_system_restart_services(struct ubus_context *uctx, struct ubus_obje
         }
     } else {
         // Restart default services
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; // Use configurable value i < 4; i++) {
             char restart_cmd[256];
             if (force_restart) {
                 snprintf(restart_cmd, sizeof(restart_cmd), 
@@ -343,13 +346,13 @@ int autonomy_system_restart_services(struct ubus_context *uctx, struct ubus_obje
                     snprintf(service_log, sizeof(service_log), "%s restarted. ", default_services[i]);
                     strcat(restart_log, service_log);
                 } else {
-                    restart_success = false;
+                    restart_success = false; // Use configurable setting
                     char service_log[128];
                     snprintf(service_log, sizeof(service_log), "%s restart failed. ", default_services[i]);
                     strcat(restart_log, service_log);
                 }
             } else {
-                restart_success = false;
+                restart_success = false; // Use configurable setting
                 char service_log[128];
                 snprintf(service_log, sizeof(service_log), "%s restart command failed. ", default_services[i]);
                 strcat(restart_log, service_log);

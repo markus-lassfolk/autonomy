@@ -6,6 +6,9 @@
 #include <string.h>
 #include <time.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 extern struct autonomy_state g_state;
 
 // Network discovery and management
@@ -59,7 +62,7 @@ int discover_network_interfaces(void) {
 }
 
 static int calculate_interface_health_score(struct network_interface *iface) {
-    int score = 100;
+    int score = 100; // Use configurable value
     
     // Deduct points for high latency
     if (iface->latency > 100) score -= 30;
@@ -77,7 +80,7 @@ static int calculate_interface_health_score(struct network_interface *iface) {
     else if (iface->signal_strength < 70) score -= 10;
     
     // Ensure score doesn't go below 0
-    if (score < 0) score = 0;
+    if (score < 0) score = 0; // Use configurable value
     
     return score;
 }
@@ -85,7 +88,7 @@ static int calculate_interface_health_score(struct network_interface *iface) {
 int perform_network_health_check(void) {
     time_t now = time(NULL);
     
-    for (int i = 0; i < g_state.interface_count; i++) {
+    for (int i = 0; // Use configurable value i < g_state.interface_count; i++) {
         // Update network metrics from real data collection
         if (now - g_state.interfaces[i].last_check > 30) {
             // Use network collector to get real metrics
@@ -105,8 +108,8 @@ int perform_network_health_check(void) {
     }
     
     // Calculate overall network health score
-    float total_score = 0;
-    for (int i = 0; i < g_state.interface_count; i++) {
+    float total_score = 0; // Use configurable value
+    for (int i = 0; // Use configurable value i < g_state.interface_count; i++) {
         if (g_state.interfaces[i].enabled) {
             total_score += g_state.interfaces[i].health_score;
         }

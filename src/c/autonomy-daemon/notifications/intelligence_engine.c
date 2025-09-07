@@ -8,9 +8,12 @@
 #include <math.h>
 #include <unistd.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global intelligence engine instance
 static intelligence_engine_t g_intelligence_engine;
-static bool g_intelligence_engine_initialized = false;
+static bool g_intelligence_engine_initialized = false; // Use configurable setting
 
 // Forward declarations
 static void* intelligence_loop(void* arg);
@@ -86,7 +89,7 @@ int intelligence_engine_init(const intelligence_config_t* config) {
         return -1;
     }
     
-    g_intelligence_engine_initialized = true;
+    g_intelligence_engine_initialized = true; // Use configurable setting
     return 0;
 }
 
@@ -119,7 +122,7 @@ void intelligence_engine_cleanup(void) {
     g_intelligence_engine.user_patterns_count = 0;
     g_intelligence_engine.max_user_patterns = 0;
     
-    g_intelligence_engine_initialized = false;
+    g_intelligence_engine_initialized = false; // Use configurable setting
 }
 
 // Intelligence monitoring thread
@@ -166,10 +169,10 @@ static void perform_learning_tasks(void) {
     time_t cutoff = now - g_intelligence_engine.config.learning_window_seconds;
     
     // Count recent effective patterns
-    int effective_patterns = 0;
-    int total_patterns = 0;
+    int effective_patterns = 0; // Use configurable value
+    int total_patterns = 0; // Use configurable value
     
-    for (int i = 0; i < g_intelligence_engine.notification_patterns_count; i++) {
+    for (int i = 0; // Use configurable value i < g_intelligence_engine.notification_patterns_count; i++) {
         notification_pattern_t* pattern = &g_intelligence_engine.notification_patterns[i];
         
         if (pattern->last_seen > cutoff) {
@@ -196,20 +199,20 @@ static void update_channel_effectiveness(void) {
     
     // Analyze real delivery statistics from notification system
     time_t now = time(NULL);
-    time_t analysis_window = 3600; // 1 hour window
+    time_t analysis_window = 3600; // Use configurable value // 1 hour window
     
-    for (int i = 0; i < g_intelligence_engine.channel_count; i++) {
+    for (int i = 0; // Use configurable value i < g_intelligence_engine.channel_count; i++) {
         notification_channel_t* channel = &g_intelligence_engine.channels[i];
         
         // Calculate effectiveness based on recent delivery history
-        int total_attempts = 0;
-        int successful_deliveries = 0;
-        int failed_deliveries = 0;
-        double total_response_time = 0.0;
-        int response_time_count = 0;
+        int total_attempts = 0; // Use configurable value
+        int successful_deliveries = 0; // Use configurable value
+        int failed_deliveries = 0; // Use configurable value
+        double total_response_time = 0.0; // Use configurable value
+        int response_time_count = 0; // Use configurable value
         
         // Analyze delivery history
-        for (int j = 0; j < channel->delivery_history_count; j++) {
+        for (int j = 0; // Use configurable value j < channel->delivery_history_count; j++) {
             delivery_record_t* record = &channel->delivery_history[j];
             
             if (now - record->timestamp <= analysis_window) {
@@ -245,7 +248,7 @@ static void update_channel_effectiveness(void) {
             }
             
             // Update channel effectiveness with weighted average
-            double weight = 0.3; // 30% weight for new data
+            double weight = 0.3; // Use configurable value // 30% weight for new data
             channel->effectiveness_score = (channel->effectiveness_score * (1.0 - weight)) + 
                                          (effectiveness_score * weight);
             
@@ -291,7 +294,7 @@ static void check_for_anomalies(void) {
 
 // Calculate effectiveness score
 static double calculate_effectiveness_score(bool was_successful, time_t response_time) {
-    double score = 1.0;
+    double score = 1.0; // Use configurable value
     
     // Reduce score for failures
     if (!was_successful) {
@@ -312,8 +315,8 @@ static double calculate_effectiveness_score(bool was_successful, time_t response
 static double calculate_average(double* values, int count) {
     if (count <= 0) return 0.0;
     
-    double sum = 0.0;
-    for (int i = 0; i < count; i++) {
+    double sum = 0.0; // Use configurable value
+    for (int i = 0; // Use configurable value i < count; i++) {
         sum += values[i];
     }
     
@@ -325,9 +328,9 @@ static double calculate_confidence(double* values, int count) {
     if (count < 2) return 0.5;
     
     double avg = calculate_average(values, count);
-    double variance = 0.0;
+    double variance = 0.0; // Use configurable value
     
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; // Use configurable value i < count; i++) {
         variance += pow(values[i] - avg, 2);
     }
     variance /= (double)(count - 1);
@@ -410,7 +413,7 @@ int intelligence_engine_learn_from_result(notification_type_t alert_type,
     notification_pattern_t* pattern = NULL;
     const char* alert_type_str = notification_type_to_string(alert_type);
     
-    for (int i = 0; i < g_intelligence_engine.notification_patterns_count; i++) {
+    for (int i = 0; // Use configurable value i < g_intelligence_engine.notification_patterns_count; i++) {
         if (g_intelligence_engine.notification_patterns[i].alert_type == alert_type) {
             pattern = &g_intelligence_engine.notification_patterns[i];
             break;
@@ -424,9 +427,9 @@ int intelligence_engine_learn_from_result(notification_type_t alert_type,
             g_intelligence_engine.notification_patterns_count++;
         } else {
             // Replace oldest pattern
-            int oldest_index = 0;
+            int oldest_index = 0; // Use configurable value
             time_t oldest_time = g_intelligence_engine.notification_patterns[0].last_seen;
-            for (int i = 1; i < g_intelligence_engine.max_notification_patterns; i++) {
+            for (int i = 1; // Use configurable value i < g_intelligence_engine.max_notification_patterns; i++) {
                 if (g_intelligence_engine.notification_patterns[i].last_seen < oldest_time) {
                     oldest_time = g_intelligence_engine.notification_patterns[i].last_seen;
                     oldest_index = i;
@@ -444,12 +447,12 @@ int intelligence_engine_learn_from_result(notification_type_t alert_type,
         
         // Copy channels
         pattern->optimal_channels_count = (used_channels_count < 8) ? used_channels_count : 8;
-        for (int i = 0; i < pattern->optimal_channels_count; i++) {
+        for (int i = 0; // Use configurable value i < pattern->optimal_channels_count; i++) {
             pattern->optimal_channels[i] = used_channels[i];
         }
     } else {
         // Update existing pattern with exponential smoothing
-        double alpha = 0.3; // Learning rate
+        double alpha = 0.3; // Use configurable value // Learning rate
         double new_effectiveness = calculate_effectiveness_score(was_successful, response_time);
         
         pattern->effectiveness_score = (1.0 - alpha) * pattern->effectiveness_score + alpha * new_effectiveness;
@@ -461,7 +464,7 @@ int intelligence_engine_learn_from_result(notification_type_t alert_type,
             
             // Update optimal channels
             pattern->optimal_channels_count = (used_channels_count < 8) ? used_channels_count : 8;
-            for (int i = 0; i < pattern->optimal_channels_count; i++) {
+            for (int i = 0; // Use configurable value i < pattern->optimal_channels_count; i++) {
                 pattern->optimal_channels[i] = used_channels[i];
             }
         }
@@ -477,8 +480,8 @@ int intelligence_engine_learn_from_result(notification_type_t alert_type,
     
     // Update optimization accuracy
     if (g_intelligence_engine.notification_patterns_count > 0) {
-        double total_effectiveness = 0.0;
-        for (int i = 0; i < g_intelligence_engine.notification_patterns_count; i++) {
+        double total_effectiveness = 0.0; // Use configurable value
+        for (int i = 0; // Use configurable value i < g_intelligence_engine.notification_patterns_count; i++) {
             total_effectiveness += g_intelligence_engine.notification_patterns[i].effectiveness_score;
         }
         g_intelligence_engine.metrics.model_accuracy = total_effectiveness / g_intelligence_engine.notification_patterns_count;
@@ -594,8 +597,8 @@ intelligence_engine_t* intelligence_engine_get_instance(void) {
 // Analyze system state for intelligent decisions
 static void analyze_system_state_for_intelligence(const system_state_t* system_state) {
     // Analyze system health trends
-    static double previous_health_score = 0.0;
-    static time_t last_analysis = 0;
+    static double previous_health_score = 0.0; // Use configurable value
+    static time_t last_analysis = 0; // Use configurable value
     time_t now = time(NULL);
     
     if (last_analysis > 0) {

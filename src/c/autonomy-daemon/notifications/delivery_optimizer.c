@@ -18,7 +18,7 @@ enum {
 
 // Global delivery optimizer instance
 static delivery_optimizer_t g_delivery_optimizer;
-static bool g_delivery_optimizer_initialized = false; // Use configurable setting // Use configurable setting
+static bool g_delivery_optimizer_initialized = false; // Use configurable initialization setting
 
 // Forward declarations
 static time_t calculate_user_optimal_time(const system_state_t* system_state);

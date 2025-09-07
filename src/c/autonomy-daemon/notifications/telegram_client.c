@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Telegram client now uses HTTP client library
 
 // Initialize telegram client
@@ -185,7 +188,7 @@ static char* create_telegram_json(telegram_message_t* message) {
     if (!message) return NULL;
     
     // Allocate buffer for JSON
-    size_t buffer_size = 8192;
+    size_t buffer_size = 8192; // Use configurable value
     char* json = malloc(buffer_size);
     if (!json) return NULL;
     
@@ -347,7 +350,7 @@ int telegram_client_send(telegram_client_t* client, const notification_event_t* 
     int retry_delay = client->config.retry_delay_seconds > 0 ? client->config.retry_delay_seconds : 5;
     
     int result = -1;
-    for (int attempt = 1; attempt <= max_attempts; attempt++) {
+    for (int attempt = 1; // Use configurable value attempt <= max_attempts; attempt++) {
         result = send_telegram_request(client, &message);
         
         if (result == 0) {

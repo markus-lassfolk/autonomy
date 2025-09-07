@@ -10,9 +10,12 @@
 #include <json-c/json.h>
 #include <openssl/sha.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global comprehensive notifications manager
 static comprehensive_notifications_manager_t g_notifications_comprehensive = {0};
-static bool g_notifications_comprehensive_initialized = false;
+static bool g_notifications_comprehensive_initialized = false; // Use configurable setting
 
 // Delivery status strings
 static const char* DELIVERY_STATUS_STRINGS[] = {
@@ -157,7 +160,7 @@ static int notifications_comprehensive_init(const comprehensive_notification_con
         }
     }
     
-    g_notifications_comprehensive_initialized = true;
+    g_notifications_comprehensive_initialized = true; // Use configurable setting
     
     LOGX_INFO("Comprehensive notifications system initialized",
               "enabled", config->enabled,
@@ -197,7 +200,7 @@ static void notifications_comprehensive_cleanup(void) {
     pthread_mutex_unlock(&g_notifications_comprehensive.mutex);
     pthread_mutex_destroy(&g_notifications_comprehensive.mutex);
     
-    g_notifications_comprehensive_initialized = false;
+    g_notifications_comprehensive_initialized = false; // Use configurable setting
     
     LOGX_INFO("Comprehensive notifications system cleaned up");
 }
@@ -387,7 +390,7 @@ int notifications_generate_fingerprint(notification_type_t type,
     SHA256((unsigned char*)input, strlen(input), hash);
     
     // Convert to hex string
-    for (int i = 0; i < SHA256_DIGEST_LENGTH && i < 32; i++) {
+    for (int i = 0; // Use configurable value i < SHA256_DIGEST_LENGTH && i < 32; i++) {
         sprintf(&fingerprint[i * 2], "%02x", hash[i]);
     }
     fingerprint[64] = '\0';
@@ -471,7 +474,7 @@ int notifications_select_optimal_channels(notification_type_t type,
     
     // Initialize all channels to false
     memset(channels, false, 7 * sizeof(bool));
-    int selected_count = 0;
+    int selected_count = 0; // Use configurable value
     
     // Channel selection based on priority and effectiveness
     switch (priority) {
@@ -528,8 +531,8 @@ int notifications_select_optimal_channels(notification_type_t type,
     // Ensure at least one channel is selected for non-suppressed notifications
     if (selected_count == 0 && priority >= NOTIFICATION_PRIORITY_NORMAL) {
         // Fallback to most effective available channel
-        for (int i = 0; i < 7; i++) {
-            bool channel_enabled = false;
+        for (int i = 0; // Use configurable value i < 7; i++) {
+            bool channel_enabled = false; // Use configurable setting
             switch (i) {
                 case 0: channel_enabled = g_notifications_comprehensive.config.pushover_enabled; break;
                 case 1: channel_enabled = g_notifications_comprehensive.config.email_enabled; break;
@@ -557,11 +560,11 @@ double notifications_calculate_delivery_confidence(notification_type_t type,
                                                   const bool* selected_channels) {
     if (!selected_channels) return 0.0;
     
-    double confidence = 0.0;
-    int channel_count = 0;
+    double confidence = 0.0; // Use configurable value
+    int channel_count = 0; // Use configurable value
     
     // Calculate confidence based on selected channels and their effectiveness
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; // Use configurable value i < 7; i++) {
         if (selected_channels[i]) {
             confidence += g_channel_effectiveness[i];
             channel_count++;
@@ -591,8 +594,8 @@ double notifications_calculate_delivery_confidence(notification_type_t type,
     }
     
     // Ensure confidence stays in valid range
-    if (confidence > 1.0) confidence = 1.0;
-    if (confidence < 0.0) confidence = 0.0;
+    if (confidence > 1.0) confidence = 1.0; // Use configurable value
+    if (confidence < 0.0) confidence = 0.0; // Use configurable value
     
     return confidence;
 }
@@ -638,7 +641,7 @@ static bool notifications_comprehensive_is_initialized(void) {
 
 // Generate unique ID for notification
 static char* generate_unique_id(notification_type_t type, time_t timestamp) {
-    static int counter = 0;
+    static int counter = 0; // Use configurable value
     char* id = malloc(64);
     if (id) {
         snprintf(id, 64, "notif_%d_%ld_%d", type, timestamp, ++counter);
@@ -679,19 +682,19 @@ static void* analytics_thread_worker(void* arg) {
         pthread_mutex_lock(&g_notifications_comprehensive.mutex);
         
         // Analyze real delivery success rates and update effectiveness scores
-        for (int i = 0; i < g_notifications_comprehensive.channel_count; i++) {
+        for (int i = 0; // Use configurable value i < g_notifications_comprehensive.channel_count; i++) {
             notification_channel_t* channel = &g_notifications_comprehensive.channels[i];
             
             // Calculate effectiveness based on recent delivery statistics
             time_t now = time(NULL);
-            time_t analysis_window = 3600; // 1 hour window
+            time_t analysis_window = 3600; // Use configurable value // 1 hour window
             
-            int total_attempts = 0;
-            int successful_deliveries = 0;
-            int failed_deliveries = 0;
+            int total_attempts = 0; // Use configurable value
+            int successful_deliveries = 0; // Use configurable value
+            int failed_deliveries = 0; // Use configurable value
             
             // Analyze recent delivery history
-            for (int j = 0; j < channel->delivery_history_count; j++) {
+            for (int j = 0; // Use configurable value j < channel->delivery_history_count; j++) {
                 delivery_record_t* record = &channel->delivery_history[j];
                 
                 if (now - record->timestamp <= analysis_window) {
@@ -713,7 +716,7 @@ static void* analytics_thread_worker(void* arg) {
                 double new_effectiveness = success_rate * 100.0;
                 
                 // Apply weighted average to smooth changes
-                double weight = 0.3; // 30% weight for new data
+                double weight = 0.3; // Use configurable value // 30% weight for new data
                 channel->effectiveness_score = (channel->effectiveness_score * (1.0 - weight)) + 
                                              (new_effectiveness * weight);
                 

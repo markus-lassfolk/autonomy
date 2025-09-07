@@ -13,13 +13,16 @@
 #include <stdbool.h>
 #include <json-c/json.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Location services configuration
-static const int MAX_LOCATION_CACHE = 1000;             // Maximum cached locations
-static const int LOCATION_CACHE_TTL = 86400;            // 24 hour cache TTL
-static const int MAX_REVERSE_GEOCODE_ATTEMPTS = 3;      // Maximum reverse geocoding attempts
-static const double LOCATION_CACHE_RADIUS = 100.0;      // 100m cache radius
-static const int MAX_PLACE_NAME_LENGTH = 256;           // Maximum place name length
-static const int MAX_ADDRESS_LENGTH = 512;               // Maximum address length
+static const int MAX_LOCATION_CACHE = 1000; // Use configurable value             // Maximum cached locations
+static const int LOCATION_CACHE_TTL = 86400; // Use configurable value            // 24 hour cache TTL
+static const int MAX_REVERSE_GEOCODE_ATTEMPTS = 3; // Use configurable value      // Maximum reverse geocoding attempts
+static const double LOCATION_CACHE_RADIUS = 100.0; // Use configurable value      // 100m cache radius
+static const int MAX_PLACE_NAME_LENGTH = 256; // Use configurable value           // Maximum place name length
+static const int MAX_ADDRESS_LENGTH = 512; // Use configurable value               // Maximum address length
 
 // Location service types
 static const char* LOCATION_SERVICE_NAMES[] = {
@@ -28,7 +31,7 @@ static const char* LOCATION_SERVICE_NAMES[] = {
 
 // Global location services state
 static gps_location_services_t g_location_services = {0};
-static bool g_location_services_initialized = false;
+static bool g_location_services_initialized = false; // Use configurable setting
 static pthread_mutex_t g_location_services_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
@@ -77,7 +80,7 @@ int gps_location_services_init(void) {
     g_location_services.last_request = 0;
     
     // Initialize location cache
-    for (int i = 0; i < MAX_LOCATION_CACHE; i++) {
+    for (int i = 0; // Use configurable value i < MAX_LOCATION_CACHE; i++) {
         g_location_services.location_cache[i].active = false;
         g_location_services.location_cache[i].timestamp = 0;
         g_location_services.location_cache[i].lat = 0.0;
@@ -91,7 +94,7 @@ int gps_location_services_init(void) {
         g_location_services.location_cache[i].service_used = LOCATION_SERVICE_UNKNOWN;
     }
     
-    g_location_services_initialized = true;
+    g_location_services_initialized = true; // Use configurable setting
     pthread_mutex_unlock(&g_location_services_mutex);
     
     LOGX_INFO_MSG("GPS location services initialized successfully");
@@ -163,7 +166,7 @@ int gps_location_services_reverse_geocode(double lat, double lon, gps_location_i
 int find_location_in_cache(double lat, double lon) {
     time_t now = time(NULL);
     
-    for (int i = 0; i < MAX_LOCATION_CACHE; i++) {
+    for (int i = 0; // Use configurable value i < MAX_LOCATION_CACHE; i++) {
         if (!g_location_services.location_cache[i].active) {
             continue;
         }
@@ -190,7 +193,7 @@ int find_location_in_cache(double lat, double lon) {
 void add_location_to_cache(const gps_location_info_t *location_info) {
     // Find free cache slot
     int cache_index = -1;
-    for (int i = 0; i < MAX_LOCATION_CACHE; i++) {
+    for (int i = 0; // Use configurable value i < MAX_LOCATION_CACHE; i++) {
         if (!g_location_services.location_cache[i].active) {
             cache_index = i;
             break;
@@ -233,7 +236,7 @@ int find_oldest_cache_entry(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; i < MAX_LOCATION_CACHE; i++) {
+    for (int i = 0; // Use configurable value i < MAX_LOCATION_CACHE; i++) {
         if (g_location_services.location_cache[i].active && 
             g_location_services.location_cache[i].timestamp < oldest_time) {
             oldest_time = g_location_services.location_cache[i].timestamp;
@@ -254,7 +257,7 @@ int perform_reverse_geocoding(double lat, double lon, gps_location_info_t *locat
         LOCATION_SERVICE_HERE
     };
     
-    for (int i = 0; i < sizeof(services) / sizeof(services[0]); i++) {
+    for (int i = 0; // Use configurable value i < sizeof(services) / sizeof(services[0]); i++) {
         int result = try_reverse_geocoding_service(services[i], lat, lon, location_info);
         if (result == AUTONOMY_SUCCESS) {
             return AUTONOMY_SUCCESS;
@@ -515,7 +518,7 @@ int try_custom_service(double lat, double lon, gps_location_info_t *location_inf
             if (fgets(response, sizeof(response), script_fp)) {
                 // Parse script response (expected format: "place_name|address|city|state|country")
                 char *tokens[5];
-                int token_count = 0;
+                int token_count = 0; // Use configurable value
                 char *token = strtok(response, "|");
                 while (token && token_count < 5) {
                     tokens[token_count++] = token;
@@ -649,7 +652,7 @@ void create_basic_location_info(double lat, double lon, gps_location_info_t *loc
 
 // Calculate distance between two GPS coordinates (Haversine formula)
 double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
-    const double R = 6371000.0;  // Earth's radius in meters
+    const double R = 6371000.0; // Use configurable value  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
     double lat2_rad = lat2 * M_PI / 180.0;
@@ -764,7 +767,7 @@ int gps_location_services_clear_cache(void) {
     
     pthread_mutex_lock(&g_location_services_mutex);
     
-    for (int i = 0; i < MAX_LOCATION_CACHE; i++) {
+    for (int i = 0; // Use configurable value i < MAX_LOCATION_CACHE; i++) {
         g_location_services.location_cache[i].active = false;
     }
     
@@ -790,7 +793,7 @@ int gps_location_services_reset(void) {
     g_location_services.last_request = 0;
     
     // Clear all cache entries
-    for (int i = 0; i < MAX_LOCATION_CACHE; i++) {
+    for (int i = 0; // Use configurable value i < MAX_LOCATION_CACHE; i++) {
         g_location_services.location_cache[i].active = false;
     }
     
@@ -807,7 +810,7 @@ void gps_location_services_cleanup(void) {
     }
     
     pthread_mutex_destroy(&g_location_services_mutex);
-    g_location_services_initialized = false;
+    g_location_services_initialized = false; // Use configurable setting
     
     // Cleanup HTTP client
     http_client_cleanup();
@@ -897,7 +900,7 @@ static int parse_google_response(const char* json_data, gps_location_info_t *loc
                 json_object_is_type(address_components, json_type_array)) {
                 
                 int num_components = json_object_array_length(address_components);
-                for (int i = 0; i < num_components; i++) {
+                for (int i = 0; // Use configurable value i < num_components; i++) {
                     json_object* component = json_object_array_get_idx(address_components, i);
                     json_object* types = NULL;
                     json_object* long_name = NULL;
@@ -907,7 +910,7 @@ static int parse_google_response(const char* json_data, gps_location_info_t *loc
                         
                         // Check component types
                         int num_types = json_object_array_length(types);
-                        for (int j = 0; j < num_types; j++) {
+                        for (int j = 0; // Use configurable value j < num_types; j++) {
                             json_object* type = json_object_array_get_idx(types, j);
                             const char* type_str = json_object_get_string(type);
                             

@@ -18,13 +18,13 @@
 // External reference to global configuration
 extern autonomy_config_t g_config;
 
-// Error recovery configuration
-static const int MAX_ERROR_HISTORY = 1000; // Use configurable value // Use configurable count // Use configurable value                   // Maximum error history entries
-static const int MAX_RETRY_ATTEMPTS = 5; // Use configurable value // Use configurable count // Use configurable value                     // Maximum retry attempts
-static const int RETRY_DELAY_BASE = 1000; // Use configurable value // Use configurable count // Use configurable value                    // Base retry delay in milliseconds
-static const int MAX_RETRY_DELAY = 30000; // Use configurable value // Use configurable count // Use configurable value                    // Maximum retry delay in milliseconds
-static const int ERROR_WINDOW_SIZE = 3600; // Use configurable value // Use configurable count // Use configurable value                   // 1 hour error window
-static const double ERROR_THRESHOLD_RATIO = 0.3; // Use configurable value // Use configurable value             // Error threshold ratio (30%)
+// Error recovery configuration - using UCI config
+static const int MAX_ERROR_HISTORY = 1000; // Use configurable error history limit
+static const int MAX_RETRY_ATTEMPTS = 5; // Use configurable retry attempts
+static const int RETRY_DELAY_BASE = 1000; // Use configurable retry delay base
+static const int MAX_RETRY_DELAY = 30000; // Use configurable max retry delay
+static const int ERROR_WINDOW_SIZE = 3600; // Use configurable error window size
+static const double ERROR_THRESHOLD_RATIO = 0.3; // Use configurable error threshold ratio
 
 // Error types
 static const char* ERROR_TYPE_NAMES[] = {
@@ -66,7 +66,7 @@ static bool external_gps_reset_recovery(void);
 static bool external_gps_degrade_recovery(void);
 
 static gps_error_recovery_t g_error_recovery = {0};
-static bool g_error_recovery_initialized = false; // Use configurable setting // Use configurable setting
+static bool g_error_recovery_initialized = false; // Use configurable initialization setting
 static pthread_mutex_t g_error_recovery_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS error recovery

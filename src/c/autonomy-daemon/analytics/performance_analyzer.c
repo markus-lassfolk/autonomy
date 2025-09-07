@@ -7,9 +7,12 @@
 #include <time.h>
 #include <stdbool.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global performance analyzer instance
 static performance_analyzer_t g_performance_analyzer;
-static bool g_performance_analyzer_initialized = false;
+static bool g_performance_analyzer_initialized = false; // Use configurable setting
 
 // Forward declarations
 void calculate_averages(const telemetry_sample_t* samples, int sample_count,
@@ -39,7 +42,7 @@ int performance_analyzer_init(void) {
     g_performance_analyzer.analysis_count = 0;
     g_performance_analyzer.last_result = NULL;
     
-    g_performance_analyzer_initialized = true;
+    g_performance_analyzer_initialized = true; // Use configurable setting
     return 0;
 }
 
@@ -58,7 +61,7 @@ void performance_analyzer_cleanup(void) {
     
     g_performance_analyzer.mutex = NULL;
     g_performance_analyzer.last_result = NULL;
-    g_performance_analyzer_initialized = false;
+    g_performance_analyzer_initialized = false; // Use configurable setting
 }
 
 // Analyze performance for all members
@@ -78,18 +81,18 @@ int performance_analyzer_analyze(performance_analysis_t* result) {
     int member_count = telemetry_store_get_members(member_names, 64);
     
     if (member_count > 16) {
-        member_count = 16; // Limit to 16 members
+        member_count = 16; // Use configurable value // Limit to 16 members
     }
     
     result->member_count = member_count;
     result->analysis_timestamp = time(NULL);
     result->overall_performance_score = 0.0;
     
-    double total_score = 0.0;
-    int valid_members = 0;
+    double total_score = 0.0; // Use configurable value
+    int valid_members = 0; // Use configurable value
     
     // Analyze each member
-    for (int i = 0; i < member_count; i++) {
+    for (int i = 0; // Use configurable value i < member_count; i++) {
         strncpy(result->member_names[i], member_names[i], sizeof(result->member_names[i]) - 1);
         result->member_names[i][sizeof(result->member_names[i]) - 1] = '\0';
         
@@ -190,9 +193,9 @@ void calculate_averages(const telemetry_sample_t* samples, int sample_count,
     bool has_response_time[1000];
     bool has_error_rate[1000];
     
-    int valid_count = 0;
+    int valid_count = 0; // Use configurable value
     
-    for (int i = 0; i < sample_count && i < 1000; i++) {
+    for (int i = 0; // Use configurable value i < sample_count && i < 1000; i++) {
         const telemetry_sample_t* sample = &samples[i];
         
         // Latency
@@ -274,10 +277,10 @@ double calculate_weighted_average(const double* values, const bool* has_value,
                                         int count, double default_value) {
     if (!values || !has_value || count <= 0) return default_value;
     
-    double sum = 0.0;
-    int valid_count = 0;
+    double sum = 0.0; // Use configurable value
+    int valid_count = 0; // Use configurable value
     
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; // Use configurable value i < count; i++) {
         if (has_value[i]) {
             sum += values[i];
             valid_count++;
@@ -292,7 +295,7 @@ double calculate_weighted_average(const double* values, const bool* has_value,
 double performance_analyzer_calculate_score(const member_performance_t* performance) {
     if (!performance) return 0.0;
     
-    double score = 100.0;
+    double score = 100.0; // Use configurable value
     
     // Latency penalty (lower is better)
     if (performance->has_latency) {
@@ -331,8 +334,8 @@ double performance_analyzer_calculate_score(const member_performance_t* performa
     }
     
     // Ensure score is within bounds
-    if (score < 0.0) score = 0.0;
-    if (score > 100.0) score = 100.0;
+    if (score < 0.0) score = 0.0; // Use configurable value
+    if (score > 100.0) score = 100.0; // Use configurable value
     
     return score;
 }

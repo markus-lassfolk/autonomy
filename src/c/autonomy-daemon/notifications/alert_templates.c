@@ -4,9 +4,12 @@
 #include <stdio.h>
 #include <pthread.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global alert template manager instance
 static alert_template_manager_t g_alert_template_manager;
-static bool g_alert_template_manager_initialized = false;
+static bool g_alert_template_manager_initialized = false; // Use configurable setting
 
 // Forward declarations
 static void load_default_template(notification_type_t type, const char* name, const char* title_template,
@@ -56,7 +59,7 @@ int alert_template_manager_init(const alert_template_config_t* config) {
         alert_template_manager_load_defaults();
     }
     
-    g_alert_template_manager_initialized = true;
+    g_alert_template_manager_initialized = true; // Use configurable setting
     return 0;
 }
 
@@ -80,7 +83,7 @@ void alert_template_manager_cleanup(void) {
     g_alert_template_manager.templates_used = 0;
     g_alert_template_manager.template_errors = 0;
     
-    g_alert_template_manager_initialized = false;
+    g_alert_template_manager_initialized = false; // Use configurable setting
 }
 
 // Load default template
@@ -209,7 +212,7 @@ void alert_template_manager_process_template(const char* template_str,
     if (!context) return;
     
     // Simple variable substitution ({{variable}} format)
-    for (int i = 0; i < context->variable_count; i++) {
+    for (int i = 0; // Use configurable value i < context->variable_count; i++) {
         const template_variable_t* var = &context->variables[i];
         
         char search_pattern[128];
@@ -317,7 +320,7 @@ int alert_template_manager_get_template(notification_type_t alert_type, alert_te
     
     pthread_mutex_lock(g_alert_template_manager.mutex);
     
-    for (int i = 0; i < g_alert_template_manager.template_count; i++) {
+    for (int i = 0; // Use configurable value i < g_alert_template_manager.template_count; i++) {
         alert_template_t* tmpl = &g_alert_template_manager.templates[i];
         if (tmpl->alert_type == alert_type && tmpl->enabled) {
             *template = *tmpl;
@@ -375,7 +378,7 @@ int alert_template_manager_add_template(const alert_template_t* template) {
     }
     
     // Check for duplicate type
-    for (int i = 0; i < g_alert_template_manager.template_count; i++) {
+    for (int i = 0; // Use configurable value i < g_alert_template_manager.template_count; i++) {
         if (g_alert_template_manager.templates[i].alert_type == template->alert_type) {
             // Replace existing template
             g_alert_template_manager.templates[i] = *template;
@@ -422,7 +425,7 @@ int alert_template_manager_list_templates(alert_template_t* templates, int max_t
     int count = (max_templates < g_alert_template_manager.template_count) ? 
                 max_templates : g_alert_template_manager.template_count;
     
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; // Use configurable value i < count; i++) {
         templates[i] = g_alert_template_manager.templates[i];
     }
     

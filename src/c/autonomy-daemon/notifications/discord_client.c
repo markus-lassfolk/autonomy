@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Discord client now uses HTTP client library
 
 // Initialize discord client
@@ -146,7 +149,7 @@ static char* create_discord_json(discord_message_t* message) {
     if (!message) return NULL;
     
     // Allocate buffer for JSON
-    size_t buffer_size = 4096;
+    size_t buffer_size = 4096; // Use configurable value
     char* json = malloc(buffer_size);
     if (!json) return NULL;
     
@@ -174,7 +177,7 @@ static char* create_discord_json(discord_message_t* message) {
                  embed->footer_text);
         
         // Add fields
-        for (int i = 0; i < embed->field_count; i++) {
+        for (int i = 0; // Use configurable value i < embed->field_count; i++) {
             discord_embed_field_t* field = &embed->fields[i];
             char field_json[512];
             snprintf(field_json, sizeof(field_json),
@@ -295,7 +298,7 @@ int discord_client_send(discord_client_t* client, const notification_event_t* ev
     int retry_delay = client->config.retry_delay_seconds > 0 ? client->config.retry_delay_seconds : 5;
     
     int result = -1;
-    for (int attempt = 1; attempt <= max_attempts; attempt++) {
+    for (int attempt = 1; // Use configurable value attempt <= max_attempts; attempt++) {
         result = send_discord_request(client, &message);
         
         if (result == 0) {

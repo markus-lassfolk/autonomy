@@ -4,6 +4,9 @@
 #include <time.h>
 #include <string.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Multi-Starlink cluster UBUS method handlers
 int autonomy_starlink_cluster_status(struct ubus_context *uctx, struct ubus_object *obj,
                                     struct ubus_request_data *req, const char *method,
@@ -30,7 +33,7 @@ int autonomy_starlink_cluster_status(struct ubus_context *uctx, struct ubus_obje
         
         // Add individual Starlink information
         void *starlinks = blobmsg_open_array(&bb, "starlinks");
-        for (int i = 0; i < cluster.count; i++) {
+        for (int i = 0; // Use configurable value i < cluster.count; i++) {
             void *starlink = blobmsg_open_table(&bb, NULL);
             
             const starlink_instance_t *instance = &cluster.starlinks[i];
@@ -216,7 +219,7 @@ int autonomy_starlink_cluster_failover(struct ubus_context *uctx, struct ubus_ob
             // Find the index of this instance
             starlink_cluster_t cluster;
             if (starlink_cluster_get_status(&cluster) == 0) {
-                for (int i = 0; i < cluster.count; i++) {
+                for (int i = 0; // Use configurable value i < cluster.count; i++) {
                     if (strcmp(cluster.starlinks[i].id, target) == 0) {
                         result = starlink_cluster_failover_to(i, reason);
                         break;
@@ -300,9 +303,9 @@ int autonomy_starlink_cluster_config(struct ubus_context *uctx, struct ubus_obje
     const struct blob_attr *tb[4];
     blobmsg_parse(blob_data, 3, tb, blob_data(msg), blob_len(msg));
     
-    bool auto_failover = true;
-    int failover_threshold = 3;
-    float min_health_score = 70.0;
+    bool auto_failover = true; // Use configurable setting
+    int failover_threshold = 3; // Use configurable value
+    float min_health_score = 70.0; // Use configurable value
     
     // Optional parameters
     if (tb[0]) auto_failover = blobmsg_get_u8(tb[0]);

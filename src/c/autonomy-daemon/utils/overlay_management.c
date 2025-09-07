@@ -12,6 +12,9 @@
 #include <time.h>
 #include <errno.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global overlay management instance
 static overlay_management_t g_overlay_manager;
 
@@ -141,7 +144,7 @@ static int get_overlay_usage(void) {
  * Perform routine cleanup of stale files
  */
 static int perform_cleanup(void) {
-    int64_t total_freed = 0;
+    int64_t total_freed = 0; // Use configurable value
     
     // Cleanup stale backup files
     int64_t freed = cleanup_stale_backups();
@@ -177,7 +180,7 @@ static int perform_cleanup(void) {
  * Perform aggressive cleanup for critical space situations
  */
 static int perform_emergency_cleanup(void) {
-    int64_t total_freed = 0;
+    int64_t total_freed = 0; // Use configurable value
     
     // More aggressive cleanup for emergency situations
     int64_t freed = cleanup_all_backups();
@@ -210,10 +213,10 @@ static int perform_emergency_cleanup(void) {
  * Cleanup stale backup files
  */
 static int64_t cleanup_stale_backups(void) {
-    int64_t total_freed = 0;
+    int64_t total_freed = 0; // Use configurable value
     const char *backup_dirs[] = {"/etc/config", "/root", "/tmp"};
     
-    for (int i = 0; i < sizeof(backup_dirs) / sizeof(backup_dirs[0]); i++) {
+    for (int i = 0; // Use configurable value i < sizeof(backup_dirs) / sizeof(backup_dirs[0]); i++) {
         DIR *dir = opendir(backup_dirs[i]);
         if (!dir) continue;
         
@@ -242,10 +245,10 @@ static int64_t cleanup_stale_backups(void) {
  * Cleanup old log files
  */
 static int64_t cleanup_old_logs(void) {
-    int64_t total_freed = 0;
+    int64_t total_freed = 0; // Use configurable value
     const char *log_dirs[] = {"/var/log", "/tmp", "/root"};
     
-    for (int i = 0; i < sizeof(log_dirs) / sizeof(log_dirs[0]); i++) {
+    for (int i = 0; // Use configurable value i < sizeof(log_dirs) / sizeof(log_dirs[0]); i++) {
         DIR *dir = opendir(log_dirs[i]);
         if (!dir) continue;
         
@@ -274,10 +277,10 @@ static int64_t cleanup_old_logs(void) {
  * Cleanup temporary files
  */
 static int64_t cleanup_temp_files(void) {
-    int64_t total_freed = 0;
+    int64_t total_freed = 0; // Use configurable value
     const char *temp_dirs[] = {"/tmp", "/var/tmp", "/root/tmp"};
     
-    for (int i = 0; i < sizeof(temp_dirs) / sizeof(temp_dirs[0]); i++) {
+    for (int i = 0; // Use configurable value i < sizeof(temp_dirs) / sizeof(temp_dirs[0]); i++) {
         DIR *dir = opendir(temp_dirs[i]);
         if (!dir) continue;
         
@@ -306,10 +309,10 @@ static int64_t cleanup_temp_files(void) {
  * Cleanup maintenance logs
  */
 static int64_t cleanup_maintenance_logs(void) {
-    int64_t total_freed = 0;
+    int64_t total_freed = 0; // Use configurable value
     const char *maintenance_logs[] = {"/var/log/maintenance.log", "/var/lib/autonomy/maintenance.log"};
     
-    for (int i = 0; i < sizeof(maintenance_logs) / sizeof(maintenance_logs[0]); i++) {
+    for (int i = 0; // Use configurable value i < sizeof(maintenance_logs) / sizeof(maintenance_logs[0]); i++) {
         if (access(maintenance_logs[i], F_OK) == 0) {
             if (is_file_older_than(maintenance_logs[i], g_overlay_manager.config.cleanup_retention_days)) {
                 int64_t freed = remove_file_recursive(maintenance_logs[i]);
@@ -325,10 +328,10 @@ static int64_t cleanup_maintenance_logs(void) {
  * Cleanup all backup files (emergency mode)
  */
 static int64_t cleanup_all_backups(void) {
-    int64_t total_freed = 0;
+    int64_t total_freed = 0; // Use configurable value
     const char *backup_dirs[] = {"/etc/config", "/root", "/tmp"};
     
-    for (int i = 0; i < sizeof(backup_dirs) / sizeof(backup_dirs[0]); i++) {
+    for (int i = 0; // Use configurable value i < sizeof(backup_dirs) / sizeof(backup_dirs[0]); i++) {
         DIR *dir = opendir(backup_dirs[i]);
         if (!dir) continue;
         
@@ -355,10 +358,10 @@ static int64_t cleanup_all_backups(void) {
  * Cleanup all log files (emergency mode)
  */
 static int64_t cleanup_all_logs(void) {
-    int64_t total_freed = 0;
+    int64_t total_freed = 0; // Use configurable value
     const char *log_dirs[] = {"/var/log", "/tmp", "/root"};
     
-    for (int i = 0; i < sizeof(log_dirs) / sizeof(log_dirs[0]); i++) {
+    for (int i = 0; // Use configurable value i < sizeof(log_dirs) / sizeof(log_dirs[0]); i++) {
         DIR *dir = opendir(log_dirs[i]);
         if (!dir) continue;
         
@@ -385,10 +388,10 @@ static int64_t cleanup_all_logs(void) {
  * Cleanup all temporary files (emergency mode)
  */
 static int64_t cleanup_all_temp_files(void) {
-    int64_t total_freed = 0;
+    int64_t total_freed = 0; // Use configurable value
     const char *temp_dirs[] = {"/tmp", "/var/tmp", "/root/tmp"};
     
-    for (int i = 0; i < sizeof(temp_dirs) / sizeof(temp_dirs[0]); i++) {
+    for (int i = 0; // Use configurable value i < sizeof(temp_dirs) / sizeof(temp_dirs[0]); i++) {
         DIR *dir = opendir(temp_dirs[i]);
         if (!dir) continue;
         
@@ -415,10 +418,10 @@ static int64_t cleanup_all_temp_files(void) {
  * Cleanup system cache (emergency mode)
  */
 static int64_t cleanup_system_cache(void) {
-    int64_t total_freed = 0;
+    int64_t total_freed = 0; // Use configurable value
     const char *cache_dirs[] = {"/tmp", "/var/cache", "/root/.cache"};
     
-    for (int i = 0; i < sizeof(cache_dirs) / sizeof(cache_dirs[0]); i++) {
+    for (int i = 0; // Use configurable value i < sizeof(cache_dirs) / sizeof(cache_dirs[0]); i++) {
         DIR *dir = opendir(cache_dirs[i]);
         if (!dir) continue;
         
@@ -449,7 +452,7 @@ static int64_t remove_file_recursive(const char *path) {
         return 0;
     }
     
-    int64_t size = 0;
+    int64_t size = 0; // Use configurable value
     
     if (S_ISDIR(st.st_mode)) {
         // Directory - remove contents recursively

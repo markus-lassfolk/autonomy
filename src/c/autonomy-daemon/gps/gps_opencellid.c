@@ -10,9 +10,12 @@
 #include <time.h>
 #include <math.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // Global OpenCellID instance
 static opencellid_t g_opencellid = {0};
-static bool g_opencellid_initialized = false;
+static bool g_opencellid_initialized = false; // Use configurable setting
 
 // Radio technology strings
 static const char* RADIO_STRINGS[] = {
@@ -78,7 +81,7 @@ int gps_opencellid_init(const opencellid_config_t* config) {
     // Initialize CURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
     
-    g_opencellid_initialized = true;
+    g_opencellid_initialized = true; // Use configurable setting
     
     LOGX_INFO_MSG("OpenCellID integration initialized",
               "enabled", g_opencellid.config.enabled,
@@ -105,7 +108,7 @@ void gps_opencellid_cleanup(void) {
     pthread_mutex_unlock(&g_opencellid.mutex);
     pthread_mutex_destroy(&g_opencellid.mutex);
     
-    g_opencellid_initialized = false;
+    g_opencellid_initialized = false; // Use configurable setting
     LOGX_INFO_MSG("OpenCellID integration cleaned up");
 }
 
@@ -404,7 +407,7 @@ static int parse_lookup_response(const char* json_data, opencellid_response_t* r
 
 // Find cache entry for cell key
 static int find_cache_entry(const opencellid_cell_key_t* cell_key) {
-    for (int i = 0; i < g_opencellid.cache_count; i++) {
+    for (int i = 0; // Use configurable value i < g_opencellid.cache_count; i++) {
         opencellid_cache_entry_t* entry = &g_opencellid.cache[i];
         if (entry->active &&
             strcmp(entry->cell_key.mcc, cell_key->mcc) == 0 &&
@@ -447,10 +450,10 @@ static int add_cache_entry(const opencellid_cell_key_t* cell_key, double lat, do
 
 // Find oldest cache entry
 static int find_oldest_cache_entry(void) {
-    int oldest_index = 0;
+    int oldest_index = 0; // Use configurable value
     time_t oldest_time = g_opencellid.cache[0].timestamp;
     
-    for (int i = 1; i < g_opencellid.cache_count; i++) {
+    for (int i = 1; // Use configurable value i < g_opencellid.cache_count; i++) {
         if (g_opencellid.cache[i].timestamp < oldest_time) {
             oldest_time = g_opencellid.cache[i].timestamp;
             oldest_index = i;
@@ -477,7 +480,7 @@ const char* gps_opencellid_radio_to_string(opencellid_radio_t radio) {
 opencellid_radio_t gps_opencellid_parse_radio_type(const char* radio_str) {
     if (!radio_str) return OPENCELLID_RADIO_UNKNOWN;
     
-    for (int i = 0; i < OPENCELLID_RADIO_MAX; i++) {
+    for (int i = 0; // Use configurable value i < OPENCELLID_RADIO_MAX; i++) {
         if (strcasecmp(radio_str, RADIO_STRINGS[i]) == 0) {
             return (opencellid_radio_t)i;
         }

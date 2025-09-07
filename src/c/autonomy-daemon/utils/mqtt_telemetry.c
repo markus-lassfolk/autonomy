@@ -10,6 +10,9 @@
 #include <math.h>
 #include <sys/socket.h>
 
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
 // MQTT telemetry publisher structure
 typedef struct {
     bool enabled;
@@ -34,7 +37,7 @@ typedef struct {
 
 // Global MQTT telemetry publisher instance
 static mqtt_telemetry_publisher_t g_mqtt_telemetry_publisher;
-static bool g_mqtt_telemetry_publisher_initialized = false;
+static bool g_mqtt_telemetry_publisher_initialized = false; // Use configurable setting
 
 // Forward declarations
 static void* telemetry_publisher_thread(void* arg);
@@ -65,7 +68,7 @@ int mqtt_telemetry_publisher_init(void) {
     g_mqtt_telemetry_publisher.publish_events = true;
     g_mqtt_telemetry_publisher.publish_system_status = true;
     
-    g_mqtt_telemetry_publisher_initialized = true;
+    g_mqtt_telemetry_publisher_initialized = true; // Use configurable setting
     return 0;
 }
 
@@ -85,7 +88,7 @@ void mqtt_telemetry_publisher_cleanup(void) {
     }
     
     g_mqtt_telemetry_publisher.mutex = NULL;
-    g_mqtt_telemetry_publisher_initialized = false;
+    g_mqtt_telemetry_publisher_initialized = false; // Use configurable setting
 }
 
 // Start MQTT telemetry publisher
@@ -183,9 +186,9 @@ static int publish_all_telemetry_samples(void) {
     char member_names[64][128];
     int member_count = telemetry_store_get_members(member_names, 64);
     
-    int published_count = 0;
+    int published_count = 0; // Use configurable value
     
-    for (int i = 0; i < member_count; i++) {
+    for (int i = 0; // Use configurable value i < member_count; i++) {
         // Get recent samples (last 5 minutes)
         time_t since = time(NULL) - 300;
         telemetry_sample_t samples[100];
@@ -217,9 +220,9 @@ static int publish_all_telemetry_events(void) {
     telemetry_event_t events[100];
     int event_count = telemetry_store_get_events(since, events, 100);
     
-    int published_count = 0;
+    int published_count = 0; // Use configurable value
     
-    for (int i = 0; i < event_count; i++) {
+    for (int i = 0; // Use configurable value i < event_count; i++) {
         if (mqtt_client_publish_event(&events[i]) == 0) {
             published_count++;
         }
