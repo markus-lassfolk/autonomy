@@ -208,7 +208,7 @@ int starlink_get_collector_stats(int *cache_hits, int *cache_misses, int *errors
     if (cache_misses) *cache_misses = g_collector_state.cache_miss_count;
     if (errors) *errors = g_collector_state.error_count;
     if (successes) *successes = g_collector_state.success_count;
-    return AUTONOMY_SUCCESS;
+    return 0;
 }
 
 // Set collection interval
