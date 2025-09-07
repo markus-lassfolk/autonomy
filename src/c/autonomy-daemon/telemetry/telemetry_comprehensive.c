@@ -377,7 +377,7 @@ int telemetry_comprehensive_collect_sample(const char* member_name,
         // Try to get current GPS data for location reference
         standardized_gps_data_t gps_data;
         if (gps_comprehensive_is_initialized() && 
-            gps_comprehensive_collect_best_gps(&gps_data) == AUTONOMY_SUCCESS && gps_data.valid) {
+            gps_comprehensive_collect_best(&gps_data) == AUTONOMY_SUCCESS && gps_data.valid) {
             
             uint32_t location_id;
             if (gps_location_reference_get_or_create(gps_data.latitude, gps_data.longitude,
@@ -577,7 +577,7 @@ static int collect_current_telemetry(void) {
     standardized_gps_data_t gps_data;
     bool gps_valid = false;
     if (gps_comprehensive_is_initialized() && 
-        gps_comprehensive_collect_best_gps(&gps_data) == AUTONOMY_SUCCESS) {
+        gps_comprehensive_collect_best(&gps_data) == AUTONOMY_SUCCESS) {
         gps_valid = gps_data.valid;
     }
     
@@ -883,7 +883,7 @@ static int insert_decision_to_database(const decision_record_t* decision) {
 }
 
 // Perform database cleanup
-static int perform_database_cleanup(void) {
+int perform_database_cleanup(void) {
     if (!g_telemetry_comprehensive.db) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -921,7 +921,15 @@ static int export_ml_dataset(void) {
     
     // Placeholder implementation
     LOGX_INFO_MSG("ML dataset export placeholder");
-    g_telemetry_comprehensive.stats.ml_exports++;
+    g_telemetry_comprehensive.stats.last_ml_export = time(NULL);
     
     return AUTONOMY_SUCCESS;
+}// Close telemetry database
+void telemetry_db_close(void) {
+    if (g_telemetry_comprehensive.db) {
+        sqlite3_close(g_telemetry_comprehensive.db);
+        g_telemetry_comprehensive.db = NULL;
+        g_telemetry_comprehensive.db_initialized = false;
+        LOGX_INFO_MSG("Telemetry database closed");
+    }
 }

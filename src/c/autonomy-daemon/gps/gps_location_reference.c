@@ -383,45 +383,7 @@ static int find_nearby_location_reference(double latitude, double longitude, uin
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
-// Initialize location database
-static int init_location_database(void) {
-    // Placeholder implementation
-    g_location_ref_manager.db_initialized = true;
-    return AUTONOMY_SUCCESS;
-}
-
-// Close location database
-static void close_location_database(void) {
-    if (g_location_ref_manager.db) {
-        sqlite3_close(g_location_ref_manager.db);
-        g_location_ref_manager.db = NULL;
-        g_location_ref_manager.db_initialized = false;
-    }
-}
-
-// Cleanup thread worker
-static void* cleanup_thread_worker(void* arg) {
-    (void)arg; // Suppress unused parameter warning
-    
-    LOGX_INFO_MSG("GPS location reference cleanup thread started",
-             "cleanup_interval_hours", g_location_ref_manager.config.cleanup_interval_hours);
-    
-    while (g_location_ref_initialized && g_location_ref_manager.thread_running) {
-        sleep(g_location_ref_manager.config.cleanup_interval_hours * 3600);
-        
-        if (!g_location_ref_manager.thread_running) break;
-        
-        // Perform cleanup
-        int cleaned_up = gps_location_reference_force_cleanup();
-        if (cleaned_up > 0) {
-            LOGX_INFO_MSG("GPS location reference cleanup completed",
-                     "locations_cleaned", cleaned_up);
-        }
-    }
-    
-    LOGX_INFO_MSG("GPS location reference cleanup thread stopped");
-    return NULL;
-}
+// Note: Functions implemented above
 
 bool gps_location_reference_is_initialized(void) {
     return g_location_ref_initialized;

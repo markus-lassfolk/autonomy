@@ -302,9 +302,7 @@ typedef enum {
 
 // Note: gps_source_health_t and gps_movement_state_t are defined in gps/gps_comprehensive.h
 
-// Forward declarations for OpenCellID types (defined in gps/opencellid_complete.h)
-typedef struct opencellid_cellular_environment opencellid_cellular_environment_t;
-typedef struct opencellid_triangulation_result opencellid_triangulation_result_t;
+// Note: OpenCellID types defined in gps/opencellid_complete.h
 
 // GPS fix types
 typedef enum {
@@ -416,19 +414,7 @@ typedef enum {
     GPS_RECOVERY_SWITCH_SOURCE
 } gps_recovery_strategy_t;
 
-// OpenCellID radio types (unified)
-typedef enum {
-    OPENCELLID_RADIO_UNKNOWN = 0,
-    OPENCELLID_RADIO_GSM = 1,
-    OPENCELLID_RADIO_UMTS = 2,
-    OPENCELLID_RADIO_LTE = 3,
-    OPENCELLID_RADIO_NR = 4,
-    OPENCELLID_RADIO_CDMA = 5,
-    OPENCELLID_RADIO_MAX
-} opencellid_radio_type_t;
-
-// Alias for compatibility
-typedef opencellid_radio_type_t opencellid_radio_t;
+// Note: OpenCellID radio types defined in gps/opencellid_complete.h
 
 // Note: opencellid_cellular_environment_t is defined in gps/opencellid_complete.h
 
