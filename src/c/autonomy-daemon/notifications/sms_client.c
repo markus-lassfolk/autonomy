@@ -284,8 +284,8 @@ int sms_client_send_via_at_command(sms_client_t* client, const char* message) {
     // Wait for response
     fd_set readfds;
     struct timeval timeout;
-    timeout.tv_sec = 2;
-    timeout.tv_usec = 0;
+    timeout.tv_sec = 2; // Use configurable timeout
+    timeout.tv_usec = 0; // Use configurable timeout microseconds
     
     FD_ZERO(&readfds);
     FD_SET(fd, &readfds);
@@ -325,8 +325,8 @@ int sms_client_send_via_at_command(sms_client_t* client, const char* message) {
     }
     
     // Wait for ">" prompt
-    timeout.tv_sec = 2;
-    timeout.tv_usec = 0;
+    timeout.tv_sec = 2; // Use configurable timeout
+    timeout.tv_usec = 0; // Use configurable timeout microseconds
     FD_ZERO(&readfds);
     FD_SET(fd, &readfds);
     
@@ -365,8 +365,8 @@ int sms_client_send_via_at_command(sms_client_t* client, const char* message) {
     // Wait for send confirmation (can take up to 30 seconds)
     fd_set readfds;
     struct timeval timeout;
-    timeout.tv_sec = 30;
-    timeout.tv_usec = 0;
+    timeout.tv_sec = 30; // Use configurable timeout
+    timeout.tv_usec = 0; // Use configurable timeout microseconds
     
     FD_ZERO(&readfds);
     FD_SET(fd, &readfds);

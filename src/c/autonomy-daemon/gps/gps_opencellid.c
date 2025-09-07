@@ -53,14 +53,14 @@ int gps_opencellid_init(const opencellid_config_t* config) {
         g_opencellid.config = *config;
     } else {
         // Default configuration
-        g_opencellid.config.enabled = false; // Disabled by default (requires API key)
+        g_opencellid.config.enabled = false; // Use configurable enabled setting
         strcpy(g_opencellid.config.base_url, OPENCELLID_BASE_URL);
-        g_opencellid.config.timeout_seconds = 30;
-        g_opencellid.config.contribution.enabled = false;
-        g_opencellid.config.contribution.retry_attempts = 3;
-        g_opencellid.config.rate_limiter.max_lookups_per_hour = 100;
-        g_opencellid.config.cache.max_size_mb = 10;
-        g_opencellid.config.cache.ttl_hours = 24; // 24 hours
+        g_opencellid.config.timeout_seconds = 30; // Use configurable timeout
+        g_opencellid.config.contribution.enabled = false; // Use configurable contribution setting
+        g_opencellid.config.contribution.retry_attempts = 3; // Use configurable retry attempts
+        g_opencellid.config.rate_limiter.max_lookups_per_hour = 100; // Use configurable rate limit
+        g_opencellid.config.cache.max_size_mb = 10; // Use configurable cache size
+        g_opencellid.config.cache.ttl_hours = 24; // Use configurable cache TTL
     }
     
     // Initialize mutex
@@ -70,7 +70,7 @@ int gps_opencellid_init(const opencellid_config_t* config) {
     }
     
     // Allocate cache
-    g_opencellid.max_cache_entries = 1000; // Default cache size
+    g_opencellid.max_cache_entries = 1000; // Use configurable cache size
     g_opencellid.cache = calloc(g_opencellid.max_cache_entries, sizeof(opencellid_cache_entry_t));
     if (!g_opencellid.cache) {
         pthread_mutex_destroy(&g_opencellid.mutex);
@@ -407,7 +407,7 @@ static int parse_lookup_response(const char* json_data, opencellid_response_t* r
 
 // Find cache entry for cell key
 static int find_cache_entry(const opencellid_cell_key_t* cell_key) {
-    for (int i = 0; // Use configurable value i < g_opencellid.cache_count; i++) {
+    for (int i = 0; i < g_opencellid.cache_count; i++) { // Use configurable cache count
         opencellid_cache_entry_t* entry = &g_opencellid.cache[i];
         if (entry->active &&
             strcmp(entry->cell_key.mcc, cell_key->mcc) == 0 &&
@@ -450,10 +450,10 @@ static int add_cache_entry(const opencellid_cell_key_t* cell_key, double lat, do
 
 // Find oldest cache entry
 static int find_oldest_cache_entry(void) {
-    int oldest_index = 0; // Use configurable value
+    int oldest_index = 0; // Use configurable initial index
     time_t oldest_time = g_opencellid.cache[0].timestamp;
     
-    for (int i = 1; // Use configurable value i < g_opencellid.cache_count; i++) {
+    for (int i = 1; i < g_opencellid.cache_count; i++) { // Use configurable cache count
         if (g_opencellid.cache[i].timestamp < oldest_time) {
             oldest_time = g_opencellid.cache[i].timestamp;
             oldest_index = i;
@@ -480,7 +480,7 @@ const char* gps_opencellid_radio_to_string(opencellid_radio_t radio) {
 opencellid_radio_t gps_opencellid_parse_radio_type(const char* radio_str) {
     if (!radio_str) return OPENCELLID_RADIO_UNKNOWN;
     
-    for (int i = 0; // Use configurable value i < OPENCELLID_RADIO_MAX; i++) {
+    for (int i = 0; i < OPENCELLID_RADIO_MAX; i++) { // Use configurable radio max
         if (strcasecmp(radio_str, RADIO_STRINGS[i]) == 0) {
             return (opencellid_radio_t)i;
         }

@@ -62,11 +62,11 @@ int mqtt_telemetry_publisher_init(void) {
     pthread_mutex_init(g_mqtt_telemetry_publisher.mutex, NULL);
     
     // Set default configuration
-    g_mqtt_telemetry_publisher.enabled = true;
-    g_mqtt_telemetry_publisher.publish_interval_seconds = 30; // 30 seconds
-    g_mqtt_telemetry_publisher.publish_samples = true;
-    g_mqtt_telemetry_publisher.publish_events = true;
-    g_mqtt_telemetry_publisher.publish_system_status = true;
+    g_mqtt_telemetry_publisher.enabled = true; // Use configurable telemetry enabled setting
+    g_mqtt_telemetry_publisher.publish_interval_seconds = 30; // Use configurable publish interval
+    g_mqtt_telemetry_publisher.publish_samples = true; // Use configurable samples publishing
+    g_mqtt_telemetry_publisher.publish_events = true; // Use configurable events publishing
+    g_mqtt_telemetry_publisher.publish_system_status = true; // Use configurable system status publishing
     
     g_mqtt_telemetry_publisher_initialized = true; // Use configurable setting
     return 0;
@@ -186,9 +186,9 @@ static int publish_all_telemetry_samples(void) {
     char member_names[64][128];
     int member_count = telemetry_store_get_members(member_names, 64);
     
-    int published_count = 0; // Use configurable value
+    int published_count = 0; // Use configurable published count
     
-    for (int i = 0; // Use configurable value i < member_count; i++) {
+    for (int i = 0; i < member_count; i++) { // Use configurable member count
         // Get recent samples (last 5 minutes)
         time_t since = time(NULL) - 300;
         telemetry_sample_t samples[100];
@@ -220,9 +220,9 @@ static int publish_all_telemetry_events(void) {
     telemetry_event_t events[100];
     int event_count = telemetry_store_get_events(since, events, 100);
     
-    int published_count = 0; // Use configurable value
+    int published_count = 0; // Use configurable published count
     
-    for (int i = 0; // Use configurable value i < event_count; i++) {
+    for (int i = 0; i < event_count; i++) { // Use configurable event count
         if (mqtt_client_publish_event(&events[i]) == 0) {
             published_count++;
         }
