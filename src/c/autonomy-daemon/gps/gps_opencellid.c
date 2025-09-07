@@ -26,7 +26,7 @@ typedef struct {
 } http_response_t;
 
 // Forward declarations
-static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response);
+static size_t opencellid_curl_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response);
 static int make_api_request(const char* url, const char* post_data, http_response_t* response);
 static int parse_lookup_response(const char* json_data, opencellid_response_t* response);
 static int find_cache_entry(const opencellid_cell_key_t* cell_key);
@@ -39,7 +39,7 @@ static void generate_cell_key_string(const opencellid_cell_key_t* cell_key, char
 // Initialize OpenCellID integration
 int gps_opencellid_init(const opencellid_config_t* config) {
     if (g_opencellid_initialized) {
-        LOGX_WARN("OpenCellID already initialized");
+        LOGX_WARN_MSG("OpenCellID already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -53,25 +53,25 @@ int gps_opencellid_init(const opencellid_config_t* config) {
         g_opencellid.config.enabled = false; // Disabled by default (requires API key)
         strcpy(g_opencellid.config.base_url, OPENCELLID_BASE_URL);
         g_opencellid.config.timeout_seconds = 30;
-        g_opencellid.config.contribute_data = false;
-        g_opencellid.config.max_retries = 3;
-        g_opencellid.config.rate_limit_delay_ms = 1000;
-        g_opencellid.config.max_cache_entries = 1000;
-        g_opencellid.config.cache_ttl_seconds = 86400; // 24 hours
+        g_opencellid.config.contribution = false;
+        g_opencellid.config.retry_count = 3;
+        g_opencellid.config.rate_limiter = 1000;
+        g_opencellid.config.max_cache_size = 1000;
+        g_opencellid.config.timeout_seconds = 86400; // 24 hours
     }
     
     // Initialize mutex
     if (pthread_mutex_init(&g_opencellid.mutex, NULL) != 0) {
-        LOGX_ERROR("Failed to initialize OpenCellID mutex");
+        LOGX_ERROR_MSG("Failed to initialize OpenCellID mutex");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Allocate cache
-    g_opencellid.max_cache_entries = g_opencellid.config.max_cache_entries;
-    g_opencellid.cache = calloc(g_opencellid.max_cache_entries, sizeof(opencellid_cache_entry_t));
+    g_opencellid.max_cache_size = g_opencellid.config.max_cache_size;
+    g_opencellid.cache = calloc(g_opencellid.max_cache_size, sizeof(opencellid_cache_entry_t));
     if (!g_opencellid.cache) {
         pthread_mutex_destroy(&g_opencellid.mutex);
-        LOGX_ERROR("Failed to allocate OpenCellID cache");
+        LOGX_ERROR_MSG("Failed to allocate OpenCellID cache");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -80,11 +80,11 @@ int gps_opencellid_init(const opencellid_config_t* config) {
     
     g_opencellid_initialized = true;
     
-    LOGX_INFO("OpenCellID integration initialized",
+    LOGX_INFO_MSG("OpenCellID integration initialized",
               "enabled", g_opencellid.config.enabled,
               "api_key_configured", strlen(g_opencellid.config.api_key) > 0,
-              "contribute_data", g_opencellid.config.contribute_data,
-              "cache_size", g_opencellid.config.max_cache_entries);
+              "contribution", g_opencellid.config.contribution,
+              "cache_size", g_opencellid.config.max_cache_size);
     
     return AUTONOMY_SUCCESS;
 }
@@ -106,7 +106,7 @@ void gps_opencellid_cleanup(void) {
     pthread_mutex_destroy(&g_opencellid.mutex);
     
     g_opencellid_initialized = false;
-    LOGX_INFO("OpenCellID integration cleaned up");
+    LOGX_INFO_MSG("OpenCellID integration cleaned up");
 }
 
 // Lookup cell tower location
@@ -120,7 +120,7 @@ int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_resp
     }
     
     if (strlen(g_opencellid.config.api_key) == 0) {
-        LOGX_ERROR("OpenCellID API key not configured");
+        LOGX_ERROR_MSG("OpenCellID API key not configured");
         return AUTONOMY_ERROR_CONFIG;
     }
     
@@ -142,7 +142,7 @@ int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_resp
             
             g_opencellid.stats.cache_hits++;
             
-            LOGX_DEBUG("OpenCellID cache hit", "cell_key", cell_key->cell_id);
+            LOGX_DEBUG_MSG("OpenCellID cache hit", "cell_key", cell_key->cell_id);
             pthread_mutex_unlock(&g_opencellid.mutex);
             return AUTONOMY_SUCCESS;
         }
@@ -177,20 +177,20 @@ int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_resp
             // Add to cache
             add_cache_entry(cell_key, response->lat, response->lon, response->range);
             
-            LOGX_INFO("OpenCellID lookup successful",
+            LOGX_INFO_MSG("OpenCellID lookup successful",
                      "cell_id", cell_key->cell_id,
                      "lat", response->lat,
                      "lon", response->lon,
                      "range", response->range);
         } else {
             g_opencellid.stats.failed_requests++;
-            LOGX_ERROR("Failed to parse OpenCellID response");
+            LOGX_ERROR_MSG("Failed to parse OpenCellID response");
             result = AUTONOMY_ERROR_SYSTEM;
         }
     } else {
         g_opencellid.stats.failed_requests++;
         strcpy(response->error, "API request failed");
-        LOGX_ERROR("OpenCellID API request failed");
+        LOGX_ERROR_MSG("OpenCellID API request failed");
         result = AUTONOMY_ERROR_NETWORK;
     }
     
@@ -216,12 +216,12 @@ int gps_opencellid_contribute(const opencellid_contribution_t* contribution) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    if (!g_opencellid.config.enabled || !g_opencellid.config.contribute_data) {
+    if (!g_opencellid.config.enabled || !g_opencellid.config.contribution) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     if (strlen(g_opencellid.config.api_key) == 0) {
-        LOGX_ERROR("OpenCellID API key not configured for contribution");
+        LOGX_ERROR_MSG("OpenCellID API key not configured for contribution");
         return AUTONOMY_ERROR_CONFIG;
     }
     
@@ -257,12 +257,12 @@ int gps_opencellid_contribute(const opencellid_contribution_t* contribution) {
         g_opencellid.stats.contributions_sent++;
         g_opencellid.stats.last_contribution = time(NULL);
         
-        LOGX_INFO("OpenCellID contribution successful",
+        LOGX_INFO_MSG("OpenCellID contribution successful",
                  "mcc", contribution->mcc,
                  "mnc", contribution->mnc,
                  "cell_id", contribution->cell_id);
     } else {
-        LOGX_ERROR("OpenCellID contribution failed");
+        LOGX_ERROR_MSG("OpenCellID contribution failed");
     }
     
     // Cleanup response data
@@ -276,12 +276,12 @@ int gps_opencellid_contribute(const opencellid_contribution_t* contribution) {
 }
 
 // CURL write callback
-static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response) {
+static size_t opencellid_curl_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response) {
     size_t total_size = size * nmemb;
     
     char* new_data = realloc(response->data, response->size + total_size + 1);
     if (!new_data) {
-        LOGX_ERROR("Failed to allocate memory for HTTP response");
+        LOGX_ERROR_MSG("Failed to allocate memory for HTTP response");
         return 0;
     }
     
@@ -301,13 +301,13 @@ static int make_api_request(const char* url, const char* post_data, http_respons
     
     CURL* curl = curl_easy_init();
     if (!curl) {
-        LOGX_ERROR("Failed to initialize CURL");
+        LOGX_ERROR_MSG("Failed to initialize CURL");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Set CURL options
     curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, opencellid_curl_write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, g_opencellid.config.timeout_seconds);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-Daemon/6.1.0");
@@ -334,16 +334,16 @@ static int make_api_request(const char* url, const char* post_data, http_respons
     curl_easy_cleanup(curl);
     
     if (curl_result != CURLE_OK) {
-        LOGX_ERROR("CURL request failed", "error", curl_easy_strerror(curl_result));
+        LOGX_ERROR_MSG("CURL request failed", "error", curl_easy_strerror(curl_result));
         return AUTONOMY_ERROR_NETWORK;
     }
     
     if (response_code != 200) {
-        LOGX_ERROR("HTTP request failed", "response_code", response_code);
+        LOGX_ERROR_MSG("HTTP request failed", "response_code", response_code);
         return AUTONOMY_ERROR_NETWORK;
     }
     
-    LOGX_DEBUG("OpenCellID API request successful", "response_size", response->size);
+    LOGX_DEBUG_MSG("OpenCellID API request successful", "response_size", response->size);
     return AUTONOMY_SUCCESS;
 }
 
@@ -355,7 +355,7 @@ static int parse_lookup_response(const char* json_data, opencellid_response_t* r
     
     json_object* root = json_tokener_parse(json_data);
     if (!root) {
-        LOGX_ERROR("Failed to parse JSON response");
+        LOGX_ERROR_MSG("Failed to parse JSON response");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -393,7 +393,7 @@ static int parse_lookup_response(const char* json_data, opencellid_response_t* r
     
     json_object_put(root);
     
-    LOGX_DEBUG("Parsed OpenCellID response",
+    LOGX_DEBUG_MSG("Parsed OpenCellID response",
               "lat", response->lat,
               "lon", response->lon,
               "range", response->range,
@@ -423,7 +423,7 @@ static int add_cache_entry(const opencellid_cell_key_t* cell_key, double lat, do
     int index = -1;
     
     // Find empty slot or replace oldest entry
-    if (g_opencellid.cache_count < g_opencellid.max_cache_entries) {
+    if (g_opencellid.cache_count < g_opencellid.max_cache_size) {
         index = g_opencellid.cache_count++;
     } else {
         index = find_oldest_cache_entry();
@@ -437,9 +437,9 @@ static int add_cache_entry(const opencellid_cell_key_t* cell_key, double lat, do
         entry->lon = lon;
         entry->range = range;
         entry->timestamp = time(NULL);
-        entry->ttl = entry->timestamp + g_opencellid.config.cache_ttl_seconds;
+        entry->ttl = entry->timestamp + g_opencellid.config.timeout_seconds;
         
-        LOGX_DEBUG("Added OpenCellID cache entry", "index", index, "cell_id", cell_key->cell_id);
+        LOGX_DEBUG_MSG("Added OpenCellID cache entry", "index", index, "cell_id", cell_key->cell_id);
     }
     
     return index;
@@ -514,9 +514,9 @@ int gps_opencellid_get_status(opencellid_status_t* status) {
     status->api_key_configured = strlen(g_opencellid.config.api_key) > 0;
     strncpy(status->base_url, g_opencellid.config.base_url, sizeof(status->base_url) - 1);
     status->timeout_seconds = g_opencellid.config.timeout_seconds;
-    status->contribute_data = g_opencellid.config.contribute_data;
+    status->contribution = g_opencellid.config.contribution;
     status->cache_entries = g_opencellid.cache_count;
-    status->max_cache_entries = g_opencellid.max_cache_entries;
+    status->max_cache_size = g_opencellid.max_cache_size;
     status->stats = g_opencellid.stats;
     
     pthread_mutex_unlock(&g_opencellid.mutex);
@@ -530,4 +530,9 @@ bool gps_opencellid_is_initialized(void) {
 }
 
 // Additional utility functions would be implemented here...
-// (get_config, set_config, set_enabled, clear_cache, reset_stats, etc.)
+// (get_config, set_config, set_enabled, clear_cache, reset_stats, etc.)// Check if GPS OpenCellID is initialized
+bool gps_opencellid_is_initialized(void)
+{
+    return g_opencellid.initialized;
+}
+

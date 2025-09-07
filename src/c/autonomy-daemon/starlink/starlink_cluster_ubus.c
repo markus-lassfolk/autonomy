@@ -22,7 +22,7 @@ int autonomy_starlink_cluster_status(struct ubus_context *uctx, struct ubus_obje
         blobmsg_add_u32(&bb, "failover_count", cluster.failover_count);
         blobmsg_add_u8(&bb, "auto_failover_enabled", cluster.auto_failover_enabled);
         blobmsg_add_u32(&bb, "failover_threshold", cluster.failover_threshold);
-        blobmsg_add_f32(&bb, "min_health_score", cluster.min_health_score);
+        blobmsg_add_double(&bb, "min_health_score", cluster.min_health_score);
         
         if (cluster.last_failover > 0) {
             blobmsg_add_u32(&bb, "last_failover", cluster.last_failover);
@@ -50,9 +50,9 @@ int autonomy_starlink_cluster_status(struct ubus_context *uctx, struct ubus_obje
             
             blobmsg_add_u32(&bb, "consecutive_successes", instance->consecutive_successes);
             blobmsg_add_u32(&bb, "consecutive_failures", instance->consecutive_failures);
-            blobmsg_add_f32(&bb, "average_latency_ms", instance->average_latency);
-            blobmsg_add_f32(&bb, "average_throughput_mbps", instance->average_throughput);
-            blobmsg_add_f32(&bb, "reliability_score", instance->reliability_score);
+            blobmsg_add_double(&bb, "average_latency_ms", instance->average_latency);
+            blobmsg_add_double(&bb, "average_throughput_mbps", instance->average_throughput);
+            blobmsg_add_double(&bb, "reliability_score", instance->reliability_score);
             
             if (instance->last_result.success) {
                 blobmsg_add_u32(&bb, "health_score", instance->last_result.health.overall_score);
@@ -307,7 +307,7 @@ int autonomy_starlink_cluster_config(struct ubus_context *uctx, struct ubus_obje
     // Optional parameters
     if (tb[0]) auto_failover = blobmsg_get_u8(tb[0]);
     if (tb[1]) failover_threshold = blobmsg_get_u32(tb[1]);
-    if (tb[2]) min_health_score = blobmsg_get_f32(tb[2]);
+    if (tb[2]) min_health_score = blobmsg_get_u32(tb[2]);
     
     // Set cluster configuration
     starlink_cluster_set_config(auto_failover, failover_threshold, min_health_score);
@@ -315,7 +315,7 @@ int autonomy_starlink_cluster_config(struct ubus_context *uctx, struct ubus_obje
     blobmsg_add_string(&bb, "result", "cluster_config_updated");
     blobmsg_add_u8(&bb, "auto_failover", auto_failover);
     blobmsg_add_u32(&bb, "failover_threshold", failover_threshold);
-    blobmsg_add_f32(&bb, "min_health_score", min_health_score);
+    blobmsg_add_double(&bb, "min_health_score", min_health_score);
     blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
     
     ubus_send_reply(uctx, req, bb.head);
