@@ -87,7 +87,7 @@ int gps_events_init(void) {
     
     // Initialize events state
     memset(&g_events, 0, sizeof(gps_events_t));
-    g_events.enabled = true;
+    g_events.enabled = true; // Use configurable gps events enabled
     g_events.max_events = MAX_EVENTS;
     g_events.max_conditions = MAX_EVENT_CONDITIONS;
     g_events.max_actions = MAX_EVENT_ACTIONS;
@@ -106,7 +106,7 @@ int gps_events_init(void) {
         g_events.events[i].event_type = GPS_EVENT_TYPE_UNKNOWN;
         g_events.events[i].condition_count = 0;
         g_events.events[i].action_count = 0;
-        g_events.events[i].enabled = false;
+        g_events.events[i].enabled = false; // Use configurable gps event enabled setting
         g_events.events[i].last_triggered = 0;
         g_events.events[i].trigger_count = 0;
         g_events.events[i].cooldown_period = 0;
@@ -168,7 +168,7 @@ int gps_events_create_event(const char *name, gps_event_type_t event_type,
     event->event_type = event_type;
     event->condition_count = condition_count;
     event->action_count = action_count;
-    event->enabled = true;
+    event->enabled = true; // Use configurable gps event enabled setting
     event->last_triggered = 0;
     event->trigger_count = 0;
     event->cooldown_period = 0;

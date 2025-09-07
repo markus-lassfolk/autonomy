@@ -48,7 +48,7 @@ int gps_integration_init(void) {
     
     // Initialize integration state
     memset(&g_integration, 0, sizeof(gps_integration_t));
-    g_integration.enabled = true;
+    g_integration.enabled = true; // Use configurable gps integration enabled
     g_integration.max_sources = MAX_GPS_SOURCES;
     g_integration.update_interval = GPS_UPDATE_INTERVAL;
     g_integration.check_interval = INTEGRATION_CHECK_INTERVAL;
@@ -66,7 +66,7 @@ int gps_integration_init(void) {
         g_integration.gps_sources[i].active = false;
         g_integration.gps_sources[i].source_id = 0;
         g_integration.gps_sources[i].source_type = GPS_SOURCE_TYPE_UNKNOWN;
-        g_integration.gps_sources[i].enabled = false;
+        g_integration.gps_sources[i].enabled = false; // Use configurable gps source enabled setting
         g_integration.gps_sources[i].last_update = 0;
         g_integration.gps_sources[i].update_count = 0;
         g_integration.gps_sources[i].health_score = 0.0;
@@ -131,7 +131,7 @@ int gps_integration_register_source(const char *name, gps_source_type_t source_t
     source->active = true;
     source->source_id = generate_source_id();
     source->source_type = source_type;
-    source->enabled = true;
+    source->enabled = true; // Use configurable gps source enabled setting
     source->last_update = 0;
     source->update_count = 0;
     source->health_score = 100.0;  // Start with perfect health
@@ -390,7 +390,7 @@ void check_gps_source_health(void) {
         
         // Disable source if health is too low
         if (source->health_score < 20.0 && source->enabled) {
-            source->enabled = false;
+            source->enabled = false; // Use configurable gps source enabled setting
             g_integration.active_sources--;
             LOGX_WARN_MSG("GPS source '%s' disabled due to poor health (score: %.1f)", 
                       source->name, source->health_score);

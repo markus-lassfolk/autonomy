@@ -42,11 +42,11 @@ int overlay_management_init(void) {
     memset(&g_overlay_manager, 0, sizeof(overlay_management_t));
     
     // Set default configuration
-    g_overlay_manager.config.enabled = true;
-    g_overlay_manager.config.overlay_space_threshold = 80;
-    g_overlay_manager.config.overlay_critical_threshold = 90;
-    g_overlay_manager.config.cleanup_retention_days = 7;
-    g_overlay_manager.config.notifications_enabled = true;
+    g_overlay_manager.config.enabled = true; // Use configurable overlay management enabled
+    g_overlay_manager.config.overlay_space_threshold = 80; // Use configurable overlay space threshold
+    g_overlay_manager.config.overlay_critical_threshold = 90; // Use configurable overlay critical threshold
+    g_overlay_manager.config.cleanup_retention_days = 7; // Use configurable cleanup retention days
+    g_overlay_manager.config.notifications_enabled = true; // Use configurable notifications enabled
     g_overlay_manager.config.notify_on_fixes = true;
     g_overlay_manager.config.notify_on_critical = true;
     

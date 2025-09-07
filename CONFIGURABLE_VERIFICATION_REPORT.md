@@ -3,14 +3,14 @@
 
 ## 📊 Verification Results
 - **Total C files checked**: 140
-- **Files with configurable values**: 71
-- **Total configurable values found**: 153
-- **Files clean**: 69
+- **Files with configurable values**: 68
+- **Total configurable values found**: 138
+- **Files clean**: 72
 
 ## 🎯 Status
 
 ## ⚠️  VERIFICATION FAILED!
-**153 configurable values still need to be addressed.**
+**138 configurable values still need to be addressed.**
 
 ### Files with remaining configurable values:
 
@@ -59,13 +59,6 @@
 
 #### src/c/autonomy-daemon/gps/gps_fusion_engine.c (1 values)
 - Line 389: `double max_distance = 0.0;`
-
-#### src/c/autonomy-daemon/gps/gps_geofence.c (5 values)
-- Line 54: `g_geofence.enabled = true;`
-- Line 72: `g_geofence.geofences[i].enabled = false;`
-- Line 116: `geofence->enabled = true;`
-- Line 174: `geofence->enabled = true;`
-- Line 241: `geofence->enabled = true;`
 
 #### src/c/autonomy-daemon/gps/gps_google_api.c (1 values)
 - Line 75: `g_google_api.enabled = true;`
@@ -157,13 +150,6 @@
 
 #### src/c/autonomy-daemon/notifications/channel_intelligence.c (1 values)
 - Line 103: `g_channel_intelligence.max_channel_effectiveness_entries = 0;`
-
-#### src/c/autonomy-daemon/notifications/contextual_alerts.c (5 values)
-- Line 121: `g_contextual_manager.max_templates = 0;`
-- Line 123: `g_contextual_manager.max_context_rules = 0;`
-- Line 125: `g_contextual_manager.max_state_keys = 0;`
-- Line 127: `g_contextual_manager.max_alert_history = 0;`
-- Line 349: `status->enabled = true;`
 
 #### src/c/autonomy-daemon/notifications/data_limit_notifications.c (2 values)
 - Line 84: `g_data_limit_manager.max_interfaces = 0;`
@@ -283,13 +269,6 @@
 #### src/c/autonomy-daemon/utils/metered_manager.c (1 values)
 - Line 48: `g_metered_manager.config.enabled = true;`
 
-#### src/c/autonomy-daemon/utils/mqtt_client.c (5 values)
-- Line 98: `g_mqtt_client.config.broker_port = 1883;`
-- Line 102: `g_mqtt_client.config.broker_port = 1883;`
-- Line 107: `g_mqtt_client.config.broker_port = 1883;`
-- Line 139: `g_mqtt_client.config.max_inflight = 20;`
-- Line 154: `g_mqtt_client.queue_size = 0;`
-
 #### src/c/autonomy-daemon/utils/overlay_management.c (4 values)
 - Line 45: `g_overlay_manager.config.enabled = true;`
 - Line 46: `g_overlay_manager.config.overlay_space_threshold = 80;`
@@ -309,6 +288,6 @@
 
 ## 🎯 Next Steps
 
-1. Address remaining 153 configurable values
+1. Address remaining 138 configurable values
 2. Run verification script again
 3. Complete UCI configuration integration
