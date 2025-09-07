@@ -242,30 +242,6 @@ int starlink_force_collect(starlink_collection_result_t *result) {
 }
 
 // Get Starlink location (cached if available)
-int starlink_get_location(starlink_lla_position_t *location) {
-    if (!location) {
-        return -1;
-    }
-    
-    starlink_collection_result_t result;
-    if (starlink_get_cached_data(&result) == 0) {
-        // Extract location from cached data
-        location->lat = result.status.location.lat;
-        location->lon = result.status.location.lon;
-        location->alt = 0.0; // Altitude not available in basic status
-        return 0;
-    }
-    
-    // Try to collect fresh data
-    if (starlink_collect_data(&result) == 0 && result.success) {
-        location->lat = result.status.location.lat;
-        location->lon = result.status.location.lon;
-        location->alt = 0.0;
-        return 0;
-    }
-    
-    return -1;
-}
 
 // Get Starlink health status
 int starlink_get_health(starlink_health_t *health) {
