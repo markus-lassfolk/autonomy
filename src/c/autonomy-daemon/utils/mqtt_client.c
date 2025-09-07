@@ -315,7 +315,47 @@ int mqtt_client_unsubscribe(const char* topic) {
         return -1;
     }
     
-    // Simplified unsubscribe - just return success for now
+    pthread_mutex_lock(g_mqtt_client.mutex);
+    
+    // Create MQTT UNSUBSCRIBE packet
+    uint8_t packet[256];
+    int packet_length = mqtt_create_unsubscribe_packet(topic, packet, sizeof(packet));
+    
+    if (packet_length <= 0) {
+        pthread_mutex_unlock(g_mqtt_client.mutex);
+        return -1;
+    }
+    
+    // Send packet
+    if (mqtt_send_packet(packet, packet_length) != 0) {
+        pthread_mutex_unlock(g_mqtt_client.mutex);
+        return -1;
+    }
+    
+    // Wait for UNSUBACK response
+    uint8_t response[256];
+    int response_length = mqtt_receive_packet(response, sizeof(response));
+    if (response_length > 0) {
+        // Parse UNSUBACK packet
+        if ((response[0] & 0xF0) != MQTT_UNSUBACK_PACKET) {
+            LOGX_WARN_MSG("Did not receive UNSUBACK for unsubscribe request");
+        }
+    }
+    
+    // Remove from subscription list (if we maintain one)
+    for (int i = 0; i < g_mqtt_client.subscription_count; i++) {
+        if (strcmp(g_mqtt_client.subscriptions[i], topic) == 0) {
+            // Shift remaining subscriptions
+            for (int j = i; j < g_mqtt_client.subscription_count - 1; j++) {
+                strcpy(g_mqtt_client.subscriptions[j], g_mqtt_client.subscriptions[j + 1]);
+            }
+            g_mqtt_client.subscription_count--;
+            break;
+        }
+    }
+    
+    pthread_mutex_unlock(g_mqtt_client.mutex);
+    
     return 0;
 }
 
@@ -562,11 +602,49 @@ static int mqtt_parse_connack(const uint8_t* packet, int length) {
 
 // Parse SUBACK packet
 static int mqtt_parse_suback(const uint8_t* packet, int length) {
-    if (!packet || length < 4) return -1;
+    if (!packet || length < 5) return -1;
     
-    if (packet[0] != MQTT_SUBACK_PACKET) return -1;
+    // Check packet type
+    if ((packet[0] & 0xF0) != MQTT_SUBACK_PACKET) return -1;
     
-    return 0; // Simplified parsing
+    // Parse remaining length
+    int remaining_length = 0;
+    int multiplier = 1;
+    int pos = 1;
+    uint8_t encoded_byte;
+    
+    do {
+        if (pos >= length) return -1;
+        encoded_byte = packet[pos++];
+        remaining_length += (encoded_byte & 127) * multiplier;
+        multiplier *= 128;
+        if (multiplier > 128*128*128) return -1; // Malformed length
+    } while ((encoded_byte & 128) != 0);
+    
+    // Check we have enough data
+    if (pos + remaining_length > length) return -1;
+    
+    // Parse packet identifier (2 bytes)
+    if (remaining_length < 2) return -1;
+    uint16_t packet_id = (packet[pos] << 8) | packet[pos + 1];
+    pos += 2;
+    
+    // Parse return codes
+    int return_code_count = remaining_length - 2;
+    for (int i = 0; i < return_code_count; i++) {
+        if (pos >= length) return -1;
+        uint8_t return_code = packet[pos++];
+        
+        // Check if subscription was successful
+        // 0x00, 0x01, 0x02 are successful QoS grants
+        // 0x80 is failure
+        if (return_code == 0x80) {
+            LOGX_WARN_MSG("MQTT subscription failed for topic at position %d", i);
+            return -1;
+        }
+    }
+    
+    return 0; // All subscriptions successful
 }
 
 // Get MQTT client status
@@ -591,4 +669,135 @@ bool mqtt_client_is_connected(void) {
 // Get MQTT client instance
 mqtt_client_t* mqtt_client_get_instance(void) {
     return g_mqtt_client_initialized ? &g_mqtt_client : NULL;
+}
+
+// Create MQTT UNSUBSCRIBE packet
+static int mqtt_create_unsubscribe_packet(const char* topic, uint8_t* packet, int max_len) {
+    if (!topic || !packet || max_len < 20) {
+        return -1;
+    }
+    
+    int topic_len = strlen(topic);
+    int packet_len = 2 + 2 + topic_len; // packet_id + topic_length + topic
+    
+    if (packet_len + 2 > max_len) { // +2 for fixed header
+        return -1;
+    }
+    
+    int pos = 0;
+    
+    // Fixed header
+    packet[pos++] = 0xA2; // UNSUBSCRIBE packet type with flags
+    packet[pos++] = packet_len; // Remaining length (simplified - assumes < 127)
+    
+    // Variable header - Packet identifier
+    static uint16_t packet_id = 1;
+    packet[pos++] = (packet_id >> 8) & 0xFF;
+    packet[pos++] = packet_id & 0xFF;
+    packet_id++;
+    
+    // Payload - Topic filter
+    packet[pos++] = (topic_len >> 8) & 0xFF;
+    packet[pos++] = topic_len & 0xFF;
+    memcpy(packet + pos, topic, topic_len);
+    pos += topic_len;
+    
+    return pos;
+}
+
+// Create MQTT SUBSCRIBE packet
+static int mqtt_create_subscribe_packet(const char* topic, int qos, uint8_t* packet, int max_len) {
+    if (!topic || !packet || max_len < 20 || qos < 0 || qos > 2) {
+        return -1;
+    }
+    
+    int topic_len = strlen(topic);
+    int packet_len = 2 + 2 + topic_len + 1; // packet_id + topic_length + topic + qos
+    
+    if (packet_len + 2 > max_len) { // +2 for fixed header
+        return -1;
+    }
+    
+    int pos = 0;
+    
+    // Fixed header
+    packet[pos++] = 0x82; // SUBSCRIBE packet type with flags
+    packet[pos++] = packet_len; // Remaining length (simplified)
+    
+    // Variable header - Packet identifier
+    static uint16_t packet_id = 1;
+    packet[pos++] = (packet_id >> 8) & 0xFF;
+    packet[pos++] = packet_id & 0xFF;
+    packet_id++;
+    
+    // Payload - Topic filter and QoS
+    packet[pos++] = (topic_len >> 8) & 0xFF;
+    packet[pos++] = topic_len & 0xFF;
+    memcpy(packet + pos, topic, topic_len);
+    pos += topic_len;
+    packet[pos++] = qos; // QoS level
+    
+    return pos;
+}
+
+// Create MQTT PUBLISH packet
+static int mqtt_create_publish_packet(const char* topic, const char* payload, int qos, bool retain, uint8_t* packet, int max_len) {
+    if (!topic || !payload || !packet || max_len < 50 || qos < 0 || qos > 2) {
+        return -1;
+    }
+    
+    int topic_len = strlen(topic);
+    int payload_len = strlen(payload);
+    int packet_len = 2 + topic_len + payload_len; // topic_length + topic + payload
+    
+    if (qos > 0) {
+        packet_len += 2; // Add packet identifier for QoS > 0
+    }
+    
+    if (packet_len + 2 > max_len) { // +2 for fixed header minimum
+        return -1;
+    }
+    
+    int pos = 0;
+    
+    // Fixed header
+    uint8_t flags = 0x30; // PUBLISH packet type
+    if (retain) flags |= 0x01;
+    if (qos == 1) flags |= 0x02;
+    else if (qos == 2) flags |= 0x04;
+    
+    packet[pos++] = flags;
+    packet[pos++] = packet_len; // Remaining length (simplified)
+    
+    // Variable header - Topic name
+    packet[pos++] = (topic_len >> 8) & 0xFF;
+    packet[pos++] = topic_len & 0xFF;
+    memcpy(packet + pos, topic, topic_len);
+    pos += topic_len;
+    
+    // Packet identifier (only for QoS > 0)
+    if (qos > 0) {
+        static uint16_t packet_id = 1;
+        packet[pos++] = (packet_id >> 8) & 0xFF;
+        packet[pos++] = packet_id & 0xFF;
+        packet_id++;
+    }
+    
+    // Payload
+    memcpy(packet + pos, payload, payload_len);
+    pos += payload_len;
+    
+    return pos;
+}
+
+// Create MQTT PINGREQ packet
+static int mqtt_create_pingreq_packet(uint8_t* packet, int max_len) {
+    if (!packet || max_len < 2) {
+        return -1;
+    }
+    
+    packet[0] = 0xC0; // PINGREQ packet type
+    packet[1] = 0x00; // No payload
+    
+    return 2;
 }

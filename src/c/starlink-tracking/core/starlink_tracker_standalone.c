@@ -206,6 +206,10 @@ void standalone_tracker_cleanup(standalone_tracker_t *tracker) {
     if (tracker->obstruction_map.snr_data) {
         free(tracker->obstruction_map.snr_data);
     }
+
+    if (tracker->prediction_engine) {
+        prediction_engine_cleanup(tracker->prediction_engine);
+    }
     
     pthread_mutex_destroy(&tracker->data_mutex);
     
@@ -479,77 +483,74 @@ static void standalone_log(standalone_tracker_t *tracker, int level, const char 
     }
 }
 
-// Calculate simple predictions (simplified for standalone)
+// Calculate predictions using the prediction engine
 int standalone_tracker_calculate_predictions(standalone_tracker_t *tracker) {
-    if (!tracker) {
+    if (!tracker || !tracker->constellation.satellites || tracker->constellation.num_satellites == 0) {
         return STANDALONE_ERROR_INVALID_PARAM;
     }
-    
+
     pthread_mutex_lock(&tracker->data_mutex);
+
+    // Initialize prediction engine if not already done
+    if (!tracker->prediction_engine) {
+        prediction_config_t engine_config;
+        prediction_engine_config_init_defaults(&engine_config);
+        engine_config.min_elevation_degrees = tracker->config.min_elevation_degrees;
+        tracker->prediction_engine = prediction_engine_init(&engine_config);
+    }
+
+    if (!tracker->prediction_engine) {
+        pthread_mutex_unlock(&tracker->data_mutex);
+        return STANDALONE_ERROR_MEMORY_FAILED;
+    }
+
+    // Update prediction engine with latest data
+    prediction_engine_set_dish_location(tracker->prediction_engine, &tracker->dish_location);
+    // Note: Obstruction analyzer would be set here if integrated
     
+    // Load constellation data into the prediction engine
+    // This requires converting standalone_tle_data_t to constellation_data_t
+    constellation_data_t constellation;
+    constellation.num_satellites = tracker->constellation.num_satellites;
+    constellation.satellites = calloc(constellation.num_satellites, sizeof(tle_data_t));
+    if(!constellation.satellites) {
+        pthread_mutex_unlock(&tracker->data_mutex);
+        return STANDALONE_ERROR_MEMORY_FAILED;
+    }
+
+    for(int i = 0; i < tracker->constellation.num_satellites; i++) {
+        strncpy(constellation.satellites[i].line1, tracker->constellation.satellites[i].line1, sizeof(constellation.satellites[i].line1) - 1);
+        strncpy(constellation.satellites[i].line2, tracker->constellation.satellites[i].line2, sizeof(constellation.satellites[i].line2) - 1);
+        constellation.satellites[i].is_valid = tracker->constellation.satellites[i].is_valid;
+    }
+    
+    prediction_engine_load_constellation(tracker->prediction_engine, &constellation);
+    free(constellation.satellites);
+
     // Free existing predictions
     if (tracker->predictions) {
         free(tracker->predictions);
         tracker->predictions = NULL;
-        tracker->num_predictions = 0;
     }
-    
-    // For standalone version, create simplified predictions
-    // In a full implementation, this would use the prediction engine
-    
-    // Check current obstruction level
-    double obstruction_percentage = 0.0;
-    if (tracker->obstruction_map.snr_data) {
-        int obstructed_count = 0;
-        int valid_count = 0;
-        
-        for (int i = 0; i < 15129; i++) {
-            if (tracker->obstruction_map.snr_data[i] >= 0.0) {
-                valid_count++;
-                if (tracker->obstruction_map.snr_data[i] < tracker->config.obstruction_threshold) {
-                    obstructed_count++;
-                }
-            }
-        }
-        
-        if (valid_count > 0) {
-            obstruction_percentage = (double)obstructed_count / valid_count * 100.0;
-        }
-    }
-    
-    // Generate sample predictions based on obstruction level
-    if (obstruction_percentage > 30.0) {
-        tracker->predictions = calloc(2, sizeof(standalone_outage_prediction_t));
-        if (tracker->predictions) {
-            // High obstruction - predict some outages
-            time_t now = time(NULL);
-            
-            tracker->predictions[0].start_time = now + 3600; // 1 hour from now
-            tracker->predictions[0].end_time = now + 4500;   // 1.25 hours from now
-            tracker->predictions[0].duration_seconds = 900;
-            tracker->predictions[0].risk_level = 3;
-            tracker->predictions[0].predicted_available_sats = 0;
-            tracker->predictions[0].confidence_score = 0.8;
-            snprintf(tracker->predictions[0].description, sizeof(tracker->predictions[0].description),
-                    "High obstruction area (%.1f%%) may block satellites", obstruction_percentage);
-            
-            tracker->predictions[1].start_time = now + 7200; // 2 hours from now
-            tracker->predictions[1].end_time = now + 7800;   // 2.17 hours from now
-            tracker->predictions[1].duration_seconds = 600;
-            tracker->predictions[1].risk_level = 2;
-            tracker->predictions[1].predicted_available_sats = 1;
-            tracker->predictions[1].confidence_score = 0.6;
-            snprintf(tracker->predictions[1].description, sizeof(tracker->predictions[1].description),
-                    "Marginal signal quality expected");
-            
-            tracker->num_predictions = 2;
-        }
-    }
-    
+
+    // Calculate predictions
+    int result = prediction_engine_calculate_predictions(
+        tracker->prediction_engine,
+        time(NULL),
+        tracker->config.prediction_horizon_hours,
+        &tracker->predictions,
+        &tracker->num_predictions
+    );
+
     pthread_mutex_unlock(&tracker->data_mutex);
-    
-    standalone_log(tracker, 1, "Predictions calculated");
-    return STANDALONE_SUCCESS;
+
+    if (result == PREDICTION_SUCCESS) {
+        standalone_log(tracker, 1, "Predictions calculated successfully");
+        return STANDALONE_SUCCESS;
+    } else {
+        standalone_log(tracker, 3, "Prediction calculation failed");
+        return STANDALONE_ERROR_PREDICTION_FAILED;
+    }
 }
 
 // Get current statistics

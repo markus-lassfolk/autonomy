@@ -1,4 +1,5 @@
 #include "starlink_types.h"
+#include "../utils/json_parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +11,7 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/time.h>
+#include <json-c/json.h>
 
 // Global Starlink client configuration
 static starlink_config_t g_starlink_config = {
@@ -122,103 +124,72 @@ int starlink_send_request(starlink_method_t method, char *response, size_t respo
         }
     }
     
-    // Create HTTP request to Starlink dish API (using REST API instead of gRPC)
+    // Create gRPC request using grpcurl for consistency
     char request[512];
-    const char *endpoints[] = {
-        "/api/v1/status",
-        "/api/v1/history", 
-        "/api/v1/device",
-        "/api/v1/location",
-        "/api/v1/diagnostics"
+    const char *method_names[] = {
+        "get_status",
+        "get_history", 
+        "get_device_info",
+        "get_location",
+        "get_diagnostics"
     };
     
-    // Create HTTP GET request to Starlink dish API endpoint
-    snprintf(request, sizeof(request), 
-             "GET %s HTTP/1.1\r\n"
-             "Host: %s:%d\r\n"
-             "User-Agent: Autonomy-Daemon/1.0\r\n"
-             "Accept: application/json\r\n"
-             "Connection: close\r\n"
-             "\r\n",
-             endpoints[method],
-             g_starlink_config.host, g_starlink_config.port);
+    snprintf(request, sizeof(request),
+             "grpcurl -plaintext -d '{\\"%s\\":{}}' %s:%d SpaceX.API.Device.Device/Handle",
+             method_names[method], g_starlink_config.host, g_starlink_config.port);
     
-    // Send request
-    ssize_t sent = send(g_starlink_state.socket_fd, request, strlen(request), 0);
-    if (sent < 0) {
+    FILE *fp = popen(request, "r");
+    if (!fp) {
+        return -1;
+    }
+    
+    size_t bytes_read = fread(response, 1, response_size - 1, fp);
+    response[bytes_read] = '\0';
+    
+    int status = pclose(fp);
+    if (status != 0) {
         g_starlink_state.connection_healthy = false;
         return -1;
     }
     
-    // Receive response
-    ssize_t received = recv(g_starlink_state.socket_fd, response, response_size - 1, 0);
-    if (received < 0) {
-        g_starlink_state.connection_healthy = false;
-        return -1;
-    }
-    
-    response[received] = '\0';
-    return received;
+    return bytes_read;
 }
 
-// Parse JSON response from Starlink (simplified parser)
+// Parse JSON response from Starlink using json-c
 int starlink_parse_response(const char *json_response, starlink_status_response_t *status) {
     if (!json_response || !status) {
         return -1;
     }
     
-    // Initialize status structure
     memset(status, 0, sizeof(starlink_status_response_t));
     
-    // Parse JSON response from Starlink dish API
-    // Using string parsing for basic fields (could be enhanced with cJSON library)
-    
-    // Extract basic fields using string search
-    const char *device_id = strstr(json_response, "\"id\":");
-    if (device_id) {
-        sscanf(device_id, "\"id\": \"%63[^\"]\"", status->device_info.id);
+    json_object *root = json_tokener_parse(json_response);
+    if (!root) {
+        return -1;
     }
     
-    const char *hardware_ver = strstr(json_response, "\"hardwareVersion\":");
-    if (hardware_ver) {
-        sscanf(hardware_ver, "\"hardwareVersion\": \"%31[^\"]\"", status->device_info.hardware_version);
+    // Extract device info
+    json_object *device_info = json_object_object_get(root, "deviceInfo");
+    if (device_info) {
+        json_object_object_foreach(device_info, key, val) {
+            if (strcmp(key, "id") == 0) strncpy(status->device_info.id, json_object_get_string(val), sizeof(status->device_info.id) - 1);
+            if (strcmp(key, "hardwareVersion") == 0) strncpy(status->device_info.hardware_version, json_object_get_string(val), sizeof(status->device_info.hardware_version) - 1);
+            if (strcmp(key, "softwareVersion") == 0) strncpy(status->device_info.software_version, json_object_get_string(val), sizeof(status->device_info.software_version) - 1);
+            if (strcmp(key, "countryCode") == 0) strncpy(status->device_info.country_code, json_object_get_string(val), sizeof(status->device_info.country_code) - 1);
+        }
     }
     
-    const char *software_ver = strstr(json_response, "\"softwareVersion\":");
-    if (software_ver) {
-        sscanf(software_ver, "\"softwareVersion\": \"%31[^\"]\"", status->device_info.software_version);
+    // Extract device state
+    json_object *device_state = json_object_object_get(root, "deviceState");
+    if (device_state) {
+        json_object *uptime;
+        if (json_object_object_get_ex(device_state, "uptimeS", &uptime)) {
+            status->device_state.uptime_s = json_object_get_uint64(uptime);
+        }
     }
-    
-    const char *country = strstr(json_response, "\"countryCode\":");
-    if (country) {
-        sscanf(country, "\"countryCode\": \"%7[^\"]\"", status->device_info.country_code);
-    }
-    
-    // Extract numeric fields
-    const char *uptime = strstr(json_response, "\"uptimeS\":");
-    if (uptime) {
-        sscanf(uptime, "\"uptimeS\": %lu", &status->device_state.uptime_s);
-    }
-    
-    const char *gps_valid = strstr(json_response, "\"gpsValid\":");
-    if (gps_valid) {
-        status->gps_stats.gps_valid = strstr(gps_valid, "true") != NULL;
-    }
-    
-    const char *gps_sats = strstr(json_response, "\"gpsSats\":");
-    if (gps_sats) {
-        sscanf(gps_sats, "\"gpsSats\": %d", &status->gps_stats.gps_sats);
-    }
-    
-    const char *lat = strstr(json_response, "\"lat\":");
-    if (lat) {
-        sscanf(lat, "\"lat\": %lf", &status->location.lat);
-    }
-    
-    const char *lon = strstr(json_response, "\"lon\":");
-    if (lon) {
-        sscanf(lon, "\"lon\": %lf", &status->location.lon);
-    }
+
+    // Free the document
+    json_object_put(root);
     
     return 0;
 }

@@ -14,6 +14,7 @@
 #include <sys/time.h>
 #include <pthread.h>
 #include <math.h>
+#include <json-c/json.h>
 
 // Global Starlink client configuration
 static starlink_config_t g_starlink_config = {
@@ -130,7 +131,7 @@ int starlink_send_request(starlink_method_t method, char *response, size_t respo
         }
     }
     
-    // Create gRPC request (simplified - in real implementation this would be proper gRPC)
+    // Create gRPC request using grpcurl
     char request[512];
     const char *method_names[] = {
         "get_status",
@@ -140,95 +141,70 @@ int starlink_send_request(starlink_method_t method, char *response, size_t respo
         "get_diagnostics"
     };
     
-    // Format: {"method": "method_name"}
-    snprintf(request, sizeof(request), 
-             "POST / HTTP/1.1\r\n"
-             "Host: %s:%d\r\n"
-             "Content-Type: application/json\r\n"
-             "Content-Length: %zu\r\n"
-             "\r\n"
-             "{\"method\": \"%s\"}",
-             g_starlink_config.host, g_starlink_config.port,
-             strlen("{\"method\": \"method_name\"}"),
-             method_names[method]);
+    snprintf(request, sizeof(request),
+             "grpcurl -plaintext -d '{\\"%s\\":{}}' %s:%d SpaceX.API.Device.Device/Handle",
+             method_names[method], g_starlink_config.host, g_starlink_config.port);
     
-    // Send request
-    ssize_t sent = send(g_starlink_state.socket_fd, request, strlen(request), 0);
-    if (sent < 0) {
+    FILE *fp = popen(request, "r");
+    if (!fp) {
+        return -1;
+    }
+    
+    size_t bytes_read = fread(response, 1, response_size - 1, fp);
+    response[bytes_read] = '\0';
+    
+    int status = pclose(fp);
+    if (status != 0) {
         g_starlink_state.connection_healthy = false;
         return -1;
     }
     
-    // Receive response
-    ssize_t received = recv(g_starlink_state.socket_fd, response, response_size - 1, 0);
-    if (received < 0) {
-        g_starlink_state.connection_healthy = false;
-        return -1;
-    }
-    
-    response[received] = '\0';
-    return received;
+    return bytes_read;
 }
 
-// Parse JSON response from Starlink (simplified parser)
+// Parse JSON response from Starlink using json-c
 int starlink_parse_response(const char *json_response, starlink_status_response_t *status) {
     if (!json_response || !status) {
         return -1;
     }
     
-    // Initialize status structure
     memset(status, 0, sizeof(starlink_status_response_t));
     
-    // Simple JSON parsing (in production, use a proper JSON library)
-    // This is a simplified version - real implementation would use cJSON or similar
-    
-    // Extract basic fields using string search
-    const char *device_id = strstr(json_response, "\"id\":");
-    if (device_id) {
-        sscanf(device_id, "\"id\": \"%63[^\"]\"", status->device_info.id);
+    json_object *root = json_tokener_parse(json_response);
+    if (!root) {
+        return -1;
     }
     
-    const char *hardware_ver = strstr(json_response, "\"hardwareVersion\":");
-    if (hardware_ver) {
-        sscanf(hardware_ver, "\"hardwareVersion\": \"%31[^\"]\"", status->device_info.hardware_version);
+    json_object *result_obj;
+    if (json_object_object_get_ex(root, "result", &result_obj)) {
+        // Handle nested result object for some responses
+        root = result_obj;
+    }
+
+    // Extract device info
+    json_object_object_foreach(root, key, val) {
+        if (strcmp(key, "id") == 0) {
+            strncpy(status->device_info.id, json_object_get_string(val), sizeof(status->device_info.id) - 1);
+        } else if (strcmp(key, "hardwareVersion") == 0) {
+            strncpy(status->device_info.hardware_version, json_object_get_string(val), sizeof(status->device_info.hardware_version) - 1);
+        } else if (strcmp(key, "softwareVersion") == 0) {
+            strncpy(status->device_info.software_version, json_object_get_string(val), sizeof(status->device_info.software_version) - 1);
+        } else if (strcmp(key, "countryCode") == 0) {
+            strncpy(status->device_info.country_code, json_object_get_string(val), sizeof(status->device_info.country_code) - 1);
+        } else if (strcmp(key, "uptimeS") == 0) {
+            status->device_state.uptime_s = json_object_get_uint64(val);
+        } else if (strcmp(key, "gpsValid") == 0) {
+            status->gps_stats.gps_valid = json_object_get_boolean(val);
+        } else if (strcmp(key, "gpsSats") == 0) {
+            status->gps_stats.gps_sats = json_object_get_int(val);
+        } else if (strcmp(key, "latitude") == 0) {
+            status->location.lat = json_object_get_double(val);
+        } else if (strcmp(key, "longitude") == 0) {
+            status->location.lon = json_object_get_double(val);
+        }
     }
     
-    const char *software_ver = strstr(json_response, "\"softwareVersion\":");
-    if (software_ver) {
-        sscanf(software_ver, "\"softwareVersion\": \"%31[^\"]\"", status->device_info.software_version);
-    }
-    
-    const char *country = strstr(json_response, "\"countryCode\":");
-    if (country) {
-        sscanf(country, "\"countryCode\": \"%7[^\"]\"", status->device_info.country_code);
-    }
-    
-    // Extract numeric fields
-    const char *uptime = strstr(json_response, "\"uptimeS\":");
-    if (uptime) {
-        sscanf(uptime, "\"uptimeS\": %llu", &status->device_state.uptime_s);
-    }
-    
-    const char *gps_valid = strstr(json_response, "\"gpsValid\":");
-    if (gps_valid) {
-        status->gps_stats.gps_valid = strstr(gps_valid, "true") != NULL;
-    }
-    
-    const char *gps_sats = strstr(json_response, "\"gpsSats\":");
-    if (gps_sats) {
-        sscanf(gps_sats, "\"gpsSats\": %d", &status->gps_stats.gps_sats);
-    }
-    
-    const char *lat = strstr(json_response, "\"lat\":");
-    if (lat) {
-        sscanf(lat, "\"lat\": %lf", &status->location.lat);
-    }
-    
-    const char *lon = strstr(json_response, "\"lon\":");
-    if (lon) {
-        sscanf(lon, "\"lon\": %lf", &status->location.lon);
-    }
-    
+    json_object_put(root);
     return 0;
 }
 
@@ -463,24 +439,26 @@ static void* collect_location_data(void *arg) {
     parallel_collection_data_t *data = (parallel_collection_data_t*)arg;
     char response[2048];
     
-    if (starlink_send_request(STARLINK_METHOD_GET_LOCATION, response, sizeof(response)) == 0) {
-        // Parse location response (simplified - would need proper JSON parsing)
-        pthread_mutex_lock(data->mutex);
-        data->result->latitude = 0.0;  // Would parse from response
-        data->result->longitude = 0.0; // Would parse from response
-        data->result->altitude = 0.0;  // Would parse from response
-        data->result->accuracy = 0.0;  // Would parse from response
-        strncpy(data->result->gps_source, "GNC_FUSED", sizeof(data->result->gps_source) - 1);
-        data->result->gps_source[sizeof(data->result->gps_source) - 1] = '\0';
-        
-        // Add to data sources
-        if (strlen(data->result->data_sources) > 0) {
-            strncat(data->result->data_sources, ",", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+    if (starlink_send_request(STARLINK_METHOD_GET_LOCATION, response, sizeof(response)) >= 0) {
+        json_object *root = json_tokener_parse(response);
+        if (root) {
+            pthread_mutex_lock(data->mutex);
+            json_object_object_foreach(root, key, val) {
+                if (strcmp(key, "latitude") == 0) data->result->latitude = json_object_get_double(val);
+                if (strcmp(key, "longitude") == 0) data->result->longitude = json_object_get_double(val);
+                if (strcmp(key, "altitude") == 0) data->result->altitude = json_object_get_double(val);
+            }
+            strncpy(data->result->gps_source, "GNC_FUSED", sizeof(data->result->gps_source) - 1);
+            
+            if (strlen(data->result->data_sources) > 0) {
+                strncat(data->result->data_sources, ",", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+            }
+            strncat(data->result->data_sources, "get_location", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+            
+            (*data->success_count)++;
+            pthread_mutex_unlock(data->mutex);
+            json_object_put(root);
         }
-        strncat(data->result->data_sources, "get_location", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
-        
-        (*data->success_count)++;
-        pthread_mutex_unlock(data->mutex);
     }
     
     return NULL;
@@ -491,22 +469,24 @@ static void* collect_status_data(void *arg) {
     parallel_collection_data_t *data = (parallel_collection_data_t*)arg;
     char response[2048];
     
-    if (starlink_send_request(STARLINK_METHOD_GET_STATUS, response, sizeof(response)) == 0) {
-        // Parse status response (simplified - would need proper JSON parsing)
-        pthread_mutex_lock(data->mutex);
-        data->result->gps_valid = true;      // Would parse from response
-        data->result->gps_satellites = 8;    // Would parse from response
-        data->result->no_sats_after_ttff = false; // Would parse from response
-        data->result->inhibit_gps = false;   // Would parse from response
-        
-        // Add to data sources
-        if (strlen(data->result->data_sources) > 0) {
-            strncat(data->result->data_sources, ",", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+    if (starlink_send_request(STARLINK_METHOD_GET_STATUS, response, sizeof(response)) >= 0) {
+        json_object *root = json_tokener_parse(response);
+        if (root) {
+            pthread_mutex_lock(data->mutex);
+            json_object_object_foreach(root, key, val) {
+                if (strcmp(key, "gpsValid") == 0) data->result->gps_valid = json_object_get_boolean(val);
+                if (strcmp(key, "gpsSats") == 0) data->result->gps_satellites = json_object_get_int(val);
+            }
+            
+            if (strlen(data->result->data_sources) > 0) {
+                strncat(data->result->data_sources, ",", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+            }
+            strncat(data->result->data_sources, "get_status", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+            
+            (*data->success_count)++;
+            pthread_mutex_unlock(data->mutex);
+            json_object_put(root);
         }
-        strncat(data->result->data_sources, "get_status", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
-        
-        (*data->success_count)++;
-        pthread_mutex_unlock(data->mutex);
     }
     
     return NULL;
@@ -517,22 +497,24 @@ static void* collect_diagnostics_data(void *arg) {
     parallel_collection_data_t *data = (parallel_collection_data_t*)arg;
     char response[2048];
     
-    if (starlink_send_request(STARLINK_METHOD_GET_DIAGNOSTICS, response, sizeof(response)) == 0) {
-        // Parse diagnostics response (simplified - would need proper JSON parsing)
-        pthread_mutex_lock(data->mutex);
-        data->result->location_enabled = true;        // Would parse from response
-        data->result->uncertainty_meters = 5.0;       // Would parse from response
-        data->result->uncertainty_meters_valid = true; // Would parse from response
-        data->result->gps_time_s = time(NULL);        // Would parse from response
-        
-        // Add to data sources
-        if (strlen(data->result->data_sources) > 0) {
-            strncat(data->result->data_sources, ",", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+    if (starlink_send_request(STARLINK_METHOD_GET_DIAGNOSTICS, response, sizeof(response)) >= 0) {
+        json_object *root = json_tokener_parse(response);
+        if (root) {
+            pthread_mutex_lock(data->mutex);
+            json_object_object_foreach(root, key, val) {
+                 if (strcmp(key, "locationEnabled") == 0) data->result->location_enabled = json_object_get_boolean(val);
+                 if (strcmp(key, "uncertaintyMeters") == 0) data->result->uncertainty_meters = json_object_get_double(val);
+            }
+
+            if (strlen(data->result->data_sources) > 0) {
+                strncat(data->result->data_sources, ",", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+            }
+            strncat(data->result->data_sources, "get_diagnostics", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
+            
+            (*data->success_count)++;
+            pthread_mutex_unlock(data->mutex);
+            json_object_put(root);
         }
-        strncat(data->result->data_sources, "get_diagnostics", sizeof(data->result->data_sources) - strlen(data->result->data_sources) - 1);
-        
-        (*data->success_count)++;
-        pthread_mutex_unlock(data->mutex);
     }
     
     return NULL;
@@ -648,13 +630,19 @@ int starlink_get_location_with_fallback(starlink_comprehensive_gps_t *gps) {
     
     // Fallback to diagnostics coordinates only
     char response[2048];
-    if (starlink_send_request(STARLINK_METHOD_GET_DIAGNOSTICS, response, sizeof(response)) == 0) {
-        // Parse diagnostics response for coordinates (simplified)
+    if (starlink_send_request(STARLINK_METHOD_GET_DIAGNOSTICS, response, sizeof(response)) >= 0) {
         memset(gps, 0, sizeof(starlink_comprehensive_gps_t));
-        gps->latitude = 0.0;  // Would parse from response
-        gps->longitude = 0.0; // Would parse from response
-        gps->altitude = 0.0;  // Would parse from response
-        gps->accuracy = 0.0;  // Would parse from response
+        
+        json_object *root = json_tokener_parse(response);
+        if(root) {
+            json_object_object_foreach(root, key, val) {
+                if (strcmp(key, "latitude") == 0) gps->latitude = json_object_get_double(val);
+                if (strcmp(key, "longitude") == 0) gps->longitude = json_object_get_double(val);
+                if (strcmp(key, "altitude") == 0) gps->altitude = json_object_get_double(val);
+            }
+            json_object_put(root);
+        }
+
         gps->collected_at = time(NULL);
         gps->valid = true;
         gps->confidence = 0.5; // Lower confidence for fallback

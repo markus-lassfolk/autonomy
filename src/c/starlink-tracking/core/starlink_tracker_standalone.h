@@ -6,6 +6,10 @@
 #include <stdbool.h>
 #include <pthread.h>
 
+// Forward declarations for core components
+struct prediction_engine_t;
+struct obstruction_analyzer_t;
+
 // Standalone configuration (no UCI dependencies)
 typedef struct {
     char space_track_username[64];
@@ -104,6 +108,10 @@ typedef struct {
     standalone_outage_prediction_t *predictions;
     int num_predictions;
     
+    // Core components
+    struct prediction_engine_t *prediction_engine;
+    struct obstruction_analyzer_t *obstruction_analyzer;
+
     // State
     bool initialized;
     bool monitoring_active;

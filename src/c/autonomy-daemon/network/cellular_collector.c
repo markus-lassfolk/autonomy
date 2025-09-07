@@ -14,6 +14,44 @@
 #include <libubox/blobmsg.h>
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <sys/select.h>
+#include <sys/time.h>
+
+// GSM UBUS response parsing policy
+enum {
+    GSM_STATUS_SIGNAL,
+    GSM_STATUS_RSRP,
+    GSM_STATUS_RSRQ,
+    GSM_STATUS_SINR,
+    GSM_STATUS_RSSI,
+    GSM_STATUS_NETWORK_TYPE,
+    GSM_STATUS_OPERATOR,
+    GSM_STATUS_BAND,
+    GSM_STATUS_CELL_ID,
+    GSM_STATUS_IP,
+    GSM_STATUS_GATEWAY,
+    GSM_STATUS_CONNECTED,
+    GSM_STATUS_ROAMING,
+    __GSM_STATUS_MAX
+};
+
+static const struct blobmsg_policy gsm_status_policy[__GSM_STATUS_MAX] = {
+    [GSM_STATUS_SIGNAL] = { .name = "signal", .type = BLOBMSG_TYPE_TABLE },
+    [GSM_STATUS_RSRP] = { .name = "rsrp", .type = BLOBMSG_TYPE_INT32 },
+    [GSM_STATUS_RSRQ] = { .name = "rsrq", .type = BLOBMSG_TYPE_INT32 },
+    [GSM_STATUS_SINR] = { .name = "sinr", .type = BLOBMSG_TYPE_INT32 },
+    [GSM_STATUS_RSSI] = { .name = "rssi", .type = BLOBMSG_TYPE_INT32 },
+    [GSM_STATUS_NETWORK_TYPE] = { .name = "network_type", .type = BLOBMSG_TYPE_STRING },
+    [GSM_STATUS_OPERATOR] = { .name = "operator", .type = BLOBMSG_TYPE_STRING },
+    [GSM_STATUS_BAND] = { .name = "band", .type = BLOBMSG_TYPE_STRING },
+    [GSM_STATUS_CELL_ID] = { .name = "cell_id", .type = BLOBMSG_TYPE_STRING },
+    [GSM_STATUS_IP] = { .name = "ip", .type = BLOBMSG_TYPE_STRING },
+    [GSM_STATUS_GATEWAY] = { .name = "gateway", .type = BLOBMSG_TYPE_STRING },
+    [GSM_STATUS_CONNECTED] = { .name = "connected", .type = BLOBMSG_TYPE_BOOL },
+    [GSM_STATUS_ROAMING] = { .name = "roaming", .type = BLOBMSG_TYPE_BOOL },
+};
 
 // Global cellular collector instance
 static cellular_collector_t g_cellular_collector = {0};
@@ -179,51 +217,157 @@ static int collect_via_ubus(cellular_info_t* info) {
         LOGX_ERROR_MSG("Failed to connect to UBUS for cellular collection");
         return AUTONOMY_ERROR_SYSTEM;
     }
-    
+
     uint32_t id;
     if (ubus_lookup_id(ctx, "gsm", &id) != 0) {
         LOGX_DEBUG_MSG("GSM service not available via UBUS");
         ubus_free(ctx);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
-    
+
     // Call GSM status method
     struct blob_buf bb = {0};
     blob_buf_init(&bb, 0);
-    
-    struct ubus_request req = {0};
-    int ret = ubus_invoke(ctx, id, "status", bb.head, NULL, NULL, 5000);
-    
+
+    // Set up callback to receive response
+    struct blob_attr *tb[__GSM_STATUS_MAX];
+    int callback_called = 0;
+
+    void gsm_status_callback(struct ubus_request *req, int type, struct blob_attr *msg) {
+        if (!msg || type != 0) {
+            return;
+        }
+
+        callback_called = 1;
+
+        // Parse the GSM status response
+        blobmsg_parse(gsm_status_policy, __GSM_STATUS_MAX, tb, blob_data(msg), blob_len(msg));
+
+        // Extract signal information
+        if (tb[GSM_STATUS_RSRP]) {
+            info->rsrp = blobmsg_get_u32(tb[GSM_STATUS_RSRP]);
+            info->has_rsrp = true;
+        } else {
+            info->rsrp = 0;
+            info->has_rsrp = false;
+        }
+
+        if (tb[GSM_STATUS_RSRQ]) {
+            info->rsrq = blobmsg_get_u32(tb[GSM_STATUS_RSRQ]);
+            info->has_rsrq = true;
+        } else {
+            info->rsrq = 0;
+            info->has_rsrq = false;
+        }
+
+        if (tb[GSM_STATUS_SINR]) {
+            info->sinr = blobmsg_get_u32(tb[GSM_STATUS_SINR]);
+            info->has_sinr = true;
+        } else {
+            info->sinr = 0;
+            info->has_sinr = false;
+        }
+
+        if (tb[GSM_STATUS_RSSI]) {
+            info->rssi = blobmsg_get_u32(tb[GSM_STATUS_RSSI]);
+            info->has_rssi = true;
+        } else {
+            info->rssi = 0;
+            info->has_rssi = false;
+        }
+
+        // Extract network information
+        if (tb[GSM_STATUS_NETWORK_TYPE]) {
+            const char* network_str = blobmsg_get_string(tb[GSM_STATUS_NETWORK_TYPE]);
+            if (strcmp(network_str, "LTE") == 0) {
+                info->network_type = CELLULAR_NETWORK_TYPE_LTE;
+            } else if (strcmp(network_str, "UMTS") == 0) {
+                info->network_type = CELLULAR_NETWORK_TYPE_UMTS;
+            } else if (strcmp(network_str, "GSM") == 0) {
+                info->network_type = CELLULAR_NETWORK_TYPE_GSM;
+            } else {
+                info->network_type = CELLULAR_NETWORK_TYPE_UNKNOWN;
+            }
+        } else {
+            info->network_type = CELLULAR_NETWORK_TYPE_UNKNOWN;
+        }
+
+        if (tb[GSM_STATUS_OPERATOR]) {
+            strncpy(info->operator_name, blobmsg_get_string(tb[GSM_STATUS_OPERATOR]),
+                    sizeof(info->operator_name) - 1);
+        } else {
+            strcpy(info->operator_name, "Unknown");
+        }
+
+        if (tb[GSM_STATUS_BAND]) {
+            strncpy(info->band, blobmsg_get_string(tb[GSM_STATUS_BAND]),
+                    sizeof(info->band) - 1);
+        } else {
+            strcpy(info->band, "Unknown");
+        }
+
+        if (tb[GSM_STATUS_CELL_ID]) {
+            strncpy(info->cell_id, blobmsg_get_string(tb[GSM_STATUS_CELL_ID]),
+                    sizeof(info->cell_id) - 1);
+        } else {
+            strcpy(info->cell_id, "Unknown");
+        }
+
+        if (tb[GSM_STATUS_IP]) {
+            strncpy(info->ip_address, blobmsg_get_string(tb[GSM_STATUS_IP]),
+                    sizeof(info->ip_address) - 1);
+        } else {
+            strcpy(info->ip_address, "0.0.0.0");
+        }
+
+        if (tb[GSM_STATUS_GATEWAY]) {
+            strncpy(info->gateway, blobmsg_get_string(tb[GSM_STATUS_GATEWAY]),
+                    sizeof(info->gateway) - 1);
+        } else {
+            strcpy(info->gateway, "0.0.0.0");
+        }
+
+        if (tb[GSM_STATUS_CONNECTED]) {
+            info->connection_state = blobmsg_get_bool(tb[GSM_STATUS_CONNECTED]) ?
+                                    CELLULAR_STATE_CONNECTED : CELLULAR_STATE_DISCONNECTED;
+        } else {
+            info->connection_state = CELLULAR_STATE_UNKNOWN;
+        }
+
+        if (tb[GSM_STATUS_ROAMING]) {
+            info->roaming = blobmsg_get_bool(tb[GSM_STATUS_ROAMING]);
+            info->roaming_type = info->roaming ? ROAMING_TYPE_DOMESTIC : ROAMING_TYPE_NONE;
+        } else {
+            info->roaming = false;
+            info->roaming_type = ROAMING_TYPE_NONE;
+        }
+    }
+
+    struct ubus_request req = {
+        .data_cb = gsm_status_callback
+    };
+
+    int ret = ubus_invoke(ctx, id, "status", bb.head, &req, NULL, 5000);
+
     blob_buf_free(&bb);
     ubus_free(ctx);
-    
+
     if (ret != 0) {
         LOGX_ERROR_MSG("Failed to call GSM status via UBUS", "error", ubus_strerror(ret));
         return AUTONOMY_ERROR_SYSTEM;
     }
-    
-    // For now, set some default values since we don't have the actual response parsing
-    // In a full implementation, you would parse the UBUS response
-    info->rsrp = -85;
-    info->rsrq = -10;
-    info->sinr = 15;
-    info->rssi = -70;
-    info->has_rsrp = true;
-    info->has_rsrq = true;
-    info->has_sinr = true;
-    info->has_rssi = true;
-    
-    info->network_type = CELLULAR_NETWORK_TYPE_LTE;
-    strcpy(info->operator_name, "Telia");
-    strcpy(info->band, "B3");
-    strcpy(info->cell_id, "12345");
-    info->roaming = false;
-    info->roaming_type = ROAMING_TYPE_NONE;
-    
-    info->connection_state = CELLULAR_STATE_CONNECTED;
-    strcpy(info->ip_address, "10.0.0.1");
-    strcpy(info->gateway, "10.0.0.1");
-    
+
+    if (!callback_called) {
+        LOGX_WARN_MSG("GSM status UBUS call completed but no response received");
+        return AUTONOMY_ERROR_NOT_FOUND;
+    }
+
+    LOGX_DEBUG_MSG("Successfully collected cellular data via UBUS",
+                   "operator", info->operator_name,
+                   "network_type", info->network_type,
+                   "rsrp", info->rsrp,
+                   "connected", info->connection_state == CELLULAR_STATE_CONNECTED);
+
     return AUTONOMY_SUCCESS;
 }
 
@@ -252,11 +396,295 @@ static int collect_via_gsmctl(cellular_info_t* info) {
 }
 
 // Collect cellular data via AT commands
+// Send AT command and read response
+static int send_at_command(int fd, const char* command, char* response, int response_size, int timeout_ms) {
+    if (!command || !response || fd < 0) {
+        return -1;
+    }
+    
+    // Clear any pending data
+    tcflush(fd, TCIOFLUSH);
+    
+    // Send command
+    char cmd_with_cr[256];
+    snprintf(cmd_with_cr, sizeof(cmd_with_cr), "%s\r\n", command);
+    
+    if (write(fd, cmd_with_cr, strlen(cmd_with_cr)) < 0) {
+        LOGX_ERROR_MSG("Failed to write AT command: %s", strerror(errno));
+        return -1;
+    }
+    
+    // Read response with timeout
+    fd_set readfds;
+    struct timeval timeout;
+    timeout.tv_sec = timeout_ms / 1000;
+    timeout.tv_usec = (timeout_ms % 1000) * 1000;
+    
+    FD_ZERO(&readfds);
+    FD_SET(fd, &readfds);
+    
+    if (select(fd + 1, &readfds, NULL, NULL, &timeout) <= 0) {
+        LOGX_DEBUG_MSG("AT command timeout or error");
+        return -1;
+    }
+    
+    // Read response
+    int total_read = 0;
+    int bytes_read;
+    while (total_read < response_size - 1) {
+        bytes_read = read(fd, response + total_read, response_size - total_read - 1);
+        if (bytes_read <= 0) break;
+        total_read += bytes_read;
+        
+        // Check for OK or ERROR response
+        if (strstr(response, "OK\r\n") || strstr(response, "ERROR\r\n")) {
+            break;
+        }
+    }
+    
+    response[total_read] = '\0';
+    return total_read > 0 ? 0 : -1;
+}
+
 static int collect_via_at_commands(cellular_info_t* info) {
-    // This would implement direct AT command communication
-    // For now, return error since it's complex to implement properly
-    LOGX_DEBUG_MSG("AT command collection not yet implemented");
-    return AUTONOMY_ERROR_NOT_FOUND;
+    if (!info) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Common modem device paths
+    const char* modem_devices[] = {
+        "/dev/ttyUSB0",
+        "/dev/ttyUSB1",
+        "/dev/ttyUSB2",
+        "/dev/ttyUSB3",
+        "/dev/ttyACM0",
+        "/dev/ttyACM1",
+        "/dev/cdc-wdm0",
+        "/dev/ttyS0"
+    };
+    
+    int fd = -1;
+    char response[1024];
+    
+    // Try to open modem device
+    for (int i = 0; i < sizeof(modem_devices)/sizeof(modem_devices[0]); i++) {
+        fd = open(modem_devices[i], O_RDWR | O_NOCTTY | O_NONBLOCK);
+        if (fd >= 0) {
+            LOGX_DEBUG_MSG("Opened modem device: %s", modem_devices[i]);
+            
+            // Configure serial port
+            struct termios tty;
+            if (tcgetattr(fd, &tty) == 0) {
+                cfsetospeed(&tty, B115200);
+                cfsetispeed(&tty, B115200);
+                
+                tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;  // 8-bit chars
+                tty.c_iflag &= ~IGNBRK;                       // disable break processing
+                tty.c_lflag = 0;                              // no signaling chars, no echo
+                tty.c_oflag = 0;                              // no remapping, no delays
+                tty.c_cc[VMIN]  = 0;                          // read doesn't block
+                tty.c_cc[VTIME] = 5;                          // 0.5 seconds read timeout
+                
+                tty.c_iflag &= ~(IXON | IXOFF | IXANY);       // shut off xon/xoff ctrl
+                tty.c_cflag |= (CLOCAL | CREAD);              // ignore modem controls
+                tty.c_cflag &= ~(PARENB | PARODD);            // shut off parity
+                tty.c_cflag &= ~CSTOPB;
+                tty.c_cflag &= ~CRTSCTS;
+                
+                tcsetattr(fd, TCSANOW, &tty);
+            }
+            
+            // Test with AT command
+            if (send_at_command(fd, "AT", response, sizeof(response), 1000) == 0) {
+                break; // Found working modem
+            }
+            
+            close(fd);
+            fd = -1;
+        }
+    }
+    
+    if (fd < 0) {
+        LOGX_DEBUG_MSG("No cellular modem found on common device paths");
+        return AUTONOMY_ERROR_NOT_FOUND;
+    }
+    
+    // Get manufacturer info
+    if (send_at_command(fd, "AT+CGMI", response, sizeof(response), 2000) == 0) {
+        char* start = strstr(response, "\r\n");
+        if (start) {
+            start += 2;
+            char* end = strstr(start, "\r\n");
+            if (end) {
+                *end = '\0';
+                strncpy(info->manufacturer, start, sizeof(info->manufacturer) - 1);
+            }
+        }
+    }
+    
+    // Get model info
+    if (send_at_command(fd, "AT+CGMM", response, sizeof(response), 2000) == 0) {
+        char* start = strstr(response, "\r\n");
+        if (start) {
+            start += 2;
+            char* end = strstr(start, "\r\n");
+            if (end) {
+                *end = '\0';
+                strncpy(info->model, start, sizeof(info->model) - 1);
+            }
+        }
+    }
+    
+    // Get IMEI
+    if (send_at_command(fd, "AT+CGSN", response, sizeof(response), 2000) == 0) {
+        char* start = strstr(response, "\r\n");
+        if (start) {
+            start += 2;
+            char* end = strstr(start, "\r\n");
+            if (end) {
+                *end = '\0';
+                strncpy(info->imei, start, sizeof(info->imei) - 1);
+            }
+        }
+    }
+    
+    // Get signal quality
+    if (send_at_command(fd, "AT+CSQ", response, sizeof(response), 2000) == 0) {
+        int rssi, ber;
+        if (sscanf(response, "\r\n+CSQ: %d,%d", &rssi, &ber) == 2) {
+            if (rssi != 99) { // 99 means unknown
+                info->rssi = -113 + (rssi * 2); // Convert to dBm
+                info->has_rssi = true;
+            }
+        }
+    }
+    
+    // Get extended signal quality (for LTE)
+    if (send_at_command(fd, "AT+CESQ", response, sizeof(response), 2000) == 0) {
+        int rxlev, ber, rscp, ecno, rsrq, rsrp;
+        if (sscanf(response, "\r\n+CESQ: %d,%d,%d,%d,%d,%d", 
+                   &rxlev, &ber, &rscp, &ecno, &rsrq, &rsrp) >= 5) {
+            if (rsrp != 255) { // 255 means unknown
+                info->rsrp = -140 + rsrp; // Convert to dBm
+                info->has_rsrp = true;
+            }
+            if (rsrq != 255) {
+                info->rsrq = -20 + (rsrq * 0.5); // Convert to dB
+                info->has_rsrq = true;
+            }
+        }
+    }
+    
+    // Get network registration status
+    if (send_at_command(fd, "AT+CREG?", response, sizeof(response), 2000) == 0) {
+        int n, stat;
+        if (sscanf(response, "\r\n+CREG: %d,%d", &n, &stat) >= 2) {
+            switch(stat) {
+                case 1:
+                case 5:
+                    info->connection_state = CELLULAR_STATE_CONNECTED;
+                    break;
+                case 2:
+                    info->connection_state = CELLULAR_STATE_SEARCHING;
+                    break;
+                default:
+                    info->connection_state = CELLULAR_STATE_DISCONNECTED;
+            }
+        }
+    }
+    
+    // Get operator name
+    if (send_at_command(fd, "AT+COPS?", response, sizeof(response), 2000) == 0) {
+        int mode, format, oper_code;
+        char oper_name[64];
+        if (sscanf(response, "\r\n+COPS: %d,%d,\"%63[^\"]\",%d", 
+                   &mode, &format, oper_name, &oper_code) >= 3) {
+            strncpy(info->operator_name, oper_name, sizeof(info->operator_name) - 1);
+            
+            // Determine network type based on access technology
+            switch(oper_code) {
+                case 0: // GSM
+                case 1: // GSM Compact
+                    info->network_type = CELLULAR_NETWORK_TYPE_2G;
+                    break;
+                case 2: // UTRAN
+                case 3: // GSM w/EGPRS
+                case 4: // UTRAN w/HSDPA
+                case 5: // UTRAN w/HSUPA
+                case 6: // UTRAN w/HSDPA and HSUPA
+                    info->network_type = CELLULAR_NETWORK_TYPE_3G;
+                    break;
+                case 7: // E-UTRAN (LTE)
+                    info->network_type = CELLULAR_NETWORK_TYPE_LTE;
+                    break;
+                default:
+                    info->network_type = CELLULAR_NETWORK_TYPE_UNKNOWN;
+            }
+        }
+    }
+    
+    // Get SIM card status
+    if (send_at_command(fd, "AT+CPIN?", response, sizeof(response), 2000) == 0) {
+        if (strstr(response, "READY")) {
+            info->sim_status = CELLULAR_SIM_STATUS_READY;
+            
+            // Get ICCID if SIM is ready
+            if (send_at_command(fd, "AT+CCID", response, sizeof(response), 2000) == 0) {
+                char* start = strstr(response, "\r\n");
+                if (start) {
+                    start += 2;
+                    char* end = strstr(start, "\r\n");
+                    if (end) {
+                        *end = '\0';
+                        strncpy(info->iccid, start, sizeof(info->iccid) - 1);
+                    }
+                }
+            }
+        } else if (strstr(response, "SIM PIN")) {
+            info->sim_status = CELLULAR_SIM_STATUS_PIN_REQUIRED;
+        } else {
+            info->sim_status = CELLULAR_SIM_STATUS_ERROR;
+        }
+    }
+    
+    // Get cell info (serving cell)
+    if (send_at_command(fd, "AT+QENG=\"servingcell\"", response, sizeof(response), 2000) == 0) {
+        // Parse Quectel-specific serving cell info
+        char* line = strstr(response, "+QENG:");
+        if (line) {
+            int mcc, mnc, cellid, pci, tac, band;
+            if (sscanf(line, "+QENG: \"servingcell\",\"%*[^\"]\",\"%*[^\"]\",\"%*[^\"]\",\"%d\",\"%d\",%*d,%*d,%d,%*x,%d,%*d,%d,%d",
+                      &mcc, &mnc, &cellid, &pci, &tac, &band) >= 4) {
+                info->mcc = mcc;
+                info->mnc = mnc;
+                info->cell_id = cellid;
+                info->pci = pci;
+                info->tac = tac;
+                info->band = band;
+                info->has_cell_info = true;
+            }
+        }
+    } else {
+        // Try generic cell info command
+        if (send_at_command(fd, "AT+CGREG=2", response, sizeof(response), 1000) == 0) {
+            if (send_at_command(fd, "AT+CGREG?", response, sizeof(response), 2000) == 0) {
+                int n, stat, lac, ci;
+                if (sscanf(response, "\r\n+CGREG: %d,%d,\"%x\",\"%x\"", &n, &stat, &lac, &ci) >= 4) {
+                    info->lac = lac;
+                    info->cell_id = ci;
+                    info->has_cell_info = true;
+                }
+            }
+        }
+    }
+    
+    close(fd);
+    
+    // Update timestamp
+    info->timestamp = time(NULL);
+    
+    LOGX_DEBUG_MSG("Successfully collected cellular info via AT commands");
+    return AUTONOMY_SUCCESS;
 }
 
 // Parse gsmctl output

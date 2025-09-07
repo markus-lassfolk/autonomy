@@ -73,16 +73,28 @@ typedef struct {
     bool valid;
 } topocentric_result_t;
 
-// Earth orientation parameters (simplified)
+// Earth orientation parameters from IERS bulletins
 typedef struct {
-    double x_pole_arcsec;  // Polar motion X (arcseconds)
-    double y_pole_arcsec;  // Polar motion Y (arcseconds)
-    double ut1_utc_sec;    // UT1-UTC difference (seconds)
-    double lod_ms;         // Length of day variation (milliseconds)
-    astro_time_t epoch;
+    double x_pole_arcsec;         // Polar motion X (arcseconds)
+    double y_pole_arcsec;         // Polar motion Y (arcseconds)
+    double ut1_utc_sec;           // UT1-UTC difference (seconds)
+    double lod_ms;                // Length of day variation (milliseconds)
+    double dX_arcsec;             // Celestial pole offset dX (arcseconds) - from IAU 2006/2000A
+    double dY_arcsec;             // Celestial pole offset dY (arcseconds) - from IAU 2006/2000A
+    astro_time_t epoch;           // Epoch of the data
+    char bulletin_source[32];     // Source of the EOP data (e.g., "IERS Bulletin A")
 } earth_orientation_t;
 
 // API Functions
+
+// EOP Data Management
+// Fetches latest EOP data from a remote source and caches it
+int astro_update_eop_data(const char *url);
+// Loads EOP data from a local cache file
+int astro_load_eop_from_cache(const char *filepath);
+// Sets EOP data manually
+void astro_set_eop_data(const earth_orientation_t *eop);
+
 
 // Time functions
 astro_time_t astro_time_from_unix(time_t unix_time);

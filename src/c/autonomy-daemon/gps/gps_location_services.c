@@ -583,26 +583,68 @@ int try_custom_service(double lat, double lon, gps_location_info_t *location_inf
     return AUTONOMY_SUCCESS;
 }
 
-// Create basic location info when services fail
+// Create enhanced location info when services fail
 void create_basic_location_info(double lat, double lon, gps_location_info_t *location_info) {
     location_info->lat = lat;
     location_info->lon = lon;
     location_info->service_used = LOCATION_SERVICE_UNKNOWN;
     location_info->timestamp = time(NULL);
-    
-    snprintf(location_info->place_name, sizeof(location_info->place_name), 
-             "Unknown Location at %.4f, %.4f", lat, lon);
-    snprintf(location_info->address, sizeof(location_info->address), 
-             "Unknown Address");
-    snprintf(location_info->country, sizeof(location_info->country), 
-             "Unknown");
-    snprintf(location_info->state, sizeof(location_info->state), 
-             "Unknown");
-    snprintf(location_info->city, sizeof(location_info->city), 
-             "Unknown");
-    location_info->postal_code[0] = '\0';
-    
-    LOGX_WARN_MSG("All reverse geocoding services failed, created basic location info");
+
+    // Provide more meaningful information based on coordinates
+    char hemisphere_lat = (lat >= 0) ? 'N' : 'S';
+    char hemisphere_lon = (lon >= 0) ? 'E' : 'W';
+    double abs_lat = fabs(lat);
+    double abs_lon = fabs(lon);
+
+    // Create descriptive location name
+    snprintf(location_info->place_name, sizeof(location_info->place_name),
+             "%.2f°%c, %.2f°%c", abs_lat, hemisphere_lat, abs_lon, hemisphere_lon);
+
+    // Create more detailed address information
+    char continent[32] = "Unknown Continent";
+    char region[32] = "Unknown Region";
+
+    // Determine continent based on latitude/longitude ranges
+    if (lat >= -60 && lat <= 80) {
+        if (lon >= -20 && lon <= 60) { // Europe/Africa
+            if (lat >= 35) {
+                strcpy(continent, "Europe");
+                strcpy(region, "Northern Europe");
+            } else if (lat >= 0) {
+                strcpy(continent, "Europe");
+                strcpy(region, "Southern Europe");
+            } else {
+                strcpy(continent, "Africa");
+                strcpy(region, lat >= -20 ? "Northern Africa" : "Southern Africa");
+            }
+        } else if (lon >= -130 && lon <= -60) { // Americas
+            strcpy(continent, "North America");
+            strcpy(region, lat >= 30 ? "Northern US/Canada" : "Central/South America");
+        } else if (lon >= 100 && lon <= 180) { // Asia/Pacific
+            strcpy(continent, "Asia");
+            strcpy(region, lat >= 20 ? "East Asia" : "Southeast Asia");
+        } else if (lon >= 60 && lon <= 100) { // Middle East/Asia
+            strcpy(continent, "Asia");
+            strcpy(region, "Central Asia");
+        }
+    }
+
+    // Create enhanced address
+    snprintf(location_info->address, sizeof(location_info->address),
+             "Approximate Location: %s, %s (%.4f, %.4f)", region, continent, lat, lon);
+
+    // Set basic country/state info
+    snprintf(location_info->country, sizeof(location_info->country), "%s", continent);
+    snprintf(location_info->state, sizeof(location_info->state), "%s", region);
+    snprintf(location_info->city, sizeof(location_info->city), "Unknown City");
+
+    // Generate a pseudo postal code based on coordinates (for caching purposes)
+    int postal_lat = (int)((abs_lat + 90) * 100); // 0-18000
+    int postal_lon = (int)((abs_lon + 180) * 100); // 0-36000
+    snprintf(location_info->postal_code, sizeof(location_info->postal_code),
+             "%04d-%04d", postal_lat, postal_lon);
+
+    LOGX_WARN_MSG("All reverse geocoding services failed, created enhanced location info with geographic context");
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)

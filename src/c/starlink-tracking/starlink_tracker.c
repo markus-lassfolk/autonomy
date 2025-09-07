@@ -144,36 +144,18 @@ int starlink_tracker_update_dish_location(starlink_tracker_t *tracker) {
         return TRACKER_ERROR_NOT_INITIALIZED;
     }
     
-    // This would call the existing Starlink gRPC client
-    // For now, we'll simulate the call - in real implementation, 
-    // this would use the existing starlink_client.c functions
-    
-    char grpc_command[512];
-    snprintf(grpc_command, sizeof(grpc_command), 
-            "grpcurl -plaintext -d '{\"getLocation\":{}}' %s:%d SpaceX.API.Device.Device/Handle",
-            tracker->config.starlink_dish_ip, tracker->config.starlink_dish_port);
-    
-    // Execute gRPC command and parse response
-    FILE *fp = popen(grpc_command, "r");
-    if (!fp) {
+    // Use starlink_client to get enhanced location
+    dish_location_t location;
+    int rc = starlink_get_enhanced_location(&location);
+    if (rc != 0) {
         return TRACKER_ERROR_API_FAILURE;
     }
     
-    char response[4096];
-    size_t response_size = fread(response, 1, sizeof(response) - 1, fp);
-    response[response_size] = '\0';
-    
-    int status = pclose(fp);
-    if (status != 0) {
-        return TRACKER_ERROR_API_FAILURE;
-    }
-    
-    // Parse location from response
     pthread_mutex_lock(&tracker->data_mutex);
-    int parse_result = obstruction_analyzer_parse_dish_response(response, NULL, &tracker->dish_location);
+    tracker->dish_location = location;
     pthread_mutex_unlock(&tracker->data_mutex);
     
-    return (parse_result == OBSTRUCTION_SUCCESS) ? TRACKER_SUCCESS : TRACKER_ERROR_PARSE_FAILURE;
+    return TRACKER_SUCCESS;
 }
 
 // Update obstruction map from Starlink API
@@ -182,27 +164,13 @@ int starlink_tracker_update_obstruction_map(starlink_tracker_t *tracker) {
         return TRACKER_ERROR_NOT_INITIALIZED;
     }
     
-    // Call obstruction map API
-    char grpc_command[512];
-    snprintf(grpc_command, sizeof(grpc_command), 
-            "grpcurl -plaintext -d '{\"dishGetObstructionMap\":{}}' %s:%d SpaceX.API.Device.Device/Handle",
-            tracker->config.starlink_dish_ip, tracker->config.starlink_dish_port);
-    
-    FILE *fp = popen(grpc_command, "r");
-    if (!fp) {
+    // Obtain obstruction map via starlink_client
+    char response[8192];
+    int rc = starlink_get_obstruction_map(response, sizeof(response));
+    if (rc != 0) {
         return TRACKER_ERROR_API_FAILURE;
     }
     
-    char response[8192]; // Larger buffer for obstruction map
-    size_t response_size = fread(response, 1, sizeof(response) - 1, fp);
-    response[response_size] = '\0';
-    
-    int status = pclose(fp);
-    if (status != 0) {
-        return TRACKER_ERROR_API_FAILURE;
-    }
-    
-    // Update obstruction map
     pthread_mutex_lock(&tracker->data_mutex);
     int update_result = obstruction_analyzer_update_map(tracker->analyzer, response);
     if (update_result == OBSTRUCTION_SUCCESS) {

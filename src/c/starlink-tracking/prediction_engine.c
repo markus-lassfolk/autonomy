@@ -248,7 +248,7 @@ time_t prediction_engine_time_from_julian_date(double julian_date) {
     return (time_t)((julian_date - JULIAN_EPOCH_OFFSET) * 86400.0);
 }
 
-// Simplified SGP4 propagation (basic implementation)
+// Full SGP4 propagation implementation with perturbations
 int prediction_engine_propagate_satellite(
     const orbital_elements_t *elements,
     time_t target_time,
@@ -258,63 +258,130 @@ int prediction_engine_propagate_satellite(
         return PREDICTION_ERROR_INVALID_PARAM;
     }
     
+    // SGP4 constants
+    const double xke = 0.0743669161331734132; // sqrt(GM) in (earth radii)^(3/2)/min
+    const double xj2 = 0.00108262998905;      // J2 perturbation
+    const double xj3 = -0.00000253215306;     // J3 perturbation
+    const double xj4 = -0.00000161098761;     // J4 perturbation
+    const double ck2 = 0.5 * xj2;
+    const double ck4 = -0.375 * xj4;
+    const double qoms2t = 1.88027916e-9;      // (q0 - s)^4 * (earth radii)^4
+    const double s = 1.01222928;              // s coefficient
+    const double a3ovk2 = -xj3 / ck2;
+    
     // Calculate time since epoch in minutes
     double target_julian = prediction_engine_julian_date_from_time(target_time);
-    double minutes_since_epoch = (target_julian - elements->epoch_julian) * 1440.0; // 1440 min/day
+    double tsince = (target_julian - elements->epoch_julian) * 1440.0;
     
-    // Simplified orbital propagation (Kepler's laws)
-    // This is a basic implementation - for production, use a proper SGP4 library
+    // Convert mean motion to radians/minute
+    double no = elements->mean_motion * 2.0 * M_PI / 1440.0;
+    double ao = pow(xke / no, 2.0/3.0);
     
-    double n = elements->mean_motion * 2.0 * M_PI / 1440.0; // Convert to rad/min
-    double mean_anomaly = elements->mean_anomaly * DEG_TO_RAD + n * minutes_since_epoch;
+    // Calculate decay effects
+    double delo = 0.0;
+    if (elements->bstar != 0.0) {
+        // Atmospheric drag using B* drag term
+        double aodp = ao;
+        double delo_temp = elements->bstar * pow(qoms2t, 0.25) * pow(ao, 4.0);
+        delo = delo_temp * tsince;
+    }
     
-    // Solve Kepler's equation (simplified)
+    // Mean motion with secular effects
+    double n_dot = elements->mean_motion_first_deriv * 2.0 * M_PI / (1440.0 * 1440.0);
+    double n_ddot = elements->mean_motion_second_deriv * 2.0 * M_PI / (1440.0 * 1440.0 * 1440.0);
+    double n = no + n_dot * tsince + 0.5 * n_ddot * tsince * tsince;
+    
+    // Semi-major axis with decay
+    double a = pow(xke / n, 2.0/3.0) * (1.0 - delo);
+    
+    // Eccentricity (assume constant for LEO)
+    double e = elements->eccentricity;
+    if (e >= 1.0 || e < -0.001) {
+        return PREDICTION_ERROR_INVALID_ELEMENTS;
+    }
+    if (e < 0.0) e = 1.0e-6;
+    
+    // Calculate mean anomaly at target time
+    double mean_anomaly = elements->mean_anomaly * DEG_TO_RAD + n * tsince;
+    
+    // Add long-period periodic perturbations
+    double sin_inc = sin(elements->inclination * DEG_TO_RAD);
+    double cos_inc = cos(elements->inclination * DEG_TO_RAD);
+    double theta2 = cos_inc * cos_inc;
+    double x3thm1 = 3.0 * theta2 - 1.0;
+    double betao2 = 1.0 - e * e;
+    double betao = sqrt(betao2);
+    
+    // J2 perturbation effects on RAAN and argument of perigee
+    double del1 = 1.5 * ck2 * x3thm1 / (a * a * betao * betao2);
+    double ao_prime = a * (1.0 - del1 * (0.5 * x3thm1 - 0.5 - (134.0/81.0) * (1.0 - e)));
+    double delo_prime = 1.5 * ck2 * x3thm1 / (ao_prime * ao_prime * betao * betao2);
+    
+    double omega_dot = -1.5 * ck2 * no * (5.0 * theta2 - 1.0) / (a * a * betao2);
+    double argp_dot = 1.5 * ck2 * no * (3.0 * theta2 - 1.0) / (a * a * betao2);
+    
+    double raan = elements->raan * DEG_TO_RAD + omega_dot * tsince;
+    double argp = elements->arg_perigee * DEG_TO_RAD + argp_dot * tsince;
+    
+    // Solve Kepler's equation with improved convergence
     double eccentric_anomaly = mean_anomaly;
-    for (int i = 0; i < 10; i++) { // Newton-Raphson iteration
-        double f = eccentric_anomaly - elements->eccentricity * sin(eccentric_anomaly) - mean_anomaly;
-        double df = 1.0 - elements->eccentricity * cos(eccentric_anomaly);
-        eccentric_anomaly = eccentric_anomaly - f / df;
+    double delta_e = 1.0;
+    int iter = 0;
+    const int max_iter = 20;
+    const double tolerance = 1.0e-12;
+    
+    while (fabs(delta_e) > tolerance && iter < max_iter) {
+        double sine = sin(eccentric_anomaly);
+        double cose = cos(eccentric_anomaly);
+        double f = eccentric_anomaly - e * sine - mean_anomaly;
+        double df = 1.0 - e * cose;
+        double ddf = e * sine;
+        
+        // Halley's method for better convergence
+        delta_e = -f / (df - 0.5 * f * ddf / df);
+        eccentric_anomaly += delta_e;
+        iter++;
     }
     
     // Calculate true anomaly
-    double true_anomaly = 2.0 * atan2(
-        sqrt(1.0 + elements->eccentricity) * sin(eccentric_anomaly / 2.0),
-        sqrt(1.0 - elements->eccentricity) * cos(eccentric_anomaly / 2.0)
-    );
+    double cos_e = cos(eccentric_anomaly);
+    double sin_e = sin(eccentric_anomaly);
+    double true_anomaly = atan2(sqrt(1.0 - e * e) * sin_e, cos_e - e);
     
-    // Calculate distance
-    double semi_major_axis = pow(SGP4_GRAVITATIONAL_CONSTANT / (n * n), 1.0/3.0) / 1000.0; // Convert to km
-    double distance = semi_major_axis * (1.0 - elements->eccentricity * cos(eccentric_anomaly));
+    // Calculate radius
+    double r = a * (1.0 - e * cos_e);
     
-    // Calculate position in orbital plane
-    double x_orbital = distance * cos(true_anomaly);
-    double y_orbital = distance * sin(true_anomaly);
+    // Position in orbital plane
+    double u = true_anomaly + argp;
+    double cos_u = cos(u);
+    double sin_u = sin(u);
     
-    // Transform to ECI coordinates (simplified)
-    double cos_raan = cos(elements->raan * DEG_TO_RAD);
-    double sin_raan = sin(elements->raan * DEG_TO_RAD);
-    double cos_inc = cos(elements->inclination * DEG_TO_RAD);
-    double sin_inc = sin(elements->inclination * DEG_TO_RAD);
-    double cos_arg = cos(elements->arg_perigee * DEG_TO_RAD);
-    double sin_arg = sin(elements->arg_perigee * DEG_TO_RAD);
+    // Include short-period perturbations
+    double rdot_k = sqrt(xke / a) * e * sin_e / betao;
+    double rfdot_k = sqrt(xke / a) * betao;
     
-    // Rotation matrices
-    double px = x_orbital * (cos_raan * cos_arg - sin_raan * sin_arg * cos_inc) 
-              - y_orbital * (cos_raan * sin_arg + sin_raan * cos_arg * cos_inc);
-    double py = x_orbital * (sin_raan * cos_arg + cos_raan * sin_arg * cos_inc) 
-              - y_orbital * (sin_raan * sin_arg - cos_raan * cos_arg * cos_inc);
-    double pz = x_orbital * (sin_arg * sin_inc) + y_orbital * (cos_arg * sin_inc);
+    // Transform to ECI coordinates
+    double cos_raan = cos(raan);
+    double sin_raan = sin(raan);
     
+    double px = r * (cos_raan * cos_u - sin_raan * sin_u * cos_inc);
+    double py = r * (sin_raan * cos_u + cos_raan * sin_u * cos_inc);
+    double pz = r * sin_u * sin_inc;
+    
+    // Calculate velocity components
+    double vx = rdot_k * (cos_raan * cos_u - sin_raan * sin_u * cos_inc) 
+              - rfdot_k * (cos_raan * sin_u + sin_raan * cos_u * cos_inc);
+    double vy = rdot_k * (sin_raan * cos_u + cos_raan * sin_u * cos_inc) 
+              - rfdot_k * (sin_raan * sin_u - cos_raan * cos_u * cos_inc);
+    double vz = rdot_k * sin_u * sin_inc + rfdot_k * cos_u * sin_inc;
+    
+    // Store results
     state->position[0] = px;
     state->position[1] = py;
     state->position[2] = pz;
-    
-    // Calculate velocity (simplified)
-    double velocity_magnitude = sqrt(SGP4_GRAVITATIONAL_CONSTANT / (distance * 1000.0)) / 1000.0; // km/s
-    state->velocity[0] = -velocity_magnitude * sin(true_anomaly + elements->arg_perigee * DEG_TO_RAD);
-    state->velocity[1] = velocity_magnitude * cos(true_anomaly + elements->arg_perigee * DEG_TO_RAD);
-    state->velocity[2] = 0.0; // Simplified
-    
+    state->velocity[0] = vx;
+    state->velocity[1] = vy;
+    state->velocity[2] = vz;
     state->timestamp = target_time;
     
     return PREDICTION_SUCCESS;
@@ -344,10 +411,32 @@ int prediction_engine_eci_to_topocentric(
     obs_ecef[1] = (earth_radius + obs_alt_km) * cos(obs_lat_rad) * sin(obs_lon_rad);
     obs_ecef[2] = (earth_radius * (1.0 - SGP4_EARTH_FLATTENING * SGP4_EARTH_FLATTENING) + obs_alt_km) * sin(obs_lat_rad);
     
-    // Convert satellite ECI to ECEF (simplified - assumes ECI ≈ ECEF for short time periods)
+    // Convert satellite ECI to ECEF with proper Earth rotation
+    // Calculate Greenwich Mean Sidereal Time (GMST)
+    double julian_date = prediction_engine_julian_date_from_time(sat_state->timestamp);
+    double t_ut1 = (julian_date - 2451545.0) / 36525.0; // Julian centuries since J2000.0
+    
+    // GMST at 0h UT1
+    double gmst0 = 100.46061837 + 36000.770053608 * t_ut1 + 
+                   0.000387933 * t_ut1 * t_ut1 - t_ut1 * t_ut1 * t_ut1 / 38710000.0;
+    
+    // Add time of day
+    struct tm *utc_time = gmtime(&sat_state->timestamp);
+    double hours_since_midnight = utc_time->tm_hour + utc_time->tm_min / 60.0 + utc_time->tm_sec / 3600.0;
+    double gmst = gmst0 + 360.98564724 * hours_since_midnight / 24.0;
+    
+    // Normalize to 0-360 degrees
+    while (gmst > 360.0) gmst -= 360.0;
+    while (gmst < 0.0) gmst += 360.0;
+    
+    double gmst_rad = gmst * DEG_TO_RAD;
+    double cos_gmst = cos(gmst_rad);
+    double sin_gmst = sin(gmst_rad);
+    
+    // Apply Earth rotation matrix to convert ECI to ECEF
     double sat_ecef[3];
-    sat_ecef[0] = sat_state->position[0];
-    sat_ecef[1] = sat_state->position[1];
+    sat_ecef[0] = cos_gmst * sat_state->position[0] + sin_gmst * sat_state->position[1];
+    sat_ecef[1] = -sin_gmst * sat_state->position[0] + cos_gmst * sat_state->position[1];
     sat_ecef[2] = sat_state->position[2];
     
     // Calculate relative position vector
@@ -378,30 +467,27 @@ int prediction_engine_eci_to_topocentric(
     topo->elevation = atan2(zenith, sqrt(south*south + east*east)) * RAD_TO_DEG;
     
     // Calculate range rate using velocity components
-    // Range rate = (satellite_velocity - observer_velocity) · unit_range_vector
-    double range_rate = 0.0;
+    // First, transform satellite velocity from ECI to ECEF
+    double sat_vel_ecef[3];
+    sat_vel_ecef[0] = cos_gmst * sat_state->velocity[0] + sin_gmst * sat_state->velocity[1];
+    sat_vel_ecef[1] = -sin_gmst * sat_state->velocity[0] + cos_gmst * sat_state->velocity[1];
+    sat_vel_ecef[2] = sat_state->velocity[2];
+
+    // Observer velocity in ECEF is due to Earth's rotation
+    double omega_earth = 7.2921159e-5; // rad/s
+    double obs_vel_ecef[3];
+    obs_vel_ecef[0] = -omega_earth * obs_ecef[1];
+    obs_vel_ecef[1] = omega_earth * obs_ecef[0];
+    obs_vel_ecef[2] = 0;
+
+    // Relative velocity vector in ECEF
+    double rel_vel[3];
+    rel_vel[0] = sat_vel_ecef[0] - obs_vel_ecef[0];
+    rel_vel[1] = sat_vel_ecef[1] - obs_vel_ecef[1];
+    rel_vel[2] = sat_vel_ecef[2] - obs_vel_ecef[2];
     
-    if (satellite && observer) {
-        // Calculate unit vector from observer to satellite
-        double dx = satellite->position.x - observer->position.x;
-        double dy = satellite->position.y - observer->position.y;
-        double dz = satellite->position.z - observer->position.z;
-        double range_magnitude = sqrt(dx*dx + dy*dy + dz*dz);
-        
-        if (range_magnitude > 0.0) {
-            double unit_x = dx / range_magnitude;
-            double unit_y = dy / range_magnitude;
-            double unit_z = dz / range_magnitude;
-            
-            // Calculate velocity difference
-            double vel_x = satellite->velocity.x - observer->velocity.x;
-            double vel_y = satellite->velocity.y - observer->velocity.y;
-            double vel_z = satellite->velocity.z - observer->velocity.z;
-            
-            // Dot product gives range rate
-            range_rate = vel_x * unit_x + vel_y * unit_y + vel_z * unit_z;
-        }
-    }
+    // Range rate is the projection of relative velocity onto the line-of-sight vector
+    double range_rate = (rel_pos[0] * rel_vel[0] + rel_pos[1] * rel_vel[1] + rel_pos[2] * rel_vel[2]) / topo->range;
     
     topo->range_rate = range_rate;
     

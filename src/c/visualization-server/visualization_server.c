@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <pthread.h>
 #include <microhttpd.h>
 #include <json-c/json.h>
@@ -115,21 +118,60 @@ static enum MHD_Result viz_request_handler(void *cls,
                                      size_t *upload_data_size,
                                      void **con_cls) {
     
-    static int dummy;
+    // Connection context structure for proper request handling
+    typedef struct {
+        bool is_new_connection;
+        time_t request_time;
+        char client_ip[INET6_ADDRSTRLEN];
+    } connection_context_t;
+    
     struct MHD_Response *response;
     enum MHD_Result ret;
     struct http_response http_resp = {0};
     
-    if (&dummy != *con_cls) {
-        *con_cls = &dummy;
+    // Handle new connection
+    if (*con_cls == NULL) {
+        // Allocate connection context for this request
+        connection_context_t *context = calloc(1, sizeof(connection_context_t));
+        if (context == NULL) {
+            // Memory allocation failed
+            return MHD_NO;
+        }
+        
+        context->is_new_connection = true;
+        context->request_time = time(NULL);
+        
+        // Get client IP address
+        const union MHD_ConnectionInfo *info = MHD_get_connection_info(connection,
+                                                    MHD_CONNECTION_INFO_CLIENT_ADDRESS);
+        if (info && info->client_addr) {
+            struct sockaddr *addr = info->client_addr;
+            if (addr->sa_family == AF_INET) {
+                struct sockaddr_in *addr_in = (struct sockaddr_in *)addr;
+                inet_ntop(AF_INET, &addr_in->sin_addr, context->client_ip, 
+                         sizeof(context->client_ip));
+            } else if (addr->sa_family == AF_INET6) {
+                struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)addr;
+                inet_ntop(AF_INET6, &addr_in6->sin6_addr, context->client_ip,
+                         sizeof(context->client_ip));
+            }
+        }
+        
+        *con_cls = context;
+        return MHD_YES;  // Continue processing
+    }
+    
+    connection_context_t *context = (connection_context_t *)*con_cls;
+    
+    // Handle upload data if present
+    if (*upload_data_size != 0) {
+        // For now, we don't support POST data
+        *upload_data_size = 0;
         return MHD_YES;
     }
     
-    if (*upload_data_size != 0) {
-        return MHD_NO;
-    }
-    
-    *con_cls = NULL;
+    // Log the request
+    printf("[%s] %s request for %s\n", context->client_ip, method, url);
     
     // Route requests
     if (strcmp(url, "/") == 0 || strcmp(url, "/index.html") == 0) {
@@ -200,6 +242,12 @@ static enum MHD_Result viz_request_handler(void *cls,
     
     ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
     MHD_destroy_response(response);
+    
+    // Clean up connection context
+    if (context) {
+        free(context);
+        *con_cls = NULL;
+    }
     
     return ret;
 }

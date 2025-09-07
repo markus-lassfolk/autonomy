@@ -1,4 +1,5 @@
 #include "starlink_snow_detection.h"
+#include "../starlink/starlink_comprehensive.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
 #include <string.h>
@@ -8,6 +9,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <sys/wait.h>
 
 // Snow detection configuration
 static const int SNOW_DETECTION_SAMPLES = 5;              // Samples needed for detection
@@ -53,6 +55,8 @@ int starlink_snow_detection_init(void) {
     g_snow_detection.temperature_threshold = SNOW_TEMPERATURE_THRESHOLD;
     g_snow_detection.verification_time = SNOW_VERIFICATION_TIME;
     g_snow_detection.melt_timeout = SNOW_MELT_TIMEOUT;
+    // Initialize with empty API key - will be loaded from UCI
+    memset(g_snow_detection.weather_api_key, 0, sizeof(g_snow_detection.weather_api_key));
     
     g_snow_detection.is_heating_active = false;
     g_snow_detection.last_clear_time = time(NULL);
@@ -184,31 +188,129 @@ static bool is_rv_stationary(void) {
     return (obstruction_variance < 0.01); // 1% variance threshold
 }
 
-// Check snow forecast
+// Enhanced snow forecast algorithm
 static bool check_snow_forecast(void) {
-    // This would integrate with weather API
-    // For now, we'll use a simple heuristic based on temperature and humidity
-    
     double temp = get_ambient_temperature();
     double humidity = get_humidity();
-    
-    // Simple snow forecast: cold temperature + high humidity
-    return (temp < 2.0 && humidity > 80.0);
+
+    // If we don't have valid weather data, use fallback logic
+    if (temp <= -100.0 || humidity < 0.0) {
+        LOGX_WARN_MSG("Invalid weather data for snow forecast, using fallback");
+        return (temp < 2.0 && humidity > 80.0);
+    }
+
+    // Enhanced snow prediction algorithm
+    double snow_probability = 0.0;
+
+    // Base conditions: temperature and humidity
+    if (temp < -5.0) {
+        snow_probability += 0.4; // Very cold - high snow potential
+    } else if (temp < 0.0) {
+        snow_probability += 0.3; // Freezing - good snow potential
+    } else if (temp < 2.0) {
+        snow_probability += 0.2; // Near freezing - moderate snow potential
+    } else if (temp < 5.0) {
+        snow_probability += 0.1; // Cool but above freezing - low snow potential
+    }
+
+    // Humidity factor
+    if (humidity > 90.0) {
+        snow_probability += 0.4; // Very humid - high precipitation potential
+    } else if (humidity > 80.0) {
+        snow_probability += 0.3; // Humid - good precipitation potential
+    } else if (humidity > 70.0) {
+        snow_probability += 0.2; // Moderately humid
+    } else if (humidity > 60.0) {
+        snow_probability += 0.1; // Dry conditions
+    }
+
+    // Wind chill factor (estimated)
+    double wind_chill_factor = 0.0;
+    if (temp < 5.0) {
+        // Estimate wind chill effect - colder temperatures are more affected
+        wind_chill_factor = (5.0 - temp) * 0.1;
+        snow_probability += wind_chill_factor;
+    }
+
+    // Seasonal adjustment (winter months increase probability)
+    time_t now = time(NULL);
+    struct tm *local_time = localtime(&now);
+    int month = local_time->tm_mon + 1; // tm_mon is 0-based
+
+    // Winter months: December, January, February, March
+    if (month == 12 || month == 1 || month == 2 || month == 3) {
+        snow_probability += 0.2; // 20% bonus for winter season
+    } else if (month == 11 || month == 4) { // Shoulder seasons
+        snow_probability += 0.1; // 10% bonus for shoulder seasons
+    }
+
+    // Altitude consideration (higher altitudes increase snow probability)
+    // This would be enhanced with actual altitude data from GPS
+    if (temp < 0.0) {
+        snow_probability += 0.1; // Bonus for freezing temperatures at any altitude
+    }
+
+    // Temperature trend consideration (rapid cooling increases snow potential)
+    static double last_temp = 0.0;
+    static time_t last_temp_time = 0;
+    time_t current_time = time(NULL);
+
+    if (last_temp_time > 0 && (current_time - last_temp_time) < 3600) { // Within last hour
+        double temp_drop = last_temp - temp;
+        if (temp_drop > 5.0) { // Rapid temperature drop
+            snow_probability += 0.2;
+        } else if (temp_drop > 2.0) { // Moderate temperature drop
+            snow_probability += 0.1;
+        }
+    }
+
+    last_temp = temp;
+    last_temp_time = current_time;
+
+    // Decision threshold: 60% probability or higher indicates snow risk
+    bool snow_risk = (snow_probability >= 0.6);
+
+    LOGX_DEBUG_MSG("Snow forecast analysis",
+                   "temperature", temp,
+                   "humidity", humidity,
+                   "probability", snow_probability,
+                   "snow_risk", snow_risk);
+
+    return snow_risk;
 }
 
 // Get ambient temperature
 static double get_ambient_temperature(void) {
-    // Try to get temperature from weather API first
-    char weather_temp[32];
-    FILE *weather_fp = popen("curl -s 'http://api.openweathermap.org/data/2.5/weather?lat=0&lon=0&appid=YOUR_API_KEY&units=metric' 2>/dev/null | grep -o '\"temp\":[0-9.-]*' | cut -d':' -f2", "r");
-    if (weather_fp && fgets(weather_temp, sizeof(weather_temp), weather_fp)) {
-        pclose(weather_fp);
-        double temp = atof(weather_temp);
-        if (temp > -50.0 && temp < 60.0) { // Sanity check
-            return temp;
+    // Get current GPS location from Starlink
+    starlink_comprehensive_gps_t gps_data;
+    if (starlink_comprehensive_collect_gps(&gps_data) == AUTONOMY_SUCCESS &&
+        gps_data.valid && gps_data.confidence > 0.5) {
+
+        // Try to get temperature from weather API using real GPS coordinates
+        if (strlen(g_snow_detection.weather_api_key) > 0) {
+            char weather_cmd[512];
+            char weather_temp[32];
+
+            // Build weather API command with real coordinates and configured API key
+            snprintf(weather_cmd, sizeof(weather_cmd),
+                     "curl -s 'http://api.openweathermap.org/data/2.5/weather?lat=%.6f&lon=%.6f&appid=%s&units=metric' 2>/dev/null | grep -o '\"temp\":[0-9.-]*' | cut -d':' -f2",
+                     gps_data.latitude, gps_data.longitude, g_snow_detection.weather_api_key);
+
+            FILE *weather_fp = popen(weather_cmd, "r");
+            if (weather_fp && fgets(weather_temp, sizeof(weather_temp), weather_fp)) {
+                pclose(weather_fp);
+                double temp = atof(weather_temp);
+                if (temp > -50.0 && temp < 60.0) { // Sanity check
+                    return temp;
+                }
+            } else {
+                if (weather_fp) pclose(weather_fp);
+            }
+        } else {
+            LOGX_WARN_MSG("Weather API key not configured, skipping weather API temperature lookup");
         }
     } else {
-        if (weather_fp) pclose(weather_fp);
+        LOGX_WARN_MSG("Unable to get valid GPS coordinates from Starlink for weather API");
     }
     
     // Try to get temperature from system thermal sensors
@@ -250,17 +352,36 @@ static double get_ambient_temperature(void) {
 
 // Get humidity
 static double get_humidity(void) {
-    // Try to get humidity from weather API first
-    char weather_humidity[32];
-    FILE *weather_fp = popen("curl -s 'http://api.openweathermap.org/data/2.5/weather?lat=0&lon=0&appid=YOUR_API_KEY&units=metric' 2>/dev/null | grep -o '\"humidity\":[0-9]*' | cut -d':' -f2", "r");
-    if (weather_fp && fgets(weather_humidity, sizeof(weather_humidity), weather_fp)) {
-        pclose(weather_fp);
-        double humidity = atof(weather_humidity);
-        if (humidity >= 0.0 && humidity <= 100.0) { // Sanity check
-            return humidity;
+    // Get current GPS location from Starlink
+    starlink_comprehensive_gps_t gps_data;
+    if (starlink_comprehensive_collect_gps(&gps_data) == AUTONOMY_SUCCESS &&
+        gps_data.valid && gps_data.confidence > 0.5) {
+
+        // Try to get humidity from weather API using real GPS coordinates
+        if (strlen(g_snow_detection.weather_api_key) > 0) {
+            char weather_cmd[512];
+            char weather_humidity[32];
+
+            // Build weather API command with real coordinates and configured API key
+            snprintf(weather_cmd, sizeof(weather_cmd),
+                     "curl -s 'http://api.openweathermap.org/data/2.5/weather?lat=%.6f&lon=%.6f&appid=%s&units=metric' 2>/dev/null | grep -o '\"humidity\":[0-9]*' | cut -d':' -f2",
+                     gps_data.latitude, gps_data.longitude, g_snow_detection.weather_api_key);
+
+            FILE *weather_fp = popen(weather_cmd, "r");
+            if (weather_fp && fgets(weather_humidity, sizeof(weather_humidity), weather_fp)) {
+                pclose(weather_fp);
+                double humidity = atof(weather_humidity);
+                if (humidity >= 0.0 && humidity <= 100.0) { // Sanity check
+                    return humidity;
+                }
+            } else {
+                if (weather_fp) pclose(weather_fp);
+            }
+        } else {
+            LOGX_WARN_MSG("Weather API key not configured, skipping weather API humidity lookup");
         }
     } else {
-        if (weather_fp) pclose(weather_fp);
+        LOGX_WARN_MSG("Unable to get valid GPS coordinates from Starlink for weather API");
     }
     
     // Try to get humidity from UCI configuration
@@ -426,7 +547,11 @@ static int start_dish_heating(void) {
         if (result == 0) {
             LOGX_INFO_MSG("Custom heating command executed successfully");
         } else {
-            LOGX_WARN_MSG("Custom heating command failed", "result", result);
+            LOGX_WARN_MSG("Custom heating command failed",
+                         "command", heating_cmd,
+                         "result", result,
+                         "error_code", WEXITSTATUS(result),
+                         "action", "Heating system activation failed - will try fallback methods");
         }
     } else {
         if (uci_fp) pclose(uci_fp);
@@ -483,7 +608,11 @@ static int stop_dish_heating(void) {
         if (result == 0) {
             LOGX_INFO_MSG("Custom heating stop command executed successfully");
         } else {
-            LOGX_WARN_MSG("Custom heating stop command failed", "result", result);
+            LOGX_WARN_MSG("Custom heating stop command failed",
+                         "command", heating_cmd,
+                         "result", result,
+                         "error_code", WEXITSTATUS(result),
+                         "action", "Heating system deactivation failed - will try fallback methods");
         }
     } else {
         if (uci_fp) pclose(uci_fp);
@@ -759,6 +888,8 @@ int starlink_snow_detection_load_uci_config(void) {
             g_snow_detection.verification_time = atoi(value);
         } else if (strcmp(option, "melt_timeout") == 0) {
             g_snow_detection.melt_timeout = atoi(value);
+        } else if (strcmp(option, "weather_api_key") == 0) {
+            strncpy(g_snow_detection.weather_api_key, value, sizeof(g_snow_detection.weather_api_key) - 1);
         }
     }
     
@@ -788,6 +919,7 @@ int starlink_snow_detection_save_uci_config(void) {
              "uci set autonomy.snow_detection.temperature_threshold='%.1f' && "
              "uci set autonomy.snow_detection.verification_time='%d' && "
              "uci set autonomy.snow_detection.melt_timeout='%d' && "
+             "uci set autonomy.snow_detection.weather_api_key='%s' && "
              "uci commit autonomy",
              g_snow_detection.enabled ? 1 : 0,
              g_snow_detection.detection_samples,
@@ -795,14 +927,19 @@ int starlink_snow_detection_save_uci_config(void) {
              g_snow_detection.snr_degradation_threshold,
              g_snow_detection.temperature_threshold,
              g_snow_detection.verification_time,
-             g_snow_detection.melt_timeout);
+             g_snow_detection.melt_timeout,
+             g_snow_detection.weather_api_key);
     
     pthread_mutex_unlock(&g_snow_detection_mutex);
     
     // Execute UCI commands
     int result = system(uci_cmd);
     if (result != 0) {
-        LOGX_ERROR_MSG("Failed to save UCI configuration", "result", result);
+        LOGX_ERROR_MSG("Failed to save UCI configuration",
+                      "command", uci_cmd,
+                      "result", result,
+                      "error_code", WEXITSTATUS(result),
+                      "action", "Configuration may not persist across reboots");
         return AUTONOMY_ERROR_OPERATION_FAILED;
     }
     

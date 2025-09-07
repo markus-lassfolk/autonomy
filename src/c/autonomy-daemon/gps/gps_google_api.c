@@ -1,5 +1,6 @@
 #include "gps_google_api.h"
 #include "../utils/logx.h"
+#include "../utils/json_parser.h"
 #include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
@@ -216,46 +217,79 @@ static void parse_reverse_geocode_response(const gps_google_api_response_t *resp
     memset(location_info, 0, sizeof(gps_google_location_info_t));
     location_info->timestamp = response->timestamp;
     
-    // Parse Google Geocoding API response
-    // Look for formatted address and location components
-    char *formatted_addr_start = strstr(response->data, "\"formatted_address\":");
-    char *lat_start = strstr(response->data, "\"lat\":");
-    char *lng_start = strstr(response->data, "\"lng\":");
-    
-    if (formatted_addr_start) {
-        formatted_addr_start = strchr(formatted_addr_start, ':');
-        if (formatted_addr_start) {
-            formatted_addr_start++; // Skip ':'
-            // Skip whitespace and quotes
-            while (*formatted_addr_start == ' ' || *formatted_addr_start == '"') {
-                formatted_addr_start++;
-            }
+    // Use proper JSON parser from json_parser library
+    geocoding_result_t result;
+    if (!json_parse_google_geocoding(response->data, &result)) {
+        // Fallback to direct parsing with json_document
+        json_document_t* doc = json_parse_string(response->data);
+        if (!doc || !doc->valid) {
+            LOGX_WARN_MSG("Failed to parse Google Geocoding response");
+            return;
+        }
+        
+        // Parse the first result from the results array
+        char* formatted_address = NULL;
+        if (json_get_string(doc, "results[0].formatted_address", 
+                          location_info->formatted_address, 
+                          sizeof(location_info->formatted_address))) {
+            // Successfully parsed formatted address
+        }
+        
+        // Parse location coordinates
+        json_get_double(doc, "results[0].geometry.location.lat", &location_info->latitude);
+        json_get_double(doc, "results[0].geometry.location.lng", &location_info->longitude);
+        
+        // Parse address components for detailed information
+        int components_count = json_get_array_size(doc, "results[0].address_components");
+        for (int i = 0; i < components_count; i++) {
+            char path[256];
+            char type[64];
             
-            char *addr_end = strchr(formatted_addr_start, '"');
-            if (addr_end) {
-                size_t addr_len = addr_end - formatted_addr_start;
-                if (addr_len < sizeof(location_info->formatted_address)) {
-                    strncpy(location_info->formatted_address, formatted_addr_start, addr_len);
-                    location_info->formatted_address[addr_len] = '\0';
+            // Get the type of this component
+            snprintf(path, sizeof(path), "results[0].address_components[%d].types[0]", i);
+            if (json_get_string(doc, path, type, sizeof(type))) {
+                // Get the long name for this component
+                char value[256];
+                snprintf(path, sizeof(path), "results[0].address_components[%d].long_name", i);
+                
+                if (json_get_string(doc, path, value, sizeof(value))) {
+                    // Map component types to location info fields
+                    if (strcmp(type, "country") == 0) {
+                        strncpy(location_info->country, value, sizeof(location_info->country) - 1);
+                    } else if (strcmp(type, "administrative_area_level_1") == 0) {
+                        strncpy(location_info->state, value, sizeof(location_info->state) - 1);
+                    } else if (strcmp(type, "locality") == 0) {
+                        strncpy(location_info->city, value, sizeof(location_info->city) - 1);
+                    } else if (strcmp(type, "postal_code") == 0) {
+                        strncpy(location_info->postal_code, value, sizeof(location_info->postal_code) - 1);
+                    } else if (strcmp(type, "route") == 0) {
+                        strncpy(location_info->street, value, sizeof(location_info->street) - 1);
+                    }
                 }
             }
         }
-    }
-    
-    if (lat_start && lng_start) {
-        lat_start = strchr(lat_start, ':');
-        lng_start = strchr(lng_start, ':');
         
-        if (lat_start && lng_start) {
-            location_info->latitude = atof(lat_start + 1);
-            location_info->longitude = atof(lng_start + 1);
-        }
+        // Parse place ID if available
+        json_get_string(doc, "results[0].place_id", location_info->place_id, 
+                       sizeof(location_info->place_id));
+        
+        json_document_free(doc);
+    } else {
+        // Successfully parsed using the helper function
+        strncpy(location_info->formatted_address, result.formatted_address, 
+                sizeof(location_info->formatted_address) - 1);
+        strncpy(location_info->country, result.country, sizeof(location_info->country) - 1);
+        strncpy(location_info->state, result.state, sizeof(location_info->state) - 1);
+        strncpy(location_info->city, result.city, sizeof(location_info->city) - 1);
+        strncpy(location_info->postal_code, result.postal_code, sizeof(location_info->postal_code) - 1);
+        location_info->latitude = result.latitude;
+        location_info->longitude = result.longitude;
     }
     
-    LOGX_DEBUG_MSG("Parsed Google Geocoding response", 
-                  "formatted_address", location_info->formatted_address,
-                  "latitude", location_info->latitude,
-                  "longitude", location_info->longitude);
+    LOGX_DEBUG_MSG("Successfully parsed Google Geocoding response: %s (%.6f, %.6f)", 
+                  location_info->formatted_address,
+                  location_info->latitude,
+                  location_info->longitude);
 }
 
 // Get place details using Google API
@@ -358,20 +392,30 @@ int gps_google_api_get_elevation(double lat, double lon, double *elevation) {
         return AUTONOMY_ERROR_API_FAILED;
     }
     
-    // Parse elevation from Google Elevation API response
-    char *elevation_start = strstr(response.data, "\"elevation\":");
-    if (elevation_start) {
-        elevation_start = strchr(elevation_start, ':');
-        if (elevation_start) {
-            *elevation = atof(elevation_start + 1);
-        } else {
-            *elevation = 100.0; // Default fallback
-        }
-    } else {
+    // Use proper JSON parser for elevation response
+    json_document_t* doc = json_parse_string(response.data);
+    if (!doc || !doc->valid) {
+        LOGX_WARN_MSG("Failed to parse elevation response");
         *elevation = 100.0; // Default fallback
+        return AUTONOMY_ERROR_API_FAILED;
     }
     
-    LOGX_DEBUG_MSG("Parsed elevation from Google API", "elevation", *elevation);
+    // Parse elevation from the first result
+    if (!json_get_double(doc, "results[0].elevation", elevation)) {
+        LOGX_WARN_MSG("No elevation data in response");
+        *elevation = 100.0; // Default fallback
+        json_document_free(doc);
+        return AUTONOMY_ERROR_API_FAILED;
+    }
+    
+    // Also get resolution if available
+    double resolution;
+    if (json_get_double(doc, "results[0].resolution", &resolution)) {
+        LOGX_DEBUG_MSG("Elevation resolution: %.2f meters", resolution);
+    }
+    
+    json_document_free(doc);
+    LOGX_DEBUG_MSG("Successfully parsed elevation from Google API: %.2f meters", *elevation);
     return AUTONOMY_SUCCESS;
 }
 
@@ -397,9 +441,47 @@ int gps_google_api_get_timezone(double lat, double lon, time_t timestamp,
         return AUTONOMY_ERROR_API_FAILED;
     }
     
-    // Parse response (simplified)
+    // Use proper JSON parser for timezone response
     memset(timezone_info, 0, sizeof(gps_google_timezone_info_t));
     timezone_info->timestamp = timestamp;
+    
+    json_document_t* doc = json_parse_string(response.data);
+    if (!doc || !doc->valid) {
+        LOGX_WARN_MSG("Failed to parse timezone response");
+        return AUTONOMY_ERROR_API_FAILED;
+    }
+    
+    // Parse timezone information
+    int dst_offset, raw_offset;
+    if (json_get_int(doc, "dstOffset", &dst_offset)) {
+        timezone_info->dst_offset = dst_offset;
+    }
+    
+    if (json_get_int(doc, "rawOffset", &raw_offset)) {
+        timezone_info->raw_offset = raw_offset;
+    }
+    
+    // Total offset in seconds
+    timezone_info->total_offset = dst_offset + raw_offset;
+    
+    // Parse timezone ID and name
+    json_get_string(doc, "timeZoneId", timezone_info->timezone_id, sizeof(timezone_info->timezone_id));
+    json_get_string(doc, "timeZoneName", timezone_info->timezone_name, sizeof(timezone_info->timezone_name));
+    
+    // Check status
+    char status[32];
+    if (json_get_string(doc, "status", status, sizeof(status))) {
+        if (strcmp(status, "OK") != 0) {
+            LOGX_WARN_MSG("Timezone API returned status: %s", status);
+            json_document_free(doc);
+            return AUTONOMY_ERROR_API_FAILED;
+        }
+    }
+    
+    json_document_free(doc);
+    
+    LOGX_DEBUG_MSG("Successfully parsed timezone: %s (offset: %d seconds)", 
+                  timezone_info->timezone_name, timezone_info->total_offset);
     
     return AUTONOMY_SUCCESS;
 }

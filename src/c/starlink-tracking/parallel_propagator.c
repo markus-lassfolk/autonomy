@@ -272,8 +272,8 @@ int parallel_propagator_calculate_positions(
     result->calculation_start = time(NULL);
     
     // Allocate result arrays
-    result->positions = calloc(constellation->num_satellites * num_times, sizeof(satellite_position_t));
-    if (!result->positions) {
+    result->states = calloc(constellation->num_satellites * num_times, sizeof(satellite_state_t));
+    if (!result->states) {
         return PARALLEL_ERROR_MEMORY_FAILED;
     }
     
@@ -309,7 +309,7 @@ int parallel_propagator_calculate_positions(
         job.elements = &elements;
         job.time_array = time_array;
         job.num_times = num_times;
-        job.results = &result->positions[sat_idx * num_times];
+        job.results = &result->states[sat_idx * num_times];
         job.satellite_index = sat_idx;
         
         pthread_mutex_lock(&propagator->job_id_mutex);
@@ -344,27 +344,35 @@ int parallel_propagator_calculate_positions(
     result->processing_time_seconds = (calc_end.tv_sec - calc_start.tv_sec) + 
                                      (calc_end.tv_usec - calc_start.tv_usec) / 1000000.0;
     
+    // Allocate positions array
+    result->positions = calloc(constellation->num_satellites * num_times, sizeof(satellite_position_t));
+    if(!result->positions) {
+        free(result->states);
+        result->states = NULL;
+        return PARALLEL_ERROR_MEMORY_FAILED;
+    }
+
     // Convert satellite states to positions with Az/El
     result->num_positions = 0;
     for (int i = 0; i < constellation->num_satellites * num_times; i++) {
-        if (result->positions[i].timestamp > 0) {
+        if (result->states[i].timestamp > 0) {
             // Convert ECI to topocentric coordinates
             topocentric_coords_t topo;
-            satellite_state_t sat_state = {
-                .position = {result->positions[i].range, 0, 0}, // Simplified for now
-                .timestamp = result->positions[i].timestamp
-            };
             
-            if (prediction_engine_eci_to_topocentric(&sat_state, observer, &topo) == PREDICTION_SUCCESS) {
+            if (prediction_engine_eci_to_topocentric(&result->states[i], observer, &topo) == PREDICTION_SUCCESS) {
                 result->positions[result->num_positions].azimuth = topo.azimuth;
                 result->positions[result->num_positions].elevation = topo.elevation;
                 result->positions[result->num_positions].range = topo.range;
-                result->positions[result->num_positions].timestamp = result->positions[i].timestamp;
+                result->positions[result->num_positions].timestamp = result->states[i].timestamp;
                 result->num_positions++;
             }
         }
     }
     
+    // Free the ECI states array as it's no longer needed
+    free(result->states);
+    result->states = NULL;
+
     // Update statistics
     propagator->total_jobs_submitted += jobs_submitted;
     propagator->total_jobs_completed += jobs_submitted; // Assume all completed
@@ -468,6 +476,11 @@ void parallel_result_cleanup(parallel_result_t *result) {
     if (result->positions) {
         free(result->positions);
         result->positions = NULL;
+    }
+
+    if (result->states) {
+        free(result->states);
+        result->states = NULL;
     }
     
     if (result->assessments) {

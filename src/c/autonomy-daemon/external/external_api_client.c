@@ -1,4 +1,6 @@
 #include "external_api_client.h"
+#include "../utils/http_client_libcurl.h"
+#include "../utils/json_parser.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -152,76 +154,104 @@ int external_api_client_test_connection(void) {
     return result;
 }
 
-// Send API request (internal implementation)
+// Send API request (internal implementation using libcurl)
 static int api_send_request(const api_request_t* request, api_response_t* response) {
-    if (!request || !response || g_api_socket < 0) {
+    if (!request || !response) {
         return -1;
     }
     
-    // This is a simplified HTTP request implementation
-    // In a real system, you'd use libcurl or similar
+    // Build full URL
+    char full_url[1024];
+    snprintf(full_url, sizeof(full_url), "%s%s", g_external_api_client.config.base_url, request->endpoint);
     
-    // Create HTTP request
-    char http_request[8192];
-    snprintf(http_request, sizeof(http_request),
-             "%s %s HTTP/1.1\r\n"
-             "Host: %s\r\n"
-             "User-Agent: Autonomy-Daemon/6.1.0\r\n"
-             "Accept: application/json\r\n"
-             "Content-Type: application/json\r\n"
-             "Content-Length: %zu\r\n"
-             "\r\n"
-             "%s",
-             request->method,
-             request->endpoint,
-             g_external_api_client.config.base_url,
-             strlen(request->body),
-             request->body);
+    // Create HTTP request using libcurl
+    http_request_t* http_req = NULL;
     
-    // Send request
-    int total_sent = 0;
-    int request_length = strlen(http_request);
-    
-    while (total_sent < request_length) {
-        int sent = send(g_api_socket, http_request + total_sent, request_length - total_sent, 0);
-        if (sent < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                usleep(1000); // Wait 1ms
-                continue;
-            }
-            return -1;
+    if (strcmp(request->method, "GET") == 0) {
+        http_req = http_request_create(full_url, HTTP_METHOD_GET);
+    } else if (strcmp(request->method, "POST") == 0) {
+        http_req = http_request_create(full_url, HTTP_METHOD_POST);
+        if (request->body && strlen(request->body) > 0) {
+            http_req->body = strdup(request->body);
+            http_req->body_size = strlen(request->body);
         }
-        total_sent += sent;
-    }
-    
-    // Receive response (simplified)
-    char response_buffer[8192];
-    int received = recv(g_api_socket, response_buffer, sizeof(response_buffer) - 1, 0);
-    
-    if (received > 0) {
-        response_buffer[received] = '\0';
-        
-        // Parse HTTP response (simplified)
-        char* body_start = strstr(response_buffer, "\r\n\r\n");
-        if (body_start) {
-            body_start += 4; // Skip headers
-            strcpy(response->body, body_start);
+    } else if (strcmp(request->method, "PUT") == 0) {
+        http_req = http_request_create(full_url, HTTP_METHOD_PUT);
+        if (request->body && strlen(request->body) > 0) {
+            http_req->body = strdup(request->body);
+            http_req->body_size = strlen(request->body);
         }
-        
-        // Extract status code (simplified)
-        if (strstr(response_buffer, "HTTP/1.1 200")) {
-            response->status_code = 200;
-        } else if (strstr(response_buffer, "HTTP/1.1 404")) {
-            response->status_code = 404;
-        } else {
-            response->status_code = 500;
-        }
-        
-        // Copy headers (simplified)
-        strcpy(response->headers, "Content-Type: application/json");
+    } else if (strcmp(request->method, "DELETE") == 0) {
+        http_req = http_request_create(full_url, HTTP_METHOD_DELETE);
     } else {
+        return -1; // Unsupported method
+    }
+    
+    if (!http_req) {
         return -1;
     }
+    
+    // Set common headers
+    http_request_add_header_kv(http_req, "User-Agent", "Autonomy-Daemon/6.1.0");
+    http_request_add_header_kv(http_req, "Accept", "application/json");
+    
+    if (http_req->body) {
+        http_request_add_header_kv(http_req, "Content-Type", "application/json");
+    }
+    
+    // Add custom headers
+    for (int i = 0; i < request->header_count; i++) {
+        http_request_add_header(http_req, request->headers[i]);
+    }
+    
+    // Set authentication if provided
+    if (g_external_api_client.config.api_key && strlen(g_external_api_client.config.api_key) > 0) {
+        char auth_header[512];
+        snprintf(auth_header, sizeof(auth_header), "Authorization: Bearer %s", g_external_api_client.config.api_key);
+        http_request_add_header(http_req, auth_header);
+    }
+    
+    // Set SSL verification based on config
+    http_req->verify_ssl = g_external_api_client.config.use_ssl;
+    
+    // Set timeouts
+    http_req->connect_timeout_ms = g_external_api_client.config.timeout_ms;
+    http_req->request_timeout_ms = g_external_api_client.config.timeout_ms;
+    
+    // Execute request
+    http_response_t* http_resp = http_request(http_req);
+    
+    if (!http_resp) {
+        http_request_free(http_req);
+        return -1;
+    }
+    
+    // Copy response data
+    response->status_code = http_resp->status_code;
+    
+    if (http_resp->body && http_resp->body_size > 0) {
+        size_t copy_size = (http_resp->body_size < sizeof(response->body) - 1) ? 
+                          http_resp->body_size : sizeof(response->body) - 1;
+        memcpy(response->body, http_resp->body, copy_size);
+        response->body[copy_size] = '\0';
+    } else {
+        response->body[0] = '\0';
+    }
+    
+    if (http_resp->headers && http_resp->header_size > 0) {
+        size_t copy_size = (http_resp->header_size < sizeof(response->headers) - 1) ? 
+                          http_resp->header_size : sizeof(response->headers) - 1;
+        memcpy(response->headers, http_resp->headers, copy_size);
+        response->headers[copy_size] = '\0';
+    } else {
+        response->headers[0] = '\0';
+    }
+    
+    response->response_time = http_resp->total_time;
+    
+    // Cleanup
+    http_response_free(http_resp);
+    http_request_free(http_req);
     
     return 0;
 }

@@ -54,6 +54,7 @@ typedef struct {
     double temperature_threshold;          // Temperature threshold for snow
     int verification_time;                 // Verification time in seconds
     int melt_timeout;                      // Maximum melt time in seconds
+    char weather_api_key[64];              // OpenWeatherMap API key
 } starlink_snow_detection_config_t;
 
 // Snow detection status

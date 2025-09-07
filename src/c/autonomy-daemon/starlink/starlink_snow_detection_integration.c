@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <json-c/json.h>
 
 // Integration configuration
 static const int INTEGRATION_CHECK_INTERVAL = 30;  // Check every 30 seconds
@@ -274,30 +275,27 @@ static int get_obstruction_sample_from_starlink(starlink_obstruction_sample_t *s
         return AUTONOMY_ERROR_OPERATION_FAILED;
     }
     
-    // Parse JSON response (simplified)
+    // Parse JSON response using json-c
     sample->timestamp = time(NULL);
-    
-    // Look for obstruction data in the response
-    char *obstruction_str = strstr(response, "\"fractionObstructed\"");
-    if (obstruction_str) {
-        char *value_start = strchr(obstruction_str, ':');
-        if (value_start) {
-            sample->fraction_obstructed = atof(value_start + 1);
-        }
-    } else {
-        sample->fraction_obstructed = 0.0;
+    sample->fraction_obstructed = 0.0;
+    sample->snr = 0.0;
+
+    json_object *root = json_tokener_parse(response);
+    if (!root) {
+        return AUTONOMY_ERROR_OPERATION_FAILED;
     }
-    
-    // Look for SNR data
-    char *snr_str = strstr(response, "\"snr\"");
-    if (snr_str) {
-        char *value_start = strchr(snr_str, ':');
-        if (value_start) {
-            sample->snr = atof(value_start + 1);
-        }
-    } else {
-        sample->snr = 0.0;
+
+    json_object *obstruction_obj;
+    if (json_object_object_get_ex(root, "fractionObstructed", &obstruction_obj)) {
+        sample->fraction_obstructed = json_object_get_double(obstruction_obj);
     }
+
+    json_object *snr_obj;
+    if (json_object_object_get_ex(root, "snr", &snr_obj)) {
+        sample->snr = json_object_get_double(snr_obj);
+    }
+
+    json_object_put(root);
     
     return AUTONOMY_SUCCESS;
 }

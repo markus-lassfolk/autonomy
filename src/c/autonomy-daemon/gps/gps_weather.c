@@ -2,6 +2,7 @@
 #include "gps_weather.h"
 #include "../external/external_apis.h"
 #include "../utils/logx.h"
+#include "../utils/json_parser.h"
 #include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
@@ -418,82 +419,84 @@ void parse_current_weather_response(const gps_weather_api_response_t *response,
     memset(weather, 0, sizeof(gps_weather_current_t));
     weather->timestamp = response->timestamp;
     
-    // This is a simplified parser - in a real implementation, you would use a JSON library
-    // to properly parse the OpenWeatherMap API response
-    
-    // Parse weather data from JSON response
-    // This is a simplified parser - in production, use a proper JSON library
-    char *temp_start = strstr(response->data, "\"temp\":");
-    char *humidity_start = strstr(response->data, "\"humidity\":");
-    char *pressure_start = strstr(response->data, "\"pressure\":");
-    char *wind_speed_start = strstr(response->data, "\"speed\":");
-    char *wind_dir_start = strstr(response->data, "\"deg\":");
-    
-    // Parse temperature
-    if (temp_start) {
-        temp_start = strchr(temp_start, ':');
-        if (temp_start) {
-            weather->temperature = atof(temp_start + 1);
-        } else {
-            weather->temperature = 20.0; // Default fallback
-        }
-    } else {
-        weather->temperature = 20.0; // Default fallback
+    // Use proper JSON parser from json_parser library
+    weather_data_t parsed_weather;
+    if (!json_parse_openweather_current(response->data, &parsed_weather)) {
+        LOGX_WARN_MSG("Failed to parse OpenWeather JSON response, using defaults");
+        weather->temperature = 20.0;        // Default fallback
+        weather->humidity = 65.0;           // Default fallback
+        weather->pressure = 1013.25;        // Default fallback
+        weather->wind_speed = 5.0;          // Default fallback
+        weather->wind_direction = 180.0;    // Default fallback
+        weather->visibility = 10000.0;      // 10km
+        weather->cloud_cover = 30.0;        // 30%
+        weather->weather_condition = WEATHER_CONDITION_PARTLY_CLOUDY;
+        weather->air_quality_index = 50;    // Moderate
+        return;
     }
     
-    // Parse humidity
-    if (humidity_start) {
-        humidity_start = strchr(humidity_start, ':');
-        if (humidity_start) {
-            weather->humidity = atof(humidity_start + 1);
+    // Copy parsed data to weather structure
+    weather->temperature = parsed_weather.temperature;
+    weather->humidity = parsed_weather.humidity;
+    weather->pressure = parsed_weather.pressure;
+    weather->wind_speed = parsed_weather.wind_speed;
+    weather->wind_direction = parsed_weather.wind_direction;
+    
+    // Parse additional fields using the JSON document directly if needed
+    json_document_t* doc = json_parse_string(response->data);
+    if (doc && doc->valid) {
+        // Parse visibility
+        double visibility;
+        if (json_get_double(doc, "visibility", &visibility)) {
+            weather->visibility = visibility;
         } else {
-            weather->humidity = 65.0; // Default fallback
+            weather->visibility = 10000.0; // Default 10km
         }
+        
+        // Parse cloud cover
+        double clouds;
+        if (json_get_double(doc, "clouds.all", &clouds)) {
+            weather->cloud_cover = clouds;
+        } else {
+            weather->cloud_cover = 30.0; // Default 30%
+        }
+        
+        // Parse weather condition from main weather array
+        char weather_main[64];
+        if (json_get_array_string(doc, "weather", 0, weather_main, sizeof(weather_main))) {
+            // Map weather condition strings to enum
+            if (strcasecmp(weather_main, "Clear") == 0) {
+                weather->weather_condition = WEATHER_CONDITION_CLEAR;
+            } else if (strcasecmp(weather_main, "Clouds") == 0) {
+                weather->weather_condition = WEATHER_CONDITION_PARTLY_CLOUDY;
+            } else if (strcasecmp(weather_main, "Rain") == 0) {
+                weather->weather_condition = WEATHER_CONDITION_RAINY;
+            } else if (strcasecmp(weather_main, "Snow") == 0) {
+                weather->weather_condition = WEATHER_CONDITION_SNOWY;
+            } else if (strcasecmp(weather_main, "Thunderstorm") == 0) {
+                weather->weather_condition = WEATHER_CONDITION_STORMY;
+            } else if (strcasecmp(weather_main, "Mist") == 0 || strcasecmp(weather_main, "Fog") == 0) {
+                weather->weather_condition = WEATHER_CONDITION_FOGGY;
+            } else {
+                weather->weather_condition = WEATHER_CONDITION_PARTLY_CLOUDY;
+            }
+        } else {
+            weather->weather_condition = WEATHER_CONDITION_PARTLY_CLOUDY;
+        }
+        
+        // Air quality would typically come from a separate API call
+        weather->air_quality_index = 50; // Default moderate for now
+        
+        json_document_free(doc);
     } else {
-        weather->humidity = 65.0; // Default fallback
+        // Use defaults for fields we couldn't parse
+        weather->visibility = 10000.0;
+        weather->cloud_cover = 30.0;
+        weather->weather_condition = WEATHER_CONDITION_PARTLY_CLOUDY;
+        weather->air_quality_index = 50;
     }
     
-    // Parse pressure
-    if (pressure_start) {
-        pressure_start = strchr(pressure_start, ':');
-        if (pressure_start) {
-            weather->pressure = atof(pressure_start + 1);
-        } else {
-            weather->pressure = 1013.25; // Default fallback
-        }
-    } else {
-        weather->pressure = 1013.25; // Default fallback
-    }
-    
-    // Parse wind speed
-    if (wind_speed_start) {
-        wind_speed_start = strchr(wind_speed_start, ':');
-        if (wind_speed_start) {
-            weather->wind_speed = atof(wind_speed_start + 1);
-        } else {
-            weather->wind_speed = 5.0; // Default fallback
-        }
-    } else {
-        weather->wind_speed = 5.0; // Default fallback
-    }
-    
-    // Parse wind direction
-    if (wind_dir_start) {
-        wind_dir_start = strchr(wind_dir_start, ':');
-        if (wind_dir_start) {
-            weather->wind_direction = atof(wind_dir_start + 1);
-        } else {
-            weather->wind_direction = 180.0; // Default fallback
-        }
-    } else {
-        weather->wind_direction = 180.0; // Default fallback
-    }
-    weather->visibility = 10000.0;      // 10km
-    weather->cloud_cover = 30.0;        // 30%
-    weather->weather_condition = WEATHER_CONDITION_PARTLY_CLOUDY;
-    weather->air_quality_index = 50;    // Moderate
-    
-    LOGX_DEBUG_MSG("Parsed current weather response");
+    LOGX_DEBUG_MSG("Successfully parsed current weather response");
 }
 
 // Parse forecast response
@@ -504,8 +507,92 @@ void parse_forecast_response(const gps_weather_api_response_t *response,
     forecast->timestamp = response->timestamp;
     forecast->forecast_count = 0;
     
-    // This is a simplified parser - in a real implementation, you would use a JSON library
-    LOGX_DEBUG_MSG("Parsed forecast response");
+    // Use proper JSON parser
+    json_document_t* doc = json_parse_string(response->data);
+    if (!doc || !doc->valid) {
+        LOGX_WARN_MSG("Failed to parse forecast JSON response");
+        return;
+    }
+    
+    // Get the list array from the response
+    int list_size = json_get_array_size(doc, "list");
+    if (list_size <= 0) {
+        LOGX_WARN_MSG("No forecast data in response");
+        json_document_free(doc);
+        return;
+    }
+    
+    // Parse up to MAX_FORECAST_DAYS * 8 entries (8 entries per day for 3-hour intervals)
+    int max_entries = MAX_FORECAST_DAYS * 8;
+    if (list_size > max_entries) {
+        list_size = max_entries;
+    }
+    
+    forecast->forecast_count = list_size;
+    
+    for (int i = 0; i < list_size && i < sizeof(forecast->entries)/sizeof(forecast->entries[0]); i++) {
+        char path[256];
+        
+        // Parse timestamp
+        int dt;
+        snprintf(path, sizeof(path), "list[%d].dt", i);
+        if (json_get_int(doc, path, &dt)) {
+            forecast->entries[i].timestamp = (time_t)dt;
+        }
+        
+        // Parse temperature
+        snprintf(path, sizeof(path), "list[%d].main.temp", i);
+        json_get_double(doc, path, &forecast->entries[i].temperature);
+        
+        // Parse min/max temperatures
+        snprintf(path, sizeof(path), "list[%d].main.temp_min", i);
+        json_get_double(doc, path, &forecast->entries[i].temp_min);
+        
+        snprintf(path, sizeof(path), "list[%d].main.temp_max", i);
+        json_get_double(doc, path, &forecast->entries[i].temp_max);
+        
+        // Parse humidity
+        snprintf(path, sizeof(path), "list[%d].main.humidity", i);
+        json_get_double(doc, path, &forecast->entries[i].humidity);
+        
+        // Parse pressure
+        snprintf(path, sizeof(path), "list[%d].main.pressure", i);
+        json_get_double(doc, path, &forecast->entries[i].pressure);
+        
+        // Parse wind
+        snprintf(path, sizeof(path), "list[%d].wind.speed", i);
+        json_get_double(doc, path, &forecast->entries[i].wind_speed);
+        
+        snprintf(path, sizeof(path), "list[%d].wind.deg", i);
+        json_get_double(doc, path, &forecast->entries[i].wind_direction);
+        
+        // Parse precipitation probability
+        snprintf(path, sizeof(path), "list[%d].pop", i);
+        json_get_double(doc, path, &forecast->entries[i].precipitation_probability);
+        
+        // Parse weather condition
+        char weather_main[64];
+        snprintf(path, sizeof(path), "list[%d].weather[0].main", i);
+        if (json_get_string(doc, path, weather_main, sizeof(weather_main))) {
+            // Map weather condition strings to enum
+            if (strcasecmp(weather_main, "Clear") == 0) {
+                forecast->entries[i].weather_condition = WEATHER_CONDITION_CLEAR;
+            } else if (strcasecmp(weather_main, "Clouds") == 0) {
+                forecast->entries[i].weather_condition = WEATHER_CONDITION_PARTLY_CLOUDY;
+            } else if (strcasecmp(weather_main, "Rain") == 0) {
+                forecast->entries[i].weather_condition = WEATHER_CONDITION_RAINY;
+            } else if (strcasecmp(weather_main, "Snow") == 0) {
+                forecast->entries[i].weather_condition = WEATHER_CONDITION_SNOWY;
+            } else if (strcasecmp(weather_main, "Thunderstorm") == 0) {
+                forecast->entries[i].weather_condition = WEATHER_CONDITION_STORMY;
+            } else {
+                forecast->entries[i].weather_condition = WEATHER_CONDITION_PARTLY_CLOUDY;
+            }
+        }
+    }
+    
+    json_document_free(doc);
+    LOGX_DEBUG_MSG("Successfully parsed forecast response with %d entries", forecast->forecast_count);
 }
 
 // Parse air quality response
@@ -515,8 +602,45 @@ void parse_air_quality_response(const gps_weather_api_response_t *response,
     memset(air_quality, 0, sizeof(gps_weather_air_quality_t));
     air_quality->timestamp = response->timestamp;
     
-    // This is a simplified parser - in a real implementation, you would use a JSON library
-    LOGX_DEBUG_MSG("Parsed air quality response");
+    // Use proper JSON parser
+    json_document_t* doc = json_parse_string(response->data);
+    if (!doc || !doc->valid) {
+        LOGX_WARN_MSG("Failed to parse air quality JSON response");
+        // Set default values
+        air_quality->aqi = 50;  // Moderate default
+        air_quality->co = 233.65;
+        air_quality->no = 0.0;
+        air_quality->no2 = 1.87;
+        air_quality->o3 = 38.85;
+        air_quality->so2 = 0.64;
+        air_quality->pm2_5 = 8.63;
+        air_quality->pm10 = 10.2;
+        air_quality->nh3 = 0.73;
+        return;
+    }
+    
+    // Parse the main AQI value from the list
+    int aqi;
+    if (json_get_int(doc, "list[0].main.aqi", &aqi)) {
+        air_quality->aqi = aqi;
+    } else {
+        air_quality->aqi = 50;  // Default moderate
+    }
+    
+    // Parse individual pollutant components
+    json_get_double(doc, "list[0].components.co", &air_quality->co);
+    json_get_double(doc, "list[0].components.no", &air_quality->no);
+    json_get_double(doc, "list[0].components.no2", &air_quality->no2);
+    json_get_double(doc, "list[0].components.o3", &air_quality->o3);
+    json_get_double(doc, "list[0].components.so2", &air_quality->so2);
+    json_get_double(doc, "list[0].components.pm2_5", &air_quality->pm2_5);
+    json_get_double(doc, "list[0].components.pm10", &air_quality->pm10);
+    json_get_double(doc, "list[0].components.nh3", &air_quality->nh3);
+    
+    json_document_free(doc);
+    
+    LOGX_DEBUG_MSG("Successfully parsed air quality response: AQI=%d, PM2.5=%.2f, PM10=%.2f", 
+                   air_quality->aqi, air_quality->pm2_5, air_quality->pm10);
 }
 
 // Get weather integration status

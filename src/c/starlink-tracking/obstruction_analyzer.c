@@ -38,7 +38,7 @@ obstruction_analyzer_t* obstruction_analyzer_init(const obstruction_analysis_con
     analyzer->current_map.elevation_resolution = 90.0 / OBSTRUCTION_GRID_HEIGHT;
     
     // Allocate smoothing buffer
-    analyzer->smoothing_buffer_size = analyzer->config.smoothing_window_size;
+    analyzer->smoothing_buffer_size = OBSTRUCTION_GRID_WIDTH * OBSTRUCTION_GRID_HEIGHT;
     analyzer->smoothing_buffer = calloc(analyzer->smoothing_buffer_size, sizeof(double));
     
     if (!analyzer->smoothing_buffer) {
@@ -371,35 +371,57 @@ void obstruction_analyzer_dish_to_absolute_coords(
         return;
     }
     
-    // Implement proper spherical coordinate transformation
-    // Convert dish-relative coordinates to absolute coordinates using spherical geometry
+    // Implement proper spherical coordinate transformation using rotation matrices
+    // Convert angles to radians
+    double dish_az_rad = dish_relative_az * M_PI / 180.0;
+    double dish_el_rad = dish_relative_el * M_PI / 180.0;
+    double bore_az_rad = boresight_azimuth * M_PI / 180.0;
+    double bore_el_rad = boresight_elevation * M_PI / 180.0;
     
-    // First, convert to Cartesian coordinates for accurate transformation
-    double dish_x = cos(dish_relative_el * M_PI / 180.0) * cos(dish_relative_az * M_PI / 180.0);
-    double dish_y = cos(dish_relative_el * M_PI / 180.0) * sin(dish_relative_az * M_PI / 180.0);
-    double dish_z = sin(dish_relative_el * M_PI / 180.0);
+    // Convert dish-relative spherical coordinates to Cartesian unit vector
+    // In dish coordinate system: x=forward, y=right, z=up
+    double dish_x = cos(dish_el_rad) * cos(dish_az_rad);
+    double dish_y = cos(dish_el_rad) * sin(dish_az_rad);
+    double dish_z = sin(dish_el_rad);
     
-    // Convert boresight to Cartesian
-    double boresight_x = cos(boresight_elevation * M_PI / 180.0) * cos(boresight_azimuth * M_PI / 180.0);
-    double boresight_y = cos(boresight_elevation * M_PI / 180.0) * sin(boresight_azimuth * M_PI / 180.0);
-    double boresight_z = sin(boresight_elevation * M_PI / 180.0);
+    // Build rotation matrix to transform from dish coordinates to absolute coordinates
+    // This requires two rotations:
+    // 1. Rotation around Z-axis by boresight azimuth
+    // 2. Rotation around Y-axis by (90° - boresight elevation)
     
-    // Apply rotation matrix to transform dish-relative coordinates to absolute coordinates
-    // This accounts for the dish orientation and provides accurate coordinate transformation
-    double absolute_x = dish_x * boresight_x - dish_y * boresight_y + dish_z * boresight_x;
-    double absolute_y = dish_x * boresight_y + dish_y * boresight_x + dish_z * boresight_y;
-    double absolute_z = -dish_x * boresight_z + dish_z * boresight_z;
+    // First rotation matrix (azimuth rotation around Z-axis)
+    double cos_az = cos(bore_az_rad);
+    double sin_az = sin(bore_az_rad);
+    
+    // Second rotation matrix (elevation rotation around Y-axis)
+    // Note: We rotate by (π/2 - elevation) to align with horizon
+    double pitch_angle = M_PI/2 - bore_el_rad;
+    double cos_pitch = cos(pitch_angle);
+    double sin_pitch = sin(pitch_angle);
+    
+    // Combined rotation matrix application
+    // Step 1: Apply elevation rotation (around Y-axis)
+    double temp_x = dish_x * cos_pitch + dish_z * sin_pitch;
+    double temp_y = dish_y;
+    double temp_z = -dish_x * sin_pitch + dish_z * cos_pitch;
+    
+    // Step 2: Apply azimuth rotation (around Z-axis)
+    double absolute_x = temp_x * cos_az - temp_y * sin_az;
+    double absolute_y = temp_x * sin_az + temp_y * cos_az;
+    double absolute_z = temp_z;
     
     // Convert back to spherical coordinates
-    double r = sqrt(absolute_x * absolute_x + absolute_y * absolute_y + absolute_z * absolute_z);
-    if (r > 0) {
-        *absolute_az = obstruction_analyzer_normalize_azimuth(atan2(absolute_y, absolute_x) * 180.0 / M_PI);
-        *absolute_el = obstruction_analyzer_clamp_elevation(asin(absolute_z / r) * 180.0 / M_PI);
-    } else {
-        // Fallback to simple addition for edge cases
-        *absolute_az = obstruction_analyzer_normalize_azimuth(boresight_azimuth + dish_relative_az);
-        *absolute_el = obstruction_analyzer_clamp_elevation(boresight_elevation + dish_relative_el);
-    }
+    double r_xy = sqrt(absolute_x * absolute_x + absolute_y * absolute_y);
+    
+    // Calculate absolute azimuth and elevation
+    *absolute_az = atan2(absolute_y, absolute_x) * 180.0 / M_PI;
+    *absolute_el = atan2(absolute_z, r_xy) * 180.0 / M_PI;
+    
+    // Normalize azimuth to [0, 360) range
+    *absolute_az = obstruction_analyzer_normalize_azimuth(*absolute_az);
+    
+    // Clamp elevation to [0, 90] range
+    *absolute_el = obstruction_analyzer_clamp_elevation(*absolute_el);
     
     // Validate the transformed coordinates
     if (*absolute_az < 0.0 || *absolute_az >= 360.0) {
@@ -423,9 +445,47 @@ void obstruction_analyzer_absolute_to_dish_coords(
         return;
     }
     
-    // Simple offset transformation (inverse of dish_to_absolute)
-    *dish_relative_az = absolute_az - boresight_azimuth;
-    *dish_relative_el = absolute_el - boresight_elevation;
+    // Implement inverse spherical coordinate transformation
+    // Convert angles to radians
+    double abs_az_rad = absolute_az * M_PI / 180.0;
+    double abs_el_rad = absolute_el * M_PI / 180.0;
+    double bore_az_rad = boresight_azimuth * M_PI / 180.0;
+    double bore_el_rad = boresight_elevation * M_PI / 180.0;
+    
+    // Convert absolute spherical coordinates to Cartesian unit vector
+    double absolute_x = cos(abs_el_rad) * cos(abs_az_rad);
+    double absolute_y = cos(abs_el_rad) * sin(abs_az_rad);
+    double absolute_z = sin(abs_el_rad);
+    
+    // Build inverse rotation matrix (transpose of forward rotation)
+    // This requires two inverse rotations:
+    // 1. Inverse rotation around Z-axis by -boresight azimuth
+    // 2. Inverse rotation around Y-axis by -(90° - boresight elevation)
+    
+    double cos_az = cos(-bore_az_rad);
+    double sin_az = sin(-bore_az_rad);
+    
+    double pitch_angle = -(M_PI/2 - bore_el_rad);
+    double cos_pitch = cos(pitch_angle);
+    double sin_pitch = sin(pitch_angle);
+    
+    // Apply inverse rotations in reverse order
+    // Step 1: Apply inverse azimuth rotation (around Z-axis)
+    double temp_x = absolute_x * cos_az - absolute_y * sin_az;
+    double temp_y = absolute_x * sin_az + absolute_y * cos_az;
+    double temp_z = absolute_z;
+    
+    // Step 2: Apply inverse elevation rotation (around Y-axis)
+    double dish_x = temp_x * cos_pitch + temp_z * sin_pitch;
+    double dish_y = temp_y;
+    double dish_z = -temp_x * sin_pitch + temp_z * cos_pitch;
+    
+    // Convert back to spherical coordinates in dish reference frame
+    double r_xy = sqrt(dish_x * dish_x + dish_y * dish_y);
+    
+    // Calculate dish-relative azimuth and elevation
+    *dish_relative_az = atan2(dish_y, dish_x) * 180.0 / M_PI;
+    *dish_relative_el = atan2(dish_z, r_xy) * 180.0 / M_PI;
     
     // Handle azimuth wraparound
     if (*dish_relative_az > 180.0) {
@@ -571,11 +631,13 @@ int obstruction_analyzer_apply_smoothing(obstruction_analyzer_t *analyzer, obstr
     int window_size = analyzer->config.smoothing_window_size;
     int half_window = window_size / 2;
     
-    // Create temporary array for smoothed values
-    double *smoothed = calloc(map->num_cells, sizeof(double));
-    if (!smoothed) {
+    // Use pre-allocated smoothing buffer
+    if (analyzer->smoothing_buffer_size < map->num_cells) {
+        // This case should ideally not happen if grid size is constant
+        // Handle error or reallocate if necessary
         return OBSTRUCTION_ERROR_MEMORY_FAILED;
     }
+    double *smoothed = analyzer->smoothing_buffer;
     
     // Apply 2D smoothing filter
     for (int row = 0; row < map->grid_height; row++) {
@@ -615,7 +677,6 @@ int obstruction_analyzer_apply_smoothing(obstruction_analyzer_t *analyzer, obstr
         map->cells[i].is_obstructed = (smoothed[i] < analyzer->config.snr_threshold);
     }
     
-    free(smoothed);
     return OBSTRUCTION_SUCCESS;
 }
 

@@ -1,4 +1,5 @@
 #include "multi_channel.h"
+#include "../utils/logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -27,14 +28,14 @@ int multi_channel_notifier_init(multi_channel_notifier_t* notifier, const multi_
     // Initialize channel clients
     if (config->webhook_enabled) {
         if (webhook_client_init(&notifier->webhook_client, &config->webhook_config) != 0) {
-            printf("WARNING: Failed to initialize webhook client\n");
+            LOGX_WARN_MSG("Failed to initialize webhook client");
             notifier->config.webhook_enabled = false;
         }
     }
     
     if (config->email_enabled) {
         if (email_client_init(&notifier->email_client, &config->email_config) != 0) {
-            printf("WARNING: Failed to initialize email client\n");
+            LOGX_WARN_MSG("Failed to initialize email client");
             notifier->config.email_enabled = false;
         }
     }
@@ -192,11 +193,33 @@ static int send_to_syslog(const notification_event_t* event) {
 static int send_to_ubus(const notification_event_t* event) {
     if (!event) return -1;
     
-    // This would integrate with the UBUS notification system
-    printf("UBUS NOTIFICATION: [%s] %s - %s\n", 
-           notification_type_to_string(event->type), event->title, event->message);
+    struct ubus_context *ctx = ubus_connect(NULL);
+    if (!ctx) {
+        LOGX_ERROR_MSG("Failed to connect to UBUS");
+        return -1;
+    }
     
-    return 0;
+    uint32_t id;
+    int ret = ubus_lookup_id(ctx, "autonomy.notifications", &id);
+    if (ret != 0) {
+        LOGX_WARN_MSG("UBUS object autonomy.notifications not found");
+        ubus_free(ctx);
+        return -1;
+    }
+    
+    struct blob_buf b;
+    blob_buf_init(&b, 0);
+    blobmsg_add_string(&b, "title", event->title);
+    blobmsg_add_string(&b, "message", event->message);
+    blobmsg_add_string(&b, "type", notification_type_to_string(event->type));
+    blobmsg_add_string(&b, "severity", notification_priority_to_string(event->priority));
+    blobmsg_add_u32(&b, "timestamp", (uint32_t)event->timestamp);
+    
+    ret = ubus_invoke(ctx, id, "send_notification", b.head, NULL, NULL, 2000);
+    blob_buf_free(&b);
+    ubus_free(ctx);
+    
+    return (ret == 0) ? 0 : -1;
 }
 
 // Send notification to specific channel
@@ -239,7 +262,7 @@ static int send_to_channel(multi_channel_notifier_t* notifier,
         case NOTIFICATION_CHANNEL_TELEGRAM:
         case NOTIFICATION_CHANNEL_SMS:
             // These would be implemented as separate clients
-            printf("CHANNEL %s: Not yet implemented - %s\n", 
+            LOGX_DEBUG_MSG("CHANNEL %s: Not yet implemented - %s", 
                    notification_channel_to_string(channel), event->title);
             result = 0; // Pretend success for now
             break;
@@ -307,7 +330,7 @@ int multi_channel_notifier_send(multi_channel_notifier_t* notifier, const notifi
     
     pthread_mutex_unlock(notifier->mutex);
     
-    printf("MULTI-CHANNEL: Sent notification '%s' to %d/%d channels\n", 
+    LOGX_INFO_MSG("MULTI-CHANNEL: Sent notification '%s' to %d/%d channels", 
            event->title, success_count, total_attempts);
     
     return (success_count > 0) ? 0 : -1;

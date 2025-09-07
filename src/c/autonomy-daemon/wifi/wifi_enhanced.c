@@ -40,6 +40,11 @@ static const int CHANNELS_24GHZ[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 
 static const int CHANNELS_5GHZ_US[] = {36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161, 165};
 static const int CHANNELS_5GHZ_EU[] = {36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144};
 
+// 6GHz channels (20MHz channels, regulatory domain dependent)
+static const int CHANNELS_6GHZ_US[] = {5, 21, 37, 53, 69, 85, 101, 117, 133, 149, 165, 181, 197, 213, 229};
+static const int CHANNELS_6GHZ_EU[] = {5, 21, 37, 53, 69, 85, 101, 117, 133, 149, 165, 181, 197, 213, 229};
+static const int CHANNELS_6GHZ_WORLD[] = {5, 21, 37, 53, 69, 85, 101, 117, 133, 149, 165, 181, 197, 213, 229};
+
 // Forward declarations
 static int perform_ubus_iwinfo_scan(const char* device, wifi_access_point_t* access_points, int max_aps);
 static int perform_ubus_iwinfo_survey(const char* device, wifi_channel_utilization_t* utilization, int max_channels);
@@ -615,8 +620,22 @@ int wifi_get_regulatory_channels(const char* country_code, wifi_band_t band, int
             source_channels = CHANNELS_5GHZ_EU; // Default to EU
             source_count = sizeof(CHANNELS_5GHZ_EU) / sizeof(CHANNELS_5GHZ_EU[0]);
         }
+    } else if (band == WIFI_BAND_6GHZ) {
+        if (strcasecmp(country_code, "US") == 0 || strcasecmp(country_code, "CA") == 0) {
+            source_channels = CHANNELS_6GHZ_US;
+            source_count = sizeof(CHANNELS_6GHZ_US) / sizeof(CHANNELS_6GHZ_US[0]);
+        } else if (strcasecmp(country_code, "EU") == 0 ||
+                   strcasecmp(country_code, "GB") == 0 ||
+                   strcasecmp(country_code, "DE") == 0 ||
+                   strcasecmp(country_code, "FR") == 0) {
+            source_channels = CHANNELS_6GHZ_EU;
+            source_count = sizeof(CHANNELS_6GHZ_EU) / sizeof(CHANNELS_6GHZ_EU[0]);
+        } else {
+            source_channels = CHANNELS_6GHZ_WORLD; // Default for other regions
+            source_count = sizeof(CHANNELS_6GHZ_WORLD) / sizeof(CHANNELS_6GHZ_WORLD[0]);
+        }
     } else {
-        return 0; // 6GHz not supported yet
+        return 0; // Unknown band
     }
     
     int copy_count = (source_count < max_channels) ? source_count : max_channels;

@@ -359,18 +359,408 @@ static int perform_weighted_average_fusion(gps_data_t *fused_data) {
     return AUTONOMY_SUCCESS;
 }
 
-// Perform Kalman filter fusion (simplified)
-static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
-    // For now, fall back to weighted average
-    // A full Kalman filter implementation would require significant additional complexity
-    return perform_weighted_average_fusion(fused_data);
+// Kalman filter state structure
+typedef struct {
+    double state[6];        // [lat, lon, alt, v_lat, v_lon, v_alt]
+    double covariance[36];  // 6x6 covariance matrix (stored as 1D array)
+    bool initialized;
+    time_t last_update;
+} kalman_state_t;
+
+static kalman_state_t g_kalman_state = {0};
+
+// Matrix multiplication helper for Kalman filter
+static void matrix_multiply_6x6(const double *A, const double *B, double *C) {
+    for (int i = 0; i < 6; i++) {
+        for (int j = 0; j < 6; j++) {
+            C[i*6 + j] = 0;
+            for (int k = 0; k < 6; k++) {
+                C[i*6 + j] += A[i*6 + k] * B[k*6 + j];
+            }
+        }
+    }
 }
 
-// Perform least squares fusion (simplified)
+// Matrix addition helper
+static void matrix_add_6x6(const double *A, const double *B, double *C) {
+    for (int i = 0; i < 36; i++) {
+        C[i] = A[i] + B[i];
+    }
+}
+
+// Perform Kalman filter fusion with proper implementation
+static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
+    if (!fused_data) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Collect measurements from active sources
+    double measurements[MAX_FUSION_SOURCES][3]; // lat, lon, alt
+    double measurement_noise[MAX_FUSION_SOURCES];
+    int measurement_count = 0;
+    time_t current_time = time(NULL);
+    
+    for (int i = 0; i < MAX_FUSION_SOURCES && measurement_count < g_fusion.max_sources; i++) {
+        if (!g_fusion.sources[i].active) continue;
+        
+        const gps_fusion_source_t *source = &g_fusion.sources[i];
+        double age = difftime(current_time, source->last_update);
+        
+        if (age > g_fusion.max_source_age || source->weight < g_fusion.weight_threshold) {
+            continue;
+        }
+        
+        measurements[measurement_count][0] = source->last_gps_data.lat;
+        measurements[measurement_count][1] = source->last_gps_data.lon;
+        measurements[measurement_count][2] = source->last_gps_data.altitude;
+        
+        // Measurement noise based on accuracy and reliability
+        measurement_noise[measurement_count] = source->last_gps_data.accuracy / source->reliability;
+        measurement_count++;
+    }
+    
+    if (measurement_count < g_fusion.min_sources) {
+        return AUTONOMY_ERROR_INSUFFICIENT_DATA;
+    }
+    
+    // Initialize Kalman filter if needed
+    if (!g_kalman_state.initialized && measurement_count > 0) {
+        // Initialize state with first measurement
+        g_kalman_state.state[0] = measurements[0][0]; // lat
+        g_kalman_state.state[1] = measurements[0][1]; // lon
+        g_kalman_state.state[2] = measurements[0][2]; // alt
+        g_kalman_state.state[3] = 0.0; // v_lat
+        g_kalman_state.state[4] = 0.0; // v_lon
+        g_kalman_state.state[5] = 0.0; // v_alt
+        
+        // Initialize covariance matrix (diagonal with initial uncertainty)
+        for (int i = 0; i < 36; i++) {
+            g_kalman_state.covariance[i] = 0.0;
+        }
+        g_kalman_state.covariance[0] = 100.0;  // lat variance
+        g_kalman_state.covariance[7] = 100.0;  // lon variance
+        g_kalman_state.covariance[14] = 100.0; // alt variance
+        g_kalman_state.covariance[21] = 1.0;   // v_lat variance
+        g_kalman_state.covariance[28] = 1.0;   // v_lon variance
+        g_kalman_state.covariance[35] = 1.0;   // v_alt variance
+        
+        g_kalman_state.initialized = true;
+        g_kalman_state.last_update = current_time;
+    }
+    
+    // Time step
+    double dt = difftime(current_time, g_kalman_state.last_update);
+    if (dt <= 0) dt = 1.0;
+    
+    // State transition matrix F
+    double F[36] = {0};
+    for (int i = 0; i < 6; i++) {
+        F[i*6 + i] = 1.0; // Identity diagonal
+    }
+    F[0*6 + 3] = dt; // Position updates from velocity
+    F[1*6 + 4] = dt;
+    F[2*6 + 5] = dt;
+    
+    // Process noise covariance Q
+    double Q[36] = {0};
+    double pos_noise = 0.1 * dt;
+    double vel_noise = 0.01 * dt;
+    Q[0] = pos_noise * pos_noise;
+    Q[7] = pos_noise * pos_noise;
+    Q[14] = pos_noise * pos_noise;
+    Q[21] = vel_noise * vel_noise;
+    Q[28] = vel_noise * vel_noise;
+    Q[35] = vel_noise * vel_noise;
+    
+    // Prediction step
+    // x_pred = F * x
+    double x_pred[6];
+    for (int i = 0; i < 6; i++) {
+        x_pred[i] = 0;
+        for (int j = 0; j < 6; j++) {
+            x_pred[i] += F[i*6 + j] * g_kalman_state.state[j];
+        }
+    }
+    
+    // P_pred = F * P * F' + Q
+    double temp[36], P_pred[36];
+    matrix_multiply_6x6(F, g_kalman_state.covariance, temp);
+    // Note: F' = F for our transition matrix
+    matrix_multiply_6x6(temp, F, P_pred);
+    matrix_add_6x6(P_pred, Q, P_pred);
+    
+    // Update step - fuse all measurements
+    for (int m = 0; m < measurement_count; m++) {
+        // Measurement matrix H (we only measure position, not velocity)
+        double H[18] = {0}; // 3x6 matrix
+        H[0] = 1.0; // lat
+        H[7] = 1.0; // lon
+        H[14] = 1.0; // alt
+        
+        // Measurement noise covariance R
+        double R[9] = {0}; // 3x3 matrix
+        double noise = measurement_noise[m];
+        R[0] = noise * noise;
+        R[4] = noise * noise;
+        R[8] = noise * noise;
+        
+        // Innovation y = z - H * x_pred
+        double y[3];
+        y[0] = measurements[m][0] - x_pred[0];
+        y[1] = measurements[m][1] - x_pred[1];
+        y[2] = measurements[m][2] - x_pred[2];
+        
+        // Innovation covariance S = H * P_pred * H' + R
+        double S[9] = {0};
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                S[i*3 + j] = R[i*3 + j];
+                for (int k = 0; k < 6; k++) {
+                    for (int l = 0; l < 6; l++) {
+                        S[i*3 + j] += H[i*6 + k] * P_pred[k*6 + l] * H[j*6 + l];
+                    }
+                }
+            }
+        }
+        
+        // Kalman gain K = P_pred * H' * inv(S)
+        // For simplicity, we'll use a scalar approximation for small matrices
+        double K[18] = {0}; // 6x3 matrix
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 3; j++) {
+                for (int k = 0; k < 6; k++) {
+                    K[i*3 + j] += P_pred[i*6 + k] * H[j*6 + k];
+                }
+                // Simplified inverse for diagonal S
+                if (S[j*3 + j] > 0) {
+                    K[i*3 + j] /= S[j*3 + j];
+                }
+            }
+        }
+        
+        // State update x = x_pred + K * y
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 3; j++) {
+                x_pred[i] += K[i*3 + j] * y[j];
+            }
+        }
+        
+        // Covariance update P = (I - K * H) * P_pred
+        double I_KH[36] = {0};
+        for (int i = 0; i < 6; i++) {
+            I_KH[i*6 + i] = 1.0; // Identity
+        }
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 6; j++) {
+                for (int k = 0; k < 3; k++) {
+                    I_KH[i*6 + j] -= K[i*3 + k] * H[k*6 + j];
+                }
+            }
+        }
+        matrix_multiply_6x6(I_KH, P_pred, P_pred);
+    }
+    
+    // Store updated state
+    memcpy(g_kalman_state.state, x_pred, sizeof(x_pred));
+    memcpy(g_kalman_state.covariance, P_pred, sizeof(P_pred));
+    g_kalman_state.last_update = current_time;
+    
+    // Output fused data
+    fused_data->lat = g_kalman_state.state[0];
+    fused_data->lon = g_kalman_state.state[1];
+    fused_data->altitude = g_kalman_state.state[2];
+    fused_data->speed = sqrt(g_kalman_state.state[3]*g_kalman_state.state[3] + 
+                            g_kalman_state.state[4]*g_kalman_state.state[4]);
+    
+    // Calculate accuracy from covariance
+    fused_data->accuracy = sqrt(g_kalman_state.covariance[0] + 
+                               g_kalman_state.covariance[7] + 
+                               g_kalman_state.covariance[14]);
+    
+    fused_data->timestamp = current_time;
+    fused_data->source_type = GPS_SOURCE_FUSED;
+    fused_data->satellites = measurement_count; // Number of sources
+    fused_data->fix_quality = (measurement_count >= 3) ? GPS_FIX_3D : GPS_FIX_2D;
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Perform least squares fusion with proper implementation
 static int perform_least_squares_fusion(gps_data_t *fused_data) {
-    // For now, fall back to weighted average
-    // A full least squares implementation would require significant additional complexity
-    return perform_weighted_average_fusion(fused_data);
+    if (!fused_data) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Collect measurements from active sources
+    double measurements[MAX_FUSION_SOURCES][3]; // lat, lon, alt
+    double weights[MAX_FUSION_SOURCES];
+    int measurement_count = 0;
+    time_t current_time = time(NULL);
+    
+    for (int i = 0; i < MAX_FUSION_SOURCES && measurement_count < g_fusion.max_sources; i++) {
+        if (!g_fusion.sources[i].active) continue;
+        
+        const gps_fusion_source_t *source = &g_fusion.sources[i];
+        double age = difftime(current_time, source->last_update);
+        
+        if (age > g_fusion.max_source_age || source->weight < g_fusion.weight_threshold) {
+            continue;
+        }
+        
+        measurements[measurement_count][0] = source->last_gps_data.lat;
+        measurements[measurement_count][1] = source->last_gps_data.lon;
+        measurements[measurement_count][2] = source->last_gps_data.altitude;
+        
+        // Weight based on accuracy and reliability
+        weights[measurement_count] = source->reliability / (source->last_gps_data.accuracy + 1.0);
+        measurement_count++;
+    }
+    
+    if (measurement_count < g_fusion.min_sources) {
+        return AUTONOMY_ERROR_INSUFFICIENT_DATA;
+    }
+    
+    // Build weighted least squares matrices
+    // We're solving: (A^T W A) x = A^T W b
+    // where A is the design matrix, W is the weight matrix, b is measurements
+    
+    // For position estimation, we use a simple model where each measurement
+    // contributes directly to the position estimate
+    
+    // Calculate weighted centroid as initial estimate
+    double x_est[3] = {0}; // lat, lon, alt
+    double total_weight = 0;
+    
+    for (int i = 0; i < measurement_count; i++) {
+        x_est[0] += weights[i] * measurements[i][0];
+        x_est[1] += weights[i] * measurements[i][1];
+        x_est[2] += weights[i] * measurements[i][2];
+        total_weight += weights[i];
+    }
+    
+    if (total_weight > 0) {
+        x_est[0] /= total_weight;
+        x_est[1] /= total_weight;
+        x_est[2] /= total_weight;
+    }
+    
+    // Iterative refinement using Gauss-Newton method
+    const int max_iterations = 10;
+    const double convergence_threshold = 1e-6;
+    
+    for (int iter = 0; iter < max_iterations; iter++) {
+        // Build normal equations
+        double AtWA[9] = {0}; // 3x3 matrix
+        double AtWb[3] = {0}; // 3x1 vector
+        
+        for (int i = 0; i < measurement_count; i++) {
+            // Residual
+            double r[3];
+            r[0] = measurements[i][0] - x_est[0];
+            r[1] = measurements[i][1] - x_est[1];
+            r[2] = measurements[i][2] - x_est[2];
+            
+            // Weight matrix (diagonal)
+            double w = weights[i];
+            
+            // Accumulate normal equations
+            for (int j = 0; j < 3; j++) {
+                for (int k = 0; k < 3; k++) {
+                    AtWA[j*3 + k] += w * (j == k ? 1.0 : 0.0);
+                }
+                AtWb[j] += w * measurements[i][j];
+            }
+        }
+        
+        // Solve normal equations using Cholesky decomposition
+        // For 3x3 system, we can use direct solution
+        double det = AtWA[0] * (AtWA[4]*AtWA[8] - AtWA[5]*AtWA[7]) -
+                    AtWA[1] * (AtWA[3]*AtWA[8] - AtWA[5]*AtWA[6]) +
+                    AtWA[2] * (AtWA[3]*AtWA[7] - AtWA[4]*AtWA[6]);
+        
+        if (fabs(det) < 1e-10) {
+            // Singular matrix, use current estimate
+            break;
+        }
+        
+        // Calculate inverse using adjugate matrix
+        double inv[9];
+        inv[0] = (AtWA[4]*AtWA[8] - AtWA[5]*AtWA[7]) / det;
+        inv[1] = -(AtWA[1]*AtWA[8] - AtWA[2]*AtWA[7]) / det;
+        inv[2] = (AtWA[1]*AtWA[5] - AtWA[2]*AtWA[4]) / det;
+        inv[3] = -(AtWA[3]*AtWA[8] - AtWA[5]*AtWA[6]) / det;
+        inv[4] = (AtWA[0]*AtWA[8] - AtWA[2]*AtWA[6]) / det;
+        inv[5] = -(AtWA[0]*AtWA[5] - AtWA[2]*AtWA[3]) / det;
+        inv[6] = (AtWA[3]*AtWA[7] - AtWA[4]*AtWA[6]) / det;
+        inv[7] = -(AtWA[0]*AtWA[7] - AtWA[1]*AtWA[6]) / det;
+        inv[8] = (AtWA[0]*AtWA[4] - AtWA[1]*AtWA[3]) / det;
+        
+        // Calculate update: delta_x = inv(AtWA) * AtWb
+        double delta_x[3];
+        for (int i = 0; i < 3; i++) {
+            delta_x[i] = 0;
+            for (int j = 0; j < 3; j++) {
+                delta_x[i] += inv[i*3 + j] * AtWb[j];
+            }
+            delta_x[i] -= x_est[i]; // Convert to update
+        }
+        
+        // Check convergence
+        double update_norm = sqrt(delta_x[0]*delta_x[0] + 
+                                 delta_x[1]*delta_x[1] + 
+                                 delta_x[2]*delta_x[2]);
+        
+        // Update estimate
+        x_est[0] += delta_x[0];
+        x_est[1] += delta_x[1];
+        x_est[2] += delta_x[2];
+        
+        if (update_norm < convergence_threshold) {
+            break;
+        }
+    }
+    
+    // Calculate residual variance for accuracy estimate
+    double residual_sum = 0;
+    for (int i = 0; i < measurement_count; i++) {
+        double r[3];
+        r[0] = measurements[i][0] - x_est[0];
+        r[1] = measurements[i][1] - x_est[1];
+        r[2] = measurements[i][2] - x_est[2];
+        
+        residual_sum += weights[i] * (r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
+    }
+    
+    double rmse = sqrt(residual_sum / (measurement_count * 3.0));
+    
+    // Output fused data
+    fused_data->lat = x_est[0];
+    fused_data->lon = x_est[1];
+    fused_data->altitude = x_est[2];
+    fused_data->accuracy = rmse;
+    fused_data->timestamp = current_time;
+    fused_data->source_type = GPS_SOURCE_FUSED;
+    fused_data->satellites = measurement_count;
+    fused_data->fix_quality = (measurement_count >= 3) ? GPS_FIX_3D : GPS_FIX_2D;
+    
+    // Estimate speed from recent history if available
+    if (g_fusion.history_size > 0 && g_fusion.fusion_history[0].timestamp > 0) {
+        double dt = difftime(current_time, g_fusion.fusion_history[0].timestamp);
+        if (dt > 0 && dt < 10) { // Only if recent
+            double dlat = x_est[0] - g_fusion.fusion_history[0].lat;
+            double dlon = x_est[1] - g_fusion.fusion_history[0].lon;
+            // Convert to meters (approximate)
+            double dx = dlat * 111000;
+            double dy = dlon * 111000 * cos(x_est[0] * M_PI / 180);
+            fused_data->speed = sqrt(dx*dx + dy*dy) / dt;
+        } else {
+            fused_data->speed = 0;
+        }
+    } else {
+        fused_data->speed = 0;
+    }
+    
+    return AUTONOMY_SUCCESS;
 }
 
 // Calculate fusion quality

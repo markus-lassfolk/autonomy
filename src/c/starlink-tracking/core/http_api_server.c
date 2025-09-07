@@ -16,6 +16,12 @@ struct api_response {
     const char *content_type;
 };
 
+// Connection context for each HTTP request
+typedef struct {
+    int request_type; // Example: 0 for status, 1 for predictions
+    // Add other per-request data here if needed
+} connection_context_t;
+
 // Create JSON response for status endpoint
 static struct api_response create_status_response(void) {
     struct api_response response = {0};
@@ -160,21 +166,29 @@ static enum MHD_Result starlink_request_handler(void *cls,
                                      size_t *upload_data_size,
                                      void **con_cls) {
     
-    static int dummy;
+    if (*con_cls == NULL) {
+        // New connection, allocate context
+        connection_context_t *context = calloc(1, sizeof(connection_context_t));
+        if (context == NULL) {
+            return MHD_NO;
+        }
+        *con_cls = context;
+        return MHD_YES;
+    }
+    
     struct MHD_Response *response;
     enum MHD_Result ret;
     struct api_response api_resp = {0};
-    
-    if (&dummy != *con_cls) {
-        *con_cls = &dummy;
-        return MHD_YES;
-    }
     
     if (*upload_data_size != 0) {
         return MHD_NO;
     }
     
-    *con_cls = NULL;
+    // Free connection context
+    if (*con_cls) {
+        free(*con_cls);
+        *con_cls = NULL;
+    }
     
     // Route requests
     if (strcmp(url, "/") == 0 || strcmp(url, "/index.html") == 0) {
@@ -215,9 +229,9 @@ static enum MHD_Result starlink_request_handler(void *cls,
 }
 
 // Start HTTP API server
-int start_http_api_server(standalone_tracker_t *tracker, int port) {
+struct MHD_Daemon* start_http_api_server(standalone_tracker_t *tracker, int port) {
     if (!tracker) {
-        return -1;
+        return NULL;
     }
     
     g_tracker_ref = tracker;
@@ -230,20 +244,20 @@ int start_http_api_server(standalone_tracker_t *tracker, int port) {
         MHD_OPTION_END
     );
     
-    if (!daemon) {
-        return -1;
+    if (daemon) {
+        printf("🌐 HTTP API server started on port %d\n", port);
+    } else {
+        g_tracker_ref = NULL;
     }
     
-    printf("🌐 HTTP API server started on port %d\n", port);
-    
-    // Keep server running (this is a simplified approach)
-    // In a real implementation, you'd want better lifecycle management
-    while (standalone_tracker_is_monitoring(tracker)) {
-        sleep(1);
+    return daemon;
+}
+
+// Stop HTTP API server
+void stop_http_api_server(struct MHD_Daemon *daemon) {
+    if (daemon) {
+        MHD_stop_daemon(daemon);
+        g_tracker_ref = NULL;
+        printf("🌐 HTTP API server stopped\n");
     }
-    
-    MHD_stop_daemon(daemon);
-    g_tracker_ref = NULL;
-    
-    return 0;
 }

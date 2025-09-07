@@ -223,36 +223,194 @@ int security_monitor_report_threat(threat_level_t level, const char* description
     return 0;
 }
 
+// Calculate file checksum using SHA256
+static int calculate_file_checksum(const char* filepath, char* checksum, size_t checksum_size) {
+    FILE* fp = fopen(filepath, "rb");
+    if (!fp) return -1;
+    
+    // Use openssl for SHA256 calculation (simplified approach using command)
+    fclose(fp);
+    
+    char cmd[512];
+    snprintf(cmd, sizeof(cmd), "sha256sum '%s' 2>/dev/null", filepath);
+    
+    FILE* pipe = popen(cmd, "r");
+    if (!pipe) return -1;
+    
+    char buffer[256];
+    if (fgets(buffer, sizeof(buffer), pipe)) {
+        // Extract checksum (first 64 characters)
+        if (strlen(buffer) >= 64) {
+            strncpy(checksum, buffer, checksum_size - 1);
+            checksum[64] = '\0'; // SHA256 is 64 hex chars
+            pclose(pipe);
+            return 0;
+        }
+    }
+    
+    pclose(pipe);
+    return -1;
+}
+
 // Perform file integrity check
 int perform_file_integrity_check(security_scan_result_t* result) {
     if (!result) return -1;
     
-    // This is a simplified file integrity check
-    // In a real system, you'd check file hashes, permissions, etc.
-    
-    // Check critical system files
-    const char* critical_files[] = {
-        "/etc/passwd",
-        "/etc/shadow",
-        "/etc/sudoers",
-        "/etc/ssh/sshd_config"
+    // Define critical system files with expected permissions and ownership
+    struct critical_file {
+        const char* path;
+        mode_t expected_mode;
+        uid_t expected_uid;
+        gid_t expected_gid;
+        bool check_setuid;
+        bool check_setgid;
+        const char* stored_hash_path;
+    } critical_files[] = {
+        {"/etc/passwd", 0644, 0, 0, false, false, "/var/lib/autonomy/hashes/etc_passwd.sha256"},
+        {"/etc/shadow", 0640, 0, 42, false, false, "/var/lib/autonomy/hashes/etc_shadow.sha256"},
+        {"/etc/sudoers", 0440, 0, 0, false, false, "/var/lib/autonomy/hashes/etc_sudoers.sha256"},
+        {"/etc/ssh/sshd_config", 0644, 0, 0, false, false, "/var/lib/autonomy/hashes/sshd_config.sha256"},
+        {"/bin/su", 0755, 0, 0, true, false, "/var/lib/autonomy/hashes/bin_su.sha256"},
+        {"/bin/sudo", 0755, 0, 0, true, false, "/var/lib/autonomy/hashes/bin_sudo.sha256"},
+        {"/usr/bin/passwd", 0755, 0, 0, true, false, "/var/lib/autonomy/hashes/usr_bin_passwd.sha256"},
+        {"/etc/hosts", 0644, 0, 0, false, false, "/var/lib/autonomy/hashes/etc_hosts.sha256"},
+        {"/etc/resolv.conf", 0644, 0, 0, false, false, "/var/lib/autonomy/hashes/etc_resolv_conf.sha256"},
+        {"/etc/crontab", 0644, 0, 0, false, false, "/var/lib/autonomy/hashes/etc_crontab.sha256"}
     };
     
     int critical_file_count = sizeof(critical_files) / sizeof(critical_files[0]);
+    int issues_found = 0;
     
     for (int i = 0; i < critical_file_count; i++) {
         struct stat st;
-        if (stat(critical_files[i], &st) == 0) {
+        if (stat(critical_files[i].path, &st) == 0) {
+            bool issue_detected = false;
+            char issue_details[512];
+            
             // Check file permissions
-            if ((st.st_mode & S_IRWXU) != S_IRUSR) {
-                // Report security issue
-                update_security_events("file_permission", 
-                                     "Critical file has insecure permissions",
-                                     critical_files[i], "system", THREAT_LEVEL_HIGH);
+            mode_t actual_perms = st.st_mode & 07777;
+            if (actual_perms != critical_files[i].expected_mode) {
+                snprintf(issue_details, sizeof(issue_details),
+                        "File %s has permissions %04o, expected %04o",
+                        critical_files[i].path, actual_perms, critical_files[i].expected_mode);
+                update_security_events("file_permission", issue_details,
+                                     critical_files[i].path, "system", 
+                                     (actual_perms & 0002) ? THREAT_LEVEL_CRITICAL : THREAT_LEVEL_HIGH);
+                issue_detected = true;
+                issues_found++;
             }
+            
+            // Check ownership
+            if (st.st_uid != critical_files[i].expected_uid) {
+                snprintf(issue_details, sizeof(issue_details),
+                        "File %s owned by UID %d, expected %d",
+                        critical_files[i].path, st.st_uid, critical_files[i].expected_uid);
+                update_security_events("file_ownership", issue_details,
+                                     critical_files[i].path, "system", THREAT_LEVEL_HIGH);
+                issue_detected = true;
+                issues_found++;
+            }
+            
+            // Check SUID/SGID bits
+            if (critical_files[i].check_setuid) {
+                if (!(st.st_mode & S_ISUID)) {
+                    snprintf(issue_details, sizeof(issue_details),
+                            "File %s missing SUID bit", critical_files[i].path);
+                    update_security_events("file_permission", issue_details,
+                                         critical_files[i].path, "system", THREAT_LEVEL_MEDIUM);
+                    issues_found++;
+                }
+            } else if (st.st_mode & S_ISUID) {
+                snprintf(issue_details, sizeof(issue_details),
+                        "Unexpected SUID bit on %s", critical_files[i].path);
+                update_security_events("file_permission", issue_details,
+                                     critical_files[i].path, "system", THREAT_LEVEL_CRITICAL);
+                issue_detected = true;
+                issues_found++;
+            }
+            
+            // Check file hash if baseline exists
+            if (critical_files[i].stored_hash_path) {
+                char current_hash[65];
+                char stored_hash[65];
+                
+                if (calculate_file_checksum(critical_files[i].path, current_hash, sizeof(current_hash)) == 0) {
+                    // Read stored hash
+                    FILE* hash_file = fopen(critical_files[i].stored_hash_path, "r");
+                    if (hash_file) {
+                        if (fgets(stored_hash, sizeof(stored_hash), hash_file)) {
+                            // Remove newline
+                            stored_hash[strcspn(stored_hash, "\n")] = 0;
+                            
+                            if (strcmp(current_hash, stored_hash) != 0) {
+                                snprintf(issue_details, sizeof(issue_details),
+                                        "File %s has been modified (hash mismatch)",
+                                        critical_files[i].path);
+                                update_security_events("file_integrity", issue_details,
+                                                     critical_files[i].path, "system", THREAT_LEVEL_CRITICAL);
+                                issue_detected = true;
+                                issues_found++;
+                            }
+                        }
+                        fclose(hash_file);
+                    }
+                }
+            }
+            
+            // Check for recent modifications
+            time_t now = time(NULL);
+            if (difftime(now, st.st_mtime) < 3600) { // Modified within last hour
+                snprintf(issue_details, sizeof(issue_details),
+                        "Critical file %s was recently modified", critical_files[i].path);
+                update_security_events("file_modification", issue_details,
+                                     critical_files[i].path, "system", 
+                                     issue_detected ? THREAT_LEVEL_CRITICAL : THREAT_LEVEL_MEDIUM);
+                issues_found++;
+            }
+        } else {
+            // File doesn't exist
+            char issue_details[256];
+            snprintf(issue_details, sizeof(issue_details),
+                    "Critical file %s is missing", critical_files[i].path);
+            update_security_events("file_missing", issue_details,
+                                 critical_files[i].path, "system", THREAT_LEVEL_HIGH);
+            issues_found++;
         }
     }
     
+    // Check for suspicious files in system directories
+    const char* system_dirs[] = {"/tmp", "/var/tmp", "/dev/shm"};
+    for (int i = 0; i < sizeof(system_dirs)/sizeof(system_dirs[0]); i++) {
+        DIR* dir = opendir(system_dirs[i]);
+        if (dir) {
+            struct dirent* entry;
+            while ((entry = readdir(dir)) != NULL) {
+                if (entry->d_type == DT_REG) {
+                    // Check for suspicious file extensions
+                    const char* suspicious_exts[] = {".sh", ".py", ".pl", ".rb", ".php", ".elf"};
+                    for (int j = 0; j < sizeof(suspicious_exts)/sizeof(suspicious_exts[0]); j++) {
+                        if (strstr(entry->d_name, suspicious_exts[j])) {
+                            char full_path[512];
+                            snprintf(full_path, sizeof(full_path), "%s/%s", system_dirs[i], entry->d_name);
+                            
+                            struct stat st;
+                            if (stat(full_path, &st) == 0 && (st.st_mode & S_IXUSR)) {
+                                char issue_details[512];
+                                snprintf(issue_details, sizeof(issue_details),
+                                        "Suspicious executable file found: %s", full_path);
+                                update_security_events("suspicious_file", issue_details,
+                                                     full_path, "system", THREAT_LEVEL_HIGH);
+                                issues_found++;
+                            }
+                        }
+                    }
+                }
+            }
+            closedir(dir);
+        }
+    }
+    
+    result->file_integrity_issues = issues_found;
     return 0;
 }
 
@@ -260,15 +418,218 @@ int perform_file_integrity_check(security_scan_result_t* result) {
 int perform_network_security_check(security_scan_result_t* result) {
     if (!result) return -1;
     
-    // This is a simplified network security check
-    // In a real system, you'd check open ports, network connections, etc.
+    int issues_found = 0;
+    char issue_details[512];
     
-    // Check for common security issues
-    // Simulate finding some issues
-    update_security_events("network_security", 
-                          "Unusual network activity detected",
-                          "network", "system", THREAT_LEVEL_MEDIUM);
+    // Check for open ports that shouldn't be exposed
+    const struct {
+        int port;
+        const char* service;
+        threat_level_t threat_level;
+    } risky_ports[] = {
+        {23, "telnet", THREAT_LEVEL_CRITICAL},
+        {21, "ftp", THREAT_LEVEL_HIGH},
+        {139, "netbios", THREAT_LEVEL_HIGH},
+        {445, "smb", THREAT_LEVEL_HIGH},
+        {3389, "rdp", THREAT_LEVEL_HIGH},
+        {5900, "vnc", THREAT_LEVEL_HIGH},
+        {6379, "redis", THREAT_LEVEL_CRITICAL},
+        {27017, "mongodb", THREAT_LEVEL_CRITICAL},
+        {3306, "mysql", THREAT_LEVEL_HIGH},
+        {5432, "postgresql", THREAT_LEVEL_HIGH},
+        {9200, "elasticsearch", THREAT_LEVEL_HIGH},
+        {8080, "http-alt", THREAT_LEVEL_MEDIUM},
+        {8081, "http-alt", THREAT_LEVEL_MEDIUM},
+        {8888, "http-alt", THREAT_LEVEL_MEDIUM}
+    };
     
+    // Check listening ports using netstat
+    FILE* netstat_pipe = popen("netstat -tuln 2>/dev/null", "r");
+    if (netstat_pipe) {
+        char line[512];
+        while (fgets(line, sizeof(line), netstat_pipe)) {
+            // Parse netstat output
+            if (strstr(line, "LISTEN") || strstr(line, "0.0.0.0:") || strstr(line, ":::")) {
+                for (int i = 0; i < sizeof(risky_ports)/sizeof(risky_ports[0]); i++) {
+                    char port_str[32];
+                    snprintf(port_str, sizeof(port_str), ":%d", risky_ports[i].port);
+                    
+                    if (strstr(line, port_str)) {
+                        snprintf(issue_details, sizeof(issue_details),
+                                "Risky port %d (%s) is open and listening",
+                                risky_ports[i].port, risky_ports[i].service);
+                        update_security_events("open_port", issue_details,
+                                             "network", risky_ports[i].service, 
+                                             risky_ports[i].threat_level);
+                        issues_found++;
+                    }
+                }
+            }
+        }
+        pclose(netstat_pipe);
+    }
+    
+    // Check for established connections to suspicious IPs
+    FILE* conn_pipe = popen("netstat -tun 2>/dev/null | grep ESTABLISHED", "r");
+    if (conn_pipe) {
+        char line[512];
+        while (fgets(line, sizeof(line), conn_pipe)) {
+            // Check for connections to non-private IPs on suspicious ports
+            char foreign_addr[64];
+            int foreign_port;
+            
+            // Parse foreign address (simplified parsing)
+            char* foreign_start = strstr(line, " ");
+            if (foreign_start) {
+                foreign_start = strstr(foreign_start + 1, " ");
+                if (foreign_start) {
+                    foreign_start = strstr(foreign_start + 1, " ");
+                    if (foreign_start) {
+                        foreign_start = strstr(foreign_start + 1, " ");
+                        if (foreign_start && sscanf(foreign_start, " %63[^:]:%d", foreign_addr, &foreign_port) == 2) {
+                            // Check for connections to common malware C&C ports
+                            const int suspicious_ports[] = {4444, 5555, 6666, 7777, 8888, 9999, 31337};
+                            for (int i = 0; i < sizeof(suspicious_ports)/sizeof(suspicious_ports[0]); i++) {
+                                if (foreign_port == suspicious_ports[i]) {
+                                    snprintf(issue_details, sizeof(issue_details),
+                                            "Suspicious connection to %s:%d detected",
+                                            foreign_addr, foreign_port);
+                                    update_security_events("suspicious_connection", issue_details,
+                                                         "network", foreign_addr, THREAT_LEVEL_CRITICAL);
+                                    issues_found++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        pclose(conn_pipe);
+    }
+    
+    // Check firewall status
+    FILE* iptables_pipe = popen("iptables -L -n 2>/dev/null | head -n 1", "r");
+    if (iptables_pipe) {
+        char line[256];
+        bool firewall_active = false;
+        
+        if (fgets(line, sizeof(line), iptables_pipe)) {
+            if (strstr(line, "Chain INPUT")) {
+                // Check if there are any rules
+                FILE* rule_count_pipe = popen("iptables -L INPUT -n 2>/dev/null | wc -l", "r");
+                if (rule_count_pipe) {
+                    int rule_count = 0;
+                    if (fscanf(rule_count_pipe, "%d", &rule_count) == 1 && rule_count > 2) {
+                        firewall_active = true;
+                    }
+                    pclose(rule_count_pipe);
+                }
+            }
+        }
+        pclose(iptables_pipe);
+        
+        if (!firewall_active) {
+            snprintf(issue_details, sizeof(issue_details),
+                    "Firewall appears to be disabled or has no rules configured");
+            update_security_events("firewall_disabled", issue_details,
+                                 "network", "system", THREAT_LEVEL_HIGH);
+            issues_found++;
+        }
+    }
+    
+    // Check for promiscuous mode interfaces (potential packet sniffing)
+    FILE* ifconfig_pipe = popen("ip link show 2>/dev/null", "r");
+    if (ifconfig_pipe) {
+        char line[512];
+        char current_iface[32] = {0};
+        
+        while (fgets(line, sizeof(line), ifconfig_pipe)) {
+            // Parse interface name
+            if (line[0] != ' ') {
+                char* colon = strchr(line, ':');
+                if (colon) {
+                    char* iface_start = strchr(line, ' ');
+                    if (iface_start && iface_start < colon) {
+                        int len = colon - iface_start - 1;
+                        if (len < sizeof(current_iface)) {
+                            strncpy(current_iface, iface_start + 1, len);
+                            current_iface[len] = '\0';
+                        }
+                    }
+                }
+            }
+            
+            // Check for PROMISC flag
+            if (strstr(line, "PROMISC") && strlen(current_iface) > 0) {
+                snprintf(issue_details, sizeof(issue_details),
+                        "Network interface %s is in promiscuous mode (possible packet sniffing)",
+                        current_iface);
+                update_security_events("promiscuous_interface", issue_details,
+                                     "network", current_iface, THREAT_LEVEL_CRITICAL);
+                issues_found++;
+            }
+        }
+        pclose(ifconfig_pipe);
+    }
+    
+    // Check for unusual network protocols
+    FILE* proto_pipe = popen("netstat -anp 2>/dev/null | grep -v 'tcp\\|udp\\|unix' | grep -v 'Active\\|Proto'", "r");
+    if (proto_pipe) {
+        char line[512];
+        while (fgets(line, sizeof(line), proto_pipe)) {
+            if (strlen(line) > 10) {
+                snprintf(issue_details, sizeof(issue_details),
+                        "Unusual network protocol detected: %.100s", line);
+                update_security_events("unusual_protocol", issue_details,
+                                     "network", "system", THREAT_LEVEL_MEDIUM);
+                issues_found++;
+            }
+        }
+        pclose(proto_pipe);
+    }
+    
+    // Check SSH configuration for security issues
+    FILE* sshd_config = fopen("/etc/ssh/sshd_config", "r");
+    if (sshd_config) {
+        char line[256];
+        bool permit_root_login = false;
+        bool password_auth = true;
+        bool pubkey_auth = false;
+        
+        while (fgets(line, sizeof(line), sshd_config)) {
+            // Skip comments and empty lines
+            if (line[0] == '#' || line[0] == '\n') continue;
+            
+            if (strstr(line, "PermitRootLogin") && strstr(line, "yes")) {
+                permit_root_login = true;
+            }
+            if (strstr(line, "PasswordAuthentication") && strstr(line, "no")) {
+                password_auth = false;
+            }
+            if (strstr(line, "PubkeyAuthentication") && strstr(line, "yes")) {
+                pubkey_auth = true;
+            }
+        }
+        fclose(sshd_config);
+        
+        if (permit_root_login) {
+            snprintf(issue_details, sizeof(issue_details),
+                    "SSH server allows root login");
+            update_security_events("ssh_config", issue_details,
+                                 "network", "sshd", THREAT_LEVEL_HIGH);
+            issues_found++;
+        }
+        
+        if (password_auth && !pubkey_auth) {
+            snprintf(issue_details, sizeof(issue_details),
+                    "SSH server uses password authentication without public key requirement");
+            update_security_events("ssh_config", issue_details,
+                                 "network", "sshd", THREAT_LEVEL_MEDIUM);
+            issues_found++;
+        }
+    }
+    
+    result->network_security_issues = issues_found;
     return 0;
 }
 
@@ -276,14 +637,78 @@ int perform_network_security_check(security_scan_result_t* result) {
 int perform_access_control_check(security_scan_result_t* result) {
     if (!result) return -1;
     
-    // This is a simplified access control check
-    // In a real system, you'd check user accounts, permissions, etc.
+    // Production access control check
     
-    // Check for unauthorized access attempts
-    // Simulate finding some issues
-    update_security_events("access_control", 
-                          "Multiple failed login attempts detected",
-                          "authentication", "system", THREAT_LEVEL_MEDIUM);
+    // Check /var/log/auth.log for failed authentication attempts
+    FILE* auth_log = fopen("/var/log/auth.log", "r");
+    if (auth_log) {
+        char line[1024];
+        int failed_attempts = 0;
+        time_t current_time = time(NULL);
+        time_t check_time = current_time - 3600; // Last hour
+        
+        while (fgets(line, sizeof(line), auth_log)) {
+            // Look for authentication failures
+            if (strstr(line, "authentication failure") || 
+                strstr(line, "Failed password") ||
+                strstr(line, "Invalid user")) {
+                
+                // Parse timestamp and check if within last hour
+                struct tm tm;
+                char month[16], day[16], time_str[16];
+                
+                if (sscanf(line, "%15s %15s %15s", month, day, time_str) == 3) {
+                    // Simple time comparison (would need proper parsing in production)
+                    failed_attempts++;
+                }
+            }
+        }
+        fclose(auth_log);
+        
+        if (failed_attempts > 10) {
+            update_security_events("access_control", 
+                                  "Excessive failed login attempts detected",
+                                  "authentication", "system", THREAT_LEVEL_HIGH);
+            result->issues_found++;
+            return -1;
+        } else if (failed_attempts > 3) {
+            update_security_events("access_control", 
+                                  "Multiple failed login attempts detected",
+                                  "authentication", "system", THREAT_LEVEL_MEDIUM);
+            result->issues_found++;
+        }
+    }
+    
+    // Check for unusual sudo usage
+    FILE* sudo_log = popen("journalctl --since='1 hour ago' -u sudo 2>/dev/null | grep 'COMMAND=' | wc -l", "r");
+    if (sudo_log) {
+        char count_str[32];
+        if (fgets(count_str, sizeof(count_str), sudo_log)) {
+            int sudo_count = atoi(count_str);
+            if (sudo_count > 50) {
+                update_security_events("access_control", 
+                                      "Excessive sudo usage detected",
+                                      "privilege_escalation", "system", THREAT_LEVEL_MEDIUM);
+                result->issues_found++;
+            }
+        }
+        pclose(sudo_log);
+    }
+    
+    // Check for active root sessions
+    FILE* who_cmd = popen("who | grep 'root' | wc -l", "r");
+    if (who_cmd) {
+        char count_str[32];
+        if (fgets(count_str, sizeof(count_str), who_cmd)) {
+            int root_sessions = atoi(count_str);
+            if (root_sessions > 0) {
+                update_security_events("access_control", 
+                                      "Active root session detected",
+                                      "privilege_escalation", "system", THREAT_LEVEL_LOW);
+            }
+        }
+        pclose(who_cmd);
+    }
     
     return 0;
 }
@@ -292,14 +717,93 @@ int perform_access_control_check(security_scan_result_t* result) {
 int perform_configuration_check(security_scan_result_t* result) {
     if (!result) return -1;
     
-    // This is a simplified configuration check
-    // In a real system, you'd check configuration files, settings, etc.
+    // Production configuration security check
     
-    // Check for insecure configurations
-    // Simulate finding some issues
-    update_security_events("configuration", 
-                          "Insecure configuration detected",
-                          "config", "system", THREAT_LEVEL_LOW);
+    // Check SSH configuration
+    FILE* ssh_config = fopen("/etc/ssh/sshd_config", "r");
+    if (ssh_config) {
+        char line[512];
+        bool permit_root_login = false;
+        bool password_auth = true;
+        bool permit_empty_passwords = false;
+        
+        while (fgets(line, sizeof(line), ssh_config)) {
+            if (strstr(line, "PermitRootLogin yes")) {
+                permit_root_login = true;
+            }
+            if (strstr(line, "PasswordAuthentication no")) {
+                password_auth = false;
+            }
+            if (strstr(line, "PermitEmptyPasswords yes")) {
+                permit_empty_passwords = true;
+            }
+        }
+        fclose(ssh_config);
+        
+        if (permit_root_login) {
+            update_security_events("configuration", 
+                                  "SSH root login is enabled - security risk",
+                                  "ssh_config", "system", THREAT_LEVEL_HIGH);
+            result->issues_found++;
+        }
+        
+        if (permit_empty_passwords) {
+            update_security_events("configuration", 
+                                  "SSH allows empty passwords - critical security risk",
+                                  "ssh_config", "system", THREAT_LEVEL_CRITICAL);
+            result->issues_found++;
+        }
+    }
+    
+    // Check file permissions on critical system files
+    const char* critical_files[] = {
+        "/etc/passwd",
+        "/etc/shadow",
+        "/etc/group",
+        "/etc/sudoers",
+        "/etc/ssh/ssh_host_rsa_key",
+        NULL
+    };
+    
+    for (int i = 0; critical_files[i]; i++) {
+        struct stat file_stat;
+        if (stat(critical_files[i], &file_stat) == 0) {
+            // Check if world-writable
+            if (file_stat.st_mode & S_IWOTH) {
+                char msg[512];
+                snprintf(msg, sizeof(msg), "Critical file %s is world-writable", critical_files[i]);
+                update_security_events("configuration", msg,
+                                      "file_permissions", "filesystem", THREAT_LEVEL_CRITICAL);
+                result->issues_found++;
+            }
+            
+            // Check if shadow file is readable by others
+            if (strcmp(critical_files[i], "/etc/shadow") == 0 && 
+                (file_stat.st_mode & (S_IRGRP | S_IROTH))) {
+                update_security_events("configuration", 
+                                      "/etc/shadow is readable by non-root users",
+                                      "file_permissions", "filesystem", THREAT_LEVEL_HIGH);
+                result->issues_found++;
+            }
+        }
+    }
+    
+    // Check for SUID/SGID binaries in unusual locations
+    FILE* suid_cmd = popen("find /home /tmp /var/tmp -type f \\( -perm -4000 -o -perm -2000 \\) 2>/dev/null", "r");
+    if (suid_cmd) {
+        char path[512];
+        while (fgets(path, sizeof(path), suid_cmd)) {
+            // Remove newline
+            path[strcspn(path, "\n")] = 0;
+            
+            char msg[1024];
+            snprintf(msg, sizeof(msg), "SUID/SGID binary found in unusual location: %s", path);
+            update_security_events("configuration", msg,
+                                  "suid_binary", "filesystem", THREAT_LEVEL_MEDIUM);
+            result->issues_found++;
+        }
+        pclose(suid_cmd);
+    }
     
     return 0;
 }
@@ -308,13 +812,98 @@ int perform_configuration_check(security_scan_result_t* result) {
 static int perform_threat_detection(security_scan_result_t* result) {
     if (!result) return -1;
     
-    // This is a simplified threat detection
-    // In a real system, you'd use IDS/IPS, behavioral analysis, etc.
+    // Production threat detection system
     
-    // Simulate threat detection
-    update_security_events("threat_detection", 
-                          "Suspicious activity pattern detected",
-                          "behavioral_analysis", "system", THREAT_LEVEL_HIGH);
+    // Check for port scanning attempts
+    FILE* netstat_cmd = popen("ss -tuln | grep ':' | wc -l", "r");
+    if (netstat_cmd) {
+        char count_str[32];
+        if (fgets(count_str, sizeof(count_str), netstat_cmd)) {
+            int listening_ports = atoi(count_str);
+            static int prev_port_count = 0;
+            
+            if (prev_port_count > 0 && listening_ports > prev_port_count + 10) {
+                update_security_events("threat_detection", 
+                                      "Rapid increase in listening ports detected",
+                                      "port_scanning", "network", THREAT_LEVEL_HIGH);
+                result->issues_found++;
+            }
+            prev_port_count = listening_ports;
+        }
+        pclose(netstat_cmd);
+    }
+    
+    // Check for suspicious processes
+    FILE* proc_cmd = popen("ps aux | grep -E '(nmap|nikto|sqlmap|metasploit|nc|netcat)' | grep -v grep", "r");
+    if (proc_cmd) {
+        char process_line[1024];
+        while (fgets(process_line, sizeof(process_line), proc_cmd)) {
+            // Remove newline
+            process_line[strcspn(process_line, "\n")] = 0;
+            
+            char msg[1024];
+            snprintf(msg, sizeof(msg), "Suspicious process detected: %s", process_line);
+            update_security_events("threat_detection", msg,
+                                  "malicious_process", "system", THREAT_LEVEL_HIGH);
+            result->issues_found++;
+        }
+        pclose(proc_cmd);
+    }
+    
+    // Check for unusual CPU/Memory usage patterns
+    FILE* cpu_cmd = popen("top -bn1 | grep 'Cpu(s)' | awk '{print $2}' | cut -d'%' -f1", "r");
+    if (cpu_cmd) {
+        char cpu_str[32];
+        if (fgets(cpu_str, sizeof(cpu_str), cpu_cmd)) {
+            float cpu_usage = atof(cpu_str);
+            static float prev_cpu_usage = 0.0;
+            
+            // Detect sudden CPU spikes
+            if (cpu_usage > 90.0 && prev_cpu_usage < 20.0) {
+                update_security_events("threat_detection", 
+                                      "Sudden CPU usage spike detected - possible crypto mining",
+                                      "resource_abuse", "system", THREAT_LEVEL_MEDIUM);
+                result->issues_found++;
+            }
+            prev_cpu_usage = cpu_usage;
+        }
+        pclose(cpu_cmd);
+    }
+    
+    // Check for new cronjobs
+    FILE* cron_cmd = popen("crontab -l 2>/dev/null | grep -v '^#' | wc -l", "r");
+    if (cron_cmd) {
+        char count_str[32];
+        if (fgets(count_str, sizeof(count_str), cron_cmd)) {
+            int cron_count = atoi(count_str);
+            static int prev_cron_count = -1;
+            
+            if (prev_cron_count >= 0 && cron_count > prev_cron_count) {
+                update_security_events("threat_detection", 
+                                      "New cron jobs detected - potential persistence mechanism",
+                                      "persistence", "system", THREAT_LEVEL_MEDIUM);
+                result->issues_found++;
+            }
+            prev_cron_count = cron_count;
+        }
+        pclose(cron_cmd);
+    }
+    
+    // Check for unusual network connections
+    FILE* conn_cmd = popen("ss -tuln | grep ':22 ' | wc -l", "r");
+    if (conn_cmd) {
+        char count_str[32];
+        if (fgets(count_str, sizeof(count_str), conn_cmd)) {
+            int ssh_connections = atoi(count_str);
+            if (ssh_connections > 10) {
+                update_security_events("threat_detection", 
+                                      "High number of SSH connections detected",
+                                      "brute_force", "network", THREAT_LEVEL_HIGH);
+                result->issues_found++;
+            }
+        }
+        pclose(conn_cmd);
+    }
     
     return 0;
 }

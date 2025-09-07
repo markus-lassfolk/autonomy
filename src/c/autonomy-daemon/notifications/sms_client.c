@@ -1,8 +1,14 @@
 #include "sms_client.h"
+#include "../utils/logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <errno.h>
 #include <libubus.h>
 #include <libblobmsg_json.h>
 
@@ -196,7 +202,7 @@ int sms_client_send_via_rutos_ubus(sms_client_t* client, const char* message) {
         return -1;
     }
     
-    printf("SMS: Sent via RUTOS UBUS to %s: %.50s%s\n", 
+    LOGX_INFO_MSG("SMS: Sent via RUTOS UBUS to %s: %.50s%s", 
            client->config.phone_number, message, strlen(message) > 50 ? "..." : "");
     
     return 0;
@@ -214,27 +220,174 @@ int sms_client_send_via_at_command(sms_client_t* client, const char* message) {
         return -1;
     }
     
-    // This would require proper serial communication
-    // For now, use a system command approach (simplified)
+    // Implement proper serial communication for AT commands
+    int fd = open(client->config.at_device, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    if (fd < 0) {
+        // Try common modem devices if configured device fails
+        const char* modem_devices[] = {
+            "/dev/ttyUSB0", "/dev/ttyUSB1", "/dev/ttyUSB2",
+            "/dev/ttyACM0", "/dev/ttyACM1", "/dev/cdc-wdm0"
+        };
+        
+        for (int i = 0; i < sizeof(modem_devices)/sizeof(modem_devices[0]); i++) {
+            fd = open(modem_devices[i], O_RDWR | O_NOCTTY | O_NONBLOCK);
+            if (fd >= 0) {
+                strncpy(client->config.at_device, modem_devices[i], 
+                       sizeof(client->config.at_device) - 1);
+                break;
+            }
+        }
+        
+        if (fd < 0) {
+            snprintf(client->status.last_error, sizeof(client->status.last_error), 
+                    "Failed to open modem device");
+            client->status.last_error_time = time(NULL);
+            return -1;
+        }
+    }
     
-    char command[1024];
-    snprintf(command, sizeof(command),
-             "echo -e 'AT+CMGF=1\\r\\nAT+CMGS=\"%s\"\\r\\n%s\\x1A' > %s",
-             client->config.phone_number, message, client->config.at_device);
+    // Configure serial port
+    struct termios tty;
+    if (tcgetattr(fd, &tty) == 0) {
+        cfsetospeed(&tty, B115200);
+        cfsetispeed(&tty, B115200);
+        
+        tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;
+        tty.c_iflag &= ~IGNBRK;
+        tty.c_lflag = 0;
+        tty.c_oflag = 0;
+        tty.c_cc[VMIN]  = 0;
+        tty.c_cc[VTIME] = 5;
+        
+        tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+        tty.c_cflag |= (CLOCAL | CREAD);
+        tty.c_cflag &= ~(PARENB | PARODD);
+        tty.c_cflag &= ~CSTOPB;
+        tty.c_cflag &= ~CRTSCTS;
+        
+        tcsetattr(fd, TCSANOW, &tty);
+    }
     
-    int result = system(command);
-    
-    if (result != 0) {
+    // Set SMS mode to text
+    tcflush(fd, TCIOFLUSH);
+    if (write(fd, "AT+CMGF=1\r", 10) < 0) {
         snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "AT command failed: %d", result);
+                "Failed to send AT+CMGF command");
         client->status.last_error_time = time(NULL);
+        close(fd);
         return -1;
     }
     
-    printf("SMS: Sent via AT command to %s: %.50s%s\n", 
-           client->config.phone_number, message, strlen(message) > 50 ? "..." : "");
+    // Wait for response
+    fd_set readfds;
+    struct timeval timeout;
+    timeout.tv_sec = 2;
+    timeout.tv_usec = 0;
     
-    return 0;
+    FD_ZERO(&readfds);
+    FD_SET(fd, &readfds);
+    
+    if (select(fd + 1, &readfds, NULL, NULL, &timeout) <= 0) {
+        snprintf(client->status.last_error, sizeof(client->status.last_error), 
+                "SMS text mode timeout");
+        client->status.last_error_time = time(NULL);
+        close(fd);
+        return -1;
+    }
+    
+    char response[512];
+    int bytes = read(fd, response, sizeof(response) - 1);
+    if (bytes > 0) {
+        response[bytes] = '\0';
+        if (!strstr(response, "OK")) {
+            snprintf(client->status.last_error, sizeof(client->status.last_error), 
+                    "Failed to set SMS text mode");
+            client->status.last_error_time = time(NULL);
+            close(fd);
+            return -1;
+        }
+    }
+    
+    // Send SMS command with phone number
+    char sms_cmd[256];
+    snprintf(sms_cmd, sizeof(sms_cmd), "AT+CMGS=\"%s\"\r", client->config.phone_number);
+    
+    tcflush(fd, TCIOFLUSH);
+    if (write(fd, sms_cmd, strlen(sms_cmd)) < 0) {
+        snprintf(client->status.last_error, sizeof(client->status.last_error), 
+                "Failed to send AT+CMGS command");
+        client->status.last_error_time = time(NULL);
+        close(fd);
+        return -1;
+    }
+    
+    // Wait for ">" prompt
+    timeout.tv_sec = 2;
+    timeout.tv_usec = 0;
+    FD_ZERO(&readfds);
+    FD_SET(fd, &readfds);
+    
+    if (select(fd + 1, &readfds, NULL, NULL, &timeout) <= 0) {
+        snprintf(client->status.last_error, sizeof(client->status.last_error), 
+                "SMS prompt timeout");
+        client->status.last_error_time = time(NULL);
+        close(fd);
+        return -1;
+    }
+    
+    bytes = read(fd, response, sizeof(response) - 1);
+    if (bytes > 0) {
+        response[bytes] = '\0';
+        if (!strstr(response, ">")) {
+            snprintf(client->status.last_error, sizeof(client->status.last_error), 
+                    "SMS prompt not received");
+            client->status.last_error_time = time(NULL);
+            close(fd);
+            return -1;
+        }
+    }
+    
+    // Send message text followed by Ctrl-Z
+    char msg_with_ctrlz[1024];
+    snprintf(msg_with_ctrlz, sizeof(msg_with_ctrlz), "%s\x1A", message);
+    
+    if (write(fd, msg_with_ctrlz, strlen(message) + 1) < 0) {
+        snprintf(client->status.last_error, sizeof(client->status.last_error), 
+                "Failed to send message text");
+        client->status.last_error_time = time(NULL);
+        close(fd);
+        return -1;
+    }
+    
+    // Wait for send confirmation (can take up to 30 seconds)
+    fd_set readfds;
+    struct timeval timeout;
+    timeout.tv_sec = 30;
+    timeout.tv_usec = 0;
+    
+    FD_ZERO(&readfds);
+    FD_SET(fd, &readfds);
+    
+    if (select(fd + 1, &readfds, NULL, NULL, &timeout) > 0) {
+        char response[512];
+        int bytes = read(fd, response, sizeof(response) - 1);
+        if (bytes > 0) {
+            response[bytes] = '\0';
+            if (strstr(response, "+CMGS:") && strstr(response, "OK")) {
+                LOGX_INFO_MSG("SMS: Sent successfully to %s: %.50s%s", 
+                       client->config.phone_number, message, 
+                       strlen(message) > 50 ? "..." : "");
+                close(fd);
+                return 0;
+            }
+        }
+    }
+    
+    snprintf(client->status.last_error, sizeof(client->status.last_error), 
+            "SMS send failed or timed out");
+    client->status.last_error_time = time(NULL);
+    close(fd);
+    return -1;
 }
 
 // Send notification via SMS
