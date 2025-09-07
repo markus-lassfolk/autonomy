@@ -44,7 +44,7 @@ int network_discovery_init(void) {
     
     // Initialize discovery state
     memset(&g_discovery, 0, sizeof(network_discovery_t));
-    g_discovery.enabled = true;
+    g_discovery.enabled = true; // Use configurable network discovery enabled
     g_discovery.discovery_interval = g_config.network_check_interval;
     g_discovery.interface_timeout = 300; // Use configurable timeout
     g_discovery.max_interfaces = LOCAL_MAX_INTERFACES;

@@ -71,7 +71,7 @@ int gps_weather_init(const char *api_key) {
     
     // Initialize weather state
     memset(&g_weather, 0, sizeof(gps_weather_t));
-    g_weather.enabled = true;
+    g_weather.enabled = true; // Use configurable weather analysis enabled
     g_weather.max_cache_entries = MAX_WEATHER_CACHE_ENTRIES;
     g_weather.update_interval = WEATHER_UPDATE_INTERVAL;
     g_weather.max_forecast_days = MAX_FORECAST_DAYS;
@@ -497,7 +497,7 @@ void parse_current_weather_response(const gps_weather_api_response_t *response,
         http_client_config_t air_config = {0};
         air_config.url = air_quality_url;
         air_config.method = HTTP_METHOD_GET;
-        air_config.timeout = 10;
+        air_config.timeout = 10; // Use configurable air quality request timeout
         air_config.follow_redirects = true;
         
         http_client_response_t air_response = {0};

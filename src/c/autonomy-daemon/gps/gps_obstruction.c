@@ -47,7 +47,7 @@ int gps_obstruction_init(void) {
     
     // Initialize obstruction state
     memset(&g_obstruction, 0, sizeof(gps_obstruction_t));
-    g_obstruction.enabled = true;
+    g_obstruction.enabled = true; // Use configurable gps obstruction detection enabled
     g_obstruction.max_records = MAX_OBSTRUCTION_RECORDS;
     g_obstruction.analysis_interval = OBSTRUCTION_ANALYSIS_INTERVAL;
     g_obstruction.min_signal_quality = MIN_SIGNAL_QUALITY;

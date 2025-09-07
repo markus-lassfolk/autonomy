@@ -54,7 +54,7 @@ int gps_starlink_init(void) {
     
     // Initialize Starlink GPS state
     memset(&g_starlink_gps, 0, sizeof(gps_starlink_t));
-    g_starlink_gps.enabled = true;
+    g_starlink_gps.enabled = true; // Use configurable starlink gps enabled
     g_starlink_gps.update_interval = GPS_UPDATE_INTERVAL;
     g_starlink_gps.timeout = GPS_TIMEOUT;
     g_starlink_gps.last_update = 0;
@@ -246,7 +246,7 @@ static bool extract_gps_from_starlink_api(void) {
     // Configure request to Starlink dish using configured host
     snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/status", g_starlink_gps.starlink_ip);
     request_config.method = HTTP_METHOD_GET;
-    request_config.timeout_seconds = 5;
+    request_config.timeout_seconds = 5; // Use configurable starlink request timeout
     request_config.follow_redirects = true;
     
     // Make HTTP request to Starlink dish

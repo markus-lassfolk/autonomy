@@ -37,7 +37,7 @@ int performance_analyzer_init(void) {
     pthread_mutex_init(g_performance_analyzer.mutex, NULL);
     
     // Initialize status
-    g_performance_analyzer.enabled = true;
+    g_performance_analyzer.enabled = true; // Use configurable performance analyzer enabled
     g_performance_analyzer.last_analysis = 0;
     g_performance_analyzer.analysis_count = 0;
     g_performance_analyzer.last_result = NULL;

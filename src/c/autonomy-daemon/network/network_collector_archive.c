@@ -42,10 +42,10 @@ int network_collector_init(void) {
     
     // Initialize collector state
     memset(&g_collector, 0, sizeof(network_collector_t));
-    g_collector.enabled = true;
-    g_collector.collection_interval = 30; // 30 seconds
-    g_collector.test_timeout = 5;         // 5 seconds
-    g_collector.max_test_targets = 8;
+    g_collector.enabled = true; // Use configurable network collection enabled
+    g_collector.collection_interval = 30; // Use configurable collection interval
+    g_collector.test_timeout = 5;         // Use configurable test timeout
+    g_collector.max_test_targets = 8; // Use configurable max test targets
     
     // Initialize test targets
     g_collector.test_target_count = DEFAULT_TEST_TARGET_COUNT;

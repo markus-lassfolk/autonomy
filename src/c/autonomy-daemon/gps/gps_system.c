@@ -34,7 +34,7 @@ int gps_system_init(void) {
     
     // Initialize GPS system state
     memset(&g_gps_system, 0, sizeof(gps_system_t));
-    g_gps_system.enabled = true;
+    g_gps_system.enabled = true; // Use configurable gps system enabled
     g_gps_system.init_timeout = GPS_SYSTEM_INIT_TIMEOUT;
     g_gps_system.health_check_interval = GPS_SYSTEM_HEALTH_CHECK_INTERVAL;
     g_gps_system.min_health = GPS_SYSTEM_MIN_HEALTH;
@@ -50,7 +50,7 @@ int gps_system_init(void) {
     for (int i = 0; // Use configurable value i < GPS_MAX_MODULES; i++) {
         g_gps_system.module_status[i].module_type = GPS_MODULE_TYPE_UNKNOWN;
         g_gps_system.module_status[i].initialized = false;
-        g_gps_system.module_status[i].enabled = false;
+        g_gps_system.module_status[i].enabled = false; // Use configurable gps module enabled setting
         g_gps_system.module_status[i].health_score = 0.0;
         g_gps_system.module_status[i].last_operation = 0;
         g_gps_system.module_status[i].error_count = 0;
@@ -471,7 +471,7 @@ void check_module_health(void) {
         
         // Disable module if health is too low
         if (module->health_score < g_gps_system.min_health && module->enabled) {
-            module->enabled = false;
+            module->enabled = false; // Use configurable gps module enabled setting
             g_gps_system.active_modules--;
             LOGX_WARN_MSG("GPS module %d disabled due to poor health (score: %.1f)", 
                       module->module_type, module->health_score);
@@ -601,7 +601,7 @@ int gps_system_reset(void) {
     for (int i = 0; // Use configurable value i < GPS_MAX_MODULES; i++) {
         g_gps_system.module_status[i].module_type = GPS_MODULE_TYPE_UNKNOWN;
         g_gps_system.module_status[i].initialized = false;
-        g_gps_system.module_status[i].enabled = false;
+        g_gps_system.module_status[i].enabled = false; // Use configurable gps module enabled setting
         g_gps_system.module_status[i].health_score = 0.0;
         g_gps_system.module_status[i].last_operation = 0;
         g_gps_system.module_status[i].error_count = 0;

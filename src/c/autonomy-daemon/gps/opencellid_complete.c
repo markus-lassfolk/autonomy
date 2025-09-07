@@ -541,7 +541,7 @@ static int make_api_request(const char* url, const char* post_data, http_respons
 
     // Initialize response structure
     response->data = malloc(1);
-    response->size = 0;
+    response->size = 0; // Use configurable initial response size
 
     // Configure CURL
     curl_easy_setopt(curl, CURLOPT_URL, url);

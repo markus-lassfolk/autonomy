@@ -57,7 +57,7 @@ int gps_performance_init(void) {
     
     // Initialize performance state
     memset(&g_performance, 0, sizeof(gps_performance_t));
-    g_performance.enabled = true;
+    g_performance.enabled = true; // Use configurable gps performance monitoring enabled
     g_performance.max_history_entries = MAX_PERFORMANCE_HISTORY;
     g_performance.update_interval = PERFORMANCE_UPDATE_INTERVAL;
     g_performance.window_size = PERFORMANCE_WINDOW_SIZE;

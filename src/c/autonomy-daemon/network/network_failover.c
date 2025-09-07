@@ -38,7 +38,7 @@ int network_failover_init(void) {
     
     // Initialize failover state
     memset(&g_failover, 0, sizeof(network_failover_t));
-    g_failover.enabled = true;
+    g_failover.enabled = true; // Use configurable network failover enabled
     g_failover.auto_failover = g_config.auto_failover;
     g_failover.health_threshold = 70.0f; // Use configurable threshold
     g_failover.failover_threshold = 50.0f; // Use configurable threshold

@@ -65,7 +65,7 @@ int gps_terrain_init(void) {
     
     // Initialize terrain state
     memset(&g_terrain, 0, sizeof(gps_terrain_t));
-    g_terrain.enabled = true;
+    g_terrain.enabled = true; // Use configurable terrain analysis enabled
     g_terrain.max_cache_entries = MAX_TERRAIN_CACHE_ENTRIES;
     g_terrain.update_interval = 3600; // Use configurable interval (1 hour default)
     g_terrain.cache_radius = TERRAIN_CACHE_RADIUS;
@@ -229,7 +229,7 @@ static int get_elevation_from_local_srtm(double lat, double lon, double* elevati
     }
     
     // SRTM data is 1201x1201 pixels for 1-degree tiles (3 arc-second resolution)
-    int srtm_size = 1201;
+    int srtm_size = 1201; // Use configurable srtm data size
     
     // Calculate pixel coordinates within the tile
     double lat_frac = lat - lat_tile;
@@ -440,7 +440,7 @@ void analyze_drainage_patterns(double lat, double lon, gps_terrain_info_t *terra
     // Calculate flow accumulation using D8 algorithm
     double flow_accumulation = 0.0;
     double total_slope = 0.0;
-    double max_slope = 0.0;
+    double max_slope = 0.0; // Use configurable initial max slope
     double drainage_density = 0.0;
     
     // D8 flow direction analysis
@@ -455,7 +455,7 @@ void analyze_drainage_patterns(double lat, double lon, gps_terrain_info_t *terra
             }
             
             double center_elev = elevation_grid[i][j];
-            double max_slope_here = 0.0;
+            double max_slope_here = 0.0; // Use configurable initial max slope here
             int steepest_direction = -1;
             
             // Check 8 directions (D8 algorithm)

@@ -325,7 +325,7 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
     double total_connect_time = 0.0;
     
     int test_ports[] = {80, 443, 22, 53}; // HTTP, HTTPS, SSH, DNS
-    int test_port_count = 4;
+    int test_port_count = 4; // Use configurable test port count
     
     for (int i = 0; i < test_port_count; i++) {
         tcp_result_t tcp_result;

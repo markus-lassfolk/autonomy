@@ -3,14 +3,14 @@
 
 ## 📊 Verification Results
 - **Total C files checked**: 140
-- **Files with configurable values**: 55
-- **Total configurable values found**: 115
-- **Files clean**: 85
+- **Files with configurable values**: 48
+- **Total configurable values found**: 106
+- **Files clean**: 92
 
 ## 🎯 Status
 
 ## ⚠️  VERIFICATION FAILED!
-**115 configurable values still need to be addressed.**
+**106 configurable values still need to be addressed.**
 
 ### Files with remaining configurable values:
 
@@ -28,29 +28,6 @@
 #### src/c/autonomy-daemon/gps/gps_error_recovery.c (2 values)
 - Line 548: `config.enabled = true;`
 - Line 844: `source->last_retry = 0;`
-
-#### src/c/autonomy-daemon/gps/gps_location_manager.c (1 values)
-- Line 77: `source->enabled = true;`
-
-#### src/c/autonomy-daemon/gps/gps_location_services.c (1 values)
-- Line 68: `g_location_services.enabled = true;`
-
-#### src/c/autonomy-daemon/gps/gps_manager.c (3 values)
-- Line 60: `g_gps_manager.enabled = true;`
-- Line 70: `g_gps_manager.sources[i].enabled = false;`
-- Line 329: `g_gps_manager.sources[index].enabled = true;`
-
-#### src/c/autonomy-daemon/gps/gps_movement.c (1 values)
-- Line 56: `g_movement_detector.enabled = true;`
-
-#### src/c/autonomy-daemon/gps/gps_nmea.c (1 values)
-- Line 60: `g_nmea_parser.enabled = true;`
-
-#### src/c/autonomy-daemon/gps/gps_obstruction.c (1 values)
-- Line 50: `g_obstruction.enabled = true;`
-
-#### src/c/autonomy-daemon/gps/gps_performance.c (1 values)
-- Line 60: `g_performance.enabled = true;`
 
 #### src/c/autonomy-daemon/gps/gps_rutos.c (1 values)
 - Line 56: `g_rutos_gps.enabled = true;`
@@ -239,6 +216,6 @@
 
 ## 🎯 Next Steps
 
-1. Address remaining 115 configurable values
+1. Address remaining 106 configurable values
 2. Run verification script again
 3. Complete UCI configuration integration

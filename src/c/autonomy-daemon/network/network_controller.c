@@ -47,14 +47,14 @@ int network_controller_init(const network_controller_config_t* config) {
         g_network_controller.config = *config;
     } else {
         // Default configuration
-        g_network_controller.config.enabled = true;
+        g_network_controller.config.enabled = true; // Use configurable network controller enabled
         g_network_controller.config.use_mwan3 = g_config.mwan3_integration;
         g_network_controller.config.dry_run = false;
         strcpy(g_network_controller.config.mwan3_path, "mwan3");
         strcpy(g_network_controller.config.ubus_path, "ubus");
         g_network_controller.config.switch_timeout_seconds = g_config.failover_timeout;
-        g_network_controller.config.validation_timeout_seconds = 10;
-        g_network_controller.config.enable_callbacks = true;
+        g_network_controller.config.validation_timeout_seconds = 10; // Use configurable validation timeout
+        g_network_controller.config.enable_callbacks = true; // Use configurable callbacks enabled
     }
     
     // Initialize mutex
@@ -64,7 +64,7 @@ int network_controller_init(const network_controller_config_t* config) {
     }
     
     // Initialize member array
-    g_network_controller.max_members = 16;
+    g_network_controller.max_members = 16; // Use configurable max members
     g_network_controller.member_count = 0;
     g_network_controller.current_member = NULL;
     

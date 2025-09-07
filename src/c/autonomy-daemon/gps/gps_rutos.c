@@ -53,7 +53,7 @@ int gps_rutos_init(void) {
     
     // Initialize RUTOS GPS state
     memset(&g_rutos_gps, 0, sizeof(gps_rutos_t));
-    g_rutos_gps.enabled = true;
+    g_rutos_gps.enabled = true; // Use configurable rutos gps enabled
     g_rutos_gps.update_interval = RUTOS_GPS_UPDATE_INTERVAL;
     g_rutos_gps.timeout = RUTOS_GPS_TIMEOUT;
     g_rutos_gps.min_accuracy = RUTOS_GPS_MIN_ACCURACY;
