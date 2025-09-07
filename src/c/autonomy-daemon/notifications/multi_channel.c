@@ -6,7 +6,7 @@
 #include <syslog.h>
 
 // Initialize multi-channel notifier
-static int multi_channel_notifier_init(multi_channel_notifier_t* notifier, const multi_channel_config_t* config) {
+int multi_channel_notifier_init(multi_channel_notifier_t* notifier, const multi_channel_config_t* config) {
     if (!notifier || !config) {
         return -1;
     }
@@ -98,7 +98,7 @@ static int multi_channel_notifier_init(multi_channel_notifier_t* notifier, const
 }
 
 // Clean up multi-channel notifier
-static void multi_channel_notifier_cleanup(multi_channel_notifier_t* notifier) {
+void multi_channel_notifier_cleanup(multi_channel_notifier_t* notifier) {
     if (!notifier) return;
     
     // Clean up channel clients
@@ -226,7 +226,7 @@ static int send_to_channel(multi_channel_notifier_t* notifier,
 }
 
 // Send notification to all enabled channels
-static int multi_channel_notifier_send(multi_channel_notifier_t* notifier, const notification_event_t* event) {
+int multi_channel_notifier_send(multi_channel_notifier_t* notifier, const notification_event_t* event) {
     if (!notifier || !event) {
         return -1;
     }
@@ -262,7 +262,6 @@ static int multi_channel_notifier_send(multi_channel_notifier_t* notifier, const
         
         if (success_count == 0) {
             strncpy(notifier->status.last_error, "All channels failed", sizeof(notifier->status.last_error) - 1);
-            notifier->status.last_error[sizeof(notifier->status.last_error) - 1] = '\0';
             notifier->status.last_error_time = time(NULL);
         }
     }
@@ -330,9 +329,7 @@ int multi_channel_notifier_test_channels(multi_channel_notifier_t* notifier,
     time_t now = time(NULL);
     snprintf(test_event.id, sizeof(test_event.id), "test_%ld", now);
     strncpy(test_event.title, "🧪 autonomy Notification Test", sizeof(test_event.title) - 1);
-    test_event.title[sizeof(test_event.title) - 1] = '\0';
     strncpy(test_event.message, "This is a test notification to verify channel configuration.", sizeof(test_event.message) - 1);
-    test_event.message[sizeof(test_event.message) - 1] = '\0';
     test_event.type = NOTIFICATION_TYPE_STATUS_UPDATE;
     test_event.priority = NOTIFICATION_PRIORITY_LOW;
     test_event.timestamp = now;
@@ -389,7 +386,7 @@ int multi_channel_notifier_get_enabled_channels(multi_channel_notifier_t* notifi
 }
 
 // Get multi-channel status
-static void multi_channel_notifier_get_status(multi_channel_notifier_t* notifier, multi_channel_status_t* status) {
+void multi_channel_notifier_get_status(multi_channel_notifier_t* notifier, multi_channel_status_t* status) {
     if (!notifier || !status) return;
     
     pthread_mutex_lock(notifier->mutex);

@@ -33,7 +33,7 @@ const char* notification_type_to_string(notification_type_t type) {
 }
 
 // String to notification type conversion
-static notification_type_t string_to_notification_type(const char* str) {
+notification_type_t string_to_notification_type(const char* str) {
     if (!str) return NOTIFICATION_TYPE_INFO;
     
     if (strcmp(str, "failover") == 0) return NOTIFICATION_TYPE_FAILOVER;
@@ -76,7 +76,7 @@ const char* notification_priority_to_string(notification_priority_t priority) {
 }
 
 // String to notification priority conversion
-static notification_priority_t string_to_notification_priority(const char* str) {
+notification_priority_t string_to_notification_priority(const char* str) {
     if (!str) return NOTIFICATION_PRIORITY_NORMAL;
     
     if (strcmp(str, "lowest") == 0) return NOTIFICATION_PRIORITY_LOWEST;
@@ -105,7 +105,7 @@ const char* notification_channel_to_string(notification_channel_t channel) {
 }
 
 // String to notification channel conversion
-static notification_channel_t string_to_notification_channel(const char* str) {
+notification_channel_t string_to_notification_channel(const char* str) {
     if (!str) return NOTIFICATION_CHANNEL_WEBHOOK;
     
     if (strcmp(str, "pushover") == 0) return NOTIFICATION_CHANNEL_PUSHOVER;

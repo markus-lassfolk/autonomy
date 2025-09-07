@@ -13,7 +13,7 @@ static void load_default_template(notification_type_t type, const char* name, co
                                  const char* message_template, notification_priority_t priority);
 
 // Initialize alert template manager
-static int alert_template_manager_init(const alert_template_config_t* config) {
+int alert_template_manager_init(const alert_template_config_t* config) {
     if (g_alert_template_manager_initialized) {
         return 0; // Already initialized
     }
@@ -61,7 +61,7 @@ static int alert_template_manager_init(const alert_template_config_t* config) {
 }
 
 // Clean up alert template manager
-static void alert_template_manager_cleanup(void) {
+void alert_template_manager_cleanup(void) {
     if (!g_alert_template_manager_initialized) return;
     
     if (g_alert_template_manager.mutex) {
@@ -94,11 +94,8 @@ static void load_default_template(notification_type_t type, const char* name, co
     
     template->alert_type = type;
     strncpy(template->name, name, sizeof(template->name) - 1);
-    template->name[sizeof(template->name) - 1] = '\0';
     strncpy(template->title_template, title_template, sizeof(template->title_template) - 1);
-    template->title_template[sizeof(template->title_template) - 1] = '\0';
     strncpy(template->message_template, message_template, sizeof(template->message_template) - 1);
-    template->message_template[sizeof(template->message_template) - 1] = '\0';
     template->default_priority = priority;
     template->enabled = true;
     template->required_context_count = 0;
@@ -108,7 +105,7 @@ static void load_default_template(notification_type_t type, const char* name, co
 }
 
 // Load default templates
-static int alert_template_manager_load_defaults(void) {
+int alert_template_manager_load_defaults(void) {
     if (!g_alert_template_manager_initialized) {
         return -1;
     }
@@ -254,9 +251,7 @@ int alert_template_manager_add_context_variable(template_context_t* context,
     
     template_variable_t* var = &context->variables[context->variable_count];
     strncpy(var->name, name, sizeof(var->name) - 1);
-    var->name[sizeof(var->name) - 1] = '\0';
     strncpy(var->value, value, sizeof(var->value) - 1);
-    var->value[sizeof(var->value) - 1] = '\0';
     context->variable_count++;
     
     return 0;
@@ -315,7 +310,7 @@ int alert_template_manager_create_context_from_json(const char* json_data,
 }
 
 // Get alert template by type
-static int alert_template_manager_get_template(notification_type_t alert_type, alert_template_t* template) {
+int alert_template_manager_get_template(notification_type_t alert_type, alert_template_t* template) {
     if (!g_alert_template_manager_initialized || !template) {
         return -1;
     }
@@ -367,7 +362,7 @@ int alert_template_manager_apply_template(notification_type_t alert_type,
 }
 
 // Add alert template
-static int alert_template_manager_add_template(const alert_template_t* template) {
+int alert_template_manager_add_template(const alert_template_t* template) {
     if (!g_alert_template_manager_initialized || !template) {
         return -1;
     }
@@ -401,7 +396,7 @@ static int alert_template_manager_add_template(const alert_template_t* template)
 }
 
 // Get template manager status
-static void alert_template_manager_get_status(alert_template_status_t* status) {
+void alert_template_manager_get_status(alert_template_status_t* status) {
     if (!status || !g_alert_template_manager_initialized) return;
     
     pthread_mutex_lock(g_alert_template_manager.mutex);
@@ -417,7 +412,7 @@ static void alert_template_manager_get_status(alert_template_status_t* status) {
 }
 
 // List available templates
-static int alert_template_manager_list_templates(alert_template_t* templates, int max_templates) {
+int alert_template_manager_list_templates(alert_template_t* templates, int max_templates) {
     if (!g_alert_template_manager_initialized || !templates || max_templates <= 0) {
         return -1;
     }
@@ -436,11 +431,11 @@ static int alert_template_manager_list_templates(alert_template_t* templates, in
 }
 
 // Check if alert template manager is initialized
-static bool alert_template_manager_is_initialized(void) {
+bool alert_template_manager_is_initialized(void) {
     return g_alert_template_manager_initialized;
 }
 
 // Get alert template manager instance
-static alert_template_manager_t* alert_template_manager_get_instance(void) {
+alert_template_manager_t* alert_template_manager_get_instance(void) {
     return g_alert_template_manager_initialized ? &g_alert_template_manager : NULL;
 }

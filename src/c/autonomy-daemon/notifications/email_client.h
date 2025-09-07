@@ -1,41 +1,86 @@
 #ifndef EMAIL_CLIENT_H
 #define EMAIL_CLIENT_H
 
-#include <stdint.h>
+#include "notification_types.h"
 #include <stdbool.h>
 #include <time.h>
 
-// Email client for sending email notifications
-
 // Email configuration
 typedef struct {
-    char smtp_server[256];
+    bool enabled;
+    char smtp_host[256];
     int smtp_port;
-    char username[128];
-    char password[128];
-    char from_address[128];
+    char from_address[256];
     char from_name[128];
+    char recipients[1024]; // Comma-separated list
+    
+    // Authentication
+    char username[256];
+    char password[256];
+    
+    // TLS configuration
     bool use_tls;
-    bool use_ssl;
+    bool use_starttls;
+    bool verify_ssl;
+    
+    // Timeout configuration
     int timeout_seconds;
+    
+    // Retry configuration
+    int retry_attempts;
+    int retry_delay_seconds;
+    
+    // Formatting options
+    bool html_format;
+    bool include_context;
+    char custom_subject_prefix[64];
 } email_config_t;
 
-// Email message
+// Email client status
 typedef struct {
-    char to[256];
-    char cc[256];
-    char bcc[256];
-    char subject[256];
-    char body[4096];
-    char content_type[64];
-    bool is_html;
-} email_message_t;
+    bool enabled;
+    char smtp_host[256];
+    int smtp_port;
+    int total_sent;
+    int total_failed;
+    time_t last_sent_time;
+    time_t last_error_time;
+    char last_error[256];
+    int recipient_count;
+} email_client_status_t;
 
-// Function declarations
-int email_client_init(const email_config_t *config);
-void email_client_cleanup(void);
-int email_client_send(const email_message_t *message);
-int email_client_send_async(const email_message_t *message, void (*callback)(bool success, void *user_data), void *user_data);
-int email_client_test_connection(void);
+// Email client structure
+typedef struct {
+    email_config_t config;
+    email_client_status_t status;
+    char recipients_array[16][256]; // Parsed recipients
+    int recipient_count;
+} email_client_t;
+
+// Initialize email client
+int email_client_init(email_client_t* client, const email_config_t* config);
+
+// Clean up email client
+void email_client_cleanup(email_client_t* client);
+
+// Send notification via email
+int email_client_send(email_client_t* client, const notification_event_t* event);
+
+// Get email client status
+void email_client_get_status(email_client_t* client, email_client_status_t* status);
+
+// Format email subject
+void email_client_format_subject(email_client_t* client, const notification_event_t* event, 
+                                char* subject, size_t max_size);
+
+// Format email body
+void email_client_format_body(email_client_t* client, const notification_event_t* event, 
+                             char* body, size_t max_size);
+
+// Get priority color for HTML formatting
+const char* email_client_get_priority_color(notification_priority_t priority);
+
+// Get priority text for display
+const char* email_client_get_priority_text(notification_priority_t priority);
 
 #endif // EMAIL_CLIENT_H

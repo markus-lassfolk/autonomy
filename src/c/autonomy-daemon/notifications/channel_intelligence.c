@@ -188,7 +188,7 @@ static double calculate_context_adjustment(notification_channel_t channel, notif
             break;
             
         case NOTIFICATION_TYPE_DATA_LIMIT:
-        case NOTIFICATION_TYPE_PREDICTIVE:  // NOTIFICATION_TYPE_OBSTRUCTION not defined
+        case NOTIFICATION_TYPE_OBSTRUCTION:
             // Informational alerts can use any channel
             switch (channel) {
                 case NOTIFICATION_CHANNEL_EMAIL:

@@ -11,7 +11,7 @@ static data_limit_notification_manager_t g_data_limit_manager;
 static bool g_data_limit_manager_initialized = false;
 
 // Initialize data limit notification manager
-static int data_limit_notification_manager_init(const data_limit_notification_config_t* config) {
+int data_limit_notification_manager_init(const data_limit_notification_config_t* config) {
     if (g_data_limit_manager_initialized) {
         return 0; // Already initialized
     }
@@ -61,7 +61,7 @@ static int data_limit_notification_manager_init(const data_limit_notification_co
 }
 
 // Clean up data limit notification manager
-static void data_limit_notification_manager_cleanup(void) {
+void data_limit_notification_manager_cleanup(void) {
     if (!g_data_limit_manager_initialized) return;
     
     if (g_data_limit_manager.mutex) {
@@ -164,7 +164,6 @@ static daily_usage_tracker_t* get_daily_usage_tracker(const char* interface_name
     daily_usage_tracker_t* tracker = &g_data_limit_manager.daily_usage_trackers[index];
     
     strncpy(tracker->interface_name, interface_name, sizeof(tracker->interface_name) - 1);
-    tracker->interface_name[sizeof(tracker->interface_name) - 1] = '\0';
     tracker->last_reset_date = time(NULL) - (30 * 24 * 60 * 60); // 30 days ago
     
     // Calculate daily allowance
@@ -421,7 +420,6 @@ int data_limit_notification_manager_notify_monthly_usage_threshold(const char* i
     snprintf(event.id, sizeof(event.id), "monthly_%s_%.0f_%ld", interface_name, data_limit->usage_percentage, now);
     
     strncpy(event.title, title, sizeof(event.title) - 1);
-    event.title[sizeof(event.title) - 1] = '\0';
     
     if (tracker) {
         snprintf(event.message, sizeof(event.message),
@@ -700,7 +698,7 @@ int data_limit_notification_manager_check_all_notifications(data_limit_config_t*
 }
 
 // Get data limit notification manager status
-static void data_limit_notification_manager_get_status(data_limit_notification_status_t* status) {
+void data_limit_notification_manager_get_status(data_limit_notification_status_t* status) {
     if (!status || !g_data_limit_manager_initialized) return;
     
     pthread_mutex_lock(g_data_limit_manager.mutex);
@@ -715,11 +713,11 @@ static void data_limit_notification_manager_get_status(data_limit_notification_s
 }
 
 // Check if data limit notification manager is initialized
-static bool data_limit_notification_manager_is_initialized(void) {
+bool data_limit_notification_manager_is_initialized(void) {
     return g_data_limit_manager_initialized;
 }
 
 // Get data limit notification manager instance
-static data_limit_notification_manager_t* data_limit_notification_manager_get_instance(void) {
+data_limit_notification_manager_t* data_limit_notification_manager_get_instance(void) {
     return g_data_limit_manager_initialized ? &g_data_limit_manager : NULL;
 }

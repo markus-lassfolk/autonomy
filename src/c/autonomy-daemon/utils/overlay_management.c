@@ -517,7 +517,7 @@ static void send_notification(const char *type, const char *message) {
     notification_event_t event = {0};
     strcpy(event.title, "Overlay Management Alert");
     strncpy(event.message, message, sizeof(event.message) - 1);
-    event.type = NOTIFICATION_TYPE_SYSTEM_ALERT;
+    event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
     event.timestamp = time(NULL);
     
     // Determine priority based on type

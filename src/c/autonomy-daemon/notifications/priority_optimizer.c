@@ -454,7 +454,6 @@ int priority_optimizer_update_learning(notification_type_t alert_type,
         }
         
         strncpy(entry->alert_type, alert_type_str, sizeof(entry->alert_type) - 1);
-        entry->alert_type[sizeof(entry->alert_type) - 1] = '\0';
         entry->optimal_priority = (int)used_priority;
         entry->effectiveness_score = effectiveness_score;
         entry->confidence_score = 0.5; // Start with medium confidence

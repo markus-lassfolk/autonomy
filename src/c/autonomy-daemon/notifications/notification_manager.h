@@ -28,7 +28,7 @@ typedef struct {
     notification_stats_t stats;
 } notification_manager_t;
 
-// Notification manager status structure
+// Notification status structure
 typedef struct {
     bool enabled;
     bool worker_running;

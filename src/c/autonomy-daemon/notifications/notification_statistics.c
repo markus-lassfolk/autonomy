@@ -5,7 +5,7 @@
 #include <math.h>
 
 // Initialize notification statistics
-static int notification_statistics_init(notification_statistics_t* stats) {
+int notification_statistics_init(notification_statistics_t* stats) {
     if (!stats) {
         return -1;
     }
@@ -36,7 +36,7 @@ static int notification_statistics_init(notification_statistics_t* stats) {
 }
 
 // Clean up notification statistics
-static void notification_statistics_cleanup(notification_statistics_t* stats) {
+void notification_statistics_cleanup(notification_statistics_t* stats) {
     if (!stats) return;
     
     if (stats->mutex) {
@@ -48,7 +48,7 @@ static void notification_statistics_cleanup(notification_statistics_t* stats) {
 }
 
 // Increment sent counter
-static void notification_statistics_increment_sent(notification_statistics_t* stats) {
+void notification_statistics_increment_sent(notification_statistics_t* stats) {
     if (!stats || !stats->mutex) return;
     
     pthread_mutex_lock(stats->mutex);
@@ -62,7 +62,7 @@ static void notification_statistics_increment_sent(notification_statistics_t* st
 }
 
 // Increment suppressed counter
-static void notification_statistics_increment_suppressed(notification_statistics_t* stats) {
+void notification_statistics_increment_suppressed(notification_statistics_t* stats) {
     if (!stats || !stats->mutex) return;
     
     pthread_mutex_lock(stats->mutex);
@@ -72,7 +72,7 @@ static void notification_statistics_increment_suppressed(notification_statistics
 }
 
 // Increment failed counter
-static void notification_statistics_increment_failed(notification_statistics_t* stats) {
+void notification_statistics_increment_failed(notification_statistics_t* stats) {
     if (!stats || !stats->mutex) return;
     
     pthread_mutex_lock(stats->mutex);
@@ -82,7 +82,7 @@ static void notification_statistics_increment_failed(notification_statistics_t* 
 }
 
 // Increment deduped counter
-static void notification_statistics_increment_deduped(notification_statistics_t* stats) {
+void notification_statistics_increment_deduped(notification_statistics_t* stats) {
     if (!stats || !stats->mutex) return;
     
     pthread_mutex_lock(stats->mutex);
@@ -92,7 +92,7 @@ static void notification_statistics_increment_deduped(notification_statistics_t*
 }
 
 // Increment rate limited counter
-static void notification_statistics_increment_rate_limited(notification_statistics_t* stats) {
+void notification_statistics_increment_rate_limited(notification_statistics_t* stats) {
     if (!stats || !stats->mutex) return;
     
     pthread_mutex_lock(stats->mutex);
@@ -166,7 +166,7 @@ void notification_statistics_record_channel_failure(notification_statistics_t* s
 }
 
 // Update latency statistics
-static void notification_statistics_update_latency(notification_statistics_t* stats, time_t latency_ms) {
+void notification_statistics_update_latency(notification_statistics_t* stats, time_t latency_ms) {
     if (!stats || !stats->mutex) return;
     
     pthread_mutex_lock(stats->mutex);
@@ -197,7 +197,7 @@ static void notification_statistics_update_latency(notification_statistics_t* st
 }
 
 // Update time-based statistics
-static void notification_statistics_update_time_based(notification_statistics_t* stats) {
+void notification_statistics_update_time_based(notification_statistics_t* stats) {
     if (!stats || !stats->mutex) return;
     
     pthread_mutex_lock(stats->mutex);
@@ -232,7 +232,7 @@ static void notification_statistics_update_time_based(notification_statistics_t*
 }
 
 // Get statistics summary
-static void notification_statistics_get_summary(notification_statistics_t* stats, char* summary_json, size_t max_size) {
+void notification_statistics_get_summary(notification_statistics_t* stats, char* summary_json, size_t max_size) {
     if (!stats || !summary_json || max_size == 0) return;
     
     pthread_mutex_lock(stats->mutex);
@@ -322,7 +322,7 @@ void notification_statistics_get_latency_stats(notification_statistics_t* stats,
 }
 
 // Reset all statistics
-static void notification_statistics_reset(notification_statistics_t* stats) {
+void notification_statistics_reset(notification_statistics_t* stats) {
     if (!stats || !stats->mutex) return;
     
     pthread_mutex_lock(stats->mutex);
@@ -368,7 +368,7 @@ static void notification_statistics_reset(notification_statistics_t* stats) {
 }
 
 // Reset time-based counters
-static void notification_statistics_reset_time_counters(notification_statistics_t* stats) {
+void notification_statistics_reset_time_counters(notification_statistics_t* stats) {
     if (!stats || !stats->mutex) return;
     
     pthread_mutex_lock(stats->mutex);
@@ -388,7 +388,7 @@ static void notification_statistics_reset_time_counters(notification_statistics_
 }
 
 // Get success rate
-static double notification_statistics_get_success_rate(notification_statistics_t* stats) {
+double notification_statistics_get_success_rate(notification_statistics_t* stats) {
     if (!stats || !stats->mutex) return 0.0;
     
     pthread_mutex_lock(stats->mutex);

@@ -1,6 +1,6 @@
 #include "notifications_comprehensive.h"
 #include "notifications/notification_manager.h"
-#include "logx.h"
+#include "../utils/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
