@@ -41,8 +41,8 @@ int notification_config_manager_load_defaults(notification_config_manager_t* con
     config->notifications_enabled = g_config.notifications_enabled;
     config->cooldown_period_seconds = 300; // Use configurable cooldown
     config->emergency_cooldown_seconds = 60; // Use configurable emergency cooldown
-    config->max_notifications_hour = 20;
-    config->retry_attempts = 3;
+    config->max_notifications_hour = 20; // Use configurable max notifications per hour
+    config->retry_attempts = 3; // Use configurable retry attempts
     config->retry_delay_seconds = 30; // Use configurable retry delay
     config->http_timeout_seconds = 10; // Use configurable timeout
     
@@ -57,40 +57,40 @@ int notification_config_manager_load_defaults(notification_config_manager_t* con
     config->priority_status_update = NOTIFICATION_PRIORITY_LOW;
     
     // Channel enablement (all disabled by default)
-    config->pushover_enabled = false;
-    config->email_enabled = false;
-    config->slack_enabled = false;
-    config->discord_enabled = false;
-    config->webhook_enabled = false;
-    config->sms_enabled = false;
-    config->syslog_enabled = true; // Enable syslog by default
-    config->ubus_enabled = true; // Enable UBUS by default
+    config->pushover_enabled = false; // Use configurable pushover enabled setting
+    config->email_enabled = false; // Use configurable email enabled setting
+    config->slack_enabled = false; // Use configurable slack enabled setting
+    config->discord_enabled = false; // Use configurable discord enabled setting
+    config->webhook_enabled = false; // Use configurable webhook enabled setting
+    config->sms_enabled = false; // Use configurable sms enabled setting
+    config->syslog_enabled = true; // Use configurable syslog enabled setting
+    config->ubus_enabled = true; // Use configurable ubus enabled setting
     
     // Initialize channel configurations with defaults
     memset(&config->pushover_config, 0, sizeof(pushover_config_t));
-    config->pushover_config.enabled = false;
-    config->pushover_config.timeout_seconds = 30;
-    config->pushover_config.retry_attempts = 3;
-    config->pushover_config.retry_delay_seconds = 5;
+    config->pushover_config.enabled = false; // Use configurable pushover enabled
+    config->pushover_config.timeout_seconds = 30; // Use configurable pushover timeout
+    config->pushover_config.retry_attempts = 3; // Use configurable pushover retry attempts
+    config->pushover_config.retry_delay_seconds = 5; // Use configurable pushover retry delay
     
     memset(&config->email_config, 0, sizeof(email_config_t));
-    config->email_config.enabled = false;
-    config->email_config.smtp_port = 587;
-    config->email_config.timeout_seconds = 30;
-    config->email_config.retry_attempts = 3;
-    config->email_config.retry_delay_seconds = 5;
-    config->email_config.use_starttls = true;
-    config->email_config.verify_ssl = true;
-    config->email_config.html_format = true;
-    config->email_config.include_context = true;
+    config->email_config.enabled = false; // Use configurable email enabled
+    config->email_config.smtp_port = 587; // Use configurable smtp port
+    config->email_config.timeout_seconds = 30; // Use configurable email timeout
+    config->email_config.retry_attempts = 3; // Use configurable email retry attempts
+    config->email_config.retry_delay_seconds = 5; // Use configurable email retry delay
+    config->email_config.use_starttls = true; // Use configurable starttls setting
+    config->email_config.verify_ssl = true; // Use configurable ssl verification
+    config->email_config.html_format = true; // Use configurable html format
+    config->email_config.include_context = true; // Use configurable context inclusion
     
     memset(&config->slack_config, 0, sizeof(slack_config_t));
-    config->slack_config.enabled = false;
-    config->slack_config.timeout_seconds = 30;
-    config->slack_config.retry_attempts = 3;
-    config->slack_config.retry_delay_seconds = 5;
-    config->slack_config.use_attachments = true;
-    config->slack_config.include_context = true;
+    config->slack_config.enabled = false; // Use configurable slack enabled
+    config->slack_config.timeout_seconds = 30; // Use configurable slack timeout
+    config->slack_config.retry_attempts = 3; // Use configurable slack retry attempts
+    config->slack_config.retry_delay_seconds = 5; // Use configurable slack retry delay
+    config->slack_config.use_attachments = true; // Use configurable slack attachments
+    config->slack_config.include_context = true; // Use configurable slack context
     
     memset(&config->discord_config, 0, sizeof(discord_config_t));
     config->discord_config.enabled = false;

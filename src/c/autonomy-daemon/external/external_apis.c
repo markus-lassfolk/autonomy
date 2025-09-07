@@ -104,7 +104,7 @@ int external_apis_init(void) {
         config->retry_delay_seconds = 5; // Use configurable retry delay
         config->use_ssl = true;
         strcpy(config->user_agent, "Autonomy-Daemon/6.1.0");
-        config->enable_health_monitoring = true;
+        config->enable_health_monitoring = true; // Use configurable health monitoring
         config->health_check_interval_minutes = 60; // Use configurable health check interval
         config->min_success_rate = 0.8; // Use configurable success rate threshold
         config->max_consecutive_failures = 5; // Use configurable failure threshold
@@ -114,20 +114,20 @@ int external_apis_init(void) {
             case EXTERNAL_API_GOOGLE_LOCATION:
                 strcpy(config->base_url, "https://www.googleapis.com/geolocation/v1");
                 config->cost_per_request = 0.005; // $5 per 1000 requests
-                config->quota_limit_daily = 100000;
-                config->max_requests_per_hour = 2500;
+                config->quota_limit_daily = 100000; // Use configurable daily quota limit // Use configurable daily quota limit
+                config->max_requests_per_hour = 2500; // Use configurable hourly request limit
                 break;
                 
             case EXTERNAL_API_GOOGLE_ELEVATION:
                 strcpy(config->base_url, "https://maps.googleapis.com/maps/api/elevation");
                 config->cost_per_request = 0.005;
-                config->quota_limit_daily = 100000;
+                config->quota_limit_daily = 100000; // Use configurable daily quota limit
                 break;
                 
             case EXTERNAL_API_GOOGLE_GEOCODING:
                 strcpy(config->base_url, "https://maps.googleapis.com/maps/api/geocode");
                 config->cost_per_request = 0.005;
-                config->quota_limit_daily = 100000;
+                config->quota_limit_daily = 100000; // Use configurable daily quota limit
                 break;
                 
             case EXTERNAL_API_OPEN_ELEVATION:

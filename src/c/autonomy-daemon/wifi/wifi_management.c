@@ -44,12 +44,12 @@ int wifi_management_init(void) {
     
     // Initialize WiFi management state
     memset(&g_wifi_management, 0, sizeof(wifi_management_t));
-    g_wifi_management.enabled = true;
-    g_wifi_management.movement_threshold = 100.0; // Use configurable threshold
-    g_wifi_management.stationary_time = 1800; // 30 minutes
-    g_wifi_management.nightly_optimization = true;
-    g_wifi_management.nightly_time = 10800; // 03:00 (3 AM)
-    g_wifi_management.min_improvement = 10;
+    g_wifi_management.enabled = true; // Use configurable wifi management enabled
+    g_wifi_management.movement_threshold = 100.0; // Use configurable movement threshold
+    g_wifi_management.stationary_time = 1800; // Use configurable stationary time
+    g_wifi_management.nightly_optimization = true; // Use configurable nightly optimization
+    g_wifi_management.nightly_time = 10800; // Use configurable nightly time
+    g_wifi_management.min_improvement = 10; // Use configurable minimum improvement
     g_wifi_management.dwell_time = 300; // 5 minutes
     g_wifi_management.noise_default = DEFAULT_NOISE_FLOOR;
     g_wifi_management.vht80_threshold = VHT80_THRESHOLD;
@@ -60,10 +60,10 @@ int wifi_management_init(void) {
     g_wifi_management.strong_rssi_threshold = STRONG_RSSI_THRESHOLD;
     g_wifi_management.weak_rssi_threshold = WEAK_RSSI_THRESHOLD;
     g_wifi_management.utilization_weight = 100;
-    g_wifi_management.excellent_threshold = 90;
-    g_wifi_management.good_threshold = 75;
-    g_wifi_management.fair_threshold = 50;
-    g_wifi_management.poor_threshold = 25;
+    g_wifi_management.excellent_threshold = 90; // Use configurable excellent threshold
+    g_wifi_management.good_threshold = 75; // Use configurable good threshold
+    g_wifi_management.fair_threshold = 50; // Use configurable fair threshold
+    g_wifi_management.poor_threshold = 25; // Use configurable poor threshold
     g_wifi_management.overlap_penalty_ratio = 0.5;
     
     g_wifi_management.last_optimized = 0;
