@@ -362,8 +362,7 @@ int telemetry_comprehensive_collect_sample(const char* member_name,
     telemetry_sample_t* buffer_sample = &g_telemetry_comprehensive.samples_buffer[g_telemetry_comprehensive.samples_buffer_head];
     *buffer_sample = *sample;
     
-    snprintf(buffer_sample->id, sizeof(buffer_sample->id), "sample_%lu_%d", 
-             time(NULL), g_telemetry_comprehensive.next_sample_id++);
+    buffer_sample->id = g_telemetry_comprehensive.next_sample_id++;
     buffer_sample->timestamp = time(NULL);
     strncpy(buffer_sample->member_name, member_name, sizeof(buffer_sample->member_name) - 1);
     buffer_sample->member_name[sizeof(buffer_sample->member_name) - 1] = '\0';
