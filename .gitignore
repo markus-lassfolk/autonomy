@@ -1,6 +1,7 @@
 # RUTOS SDK and build artifacts - DO NOT COMMIT
 RUTX_R_GPL_*.tar.gz*
 rutos-ipq40xx-rutx-sdk/
+dl/
 *.o
 *.so
 *.a
