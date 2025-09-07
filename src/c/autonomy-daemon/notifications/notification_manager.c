@@ -21,7 +21,7 @@ static notification_manager_t g_notification_manager;
 static bool g_manager_initialized = false;
 
 // Initialize notification manager
-static int notification_manager_init(const notification_config_t* config) {
+int notification_manager_init(const notification_config_t* config) {
     if (g_manager_initialized) {
         return 0; // Already initialized
     }
@@ -108,7 +108,7 @@ static int notification_manager_init(const notification_config_t* config) {
 }
 
 // Clean up notification manager
-static void notification_manager_cleanup(void) {
+void notification_manager_cleanup(void) {
     if (!g_manager_initialized) return;
     
     // Stop worker thread
@@ -206,11 +206,8 @@ static bool send_notification_to_channels(const notification_event_t* event) {
             .retry_delay_seconds = 5
         };
         strncpy(pushover_config.token, channels->pushover.token, sizeof(pushover_config.token) - 1);
-        pushover_config.token[sizeof(pushover_config.token) - 1] = '\0';
         strncpy(pushover_config.user, channels->pushover.user, sizeof(pushover_config.user) - 1);
-        pushover_config.user[sizeof(pushover_config.user) - 1] = '\0';
         strncpy(pushover_config.device, channels->pushover.device, sizeof(pushover_config.device) - 1);
-        pushover_config.device[sizeof(pushover_config.device) - 1] = '\0';
         
         if (pushover_client_init(&pushover_client, &pushover_config) == 0) {
             if (pushover_client_send(&pushover_client, event) == 0) {
@@ -235,15 +232,10 @@ static bool send_notification_to_channels(const notification_event_t* event) {
             .include_context = true
         };
         strncpy(email_config.smtp_host, channels->email.smtp_host, sizeof(email_config.smtp_host) - 1);
-        email_config.smtp_host[sizeof(email_config.smtp_host) - 1] = '\0';
         strncpy(email_config.from_address, channels->email.from, sizeof(email_config.from_address) - 1);
-        email_config.from_address[sizeof(email_config.from_address) - 1] = '\0';
         strncpy(email_config.recipients, channels->email.to, sizeof(email_config.recipients) - 1);
-        email_config.recipients[sizeof(email_config.recipients) - 1] = '\0';
         strncpy(email_config.username, channels->email.username, sizeof(email_config.username) - 1);
-        email_config.username[sizeof(email_config.username) - 1] = '\0';
         strncpy(email_config.password, channels->email.password, sizeof(email_config.password) - 1);
-        email_config.password[sizeof(email_config.password) - 1] = '\0';
         
         if (email_client_init(&email_client, &email_config) == 0) {
             if (email_client_send(&email_client, event) == 0) {
@@ -265,15 +257,10 @@ static bool send_notification_to_channels(const notification_event_t* event) {
             .include_context = true
         };
         strncpy(slack_config.webhook_url, channels->slack.webhook_url, sizeof(slack_config.webhook_url) - 1);
-        slack_config.webhook_url[sizeof(slack_config.webhook_url) - 1] = '\0';
         strncpy(slack_config.channel, channels->slack.channel, sizeof(slack_config.channel) - 1);
-        slack_config.channel[sizeof(slack_config.channel) - 1] = '\0';
         strncpy(slack_config.username, channels->slack.username, sizeof(slack_config.username) - 1);
-        slack_config.username[sizeof(slack_config.username) - 1] = '\0';
         strncpy(slack_config.icon_emoji, channels->slack.icon_emoji, sizeof(slack_config.icon_emoji) - 1);
-        slack_config.icon_emoji[sizeof(slack_config.icon_emoji) - 1] = '\0';
         strncpy(slack_config.icon_url, channels->slack.icon_url, sizeof(slack_config.icon_url) - 1);
-        slack_config.icon_url[sizeof(slack_config.icon_url) - 1] = '\0';
         
         if (slack_client_init(&slack_client, &slack_config) == 0) {
             if (slack_client_send(&slack_client, event) == 0) {
@@ -295,11 +282,8 @@ static bool send_notification_to_channels(const notification_event_t* event) {
             .include_context = true
         };
         strncpy(discord_config.webhook_url, channels->discord.webhook_url, sizeof(discord_config.webhook_url) - 1);
-        discord_config.webhook_url[sizeof(discord_config.webhook_url) - 1] = '\0';
         strncpy(discord_config.username, channels->discord.username, sizeof(discord_config.username) - 1);
-        discord_config.username[sizeof(discord_config.username) - 1] = '\0';
         strncpy(discord_config.avatar_url, channels->discord.avatar_url, sizeof(discord_config.avatar_url) - 1);
-        discord_config.avatar_url[sizeof(discord_config.avatar_url) - 1] = '\0';
         
         if (discord_client_init(&discord_client, &discord_config) == 0) {
             if (discord_client_send(&discord_client, event) == 0) {
@@ -321,9 +305,7 @@ static bool send_notification_to_channels(const notification_event_t* event) {
             .include_context = true
         };
         strncpy(telegram_config.token, channels->telegram.token, sizeof(telegram_config.token) - 1);
-        telegram_config.token[sizeof(telegram_config.token) - 1] = '\0';
         strncpy(telegram_config.chat_id, channels->telegram.chat_id, sizeof(telegram_config.chat_id) - 1);
-        telegram_config.chat_id[sizeof(telegram_config.chat_id) - 1] = '\0';
         
         if (telegram_client_init(&telegram_client, &telegram_config) == 0) {
             if (telegram_client_send(&telegram_client, event) == 0) {
@@ -346,11 +328,8 @@ static bool send_notification_to_channels(const notification_event_t* event) {
             .follow_redirects = true
         };
         strncpy(webhook_config.url, channels->webhook.url, sizeof(webhook_config.url) - 1);
-        webhook_config.url[sizeof(webhook_config.url) - 1] = '\0';
         strncpy(webhook_config.method, channels->webhook.method, sizeof(webhook_config.method) - 1);
-        webhook_config.method[sizeof(webhook_config.method) - 1] = '\0';
         strncpy(webhook_config.content_type, channels->webhook.content_type, sizeof(webhook_config.content_type) - 1);
-        webhook_config.content_type[sizeof(webhook_config.content_type) - 1] = '\0';
         
         if (webhook_client_init(&webhook_client, &webhook_config) == 0) {
             if (webhook_client_send(&webhook_client, event) == 0) {
@@ -377,9 +356,7 @@ static bool send_notification_to_channels(const notification_event_t* event) {
             .max_message_length = 160
         };
         strncpy(sms_config.phone_number, channels->sms.from_number, sizeof(sms_config.phone_number) - 1);
-        sms_config.phone_number[sizeof(sms_config.phone_number) - 1] = '\0';
         strncpy(sms_config.modem_path, "gsm.modem1", sizeof(sms_config.modem_path) - 1);
-        sms_config.modem_path[sizeof(sms_config.modem_path) - 1] = '\0';
         
         if (sms_client_init(&sms_client, &sms_config) == 0) {
             if (sms_client_send(&sms_client, event) == 0) {
@@ -431,7 +408,7 @@ static void* notification_worker_thread(void* arg) {
 }
 
 // Start notification worker thread
-static int notification_manager_start_worker(void) {
+int notification_manager_start_worker(void) {
     if (!g_manager_initialized || g_notification_manager.worker_running) {
         return -1;
     }
@@ -452,7 +429,7 @@ static int notification_manager_start_worker(void) {
 }
 
 // Stop notification worker thread
-static void notification_manager_stop_worker(void) {
+void notification_manager_stop_worker(void) {
     if (!g_manager_initialized || !g_notification_manager.worker_running) {
         return;
     }
@@ -494,16 +471,13 @@ int notification_manager_send(notification_type_t type, const char* title, const
     
     generate_notification_id(event.id, sizeof(event.id));
     strncpy(event.title, title, sizeof(event.title) - 1);
-    event.title[sizeof(event.title) - 1] = '\0';
     strncpy(event.message, message, sizeof(event.message) - 1);
-    event.message[sizeof(event.message) - 1] = '\0';
     event.type = type;
     event.priority = priority;
     event.timestamp = time(NULL);
     
     if (member_name) {
         strncpy(event.member_name, member_name, sizeof(event.member_name) - 1);
-        event.member_name[sizeof(event.member_name) - 1] = '\0';
     }
     
     // Check for duplicates
@@ -523,13 +497,13 @@ int notification_manager_send(notification_type_t type, const char* title, const
 }
 
 // Send notification with default priority
-static int notification_manager_send_default(notification_type_t type, const char* title, const char* message) {
+int notification_manager_send_default(notification_type_t type, const char* title, const char* message) {
     notification_priority_t priority = get_notification_priority(type);
     return notification_manager_send(type, title, message, priority, NULL);
 }
 
 // Get notification manager status
-static void notification_manager_get_status(notification_status_t* status) {
+void notification_manager_get_status(notification_status_t* status) {
     if (!status || !g_manager_initialized) return;
     
     pthread_mutex_lock(g_notification_manager.mutex);
@@ -565,7 +539,7 @@ static void notification_manager_get_status(notification_status_t* status) {
 }
 
 // Get notification manager statistics
-static void notification_manager_get_stats(notification_stats_t* stats) {
+void notification_manager_get_stats(notification_stats_t* stats) {
     if (!stats || !g_manager_initialized) return;
     
     pthread_mutex_lock(g_notification_manager.mutex);
@@ -576,7 +550,7 @@ static void notification_manager_get_stats(notification_stats_t* stats) {
 }
 
 // Reset notification manager statistics
-static void notification_manager_reset_stats(void) {
+void notification_manager_reset_stats(void) {
     if (!g_manager_initialized) return;
     
     pthread_mutex_lock(g_notification_manager.mutex);
@@ -587,11 +561,11 @@ static void notification_manager_reset_stats(void) {
 }
 
 // Check if notification manager is initialized
-static bool notification_manager_is_initialized(void) {
+bool notification_manager_is_initialized(void) {
     return g_manager_initialized;
 }
 
 // Get notification manager instance
-static notification_manager_t* notification_manager_get_instance(void) {
+notification_manager_t* notification_manager_get_instance(void) {
     return g_manager_initialized ? &g_notification_manager : NULL;
 }
