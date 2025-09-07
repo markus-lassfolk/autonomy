@@ -105,7 +105,7 @@ const char* notification_channel_to_string(notification_channel_t channel) {
 }
 
 // String to notification channel conversion
-notification_channel_t string_to_notification_channel(const char* str) {
+static notification_channel_t string_to_notification_channel(const char* str) {
     if (!str) return NOTIFICATION_CHANNEL_WEBHOOK;
     
     if (strcmp(str, "pushover") == 0) return NOTIFICATION_CHANNEL_PUSHOVER;
