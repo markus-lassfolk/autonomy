@@ -1,11 +1,12 @@
 #include "gps_confidence.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <stdbool.h>
 
 // GPS confidence configuration
 static const double MIN_CONFIDENCE = 0.1;         // Minimum confidence threshold
@@ -31,10 +32,23 @@ static const int OLD_DATA_THRESHOLD = 300;             // 5 minutes
 static gps_confidence_t g_confidence_calc = {0};
 static bool g_confidence_initialized = false;
 
+// Forward declarations
+double calculate_accuracy_confidence(double accuracy);
+double calculate_satellite_confidence(int satellite_count);
+double calculate_fix_quality_confidence(int fix_quality);
+double calculate_freshness_confidence(time_t timestamp);
+double calculate_consistency_confidence(const gps_data_t *current_gps, 
+                                            const gps_confidence_context_t *context);
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double calculate_expected_movement(int time_diff_seconds, const gps_confidence_context_t *context);
+double calculate_position_consistency(double actual_distance, double expected_movement,
+                                          double current_accuracy, double previous_accuracy);
+
+
 // Initialize GPS confidence calculator
-static int gps_confidence_init(void) {
+int gps_confidence_init(void) {
     if (g_confidence_initialized) {
-        LOGX_WARN("GPS confidence calculator already initialized");
+        LOGX_WARN_MSG("GPS confidence calculator already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -51,12 +65,12 @@ static int gps_confidence_init(void) {
     
     g_confidence_initialized = true;
     
-    LOGX_INFO("GPS confidence calculator initialized successfully");
+    LOGX_INFO_MSG("GPS confidence calculator initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Calculate GPS confidence score
-static double gps_confidence_calculate(const gps_data_t *gps_data, const gps_confidence_context_t *context) {
+double gps_confidence_calculate(const gps_data_t *gps_data, const gps_confidence_context_t *context) {
     if (!g_confidence_initialized || !gps_data) {
         return MIN_CONFIDENCE;
     }
@@ -89,14 +103,14 @@ static double gps_confidence_calculate(const gps_data_t *gps_data, const gps_con
     confidence = fmax(confidence, g_confidence_calc.min_confidence);
     confidence = fmin(confidence, g_confidence_calc.max_confidence);
     
-    LOGX_DEBUG("GPS confidence calculated: %.3f (acc:%.3f, sat:%.3f, fix:%.3f, fresh:%.3f)", 
+    LOGX_DEBUG_MSG("GPS confidence calculated: %.3f (acc:%.3f, sat:%.3f, fix:%.3f, fresh:%.3f)", 
                confidence, accuracy_confidence, satellite_confidence, fix_quality_confidence, freshness_confidence);
     
     return confidence;
 }
 
 // Calculate accuracy-based confidence
-static double calculate_accuracy_confidence(double accuracy) {
+double calculate_accuracy_confidence(double accuracy) {
     if (accuracy <= 0) {
         return 0.0;
     }
@@ -118,7 +132,7 @@ static double calculate_accuracy_confidence(double accuracy) {
 }
 
 // Calculate satellite-based confidence
-static double calculate_satellite_confidence(int satellite_count) {
+double calculate_satellite_confidence(int satellite_count) {
     if (satellite_count <= 0) {
         return 0.0;
     }
@@ -140,7 +154,7 @@ static double calculate_satellite_confidence(int satellite_count) {
 }
 
 // Calculate fix quality confidence
-static double calculate_fix_quality_confidence(int fix_quality) {
+double calculate_fix_quality_confidence(int fix_quality) {
     switch (fix_quality) {
         case 0: return 0.0;   // No fix
         case 1: return 0.3;   // GPS fix
@@ -153,7 +167,7 @@ static double calculate_fix_quality_confidence(int fix_quality) {
 }
 
 // Calculate data freshness confidence
-static double calculate_freshness_confidence(time_t timestamp) {
+double calculate_freshness_confidence(time_t timestamp) {
     if (timestamp <= 0) {
         return 0.0;
     }
@@ -178,7 +192,7 @@ static double calculate_freshness_confidence(time_t timestamp) {
 }
 
 // Calculate position consistency confidence
-static double calculate_consistency_confidence(const gps_data_t *current_gps, 
+double calculate_consistency_confidence(const gps_data_t *current_gps, 
                                             const gps_confidence_context_t *context) {
     if (!context || !context->previous_positions || context->position_count == 0) {
         return 0.5;  // Neutral confidence if no context
@@ -221,7 +235,7 @@ static double calculate_consistency_confidence(const gps_data_t *current_gps,
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
@@ -239,7 +253,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Calculate expected movement based on time difference
-static double calculate_expected_movement(int time_diff_seconds, const gps_confidence_context_t *context) {
+double calculate_expected_movement(int time_diff_seconds, const gps_confidence_context_t *context) {
     if (!context || context->average_speed <= 0) {
         return 0.0;  // No speed information available
     }
@@ -249,7 +263,7 @@ static double calculate_expected_movement(int time_diff_seconds, const gps_confi
 }
 
 // Calculate position consistency score
-static double calculate_position_consistency(double actual_distance, double expected_movement,
+double calculate_position_consistency(double actual_distance, double expected_movement,
                                           double current_accuracy, double previous_accuracy) {
     // Calculate combined accuracy
     double combined_accuracy = sqrt(current_accuracy * current_accuracy + 
@@ -274,7 +288,7 @@ static double calculate_position_consistency(double actual_distance, double expe
 }
 
 // Get confidence calculator configuration
-static int gps_confidence_get_config(gps_confidence_config_t *config) {
+int gps_confidence_get_config(gps_confidence_config_t *config) {
     if (!g_confidence_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -292,7 +306,7 @@ static int gps_confidence_get_config(gps_confidence_config_t *config) {
 }
 
 // Set confidence calculator configuration
-static int gps_confidence_set_config(const gps_confidence_config_t *config) {
+int gps_confidence_set_config(const gps_confidence_config_t *config) {
     if (!g_confidence_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -303,7 +317,7 @@ static int gps_confidence_set_config(const gps_confidence_config_t *config) {
                          config->consistency_weight;
     
     if (fabs(total_weight - 1.0) > 0.1) {
-        LOGX_WARN("GPS confidence weights should sum to 1.0, current sum: %.3f", total_weight);
+        LOGX_WARN_MSG("GPS confidence weights should sum to 1.0, current sum: %.3f", total_weight);
     }
     
     g_confidence_calc.enabled = config->enabled;
@@ -315,23 +329,23 @@ static int gps_confidence_set_config(const gps_confidence_config_t *config) {
     g_confidence_calc.freshness_weight = config->freshness_weight;
     g_confidence_calc.consistency_weight = config->consistency_weight;
     
-    LOGX_INFO("GPS confidence calculator configuration updated");
+    LOGX_INFO_MSG("GPS confidence calculator configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable confidence calculator
-static int gps_confidence_set_enabled(bool enabled) {
+int gps_confidence_set_enabled(bool enabled) {
     if (!g_confidence_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     g_confidence_calc.enabled = enabled;
-    LOGX_INFO("GPS confidence calculator %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS confidence calculator %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Get confidence calculator status
-static int gps_confidence_get_status(gps_confidence_status_t *status) {
+int gps_confidence_get_status(gps_confidence_status_t *status) {
     if (!g_confidence_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -349,11 +363,11 @@ static int gps_confidence_get_status(gps_confidence_status_t *status) {
 }
 
 // Cleanup confidence calculator
-static void gps_confidence_cleanup(void) {
+void gps_confidence_cleanup(void) {
     if (!g_confidence_initialized) {
         return;
     }
     
     g_confidence_initialized = false;
-    LOGX_INFO("GPS confidence calculator cleaned up");
+    LOGX_INFO_MSG("GPS confidence calculator cleaned up");
 }

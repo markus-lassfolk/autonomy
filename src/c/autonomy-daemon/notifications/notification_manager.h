@@ -28,7 +28,7 @@ typedef struct {
     notification_stats_t stats;
 } notification_manager_t;
 
-// Notification status structure
+// Notification manager status structure
 typedef struct {
     bool enabled;
     bool worker_running;
@@ -39,7 +39,7 @@ typedef struct {
     bool rate_limiter_emergency_mode;
     bool deduplication_enabled;
     double duplicate_rate;
-} notification_status_t;
+} notification_manager_status_t;
 
 // Initialize notification manager
 int notification_manager_init(const notification_config_t* config);
@@ -61,7 +61,7 @@ int notification_manager_send(notification_type_t type, const char* title, const
 int notification_manager_send_default(notification_type_t type, const char* title, const char* message);
 
 // Get notification manager status
-void notification_manager_get_status(notification_status_t* status);
+void notification_manager_get_status(notification_manager_status_t* status);
 
 // Get notification manager statistics
 void notification_manager_get_stats(notification_stats_t* stats);

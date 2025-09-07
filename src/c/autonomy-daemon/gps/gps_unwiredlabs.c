@@ -5,6 +5,9 @@
 #include <time.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
+#include <stdbool.h>
+#include <math.h>
+#include <unistd.h>
 
 // Global UnwiredLabs API state
 static unwiredlabs_config_t g_unwiredlabs_config = {0};
@@ -13,7 +16,7 @@ static bool g_unwiredlabs_initialized = false;
 static CURL* g_curl_handle = NULL;
 
 // HTTP response callback
-static size_t http_response_callback(void* contents, size_t size, size_t nmemb, void* userp) {
+size_t http_response_callback(void* contents, size_t size, size_t nmemb, void* userp) {
     size_t total_size = size * nmemb;
     char* response = (char*)userp;
     
@@ -22,7 +25,7 @@ static size_t http_response_callback(void* contents, size_t size, size_t nmemb, 
 }
 
 // Initialize UnwiredLabs API
-static int unwiredlabs_api_init(const unwiredlabs_config_t* config) {
+int unwiredlabs_api_init(const unwiredlabs_config_t* config) {
     if (!config) {
         return -1;
     }
@@ -45,7 +48,7 @@ static int unwiredlabs_api_init(const unwiredlabs_config_t* config) {
 }
 
 // Cleanup UnwiredLabs API
-static void unwiredlabs_api_cleanup(void) {
+void unwiredlabs_api_cleanup(void) {
     if (g_curl_handle) {
         curl_easy_cleanup(g_curl_handle);
         g_curl_handle = NULL;
@@ -195,7 +198,7 @@ static int make_unwiredlabs_request(const char* json_data, unwiredlabs_response_
 }
 
 // Get location using cell towers
-static int unwiredlabs_api_get_cellular_location(const unwiredlabs_cell_t* cells, int cell_count, unwiredlabs_response_t* response) {
+int unwiredlabs_api_get_cellular_location(const unwiredlabs_cell_t* cells, int cell_count, unwiredlabs_response_t* response) {
     if (!cells || cell_count <= 0 || !response) {
         return -1;
     }
@@ -252,7 +255,7 @@ static int unwiredlabs_api_get_cellular_location(const unwiredlabs_cell_t* cells
 }
 
 // Get location using WiFi access points
-static int unwiredlabs_api_get_wifi_location(const unwiredlabs_wifi_ap_t* wifi_aps, int wifi_count, unwiredlabs_response_t* response) {
+int unwiredlabs_api_get_wifi_location(const unwiredlabs_wifi_ap_t* wifi_aps, int wifi_count, unwiredlabs_response_t* response) {
     if (!wifi_aps || wifi_count <= 0 || !response) {
         return -1;
     }
@@ -288,7 +291,7 @@ static int unwiredlabs_api_get_wifi_location(const unwiredlabs_wifi_ap_t* wifi_a
 }
 
 // Get location using combined cell and WiFi data
-static int unwiredlabs_api_get_combined_location(const unwiredlabs_request_t* request, unwiredlabs_response_t* response) {
+int unwiredlabs_api_get_combined_location(const unwiredlabs_request_t* request, unwiredlabs_response_t* response) {
     if (!request || !response) {
         return -1;
     }
@@ -342,7 +345,7 @@ static int unwiredlabs_api_get_combined_location(const unwiredlabs_request_t* re
 }
 
 // Get API statistics
-static int unwiredlabs_api_get_stats(unwiredlabs_stats_t* stats) {
+int unwiredlabs_api_get_stats(unwiredlabs_stats_t* stats) {
     if (!g_unwiredlabs_initialized || !stats) {
         return -1;
     }
@@ -352,12 +355,12 @@ static int unwiredlabs_api_get_stats(unwiredlabs_stats_t* stats) {
 }
 
 // Check if UnwiredLabs API is initialized
-static bool unwiredlabs_api_is_initialized(void) {
+bool unwiredlabs_api_is_initialized(void) {
     return g_unwiredlabs_initialized;
 }
 
 // Validate API token
-static bool unwiredlabs_api_validate_token(void) {
+bool unwiredlabs_api_validate_token(void) {
     if (!g_unwiredlabs_initialized) {
         return false;
     }
@@ -380,7 +383,7 @@ static bool unwiredlabs_api_validate_token(void) {
 }
 
 // Check quota status
-static int unwiredlabs_api_get_quota_remaining(void) {
+int unwiredlabs_api_get_quota_remaining(void) {
     // UnwiredLabs API doesn't provide quota information in the response
     // This would need to be tracked separately or queried from their dashboard
     return -1; // Unknown

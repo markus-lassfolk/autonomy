@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <math.h>
+#include <stdbool.h>
 
 // Global predictive engine instance
 static predictive_engine_t g_predictive_engine;
@@ -15,10 +16,10 @@ static void generate_failover_predictions(void);
 static void generate_performance_predictions(void);
 static void generate_maintenance_predictions(void);
 static void generate_capacity_predictions(void);
-static double calculate_prediction_confidence(const prediction_result_t* prediction);
+double calculate_prediction_confidence(const prediction_result_t* prediction);
 
 // Initialize predictive engine
-static int predictive_engine_init(const predictive_model_config_t* config) {
+int predictive_engine_init(const predictive_model_config_t* config) {
     if (g_predictive_engine_initialized) {
         return 0; // Already initialized
     }
@@ -54,7 +55,7 @@ static int predictive_engine_init(const predictive_model_config_t* config) {
 }
 
 // Clean up predictive engine
-static void predictive_engine_cleanup(void) {
+void predictive_engine_cleanup(void) {
     if (!g_predictive_engine_initialized) return;
     
     if (g_predictive_engine.mutex) {
@@ -67,7 +68,7 @@ static void predictive_engine_cleanup(void) {
 }
 
 // Generate predictions
-static int predictive_engine_generate_predictions(void) {
+int predictive_engine_generate_predictions(void) {
     if (!g_predictive_engine_initialized || !g_predictive_engine.config.enabled) {
         return -1;
     }
@@ -93,7 +94,7 @@ static int predictive_engine_generate_predictions(void) {
 }
 
 // Get predictions
-static int predictive_engine_get_predictions(prediction_result_t* predictions, int max_predictions) {
+int predictive_engine_get_predictions(prediction_result_t* predictions, int max_predictions) {
     if (!g_predictive_engine_initialized || !predictions || max_predictions <= 0) {
         return -1;
     }
@@ -114,7 +115,7 @@ static int predictive_engine_get_predictions(prediction_result_t* predictions, i
 }
 
 // Train predictive models
-static int predictive_engine_train_models(void) {
+int predictive_engine_train_models(void) {
     if (!g_predictive_engine_initialized || !g_predictive_engine.config.enable_machine_learning) {
         return -1;
     }
@@ -140,7 +141,7 @@ static int predictive_engine_train_models(void) {
 }
 
 // Update prediction accuracy
-static int predictive_engine_update_accuracy(bool prediction_correct) {
+int predictive_engine_update_accuracy(bool prediction_correct) {
     if (!g_predictive_engine_initialized) return -1;
     
     pthread_mutex_lock(g_predictive_engine.mutex);
@@ -228,7 +229,7 @@ static void generate_capacity_predictions(void) {
 }
 
 // Calculate prediction confidence
-static double calculate_prediction_confidence(const prediction_result_t* prediction) {
+double calculate_prediction_confidence(const prediction_result_t* prediction) {
     if (!prediction) return 0.0;
     
     // Simplified confidence calculation
@@ -241,7 +242,7 @@ static double calculate_prediction_confidence(const prediction_result_t* predict
 }
 
 // Get predictive engine status
-static void predictive_engine_get_status(predictive_engine_t* status) {
+void predictive_engine_get_status(predictive_engine_t* status) {
     if (!status || !g_predictive_engine_initialized) return;
     
     pthread_mutex_lock(g_predictive_engine.mutex);
@@ -250,11 +251,11 @@ static void predictive_engine_get_status(predictive_engine_t* status) {
 }
 
 // Check if predictive engine is initialized
-static bool predictive_engine_is_initialized(void) {
+bool predictive_engine_is_initialized(void) {
     return g_predictive_engine_initialized;
 }
 
 // Get predictive engine instance
-static predictive_engine_t* predictive_engine_get_instance(void) {
+predictive_engine_t* predictive_engine_get_instance(void) {
     return g_predictive_engine_initialized ? &g_predictive_engine : NULL;
 }

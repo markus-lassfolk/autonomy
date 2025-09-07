@@ -1,4 +1,4 @@
-#include "logx.h"
+#include "../utils/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +54,7 @@ static const char* LOGX_LEVEL_COLORS[] = {
 static const char* LOGX_RESET_COLOR = "\033[0m";
 
 // Initialize logx system
-static int logx_init(const logx_config_t *config) {
+int logx_init(const logx_config_t *config) {
     if (config) {
         memcpy(&g_logx_config, config, sizeof(logx_config_t));
     }
@@ -122,7 +122,7 @@ static void write_to_file(const char *message) {
 }
 
 // Rotate log files
-static void rotate_log_files(void) {
+void rotate_log_files(void) {
     char old_name[256];
     char new_name[256];
     
@@ -167,7 +167,7 @@ static void format_message(char *buffer, size_t size, logx_level_t level,
 }
 
 // Core logging function
-static void logx_log(logx_level_t level, const char *file, int line, const char *func, const char *format, ...) {
+void logx_log(logx_level_t level, const char *file, int line, const char *func, const char *format, ...) {
     if (level < g_logx_config.level) {
         return;
     }
@@ -269,7 +269,7 @@ static logx_output_t logx_get_output(void) {
 }
 
 // Cleanup logx system
-static void logx_cleanup(void) {
+void logx_cleanup(void) {
     if (g_logx_config.output & LOGX_OUTPUT_SYSLOG) {
         closelog();
     }

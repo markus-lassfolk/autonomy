@@ -1,11 +1,13 @@
 #include "gps_movement.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // Movement detection configuration
 static const int MOVEMENT_HISTORY_SIZE = 50;        // Number of positions to track
@@ -22,14 +24,24 @@ static const char* MOVEMENT_PATTERN_NAMES[] = {
 };
 
 // Global movement detector state
+
+// Forward declarations - movement specific
+movement_metrics_t calculate_movement_metrics(void);
+static gps_movement_pattern_t determine_movement_pattern(const movement_metrics_t *metrics);
+static bool detect_turning_pattern(void);
+static bool detect_oscillation_pattern(void);
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+double calculate_bearing(double lat1, double lon1, double lat2, double lon2);
+void analyze_movement_pattern(void);
+
 static gps_movement_t g_movement_detector = {0};
 static bool g_movement_initialized = false;
 static pthread_mutex_t g_movement_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS movement detector
-static int gps_movement_init(void) {
+int gps_movement_init(void) {
     if (g_movement_initialized) {
-        LOGX_WARN("GPS movement detector already initialized");
+        LOGX_WARN_MSG("GPS movement detector already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -64,12 +76,12 @@ static int gps_movement_init(void) {
     g_movement_initialized = true;
     pthread_mutex_unlock(&g_movement_mutex);
     
-    LOGX_INFO("GPS movement detector initialized successfully");
+    LOGX_INFO_MSG("GPS movement detector initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Add GPS position for movement analysis
-static int gps_movement_add_position(const gps_data_t *gps_data) {
+int gps_movement_add_position(const gps_data_t *gps_data) {
     if (!g_movement_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -103,7 +115,7 @@ static int gps_movement_add_position(const gps_data_t *gps_data) {
 }
 
 // Analyze movement pattern
-static void analyze_movement_pattern(void) {
+void analyze_movement_pattern(void) {
     if (g_movement_detector.position_count < g_movement_detector.min_positions) {
         return;
     }
@@ -121,12 +133,12 @@ static void analyze_movement_pattern(void) {
     // Update current metrics
     memcpy(&g_movement_detector.current_metrics, &metrics, sizeof(movement_metrics_t));
     
-    LOGX_DEBUG("Movement analysis: pattern=%s, speed=%.2f m/s, distance=%.1fm", 
+    LOGX_DEBUG_MSG("Movement analysis: pattern=%s, speed=%.2f m/s, distance=%.1fm", 
                MOVEMENT_PATTERN_NAMES[pattern], metrics.current_speed, metrics.total_distance);
 }
 
 // Calculate movement metrics
-static movement_metrics_t calculate_movement_metrics(void) {
+movement_metrics_t calculate_movement_metrics(void) {
     movement_metrics_t metrics = {0};
     
     if (g_movement_detector.position_count < 2) {
@@ -350,7 +362,7 @@ static bool detect_oscillation_pattern(void) {
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
@@ -368,7 +380,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Calculate bearing between two GPS coordinates
-static double calculate_bearing(double lat1, double lon1, double lat2, double lon2) {
+double calculate_bearing(double lat1, double lon1, double lat2, double lon2) {
     double lat1_rad = lat1 * M_PI / 180.0;
     double lat2_rad = lat2 * M_PI / 180.0;
     double delta_lon = (lon2 - lon1) * M_PI / 180.0;
@@ -387,7 +399,7 @@ static double calculate_bearing(double lat1, double lon1, double lat2, double lo
 }
 
 // Get movement detection status
-static int gps_movement_get_status(gps_movement_status_t *status) {
+int gps_movement_get_status(gps_movement_status_t *status) {
     if (!g_movement_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -410,7 +422,7 @@ static int gps_movement_get_status(gps_movement_status_t *status) {
 }
 
 // Get movement detector configuration
-static int gps_movement_get_config(gps_movement_config_t *config) {
+int gps_movement_get_config(gps_movement_config_t *config) {
     if (!g_movement_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -432,7 +444,7 @@ static int gps_movement_get_config(gps_movement_config_t *config) {
 }
 
 // Set movement detector configuration
-static int gps_movement_set_config(const gps_movement_config_t *config) {
+int gps_movement_set_config(const gps_movement_config_t *config) {
     if (!g_movement_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -450,12 +462,12 @@ static int gps_movement_set_config(const gps_movement_config_t *config) {
     
     pthread_mutex_unlock(&g_movement_mutex);
     
-    LOGX_INFO("GPS movement detector configuration updated");
+    LOGX_INFO_MSG("GPS movement detector configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable movement detector
-static int gps_movement_set_enabled(bool enabled) {
+int gps_movement_set_enabled(bool enabled) {
     if (!g_movement_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -464,12 +476,12 @@ static int gps_movement_set_enabled(bool enabled) {
     g_movement_detector.enabled = enabled;
     pthread_mutex_unlock(&g_movement_mutex);
     
-    LOGX_INFO("GPS movement detector %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS movement detector %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Force movement analysis
-static int gps_movement_force_analysis(void) {
+int gps_movement_force_analysis(void) {
     if (!g_movement_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -482,7 +494,7 @@ static int gps_movement_force_analysis(void) {
         g_movement_detector.total_analyses++;
         pthread_mutex_unlock(&g_movement_mutex);
         
-        LOGX_INFO("Forced movement analysis completed");
+        LOGX_INFO_MSG("Forced movement analysis completed");
         return AUTONOMY_SUCCESS;
     }
     
@@ -491,7 +503,7 @@ static int gps_movement_force_analysis(void) {
 }
 
 // Reset movement detector
-static int gps_movement_reset(void) {
+int gps_movement_reset(void) {
     if (!g_movement_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -515,12 +527,12 @@ static int gps_movement_reset(void) {
     
     pthread_mutex_unlock(&g_movement_mutex);
     
-    LOGX_INFO("GPS movement detector reset");
+    LOGX_INFO_MSG("GPS movement detector reset");
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup movement detector
-static void gps_movement_cleanup(void) {
+void gps_movement_cleanup(void) {
     if (!g_movement_initialized) {
         return;
     }
@@ -528,5 +540,5 @@ static void gps_movement_cleanup(void) {
     pthread_mutex_destroy(&g_movement_mutex);
     g_movement_initialized = false;
     
-    LOGX_INFO("GPS movement detector cleaned up");
+    LOGX_INFO_MSG("GPS movement detector cleaned up");
 }

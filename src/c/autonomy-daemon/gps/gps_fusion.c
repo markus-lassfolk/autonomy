@@ -1,19 +1,31 @@
 #include "gps_fusion.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // GPS fusion configuration
-static const int MAX_FUSION_SOURCES = 8;              // Maximum sources to fuse
+// Note: MAX_FUSION_SOURCES is defined in ../core/types.h
 static const int MIN_FUSION_SOURCES = 2;               // Minimum sources for fusion
 static const double FUSION_UPDATE_INTERVAL = 5.0;      // 5 second fusion update interval
 static const double MAX_SOURCE_AGE = 60.0;             // 60 second maximum source age
 static const double FUSION_WEIGHT_THRESHOLD = 0.3;     // Minimum weight for source inclusion
 static const int FUSION_HISTORY_SIZE = 20;             // Number of fused positions to track
+
+// Forward declarations
+void update_source_metrics(gps_fusion_source_t *source, const gps_data_t *gps_data);
+void update_source_reliability(gps_fusion_source_t *source);
+static int perform_weighted_average_fusion(gps_data_t *fused_data);
+static int perform_kalman_filter_fusion(gps_data_t *fused_data);
+static int perform_least_squares_fusion(gps_data_t *fused_data);
+double calculate_fusion_quality(void);
+void add_fusion_history(const gps_data_t *fused_data);
+int find_fusion_source_by_name(const char *source_name);
 
 // Fusion algorithms
 static const char* FUSION_ALGORITHM_NAMES[] = {
@@ -23,16 +35,16 @@ static const char* FUSION_ALGORITHM_NAMES[] = {
 // Global GPS fusion state
 static gps_fusion_t g_fusion = {0};
 static bool g_fusion_initialized = false;
-static pthread_mutex_t g_fusion_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_geofence_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS fusion system
-static int gps_fusion_init(void) {
+int gps_fusion_init(void) {
     if (g_fusion_initialized) {
-        LOGX_WARN("GPS fusion system already initialized");
+        LOGX_WARN_MSG("GPS fusion system already initialized");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_fusion_mutex);
+    pthread_mutex_lock(&g_geofence_mutex);
     
     // Initialize fusion state
     memset(&g_fusion, 0, sizeof(gps_fusion_t));
@@ -62,25 +74,25 @@ static int gps_fusion_init(void) {
     }
     
     g_fusion_initialized = true;
-    pthread_mutex_unlock(&g_fusion_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex);
     
-    LOGX_INFO("GPS fusion system initialized successfully");
+    LOGX_INFO_MSG("GPS fusion system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Add GPS source for fusion
-static int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type) {
+int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type) {
     if (!g_fusion_initialized || !source_name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_fusion_mutex);
+    pthread_mutex_lock(&g_geofence_mutex);
     
     // Check if source already exists
     int existing_index = find_fusion_source_by_name(source_name);
     if (existing_index >= 0) {
-        pthread_mutex_unlock(&g_fusion_mutex);
-        LOGX_WARN("GPS fusion source '%s' already registered", source_name);
+        pthread_mutex_unlock(&g_geofence_mutex);
+        LOGX_WARN_MSG("GPS fusion source '%s' already registered", source_name);
         return AUTONOMY_ERROR_ALREADY_EXISTS;
     }
     
@@ -94,8 +106,8 @@ static int gps_fusion_add_source(const char *source_name, gps_source_type_t sour
     }
     
     if (source_index < 0) {
-        pthread_mutex_unlock(&g_fusion_mutex);
-        LOGX_ERROR("No free slots for GPS fusion source");
+        pthread_mutex_unlock(&g_geofence_mutex);
+        LOGX_ERROR_MSG("No free slots for GPS fusion source");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
@@ -119,25 +131,25 @@ static int gps_fusion_add_source(const char *source_name, gps_source_type_t sour
     
     g_fusion.source_count++;
     
-    pthread_mutex_unlock(&g_fusion_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex);
     
-    LOGX_INFO("Added GPS fusion source '%s' (type: %d)", source_name, source_type);
+    LOGX_INFO_MSG("Added GPS fusion source '%s' (type: %d)", source_name, source_type);
     return AUTONOMY_SUCCESS;
 }
 
 // Update GPS source data
-static int gps_fusion_update_source(const char *source_name, const gps_data_t *gps_data) {
+int gps_fusion_update_source(const char *source_name, const gps_data_t *gps_data) {
     if (!g_fusion_initialized || !source_name || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_fusion_mutex);
+    pthread_mutex_lock(&g_geofence_mutex);
     
     // Find source
     int source_index = find_fusion_source_by_name(source_name);
     if (source_index < 0) {
-        pthread_mutex_unlock(&g_fusion_mutex);
-        LOGX_WARN("GPS fusion source '%s' not found", source_name);
+        pthread_mutex_unlock(&g_geofence_mutex);
+        LOGX_WARN_MSG("GPS fusion source '%s' not found", source_name);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -150,13 +162,13 @@ static int gps_fusion_update_source(const char *source_name, const gps_data_t *g
     // Update source weight and reliability
     update_source_metrics(source, gps_data);
     
-    pthread_mutex_unlock(&g_fusion_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex);
     
     return AUTONOMY_SUCCESS;
 }
 
 // Update source metrics
-static void update_source_metrics(gps_fusion_source_t *source, const gps_data_t *gps_data) {
+void update_source_metrics(gps_fusion_source_t *source, const gps_data_t *gps_data) {
     // Calculate accuracy-based weight
     double accuracy_weight = 1.0;
     if (gps_data->accuracy > 0) {
@@ -200,7 +212,7 @@ static void update_source_metrics(gps_fusion_source_t *source, const gps_data_t 
 }
 
 // Update source reliability
-static void update_source_reliability(gps_fusion_source_t *source) {
+void update_source_reliability(gps_fusion_source_t *source) {
     // Simple reliability calculation based on data quality
     double reliability = 1.0;
     
@@ -232,23 +244,23 @@ static void update_source_reliability(gps_fusion_source_t *source) {
 }
 
 // Perform GPS data fusion
-static int gps_fusion_perform_fusion(gps_data_t *fused_data) {
+int gps_fusion_perform_fusion(gps_data_t *fused_data) {
     if (!g_fusion_initialized || !fused_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_fusion_mutex);
+    pthread_mutex_lock(&g_geofence_mutex);
     
     // Check if we have enough sources
     if (g_fusion.source_count < g_fusion.min_sources) {
-        pthread_mutex_unlock(&g_fusion_mutex);
+        pthread_mutex_unlock(&g_geofence_mutex);
         return AUTONOMY_ERROR_NO_DATA;
     }
     
     // Check if enough time has passed since last fusion
     time_t now = time(NULL);
     if ((now - g_fusion.last_fusion) < g_fusion.update_interval) {
-        pthread_mutex_unlock(&g_fusion_mutex);
+        pthread_mutex_unlock(&g_geofence_mutex);
         return AUTONOMY_ERROR_NO_DATA;
     }
     
@@ -280,17 +292,18 @@ static int gps_fusion_perform_fusion(gps_data_t *fused_data) {
         // Calculate fusion quality
         g_fusion.fusion_quality = calculate_fusion_quality();
         
-        LOGX_DEBUG("GPS fusion completed: lat=%.6f, lon=%.6f, accuracy=%.1fm, quality=%.3f", 
+        LOGX_DEBUG_MSG("GPS fusion completed: lat=%.6f, lon=%.6f, accuracy=%.1fm, quality=%.3f", 
                    fused_data->lat, fused_data->lon, fused_data->accuracy, g_fusion.fusion_quality);
     }
     
-    pthread_mutex_unlock(&g_fusion_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex);
     
     return fusion_result;
 }
 
 // Perform weighted average fusion
 static int perform_weighted_average_fusion(gps_data_t *fused_data) {
+    time_t now = time(NULL);
     double total_weight = 0.0;
     double weighted_lat = 0.0;
     double weighted_lon = 0.0;
@@ -361,7 +374,7 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
 }
 
 // Calculate fusion quality
-static double calculate_fusion_quality(void) {
+double calculate_fusion_quality(void) {
     if (g_fusion.source_count < g_fusion.min_sources) {
         return 0.0;
     }
@@ -390,7 +403,7 @@ static double calculate_fusion_quality(void) {
 }
 
 // Add fusion history
-static void add_fusion_history(const gps_data_t *fused_data) {
+void add_fusion_history(const gps_data_t *fused_data) {
     // Shift history array
     for (int i = g_fusion.history_size - 1; i > 0; i--) {
         memcpy(&g_fusion.fusion_history[i], &g_fusion.fusion_history[i-1], 
@@ -408,7 +421,7 @@ static void add_fusion_history(const gps_data_t *fused_data) {
 }
 
 // Find fusion source by name
-static int find_fusion_source_by_name(const char *source_name) {
+int find_fusion_source_by_name(const char *source_name) {
     for (int i = 0; i < MAX_FUSION_SOURCES; i++) {
         if (g_fusion.sources[i].active && 
             strcmp(g_fusion.sources[i].name, source_name) == 0) {
@@ -419,12 +432,12 @@ static int find_fusion_source_by_name(const char *source_name) {
 }
 
 // Get fusion status
-static int gps_fusion_get_status(gps_fusion_status_t *status) {
+int gps_fusion_get_status(gps_fusion_status_t *status) {
     if (!g_fusion_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_fusion_mutex);
+    pthread_mutex_lock(&g_geofence_mutex);
     
     status->enabled = g_fusion.enabled;
     status->fusion_algorithm = g_fusion.fusion_algorithm;
@@ -444,18 +457,18 @@ static int gps_fusion_get_status(gps_fusion_status_t *status) {
     }
     status->active_source_count = active_sources;
     
-    pthread_mutex_unlock(&g_fusion_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex);
     
     return AUTONOMY_SUCCESS;
 }
 
 // Get fusion configuration
-static int gps_fusion_get_config(gps_fusion_config_t *config) {
+int gps_fusion_get_config(gps_fusion_config_t *config) {
     if (!g_fusion_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_fusion_mutex);
+    pthread_mutex_lock(&g_geofence_mutex);
     
     config->enabled = g_fusion.enabled;
     config->max_sources = g_fusion.max_sources;
@@ -466,18 +479,18 @@ static int gps_fusion_get_config(gps_fusion_config_t *config) {
     config->history_size = g_fusion.history_size;
     config->fusion_algorithm = g_fusion.fusion_algorithm;
     
-    pthread_mutex_unlock(&g_fusion_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex);
     
     return AUTONOMY_SUCCESS;
 }
 
 // Set fusion configuration
-static int gps_fusion_set_config(const gps_fusion_config_t *config) {
+int gps_fusion_set_config(const gps_fusion_config_t *config) {
     if (!g_fusion_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_fusion_mutex);
+    pthread_mutex_lock(&g_geofence_mutex);
     
     g_fusion.enabled = config->enabled;
     g_fusion.max_sources = config->max_sources;
@@ -488,28 +501,28 @@ static int gps_fusion_set_config(const gps_fusion_config_t *config) {
     g_fusion.history_size = config->history_size;
     g_fusion.fusion_algorithm = config->fusion_algorithm;
     
-    pthread_mutex_unlock(&g_fusion_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex);
     
-    LOGX_INFO("GPS fusion configuration updated");
+    LOGX_INFO_MSG("GPS fusion configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable fusion
-static int gps_fusion_set_enabled(bool enabled) {
+int gps_fusion_set_enabled(bool enabled) {
     if (!g_fusion_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_fusion_mutex);
+    pthread_mutex_lock(&g_geofence_mutex);
     g_fusion.enabled = enabled;
-    pthread_mutex_unlock(&g_fusion_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex);
     
-    LOGX_INFO("GPS fusion %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS fusion %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Force fusion update
-static int gps_fusion_force_update(void) {
+int gps_fusion_force_update(void) {
     if (!g_fusion_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -518,19 +531,19 @@ static int gps_fusion_force_update(void) {
     int result = gps_fusion_perform_fusion(&fused_data);
     
     if (result == AUTONOMY_SUCCESS) {
-        LOGX_INFO("Forced GPS fusion update completed");
+        LOGX_INFO_MSG("Forced GPS fusion update completed");
     }
     
     return result;
 }
 
 // Reset fusion system
-static int gps_fusion_reset(void) {
+int gps_fusion_reset(void) {
     if (!g_fusion_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_fusion_mutex);
+    pthread_mutex_lock(&g_geofence_mutex);
     
     g_fusion.source_count = 0;
     g_fusion.fusion_count = 0;
@@ -553,20 +566,20 @@ static int gps_fusion_reset(void) {
         g_fusion.fusion_history[i].source_count = 0;
     }
     
-    pthread_mutex_unlock(&g_fusion_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex);
     
-    LOGX_INFO("GPS fusion system reset");
+    LOGX_INFO_MSG("GPS fusion system reset");
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup fusion system
-static void gps_fusion_cleanup(void) {
+void gps_fusion_cleanup(void) {
     if (!g_fusion_initialized) {
         return;
     }
     
-    pthread_mutex_destroy(&g_fusion_mutex);
+    pthread_mutex_destroy(&g_geofence_mutex);
     g_fusion_initialized = false;
     
-    LOGX_INFO("GPS fusion system cleaned up");
+    LOGX_INFO_MSG("GPS fusion system cleaned up");
 }

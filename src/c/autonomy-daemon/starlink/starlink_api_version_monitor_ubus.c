@@ -1,14 +1,20 @@
 #include "starlink_api_version_monitor_ubus.h"
 #include "starlink_api_version_monitor.h"
-#include "logx.h"
+#include "../core/types.h"
+#include "../utils/logx.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <math.h>
+#include <fcntl.h>
 
 // Helper function to add API version to blob
-static void add_api_version_to_blob(struct blob_buf *bb, const char *name, 
+void add_api_version_to_blob(struct blob_buf *bb, const char *name, 
                                     const starlink_api_version_t *version) {
     void *version_table = blobmsg_open_table(bb, name);
     
@@ -33,7 +39,7 @@ static void add_api_version_to_blob(struct blob_buf *bb, const char *name,
 }
 
 // Helper function to add version change to blob
-static void add_version_change_to_blob(struct blob_buf *bb, const starlink_api_version_change_t *change) {
+void add_version_change_to_blob(struct blob_buf *bb, const starlink_api_version_change_t *change) {
     void *change_table = blobmsg_open_table(bb, NULL);
     
     blobmsg_add_string(bb, "change_id", change->change_id);

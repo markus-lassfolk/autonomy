@@ -1,8 +1,12 @@
 #ifndef OPENCELLID_UBUS_H
 #define OPENCELLID_UBUS_H
 
+#include "../core/types.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
+#include <stdbool.h>
+#include <math.h>
+#include <fcntl.h>
 
 #ifdef __cplusplus
 extern "C" {

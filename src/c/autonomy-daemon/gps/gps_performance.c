@@ -1,14 +1,16 @@
 #include "gps_performance.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // Performance tracking configuration
-static const int MAX_PERFORMANCE_HISTORY = 10000;           // Maximum performance history entries
+// Note: MAX_PERFORMANCE_HISTORY is defined in ../core/types.h
 static const int PERFORMANCE_UPDATE_INTERVAL = 60;           // 1 minute performance update interval
 static const int PERFORMANCE_WINDOW_SIZE = 3600;             // 1 hour performance window
 static const double MIN_ACCURACY_THRESHOLD = 1.0;            // Minimum accuracy threshold in meters
@@ -21,14 +23,29 @@ static const double SPEED_WEIGHT = 0.20;                     // Speed weight in 
 static const double CONSISTENCY_WEIGHT = 0.20;               // Consistency weight in scoring
 
 // Global performance tracking state
+
+// Forward declarations - performance specific
+void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success);
+void update_source_performance(int source_id, double accuracy, double response_time, bool success);
+double calculate_source_reliability(const gps_source_performance_t *source);
+double calculate_source_consistency(const gps_source_performance_t *source);
+double calculate_accuracy_standard_deviation(const gps_source_performance_t *source);
+double calculate_response_time_standard_deviation(const gps_source_performance_t *source);
+double calculate_source_overall_score(const gps_source_performance_t *source);
+int find_oldest_performance_entry(void);
+double calculate_reliability_score(int source_id);
+double calculate_consistency_score(int source_id);
+double calculate_overall_score(double reliability, double consistency, double accuracy, double response_time);
+void calculate_overall_performance(void);
+
 static gps_performance_t g_performance = {0};
 static bool g_performance_initialized = false;
 static pthread_mutex_t g_performance_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize GPS performance tracking
-static int gps_performance_init(void) {
+int gps_performance_init(void) {
     if (g_performance_initialized) {
-        LOGX_WARN("GPS performance tracking already initialized");
+        LOGX_WARN_MSG("GPS performance tracking already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -85,12 +102,12 @@ static int gps_performance_init(void) {
     g_performance_initialized = true;
     pthread_mutex_unlock(&g_performance_mutex);
     
-    LOGX_INFO("GPS performance tracking initialized successfully");
+    LOGX_INFO_MSG("GPS performance tracking initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Record GPS performance measurement
-static int gps_performance_record_measurement(int source_id, double accuracy, double response_time, bool success) {
+int gps_performance_record_measurement(int source_id, double accuracy, double response_time, bool success) {
     if (!g_performance_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -121,7 +138,7 @@ static int gps_performance_record_measurement(int source_id, double accuracy, do
 }
 
 // Add performance history entry
-static void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success) {
+void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success) {
     // Find free history slot
     int slot_index = -1;
     for (int i = 0; i < g_performance.max_history_entries; i++) {
@@ -162,7 +179,7 @@ static void add_performance_history_entry(int source_id, double accuracy, double
 }
 
 // Find oldest performance entry
-static int find_oldest_performance_entry(void) {
+int find_oldest_performance_entry(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
@@ -178,7 +195,7 @@ static int find_oldest_performance_entry(void) {
 }
 
 // Update source performance
-static void update_source_performance(int source_id, double accuracy, double response_time, bool success) {
+void update_source_performance(int source_id, double accuracy, double response_time, bool success) {
     if (source_id < 0 || source_id >= GPS_MAX_SOURCES) {
         return;
     }
@@ -226,7 +243,7 @@ static void update_source_performance(int source_id, double accuracy, double res
 }
 
 // Calculate reliability score for a source
-static double calculate_source_reliability(const gps_source_performance_t *source) {
+double calculate_source_reliability(const gps_source_performance_t *source) {
     if (source->total_measurements == 0) {
         return 0.0;
     }
@@ -263,7 +280,7 @@ static double calculate_source_reliability(const gps_source_performance_t *sourc
 }
 
 // Calculate consistency score for a source
-static double calculate_source_consistency(const gps_source_performance_t *source) {
+double calculate_source_consistency(const gps_source_performance_t *source) {
     if (source->total_measurements < 2) {
         return 0.0;
     }
@@ -291,7 +308,7 @@ static double calculate_source_consistency(const gps_source_performance_t *sourc
 }
 
 // Calculate accuracy standard deviation
-static double calculate_accuracy_standard_deviation(const gps_source_performance_t *source) {
+double calculate_accuracy_standard_deviation(const gps_source_performance_t *source) {
     if (source->total_measurements < 2) {
         return 0.0;
     }
@@ -317,7 +334,7 @@ static double calculate_accuracy_standard_deviation(const gps_source_performance
 }
 
 // Calculate response time standard deviation
-static double calculate_response_time_standard_deviation(const gps_source_performance_t *source) {
+double calculate_response_time_standard_deviation(const gps_source_performance_t *source) {
     if (source->total_measurements < 2) {
         return 0.0;
     }
@@ -343,7 +360,7 @@ static double calculate_response_time_standard_deviation(const gps_source_perfor
 }
 
 // Calculate source overall score
-static double calculate_source_overall_score(const gps_source_performance_t *source) {
+double calculate_source_overall_score(const gps_source_performance_t *source) {
     // Weighted combination of reliability, consistency, accuracy, and response time
     double accuracy_score = 1.0 - (source->average_accuracy / g_performance.max_accuracy_threshold);
     accuracy_score = fmin(1.0, fmax(0.0, accuracy_score));
@@ -360,7 +377,7 @@ static double calculate_source_overall_score(const gps_source_performance_t *sou
 }
 
 // Calculate reliability score for history entry
-static double calculate_reliability_score(int source_id) {
+double calculate_reliability_score(int source_id) {
     if (source_id < 0 || source_id >= GPS_MAX_SOURCES) {
         return 0.0;
     }
@@ -369,7 +386,7 @@ static double calculate_reliability_score(int source_id) {
 }
 
 // Calculate consistency score for history entry
-static double calculate_consistency_score(int source_id) {
+double calculate_consistency_score(int source_id) {
     if (source_id < 0 || source_id >= GPS_MAX_SOURCES) {
         return 0.0;
     }
@@ -378,7 +395,7 @@ static double calculate_consistency_score(int source_id) {
 }
 
 // Calculate overall score for history entry
-static double calculate_overall_score(double reliability, double consistency, double accuracy, double response_time) {
+double calculate_overall_score(double reliability, double consistency, double accuracy, double response_time) {
     double accuracy_score = 1.0 - (accuracy / g_performance.max_accuracy_threshold);
     accuracy_score = fmin(1.0, fmax(0.0, accuracy_score));
     
@@ -394,7 +411,7 @@ static double calculate_overall_score(double reliability, double consistency, do
 }
 
 // Calculate overall performance metrics
-static void calculate_overall_performance(void) {
+void calculate_overall_performance(void) {
     if (g_performance.total_measurements == 0) {
         return;
     }
@@ -446,7 +463,7 @@ static void calculate_overall_performance(void) {
 }
 
 // Get GPS performance status
-static int gps_performance_get_status(gps_performance_status_t *status) {
+int gps_performance_get_status(gps_performance_status_t *status) {
     if (!g_performance_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -473,7 +490,7 @@ static int gps_performance_get_status(gps_performance_status_t *status) {
 }
 
 // Get source performance
-static int gps_performance_get_source_performance(int source_id, gps_source_performance_t *source_perf) {
+int gps_performance_get_source_performance(int source_id, gps_source_performance_t *source_perf) {
     if (!g_performance_initialized || !source_perf || source_id < 0 || source_id >= GPS_MAX_SOURCES) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -488,7 +505,7 @@ static int gps_performance_get_source_performance(int source_id, gps_source_perf
 }
 
 // Get all source performance data
-static int gps_performance_get_all_sources(gps_source_performance_t *sources, int max_sources) {
+int gps_performance_get_all_sources(gps_source_performance_t *sources, int max_sources) {
     if (!g_performance_initialized || !sources || max_sources <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -509,7 +526,7 @@ static int gps_performance_get_all_sources(gps_source_performance_t *sources, in
 }
 
 // Get performance history
-static int gps_performance_get_history(gps_performance_entry_t *history, int max_entries, time_t since) {
+int gps_performance_get_history(gps_performance_entry_t *history, int max_entries, time_t since) {
     if (!g_performance_initialized || !history || max_entries <= 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -531,7 +548,7 @@ static int gps_performance_get_history(gps_performance_entry_t *history, int max
 }
 
 // Get performance configuration
-static int gps_performance_get_config(gps_performance_config_t *config) {
+int gps_performance_get_config(gps_performance_config_t *config) {
     if (!g_performance_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -551,7 +568,7 @@ static int gps_performance_get_config(gps_performance_config_t *config) {
 }
 
 // Set performance configuration
-static int gps_performance_set_config(const gps_performance_config_t *config) {
+int gps_performance_set_config(const gps_performance_config_t *config) {
     if (!g_performance_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -567,12 +584,12 @@ static int gps_performance_set_config(const gps_performance_config_t *config) {
     
     pthread_mutex_unlock(&g_performance_mutex);
     
-    LOGX_INFO("GPS performance tracking configuration updated");
+    LOGX_INFO_MSG("GPS performance tracking configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable performance tracking
-static int gps_performance_set_enabled(bool enabled) {
+int gps_performance_set_enabled(bool enabled) {
     if (!g_performance_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -581,12 +598,12 @@ static int gps_performance_set_enabled(bool enabled) {
     g_performance.enabled = enabled;
     pthread_mutex_unlock(&g_performance_mutex);
     
-    LOGX_INFO("GPS performance tracking %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS performance tracking %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Reset performance tracking
-static int gps_performance_reset(void) {
+int gps_performance_reset(void) {
     if (!g_performance_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -634,12 +651,12 @@ static int gps_performance_reset(void) {
     
     pthread_mutex_unlock(&g_performance_mutex);
     
-    LOGX_INFO("GPS performance tracking reset");
+    LOGX_INFO_MSG("GPS performance tracking reset");
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup performance tracking
-static void gps_performance_cleanup(void) {
+void gps_performance_cleanup(void) {
     if (!g_performance_initialized) {
         return;
     }
@@ -647,5 +664,5 @@ static void gps_performance_cleanup(void) {
     pthread_mutex_destroy(&g_performance_mutex);
     g_performance_initialized = false;
     
-    LOGX_INFO("GPS performance tracking cleaned up");
+    LOGX_INFO_MSG("GPS performance tracking cleaned up");
 }

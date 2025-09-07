@@ -1,7 +1,7 @@
 #ifndef GPS_TERRAIN_H
 #define GPS_TERRAIN_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
@@ -62,6 +62,8 @@ typedef struct {
     int water_bodies;                   // Presence of water bodies
     double difficulty_score;            // Overall difficulty score (0-100)
     terrain_difficulty_level_t difficulty_level; // Difficulty level classification
+    double slope;                       // Slope
+    double drainage;                  // Drainage
 } gps_terrain_info_t;
 
 // Terrain cache entry
@@ -74,7 +76,7 @@ typedef struct {
     terrain_type_t terrain_type;        // Terrain type
     double slope;                       // Slope
     double roughness;                   // Roughness
-    double draination;                  // Drainage
+    double drainage;                  // Drainage
     double vegetation_density;          // Vegetation density
     int soil_type;                      // Soil type
     int water_bodies;                   // Water bodies

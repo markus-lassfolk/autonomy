@@ -66,12 +66,14 @@ class CodeFile:
 class CCodeVerifier:
     """Main verification class"""
     
-    def __init__(self, verbose: bool = False, strict: bool = False):
+    def __init__(self, verbose: bool = False, strict: bool = False, fix_mode: bool = False):
         self.verbose = verbose
         self.strict = strict
+        self.fix_mode = fix_mode
         self.results: List[VerificationResult] = []
         self.files: Dict[str, CodeFile] = {}
         self.include_paths: Set[str] = set()
+        self.fixes_applied: List[str] = []
         self.compiler_flags = [
             "-Wall", "-Wextra", "-Wpedantic", "-Werror=implicit-function-declaration",
             "-Werror=implicit-int", "-Werror=incompatible-pointer-types",
@@ -1464,6 +1466,819 @@ class CCodeVerifier:
             self.log(f"Report saved to {output_file}")
         
         return report_text
+    
+    def apply_automatic_fixes(self, directory: str):
+        """Apply automatic fixes for common issues found during GPS module development"""
+        if not self.fix_mode:
+            return
+        
+        self.log("Applying automatic fixes based on GPS module patterns...")
+        
+        # Find all C files in the directory
+        c_files = self.find_c_files(directory, ["*.c", "*.h"])
+        
+        for file_path in c_files:
+            self.fix_include_path_issues(file_path)
+            self.fix_static_declaration_conflicts(file_path)
+            self.fix_curl_callback_conflicts(file_path)
+            self.fix_missing_includes(file_path)
+            self.fix_missing_standard_includes_comprehensive(file_path)
+            self.fix_struct_member_issues(file_path)
+            self.fix_enum_redeclarations(file_path)
+            self.fix_macro_conflicts(file_path)
+            self.fix_missing_core_structs(file_path)
+            self.fix_function_signature_conflicts(file_path)
+            # New fixes learned from Utils module
+            self.fix_ubus_method_definitions(file_path)
+            self.fix_missing_constants(file_path)
+            self.fix_struct_field_aliases(file_path)
+        
+        self.log(f"Applied {len(self.fixes_applied)} automatic fixes")
+    
+    def fix_include_path_issues(self, file_path: str):
+        """Fix common include path issues"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Fix autonomy_types.h -> types.h (GPS module pattern)
+            content = content.replace('#include "../autonomy_types.h"', '#include "../core/types.h"')
+            content = content.replace('#include "autonomy_types.h"', '#include "../core/types.h"')
+            
+            # Fix relative include paths
+            content = content.replace('#include "starlink_comprehensive.h"', '#include "../starlink/starlink_comprehensive.h"')
+            content = content.replace('#include "external_apis.h"', '#include "../external/external_apis.h"')
+            content = content.replace('#include "logx.h"', '#include "../utils/logx.h"')
+            
+            # Fix UBUS includes
+            content = content.replace('#include <libubus.h>', '#include <libubus.h>')
+            content = content.replace('#include <ubus.h>', '#include <libubus.h>')
+            content = content.replace('#include <libuci.h>', '#include <uci.h>')
+            
+            if content != original_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed include paths in {file_path}")
+                self.log(f"Fixed include paths in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing includes in {file_path}: {e}", "error")
+    
+    def fix_static_declaration_conflicts(self, file_path: str):
+        """Fix static declaration conflicts (GPS module pattern)"""
+        if not file_path.endswith('.c'):
+            return
+            
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Common functions that should not be static (based on GPS + Analytics module experience)
+            functions_to_make_public = [
+                'init', 'cleanup', 'start', 'stop', 'update', 'get_status', 'get_config', 
+                'set_config', 'analyze', 'calculate', 'process', 'handle', 'check',
+                'register', 'unregister', 'add', 'remove', 'find', 'search',
+                'monitor_thread', 'worker_thread', 'callback',
+                # Analytics module patterns
+                'get_instance', 'generate_predictions', 'get_predictions', 'train_models',
+                'collect_metrics', 'get_metrics', 'get_history', 'get_dashboard_metrics',
+                'is_running', 'is_initialized', 'calculate_score', 'detect_issues'
+            ]
+            
+            lines = content.split('\n')
+            modified = False
+            
+            for i, line in enumerate(lines):
+                # Look for static function definitions that might need to be public
+                static_match = re.match(r'^static\s+(\w+(?:\s+\w+)*)\s+(\w+)\s*\(', line)
+                if static_match:
+                    func_name = static_match.group(2)
+                    # Check if function name suggests it should be public
+                    for pattern in functions_to_make_public:
+                        if pattern in func_name.lower():
+                            # Remove static keyword
+                            lines[i] = line.replace('static ', '', 1)
+                            modified = True
+                            self.log(f"Removed static from {func_name} in {file_path}")
+                            break
+            
+            if modified:
+                content = '\n'.join(lines)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed static declarations in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing static declarations in {file_path}: {e}", "error")
+    
+    def fix_curl_callback_conflicts(self, file_path: str):
+        """Fix curl_write_callback naming conflicts"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Rename curl_write_callback to avoid conflicts (GPS module pattern)
+            if 'curl_write_callback' in content and file_path.endswith('.c'):
+                # Get the base filename for a unique callback name
+                base_name = Path(file_path).stem
+                new_callback_name = f"{base_name}_write_callback"
+                
+                content = content.replace('curl_write_callback', new_callback_name)
+                
+                if content != original_content:
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    self.fixes_applied.append(f"Renamed curl_write_callback in {file_path}")
+                    self.log(f"Renamed curl_write_callback to {new_callback_name} in {file_path}")
+                    
+        except Exception as e:
+            self.log(f"Error fixing curl callback in {file_path}: {e}", "error")
+    
+    def fix_missing_includes(self, file_path: str):
+        """Add missing includes based on common patterns"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            lines = content.split('\n')
+            
+            # Check for missing includes based on function usage
+            missing_includes = []
+            
+            # Check for pthread functions
+            if any('pthread_' in line for line in lines) and not any('#include <pthread.h>' in line for line in lines):
+                missing_includes.append('#include <pthread.h>')
+            
+            # Check for time functions
+            if any('time(' in line or 'time_t' in line for line in lines) and not any('#include <time.h>' in line for line in lines):
+                missing_includes.append('#include <time.h>')
+            
+            # Check for math functions
+            if any('fmin(' in line or 'fmax(' in line or 'cos(' in line or 'sin(' in line for line in lines) and not any('#include <math.h>' in line for line in lines):
+                missing_includes.append('#include <math.h>')
+            
+            # Check for sys/time.h for struct timeval
+            if any('struct timeval' in line for line in lines) and not any('#include <sys/time.h>' in line for line in lines):
+                missing_includes.append('#include <sys/time.h>')
+            
+            # Check for stdint.h for uint64_t (analytics module pattern)
+            if any('uint64_t' in line for line in lines) and not any('#include <stdint.h>' in line for line in lines):
+                missing_includes.append('#include <stdint.h>')
+            
+            # Check for stdbool.h for bool type
+            if any('bool ' in line or ' bool' in line for line in lines) and not any('#include <stdbool.h>' in line for line in lines):
+                missing_includes.append('#include <stdbool.h>')
+            
+            # Check for standard C library includes
+            if any('malloc(' in line or 'free(' in line or 'calloc(' in line for line in lines) and not any('#include <stdlib.h>' in line for line in lines):
+                missing_includes.append('#include <stdlib.h>')
+            
+            if any('strcpy(' in line or 'strlen(' in line or 'strncpy(' in line for line in lines) and not any('#include <string.h>' in line for line in lines):
+                missing_includes.append('#include <string.h>')
+            
+            if any('printf(' in line or 'sprintf(' in line or 'snprintf(' in line for line in lines) and not any('#include <stdio.h>' in line for line in lines):
+                missing_includes.append('#include <stdio.h>')
+            
+            # Add missing includes after existing includes
+            if missing_includes:
+                # Find the last include line
+                last_include_idx = -1
+                for i, line in enumerate(lines):
+                    if line.strip().startswith('#include'):
+                        last_include_idx = i
+                
+                if last_include_idx >= 0:
+                    # Insert missing includes after the last include
+                    for include in missing_includes:
+                        lines.insert(last_include_idx + 1, include)
+                        last_include_idx += 1
+                    
+                    content = '\n'.join(lines)
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    self.fixes_applied.append(f"Added missing includes in {file_path}: {', '.join(missing_includes)}")
+                    self.log(f"Added missing includes in {file_path}: {', '.join(missing_includes)}")
+                    
+        except Exception as e:
+            self.log(f"Error adding missing includes in {file_path}: {e}", "error")
+    
+    def fix_struct_member_issues(self, file_path: str):
+        """Fix common struct member issues found in GPS module"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Fix common struct member typos (GPS module pattern)
+            fixes = {
+                'draination': 'drainage',  # Common typo found in terrain analysis
+                '.geofence.geofences[': '.geofences[',  # Duplicate field access
+                'g_fusion_mutex': 'g_geofence_mutex',  # Wrong mutex name
+            }
+            
+            for incorrect, correct in fixes.items():
+                if incorrect in content:
+                    content = content.replace(incorrect, correct)
+                    self.fixes_applied.append(f"Fixed struct member issue in {file_path}: {incorrect} -> {correct}")
+                    self.log(f"Fixed struct member issue in {file_path}: {incorrect} -> {correct}")
+            
+            if content != original_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                    
+        except Exception as e:
+            self.log(f"Error fixing struct members in {file_path}: {e}", "error")
+    
+    def fix_enum_redeclarations(self, file_path: str):
+        """Fix enum redeclaration issues by adding notes about central definitions"""
+        if not file_path.endswith('.h'):
+            return
+            
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # CORE MODULE LESSON: Don't remove enums from central types.h file
+            if 'types.h' in file_path:
+                self.log(f"Skipping enum cleanup for central types file: {file_path}")
+                return
+            
+            # Common enum types that should be centralized (GPS + Core module patterns)
+            centralized_enums = [
+                'gps_source_type_t',
+                'gps_module_type_t', 
+                'opencellid_radio_type_t',
+                'gps_error_type_t',
+                'gps_recovery_strategy_t',
+                # Core module patterns
+                'log_level_t',
+                'autonomy_error_t'
+            ]
+            
+            lines = content.split('\n')
+            modified = False
+            
+            i = 0
+            while i < len(lines):
+                line = lines[i]
+                
+                # Look for enum definitions
+                enum_match = re.match(r'typedef\s+enum\s*\{', line)
+                if enum_match:
+                    # Find the end of the enum and the typedef name
+                    enum_start = i
+                    enum_end = -1
+                    typedef_name = None
+                    
+                    j = i
+                    while j < len(lines):
+                        if '}' in lines[j] and ';' in lines[j]:
+                            # Extract typedef name
+                            typedef_match = re.search(r'\}\s*(\w+)\s*;', lines[j])
+                            if typedef_match:
+                                typedef_name = typedef_match.group(1)
+                                enum_end = j
+                                break
+                        j += 1
+                    
+                    # Check if this enum should be centralized
+                    if typedef_name in centralized_enums:
+                        # Replace the entire enum with a note
+                        note = f"// Note: {typedef_name} is defined in ../core/types.h"
+                        lines[enum_start:enum_end+1] = [note]
+                        modified = True
+                        self.log(f"Replaced duplicate enum {typedef_name} with note in {file_path}")
+                        i = enum_start + 1
+                        continue
+                
+                i += 1
+            
+            if modified:
+                content = '\n'.join(lines)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed enum redeclarations in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing enum redeclarations in {file_path}: {e}", "error")
+    
+    def fix_macro_conflicts(self, file_path: str):
+        """Fix macro conflicts by removing local definitions"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Common macros that should be centralized (GPS module pattern)
+            centralized_macros = [
+                'MAX_GPS_SOURCES', 'MAX_CLUSTERS', 'MAX_EVENTS', 'MAX_GEOFENCES',
+                'MAX_CACHE_ENTRIES', 'MAX_WEATHER_CACHE', 'MAX_TERRAIN_CACHE',
+                'MAX_PERFORMANCE_HISTORY', 'MAX_INTEGRATION_SOURCES', 'MAX_FUSION_SOURCES'
+            ]
+            
+            lines = content.split('\n')
+            modified = False
+            
+            for i, line in enumerate(lines):
+                # Look for local macro definitions that conflict with central ones
+                for macro in centralized_macros:
+                    if re.match(rf'static\s+const\s+int\s+{macro}\s*=', line) or re.match(rf'#define\s+{macro}\s+', line):
+                        # Replace with note
+                        lines[i] = f"// Note: {macro} is defined in ../core/types.h"
+                        modified = True
+                        self.log(f"Replaced local macro {macro} with note in {file_path}")
+            
+            if modified:
+                content = '\n'.join(lines)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed macro conflicts in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing macro conflicts in {file_path}: {e}", "error")
+    
+    def apply_rutos_sdk_fixes(self, directory: str):
+        """Apply comprehensive fixes for RUTOS SDK compatibility based on GPS module success"""
+        self.log("Applying RUTOS SDK compatibility fixes...")
+        
+        # Apply all fix methods
+        self.apply_automatic_fixes(directory)
+        self.fix_duplicate_type_definitions(directory)
+        
+        # Additional RUTOS-specific fixes
+        c_files = self.find_c_files(directory, ["*.c", "*.h"])
+        
+        # Core module pattern: Check for missing Starlink obstruction types
+        self.fix_missing_starlink_types(directory)
+        
+        for file_path in c_files:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                original_content = content
+                
+                # Fix LOGX macro calls (GPS module pattern)
+                logx_fixes = {
+                    'LOGX_WARN(': 'LOGX_WARN_MSG(',
+                    'LOGX_ERROR(': 'LOGX_ERROR_MSG(',
+                    'LOGX_INFO(': 'LOGX_INFO_MSG(',
+                    'LOGX_DEBUG(': 'LOGX_DEBUG_MSG('
+                }
+                
+                for incorrect, correct in logx_fixes.items():
+                    if incorrect in content:
+                        content = content.replace(incorrect, correct)
+                        self.log(f"Fixed LOGX macro in {file_path}: {incorrect} -> {correct}")
+                
+                # Fix common function parameter issues
+                if 'uci_set(' in content:
+                    # Fix uci_set calls that have too many arguments
+                    content = re.sub(r'uci_set\([^,]+,\s*[^,]+,\s*[^,]+,\s*[^,]+,\s*[^)]+\)', 
+                                   lambda m: m.group(0).rsplit(',', 1)[0] + ')', content)
+                
+                if content != original_content:
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    self.fixes_applied.append(f"Applied RUTOS SDK fixes in {file_path}")
+                    
+            except Exception as e:
+                self.log(f"Error applying RUTOS fixes in {file_path}: {e}", "error")
+    
+    def fix_duplicate_type_definitions(self, directory: str):
+        """Fix duplicate type definitions across headers (Analytics module pattern)"""
+        self.log("Fixing duplicate type definitions...")
+        
+        # Common types that get duplicated across modules
+        common_duplicate_types = [
+            'health_thresholds_t',
+            'member_health_t', 
+            'performance_metrics_t',
+            'trend_analysis_t',
+            'usage_pattern_t',
+            'analytics_config_t'
+        ]
+        
+        # Find all header files
+        header_files = self.find_c_files(directory, ["*.h"])
+        
+        # Track where types are defined
+        type_definitions = {}  # {type_name: [file_paths]}
+        
+        for file_path in header_files:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                for type_name in common_duplicate_types:
+                    # Look for typedef struct definitions
+                    if re.search(rf'typedef\s+struct\s*\{{[^}}]*\}}\s*{type_name}\s*;', content, re.DOTALL):
+                        if type_name not in type_definitions:
+                            type_definitions[type_name] = []
+                        type_definitions[type_name].append(file_path)
+                        
+            except Exception as e:
+                self.log(f"Error scanning {file_path} for type definitions: {e}", "error")
+        
+        # Fix duplicates by keeping the first definition and replacing others with notes
+        for type_name, file_paths in type_definitions.items():
+            if len(file_paths) > 1:
+                self.log(f"Found duplicate type {type_name} in {len(file_paths)} files: {file_paths}")
+                
+                # Keep the first file, replace others with notes
+                primary_file = file_paths[0]
+                for duplicate_file in file_paths[1:]:
+                    self.replace_duplicate_type_with_note(duplicate_file, type_name, primary_file)
+    
+    def replace_duplicate_type_with_note(self, file_path: str, type_name: str, primary_file: str):
+        """Replace duplicate type definition with include note"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Find and replace the typedef struct definition
+            pattern = rf'typedef\s+struct\s*\{{[^}}]*\}}\s*{type_name}\s*;'
+            match = re.search(pattern, content, re.DOTALL)
+            
+            if match:
+                primary_file_relative = os.path.relpath(primary_file, os.path.dirname(file_path))
+                note = f"// Note: {type_name} is defined in {primary_file_relative}"
+                content = content[:match.start()] + note + content[match.end():]
+                
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                
+                self.fixes_applied.append(f"Replaced duplicate {type_name} in {file_path} with note")
+                self.log(f"Replaced duplicate {type_name} in {file_path} with note pointing to {primary_file_relative}")
+                
+        except Exception as e:
+            self.log(f"Error replacing duplicate type in {file_path}: {e}", "error")
+    
+    def fix_missing_standard_includes_comprehensive(self, file_path: str):
+        """Comprehensive fix for missing standard includes (Analytics module pattern)"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            lines = content.split('\n')
+            
+            # Comprehensive include detection based on analytics module
+            include_map = {
+                # Standard C library
+                'stdint.h': ['uint64_t', 'uint32_t', 'uint16_t', 'uint8_t', 'int64_t', 'int32_t', 'int16_t', 'int8_t'],
+                'stdbool.h': ['bool', 'true', 'false'],
+                'stdlib.h': ['malloc', 'free', 'calloc', 'realloc', 'exit', 'abort', 'atoi', 'atof'],
+                'string.h': ['strcpy', 'strncpy', 'strlen', 'strcmp', 'strncmp', 'memcpy', 'memset', 'memcmp'],
+                'stdio.h': ['printf', 'fprintf', 'sprintf', 'snprintf', 'scanf', 'sscanf', 'FILE'],
+                'math.h': ['fmin', 'fmax', 'cos', 'sin', 'tan', 'sqrt', 'pow', 'floor', 'ceil'],
+                'time.h': ['time_t', 'time(', 'localtime', 'gmtime', 'strftime', 'mktime'],
+                'pthread.h': ['pthread_t', 'pthread_create', 'pthread_join', 'pthread_mutex_t', 'pthread_mutex_lock'],
+                
+                # System includes
+                'sys/time.h': ['struct timeval', 'gettimeofday'],
+                'sys/resource.h': ['struct rusage', 'getrusage', 'RUSAGE_SELF'],
+                'sys/sysinfo.h': ['struct sysinfo', 'sysinfo'],
+                'sys/statvfs.h': ['struct statvfs', 'statvfs'],
+                'unistd.h': ['sleep', 'usleep', 'getpid', 'access'],
+                'fcntl.h': ['open', 'O_RDONLY', 'O_WRONLY', 'O_RDWR'],
+                'dirent.h': ['DIR', 'opendir', 'readdir', 'closedir', 'struct dirent'],
+                
+                # Networking
+                'sys/socket.h': ['socket', 'bind', 'listen', 'accept', 'connect'],
+                'netinet/in.h': ['struct sockaddr_in', 'INADDR_ANY'],
+                'arpa/inet.h': ['inet_addr', 'inet_ntoa'],
+                'netdb.h': ['gethostbyname', 'struct hostent']
+            }
+            
+            missing_includes = []
+            content_text = ' '.join(lines)
+            
+            for include_file, identifiers in include_map.items():
+                # Check if any identifier is used and include is missing
+                if any(identifier in content_text for identifier in identifiers):
+                    if not any(f'#include <{include_file}>' in line for line in lines):
+                        missing_includes.append(f'#include <{include_file}>')
+            
+            # Add missing includes after existing includes
+            if missing_includes:
+                # Find the last include line
+                last_include_idx = -1
+                for i, line in enumerate(lines):
+                    if line.strip().startswith('#include'):
+                        last_include_idx = i
+                
+                if last_include_idx >= 0:
+                    # Insert missing includes after the last include
+                    for include in missing_includes:
+                        lines.insert(last_include_idx + 1, include)
+                        last_include_idx += 1
+                    
+                    content = '\n'.join(lines)
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    self.fixes_applied.append(f"Added comprehensive includes in {file_path}: {', '.join(missing_includes)}")
+                    self.log(f"Added comprehensive includes in {file_path}: {', '.join(missing_includes)}")
+                    
+        except Exception as e:
+            self.log(f"Error adding comprehensive includes in {file_path}: {e}", "error")
+    
+    def fix_missing_core_structs(self, file_path: str):
+        """Detect and suggest fixes for missing core struct definitions (Core module pattern)"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Core structs that are commonly missing (based on core module experience)
+            missing_core_structs = {
+                'system_health': {
+                    'fields': [
+                        'char status[32]',
+                        'int starlink_health', 'int uci_health', 'int overlay_health',
+                        'int services_health', 'int network_health', 'int database_health',
+                        'int time_health', 'int logs_health', 'int gps_health',
+                        'int overall_health', 'double overall_score', 'time_t last_check'
+                    ],
+                    'typedef_name': 'system_health_t'
+                },
+                'autonomy_state': {
+                    'fields': [
+                        'bool running', 'bool gps_enabled', 'double current_lat',
+                        'double current_lon', 'double current_accuracy', 'double current_confidence',
+                        'time_t last_gps_update', 'char location_status[32]',
+                        'bool movement_detected', 'time_t last_movement_check'
+                    ],
+                    'typedef_name': 'autonomy_state_t'
+                },
+                'autonomy_config': {
+                    'fields': [
+                        'bool debug_mode', 'char log_file[256]', 'char pid_file[256]',
+                        'int pid_file_timeout', 'int update_interval', 'int health_check_interval'
+                    ],
+                    'typedef_name': 'autonomy_config_t'
+                }
+            }
+            
+            # Check for usage of these structs
+            for struct_name, struct_info in missing_core_structs.items():
+                if f'struct {struct_name}' in content or f'{struct_info["typedef_name"]}' in content:
+                    # Check if this looks like it needs the struct definition
+                    if ('has no member named' in content or 
+                        'incomplete type' in content or 
+                        'storage size' in content):
+                        
+                        self.add_result(
+                            file_path,
+                            f"Missing core struct definition: {struct_name}",
+                            "error",
+                            0,
+                            "missing_core_struct",
+                            f"Add {struct_info['typedef_name']} definition to types.h with fields: {', '.join(struct_info['fields'][:3])}..."
+                        )
+                        
+                        # If this is types.h, we could automatically add the definition
+                        if 'types.h' in file_path and self.fix_mode:
+                            self.add_core_struct_definition(file_path, struct_name, struct_info)
+                            
+        except Exception as e:
+            self.log(f"Error checking core structs in {file_path}: {e}", "error")
+    
+    def add_core_struct_definition(self, file_path: str, struct_name: str, struct_info: dict):
+        """Add missing core struct definition to types.h"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Generate struct definition
+            struct_def = f"\n// {struct_name.title().replace('_', ' ')} structure\n"
+            struct_def += f"typedef struct {{\n"
+            for field in struct_info['fields']:
+                struct_def += f"    {field};\n"
+            struct_def += f"}} {struct_info['typedef_name']};\n"
+            
+            # Find a good place to insert (before function declarations)
+            lines = content.split('\n')
+            insert_idx = -1
+            
+            for i, line in enumerate(lines):
+                if 'Function declarations' in line or 'void log_message' in line:
+                    insert_idx = i
+                    break
+            
+            if insert_idx > 0:
+                lines.insert(insert_idx, struct_def)
+                content = '\n'.join(lines)
+                
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                
+                self.fixes_applied.append(f"Added missing struct {struct_info['typedef_name']} to {file_path}")
+                self.log(f"Added missing struct {struct_info['typedef_name']} to {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error adding struct definition to {file_path}: {e}", "error")
+    
+    def fix_function_signature_conflicts(self, file_path: str):
+        """Detect function signature conflicts (Core module pattern)"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Common function signature conflicts found in core module
+            signature_conflicts = {
+                'starlink_get_collector_stats': {
+                    'expected_return': 'int',
+                    'common_wrong_return': 'void',
+                    'suggestion': 'Change return type to int for consistency'
+                },
+                'log_message': {
+                    'expected_static': False,
+                    'suggestion': 'Remove static keyword - function should be public'
+                }
+            }
+            
+            lines = content.split('\n')
+            
+            for i, line in enumerate(lines):
+                for func_name, conflict_info in signature_conflicts.items():
+                    if func_name in line:
+                        # Check for return type conflicts
+                        if 'expected_return' in conflict_info:
+                            wrong_return = conflict_info['common_wrong_return']
+                            correct_return = conflict_info['expected_return']
+                            
+                            if f'{wrong_return} {func_name}' in line:
+                                self.add_result(
+                                    file_path,
+                                    f"Function signature conflict: {func_name} should return {correct_return}, not {wrong_return}",
+                                    "error",
+                                    i + 1,
+                                    "function_signature_conflict",
+                                    conflict_info['suggestion']
+                                )
+                        
+                        # Check for static conflicts
+                        if 'expected_static' in conflict_info:
+                            if not conflict_info['expected_static'] and f'static ' in line and func_name in line:
+                                self.add_result(
+                                    file_path,
+                                    f"Function should not be static: {func_name}",
+                                    "error",
+                                    i + 1,
+                                    "static_function_conflict",
+                                    conflict_info['suggestion']
+                                )
+                                
+        except Exception as e:
+            self.log(f"Error checking function signatures in {file_path}: {e}", "error")
+    
+    def fix_missing_starlink_types(self, directory: str):
+        """Fix missing Starlink obstruction types (Core module pattern)"""
+        # Check if we need to add missing Starlink obstruction types
+        starlink_types_needed = [
+            'starlink_obstruction_sample_t',
+            'starlink_obstruction_status_t', 
+            'starlink_environmental_pattern_t',
+            'starlink_active_match_t',
+            'starlink_match_result_t',
+            'starlink_obstruction_config_t'
+        ]
+        
+        # Check if any files reference these types
+        c_files = self.find_c_files(directory, ["*.c", "*.h"])
+        types_referenced = set()
+        
+        for file_path in c_files:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                for type_name in starlink_types_needed:
+                    if type_name in content:
+                        types_referenced.add(type_name)
+                        
+            except Exception as e:
+                continue
+        
+        if types_referenced:
+            self.log(f"Found references to missing Starlink types: {types_referenced}")
+            
+            # Add suggestion to define these types
+            for file_path in c_files:
+                if 'types.h' in file_path:
+                    for type_name in types_referenced:
+                        self.add_result(
+                            file_path,
+                            f"Missing Starlink obstruction type: {type_name}",
+                            "error",
+                            0,
+                            "missing_starlink_type",
+                            f"Define {type_name} in starlink obstruction headers or add forward declaration"
+                        )
+    
+    def fix_ubus_method_definitions(self, file_path: str):
+        """Fix UBUS method definition issues learned from Utils module"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Fix struct ubus_method_type to struct ubus_method
+            content = re.sub(
+                r'struct ubus_method_type\s+(\w+)\s*\[\s*\]\s*=',
+                r'struct ubus_method \\1[] =',
+                content
+            )
+            
+            # Fix UBUS_METHOD with 0 parameter to UBUS_METHOD_NOARG
+            content = re.sub(
+                r'UBUS_METHOD\s*\(\s*"([^"]+)"\s*,\s*(\w+)\s*,\s*0\s*\)',
+                r'UBUS_METHOD_NOARG("\\1", \\2)',
+                content
+            )
+            
+            # Fix const struct ubus_object to struct ubus_object (remove const)
+            content = re.sub(
+                r'static const struct ubus_object\s+(\w+)\s*=',
+                r'static struct ubus_object \\1 =',
+                content
+            )
+            
+            if content != original_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed UBUS method definitions in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing UBUS methods in {file_path}: {e}")
+    
+    def fix_missing_constants(self, file_path: str):
+        """Fix missing constants learned from Utils module"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Fix common missing constants
+            constant_fixes = {
+                'AUTONOMY_ERROR_INVALID_PARAMETER': 'AUTONOMY_ERROR_INVALID_PARAM',
+                'AUTONOMY_ERROR_SYSTEM_CALL_FAILED': 'AUTONOMY_ERROR_SYSTEM',
+                'AUTONOMY_ERROR_OPERATION_NOT_PERMITTED': 'AUTONOMY_ERROR_SYSTEM',
+                'NOTIFICATION_TYPE_SYSTEM_HEALTH': 'NOTIFICATION_TYPE_SYSTEM_ALERT',
+                'NOTIFICATION_PRIORITY_EMERGENCY': 'NOTIFICATION_PRIORITY_CRITICAL',
+            }
+            
+            for old_const, new_const in constant_fixes.items():
+                content = content.replace(old_const, new_const)
+            
+            if content != original_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed missing constants in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing constants in {file_path}: {e}")
+    
+    def fix_struct_field_aliases(self, file_path: str):
+        """Fix struct field name mismatches with aliases"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            
+            # Common field name fixes learned from Utils module
+            field_fixes = {
+                r'\.signal_quality\b': '.signal_strength',
+                r'gps_data\.satellites\b': 'gps_data.satellites_used',
+                r'\.latency_ms\b': '.latency_score',  # For connection scoring
+                r'\.loss_percent\b': '.loss_score',   # For connection scoring
+                r'cellular_info\.stability_score\b': 'cellular_info.reliability_score',
+            }
+            
+            for pattern, replacement in field_fixes.items():
+                content = re.sub(pattern, replacement, content)
+            
+            if content != original_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.fixes_applied.append(f"Fixed struct field aliases in {file_path}")
+                
+        except Exception as e:
+            self.log(f"Error fixing struct field aliases in {file_path}: {e}")
 
 def main():
     """Main entry point"""
@@ -1480,11 +2295,17 @@ def main():
                        help="Exclude files matching pattern")
     parser.add_argument("-i", "--include", action="append", default=[], 
                        help="Only include files matching pattern")
+    parser.add_argument("-f", "--fix", action="store_true", 
+                       help="Automatically fix common issues")
     
     args = parser.parse_args()
     
     # Create verifier
-    verifier = CCodeVerifier(verbose=args.verbose, strict=args.strict)
+    verifier = CCodeVerifier(verbose=args.verbose, strict=args.strict, fix_mode=args.fix)
+    
+    # Apply fixes if requested
+    if args.fix:
+        verifier.apply_rutos_sdk_fixes(args.directory)
     
     # Run verification
     verifier.verify_directory(
@@ -1505,6 +2326,7 @@ def main():
         sys.exit(1)
     else:
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

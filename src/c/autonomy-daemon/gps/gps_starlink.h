@@ -1,13 +1,19 @@
 #ifndef GPS_STARLINK_H
 #define GPS_STARLINK_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// Forward declarations
+static void* starlink_gps_monitor_thread(void *arg);
+static bool extract_gps_from_starlink_api(void);
+static bool parse_gps_from_response(const char *response);
+static void calculate_gps_reliability(void);
 
 // Starlink GPS configuration
 typedef struct {
@@ -16,7 +22,6 @@ typedef struct {
     int timeout;                     // API timeout in seconds
     char starlink_ip[16];            // Starlink dish IP address
     int starlink_port;               // Starlink dish port
-    // Simulation fallback removed - production uses only real data
 } gps_starlink_config_t;
 
 // Starlink GPS status
@@ -28,7 +33,6 @@ typedef struct {
     int total_updates;               // Total updates performed
     int successful_updates;          // Successful updates
     int failed_updates;              // Failed updates
-    // Simulation fallback removed - production uses only real data
     char starlink_ip[16];            // Current Starlink IP
     int starlink_port;               // Current Starlink port
 } gps_starlink_status_t;
@@ -42,7 +46,6 @@ typedef struct {
     int total_updates;               // Total updates performed
     int successful_updates;          // Successful updates
     int failed_updates;              // Failed updates
-    // Simulation fallback removed - production uses only real data
     char starlink_ip[16];            // Starlink dish IP address
     int starlink_port;               // Starlink dish port
     gps_data_t gps_data;             // Current GPS data
@@ -55,6 +58,12 @@ typedef struct {
  * @return AUTONOMY_SUCCESS on success, error code on failure
  */
 int gps_starlink_init(void);
+
+/**
+ * Check if Starlink GPS is initialized
+ * @return true if initialized, false otherwise
+ */
+bool gps_starlink_is_initialized(void);
 
 /**
  * Start Starlink GPS monitoring thread

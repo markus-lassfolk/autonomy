@@ -1,4 +1,4 @@
-#include "autonomy_types.h"
+#include "../core/types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,7 +56,7 @@ int discover_network_interfaces(void) {
     return 0;
 }
 
-static int calculate_interface_health_score(struct network_interface *iface) {
+int calculate_interface_health_score(struct network_interface *iface) {
     int score = 100;
     
     // Deduct points for high latency

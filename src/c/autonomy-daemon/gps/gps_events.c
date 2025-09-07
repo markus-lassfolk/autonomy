@@ -1,14 +1,16 @@
 #include "gps_events.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // GPS event configuration
-static const int MAX_EVENTS = 50;                      // Maximum number of events
+// Note: MAX_EVENTS is defined in ../core/types.h
 static const int MAX_EVENT_CONDITIONS = 10;             // Maximum conditions per event
 static const int MAX_EVENT_ACTIONS = 5;                 // Maximum actions per event
 static const int EVENT_CHECK_INTERVAL = 2;              // 2 second event check interval
@@ -36,14 +38,38 @@ static const char* ACTION_TYPE_NAMES[] = {
 };
 
 // Global GPS events state
+
+// Forward declarations - auto-generated
+void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success);
+// Removed old auto-generated forward declarations - using proper ones below
+
 static gps_events_t g_events = {0};
 static bool g_events_initialized = false;
 static pthread_mutex_t g_events_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Forward declarations
+bool check_event_conditions(const gps_event_definition_t *event, const gps_data_t *gps_data);
+static bool evaluate_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
+bool check_location_in_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
+bool check_location_out_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
+bool check_time_after_condition(const gps_event_condition_t *condition);
+bool check_time_before_condition(const gps_event_condition_t *condition);
+static bool evaluate_custom_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data);
+void execute_event_actions(const gps_event_definition_t *event, const gps_data_t *gps_data);
+void log_event_action(const gps_event_definition_t *event, const gps_data_t *gps_data, const gps_event_action_t *action);
+void send_notification_action(const gps_event_definition_t *event, const gps_data_t *gps_data, const gps_event_action_t *action);
+void trigger_callback_action(const gps_event_definition_t *event, const gps_data_t *gps_data, const gps_event_action_t *action);
+void execute_command_action(const gps_event_definition_t *event, const gps_data_t *gps_data, const gps_event_action_t *action);
+void update_status_action(const gps_event_definition_t *event, const gps_data_t *gps_data, const gps_event_action_t *action);
+void send_ubus_message_action(const gps_event_definition_t *event, const gps_data_t *gps_data, const gps_event_action_t *action);
+void execute_custom_action(const gps_event_definition_t *event, const gps_data_t *gps_data, const gps_event_action_t *action);
+void add_event_history(const gps_event_definition_t *event, const gps_data_t *gps_data, time_t timestamp);
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+
 // Initialize GPS events system
-static int gps_events_init(void) {
+int gps_events_init(void) {
     if (g_events_initialized) {
-        LOGX_WARN("GPS events system already initialized");
+        LOGX_WARN_MSG("GPS events system already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -91,7 +117,7 @@ static int gps_events_init(void) {
     g_events_initialized = true;
     pthread_mutex_unlock(&g_events_mutex);
     
-    LOGX_INFO("GPS events system initialized successfully");
+    LOGX_INFO_MSG("GPS events system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -121,7 +147,7 @@ int gps_events_create_event(const char *name, gps_event_type_t event_type,
     
     if (event_index < 0) {
         pthread_mutex_unlock(&g_events_mutex);
-        LOGX_ERROR("No free slots for GPS event creation");
+        LOGX_ERROR_MSG("No free slots for GPS event creation");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
@@ -156,20 +182,20 @@ int gps_events_create_event(const char *name, gps_event_type_t event_type,
     
     pthread_mutex_unlock(&g_events_mutex);
     
-    LOGX_INFO("Created GPS event '%s' (type: %d) with %d conditions and %d actions", 
+    LOGX_INFO_MSG("Created GPS event '%s' (type: %d) with %d conditions and %d actions", 
                name, event_type, condition_count, action_count);
     
     return event->event_id;
 }
 
 // Generate unique event ID
-static int generate_event_id(void) {
+int generate_event_id(void) {
     static int next_id = 2000;
     return next_id++;
 }
 
 // Check GPS data against all events
-static int gps_events_check_gps_data(const gps_data_t *gps_data) {
+int gps_events_check_gps_data(const gps_data_t *gps_data) {
     if (!g_events_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -213,7 +239,7 @@ static int gps_events_check_gps_data(const gps_data_t *gps_data) {
             // Add to event history
             add_event_history(event, gps_data, now);
             
-            LOGX_DEBUG("GPS event '%s' triggered", event->name);
+            LOGX_DEBUG_MSG("GPS event '%s' triggered", event->name);
         }
     }
     
@@ -223,7 +249,7 @@ static int gps_events_check_gps_data(const gps_data_t *gps_data) {
 }
 
 // Check if event conditions are met
-static bool check_event_conditions(const gps_event_definition_t *event, const gps_data_t *gps_data) {
+bool check_event_conditions(const gps_event_definition_t *event, const gps_data_t *gps_data) {
     for (int i = 0; i < event->condition_count; i++) {
         const gps_event_condition_t *condition = &event->conditions[i];
         
@@ -270,7 +296,7 @@ static bool evaluate_condition(const gps_event_condition_t *condition, const gps
 }
 
 // Check location in condition
-static bool check_location_in_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data) {
+bool check_location_in_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data) {
     // For now, implement a simple circular area check
     // In a full implementation, this could check against geofences or other defined areas
     
@@ -285,7 +311,7 @@ static bool check_location_in_condition(const gps_event_condition_t *condition, 
 }
 
 // Check location out condition
-static bool check_location_out_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data) {
+bool check_location_out_condition(const gps_event_condition_t *condition, const gps_data_t *gps_data) {
     if (condition->location_data.lat == 0.0 && condition->location_data.lon == 0.0) {
         return false;
     }
@@ -297,7 +323,7 @@ static bool check_location_out_condition(const gps_event_condition_t *condition,
 }
 
 // Check time after condition
-static bool check_time_after_condition(const gps_event_condition_t *condition) {
+bool check_time_after_condition(const gps_event_condition_t *condition) {
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     
@@ -307,7 +333,7 @@ static bool check_time_after_condition(const gps_event_condition_t *condition) {
 }
 
 // Check time before condition
-static bool check_time_before_condition(const gps_event_condition_t *condition) {
+bool check_time_before_condition(const gps_event_condition_t *condition) {
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     
@@ -324,7 +350,7 @@ static bool evaluate_custom_condition(const gps_event_condition_t *condition, co
 }
 
 // Execute event actions
-static void execute_event_actions(const gps_event_definition_t *event, const gps_data_t *gps_data) {
+void execute_event_actions(const gps_event_definition_t *event, const gps_data_t *gps_data) {
     for (int i = 0; i < event->action_count; i++) {
         const gps_event_action_t *action = &event->actions[i];
         
@@ -351,69 +377,69 @@ static void execute_event_actions(const gps_event_definition_t *event, const gps
                 execute_custom_action(event, gps_data, action);
                 break;
             default:
-                LOGX_WARN("Unknown action type: %d", action->action_type);
+                LOGX_WARN_MSG("Unknown action type: %d", action->action_type);
                 break;
         }
     }
 }
 
 // Log event action
-static void log_event_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
+void log_event_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
                             const gps_event_action_t *action) {
-    LOGX_INFO("GPS EVENT: '%s' triggered - Lat: %.6f, Lon: %.6f, Accuracy: %.1fm, Speed: %.1fm/s", 
+    LOGX_INFO_MSG("GPS EVENT: '%s' triggered - Lat: %.6f, Lon: %.6f, Accuracy: %.1fm, Speed: %.1fm/s", 
                event->name, gps_data->lat, gps_data->lon, gps_data->accuracy, gps_data->speed);
 }
 
 // Send notification action
-static void send_notification_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
+void send_notification_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
                                    const gps_event_action_t *action) {
     // For now, just log the notification
     // In a full implementation, this would integrate with the notification system
-    LOGX_INFO("GPS EVENT NOTIFICATION: '%s' - %s", event->name, action->action_data);
+    LOGX_INFO_MSG("GPS EVENT NOTIFICATION: '%s' - %s", event->name, action->action_data);
 }
 
 // Trigger callback action
-static void trigger_callback_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
+void trigger_callback_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
                                   const gps_event_action_t *action) {
     // For now, just log the callback
     // In a full implementation, this would call registered callback functions
-    LOGX_INFO("GPS EVENT CALLBACK: '%s' - %s", event->name, action->action_data);
+    LOGX_INFO_MSG("GPS EVENT CALLBACK: '%s' - %s", event->name, action->action_data);
 }
 
 // Execute command action
-static void execute_command_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
+void execute_command_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
                                  const gps_event_action_t *action) {
     // For now, just log the command
     // In a full implementation, this would execute system commands
-    LOGX_INFO("GPS EVENT COMMAND: '%s' - %s", event->name, action->action_data);
+    LOGX_INFO_MSG("GPS EVENT COMMAND: '%s' - %s", event->name, action->action_data);
 }
 
 // Update status action
-static void update_status_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
+void update_status_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
                                const gps_event_action_t *action) {
     // For now, just log the status update
     // In a full implementation, this would update system status
-    LOGX_INFO("GPS EVENT STATUS UPDATE: '%s' - %s", event->name, action->action_data);
+    LOGX_INFO_MSG("GPS EVENT STATUS UPDATE: '%s' - %s", event->name, action->action_data);
 }
 
 // Send UBUS message action
-static void send_ubus_message_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
+void send_ubus_message_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
                                     const gps_event_action_t *action) {
     // For now, just log the UBUS message
     // In a full implementation, this would send UBUS messages
-    LOGX_INFO("GPS EVENT UBUS MESSAGE: '%s' - %s", event->name, action->action_data);
+    LOGX_INFO_MSG("GPS EVENT UBUS MESSAGE: '%s' - %s", event->name, action->action_data);
 }
 
 // Execute custom action
-static void execute_custom_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
+void execute_custom_action(const gps_event_definition_t *event, const gps_data_t *gps_data, 
                                 const gps_event_action_t *action) {
     // For now, just log the custom action
     // In a full implementation, this would execute user-defined actions
-    LOGX_INFO("GPS EVENT CUSTOM ACTION: '%s' - %s", event->name, action->action_data);
+    LOGX_INFO_MSG("GPS EVENT CUSTOM ACTION: '%s' - %s", event->name, action->action_data);
 }
 
 // Add event to history
-static void add_event_history(const gps_event_definition_t *event, const gps_data_t *gps_data, time_t timestamp) {
+void add_event_history(const gps_event_definition_t *event, const gps_data_t *gps_data, time_t timestamp) {
     // Shift history array
     for (int i = g_events.history_size - 1; i > 0; i--) {
         memcpy(&g_events.event_history[i], &g_events.event_history[i-1], 
@@ -432,7 +458,7 @@ static void add_event_history(const gps_event_definition_t *event, const gps_dat
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
@@ -450,7 +476,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Get events status
-static int gps_events_get_status(gps_events_status_t *status) {
+int gps_events_get_status(gps_events_status_t *status) {
     if (!g_events_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -480,7 +506,7 @@ static int gps_events_get_status(gps_events_status_t *status) {
 }
 
 // Get events configuration
-static int gps_events_get_config(gps_events_config_t *config) {
+int gps_events_get_config(gps_events_config_t *config) {
     if (!g_events_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -500,7 +526,7 @@ static int gps_events_get_config(gps_events_config_t *config) {
 }
 
 // Set events configuration
-static int gps_events_set_config(const gps_events_config_t *config) {
+int gps_events_set_config(const gps_events_config_t *config) {
     if (!g_events_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -516,12 +542,12 @@ static int gps_events_set_config(const gps_events_config_t *config) {
     
     pthread_mutex_unlock(&g_events_mutex);
     
-    LOGX_INFO("GPS events configuration updated");
+    LOGX_INFO_MSG("GPS events configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable events
-static int gps_events_set_enabled(bool enabled) {
+int gps_events_set_enabled(bool enabled) {
     if (!g_events_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -530,12 +556,12 @@ static int gps_events_set_enabled(bool enabled) {
     g_events.enabled = enabled;
     pthread_mutex_unlock(&g_events_mutex);
     
-    LOGX_INFO("GPS events %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS events %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable specific event
-static int gps_events_set_event_enabled(int event_id, bool enabled) {
+int gps_events_set_event_enabled(int event_id, bool enabled) {
     if (!g_events_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -556,7 +582,7 @@ static int gps_events_set_event_enabled(int event_id, bool enabled) {
             
             pthread_mutex_unlock(&g_events_mutex);
             
-            LOGX_INFO("GPS event %d %s", event_id, enabled ? "enabled" : "disabled");
+            LOGX_INFO_MSG("GPS event %d %s", event_id, enabled ? "enabled" : "disabled");
             return AUTONOMY_SUCCESS;
         }
     }
@@ -566,7 +592,7 @@ static int gps_events_set_event_enabled(int event_id, bool enabled) {
 }
 
 // Delete event
-static int gps_events_delete(int event_id) {
+int gps_events_delete(int event_id) {
     if (!g_events_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -586,7 +612,7 @@ static int gps_events_delete(int event_id) {
             
             pthread_mutex_unlock(&g_events_mutex);
             
-            LOGX_INFO("Deleted GPS event %d", event_id);
+            LOGX_INFO_MSG("Deleted GPS event %d", event_id);
             return AUTONOMY_SUCCESS;
         }
     }
@@ -596,7 +622,7 @@ static int gps_events_delete(int event_id) {
 }
 
 // Reset events system
-static int gps_events_reset(void) {
+int gps_events_reset(void) {
     if (!g_events_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -627,12 +653,12 @@ static int gps_events_reset(void) {
     
     pthread_mutex_unlock(&g_events_mutex);
     
-    LOGX_INFO("GPS events system reset");
+    LOGX_INFO_MSG("GPS events system reset");
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup events system
-static void gps_events_cleanup(void) {
+void gps_events_cleanup(void) {
     if (!g_events_initialized) {
         return;
     }
@@ -640,5 +666,5 @@ static void gps_events_cleanup(void) {
     pthread_mutex_destroy(&g_events_mutex);
     g_events_initialized = false;
     
-    LOGX_INFO("GPS events system cleaned up");
+    LOGX_INFO_MSG("GPS events system cleaned up");
 }

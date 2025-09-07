@@ -9,23 +9,26 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <stdbool.h>
+#include <math.h>
+#include <sys/socket.h>
 
 // Global security monitor instance
 static security_monitor_t g_security_monitor;
 static bool g_security_monitor_initialized = false;
 
 // Forward declarations
-static int perform_file_integrity_check(security_scan_result_t* result);
-static int perform_network_security_check(security_scan_result_t* result);
-static int perform_access_control_check(security_scan_result_t* result);
-static int perform_configuration_check(security_scan_result_t* result);
+int perform_file_integrity_check(security_scan_result_t* result);
+int perform_network_security_check(security_scan_result_t* result);
+int perform_access_control_check(security_scan_result_t* result);
+int perform_configuration_check(security_scan_result_t* result);
 static int perform_threat_detection(security_scan_result_t* result);
-static void update_security_events(const char* event_type, const char* description, 
+void update_security_events(const char* event_type, const char* description, 
                                   const char* source, const char* target, threat_level_t level);
 static char* generate_event_id(void);
 
 // Initialize security monitor
-static int security_monitor_init(const security_monitor_config_t* config) {
+int security_monitor_init(const security_monitor_config_t* config) {
     if (g_security_monitor_initialized) {
         return 0; // Already initialized
     }
@@ -63,7 +66,7 @@ static int security_monitor_init(const security_monitor_config_t* config) {
 }
 
 // Clean up security monitor
-static void security_monitor_cleanup(void) {
+void security_monitor_cleanup(void) {
     if (!g_security_monitor_initialized) return;
     
     if (g_security_monitor.mutex) {
@@ -76,7 +79,7 @@ static void security_monitor_cleanup(void) {
 }
 
 // Perform security scan
-static int security_monitor_perform_scan(void) {
+int security_monitor_perform_scan(void) {
     if (!g_security_monitor_initialized || !g_security_monitor.config.enabled) {
         return -1;
     }
@@ -152,7 +155,7 @@ static int security_monitor_perform_scan(void) {
 }
 
 // Get security scan results
-static int security_monitor_get_scan_results(security_scan_result_t* results) {
+int security_monitor_get_scan_results(security_scan_result_t* results) {
     if (!g_security_monitor_initialized || !results) {
         return -1;
     }
@@ -165,7 +168,7 @@ static int security_monitor_get_scan_results(security_scan_result_t* results) {
 }
 
 // Get security events
-static int security_monitor_get_events(security_event_t* events, int max_events) {
+int security_monitor_get_events(security_event_t* events, int max_events) {
     if (!g_security_monitor_initialized || !events || max_events <= 0) {
         return -1;
     }
@@ -189,7 +192,7 @@ static int security_monitor_get_events(security_event_t* events, int max_events)
 }
 
 // Acknowledge security event
-static int security_monitor_acknowledge_event(const char* event_id) {
+int security_monitor_acknowledge_event(const char* event_id) {
     if (!g_security_monitor_initialized || !event_id) {
         return -1;
     }
@@ -221,7 +224,7 @@ int security_monitor_report_threat(threat_level_t level, const char* description
 }
 
 // Perform file integrity check
-static int perform_file_integrity_check(security_scan_result_t* result) {
+int perform_file_integrity_check(security_scan_result_t* result) {
     if (!result) return -1;
     
     // This is a simplified file integrity check
@@ -254,7 +257,7 @@ static int perform_file_integrity_check(security_scan_result_t* result) {
 }
 
 // Perform network security check
-static int perform_network_security_check(security_scan_result_t* result) {
+int perform_network_security_check(security_scan_result_t* result) {
     if (!result) return -1;
     
     // This is a simplified network security check
@@ -270,7 +273,7 @@ static int perform_network_security_check(security_scan_result_t* result) {
 }
 
 // Perform access control check
-static int perform_access_control_check(security_scan_result_t* result) {
+int perform_access_control_check(security_scan_result_t* result) {
     if (!result) return -1;
     
     // This is a simplified access control check
@@ -286,7 +289,7 @@ static int perform_access_control_check(security_scan_result_t* result) {
 }
 
 // Perform configuration check
-static int perform_configuration_check(security_scan_result_t* result) {
+int perform_configuration_check(security_scan_result_t* result) {
     if (!result) return -1;
     
     // This is a simplified configuration check
@@ -317,7 +320,7 @@ static int perform_threat_detection(security_scan_result_t* result) {
 }
 
 // Update security events
-static void update_security_events(const char* event_type, const char* description, 
+void update_security_events(const char* event_type, const char* description, 
                                   const char* source, const char* target, threat_level_t level) {
     if (g_security_monitor.event_count >= 100) return;
     
@@ -372,7 +375,7 @@ static char* generate_event_id(void) {
 }
 
 // Get security monitor status
-static void security_monitor_get_status(security_monitor_t* status) {
+void security_monitor_get_status(security_monitor_t* status) {
     if (!status || !g_security_monitor_initialized) return;
     
     pthread_mutex_lock(g_security_monitor.mutex);
@@ -381,11 +384,11 @@ static void security_monitor_get_status(security_monitor_t* status) {
 }
 
 // Check if security monitor is initialized
-static bool security_monitor_is_initialized(void) {
+bool security_monitor_is_initialized(void) {
     return g_security_monitor_initialized;
 }
 
 // Get security monitor instance
-static security_monitor_t* security_monitor_get_instance(void) {
+security_monitor_t* security_monitor_get_instance(void) {
     return g_security_monitor_initialized ? &g_security_monitor : NULL;
 }

@@ -1,10 +1,11 @@
 #ifndef GPS_SYSTEM_H
 #define GPS_SYSTEM_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
+#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,24 +14,7 @@ extern "C" {
 // GPS system constants
 #define GPS_MAX_MODULES 20
 
-// GPS module types (matching gps_connector.h)
-typedef enum {
-    GPS_MODULE_TYPE_UNKNOWN = 0,
-    GPS_MODULE_TYPE_INTEGRATION,
-    GPS_MODULE_TYPE_MANAGER,
-    GPS_MODULE_TYPE_RUTOS,
-    GPS_MODULE_TYPE_STARLINK,
-    GPS_MODULE_TYPE_CONFIDENCE,
-    GPS_MODULE_TYPE_ACCURACY,
-    GPS_MODULE_TYPE_NMEA,
-    GPS_MODULE_TYPE_MOVEMENT,
-    GPS_MODULE_TYPE_CLUSTERING,
-    GPS_MODULE_TYPE_HEALTH,
-    GPS_MODULE_TYPE_FUSION,
-    GPS_MODULE_TYPE_GEOFENCE,
-    GPS_MODULE_TYPE_EVENTS,
-    GPS_MODULE_TYPE_LOCATION_SERVICES
-} gps_module_type_t;
+// Note: gps_module_type_t is defined in ../core/types.h
 
 // GPS module status
 typedef struct {

@@ -1,12 +1,13 @@
 #ifndef GPS_ADAPTIVE_CACHE_H
 #define GPS_ADAPTIVE_CACHE_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <unistd.h>
 
 #ifdef __cplusplus
 extern "C" {

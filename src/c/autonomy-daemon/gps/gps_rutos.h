@@ -1,29 +1,19 @@
 #ifndef GPS_RUTOS_H
 #define GPS_RUTOS_H
 
-#include "types.h"
-#include "logx.h"
-#include <stdint.h>
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 
-// Forward declarations
-// These functions are implemented in the corresponding .c file
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// GPS data structure
-typedef struct {
-    bool valid;                  // Data is valid
-    double latitude;             // Latitude in decimal degrees
-    double longitude;            // Longitude in decimal degrees
-    double altitude;             // Altitude in meters
-    float accuracy;              // Accuracy in meters
-    float speed;                 // Speed in m/s
-    float heading;               // Heading in degrees
-    time_t timestamp;            // Timestamp
-    uint32_t satellites;         // Number of satellites
-    float hdop;                  // Horizontal dilution of precision
-    float vdop;                  // Vertical dilution of precision
-} gps_data_t;
+// Forward declarations
+static void* rutos_monitor_thread(void *arg);
+static int read_rutos_gps_data(gps_data_t *data);
+static bool validate_gps_data(const gps_data_t *data);
+static float calculate_reliability_score(void);
 
 // RUTOS GPS configuration
 typedef struct {
@@ -76,6 +66,9 @@ int gps_rutos_read_data(void);
 // Get current GPS data
 int gps_rutos_get_data(gps_data_t *data);
 
+// Check if RUTOS GPS is initialized
+bool gps_rutos_is_initialized(void);
+
 // Get RUTOS GPS status
 int gps_rutos_get_status(gps_rutos_status_t *status);
 
@@ -93,5 +86,9 @@ bool gps_rutos_meets_accuracy(float required_accuracy);
 
 // Cleanup RUTOS GPS system
 void gps_rutos_cleanup(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // GPS_RUTOS_H

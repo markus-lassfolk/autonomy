@@ -1,7 +1,7 @@
 #ifndef GPS_MANAGER_H
 #define GPS_MANAGER_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 
@@ -9,17 +9,7 @@
 extern "C" {
 #endif
 
-// GPS source types
-typedef enum {
-    GPS_SOURCE_UNKNOWN = 0,
-    GPS_SOURCE_RUTOS,
-    GPS_SOURCE_STARLINK,
-    GPS_SOURCE_EXTERNAL,
-    GPS_SOURCE_SIMULATED,
-    GPS_SOURCE_WIFI,
-    GPS_SOURCE_CELLULAR,
-    GPS_SOURCE_COMBINED
-} gps_source_type_t;
+// Note: gps_source_type_t is defined in ../core/types.h
 
 // Location data structure
 typedef struct {

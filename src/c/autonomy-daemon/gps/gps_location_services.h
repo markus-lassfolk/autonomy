@@ -1,7 +1,7 @@
 #ifndef GPS_LOCATION_SERVICES_H
 #define GPS_LOCATION_SERVICES_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>

@@ -1,7 +1,7 @@
 #ifndef GPS_HEALTH_H
 #define GPS_HEALTH_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
@@ -10,15 +10,7 @@
 extern "C" {
 #endif
 
-// GPS source status
-typedef enum {
-    GPS_SOURCE_STATUS_UNKNOWN = 0,
-    GPS_SOURCE_STATUS_EXCELLENT,
-    GPS_SOURCE_STATUS_GOOD,
-    GPS_SOURCE_STATUS_POOR,
-    GPS_SOURCE_STATUS_CRITICAL,
-    GPS_SOURCE_STATUS_FAILED
-} gps_source_status_t;
+#define MAX_GPS_SOURCES 8
 
 // GPS source health
 typedef struct {
@@ -69,7 +61,7 @@ typedef struct {
     int total_health_checks;            // Total health checks performed
     time_t last_health_check;           // Last health check timestamp
     int active_source_count;            // Number of active sources
-    gps_source_health_t sources[8];     // Active source health information
+    gps_source_health_t sources[MAX_GPS_SOURCES];     // Active source health information
 } gps_health_status_t;
 
 // GPS health monitor state
@@ -92,7 +84,7 @@ typedef struct {
     double overall_health_score;        // Overall health score
     
     // Sources array
-    gps_source_health_t sources[8];     // GPS sources
+    gps_source_health_t sources[MAX_GPS_SOURCES];     // GPS sources
     
     // Health history
     gps_health_record_t health_history[100]; // Health history records

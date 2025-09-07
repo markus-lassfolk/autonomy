@@ -1,6 +1,6 @@
 #include "cellular_collector.h"
-#include "../logx.h"
-#include "../types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +14,10 @@
 #include <libubox/blobmsg.h>
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
+#include <time.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <fcntl.h>
 
 // Global cellular collector instance
 static cellular_collector_t g_cellular_collector = {0};
@@ -30,16 +34,16 @@ static int collect_via_gsmctl(cellular_info_t* info);
 static int collect_via_at_commands(cellular_info_t* info);
 static int parse_gsmctl_output(const char* output, cellular_info_t* info);
 static int parse_at_command_response(const char* response, cellular_info_t* info);
-static void update_signal_history(int rsrp, int rsrq, int sinr);
-static void calculate_signal_variance(void);
-static double calculate_signal_quality_score(const cellular_info_t* info);
+void update_signal_history(int rsrp, int rsrq, int sinr);
+void calculate_signal_variance(void);
+double calculate_signal_quality_score(const cellular_info_t* info);
 static cellular_network_type_t parse_network_type(const char* network_str);
 static const char* network_type_to_string(cellular_network_type_t type);
 
 // Initialize cellular collector
-static int cellular_collector_init(const cellular_collector_config_t* config) {
+int cellular_collector_init(const cellular_collector_config_t* config) {
     if (g_cellular_collector_initialized) {
-        LOGX_WARN("Cellular collector already initialized");
+        LOGX_WARN_MSG("Cellular collector already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -65,7 +69,7 @@ static int cellular_collector_init(const cellular_collector_config_t* config) {
     
     // Initialize mutex
     if (pthread_mutex_init(&g_cellular_collector.mutex, NULL) != 0) {
-        LOGX_ERROR("Failed to initialize cellular collector mutex");
+        LOGX_ERROR_MSG("Failed to initialize cellular collector mutex");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -74,23 +78,23 @@ static int cellular_collector_init(const cellular_collector_config_t* config) {
     g_cellular_collector.history_index = 0;
     
     g_cellular_collector_initialized = true;
-    LOGX_INFO("Cellular collector initialized", "device", g_cellular_collector.config.modem_device);
+    LOGX_INFO_MSG("Cellular collector initialized", "device", g_cellular_collector.config.modem_device);
     
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup cellular collector
-static void cellular_collector_cleanup(void) {
+void cellular_collector_cleanup(void) {
     if (!g_cellular_collector_initialized) return;
     
     pthread_mutex_destroy(&g_cellular_collector.mutex);
     g_cellular_collector_initialized = false;
     
-    LOGX_INFO("Cellular collector cleaned up");
+    LOGX_INFO_MSG("Cellular collector cleaned up");
 }
 
 // Collect cellular metrics
-static int cellular_collector_collect(cellular_info_t* info) {
+int cellular_collector_collect(cellular_info_t* info) {
     if (!g_cellular_collector_initialized || !info) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -112,20 +116,20 @@ static int cellular_collector_collect(cellular_info_t* info) {
     // 1. UBUS (fastest and most reliable)
     if (collect_via_ubus(info) == AUTONOMY_SUCCESS) {
         result = AUTONOMY_SUCCESS;
-        LOGX_DEBUG("Cellular data collected via UBUS");
+        LOGX_DEBUG_MSG("Cellular data collected via UBUS");
     }
     // 2. gsmctl command
     else if (collect_via_gsmctl(info) == AUTONOMY_SUCCESS) {
         result = AUTONOMY_SUCCESS;
-        LOGX_DEBUG("Cellular data collected via gsmctl");
+        LOGX_DEBUG_MSG("Cellular data collected via gsmctl");
     }
     // 3. AT commands (fallback)
     else if (collect_via_at_commands(info) == AUTONOMY_SUCCESS) {
         result = AUTONOMY_SUCCESS;
-        LOGX_DEBUG("Cellular data collected via AT commands");
+        LOGX_DEBUG_MSG("Cellular data collected via AT commands");
     }
     else {
-        LOGX_ERROR("Failed to collect cellular data via any method");
+        LOGX_ERROR_MSG("Failed to collect cellular data via any method");
         result = AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -158,7 +162,7 @@ static int cellular_collector_collect(cellular_info_t* info) {
         // Store last successful collection
         g_cellular_collector.last_info = *info;
         
-        LOGX_DEBUG("Cellular collection successful",
+        LOGX_DEBUG_MSG("Cellular collection successful",
                   "rsrp", info->rsrp,
                   "rsrq", info->rsrq,
                   "quality", info->signal_quality,
@@ -176,13 +180,13 @@ static int cellular_collector_collect(cellular_info_t* info) {
 static int collect_via_ubus(cellular_info_t* info) {
     struct ubus_context* ctx = ubus_connect(NULL);
     if (!ctx) {
-        LOGX_ERROR("Failed to connect to UBUS for cellular collection");
+        LOGX_ERROR_MSG("Failed to connect to UBUS for cellular collection");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     uint32_t id;
     if (ubus_lookup_id(ctx, "gsm", &id) != 0) {
-        LOGX_DEBUG("GSM service not available via UBUS");
+        LOGX_DEBUG_MSG("GSM service not available via UBUS");
         ubus_free(ctx);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
@@ -198,7 +202,7 @@ static int collect_via_ubus(cellular_info_t* info) {
     ubus_free(ctx);
     
     if (ret != 0) {
-        LOGX_ERROR("Failed to call GSM status via UBUS", "error", ubus_strerror(ret));
+        LOGX_ERROR_MSG("Failed to call GSM status via UBUS", "error", ubus_strerror(ret));
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -234,7 +238,7 @@ static int collect_via_gsmctl(cellular_info_t* info) {
     
     FILE* fp = popen(command, "r");
     if (!fp) {
-        LOGX_ERROR("Failed to execute gsmctl command");
+        LOGX_ERROR_MSG("Failed to execute gsmctl command");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -244,7 +248,7 @@ static int collect_via_gsmctl(cellular_info_t* info) {
     
     int exit_code = pclose(fp);
     if (exit_code != 0) {
-        LOGX_ERROR("gsmctl command failed", "exit_code", exit_code);
+        LOGX_ERROR_MSG("gsmctl command failed", "exit_code", exit_code);
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -255,7 +259,7 @@ static int collect_via_gsmctl(cellular_info_t* info) {
 static int collect_via_at_commands(cellular_info_t* info) {
     // This would implement direct AT command communication
     // For now, return error since it's complex to implement properly
-    LOGX_DEBUG("AT command collection not yet implemented");
+    LOGX_DEBUG_MSG("AT command collection not yet implemented");
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -285,7 +289,7 @@ static int parse_gsmctl_output(const char* output, cellular_info_t* info) {
 }
 
 // Update signal history for stability analysis
-static void update_signal_history(int rsrp, int rsrq, int sinr) {
+void update_signal_history(int rsrp, int rsrq, int sinr) {
     int index = g_cellular_collector.history_index;
     
     g_cellular_collector.rsrp_history[index] = rsrp;
@@ -300,7 +304,7 @@ static void update_signal_history(int rsrp, int rsrq, int sinr) {
 }
 
 // Calculate signal variance for stability analysis
-static void calculate_signal_variance(void) {
+void calculate_signal_variance(void) {
     if (g_cellular_collector.history_count < 2) {
         return;
     }
@@ -331,7 +335,7 @@ static void calculate_signal_variance(void) {
 }
 
 // Calculate signal quality score
-static double calculate_signal_quality_score(const cellular_info_t* info) {
+double calculate_signal_quality_score(const cellular_info_t* info) {
     if (!info) return 0.0;
     
     double score = 100.0;
@@ -390,7 +394,7 @@ static double calculate_signal_quality_score(const cellular_info_t* info) {
 }
 
 // Calculate stability score
-static double cellular_collector_calculate_stability_score(const cellular_info_t* info) {
+double cellular_collector_calculate_stability_score(const cellular_info_t* info) {
     if (!info || !g_cellular_collector_initialized) {
         return 0.0;
     }
@@ -421,7 +425,7 @@ static double cellular_collector_calculate_stability_score(const cellular_info_t
 }
 
 // Calculate predictive risk score
-static double cellular_collector_calculate_predictive_risk(const cellular_info_t* info) {
+double cellular_collector_calculate_predictive_risk(const cellular_info_t* info) {
     if (!info || !g_cellular_collector_initialized) {
         return 1.0; // Maximum risk if no data
     }
@@ -464,7 +468,7 @@ static double cellular_collector_calculate_predictive_risk(const cellular_info_t
 }
 
 // Get cellular collector statistics
-static int cellular_collector_get_stats(cellular_collector_stats_t* stats) {
+int cellular_collector_get_stats(cellular_collector_stats_t* stats) {
     if (!stats || !g_cellular_collector_initialized) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -477,7 +481,7 @@ static int cellular_collector_get_stats(cellular_collector_stats_t* stats) {
 }
 
 // Get cellular collector configuration
-static int cellular_collector_get_config(cellular_collector_config_t* config) {
+int cellular_collector_get_config(cellular_collector_config_t* config) {
     if (!config || !g_cellular_collector_initialized) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -487,7 +491,7 @@ static int cellular_collector_get_config(cellular_collector_config_t* config) {
 }
 
 // Set cellular collector configuration
-static int cellular_collector_set_config(const cellular_collector_config_t* config) {
+int cellular_collector_set_config(const cellular_collector_config_t* config) {
     if (!config || !g_cellular_collector_initialized) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -496,24 +500,24 @@ static int cellular_collector_set_config(const cellular_collector_config_t* conf
     g_cellular_collector.config = *config;
     pthread_mutex_unlock(&g_cellular_collector.mutex);
     
-    LOGX_INFO("Cellular collector configuration updated");
+    LOGX_INFO_MSG("Cellular collector configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable cellular collector
-static int cellular_collector_set_enabled(bool enabled) {
+int cellular_collector_set_enabled(bool enabled) {
     if (!g_cellular_collector_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     g_cellular_collector.config.enabled = enabled;
-    LOGX_INFO("Cellular collector", "enabled", enabled);
+    LOGX_INFO_MSG("Cellular collector", "enabled", enabled);
     
     return AUTONOMY_SUCCESS;
 }
 
 // Reset cellular collector statistics
-static int cellular_collector_reset_stats(void) {
+int cellular_collector_reset_stats(void) {
     if (!g_cellular_collector_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -524,17 +528,17 @@ static int cellular_collector_reset_stats(void) {
     g_cellular_collector.history_index = 0;
     pthread_mutex_unlock(&g_cellular_collector.mutex);
     
-    LOGX_INFO("Cellular collector statistics reset");
+    LOGX_INFO_MSG("Cellular collector statistics reset");
     return AUTONOMY_SUCCESS;
 }
 
 // Force immediate collection
-static int cellular_collector_force_collect(cellular_info_t* info) {
+int cellular_collector_force_collect(cellular_info_t* info) {
     return cellular_collector_collect(info);
 }
 
 // Check if cellular collector is initialized
-static bool cellular_collector_is_initialized(void) {
+bool cellular_collector_is_initialized(void) {
     return g_cellular_collector_initialized;
 }
 

@@ -4,6 +4,11 @@
 #include <libubox/blobmsg_json.h>
 #include <time.h>
 #include <string.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <math.h>
+#include <fcntl.h>
 
 // Policy definitions for blobmsg parsing
 static const struct blobmsg_policy cluster_add_policy[] = {

@@ -1,9 +1,11 @@
 #ifndef GPS_COMPREHENSIVE_UBUS_H
 #define GPS_COMPREHENSIVE_UBUS_H
 
+#include "../core/types.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <stdbool.h>
+#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {

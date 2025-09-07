@@ -1,7 +1,6 @@
 #include "disk_monitor.h"
-#include "types.h"
-#include "notifications/notification_manager.h"
-#include "notifications/notification_types.h"
+#include "../core/types.h"
+#include "../notifications/notification_types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,23 +10,27 @@
 #include <dirent.h>
 #include <time.h>
 #include <errno.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <math.h>
+#include <fcntl.h>
 
 // Global disk monitor instance
 static disk_monitor_t g_disk_monitor;
 
 // Forward declarations
 static int get_disk_space_info(const char *path, disk_space_info_t *info);
-static int64_t cleanup_old_logs(void);
-static int64_t cleanup_temp_files(void);
-static int64_t cleanup_cache_files(void);
-static int64_t remove_file_recursive(const char *path);
+int64_t cleanup_old_logs(void);
+int64_t cleanup_temp_files(void);
+int64_t cleanup_cache_files(void);
+int64_t remove_file_recursive(const char *path);
 static int is_file_older_than(const char *path, int hours);
 static void send_notification(const char *type, const char *message);
 
 /**
  * Initialize disk monitor
  */
-static int disk_monitor_init(void) {
+int disk_monitor_init(void) {
     memset(&g_disk_monitor, 0, sizeof(disk_monitor_t));
     
     // Set default configuration
@@ -55,7 +58,7 @@ static int disk_monitor_init(void) {
 /**
  * Check disk space for monitored paths
  */
-static int disk_monitor_check_disk_space(void) {
+int disk_monitor_check_disk_space(void) {
     g_disk_monitor.stats.last_check_time = time(NULL);
     
     for (int i = 0; i < g_disk_monitor.config.monitor_paths_count; i++) {
@@ -72,9 +75,7 @@ static int disk_monitor_check_disk_space(void) {
             if (info.available_gb <= g_disk_monitor.config.critical_threshold_gb) {
                 send_notification("critical", "Critical disk space");
                 disk_monitor_perform_emergency_cleanup();
-            }
-            // Check for warning threshold
-            static else if (info.available_gb <= g_disk_monitor.config.warning_threshold_gb) {
+            } else if (info.available_gb <= g_disk_monitor.config.warning_threshold_gb) {
                 send_notification("warning", "Low disk space");
             }
         }
@@ -88,12 +89,12 @@ static int disk_monitor_check_disk_space(void) {
  */
 static int get_disk_space_info(const char *path, disk_space_info_t *info) {
     if (!info || !path) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     struct statvfs fs_info;
     if (statvfs(path, &fs_info) != 0) {
-        return AUTONOMY_ERROR_SYSTEM_CALL_FAILED;
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Calculate sizes in GB
@@ -126,7 +127,7 @@ static int get_disk_space_info(const char *path, disk_space_info_t *info) {
 /**
  * Perform routine cleanup
  */
-static int disk_monitor_perform_cleanup(void) {
+int disk_monitor_perform_cleanup(void) {
     int64_t total_freed = 0;
     
     // Cleanup old log files
@@ -155,7 +156,7 @@ static int disk_monitor_perform_cleanup(void) {
 /**
  * Perform emergency cleanup
  */
-static int disk_monitor_perform_emergency_cleanup(void) {
+int disk_monitor_perform_emergency_cleanup(void) {
     int64_t total_freed = 0;
     
     // More aggressive cleanup for emergency situations
@@ -194,7 +195,7 @@ static int disk_monitor_perform_emergency_cleanup(void) {
 /**
  * Cleanup old log files
  */
-static int64_t cleanup_old_logs(void) {
+int64_t cleanup_old_logs(void) {
     int64_t total_freed = 0;
     const char *log_dirs[] = {"/var/log", "/tmp", "/root"};
     
@@ -231,7 +232,7 @@ static int64_t cleanup_old_logs(void) {
 /**
  * Cleanup temporary files
  */
-static int64_t cleanup_temp_files(void) {
+int64_t cleanup_temp_files(void) {
     int64_t total_freed = 0;
     const char *temp_dirs[] = {"/tmp", "/var/tmp", "/root/tmp"};
     
@@ -263,7 +264,7 @@ static int64_t cleanup_temp_files(void) {
 /**
  * Cleanup cache files
  */
-static int64_t cleanup_cache_files(void) {
+int64_t cleanup_cache_files(void) {
     int64_t total_freed = 0;
     const char *cache_dirs[] = {"/tmp", "/var/cache", "/root/.cache"};
     
@@ -295,7 +296,7 @@ static int64_t cleanup_cache_files(void) {
 /**
  * Remove file or directory recursively
  */
-static int64_t remove_file_recursive(const char *path) {
+int64_t remove_file_recursive(const char *path) {
     struct stat st;
     if (lstat(path, &st) != 0) {
         return 0;
@@ -359,12 +360,12 @@ static void send_notification(const char *type, const char *message) {
     strcpy(event.title, "Disk Monitor Alert");
     strncpy(event.message, message, sizeof(event.message) - 1);
     event.message[sizeof(event.message) - 1] = '\0';
-    event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
+    event.type = NOTIFICATION_TYPE_SYSTEM_ALERT;
     event.timestamp = time(NULL);
     
     // Determine priority based on type
     if (strcmp(type, "critical") == 0) {
-        event.priority = NOTIFICATION_PRIORITY_EMERGENCY;
+        event.priority = NOTIFICATION_PRIORITY_CRITICAL;
     } else if (strcmp(type, "warning") == 0) {
         event.priority = NOTIFICATION_PRIORITY_HIGH;
     } else {
@@ -383,9 +384,9 @@ static void send_notification(const char *type, const char *message) {
 /**
  * Get disk monitor status
  */
-static int disk_monitor_get_status(disk_monitor_status_t *status) {
+int disk_monitor_get_status(disk_monitor_status_t *status) {
     if (!status) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     status->enabled = g_disk_monitor.config.enabled;
@@ -406,9 +407,9 @@ static int disk_monitor_get_status(disk_monitor_status_t *status) {
 /**
  * Get disk monitor configuration
  */
-static int disk_monitor_get_config(disk_monitor_config_t *config) {
+int disk_monitor_get_config(disk_monitor_config_t *config) {
     if (!config) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     *config = g_disk_monitor.config;
@@ -418,9 +419,9 @@ static int disk_monitor_get_config(disk_monitor_config_t *config) {
 /**
  * Set disk monitor configuration
  */
-static int disk_monitor_set_config(const disk_monitor_config_t *config) {
+int disk_monitor_set_config(const disk_monitor_config_t *config) {
     if (!config) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     g_disk_monitor.config = *config;
@@ -430,7 +431,7 @@ static int disk_monitor_set_config(const disk_monitor_config_t *config) {
 /**
  * Enable/disable disk monitor
  */
-static int disk_monitor_set_enabled(bool enabled) {
+int disk_monitor_set_enabled(bool enabled) {
     g_disk_monitor.config.enabled = enabled;
     return AUTONOMY_SUCCESS;
 }
@@ -438,7 +439,7 @@ static int disk_monitor_set_enabled(bool enabled) {
 /**
  * Reset disk monitor
  */
-static int disk_monitor_reset(void) {
+int disk_monitor_reset(void) {
     memset(&g_disk_monitor.stats, 0, sizeof(disk_monitor_stats_t));
     return AUTONOMY_SUCCESS;
 }
@@ -446,6 +447,6 @@ static int disk_monitor_reset(void) {
 /**
  * Cleanup disk monitor
  */
-static void disk_monitor_cleanup(void) {
+void disk_monitor_cleanup(void) {
     // Nothing to cleanup for this module
 }

@@ -1,7 +1,7 @@
 #include "service_watchdog.h"
-#include "types.h"
-#include "notifications/notification_manager.h"
-#include "notifications/notification_types.h"
+#include "../core/types.h"
+#include "../notifications/notification_manager.h"
+#include "../notifications/notification_types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,23 +11,26 @@
 #include <signal.h>
 #include <time.h>
 #include <errno.h>
+#include <stdbool.h>
+#include <math.h>
+#include <fcntl.h>
 
 // Global service watchdog instance
 static service_watchdog_t g_service_watchdog;
 
 // Forward declarations
-static int check_service_status(const char *service);
-static int check_process_running(const char *service);
-static int check_init_script(const char *service);
+int check_service_status(const char *service);
+int check_process_running(const char *service);
+int check_init_script(const char *service);
 static int has_recent_activity(const char *service);
-static int restart_service(const char *service, const char *reason);
+int restart_service(const char *service, const char *reason);
 static int kill_service(const char *service);
 static void send_notification(const char *type, const char *message);
 
 /**
  * Initialize service watchdog
  */
-static int service_watchdog_init(void) {
+int service_watchdog_init(void) {
     memset(&g_service_watchdog, 0, sizeof(service_watchdog_t));
     
     // Set default configuration
@@ -57,7 +60,7 @@ static int service_watchdog_init(void) {
 /**
  * Check services and restart hung ones
  */
-static int service_watchdog_check(void) {
+int service_watchdog_check(void) {
     if (!g_service_watchdog.config.enabled) {
         return AUTONOMY_SUCCESS;
     }
@@ -80,7 +83,7 @@ static int service_watchdog_check(void) {
 /**
  * Check if a specific service is healthy
  */
-static int check_service(const char *service) {
+int check_service(const char *service) {
     // Check if service is running
     int running = check_service_status(service);
     if (!running) {
@@ -102,7 +105,7 @@ static int check_service(const char *service) {
 /**
  * Check service status using systemctl or init.d
  */
-static int check_service_status(const char *service) {
+int check_service_status(const char *service) {
     // Try different methods to check service status
     int running = check_service_status_method(service);
     if (running) return true;
@@ -117,7 +120,7 @@ static int check_service_status(const char *service) {
 /**
  * Check service status using systemctl/init.d
  */
-static int check_service_status_method(const char *service) {
+int check_service_status_method(const char *service) {
     char command[256];
     
     // Try systemctl first
@@ -140,7 +143,7 @@ static int check_service_status_method(const char *service) {
 /**
  * Check if process is running by name
  */
-static int check_process_running(const char *service) {
+int check_process_running(const char *service) {
     char command[256];
     snprintf(command, sizeof(command), "pgrep -f %s > /dev/null 2>&1", service);
     
@@ -151,7 +154,7 @@ static int check_process_running(const char *service) {
 /**
  * Check init script status
  */
-static int check_init_script(const char *service) {
+int check_init_script(const char *service) {
     char script_path[256];
     snprintf(script_path, sizeof(script_path), "/etc/init.d/%s", service);
     
@@ -209,10 +212,10 @@ static int has_recent_activity(const char *service) {
 /**
  * Restart a service
  */
-static int restart_service(const char *service, const char *reason) {
+int restart_service(const char *service, const char *reason) {
     if (!g_service_watchdog.config.auto_restart) {
         fprintf(stderr, "Auto-restart disabled for %s\n", service);
-        return AUTONOMY_ERROR_OPERATION_NOT_PERMITTED;
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Check restart cooldown
@@ -221,14 +224,14 @@ static int restart_service(const char *service, const char *reason) {
         time_t time_since_restart = now - g_service_watchdog.stats.last_restart_time;
         if (time_since_restart < g_service_watchdog.config.restart_cooldown) {
             fprintf(stderr, "Service restart cooldown active for %s\n", service);
-            return AUTONOMY_ERROR_OPERATION_NOT_PERMITTED;
+            return AUTONOMY_ERROR_SYSTEM;
         }
     }
     
     // Check restart attempts
     if (g_service_watchdog.stats.services_restarted >= g_service_watchdog.config.max_restart_attempts) {
         fprintf(stderr, "Maximum restart attempts reached for %s\n", service);
-        return AUTONOMY_ERROR_OPERATION_NOT_PERMITTED;
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
     fprintf(stderr, "Restarting service %s (reason: %s)\n", service, reason);
@@ -281,7 +284,7 @@ static int kill_service(const char *service) {
         return restart_service(service, "killed and restarting");
     } else {
         fprintf(stderr, "Failed to kill service %s\n", service);
-        return AUTONOMY_ERROR_SYSTEM_CALL_FAILED;
+        return AUTONOMY_ERROR_SYSTEM;
     }
 }
 
@@ -294,12 +297,12 @@ static void send_notification(const char *type, const char *message) {
     strcpy(event.title, "Service Watchdog Alert");
     strncpy(event.message, message, sizeof(event.message) - 1);
     event.message[sizeof(event.message) - 1] = '\0';
-    event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
+    event.type = NOTIFICATION_TYPE_SYSTEM_ALERT;
     event.timestamp = time(NULL);
     
     // Determine priority based on type
     if (strcmp(type, "critical") == 0) {
-        event.priority = NOTIFICATION_PRIORITY_EMERGENCY;
+        event.priority = NOTIFICATION_PRIORITY_CRITICAL;
     } else if (strcmp(type, "warning") == 0) {
         event.priority = NOTIFICATION_PRIORITY_HIGH;
     } else {
@@ -318,9 +321,9 @@ static void send_notification(const char *type, const char *message) {
 /**
  * Get service watchdog status
  */
-static int service_watchdog_get_status(service_watchdog_status_t *status) {
+int service_watchdog_get_status(service_watchdog_status_t *status) {
     if (!status) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     status->enabled = g_service_watchdog.config.enabled;
@@ -347,9 +350,9 @@ static int service_watchdog_get_status(service_watchdog_status_t *status) {
 /**
  * Get service watchdog configuration
  */
-static int service_watchdog_get_config(service_watchdog_config_t *config) {
+int service_watchdog_get_config(service_watchdog_config_t *config) {
     if (!config) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     *config = g_service_watchdog.config;
@@ -359,9 +362,9 @@ static int service_watchdog_get_config(service_watchdog_config_t *config) {
 /**
  * Set service watchdog configuration
  */
-static int service_watchdog_set_config(const service_watchdog_config_t *config) {
+int service_watchdog_set_config(const service_watchdog_config_t *config) {
     if (!config) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     g_service_watchdog.config = *config;
@@ -371,7 +374,7 @@ static int service_watchdog_set_config(const service_watchdog_config_t *config) 
 /**
  * Enable/disable service watchdog
  */
-static int service_watchdog_set_enabled(bool enabled) {
+int service_watchdog_set_enabled(bool enabled) {
     g_service_watchdog.config.enabled = enabled;
     return AUTONOMY_SUCCESS;
 }
@@ -379,7 +382,7 @@ static int service_watchdog_set_enabled(bool enabled) {
 /**
  * Reset service watchdog
  */
-static int service_watchdog_reset(void) {
+int service_watchdog_reset(void) {
     memset(&g_service_watchdog.stats, 0, sizeof(service_watchdog_stats_t));
     return AUTONOMY_SUCCESS;
 }
@@ -387,6 +390,6 @@ static int service_watchdog_reset(void) {
 /**
  * Cleanup service watchdog
  */
-static void service_watchdog_cleanup(void) {
+void service_watchdog_cleanup(void) {
     // Nothing to cleanup for this module
 }

@@ -1,15 +1,19 @@
 #include "gps_comprehensive_ubus.h"
 #include "gps_comprehensive.h"
 #include "gps_fusion_engine.h"
-#include "logx.h"
+#include "../utils/logx.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <math.h>
+#include <fcntl.h>
 
 // Helper function to add standardized GPS data to blob
-static void add_gps_data_to_blob(struct blob_buf *bb, const char *name, 
+void add_gps_data_to_blob(struct blob_buf *bb, const char *name, 
                                  const standardized_gps_data_t *gps_data) {
     void *gps_table = blobmsg_open_table(bb, name);
     
@@ -53,7 +57,7 @@ static void add_gps_data_to_blob(struct blob_buf *bb, const char *name,
 }
 
 // Helper function to add source health to blob
-static void add_source_health_to_blob(struct blob_buf *bb, const gps_source_health_t *health) {
+void add_source_health_to_blob(struct blob_buf *bb, const gps_source_health_t *health) {
     void *health_table = blobmsg_open_table(bb, NULL);
     
     blobmsg_add_string(bb, "source", health->source_name);

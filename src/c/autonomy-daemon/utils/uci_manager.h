@@ -1,8 +1,10 @@
 #ifndef UCI_MANAGER_H
 #define UCI_MANAGER_H
 
-#include "types.h"
-#include "logx.h"
+#include "../core/types.h"
+#include "../utils/logx.h"
+#include <stdbool.h>
+#include <libtlt_uci.h>
 
 // Initialize UCI system
 int uci_manager_init(void);

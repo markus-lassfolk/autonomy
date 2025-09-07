@@ -1,12 +1,13 @@
 #ifndef AUTONOMY_MODULES_H
 #define AUTONOMY_MODULES_H
 
-#include <ubus.h>
-#include <blobmsg_json.h>
+#include <libubus.h>
+#include <libubox/blobmsg_json.h>
 #include <uci.h>
-#include "autonomy_types.h"
-#include "starlink/starlink_types.h"
-#include "starlink/starlink_tracker.h"
+#include "../core/types.h"
+#include "../starlink/starlink_types.h"
+#include "../starlink/starlink_tracker.h"
+#include <time.h>
 
 // Network module functions
 int discover_network_interfaces(void);

@@ -1,7 +1,7 @@
 #ifndef GPS_COORDINATE_UTILS_H
 #define GPS_COORDINATE_UTILS_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <math.h>
 

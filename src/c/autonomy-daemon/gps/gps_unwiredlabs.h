@@ -1,10 +1,12 @@
 #ifndef GPS_UNWIREDLABS_H
 #define GPS_UNWIREDLABS_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
+#include <math.h>
+#include <unistd.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,11 +1,13 @@
 #include "gps_location_services.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // Location services configuration
 static const int MAX_LOCATION_CACHE = 1000;             // Maximum cached locations
@@ -25,10 +27,19 @@ static gps_location_services_t g_location_services = {0};
 static bool g_location_services_initialized = false;
 static pthread_mutex_t g_location_services_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Forward declarations
+int find_location_in_cache(double lat, double lon);
+void add_location_to_cache(const gps_location_info_t *location_info);
+int find_oldest_cache_entry(void);
+int perform_reverse_geocoding(double lat, double lon, gps_location_info_t *location_info);
+int try_reverse_geocoding_service(gps_location_service_t service, double lat, double lon, gps_location_info_t *location_info);
+void create_basic_location_info(double lat, double lon, gps_location_info_t *location_info);
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+
 // Initialize GPS location services
-static int gps_location_services_init(void) {
+int gps_location_services_init(void) {
     if (g_location_services_initialized) {
-        LOGX_WARN("GPS location services already initialized");
+        LOGX_WARN_MSG("GPS location services already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -68,12 +79,12 @@ static int gps_location_services_init(void) {
     g_location_services_initialized = true;
     pthread_mutex_unlock(&g_location_services_mutex);
     
-    LOGX_INFO("GPS location services initialized successfully");
+    LOGX_INFO_MSG("GPS location services initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Reverse geocode GPS coordinates
-static int gps_location_services_reverse_geocode(double lat, double lon, gps_location_info_t *location_info) {
+int gps_location_services_reverse_geocode(double lat, double lon, gps_location_info_t *location_info) {
     if (!g_location_services_initialized || !location_info) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -109,7 +120,7 @@ static int gps_location_services_reverse_geocode(double lat, double lon, gps_loc
         
         pthread_mutex_unlock(&g_location_services_mutex);
         
-        LOGX_DEBUG("Location cache hit for (%.6f, %.6f): %s", lat, lon, cache_entry->place_name);
+        LOGX_DEBUG_MSG("Location cache hit for (%.6f, %.6f): %s", lat, lon, cache_entry->place_name);
         return AUTONOMY_SUCCESS;
     }
     
@@ -134,7 +145,7 @@ static int gps_location_services_reverse_geocode(double lat, double lon, gps_loc
 }
 
 // Find location in cache
-static int find_location_in_cache(double lat, double lon) {
+int find_location_in_cache(double lat, double lon) {
     time_t now = time(NULL);
     
     for (int i = 0; i < MAX_LOCATION_CACHE; i++) {
@@ -161,7 +172,7 @@ static int find_location_in_cache(double lat, double lon) {
 }
 
 // Add location to cache
-static void add_location_to_cache(const gps_location_info_t *location_info) {
+void add_location_to_cache(const gps_location_info_t *location_info) {
     // Find free cache slot
     int cache_index = -1;
     for (int i = 0; i < MAX_LOCATION_CACHE; i++) {
@@ -199,11 +210,11 @@ static void add_location_to_cache(const gps_location_info_t *location_info) {
     cache_entry->postal_code[sizeof(cache_entry->postal_code) - 1] = '\0';
     cache_entry->service_used = location_info->service_used;
     
-    LOGX_DEBUG("Added location to cache: %s", location_info->place_name);
+    LOGX_DEBUG_MSG("Added location to cache: %s", location_info->place_name);
 }
 
 // Find oldest cache entry
-static int find_oldest_cache_entry(void) {
+int find_oldest_cache_entry(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
@@ -219,7 +230,7 @@ static int find_oldest_cache_entry(void) {
 }
 
 // Perform reverse geocoding
-static int perform_reverse_geocoding(double lat, double lon, gps_location_info_t *location_info) {
+int perform_reverse_geocoding(double lat, double lon, gps_location_info_t *location_info) {
     // Try different services in order of preference
     gps_location_service_t services[] = {
         g_location_services.default_service,
@@ -241,7 +252,7 @@ static int perform_reverse_geocoding(double lat, double lon, gps_location_info_t
 }
 
 // Try reverse geocoding with specific service
-static int try_reverse_geocoding_service(gps_location_service_t service, double lat, double lon, 
+int try_reverse_geocoding_service(gps_location_service_t service, double lat, double lon, 
                                         gps_location_info_t *location_info) {
     switch (service) {
         case LOCATION_SERVICE_NOMINATIM:
@@ -258,7 +269,7 @@ static int try_reverse_geocoding_service(gps_location_service_t service, double 
 }
 
 // Try Nominatim service (OpenStreetMap)
-static int try_nominatim_service(double lat, double lon, gps_location_info_t *location_info) {
+int try_nominatim_service(double lat, double lon, gps_location_info_t *location_info) {
     // For now, implement a simulated response
     // In a full implementation, this would make HTTP requests to Nominatim API
     
@@ -283,12 +294,12 @@ static int try_nominatim_service(double lat, double lon, gps_location_info_t *lo
     snprintf(location_info->postal_code, sizeof(location_info->postal_code), 
              "");
     
-    LOGX_DEBUG("Nominatim service simulated response for (%.6f, %.6f)", lat, lon);
+    LOGX_DEBUG_MSG("Nominatim service simulated response for (%.6f, %.6f)", lat, lon);
     return AUTONOMY_SUCCESS;
 }
 
 // Try Google service
-static int try_google_service(double lat, double lon, gps_location_info_t *location_info) {
+int try_google_service(double lat, double lon, gps_location_info_t *location_info) {
     // For now, implement a simulated response
     // In a full implementation, this would make HTTP requests to Google Geocoding API
     
@@ -313,12 +324,12 @@ static int try_google_service(double lat, double lon, gps_location_info_t *locat
     snprintf(location_info->postal_code, sizeof(location_info->postal_code), 
              "12345");
     
-    LOGX_DEBUG("Google service simulated response for (%.6f, %.6f)", lat, lon);
+    LOGX_DEBUG_MSG("Google service simulated response for (%.6f, %.6f)", lat, lon);
     return AUTONOMY_SUCCESS;
 }
 
 // Try HERE service
-static int try_here_service(double lat, double lon, gps_location_info_t *location_info) {
+int try_here_service(double lat, double lon, gps_location_info_t *location_info) {
     // For now, implement a simulated response
     // In a full implementation, this would make HTTP requests to HERE Geocoding API
     
@@ -343,12 +354,12 @@ static int try_here_service(double lat, double lon, gps_location_info_t *locatio
     snprintf(location_info->postal_code, sizeof(location_info->postal_code), 
              "67890");
     
-    LOGX_DEBUG("HERE service simulated response for (%.6f, %.6f)", lat, lon);
+    LOGX_DEBUG_MSG("HERE service simulated response for (%.6f, %.6f)", lat, lon);
     return AUTONOMY_SUCCESS;
 }
 
 // Try custom service
-static int try_custom_service(double lat, double lon, gps_location_info_t *location_info) {
+int try_custom_service(double lat, double lon, gps_location_info_t *location_info) {
     // For now, implement a simulated response
     // In a full implementation, this would call user-defined functions or scripts
     
@@ -373,12 +384,12 @@ static int try_custom_service(double lat, double lon, gps_location_info_t *locat
     snprintf(location_info->postal_code, sizeof(location_info->postal_code), 
              "CUSTOM");
     
-    LOGX_DEBUG("Custom service simulated response for (%.6f, %.6f)", lat, lon);
+    LOGX_DEBUG_MSG("Custom service simulated response for (%.6f, %.6f)", lat, lon);
     return AUTONOMY_SUCCESS;
 }
 
 // Create basic location info when services fail
-static void create_basic_location_info(double lat, double lon, gps_location_info_t *location_info) {
+void create_basic_location_info(double lat, double lon, gps_location_info_t *location_info) {
     location_info->lat = lat;
     location_info->lon = lon;
     location_info->service_used = LOCATION_SERVICE_UNKNOWN;
@@ -396,11 +407,11 @@ static void create_basic_location_info(double lat, double lon, gps_location_info
              "Unknown");
     location_info->postal_code[0] = '\0';
     
-    LOGX_WARN("All reverse geocoding services failed, created basic location info");
+    LOGX_WARN_MSG("All reverse geocoding services failed, created basic location info");
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
@@ -418,7 +429,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Get location services status
-static int gps_location_services_get_status(gps_location_services_status_t *status) {
+int gps_location_services_get_status(gps_location_services_status_t *status) {
     if (!g_location_services_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -454,7 +465,7 @@ static int gps_location_services_get_status(gps_location_services_status_t *stat
 }
 
 // Get location services configuration
-static int gps_location_services_get_config(gps_location_services_config_t *config) {
+int gps_location_services_get_config(gps_location_services_config_t *config) {
     if (!g_location_services_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -474,7 +485,7 @@ static int gps_location_services_get_config(gps_location_services_config_t *conf
 }
 
 // Set location services configuration
-static int gps_location_services_set_config(const gps_location_services_config_t *config) {
+int gps_location_services_set_config(const gps_location_services_config_t *config) {
     if (!g_location_services_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -490,12 +501,12 @@ static int gps_location_services_set_config(const gps_location_services_config_t
     
     pthread_mutex_unlock(&g_location_services_mutex);
     
-    LOGX_INFO("GPS location services configuration updated");
+    LOGX_INFO_MSG("GPS location services configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable location services
-static int gps_location_services_set_enabled(bool enabled) {
+int gps_location_services_set_enabled(bool enabled) {
     if (!g_location_services_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -504,12 +515,12 @@ static int gps_location_services_set_enabled(bool enabled) {
     g_location_services.enabled = enabled;
     pthread_mutex_unlock(&g_location_services_mutex);
     
-    LOGX_INFO("GPS location services %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS location services %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Clear location cache
-static int gps_location_services_clear_cache(void) {
+int gps_location_services_clear_cache(void) {
     if (!g_location_services_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -522,12 +533,12 @@ static int gps_location_services_clear_cache(void) {
     
     pthread_mutex_unlock(&g_location_services_mutex);
     
-    LOGX_INFO("GPS location services cache cleared");
+    LOGX_INFO_MSG("GPS location services cache cleared");
     return AUTONOMY_SUCCESS;
 }
 
 // Reset location services
-static int gps_location_services_reset(void) {
+int gps_location_services_reset(void) {
     if (!g_location_services_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -548,12 +559,12 @@ static int gps_location_services_reset(void) {
     
     pthread_mutex_unlock(&g_location_services_mutex);
     
-    LOGX_INFO("GPS location services reset");
+    LOGX_INFO_MSG("GPS location services reset");
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup location services
-static void gps_location_services_cleanup(void) {
+void gps_location_services_cleanup(void) {
     if (!g_location_services_initialized) {
         return;
     }
@@ -561,5 +572,5 @@ static void gps_location_services_cleanup(void) {
     pthread_mutex_destroy(&g_location_services_mutex);
     g_location_services_initialized = false;
     
-    LOGX_INFO("GPS location services cleaned up");
+    LOGX_INFO_MSG("GPS location services cleaned up");
 }

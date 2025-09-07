@@ -7,9 +7,23 @@
 
 // Notification types and structures
 
+// Notification types
+typedef enum {
+    NOTIFICATION_TYPE_INFO = 0,
+    NOTIFICATION_TYPE_WARNING,
+    NOTIFICATION_TYPE_ERROR,
+    NOTIFICATION_TYPE_CRITICAL,
+    NOTIFICATION_TYPE_SYSTEM_ALERT,
+    NOTIFICATION_TYPE_PREDICTIVE,
+    NOTIFICATION_TYPE_HEALTH,
+    NOTIFICATION_TYPE_PERFORMANCE,
+    NOTIFICATION_TYPE_SECURITY
+} notification_type_t;
+
 // Notification priority levels
 typedef enum {
     NOTIFICATION_PRIORITY_LOW = 0,
+    NOTIFICATION_PRIORITY_NORMAL,
     NOTIFICATION_PRIORITY_MEDIUM,
     NOTIFICATION_PRIORITY_HIGH,
     NOTIFICATION_PRIORITY_CRITICAL
@@ -38,6 +52,7 @@ typedef struct {
     char id[64];
     char title[256];
     char message[1024];
+    notification_type_t type;
     notification_priority_t priority;
     notification_method_t method;
     notification_status_t status;
@@ -70,6 +85,48 @@ typedef struct {
     int rate_limit_per_minute;
     int max_retries;
 } notification_config_t;
+
+// Notification event structure
+typedef struct {
+    char id[64];                           // Event ID
+    char title[256];                       // Event title
+    char message[1024];                    // Event message
+    notification_type_t type;              // Event type
+    notification_priority_t priority;      // Event priority
+    time_t timestamp;                      // Event timestamp
+    char context[512];                     // Additional context
+} notification_event_t;
+
+// Channel configuration structure
+typedef struct {
+    bool webhook_enabled;
+    char webhook_url[512];
+    bool email_enabled;
+    char email_smtp_server[256];
+    int email_smtp_port;
+    char email_username[128];
+    char email_password[128];
+    char email_from[128];
+    bool pushover_enabled;
+    char pushover_token[128];
+    char pushover_user[128];
+    bool discord_enabled;
+    char discord_webhook_url[512];
+    bool slack_enabled;
+    char slack_webhook_url[512];
+} channel_config_t;
+
+// Notification statistics structure
+typedef struct {
+    int total_sent;
+    int total_delivered;
+    int total_failed;
+    int total_acknowledged;
+    double average_delivery_time_ms;
+    time_t last_sent;
+    time_t last_delivered;
+    time_t last_failed;
+} notification_stats_t;
 
 // Function declarations
 int notification_init(const notification_config_t *config);

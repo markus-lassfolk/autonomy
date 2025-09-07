@@ -1,459 +1,456 @@
 #include "uci_manager.h"
-#include "logx.h"
-#include <libuci.h>
-#include <string.h>
-#include <stdlib.h>
+#include "../core/types.h"
+#include "../utils/logx.h"
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/stat.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <libtlt_uci.h>
 
 // Global UCI context
 static struct uci_context *g_uci_ctx = NULL;
 static bool g_uci_initialized = false;
+
+// Configuration package name
+#define UCI_PACKAGE "autonomy"
 
 // Default configuration values
 static const autonomy_config_t DEFAULT_CONFIG = {
     .config_file = "/etc/config/autonomy",
     .daemon_mode = true,
     .debug_mode = false,
-    .log_level = LOGX_LEVEL_INFO,
+    .log_level = 2, // info
     .log_file = "/var/log/autonomy.log",
     .pid_file_timeout = 30,
+    
+    // Network settings
     .network_check_interval = 30,
     .failover_timeout = 60,
     .auto_failover = true,
-    .min_interface_health = 70,
+    .min_interface_health = 50,
     .mwan3_integration = true,
-    .gps_update_interval = 60,
+    
+    // GPS settings
+    .gps_update_interval = 10,
     .gps_timeout = 30,
     .gps_fusion = true,
     .gps_cache_timeout = 300,
-    .min_gps_accuracy = 10.0f,
-    .starlink_host = "192.168.100.1",
-    .starlink_port = 9000,
-    .starlink_timeout = 10,
-    .starlink_check_interval = 60,
+    .min_gps_accuracy = 10.0,
+    
+    // Starlink settings
+    .starlink_check_interval = 30,
     .starlink_health_monitoring = true,
-    .system_check_interval = 300,
+    .starlink_host = "192.168.100.1",
+    .starlink_port = 9200,
+    .starlink_timeout = 10,
+    
+    // System monitoring
+    .system_check_interval = 60,
     .resource_monitoring = true,
     .service_monitoring = true,
     .alert_threshold = 80,
+    
+    // Notifications
     .notifications_enabled = true,
-    .webhook_url = "",
-    .email_smtp = "",
     .email_from = "",
-    .email_to = ""
+    .email_to = "",
+    .email_smtp = "",
+    .webhook_url = ""
 };
 
-// Initialize UCI system
-static int uci_manager_init(void) {
+// Initialize UCI manager using Teltonika's library
+int uci_manager_init(void) {
     if (g_uci_initialized) {
-        LOGX_WARN("UCI manager already initialized");
+        LOGX_WARN_MSG("UCI manager already initialized");
         return AUTONOMY_SUCCESS;
     }
     
-    // Create UCI context
-    g_uci_ctx = uci_alloc_context();
+    // Use Teltonika's UCI initialization
+    g_uci_ctx = uci_init();
     if (!g_uci_ctx) {
-        LOGX_ERROR("Failed to allocate UCI context");
+        LOGX_ERROR_MSG("Failed to initialize UCI context using Teltonika library");
         return AUTONOMY_ERROR_SYSTEM;
     }
-    
-    // Set UCI search path
-    uci_set_confdir(g_uci_ctx, "/etc/config");
     
     g_uci_initialized = true;
-    LOGX_INFO("UCI manager initialized successfully");
+    LOGX_INFO_MSG("UCI manager initialized successfully using Teltonika libtlt_uci");
     
     return AUTONOMY_SUCCESS;
 }
 
-// Load configuration from UCI
-static int uci_manager_load_config(autonomy_config_t *config) {
+// Cleanup UCI manager
+void uci_manager_cleanup(void) {
+    if (!g_uci_initialized) return;
+    
+    if (g_uci_ctx) {
+        uci_cleanup(g_uci_ctx);
+        g_uci_ctx = NULL;
+    }
+    
+    g_uci_initialized = false;
+    LOGX_INFO_MSG("UCI manager cleaned up");
+}
+
+// Load configuration from UCI using Teltonika library
+int uci_manager_load_config(autonomy_config_t *config) {
     if (!g_uci_initialized || !config) {
-        LOGX_ERROR("UCI manager not initialized or invalid config pointer");
+        LOGX_ERROR_MSG("UCI manager not initialized or invalid config pointer");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    // Start with default configuration
-    memcpy(config, &DEFAULT_CONFIG, sizeof(autonomy_config_t));
+    LOGX_INFO_MSG("Loading configuration from UCI using Teltonika library");
     
-    // Load UCI configuration
-    struct uci_package *pkg = NULL;
-    int ret = uci_load(g_uci_ctx, "autonomy", &pkg);
-    if (ret != UCI_OK) {
-        LOGX_WARN("Failed to load UCI package 'autonomy', using defaults");
-        return AUTONOMY_SUCCESS; // Return success with defaults
+    // Start with defaults
+    *config = DEFAULT_CONFIG;
+    
+    // Load daemon settings using ucix_get_option functions
+    char *value;
+    
+    // Daemon mode
+    config->daemon_mode = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "general", "daemon_mode", 1) != 0;
+    
+    // Debug mode
+    config->debug_mode = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "general", "debug_mode", 0) != 0;
+    
+    // Log level
+    config->log_level = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "general", "log_level", 2);
+    
+    // Log file
+    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "general", "log_file");
+    if (value) {
+        strncpy(config->log_file, value, sizeof(config->log_file) - 1);
+        config->log_file[sizeof(config->log_file) - 1] = '\0';
+        free(value);
     }
     
-    // Parse general section
-    struct uci_section *general = uci_lookup_section(g_uci_ctx, pkg, "general");
-    if (general) {
-        const char *value;
-        
-        value = uci_lookup_option_string(g_uci_ctx, general, "daemon_mode");
-        if (value) {
-            config->daemon_mode = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, general, "debug_mode");
-        if (value) {
-            config->debug_mode = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, general, "log_level");
-        if (value) {
-            if (strcmp(value, "trace") == 0) config->log_level = LOGX_LEVEL_TRACE;
-            else if (strcmp(value, "debug") == 0) config->log_level = LOGX_LEVEL_DEBUG;
-            else if (strcmp(value, "info") == 0) config->log_level = LOGX_LEVEL_INFO;
-            else if (strcmp(value, "warn") == 0) config->log_level = LOGX_LEVEL_WARN;
-            else if (strcmp(value, "error") == 0) config->log_level = LOGX_LEVEL_ERROR;
-            else if (strcmp(value, "fatal") == 0) config->log_level = LOGX_LEVEL_FATAL;
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, general, "log_file");
-        if (value) {
-            strncpy(config->log_file, value, sizeof(config->log_file) - 1);
-            config->log_file[sizeof(config->log_file) - 1] = '\0';
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, general, "pid_file_timeout");
-        if (value) {
-            config->pid_file_timeout = atoi(value);
-        }
+    // PID file timeout
+    config->pid_file_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "general", "pid_file_timeout", 30);
+    
+    // Network settings
+    config->network_check_interval = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "network", "check_interval", 30);
+    config->failover_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "network", "failover_timeout", 60);
+    config->auto_failover = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "network", "auto_failover", 1) != 0;
+    config->min_interface_health = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "network", "min_interface_health", 50);
+    config->mwan3_integration = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "network", "mwan3_integration", 1) != 0;
+    
+    // GPS settings
+    config->gps_update_interval = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "update_interval", 10);
+    config->gps_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "timeout", 30);
+    config->gps_fusion = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "fusion", 1) != 0;
+    config->gps_cache_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "cache_timeout", 300);
+    
+    // Min GPS accuracy (double value)
+    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "gps", "min_accuracy");
+    if (value) {
+        config->min_gps_accuracy = atof(value);
+        free(value);
     }
     
-    // Parse network section
-    struct uci_section *network = uci_lookup_section(g_uci_ctx, pkg, "network");
-    if (network) {
-        const char *value;
-        
-        value = uci_lookup_option_string(g_uci_ctx, network, "check_interval");
-        if (value) {
-            config->network_check_interval = atoi(value);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, network, "failover_timeout");
-        if (value) {
-            config->failover_timeout = atoi(value);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, network, "auto_failover");
-        if (value) {
-            config->auto_failover = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, network, "min_interface_health");
-        if (value) {
-            config->min_interface_health = atoi(value);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, network, "mwan3_integration");
-        if (value) {
-            config->mwan3_integration = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
-        }
+    // Starlink settings
+    config->starlink_check_interval = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "check_interval", 30);
+    config->starlink_health_monitoring = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "health_monitoring", 1) != 0;
+    config->starlink_port = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "port", 9200);
+    config->starlink_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "timeout", 10);
+    
+    // Starlink host
+    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "starlink", "host");
+    if (value) {
+        strncpy(config->starlink_host, value, sizeof(config->starlink_host) - 1);
+        config->starlink_host[sizeof(config->starlink_host) - 1] = '\0';
+        free(value);
     }
     
-    // Parse GPS section
-    struct uci_section *gps = uci_lookup_section(g_uci_ctx, pkg, "gps");
-    if (gps) {
-        const char *value;
-        
-        value = uci_lookup_option_string(g_uci_ctx, gps, "update_interval");
-        if (value) {
-            config->gps_update_interval = atoi(value);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, gps, "timeout");
-        if (value) {
-            config->gps_timeout = atoi(value);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, gps, "fusion");
-        if (value) {
-            config->gps_fusion = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, gps, "cache_timeout");
-        if (value) {
-            config->gps_cache_timeout = atoi(value);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, gps, "min_accuracy");
-        if (value) {
-            config->min_gps_accuracy = atof(value);
-        }
+    // System monitoring
+    config->system_check_interval = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "system", "check_interval", 60);
+    config->resource_monitoring = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "system", "resource_monitoring", 1) != 0;
+    config->service_monitoring = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "system", "service_monitoring", 1) != 0;
+    config->alert_threshold = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "system", "alert_threshold", 80);
+    
+    // Notifications
+    config->notifications_enabled = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "notifications", "enabled", 1) != 0;
+    
+    // Email settings
+    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_from");
+    if (value) {
+        strncpy(config->email_from, value, sizeof(config->email_from) - 1);
+        config->email_from[sizeof(config->email_from) - 1] = '\0';
+        free(value);
     }
     
-    // Parse Starlink section
-    struct uci_section *starlink = uci_lookup_section(g_uci_ctx, pkg, "starlink");
-    if (starlink) {
-        const char *value;
-        
-        value = uci_lookup_option_string(g_uci_ctx, starlink, "host");
-        if (value) {
-            strncpy(config->starlink_host, value, sizeof(config->starlink_host) - 1);
-            config->starlink_host[sizeof(config->starlink_host) - 1] = '\0';
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, starlink, "port");
-        if (value) {
-            config->starlink_port = atoi(value);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, starlink, "timeout");
-        if (value) {
-            config->starlink_timeout = atoi(value);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, starlink, "check_interval");
-        if (value) {
-            config->starlink_check_interval = atoi(value);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, starlink, "health_monitoring");
-        if (value) {
-            config->starlink_health_monitoring = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
-        }
+    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_to");
+    if (value) {
+        strncpy(config->email_to, value, sizeof(config->email_to) - 1);
+        config->email_to[sizeof(config->email_to) - 1] = '\0';
+        free(value);
     }
     
-    // Parse system section
-    struct uci_section *system = uci_lookup_section(g_uci_ctx, pkg, "system");
-    if (system) {
-        const char *value;
-        
-        value = uci_lookup_option_string(g_uci_ctx, system, "check_interval");
-        if (value) {
-            config->system_check_interval = atoi(value);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, system, "resource_monitoring");
-        if (value) {
-            config->resource_monitoring = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, system, "service_monitoring");
-        if (value) {
-            config->service_monitoring = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, system, "alert_threshold");
-        if (value) {
-            config->alert_threshold = atoi(value);
-        }
+    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_smtp");
+    if (value) {
+        strncpy(config->email_smtp, value, sizeof(config->email_smtp) - 1);
+        config->email_smtp[sizeof(config->email_smtp) - 1] = '\0';
+        free(value);
     }
     
-    // Parse notifications section
-    struct uci_section *notifications = uci_lookup_section(g_uci_ctx, pkg, "notifications");
-    if (notifications) {
-        const char *value;
-        
-        value = uci_lookup_option_string(g_uci_ctx, notifications, "enabled");
-        if (value) {
-            config->notifications_enabled = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, notifications, "webhook_url");
-        if (value) {
-            strncpy(config->webhook_url, value, sizeof(config->webhook_url) - 1);
-            config->webhook_url[sizeof(config->webhook_url) - 1] = '\0';
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, notifications, "email_smtp");
-        if (value) {
-            strncpy(config->email_smtp, value, sizeof(config->email_smtp) - 1);
-            config->email_smtp[sizeof(config->email_smtp) - 1] = '\0';
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, notifications, "email_from");
-        if (value) {
-            strncpy(config->email_from, value, sizeof(config->email_from) - 1);
-            config->email_from[sizeof(config->email_from) - 1] = '\0';
-        }
-        
-        value = uci_lookup_option_string(g_uci_ctx, notifications, "email_to");
-        if (value) {
-            strncpy(config->email_to, value, sizeof(config->email_to) - 1);
-            config->email_to[sizeof(config->email_to) - 1] = '\0';
-        }
+    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "webhook_url");
+    if (value) {
+        strncpy(config->webhook_url, value, sizeof(config->webhook_url) - 1);
+        config->webhook_url[sizeof(config->webhook_url) - 1] = '\0';
+        free(value);
     }
     
-    // Unload package
-    uci_unload(g_uci_ctx, pkg);
-    
-    LOGX_INFO("Configuration loaded successfully from UCI");
+    LOGX_INFO_MSG("Configuration loaded successfully from UCI using Teltonika library");
     return AUTONOMY_SUCCESS;
 }
 
-// Save configuration to UCI
-static int uci_manager_save_config(const autonomy_config_t *config) {
+// Save configuration to UCI using Teltonika library
+int uci_manager_save_config(const autonomy_config_t *config) {
     if (!g_uci_initialized || !config) {
-        LOGX_ERROR("UCI manager not initialized or invalid config pointer");
+        LOGX_ERROR_MSG("UCI manager not initialized or invalid config pointer");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    // Create new package
-    struct uci_package *pkg = NULL;
-    int ret = uci_new_package(g_uci_ctx, "autonomy", &pkg);
-    if (ret != UCI_OK) {
-        LOGX_ERROR("Failed to create new UCI package");
+    LOGX_INFO_MSG("Saving configuration to UCI using Teltonika library");
+    
+    int ret;
+    
+    // Save daemon settings using ucix_add_option functions
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "general", "daemon_mode", config->daemon_mode ? 1 : 0);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save daemon_mode to UCI");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    // Create general section
-    struct uci_section *general = uci_add_section(g_uci_ctx, pkg, "general", "general");
-    if (general) {
-        uci_set(g_uci_ctx, general, "daemon_mode", config->daemon_mode ? "1" : "0");
-        uci_set(g_uci_ctx, general, "debug_mode", config->debug_mode ? "1" : "0");
-        uci_set(g_uci_ctx, general, "log_level", get_log_level_string(config->log_level));
-        uci_set(g_uci_ctx, general, "log_file", config->log_file);
-        uci_set(g_uci_ctx, general, "pid_file_timeout", int_to_string(config->pid_file_timeout));
-    }
-    
-    // Create network section
-    struct uci_section *network = uci_add_section(g_uci_ctx, pkg, "network", "network");
-    if (network) {
-        uci_set(g_uci_ctx, network, "check_interval", int_to_string(config->network_check_interval));
-        uci_set(g_uci_ctx, network, "failover_timeout", int_to_string(config->failover_timeout));
-        uci_set(g_uci_ctx, network, "auto_failover", config->auto_failover ? "1" : "0");
-        uci_set(g_uci_ctx, network, "min_interface_health", int_to_string(config->min_interface_health));
-        uci_set(g_uci_ctx, network, "mwan3_integration", config->mwan3_integration ? "1" : "0");
-    }
-    
-    // Create GPS section
-    struct uci_section *gps = uci_add_section(g_uci_ctx, pkg, "gps", "gps");
-    if (gps) {
-        uci_set(g_uci_ctx, gps, "update_interval", int_to_string(config->gps_update_interval));
-        uci_set(g_uci_ctx, gps, "timeout", int_to_string(config->gps_timeout));
-        uci_set(g_uci_ctx, gps, "fusion", config->gps_fusion ? "1" : "0");
-        uci_set(g_uci_ctx, gps, "cache_timeout", int_to_string(config->gps_cache_timeout));
-        uci_set(g_uci_ctx, gps, "min_accuracy", float_to_string(config->min_gps_accuracy));
-    }
-    
-    // Create Starlink section
-    struct uci_section *starlink = uci_add_section(g_uci_ctx, pkg, "starlink", "starlink");
-    if (starlink) {
-        uci_set(g_uci_ctx, starlink, "host", config->starlink_host);
-        uci_set(g_uci_ctx, starlink, "port", int_to_string(config->starlink_port));
-        uci_set(g_uci_ctx, starlink, "timeout", int_to_string(config->starlink_timeout));
-        uci_set(g_uci_ctx, starlink, "check_interval", int_to_string(config->starlink_check_interval));
-        uci_set(g_uci_ctx, starlink, "health_monitoring", config->starlink_health_monitoring ? "1" : "0");
-    }
-    
-    // Create system section
-    struct uci_section *system = uci_add_section(g_uci_ctx, pkg, "system", "system");
-    if (system) {
-        uci_set(g_uci_ctx, system, "check_interval", int_to_string(config->system_check_interval));
-        uci_set(g_uci_ctx, system, "resource_monitoring", config->resource_monitoring ? "1" : "0");
-        uci_set(g_uci_ctx, system, "service_monitoring", config->service_monitoring ? "1" : "0");
-        uci_set(g_uci_ctx, system, "alert_threshold", int_to_string(config->alert_threshold));
-    }
-    
-    // Create notifications section
-    struct uci_section *notifications = uci_add_section(g_uci_ctx, pkg, "notifications", "notifications");
-    if (notifications) {
-        uci_set(g_uci_ctx, notifications, "enabled", config->notifications_enabled ? "1" : "0");
-        uci_set(g_uci_ctx, notifications, "webhook_url", config->webhook_url);
-        uci_set(g_uci_ctx, notifications, "email_smtp", config->email_smtp);
-        uci_set(g_uci_ctx, notifications, "email_from", config->email_from);
-        uci_set(g_uci_ctx, notifications, "email_to", config->email_to);
-    }
-    
-    // Save package
-    ret = uci_save(g_uci_ctx, pkg);
-    if (ret != UCI_OK) {
-        LOGX_ERROR("Failed to save UCI package");
-        uci_unload(g_uci_ctx, pkg);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "general", "debug_mode", config->debug_mode ? 1 : 0);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save debug_mode to UCI");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    // Commit changes
-    ret = uci_commit(g_uci_ctx, &pkg, false);
-    if (ret != UCI_OK) {
-        LOGX_ERROR("Failed to commit UCI changes");
-        uci_unload(g_uci_ctx, pkg);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "general", "log_level", config->log_level);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save log_level to UCI");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    uci_unload(g_uci_ctx, pkg);
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "general", "log_file", config->log_file);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save log_file to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
     
-    LOGX_INFO("Configuration saved successfully to UCI");
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "general", "pid_file_timeout", config->pid_file_timeout);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save pid_file_timeout to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Save network settings
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "check_interval", config->network_check_interval);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save network check_interval to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "failover_timeout", config->failover_timeout);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save failover_timeout to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "auto_failover", config->auto_failover ? 1 : 0);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save auto_failover to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "min_interface_health", config->min_interface_health);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save min_interface_health to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "mwan3_integration", config->mwan3_integration ? 1 : 0);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save mwan3_integration to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Save GPS settings
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "update_interval", config->gps_update_interval);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save GPS update_interval to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "timeout", config->gps_timeout);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save GPS timeout to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "fusion", config->gps_fusion ? 1 : 0);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save GPS fusion to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "cache_timeout", config->gps_cache_timeout);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save GPS cache_timeout to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Save GPS accuracy as string
+    char accuracy_str[32];
+    snprintf(accuracy_str, sizeof(accuracy_str), "%.2f", config->min_gps_accuracy);
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "gps", "min_accuracy", accuracy_str);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save GPS min_accuracy to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Save Starlink settings
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "check_interval", config->starlink_check_interval);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save Starlink check_interval to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "health_monitoring", config->starlink_health_monitoring ? 1 : 0);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save Starlink health_monitoring to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "starlink", "host", config->starlink_host);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save Starlink host to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "port", config->starlink_port);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save Starlink port to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "timeout", config->starlink_timeout);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save Starlink timeout to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Save system monitoring settings
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "system", "check_interval", config->system_check_interval);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save system check_interval to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "system", "resource_monitoring", config->resource_monitoring ? 1 : 0);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save resource_monitoring to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "system", "service_monitoring", config->service_monitoring ? 1 : 0);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save service_monitoring to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "system", "alert_threshold", config->alert_threshold);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save alert_threshold to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Save notification settings
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "notifications", "enabled", config->notifications_enabled ? 1 : 0);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save notifications enabled to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_from", config->email_from);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save email_from to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_to", config->email_to);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save email_to to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_smtp", config->email_smtp);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save email_smtp to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "notifications", "webhook_url", config->webhook_url);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to save webhook_url to UCI");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Commit all changes using Teltonika's logged commit (includes logging)
+    ret = ucix_logged_commit(g_uci_ctx, UCI_PACKAGE);
+    if (ret != 0) {
+        LOGX_ERROR_MSG("Failed to commit UCI changes");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    LOGX_INFO_MSG("Configuration saved successfully to UCI using Teltonika library");
     return AUTONOMY_SUCCESS;
-}
-
-// Helper functions
-static const char* get_log_level_string(logx_level_t level) {
-    switch (level) {
-        case LOGX_LEVEL_TRACE: return "trace";
-        case LOGX_LEVEL_DEBUG: return "debug";
-        case LOGX_LEVEL_INFO: return "info";
-        case LOGX_LEVEL_WARN: return "warn";
-        case LOGX_LEVEL_ERROR: return "error";
-        case LOGX_LEVEL_FATAL: return "fatal";
-        default: return "info";
-    }
-}
-
-static char* int_to_string(int value) {
-    static char buffer[32];
-    snprintf(buffer, sizeof(buffer), "%d", value);
-    return buffer;
-}
-
-static char* float_to_string(float value) {
-    static char buffer[32];
-    snprintf(buffer, sizeof(buffer), "%.2f", value);
-    return buffer;
 }
 
 // Validate configuration
-static int uci_manager_validate_config(const autonomy_config_t *config) {
+int uci_manager_validate_config(const autonomy_config_t *config) {
     if (!config) {
+        LOGX_ERROR_MSG("Invalid config pointer");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    // Validate timeouts
-    if (config->network_check_interval < 5 || config->network_check_interval > 3600) {
-        LOGX_WARN("Invalid network_check_interval: %d, using default", config->network_check_interval);
+    // Validate intervals are positive
+    if (config->network_check_interval <= 0 || config->gps_update_interval <= 0 || 
+        config->starlink_check_interval <= 0 || config->system_check_interval <= 0) {
+        LOGX_ERROR_MSG("Check intervals must be positive");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    if (config->failover_timeout < 10 || config->failover_timeout > 300) {
-        LOGX_WARN("Invalid failover_timeout: %d, using default", config->failover_timeout);
+    // Validate timeouts are positive
+    if (config->failover_timeout <= 0 || config->gps_timeout <= 0 || config->starlink_timeout <= 0) {
+        LOGX_ERROR_MSG("Timeouts must be positive");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    if (config->gps_update_interval < 10 || config->gps_update_interval > 3600) {
-        LOGX_WARN("Invalid gps_update_interval: %d, using default", config->gps_update_interval);
-        return AUTONOMY_ERROR_INVALID_PARAM;
-    }
-    
-    if (config->starlink_check_interval < 10 || config->starlink_check_interval > 3600) {
-        LOGX_WARN("Invalid starlink_check_interval: %d, using default", config->starlink_check_interval);
-        return AUTONOMY_ERROR_INVALID_PARAM;
-    }
-    
-    if (config->system_check_interval < 60 || config->system_check_interval > 3600) {
-        LOGX_WARN("Invalid system_check_interval: %d, using default", config->system_check_interval);
-        return AUTONOMY_ERROR_INVALID_PARAM;
-    }
-    
-    // Validate thresholds
+    // Validate thresholds are in valid ranges
     if (config->min_interface_health < 0 || config->min_interface_health > 100) {
-        LOGX_WARN("Invalid min_interface_health: %d, using default", config->min_interface_health);
+        LOGX_ERROR_MSG("Interface health threshold must be 0-100");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     if (config->alert_threshold < 0 || config->alert_threshold > 100) {
-        LOGX_WARN("Invalid alert_threshold: %d, using default", config->alert_threshold);
+        LOGX_ERROR_MSG("Alert threshold must be 0-100");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    if (config->min_gps_accuracy < 0.1f || config->min_gps_accuracy > 1000.0f) {
-        LOGX_WARN("Invalid min_gps_accuracy: %.2f, using default", config->min_gps_accuracy);
+    // Validate GPS accuracy is positive
+    if (config->min_gps_accuracy <= 0.0) {
+        LOGX_ERROR_MSG("GPS accuracy must be positive");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
+    // Validate Starlink port is in valid range
+    if (config->starlink_port < 1 || config->starlink_port > 65535) {
+        LOGX_ERROR_MSG("Starlink port must be 1-65535");
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    LOGX_DEBUG_MSG("Configuration validation passed");
     return AUTONOMY_SUCCESS;
 }
 
@@ -462,17 +459,7 @@ const autonomy_config_t* uci_manager_get_default_config(void) {
     return &DEFAULT_CONFIG;
 }
 
-// Check if UCI is available
-static bool uci_manager_is_available(void) {
+// Check if UCI manager is available
+bool uci_manager_is_available(void) {
     return g_uci_initialized && g_uci_ctx != NULL;
-}
-
-// Cleanup UCI system
-static void uci_manager_cleanup(void) {
-    if (g_uci_ctx) {
-        uci_free_context(g_uci_ctx);
-        g_uci_ctx = NULL;
-    }
-    g_uci_initialized = false;
-    LOGX_INFO("UCI manager cleaned up");
 }

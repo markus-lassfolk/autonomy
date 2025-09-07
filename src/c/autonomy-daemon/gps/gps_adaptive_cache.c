@@ -1,14 +1,17 @@
 #include "gps_adaptive_cache.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <unistd.h>
 
 // GPS adaptive cache configuration
-static const int MAX_CACHE_ENTRIES = 2000;                 // Maximum cache entries
+// Note: MAX_CACHE_ENTRIES is defined in ../core/types.h
 static const int CACHE_CLEANUP_INTERVAL = 300;             // 5 minute cleanup interval
 static const double MIN_CACHE_HIT_RATIO = 0.1;             // Minimum cache hit ratio
 static const int MAX_CACHE_AGE = 86400;                    // 24 hour maximum cache age
@@ -25,10 +28,16 @@ static gps_adaptive_cache_t g_cache = {0};
 static bool g_cache_initialized = false;
 static pthread_mutex_t g_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Forward declarations
+void perform_cache_cleanup(void);
+void perform_aggressive_cleanup(void);
+void perform_gentle_cleanup(void);
+double calculate_eviction_score(const gps_cache_entry_t *entry);
+
 // Initialize GPS adaptive cache
-static int gps_adaptive_cache_init(void) {
+int gps_adaptive_cache_init(void) {
     if (g_cache_initialized) {
-        LOGX_WARN("GPS adaptive cache already initialized");
+        LOGX_WARN_MSG("GPS adaptive cache already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -66,7 +75,7 @@ static int gps_adaptive_cache_init(void) {
     g_cache_initialized = true;
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_INFO("GPS adaptive cache initialized successfully");
+    LOGX_INFO_MSG("GPS adaptive cache initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -101,7 +110,7 @@ int gps_adaptive_cache_add_entry(gps_cache_entry_type_t entry_type, const void *
     
     if (slot_index < 0) {
         pthread_mutex_unlock(&g_cache_mutex);
-        LOGX_ERROR("No free slots for cache entry");
+        LOGX_ERROR_MSG("No free slots for cache entry");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
@@ -109,7 +118,7 @@ int gps_adaptive_cache_add_entry(gps_cache_entry_type_t entry_type, const void *
     void *data_copy = malloc(data_size);
     if (!data_copy) {
         pthread_mutex_unlock(&g_cache_mutex);
-        LOGX_ERROR("Failed to allocate memory for cache entry");
+        LOGX_ERROR_MSG("Failed to allocate memory for cache entry");
         return AUTONOMY_ERROR_NO_MEMORY;
     }
     
@@ -133,7 +142,7 @@ int gps_adaptive_cache_add_entry(gps_cache_entry_type_t entry_type, const void *
     
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_DEBUG("Added cache entry %d: type=%d, size=%zu, priority=%.2f", 
+    LOGX_DEBUG_MSG("Added cache entry %d: type=%d, size=%zu, priority=%.2f", 
                entry->entry_id, entry_type, data_size, priority);
     
     return entry->entry_id;
@@ -172,7 +181,7 @@ int gps_adaptive_cache_find_entry(gps_cache_entry_type_t entry_type, const void 
             
             pthread_mutex_unlock(&g_cache_mutex);
             
-            LOGX_DEBUG("Cache hit for entry %d: type=%d, access_count=%d", 
+            LOGX_DEBUG_MSG("Cache hit for entry %d: type=%d, access_count=%d", 
                        entry->entry_id, entry_type, entry->access_count);
             
             return AUTONOMY_SUCCESS;
@@ -182,12 +191,12 @@ int gps_adaptive_cache_find_entry(gps_cache_entry_type_t entry_type, const void 
     g_cache.total_misses++;
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_DEBUG("Cache miss for entry type=%d", entry_type);
+    LOGX_DEBUG_MSG("Cache miss for entry type=%d", entry_type);
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
 // Update entry priority
-static int gps_adaptive_cache_update_priority(int entry_id, double new_priority) {
+int gps_adaptive_cache_update_priority(int entry_id, double new_priority) {
     if (!g_cache_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -202,7 +211,7 @@ static int gps_adaptive_cache_update_priority(int entry_id, double new_priority)
             g_cache.cache_entries[i].priority = new_priority;
             pthread_mutex_unlock(&g_cache_mutex);
             
-            LOGX_DEBUG("Updated cache entry %d priority to %.2f", entry_id, new_priority);
+            LOGX_DEBUG_MSG("Updated cache entry %d priority to %.2f", entry_id, new_priority);
             return AUTONOMY_SUCCESS;
         }
     }
@@ -212,7 +221,7 @@ static int gps_adaptive_cache_update_priority(int entry_id, double new_priority)
 }
 
 // Remove entry from cache
-static int gps_adaptive_cache_remove_entry(int entry_id) {
+int gps_adaptive_cache_remove_entry(int entry_id) {
     if (!g_cache_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -247,7 +256,7 @@ static int gps_adaptive_cache_remove_entry(int entry_id) {
             
             pthread_mutex_unlock(&g_cache_mutex);
             
-            LOGX_DEBUG("Removed cache entry %d", entry_id);
+            LOGX_DEBUG_MSG("Removed cache entry %d", entry_id);
             return AUTONOMY_SUCCESS;
         }
     }
@@ -257,7 +266,7 @@ static int gps_adaptive_cache_remove_entry(int entry_id) {
 }
 
 // Perform cache cleanup
-static void perform_cache_cleanup(void) {
+void perform_cache_cleanup(void) {
     time_t now = time(NULL);
     
     // Check if enough time has passed since last cleanup
@@ -268,7 +277,7 @@ static void perform_cache_cleanup(void) {
     g_cache.last_cleanup = now;
     g_cache.total_cleanups++;
     
-    LOGX_DEBUG("Starting cache cleanup - entries: %d, memory: %zu bytes", 
+    LOGX_DEBUG_MSG("Starting cache cleanup - entries: %d, memory: %zu bytes", 
                g_cache.entry_count, g_cache.memory_usage);
     
     // Calculate cache hit ratio
@@ -288,12 +297,12 @@ static void perform_cache_cleanup(void) {
         perform_gentle_cleanup();
     }
     
-    LOGX_DEBUG("Cache cleanup completed - entries: %d, memory: %zu bytes", 
+    LOGX_DEBUG_MSG("Cache cleanup completed - entries: %d, memory: %zu bytes", 
                g_cache.entry_count, g_cache.memory_usage);
 }
 
 // Perform aggressive cache cleanup
-static void perform_aggressive_cleanup(void) {
+void perform_aggressive_cleanup(void) {
     // Sort entries by priority and age for eviction
     int eviction_candidates[MAX_CACHE_ENTRIES];
     int candidate_count = 0;
@@ -349,11 +358,11 @@ static void perform_aggressive_cleanup(void) {
         g_cache.entry_count--;
     }
     
-    LOGX_INFO("Aggressive cache cleanup: evicted %d entries", entries_to_evict);
+    LOGX_INFO_MSG("Aggressive cache cleanup: evicted %d entries", entries_to_evict);
 }
 
 // Perform gentle cache cleanup
-static void perform_gentle_cleanup(void) {
+void perform_gentle_cleanup(void) {
     time_t now = time(NULL);
     int expired_count = 0;
     
@@ -389,12 +398,12 @@ static void perform_gentle_cleanup(void) {
     }
     
     if (expired_count > 0) {
-        LOGX_INFO("Gentle cache cleanup: removed %d expired entries", expired_count);
+        LOGX_INFO_MSG("Gentle cache cleanup: removed %d expired entries", expired_count);
     }
 }
 
 // Calculate eviction score for an entry
-static double calculate_eviction_score(const gps_cache_entry_t *entry) {
+double calculate_eviction_score(const gps_cache_entry_t *entry) {
     time_t now = time(NULL);
     
     // Priority factor (higher priority = lower eviction score)
@@ -413,7 +422,7 @@ static double calculate_eviction_score(const gps_cache_entry_t *entry) {
 }
 
 // Get cache status
-static int gps_adaptive_cache_get_status(gps_adaptive_cache_status_t *status) {
+int gps_adaptive_cache_get_status(gps_adaptive_cache_status_t *status) {
     if (!g_cache_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -445,7 +454,7 @@ static int gps_adaptive_cache_get_status(gps_adaptive_cache_status_t *status) {
 }
 
 // Get cache configuration
-static int gps_adaptive_cache_get_config(gps_adaptive_cache_config_t *config) {
+int gps_adaptive_cache_get_config(gps_adaptive_cache_config_t *config) {
     if (!g_cache_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -465,7 +474,7 @@ static int gps_adaptive_cache_get_config(gps_adaptive_cache_config_t *config) {
 }
 
 // Set cache configuration
-static int gps_adaptive_cache_set_config(const gps_adaptive_cache_config_t *config) {
+int gps_adaptive_cache_set_config(const gps_adaptive_cache_config_t *config) {
     if (!g_cache_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -481,12 +490,12 @@ static int gps_adaptive_cache_set_config(const gps_adaptive_cache_config_t *conf
     
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_INFO("GPS adaptive cache configuration updated");
+    LOGX_INFO_MSG("GPS adaptive cache configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable cache
-static int gps_adaptive_cache_set_enabled(bool enabled) {
+int gps_adaptive_cache_set_enabled(bool enabled) {
     if (!g_cache_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -495,12 +504,12 @@ static int gps_adaptive_cache_set_enabled(bool enabled) {
     g_cache.enabled = enabled;
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_INFO("GPS adaptive cache %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS adaptive cache %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Force cache cleanup
-static int gps_adaptive_cache_force_cleanup(void) {
+int gps_adaptive_cache_force_cleanup(void) {
     if (!g_cache_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -515,12 +524,12 @@ static int gps_adaptive_cache_force_cleanup(void) {
     
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_INFO("GPS adaptive cache cleanup forced");
+    LOGX_INFO_MSG("GPS adaptive cache cleanup forced");
     return AUTONOMY_SUCCESS;
 }
 
 // Get cache statistics
-static int gps_adaptive_cache_get_statistics(gps_adaptive_cache_stats_t *stats) {
+int gps_adaptive_cache_get_statistics(gps_adaptive_cache_stats_t *stats) {
     if (!g_cache_initialized || !stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -565,7 +574,7 @@ static int gps_adaptive_cache_get_statistics(gps_adaptive_cache_stats_t *stats) 
 }
 
 // Reset cache
-static int gps_adaptive_cache_reset(void) {
+int gps_adaptive_cache_reset(void) {
     if (!g_cache_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -598,12 +607,12 @@ static int gps_adaptive_cache_reset(void) {
     
     pthread_mutex_unlock(&g_cache_mutex);
     
-    LOGX_INFO("GPS adaptive cache reset");
+    LOGX_INFO_MSG("GPS adaptive cache reset");
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup adaptive cache
-static void gps_adaptive_cache_cleanup(void) {
+void gps_adaptive_cache_cleanup(void) {
     if (!g_cache_initialized) {
         return;
     }
@@ -622,5 +631,5 @@ static void gps_adaptive_cache_cleanup(void) {
     pthread_mutex_destroy(&g_cache_mutex);
     g_cache_initialized = false;
     
-    LOGX_INFO("GPS adaptive cache cleaned up");
+    LOGX_INFO_MSG("GPS adaptive cache cleaned up");
 }

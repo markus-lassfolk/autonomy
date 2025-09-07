@@ -1,11 +1,13 @@
 #ifndef GPS_OPENCELLID_ENHANCED_H
 #define GPS_OPENCELLID_ENHANCED_H
 
+#include "../core/types.h"
 #include "gps_opencellid.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
 #include <pthread.h>
+#include <fcntl.h>
 
 #ifdef __cplusplus
 extern "C" {

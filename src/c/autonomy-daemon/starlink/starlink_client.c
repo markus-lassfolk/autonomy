@@ -10,6 +10,8 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/time.h>
+#include <stdbool.h>
+#include <math.h>
 
 // Global Starlink client configuration
 static starlink_config_t g_starlink_config = {
@@ -236,7 +238,7 @@ static int starlink_parse_response(const char *json_response, starlink_status_re
 }
 
 // Get Starlink status
-static int starlink_get_status(starlink_status_response_t *status) {
+int starlink_get_status(starlink_status_response_t *status) {
     if (!status) {
         return -1;
     }
@@ -305,8 +307,4 @@ const starlink_config_t* starlink_get_config(void) {
     return &g_starlink_config;
 }
 
-// Cleanup Starlink client
-static void starlink_client_cleanup(void) {
-    starlink_disconnect();
-    g_starlink_state.initialized = false;
-}
+// Note: starlink_client_cleanup already defined above

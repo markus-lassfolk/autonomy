@@ -6,6 +6,9 @@
 #include <pthread.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdbool.h>
+#include <math.h>
+#include <sys/socket.h>
 
 // MQTT telemetry publisher structure
 typedef struct {
@@ -37,10 +40,10 @@ static bool g_mqtt_telemetry_publisher_initialized = false;
 static void* telemetry_publisher_thread(void* arg);
 static int publish_all_telemetry_samples(void);
 static int publish_all_telemetry_events(void);
-static int publish_system_status_update(void);
+int publish_system_status_update(void);
 
 // Initialize MQTT telemetry publisher
-static int mqtt_telemetry_publisher_init(void) {
+int mqtt_telemetry_publisher_init(void) {
     if (g_mqtt_telemetry_publisher_initialized) {
         return 0; // Already initialized
     }
@@ -67,7 +70,7 @@ static int mqtt_telemetry_publisher_init(void) {
 }
 
 // Clean up MQTT telemetry publisher
-static void mqtt_telemetry_publisher_cleanup(void) {
+void mqtt_telemetry_publisher_cleanup(void) {
     if (!g_mqtt_telemetry_publisher_initialized) return;
     
     // Stop publisher thread
@@ -86,7 +89,7 @@ static void mqtt_telemetry_publisher_cleanup(void) {
 }
 
 // Start MQTT telemetry publisher
-static int mqtt_telemetry_publisher_start(void) {
+int mqtt_telemetry_publisher_start(void) {
     if (!g_mqtt_telemetry_publisher_initialized || !g_mqtt_telemetry_publisher.enabled) {
         return -1;
     }
@@ -115,7 +118,7 @@ static int mqtt_telemetry_publisher_start(void) {
 }
 
 // Stop MQTT telemetry publisher
-static int mqtt_telemetry_publisher_stop(void) {
+int mqtt_telemetry_publisher_stop(void) {
     if (!g_mqtt_telemetry_publisher_initialized || !g_mqtt_telemetry_publisher.thread_running) {
         return -1;
     }
@@ -230,7 +233,7 @@ static int publish_all_telemetry_events(void) {
 }
 
 // Publish system status update
-static int publish_system_status_update(void) {
+int publish_system_status_update(void) {
     int result = mqtt_client_publish_system_status();
     
     if (result == 0) {
@@ -285,7 +288,7 @@ static int mqtt_telemetry_publisher_publish_event(const telemetry_event_t* event
 }
 
 // Get MQTT telemetry publisher status
-static void mqtt_telemetry_publisher_get_status(mqtt_telemetry_publisher_t* status) {
+void mqtt_telemetry_publisher_get_status(mqtt_telemetry_publisher_t* status) {
     if (!status || !g_mqtt_telemetry_publisher_initialized) return;
     
     pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex);
@@ -294,12 +297,12 @@ static void mqtt_telemetry_publisher_get_status(mqtt_telemetry_publisher_t* stat
 }
 
 // Check if MQTT telemetry publisher is initialized
-static bool mqtt_telemetry_publisher_is_initialized(void) {
+bool mqtt_telemetry_publisher_is_initialized(void) {
     return g_mqtt_telemetry_publisher_initialized;
 }
 
 // Check if MQTT telemetry publisher is running
-static bool mqtt_telemetry_publisher_is_running(void) {
+bool mqtt_telemetry_publisher_is_running(void) {
     return g_mqtt_telemetry_publisher_initialized && g_mqtt_telemetry_publisher.thread_running;
 }
 

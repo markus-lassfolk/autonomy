@@ -1,11 +1,18 @@
 #include "gps_cell_tower.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
+
+// Forward declarations
+static void calculate_triangulated_position(void);
+static void calculate_single_tower_position(void);
+static void add_position_history(void);
 
 // Cell tower positioning configuration
 static const int MAX_CELL_TOWERS = 100;                     // Maximum cell towers to track
@@ -25,9 +32,9 @@ static bool g_cell_tower_initialized = false;
 static pthread_mutex_t g_cell_tower_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialize cell tower positioning
-static int gps_cell_tower_init(void) {
+int gps_cell_tower_init(void) {
     if (g_cell_tower_initialized) {
-        LOGX_WARN("Cell tower positioning already initialized");
+        LOGX_WARN_MSG("Cell tower positioning already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -79,12 +86,12 @@ static int gps_cell_tower_init(void) {
     g_cell_tower_initialized = true;
     pthread_mutex_unlock(&g_cell_tower_mutex);
     
-    LOGX_INFO("Cell tower positioning initialized successfully");
+    LOGX_INFO_MSG("Cell tower positioning initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Add cell tower information
-static int gps_cell_tower_add_tower(const gps_cell_tower_info_t *tower_info) {
+int gps_cell_tower_add_tower(const gps_cell_tower_info_t *tower_info) {
     if (!g_cell_tower_initialized || !tower_info) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -109,7 +116,7 @@ static int gps_cell_tower_add_tower(const gps_cell_tower_info_t *tower_info) {
             
             pthread_mutex_unlock(&g_cell_tower_mutex);
             
-            LOGX_DEBUG("Updated existing cell tower: cell_id=%d, signal=%.1f dBm", 
+            LOGX_DEBUG_MSG("Updated existing cell tower: cell_id=%d, signal=%.1f dBm", 
                        tower_info->cell_id, tower_info->signal_strength);
             
             return AUTONOMY_SUCCESS;
@@ -136,7 +143,7 @@ static int gps_cell_tower_add_tower(const gps_cell_tower_info_t *tower_info) {
     
     if (tower_index < 0) {
         pthread_mutex_unlock(&g_cell_tower_mutex);
-        LOGX_ERROR("No free slots for cell tower");
+        LOGX_ERROR_MSG("No free slots for cell tower");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
@@ -162,7 +169,7 @@ static int gps_cell_tower_add_tower(const gps_cell_tower_info_t *tower_info) {
     
     pthread_mutex_unlock(&g_cell_tower_mutex);
     
-    LOGX_INFO("Added cell tower: cell_id=%d, network=%d, signal=%.1f dBm, pos=(%.6f, %.6f)", 
+    LOGX_INFO_MSG("Added cell tower: cell_id=%d, network=%d, signal=%.1f dBm, pos=(%.6f, %.6f)", 
                tower_info->cell_id, tower_info->network_type, tower_info->signal_strength,
                tower_info->lat, tower_info->lon);
     
@@ -170,13 +177,13 @@ static int gps_cell_tower_add_tower(const gps_cell_tower_info_t *tower_info) {
 }
 
 // Generate unique tower ID
-static int generate_tower_id(void) {
+int generate_tower_id(void) {
     static int next_id = 6000;
     return next_id++;
 }
 
 // Find oldest tower
-static int find_oldest_tower(void) {
+int find_oldest_tower(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
@@ -192,7 +199,7 @@ static int find_oldest_tower(void) {
 }
 
 // Update cell tower positioning
-static int gps_cell_tower_update_position(void) {
+int gps_cell_tower_update_position(void) {
     if (!g_cell_tower_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -227,14 +234,14 @@ static int gps_cell_tower_update_position(void) {
     
     pthread_mutex_unlock(&g_cell_tower_mutex);
     
-    LOGX_DEBUG("Cell tower position updated: (%.6f, %.6f) accuracy: %.1fm", 
+    LOGX_DEBUG_MSG("Cell tower position updated: (%.6f, %.6f) accuracy: %.1fm", 
                g_cell_tower.current_lat, g_cell_tower.current_lon, g_cell_tower.current_accuracy);
     
     return AUTONOMY_SUCCESS;
 }
 
 // Calculate position using triangulation
-static void calculate_triangulated_position(void) {
+void calculate_triangulated_position(void) {
     double total_weight = 0.0;
     double weighted_lat = 0.0;
     double weighted_lon = 0.0;
@@ -274,7 +281,7 @@ static void calculate_triangulated_position(void) {
 }
 
 // Calculate position using single tower
-static void calculate_single_tower_position(void) {
+void calculate_single_tower_position(void) {
     // Find the tower with the strongest signal
     int best_tower_index = -1;
     double best_signal = g_cell_tower.min_signal_strength;
@@ -305,7 +312,7 @@ static void calculate_single_tower_position(void) {
 }
 
 // Add position to history
-static void add_position_history(void) {
+void add_position_history(void) {
     // Shift position history array
     for (int i = g_cell_tower.max_position_history - 1; i > 0; i--) {
         memcpy(&g_cell_tower.position_history[i], &g_cell_tower.position_history[i-1], 
@@ -324,7 +331,7 @@ static void add_position_history(void) {
 }
 
 // Get cell tower position
-static int gps_cell_tower_get_position(double *lat, double *lon, double *accuracy) {
+int gps_cell_tower_get_position(double *lat, double *lon, double *accuracy) {
     if (!g_cell_tower_initialized || !lat || !lon || !accuracy) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -341,7 +348,7 @@ static int gps_cell_tower_get_position(double *lat, double *lon, double *accurac
 }
 
 // Get cell tower status
-static int gps_cell_tower_get_status(gps_cell_tower_status_t *status) {
+int gps_cell_tower_get_status(gps_cell_tower_status_t *status) {
     if (!g_cell_tower_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -374,7 +381,7 @@ static int gps_cell_tower_get_status(gps_cell_tower_status_t *status) {
 }
 
 // Get cell tower configuration
-static int gps_cell_tower_get_config(gps_cell_tower_config_t *config) {
+int gps_cell_tower_get_config(gps_cell_tower_config_t *config) {
     if (!g_cell_tower_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -394,7 +401,7 @@ static int gps_cell_tower_get_config(gps_cell_tower_config_t *config) {
 }
 
 // Set cell tower configuration
-static int gps_cell_tower_set_config(const gps_cell_tower_config_t *config) {
+int gps_cell_tower_set_config(const gps_cell_tower_config_t *config) {
     if (!g_cell_tower_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -410,12 +417,12 @@ static int gps_cell_tower_set_config(const gps_cell_tower_config_t *config) {
     
     pthread_mutex_unlock(&g_cell_tower_mutex);
     
-    LOGX_INFO("Cell tower positioning configuration updated");
+    LOGX_INFO_MSG("Cell tower positioning configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable cell tower positioning
-static int gps_cell_tower_set_enabled(bool enabled) {
+int gps_cell_tower_set_enabled(bool enabled) {
     if (!g_cell_tower_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -424,12 +431,12 @@ static int gps_cell_tower_set_enabled(bool enabled) {
     g_cell_tower.enabled = enabled;
     pthread_mutex_unlock(&g_cell_tower_mutex);
     
-    LOGX_INFO("Cell tower positioning %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("Cell tower positioning %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Force position update
-static int gps_cell_tower_force_position_update(void) {
+int gps_cell_tower_force_position_update(void) {
     if (!g_cell_tower_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -439,12 +446,12 @@ static int gps_cell_tower_force_position_update(void) {
     g_cell_tower.last_position_update = 0;
     pthread_mutex_unlock(&g_cell_tower_mutex);
     
-    LOGX_INFO("Cell tower position update forced");
+    LOGX_INFO_MSG("Cell tower position update forced");
     return gps_cell_tower_update_position();
 }
 
 // Get cell tower statistics
-static int gps_cell_tower_get_statistics(gps_cell_tower_stats_t *stats) {
+int gps_cell_tower_get_statistics(gps_cell_tower_stats_t *stats) {
     if (!g_cell_tower_initialized || !stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -486,7 +493,7 @@ static int gps_cell_tower_get_statistics(gps_cell_tower_stats_t *stats) {
 }
 
 // Reset cell tower positioning
-static int gps_cell_tower_reset(void) {
+int gps_cell_tower_reset(void) {
     if (!g_cell_tower_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -529,12 +536,12 @@ static int gps_cell_tower_reset(void) {
     
     pthread_mutex_unlock(&g_cell_tower_mutex);
     
-    LOGX_INFO("Cell tower positioning reset");
+    LOGX_INFO_MSG("Cell tower positioning reset");
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup cell tower positioning
-static void gps_cell_tower_cleanup(void) {
+void gps_cell_tower_cleanup(void) {
     if (!g_cell_tower_initialized) {
         return;
     }
@@ -542,5 +549,5 @@ static void gps_cell_tower_cleanup(void) {
     pthread_mutex_destroy(&g_cell_tower_mutex);
     g_cell_tower_initialized = false;
     
-    LOGX_INFO("Cell tower positioning cleaned up");
+    LOGX_INFO_MSG("Cell tower positioning cleaned up");
 }

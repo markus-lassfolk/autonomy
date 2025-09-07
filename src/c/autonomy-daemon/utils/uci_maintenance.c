@@ -1,7 +1,6 @@
 #include "uci_maintenance.h"
-#include "types.h"
-#include "notifications/notification_manager.h"
-#include "notifications/notification_types.h"
+#include "../core/types.h"
+#include "../notifications/notification_types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,26 +9,29 @@
 #include <dirent.h>
 #include <time.h>
 #include <errno.h>
+#include <stdbool.h>
+#include <math.h>
+#include <fcntl.h>
 
 // Global UCI maintenance instance
 static uci_maintenance_t g_uci_maintenance;
 
 // Forward declarations
-static int check_parse_errors(uci_maintenance_result_t *result);
+int check_parse_errors(uci_maintenance_result_t *result);
 static int validate_critical_sections(uci_maintenance_result_t *result);
-static int check_uci_corruption(uci_maintenance_result_t *result);
-static int check_unwanted_config_files(uci_maintenance_result_t *result);
+int check_uci_corruption(uci_maintenance_result_t *result);
+int check_unwanted_config_files(uci_maintenance_result_t *result);
 static int fix_issues(uci_maintenance_result_t *result);
 static int verify_fixes(uci_maintenance_result_t *result);
 static int create_uci_backup(const char *backup_path);
 static int restore_uci_backup(const char *backup_path);
-static int remove_unwanted_files(void);
+int remove_unwanted_files(void);
 static void send_notification(const char *type, const char *message);
 
 /**
  * Initialize UCI maintenance
  */
-static int uci_maintenance_init(void) {
+int uci_maintenance_init(void) {
     memset(&g_uci_maintenance, 0, sizeof(uci_maintenance_t));
     
     // Initialize statistics
@@ -45,9 +47,9 @@ static int uci_maintenance_init(void) {
 /**
  * Perform comprehensive UCI maintenance
  */
-static int uci_maintenance_perform_maintenance(uci_maintenance_result_t *result) {
+int uci_maintenance_perform_maintenance(uci_maintenance_result_t *result) {
     if (!result) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Initialize result structure
@@ -110,7 +112,7 @@ static int uci_maintenance_perform_maintenance(uci_maintenance_result_t *result)
 /**
  * Check for UCI parse errors
  */
-static int check_parse_errors(uci_maintenance_result_t *result) {
+int check_parse_errors(uci_maintenance_result_t *result) {
     // Test UCI configuration by trying to read all sections
     const char *test_sections[] = {"network", "mwan3", "system", "firewall"};
     
@@ -185,12 +187,12 @@ static int validate_critical_sections(uci_maintenance_result_t *result) {
 /**
  * Check for UCI corruption
  */
-static int check_uci_corruption(uci_maintenance_result_t *result) {
+int check_uci_corruption(uci_maintenance_result_t *result) {
     // Check for corrupted UCI files by looking for common corruption patterns
     const char *config_dir = "/etc/config";
     DIR *dir = opendir(config_dir);
     if (!dir) {
-        return AUTONOMY_ERROR_SYSTEM_CALL_FAILED;
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
     struct dirent *entry;
@@ -234,11 +236,11 @@ static int check_uci_corruption(uci_maintenance_result_t *result) {
 /**
  * Check for unwanted config files
  */
-static int check_unwanted_config_files(uci_maintenance_result_t *result) {
+int check_unwanted_config_files(uci_maintenance_result_t *result) {
     const char *config_dir = "/etc/config";
     DIR *dir = opendir(config_dir);
     if (!dir) {
-        return AUTONOMY_ERROR_SYSTEM_CALL_FAILED;
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
     struct dirent *entry;
@@ -400,11 +402,11 @@ static int restore_uci_backup(const char *backup_path) {
 /**
  * Remove unwanted files
  */
-static int remove_unwanted_files(void) {
+int remove_unwanted_files(void) {
     const char *config_dir = "/etc/config";
     DIR *dir = opendir(config_dir);
     if (!dir) {
-        return AUTONOMY_ERROR_SYSTEM_CALL_FAILED;
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
     int removed_count = 0;
@@ -443,12 +445,12 @@ static void send_notification(const char *type, const char *message) {
     strcpy(event.title, "UCI Maintenance Alert");
     strncpy(event.message, message, sizeof(event.message) - 1);
     event.message[sizeof(event.message) - 1] = '\0';
-    event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
+    event.type = NOTIFICATION_TYPE_SYSTEM_ALERT;
     event.timestamp = time(NULL);
     
     // Determine priority based on type
     if (strcmp(type, "critical") == 0) {
-        event.priority = NOTIFICATION_PRIORITY_EMERGENCY;
+        event.priority = NOTIFICATION_PRIORITY_CRITICAL;
     } else if (strcmp(type, "warning") == 0) {
         event.priority = NOTIFICATION_PRIORITY_HIGH;
     } else {
@@ -467,9 +469,9 @@ static void send_notification(const char *type, const char *message) {
 /**
  * Get UCI maintenance status
  */
-static int uci_maintenance_get_status(uci_maintenance_status_t *status) {
+int uci_maintenance_get_status(uci_maintenance_status_t *status) {
     if (!status) {
-        return AUTONOMY_ERROR_INVALID_PARAMETER;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     status->last_check_time = g_uci_maintenance.stats.last_check_time;
@@ -484,7 +486,7 @@ static int uci_maintenance_get_status(uci_maintenance_status_t *status) {
 /**
  * Reset UCI maintenance
  */
-static int uci_maintenance_reset(void) {
+int uci_maintenance_reset(void) {
     memset(&g_uci_maintenance.stats, 0, sizeof(uci_maintenance_stats_t));
     return AUTONOMY_SUCCESS;
 }
@@ -492,6 +494,6 @@ static int uci_maintenance_reset(void) {
 /**
  * Cleanup UCI maintenance
  */
-static void uci_maintenance_cleanup(void) {
+void uci_maintenance_cleanup(void) {
     // Nothing to cleanup for this module
 }

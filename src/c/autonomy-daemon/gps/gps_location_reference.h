@@ -1,11 +1,15 @@
 #ifndef GPS_LOCATION_REFERENCE_H
 #define GPS_LOCATION_REFERENCE_H
 
+#include "../core/types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
 #include <pthread.h>
 #include <sqlite3.h>
+#include <math.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 extern "C" {

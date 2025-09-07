@@ -1,11 +1,22 @@
 #include "telemetry_comprehensive_ubus.h"
 #include "telemetry_comprehensive.h"
-#include "logx.h"
+#include "telemetry_store.h"
+#include "../core/types.h"
+#include "../utils/logx.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
+#include <json-c/json.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <math.h>
+#include <fcntl.h>
+
+// UBUS constants
+#define UBUS_STATUS_OK 0
 
 // UBUS parameter policies
 enum {
@@ -43,7 +54,7 @@ static const struct blobmsg_policy telemetry_location_policy[] = {
 };
 
 // Helper function to add telemetry sample to blob
-static void add_telemetry_sample_to_blob(struct blob_buf *bb, const telemetry_sample_t *sample) {
+void add_telemetry_sample_to_blob(struct blob_buf *bb, const telemetry_sample_t *sample) {
     void *sample_table = blobmsg_open_table(bb, NULL);
     
     blobmsg_add_u64(bb, "id", sample->id);
@@ -70,7 +81,7 @@ static void add_telemetry_sample_to_blob(struct blob_buf *bb, const telemetry_sa
     blobmsg_add_double(bb, "packet_loss_percent", sample->packet_loss_percent);
     blobmsg_add_double(bb, "jitter_ms", sample->jitter_ms);
     blobmsg_add_u64(bb, "throughput_bps", sample->throughput_bps);
-    blobmsg_add_double(bb, "signal_quality", sample->signal_quality);
+    blobmsg_add_double(bb, "signal_quality", sample->signal_strength);
     blobmsg_add_string(bb, "status", sample->status);
     blobmsg_close_table(bb, network_table);
     
@@ -112,7 +123,7 @@ static void add_telemetry_sample_to_blob(struct blob_buf *bb, const telemetry_sa
 }
 
 // Helper function to add decision record to blob
-static void add_decision_record_to_blob(struct blob_buf *bb, const decision_record_t *decision) {
+void add_decision_record_to_blob(struct blob_buf *bb, const decision_record_t *decision) {
     void *decision_table = blobmsg_open_table(bb, NULL);
     
     blobmsg_add_u64(bb, "id", decision->id);

@@ -1,11 +1,17 @@
 #include "wifi_enhanced_ubus.h"
 #include "wifi_enhanced.h"
-#include "logx.h"
+#include "../utils/logx.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <math.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 // UBUS parameter policies
 enum {
@@ -48,7 +54,7 @@ static const struct blobmsg_policy wifi_config_policy[] = {
 };
 
 // Helper function to add WiFi interface to blob
-static void add_wifi_interface_to_blob(struct blob_buf *bb, const wifi_interface_t *interface) {
+void add_wifi_interface_to_blob(struct blob_buf *bb, const wifi_interface_t *interface) {
     void *interface_table = blobmsg_open_table(bb, NULL);
     
     blobmsg_add_string(bb, "name", interface->name);
@@ -85,7 +91,7 @@ static void add_wifi_interface_to_blob(struct blob_buf *bb, const wifi_interface
 }
 
 // Helper function to add channel score to blob
-static void add_channel_score_to_blob(struct blob_buf *bb, const wifi_enhanced_channel_score_t *score) {
+void add_channel_score_to_blob(struct blob_buf *bb, const wifi_enhanced_channel_score_t *score) {
     void *channel_table = blobmsg_open_table(bb, NULL);
     
     blobmsg_add_u32(bb, "channel", score->channel);

@@ -1,12 +1,17 @@
 #include "opencellid_ubus.h"
 #include "opencellid_complete.h"
-#include "logx.h"
+#include "../utils/logx.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <math.h>
+#include <fcntl.h>
 
 // UBUS parameter policies
 enum {
@@ -53,7 +58,7 @@ static const struct blobmsg_policy opencellid_clear_policy[] = {
 };
 
 // Helper function to add cell info to blob
-static void add_cell_info_to_blob(struct blob_buf *bb, const char *name, 
+void add_cell_info_to_blob(struct blob_buf *bb, const char *name, 
                                   const opencellid_cell_identifier_t *cell_id,
                                   const opencellid_cellular_metrics_t *metrics) {
     void *cell_table = blobmsg_open_table(bb, name);

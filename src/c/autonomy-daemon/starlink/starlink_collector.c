@@ -1,11 +1,12 @@
 #include "starlink_types.h"
 #include "starlink_modules.h"
-#include "../starlink_obstruction.h"
+#include "starlink_obstruction.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <stdbool.h>
 
 // Starlink collector state
 static struct {
@@ -28,7 +29,7 @@ static struct {
 };
 
 // Initialize Starlink collector
-static int starlink_collector_init(int collection_interval) {
+int starlink_collector_init(int collection_interval) {
     if (collection_interval > 0) {
         g_collector_state.collection_interval = collection_interval;
     }
@@ -52,7 +53,7 @@ static int starlink_collector_init(int collection_interval) {
 }
 
 // Check if we should collect new data
-static bool starlink_should_collect(void) {
+bool starlink_should_collect(void) {
     if (!g_collector_state.collection_enabled) {
         return false;
     }
@@ -62,7 +63,7 @@ static bool starlink_should_collect(void) {
 }
 
 // Collect Starlink data
-static int starlink_collect_data(starlink_collection_result_t *result) {
+int starlink_collect_data(starlink_collection_result_t *result) {
     if (!result) {
         return -1;
     }
@@ -189,7 +190,7 @@ static int starlink_collect_data(starlink_collection_result_t *result) {
 }
 
 // Get cached Starlink data
-static int starlink_get_cached_data(starlink_collection_result_t *result) {
+int starlink_get_cached_data(starlink_collection_result_t *result) {
     if (!result) {
         return -1;
     }
@@ -203,27 +204,28 @@ static int starlink_get_cached_data(starlink_collection_result_t *result) {
 }
 
 // Get Starlink statistics
-static void starlink_get_collector_stats(int *cache_hits, int *cache_misses, int *errors, int *successes) {
+int starlink_get_collector_stats(int *cache_hits, int *cache_misses, int *errors, int *successes) {
     if (cache_hits) *cache_hits = g_collector_state.cache_hit_count;
     if (cache_misses) *cache_misses = g_collector_state.cache_miss_count;
     if (errors) *errors = g_collector_state.error_count;
     if (successes) *successes = g_collector_state.success_count;
+    return 0; // Success
 }
 
 // Set collection interval
-static void starlink_set_collection_interval(int interval_seconds) {
+void starlink_set_collection_interval(int interval_seconds) {
     if (interval_seconds > 0) {
         g_collector_state.collection_interval = interval_seconds;
     }
 }
 
 // Enable/disable collection
-static void starlink_set_collection_enabled(bool enabled) {
+void starlink_set_collection_enabled(bool enabled) {
     g_collector_state.collection_enabled = enabled;
 }
 
 // Force immediate collection (bypass cache)
-static int starlink_force_collect(starlink_collection_result_t *result) {
+int starlink_force_collect(starlink_collection_result_t *result) {
     if (!result) {
         return -1;
     }
@@ -241,7 +243,7 @@ static int starlink_force_collect(starlink_collection_result_t *result) {
 }
 
 // Get Starlink location (cached if available)
-static int starlink_get_location(starlink_lla_position_t *location) {
+int starlink_get_location(starlink_lla_position_t *location) {
     if (!location) {
         return -1;
     }
@@ -267,7 +269,7 @@ static int starlink_get_location(starlink_lla_position_t *location) {
 }
 
 // Get Starlink health status
-static int starlink_get_health(starlink_health_t *health) {
+int starlink_get_health(starlink_health_t *health) {
     if (!health) {
         return -1;
     }
@@ -288,7 +290,7 @@ static int starlink_get_health(starlink_health_t *health) {
 }
 
 // Cleanup Starlink collector
-static void starlink_collector_cleanup(void) {
+void starlink_collector_cleanup(void) {
     starlink_client_cleanup();
     memset(&g_collector_state, 0, sizeof(g_collector_state));
 }

@@ -1,52 +1,26 @@
 #ifndef GPS_COMPREHENSIVE_H
 #define GPS_COMPREHENSIVE_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
 #include <pthread.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <math.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// GPS source types
-typedef enum {
-    GPS_SOURCE_RUTOS = 0,
-    GPS_SOURCE_STARLINK,
-    GPS_SOURCE_OPENCELLID,
-    GPS_SOURCE_GOOGLE,
-    GPS_SOURCE_EXTERNAL,
-    GPS_SOURCE_MAX
-} gps_source_type_t;
+// Note: gps_source_type_t is defined in ../core/types.h
 
-// GPS fix types
-typedef enum {
-    GPS_FIX_TYPE_NONE = 0,
-    GPS_FIX_TYPE_2D,
-    GPS_FIX_TYPE_3D,
-    GPS_FIX_TYPE_DGPS,
-    GPS_FIX_TYPE_RTK_FLOAT,
-    GPS_FIX_TYPE_RTK_FIXED,
-    GPS_FIX_TYPE_MAX
-} gps_fix_type_t;
+// Note: gps_fix_type_t is defined in ../core/types.h
 
-// GPS fix quality
-typedef enum {
-    GPS_FIX_QUALITY_INVALID = 0,
-    GPS_FIX_QUALITY_GPS = 1,
-    GPS_FIX_QUALITY_DGPS = 2,
-    GPS_FIX_QUALITY_PPS = 3,
-    GPS_FIX_QUALITY_RTK = 4,
-    GPS_FIX_QUALITY_RTK_FLOAT = 5,
-    GPS_FIX_QUALITY_ESTIMATED = 6,
-    GPS_FIX_QUALITY_MANUAL = 7,
-    GPS_FIX_QUALITY_SIMULATED = 8,
-    GPS_FIX_QUALITY_MAX
-} gps_fix_quality_t;
+// Note: gps_fix_quality_t is defined in ../core/types.h
 
 // Standardized GPS data structure
 typedef struct {

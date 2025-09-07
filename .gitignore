@@ -1,95 +1,25 @@
-# Binaries
-*.exe
-*.dll
+# RUTOS SDK and build artifacts - DO NOT COMMIT
+RUTX_R_GPL_*.tar.gz*
+rutos-ipq40xx-rutx-sdk/
+*.o
 *.so
-*.dylib
+*.a
 
-# Ignore binary files in root and build directories, but allow source directories
-/autonomyd
-/autonomyd-*
-/autonomyctl
-/test-*
-!test-*.go
-!test-*.sh
-
-# Ignore binaries in cmd subdirectories
-cmd/*/autonomyd
-cmd/*/autonomyctl
-cmd/*/starfaild
-cmd/*/test-*
-!cmd/*/test-*.go
-!cmd/*/test-*.sh
-
-# Build directories
-build/
-dist/
-SDK/
-
-# Temporary files
-*.tmp
-*.temp
+# Temporary scripts and build artifacts  
+*_fix.py
+*_sprint.py
+compilation_*.txt
+build_*.txt
+remaining_*.txt
 *.log
-*.pid
-*.swp
-*.swo
-*~
 
-# Configuration files with sensitive data
-*.key
-*.pem
-*.crt
-config.local.*
-*.env
-.env.*
-
-# SSH keys and certificates
-id_rsa*
-id_ed25519*
-*.ppk
-ssh_key*
-private_key*
-
-# API keys and tokens
-*api_key*
-*token*
-*secret*
-*password*
-/keys
-keys
-
-# Personal configuration
-configs/autonomy.local
-configs/autonomy.production
-
-# IDE files
+# IDE and editor files
 .vscode/
 .idea/
-*.sublime-*
+*~
+*.swp
+*.swo
 
-# OS files
+# OS generated files
 .DS_Store
 Thumbs.db
-desktop.ini
-
-# Go specific
-vendor/
-*.test
-*.prof
-coverage.out
-
-# Local development files
-*.local
-.env
-.env.local
-
-# Backup files
-*.bak
-*.backup
-*_backup
-
-# Test data and results
-test_results/
-test_data/
-*.json.bak
-/dl
-/keys

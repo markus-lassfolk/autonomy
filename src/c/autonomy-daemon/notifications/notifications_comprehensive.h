@@ -1,11 +1,17 @@
 #ifndef NOTIFICATIONS_COMPREHENSIVE_H
 #define NOTIFICATIONS_COMPREHENSIVE_H
 
-#include "notifications/notification_types.h"
-#include "notifications/smart_manager.h"
-#include "notifications/intelligence_engine.h"
-#include "notifications/acknowledgment_tracker.h"
-#include "notifications/delivery_optimizer.h"
+#include "notification_types.h"
+#include "smart_manager.h"
+#include "intelligence_engine.h"
+#include "acknowledgment_tracker.h"
+#include "delivery_optimizer.h"
+
+// Forward declarations for types that may not exist yet
+typedef struct smart_notification_manager smart_notification_manager_t;
+typedef struct intelligence_engine intelligence_engine_t;
+typedef struct acknowledgment_tracker acknowledgment_tracker_t;
+typedef struct delivery_optimizer delivery_optimizer_t;
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>

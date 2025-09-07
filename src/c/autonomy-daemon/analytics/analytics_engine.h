@@ -2,18 +2,13 @@
 #define ANALYTICS_ENGINE_H
 
 #include "../telemetry/telemetry_store.h"
+#include "health_analyzer.h"
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
+#include <math.h>
 
-// Health thresholds
-typedef struct {
-    double excellent; // > 80
-    double good;      // 60-80
-    double fair;      // 40-60
-    double poor;      // 20-40
-    double critical;  // < 20
-} health_thresholds_t;
+// Note: health_thresholds_t is defined in health_analyzer.h
 
 // Analytics configuration
 typedef struct {
@@ -49,7 +44,7 @@ typedef struct {
     bool has_last_failover;
 } system_overview_t;
 
-// Performance metrics
+// Member performance metrics (different from system performance_metrics_t)
 typedef struct {
     double average_latency[16];
     double average_loss[16];
@@ -60,7 +55,7 @@ typedef struct {
     double availability[16];
     char member_names[16][128];
     int member_count;
-} performance_metrics_t;
+} member_performance_metrics_t;
 
 // Member health
 typedef struct {
@@ -69,7 +64,7 @@ typedef struct {
     char issues[512];
     time_t last_check;
     trend_t trend;
-} member_health_t;
+}; // Note: member_health_t defined in health_analyzer.h
 
 // Health metrics
 typedef struct {
@@ -108,7 +103,7 @@ typedef struct {
 typedef struct {
     time_t timestamp;
     system_overview_t overview;
-    performance_metrics_t performance;
+    member_performance_metrics_t performance;
     health_metrics_t health;
     analytics_alert_t alerts[16];
     int alert_count;
@@ -162,7 +157,7 @@ void analytics_engine_get_dashboard_metrics(dashboard_metrics_t* metrics);
 
 // Get member analytics
 int analytics_engine_get_member_analytics(const char* member_name, int hours,
-                                         performance_metrics_t* analytics);
+                                         member_performance_metrics_t* analytics);
 
 // Update analytics metrics
 int analytics_engine_update_metrics(void);

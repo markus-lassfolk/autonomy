@@ -1,10 +1,11 @@
 #ifndef OVERLAY_MANAGEMENT_H
 #define OVERLAY_MANAGEMENT_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,6 +20,11 @@ typedef struct {
     bool notifications_enabled;             // Enable notifications
     bool notify_on_fixes;                   // Notify on successful fixes
     bool notify_on_critical;                // Notify on critical issues
+    int check_interval;                      // Check interval in seconds
+    int cleanup_threshold;                   // Cleanup threshold
+    int emergency_threshold;                 // Emergency threshold
+    bool auto_cleanup;                       // Auto cleanup enabled
+    bool backup_before_cleanup;              // Backup before cleanup
 } overlay_management_config_t;
 
 // Overlay management statistics
@@ -44,6 +50,17 @@ typedef struct {
     int emergency_cleanup_count;            // Emergency cleanup count
     int64_t total_bytes_freed;              // Total bytes freed
     time_t last_cleanup_time;               // Last cleanup time
+    int check_interval;                      // Check interval in seconds
+    int cleanup_threshold;                   // Cleanup threshold
+    int emergency_threshold;                 // Emergency threshold
+    bool auto_cleanup;                       // Auto cleanup enabled
+    bool backup_before_cleanup;              // Backup before cleanup
+    int total_cleanups;                      // Total cleanups performed
+    int total_emergency_cleanups;            // Total emergency cleanups
+    int64_t total_space_freed;               // Total space freed (alias for total_bytes_freed)
+    double current_usage_percent;            // Current usage percentage
+    int64_t current_usage_bytes;             // Current usage in bytes
+    int64_t total_space_bytes;               // Total space in bytes
 } overlay_management_status_t;
 
 // Main overlay management structure

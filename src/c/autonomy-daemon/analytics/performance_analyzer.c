@@ -4,19 +4,21 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <math.h>
+#include <time.h>
+#include <stdbool.h>
 
 // Global performance analyzer instance
 static performance_analyzer_t g_performance_analyzer;
 static bool g_performance_analyzer_initialized = false;
 
 // Forward declarations
-static void calculate_averages(const telemetry_sample_t* samples, int sample_count,
+void calculate_averages(const telemetry_sample_t* samples, int sample_count,
                               member_performance_t* performance);
-static double calculate_weighted_average(const double* values, const bool* has_value, 
+double calculate_weighted_average(const double* values, const bool* has_value, 
                                         int count, double default_value);
 
 // Initialize performance analyzer
-static int performance_analyzer_init(void) {
+int performance_analyzer_init(void) {
     if (g_performance_analyzer_initialized) {
         return 0; // Already initialized
     }
@@ -42,7 +44,7 @@ static int performance_analyzer_init(void) {
 }
 
 // Clean up performance analyzer
-static void performance_analyzer_cleanup(void) {
+void performance_analyzer_cleanup(void) {
     if (!g_performance_analyzer_initialized) return;
     
     if (g_performance_analyzer.mutex) {
@@ -60,7 +62,7 @@ static void performance_analyzer_cleanup(void) {
 }
 
 // Analyze performance for all members
-static int performance_analyzer_analyze(performance_analysis_t* result) {
+int performance_analyzer_analyze(performance_analysis_t* result) {
     if (!g_performance_analyzer_initialized || !result) {
         return -1;
     }
@@ -169,7 +171,7 @@ int performance_analyzer_get_member_performance(const char* member_name,
 }
 
 // Calculate averages from samples
-static void calculate_averages(const telemetry_sample_t* samples, int sample_count,
+void calculate_averages(const telemetry_sample_t* samples, int sample_count,
                               member_performance_t* performance) {
     if (!samples || !performance || sample_count <= 0) return;
     
@@ -268,7 +270,7 @@ static void calculate_averages(const telemetry_sample_t* samples, int sample_cou
 }
 
 // Calculate weighted average
-static double calculate_weighted_average(const double* values, const bool* has_value, 
+double calculate_weighted_average(const double* values, const bool* has_value, 
                                         int count, double default_value) {
     if (!values || !has_value || count <= 0) return default_value;
     
@@ -287,7 +289,7 @@ static double calculate_weighted_average(const double* values, const bool* has_v
 }
 
 // Calculate performance score
-static double performance_analyzer_calculate_score(const member_performance_t* performance) {
+double performance_analyzer_calculate_score(const member_performance_t* performance) {
     if (!performance) return 0.0;
     
     double score = 100.0;
@@ -336,7 +338,7 @@ static double performance_analyzer_calculate_score(const member_performance_t* p
 }
 
 // Get performance analyzer status
-static void performance_analyzer_get_status(performance_analyzer_t* status) {
+void performance_analyzer_get_status(performance_analyzer_t* status) {
     if (!status || !g_performance_analyzer_initialized) return;
     
     pthread_mutex_lock(g_performance_analyzer.mutex);
@@ -345,11 +347,11 @@ static void performance_analyzer_get_status(performance_analyzer_t* status) {
 }
 
 // Check if performance analyzer is initialized
-static bool performance_analyzer_is_initialized(void) {
+bool performance_analyzer_is_initialized(void) {
     return g_performance_analyzer_initialized;
 }
 
 // Get performance analyzer instance
-static performance_analyzer_t* performance_analyzer_get_instance(void) {
+performance_analyzer_t* performance_analyzer_get_instance(void) {
     return g_performance_analyzer_initialized ? &g_performance_analyzer : NULL;
 }

@@ -1,7 +1,7 @@
 #ifndef GPS_NMEA_H
 #define GPS_NMEA_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 

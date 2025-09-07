@@ -1,24 +1,85 @@
 #ifndef TELEMETRY_STORE_H
 #define TELEMETRY_STORE_H
 
-#include "../autonomy_types.h"
+#include "../core/types.h"
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
+#include <stdint.h>
+#include <math.h>
 
 // Telemetry sample
 typedef struct {
+    char id[64];                            // Sample ID
     char member_name[128];
     time_t timestamp;
+    char interface_name[64];                // Interface name
+    
+    // Network performance metrics
     double latency_ms;
     double loss_percent;
+    double packet_loss_percent;             // Alias for loss_percent
     double jitter_ms;
+    int64_t throughput_bps;                 // Throughput in bits per second
+    double throughput_mbps;                 // Throughput in Mbps (alias)
+    
+    // GPS fields
+    double latitude;
+    double longitude;
+    double accuracy;
+    double gps_accuracy;                    // Alias for accuracy
+    int satellites;
+    double hdop;
+    char gps_source[32];                    // GPS source
+    double movement_kmh;                    // Movement speed
+    uint32_t location_reference_id;         // Reference to GPS location table
+    
+    // Signal quality metrics
     double signal_strength;
-    double obstruction_pct;
-    int rsrp;
-    int rsrq;
-    double throughput_mbps;
-    double score;
+    char status[64];                        // Interface status
+    
+    // Starlink specific
+    double obstruction_pct;                 // Legacy field name
+    double obstruction_percent;             // New field name
+    double snr_db;                          // Signal-to-noise ratio
+    double temperature_c;                   // Temperature in Celsius
+    int outage_count;                       // Number of outages
+    double pop_ping_drop_rate;              // PoP ping drop rate
+    
+    // Cellular specific  
+    int rsrp;                               // Legacy RSRP (integer)
+    int rsrq;                               // Legacy RSRQ (integer)
+    double rsrp_dbm;                        // RSRP in dBm
+    double rsrq_db;                         // RSRQ in dB
+    double sinr_db;                         // SINR in dB
+    char carrier[64];                       // Cellular carrier
+    uint32_t cell_id;                       // Cell tower ID
+    uint32_t cell_changes;                  // Number of cell changes
+    
+    // WiFi specific
+    double wifi_rssi_dbm;                   // WiFi RSSI
+    int wifi_channel;                       // WiFi channel
+    char wifi_ssid[64];                     // WiFi SSID
+    double wifi_noise_floor;                // WiFi noise floor
+    
+    // System metrics
+    double cpu_usage_percent;               // CPU usage percentage
+    double memory_usage_percent;            // Memory usage percentage
+    double disk_usage_percent;              // Disk usage percentage
+    double load_avg_1min;                   // Load average (1 minute)
+    
+    // Scoring and analysis
+    double score;                           // Legacy score field
+    double overall_score;                   // Overall performance score
+    double reliability_score;               // Reliability score
+    double predictive_risk;                 // Predictive risk score
+    
+    // Metadata
+    bool is_active_interface;               // Whether this is the active interface
+    char collection_method[64];             // Collection method used
+    double collection_time_ms;              // Time taken to collect this sample
+    
+    // Flags for data availability
     bool has_latency;
     bool has_loss;
     bool has_jitter;
@@ -36,6 +97,9 @@ typedef struct {
     char type[64];
     char member_name[128];
     char description[512];
+    char message[512];                      // Event message
+    char severity[32];                      // Event severity level
+    char data[1024];                        // Additional event data
     time_t timestamp;
     char details_json[1024];
 } telemetry_event_t;

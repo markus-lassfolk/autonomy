@@ -4,23 +4,26 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <stdint.h>
+#include <time.h>
+#include <math.h>
+#include <stdbool.h>
 
 // Global usage analyzer instance
 static usage_analyzer_t g_usage_analyzer;
 static bool g_usage_analyzer_initialized = false;
 
 // Forward declarations
-static void analyze_data_usage(const telemetry_sample_t* samples, int sample_count,
+void analyze_data_usage(const telemetry_sample_t* samples, int sample_count,
                                data_usage_t* usage);
-static void analyze_bandwidth_usage(const telemetry_sample_t* samples, int sample_count,
+void analyze_bandwidth_usage(const telemetry_sample_t* samples, int sample_count,
                                    bandwidth_usage_t* usage);
-static void analyze_peak_usage(const telemetry_sample_t* samples, int sample_count,
+void analyze_peak_usage(const telemetry_sample_t* samples, int sample_count,
                               peak_usage_t* usage);
-static void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_count,
+void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_count,
                                     usage_pattern_t* patterns, int max_patterns);
 
 // Initialize usage analyzer
-static int usage_analyzer_init(void) {
+int usage_analyzer_init(void) {
     if (g_usage_analyzer_initialized) {
         return 0; // Already initialized
     }
@@ -46,7 +49,7 @@ static int usage_analyzer_init(void) {
 }
 
 // Clean up usage analyzer
-static void usage_analyzer_cleanup(void) {
+void usage_analyzer_cleanup(void) {
     if (!g_usage_analyzer_initialized) return;
     
     if (g_usage_analyzer.mutex) {
@@ -64,7 +67,7 @@ static void usage_analyzer_cleanup(void) {
 }
 
 // Analyze usage for all members
-static int usage_analyzer_analyze(usage_metrics_t* result) {
+int usage_analyzer_analyze(usage_metrics_t* result) {
     if (!g_usage_analyzer_initialized || !result) {
         return -1;
     }
@@ -136,7 +139,7 @@ static int usage_analyzer_analyze(usage_metrics_t* result) {
 }
 
 // Analyze data usage
-static void analyze_data_usage(const telemetry_sample_t* samples, int sample_count,
+void analyze_data_usage(const telemetry_sample_t* samples, int sample_count,
                                data_usage_t* usage) {
     if (!samples || !usage || sample_count <= 0) return;
     
@@ -193,7 +196,7 @@ static void analyze_data_usage(const telemetry_sample_t* samples, int sample_cou
 }
 
 // Analyze bandwidth usage
-static void analyze_bandwidth_usage(const telemetry_sample_t* samples, int sample_count,
+void analyze_bandwidth_usage(const telemetry_sample_t* samples, int sample_count,
                                    bandwidth_usage_t* usage) {
     if (!samples || !usage || sample_count <= 0) return;
     
@@ -220,7 +223,7 @@ static void analyze_bandwidth_usage(const telemetry_sample_t* samples, int sampl
 }
 
 // Analyze peak usage
-static void analyze_peak_usage(const telemetry_sample_t* samples, int sample_count,
+void analyze_peak_usage(const telemetry_sample_t* samples, int sample_count,
                               peak_usage_t* usage) {
     if (!samples || !usage || sample_count <= 0) return;
     
@@ -248,7 +251,7 @@ static void analyze_peak_usage(const telemetry_sample_t* samples, int sample_cou
 }
 
 // Calculate usage patterns
-static void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_count,
+void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_count,
                                     usage_pattern_t* patterns, int max_patterns) {
     if (!samples || !patterns || sample_count <= 0 || max_patterns <= 0) return;
     
@@ -363,7 +366,7 @@ static void calculate_usage_patterns(const telemetry_sample_t* samples, int samp
 }
 
 // Get usage for specific member
-static int usage_analyzer_get_member_usage(const char* member_name, usage_metrics_t* usage) {
+int usage_analyzer_get_member_usage(const char* member_name, usage_metrics_t* usage) {
     if (!g_usage_analyzer_initialized || !member_name || !usage) {
         return -1;
     }
@@ -398,7 +401,7 @@ static int usage_analyzer_get_member_usage(const char* member_name, usage_metric
 }
 
 // Calculate usage patterns
-static int usage_analyzer_calculate_patterns(const char* member_name, usage_pattern_t* patterns, int max_patterns) {
+int usage_analyzer_calculate_patterns(const char* member_name, usage_pattern_t* patterns, int max_patterns) {
     if (!g_usage_analyzer_initialized || !member_name || !patterns || max_patterns <= 0) {
         return -1;
     }
@@ -430,7 +433,7 @@ static int usage_analyzer_calculate_patterns(const char* member_name, usage_patt
 }
 
 // Get usage analyzer status
-static void usage_analyzer_get_status(usage_analyzer_t* status) {
+void usage_analyzer_get_status(usage_analyzer_t* status) {
     if (!status || !g_usage_analyzer_initialized) return;
     
     pthread_mutex_lock(g_usage_analyzer.mutex);
@@ -439,11 +442,11 @@ static void usage_analyzer_get_status(usage_analyzer_t* status) {
 }
 
 // Check if usage analyzer is initialized
-static bool usage_analyzer_is_initialized(void) {
+bool usage_analyzer_is_initialized(void) {
     return g_usage_analyzer_initialized;
 }
 
 // Get usage analyzer instance
-static usage_analyzer_t* usage_analyzer_get_instance(void) {
+usage_analyzer_t* usage_analyzer_get_instance(void) {
     return g_usage_analyzer_initialized ? &g_usage_analyzer : NULL;
 }

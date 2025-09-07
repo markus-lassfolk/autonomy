@@ -1,11 +1,12 @@
 #include "gps_accuracy.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <stdbool.h>
 
 // GPS accuracy validation configuration
 static const double MIN_ACCURACY = 0.1;            // Minimum accuracy in meters
@@ -29,10 +30,22 @@ static const int VALIDATION_WINDOW = 300;                   // 5 minute validati
 static gps_accuracy_t g_accuracy_validator = {0};
 static bool g_accuracy_initialized = false;
 
+// Forward declarations
+static bool validate_basic_parameters(const gps_data_t *gps_data, gps_validation_result_t *result);
+static bool validate_accuracy_values(const gps_data_t *gps_data, gps_validation_result_t *result);
+static bool validate_satellite_data(const gps_data_t *gps_data, gps_validation_result_t *result);
+static bool validate_position_data(const gps_data_t *gps_data, gps_validation_result_t *result);
+static bool validate_temporal_data(const gps_data_t *gps_data, gps_validation_result_t *result);
+static bool validate_consistency(const gps_data_t *gps_data, gps_validation_result_t *result);
+static double estimate_expected_accuracy(int satellites, int fix_quality);
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+void update_validation_statistics(const gps_validation_result_t *result);
+
+
 // Initialize GPS accuracy validator
-static int gps_accuracy_init(void) {
+int gps_accuracy_init(void) {
     if (g_accuracy_initialized) {
-        LOGX_WARN("GPS accuracy validator already initialized");
+        LOGX_WARN_MSG("GPS accuracy validator already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -57,12 +70,12 @@ static int gps_accuracy_init(void) {
     
     g_accuracy_initialized = true;
     
-    LOGX_INFO("GPS accuracy validator initialized successfully");
+    LOGX_INFO_MSG("GPS accuracy validator initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Validate GPS accuracy
-static int gps_accuracy_validate(const gps_data_t *gps_data, gps_validation_result_t *result) {
+int gps_accuracy_validate(const gps_data_t *gps_data, gps_validation_result_t *result) {
     if (!g_accuracy_initialized || !gps_data || !result) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -114,10 +127,10 @@ static int gps_accuracy_validate(const gps_data_t *gps_data, gps_validation_resu
     
     // Log validation result
     if (result->is_valid) {
-        LOGX_DEBUG("GPS accuracy validation passed: confidence=%.3f, accuracy=%.1fm", 
+        LOGX_DEBUG_MSG("GPS accuracy validation passed: confidence=%.3f, accuracy=%.1fm", 
                    result->confidence, gps_data->accuracy);
     } else {
-        LOGX_WARN("GPS accuracy validation failed: %s, confidence=%.3f", 
+        LOGX_WARN_MSG("GPS accuracy validation failed: %s, confidence=%.3f", 
                   result->error_message, result->confidence);
     }
     
@@ -316,7 +329,7 @@ static double estimate_expected_accuracy(int satellites, int fix_quality) {
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0;  // Earth's radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
@@ -334,7 +347,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Update validation statistics
-static void update_validation_statistics(const gps_validation_result_t *result) {
+void update_validation_statistics(const gps_validation_result_t *result) {
     g_accuracy_validator.validation_count++;
     g_accuracy_validator.last_validation = time(NULL);
     
@@ -350,7 +363,7 @@ static void update_validation_statistics(const gps_validation_result_t *result) 
 }
 
 // Get accuracy validation statistics
-static int gps_accuracy_get_statistics(gps_accuracy_stats_t *stats) {
+int gps_accuracy_get_statistics(gps_accuracy_stats_t *stats) {
     if (!g_accuracy_initialized || !stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -371,7 +384,7 @@ static int gps_accuracy_get_statistics(gps_accuracy_stats_t *stats) {
 }
 
 // Get accuracy validator configuration
-static int gps_accuracy_get_config(gps_accuracy_config_t *config) {
+int gps_accuracy_get_config(gps_accuracy_config_t *config) {
     if (!g_accuracy_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -391,7 +404,7 @@ static int gps_accuracy_get_config(gps_accuracy_config_t *config) {
 }
 
 // Set accuracy validator configuration
-static int gps_accuracy_set_config(const gps_accuracy_config_t *config) {
+int gps_accuracy_set_config(const gps_accuracy_config_t *config) {
     if (!g_accuracy_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -407,23 +420,23 @@ static int gps_accuracy_set_config(const gps_accuracy_config_t *config) {
     g_accuracy_validator.max_altitude = config->max_altitude;
     g_accuracy_validator.min_altitude = config->min_altitude;
     
-    LOGX_INFO("GPS accuracy validator configuration updated");
+    LOGX_INFO_MSG("GPS accuracy validator configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable accuracy validator
-static int gps_accuracy_set_enabled(bool enabled) {
+int gps_accuracy_set_enabled(bool enabled) {
     if (!g_accuracy_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     g_accuracy_validator.enabled = enabled;
-    LOGX_INFO("GPS accuracy validator %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS accuracy validator %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Reset validation statistics
-static int gps_accuracy_reset_statistics(void) {
+int gps_accuracy_reset_statistics(void) {
     if (!g_accuracy_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -434,16 +447,16 @@ static int gps_accuracy_reset_statistics(void) {
     g_accuracy_validator.suspicious_count = 0;
     g_accuracy_validator.last_validation = 0;
     
-    LOGX_INFO("GPS accuracy validation statistics reset");
+    LOGX_INFO_MSG("GPS accuracy validation statistics reset");
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup accuracy validator
-static void gps_accuracy_cleanup(void) {
+void gps_accuracy_cleanup(void) {
     if (!g_accuracy_initialized) {
         return;
     }
     
     g_accuracy_initialized = false;
-    LOGX_INFO("GPS accuracy validator cleaned up");
+    LOGX_INFO_MSG("GPS accuracy validator cleaned up");
 }

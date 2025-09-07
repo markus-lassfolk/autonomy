@@ -16,10 +16,11 @@
 #include <math.h>
 
 // Include our modular headers
-#include "autonomy_types.h"
+#include "../core/types.h"
 #include "autonomy_modules.h"
 #include "../starlink/starlink_modules.h"
 #include "../starlink/starlink_tracker.h"
+#include <sys/socket.h>
 
 // Global variables
 struct autonomy_config g_config = {
@@ -30,7 +31,7 @@ struct autonomy_config g_config = {
     .config_file = "/etc/config/autonomy"
 };
 
-struct autonomy_state g_state = {
+autonomy_state_t g_state = {
     .running = 0,
     .start_time = 0,
     .health_checks_run = 0,
@@ -55,7 +56,7 @@ struct autonomy_state g_state = {
 static starlink_tracker_t *g_starlink_tracker = NULL;
 
 // Global system health
-struct system_health g_system_health = {
+system_health_t g_system_health = {
     .status = "unknown",
     .starlink_health = 0,
     .uci_health = 0,
@@ -75,7 +76,7 @@ static struct ubus_context *ctx;
 struct uci_context *uci_ctx;
 
 // Signal handler
-static void handle_sig(int sig) {
+void handle_sig(int sig) {
     fprintf(stderr, "Received signal %d, shutting down...\n", sig);
     
     if (ctx) {

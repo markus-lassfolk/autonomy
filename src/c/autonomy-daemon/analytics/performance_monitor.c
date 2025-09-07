@@ -10,6 +10,9 @@
 #include <sys/statvfs.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <math.h>
 
 // Global performance monitor instance
 static performance_monitor_t g_performance_monitor;
@@ -21,11 +24,11 @@ static int collect_memory_metrics(performance_metrics_t* metrics);
 static int collect_disk_metrics(performance_metrics_t* metrics);
 static int collect_load_metrics(performance_metrics_t* metrics);
 static int collect_file_descriptor_metrics(performance_metrics_t* metrics);
-static void update_metrics_history(performance_metrics_t* metrics);
-static bool check_thresholds(const performance_metrics_t* metrics);
+void update_metrics_history(performance_metrics_t* metrics);
+bool check_thresholds(const performance_metrics_t* metrics);
 
 // Initialize performance monitor
-static int performance_monitor_init(const performance_monitor_config_t* config) {
+int performance_monitor_init(const performance_monitor_config_t* config) {
     if (g_performance_monitor_initialized) {
         return 0; // Already initialized
     }
@@ -70,7 +73,7 @@ static int performance_monitor_init(const performance_monitor_config_t* config) 
 }
 
 // Clean up performance monitor
-static void performance_monitor_cleanup(void) {
+void performance_monitor_cleanup(void) {
     if (!g_performance_monitor_initialized) return;
     
     if (g_performance_monitor.mutex) {
@@ -83,7 +86,7 @@ static void performance_monitor_cleanup(void) {
 }
 
 // Collect performance metrics
-static int performance_monitor_collect_metrics(void) {
+int performance_monitor_collect_metrics(void) {
     if (!g_performance_monitor_initialized || !g_performance_monitor.config.enabled) {
         return -1;
     }
@@ -144,7 +147,7 @@ static int performance_monitor_collect_metrics(void) {
 }
 
 // Get current performance metrics
-static int performance_monitor_get_metrics(performance_metrics_t* metrics) {
+int performance_monitor_get_metrics(performance_metrics_t* metrics) {
     if (!g_performance_monitor_initialized || !metrics) {
         return -1;
     }
@@ -157,7 +160,7 @@ static int performance_monitor_get_metrics(performance_metrics_t* metrics) {
 }
 
 // Get performance history
-static int performance_monitor_get_history(performance_metrics_t* history, int max_history) {
+int performance_monitor_get_history(performance_metrics_t* history, int max_history) {
     if (!g_performance_monitor_initialized || !history || max_history <= 0) {
         return -1;
     }
@@ -181,7 +184,7 @@ static int performance_monitor_get_history(performance_metrics_t* history, int m
 }
 
 // Check performance thresholds
-static bool performance_monitor_check_thresholds(void) {
+bool performance_monitor_check_thresholds(void) {
     if (!g_performance_monitor_initialized) return false;
     
     pthread_mutex_lock(g_performance_monitor.mutex);
@@ -198,7 +201,7 @@ static int collect_cpu_metrics(performance_metrics_t* metrics) {
     // Read real CPU usage from /proc/stat
     FILE* stat_file = fopen("/proc/stat", "r");
     if (!stat_file) {
-        LOGX_ERROR("Failed to open /proc/stat for CPU usage");
+        LOGX_ERROR_MSG("Failed to open /proc/stat for CPU usage");
         return -1;
     }
     
@@ -221,7 +224,7 @@ static int collect_cpu_metrics(performance_metrics_t* metrics) {
         prev_total = total;
         prev_idle = idle;
     } else {
-        LOGX_ERROR("Failed to parse /proc/stat");
+        LOGX_ERROR_MSG("Failed to parse /proc/stat");
         fclose(stat_file);
         return -1;
     }
@@ -324,7 +327,7 @@ static int collect_file_descriptor_metrics(performance_metrics_t* metrics) {
         }
         closedir(fd_dir);
     } else {
-        LOGX_WARN("Failed to open /proc/self/fd for file descriptor count");
+        LOGX_WARN_MSG("Failed to open /proc/self/fd for file descriptor count");
         metrics->open_file_descriptors = 0;
     }
     
@@ -332,7 +335,7 @@ static int collect_file_descriptor_metrics(performance_metrics_t* metrics) {
 }
 
 // Update metrics history
-static void update_metrics_history(performance_metrics_t* metrics) {
+void update_metrics_history(performance_metrics_t* metrics) {
     if (!metrics) return;
     
     g_performance_monitor.metrics_history[g_performance_monitor.history_index] = *metrics;
@@ -345,7 +348,7 @@ static void update_metrics_history(performance_metrics_t* metrics) {
 }
 
 // Check performance thresholds
-static bool check_thresholds(const performance_metrics_t* metrics) {
+bool check_thresholds(const performance_metrics_t* metrics) {
     if (!metrics) return false;
     
     const performance_thresholds_t* thresholds = &g_performance_monitor.config.thresholds;
@@ -374,7 +377,7 @@ static bool check_thresholds(const performance_metrics_t* metrics) {
 }
 
 // Get performance monitor status
-static void performance_monitor_get_status(performance_monitor_t* status) {
+void performance_monitor_get_status(performance_monitor_t* status) {
     if (!status || !g_performance_monitor_initialized) return;
     
     pthread_mutex_lock(g_performance_monitor.mutex);
@@ -383,11 +386,11 @@ static void performance_monitor_get_status(performance_monitor_t* status) {
 }
 
 // Check if performance monitor is initialized
-static bool performance_monitor_is_initialized(void) {
+bool performance_monitor_is_initialized(void) {
     return g_performance_monitor_initialized;
 }
 
 // Get performance monitor instance
-static performance_monitor_t* performance_monitor_get_instance(void) {
+performance_monitor_t* performance_monitor_get_instance(void) {
     return g_performance_monitor_initialized ? &g_performance_monitor : NULL;
 }

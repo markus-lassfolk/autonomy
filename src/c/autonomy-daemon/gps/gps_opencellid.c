@@ -5,6 +5,8 @@
 #include <time.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
+#include <stdbool.h>
+#include <fcntl.h>
 
 // Global OpenCellID state
 static opencellid_config_t g_opencellid_config = {0};
@@ -13,7 +15,7 @@ static bool g_opencellid_initialized = false;
 static CURL* g_curl_handle = NULL;
 
 // HTTP response callback
-static size_t http_response_callback(void* contents, size_t size, size_t nmemb, void* userp) {
+size_t http_response_callback(void* contents, size_t size, size_t nmemb, void* userp) {
     size_t total_size = size * nmemb;
     char* response = (char*)userp;
     
@@ -22,7 +24,7 @@ static size_t http_response_callback(void* contents, size_t size, size_t nmemb, 
 }
 
 // Initialize OpenCellID API
-static int gps_opencellid_init(const opencellid_config_t* config) {
+int gps_opencellid_init(const opencellid_config_t* config) {
     if (!config) {
         return -1;
     }
@@ -35,7 +37,7 @@ static int gps_opencellid_init(const opencellid_config_t* config) {
     }
     
     // Copy configuration
-    memcpy(&g_opencellid_config, *config, sizeof(opencellid_config_t));
+    memcpy(&g_opencellid_config, config, sizeof(opencellid_config_t));
     
     // Initialize statistics
     memset(&g_opencellid_stats, 0, sizeof(opencellid_stats_t));
@@ -45,7 +47,7 @@ static int gps_opencellid_init(const opencellid_config_t* config) {
 }
 
 // Cleanup OpenCellID API
-static void gps_opencellid_cleanup(void) {
+void gps_opencellid_cleanup(void) {
     if (g_curl_handle) {
         curl_easy_cleanup(g_curl_handle);
         g_curl_handle = NULL;
@@ -149,7 +151,7 @@ static int make_opencellid_request(const char* url, opencellid_response_t* respo
 }
 
 // Lookup cell tower location
-static int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_response_t* response) {
+int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_response_t* response) {
     if (!g_opencellid_initialized || !cell_key || !response) {
         return -1;
     }
@@ -168,21 +170,21 @@ static int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencell
 }
 
 // Contribute cell tower data
-static int gps_opencellid_contribute(const opencellid_cell_key_t* cell_key, double lat, double lon, int range) {
-    if (!g_opencellid_initialized || !cell_key) {
+int gps_opencellid_contribute(const opencellid_contribution_t* contribution) {
+    if (!g_opencellid_initialized || !contribution) {
         return -1;
     }
     
     // Build contribution URL
     char url[OPENCELLID_MAX_URL_LEN];
-    snprintf(url, sizeof(url), "%s/cell?key=%s&mcc=%s&mnc=%s&lac=%s&cellid=%s&lat=%.6f&lon=%.6f&range=%d&format=json",
+    snprintf(url, sizeof(url), "%s/cell?key=%s&mcc=%d&mnc=%d&lac=%d&cellid=%d&lat=%.6f&lon=%.6f&range=%d&format=json",
              OPENCELLID_BASE_URL,
              g_opencellid_config.api_key,
-             cell_key->mcc,
-             cell_key->mnc,
-             cell_key->lac,
-             cell_key->cell_id,
-             lat, lon, range);
+             contribution->mcc,
+             contribution->mnc,
+             contribution->lac,
+             contribution->cell_id,
+             contribution->lat, contribution->lon, (int)contribution->rating);
     
     opencellid_response_t response;
     int result = make_opencellid_request(url, &response);
@@ -199,7 +201,7 @@ static int gps_opencellid_contribute(const opencellid_cell_key_t* cell_key, doub
 }
 
 // Get API statistics
-static int gps_opencellid_get_stats(opencellid_stats_t* stats) {
+int gps_opencellid_get_stats(opencellid_stats_t* stats) {
     if (!g_opencellid_initialized || !stats) {
         return -1;
     }
@@ -209,7 +211,7 @@ static int gps_opencellid_get_stats(opencellid_stats_t* stats) {
 }
 
 // Check if OpenCellID is initialized
-static bool gps_opencellid_is_initialized(void) {
+bool gps_opencellid_is_initialized(void) {
     return g_opencellid_initialized;
 }
 
@@ -244,7 +246,7 @@ static int gps_opencellid_get_quota_remaining(void) {
 }
 
 // Start background contribution manager
-static int gps_opencellid_start_contribution_manager(void) {
+int gps_opencellid_start_contribution_manager(void) {
     if (!g_opencellid_initialized) {
         return -1;
     }
@@ -255,7 +257,7 @@ static int gps_opencellid_start_contribution_manager(void) {
 }
 
 // Stop background contribution manager
-static int gps_opencellid_stop_contribution_manager(void) {
+int gps_opencellid_stop_contribution_manager(void) {
     if (!g_opencellid_initialized) {
         return -1;
     }
@@ -266,7 +268,7 @@ static int gps_opencellid_stop_contribution_manager(void) {
 }
 
 // Perform health check
-static int gps_opencellid_health_check(void) {
+int gps_opencellid_health_check(void) {
     if (!g_opencellid_initialized) {
         return -1;
     }

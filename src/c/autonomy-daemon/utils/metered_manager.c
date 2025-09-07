@@ -1,7 +1,7 @@
 #include "metered_manager.h"
-#include "../logx.h"
-#include "../types.h"
-#include "../collectors/cellular_collector.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
+#include "../telemetry/cellular_collector.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -12,6 +12,11 @@
 #include <libubus.h>
 #include <libubox/blobmsg.h>
 #include <sys/sysinfo.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <math.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 // Global metered manager instance
 static metered_manager_t g_metered_manager;
@@ -20,12 +25,12 @@ static bool g_metered_manager_initialized = false;
 // Forward declarations
 static int detect_metered_connection(void);
 static int collect_data_usage(void);
-static int check_roaming_status(void);
-static void update_usage_statistics(void);
-static bool check_usage_thresholds(void);
+int check_roaming_status(void);
+void update_usage_statistics(void);
+bool check_usage_thresholds(void);
 
 // Initialize metered manager
-static int metered_manager_init(const metered_manager_config_t* config) {
+int metered_manager_init(const metered_manager_config_t* config) {
     if (g_metered_manager_initialized) {
         return 0; // Already initialized
     }
@@ -79,7 +84,7 @@ static int metered_manager_init(const metered_manager_config_t* config) {
 }
 
 // Clean up metered manager
-static void metered_manager_cleanup(void) {
+void metered_manager_cleanup(void) {
     if (!g_metered_manager_initialized) return;
     
     if (g_metered_manager.mutex) {
@@ -92,7 +97,7 @@ static void metered_manager_cleanup(void) {
 }
 
 // Check metered connection status
-static int metered_manager_check_status(void) {
+int metered_manager_check_status(void) {
     if (!g_metered_manager_initialized || !g_metered_manager.config.enabled) {
         return -1;
     }
@@ -136,7 +141,7 @@ static int metered_manager_check_status(void) {
 }
 
 // Get data usage statistics
-static int metered_manager_get_usage_stats(data_usage_stats_t* stats) {
+int metered_manager_get_usage_stats(data_usage_stats_t* stats) {
     if (!g_metered_manager_initialized || !stats) {
         return -1;
     }
@@ -149,7 +154,7 @@ static int metered_manager_get_usage_stats(data_usage_stats_t* stats) {
 }
 
 // Get metered connection status
-static int metered_manager_get_connection_status(metered_connection_status_t* status) {
+int metered_manager_get_connection_status(metered_connection_status_t* status) {
     if (!g_metered_manager_initialized || !status) {
         return -1;
     }
@@ -162,7 +167,7 @@ static int metered_manager_get_connection_status(metered_connection_status_t* st
 }
 
 // Check if connection is metered
-static bool metered_manager_is_metered(void) {
+bool metered_manager_is_metered(void) {
     if (!g_metered_manager_initialized) return false;
     
     pthread_mutex_lock(g_metered_manager.mutex);
@@ -173,7 +178,7 @@ static bool metered_manager_is_metered(void) {
 }
 
 // Check if roaming
-static bool metered_manager_is_roaming(void) {
+bool metered_manager_is_roaming(void) {
     if (!g_metered_manager_initialized) return false;
     
     pthread_mutex_lock(g_metered_manager.mutex);
@@ -184,7 +189,7 @@ static bool metered_manager_is_roaming(void) {
 }
 
 // Get remaining data
-static uint64_t metered_manager_get_remaining_data(void) {
+uint64_t metered_manager_get_remaining_data(void) {
     if (!g_metered_manager_initialized) return 0;
     
     pthread_mutex_lock(g_metered_manager.mutex);
@@ -195,7 +200,7 @@ static uint64_t metered_manager_get_remaining_data(void) {
 }
 
 // Reset usage counters
-static int metered_manager_reset_usage(void) {
+int metered_manager_reset_usage(void) {
     if (!g_metered_manager_initialized) return -1;
     
     pthread_mutex_lock(g_metered_manager.mutex);
@@ -214,7 +219,7 @@ static int metered_manager_reset_usage(void) {
 }
 
 // Set data thresholds
-static int metered_manager_set_thresholds(const data_thresholds_t* thresholds) {
+int metered_manager_set_thresholds(const data_thresholds_t* thresholds) {
     if (!g_metered_manager_initialized || !thresholds) return -1;
     
     pthread_mutex_lock(g_metered_manager.mutex);
@@ -369,7 +374,7 @@ static int collect_data_usage(void) {
 }
 
 // Check roaming status using real cellular data
-static int check_roaming_status(void) {
+int check_roaming_status(void) {
     bool is_roaming = false;
     
     // Use UBUS to get real roaming status from GSM service
@@ -387,7 +392,7 @@ static int check_roaming_status(void) {
             if (cellular_collector_is_initialized() && 
                 cellular_collector_collect(&cellular_info) == AUTONOMY_SUCCESS) {
                 is_roaming = cellular_info.roaming;
-                LOGX_DEBUG("Roaming status from cellular collector", "roaming", is_roaming);
+                LOGX_DEBUG_MSG("Roaming status from cellular collector", "roaming", is_roaming);
             }
             
             blob_buf_free(&bb);
@@ -401,7 +406,7 @@ static int check_roaming_status(void) {
 }
 
 // Update usage statistics
-static void update_usage_statistics(void) {
+void update_usage_statistics(void) {
     // Check if we need to reset daily/monthly counters
     time_t now = time(NULL);
     
@@ -424,7 +429,7 @@ static void update_usage_statistics(void) {
 }
 
 // Check usage thresholds
-static bool check_usage_thresholds(void) {
+bool check_usage_thresholds(void) {
     const data_thresholds_t* thresholds = &g_metered_manager.config.thresholds;
     
     // Check if any thresholds are exceeded
@@ -440,7 +445,7 @@ static bool check_usage_thresholds(void) {
 }
 
 // Get metered manager status
-static void metered_manager_get_status(metered_manager_t* status) {
+void metered_manager_get_status(metered_manager_t* status) {
     if (!status || !g_metered_manager_initialized) return;
     
     pthread_mutex_lock(g_metered_manager.mutex);
@@ -449,11 +454,11 @@ static void metered_manager_get_status(metered_manager_t* status) {
 }
 
 // Check if metered manager is initialized
-static bool metered_manager_is_initialized(void) {
+bool metered_manager_is_initialized(void) {
     return g_metered_manager_initialized;
 }
 
 // Get metered manager instance
-static metered_manager_t* metered_manager_get_instance(void) {
+metered_manager_t* metered_manager_get_instance(void) {
     return g_metered_manager_initialized ? &g_metered_manager : NULL;
 }

@@ -1,4 +1,4 @@
-#include "autonomy_types.h"
+#include "../core/types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,14 +6,15 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/sysinfo.h>
+#include <math.h>
 
 extern struct autonomy_state g_state;
 
 // Global system health variable (defined in autonomy_types.h)
-struct system_health g_system_health = {0};
+system_health_t g_system_health = {0};
 
 // System health check functions
-static int check_starlink_health(void) {
+int check_starlink_health(void) {
     // Simulate Starlink health check
     int health = 85 + (rand() % 20); // 85-105 range
     if (health > 100) health = 100;
@@ -22,7 +23,7 @@ static int check_starlink_health(void) {
     return health;
 }
 
-static int check_uci_health(void) {
+int check_uci_health(void) {
     // Simulate UCI configuration health check
     int health = 90 + (rand() % 15); // 90-105 range
     if (health > 100) health = 100;
@@ -31,7 +32,7 @@ static int check_uci_health(void) {
     return health;
 }
 
-static int check_overlay_health(void) {
+int check_overlay_health(void) {
     // Simulate overlay filesystem health check
     int health = 95 + (rand() % 10); // 95-105 range
     if (health > 100) health = 100;
@@ -40,7 +41,7 @@ static int check_overlay_health(void) {
     return health;
 }
 
-static int check_services_health(void) {
+int check_services_health(void) {
     // Simulate system services health check
     int health = 88 + (rand() % 17); // 88-105 range
     if (health > 100) health = 100;
@@ -49,7 +50,7 @@ static int check_services_health(void) {
     return health;
 }
 
-static int check_database_health(void) {
+int check_database_health(void) {
     // Simulate database health check
     int health = 92 + (rand() % 13); // 92-105 range
     if (health > 100) health = 100;
@@ -58,7 +59,7 @@ static int check_database_health(void) {
     return health;
 }
 
-static int check_time_health(void) {
+int check_time_health(void) {
     // Simulate time synchronization health check
     int health = 96 + (rand() % 9); // 96-105 range
     if (health > 100) health = 100;
@@ -67,7 +68,7 @@ static int check_time_health(void) {
     return health;
 }
 
-static int check_logs_health(void) {
+int check_logs_health(void) {
     // Simulate log system health check
     int health = 87 + (rand() % 18); // 87-105 range
     if (health > 100) health = 100;

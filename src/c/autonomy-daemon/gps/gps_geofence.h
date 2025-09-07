@@ -1,10 +1,11 @@
 #ifndef GPS_GEOFENCE_H
 #define GPS_GEOFENCE_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
+#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,16 +60,7 @@ typedef struct {
     int check_interval;                 // Check interval in seconds
 } gps_geofence_config_t;
 
-// Geofence status
-typedef struct {
-    bool enabled;                       // Geofencing enabled
-    int geofence_count;                 // Total geofences
-    int active_geofences;               // Active geofences
-    int total_events;                   // Total events
-    time_t last_check;                  // Last check timestamp
-    int active_geofence_count;          // Number of active geofences
-    gps_geofence_definition_t geofences[20]; // Active geofences
-} gps_geofence_status_t;
+// Note: gps_geofence_status_t is defined in ../core/types.h
 
 // Geofencing system state
 typedef struct {
@@ -144,7 +136,7 @@ int gps_geofence_check_position(const gps_data_t *gps_data);
  * @param status Status structure to populate
  * @return AUTONOMY_SUCCESS on success, error code on failure
  */
-int gps_geofence_get_status(gps_geofence_status_t *status);
+int gps_geofence_get_status(gps_geofence_system_status_t *status);
 
 /**
  * Get geofence configuration

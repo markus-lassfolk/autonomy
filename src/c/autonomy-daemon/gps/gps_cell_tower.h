@@ -1,10 +1,11 @@
 #ifndef GPS_CELL_TOWER_H
 #define GPS_CELL_TOWER_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
+#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,7 +1,7 @@
 #ifndef GPS_INTEGRATION_H
 #define GPS_INTEGRATION_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
@@ -11,14 +11,7 @@ extern "C" {
 #endif
 
 // GPS source types
-typedef enum {
-    GPS_SOURCE_TYPE_UNKNOWN = 0,
-    GPS_SOURCE_TYPE_RUTOS,
-    GPS_SOURCE_TYPE_STARLINK,
-    GPS_SOURCE_TYPE_EXTERNAL,
-    GPS_SOURCE_TYPE_SIMULATED,
-    GPS_SOURCE_TYPE_CUSTOM
-} gps_source_type_t;
+// Note: gps_integration_source_type_t is defined in ../core/types.h
 
 // GPS integration source
 typedef struct {

@@ -2,8 +2,8 @@
 #include "gps_comprehensive.h"
 #include "gps_fusion_engine.h"
 #include "opencellid_complete.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include "gps_rutos.h"
 #include "gps_starlink.h"
 #include <string.h>
@@ -13,11 +13,14 @@
 #include <pthread.h>
 #include <time.h>
 #include <math.h>
+#include <stdbool.h>
+#include <fcntl.h>
+#include <sys/socket.h>
 
 // GPS manager configuration
 static const int GPS_UPDATE_INTERVAL = 5;         // 5 seconds
 static const int GPS_SOURCE_TIMEOUT = 60;         // 60 seconds
-static const int MAX_GPS_SOURCES = 8;             // Maximum GPS sources
+// Note: MAX_GPS_SOURCES is defined in ../core/types.h
 static const double MIN_RELIABILITY = 0.3;        // Minimum reliability threshold
 static const double POSITION_THRESHOLD = 50.0;    // 50 meters position change threshold
 
@@ -33,10 +36,20 @@ static bool g_gps_manager_initialized = false;
 static pthread_t g_gps_manager_thread = 0;
 static bool g_gps_manager_thread_running = false;
 
+// Forward declarations
+void* gps_manager_monitor_thread(void *arg);
+void update_rutos_gps_source(void);
+void update_starlink_gps_source(void);
+int find_or_create_gps_source(gps_source_type_t source_type, const char *name);
+double calculate_data_quality(const gps_data_t *data);
+void cleanup_stale_gps_sources(time_t now);
+int find_best_gps_source(void);
+bool check_position_change(const gps_data_t *new_data);
+
 // Initialize GPS manager system
-static int gps_manager_init(void) {
+int gps_manager_init(void) {
     if (g_gps_manager_initialized) {
-        LOGX_WARN("GPS manager already initialized");
+        LOGX_WARN_MSG("GPS manager already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -95,7 +108,7 @@ static int gps_manager_init(void) {
     strcpy(comprehensive_config.source_priority, "rutos,starlink,opencellid,google");
     
     if (gps_comprehensive_init(&comprehensive_config) != AUTONOMY_SUCCESS) {
-        LOGX_ERROR("Failed to initialize comprehensive GPS collector");
+        LOGX_ERROR_MSG("Failed to initialize comprehensive GPS collector");
         pthread_mutex_unlock(&g_gps_manager_mutex);
         return AUTONOMY_ERROR_SYSTEM;
     }
@@ -126,7 +139,7 @@ static int gps_manager_init(void) {
     };
     
     if (gps_fusion_engine_init(&fusion_config) != AUTONOMY_SUCCESS) {
-        LOGX_ERROR("Failed to initialize GPS fusion engine");
+        LOGX_ERROR_MSG("Failed to initialize GPS fusion engine");
         gps_comprehensive_cleanup();
         pthread_mutex_unlock(&g_gps_manager_mutex);
         return AUTONOMY_ERROR_SYSTEM;
@@ -145,37 +158,37 @@ static int gps_manager_init(void) {
     g_gps_manager_initialized = true;
     pthread_mutex_unlock(&g_gps_manager_mutex);
     
-    LOGX_INFO("GPS manager system initialized successfully");
+    LOGX_INFO_MSG("GPS manager system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Start GPS manager monitoring thread
-static int gps_manager_start_monitoring(void) {
+int gps_manager_start_monitoring(void) {
     if (!g_gps_manager_initialized) {
-        LOGX_ERROR("GPS manager not initialized");
+        LOGX_ERROR_MSG("GPS manager not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     if (g_gps_manager_thread_running) {
-        LOGX_WARN("GPS manager monitoring already running");
+        LOGX_WARN_MSG("GPS manager monitoring already running");
         return AUTONOMY_SUCCESS;
     }
     
     // Create monitoring thread
     int ret = pthread_create(&g_gps_manager_thread, NULL, gps_manager_monitor_thread, NULL);
     if (ret != 0) {
-        LOGX_ERROR("Failed to create GPS manager monitoring thread");
+        LOGX_ERROR_MSG("Failed to create GPS manager monitoring thread");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     g_gps_manager_thread_running = true;
-    LOGX_INFO("GPS manager monitoring started");
+    LOGX_INFO_MSG("GPS manager monitoring started");
     
     return AUTONOMY_SUCCESS;
 }
 
 // Stop GPS manager monitoring
-static void gps_manager_stop_monitoring(void) {
+void gps_manager_stop_monitoring(void) {
     if (!g_gps_manager_thread_running) {
         return;
     }
@@ -187,14 +200,14 @@ static void gps_manager_stop_monitoring(void) {
         g_gps_manager_thread = 0;
     }
     
-    LOGX_INFO("GPS manager monitoring stopped");
+    LOGX_INFO_MSG("GPS manager monitoring stopped");
 }
 
 // GPS manager monitoring thread
-static void* gps_manager_monitor_thread(void *arg) {
+void* gps_manager_monitor_thread(void *arg) {
     (void)arg;
     
-    LOGX_INFO("GPS manager monitoring thread started");
+    LOGX_INFO_MSG("GPS manager monitoring thread started");
     
     while (g_gps_manager_thread_running) {
         // Update GPS data from all sources
@@ -209,12 +222,12 @@ static void* gps_manager_monitor_thread(void *arg) {
         }
     }
     
-    LOGX_INFO("GPS manager monitoring thread stopped");
+    LOGX_INFO_MSG("GPS manager monitoring thread stopped");
     return NULL;
 }
 
 // Update GPS data from all sources
-static int gps_manager_update_all_sources(void) {
+int gps_manager_update_all_sources(void) {
     if (!g_gps_manager_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -230,7 +243,7 @@ static int gps_manager_update_all_sources(void) {
         return AUTONOMY_SUCCESS;
     }
     
-    LOGX_DEBUG("Updating GPS data from all sources");
+    LOGX_DEBUG_MSG("Updating GPS data from all sources");
     
     // Update RUTOS GPS source
     update_rutos_gps_source();
@@ -250,7 +263,7 @@ static int gps_manager_update_all_sources(void) {
 }
 
 // Update RUTOS GPS source
-static void update_rutos_gps_source(void) {
+void update_rutos_gps_source(void) {
     // Check if RUTOS GPS is available
     if (!gps_rutos_is_available()) {
         return;
@@ -269,14 +282,14 @@ static void update_rutos_gps_source(void) {
             source->reliability_score = rutos_data.reliability_score;
             source->data_quality = calculate_data_quality(&rutos_data);
             
-            LOGX_DEBUG("Updated RUTOS GPS source: lat=%.6f, lon=%.6f, reliability=%.2f", 
+            LOGX_DEBUG_MSG("Updated RUTOS GPS source: lat=%.6f, lon=%.6f, reliability=%.2f", 
                        rutos_data.lat, rutos_data.lon, source->reliability_score);
         }
     }
 }
 
 // Update Starlink GPS source
-static void update_starlink_gps_source(void) {
+void update_starlink_gps_source(void) {
     // Check if Starlink GPS is available
     if (!gps_starlink_is_data_recent(300)) { // 5 minutes
         return;
@@ -295,14 +308,14 @@ static void update_starlink_gps_source(void) {
             source->reliability_score = starlink_data.reliability_score;
             source->data_quality = calculate_data_quality(&starlink_data);
             
-            LOGX_DEBUG("Updated Starlink GPS source: lat=%.6f, lon=%.6f, reliability=%.2f", 
+            LOGX_DEBUG_MSG("Updated Starlink GPS source: lat=%.6f, lon=%.6f, reliability=%.2f", 
                        starlink_data.lat, starlink_data.lon, source->reliability_score);
         }
     }
 }
 
 // Find or create GPS source
-static int find_or_create_gps_source(gps_source_type_t type, const char *name) {
+int find_or_create_gps_source(gps_source_type_t type, const char *name) {
     // First, try to find existing source
     for (int i = 0; i < g_gps_manager.source_count; i++) {
         if (g_gps_manager.sources[i].type == type) {
@@ -324,16 +337,16 @@ static int find_or_create_gps_source(gps_source_type_t type, const char *name) {
         
         g_gps_manager.source_count++;
         
-        LOGX_DEBUG("Created new GPS source: %s (type: %s)", name, GPS_SOURCE_NAMES[type]);
+        LOGX_DEBUG_MSG("Created new GPS source: %s (type: %s)", name, GPS_SOURCE_NAMES[type]);
         return index;
     }
     
-    LOGX_WARN("Maximum GPS sources reached, cannot create new source");
+    LOGX_WARN_MSG("Maximum GPS sources reached, cannot create new source");
     return -1;
 }
 
 // Calculate data quality score
-static double calculate_data_quality(const gps_data_t *gps_data) {
+double calculate_data_quality(const gps_data_t *gps_data) {
     if (!gps_data) {
         return 0.0;
     }
@@ -382,12 +395,12 @@ static double calculate_data_quality(const gps_data_t *gps_data) {
 }
 
 // Clean up stale GPS sources
-static void cleanup_stale_gps_sources(time_t now) {
+void cleanup_stale_gps_sources(time_t now) {
     for (int i = 0; i < g_gps_manager.source_count; i++) {
         if (g_gps_manager.sources[i].last_update > 0 &&
             (now - g_gps_manager.sources[i].last_update) > g_gps_manager.source_timeout) {
             
-            LOGX_DEBUG("Removing stale GPS source: %s", g_gps_manager.sources[i].name);
+            LOGX_DEBUG_MSG("Removing stale GPS source: %s", g_gps_manager.sources[i].name);
             
             // Remove source by shifting remaining sources
             for (int j = i; j < g_gps_manager.source_count - 1; j++) {
@@ -400,7 +413,7 @@ static void cleanup_stale_gps_sources(time_t now) {
 }
 
 // Calculate unified GPS position
-static int gps_manager_calculate_unified_position(void) {
+int gps_manager_calculate_unified_position(void) {
     if (!g_gps_manager_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -429,7 +442,7 @@ static int gps_manager_calculate_unified_position(void) {
         // Update unified GPS data
         memcpy(&g_gps_manager.unified_gps, &source->gps_data, sizeof(gps_data_t));
         
-        LOGX_DEBUG("Updated unified GPS position from %s: lat=%.6f, lon=%.6f, acc=%.1fm", 
+        LOGX_DEBUG_MSG("Updated unified GPS position from %s: lat=%.6f, lon=%.6f, acc=%.1fm", 
                    source->name, source->gps_data.lat, source->gps_data.lon, source->gps_data.accuracy);
     }
     
@@ -439,7 +452,7 @@ static int gps_manager_calculate_unified_position(void) {
 }
 
 // Find the best GPS source
-static int find_best_gps_source(void) {
+int find_best_gps_source(void) {
     int best_source = -1;
     double best_score = 0.0;
     
@@ -462,7 +475,7 @@ static int find_best_gps_source(void) {
 }
 
 // Check if position has changed significantly
-static bool check_position_change(const gps_data_t *new_data) {
+bool check_position_change(const gps_data_t *new_data) {
     if (!new_data || g_gps_manager.unified_gps.timestamp == 0) {
         return true; // First data or no previous data
     }
@@ -478,7 +491,7 @@ static bool check_position_change(const gps_data_t *new_data) {
 }
 
 // Get unified GPS data
-static int gps_manager_get_unified_gps(gps_data_t *gps_data) {
+int gps_manager_get_unified_gps(gps_data_t *gps_data) {
     if (!g_gps_manager_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -493,7 +506,7 @@ static int gps_manager_get_unified_gps(gps_data_t *gps_data) {
 }
 
 // Get GPS source information
-static int gps_manager_get_sources(gps_source_t *sources, int max_count, int *actual_count) {
+int gps_manager_get_sources(gps_source_t *sources, int max_count, int *actual_count) {
     if (!g_gps_manager_initialized || !sources || !actual_count) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -514,7 +527,7 @@ static int gps_manager_get_sources(gps_source_t *sources, int max_count, int *ac
 }
 
 // Get GPS manager status
-static int gps_manager_get_status(gps_manager_status_t *status) {
+int gps_manager_get_status(gps_manager_status_t *status) {
     if (!g_gps_manager_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -535,7 +548,7 @@ static int gps_manager_get_status(gps_manager_status_t *status) {
 }
 
 // Set GPS manager configuration
-static int gps_manager_set_config(const gps_manager_config_t *config) {
+int gps_manager_set_config(const gps_manager_config_t *config) {
     if (!g_gps_manager_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -554,12 +567,12 @@ static int gps_manager_set_config(const gps_manager_config_t *config) {
     
     pthread_mutex_unlock(&g_gps_manager_mutex);
     
-    LOGX_INFO("GPS manager configuration updated");
+    LOGX_INFO_MSG("GPS manager configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable GPS manager
-static int gps_manager_set_enabled(bool enabled) {
+int gps_manager_set_enabled(bool enabled) {
     if (!g_gps_manager_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -568,22 +581,22 @@ static int gps_manager_set_enabled(bool enabled) {
     g_gps_manager.enabled = enabled;
     pthread_mutex_unlock(&g_gps_manager_mutex);
     
-    LOGX_INFO("GPS manager system %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS manager system %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Force immediate GPS update
-static int gps_manager_force_update(void) {
+int gps_manager_force_update(void) {
     if (!g_gps_manager_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    LOGX_INFO("Forcing immediate GPS manager update");
+    LOGX_INFO_MSG("Forcing immediate GPS manager update");
     return gps_manager_update_all_sources();
 }
 
 // Cleanup GPS manager system
-static void gps_manager_cleanup(void) {
+void gps_manager_cleanup(void) {
     if (!g_gps_manager_initialized) {
         return;
     }
@@ -604,5 +617,5 @@ static void gps_manager_cleanup(void) {
     
     pthread_mutex_destroy(&g_gps_manager_mutex);
     
-    LOGX_INFO("GPS manager system cleaned up");
+    LOGX_INFO_MSG("GPS manager system cleaned up");
 }

@@ -6,6 +6,10 @@
 #include <stdbool.h>
 #include "starlink_types.h"
 
+// Forward declarations for UCI and UBUS types
+struct uci_context;
+struct ubus_context;
+
 // Starlink tracker configuration
 typedef struct {
     char space_track_username[64];

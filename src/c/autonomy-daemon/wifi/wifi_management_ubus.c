@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <fcntl.h>
 
 // WiFi management UBUS methods
 
@@ -216,7 +220,7 @@ int autonomy_wifi_management_set_config(struct ubus_context *uctx, struct ubus_o
     struct blob_attr *tb[__BLOBMSG_TYPE_LAST];
     unsigned int rem;
     
-    blobmsg_parse(blobmsg_policy_policy, 0, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg));
     
     if (tb[BLOBMSG_TYPE_BOOL]) {
         config.enabled = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]);
@@ -310,7 +314,7 @@ int autonomy_wifi_management_set_enabled(struct ubus_context *uctx, struct ubus_
     struct blob_attr *tb[__BLOBMSG_TYPE_LAST];
     unsigned int rem;
     
-    blobmsg_parse(blobmsg_policy_policy, 0, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg));
     
     bool enabled = false;
     if (tb[BLOBMSG_TYPE_BOOL]) {
@@ -371,7 +375,7 @@ int autonomy_wifi_management_scan_channels(struct ubus_context *uctx, struct ubu
     struct blob_attr *tb[__BLOBMSG_TYPE_LAST];
     unsigned int rem;
     
-    blobmsg_parse(blobmsg_policy_policy, 0, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg));
     
     const char *interface_name = "wlan0"; // Default interface
     if (tb[BLOBMSG_TYPE_STRING]) {
@@ -409,7 +413,7 @@ int autonomy_wifi_management_optimize_channels(struct ubus_context *uctx, struct
     struct blob_attr *tb[__BLOBMSG_TYPE_LAST];
     unsigned int rem;
     
-    blobmsg_parse(blobmsg_policy_policy, 0, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg));
     
     const char *interface_name = "wlan0"; // Default interface
     if (tb[BLOBMSG_TYPE_STRING]) {
@@ -446,7 +450,7 @@ int autonomy_wifi_management_update_gps_location(struct ubus_context *uctx, stru
     struct blob_attr *tb[__BLOBMSG_TYPE_LAST];
     unsigned int rem;
     
-    blobmsg_parse(blobmsg_policy_policy, 0, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg));
     
     double lat = 0.0, lon = 0.0, accuracy = 0.0;
     time_t timestamp = time(NULL);

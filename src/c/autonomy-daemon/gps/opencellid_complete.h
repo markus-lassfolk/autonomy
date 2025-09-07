@@ -1,7 +1,7 @@
 #ifndef OPENCELLID_COMPLETE_H
 #define OPENCELLID_COMPLETE_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>

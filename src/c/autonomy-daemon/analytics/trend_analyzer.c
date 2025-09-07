@@ -4,26 +4,28 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <math.h>
+#include <time.h>
+#include <stdbool.h>
 
 // Global trend analyzer instance
 static trend_analyzer_t g_trend_analyzer;
 static bool g_trend_analyzer_initialized = false;
 
 // Forward declarations
-static void analyze_latency_trend(const telemetry_sample_t* samples, int sample_count,
+void analyze_latency_trend(const telemetry_sample_t* samples, int sample_count,
                                  trend_result_t* result);
-static void analyze_signal_trend(const telemetry_sample_t* samples, int sample_count,
+void analyze_signal_trend(const telemetry_sample_t* samples, int sample_count,
                                 trend_result_t* result);
-static void analyze_loss_trend(const telemetry_sample_t* samples, int sample_count,
+void analyze_loss_trend(const telemetry_sample_t* samples, int sample_count,
                               trend_result_t* result);
-static void analyze_throughput_trend(const telemetry_sample_t* samples, int sample_count,
+void analyze_throughput_trend(const telemetry_sample_t* samples, int sample_count,
                                     trend_result_t* result);
-static void calculate_overall_trend(member_trends_t* trends);
+void calculate_overall_trend(member_trends_t* trends);
 static void classify_trend(trend_result_t* result);
 static double linear_regression_slope(const double* x_values, const double* y_values, int count);
 
 // Initialize trend analyzer
-static int trend_analyzer_init(const trend_analyzer_config_t* config) {
+int trend_analyzer_init(const trend_analyzer_config_t* config) {
     if (g_trend_analyzer_initialized) {
         return 0; // Already initialized
     }
@@ -60,7 +62,7 @@ static int trend_analyzer_init(const trend_analyzer_config_t* config) {
 }
 
 // Clean up trend analyzer
-static void trend_analyzer_cleanup(void) {
+void trend_analyzer_cleanup(void) {
     if (!g_trend_analyzer_initialized) return;
     
     if (g_trend_analyzer.mutex) {
@@ -73,7 +75,7 @@ static void trend_analyzer_cleanup(void) {
 }
 
 // Analyze trends for all members
-static int trend_analyzer_analyze_all(void) {
+int trend_analyzer_analyze_all(void) {
     if (!g_trend_analyzer_initialized) {
         return -1;
     }
@@ -114,7 +116,7 @@ static int trend_analyzer_analyze_all(void) {
 }
 
 // Analyze trends for specific member
-static int trend_analyzer_analyze_member(const char* member_name, member_trends_t* trends) {
+int trend_analyzer_analyze_member(const char* member_name, member_trends_t* trends) {
     if (!g_trend_analyzer_initialized || !member_name || !trends) {
         return -1;
     }
@@ -151,7 +153,7 @@ static int trend_analyzer_analyze_member(const char* member_name, member_trends_
 }
 
 // Analyze latency trend
-static void analyze_latency_trend(const telemetry_sample_t* samples, int sample_count,
+void analyze_latency_trend(const telemetry_sample_t* samples, int sample_count,
                                  trend_result_t* result) {
     if (!samples || !result || sample_count <= 0) return;
     
@@ -189,7 +191,7 @@ static void analyze_latency_trend(const telemetry_sample_t* samples, int sample_
 }
 
 // Analyze signal trend
-static void analyze_signal_trend(const telemetry_sample_t* samples, int sample_count,
+void analyze_signal_trend(const telemetry_sample_t* samples, int sample_count,
                                 trend_result_t* result) {
     if (!samples || !result || sample_count <= 0) return;
     
@@ -227,7 +229,7 @@ static void analyze_signal_trend(const telemetry_sample_t* samples, int sample_c
 }
 
 // Analyze loss trend
-static void analyze_loss_trend(const telemetry_sample_t* samples, int sample_count,
+void analyze_loss_trend(const telemetry_sample_t* samples, int sample_count,
                               trend_result_t* result) {
     if (!samples || !result || sample_count <= 0) return;
     
@@ -265,7 +267,7 @@ static void analyze_loss_trend(const telemetry_sample_t* samples, int sample_cou
 }
 
 // Analyze throughput trend
-static void analyze_throughput_trend(const telemetry_sample_t* samples, int sample_count,
+void analyze_throughput_trend(const telemetry_sample_t* samples, int sample_count,
                                     trend_result_t* result) {
     if (!samples || !result || sample_count <= 0) return;
     
@@ -303,7 +305,7 @@ static void analyze_throughput_trend(const telemetry_sample_t* samples, int samp
 }
 
 // Calculate overall trend from individual metrics
-static void calculate_overall_trend(member_trends_t* trends) {
+void calculate_overall_trend(member_trends_t* trends) {
     if (!trends) return;
     
     // Calculate weighted average slope
@@ -442,7 +444,7 @@ double trend_analyzer_calculate_confidence(const double* values, const double* r
 }
 
 // Predict future value
-static double trend_analyzer_predict_value(const trend_result_t* trend, time_t future_time) {
+double trend_analyzer_predict_value(const trend_result_t* trend, time_t future_time) {
     if (!trend || !trend->has_prediction) return 0.0;
     
     // Simple linear prediction
@@ -451,7 +453,7 @@ static double trend_analyzer_predict_value(const trend_result_t* trend, time_t f
 }
 
 // Get trend results for all members
-static int trend_analyzer_get_all_trends(member_trends_t* trends, int max_trends) {
+int trend_analyzer_get_all_trends(member_trends_t* trends, int max_trends) {
     if (!g_trend_analyzer_initialized || !trends || max_trends <= 0) {
         return -1;
     }
@@ -471,7 +473,7 @@ static int trend_analyzer_get_all_trends(member_trends_t* trends, int max_trends
 }
 
 // Get trend results for specific member
-static int trend_analyzer_get_member_trends(const char* member_name, member_trends_t* trends) {
+int trend_analyzer_get_member_trends(const char* member_name, member_trends_t* trends) {
     if (!g_trend_analyzer_initialized || !member_name || !trends) {
         return -1;
     }
@@ -491,7 +493,7 @@ static int trend_analyzer_get_member_trends(const char* member_name, member_tren
 }
 
 // Get trend analyzer status
-static void trend_analyzer_get_status(trend_analyzer_t* status) {
+void trend_analyzer_get_status(trend_analyzer_t* status) {
     if (!status || !g_trend_analyzer_initialized) return;
     
     pthread_mutex_lock(g_trend_analyzer.mutex);
@@ -500,11 +502,11 @@ static void trend_analyzer_get_status(trend_analyzer_t* status) {
 }
 
 // Check if trend analyzer is initialized
-static bool trend_analyzer_is_initialized(void) {
+bool trend_analyzer_is_initialized(void) {
     return g_trend_analyzer_initialized;
 }
 
 // Get trend analyzer instance
-static trend_analyzer_t* trend_analyzer_get_instance(void) {
+trend_analyzer_t* trend_analyzer_get_instance(void) {
     return g_trend_analyzer_initialized ? &g_trend_analyzer : NULL;
 }

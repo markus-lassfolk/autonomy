@@ -1,13 +1,16 @@
 #include "gps_weather.h"
-#include "external_apis.h"
-#include "logx.h"
-#include "types.h"
+#include "../external/external_apis.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
 #include <curl/curl.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <fcntl.h>
 
 // Weather integration configuration
 static const int MAX_WEATHER_CACHE_ENTRIES = 1000;          // Maximum weather cache entries
@@ -26,13 +29,22 @@ static gps_weather_t g_weather = {0};
 static bool g_weather_initialized = false;
 static pthread_mutex_t g_weather_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Forward declarations
+static bool get_cached_weather(double lat, double lon, gps_weather_current_t *weather);
+void cache_weather_data(double lat, double lon, const gps_weather_current_t *weather);
+int find_oldest_weather_cache(void);
+double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+void parse_current_weather_response(const gps_weather_api_response_t *response, gps_weather_current_t *weather);
+void parse_forecast_response(const gps_weather_api_response_t *response, gps_weather_forecast_t *forecast);
+void parse_air_quality_response(const gps_weather_api_response_t *response, gps_weather_air_quality_t *air_quality);
+
 // CURL write callback for weather API responses
-static size_t weather_write_callback(void *contents, size_t size, size_t nmemb, void *userp) {
+size_t weather_write_callback(void *contents, size_t size, size_t nmemb, void *userp) {
     size_t realsize = size * nmemb;
     gps_weather_api_response_t *response = (gps_weather_api_response_t *)userp;
     
     if (response->data_size + realsize >= sizeof(response->data)) {
-        LOGX_WARN("Weather response too large, truncating");
+        LOGX_WARN_MSG("Weather response too large, truncating");
         return 0;
     }
     
@@ -44,9 +56,9 @@ static size_t weather_write_callback(void *contents, size_t size, size_t nmemb, 
 }
 
 // Initialize GPS weather integration
-static int gps_weather_init(const char *api_key) {
+int gps_weather_init(const char *api_key) {
     if (g_weather_initialized) {
-        LOGX_WARN("GPS weather integration already initialized");
+        LOGX_WARN_MSG("GPS weather integration already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -94,7 +106,7 @@ static int gps_weather_init(const char *api_key) {
     g_weather_initialized = true;
     pthread_mutex_unlock(&g_weather_mutex);
     
-    LOGX_INFO("GPS weather integration initialized successfully");
+    LOGX_INFO_MSG("GPS weather integration initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -120,7 +132,7 @@ static int perform_weather_api_request(const char *endpoint, const char *params,
     CURL *curl = curl_easy_init();
     if (!curl) {
         pthread_mutex_unlock(&g_weather_mutex);
-        LOGX_ERROR("Failed to initialize CURL for weather request");
+        LOGX_ERROR_MSG("Failed to initialize CURL for weather request");
         return AUTONOMY_ERROR_INTERNAL;
     }
     
@@ -144,14 +156,14 @@ static int perform_weather_api_request(const char *endpoint, const char *params,
         response->success = true;
         response->http_code = http_code;
         
-        LOGX_DEBUG("Weather API request successful: %s", endpoint);
+        LOGX_DEBUG_MSG("Weather API request successful: %s", endpoint);
     } else {
         g_weather.failed_requests++;
         response->success = false;
         response->http_code = http_code;
         response->error_code = res;
         
-        LOGX_ERROR("Weather API request failed: %s, HTTP: %ld, CURL: %d", 
+        LOGX_ERROR_MSG("Weather API request failed: %s, HTTP: %ld, CURL: %d", 
                    endpoint, http_code, res);
     }
     
@@ -162,7 +174,7 @@ static int perform_weather_api_request(const char *endpoint, const char *params,
 }
 
 // Get current weather for coordinates
-static int gps_weather_get_current(double lat, double lon, gps_weather_current_t *weather) {
+int gps_weather_get_current(double lat, double lon, gps_weather_current_t *weather) {
     if (!g_weather_initialized || !weather) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -195,7 +207,7 @@ static int gps_weather_get_current(double lat, double lon, gps_weather_current_t
             // Cache the result
             cache_weather_data(lat, lon, weather);
             
-            LOGX_INFO("Weather data obtained from external APIs manager",
+            LOGX_INFO_MSG("Weather data obtained from external APIs manager",
                      "lat", lat, "lon", lon,
                      "temperature", weather->temperature,
                      "description", weather->description,
@@ -257,7 +269,7 @@ int gps_weather_get_forecast(double lat, double lon, int days,
 }
 
 // Get air quality for coordinates
-static int gps_weather_get_air_quality(double lat, double lon, gps_weather_air_quality_t *air_quality) {
+int gps_weather_get_air_quality(double lat, double lon, gps_weather_air_quality_t *air_quality) {
     if (!g_weather_initialized || !air_quality) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -311,7 +323,7 @@ static bool get_cached_weather(double lat, double lon, gps_weather_current_t *we
                 weather->weather_condition = cache->weather_condition;
                 weather->air_quality_index = cache->air_quality_index;
                 
-                LOGX_DEBUG("Weather data retrieved from cache for (%.6f, %.6f)", lat, lon);
+                LOGX_DEBUG_MSG("Weather data retrieved from cache for (%.6f, %.6f)", lat, lon);
                 return true;
             }
         }
@@ -321,7 +333,7 @@ static bool get_cached_weather(double lat, double lon, gps_weather_current_t *we
 }
 
 // Cache weather data
-static void cache_weather_data(double lat, double lon, const gps_weather_current_t *weather) {
+void cache_weather_data(double lat, double lon, const gps_weather_current_t *weather) {
     // Find free cache slot
     int slot_index = -1;
     for (int i = 0; i < g_weather.max_cache_entries; i++) {
@@ -361,12 +373,12 @@ static void cache_weather_data(double lat, double lon, const gps_weather_current
             g_weather.cache_entry_count = slot_index + 1;
         }
         
-        LOGX_DEBUG("Weather data cached for (%.6f, %.6f)", lat, lon);
+        LOGX_DEBUG_MSG("Weather data cached for (%.6f, %.6f)", lat, lon);
     }
 }
 
 // Find oldest weather cache entry
-static int find_oldest_weather_cache(void) {
+int find_oldest_weather_cache(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
@@ -382,7 +394,7 @@ static int find_oldest_weather_cache(void) {
 }
 
 // Calculate distance between coordinates
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
     const double R = 6371000.0; // Earth radius in meters
     
     double lat1_rad = lat1 * M_PI / 180.0;
@@ -399,7 +411,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 // Parse current weather response
-static void parse_current_weather_response(const gps_weather_api_response_t *response, 
+void parse_current_weather_response(const gps_weather_api_response_t *response, 
                                          gps_weather_current_t *weather) {
     // Initialize weather data
     memset(weather, 0, sizeof(gps_weather_current_t));
@@ -419,11 +431,11 @@ static void parse_current_weather_response(const gps_weather_api_response_t *res
     weather->weather_condition = WEATHER_CONDITION_PARTLY_CLOUDY;
     weather->air_quality_index = 50;    // Moderate
     
-    LOGX_DEBUG("Parsed current weather response");
+    LOGX_DEBUG_MSG("Parsed current weather response");
 }
 
 // Parse forecast response
-static void parse_forecast_response(const gps_weather_api_response_t *response, 
+void parse_forecast_response(const gps_weather_api_response_t *response, 
                                   gps_weather_forecast_t *forecast) {
     // Initialize forecast data
     memset(forecast, 0, sizeof(gps_weather_forecast_t));
@@ -431,22 +443,22 @@ static void parse_forecast_response(const gps_weather_api_response_t *response,
     forecast->forecast_count = 0;
     
     // This is a simplified parser - in a real implementation, you would use a JSON library
-    LOGX_DEBUG("Parsed forecast response");
+    LOGX_DEBUG_MSG("Parsed forecast response");
 }
 
 // Parse air quality response
-static void parse_air_quality_response(const gps_weather_api_response_t *response, 
+void parse_air_quality_response(const gps_weather_api_response_t *response, 
                                      gps_weather_air_quality_t *air_quality) {
     // Initialize air quality data
     memset(air_quality, 0, sizeof(gps_weather_air_quality_t));
     air_quality->timestamp = response->timestamp;
     
     // This is a simplified parser - in a real implementation, you would use a JSON library
-    LOGX_DEBUG("Parsed air quality response");
+    LOGX_DEBUG_MSG("Parsed air quality response");
 }
 
 // Get weather integration status
-static int gps_weather_get_status(gps_weather_status_t *status) {
+int gps_weather_get_status(gps_weather_status_t *status) {
     if (!g_weather_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -474,7 +486,7 @@ static int gps_weather_get_status(gps_weather_status_t *status) {
 }
 
 // Get weather integration configuration
-static int gps_weather_get_config(gps_weather_config_t *config) {
+int gps_weather_get_config(gps_weather_config_t *config) {
     if (!g_weather_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -495,7 +507,7 @@ static int gps_weather_get_config(gps_weather_config_t *config) {
 }
 
 // Set weather integration configuration
-static int gps_weather_set_config(const gps_weather_config_t *config) {
+int gps_weather_set_config(const gps_weather_config_t *config) {
     if (!g_weather_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -515,12 +527,12 @@ static int gps_weather_set_config(const gps_weather_config_t *config) {
     
     pthread_mutex_unlock(&g_weather_mutex);
     
-    LOGX_INFO("GPS weather integration configuration updated");
+    LOGX_INFO_MSG("GPS weather integration configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable weather integration
-static int gps_weather_set_enabled(bool enabled) {
+int gps_weather_set_enabled(bool enabled) {
     if (!g_weather_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -529,12 +541,12 @@ static int gps_weather_set_enabled(bool enabled) {
     g_weather.enabled = enabled;
     pthread_mutex_unlock(&g_weather_mutex);
     
-    LOGX_INFO("GPS weather integration %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS weather integration %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Force weather update
-static int gps_weather_force_update(void) {
+int gps_weather_force_update(void) {
     if (!g_weather_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -544,12 +556,12 @@ static int gps_weather_force_update(void) {
     g_weather.last_update = 0;
     pthread_mutex_unlock(&g_weather_mutex);
     
-    LOGX_INFO("GPS weather update forced");
+    LOGX_INFO_MSG("GPS weather update forced");
     return AUTONOMY_SUCCESS;
 }
 
 // Get weather statistics
-static int gps_weather_get_statistics(gps_weather_stats_t *stats) {
+int gps_weather_get_statistics(gps_weather_stats_t *stats) {
     if (!g_weather_initialized || !stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -591,7 +603,7 @@ static int gps_weather_get_statistics(gps_weather_stats_t *stats) {
 }
 
 // Reset weather integration
-static int gps_weather_reset(void) {
+int gps_weather_reset(void) {
     if (!g_weather_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -623,12 +635,12 @@ static int gps_weather_reset(void) {
     
     pthread_mutex_unlock(&g_weather_mutex);
     
-    LOGX_INFO("GPS weather integration reset");
+    LOGX_INFO_MSG("GPS weather integration reset");
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup weather integration
-static void gps_weather_cleanup(void) {
+void gps_weather_cleanup(void) {
     if (!g_weather_initialized) {
         return;
     }
@@ -637,5 +649,5 @@ static void gps_weather_cleanup(void) {
     pthread_mutex_destroy(&g_weather_mutex);
     g_weather_initialized = false;
     
-    LOGX_INFO("GPS weather integration cleaned up");
+    LOGX_INFO_MSG("GPS weather integration cleaned up");
 }

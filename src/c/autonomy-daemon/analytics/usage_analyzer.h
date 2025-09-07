@@ -4,6 +4,9 @@
 #include "../telemetry/telemetry_store.h"
 #include <stdbool.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdint.h>
+#include <math.h>
 
 // Data usage structure
 typedef struct {

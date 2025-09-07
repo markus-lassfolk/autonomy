@@ -1,14 +1,16 @@
 #include "gps_integration.h"
-#include "logx.h"
-#include "types.h"
+#include "../utils/logx.h"
+#include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 // GPS integration configuration
-static const int MAX_GPS_SOURCES = 10;                  // Maximum GPS sources
+// Note: MAX_GPS_SOURCES is defined in ../core/types.h
 static const int GPS_UPDATE_INTERVAL = 1;               // 1 second GPS update interval
 static const int INTEGRATION_CHECK_INTERVAL = 5;        // 5 second integration check interval
 static const double MIN_GPS_ACCURACY = 100.0;           // 100m minimum accuracy threshold
@@ -19,10 +21,23 @@ static gps_integration_t g_integration = {0};
 static bool g_integration_initialized = false;
 static pthread_mutex_t g_integration_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Forward declarations
+int find_source_by_id(int source_id);
+double calculate_source_health_score(const gps_integration_source_t *source, const gps_data_t *gps_data);
+double calculate_source_reliability(const gps_integration_source_t *source, const gps_data_t *gps_data);
+void add_gps_history(const gps_data_t *gps_data, int source_id, gps_source_type_t source_type, double health_score);
+double calculate_gps_confidence(const gps_data_t *gps_data);
+void perform_integration_checks(void);
+void check_gps_source_health(void);
+void update_best_gps_source(void);
+void perform_gps_data_fusion(void);
+void check_gps_events(void);
+void check_location_services_update(void);
+
 // Initialize GPS integration system
-static int gps_integration_init(void) {
+int gps_integration_init(void) {
     if (g_integration_initialized) {
-        LOGX_WARN("GPS integration already initialized");
+        LOGX_WARN_MSG("GPS integration already initialized");
         return AUTONOMY_SUCCESS;
     }
     
@@ -71,12 +86,12 @@ static int gps_integration_init(void) {
     g_integration_initialized = true;
     pthread_mutex_unlock(&g_integration_mutex);
     
-    LOGX_INFO("GPS integration system initialized successfully");
+    LOGX_INFO_MSG("GPS integration system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Register GPS source
-static int gps_integration_register_source(const char *name, gps_source_type_t source_type) {
+int gps_integration_register_source(const char *name, gps_source_type_t source_type) {
     if (!g_integration_initialized || !name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -88,7 +103,7 @@ static int gps_integration_register_source(const char *name, gps_source_type_t s
         if (g_integration.gps_sources[i].active && 
             strcmp(g_integration.gps_sources[i].name, name) == 0) {
             pthread_mutex_unlock(&g_integration_mutex);
-            LOGX_WARN("GPS source '%s' already registered", name);
+            LOGX_WARN_MSG("GPS source '%s' already registered", name);
             return AUTONOMY_ERROR_ALREADY_EXISTS;
         }
     }
@@ -104,7 +119,7 @@ static int gps_integration_register_source(const char *name, gps_source_type_t s
     
     if (source_index < 0) {
         pthread_mutex_unlock(&g_integration_mutex);
-        LOGX_ERROR("No free slots for GPS source registration");
+        LOGX_ERROR_MSG("No free slots for GPS source registration");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
@@ -127,20 +142,20 @@ static int gps_integration_register_source(const char *name, gps_source_type_t s
     
     pthread_mutex_unlock(&g_integration_mutex);
     
-    LOGX_INFO("Registered GPS source '%s' (type: %d) with ID %d", 
+    LOGX_INFO_MSG("Registered GPS source '%s' (type: %d) with ID %d", 
                name, source_type, source->source_id);
     
     return source->source_id;
 }
 
 // Generate unique source ID
-static int generate_source_id(void) {
+int generate_source_id(void) {
     static int next_id = 3000;
     return next_id++;
 }
 
 // Update GPS source data
-static int gps_integration_update_source(int source_id, const gps_data_t *gps_data) {
+int gps_integration_update_source(int source_id, const gps_data_t *gps_data) {
     if (!g_integration_initialized || !gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -151,7 +166,7 @@ static int gps_integration_update_source(int source_id, const gps_data_t *gps_da
     int source_index = find_source_by_id(source_id);
     if (source_index < 0) {
         pthread_mutex_unlock(&g_integration_mutex);
-        LOGX_ERROR("GPS source %d not found", source_id);
+        LOGX_ERROR_MSG("GPS source %d not found", source_id);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -189,14 +204,14 @@ static int gps_integration_update_source(int source_id, const gps_data_t *gps_da
     // Trigger integration checks
     perform_integration_checks();
     
-    LOGX_DEBUG("Updated GPS source %d: (%.6f, %.6f) accuracy: %.1fm, health: %.1f", 
+    LOGX_DEBUG_MSG("Updated GPS source %d: (%.6f, %.6f) accuracy: %.1fm, health: %.1f", 
                source_id, gps_data->lat, gps_data->lon, gps_data->accuracy, source->health_score);
     
     return AUTONOMY_SUCCESS;
 }
 
 // Find source by ID
-static int find_source_by_id(int source_id) {
+int find_source_by_id(int source_id) {
     for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         if (g_integration.gps_sources[i].active && 
             g_integration.gps_sources[i].source_id == source_id) {
@@ -207,7 +222,7 @@ static int find_source_by_id(int source_id) {
 }
 
 // Calculate source health score
-static double calculate_source_health_score(const gps_integration_source_t *source, const gps_data_t *gps_data) {
+double calculate_source_health_score(const gps_integration_source_t *source, const gps_data_t *gps_data) {
     double health_score = 100.0;
     
     // Accuracy penalty
@@ -242,7 +257,7 @@ static double calculate_source_health_score(const gps_integration_source_t *sour
 }
 
 // Calculate source reliability
-static double calculate_source_reliability(const gps_integration_source_t *source, const gps_data_t *gps_data) {
+double calculate_source_reliability(const gps_integration_source_t *source, const gps_data_t *gps_data) {
     double reliability = 1.0;
     
     // Base reliability on update consistency
@@ -265,7 +280,7 @@ static double calculate_source_reliability(const gps_integration_source_t *sourc
 }
 
 // Add GPS data to history
-static void add_gps_history(const gps_data_t *gps_data, int source_id, 
+void add_gps_history(const gps_data_t *gps_data, int source_id, 
                            gps_source_type_t source_type, double health_score) {
     // Shift history array
     for (int i = g_integration.history_size - 1; i > 0; i--) {
@@ -286,7 +301,7 @@ static void add_gps_history(const gps_data_t *gps_data, int source_id,
 }
 
 // Calculate GPS confidence
-static double calculate_gps_confidence(const gps_data_t *gps_data) {
+double calculate_gps_confidence(const gps_data_t *gps_data) {
     double confidence = 1.0;
     
     // Accuracy confidence
@@ -322,7 +337,7 @@ static double calculate_gps_confidence(const gps_data_t *gps_data) {
 }
 
 // Perform integration checks
-static void perform_integration_checks(void) {
+void perform_integration_checks(void) {
     time_t now = time(NULL);
     
     // Check if enough time has passed since last integration check
@@ -349,11 +364,11 @@ static void perform_integration_checks(void) {
     // Update location services if coordinates changed significantly
     check_location_services_update();
     
-    LOGX_DEBUG("GPS integration checks completed");
+    LOGX_DEBUG_MSG("GPS integration checks completed");
 }
 
 // Check GPS source health
-static void check_gps_source_health(void) {
+void check_gps_source_health(void) {
     for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         if (!g_integration.gps_sources[i].active) {
             continue;
@@ -366,7 +381,7 @@ static void check_gps_source_health(void) {
         if (source->last_update > 0 && 
             (now - source->last_update) > 300) {  // 5 minutes
             source->health_score *= 0.8;  // Reduce health score
-            LOGX_WARN("GPS source '%s' is stale (last update: %ld seconds ago)", 
+            LOGX_WARN_MSG("GPS source '%s' is stale (last update: %ld seconds ago)", 
                       source->name, now - source->last_update);
         }
         
@@ -374,14 +389,14 @@ static void check_gps_source_health(void) {
         if (source->health_score < 20.0 && source->enabled) {
             source->enabled = false;
             g_integration.active_sources--;
-            LOGX_WARN("GPS source '%s' disabled due to poor health (score: %.1f)", 
+            LOGX_WARN_MSG("GPS source '%s' disabled due to poor health (score: %.1f)", 
                       source->name, source->health_score);
         }
     }
 }
 
 // Update best GPS source
-static void update_best_gps_source(void) {
+void update_best_gps_source(void) {
     int best_source_index = -1;
     double best_score = -1.0;
     
@@ -402,34 +417,34 @@ static void update_best_gps_source(void) {
     
     if (best_source_index >= 0) {
         g_integration.best_source_id = g_integration.gps_sources[best_source_index].source_id;
-        LOGX_DEBUG("Best GPS source updated: %d (score: %.1f)", 
+        LOGX_DEBUG_MSG("Best GPS source updated: %d (score: %.1f)", 
                    g_integration.best_source_id, best_score);
     }
 }
 
 // Perform GPS data fusion
-static void perform_gps_data_fusion(void) {
+void perform_gps_data_fusion(void) {
     // This is a placeholder for GPS data fusion
     // In a full implementation, this would call the gps_fusion module
-    LOGX_DEBUG("GPS data fusion would be performed here");
+    LOGX_DEBUG_MSG("GPS data fusion would be performed here");
 }
 
 // Check GPS events
-static void check_gps_events(void) {
+void check_gps_events(void) {
     // This is a placeholder for GPS event checking
     // In a full implementation, this would call the gps_events module
-    LOGX_DEBUG("GPS events would be checked here");
+    LOGX_DEBUG_MSG("GPS events would be checked here");
 }
 
 // Check location services update
-static void check_location_services_update(void) {
+void check_location_services_update(void) {
     // This is a placeholder for location services updates
     // In a full implementation, this would call the gps_location_services module
-    LOGX_DEBUG("Location services would be updated here");
+    LOGX_DEBUG_MSG("Location services would be updated here");
 }
 
 // Get GPS integration status
-static int gps_integration_get_status(gps_integration_status_t *status) {
+int gps_integration_get_status(gps_integration_status_t *status) {
     if (!g_integration_initialized || !status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -464,7 +479,7 @@ static int gps_integration_get_status(gps_integration_status_t *status) {
 }
 
 // Get GPS integration configuration
-static int gps_integration_get_config(gps_integration_config_t *config) {
+int gps_integration_get_config(gps_integration_config_t *config) {
     if (!g_integration_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -484,7 +499,7 @@ static int gps_integration_get_config(gps_integration_config_t *config) {
 }
 
 // Set GPS integration configuration
-static int gps_integration_set_config(const gps_integration_config_t *config) {
+int gps_integration_set_config(const gps_integration_config_t *config) {
     if (!g_integration_initialized || !config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -500,12 +515,12 @@ static int gps_integration_set_config(const gps_integration_config_t *config) {
     
     pthread_mutex_unlock(&g_integration_mutex);
     
-    LOGX_INFO("GPS integration configuration updated");
+    LOGX_INFO_MSG("GPS integration configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable GPS integration
-static int gps_integration_set_enabled(bool enabled) {
+int gps_integration_set_enabled(bool enabled) {
     if (!g_integration_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -514,12 +529,12 @@ static int gps_integration_set_enabled(bool enabled) {
     g_integration.enabled = enabled;
     pthread_mutex_unlock(&g_integration_mutex);
     
-    LOGX_INFO("GPS integration %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS integration %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Enable/disable specific GPS source
-static int gps_integration_set_source_enabled(int source_id, bool enabled) {
+int gps_integration_set_source_enabled(int source_id, bool enabled) {
     if (!g_integration_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -545,12 +560,12 @@ static int gps_integration_set_source_enabled(int source_id, bool enabled) {
     
     pthread_mutex_unlock(&g_integration_mutex);
     
-    LOGX_INFO("GPS source %d %s", source_id, enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("GPS source %d %s", source_id, enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
 // Unregister GPS source
-static int gps_integration_unregister_source(int source_id) {
+int gps_integration_unregister_source(int source_id) {
     if (!g_integration_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -574,12 +589,12 @@ static int gps_integration_unregister_source(int source_id) {
     
     pthread_mutex_unlock(&g_integration_mutex);
     
-    LOGX_INFO("Unregistered GPS source %d", source_id);
+    LOGX_INFO_MSG("Unregistered GPS source %d", source_id);
     return AUTONOMY_SUCCESS;
 }
 
 // Reset GPS integration
-static int gps_integration_reset(void) {
+int gps_integration_reset(void) {
     if (!g_integration_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
@@ -605,12 +620,12 @@ static int gps_integration_reset(void) {
     
     pthread_mutex_unlock(&g_integration_mutex);
     
-    LOGX_INFO("GPS integration system reset");
+    LOGX_INFO_MSG("GPS integration system reset");
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup GPS integration
-static void gps_integration_cleanup(void) {
+void gps_integration_cleanup(void) {
     if (!g_integration_initialized) {
         return;
     }
@@ -618,5 +633,5 @@ static void gps_integration_cleanup(void) {
     pthread_mutex_destroy(&g_integration_mutex);
     g_integration_initialized = false;
     
-    LOGX_INFO("GPS integration system cleaned up");
+    LOGX_INFO_MSG("GPS integration system cleaned up");
 }

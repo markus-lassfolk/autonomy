@@ -1,10 +1,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "../core/types.h"
 
 #pragma once
 
 #include <libubus.h>
+#include <stdint.h>
 
 typedef enum {
 	LGPS_SUCCESS,

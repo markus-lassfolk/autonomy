@@ -4,6 +4,10 @@
 #include <stdbool.h>
 #include <time.h>
 #include <sys/resource.h>
+#include <pthread.h>
+#include <stdint.h>
+#include <math.h>
+#include <fcntl.h>
 
 // Performance metrics
 typedef struct {

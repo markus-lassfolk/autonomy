@@ -3,29 +3,63 @@
 #include <libubox/blobmsg.h>
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <unistd.h>
+#include <sys/socket.h>
 
 // Forward declarations
-static int autonomy_ubus_monitor_status(struct ubus_context *ctx, struct ubus_request_data *req,
-                                      const char *method, struct blob_attr *msg);
-static int autonomy_ubus_monitor_config(struct ubus_context *ctx, struct ubus_request_data *req,
-                                       const char *method, struct blob_attr *msg);
-static int autonomy_ubus_monitor_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
-                                           const char *method, struct blob_attr *msg);
-static int autonomy_ubus_monitor_set_enabled(struct ubus_context *ctx, struct ubus_request_data *req,
-                                            const char *method, struct blob_attr *msg);
-static int autonomy_ubus_monitor_reset(struct ubus_context *ctx, struct ubus_request_data *req,
-                                      const char *method, struct blob_attr *msg);
-static int autonomy_ubus_monitor_check(struct ubus_context *ctx, struct ubus_request_data *req,
-                                      const char *method, struct blob_attr *msg);
+static int autonomy_ubus_monitor_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+static int autonomy_ubus_monitor_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                       struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+int autonomy_ubus_monitor_set_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                           struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+static int autonomy_ubus_monitor_set_enabled(struct ubus_context *ctx, struct ubus_object *obj,
+                                            struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+static int autonomy_ubus_monitor_reset(struct ubus_context *ctx, struct ubus_object *obj,
+                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+int autonomy_ubus_monitor_check(struct ubus_context *ctx, struct ubus_object *obj,
+                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg);
 
 // UBUS method definitions
-static const struct ubus_method_type autonomy_ubus_monitor_methods[] = {
-    UBUS_METHOD("status", autonomy_ubus_monitor_status, 0),
-    UBUS_METHOD("config", autonomy_ubus_monitor_config, 0),
-    UBUS_METHOD("set_config", autonomy_ubus_monitor_set_config, 0),
-    UBUS_METHOD("set_enabled", autonomy_ubus_monitor_set_enabled, 0),
-    UBUS_METHOD("reset", autonomy_ubus_monitor_reset, 0),
-    UBUS_METHOD("check", autonomy_ubus_monitor_check, 0),
+// UBUS policy for set_config method
+enum {
+    UBUS_MONITOR_CONFIG_ENABLED,
+    UBUS_MONITOR_CONFIG_CHECK_INTERVAL,
+    UBUS_MONITOR_CONFIG_AUTO_RESTART,
+    UBUS_MONITOR_CONFIG_MAX_FIX_ATTEMPTS,
+    UBUS_MONITOR_CONFIG_MONITOR_CRITICAL_SERVICES,
+    __UBUS_MONITOR_CONFIG_MAX
+};
+
+static const struct blobmsg_policy ubus_monitor_config_policy[] = {
+    [UBUS_MONITOR_CONFIG_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
+    [UBUS_MONITOR_CONFIG_CHECK_INTERVAL] = { .name = "check_interval", .type = BLOBMSG_TYPE_INT32 },
+    [UBUS_MONITOR_CONFIG_AUTO_RESTART] = { .name = "auto_restart", .type = BLOBMSG_TYPE_BOOL },
+    [UBUS_MONITOR_CONFIG_MAX_FIX_ATTEMPTS] = { .name = "max_fix_attempts", .type = BLOBMSG_TYPE_INT32 },
+    [UBUS_MONITOR_CONFIG_MONITOR_CRITICAL_SERVICES] = { .name = "monitor_critical_services", .type = BLOBMSG_TYPE_BOOL },
+};
+
+// UBUS policy for set_enabled method
+enum {
+    UBUS_MONITOR_ENABLED,
+    __UBUS_MONITOR_ENABLED_MAX
+};
+
+static const struct blobmsg_policy ubus_monitor_enabled_policy[] = {
+    [UBUS_MONITOR_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
+};
+
+static const struct ubus_method autonomy_ubus_monitor_methods[] = {
+    UBUS_METHOD_NOARG("status", autonomy_ubus_monitor_status),
+    UBUS_METHOD_NOARG("config", autonomy_ubus_monitor_config),
+    UBUS_METHOD("set_config", autonomy_ubus_monitor_set_config, ubus_monitor_config_policy),
+    UBUS_METHOD("set_enabled", autonomy_ubus_monitor_set_enabled, ubus_monitor_enabled_policy),
+    UBUS_METHOD_NOARG("reset", autonomy_ubus_monitor_reset),
+    UBUS_METHOD_NOARG("check", autonomy_ubus_monitor_check),
 };
 
 // UBUS object type
@@ -36,7 +70,7 @@ static const struct ubus_object_type autonomy_ubus_monitor_obj_type = {
 };
 
 // UBUS object
-static const struct ubus_object autonomy_ubus_monitor_obj = {
+static struct ubus_object autonomy_ubus_monitor_obj = {
     .name = "ubus_monitor",
     .type = &autonomy_ubus_monitor_obj_type,
     .methods = autonomy_ubus_monitor_methods,
@@ -46,8 +80,9 @@ static const struct ubus_object autonomy_ubus_monitor_obj = {
 /**
  * Get UBUS monitor status
  */
-static int autonomy_ubus_monitor_status(struct ubus_context *ctx, struct ubus_request_data *req,
-                                      const char *method, struct blob_attr *msg) {
+static int autonomy_ubus_monitor_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
@@ -92,8 +127,9 @@ static int autonomy_ubus_monitor_status(struct ubus_context *ctx, struct ubus_re
 /**
  * Get UBUS monitor configuration
  */
-static int autonomy_ubus_monitor_config(struct ubus_context *ctx, struct ubus_request_data *req,
-                                       const char *method, struct blob_attr *msg) {
+static int autonomy_ubus_monitor_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                       struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
@@ -120,8 +156,9 @@ static int autonomy_ubus_monitor_config(struct ubus_context *ctx, struct ubus_re
 /**
  * Set UBUS monitor configuration
  */
-static int autonomy_ubus_monitor_set_config(struct ubus_context *ctx, struct ubus_request_data *req,
-                                           const char *method, struct blob_attr *msg) {
+int autonomy_ubus_monitor_set_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                           struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
@@ -190,8 +227,9 @@ static int autonomy_ubus_monitor_set_config(struct ubus_context *ctx, struct ubu
 /**
  * Enable/disable UBUS monitor
  */
-static int autonomy_ubus_monitor_set_enabled(struct ubus_context *ctx, struct ubus_request_data *req,
-                                            const char *method, struct blob_attr *msg) {
+static int autonomy_ubus_monitor_set_enabled(struct ubus_context *ctx, struct ubus_object *obj,
+                                            struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
@@ -233,8 +271,9 @@ static int autonomy_ubus_monitor_set_enabled(struct ubus_context *ctx, struct ub
 /**
  * Reset UBUS monitor statistics
  */
-static int autonomy_ubus_monitor_reset(struct ubus_context *ctx, struct ubus_request_data *req,
-                                      const char *method, struct blob_attr *msg) {
+static int autonomy_ubus_monitor_reset(struct ubus_context *ctx, struct ubus_object *obj,
+                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
@@ -256,12 +295,14 @@ static int autonomy_ubus_monitor_reset(struct ubus_context *ctx, struct ubus_req
 /**
  * Manually trigger UBUS monitor check
  */
-static int autonomy_ubus_monitor_check(struct ubus_context *ctx, struct ubus_request_data *req,
-                                      const char *method, struct blob_attr *msg) {
+int autonomy_ubus_monitor_check(struct ubus_context *ctx, struct ubus_object *obj,
+                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
     blob_buf_init(&bb, 0);
     
-    int result = ubus_monitor_check_ubus_health();
+    ubus_health_info_t health_info;
+    int result = ubus_monitor_check_ubus_health(&health_info);
     
     if (result != AUTONOMY_SUCCESS) {
         blobmsg_add_string(&bb, "error", "UBUS monitor check failed");
@@ -279,7 +320,7 @@ static int autonomy_ubus_monitor_check(struct ubus_context *ctx, struct ubus_req
 /**
  * Register UBUS monitor UBUS object
  */
-static int ubus_monitor_ubus_register(struct ubus_context *ctx) {
+int ubus_monitor_ubus_register(struct ubus_context *ctx) {
     int ret = ubus_add_object(ctx, &autonomy_ubus_monitor_obj);
     if (ret) {
         fprintf(stderr, "Failed to add UBUS monitor object: %s\n", ubus_strerror(ret));
@@ -293,7 +334,7 @@ static int ubus_monitor_ubus_register(struct ubus_context *ctx) {
 /**
  * Unregister UBUS monitor UBUS object
  */
-static void ubus_monitor_ubus_unregister(struct ubus_context *ctx) {
+void ubus_monitor_ubus_unregister(struct ubus_context *ctx) {
     ubus_remove_object(ctx, &autonomy_ubus_monitor_obj);
     fprintf(stderr, "UBUS monitor UBUS object unregistered\n");
 }

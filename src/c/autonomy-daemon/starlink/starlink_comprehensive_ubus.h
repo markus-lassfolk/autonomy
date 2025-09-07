@@ -3,6 +3,8 @@
 
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
+#include <stdbool.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 extern "C" {

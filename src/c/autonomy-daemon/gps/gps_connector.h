@@ -1,42 +1,17 @@
 #ifndef GPS_CONNECTOR_H
 #define GPS_CONNECTOR_H
 
-#include "types.h"
+#include "../core/types.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// GPS module types
-typedef enum {
-    GPS_MODULE_TYPE_UNKNOWN = 0,
-    GPS_MODULE_TYPE_INTEGRATION,
-    GPS_MODULE_TYPE_MANAGER,
-    GPS_MODULE_TYPE_RUTOS,
-    GPS_MODULE_TYPE_STARLINK,
-    GPS_MODULE_TYPE_CONFIDENCE,
-    GPS_MODULE_TYPE_ACCURACY,
-    GPS_MODULE_TYPE_NMEA,
-    GPS_MODULE_TYPE_MOVEMENT,
-    GPS_MODULE_TYPE_CLUSTERING,
-    GPS_MODULE_TYPE_HEALTH,
-    GPS_MODULE_TYPE_FUSION,
-    GPS_MODULE_TYPE_GEOFENCE,
-    GPS_MODULE_TYPE_EVENTS,
-    GPS_MODULE_TYPE_LOCATION_SERVICES,
-    GPS_MODULE_TYPE_COORDINATE_UTILS,
-    GPS_MODULE_TYPE_OBSTRUCTION,
-    GPS_MODULE_TYPE_ADAPTIVE_CACHE,
-    GPS_MODULE_TYPE_GOOGLE_API,
-    GPS_MODULE_TYPE_CELL_TOWER,
-    GPS_MODULE_TYPE_WEATHER,
-    GPS_MODULE_TYPE_TERRAIN,
-    GPS_MODULE_TYPE_PERFORMANCE,
-    GPS_MODULE_TYPE_ERROR_RECOVERY
-} gps_module_type_t;
+// Note: gps_module_type_t is defined in ../core/types.h
 
 // GPS connector module
 typedef struct {
@@ -61,17 +36,7 @@ typedef struct {
     double health_threshold;            // Module health threshold
 } gps_connector_config_t;
 
-// GPS connector status
-typedef struct {
-    bool enabled;                       // Connector enabled
-    int module_count;                   // Total modules
-    int active_modules;                 // Active modules
-    int total_operations;               // Total operations
-    time_t last_check;                  // Last check timestamp
-    double system_health;               // Overall system health
-    int active_module_count;            // Number of active modules
-    gps_connector_module_t modules[20]; // GPS modules
-} gps_connector_status_t;
+// Note: gps_connector_status_t is defined in ../core/types.h
 
 // GPS connector system state
 typedef struct {
