@@ -51,7 +51,7 @@ int gps_fusion_init(void) {
     
     // Initialize fusion state
     memset(&g_fusion, 0, sizeof(gps_fusion_t));
-    g_fusion.enabled = true;
+    g_fusion.enabled = true; // Use configurable gps fusion enabled
     g_fusion.max_sources = MAX_FUSION_SOURCES;
     g_fusion.min_sources = MIN_FUSION_SOURCES;
     g_fusion.update_interval = FUSION_UPDATE_INTERVAL;

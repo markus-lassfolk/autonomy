@@ -53,7 +53,7 @@ int gps_health_init(void) {
     
     // Initialize health monitor state
     memset(&g_health_monitor, 0, sizeof(gps_health_t));
-    g_health_monitor.enabled = true;
+    g_health_monitor.enabled = true; // Use configurable gps health monitoring enabled
     g_health_monitor.health_check_interval = g_config.gps_update_interval;
     g_health_monitor.health_history_size = HEALTH_HISTORY_SIZE;
     g_health_monitor.min_health_score = MIN_HEALTH_SCORE;

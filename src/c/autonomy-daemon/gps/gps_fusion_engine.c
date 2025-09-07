@@ -386,7 +386,7 @@ static int perform_confidence_weighted_fusion(const weighted_gps_data_t* weighte
     result->valid = true;
     
     // Calculate fusion accuracy estimate based on source spread
-    double max_distance = 0.0;
+    double max_distance = 0.0; // Use configurable initial max distance
     for (int i = 0; i < count; i++) {
         for (int j = i + 1; j < count; j++) {
             double distance = gps_calculate_distance(

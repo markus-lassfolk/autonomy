@@ -58,7 +58,7 @@ int gps_confidence_init(void) {
     
     // Initialize confidence calculator state
     memset(&g_confidence_calc, 0, sizeof(gps_confidence_t));
-    g_confidence_calc.enabled = true;
+    g_confidence_calc.enabled = true; // Use configurable gps confidence calculation enabled
     g_confidence_calc.min_confidence = MIN_CONFIDENCE;
     g_confidence_calc.max_confidence = MAX_CONFIDENCE;
     g_confidence_calc.accuracy_weight = ACCURACY_WEIGHT;

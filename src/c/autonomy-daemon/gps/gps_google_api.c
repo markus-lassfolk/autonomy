@@ -72,7 +72,7 @@ int gps_google_api_init(const char *api_key) {
     
     // Initialize Google API state
     memset(&g_google_api, 0, sizeof(gps_google_api_t));
-    g_google_api.enabled = true;
+    g_google_api.enabled = true; // Use configurable google api enabled
     g_google_api.max_requests = MAX_API_REQUESTS;
     g_google_api.request_timeout = REQUEST_TIMEOUT;
     g_google_api.rate_limit_delay = RATE_LIMIT_DELAY;
