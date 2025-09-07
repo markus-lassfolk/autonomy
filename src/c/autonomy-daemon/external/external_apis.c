@@ -22,8 +22,11 @@ static size_t external_api_curl_write_callback(void* contents, size_t size, size
     
     curl_response_t* response = (curl_response_t*)userp;
     
+    char* old_data = response->data;
     char* ptr = realloc(response->data, response->size + realsize + 1);
     if (!ptr) {
+        free(old_data);
+        response->data = NULL;
         return 0; // Out of memory
     }
     
