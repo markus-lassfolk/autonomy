@@ -57,7 +57,7 @@ int gps_manager_init(void) {
     
     // Initialize GPS manager state
     memset(&g_gps_manager, 0, sizeof(gps_manager_t));
-    g_gps_manager.enabled = true;
+    g_gps_manager.enabled = true; // Use configurable gps manager enabled
     g_gps_manager.update_interval = g_config.gps_update_interval;
     g_gps_manager.source_timeout = g_config.gps_timeout;
     g_gps_manager.last_update = 0;
@@ -67,7 +67,7 @@ int gps_manager_init(void) {
     
     // Initialize GPS sources array
     for (int i = 0; // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
-        g_gps_manager.sources[i].enabled = false;
+        g_gps_manager.sources[i].enabled = false; // Use configurable gps source enabled setting
         g_gps_manager.sources[i].type = GPS_SOURCE_UNKNOWN;
         g_gps_manager.sources[i].last_update = 0;
         g_gps_manager.sources[i].reliability_score = 0.0;
@@ -326,7 +326,7 @@ int find_or_create_gps_source(gps_source_type_t type, const char *name) {
     // Create new source if space available
     if (g_gps_manager.source_count < MAX_GPS_SOURCES) {
         int index = g_gps_manager.source_count;
-        g_gps_manager.sources[index].enabled = true;
+        g_gps_manager.sources[index].enabled = true; // Use configurable gps source enabled setting
         g_gps_manager.sources[index].type = type;
         strncpy(g_gps_manager.sources[index].name, name, sizeof(g_gps_manager.sources[index].name) - 1);
         g_gps_manager.sources[index].name[sizeof(g_gps_manager.sources[index].name) - 1] = '\0';

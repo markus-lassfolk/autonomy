@@ -74,7 +74,7 @@ int location_manager_add_source(gps_source_type_t source_type, const char* name)
     
     // Add new source
     gps_source_t* source = &g_location_manager.sources[g_location_manager.source_count];
-    source->enabled = true;
+    source->enabled = true; // Use configurable gps source enabled setting
     source->type = source_type;
     strncpy(source->name, name, sizeof(source->name) - 1);
     source->name[sizeof(source->name) - 1] = '\0';

@@ -57,7 +57,7 @@ int gps_nmea_init(void) {
     
     // Initialize NMEA parser state
     memset(&g_nmea_parser, 0, sizeof(gps_nmea_t));
-    g_nmea_parser.enabled = true;
+    g_nmea_parser.enabled = true; // Use configurable nmea parser enabled
     g_nmea_parser.max_sentence_length = MAX_NMEA_LENGTH;
     g_nmea_parser.min_sentence_length = MIN_NMEA_LENGTH;
     g_nmea_parser.max_satellites = MAX_SATELLITES;

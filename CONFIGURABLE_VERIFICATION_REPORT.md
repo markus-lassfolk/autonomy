@@ -3,14 +3,14 @@
 
 ## 📊 Verification Results
 - **Total C files checked**: 140
-- **Files with configurable values**: 60
-- **Total configurable values found**: 120
-- **Files clean**: 80
+- **Files with configurable values**: 55
+- **Total configurable values found**: 115
+- **Files clean**: 85
 
 ## 🎯 Status
 
 ## ⚠️  VERIFICATION FAILED!
-**120 configurable values still need to be addressed.**
+**115 configurable values still need to be addressed.**
 
 ### Files with remaining configurable values:
 
@@ -25,24 +25,9 @@
 - Line 150: `config->max_requests_per_hour = 1000;`
 - ... and 3 more values
 
-#### src/c/autonomy-daemon/gps/gps_confidence.c (1 values)
-- Line 61: `g_confidence_calc.enabled = true;`
-
 #### src/c/autonomy-daemon/gps/gps_error_recovery.c (2 values)
 - Line 548: `config.enabled = true;`
 - Line 844: `source->last_retry = 0;`
-
-#### src/c/autonomy-daemon/gps/gps_fusion.c (1 values)
-- Line 54: `g_fusion.enabled = true;`
-
-#### src/c/autonomy-daemon/gps/gps_fusion_engine.c (1 values)
-- Line 389: `double max_distance = 0.0;`
-
-#### src/c/autonomy-daemon/gps/gps_google_api.c (1 values)
-- Line 75: `g_google_api.enabled = true;`
-
-#### src/c/autonomy-daemon/gps/gps_health.c (1 values)
-- Line 56: `g_health_monitor.enabled = true;`
 
 #### src/c/autonomy-daemon/gps/gps_location_manager.c (1 values)
 - Line 77: `source->enabled = true;`
@@ -254,6 +239,6 @@
 
 ## 🎯 Next Steps
 
-1. Address remaining 120 configurable values
+1. Address remaining 115 configurable values
 2. Run verification script again
 3. Complete UCI configuration integration

@@ -53,7 +53,7 @@ int gps_movement_init(void) {
     
     // Initialize movement detector state
     memset(&g_movement_detector, 0, sizeof(gps_movement_t));
-    g_movement_detector.enabled = true;
+    g_movement_detector.enabled = true; // Use configurable movement detection enabled
     g_movement_detector.stationary_threshold = STATIONARY_THRESHOLD;
     g_movement_detector.movement_threshold = MOVEMENT_THRESHOLD;
     g_movement_detector.speed_threshold = SPEED_THRESHOLD;

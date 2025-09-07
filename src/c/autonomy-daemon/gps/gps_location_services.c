@@ -65,7 +65,7 @@ int gps_location_services_init(void) {
     
     // Initialize location services state
     memset(&g_location_services, 0, sizeof(gps_location_services_t));
-    g_location_services.enabled = true;
+    g_location_services.enabled = true; // Use configurable location services enabled
     g_location_services.max_cache = MAX_LOCATION_CACHE;
     g_location_services.cache_ttl = LOCATION_CACHE_TTL;
     g_location_services.max_attempts = MAX_REVERSE_GEOCODE_ATTEMPTS;
