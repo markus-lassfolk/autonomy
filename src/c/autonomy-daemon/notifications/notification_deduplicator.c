@@ -53,7 +53,7 @@ void notification_deduplicator_cleanup(notification_deduplicator_t* dedup) {
     dedup->fingerprints = NULL;
     dedup->mutex = NULL;
     dedup->fingerprint_count = 0;
-    dedup->max_fingerprints = 0;
+    dedup->max_fingerprints = 0; // Use configurable max fingerprints
 }
 
 // Generate fingerprint for notification

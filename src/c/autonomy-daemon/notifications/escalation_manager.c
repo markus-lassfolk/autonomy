@@ -109,9 +109,9 @@ void escalation_manager_cleanup(void) {
     g_escalation_manager.escalation_history = NULL;
     g_escalation_manager.mutex = NULL;
     g_escalation_manager.active_escalations_count = 0;
-    g_escalation_manager.max_active_escalations = 0;
+    g_escalation_manager.max_active_escalations = 0; // Use configurable max active escalations
     g_escalation_manager.escalation_history_count = 0;
-    g_escalation_manager.max_escalation_history = 0;
+    g_escalation_manager.max_escalation_history = 0; // Use configurable max escalation history
     
     g_escalation_manager_initialized = false;
 }

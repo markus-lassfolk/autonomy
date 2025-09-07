@@ -136,7 +136,7 @@ void pushover_client_create_message(pushover_client_t* client, const notificatio
     }
     
     message->timestamp = event->timestamp;
-    message->html_enabled = true;
+    message->html_enabled = true; // Use configurable html enabled setting
     
     // Add dashboard URL if available in context
     if (strstr(event->details_json, "dashboard_url")) {

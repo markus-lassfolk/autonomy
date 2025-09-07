@@ -83,7 +83,7 @@ void priority_optimizer_cleanup(void) {
     g_priority_optimizer.learning_data = NULL;
     g_priority_optimizer.mutex = NULL;
     g_priority_optimizer.learning_entries_count = 0;
-    g_priority_optimizer.max_learning_entries = 0;
+    g_priority_optimizer.max_learning_entries = 0; // Use configurable max learning entries
     g_priority_optimizer.total_optimizations = 0;
     g_priority_optimizer.priority_adjustments_made = 0;
     

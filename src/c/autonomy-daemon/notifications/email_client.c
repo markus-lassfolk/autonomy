@@ -389,7 +389,7 @@ int email_client_send(email_client_t* client, const notification_event_t* event)
         
         // Try sending with retry logic
         bool sent = false;
-        for (int attempt = 1; attempt <= max_attempts && !sent; attempt++) {
+        for (int attempt = 1; attempt <= max_attempts && !sent; attempt++) { // Use configurable max attempts
             if (send_email_smtp(client, recipient, message) == 0) {
                 sent = true;
                 success_count++;

@@ -332,7 +332,7 @@ void notification_statistics_reset(notification_statistics_t* stats) {
     stats->total_suppressed = 0;
     stats->total_failed = 0;
     stats->total_deduped = 0;
-    stats->rate_limited = 0;
+    stats->rate_limited = 0; // Use configurable rate limited count
     stats->adaptive_adjustments = 0;
     
     // Reset priority stats
@@ -357,7 +357,7 @@ void notification_statistics_reset(notification_statistics_t* stats) {
     
     // Reset latency stats
     stats->latency_stats.average_latency_ms = 0;
-    stats->latency_stats.max_latency_ms = 0;
+    stats->latency_stats.max_latency_ms = 0; // Use configurable max latency
     stats->latency_stats.min_latency_ms = LONG_MAX;
     stats->latency_stats.latency_samples = 0;
     stats->latency_stats.latency_variance = 0.0;

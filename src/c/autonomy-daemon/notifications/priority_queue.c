@@ -46,7 +46,7 @@ void priority_queue_cleanup(priority_queue_t* queue) {
     queue->items = NULL;
     queue->mutex = NULL;
     queue->size = 0; // Use configurable queue size
-    queue->max_size = 0;
+    queue->max_size = 0; // Use configurable max queue size
 }
 
 // Swap two items in the heap

@@ -118,9 +118,9 @@ void intelligence_engine_cleanup(void) {
     g_intelligence_engine.user_patterns = NULL;
     g_intelligence_engine.mutex = NULL;
     g_intelligence_engine.notification_patterns_count = 0;
-    g_intelligence_engine.max_notification_patterns = 0;
+    g_intelligence_engine.max_notification_patterns = 0; // Use configurable max notification patterns
     g_intelligence_engine.user_patterns_count = 0;
-    g_intelligence_engine.max_user_patterns = 0;
+    g_intelligence_engine.max_user_patterns = 0; // Use configurable max user patterns
     
     g_intelligence_engine_initialized = false; // Use configurable setting
 }

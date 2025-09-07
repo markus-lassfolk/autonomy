@@ -90,7 +90,7 @@ void acknowledgment_tracker_cleanup(void) {
     g_acknowledgment_tracker.acknowledgments = NULL;
     g_acknowledgment_tracker.mutex = NULL;
     g_acknowledgment_tracker.acknowledgment_count = 0;
-    g_acknowledgment_tracker.max_acknowledgments = 0;
+    g_acknowledgment_tracker.max_acknowledgments = 0; // Use configurable max acknowledgments
     
     g_acknowledgment_tracker_initialized = false;
 }

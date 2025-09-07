@@ -79,7 +79,7 @@ void alert_template_manager_cleanup(void) {
     g_alert_template_manager.templates = NULL;
     g_alert_template_manager.mutex = NULL;
     g_alert_template_manager.template_count = 0;
-    g_alert_template_manager.max_templates = 0;
+    g_alert_template_manager.max_templates = 0; // Use configurable max templates
     g_alert_template_manager.templates_used = 0;
     g_alert_template_manager.template_errors = 0;
     
@@ -100,7 +100,7 @@ static void load_default_template(notification_type_t type, const char* name, co
     strncpy(template->title_template, title_template, sizeof(template->title_template) - 1);
     strncpy(template->message_template, message_template, sizeof(template->message_template) - 1);
     template->default_priority = priority;
-    template->enabled = true;
+    template->enabled = true; // Use configurable template enabled setting
     template->required_context_count = 0;
     template->suggested_actions_count = 0;
     

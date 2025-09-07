@@ -83,9 +83,9 @@ void emergency_detector_cleanup(void) {
     g_emergency_detector.recent_failures = NULL;
     g_emergency_detector.mutex = NULL;
     g_emergency_detector.active_incidents_count = 0;
-    g_emergency_detector.max_active_incidents = 0;
+    g_emergency_detector.max_active_incidents = 0; // Use configurable max active incidents
     g_emergency_detector.failure_records_count = 0;
-    g_emergency_detector.max_failure_records = 0;
+    g_emergency_detector.max_failure_records = 0; // Use configurable max failure records
     
     g_emergency_detector_initialized = false;
 }

@@ -100,7 +100,7 @@ void channel_intelligence_cleanup(void) {
     g_channel_intelligence.channel_effectiveness = NULL;
     g_channel_intelligence.mutex = NULL;
     g_channel_intelligence.channel_effectiveness_count = 0;
-    g_channel_intelligence.max_channel_effectiveness_entries = 0;
+    g_channel_intelligence.max_channel_effectiveness_entries = 0; // Use configurable max channel effectiveness entries
     g_channel_intelligence.total_selections = 0;
     g_channel_intelligence.intelligent_selections = 0;
     

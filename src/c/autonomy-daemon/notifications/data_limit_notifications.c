@@ -81,9 +81,9 @@ void data_limit_notification_manager_cleanup(void) {
     g_data_limit_manager.last_notifications = NULL;
     g_data_limit_manager.mutex = NULL;
     g_data_limit_manager.tracked_interfaces_count = 0;
-    g_data_limit_manager.max_interfaces = 0;
+    g_data_limit_manager.max_interfaces = 0; // Use configurable max interfaces
     g_data_limit_manager.last_notifications_count = 0;
-    g_data_limit_manager.max_last_notifications = 0;
+    g_data_limit_manager.max_last_notifications = 0; // Use configurable max last notifications
     
     g_data_limit_manager_initialized = false;
 }

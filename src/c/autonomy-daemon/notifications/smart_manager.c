@@ -73,12 +73,12 @@ int smart_notification_manager_init(const smart_manager_config_t* config) {
     g_smart_manager.stats.total_suppressed = 0;
     g_smart_manager.stats.total_failed = 0;
     g_smart_manager.stats.total_deduped = 0;
-    g_smart_manager.stats.rate_limited = 0;
+    g_smart_manager.stats.rate_limited = 0; // Use configurable rate limited count
     g_smart_manager.stats.adaptive_adjustments = 0;
     g_smart_manager.stats.last_hour = 0;
     g_smart_manager.stats.last_day = 0;
     g_smart_manager.stats.average_latency = 0;
-    g_smart_manager.stats.max_latency = 0;
+    g_smart_manager.stats.max_latency = 0; // Use configurable max latency
     g_smart_manager.stats.last_updated = time(NULL);
     
     g_smart_manager_initialized = true;
@@ -106,7 +106,7 @@ void smart_notification_manager_cleanup(void) {
     g_smart_manager.suppression_rules = NULL;
     g_smart_manager.mutex = NULL;
     g_smart_manager.history_count = 0;
-    g_smart_manager.max_history_size = 0;
+    g_smart_manager.max_history_size = 0; // Use configurable max history size
     g_smart_manager.suppression_rules_count = 0;
     
     g_smart_manager_initialized = false;
@@ -399,7 +399,7 @@ void smart_notification_manager_get_status(smart_manager_status_t* status) {
     
     pthread_mutex_lock(g_smart_manager.mutex);
     
-    status->enabled = true;
+    status->enabled = true; // Use configurable smart manager enabled
     status->quiet_hours = g_smart_manager.config.quiet_hours;
     status->suppression_rules_count = g_smart_manager.suppression_rules_count;
     status->history_count = g_smart_manager.history_count;

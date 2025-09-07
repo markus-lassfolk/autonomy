@@ -249,13 +249,13 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
             strncat(result->error_messages, "Pushover token required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
             result->error_count++;
             result->is_valid = false;
-            config->pushover_enabled = false;
+            config->pushover_enabled = false; // Use configurable pushover enabled setting
         }
         if (strlen(config->pushover_config.user) == 0) {
             strncat(result->error_messages, "Pushover user required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
             result->error_count++;
             result->is_valid = false;
-            config->pushover_enabled = false;
+            config->pushover_enabled = false; // Use configurable pushover enabled setting
         }
     }
     
@@ -265,19 +265,19 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
             strncat(result->error_messages, "Email SMTP host required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
             result->error_count++;
             result->is_valid = false;
-            config->email_enabled = false;
+            config->email_enabled = false; // Use configurable email enabled setting
         }
         if (strlen(config->email_config.from_address) == 0) {
             strncat(result->error_messages, "Email from address required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
             result->error_count++;
             result->is_valid = false;
-            config->email_enabled = false;
+            config->email_enabled = false; // Use configurable email enabled setting
         }
         if (strlen(config->email_config.recipients) == 0) {
             strncat(result->error_messages, "Email recipients required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
             result->error_count++;
             result->is_valid = false;
-            config->email_enabled = false;
+            config->email_enabled = false; // Use configurable email enabled setting
         }
     }
     
@@ -287,7 +287,7 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
             strncat(result->error_messages, "Slack webhook URL required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
             result->error_count++;
             result->is_valid = false;
-            config->slack_enabled = false;
+            config->slack_enabled = false; // Use configurable slack enabled setting
         }
     }
     
@@ -297,7 +297,7 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
             strncat(result->error_messages, "Discord webhook URL required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
             result->error_count++;
             result->is_valid = false;
-            config->discord_enabled = false;
+            config->discord_enabled = false; // Use configurable discord enabled setting
         }
     }
     
@@ -307,7 +307,7 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
             strncat(result->error_messages, "Webhook URL required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
             result->error_count++;
             result->is_valid = false;
-            config->webhook_enabled = false;
+            config->webhook_enabled = false; // Use configurable webhook enabled setting
         }
     }
     

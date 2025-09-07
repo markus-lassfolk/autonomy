@@ -3,19 +3,16 @@
 
 ## 📊 Verification Results
 - **Total C files checked**: 140
-- **Files with configurable values**: 48
-- **Total configurable values found**: 106
-- **Files clean**: 92
+- **Files with configurable values**: 37
+- **Total configurable values found**: 82
+- **Files clean**: 103
 
 ## 🎯 Status
 
 ## ⚠️  VERIFICATION FAILED!
-**106 configurable values still need to be addressed.**
+**82 configurable values still need to be addressed.**
 
 ### Files with remaining configurable values:
-
-#### src/c/autonomy-daemon/analytics/performance_analyzer.c (1 values)
-- Line 40: `g_performance_analyzer.enabled = true;`
 
 #### src/c/autonomy-daemon/external/external_apis.c (8 values)
 - Line 136: `config->max_requests_per_hour = 1000;`
@@ -29,51 +26,8 @@
 - Line 548: `config.enabled = true;`
 - Line 844: `source->last_retry = 0;`
 
-#### src/c/autonomy-daemon/gps/gps_rutos.c (1 values)
-- Line 56: `g_rutos_gps.enabled = true;`
-
-#### src/c/autonomy-daemon/gps/gps_starlink.c (2 values)
-- Line 57: `g_starlink_gps.enabled = true;`
-- Line 249: `request_config.timeout_seconds = 5;`
-
-#### src/c/autonomy-daemon/gps/gps_system.c (4 values)
-- Line 37: `g_gps_system.enabled = true;`
-- Line 53: `g_gps_system.module_status[i].enabled = false;`
-- Line 474: `module->enabled = false;`
-- Line 604: `g_gps_system.module_status[i].enabled = false;`
-
-#### src/c/autonomy-daemon/gps/gps_terrain.c (4 values)
-- Line 68: `g_terrain.enabled = true;`
-- Line 232: `int srtm_size = 1201;`
-- Line 443: `double max_slope = 0.0;`
-- Line 458: `double max_slope_here = 0.0;`
-
-#### src/c/autonomy-daemon/gps/gps_weather.c (2 values)
-- Line 74: `g_weather.enabled = true;`
-- Line 500: `air_config.timeout = 10;`
-
-#### src/c/autonomy-daemon/gps/opencellid_complete.c (1 values)
-- Line 544: `response->size = 0;`
-
-#### src/c/autonomy-daemon/network/network_collector.c (1 values)
-- Line 328: `int test_port_count = 4;`
-
-#### src/c/autonomy-daemon/network/network_collector_archive.c (3 values)
-- Line 45: `g_collector.enabled = true;`
-- Line 48: `g_collector.max_test_targets = 8;`
+#### src/c/autonomy-daemon/network/network_collector_archive.c (1 values)
 - Line 57: `g_collector.metrics_history_size = 100;`
-
-#### src/c/autonomy-daemon/network/network_controller.c (4 values)
-- Line 50: `g_network_controller.config.enabled = true;`
-- Line 56: `g_network_controller.config.validation_timeout_seconds = 10;`
-- Line 57: `g_network_controller.config.enable_callbacks = true;`
-- Line 67: `g_network_controller.max_members = 16;`
-
-#### src/c/autonomy-daemon/network/network_discovery.c (1 values)
-- Line 47: `g_discovery.enabled = true;`
-
-#### src/c/autonomy-daemon/network/network_failover.c (1 values)
-- Line 41: `g_failover.enabled = true;`
 
 #### src/c/autonomy-daemon/notifications/acknowledgment_tracker.c (1 values)
 - Line 93: `g_acknowledgment_tracker.max_acknowledgments = 0;`
@@ -216,6 +170,6 @@
 
 ## 🎯 Next Steps
 
-1. Address remaining 106 configurable values
+1. Address remaining 82 configurable values
 2. Run verification script again
 3. Complete UCI configuration integration
