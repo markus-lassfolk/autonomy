@@ -786,7 +786,7 @@ static void* ml_monitor_prediction_thread(void *arg) {
         
         if (monitor->should_stop) break;
         
-        // Create a dummy observation for prediction
+        // Get current observation for prediction
         ml_observation_t current_obs;
         if (ml_monitor_collect_data_sources(monitor, &current_obs) == ML_MONITOR_SUCCESS) {
             

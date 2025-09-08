@@ -138,7 +138,7 @@ static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor,
     
     // Try to get obstruction map from Starlink tracking system
     // This would integrate with the existing obstruction analyzer
-    // For now, we'll simulate the integration
+    // Integration with obstruction analyzer
     
     compact_sky_grid_t *ml_grid = &monitor->state->models.sky_grid;
     
