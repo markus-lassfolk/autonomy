@@ -3,7 +3,6 @@
 
 #include "../core/types.h"
 #include <stddef.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -26,9 +25,6 @@ int secure_exec_command(const char *command, exec_result_t *result);
 // Secure command execution with arguments array
 int secure_exec_args(char *const argv[], exec_result_t *result);
 
-// Secure command execution with environment variables
-int secure_exec_with_env(char *const argv[], char *const envp[], exec_result_t *result);
-
 // Check if a command exists in PATH
 bool command_exists(const char *command);
 
@@ -46,6 +42,12 @@ int secure_systemctl_command(const char *action, const char *service, exec_resul
 
 // Safe file operations
 int secure_file_operation(const char *operation, const char *file_path, exec_result_t *result);
+
+// Safe cellular device operations
+int secure_cellular_at_command(const char *device_path, const char *at_command, exec_result_t *result);
+
+// Check MWAN3 availability securely
+int secure_check_mwan3_available(void);
 
 #ifdef __cplusplus
 }

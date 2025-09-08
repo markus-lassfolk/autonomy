@@ -1,0 +1,396 @@
+# ML Monitoring System for Starlink
+
+## Overview
+
+This is an embedded machine learning monitoring system designed for RUTOS-based Starlink installations. It provides intelligent outage prediction, obstruction learning, and performance optimization using lightweight algorithms optimized for resource-constrained environments.
+
+## Features
+
+### 🧠 Machine Learning Capabilities
+- **k-NN Pattern Recognition**: Identifies patterns in outage events
+- **Tiny Neural Network**: Quantized int8 network for prediction
+- **Sky Grid Learning**: Learns obstruction patterns with 4° resolution
+- **Location Awareness**: Adapts to mobile scenarios and location changes
+- **Incremental Learning**: Learns continuously from every observation
+
+### 📊 Data Collection
+- **Compact Storage**: 56-byte observations for memory efficiency
+- **Memory-Mapped Files**: Zero-copy persistent storage
+- **Circular Buffers**: Recent, hourly, and daily data aggregation
+- **Multi-Source**: Starlink, weather, GPS, and location data
+
+### ⚙️ Configuration & Control
+- **UCI Integration**: Full OpenWRT UCI configuration support
+- **UBUS Interface**: Complete API for monitoring and control
+- **Real-time Updates**: Live configuration changes
+- **Comprehensive Validation**: Parameter validation and error handling
+
+### 🚀 Performance
+- **<1MB RAM**: Designed for embedded systems
+- **<10MB Storage**: Efficient persistent storage
+- **Sub-second Response**: Fast prediction and learning
+- **Auto-tuning**: Self-optimizing parameters
+
+## Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Data Sources  │    │   ML Monitor     │    │   Interfaces    │
+│                 │    │                  │    │                 │
+│ • Starlink API  │───▶│ • Data Collection│───▶│ • UBUS API      │
+│ • Weather API   │    │ • Pattern Learning│    │ • UCI Config    │
+│ • GPS Data      │    │ • Prediction      │    │ • Logging       │
+│ • Location      │    │ • Sky Grid        │    │ • Callbacks     │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │ Memory-Mapped Store │
+                    │                     │
+                    │ • Observations      │
+                    │ • ML Models         │
+                    │ • Learning Data     │
+                    │ • Performance Stats │
+                    └─────────────────────┘
+```
+
+## Installation
+
+### Prerequisites
+- RUTOS system (OpenWRT-based)
+- UCI configuration system
+- UBUS system
+- Standard C libraries (pthread, math, etc.)
+
+### Build
+```bash
+cd src/c/autonomy-daemon/ml
+make clean
+make all
+```
+
+### Integration
+The ML monitoring system is automatically integrated into the autonomy daemon. No separate installation required.
+
+## Configuration
+
+### UCI Configuration
+
+The system uses UCI for configuration management:
+
+```bash
+# Enable ML monitoring
+uci set autonomy.ml_monitor.enabled='1'
+
+# Set collection interval (seconds)
+uci set autonomy.ml_monitor.collection_interval_seconds='15'
+
+# Set prediction horizon (minutes)
+uci set autonomy.ml_monitor.prediction_horizon_minutes='15'
+
+# Set learning parameters
+uci set autonomy.ml_monitor.learning_rate='128'
+uci set autonomy.ml_monitor.confidence_threshold='128'
+
+# Enable mobile mode
+uci set autonomy.ml_monitor.mobile_mode_enabled='1'
+
+# Commit changes
+uci commit autonomy
+```
+
+### Configuration Parameters
+
+| Parameter | Default | Range | Description |
+|-----------|---------|-------|-------------|
+| `enabled` | true | true/false | Enable ML monitoring |
+| `collection_interval_seconds` | 15 | 1-3600 | Data collection interval |
+| `prediction_horizon_minutes` | 15 | 1-120 | Prediction time horizon |
+| `max_observations` | 10000 | 100-100000 | Maximum stored observations |
+| `learning_rate` | 128 | 0-255 | Learning rate (fixed point) |
+| `confidence_threshold` | 128 | 0-255 | Prediction confidence threshold |
+| `mobile_mode_enabled` | true | true/false | Enable mobile optimizations |
+| `location_change_threshold_meters` | 100 | 10-10000 | Location change detection |
+| `auto_tuning_enabled` | true | true/false | Enable automatic tuning |
+| `memory_limit_kb` | 1024 | 100-10240 | Memory usage limit |
+
+## UBUS Interface
+
+### Control Commands
+
+```bash
+# Check status
+ubus call ml_monitor status
+
+# Start monitoring
+ubus call ml_monitor start
+
+# Stop monitoring
+ubus call ml_monitor stop
+
+# Restart with new config
+ubus call ml_monitor restart
+```
+
+### Configuration Management
+
+```bash
+# Get current configuration
+ubus call ml_monitor get_config
+
+# Update configuration
+ubus call ml_monitor set_config '{"enabled":true,"learning_rate":150}'
+```
+
+### Data Access
+
+```bash
+# Get predictions (15 minutes ahead)
+ubus call ml_monitor get_predictions
+
+# Get learning statistics
+ubus call ml_monitor get_statistics
+
+# Reset learning data
+ubus call ml_monitor reset_learning
+
+# Export learning data
+ubus call ml_monitor export_data
+
+# Phase 4: Advanced ensemble and validation
+ubus call ml_monitor get_ensemble_status
+ubus call ml_monitor get_validation_metrics
+ubus call ml_monitor trigger_optimization
+
+# Phase 5: Mobile optimization and field testing
+ubus call ml_monitor get_mobile_status
+ubus call ml_monitor export_field_data
+ubus call ml_monitor enable_field_test
+
+# Phase 7: Advanced networking intelligence
+ubus call ml_monitor get_multi_interface_status
+ubus call ml_monitor predict_interface_outage '{"interface_id":"starlink1"}'
+ubus call ml_monitor update_mwan3_weights
+ubus call ml_monitor validate_failover_prediction '{"interface_id":"starlink1","actual_outage":true,"duration_seconds":3}'
+```
+
+## Data Structures
+
+### Observation Format
+Each observation is exactly 56 bytes:
+- **4 bytes**: Timestamp
+- **28 bytes**: Starlink metrics (SNR, latency, obstruction, etc.)
+- **8 bytes**: Weather data
+- **12 bytes**: Location data
+- **8 bytes**: ML features and predictions
+
+### Storage Layout
+- **Recent Buffer**: 10,000 observations (~560KB)
+- **Hourly Buffer**: 168 entries (1 week)
+- **Daily Buffer**: 30 entries (1 month)
+- **ML Models**: <100KB total
+- **Total Storage**: <10MB
+
+## Machine Learning Algorithms
+
+### k-NN Pattern Matcher
+- **k=5**: Uses 5 nearest neighbors
+- **Manhattan Distance**: Fast distance calculation
+- **Incremental Learning**: Adds patterns as they occur
+- **Pattern Library**: Up to 1000 stored patterns
+
+### Tiny Neural Network
+- **Architecture**: 32 inputs → 16 hidden → 8 outputs
+- **Quantization**: int8 weights for embedded efficiency
+- **Online Learning**: Single-sample updates
+- **Memory**: <1KB total
+
+### Sky Grid Learning
+- **Resolution**: 4° azimuth × 4° elevation (90×45 grid)
+- **Learning**: Exponential moving average
+- **Location Aware**: Resets when moving >100m
+- **Memory**: 4KB total
+
+## Performance Monitoring
+
+The system tracks comprehensive performance metrics:
+
+- **Prediction Accuracy**: Percentage of correct predictions
+- **False Positive Rate**: Incorrect outage predictions
+- **Learning Speed**: Time to useful predictions
+- **Memory Usage**: RAM and storage consumption
+- **CPU Usage**: Processing time per operation
+
+## Mobile Optimization
+
+### Location Learning
+- **Automatic Detection**: Detects movement >100m
+- **Location Profiles**: Learns characteristics of each location
+- **History**: Remembers last 10 locations
+- **Rapid Re-learning**: Faster learning at known locations
+
+### Adaptation Strategies
+- **Soft Reset**: Decays old learning instead of wiping
+- **Adaptive Learning Rates**: Higher rates for new locations
+- **Movement Detection**: Adjusts behavior based on mobility
+
+## Testing
+
+### Unit Tests
+```bash
+cd src/c/autonomy-daemon/ml
+./build_test.sh
+./test_ml_monitor
+```
+
+### Integration Testing
+The system includes comprehensive tests for:
+- Data structure validation
+- Configuration management
+- Storage operations
+- ML algorithm functionality
+- UBUS interface
+
+## Troubleshooting
+
+### Common Issues
+
+1. **High Memory Usage**
+   - Reduce `max_observations`
+   - Check for memory leaks in logs
+   - Verify storage file size
+
+2. **Poor Prediction Accuracy**
+   - Increase `learning_rate`
+   - Check data quality
+   - Verify location stability
+
+3. **Configuration Not Loading**
+   - Check UCI syntax: `uci show autonomy.ml_monitor`
+   - Verify file permissions
+   - Check system logs
+
+### Logging
+
+Enable debug logging:
+```bash
+uci set autonomy.ml_monitor.debug_logging_enabled='1'
+uci commit autonomy
+```
+
+Logs are written to system log and optionally to debug file.
+
+## Development
+
+### Adding New Algorithms
+
+1. Define algorithm structure in `ml_monitor.h`
+2. Implement algorithm in `ml_monitor.c`
+3. Add configuration parameters to UCI
+4. Update UBUS interface if needed
+5. Add tests to `test_ml_monitor.c`
+
+### Performance Optimization
+
+- Use fixed-point arithmetic where possible
+- Minimize memory allocations
+- Optimize critical loops
+- Profile with embedded tools
+
+## Implementation Status
+
+### ✅ Phase 1 (Complete)
+- [x] Compact data structures and memory-mapped storage
+- [x] UCI configuration system and UBUS interface
+- [x] Basic ML algorithms (k-NN, neural network, sky grid)
+- [x] Integration with autonomy daemon
+
+### ✅ Phase 2 (Complete) - Real Data Integration
+- [x] Starlink data integration (comprehensive, gRPC, regular collectors)
+- [x] GPS data integration (GPS manager, comprehensive GPS)
+- [x] Weather data integration (weather APIs, location-based)
+- [x] Enhanced prediction system with real data
+- [x] Location learning and mobile scenarios
+- [x] Real-time anomaly detection and callbacks
+- [x] Performance monitoring and statistics
+
+### ✅ Phase 3 (Complete) - Advanced Sky Grid & Sliding Window
+- [x] Sky grid integration with obstruction analyzer (123x123 polar projection)
+- [x] Sliding window predictor (15-minute rolling predictions with 15-second intervals)
+- [x] Advanced feature extraction (trends, volatility, patterns)
+- [x] Enhanced model fusion (ML + obstruction analyzer data)
+- [x] Coordinate mapping between ML grid (90x45) and polar projection
+- [x] Real-time trend analysis and degradation detection
+- [x] Mobile scenario optimization with location-aware learning
+
+### ✅ Phase 4 (Complete) - Advanced Ensemble Methods & Real-time Validation
+- [x] Advanced ensemble model combining 5 ML algorithms (k-NN, NN, SkyGrid, SlidingWindow, Obstruction)
+- [x] Real-time prediction validation system with confusion matrix
+- [x] Proactive network optimization with failover integration
+- [x] Dynamic model weight adaptation based on performance
+- [x] Continual learning and meta-learning capabilities
+- [x] Performance metrics tracking (precision, recall, F1-score, accuracy)
+- [x] Model agreement scoring and confidence assessment
+- [x] Prediction validation and feedback learning
+- [x] Network optimization triggers and callbacks
+- [x] Advanced UBUS interface with ensemble and validation metrics
+
+### ✅ Phase 5 (Complete) - Mobile Optimization & Field Testing
+- [x] Mobile scenario detection and classification (stationary, highway, urban, slow mobile)
+- [x] Advanced auto-tuning with parameter space exploration
+- [x] Transfer learning between locations with similarity scoring
+- [x] Location profile management and knowledge transfer
+- [x] Mobile-aware learning rate adaptation
+- [x] Field testing framework and data export
+- [x] RV deployment scenario optimization
+- [x] Performance validation across mobile scenarios
+- [x] Enhanced UBUS interface with mobile status and field testing
+- [x] Real-world deployment readiness validation
+
+### ✅ Phase 6 (Complete) - Self-Optimizing System & Production Deployment
+- [x] Self-optimizing system with advanced auto-tuning
+- [x] Resource tracking and optimization
+- [x] Production deployment validation
+- [x] Performance benchmarking and optimization
+
+### 🚀 Phase 7 (COMPLETE) - Advanced Networking Intelligence
+- [x] High-frequency monitoring (1-second intervals for Starlink/WiFi/LAN, 5-second for Cellular)
+- [x] Streaming protection mode (2-second tolerance, predictive failover)
+- [x] Connection flapping prevention with stability scoring
+- [x] Background validation intelligence (what-if analysis for all interfaces)
+- [x] Continuous monitoring during failover for true/false validation
+- [x] Enhanced network performance ML (latency, packet loss, stability focus)
+- [x] Intelligent failback prediction with optimal timing
+- [x] Granular outage duration prediction (11 user-specified windows)
+- [x] Multi-interface monitoring (Starlink, Cellular, WiFi, LAN)
+- [x] Hybrid per-device + per-type ML models
+- [x] Dynamic MWAN3 weight optimization (1-99 range)
+- [x] Failover timing monitoring and cost analysis
+- [x] Cross-interface correlation learning
+- [x] Predictive failover (vs reactive) for streaming protection
+
+### Phase 4 (Future)
+- [ ] Mobile scenario field testing
+- [ ] Advanced auto-tuning algorithms
+- [ ] Additional ML algorithms (ensemble methods)
+- [ ] Proactive network optimization
+
+## License
+
+This code is part of the autonomy daemon system and follows the same licensing terms.
+
+## Support
+
+For issues and questions:
+1. Check the logs for error messages
+2. Verify configuration with `ubus call ml_monitor get_config`
+3. Test with `ubus call ml_monitor status`
+4. Review the MasterPlan documentation for detailed information
+
+---
+
+**Status**: Phase 1 Complete - Production Ready  
+**Version**: 1.0  
+**Last Updated**: 2024  
+**Memory Footprint**: <1MB RAM, <10MB Storage  
+**Target Platform**: RUTOS (OpenWRT)

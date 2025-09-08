@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Network Intelligence Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.0/index.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        
+        .stat-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-card .trend {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .trend.up { background: #d4edda; color: #155724; }
+        .trend.down { background: #f8d7da; color: #721c24; }
+        .trend.stable { background: #e2e3e5; color: #495057; }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .chart-card h3 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+        
+        .interface-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .interface-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .interface-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .interface-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        
+        .interface-type {
+            background: #6c757d;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+        
+        .interface-type.starlink { background: #28a745; }
+        .interface-type.cellular { background: #007bff; }
+        .interface-type.wifi { background: #ffc107; color: #333; }
+        .interface-type.lan { background: #17a2b8; }
+        
+        .score-display {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .score-value {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .score-value.excellent { color: #28a745; }
+        .score-value.very-good { color: #20c997; }
+        .score-value.good { color: #ffc107; }
+        .score-value.fair { color: #fd7e14; }
+        .score-value.poor { color: #dc3545; }
+        .score-value.very-poor { color: #6f42c1; }
+        
+        .score-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .score-component {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+        
+        .score-component .name {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        
+        .score-component .value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .contributors {
+            margin-top: 15px;
+        }
+        
+        .contributors h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .contributor {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .contributor:last-child {
+            border-bottom: none;
+        }
+        
+        .contributor .impact {
+            font-weight: bold;
+        }
+        
+        .contributor .impact.positive { color: #28a745; }
+        .contributor .impact.negative { color: #dc3545; }
+        .contributor .impact.neutral { color: #6c757d; }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .auto-refresh {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: rgba(255,255,255,0.9);
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            color: #333;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .interface-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .score-breakdown {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🧠 ML Network Intelligence Dashboard</h1>
+            <p class="subtitle">Real-time monitoring of AI-powered network optimization</p>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div>🔄 Loading ML analytics data...</div>
+        </div>
+        
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <div id="content" style="display: none;">
+            <!-- Overall Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="icon">🎯</div>
+                    <div class="value" id="overall-accuracy">--</div>
+                    <div class="label">Overall Accuracy</div>
+                    <div class="trend" id="accuracy-trend">--</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="icon">⚡</div>
+                    <div class="value" id="ml-actions">--</div>
+                    <div class="label">ML Actions Taken</div>
+                    <div class="trend" id="actions-trend">Last 24h</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="icon">📈</div>
+                    <div class="value" id="improvement-time">--</div>
+                    <div class="label">Time Saved</div>
+                    <div class="trend" id="improvement-trend">--</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="icon">🛡️</div>
+                    <div class="value" id="stability-improvement">--</div>
+                    <div class="label">Stability Improvement</div>
+                    <div class="trend" id="stability-trend">--</div>
+                </div>
+            </div>
+            
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>📊 Prediction Accuracy Trend</h3>
+                    <canvas id="accuracy-chart"></canvas>
+                </div>
+                
+                <div class="chart-card">
+                    <h3>⚡ ML Impact Over Time</h3>
+                    <canvas id="impact-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Interface Scores -->
+            <div id="interfaces-container" class="interface-grid">
+                <!-- Interface cards will be populated here -->
+            </div>
+        </div>
+        
+        <button class="refresh-btn" onclick="refreshData()">🔄 Refresh</button>
+        <div class="auto-refresh">🔄 Auto-refresh: <span id="countdown">30</span>s</div>
+    </div>
+
+    <script>
+        let accuracyChart, impactChart;
+        let refreshInterval;
+        let countdownInterval;
+        let countdown = 30;
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            loadData();
+            startAutoRefresh();
+        });
+        
+        // Initialize charts
+        function initCharts() {
+            const accuracyCtx = document.getElementById('accuracy-chart').getContext('2d');
+            accuracyChart = new Chart(accuracyCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Accuracy %',
+                        data: [],
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            const impactCtx = document.getElementById('impact-chart').getContext('2d');
+            impactChart = new Chart(impactCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Time Saved (seconds)',
+                        data: [],
+                        backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                        borderColor: '#28a745',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + 's';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Load all data
+        async function loadData() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('content').style.display = 'none';
+                document.getElementById('error').style.display = 'none';
+                
+                // Load summary data
+                await loadSummaryData();
+                
+                // Load interface scores
+                await loadInterfaceScores();
+                
+                // Load chart data
+                await loadChartData();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showError('Failed to load ML analytics data: ' + error.message);
+            }
+        }
+        
+        // Load summary statistics
+        async function loadSummaryData() {
+            const response = await ubusCall('ml_monitor', 'get_analytics_summary', {});
+            
+            if (response.status === 'success') {
+                // Overall accuracy
+                const accuracy = Math.round(response.overall_accuracy_pct);
+                document.getElementById('overall-accuracy').textContent = accuracy + '%';
+                
+                // ML actions
+                document.getElementById('ml-actions').textContent = response.ml_triggered_actions || 0;
+                
+                // Time improvement
+                const improvementMs = response.total_improvement_ms || 0;
+                let improvementText = '--';
+                if (improvementMs > 60000) {
+                    improvementText = Math.round(improvementMs / 60000) + 'm';
+                } else if (improvementMs > 1000) {
+                    improvementText = Math.round(improvementMs / 1000) + 's';
+                } else if (improvementMs > 0) {
+                    improvementText = improvementMs + 'ms';
+                }
+                document.getElementById('improvement-time').textContent = improvementText;
+                
+                // Get impact summary for stability
+                const impactResponse = await ubusCall('ml_monitor', 'get_impact_summary', {});
+                if (impactResponse.status === 'success') {
+                    const stabilityImprovement = Math.round(impactResponse.stability_improvement_pct);
+                    document.getElementById('stability-improvement').textContent = stabilityImprovement + '%';
+                }
+            }
+        }
+        
+        // Load interface scores
+        async function loadInterfaceScores() {
+            const response = await ubusCall('ml_monitor', 'get_current_interface_scores', {});
+            
+            if (response.status === 'success') {
+                const container = document.getElementById('interfaces-container');
+                container.innerHTML = '';
+                
+                response.interface_scores.forEach(interface => {
+                    const card = createInterfaceCard(interface);
+                    container.appendChild(card);
+                });
+            }
+        }
+        
+        // Create interface card
+        function createInterfaceCard(interface) {
+            const card = document.createElement('div');
+            card.className = 'interface-card';
+            
+            const scoreClass = getScoreClass(interface.overall_score);
+            const typeClass = interface.interface_type.toLowerCase();
+            
+            card.innerHTML = `
+                <div class="interface-header">
+                    <div class="interface-name">${interface.interface_id}</div>
+                    <div class="interface-type ${typeClass}">${interface.interface_type}</div>
+                </div>
+                
+                <div class="score-display">
+                    <div class="score-value ${scoreClass}">${Math.round(interface.overall_score)}</div>
+                    <div class="score-label">Overall ML Score</div>
+                </div>
+                
+                <div class="score-breakdown">
+                    <div class="score-component">
+                        <div class="name">Accuracy</div>
+                        <div class="value">${Math.round(interface.accuracy_score)}</div>
+                    </div>
+                    <div class="score-component">
+                        <div class="name">Stability</div>
+                        <div class="value">${Math.round(interface.stability_score)}</div>
+                    </div>
+                    <div class="score-component">
+                        <div class="name">Performance</div>
+                        <div class="value">${Math.round(interface.performance_score)}</div>
+                    </div>
+                    <div class="score-component">
+                        <div class="name">Trend</div>
+                        <div class="value">${Math.round(interface.trend_score)}</div>
+                    </div>
+                </div>
+                
+                <div class="contributors">
+                    <h4>Score Contributors</h4>
+                    ${createContributor('Latency', interface.score_contributors.latency_impact)}
+                    ${createContributor('Packet Loss', interface.score_contributors.loss_impact)}
+                    ${createContributor('Signal', interface.score_contributors.signal_impact)}
+                    ${createContributor('Predictions', interface.score_contributors.prediction_impact)}
+                    ${createContributor('Stability', interface.score_contributors.stability_impact)}
+                    ${createContributor('Trend', interface.score_contributors.trend_impact)}
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        // Create contributor row
+        function createContributor(name, impact) {
+            const impactClass = impact > 1 ? 'positive' : impact < -1 ? 'negative' : 'neutral';
+            const impactText = impact > 0 ? `+${Math.round(impact)}` : Math.round(impact);
+            
+            return `
+                <div class="contributor">
+                    <span>${name}</span>
+                    <span class="impact ${impactClass}">${impactText}</span>
+                </div>
+            `;
+        }
+        
+        // Get score class for styling
+        function getScoreClass(score) {
+            if (score >= 90) return 'excellent';
+            if (score >= 80) return 'very-good';
+            if (score >= 70) return 'good';
+            if (score >= 60) return 'fair';
+            if (score >= 50) return 'poor';
+            return 'very-poor';
+        }
+        
+        // Load chart data
+        async function loadChartData() {
+            // Load accuracy trend data (mock for now)
+            const hours = Array.from({length: 24}, (_, i) => {
+                const date = new Date();
+                date.setHours(date.getHours() - (23 - i));
+                return date.getHours() + ':00';
+            });
+            
+            const accuracyData = Array.from({length: 24}, () => 
+                85 + Math.random() * 10 + Math.sin(Date.now() / 1000000) * 5
+            );
+            
+            accuracyChart.data.labels = hours;
+            accuracyChart.data.datasets[0].data = accuracyData;
+            accuracyChart.update();
+            
+            // Load impact data (mock for now)
+            const impactData = Array.from({length: 24}, () => 
+                Math.random() * 30 + 5
+            );
+            
+            impactChart.data.labels = hours;
+            impactChart.data.datasets[0].data = impactData;
+            impactChart.update();
+        }
+        
+        // UBUS call wrapper
+        async function ubusCall(object, method, params) {
+            // In a real implementation, this would make actual UBUS calls
+            // For now, return mock data
+            
+            if (object === 'ml_monitor' && method === 'get_analytics_summary') {
+                return {
+                    status: 'success',
+                    total_predictions: 1247,
+                    correct_predictions: 1156,
+                    overall_accuracy_pct: 92.7,
+                    ml_triggered_actions: 23,
+                    total_improvement_ms: 145000,
+                    interface_summaries: []
+                };
+            }
+            
+            if (object === 'ml_monitor' && method === 'get_current_interface_scores') {
+                return {
+                    status: 'success',
+                    interface_scores: [
+                        {
+                            interface_id: 'eth1',
+                            interface_type: 'Starlink',
+                            overall_score: 92.5,
+                            accuracy_score: 95.2,
+                            stability_score: 88.7,
+                            performance_score: 94.1,
+                            trend_score: 91.8,
+                            score_contributors: {
+                                latency_impact: 8.2,
+                                loss_impact: 12.1,
+                                signal_impact: 15.7,
+                                prediction_impact: 18.3,
+                                stability_impact: -2.1,
+                                trend_impact: 5.4
+                            }
+                        },
+                        {
+                            interface_id: 'qmimux0',
+                            interface_type: 'Cellular',
+                            overall_score: 78.3,
+                            accuracy_score: 82.1,
+                            stability_score: 75.6,
+                            performance_score: 76.8,
+                            trend_score: 79.2,
+                            score_contributors: {
+                                latency_impact: -5.2,
+                                loss_impact: -8.1,
+                                signal_impact: -12.3,
+                                prediction_impact: 15.7,
+                                stability_impact: 8.9,
+                                trend_impact: 3.2
+                            }
+                        }
+                    ]
+                };
+            }
+            
+            if (object === 'ml_monitor' && method === 'get_impact_summary') {
+                return {
+                    status: 'success',
+                    stability_improvement_pct: 15.7
+                };
+            }
+            
+            throw new Error('Unknown UBUS call');
+        }
+        
+        // Show error message
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = message;
+        }
+        
+        // Refresh data
+        function refreshData() {
+            countdown = 30;
+            loadData();
+        }
+        
+        // Start auto-refresh
+        function startAutoRefresh() {
+            refreshInterval = setInterval(refreshData, 30000);
+            
+            countdownInterval = setInterval(() => {
+                countdown--;
+                document.getElementById('countdown').textContent = countdown;
+                
+                if (countdown <= 0) {
+                    countdown = 30;
+                }
+            }, 1000);
+        }
+        
+        // Stop auto-refresh when page is hidden
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                clearInterval(refreshInterval);
+                clearInterval(countdownInterval);
+            } else {
+                startAutoRefresh();
+            }
+        });
+    </script>
+</body>
+</html>

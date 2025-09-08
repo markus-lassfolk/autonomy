@@ -277,6 +277,18 @@ typedef struct {
     char modem_id[16];                  // Modem ID (e.g., "2-1")
     char cellular_device_path[64];      // Cellular device path (e.g., "/dev/ttyUSB2")
     
+    // Enhanced cellular information
+    struct {
+        char operator_name[32];         // Network operator name
+        char network_technology[16];    // 2G/3G/4G/5G
+        int signal_strength_dbm;        // Real-time signal strength in dBm
+        char cell_id[16];               // Current cell tower ID
+        int signal_quality;             // Signal quality (0-100)
+        int rsrp_dbm;                   // Reference Signal Received Power
+        int rsrq_db;                    // Reference Signal Received Quality
+        int sinr_db;                    // Signal-to-Interference-plus-Noise Ratio
+    } enhanced_cellular_info;
+    
     // WiFi specific
     char ssid[64];                      // WiFi SSID
     char wifi_band[16];                 // WiFi band (2.4G, 5G)
@@ -295,6 +307,36 @@ typedef struct {
     double health_score;                // Interface health score
     double latency;                     // Latency in ms
     double packet_loss;                 // Packet loss percentage
+    
+    // Enhanced real-time metrics
+    struct {
+        uint32_t ping_latency_ms;       // Real-time ping latency
+        uint8_t ping_success_rate;      // Ping success rate over last minute (0-100)
+        time_t last_ping_test;          // Last ping test timestamp
+        uint32_t consecutive_ping_failures; // Consecutive ping failures
+        uint32_t total_ping_tests;      // Total ping tests performed
+        uint32_t successful_pings;      // Successful ping tests
+        uint16_t ping_jitter_ms;        // Ping jitter in milliseconds
+        uint16_t ping_min_ms;           // Minimum ping latency
+        uint16_t ping_max_ms;           // Maximum ping latency
+        bool mwan3_ping_active;         // Is MWAN3 actively pinging this interface?
+        uint16_t mwan3_ping_interval;   // MWAN3 ping interval in seconds
+        time_t last_mwan3_ping;         // Last MWAN3 ping timestamp
+        uint8_t mwan3_ping_success_rate; // MWAN3 ping success rate
+    } real_time_metrics;
+    
+    // Interface performance history for trend analysis
+    struct {
+        uint16_t latency_history[60];   // Last 60 latency measurements (1 per minute)
+        uint8_t loss_history[60];       // Last 60 loss measurements (percentage)
+        uint8_t health_history[60];     // Last 60 health scores
+        uint8_t history_index;          // Current history index (circular buffer)
+        time_t history_start_time;      // When history collection started
+        uint32_t history_count;         // Number of valid history entries
+        double latency_trend;           // Latency trend (-1 to 1, negative = improving)
+        double loss_trend;              // Loss trend (-1 to 1, negative = improving)
+        double health_trend;            // Health trend (-1 to 1, negative = degrading)
+    } performance_history;
     
     // Timestamps and status
     time_t last_check;                  // Last health check

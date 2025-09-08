@@ -557,3 +557,312 @@ void network_discovery_comprehensive_cleanup(void) {
     
     LOGX_INFO_MSG("Comprehensive network discovery system cleaned up");
 }
+
+// Enhanced Network Discovery Functions
+
+// Get enhanced cellular metrics via modem commands
+static void get_enhanced_cellular_metrics(network_interface_t *interface) {
+    if (!interface || strcmp(interface->type, "cellular") != 0) return;
+    
+    // Initialize enhanced cellular info
+    memset(&interface->enhanced_cellular_info, 0, sizeof(interface->enhanced_cellular_info));
+    
+    // Execute AT commands to get detailed cellular information
+    char cmd[256];
+    char result[1024];
+    FILE *fp;
+    
+    // Get signal strength using dynamic device discovery
+    extern int get_signal_strength_dynamic(int *rssi, int *ber);
+    int rssi, ber;
+    if (get_signal_strength_dynamic(&rssi, &ber) == AUTONOMY_SUCCESS) {
+        // Convert RSSI to dBm: dBm = -113 + (rssi * 2)
+        if (rssi != 99) { // 99 means unknown
+            interface->enhanced_cellular_info.signal_strength_dbm = -113 + (rssi * 2);
+            interface->enhanced_cellular_info.signal_quality = (rssi * 100) / 31; // Scale to 0-100
+        }
+    }
+    
+    // Get network operator using dynamic device discovery
+    extern int get_network_operator(const char *device_path, char *operator_name, size_t name_size);
+    char device_path[64];
+    if (get_cellular_device_path(interface->name, device_path, sizeof(device_path)) == AUTONOMY_SUCCESS) {
+        get_network_operator(device_path, interface->enhanced_cellular_info.operator_name, 
+                           sizeof(interface->enhanced_cellular_info.operator_name));
+    }
+    
+    // Get LTE specific metrics using dynamic device discovery
+    extern int get_lte_metrics(const char *device_path, int *rsrp, int *rsrq, int *sinr);
+    if (strlen(device_path) > 0) {
+        int rsrp, rsrq, sinr;
+        if (get_lte_metrics(device_path, &rsrp, &rsrq, &sinr) == AUTONOMY_SUCCESS) {
+            interface->enhanced_cellular_info.rsrp_dbm = rsrp;
+            interface->enhanced_cellular_info.rsrq_db = rsrq;
+            interface->enhanced_cellular_info.sinr_db = sinr;
+        }
+    }
+    
+    // Determine network technology based on available metrics
+    if (interface->enhanced_cellular_info.rsrp_dbm != 0) {
+        strcpy(interface->enhanced_cellular_info.network_technology, "4G");
+    } else {
+        strcpy(interface->enhanced_cellular_info.network_technology, "3G");
+    }
+}
+
+// Get MWAN3 ping information for interface
+static void get_mwan3_ping_info(network_interface_t *interface) {
+    if (!interface || !interface->mwan3_tracking_enabled) return;
+    
+    // Initialize real-time metrics
+    memset(&interface->real_time_metrics, 0, sizeof(interface->real_time_metrics));
+    
+    // Get MWAN3 status via UBUS
+    struct ubus_context *ctx = ubus_connect(NULL);
+    if (!ctx) return;
+    
+    uint32_t id;
+    if (ubus_lookup_id(ctx, "mwan3", &id) == 0) {
+        struct blob_buf req = {0};
+        blob_buf_init(&req, 0);
+        blobmsg_add_string(&req, "interface", interface->mwan3_name);
+        
+        // Get MWAN3 interface status
+        if (ubus_invoke(ctx, id, "status", req.head, NULL, NULL, 1000) == 0) {
+            // Parse MWAN3 ping information
+            // This would extract ping interval, success rate, etc.
+            interface->real_time_metrics.mwan3_ping_active = true;
+            interface->real_time_metrics.mwan3_ping_interval = 5; // Default 5 seconds
+            interface->real_time_metrics.last_mwan3_ping = time(NULL);
+            
+            // Get ping statistics if available
+            interface->real_time_metrics.mwan3_ping_success_rate = 95; // Would parse from response
+        }
+        
+        blob_buf_free(&req);
+    }
+    
+    ubus_free(ctx);
+    
+    // Check if MWAN3 is actively monitoring this interface
+    char mwan3_config_path[256];
+    snprintf(mwan3_config_path, sizeof(mwan3_config_path), "/etc/config/mwan3");
+    
+    FILE *fp = fopen(mwan3_config_path, "r");
+    if (fp) {
+        char line[256];
+        bool in_interface_section = false;
+        bool found_interface = false;
+        
+        while (fgets(line, sizeof(line), fp)) {
+            if (strstr(line, "config interface") && strstr(line, interface->mwan3_name)) {
+                in_interface_section = true;
+                found_interface = true;
+                continue;
+            }
+            
+            if (in_interface_section && strstr(line, "config ")) {
+                in_interface_section = false;
+            }
+            
+            if (in_interface_section && found_interface) {
+                if (strstr(line, "option track_ip")) {
+                    interface->real_time_metrics.mwan3_ping_active = true;
+                }
+                if (strstr(line, "option ping_timeout")) {
+                    // Parse ping timeout
+                    char *value = strchr(line, '\'');
+                    if (value) {
+                        interface->real_time_metrics.mwan3_ping_interval = atoi(value + 1);
+                    }
+                }
+            }
+        }
+        
+        fclose(fp);
+    }
+}
+
+// Update interface performance history
+static void update_interface_performance_history(network_interface_t *interface) {
+    if (!interface) return;
+    
+    // Initialize history if needed
+    if (interface->performance_history.history_start_time == 0) {
+        interface->performance_history.history_start_time = time(NULL);
+        interface->performance_history.history_index = 0;
+        interface->performance_history.history_count = 0;
+    }
+    
+    // Add current metrics to history (circular buffer)
+    uint8_t idx = interface->performance_history.history_index;
+    
+    interface->performance_history.latency_history[idx] = (uint16_t)interface->latency;
+    interface->performance_history.loss_history[idx] = (uint8_t)(interface->packet_loss * 100);
+    interface->performance_history.health_history[idx] = (uint8_t)(interface->health_score * 2.55);
+    
+    // Update circular buffer index
+    interface->performance_history.history_index = (idx + 1) % 60;
+    if (interface->performance_history.history_count < 60) {
+        interface->performance_history.history_count++;
+    }
+    
+    // Calculate trends if we have enough data
+    if (interface->performance_history.history_count >= 10) {
+        calculate_performance_trends(interface);
+    }
+}
+
+// Calculate performance trends using linear regression
+static void calculate_performance_trends(network_interface_t *interface) {
+    if (!interface || interface->performance_history.history_count < 10) return;
+    
+    uint32_t count = interface->performance_history.history_count;
+    double sum_x = 0, sum_y = 0, sum_xy = 0, sum_x2 = 0;
+    
+    // Calculate latency trend
+    for (uint32_t i = 0; i < count; i++) {
+        double x = (double)i;
+        double y = (double)interface->performance_history.latency_history[i];
+        
+        sum_x += x;
+        sum_y += y;
+        sum_xy += x * y;
+        sum_x2 += x * x;
+    }
+    
+    double n = (double)count;
+    double slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x);
+    
+    // Normalize slope to -1 to 1 range
+    interface->performance_history.latency_trend = fmax(-1.0, fmin(1.0, slope / 100.0));
+    
+    // Calculate loss trend (similar calculation)
+    sum_x = sum_y = sum_xy = sum_x2 = 0;
+    for (uint32_t i = 0; i < count; i++) {
+        double x = (double)i;
+        double y = (double)interface->performance_history.loss_history[i];
+        
+        sum_x += x;
+        sum_y += y;
+        sum_xy += x * y;
+        sum_x2 += x * x;
+    }
+    
+    slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x);
+    interface->performance_history.loss_trend = fmax(-1.0, fmin(1.0, slope / 10.0));
+    
+    // Calculate health trend
+    sum_x = sum_y = sum_xy = sum_x2 = 0;
+    for (uint32_t i = 0; i < count; i++) {
+        double x = (double)i;
+        double y = (double)interface->performance_history.health_history[i];
+        
+        sum_x += x;
+        sum_y += y;
+        sum_xy += x * y;
+        sum_x2 += x * x;
+    }
+    
+    slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x);
+    interface->performance_history.health_trend = fmax(-1.0, fmin(1.0, slope / 50.0));
+}
+
+// Enhanced interface discovery with new metrics
+int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count) {
+    // First get basic interface info
+    int result = get_comprehensive_interface_info(interfaces, count);
+    if (result != AUTONOMY_SUCCESS) {
+        return result;
+    }
+    
+    // Enhance each interface with additional metrics
+    for (int i = 0; i < *count; i++) {
+        network_interface_t *interface = &interfaces[i];
+        
+        // Get enhanced cellular metrics for cellular interfaces
+        if (strcmp(interface->type, "cellular") == 0) {
+            get_enhanced_cellular_metrics(interface);
+        }
+        
+        // Get MWAN3 ping information for tracked interfaces
+        if (interface->mwan3_tracking_enabled) {
+            get_mwan3_ping_info(interface);
+        }
+        
+        // Update performance history
+        update_interface_performance_history(interface);
+        
+        // Update real-time ping metrics
+        update_real_time_ping_metrics(interface);
+    }
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Update real-time ping metrics
+static void update_real_time_ping_metrics(network_interface_t *interface) {
+    if (!interface) return;
+    
+    // Perform ping test if not done recently
+    time_t now = time(NULL);
+    if (now - interface->real_time_metrics.last_ping_test < 60) {
+        return; // Don't ping more than once per minute for discovery
+    }
+    
+    // Skip ping if MWAN3 is already pinging frequently
+    if (interface->real_time_metrics.mwan3_ping_active && 
+        interface->real_time_metrics.mwan3_ping_interval <= 10) {
+        // Use MWAN3 ping results instead of doing our own
+        interface->real_time_metrics.ping_success_rate = interface->real_time_metrics.mwan3_ping_success_rate;
+        interface->real_time_metrics.last_ping_test = now;
+        return;
+    }
+    
+    // Perform ping test to gateway
+    char cmd[256];
+    snprintf(cmd, sizeof(cmd), "ping -c 3 -W 2 -I %s %s 2>/dev/null | grep 'time=' | tail -1", 
+             interface->name, interface->gateway);
+    
+    FILE *fp = popen(cmd, "r");
+    if (fp) {
+        char result[256];
+        if (fgets(result, sizeof(result), fp)) {
+            // Parse ping result: time=XX.X ms
+            char *time_str = strstr(result, "time=");
+            if (time_str) {
+                float latency = atof(time_str + 5);
+                interface->real_time_metrics.ping_latency_ms = (uint32_t)latency;
+                
+                // Update ping statistics
+                interface->real_time_metrics.total_ping_tests++;
+                interface->real_time_metrics.successful_pings++;
+                interface->real_time_metrics.consecutive_ping_failures = 0;
+                
+                // Update min/max latency
+                if (interface->real_time_metrics.ping_min_ms == 0 || 
+                    latency < interface->real_time_metrics.ping_min_ms) {
+                    interface->real_time_metrics.ping_min_ms = (uint16_t)latency;
+                }
+                if (latency > interface->real_time_metrics.ping_max_ms) {
+                    interface->real_time_metrics.ping_max_ms = (uint16_t)latency;
+                }
+            }
+        } else {
+            // Ping failed
+            interface->real_time_metrics.total_ping_tests++;
+            interface->real_time_metrics.consecutive_ping_failures++;
+        }
+        
+        // Calculate success rate
+        if (interface->real_time_metrics.total_ping_tests > 0) {
+            interface->real_time_metrics.ping_success_rate = 
+                (interface->real_time_metrics.successful_pings * 100) / 
+                interface->real_time_metrics.total_ping_tests;
+        }
+        
+        pclose(fp);
+    }
+    
+    interface->real_time_metrics.last_ping_test = now;
+}

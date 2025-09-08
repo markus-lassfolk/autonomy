@@ -141,32 +141,12 @@ void detect_vpn_connections(network_interface_t *interfaces, int count);
 void get_friendly_names_from_uci(network_interface_t *interfaces, int count);
 
 /**
- * Dynamically detect cellular device path
- * @param iface Interface to update with device path
- */
-void detect_cellular_device_path(network_interface_t *iface);
-
-/**
- * Check if a cellular device is active
- * @param device_path Device path to check
- * @return true if device is active, false otherwise
- */
-bool is_cellular_device_active(const char *device_path);
-
-/**
- * Get cellular device path from UCI configuration
- * @param iface Interface to update with device path
- */
-void get_cellular_device_from_uci(network_interface_t *iface);
-
-/**
- * Get cellular device path for a specific interface
- * @param interface_name Name of the cellular interface
- * @param device_path Buffer to store the device path
- * @param path_size Size of the device_path buffer
+ * Get enhanced comprehensive interface information with detailed metrics
+ * @param interfaces Array to store interfaces
+ * @param count Pointer to store actual count
  * @return AUTONOMY_SUCCESS on success, error code on failure
  */
-int get_cellular_device_path(const char *interface_name, char *device_path, size_t path_size);
+int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count);
 
 #ifdef __cplusplus
 }

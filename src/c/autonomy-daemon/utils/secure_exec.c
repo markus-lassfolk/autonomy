@@ -17,7 +17,7 @@ static const char* ALLOWED_COMMANDS[] = {
     "find", "ls", "cat", "echo", "printf", "test", "which",
     "ip", "route", "ifconfig", "ping", "wget", "curl",
     "sqlite3", "opkg", "fsck", "ntpdate", "sync",
-    "wifi", "hostapd_cli", "iwconfig", "iwlist",
+    "wifi", "hostapd_cli", "iwconfig", "iwlist", "iw", "ethtool",
     NULL
 };
 
@@ -125,7 +125,7 @@ int secure_exec_command(const char *command, exec_result_t *result) {
     // Check if command is allowed
     if (!is_command_allowed(command)) {
         snprintf(result->error, sizeof(result->error), "Command not allowed: %s", command);
-        LOGX_WARN_MSG("Blocked unauthorized command: %s", command);
+        LOGX_WARN("Blocked unauthorized command: %s", command);
         return AUTONOMY_ERROR_SECURITY;
     }
     
@@ -134,7 +134,7 @@ int secure_exec_command(const char *command, exec_result_t *result) {
     int argc = parse_command_args(command, args, MAX_ARGUMENTS);
     if (argc == 0) {
         snprintf(result->error, sizeof(result->error), "Failed to parse command");
-        return AUTONOMY_ERROR_PARSE;
+        return AUTONOMY_ERROR_PARSE_FAILED;
     }
     
     // Execute with arguments array
@@ -164,8 +164,8 @@ int secure_exec_args(char *const argv[], exec_result_t *result) {
     // Check if command is allowed
     if (!is_command_allowed(argv[0])) {
         snprintf(result->error, sizeof(result->error), "Command not allowed: %s", argv[0]);
-        LOGX_WARN_MSG("Blocked unauthorized command: %s", argv[0]);
-        return AUTONOMY_ERROR_SECURITY;
+        LOGX_WARN("Blocked unauthorized command: %s", argv[0]);
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Create pipes for output capture
@@ -310,7 +310,7 @@ int secure_uci_command(const char *uci_args, exec_result_t *result) {
     // Check if UCI operation is allowed
     if (!is_uci_operation_allowed(operation)) {
         snprintf(result->error, sizeof(result->error), "UCI operation not allowed: %s", operation);
-        return AUTONOMY_ERROR_SECURITY;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Build command
@@ -329,7 +329,7 @@ int secure_systemctl_command(const char *action, const char *service, exec_resul
     // Check if systemctl operation is allowed
     if (!is_systemctl_operation_allowed(action)) {
         snprintf(result->error, sizeof(result->error), "systemctl operation not allowed: %s", action);
-        return AUTONOMY_ERROR_SECURITY;
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Build command
@@ -346,14 +346,17 @@ int secure_file_operation(const char *operation, const char *file_path, exec_res
     }
     
     // Validate file path (basic security check)
-    if (strstr(file_path, "..") || strstr(file_path, "~") || file_path[0] == '/') {
-        // Only allow relative paths in safe directories
-        if (!strstr(file_path, "/var/lib/autonomy/") && 
-            !strstr(file_path, "/tmp/") && 
-            !strstr(file_path, "/var/log/")) {
-            snprintf(result->error, sizeof(result->error), "File path not allowed: %s", file_path);
-            return AUTONOMY_ERROR_SECURITY;
-        }
+    if (strstr(file_path, "..") || strstr(file_path, "~")) {
+        snprintf(result->error, sizeof(result->error), "File path not allowed: %s", file_path);
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Only allow operations in safe directories
+    if (!strstr(file_path, "/var/lib/autonomy/") && 
+        !strstr(file_path, "/tmp/autonomy/") && 
+        !strstr(file_path, "/var/log/autonomy/")) {
+        snprintf(result->error, sizeof(result->error), "File path not in allowed directory: %s", file_path);
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Build command based on operation
@@ -368,4 +371,55 @@ int secure_file_operation(const char *operation, const char *file_path, exec_res
     }
     
     return secure_exec_command(command, result);
+}
+
+// Safe cellular device AT command execution
+int secure_cellular_at_command(const char *device_path, const char *at_command, exec_result_t *result) {
+    if (!device_path || !at_command || !result) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Validate device path
+    if (!strstr(device_path, "/dev/tty")) {
+        snprintf(result->error, sizeof(result->error), "Invalid device path: %s", device_path);
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Check if device exists and is accessible
+    if (access(device_path, R_OK | W_OK) != 0) {
+        snprintf(result->error, sizeof(result->error), "Device not accessible: %s", device_path);
+        return AUTONOMY_ERROR_NOT_FOUND;
+    }
+    
+    // Validate AT command
+    if (strlen(at_command) > 32 || strstr(at_command, ";") || strstr(at_command, "&")) {
+        snprintf(result->error, sizeof(result->error), "Invalid AT command: %s", at_command);
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Build secure command
+    char command[MAX_COMMAND_LENGTH];
+    snprintf(command, sizeof(command), "timeout 2 sh -c 'echo \"%s\" > %s && head -1 < %s'", 
+             at_command, device_path, device_path);
+    
+    return secure_exec_command(command, result);
+}
+
+// Check MWAN3 availability securely
+int secure_check_mwan3_available(void) {
+    exec_result_t result;
+    
+    // First check if UCI is available
+    int ret = secure_exec_command("which uci", &result);
+    if (ret != AUTONOMY_SUCCESS || !result.success) {
+        return AUTONOMY_ERROR_NOT_FOUND;
+    }
+    
+    // Then check if MWAN3 config exists
+    ret = secure_uci_command("show mwan3", &result);
+    if (ret != AUTONOMY_SUCCESS || !result.success) {
+        return AUTONOMY_ERROR_NOT_FOUND;
+    }
+    
+    return AUTONOMY_SUCCESS;
 }
