@@ -38,21 +38,24 @@ int ml_monitor_init_phase7_multi_interface(ml_monitor_t *monitor) {
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
-    // Discover and add existing network interfaces
-    LOGX_INFO("🔍 Discovering network interfaces for ML monitoring");
+    // Use comprehensive network discovery to automatically find interfaces
+    LOGX_INFO("🔍 Using comprehensive network discovery for automatic interface detection");
     
-    // Add Starlink interfaces (integrate with existing Starlink monitoring)
-    ml_monitor_add_interface(g_phase7_system, "starlink1", INTERFACE_TYPE_STARLINK);
-    
-    // Add Cellular interfaces (would discover from network controller)
-    ml_monitor_add_interface(g_phase7_system, "cellular1", INTERFACE_TYPE_CELLULAR);
-    ml_monitor_add_interface(g_phase7_system, "cellular2", INTERFACE_TYPE_CELLULAR);
-    
-    // Add WiFi interfaces
-    ml_monitor_add_interface(g_phase7_system, "wifi1", INTERFACE_TYPE_WIFI);
-    
-    // Add LAN interface
-    ml_monitor_add_interface(g_phase7_system, "lan1", INTERFACE_TYPE_LAN);
+    // Initialize ML monitoring from discovered interfaces
+    extern int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor);
+    int discovery_result = ml_monitor_init_from_network_discovery(monitor);
+    if (discovery_result != ML_MONITOR_SUCCESS) {
+        LOGX_WARN("Failed to initialize from network discovery: %d", discovery_result);
+        
+        // Fallback: Add common interfaces manually
+        LOGX_INFO("Using fallback interface detection");
+        ml_monitor_add_interface(g_phase7_system, "eth1", INTERFACE_TYPE_STARLINK);
+        ml_monitor_add_interface(g_phase7_system, "qmimux0", INTERFACE_TYPE_CELLULAR);
+        ml_monitor_add_interface(g_phase7_system, "wlan0", INTERFACE_TYPE_WIFI);
+        ml_monitor_add_interface(g_phase7_system, "eth0", INTERFACE_TYPE_LAN);
+    } else {
+        LOGX_INFO("✅ Interfaces automatically discovered and added to ML monitoring");
+    }
     
     // Integrate with network controller for failover events
     int integration_result = ml_monitor_integrate_with_network_controller(monitor);
@@ -325,16 +328,22 @@ int ml_monitor_update_with_phase7_multi_interface(ml_monitor_t *monitor, const m
     // Collect multi-interface observations
     ml_monitor_collect_multi_interface_observations(monitor);
     
-    // Update MWAN3 weights based on ML predictions
-    static time_t last_mwan3_update = 0;
+    // Periodic sync with network discovery and MWAN3 updates
+    static time_t last_sync = 0;
     time_t now = observation->timestamp;
     
-    if (now - last_mwan3_update > 300) { // Update every 5 minutes
+    if (now - last_sync > 300) { // Update every 5 minutes
+        // Sync with network discovery for new/removed interfaces
+        extern int ml_monitor_periodic_network_discovery_sync(ml_monitor_t *monitor);
+        ml_monitor_periodic_network_discovery_sync(monitor);
+        
+        // Update MWAN3 weights based on ML predictions
         int mwan3_result = ml_monitor_update_mwan3_weights(g_phase7_system);
         if (mwan3_result == ML_MONITOR_MULTI_SUCCESS) {
             LOGX_DEBUG("MWAN3 weights updated based on ML predictions");
         }
-        last_mwan3_update = now;
+        
+        last_sync = now;
     }
     
     return ML_MONITOR_SUCCESS;

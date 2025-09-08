@@ -85,6 +85,19 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+echo "Compiling Network Discovery Integration modules..."
+$CC $CFLAGS $INCLUDES -c ml_monitor_network_discovery_integration.c -o ml_monitor_network_discovery_integration.o
+if [ $? -ne 0 ]; then
+    echo "Error compiling ml_monitor_network_discovery_integration.c"
+    exit 1
+fi
+
+$CC $CFLAGS $INCLUDES -c ml_monitor_network_discovery_ubus.c -o ml_monitor_network_discovery_ubus.o
+if [ $? -ne 0 ]; then
+    echo "Error compiling ml_monitor_network_discovery_ubus.c"
+    exit 1
+fi
+
 echo "Compiling test programs..."
 $CC $CFLAGS $INCLUDES -c test_ml_monitor.c -o test_ml_monitor.o
 if [ $? -ne 0 ]; then
@@ -140,6 +153,12 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+$CC $CFLAGS $INCLUDES -c test_ml_network_discovery_integration.c -o test_ml_network_discovery_integration.o
+if [ $? -ne 0 ]; then
+    echo "Error compiling test_ml_network_discovery_integration.c"
+    exit 1
+fi
+
 echo "Linking test executables..."
 $CC test_ml_monitor.o ml_monitor.o ml_monitor_uci.o -o test_ml_monitor $LIBS
 if [ $? -ne 0 ]; then
@@ -165,7 +184,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-ALL_MODULES="ml_monitor.o ml_monitor_uci.o ml_monitor_integration.o ml_monitor_phase3.o ml_monitor_phase4.o ml_monitor_phase5.o ml_monitor_phase6.o ml_monitor_phase7.o ml_monitor_multi_interface.o ml_monitor_multi_interface_ubus.o ml_monitor_advanced_networking.o"
+ALL_MODULES="ml_monitor.o ml_monitor_uci.o ml_monitor_integration.o ml_monitor_phase3.o ml_monitor_phase4.o ml_monitor_phase5.o ml_monitor_phase6.o ml_monitor_phase7.o ml_monitor_multi_interface.o ml_monitor_multi_interface_ubus.o ml_monitor_advanced_networking.o ml_monitor_network_discovery_integration.o ml_monitor_network_discovery_ubus.o"
 
 $CC test_ml_phase5.o $ALL_MODULES -o test_ml_phase5 $LIBS
 if [ $? -ne 0 ]; then
@@ -197,6 +216,12 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+$CC test_ml_network_discovery_integration.o $ALL_MODULES -o test_ml_network_discovery_integration $LIBS
+if [ $? -ne 0 ]; then
+    echo "Error linking Network Discovery Integration test executable"
+    exit 1
+fi
+
 echo "Build successful!"
 echo "Run './test_ml_monitor' to test basic ML monitoring"
 echo "Run './test_ml_integration' to test Phase 2 integration" 
@@ -206,7 +231,8 @@ echo "Run './test_ml_phase5' to test Phase 5 mobile optimization"
 echo "Run './test_ml_phase6' to test Phase 6 self-optimization"
 echo "Run './test_ml_phase7' to test Phase 7 multi-interface intelligence"
 echo "Run './test_ml_multi_interface' to test multi-interface system specifically"
-echo "Run './test_ml_advanced_networking' to test advanced networking intelligence (ULTIMATE SYSTEM)"
+echo "Run './test_ml_advanced_networking' to test advanced networking intelligence"
+echo "Run './test_ml_network_discovery_integration' to test network discovery integration (ULTIMATE SYSTEM)"
 
 # Clean up object files
 rm -f *.o

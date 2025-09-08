@@ -6,9 +6,9 @@ INCLUDES = -I../core -I../utils -I../starlink -I../external -I../gps
 LIBS = -luci -lubox -lubus -lpthread -lm -ljson-c
 
 # Source files
-SOURCES = ml_monitor.c ml_monitor_uci.c ml_monitor_ubus.c ml_monitor_integration.c ml_monitor_phase3.c ml_monitor_phase4.c ml_monitor_phase5.c ml_monitor_phase6.c ml_monitor_phase7.c ml_monitor_multi_interface.c ml_monitor_multi_interface_ubus.c ml_monitor_advanced_networking.c
+SOURCES = ml_monitor.c ml_monitor_uci.c ml_monitor_ubus.c ml_monitor_integration.c ml_monitor_phase3.c ml_monitor_phase4.c ml_monitor_phase5.c ml_monitor_phase6.c ml_monitor_phase7.c ml_monitor_multi_interface.c ml_monitor_multi_interface_ubus.c ml_monitor_advanced_networking.c ml_monitor_network_discovery_integration.c ml_monitor_network_discovery_ubus.c
 OBJECTS = $(SOURCES:.c=.o)
-HEADERS = ml_monitor.h ml_monitor_ubus.h ml_monitor_multi_interface.h ml_monitor_advanced_networking.h
+HEADERS = ml_monitor.h ml_monitor_ubus.h ml_monitor_multi_interface.h ml_monitor_advanced_networking.h ml_monitor_network_discovery_integration.h
 
 # Target library
 TARGET = libml_monitor.a
