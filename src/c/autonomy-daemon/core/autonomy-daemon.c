@@ -21,6 +21,8 @@
 #include "../starlink/starlink_modules.h"
 #include "../starlink/starlink_tracker.h"
 #include "../utils/uci_manager.h"
+#include "../ml/ml_monitor.h"
+#include "../ml/ml_monitor_ubus.h"
 #include <sys/socket.h>
 
 // Global variables
@@ -212,6 +214,41 @@ int main(int argc, char **argv)
         fprintf(stderr, "Starlink tracking module initialization failed (check credentials)\n");
     }
 
+    // Initialize ML monitoring module
+    ml_monitor_config_t ml_config;
+    if (ml_monitor_load_config_from_uci(&ml_config) == ML_MONITOR_SUCCESS) {
+        if (ml_config.enabled) {
+            ml_monitor_t *ml_monitor = ml_monitor_init(&ml_config);
+            if (ml_monitor) {
+                fprintf(stderr, "ML monitoring module initialized successfully\n");
+                
+                // Initialize ML monitoring UBUS interface
+                if (ml_monitor_ubus_init(ctx) == ML_MONITOR_SUCCESS) {
+                    if (ml_monitor_ubus_add_object(ctx) == 0) {
+                        fprintf(stderr, "ML monitoring UBUS interface registered\n");
+                    } else {
+                        fprintf(stderr, "Failed to register ML monitoring UBUS interface\n");
+                    }
+                } else {
+                    fprintf(stderr, "Failed to initialize ML monitoring UBUS interface\n");
+                }
+                
+                // Auto-start ML monitoring if configured
+                if (ml_monitor_start(ml_monitor) == ML_MONITOR_SUCCESS) {
+                    fprintf(stderr, "ML monitoring started automatically\n");
+                } else {
+                    fprintf(stderr, "ML monitoring initialized but not started (manual start required)\n");
+                }
+            } else {
+                fprintf(stderr, "ML monitoring module initialization failed\n");
+            }
+        } else {
+            fprintf(stderr, "ML monitoring module disabled in configuration\n");
+        }
+    } else {
+        fprintf(stderr, "Failed to load ML monitoring configuration\n");
+    }
+
     // Initialize random seed for simulation
     srand(time(NULL));
 
@@ -232,6 +269,9 @@ int main(int argc, char **argv)
     fprintf(stderr, "Starlink cluster methods: starlink_cluster_status, starlink_cluster_check_failover\n");
     fprintf(stderr, "Starlink tracking methods: starlink_tracker.status, starlink_tracker.predictions, starlink_tracker.satellites\n");
     fprintf(stderr, "Starlink tracking control: starlink_tracker.start_monitoring, starlink_tracker.stop_monitoring, starlink_tracker.update_data\n");
+    fprintf(stderr, "ML monitoring methods: ml_monitor.status, ml_monitor.start, ml_monitor.stop, ml_monitor.restart\n");
+    fprintf(stderr, "ML monitoring config: ml_monitor.get_config, ml_monitor.set_config\n");
+    fprintf(stderr, "ML monitoring data: ml_monitor.get_predictions, ml_monitor.get_statistics, ml_monitor.reset_learning, ml_monitor.export_data\n");
     fprintf(stderr, "Daemon running, press Ctrl+C to stop\n");
     uloop_run();
 
