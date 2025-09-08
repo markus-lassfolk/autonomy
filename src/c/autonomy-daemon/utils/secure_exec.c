@@ -126,7 +126,7 @@ int secure_exec_command(const char *command, exec_result_t *result) {
     if (!is_command_allowed(command)) {
         snprintf(result->error, sizeof(result->error), "Command not allowed: %s", command);
         LOGX_WARN("Blocked unauthorized command: %s", command);
-        return AUTONOMY_ERROR_INVALID_PARAM;
+        return AUTONOMY_ERROR_SECURITY;
     }
     
     // Parse command into arguments
