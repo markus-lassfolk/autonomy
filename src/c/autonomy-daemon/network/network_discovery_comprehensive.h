@@ -140,6 +140,14 @@ void detect_vpn_connections(network_interface_t *interfaces, int count);
  */
 void get_friendly_names_from_uci(network_interface_t *interfaces, int count);
 
+/**
+ * Get enhanced comprehensive interface information with detailed metrics
+ * @param interfaces Array to store interfaces
+ * @param count Pointer to store actual count
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count);
+
 #ifdef __cplusplus
 }
 #endif

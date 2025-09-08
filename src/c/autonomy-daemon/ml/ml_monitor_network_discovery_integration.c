@@ -37,9 +37,11 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     network_interface_t discovered_interfaces[MAX_INTERFACES];
     int interface_count = 0;
     
-    int discovery_result = get_comprehensive_interface_info(discovered_interfaces, &interface_count);
+    // Use enhanced discovery to get detailed metrics
+    extern int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count);
+    int discovery_result = get_enhanced_comprehensive_interface_info(discovered_interfaces, &interface_count);
     if (discovery_result != AUTONOMY_SUCCESS) {
-        LOGX_ERROR("Failed to get comprehensive interface info: %d", discovery_result);
+        LOGX_ERROR("Failed to get enhanced comprehensive interface info: %d", discovery_result);
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
@@ -249,13 +251,35 @@ int ml_monitor_convert_network_interface_to_observation(const network_interface_
     strncpy(observation->interface_id, interface->name, sizeof(observation->interface_id) - 1);
     observation->interface_type = ml_monitor_map_interface_type(interface);
     
-    // Convert network discovery data to ML observation
-    observation->latency_ms = (uint16_t)interface->latency;
-    observation->packet_loss_pct = (uint8_t)(interface->packet_loss * 100);
+    // Convert network discovery data to ML observation (prioritize real-time metrics)
+    if (interface->real_time_metrics.ping_latency_ms > 0) {
+        observation->latency_ms = (uint16_t)interface->real_time_metrics.ping_latency_ms;
+    } else {
+        observation->latency_ms = (uint16_t)interface->latency;
+    }
+    
+    // Use real-time packet loss if available
+    if (interface->real_time_metrics.ping_success_rate > 0) {
+        observation->packet_loss_pct = 100 - interface->real_time_metrics.ping_success_rate;
+    } else {
+        observation->packet_loss_pct = (uint8_t)(interface->packet_loss * 100);
+    }
+    
     observation->connection_stability = (uint8_t)(interface->health_score * 2.55); // Scale to 0-255
     observation->connection_health = observation->connection_stability;
     observation->quality_score = observation->connection_stability;
     observation->reliability_score = observation->connection_stability;
+    
+    // Add performance trend information
+    if (interface->performance_history.history_count >= 10) {
+        // Adjust reliability based on trends
+        double trend_factor = 1.0;
+        trend_factor += interface->performance_history.latency_trend * 0.1; // Latency trend impact
+        trend_factor += interface->performance_history.loss_trend * 0.1;    // Loss trend impact
+        trend_factor += interface->performance_history.health_trend * 0.2;  // Health trend impact
+        
+        observation->reliability_score = (uint8_t)(observation->reliability_score * fmax(0.5, fmin(1.5, trend_factor)));
+    }
     
     // Interface-specific metrics from network discovery
     switch (observation->interface_type) {
@@ -269,9 +293,27 @@ int ml_monitor_convert_network_interface_to_observation(const network_interface_
             
         case INTERFACE_TYPE_CELLULAR:
             if (strlen(interface->modem_model) > 0) {
-                observation->interface_specific.cellular.signal_strength_dbm = interface->signal_strength;
-                observation->interface_specific.cellular.signal_quality = (uint8_t)(interface->health_score * 2.55);
-                // Additional metrics would come from modem
+                // Use enhanced cellular metrics if available
+                if (interface->enhanced_cellular_info.signal_strength_dbm != 0) {
+                    observation->interface_specific.cellular.signal_strength_dbm = interface->enhanced_cellular_info.signal_strength_dbm;
+                    observation->interface_specific.cellular.signal_quality = interface->enhanced_cellular_info.signal_quality;
+                    observation->interface_specific.cellular.rsrp_dbm = interface->enhanced_cellular_info.rsrp_dbm;
+                    observation->interface_specific.cellular.rsrq_db = interface->enhanced_cellular_info.rsrq_db;
+                    observation->interface_specific.cellular.sinr_db = interface->enhanced_cellular_info.sinr_db;
+                    
+                    // Set network technology
+                    if (strcmp(interface->enhanced_cellular_info.network_technology, "4G") == 0) {
+                        observation->interface_specific.cellular.network_type = 4;
+                    } else if (strcmp(interface->enhanced_cellular_info.network_technology, "5G") == 0) {
+                        observation->interface_specific.cellular.network_type = 5;
+                    } else {
+                        observation->interface_specific.cellular.network_type = 3; // 3G default
+                    }
+                } else {
+                    // Fallback to basic metrics
+                    observation->interface_specific.cellular.signal_strength_dbm = interface->signal_strength;
+                    observation->interface_specific.cellular.signal_quality = (uint8_t)(interface->health_score * 2.55);
+                }
             }
             break;
             
@@ -358,6 +400,97 @@ bool ml_monitor_is_interface_suitable_for_ml(const network_interface_t *interfac
     }
     
     return true;
+}
+
+// Determine ML monitoring strategy based on MWAN3 ping frequency
+typedef enum {
+    ML_MONITORING_STRATEGY_FULL,        // Full ML monitoring with our own pings
+    ML_MONITORING_STRATEGY_MWAN3_BASED, // Use MWAN3 ping results for ML
+    ML_MONITORING_STRATEGY_HYBRID,      // Combination of both
+    ML_MONITORING_STRATEGY_MINIMAL      // Minimal monitoring (cost-sensitive)
+} ml_monitoring_strategy_t;
+
+ml_monitoring_strategy_t ml_monitor_determine_monitoring_strategy(const network_interface_t *interface) {
+    if (!interface) return ML_MONITORING_STRATEGY_MINIMAL;
+    
+    // For cellular interfaces, be cost-conscious
+    if (strcmp(interface->type, "cellular") == 0) {
+        if (interface->real_time_metrics.mwan3_ping_active && 
+            interface->real_time_metrics.mwan3_ping_interval <= 10) {
+            // MWAN3 is pinging frequently (every 10 seconds or less)
+            // Use MWAN3 results to avoid data costs
+            return ML_MONITORING_STRATEGY_MWAN3_BASED;
+        } else {
+            // MWAN3 not pinging frequently, use minimal monitoring
+            // Focus on modem metrics (SNR, RSRP, etc.) which don't cost data
+            return ML_MONITORING_STRATEGY_MINIMAL;
+        }
+    }
+    
+    // For Starlink, WiFi, LAN - no data cost concerns
+    if (strcmp(interface->type, "starlink") == 0 || 
+        strcmp(interface->type, "wifi") == 0 || 
+        strcmp(interface->type, "ethernet") == 0) {
+        
+        if (interface->real_time_metrics.mwan3_ping_active && 
+            interface->real_time_metrics.mwan3_ping_interval <= 5) {
+            // MWAN3 pinging very frequently, use hybrid approach
+            return ML_MONITORING_STRATEGY_HYBRID;
+        } else {
+            // Do full ML monitoring
+            return ML_MONITORING_STRATEGY_FULL;
+        }
+    }
+    
+    return ML_MONITORING_STRATEGY_MINIMAL;
+}
+
+// Get monitoring frequency recommendation based on interface and MWAN3 status
+int ml_monitor_get_monitoring_frequency_recommendation(const network_interface_t *interface) {
+    if (!interface) return 60; // Default 1 minute
+    
+    ml_monitoring_strategy_t strategy = ml_monitor_determine_monitoring_strategy(interface);
+    
+    switch (strategy) {
+        case ML_MONITORING_STRATEGY_FULL:
+            // Full monitoring for no-cost interfaces
+            if (strcmp(interface->type, "starlink") == 0) {
+                return 1; // Every second for Starlink (streaming protection)
+            } else if (strcmp(interface->type, "wifi") == 0 || strcmp(interface->type, "ethernet") == 0) {
+                return 1; // Every second for LAN/WiFi
+            }
+            return 5; // Every 5 seconds default
+            
+        case ML_MONITORING_STRATEGY_MWAN3_BASED:
+            // Use MWAN3 ping frequency
+            return interface->real_time_metrics.mwan3_ping_interval;
+            
+        case ML_MONITORING_STRATEGY_HYBRID:
+            // Complement MWAN3 pings with our own less frequent monitoring
+            return interface->real_time_metrics.mwan3_ping_interval * 2;
+            
+        case ML_MONITORING_STRATEGY_MINIMAL:
+            // Minimal monitoring for cost-sensitive interfaces
+            if (strcmp(interface->type, "cellular") == 0) {
+                return 300; // Every 5 minutes for cellular
+            }
+            return 60; // Every minute for others
+    }
+    
+    return 60; // Default fallback
+}
+
+// Check if we should use MWAN3 ping results instead of our own
+bool ml_monitor_should_use_mwan3_ping_results(const network_interface_t *interface) {
+    if (!interface || !interface->real_time_metrics.mwan3_ping_active) {
+        return false;
+    }
+    
+    ml_monitoring_strategy_t strategy = ml_monitor_determine_monitoring_strategy(interface);
+    
+    // Use MWAN3 results for cellular (to avoid data costs) or when MWAN3 is very frequent
+    return (strategy == ML_MONITORING_STRATEGY_MWAN3_BASED || 
+            strategy == ML_MONITORING_STRATEGY_HYBRID);
 }
 
 // Get enhanced interface information for ML monitoring

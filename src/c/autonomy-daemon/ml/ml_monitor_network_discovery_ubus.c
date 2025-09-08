@@ -14,11 +14,12 @@ int ml_monitor_ubus_get_discovered_interfaces(struct ubus_context *ctx, struct u
     struct blob_buf b = {};
     blob_buf_init(&b, 0);
     
-    // Get comprehensive interface information
+    // Get enhanced comprehensive interface information
     network_interface_t discovered_interfaces[MAX_INTERFACES];
     int interface_count = 0;
     
-    int discovery_result = get_comprehensive_interface_info(discovered_interfaces, &interface_count);
+    extern int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count);
+    int discovery_result = get_enhanced_comprehensive_interface_info(discovered_interfaces, &interface_count);
     
     if (discovery_result == AUTONOMY_SUCCESS) {
         blobmsg_add_u32(&b, "total_interfaces_discovered", interface_count);

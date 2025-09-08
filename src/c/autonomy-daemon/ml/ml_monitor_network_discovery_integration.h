@@ -40,4 +40,8 @@ int ml_monitor_get_enhanced_interface_info(const char *interface_name,
 // Get interface type string for logging
 const char* ml_monitor_get_interface_type_string(interface_type_t type);
 
+// Enhanced monitoring strategy functions
+int ml_monitor_get_monitoring_frequency_recommendation(const network_interface_t *interface);
+bool ml_monitor_should_use_mwan3_ping_results(const network_interface_t *interface);
+
 #endif // ML_MONITOR_NETWORK_DISCOVERY_INTEGRATION_H
