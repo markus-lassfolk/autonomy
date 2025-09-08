@@ -225,7 +225,7 @@ int ml_monitor_get_interface_recommendations(const char *interface_name,
         if (recommended_mwan3_weight) {
             // Get MWAN3 weight recommendation
             double weight_confidence;
-            ml_monitor_get_mwan3_weight_recommendation(multi_system, interface_name, 
+            ml_monitor_get_mwan3_weight_recommendation_multi(multi_system, interface_name, 
                                                      recommended_mwan3_weight, &weight_confidence);
         }
         

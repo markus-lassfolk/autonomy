@@ -334,10 +334,10 @@ int ml_monitor_assess_failback_readiness(multi_interface_ml_system_t *system,
 
 // MWAN3 integration
 int ml_monitor_update_mwan3_weights(multi_interface_ml_system_t *system);
-int ml_monitor_get_mwan3_weight_recommendation(multi_interface_ml_system_t *system,
-                                              const char *interface_id,
-                                              int *recommended_weight,
-                                              double *confidence);
+int ml_monitor_get_mwan3_weight_recommendation_multi(multi_interface_ml_system_t *system,
+                                                    const char *interface_id,
+                                                    int *recommended_weight,
+                                                    double *confidence);
 int ml_monitor_apply_mwan3_weight_changes(multi_interface_ml_system_t *system);
 
 // Failover timing monitoring - NEW: Monitor actual failover costs

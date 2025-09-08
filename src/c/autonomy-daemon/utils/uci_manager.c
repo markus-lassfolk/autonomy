@@ -2,14 +2,14 @@
 #include "../core/types.h"
 #include "../utils/logx.h"
 #include <uci.h>
-#include <libtlt_uci.h> 
+#include <uci.h> 
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <libtlt_uci.h>
+#include <uci.h>
 
 // External reference to global configuration
 extern autonomy_config_t g_config;

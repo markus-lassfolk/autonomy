@@ -4,6 +4,7 @@
 #include "../core/types.h"
 #include "../starlink/starlink_types.h"
 #include "../external/external_apis.h"
+#include "../utils/json_parser.h"
 #include <time.h>
 #include <stdint.h>
 #include <stdbool.h>
