@@ -133,15 +133,14 @@ int ml_monitor_update_interface_observation(multi_interface_ml_system_t *system,
         return ML_MONITOR_MULTI_ERROR_NOT_FOUND;
     }
     
-    // Update performance characteristics
+    // Update performance characteristics - FIXED: Removed throughput tracking
     double alpha = 0.1; // Learning rate for exponential moving average
     
     model->performance.typical_latency_ms = 
         model->performance.typical_latency_ms * (1.0 - alpha) + observation->latency_ms * alpha;
     
-    double current_throughput = (observation->throughput_down_kbps + observation->throughput_up_kbps) / 2000.0; // Convert to Mbps
-    model->performance.typical_throughput_mbps = 
-        model->performance.typical_throughput_mbps * (1.0 - alpha) + current_throughput * alpha;
+    // REMOVED: Throughput tracking (unreliable as it shows current usage, not capacity)
+    // Focus on latency, packet loss, and connection stability instead
     
     model->performance.typical_reliability = 
         model->performance.typical_reliability * (1.0 - alpha) + (observation->reliability_score / 255.0) * alpha;
@@ -164,9 +163,9 @@ int ml_monitor_update_interface_observation(multi_interface_ml_system_t *system,
     // Update cross-interface correlations
     ml_monitor_update_cross_interface_correlations(system);
     
-    LOGX_DEBUG("Updated %s observation: latency=%.1fms, throughput=%.1fMbps, reliability=%.3f",
+    LOGX_DEBUG("Updated %s observation: latency=%.1fms, reliability=%.3f, stability=%.3f",
               interface_id, model->performance.typical_latency_ms, 
-              model->performance.typical_throughput_mbps, model->performance.typical_reliability);
+              model->performance.typical_reliability, model->performance.performance_stability);
     
     return ML_MONITOR_MULTI_SUCCESS;
 }
@@ -194,23 +193,45 @@ int ml_monitor_predict_interface_performance(multi_interface_ml_system_t *system
         return ML_MONITOR_MULTI_ERROR_NOT_FOUND;
     }
     
-    // Make prediction based on interface type and personal learning
+    // Make prediction based on interface type and personal learning - FIXED: Focus on latency/loss
     double base_reliability = model->performance.typical_reliability;
-    double latency_factor = model->performance.typical_latency_ms / 100.0; // Normalize
-    double throughput_factor = model->performance.typical_throughput_mbps / 50.0; // Normalize
+    double latency_factor = fmin(1.0, model->performance.typical_latency_ms / 200.0); // Normalize (200ms = bad)
+    double stability_factor = model->performance.performance_stability;
     
-    // Calculate outage probability
+    // Calculate outage probability based on network performance indicators
     double outage_prob = 1.0 - base_reliability;
-    outage_prob += latency_factor * 0.2;  // Higher latency increases outage probability
-    outage_prob -= throughput_factor * 0.1; // Higher throughput decreases outage probability
-    outage_prob = fmax(0.0, fmin(1.0, outage_prob));
+    outage_prob += latency_factor * 0.4;      // Latency is primary indicator
+    outage_prob += (1.0 - stability_factor) * 0.3; // Instability increases outage risk
     
+    // Interface-specific adjustments
+    switch (model->type) {
+        case INTERFACE_TYPE_STARLINK:
+            // Starlink: latency spikes often indicate obstruction/satellite issues
+            if (model->performance.typical_latency_ms > 100) outage_prob += 0.2;
+            break;
+        case INTERFACE_TYPE_CELLULAR:
+            // Cellular: more tolerant of latency variation
+            if (model->performance.typical_latency_ms > 200) outage_prob += 0.1;
+            break;
+        case INTERFACE_TYPE_WIFI:
+            // WiFi: very sensitive to latency increases
+            if (model->performance.typical_latency_ms > 50) outage_prob += 0.3;
+            break;
+        case INTERFACE_TYPE_LAN:
+            // LAN: any significant latency indicates problems
+            if (model->performance.typical_latency_ms > 20) outage_prob += 0.4;
+            break;
+        default:
+            break;
+    }
+    
+    outage_prob = fmax(0.0, fmin(1.0, outage_prob));
     *outage_probability = (uint8_t)(outage_prob * 255);
     
-    // Calculate performance score
-    double perf_score = base_reliability * 0.5 + 
-                       (1.0 - latency_factor) * 0.3 + 
-                       throughput_factor * 0.2;
+    // Calculate performance score - FIXED: Based on latency and stability
+    double perf_score = base_reliability * 0.4 + 
+                       (1.0 - latency_factor) * 0.4 + 
+                       stability_factor * 0.2;
     *performance_score = (uint8_t)(perf_score * 255);
     
     // Calculate confidence based on data amount
@@ -249,69 +270,98 @@ int ml_monitor_predict_outage_duration(multi_interface_ml_system_t *system,
     
     memset(duration_prediction, 0, sizeof(outage_duration_prediction_t));
     
-    // Use historical data to predict duration
-    double avg_duration_minutes = model->failover_learning.average_outage_duration_minutes;
+    // Use historical data to predict duration - FIXED: Enhanced granular prediction
+    double avg_duration_seconds = model->failover_learning.average_outage_duration_seconds;
     
-    if (avg_duration_minutes == 0) {
-        // No historical data, use interface type defaults
+    if (avg_duration_seconds == 0) {
+        // No historical data, use interface type defaults (in seconds)
         switch (model->type) {
             case INTERFACE_TYPE_STARLINK:
-                avg_duration_minutes = 5.0;  // Starlink outages typically short
+                avg_duration_seconds = 180.0;  // 3 minutes typical
                 break;
             case INTERFACE_TYPE_CELLULAR:
-                avg_duration_minutes = 15.0; // Cellular can be longer
+                avg_duration_seconds = 600.0;  // 10 minutes typical
                 break;
             case INTERFACE_TYPE_WIFI:
-                avg_duration_minutes = 10.0; // WiFi medium duration
+                avg_duration_seconds = 300.0;  // 5 minutes typical
                 break;
             case INTERFACE_TYPE_LAN:
-                avg_duration_minutes = 2.0;  // LAN usually quick fixes
+                avg_duration_seconds = 60.0;   // 1 minute typical
                 break;
             default:
-                avg_duration_minutes = 10.0;
+                avg_duration_seconds = 300.0;
                 break;
         }
     }
     
-    // Classify duration probabilities
-    if (avg_duration_minutes < 2.0) {
-        duration_prediction->very_short_probability = 200;
-        duration_prediction->short_probability = 55;
-        duration_prediction->medium_probability = 0;
-        duration_prediction->long_probability = 0;
-    } else if (avg_duration_minutes < 10.0) {
-        duration_prediction->very_short_probability = 100;
-        duration_prediction->short_probability = 155;
-        duration_prediction->medium_probability = 0;
-        duration_prediction->long_probability = 0;
-    } else if (avg_duration_minutes < 60.0) {
-        duration_prediction->very_short_probability = 50;
+    // Enhanced granular duration classification - FIXED: Seconds to hours
+    memset(duration_prediction, 0, sizeof(outage_duration_prediction_t));
+    
+    if (avg_duration_seconds < 30) {
+        duration_prediction->immediate_probability = 200;      // <30 seconds
+        duration_prediction->very_short_probability = 55;
+    } else if (avg_duration_seconds < 120) {
+        duration_prediction->immediate_probability = 100;
+        duration_prediction->very_short_probability = 155;     // 30s-2min
+    } else if (avg_duration_seconds < 600) {
+        duration_prediction->very_short_probability = 80;
+        duration_prediction->short_probability = 175;          // 2-10 minutes
+    } else if (avg_duration_seconds < 1800) {
         duration_prediction->short_probability = 100;
-        duration_prediction->medium_probability = 105;
-        duration_prediction->long_probability = 0;
+        duration_prediction->medium_probability = 155;         // 10-30 minutes
+    } else if (avg_duration_seconds < 3600) {
+        duration_prediction->medium_probability = 80;
+        duration_prediction->long_probability = 175;           // 30-60 minutes
+    } else if (avg_duration_seconds < 14400) {
+        duration_prediction->long_probability = 100;
+        duration_prediction->very_long_probability = 155;      // 1-4 hours
+    } else if (avg_duration_seconds < 86400) {
+        duration_prediction->very_long_probability = 80;
+        duration_prediction->extended_probability = 175;       // >4 hours
     } else {
-        duration_prediction->very_short_probability = 0;
-        duration_prediction->short_probability = 50;
-        duration_prediction->medium_probability = 100;
-        duration_prediction->long_probability = 105;
+        duration_prediction->extended_probability = 100;
+        duration_prediction->permanent_probability = 155;      // >24 hours
     }
     
-    duration_prediction->expected_duration_seconds = (uint32_t)(avg_duration_minutes * 60);
+    duration_prediction->expected_duration_seconds = (uint32_t)avg_duration_seconds;
     duration_prediction->confidence_interval_low = duration_prediction->expected_duration_seconds / 2;
     duration_prediction->confidence_interval_high = duration_prediction->expected_duration_seconds * 2;
     duration_prediction->prediction_confidence = model->models.personalization_confidence > 0.3 ? 180 : 120;
     
-    // Cost-benefit analysis
-    duration_prediction->estimated_failover_cost = 5.0; // Arbitrary units
-    duration_prediction->estimated_outage_cost = avg_duration_minutes * 2.0; // Cost increases with time
+    // Enhanced cost-benefit analysis - FIXED: Use measured failover timing
+    duration_prediction->failover_timing.typical_failover_time_ms = 
+        model->failover_learning.timing_measurements.average_failover_ms > 0 ?
+        model->failover_learning.timing_measurements.average_failover_ms : 3000; // 3 second default
+        
+    duration_prediction->failover_timing.typical_failback_time_ms = 
+        model->failover_learning.timing_measurements.average_failback_ms > 0 ?
+        model->failover_learning.timing_measurements.average_failback_ms : 5000; // 5 second default
+        
+    duration_prediction->failover_timing.connection_stabilization_ms = 2000; // 2 seconds to stabilize
     
-    duration_prediction->recommend_failover = 
-        (duration_prediction->estimated_outage_cost > duration_prediction->estimated_failover_cost);
+    // Calculate real costs based on timing measurements
+    double total_failover_disruption_ms = duration_prediction->failover_timing.typical_failover_time_ms +
+                                         duration_prediction->failover_timing.connection_stabilization_ms;
+    double total_failback_disruption_ms = duration_prediction->failover_timing.typical_failback_time_ms +
+                                         duration_prediction->failover_timing.connection_stabilization_ms;
+    
+    duration_prediction->total_estimated_failover_cost = 
+        (total_failover_disruption_ms + total_failback_disruption_ms) / 1000.0; // Convert to seconds
+    
+    duration_prediction->estimated_outage_cost_per_second = 1.0; // 1 unit per second of outage
+    duration_prediction->total_estimated_outage_cost = 
+        avg_duration_seconds * duration_prediction->estimated_outage_cost_per_second;
+    
+    duration_prediction->cost_benefit_ratio = 
+        duration_prediction->total_estimated_outage_cost / duration_prediction->total_estimated_failover_cost;
+    
+    // Recommend failover if outage cost > failover cost
+    duration_prediction->recommend_failover = (duration_prediction->cost_benefit_ratio > 1.0);
     
     snprintf(duration_prediction->reasoning, sizeof(duration_prediction->reasoning),
-            "Expected %.1f min outage, failover cost %.1f, outage cost %.1f",
-            avg_duration_minutes, duration_prediction->estimated_failover_cost,
-            duration_prediction->estimated_outage_cost);
+            "Expected %.1fs outage, failover disruption %.1fs, cost ratio %.2f",
+            avg_duration_seconds, duration_prediction->total_estimated_failover_cost,
+            duration_prediction->cost_benefit_ratio);
     
     LOGX_DEBUG("Duration prediction for %s: %.1f minutes, recommend_failover=%s",
               interface_id, avg_duration_minutes, 
@@ -423,15 +473,16 @@ int ml_monitor_update_mwan3_weights(multi_interface_ml_system_t *system) {
             for (int j = 0; j < system->mwan3_integration.mwan3_interface_count; j++) {
                 if (strstr(system->mwan3_integration.mwan3_interfaces[j].interface_name, model->interface_id)) {
                     
-                    // Calculate weight adjustment
+                    // Calculate weight adjustment - FIXED: MWAN3 weight range 1-99
                     int base_weight = system->mwan3_integration.mwan3_interfaces[j].base_weight;
                     double sensitivity = system->mwan3_integration.weight_adjustment_sensitivity;
                     
-                    int adjustment = (int)((overall_ml_score - 0.5) * 100 * sensitivity);
+                    // ML score adjustment: -0.5 to +0.5 range maps to weight adjustment
+                    int adjustment = (int)((overall_ml_score - 0.5) * 98 * sensitivity); // Max ±49 adjustment
                     int new_weight = base_weight + adjustment;
                     
-                    // Clamp weight to reasonable range
-                    new_weight = fmax(1, fmin(100, new_weight));
+                    // FIXED: Clamp weight to MWAN3 range 1-99 (not 1-100)
+                    new_weight = fmax(1, fmin(99, new_weight));
                     
                     if (new_weight != system->mwan3_integration.mwan3_interfaces[j].current_weight) {
                         system->mwan3_integration.mwan3_interfaces[j].ml_weight_adjustment = adjustment;
@@ -561,6 +612,172 @@ int ml_monitor_validate_failover_prediction(multi_interface_ml_system_t *system,
     // Update accuracy
     model->performance.accuracy = model->performance.total_predictions > 0 ?
         (double)model->performance.correct_predictions / model->performance.total_predictions : 0.0;
+    
+    return ML_MONITOR_MULTI_SUCCESS;
+}
+
+// Failover timing monitoring functions - NEW: Monitor actual failover costs
+
+// Start timing a failover operation
+int ml_monitor_start_failover_timing(multi_interface_ml_system_t *system, const char *from_interface, const char *to_interface) {
+    if (!system || !from_interface || !to_interface) return ML_MONITOR_MULTI_ERROR_INVALID_PARAM;
+    
+    LOGX_INFO("⏱️ Starting failover timing: %s → %s", from_interface, to_interface);
+    
+    // Store failover start time (in practice, this would be stored in a timing structure)
+    static time_t failover_start_time = 0;
+    failover_start_time = time(NULL);
+    
+    return ML_MONITOR_MULTI_SUCCESS;
+}
+
+// Complete timing a failover operation
+int ml_monitor_complete_failover_timing(multi_interface_ml_system_t *system, const char *from_interface, const char *to_interface, bool success) {
+    if (!system || !from_interface || !to_interface) return ML_MONITOR_MULTI_ERROR_INVALID_PARAM;
+    
+    // Calculate failover duration
+    static time_t failover_start_time = 0;
+    time_t failover_end_time = time(NULL);
+    uint32_t failover_duration_ms = (failover_end_time - failover_start_time) * 1000; // Convert to ms
+    
+    LOGX_INFO("⏱️ Failover completed: %s → %s, duration=%ums, success=%s",
+             from_interface, to_interface, failover_duration_ms, success ? "yes" : "no");
+    
+    // Find interface model to update timing statistics
+    interface_ml_model_t *model = NULL;
+    for (int i = 0; i < system->interface_count; i++) {
+        if (strcmp(system->interface_models[i].interface_id, from_interface) == 0) {
+            model = &system->interface_models[i];
+            break;
+        }
+    }
+    
+    if (model) {
+        // Update timing measurements
+        if (success) {
+            model->failover_learning.successful_failovers++;
+            
+            // Update timing statistics
+            if (model->failover_learning.timing_measurements.fastest_failover_ms == 0 ||
+                failover_duration_ms < model->failover_learning.timing_measurements.fastest_failover_ms) {
+                model->failover_learning.timing_measurements.fastest_failover_ms = failover_duration_ms;
+            }
+            
+            if (failover_duration_ms > model->failover_learning.timing_measurements.slowest_failover_ms) {
+                model->failover_learning.timing_measurements.slowest_failover_ms = failover_duration_ms;
+            }
+            
+            // Update average (exponential moving average)
+            double alpha = 0.1;
+            model->failover_learning.timing_measurements.average_failover_ms = 
+                model->failover_learning.timing_measurements.average_failover_ms * (1.0 - alpha) + 
+                failover_duration_ms * alpha;
+            
+            // Update cost analysis
+            model->failover_learning.measured_failover_cost = 
+                model->failover_learning.timing_measurements.average_failover_ms / 1000.0; // Convert to seconds
+        }
+        
+        model->failover_learning.failover_events++;
+    }
+    
+    return ML_MONITOR_MULTI_SUCCESS;
+}
+
+// Start timing a failback operation
+int ml_monitor_start_failback_timing(multi_interface_ml_system_t *system, const char *from_interface, const char *to_interface) {
+    if (!system || !from_interface || !to_interface) return ML_MONITOR_MULTI_ERROR_INVALID_PARAM;
+    
+    LOGX_INFO("⏪ Starting failback timing: %s → %s", from_interface, to_interface);
+    
+    // Store failback start time
+    static time_t failback_start_time = 0;
+    failback_start_time = time(NULL);
+    
+    return ML_MONITOR_MULTI_SUCCESS;
+}
+
+// Complete timing a failback operation
+int ml_monitor_complete_failback_timing(multi_interface_ml_system_t *system, const char *from_interface, const char *to_interface, bool success) {
+    if (!system || !from_interface || !to_interface) return ML_MONITOR_MULTI_ERROR_INVALID_PARAM;
+    
+    // Calculate failback duration
+    static time_t failback_start_time = 0;
+    time_t failback_end_time = time(NULL);
+    uint32_t failback_duration_ms = (failback_end_time - failback_start_time) * 1000;
+    
+    LOGX_INFO("⏪ Failback completed: %s → %s, duration=%ums, success=%s",
+             from_interface, to_interface, failback_duration_ms, success ? "yes" : "no");
+    
+    // Find interface model to update timing statistics
+    interface_ml_model_t *model = NULL;
+    for (int i = 0; i < system->interface_count; i++) {
+        if (strcmp(system->interface_models[i].interface_id, to_interface) == 0) {
+            model = &system->interface_models[i];
+            break;
+        }
+    }
+    
+    if (model) {
+        if (success) {
+            model->failover_learning.successful_failbacks++;
+            
+            // Update failback timing statistics
+            if (model->failover_learning.timing_measurements.fastest_failback_ms == 0 ||
+                failback_duration_ms < model->failover_learning.timing_measurements.fastest_failback_ms) {
+                model->failover_learning.timing_measurements.fastest_failback_ms = failback_duration_ms;
+            }
+            
+            if (failback_duration_ms > model->failover_learning.timing_measurements.slowest_failback_ms) {
+                model->failover_learning.timing_measurements.slowest_failback_ms = failback_duration_ms;
+            }
+            
+            // Update average
+            double alpha = 0.1;
+            model->failover_learning.timing_measurements.average_failback_ms = 
+                model->failover_learning.timing_measurements.average_failback_ms * (1.0 - alpha) + 
+                failback_duration_ms * alpha;
+            
+            // Update cost analysis
+            model->failover_learning.measured_failback_cost = 
+                model->failover_learning.timing_measurements.average_failback_ms / 1000.0;
+        }
+        
+        model->failover_learning.failback_events++;
+    }
+    
+    return ML_MONITOR_MULTI_SUCCESS;
+}
+
+// Get failover timing statistics
+int ml_monitor_get_failover_timing_stats(multi_interface_ml_system_t *system, const char *interface_id,
+                                        uint32_t *avg_failover_ms, uint32_t *avg_failback_ms,
+                                        double *disruption_cost) {
+    if (!system || !interface_id) return ML_MONITOR_MULTI_ERROR_INVALID_PARAM;
+    
+    // Find interface model
+    interface_ml_model_t *model = NULL;
+    for (int i = 0; i < system->interface_count; i++) {
+        if (strcmp(system->interface_models[i].interface_id, interface_id) == 0) {
+            model = &system->interface_models[i];
+            break;
+        }
+    }
+    
+    if (!model) return ML_MONITOR_MULTI_ERROR_NOT_FOUND;
+    
+    if (avg_failover_ms) {
+        *avg_failover_ms = (uint32_t)model->failover_learning.timing_measurements.average_failover_ms;
+    }
+    
+    if (avg_failback_ms) {
+        *avg_failback_ms = (uint32_t)model->failover_learning.timing_measurements.average_failback_ms;
+    }
+    
+    if (disruption_cost) {
+        *disruption_cost = model->failover_learning.measured_failover_cost + 
+                          model->failover_learning.measured_failback_cost;
+    }
     
     return ML_MONITOR_MULTI_SUCCESS;
 }

@@ -26,19 +26,19 @@ typedef struct __attribute__((packed)) {
     char interface_id[16];           // 16 bytes - Interface identifier
     uint8_t interface_type;          // 1 byte - Interface type
     
-    // Network performance metrics (20 bytes)
-    uint16_t latency_ms;             // 2 bytes - Latency
-    uint16_t latency_jitter_ms;      // 2 bytes - Latency variation
+    // Network performance metrics (16 bytes) - FIXED: Removed unreliable throughput
+    uint16_t latency_ms;             // 2 bytes - Latency (primary metric)
+    uint16_t latency_jitter_ms;      // 2 bytes - Latency variation (key indicator)
     uint8_t packet_loss_pct;         // 1 byte - Packet loss percentage
     uint8_t packet_loss_burst_count; // 1 byte - Burst loss events
-    uint16_t throughput_down_kbps;   // 2 bytes - Download throughput
-    uint16_t throughput_up_kbps;     // 2 bytes - Upload throughput
     uint8_t connection_stability;    // 1 byte - Stability score (0-255)
-    int8_t latency_trend;           // 1 byte - Trend (-128 to 127)
-    int8_t throughput_trend;        // 1 byte - Throughput trend
+    int8_t latency_trend;           // 1 byte - Latency trend (-128 to 127)
+    int8_t packet_loss_trend;       // 1 byte - Packet loss trend
     uint8_t performance_degradation; // 1 byte - Overall degradation score
     uint8_t quality_score;          // 1 byte - Overall quality (0-255)
     uint8_t reliability_score;      // 1 byte - Predicted reliability
+    uint8_t connection_health;      // 1 byte - Overall connection health
+    uint8_t reserved[1];            // 1 byte - Reserved for future use
     
     // Interface-specific metrics (12 bytes)
     union {
@@ -139,13 +139,34 @@ typedef struct {
         double performance_stability;
     } performance;
     
-    // Failover/failback learning
+    // Failover/failback learning - ENHANCED: Monitor actual timing costs
     struct {
         uint32_t failover_events;
         uint32_t successful_failovers;
         uint32_t failback_events;
         uint32_t successful_failbacks;
-        double average_outage_duration_minutes;
+        double average_outage_duration_seconds;  // FIXED: Use seconds for precision
+        
+        // Actual failover timing measurements - NEW
+        struct {
+            uint32_t failover_initiation_to_completion_ms;  // Total failover time
+            uint32_t failback_initiation_to_completion_ms;  // Total failback time
+            uint32_t connection_stabilization_time_ms;      // Time to stable after switch
+            uint32_t user_perceived_disruption_ms;          // User-visible disruption
+            
+            // Timing statistics
+            uint32_t fastest_failover_ms;
+            uint32_t slowest_failover_ms;
+            uint32_t fastest_failback_ms;
+            uint32_t slowest_failback_ms;
+            double average_failover_ms;
+            double average_failback_ms;
+        } timing_measurements;
+        
+        // Cost analysis based on real measurements
+        double measured_failover_cost;           // Real cost based on timing
+        double measured_failback_cost;          // Real cost based on timing
+        double disruption_cost_per_ms;          // Cost per millisecond of disruption
         
         // Timing optimization
         uint32_t optimal_failover_delay_seconds;
@@ -196,39 +217,59 @@ typedef struct {
         uint32_t weight_update_interval_seconds;
         char mwan3_config_path[256];
         
-        // Current MWAN3 state
+        // Current MWAN3 state - FIXED: Correct weight range 1-99
         struct {
             char interface_name[32];
-            int base_weight;
-            int ml_weight_adjustment;
-            int current_weight;
-            double ml_reliability_score;
+            int base_weight;              // Base weight (1-99)
+            int ml_weight_adjustment;     // ML adjustment (-98 to +98)
+            int current_weight;           // Final weight (1-99, clamped)
+            double ml_reliability_score;  // ML-predicted reliability (0-1)
             time_t last_weight_update;
+            
+            // Weight change tracking
+            int weight_change_count;
+            double average_weight_adjustment;
+            time_t first_weight_change;
         } mwan3_interfaces[MAX_INTERFACES];
         uint8_t mwan3_interface_count;
     } mwan3_integration;
     
 } multi_interface_ml_system_t;
 
-// Outage duration prediction
+// Enhanced outage duration prediction - FIXED: More granular time windows
 typedef struct {
-    // Duration classification
-    uint8_t very_short_probability;  // <2 minutes
-    uint8_t short_probability;       // 2-10 minutes
-    uint8_t medium_probability;      // 10-60 minutes
-    uint8_t long_probability;        // >60 minutes
+    // Granular duration classification (seconds to hours)
+    uint8_t immediate_probability;    // <30 seconds (very brief)
+    uint8_t very_short_probability;   // 30 seconds - 2 minutes
+    uint8_t short_probability;        // 2-10 minutes
+    uint8_t medium_probability;       // 10-30 minutes
+    uint8_t long_probability;         // 30-60 minutes
+    uint8_t very_long_probability;    // 1-4 hours
+    uint8_t extended_probability;     // >4 hours
+    uint8_t permanent_probability;    // Likely permanent (>24 hours)
     
-    // Expected duration
+    // Precise duration prediction
     uint32_t expected_duration_seconds;
     uint32_t confidence_interval_low;
     uint32_t confidence_interval_high;
     uint8_t prediction_confidence;
     
-    // Cost-benefit analysis
-    double estimated_failover_cost;
-    double estimated_outage_cost;
+    // Failover timing costs - FIXED: Monitor actual failover timing
+    struct {
+        uint32_t typical_failover_time_ms;    // How long failover takes
+        uint32_t typical_failback_time_ms;    // How long failback takes
+        uint32_t connection_stabilization_ms; // Time to stabilize after switch
+        double failover_disruption_cost;      // Cost of failover disruption
+        double failback_disruption_cost;      // Cost of failback disruption
+    } failover_timing;
+    
+    // Enhanced cost-benefit analysis
+    double estimated_outage_cost_per_second;
+    double total_estimated_outage_cost;
+    double total_estimated_failover_cost;
     bool recommend_failover;
-    char reasoning[128];
+    double cost_benefit_ratio;               // outage_cost / failover_cost
+    char reasoning[256];
     
 } outage_duration_prediction_t;
 
@@ -295,6 +336,15 @@ int ml_monitor_get_mwan3_weight_recommendation(multi_interface_ml_system_t *syst
                                               int *recommended_weight,
                                               double *confidence);
 int ml_monitor_apply_mwan3_weight_changes(multi_interface_ml_system_t *system);
+
+// Failover timing monitoring - NEW: Monitor actual failover costs
+int ml_monitor_start_failover_timing(multi_interface_ml_system_t *system, const char *from_interface, const char *to_interface);
+int ml_monitor_complete_failover_timing(multi_interface_ml_system_t *system, const char *from_interface, const char *to_interface, bool success);
+int ml_monitor_start_failback_timing(multi_interface_ml_system_t *system, const char *from_interface, const char *to_interface);
+int ml_monitor_complete_failback_timing(multi_interface_ml_system_t *system, const char *from_interface, const char *to_interface, bool success);
+int ml_monitor_get_failover_timing_stats(multi_interface_ml_system_t *system, const char *interface_id,
+                                        uint32_t *avg_failover_ms, uint32_t *avg_failback_ms,
+                                        double *disruption_cost);
 
 // Cross-interface learning
 int ml_monitor_update_cross_interface_correlations(multi_interface_ml_system_t *system);

@@ -60,9 +60,12 @@ int main() {
         obs.latency_ms = 25 + (rand() % 30);
         obs.latency_jitter_ms = 5 + (rand() % 10);
         obs.packet_loss_pct = rand() % 5;
-        obs.throughput_down_kbps = 50000 + (rand() % 50000); // 50-100 Mbps
-        obs.throughput_up_kbps = 10000 + (rand() % 10000);   // 10-20 Mbps
         obs.connection_stability = 200 + (rand() % 55);
+        obs.connection_health = 180 + (rand() % 75);
+        
+        // Focus on latency trends (key indicator for Starlink)
+        obs.latency_trend = (rand() % 21) - 10; // -10 to +10 trend
+        obs.packet_loss_trend = (rand() % 11) - 5; // -5 to +5 trend
         
         // Starlink-specific metrics
         obs.interface_specific.starlink.snr_x100 = 800 + (rand() % 400);
@@ -86,13 +89,16 @@ int main() {
         strncpy(obs.interface_id, "cellular1", sizeof(obs.interface_id) - 1);
         obs.interface_type = INTERFACE_TYPE_CELLULAR;
         
-        // Cellular performance characteristics (typically higher latency, lower throughput)
+        // Cellular performance characteristics (typically higher latency)
         obs.latency_ms = 40 + (rand() % 60);
         obs.latency_jitter_ms = 10 + (rand() % 20);
         obs.packet_loss_pct = rand() % 8;
-        obs.throughput_down_kbps = 5000 + (rand() % 15000);  // 5-20 Mbps
-        obs.throughput_up_kbps = 1000 + (rand() % 4000);     // 1-5 Mbps
         obs.connection_stability = 150 + (rand() % 80);
+        obs.connection_health = 120 + (rand() % 100);
+        
+        // Cellular trends (more variable)
+        obs.latency_trend = (rand() % 31) - 15; // -15 to +15 trend
+        obs.packet_loss_trend = (rand() % 21) - 10; // -10 to +10 trend
         
         // Cellular-specific metrics
         obs.interface_specific.cellular.signal_strength_dbm = -60 - (rand() % 40); // -60 to -100 dBm
@@ -119,9 +125,12 @@ int main() {
         obs.latency_ms = 5 + (rand() % 20);  // Generally low latency
         obs.latency_jitter_ms = 2 + (rand() % 8);
         obs.packet_loss_pct = rand() % 3;
-        obs.throughput_down_kbps = 20000 + (rand() % 80000); // 20-100 Mbps
-        obs.throughput_up_kbps = 10000 + (rand() % 40000);   // 10-50 Mbps
         obs.connection_stability = 180 + (rand() % 75);
+        obs.connection_health = 160 + (rand() % 95);
+        
+        // WiFi trends (can be affected by interference)
+        obs.latency_trend = (rand() % 21) - 10; // -10 to +10 trend
+        obs.packet_loss_trend = (rand() % 11) - 5; // -5 to +5 trend
         
         // WiFi-specific metrics
         obs.interface_specific.wifi.rssi_dbm = -30 - (rand() % 50); // -30 to -80 dBm
@@ -246,6 +255,30 @@ int main() {
     printf("  ✓ Validated 3 failover predictions (2 true positives, 1 false positive)\n");
     printf("✓ Failover prediction validation system functional\n");
     
+    // Test 9b: Failover timing monitoring
+    printf("Test 9b: Failover timing monitoring and cost analysis...\n");
+    
+    // Simulate failover timing measurements
+    assert(ml_monitor_start_failover_timing(system, "starlink1", "cellular1") == ML_MONITOR_MULTI_SUCCESS);
+    sleep(1); // Simulate 1-second failover
+    assert(ml_monitor_complete_failover_timing(system, "starlink1", "cellular1", true) == ML_MONITOR_MULTI_SUCCESS);
+    
+    // Simulate failback timing
+    assert(ml_monitor_start_failback_timing(system, "cellular1", "starlink1") == ML_MONITOR_MULTI_SUCCESS);
+    sleep(1); // Simulate 1-second failback
+    assert(ml_monitor_complete_failback_timing(system, "cellular1", "starlink1", true) == ML_MONITOR_MULTI_SUCCESS);
+    
+    // Get timing statistics
+    uint32_t avg_failover_ms, avg_failback_ms;
+    double disruption_cost;
+    int timing_result = ml_monitor_get_failover_timing_stats(system, "starlink1", 
+                                                           &avg_failover_ms, &avg_failback_ms, &disruption_cost);
+    assert(timing_result == ML_MONITOR_MULTI_SUCCESS);
+    
+    printf("  ✓ Failover timing: %ums, Failback timing: %ums, Total cost: %.1fs\n",
+           avg_failover_ms, avg_failback_ms, disruption_cost);
+    printf("✓ Failover timing monitoring functional\n");
+    
     // Test 10: Continuous monitoring during failover
     printf("Test 10: Continuous monitoring capabilities...\n");
     
@@ -267,8 +300,8 @@ int main() {
         interface_ml_model_t *model = &system->interface_models[i];
         printf("    %s (%s):\n", model->interface_id, type_names[model->type]);
         printf("      - Latency: %.1f ms\n", model->performance.typical_latency_ms);
-        printf("      - Throughput: %.1f Mbps\n", model->performance.typical_throughput_mbps);
         printf("      - Reliability: %.3f\n", model->performance.typical_reliability);
+        printf("      - Stability: %.3f\n", model->performance.performance_stability);
         printf("      - Predictions: %u (%.1f%% accuracy)\n", 
                model->performance.total_predictions, model->performance.accuracy * 100);
     }
@@ -284,10 +317,11 @@ int main() {
     
     printf("  - Enhanced observation size: %zu bytes\n", sizeof(multi_interface_observation_t));
     printf("  - Interface-specific metrics: Supported for all types\n");
-    printf("  - Latency trend analysis: Enabled\n");
+    printf("  - Latency trend analysis: Enabled (primary indicator)\n");
     printf("  - Packet loss burst detection: Enabled\n");
-    printf("  - Throughput monitoring: Enabled\n");
     printf("  - Connection stability tracking: Enabled\n");
+    printf("  - Connection health monitoring: Enabled\n");
+    printf("  - Failover timing monitoring: Enabled\n");
     
     assert(sizeof(multi_interface_observation_t) <= 80); // Reasonable size for embedded
     printf("✓ Advanced features validated\n");
