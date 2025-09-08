@@ -18,6 +18,9 @@
 #define ML_MONITOR_UBUS_METHOD_GET_ENSEMBLE     "get_ensemble_status"
 #define ML_MONITOR_UBUS_METHOD_GET_VALIDATION   "get_validation_metrics"
 #define ML_MONITOR_UBUS_METHOD_TRIGGER_OPTIMIZATION "trigger_optimization"
+#define ML_MONITOR_UBUS_METHOD_GET_MOBILE_STATUS "get_mobile_status"
+#define ML_MONITOR_UBUS_METHOD_EXPORT_FIELD_DATA "export_field_data"
+#define ML_MONITOR_UBUS_METHOD_ENABLE_FIELD_TEST "enable_field_test"
 
 // UBUS object name
 #define ML_MONITOR_UBUS_OBJECT "ml_monitor"
@@ -75,6 +78,19 @@ int ml_monitor_ubus_get_validation_metrics(struct ubus_context *ctx, struct ubus
 int ml_monitor_ubus_trigger_optimization(struct ubus_context *ctx, struct ubus_object *obj,
                                         struct ubus_request_data *req, const char *method,
                                         struct blob_attr *msg);
+
+// Phase 5 UBUS method handlers
+int ml_monitor_ubus_get_mobile_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                     struct ubus_request_data *req, const char *method,
+                                     struct blob_attr *msg);
+
+int ml_monitor_ubus_export_field_data(struct ubus_context *ctx, struct ubus_object *obj,
+                                     struct ubus_request_data *req, const char *method,
+                                     struct blob_attr *msg);
+
+int ml_monitor_ubus_enable_field_test(struct ubus_context *ctx, struct ubus_object *obj,
+                                     struct ubus_request_data *req, const char *method,
+                                     struct blob_attr *msg);
 
 // UBUS initialization and cleanup
 int ml_monitor_ubus_init(struct ubus_context *ctx);

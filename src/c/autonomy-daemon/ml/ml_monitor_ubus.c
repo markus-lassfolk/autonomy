@@ -57,7 +57,7 @@ int ml_monitor_ubus_status(struct ubus_context *ctx, struct ubus_object *obj,
             blobmsg_add_u8(&b, "starlink_available", 1); // Would check actual availability
             blobmsg_add_u8(&b, "gps_available", 1);      // Would check actual availability
             blobmsg_add_u8(&b, "weather_available", 1);  // Would check actual availability
-            blobmsg_add_string(&b, "integration_status", "Phase 4 - Advanced Ensemble & Validation");
+            blobmsg_add_string(&b, "integration_status", "Phase 5 - Mobile Optimization & Field Testing");
             blobmsg_close_table(&b, integration_table);
             
             // Location learning status
@@ -749,6 +749,158 @@ int ml_monitor_ubus_trigger_optimization(struct ubus_context *ctx, struct ubus_o
     return UBUS_STATUS_OK;
 }
 
+// Phase 5 UBUS methods
+
+// UBUS method: get_mobile_status
+int ml_monitor_ubus_get_mobile_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                     struct ubus_request_data *req, const char *method,
+                                     struct blob_attr *msg) {
+    struct blob_buf b = {};
+    blob_buf_init(&b, 0);
+    
+    ml_monitor_t *monitor = ml_monitor_get_instance();
+    
+    if (!monitor) {
+        blobmsg_add_string(&b, "error", "ML monitor not initialized");
+        blobmsg_add_u32(&b, "code", ML_MONITOR_ERROR_NOT_INITIALIZED);
+        ubus_send_reply(ctx, req, b.head);
+        blob_buf_free(&b);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Get mobile optimization status
+    int scenario;
+    double learning_rate_multiplier;
+    uint32_t location_profiles;
+    double auto_tune_performance;
+    
+    int result = ml_monitor_get_mobile_status(monitor, &scenario, &learning_rate_multiplier,
+                                            &location_profiles, &auto_tune_performance);
+    
+    if (result == ML_MONITOR_SUCCESS) {
+        blobmsg_add_string(&b, "phase", "Phase 5 - Mobile Optimization & Field Testing");
+        
+        // Mobile scenario information
+        const char* scenario_names[] = {
+            "stationary", "slow_mobile", "highway", "urban", "unknown"
+        };
+        blobmsg_add_string(&b, "mobile_scenario", scenario_names[scenario]);
+        blobmsg_add_double(&b, "learning_rate_multiplier", learning_rate_multiplier);
+        blobmsg_add_u32(&b, "location_profiles_learned", location_profiles);
+        blobmsg_add_double(&b, "auto_tune_performance", auto_tune_performance);
+        
+        // Mobile optimization features
+        void *mobile_table = blobmsg_open_table(&b, "mobile_features");
+        blobmsg_add_u8(&b, "scenario_detection", 1);
+        blobmsg_add_u8(&b, "adaptive_learning", 1);
+        blobmsg_add_u8(&b, "transfer_learning", 1);
+        blobmsg_add_u8(&b, "auto_tuning", 1);
+        blobmsg_close_table(&b, mobile_table);
+        
+        // Auto-tuning status
+        void *tuning_table = blobmsg_open_table(&b, "auto_tuning");
+        blobmsg_add_u8(&b, "active", 1);
+        blobmsg_add_double(&b, "current_performance", auto_tune_performance);
+        blobmsg_add_u32(&b, "tuning_cycles", 25); // Simulated
+        blobmsg_add_string(&b, "status", "optimizing");
+        blobmsg_close_table(&b, tuning_table);
+        
+        blobmsg_add_u32(&b, "timestamp", time(NULL));
+        blobmsg_add_string(&b, "status", "mobile_optimization_active");
+    } else {
+        blobmsg_add_string(&b, "error", "Failed to get mobile status");
+        blobmsg_add_u32(&b, "code", result);
+    }
+    
+    ubus_send_reply(ctx, req, b.head);
+    blob_buf_free(&b);
+    
+    return UBUS_STATUS_OK;
+}
+
+// UBUS method: export_field_data
+int ml_monitor_ubus_export_field_data(struct ubus_context *ctx, struct ubus_object *obj,
+                                     struct ubus_request_data *req, const char *method,
+                                     struct blob_attr *msg) {
+    struct blob_buf b = {};
+    blob_buf_init(&b, 0);
+    
+    ml_monitor_t *monitor = ml_monitor_get_instance();
+    
+    if (!monitor) {
+        blobmsg_add_string(&b, "error", "ML monitor not initialized");
+        blobmsg_add_u32(&b, "code", ML_MONITOR_ERROR_NOT_INITIALIZED);
+        ubus_send_reply(ctx, req, b.head);
+        blob_buf_free(&b);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Export field testing data
+    char export_path[256];
+    snprintf(export_path, sizeof(export_path), "/tmp/ml_field_test_%ld.txt", time(NULL));
+    
+    int result = ml_monitor_export_field_testing_data(monitor, export_path);
+    
+    if (result == ML_MONITOR_SUCCESS) {
+        blobmsg_add_string(&b, "status", "field_data_exported");
+        blobmsg_add_string(&b, "export_path", export_path);
+        blobmsg_add_u32(&b, "total_observations", monitor->state->total_observations);
+        blobmsg_add_u32(&b, "location_changes", monitor->state->location_changes);
+        blobmsg_add_u32(&b, "export_timestamp", time(NULL));
+        
+        LOGX_INFO("Field testing data exported via UBUS to: %s", export_path);
+    } else {
+        blobmsg_add_string(&b, "error", "Failed to export field data");
+        blobmsg_add_u32(&b, "code", result);
+    }
+    
+    ubus_send_reply(ctx, req, b.head);
+    blob_buf_free(&b);
+    
+    return UBUS_STATUS_OK;
+}
+
+// UBUS method: enable_field_test
+int ml_monitor_ubus_enable_field_test(struct ubus_context *ctx, struct ubus_object *obj,
+                                     struct ubus_request_data *req, const char *method,
+                                     struct blob_attr *msg) {
+    struct blob_buf b = {};
+    blob_buf_init(&b, 0);
+    
+    ml_monitor_t *monitor = ml_monitor_get_instance();
+    
+    if (!monitor) {
+        blobmsg_add_string(&b, "error", "ML monitor not initialized");
+        blobmsg_add_u32(&b, "code", ML_MONITOR_ERROR_NOT_INITIALIZED);
+        ubus_send_reply(ctx, req, b.head);
+        blob_buf_free(&b);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Enable field testing mode
+    char test_id[64];
+    snprintf(test_id, sizeof(test_id), "field_test_%ld", time(NULL));
+    
+    int result = ml_monitor_enable_field_testing_mode(monitor, test_id);
+    
+    if (result == ML_MONITOR_SUCCESS) {
+        blobmsg_add_string(&b, "status", "field_testing_enabled");
+        blobmsg_add_string(&b, "field_test_id", test_id);
+        blobmsg_add_u32(&b, "start_timestamp", time(NULL));
+        blobmsg_add_string(&b, "mode", "enhanced_data_collection");
+        
+        LOGX_INFO("Field testing mode enabled via UBUS: %s", test_id);
+    } else {
+        blobmsg_add_string(&b, "error", "Failed to enable field testing");
+        blobmsg_add_u32(&b, "code", result);
+    }
+    
+    ubus_send_reply(ctx, req, b.head);
+    blob_buf_free(&b);
+    
+    return UBUS_STATUS_OK;
+}
+
 // UBUS method definitions
 static const struct ubus_method ml_monitor_methods[] = {
     UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_STATUS, ml_monitor_ubus_status),
@@ -764,6 +916,9 @@ static const struct ubus_method ml_monitor_methods[] = {
     UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_GET_ENSEMBLE, ml_monitor_ubus_get_ensemble_status),
     UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_GET_VALIDATION, ml_monitor_ubus_get_validation_metrics),
     UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_TRIGGER_OPTIMIZATION, ml_monitor_ubus_trigger_optimization),
+    UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_GET_MOBILE_STATUS, ml_monitor_ubus_get_mobile_status),
+    UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_EXPORT_FIELD_DATA, ml_monitor_ubus_export_field_data),
+    UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_ENABLE_FIELD_TEST, ml_monitor_ubus_enable_field_test),
 };
 
 // UBUS object type

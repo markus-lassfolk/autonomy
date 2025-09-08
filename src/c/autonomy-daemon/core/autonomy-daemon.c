@@ -240,6 +240,13 @@ int main(int argc, char **argv)
                     // Initialize Phase 4 enhancements
                     if (ml_monitor_init_phase4_enhancements(ml_monitor) == ML_MONITOR_SUCCESS) {
                         fprintf(stderr, "ML monitoring Phase 4 enhancements initialized\n");
+                        
+                        // Initialize Phase 5 mobile optimization
+                        if (ml_monitor_init_phase5_mobile_system(ml_monitor) == ML_MONITOR_SUCCESS) {
+                            fprintf(stderr, "ML monitoring Phase 5 mobile optimization initialized\n");
+                        } else {
+                            fprintf(stderr, "ML monitoring Phase 5 initialization failed, using Phase 4 features\n");
+                        }
                     } else {
                         fprintf(stderr, "ML monitoring Phase 4 initialization failed, using Phase 3 features\n");
                     }
@@ -249,7 +256,7 @@ int main(int argc, char **argv)
                 
                 // Auto-start ML monitoring if configured
                 if (ml_monitor_start(ml_monitor) == ML_MONITOR_SUCCESS) {
-                    fprintf(stderr, "ML monitoring started automatically with Phase 4 features\n");
+                    fprintf(stderr, "ML monitoring started automatically with Phase 5 mobile optimization\n");
                 } else {
                     fprintf(stderr, "ML monitoring initialized but not started (manual start required)\n");
                 }
@@ -287,6 +294,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "ML monitoring config: ml_monitor.get_config, ml_monitor.set_config\n");
     fprintf(stderr, "ML monitoring data: ml_monitor.get_predictions, ml_monitor.get_statistics, ml_monitor.reset_learning, ml_monitor.export_data\n");
     fprintf(stderr, "ML monitoring Phase 4: ml_monitor.get_ensemble_status, ml_monitor.get_validation_metrics, ml_monitor.trigger_optimization\n");
+    fprintf(stderr, "ML monitoring Phase 5: ml_monitor.get_mobile_status, ml_monitor.export_field_data, ml_monitor.enable_field_test\n");
     fprintf(stderr, "Daemon running, press Ctrl+C to stop\n");
     uloop_run();
 

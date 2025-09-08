@@ -315,6 +315,16 @@ int ml_monitor_get_phase4_metrics(ml_monitor_t *monitor,
                                  uint32_t *proactive_actions);
 int ml_monitor_trigger_proactive_optimization(ml_monitor_t *monitor, uint8_t probability, uint8_t confidence);
 
+// Phase 5: Mobile-Optimized Learning & Field Testing
+int ml_monitor_init_phase5_mobile_system(ml_monitor_t *monitor);
+int ml_monitor_update_with_phase5_mobile_optimization(ml_monitor_t *monitor, const ml_observation_t *observation);
+int ml_monitor_get_mobile_status(ml_monitor_t *monitor, 
+                                int *scenario, double *learning_rate_multiplier,
+                                uint32_t *location_profiles, double *auto_tune_performance);
+int ml_monitor_export_field_testing_data(ml_monitor_t *monitor, const char *export_path);
+int ml_monitor_enable_field_testing_mode(ml_monitor_t *monitor, const char *test_id);
+int ml_monitor_disable_field_testing_mode(ml_monitor_t *monitor);
+
 // Learning algorithms
 int ml_monitor_update_sky_grid(ml_monitor_t *monitor, const ml_observation_t *observation);
 int ml_monitor_learn_pattern(ml_monitor_t *monitor, const ml_observation_t *observation, uint8_t actual_outcome);
