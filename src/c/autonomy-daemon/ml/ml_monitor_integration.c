@@ -173,6 +173,9 @@ int ml_monitor_collect_observation(ml_monitor_t *monitor) {
     ml_monitor_update_sky_grid(monitor, &observation);
     ml_monitor_update_location_learning(monitor, &observation);
     
+    // Phase 3: Update with enhanced learning
+    ml_monitor_update_with_phase3_enhancements(monitor, &observation);
+    
     // Make predictions if we have enough data
     if (monitor->state->total_observations > 10) {
         uint8_t knn_confidence;

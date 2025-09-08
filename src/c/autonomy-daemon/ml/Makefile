@@ -6,7 +6,7 @@ INCLUDES = -I../core -I../utils -I../starlink -I../external -I../gps
 LIBS = -luci -lubox -lubus -lpthread -lm -ljson-c
 
 # Source files
-SOURCES = ml_monitor.c ml_monitor_uci.c ml_monitor_ubus.c ml_monitor_integration.c
+SOURCES = ml_monitor.c ml_monitor_uci.c ml_monitor_ubus.c ml_monitor_integration.c ml_monitor_phase3.c
 OBJECTS = $(SOURCES:.c=.o)
 HEADERS = ml_monitor.h ml_monitor_ubus.h
 

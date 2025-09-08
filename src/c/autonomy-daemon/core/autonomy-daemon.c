@@ -233,9 +233,16 @@ int main(int argc, char **argv)
                     fprintf(stderr, "Failed to initialize ML monitoring UBUS interface\n");
                 }
                 
+                // Initialize Phase 3 enhancements
+                if (ml_monitor_init_phase3_enhancements(ml_monitor) == ML_MONITOR_SUCCESS) {
+                    fprintf(stderr, "ML monitoring Phase 3 enhancements initialized\n");
+                } else {
+                    fprintf(stderr, "ML monitoring Phase 3 initialization failed, using Phase 2 features\n");
+                }
+                
                 // Auto-start ML monitoring if configured
                 if (ml_monitor_start(ml_monitor) == ML_MONITOR_SUCCESS) {
-                    fprintf(stderr, "ML monitoring started automatically\n");
+                    fprintf(stderr, "ML monitoring started automatically with Phase 3 features\n");
                 } else {
                     fprintf(stderr, "ML monitoring initialized but not started (manual start required)\n");
                 }

@@ -293,6 +293,13 @@ int ml_monitor_integrate_with_starlink_collector(ml_monitor_t *monitor);
 int ml_monitor_integrate_with_gps_manager(ml_monitor_t *monitor);
 int ml_monitor_integrate_with_weather_system(ml_monitor_t *monitor);
 
+// Phase 3: Advanced Sky Grid & Sliding Window Predictions
+int ml_monitor_init_phase3_enhancements(ml_monitor_t *monitor);
+int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_observation_t *observation);
+int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t probabilities[60], uint8_t *confidence);
+int ml_monitor_integrate_obstruction_analyzer(ml_monitor_t *monitor, const void *obstruction_map);
+int ml_monitor_sliding_window_analysis(ml_monitor_t *monitor, const ml_observation_t *observation);
+
 // Learning algorithms
 int ml_monitor_update_sky_grid(ml_monitor_t *monitor, const ml_observation_t *observation);
 int ml_monitor_learn_pattern(ml_monitor_t *monitor, const ml_observation_t *observation, uint8_t actual_outcome);

@@ -57,7 +57,7 @@ int ml_monitor_ubus_status(struct ubus_context *ctx, struct ubus_object *obj,
             blobmsg_add_u8(&b, "starlink_available", 1); // Would check actual availability
             blobmsg_add_u8(&b, "gps_available", 1);      // Would check actual availability
             blobmsg_add_u8(&b, "weather_available", 1);  // Would check actual availability
-            blobmsg_add_string(&b, "integration_status", "Phase 2 - Real Data Integration");
+            blobmsg_add_string(&b, "integration_status", "Phase 3 - Advanced Sky Grid & Sliding Window");
             blobmsg_close_table(&b, integration_table);
             
             // Location learning status
@@ -386,7 +386,11 @@ int ml_monitor_ubus_get_predictions(struct ubus_context *ctx, struct ubus_object
     uint8_t probabilities[60];
     uint8_t confidence;
     
-    int result = ml_monitor_predict_next_15_minutes(monitor, probabilities, &confidence);
+    // Try enhanced predictions first (Phase 3), fall back to basic predictions
+    int result = ml_monitor_predict_next_15_minutes_enhanced(monitor, probabilities, &confidence);
+    if (result != ML_MONITOR_SUCCESS) {
+        result = ml_monitor_predict_next_15_minutes(monitor, probabilities, &confidence);
+    }
     
     if (result == ML_MONITOR_SUCCESS) {
         blobmsg_add_u8(&b, "confidence", confidence);
