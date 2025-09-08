@@ -166,6 +166,12 @@ ubus call ml_monitor trigger_optimization
 ubus call ml_monitor get_mobile_status
 ubus call ml_monitor export_field_data
 ubus call ml_monitor enable_field_test
+
+# Phase 7: Advanced networking intelligence
+ubus call ml_monitor get_multi_interface_status
+ubus call ml_monitor predict_interface_outage '{"interface_id":"starlink1"}'
+ubus call ml_monitor update_mwan3_weights
+ubus call ml_monitor validate_failover_prediction '{"interface_id":"starlink1","actual_outage":true,"duration_seconds":3}'
 ```
 
 ## Data Structures
@@ -347,16 +353,21 @@ Logs are written to system log and optionally to debug file.
 - [x] Production deployment validation
 - [x] Performance benchmarking and optimization
 
-### 🚀 Phase 7 (NEW) - Multi-Interface ML Intelligence
+### 🚀 Phase 7 (COMPLETE) - Advanced Networking Intelligence
+- [x] High-frequency monitoring (1-second intervals for Starlink/WiFi/LAN, 5-second for Cellular)
+- [x] Streaming protection mode (2-second tolerance, predictive failover)
+- [x] Connection flapping prevention with stability scoring
+- [x] Background validation intelligence (what-if analysis for all interfaces)
 - [x] Continuous monitoring during failover for true/false validation
 - [x] Enhanced network performance ML (latency, packet loss, stability focus)
 - [x] Intelligent failback prediction with optimal timing
-- [x] Granular outage duration prediction (seconds to hours)
+- [x] Granular outage duration prediction (11 user-specified windows)
 - [x] Multi-interface monitoring (Starlink, Cellular, WiFi, LAN)
 - [x] Hybrid per-device + per-type ML models
 - [x] Dynamic MWAN3 weight optimization (1-99 range)
 - [x] Failover timing monitoring and cost analysis
 - [x] Cross-interface correlation learning
+- [x] Predictive failover (vs reactive) for streaming protection
 
 ### Phase 4 (Future)
 - [ ] Mobile scenario field testing
