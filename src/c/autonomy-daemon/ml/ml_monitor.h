@@ -325,6 +325,15 @@ int ml_monitor_export_field_testing_data(ml_monitor_t *monitor, const char *expo
 int ml_monitor_enable_field_testing_mode(ml_monitor_t *monitor, const char *test_id);
 int ml_monitor_disable_field_testing_mode(ml_monitor_t *monitor);
 
+// Phase 6: Self-Optimizing System & Production Deployment
+int ml_monitor_init_phase6_self_optimization(ml_monitor_t *monitor);
+int ml_monitor_update_with_phase6_self_optimization(ml_monitor_t *monitor, const ml_observation_t *observation);
+int ml_monitor_get_phase6_status(ml_monitor_t *monitor, double *resource_efficiency, 
+                                uint32_t *optimization_cycles, bool *production_ready, double *system_health);
+int ml_monitor_run_production_validation(ml_monitor_t *monitor, char *validation_report, size_t report_size);
+int ml_monitor_enable_autonomous_mode(ml_monitor_t *monitor);
+int ml_monitor_disable_autonomous_mode(ml_monitor_t *monitor);
+
 // Learning algorithms
 int ml_monitor_update_sky_grid(ml_monitor_t *monitor, const ml_observation_t *observation);
 int ml_monitor_learn_pattern(ml_monitor_t *monitor, const ml_observation_t *observation, uint8_t actual_outcome);

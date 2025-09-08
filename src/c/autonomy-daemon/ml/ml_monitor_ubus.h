@@ -21,6 +21,9 @@
 #define ML_MONITOR_UBUS_METHOD_GET_MOBILE_STATUS "get_mobile_status"
 #define ML_MONITOR_UBUS_METHOD_EXPORT_FIELD_DATA "export_field_data"
 #define ML_MONITOR_UBUS_METHOD_ENABLE_FIELD_TEST "enable_field_test"
+#define ML_MONITOR_UBUS_METHOD_GET_SYSTEM_STATUS "get_system_status"
+#define ML_MONITOR_UBUS_METHOD_RUN_PRODUCTION_VALIDATION "run_production_validation"
+#define ML_MONITOR_UBUS_METHOD_ENABLE_AUTONOMOUS_MODE "enable_autonomous_mode"
 
 // UBUS object name
 #define ML_MONITOR_UBUS_OBJECT "ml_monitor"
@@ -91,6 +94,19 @@ int ml_monitor_ubus_export_field_data(struct ubus_context *ctx, struct ubus_obje
 int ml_monitor_ubus_enable_field_test(struct ubus_context *ctx, struct ubus_object *obj,
                                      struct ubus_request_data *req, const char *method,
                                      struct blob_attr *msg);
+
+// Phase 6 UBUS method handlers
+int ml_monitor_ubus_get_system_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                     struct ubus_request_data *req, const char *method,
+                                     struct blob_attr *msg);
+
+int ml_monitor_ubus_run_production_validation(struct ubus_context *ctx, struct ubus_object *obj,
+                                             struct ubus_request_data *req, const char *method,
+                                             struct blob_attr *msg);
+
+int ml_monitor_ubus_enable_autonomous_mode(struct ubus_context *ctx, struct ubus_object *obj,
+                                          struct ubus_request_data *req, const char *method,
+                                          struct blob_attr *msg);
 
 // UBUS initialization and cleanup
 int ml_monitor_ubus_init(struct ubus_context *ctx);
