@@ -28,19 +28,20 @@ By merging these views, we get a plan that is strategically sound, technically d
 
 The project is broken down into five logical phases, designed to deliver value at each stage and build upon the previous phase's accomplishments.
 
-### Phase 1: Harden Data Foundation & Ingestion (Weeks 1-3)
+### Phase 1: Harden Data Foundation & Integration (Weeks 1-3)
 
-**Goal:** Ensure we are capturing all necessary data reliably and storing it in a structured, accessible format. This phase closes critical gaps in our current data collection.
+**Goal:** Ensure we are capturing all necessary data reliably and storing it in a structured, accessible format. This phase closes critical gaps in our current data collection and leverages our existing, powerful satellite tracking code.
 
 *   **1.1. Fix Starlink History Ingestion:**
     *   **Action:** Modify the data collector in `starlink_collector.c` to use the gRPC `get_history` method instead of the non-functional HTTP endpoints.
     *   **Details:** Persist structured outage events, capturing `t_start`, `duration`, `cause_flags` (from the dish), pre/post-outage performance metrics (SNR, latency, drop rate), and dish boresight data at the time of the event.
 
-*   **1.2. Implement TLE-Based Satellite Visibility Service:**
-    *   **Action:** Develop a new, standalone Python service to be the source of "ground truth" for satellite positions. This is the #1 missing piece in our current architecture.
+*   **1.2. Integrate Existing Satellite Visibility Engine:**
+    *   **Action:** Ensure the existing C-based satellite tracking engine (`prediction_engine.c` and `dynamic_satellite_tracker.c`) is properly integrated into our main data collection loop. The plan to create a new Python service was incorrect; this capability already exists.
     *   **Details:**
-        *   Fetch Starlink TLEs from Celestrak daily.
-        *   Use the `skyfield` library to create an internal API that accepts a `(timestamp, lat, lon)` and returns a list of visible Starlink satellites (`azimuth`, `elevation`, `id`).
+        *   Confirm that a TLE data source (e.g., from Celestrak) is being regularly fetched and loaded into the `prediction_engine`.
+        *   At each observation/event, call the appropriate functions to get the count of all visible satellites. This data point is critical context for every observation.
+        *   Log the identified serving satellite (from `dynamic_satellite_tracker.c`) when an identification is successful.
 
 *   **1.3. Establish Centralized Time-Series Database:**
     *   **Action:** Set up a TimescaleDB (PostgreSQL) or InfluxDB instance to store all monitoring data.
