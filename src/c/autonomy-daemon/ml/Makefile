@@ -6,9 +6,9 @@ INCLUDES = -I../core -I../utils -I../starlink -I../external -I../gps
 LIBS = -luci -lubox -lubus -lpthread -lm -ljson-c
 
 # Source files
-SOURCES = ml_monitor.c ml_monitor_uci.c ml_monitor_ubus.c ml_monitor_integration.c ml_monitor_phase3.c ml_monitor_phase4.c ml_monitor_phase5.c ml_monitor_phase6.c ml_monitor_phase7.c ml_monitor_multi_interface.c ml_monitor_multi_interface_ubus.c ml_monitor_advanced_networking.c ml_monitor_network_discovery_integration.c ml_monitor_analytics.c ml_monitor_analytics_ubus.c ../core/constants.c ../utils/secure_exec.c ../network/cellular_device_helper.c
+SOURCES = ml_monitor.c ml_monitor_uci.c ml_monitor_ubus.c ml_monitor_integration.c ml_monitor_phase3.c ml_monitor_phase4.c ml_monitor_phase5.c ml_monitor_phase6.c ml_monitor_phase7.c ml_monitor_multi_interface.c ml_monitor_multi_interface_ubus.c ml_monitor_advanced_networking.c ml_monitor_network_discovery_integration.c ml_monitor_analytics.c ml_monitor_analytics_ubus.c ml_satellite_redundancy.c ml_cellular_tower_intelligence.c ml_enhanced_integration.c ../core/constants.c ../utils/secure_exec.c ../network/cellular_device_helper.c
 OBJECTS = $(SOURCES:.c=.o)
-HEADERS = ml_monitor.h ml_monitor_ubus.h ml_monitor_multi_interface.h ml_monitor_advanced_networking.h ml_monitor_network_discovery_integration.h ml_monitor_analytics.h ../core/constants.h ../utils/secure_exec.h ../network/cellular_device_helper.h
+HEADERS = ml_monitor.h ml_monitor_ubus.h ml_monitor_multi_interface.h ml_monitor_advanced_networking.h ml_monitor_network_discovery_integration.h ml_monitor_analytics.h ml_satellite_redundancy.h ml_cellular_tower_intelligence.h ml_enhanced_integration.h ../core/constants.h ../utils/secure_exec.h ../network/cellular_device_helper.h
 
 # Target library
 TARGET = libml_monitor.a
