@@ -61,6 +61,9 @@ int autonomy_network_status(struct ubus_context *uctx, struct ubus_object *obj,
 int autonomy_network_interfaces(struct ubus_context *uctx, struct ubus_object *obj,
                                struct ubus_request_data *req, const char *method,
                                struct blob_attr *msg);
+int autonomy_network_interfaces_detailed(struct ubus_context *uctx, struct ubus_object *obj,
+                                       struct ubus_request_data *req, const char *method,
+                                       struct blob_attr *msg);
 int autonomy_network_health_check(struct ubus_context *uctx, struct ubus_object *obj,
                                  struct ubus_request_data *req, const char *method,
                                  struct blob_attr *msg);

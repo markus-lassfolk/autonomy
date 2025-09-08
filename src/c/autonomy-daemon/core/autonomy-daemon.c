@@ -105,6 +105,7 @@ static const struct ubus_method autonomy_methods[] = {
     // Network management methods
     UBUS_METHOD_NOARG("network_status", autonomy_network_status),
     UBUS_METHOD_NOARG("network_interfaces", autonomy_network_interfaces),
+    UBUS_METHOD_NOARG("network_interfaces_detailed", autonomy_network_interfaces_detailed),
     UBUS_METHOD_NOARG("network_health_check", autonomy_network_health_check),
     UBUS_METHOD_NOARG("network_failover", autonomy_network_failover),
     // GPS methods
