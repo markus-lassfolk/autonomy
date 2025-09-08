@@ -1,4 +1,5 @@
 #include "network_failover.h"
+#include "network_discovery_comprehensive.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
 #include <string.h>
@@ -175,16 +176,22 @@ int network_failover_check_health(void) {
     return AUTONOMY_SUCCESS;
 }
 
-// Find the best interface based on health score
+// Find the best interface based on health score and MWAN3 filtering
 int find_best_interface(void) {
     int best_index = -1;
     float best_score = -1.0f;
     
-    for (int i = 0; // Use configurable count // Use configurable value i < g_failover.interface_count; i++) {
+    for (int i = 0; i < g_failover.interface_count; i++) {
         network_interface_t *iface = &g_failover.interfaces[i];
         
         // Skip disabled interfaces
         if (!iface->enabled) {
+            continue;
+        }
+        
+        // Apply MWAN3 filtering - only include interfaces tracked by MWAN3
+        if (!should_include_in_failover(iface)) {
+            LOGX_DEBUG_MSG("Skipping interface %s - not suitable for failover (MWAN3 filtering)", iface->name);
             continue;
         }
         
@@ -195,6 +202,13 @@ int find_best_interface(void) {
                 best_index = i;
             }
         }
+    }
+    
+    if (best_index >= 0) {
+        LOGX_DEBUG_MSG("Selected best interface: %s (health: %.1f%%, MWAN3: %s)", 
+                      g_failover.interfaces[best_index].name, 
+                      best_score,
+                      g_failover.interfaces[best_index].mwan3_tracking_enabled ? "tracked" : "not tracked");
     }
     
     return best_index;

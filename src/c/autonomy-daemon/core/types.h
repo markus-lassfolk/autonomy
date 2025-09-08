@@ -232,7 +232,13 @@ typedef struct {
 
 // Network interface structure
 typedef struct {
+    // Basic interface info
     char name[32];                      // Interface name (e.g., "eth0", "wlan0")
+    char friendly_name[64];             // Friendly name as seen in RUTOS UI
+    char type[32];                      // Interface type (ethernet, wifi, cellular, starlink, vpn)
+    char subtype[32];                   // More specific type (sim, wireguard, etc.)
+    
+    // Network configuration
     bool is_up;                         // Interface is up
     bool is_default_route;              // Is default route
     char ip_address[16];                // IP address
@@ -240,23 +246,64 @@ typedef struct {
     char gateway[16];                   // Gateway
     char mac_address[18];               // MAC address
     int mtu;                            // MTU size
+    int metric;                         // Route metric
+    char dns_servers[128];              // DNS servers (comma-separated)
+    char protocol[16];                  // Protocol (static, dhcp, wwan, etc.)
+    char device[32];                    // Physical device name
+    
+    // MWAN3 integration
+    char mwan3_name[32];                // MWAN3 interface name
+    bool mwan3_tracking_enabled;        // Is this interface tracked by MWAN3?
+    bool mwan3_available;               // Is this interface available in MWAN3?
+    char mwan3_status[16];              // MWAN3 status (online, offline, standby, etc.)
+    int mwan3_metric;                   // MWAN3 metric value
+    
+    // VPN detection
+    bool is_vpn;                        // Is this a VPN interface?
+    char vpn_type[32];                  // VPN type (wireguard, openvpn, etc.)
+    char vpn_name[64];                  // VPN connection name
+    
+    // Starlink specific
+    bool is_starlink;                   // Is this a Starlink connection?
+    char starlink_dish_id[32];          // Starlink dish identifier
+    char starlink_dish_name[64];        // Starlink dish friendly name
+    char starlink_ip[16];               // Starlink IP address
+    
+    // Cellular specific
+    char modem_model[64];               // Cellular modem model
+    char sim_id[16];                    // SIM identifier
+    char operator[64];                  // Cellular operator
+    int signal_strength;                // Signal strength
+    char modem_id[16];                  // Modem ID (e.g., "2-1")
+    
+    // WiFi specific
+    char ssid[64];                      // WiFi SSID
+    char wifi_band[16];                 // WiFi band (2.4G, 5G)
+    char wifi_mode[16];                 // WiFi mode (ap, sta)
+    char wifi_encryption[16];           // WiFi encryption type
+    
+    // Statistics and health
     uint64_t rx_bytes;                  // Received bytes
     uint64_t tx_bytes;                  // Transmitted bytes
     uint64_t rx_packets;                // Received packets
     uint64_t tx_packets;                // Transmitted packets
     uint64_t rx_errors;                 // Receive errors
     uint64_t tx_errors;                 // Transmit errors
+    uint64_t rx_dropped;                // Dropped received packets
+    uint64_t tx_dropped;                // Dropped transmitted packets
     double health_score;                // Interface health score
+    double latency;                     // Latency in ms
+    double packet_loss;                 // Packet loss percentage
+    
+    // Timestamps and status
     time_t last_check;                  // Last health check
+    time_t last_seen;                   // Last time interface was seen
+    time_t last_health_check;           // Last health check timestamp
     network_metrics_t metrics;          // Current metrics
     bool enabled;                       // Interface enabled for failover
     bool up;                            // Interface is up (alias for is_up)
-    time_t last_seen;                   // Last time interface was seen
     int index;                          // Interface index
     bool discovered;                    // Interface was discovered
-    char type[32];                      // Interface type (ethernet, wifi, cellular, etc.)
-    uint64_t rx_dropped;                // Dropped received packets
-    uint64_t tx_dropped;                // Dropped transmitted packets
 } network_interface_t;
 
 // GPS geofence system status
@@ -566,6 +613,7 @@ typedef struct {
     bool auto_failover;                      // Auto failover enabled
     int min_interface_health;                // Minimum interface health
     bool mwan3_integration;                  // MWAN3 integration
+    bool include_vpn_in_failover;            // Include VPN interfaces in failover
     
     // GPS settings
     int gps_update_interval;                 // GPS update interval
