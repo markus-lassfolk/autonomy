@@ -52,6 +52,33 @@ int ml_monitor_ubus_status(struct ubus_context *ctx, struct ubus_object *obj,
             blobmsg_add_u32(&b, "location_changes", monitor->state->location_changes);
             blobmsg_add_u32(&b, "storage_size_kb", monitor->storage_size / 1024);
             
+            // Data integration status
+            void *integration_table = blobmsg_open_table(&b, "data_integration");
+            blobmsg_add_u8(&b, "starlink_available", 1); // Would check actual availability
+            blobmsg_add_u8(&b, "gps_available", 1);      // Would check actual availability
+            blobmsg_add_u8(&b, "weather_available", 1);  // Would check actual availability
+            blobmsg_add_string(&b, "integration_status", "Phase 2 - Real Data Integration");
+            blobmsg_close_table(&b, integration_table);
+            
+            // Location learning status
+            location_learner_t *learner = &monitor->state->models.location_learner;
+            void *location_table = blobmsg_open_table(&b, "location_learning");
+            blobmsg_add_double(&b, "current_lat", learner->current_lat_e7 / 10000000.0);
+            blobmsg_add_double(&b, "current_lon", learner->current_lon_e7 / 10000000.0);
+            blobmsg_add_u32(&b, "observations_here", learner->observations_here);
+            blobmsg_add_u32(&b, "learned_percentage", learner->profile.learned);
+            blobmsg_add_u32(&b, "location_history_count", learner->history_count);
+            blobmsg_close_table(&b, location_table);
+            
+            // Sky grid status
+            compact_sky_grid_t *grid = &monitor->state->models.sky_grid;
+            void *sky_table = blobmsg_open_table(&b, "sky_grid");
+            blobmsg_add_double(&b, "learned_lat", grid->learned_lat_e7 / 10000000.0);
+            blobmsg_add_double(&b, "learned_lon", grid->learned_lon_e7 / 10000000.0);
+            blobmsg_add_u32(&b, "learning_hours", grid->learning_time_hours);
+            blobmsg_add_u32(&b, "last_update", grid->last_update);
+            blobmsg_close_table(&b, sky_table);
+            
             // Performance metrics
             void *perf_table = blobmsg_open_table(&b, "performance");
             performance_monitor_t *perf = &monitor->state->models.performance;

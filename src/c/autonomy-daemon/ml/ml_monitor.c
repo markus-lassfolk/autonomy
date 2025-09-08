@@ -588,68 +588,51 @@ void ml_monitor_predict_neural_network(ml_monitor_t *monitor, const ml_observati
     }
 }
 
-// Data collection thread
+// Data collection thread (now uses real data integration)
 static void* ml_monitor_collection_thread(void *arg) {
     ml_monitor_t *monitor = (ml_monitor_t*)arg;
     if (!monitor) return NULL;
     
-    LOGX_INFO("ML monitor collection thread started");
+    LOGX_INFO("ML monitor collection thread started with real data integration");
+    
+    int collection_count = 0;
+    time_t last_sync = time(NULL);
     
     while (!monitor->should_stop) {
-        ml_observation_t observation;
+        // Use enhanced data collection with real sources
+        int result = ml_monitor_collect_observation(monitor);
         
-        // Collect data from various sources
-        if (ml_monitor_collect_data_sources(monitor, &observation) == ML_MONITOR_SUCCESS) {
-            // Add observation to buffer
-            ml_monitor_add_observation(monitor, &observation);
-            
-            // Update learning models
-            ml_monitor_update_sky_grid(monitor, &observation);
-            
+        if (result == ML_MONITOR_SUCCESS) {
+            collection_count++;
             monitor->last_collection = time(NULL);
+            
+            // Sync storage periodically
+            time_t now = time(NULL);
+            if (now - last_sync > monitor->config.storage_sync_interval_minutes * 60) {
+                ml_monitor_sync_storage(monitor);
+                last_sync = now;
+                LOGX_DEBUG("Synced ML storage to disk (%d collections)", collection_count);
+            }
+            
+            // Log progress periodically
+            if (collection_count % 100 == 0) {
+                LOGX_INFO("ML monitor collected %d observations, total: %u",
+                         collection_count, monitor->state->total_observations);
+            }
+        } else {
+            LOGX_WARN("Failed to collect ML observation: %d", result);
         }
         
         // Sleep for collection interval
         sleep(monitor->config.collection_interval_seconds);
     }
     
-    LOGX_INFO("ML monitor collection thread stopped");
+    LOGX_INFO("ML monitor collection thread stopped after %d collections", collection_count);
     return NULL;
 }
 
-// Collect data from various sources
-static int ml_monitor_collect_data_sources(ml_monitor_t *monitor, ml_observation_t *observation) {
-    if (!monitor || !observation) return ML_MONITOR_ERROR_INVALID_PARAM;
-    
-    // TODO: Integrate with actual data sources
-    // For now, simulate data collection
-    
-    memset(observation, 0, sizeof(ml_observation_t));
-    observation->timestamp = time(NULL);
-    
-    // Simulate some realistic values
-    observation->snr_x100 = 800 + (rand() % 400);  // 8-12 dB SNR
-    observation->latency_ms = 30 + (rand() % 40);   // 30-70ms latency
-    observation->packet_loss_pct = rand() % 5;      // 0-5% packet loss
-    observation->obstruction_pct = rand() % 20;     // 0-20% obstruction
-    observation->azimuth_deg = rand() % 360;        // Random azimuth
-    observation->elevation_deg = 25 + (rand() % 65); // 25-90° elevation
-    observation->satellites_visible = 8 + (rand() % 8); // 8-15 satellites
-    
-    // Simulate weather
-    observation->temperature_c = 20 + (rand() % 20) - 10; // 10-30°C
-    observation->humidity_pct = 40 + (rand() % 40);       // 40-80%
-    observation->pressure_hpa = 1013 + (rand() % 40) - 20; // 993-1033 hPa
-    
-    // Simulate location (stationary for now)
-    observation->latitude_e7 = 400000000;  // 40.0°N
-    observation->longitude_e7 = -740000000; // -74.0°W
-    
-    LOGX_DEBUG("Collected ML observation: SNR=%.2f dB, latency=%u ms, obstruction=%u%%",
-              observation->snr_x100 / 100.0, observation->latency_ms, observation->obstruction_pct);
-    
-    return ML_MONITOR_SUCCESS;
-}
+// Forward declaration - implementation in ml_monitor_integration.c
+int ml_monitor_collect_observation(ml_monitor_t *monitor);
 
 // Prediction thread
 static void* ml_monitor_prediction_thread(void *arg) {

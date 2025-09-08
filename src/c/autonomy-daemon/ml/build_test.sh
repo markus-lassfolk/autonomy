@@ -23,22 +23,42 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "Compiling test program..."
+echo "Compiling integration module..."
+$CC $CFLAGS $INCLUDES -c ml_monitor_integration.c -o ml_monitor_integration.o
+if [ $? -ne 0 ]; then
+    echo "Error compiling ml_monitor_integration.c"
+    exit 1
+fi
+
+echo "Compiling test programs..."
 $CC $CFLAGS $INCLUDES -c test_ml_monitor.c -o test_ml_monitor.o
 if [ $? -ne 0 ]; then
     echo "Error compiling test_ml_monitor.c"
     exit 1
 fi
 
-echo "Linking test executable..."
+$CC $CFLAGS $INCLUDES -c test_ml_integration.c -o test_ml_integration.o
+if [ $? -ne 0 ]; then
+    echo "Error compiling test_ml_integration.c"
+    exit 1
+fi
+
+echo "Linking test executables..."
 $CC test_ml_monitor.o ml_monitor.o ml_monitor_uci.o -o test_ml_monitor $LIBS
 if [ $? -ne 0 ]; then
-    echo "Error linking test executable"
+    echo "Error linking basic test executable"
+    exit 1
+fi
+
+$CC test_ml_integration.o ml_monitor.o ml_monitor_uci.o ml_monitor_integration.o -o test_ml_integration $LIBS
+if [ $? -ne 0 ]; then
+    echo "Error linking integration test executable"
     exit 1
 fi
 
 echo "Build successful!"
-echo "Run './test_ml_monitor' to test the ML monitoring implementation"
+echo "Run './test_ml_monitor' to test basic ML monitoring"
+echo "Run './test_ml_integration' to test Phase 2 integration"
 
 # Clean up object files
 rm -f *.o

@@ -287,6 +287,12 @@ int ml_monitor_convert_starlink_data(const starlink_status_response_t *starlink_
                                     const gps_data_t *gps_data,
                                     ml_observation_t *observation);
 
+// Real data integration (Phase 2)
+int ml_monitor_collect_observation_from_sources(ml_monitor_t *monitor);
+int ml_monitor_integrate_with_starlink_collector(ml_monitor_t *monitor);
+int ml_monitor_integrate_with_gps_manager(ml_monitor_t *monitor);
+int ml_monitor_integrate_with_weather_system(ml_monitor_t *monitor);
+
 // Learning algorithms
 int ml_monitor_update_sky_grid(ml_monitor_t *monitor, const ml_observation_t *observation);
 int ml_monitor_learn_pattern(ml_monitor_t *monitor, const ml_observation_t *observation, uint8_t actual_outcome);
