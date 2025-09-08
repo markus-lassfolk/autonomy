@@ -294,33 +294,42 @@ int ml_monitor_predict_outage_duration(multi_interface_ml_system_t *system,
         }
     }
     
-    // Enhanced granular duration classification - FIXED: Seconds to hours
+    // USER SPECIFIED: Practical network management duration windows
     memset(duration_prediction, 0, sizeof(outage_duration_prediction_t));
     
-    if (avg_duration_seconds < 30) {
-        duration_prediction->immediate_probability = 200;      // <30 seconds
+    if (avg_duration_seconds < 2) {
+        duration_prediction->immediate_probability = 200;      // <2 seconds
         duration_prediction->very_short_probability = 55;
-    } else if (avg_duration_seconds < 120) {
+    } else if (avg_duration_seconds < 5) {
         duration_prediction->immediate_probability = 100;
-        duration_prediction->very_short_probability = 155;     // 30s-2min
-    } else if (avg_duration_seconds < 600) {
+        duration_prediction->very_short_probability = 155;     // 2-5 seconds
+    } else if (avg_duration_seconds < 10) {
         duration_prediction->very_short_probability = 80;
-        duration_prediction->short_probability = 175;          // 2-10 minutes
-    } else if (avg_duration_seconds < 1800) {
+        duration_prediction->short_probability = 175;          // 5-10 seconds
+    } else if (avg_duration_seconds < 30) {
         duration_prediction->short_probability = 100;
-        duration_prediction->medium_probability = 155;         // 10-30 minutes
+        duration_prediction->brief_probability = 155;          // 10-30 seconds
+    } else if (avg_duration_seconds < 60) {
+        duration_prediction->brief_probability = 80;
+        duration_prediction->moderate_probability = 175;       // 30-60 seconds
+    } else if (avg_duration_seconds < 120) {
+        duration_prediction->moderate_probability = 100;
+        duration_prediction->medium_short_probability = 155;   // 1-2 minutes
+    } else if (avg_duration_seconds < 300) {
+        duration_prediction->medium_short_probability = 80;
+        duration_prediction->medium_probability = 175;         // 2-5 minutes
+    } else if (avg_duration_seconds < 900) {
+        duration_prediction->medium_probability = 100;
+        duration_prediction->medium_long_probability = 155;    // 5-15 minutes
     } else if (avg_duration_seconds < 3600) {
-        duration_prediction->medium_probability = 80;
-        duration_prediction->long_probability = 175;           // 30-60 minutes
+        duration_prediction->medium_long_probability = 80;
+        duration_prediction->long_probability = 175;           // 15-60 minutes
     } else if (avg_duration_seconds < 14400) {
         duration_prediction->long_probability = 100;
         duration_prediction->very_long_probability = 155;      // 1-4 hours
-    } else if (avg_duration_seconds < 86400) {
+    } else {
         duration_prediction->very_long_probability = 80;
         duration_prediction->extended_probability = 175;       // >4 hours
-    } else {
-        duration_prediction->extended_probability = 100;
-        duration_prediction->permanent_probability = 155;      // >24 hours
     }
     
     duration_prediction->expected_duration_seconds = (uint32_t)avg_duration_seconds;

@@ -236,17 +236,20 @@ typedef struct {
     
 } multi_interface_ml_system_t;
 
-// Enhanced outage duration prediction - FIXED: More granular time windows
+// Enhanced outage duration prediction - USER SPECIFIED: Practical network management windows
 typedef struct {
-    // Granular duration classification (seconds to hours)
-    uint8_t immediate_probability;    // <30 seconds (very brief)
-    uint8_t very_short_probability;   // 30 seconds - 2 minutes
-    uint8_t short_probability;        // 2-10 minutes
-    uint8_t medium_probability;       // 10-30 minutes
-    uint8_t long_probability;         // 30-60 minutes
-    uint8_t very_long_probability;    // 1-4 hours
-    uint8_t extended_probability;     // >4 hours
-    uint8_t permanent_probability;    // Likely permanent (>24 hours)
+    // Practical duration classification (optimized for network management)
+    uint8_t immediate_probability;      // <2 seconds (very brief)
+    uint8_t very_short_probability;     // 2-5 seconds
+    uint8_t short_probability;          // 5-10 seconds  
+    uint8_t brief_probability;          // 10-30 seconds
+    uint8_t moderate_probability;       // 30-60 seconds
+    uint8_t medium_short_probability;   // 1-2 minutes
+    uint8_t medium_probability;         // 2-5 minutes
+    uint8_t medium_long_probability;    // 5-15 minutes
+    uint8_t long_probability;           // 15-60 minutes
+    uint8_t very_long_probability;      // 1-4 hours
+    uint8_t extended_probability;       // >4 hours
     
     // Precise duration prediction
     uint32_t expected_duration_seconds;

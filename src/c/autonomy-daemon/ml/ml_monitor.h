@@ -334,6 +334,22 @@ int ml_monitor_run_production_validation(ml_monitor_t *monitor, char *validation
 int ml_monitor_enable_autonomous_mode(ml_monitor_t *monitor);
 int ml_monitor_disable_autonomous_mode(ml_monitor_t *monitor);
 
+// Phase 7: Multi-Interface ML Intelligence
+int ml_monitor_init_phase7_multi_interface(ml_monitor_t *monitor);
+int ml_monitor_update_with_phase7_multi_interface(ml_monitor_t *monitor, const ml_observation_t *observation);
+int ml_monitor_get_interface_prediction(const char *interface_id, uint8_t *outage_probability,
+                                       uint8_t *performance_score, uint8_t *confidence);
+int ml_monitor_get_interface_duration_prediction(const char *interface_id, void *duration_prediction);
+int ml_monitor_get_interface_failback_readiness(const char *interface_id, void *readiness);
+int ml_monitor_validate_interface_prediction(const char *interface_id, bool actual_outage_occurred,
+                                           uint32_t actual_duration_seconds);
+int ml_monitor_get_mwan3_weight_recommendation(const char *interface_id, int *recommended_weight, double *confidence);
+int ml_monitor_auto_tune_duration_windows(ml_monitor_t *monitor);
+int ml_monitor_get_phase7_status(ml_monitor_t *monitor, uint32_t *interfaces_monitored,
+                                uint32_t *total_interface_predictions, double *multi_interface_accuracy,
+                                bool *mwan3_integration_active);
+void ml_monitor_cleanup_phase7_multi_interface(void);
+
 // Learning algorithms
 int ml_monitor_update_sky_grid(ml_monitor_t *monitor, const ml_observation_t *observation);
 int ml_monitor_learn_pattern(ml_monitor_t *monitor, const ml_observation_t *observation, uint8_t actual_outcome);

@@ -185,6 +185,9 @@ int ml_monitor_collect_observation(ml_monitor_t *monitor) {
     // Phase 6: Update with self-optimization
     ml_monitor_update_with_phase6_self_optimization(monitor, &observation);
     
+    // Phase 7: Update with multi-interface intelligence
+    ml_monitor_update_with_phase7_multi_interface(monitor, &observation);
+    
     // Make predictions if we have enough data
     if (monitor->state->total_observations > 10) {
         // Use advanced ensemble prediction (Phase 4)

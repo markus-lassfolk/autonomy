@@ -57,7 +57,7 @@ int ml_monitor_ubus_status(struct ubus_context *ctx, struct ubus_object *obj,
             blobmsg_add_u8(&b, "starlink_available", 1); // Would check actual availability
             blobmsg_add_u8(&b, "gps_available", 1);      // Would check actual availability
             blobmsg_add_u8(&b, "weather_available", 1);  // Would check actual availability
-            blobmsg_add_string(&b, "integration_status", "Phase 6 - Self-Optimizing System");
+            blobmsg_add_string(&b, "integration_status", "Phase 7 - Multi-Interface Intelligence");
             blobmsg_close_table(&b, integration_table);
             
             // Location learning status
@@ -1057,6 +1057,20 @@ int ml_monitor_ubus_enable_autonomous_mode(struct ubus_context *ctx, struct ubus
     return UBUS_STATUS_OK;
 }
 
+// Phase 7 Multi-Interface UBUS methods (forward declarations)
+extern int ml_monitor_ubus_get_multi_interface_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                                     struct ubus_request_data *req, const char *method,
+                                                     struct blob_attr *msg);
+extern int ml_monitor_ubus_predict_interface_outage(struct ubus_context *ctx, struct ubus_object *obj,
+                                                   struct ubus_request_data *req, const char *method,
+                                                   struct blob_attr *msg);
+extern int ml_monitor_ubus_update_mwan3_weights(struct ubus_context *ctx, struct ubus_object *obj,
+                                               struct ubus_request_data *req, const char *method,
+                                               struct blob_attr *msg);
+extern int ml_monitor_ubus_validate_failover_prediction(struct ubus_context *ctx, struct ubus_object *obj,
+                                                       struct ubus_request_data *req, const char *method,
+                                                       struct blob_attr *msg);
+
 // UBUS method definitions
 static const struct ubus_method ml_monitor_methods[] = {
     UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_STATUS, ml_monitor_ubus_status),
@@ -1078,6 +1092,10 @@ static const struct ubus_method ml_monitor_methods[] = {
     UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_GET_SYSTEM_STATUS, ml_monitor_ubus_get_system_status),
     UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_RUN_PRODUCTION_VALIDATION, ml_monitor_ubus_run_production_validation),
     UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_ENABLE_AUTONOMOUS_MODE, ml_monitor_ubus_enable_autonomous_mode),
+    UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_GET_MULTI_INTERFACE_STATUS, ml_monitor_ubus_get_multi_interface_status),
+    UBUS_METHOD(ML_MONITOR_UBUS_METHOD_PREDICT_INTERFACE_OUTAGE, ml_monitor_ubus_predict_interface_outage, NULL),
+    UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_UPDATE_MWAN3_WEIGHTS, ml_monitor_ubus_update_mwan3_weights),
+    UBUS_METHOD(ML_MONITOR_UBUS_METHOD_VALIDATE_FAILOVER, ml_monitor_ubus_validate_failover_prediction, NULL),
 };
 
 // UBUS object type

@@ -24,6 +24,10 @@
 #define ML_MONITOR_UBUS_METHOD_GET_SYSTEM_STATUS "get_system_status"
 #define ML_MONITOR_UBUS_METHOD_RUN_PRODUCTION_VALIDATION "run_production_validation"
 #define ML_MONITOR_UBUS_METHOD_ENABLE_AUTONOMOUS_MODE "enable_autonomous_mode"
+#define ML_MONITOR_UBUS_METHOD_GET_MULTI_INTERFACE_STATUS "get_multi_interface_status"
+#define ML_MONITOR_UBUS_METHOD_PREDICT_INTERFACE_OUTAGE "predict_interface_outage"
+#define ML_MONITOR_UBUS_METHOD_UPDATE_MWAN3_WEIGHTS "update_mwan3_weights"
+#define ML_MONITOR_UBUS_METHOD_VALIDATE_FAILOVER "validate_failover_prediction"
 
 // UBUS object name
 #define ML_MONITOR_UBUS_OBJECT "ml_monitor"
