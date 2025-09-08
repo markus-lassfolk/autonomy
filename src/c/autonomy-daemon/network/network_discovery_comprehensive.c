@@ -434,64 +434,34 @@ static void get_enhanced_cellular_metrics(network_interface_t *interface) {
     char result[1024];
     FILE *fp;
     
-    // Get signal strength (AT+CSQ)
-    snprintf(cmd, sizeof(cmd), "echo 'AT+CSQ' | microcom -t 1000 /dev/ttyUSB2 2>/dev/null | grep '+CSQ:' | head -1");
-    fp = popen(cmd, "r");
-    if (fp) {
-        if (fgets(result, sizeof(result), fp)) {
-            int rssi, ber;
-            if (sscanf(result, "+CSQ: %d,%d", &rssi, &ber) == 2) {
-                // Convert RSSI to dBm: dBm = -113 + (rssi * 2)
-                if (rssi != 99) { // 99 means unknown
-                    interface->enhanced_cellular_info.signal_strength_dbm = -113 + (rssi * 2);
-                    interface->enhanced_cellular_info.signal_quality = (rssi * 100) / 31; // Scale to 0-100
-                }
-            }
+    // Get signal strength using dynamic device discovery
+    extern int get_signal_strength_dynamic(int *rssi, int *ber);
+    int rssi, ber;
+    if (get_signal_strength_dynamic(&rssi, &ber) == AUTONOMY_SUCCESS) {
+        // Convert RSSI to dBm: dBm = -113 + (rssi * 2)
+        if (rssi != 99) { // 99 means unknown
+            interface->enhanced_cellular_info.signal_strength_dbm = -113 + (rssi * 2);
+            interface->enhanced_cellular_info.signal_quality = (rssi * 100) / 31; // Scale to 0-100
         }
-        pclose(fp);
     }
     
-    // Get network technology (AT+COPS?)
-    snprintf(cmd, sizeof(cmd), "echo 'AT+COPS?' | microcom -t 1000 /dev/ttyUSB2 2>/dev/null | grep '+COPS:' | head -1");
-    fp = popen(cmd, "r");
-    if (fp) {
-        if (fgets(result, sizeof(result), fp)) {
-            // Parse operator name from response
-            char *start = strchr(result, '"');
-            if (start) {
-                start++;
-                char *end = strchr(start, '"');
-                if (end) {
-                    *end = '\0';
-                    strncpy(interface->enhanced_cellular_info.operator_name, start, 
-                           sizeof(interface->enhanced_cellular_info.operator_name) - 1);
-                }
-            }
-        }
-        pclose(fp);
+    // Get network operator using dynamic device discovery
+    extern int get_network_operator(const char *device_path, char *operator_name, size_t name_size);
+    char device_path[64];
+    if (get_cellular_device_path(interface->name, device_path, sizeof(device_path)) == AUTONOMY_SUCCESS) {
+        get_network_operator(device_path, interface->enhanced_cellular_info.operator_name, 
+                           sizeof(interface->enhanced_cellular_info.operator_name));
     }
     
-    // Get LTE specific metrics (AT+QENG="servingcell")
-    snprintf(cmd, sizeof(cmd), "echo 'AT+QENG=\"servingcell\"' | microcom -t 1000 /dev/ttyUSB2 2>/dev/null | grep 'LTE' | head -1");
-    fp = popen(cmd, "r");
-    if (fp) {
-        if (fgets(result, sizeof(result), fp)) {
-            // Parse LTE metrics: RSRP, RSRQ, SINR
-            char *token = strtok(result, ",");
-            int field = 0;
-            while (token && field < 20) {
-                if (field == 11) { // RSRP field
-                    interface->enhanced_cellular_info.rsrp_dbm = atoi(token);
-                } else if (field == 12) { // RSRQ field
-                    interface->enhanced_cellular_info.rsrq_db = atoi(token);
-                } else if (field == 13) { // SINR field
-                    interface->enhanced_cellular_info.sinr_db = atoi(token);
-                }
-                token = strtok(NULL, ",");
-                field++;
-            }
+    // Get LTE specific metrics using dynamic device discovery
+    extern int get_lte_metrics(const char *device_path, int *rsrp, int *rsrq, int *sinr);
+    if (strlen(device_path) > 0) {
+        int rsrp, rsrq, sinr;
+        if (get_lte_metrics(device_path, &rsrp, &rsrq, &sinr) == AUTONOMY_SUCCESS) {
+            interface->enhanced_cellular_info.rsrp_dbm = rsrp;
+            interface->enhanced_cellular_info.rsrq_db = rsrq;
+            interface->enhanced_cellular_info.sinr_db = sinr;
         }
-        pclose(fp);
     }
     
     // Determine network technology based on available metrics

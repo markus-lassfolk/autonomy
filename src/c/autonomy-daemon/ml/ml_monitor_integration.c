@@ -426,7 +426,9 @@ static void ml_monitor_on_outage_prediction(uint8_t probability, uint8_t confide
     snprintf(notify_cmd, sizeof(notify_cmd), 
             "ubus call system notify '{\"message\":\"ML predicted outage: %u%% probability in %d minutes\",\"level\":\"warning\"}'",
             probability, minutes_ahead);
-    system(notify_cmd);
+    extern int secure_exec_command(const char *command, exec_result_t *result);
+    exec_result_t notify_result;
+    secure_exec_command(notify_cmd, &notify_result);
     
     // Log for analysis with structured data
     LOGX_WARN("OUTAGE_PREDICTION_EVENT: interface=starlink,probability=%u,confidence=%u,minutes_ahead=%d,timestamp=%ld",
@@ -438,8 +440,8 @@ static void ml_monitor_on_outage_prediction(uint8_t probability, uint8_t confide
         snprintf(optimize_cmd, sizeof(optimize_cmd), 
                 "ubus call network optimize '{\"reason\":\"ml_prediction\",\"probability\":%u,\"confidence\":%u}'",
                 probability, confidence);
-        int optimize_result = system(optimize_cmd);
-        if (optimize_result == 0) {
+        exec_result_t optimize_result;
+        if (secure_exec_command(optimize_cmd, &optimize_result) == AUTONOMY_SUCCESS && optimize_result.success) {
             LOGX_INFO("Triggered network optimization based on ML prediction");
         }
     }
@@ -458,7 +460,8 @@ static void ml_monitor_on_anomaly_detected(uint8_t score, const ml_observation_t
     snprintf(alert_cmd, sizeof(alert_cmd),
             "ubus call system alert '{\"type\":\"ml_anomaly\",\"score\":%u,\"snr\":%.2f,\"latency\":%u,\"loss\":%u,\"severity\":\"high\"}'",
             score, observation->snr_x100 / 100.0, observation->latency_ms, observation->packet_loss_pct);
-    system(alert_cmd);
+    exec_result_t alert_result;
+    secure_exec_command(alert_cmd, &alert_result);
     
     // Log structured anomaly data
     LOGX_WARN("ANOMALY_DETECTION_EVENT: score=%u,snr_x100=%u,latency_ms=%u,packet_loss_pct=%u,timestamp=%u",

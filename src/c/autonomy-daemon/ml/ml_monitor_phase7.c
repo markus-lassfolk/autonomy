@@ -122,9 +122,11 @@ static int ml_monitor_integrate_with_network_controller(ml_monitor_t *monitor) {
     
     // 3. Integrate with MWAN3 for weight updates
     // Verify MWAN3 is available
-    int mwan3_check = system("which uci > /dev/null 2>&1 && uci show mwan3 > /dev/null 2>&1");
-    if (mwan3_check == 0) {
-        LOGX_INFO("MWAN3 integration available and ready");
+    extern int secure_check_mwan3_available(void);
+    int mwan3_check = secure_check_mwan3_available();
+    if (mwan3_check == AUTONOMY_SUCCESS) {
+        LOGX_INFO("🎛️ MWAN3 detected - enabling dynamic weight updates");
+        g_phase7_system->mwan3_integration.enabled = true;
     } else {
         LOGX_WARN("MWAN3 not available - weight updates disabled");
     }
@@ -197,7 +199,9 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
                     snprintf(wifi_file, sizeof(wifi_file), "/tmp/wifi_info_%s_%ld", model->interface_id, time(NULL));
                     snprintf(wifi_cmd, sizeof(wifi_cmd), "iw dev %s link > %s 2>/dev/null", model->interface_id, wifi_file);
                     
-                    if (system(wifi_cmd) == 0) {
+                    extern int secure_exec_command(const char *command, exec_result_t *result);
+                    exec_result_t wifi_result;
+                    if (secure_exec_command(wifi_cmd, &wifi_result) == AUTONOMY_SUCCESS && wifi_result.success) {
                         FILE *f = fopen(wifi_file, "r");
                         if (f) {
                             char line[256];
@@ -237,7 +241,8 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
                     snprintf(lan_file, sizeof(lan_file), "/tmp/lan_info_%s_%ld", model->interface_id, time(NULL));
                     snprintf(lan_cmd, sizeof(lan_cmd), "ethtool %s | grep 'Speed:\\|Duplex:' > %s 2>/dev/null", model->interface_id, lan_file);
                     
-                    if (system(lan_cmd) == 0) {
+                    exec_result_t lan_result;
+                    if (secure_exec_command(lan_cmd, &lan_result) == AUTONOMY_SUCCESS && lan_result.success) {
                         FILE *f = fopen(lan_file, "r");
                         if (f) {
                             char line[256];

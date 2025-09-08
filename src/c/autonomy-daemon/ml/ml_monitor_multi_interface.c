@@ -542,9 +542,14 @@ int ml_monitor_apply_mwan3_weight_changes(multi_interface_ml_system_t *system) {
         
         LOGX_DEBUG("Executing: %s", uci_command);
         
-        // Execute actual UCI command
-        int uci_result = system(uci_command);
-        if (uci_result == 0) {
+        // Execute actual UCI command securely
+        extern int secure_uci_command(const char *uci_args, exec_result_t *result);
+        exec_result_t uci_result;
+        char uci_args[256];
+        snprintf(uci_args, sizeof(uci_args), "set mwan3.%s.weight=%d", 
+                interface_name, new_weight);
+        
+        if (secure_uci_command(uci_args, &uci_result) == AUTONOMY_SUCCESS && uci_result.success) {
             changes_made = true;
             LOGX_INFO("Updated MWAN3 weight for %s: %d",
                      system->mwan3_integration.mwan3_interfaces[i].interface_name,
@@ -556,18 +561,18 @@ int ml_monitor_apply_mwan3_weight_changes(multi_interface_ml_system_t *system) {
     }
     
     if (changes_made) {
-        // Commit UCI changes
+        // Commit UCI changes securely
         LOGX_DEBUG("Executing: uci commit mwan3");
-        int commit_result = system("uci commit mwan3");
-        if (commit_result != 0) {
+        exec_result_t commit_result;
+        if (secure_uci_command("commit mwan3", &commit_result) != AUTONOMY_SUCCESS || !commit_result.success) {
             LOGX_ERROR("Failed to commit MWAN3 UCI changes (exit code: %d)", commit_result);
             return ML_MONITOR_MULTI_ERROR_MWAN3_FAILED;
         }
         
-        // Reload MWAN3 configuration
+        // Reload MWAN3 configuration securely
         LOGX_DEBUG("Executing: ubus call mwan3 reload");
-        int reload_result = system("ubus call mwan3 reload");
-        if (reload_result != 0) {
+        exec_result_t reload_result;
+        if (secure_exec_command("ubus call mwan3 reload", &reload_result) != AUTONOMY_SUCCESS || !reload_result.success) {
             LOGX_ERROR("Failed to reload MWAN3 configuration (exit code: %d)", reload_result);
             return ML_MONITOR_MULTI_ERROR_MWAN3_FAILED;
         }

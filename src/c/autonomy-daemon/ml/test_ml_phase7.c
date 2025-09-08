@@ -40,14 +40,13 @@ int main() {
     printf("Test 2: User-specified duration windows validation...\n");
     
     // Test duration prediction with the new windows
-    const char* duration_windows[] = {
-        "<2sec", "2-5sec", "5-10sec", "10-30sec", "30-60sec", 
-        "1-2min", "2-5min", "5-15min", "15-60min", "1-4hours", ">4hours"
-    };
+    // Use shared duration window constants
+    extern const char* DURATION_WINDOWS[];
+    extern const int DURATION_WINDOW_COUNT;
     
     printf("  Duration Windows Implemented:\n");
-    for (int i = 0; i < 11; i++) {
-        printf("    %d. %s\n", i + 1, duration_windows[i]);
+    for (int i = 0; i < DURATION_WINDOW_COUNT; i++) {
+        printf("    %d. %s\n", i + 1, DURATION_WINDOWS[i]);
     }
     printf("✓ User-specified duration windows implemented correctly\n");
     

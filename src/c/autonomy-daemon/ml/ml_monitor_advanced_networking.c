@@ -277,7 +277,9 @@ static void* ml_monitor_wifi_high_freq_thread(void *arg) {
             snprintf(wifi_file, sizeof(wifi_file), "/tmp/wifi_metrics_%s_%ld", obs.interface_id, time(NULL));
             snprintf(wifi_cmd, sizeof(wifi_cmd), "iw dev %s station dump > %s 2>/dev/null", obs.interface_id, wifi_file);
             
-            if (system(wifi_cmd) == 0) {
+            extern int secure_exec_command(const char *command, exec_result_t *result);
+            exec_result_t wifi_result;
+            if (secure_exec_command(wifi_cmd, &wifi_result) == AUTONOMY_SUCCESS && wifi_result.success) {
                 FILE *f = fopen(wifi_file, "r");
                 if (f) {
                     char line[256];
@@ -298,7 +300,8 @@ static void* ml_monitor_wifi_high_freq_thread(void *arg) {
             // Get channel utilization via iw survey
             snprintf(wifi_cmd, sizeof(wifi_cmd), "iw dev %s survey dump | grep 'channel active time' | tail -1 > %s 2>/dev/null", 
                     obs.interface_id, wifi_file);
-            if (system(wifi_cmd) == 0) {
+            exec_result_t wifi_survey_result;
+            if (secure_exec_command(wifi_cmd, &wifi_survey_result) == AUTONOMY_SUCCESS && wifi_survey_result.success) {
                 FILE *f = fopen(wifi_file, "r");
                 if (f) {
                     char line[256];
@@ -384,9 +387,10 @@ static int ml_monitor_perform_ping_test(const char *interface_id, const char *ta
             "ping -I %s -c 1 -W 2 %s | grep 'time=' | sed 's/.*time=\\([0-9.]*\\).*/\\1/' > %s 2>/dev/null",
             interface_id, target, result_file);
     
-    int ping_result = system(ping_cmd);
+    exec_result_t ping_result_struct;
+    int ping_result = secure_exec_command(ping_cmd, &ping_result_struct);
     
-    if (ping_result == 0) {
+    if (ping_result == AUTONOMY_SUCCESS && ping_result_struct.success) {
         // Read latency from result file
         FILE *f = fopen(result_file, "r");
         if (f) {
@@ -430,9 +434,10 @@ static int ml_monitor_collect_cellular_modem_metrics(const char *interface_id, m
     snprintf(modem_cmd, sizeof(modem_cmd), 
             "ubus call modem.%s get_signal_info > %s 2>/dev/null", interface_id, signal_file);
     
-    int modem_result = system(modem_cmd);
+    exec_result_t modem_result_struct;
+    int modem_result = secure_exec_command(modem_cmd, &modem_result_struct);
     
-    if (modem_result == 0) {
+    if (modem_result == AUTONOMY_SUCCESS && modem_result_struct.success) {
         // Parse signal information from UBUS response
         FILE *f = fopen(signal_file, "r");
         if (f) {
@@ -468,7 +473,8 @@ static int ml_monitor_collect_cellular_modem_metrics(const char *interface_id, m
                 "echo 'AT+CSQ' | socat - /dev/ttyUSB0,b115200 | grep '+CSQ:' | cut -d: -f2 > %s 2>/dev/null",
                 signal_file);
         
-        if (system(modem_cmd) == 0) {
+        exec_result_t at_result;
+        if (secure_exec_command(modem_cmd, &at_result) == AUTONOMY_SUCCESS && at_result.success) {
             FILE *f = fopen(signal_file, "r");
             if (f) {
                 char csq_response[64];

@@ -177,25 +177,23 @@ int main() {
     // Test 7: Duration windows with user-specified ranges
     printf("Test 7: User-specified duration windows validation...\n");
     
-    const char* duration_windows[] = {
-        "<2sec", "2-5sec", "5-10sec", "10-30sec", "30-60sec", 
-        "1-2min", "2-5min", "5-15min", "15-60min", "1-4hours", ">4hours"
-    };
+    // Use shared duration window constants
+    extern const char* DURATION_WINDOWS[];
+    extern const int DURATION_WINDOW_COUNT;
     
     printf("  Duration Prediction Windows (User Specified):\n");
-    for (int i = 0; i < 11; i++) {
-        printf("    %d. %s\n", i + 1, duration_windows[i]);
+    for (int i = 0; i < DURATION_WINDOW_COUNT; i++) {
+        printf("    %d. %s\n", i + 1, DURATION_WINDOWS[i]);
     }
     
     // Test duration prediction with different scenarios
     double test_durations[] = {1.5, 3.0, 8.0, 20.0, 45.0, 90.0, 180.0, 600.0, 1800.0, 7200.0, 18000.0};
-    const char* expected_windows[] = {
-        "<2sec", "2-5sec", "5-10sec", "10-30sec", "30-60sec", 
-        "1-2min", "2-5min", "5-15min", "15-60min", "1-4hours", ">4hours"
-    };
+    // Use shared duration window function
+    extern const char* get_duration_window_label(int seconds);
     
     for (int i = 0; i < 11; i++) {
-        printf("  %.1fs outage → %s window\n", test_durations[i], expected_windows[i]);
+        const char* predicted_window = get_duration_window_label((int)test_durations[i]);
+        printf("  %.1fs outage → %s window\n", test_durations[i], predicted_window);
     }
     
     printf("✓ User-specified duration windows implemented correctly\n");
