@@ -1093,16 +1093,6 @@ extern int ml_monitor_ubus_validate_failover_prediction(struct ubus_context *ctx
                                                        struct ubus_request_data *req, const char *method,
                                                        struct blob_attr *msg);
 
-// Network Discovery Integration UBUS methods
-extern int ml_monitor_ubus_get_discovered_interfaces(struct ubus_context *ctx, struct ubus_object *obj,
-                                                   struct ubus_request_data *req, const char *method,
-                                                   struct blob_attr *msg);
-extern int ml_monitor_ubus_sync_with_network_discovery(struct ubus_context *ctx, struct ubus_object *obj,
-                                                     struct ubus_request_data *req, const char *method,
-                                                     struct blob_attr *msg);
-extern int ml_monitor_ubus_get_interface_ml_recommendations(struct ubus_context *ctx, struct ubus_object *obj,
-                                                          struct ubus_request_data *req, const char *method,
-                                                          struct blob_attr *msg);
 
 // UBUS method definitions
 static const struct ubus_method ml_monitor_methods[] = {
@@ -1129,9 +1119,6 @@ static const struct ubus_method ml_monitor_methods[] = {
     UBUS_METHOD(ML_MONITOR_UBUS_METHOD_PREDICT_INTERFACE_OUTAGE, ml_monitor_ubus_predict_interface_outage, NULL),
     UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_UPDATE_MWAN3_WEIGHTS, ml_monitor_ubus_update_mwan3_weights),
     UBUS_METHOD(ML_MONITOR_UBUS_METHOD_VALIDATE_FAILOVER, ml_monitor_ubus_validate_failover_prediction, NULL),
-    UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_GET_DISCOVERED_INTERFACES, ml_monitor_ubus_get_discovered_interfaces),
-    UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_SYNC_NETWORK_DISCOVERY, ml_monitor_ubus_sync_with_network_discovery),
-    UBUS_METHOD(ML_MONITOR_UBUS_METHOD_GET_INTERFACE_RECOMMENDATIONS, ml_monitor_ubus_get_interface_ml_recommendations, NULL),
 };
 
 // UBUS object type

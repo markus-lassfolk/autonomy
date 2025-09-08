@@ -312,7 +312,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "ML monitoring Phase 5: ml_monitor.get_mobile_status, ml_monitor.export_field_data, ml_monitor.enable_field_test\n");
     fprintf(stderr, "ML monitoring Phase 6: ml_monitor.get_system_status, ml_monitor.run_production_validation, ml_monitor.enable_autonomous_mode\n");
     fprintf(stderr, "ML monitoring Phase 7: ml_monitor.get_multi_interface_status, ml_monitor.predict_interface_outage, ml_monitor.update_mwan3_weights, ml_monitor.validate_failover_prediction\n");
-    fprintf(stderr, "ML monitoring Network Discovery: ml_monitor.get_discovered_interfaces, ml_monitor.sync_with_network_discovery, ml_monitor.get_interface_ml_recommendations\n");
+    fprintf(stderr, "Network Discovery Enhanced: autonomy.network.interfaces_detailed (includes ML recommendations, MWAN3 ping info, enhanced cellular metrics, performance trends)\n");
     fprintf(stderr, "Daemon running, press Ctrl+C to stop\n");
     uloop_run();
 

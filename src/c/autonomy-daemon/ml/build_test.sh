@@ -92,11 +92,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-$CC $CFLAGS $INCLUDES -c ml_monitor_network_discovery_ubus.c -o ml_monitor_network_discovery_ubus.o
-if [ $? -ne 0 ]; then
-    echo "Error compiling ml_monitor_network_discovery_ubus.c"
-    exit 1
-fi
 
 echo "Compiling test programs..."
 $CC $CFLAGS $INCLUDES -c test_ml_monitor.c -o test_ml_monitor.o
@@ -184,7 +179,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-ALL_MODULES="ml_monitor.o ml_monitor_uci.o ml_monitor_integration.o ml_monitor_phase3.o ml_monitor_phase4.o ml_monitor_phase5.o ml_monitor_phase6.o ml_monitor_phase7.o ml_monitor_multi_interface.o ml_monitor_multi_interface_ubus.o ml_monitor_advanced_networking.o ml_monitor_network_discovery_integration.o ml_monitor_network_discovery_ubus.o"
+ALL_MODULES="ml_monitor.o ml_monitor_uci.o ml_monitor_integration.o ml_monitor_phase3.o ml_monitor_phase4.o ml_monitor_phase5.o ml_monitor_phase6.o ml_monitor_phase7.o ml_monitor_multi_interface.o ml_monitor_multi_interface_ubus.o ml_monitor_advanced_networking.o ml_monitor_network_discovery_integration.o"
 
 $CC test_ml_phase5.o $ALL_MODULES -o test_ml_phase5 $LIBS
 if [ $? -ne 0 ]; then

@@ -123,7 +123,8 @@ int autonomy_network_interfaces_detailed(struct ubus_context *uctx, struct ubus_
     int interface_count = 0;
     
     // Call our enhanced discovery function
-    int ret = get_comprehensive_interface_info(interfaces, &interface_count);
+    extern int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count);
+    int ret = get_enhanced_comprehensive_interface_info(interfaces, &interface_count);
     if (ret != AUTONOMY_SUCCESS) {
         blobmsg_add_string(&bb, "error", "Failed to get interface information");
         blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
@@ -190,6 +191,48 @@ int autonomy_network_interfaces_detailed(struct ubus_context *uctx, struct ubus_
         blobmsg_add_double(&bb, "packet_loss", interfaces[i].packet_loss);
         blobmsg_add_double(&bb, "health_score", interfaces[i].health_score);
         
+        // Enhanced real-time metrics
+        void *realtime_table = blobmsg_open_table(&bb, "real_time_metrics");
+        blobmsg_add_u32(&bb, "ping_latency_ms", interfaces[i].real_time_metrics.ping_latency_ms);
+        blobmsg_add_u32(&bb, "ping_success_rate", interfaces[i].real_time_metrics.ping_success_rate);
+        blobmsg_add_u32(&bb, "consecutive_ping_failures", interfaces[i].real_time_metrics.consecutive_ping_failures);
+        blobmsg_add_u32(&bb, "total_ping_tests", interfaces[i].real_time_metrics.total_ping_tests);
+        blobmsg_add_u32(&bb, "successful_pings", interfaces[i].real_time_metrics.successful_pings);
+        blobmsg_add_u32(&bb, "ping_jitter_ms", interfaces[i].real_time_metrics.ping_jitter_ms);
+        blobmsg_add_u32(&bb, "ping_min_ms", interfaces[i].real_time_metrics.ping_min_ms);
+        blobmsg_add_u32(&bb, "ping_max_ms", interfaces[i].real_time_metrics.ping_max_ms);
+        blobmsg_add_u8(&bb, "mwan3_ping_active", interfaces[i].real_time_metrics.mwan3_ping_active);
+        blobmsg_add_u32(&bb, "mwan3_ping_interval", interfaces[i].real_time_metrics.mwan3_ping_interval);
+        blobmsg_add_u32(&bb, "last_mwan3_ping", (uint32_t)interfaces[i].real_time_metrics.last_mwan3_ping);
+        blobmsg_add_u32(&bb, "mwan3_ping_success_rate", interfaces[i].real_time_metrics.mwan3_ping_success_rate);
+        blobmsg_close_table(&bb, realtime_table);
+        
+        // Performance history trends
+        if (interfaces[i].performance_history.history_count >= 10) {
+            void *trends_table = blobmsg_open_table(&bb, "performance_trends");
+            blobmsg_add_double(&bb, "latency_trend", interfaces[i].performance_history.latency_trend);
+            blobmsg_add_double(&bb, "loss_trend", interfaces[i].performance_history.loss_trend);
+            blobmsg_add_double(&bb, "health_trend", interfaces[i].performance_history.health_trend);
+            blobmsg_add_u32(&bb, "history_count", interfaces[i].performance_history.history_count);
+            blobmsg_add_u32(&bb, "history_start_time", (uint32_t)interfaces[i].performance_history.history_start_time);
+            blobmsg_close_table(&bb, trends_table);
+        }
+        
+        // Enhanced cellular information
+        if (strcmp(interfaces[i].type, "cellular") == 0 && 
+            interfaces[i].enhanced_cellular_info.signal_strength_dbm != 0) {
+            void *cellular_table = blobmsg_open_table(&bb, "enhanced_cellular_info");
+            blobmsg_add_string(&bb, "operator_name", interfaces[i].enhanced_cellular_info.operator_name);
+            blobmsg_add_string(&bb, "network_technology", interfaces[i].enhanced_cellular_info.network_technology);
+            blobmsg_add_u32(&bb, "signal_strength_dbm", interfaces[i].enhanced_cellular_info.signal_strength_dbm);
+            blobmsg_add_string(&bb, "cell_id", interfaces[i].enhanced_cellular_info.cell_id);
+            blobmsg_add_u32(&bb, "signal_quality", interfaces[i].enhanced_cellular_info.signal_quality);
+            blobmsg_add_u32(&bb, "rsrp_dbm", interfaces[i].enhanced_cellular_info.rsrp_dbm);
+            blobmsg_add_u32(&bb, "rsrq_db", interfaces[i].enhanced_cellular_info.rsrq_db);
+            blobmsg_add_u32(&bb, "sinr_db", interfaces[i].enhanced_cellular_info.sinr_db);
+            blobmsg_close_table(&bb, cellular_table);
+        }
+        
         // Statistics
         blobmsg_add_u64(&bb, "rx_bytes", interfaces[i].rx_bytes);
         blobmsg_add_u64(&bb, "tx_bytes", interfaces[i].tx_bytes);
@@ -197,6 +240,45 @@ int autonomy_network_interfaces_detailed(struct ubus_context *uctx, struct ubus_
         blobmsg_add_u64(&bb, "tx_packets", interfaces[i].tx_packets);
         blobmsg_add_u64(&bb, "rx_errors", interfaces[i].rx_errors);
         blobmsg_add_u64(&bb, "tx_errors", interfaces[i].tx_errors);
+        
+        // ML monitoring recommendations
+        void *ml_table = blobmsg_open_table(&bb, "ml_monitoring_recommendations");
+        
+        // Get monitoring strategy recommendations
+        extern int ml_monitor_get_monitoring_frequency_recommendation(const network_interface_t *interface);
+        extern bool ml_monitor_should_use_mwan3_ping_results(const network_interface_t *interface);
+        extern bool ml_monitor_is_interface_suitable_for_ml(const network_interface_t *interface);
+        
+        int recommended_frequency = ml_monitor_get_monitoring_frequency_recommendation(&interfaces[i]);
+        bool use_mwan3_pings = ml_monitor_should_use_mwan3_ping_results(&interfaces[i]);
+        bool suitable_for_ml = ml_monitor_is_interface_suitable_for_ml(&interfaces[i]);
+        
+        blobmsg_add_u32(&bb, "recommended_monitoring_frequency_seconds", recommended_frequency);
+        blobmsg_add_u8(&bb, "use_mwan3_ping_results", use_mwan3_pings);
+        blobmsg_add_u8(&bb, "suitable_for_ml_monitoring", suitable_for_ml);
+        
+        // Add monitoring strategy explanation
+        const char *strategy_explanation;
+        if (strcmp(interfaces[i].type, "cellular") == 0) {
+            if (use_mwan3_pings) {
+                strategy_explanation = "Using MWAN3 ping results to minimize cellular data costs";
+            } else {
+                strategy_explanation = "Minimal monitoring focusing on modem metrics (no data cost)";
+            }
+        } else if (strcmp(interfaces[i].type, "starlink") == 0 || 
+                   strcmp(interfaces[i].type, "wifi") == 0 || 
+                   strcmp(interfaces[i].type, "ethernet") == 0) {
+            if (use_mwan3_pings) {
+                strategy_explanation = "Hybrid monitoring complementing MWAN3 pings";
+            } else {
+                strategy_explanation = "Full ML monitoring (no data cost concerns)";
+            }
+        } else {
+            strategy_explanation = "Standard monitoring approach";
+        }
+        blobmsg_add_string(&bb, "monitoring_strategy", strategy_explanation);
+        
+        blobmsg_close_table(&bb, ml_table);
         
         // Timestamps
         blobmsg_add_u32(&bb, "last_check", (uint32_t)interfaces[i].last_check);
