@@ -420,10 +420,29 @@ static void ml_monitor_on_outage_prediction(uint8_t probability, uint8_t confide
         // In a full implementation, we'd track predictions and validate them
     }
     
-    // TODO: Trigger proactive actions based on prediction
-    // - Notify other systems
-    // - Adjust network routing
-    // - Log for analysis
+    // Trigger real proactive actions based on prediction
+    // Notify other systems via UBUS
+    char notify_cmd[256];
+    snprintf(notify_cmd, sizeof(notify_cmd), 
+            "ubus call system notify '{\"message\":\"ML predicted outage: %u%% probability in %d minutes\",\"level\":\"warning\"}'",
+            probability, minutes_ahead);
+    system(notify_cmd);
+    
+    // Log for analysis with structured data
+    LOGX_WARN("OUTAGE_PREDICTION_EVENT: interface=starlink,probability=%u,confidence=%u,minutes_ahead=%d,timestamp=%ld",
+             probability, confidence, minutes_ahead, when);
+    
+    // Trigger network optimization if high confidence
+    if (confidence > 180) {
+        char optimize_cmd[256];
+        snprintf(optimize_cmd, sizeof(optimize_cmd), 
+                "ubus call network optimize '{\"reason\":\"ml_prediction\",\"probability\":%u,\"confidence\":%u}'",
+                probability, confidence);
+        int optimize_result = system(optimize_cmd);
+        if (optimize_result == 0) {
+            LOGX_INFO("Triggered network optimization based on ML prediction");
+        }
+    }
 }
 
 // Anomaly detection callback handler
@@ -433,10 +452,32 @@ static void ml_monitor_on_anomaly_detected(uint8_t score, const ml_observation_t
     LOGX_WARN("🚨 ANOMALY DETECTED: Score=%u, SNR=%.2f dB, Latency=%u ms, Loss=%u%%",
              score, observation->snr_x100 / 100.0, observation->latency_ms, observation->packet_loss_pct);
     
-    // TODO: Trigger anomaly response actions
-    // - Alert administrators
-    // - Increase monitoring frequency
-    // - Collect additional diagnostics
+    // Trigger real anomaly response actions
+    // Alert administrators via UBUS
+    char alert_cmd[512];
+    snprintf(alert_cmd, sizeof(alert_cmd),
+            "ubus call system alert '{\"type\":\"ml_anomaly\",\"score\":%u,\"snr\":%.2f,\"latency\":%u,\"loss\":%u,\"severity\":\"high\"}'",
+            score, observation->snr_x100 / 100.0, observation->latency_ms, observation->packet_loss_pct);
+    system(alert_cmd);
+    
+    // Log structured anomaly data
+    LOGX_WARN("ANOMALY_DETECTION_EVENT: score=%u,snr_x100=%u,latency_ms=%u,packet_loss_pct=%u,timestamp=%u",
+             score, observation->snr_x100, observation->latency_ms, observation->packet_loss_pct, observation->timestamp);
+    
+    // Increase monitoring frequency for anomaly investigation
+    char monitor_cmd[256];
+    snprintf(monitor_cmd, sizeof(monitor_cmd),
+            "ubus call ml_monitor set_config '{\"collection_interval_seconds\":5}'");
+    int monitor_result = system(monitor_cmd);
+    if (monitor_result == 0) {
+        LOGX_INFO("Increased monitoring frequency due to anomaly detection");
+    }
+    
+    // Trigger additional diagnostics collection
+    char diag_cmd[256];
+    snprintf(diag_cmd, sizeof(diag_cmd),
+            "ubus call starlink force_collect");
+    system(diag_cmd);
 }
 
 // Update location learning with real GPS data

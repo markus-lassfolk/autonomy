@@ -330,23 +330,45 @@ static void* ml_monitor_lan_high_freq_thread(void *arg) {
     return NULL;
 }
 
-// Perform ping test for interface
+// Perform real ping test for interface
 static int ml_monitor_perform_ping_test(const char *interface_id, const char *target, uint32_t *latency_ms, bool *success) {
     if (!interface_id || !target || !latency_ms || !success) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    // Simulate ping test (in real implementation, this would use actual ping)
-    *latency_ms = 20 + (rand() % 60); // Simulate 20-80ms latency
-    *success = (rand() % 100) > 5; // 95% success rate
+    *latency_ms = 0;
+    *success = false;
     
-    // Adjust based on interface type for realism
-    if (strstr(interface_id, "starlink")) {
-        *latency_ms = 25 + (rand() % 40); // 25-65ms for Starlink
-    } else if (strstr(interface_id, "cellular")) {
-        *latency_ms = 40 + (rand() % 80); // 40-120ms for Cellular
-    } else if (strstr(interface_id, "wifi")) {
-        *latency_ms = 5 + (rand() % 25);  // 5-30ms for WiFi
-    } else if (strstr(interface_id, "lan")) {
-        *latency_ms = 1 + (rand() % 8);   // 1-9ms for LAN
+    // Execute real ping command
+    char ping_cmd[256];
+    char result_file[128];
+    snprintf(result_file, sizeof(result_file), "/tmp/ping_result_%s_%ld", interface_id, time(NULL));
+    
+    // Use ping with specific interface and timeout
+    snprintf(ping_cmd, sizeof(ping_cmd), 
+            "ping -I %s -c 1 -W 2 %s | grep 'time=' | sed 's/.*time=\\([0-9.]*\\).*/\\1/' > %s 2>/dev/null",
+            interface_id, target, result_file);
+    
+    int ping_result = system(ping_cmd);
+    
+    if (ping_result == 0) {
+        // Read latency from result file
+        FILE *f = fopen(result_file, "r");
+        if (f) {
+            char latency_str[32];
+            if (fgets(latency_str, sizeof(latency_str), f)) {
+                double latency_double = strtod(latency_str, NULL);
+                *latency_ms = (uint32_t)latency_double;
+                *success = true;
+            }
+            fclose(f);
+        }
+    }
+    
+    // Clean up result file
+    unlink(result_file);
+    
+    if (!*success) {
+        LOGX_DEBUG("Ping failed for %s to %s", interface_id, target);
+        *latency_ms = 9999; // High latency for failed ping
     }
     
     return ML_MONITOR_SUCCESS;
@@ -362,19 +384,84 @@ static int ml_monitor_collect_cellular_modem_metrics(const char *interface_id, m
     strncpy(observation->interface_id, interface_id, sizeof(observation->interface_id) - 1);
     observation->interface_type = INTERFACE_TYPE_CELLULAR;
     
-    // Collect modem metrics (free - no data usage)
-    observation->interface_specific.cellular.signal_strength_dbm = -70 - (rand() % 30); // -70 to -100 dBm
-    observation->interface_specific.cellular.signal_quality = 100 + (rand() % 155);
-    observation->interface_specific.cellular.network_type = 4; // 4G
-    observation->interface_specific.cellular.band = 3 + (rand() % 5);
+    // Collect real modem metrics using AT commands or UBUS
+    char modem_cmd[256];
+    char signal_file[128];
+    snprintf(signal_file, sizeof(signal_file), "/tmp/modem_signal_%s_%ld", interface_id, time(NULL));
     
-    // Estimate latency based on signal quality (no ping needed)
+    // Try to get signal strength via ubus (preferred method)
+    snprintf(modem_cmd, sizeof(modem_cmd), 
+            "ubus call modem.%s get_signal_info > %s 2>/dev/null", interface_id, signal_file);
+    
+    int modem_result = system(modem_cmd);
+    
+    if (modem_result == 0) {
+        // Parse signal information from UBUS response
+        FILE *f = fopen(signal_file, "r");
+        if (f) {
+            char line[256];
+            while (fgets(line, sizeof(line), f)) {
+                // Parse signal strength
+                if (strstr(line, "signal_strength")) {
+                    char *value_start = strchr(line, ':');
+                    if (value_start) {
+                        observation->interface_specific.cellular.signal_strength_dbm = atoi(value_start + 1);
+                    }
+                }
+                // Parse signal quality
+                if (strstr(line, "signal_quality")) {
+                    char *value_start = strchr(line, ':');
+                    if (value_start) {
+                        observation->interface_specific.cellular.signal_quality = (uint8_t)atoi(value_start + 1);
+                    }
+                }
+                // Parse network type
+                if (strstr(line, "network_type")) {
+                    char *value_start = strchr(line, ':');
+                    if (value_start) {
+                        observation->interface_specific.cellular.network_type = (uint8_t)atoi(value_start + 1);
+                    }
+                }
+            }
+            fclose(f);
+        }
+    } else {
+        // Fallback: Try AT commands directly
+        snprintf(modem_cmd, sizeof(modem_cmd), 
+                "echo 'AT+CSQ' | socat - /dev/ttyUSB0,b115200 | grep '+CSQ:' | cut -d: -f2 > %s 2>/dev/null",
+                signal_file);
+        
+        if (system(modem_cmd) == 0) {
+            FILE *f = fopen(signal_file, "r");
+            if (f) {
+                char csq_response[64];
+                if (fgets(csq_response, sizeof(csq_response), f)) {
+                    int rssi, ber;
+                    if (sscanf(csq_response, "%d,%d", &rssi, &ber) == 2) {
+                        // Convert CSQ to dBm: dBm = -113 + (rssi * 2)
+                        observation->interface_specific.cellular.signal_strength_dbm = -113 + (rssi * 2);
+                        observation->interface_specific.cellular.signal_quality = (uint8_t)((rssi * 255) / 31);
+                    }
+                }
+                fclose(f);
+            }
+        } else {
+            LOGX_WARN("Failed to collect cellular modem metrics for %s", interface_id);
+            unlink(signal_file);
+            return ML_MONITOR_ERROR_NO_DATA;
+        }
+    }
+    
+    // Clean up
+    unlink(signal_file);
+    
+    // Estimate latency based on signal quality (no ping needed to save data)
     int signal_strength = abs(observation->interface_specific.cellular.signal_strength_dbm);
-    observation->latency_ms = 40 + (signal_strength - 70) * 2; // Worse signal = higher latency
+    observation->latency_ms = 40 + ((signal_strength - 70) > 0 ? (signal_strength - 70) * 3 : 0);
     
-    // Estimate connection quality
+    // Calculate connection quality based on real signal metrics
     observation->connection_stability = observation->interface_specific.cellular.signal_quality;
-    observation->connection_health = observation->connection_stability - (rand() % 30);
+    observation->connection_health = (observation->connection_stability * 80) / 100; // 80% of stability
     
     return ML_MONITOR_SUCCESS;
 }

@@ -73,10 +73,55 @@ int ml_monitor_load_config_from_uci(ml_monitor_config_t *config) {
     // Initialize with defaults first
     ml_monitor_config_init_defaults(config);
     
-    // TODO: Implement UCI loading when UCI integration is ready
-    // For now, use defaults and log that UCI is not yet implemented
-    LOGX_DEBUG("UCI integration for ML monitor not yet implemented, using defaults");
+    // Use existing UCI system from autonomy daemon
+    struct uci_context *ctx = uci_alloc_context();
+    if (!ctx) {
+        LOGX_ERROR("Failed to allocate UCI context for ML monitor");
+        return ML_MONITOR_ERROR_UCI_FAILED;
+    }
     
+    struct uci_package *pkg = NULL;
+    int ret = uci_load(ctx, "autonomy", &pkg);
+    if (ret != UCI_OK) {
+        LOGX_WARN("Failed to load autonomy UCI package, using defaults");
+        uci_free_context(ctx);
+        return ML_MONITOR_SUCCESS; // Use defaults if UCI not available
+    }
+    
+    // Load ML monitor section if it exists
+    struct uci_section *s = uci_lookup_section(ctx, pkg, "ml_monitor");
+    if (s) {
+        const char *enabled = uci_lookup_option_string(ctx, s, "enabled");
+        if (enabled) {
+            config->enabled = (strcmp(enabled, "1") == 0 || strcmp(enabled, "true") == 0);
+        }
+        
+        const char *collection_interval = uci_lookup_option_string(ctx, s, "collection_interval_seconds");
+        if (collection_interval) {
+            config->collection_interval_seconds = atoi(collection_interval);
+        }
+        
+        const char *prediction_horizon = uci_lookup_option_string(ctx, s, "prediction_horizon_minutes");
+        if (prediction_horizon) {
+            config->prediction_horizon_minutes = atoi(prediction_horizon);
+        }
+        
+        const char *learning_rate = uci_lookup_option_string(ctx, s, "learning_rate");
+        if (learning_rate) {
+            config->learning_rate = atoi(learning_rate);
+        }
+        
+        const char *mobile_mode = uci_lookup_option_string(ctx, s, "mobile_mode_enabled");
+        if (mobile_mode) {
+            config->mobile_mode_enabled = (strcmp(mobile_mode, "1") == 0 || strcmp(mobile_mode, "true") == 0);
+        }
+        
+        LOGX_INFO("ML monitor configuration loaded from UCI successfully");
+    } else {
+        LOGX_DEBUG("ML monitor section not found in UCI, using defaults");
+    }
+    
+    uci_free_context(ctx);
     return ML_MONITOR_SUCCESS;
 }
 
@@ -86,9 +131,75 @@ int ml_monitor_save_config_to_uci(const ml_monitor_config_t *config) {
     
     LOGX_INFO("Saving ML monitor configuration to UCI");
     
-    // TODO: Implement UCI saving when UCI integration is ready
-    LOGX_DEBUG("UCI integration for ML monitor not yet implemented");
+    // Use existing UCI system to save configuration
+    struct uci_context *ctx = uci_alloc_context();
+    if (!ctx) {
+        LOGX_ERROR("Failed to allocate UCI context for saving ML monitor config");
+        return ML_MONITOR_ERROR_UCI_FAILED;
+    }
     
+    struct uci_package *pkg = NULL;
+    int ret = uci_load(ctx, "autonomy", &pkg);
+    if (ret != UCI_OK) {
+        LOGX_ERROR("Failed to load autonomy UCI package for saving");
+        uci_free_context(ctx);
+        return ML_MONITOR_ERROR_UCI_FAILED;
+    }
+    
+    // Get or create ml_monitor section
+    struct uci_section *s = uci_lookup_section(ctx, pkg, "ml_monitor");
+    if (!s) {
+        // Create section
+        struct uci_ptr ptr;
+        char section_path[] = "autonomy.ml_monitor=ml_monitor";
+        if (uci_lookup_ptr(ctx, &ptr, section_path, true) != UCI_OK || uci_set(ctx, &ptr) != UCI_OK) {
+            LOGX_ERROR("Failed to create ml_monitor UCI section");
+            uci_free_context(ctx);
+            return ML_MONITOR_ERROR_UCI_FAILED;
+        }
+        s = ptr.s;
+    }
+    
+    // Helper macro to set UCI options
+    #define SET_UCI_OPTION(key, value) do { \
+        struct uci_ptr ptr; \
+        char opt_path[128]; \
+        snprintf(opt_path, sizeof(opt_path), "autonomy.ml_monitor.%s", key); \
+        if (uci_lookup_ptr(ctx, &ptr, opt_path, true) == UCI_OK) { \
+            ptr.value = value; \
+            if (uci_set(ctx, &ptr) != UCI_OK) { \
+                LOGX_ERROR("Failed to set UCI option: %s", key); \
+            } \
+        } \
+    } while(0)
+    
+    // Set configuration options
+    char buffer[64];
+    
+    SET_UCI_OPTION("enabled", config->enabled ? "1" : "0");
+    
+    snprintf(buffer, sizeof(buffer), "%d", config->collection_interval_seconds);
+    SET_UCI_OPTION("collection_interval_seconds", buffer);
+    
+    snprintf(buffer, sizeof(buffer), "%d", config->prediction_horizon_minutes);
+    SET_UCI_OPTION("prediction_horizon_minutes", buffer);
+    
+    snprintf(buffer, sizeof(buffer), "%d", config->learning_rate);
+    SET_UCI_OPTION("learning_rate", buffer);
+    
+    SET_UCI_OPTION("mobile_mode_enabled", config->mobile_mode_enabled ? "1" : "0");
+    
+    #undef SET_UCI_OPTION
+    
+    // Commit changes
+    if (uci_commit(ctx, &pkg, false) != UCI_OK) {
+        LOGX_ERROR("Failed to commit ML monitor UCI changes");
+        uci_free_context(ctx);
+        return ML_MONITOR_ERROR_UCI_FAILED;
+    }
+    
+    uci_free_context(ctx);
+    LOGX_INFO("ML monitor configuration saved to UCI successfully");
     return ML_MONITOR_SUCCESS;
 }
 
@@ -328,20 +439,21 @@ int ml_monitor_add_observation(ml_monitor_t *monitor, const ml_observation_t *ob
     ml_persistent_state_t *state = monitor->state;
     observation_buffer_t *buffer = &state->recent;
     
-    // Add to recent observations buffer
-    if (!buffer->observations) {
-        // Allocate observation buffer in the memory-mapped region
-        // Note: In a real implementation, we'd need to manage this memory more carefully
-        LOGX_ERROR("Observation buffer not properly initialized");
-        pthread_mutex_unlock(&monitor->state_mutex);
-        return ML_MONITOR_ERROR_STORAGE_FAILED;
-    }
+    // Add to recent observations buffer in memory-mapped storage
+    // Calculate offset within the memory-mapped storage for observations
+    size_t observations_offset = offsetof(ml_persistent_state_t, recent) + offsetof(observation_buffer_t, write_index);
     
-    // For now, simulate the circular buffer by using indices
+    // Use the memory-mapped region directly
     uint32_t index = buffer->write_index % buffer->max_observations;
     
-    // Copy observation (simulated - in real implementation this would be in the mapped memory)
-    memcpy(&observation, observation, sizeof(ml_observation_t));
+    // Calculate the actual memory location for this observation
+    // The observations are stored after the buffer metadata in the memory-mapped file
+    char *storage_base = (char*)monitor->state;
+    size_t obs_array_offset = sizeof(ml_persistent_state_t); // Observations stored after main structure
+    ml_observation_t *obs_array = (ml_observation_t*)(storage_base + obs_array_offset);
+    
+    // Copy observation directly to memory-mapped storage
+    memcpy(&obs_array[index], observation, sizeof(ml_observation_t));
     
     buffer->write_index++;
     if (buffer->count < buffer->max_observations) {
@@ -508,15 +620,31 @@ uint8_t ml_monitor_predict_outage_knn(ml_monitor_t *monitor, const ml_observatio
     neighbor_t neighbors[5];
     uint8_t k = 0;
     
-    // Simulate pattern matching (in real implementation, this would access the stored patterns)
-    for (int i = 0; i < 5 && i < matcher->count; i++) {
-        // Simulate Manhattan distance calculation
-        uint32_t dist = 1000 + (rand() % 5000);  // Simulated distance
+    // Access stored patterns from memory-mapped storage
+    char *storage_base = (char*)monitor->state;
+    size_t patterns_offset = sizeof(ml_persistent_state_t) + (buffer->max_observations * sizeof(ml_observation_t));
+    pattern_entry_t *patterns = (pattern_entry_t*)(storage_base + patterns_offset);
+    
+    for (int i = 0; i < matcher->count && i < matcher->max_patterns; i++) {
+        // Calculate Manhattan distance between current pattern and stored pattern
+        uint32_t dist = 0;
+        for (int j = 0; j < 16; j++) {
+            int32_t diff = current_pattern[j] - patterns[i].pattern[j];
+            dist += abs(diff);
+        }
         
-        if (k < 5) {
-            neighbors[k].distance = dist;
-            neighbors[k].outcome = OUTAGE_OBSTRUCTION_STATIC + (rand() % 3);
-            k++;
+        // Insert into top-k if closer
+        if (k < 5 || dist < neighbors[k-1].distance) {
+            if (k < 5) k++;
+            
+            // Insert sorted
+            int pos = k - 1;
+            while (pos > 0 && dist < neighbors[pos-1].distance) {
+                neighbors[pos] = neighbors[pos-1];
+                pos--;
+            }
+            neighbors[pos].distance = dist;
+            neighbors[pos].outcome = patterns[i].outcome;
         }
     }
     

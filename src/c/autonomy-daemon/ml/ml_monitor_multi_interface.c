@@ -530,10 +530,8 @@ int ml_monitor_apply_mwan3_weight_changes(multi_interface_ml_system_t *system) {
     
     LOGX_INFO("🔧 Applying ML-optimized weights to MWAN3 configuration");
     
-    // In a full implementation, this would:
-    // 1. Update MWAN3 UCI configuration
-    // 2. Apply changes via ubus call to mwan3
-    // 3. Validate changes were applied
+    // Execute real MWAN3 UCI configuration updates
+    bool changes_made = false;
     
     for (int i = 0; i < system->mwan3_integration.mwan3_interface_count; i++) {
         char uci_command[256];
@@ -542,16 +540,42 @@ int ml_monitor_apply_mwan3_weight_changes(multi_interface_ml_system_t *system) {
                 system->mwan3_integration.mwan3_interfaces[i].interface_name,
                 system->mwan3_integration.mwan3_interfaces[i].current_weight);
         
-        LOGX_DEBUG("Would execute: %s", uci_command);
+        LOGX_DEBUG("Executing: %s", uci_command);
         
-        // In production, execute: system(uci_command);
+        // Execute actual UCI command
+        int uci_result = system(uci_command);
+        if (uci_result == 0) {
+            changes_made = true;
+            LOGX_INFO("Updated MWAN3 weight for %s: %d",
+                     system->mwan3_integration.mwan3_interfaces[i].interface_name,
+                     system->mwan3_integration.mwan3_interfaces[i].current_weight);
+        } else {
+            LOGX_ERROR("Failed to update MWAN3 weight for %s (exit code: %d)",
+                      system->mwan3_integration.mwan3_interfaces[i].interface_name, uci_result);
+        }
     }
     
-    // Commit UCI changes
-    LOGX_DEBUG("Would execute: uci commit mwan3");
-    LOGX_DEBUG("Would execute: ubus call mwan3 reload");
-    
-    LOGX_INFO("✅ MWAN3 weight changes applied (simulated)");
+    if (changes_made) {
+        // Commit UCI changes
+        LOGX_DEBUG("Executing: uci commit mwan3");
+        int commit_result = system("uci commit mwan3");
+        if (commit_result != 0) {
+            LOGX_ERROR("Failed to commit MWAN3 UCI changes (exit code: %d)", commit_result);
+            return ML_MONITOR_MULTI_ERROR_MWAN3_FAILED;
+        }
+        
+        // Reload MWAN3 configuration
+        LOGX_DEBUG("Executing: ubus call mwan3 reload");
+        int reload_result = system("ubus call mwan3 reload");
+        if (reload_result != 0) {
+            LOGX_ERROR("Failed to reload MWAN3 configuration (exit code: %d)", reload_result);
+            return ML_MONITOR_MULTI_ERROR_MWAN3_FAILED;
+        }
+        
+        LOGX_INFO("✅ MWAN3 weight changes applied and committed successfully");
+    } else {
+        LOGX_DEBUG("No MWAN3 weight changes needed");
+    }
     return ML_MONITOR_MULTI_SUCCESS;
 }
 

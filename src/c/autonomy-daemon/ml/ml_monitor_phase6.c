@@ -663,11 +663,38 @@ int ml_monitor_get_phase6_status(ml_monitor_t *monitor,
                                 double *system_health) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    // Return simulated Phase 6 status
-    if (resource_efficiency) *resource_efficiency = 0.92; // 92% resource efficiency
-    if (optimization_cycles) *optimization_cycles = 25; // 25 optimization cycles completed
-    if (production_ready) *production_ready = true; // Production ready
-    if (system_health) *system_health = 0.95; // 95% system health
+    // Return real Phase 6 status from actual system state
+    if (resource_efficiency) {
+        // Calculate real resource efficiency
+        size_t memory_used = monitor->storage_size;
+        size_t memory_limit = monitor->config.memory_limit_kb * 1024;
+        *resource_efficiency = 1.0 - ((double)memory_used / memory_limit);
+        *resource_efficiency = fmax(0.0, fmin(1.0, *resource_efficiency));
+    }
+    
+    if (optimization_cycles) {
+        // Get real optimization cycles from performance monitor
+        performance_monitor_t *perf = &monitor->state->models.performance;
+        *optimization_cycles = perf->predictions_made / 50; // Estimate cycles
+    }
+    
+    if (production_ready) {
+        // Calculate real production readiness
+        performance_monitor_t *perf = &monitor->state->models.performance;
+        double accuracy = perf->predictions_made > 0 ? (double)perf->predictions_correct / perf->predictions_made : 0.0;
+        bool memory_ok = monitor->storage_size < (2 * 1024 * 1024); // <2MB
+        bool accuracy_ok = accuracy > 0.85; // >85%
+        *production_ready = memory_ok && accuracy_ok;
+    }
+    
+    if (system_health) {
+        // Calculate real system health
+        performance_monitor_t *perf = &monitor->state->models.performance;
+        double accuracy = perf->predictions_made > 0 ? (double)perf->predictions_correct / perf->predictions_made : 0.5;
+        double memory_health = 1.0 - ((double)monitor->storage_size / (monitor->config.memory_limit_kb * 1024));
+        *system_health = (accuracy * 0.6) + (memory_health * 0.4);
+        *system_health = fmax(0.0, fmin(1.0, *system_health));
+    }
     
     return ML_MONITOR_SUCCESS;
 }

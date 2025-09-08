@@ -643,11 +643,42 @@ int ml_monitor_get_mobile_status(ml_monitor_t *monitor,
                                 double *auto_tune_performance) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    // Return simulated mobile status
-    if (scenario) *scenario = MOBILE_SCENARIO_STATIONARY; // Default
-    if (learning_rate_multiplier) *learning_rate_multiplier = 1.0;
-    if (location_profiles) *location_profiles = 3; // Simulated profile count
-    if (auto_tune_performance) *auto_tune_performance = 0.87; // 87% performance
+    // Return real mobile status from actual system state
+    location_learner_t *learner = &monitor->state->models.location_learner;
+    
+    if (scenario) {
+        // Determine current scenario based on recent observations
+        // Check if we have recent speed data
+        if (learner->observations_here > 10) {
+            // In a real implementation, we'd analyze recent speed patterns
+            // For now, determine based on location stability
+            time_t time_at_location = time(NULL) - learner->arrival_time;
+            if (time_at_location > 3600) { // >1 hour at location
+                *scenario = MOBILE_SCENARIO_STATIONARY;
+            } else {
+                *scenario = MOBILE_SCENARIO_SLOW_MOBILE; // Recently arrived
+            }
+        } else {
+            *scenario = MOBILE_SCENARIO_UNKNOWN;
+        }
+    }
+    
+    if (learning_rate_multiplier) {
+        // Calculate real learning rate multiplier based on location familiarity
+        double familiarity = (double)learner->profile.learned / 255.0;
+        *learning_rate_multiplier = 1.0 + (1.0 - familiarity) * 0.5; // Higher rate for unfamiliar locations
+    }
+    
+    if (location_profiles) {
+        *location_profiles = learner->history_count; // Real profile count
+    }
+    
+    if (auto_tune_performance) {
+        // Calculate real auto-tuning performance
+        performance_monitor_t *perf = &monitor->state->models.performance;
+        *auto_tune_performance = perf->predictions_made > 0 ? 
+                               (double)perf->predictions_correct / perf->predictions_made : 0.0;
+    }
     
     return ML_MONITOR_SUCCESS;
 }
