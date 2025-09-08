@@ -151,71 +151,162 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
         switch (model->type) {
             case INTERFACE_TYPE_STARLINK:
                 // Integrate with existing Starlink data collection
-                obs.latency_ms = 30 + (rand() % 40);  // Simulate from real Starlink data
-                obs.latency_jitter_ms = 5 + (rand() % 15);
-                obs.packet_loss_pct = rand() % 5;
-                obs.connection_stability = 200 + (rand() % 55);
-                obs.connection_health = 180 + (rand() % 75);
-                
-                // Starlink-specific metrics
-                obs.interface_specific.starlink.snr_x100 = 800 + (rand() % 400);
-                obs.interface_specific.starlink.obstruction_pct = rand() % 20;
-                obs.interface_specific.starlink.azimuth_deg = rand() % 360;
-                obs.interface_specific.starlink.elevation_deg = 25 + (rand() % 65);
-                obs.interface_specific.starlink.satellites_visible = 8 + (rand() % 8);
+                starlink_collection_result_t starlink_result;
+                if (starlink_collect_data(&starlink_result) == AUTONOMY_SUCCESS) {
+                    obs.latency_ms = (uint16_t)starlink_result.status.network_perf.pop_ping_latency_ms;
+                    obs.packet_loss_pct = (uint8_t)(starlink_result.status.network_perf.pop_ping_drop_rate * 100);
+                    obs.connection_stability = starlink_result.status.signal_quality.snr > 5.0 ? 200 : 100;
+                    obs.connection_health = (uint8_t)(starlink_result.status.signal_quality.snr * 20);
+                    
+                    // Real Starlink-specific metrics
+                    obs.interface_specific.starlink.snr_x100 = (uint16_t)(starlink_result.status.signal_quality.snr * 100);
+                    obs.interface_specific.starlink.obstruction_pct = (uint8_t)(starlink_result.status.obstruction_stats.fraction_obstructed * 100);
+                    obs.interface_specific.starlink.azimuth_deg = (int16_t)starlink_result.status.positioning.boresight_azimuth_deg;
+                    obs.interface_specific.starlink.elevation_deg = (int16_t)starlink_result.status.positioning.boresight_elevation_deg;
+                    obs.interface_specific.starlink.satellites_visible = starlink_result.status.gps_stats.gps_sats;
+                } else {
+                    LOGX_WARN("Failed to collect real Starlink data for %s", model->interface_id);
+                    continue; // Skip this interface if no real data available
+                }
                 break;
                 
             case INTERFACE_TYPE_CELLULAR:
-                // Collect cellular performance data
-                obs.latency_ms = 50 + (rand() % 80);
-                obs.latency_jitter_ms = 15 + (rand() % 25);
-                obs.packet_loss_pct = rand() % 8;
-                obs.connection_stability = 150 + (rand() % 80);
-                obs.connection_health = 120 + (rand() % 100);
-                
-                // Cellular-specific metrics
-                obs.interface_specific.cellular.signal_strength_dbm = -70 - (rand() % 30);
-                obs.interface_specific.cellular.signal_quality = 100 + (rand() % 155);
-                obs.interface_specific.cellular.network_type = 4; // 4G
+                // Use real cellular modem metrics collection
+                if (ml_monitor_collect_cellular_modem_metrics(model->interface_id, &obs) != ML_MONITOR_SUCCESS) {
+                    LOGX_WARN("Failed to collect real cellular data for %s", model->interface_id);
+                    continue; // Skip this interface if no real data available
+                }
                 break;
                 
             case INTERFACE_TYPE_WIFI:
-                // Collect WiFi performance data
-                obs.latency_ms = 8 + (rand() % 25);
-                obs.latency_jitter_ms = 3 + (rand() % 12);
-                obs.packet_loss_pct = rand() % 4;
-                obs.connection_stability = 170 + (rand() % 85);
-                obs.connection_health = 160 + (rand() % 95);
-                
-                // WiFi-specific metrics
-                obs.interface_specific.wifi.rssi_dbm = -40 - (rand() % 40);
-                obs.interface_specific.wifi.channel = 1 + (rand() % 11);
-                obs.interface_specific.wifi.channel_utilization = rand() % 60;
+                // Collect real WiFi performance data via ping test
+                uint32_t wifi_latency;
+                bool wifi_success;
+                if (ml_monitor_perform_ping_test(model->interface_id, "8.8.8.8", &wifi_latency, &wifi_success) == ML_MONITOR_SUCCESS) {
+                    obs.latency_ms = wifi_latency;
+                    obs.packet_loss_pct = wifi_success ? 0 : 100;
+                    obs.connection_stability = wifi_success ? (255 - (wifi_latency / 2)) : 0;
+                    obs.connection_health = obs.connection_stability;
+                    
+                    // Collect real WiFi-specific metrics via iwconfig/iw
+                    char wifi_cmd[256];
+                    char wifi_file[128];
+                    snprintf(wifi_file, sizeof(wifi_file), "/tmp/wifi_info_%s_%ld", model->interface_id, time(NULL));
+                    snprintf(wifi_cmd, sizeof(wifi_cmd), "iw dev %s link > %s 2>/dev/null", model->interface_id, wifi_file);
+                    
+                    if (system(wifi_cmd) == 0) {
+                        FILE *f = fopen(wifi_file, "r");
+                        if (f) {
+                            char line[256];
+                            while (fgets(line, sizeof(line), f)) {
+                                if (strstr(line, "signal:")) {
+                                    sscanf(line, "%*s %d dBm", &obs.interface_specific.wifi.rssi_dbm);
+                                }
+                                if (strstr(line, "freq:")) {
+                                    int freq;
+                                    sscanf(line, "%*s %d", &freq);
+                                    obs.interface_specific.wifi.channel = (freq - 2412) / 5 + 1; // Convert freq to channel
+                                }
+                            }
+                            fclose(f);
+                        }
+                        unlink(wifi_file);
+                    }
+                } else {
+                    LOGX_WARN("Failed to collect real WiFi data for %s", model->interface_id);
+                    continue;
+                }
                 break;
                 
             case INTERFACE_TYPE_LAN:
-                // Collect LAN performance data
-                obs.latency_ms = 1 + (rand() % 8);
-                obs.latency_jitter_ms = rand() % 3;
-                obs.packet_loss_pct = 0; // LAN should have no packet loss
-                obs.connection_stability = 240 + (rand() % 15);
-                obs.connection_health = 230 + (rand() % 25);
-                
-                // LAN-specific metrics
-                obs.interface_specific.lan.link_speed_mbps = 100; // 100 Mbps
-                obs.interface_specific.lan.duplex = 1; // Full duplex
-                obs.interface_specific.lan.cable_quality = 200 + (rand() % 55);
+                // Collect real LAN performance data via ping to gateway
+                uint32_t lan_latency;
+                bool lan_success;
+                if (ml_monitor_perform_ping_test(model->interface_id, "192.168.1.1", &lan_latency, &lan_success) == ML_MONITOR_SUCCESS) {
+                    obs.latency_ms = lan_latency;
+                    obs.packet_loss_pct = lan_success ? 0 : 100;
+                    obs.connection_stability = lan_success ? (255 - lan_latency) : 0;
+                    obs.connection_health = obs.connection_stability;
+                    
+                    // Collect real LAN-specific metrics via ethtool
+                    char lan_cmd[256];
+                    char lan_file[128];
+                    snprintf(lan_file, sizeof(lan_file), "/tmp/lan_info_%s_%ld", model->interface_id, time(NULL));
+                    snprintf(lan_cmd, sizeof(lan_cmd), "ethtool %s | grep 'Speed:\\|Duplex:' > %s 2>/dev/null", model->interface_id, lan_file);
+                    
+                    if (system(lan_cmd) == 0) {
+                        FILE *f = fopen(lan_file, "r");
+                        if (f) {
+                            char line[256];
+                            while (fgets(line, sizeof(line), f)) {
+                                if (strstr(line, "Speed:")) {
+                                    int speed;
+                                    sscanf(line, "%*s %dMb/s", &speed);
+                                    obs.interface_specific.lan.link_speed_mbps = (uint8_t)(speed > 255 ? 255 : speed);
+                                }
+                                if (strstr(line, "Full")) {
+                                    obs.interface_specific.lan.duplex = 1;
+                                }
+                            }
+                            fclose(f);
+                        }
+                        unlink(lan_file);
+                    }
+                    
+                    // Calculate cable quality based on latency (LAN should be very low latency)
+                    obs.interface_specific.lan.cable_quality = lan_latency < 5 ? 255 : (255 - (lan_latency * 10));
+                } else {
+                    LOGX_WARN("Failed to collect real LAN data for %s", model->interface_id);
+                    continue;
+                }
                 break;
                 
             default:
                 continue;
         }
         
-        // Calculate trends
-        obs.latency_trend = (rand() % 21) - 10; // -10 to +10
-        obs.packet_loss_trend = (rand() % 11) - 5; // -5 to +5
-        obs.performance_degradation = (obs.latency_ms > 100 || obs.packet_loss_pct > 5) ? 
-                                     100 + (rand() % 155) : rand() % 100;
+        // Calculate real trends based on recent observations
+        // Get previous observation for trend calculation
+        static uint16_t prev_latency[MAX_INTERFACES] = {0};
+        static uint8_t prev_loss[MAX_INTERFACES] = {0};
+        
+        int interface_idx = -1;
+        for (int idx = 0; idx < g_phase7_system->interface_count; idx++) {
+            if (strcmp(g_phase7_system->interface_models[idx].interface_id, model->interface_id) == 0) {
+                interface_idx = idx;
+                break;
+            }
+        }
+        
+        if (interface_idx >= 0) {
+            // Calculate real latency trend
+            if (prev_latency[interface_idx] > 0) {
+                int latency_diff = (int)obs.latency_ms - (int)prev_latency[interface_idx];
+                obs.latency_trend = (int8_t)fmax(-127, fmin(127, latency_diff));
+            } else {
+                obs.latency_trend = 0;
+            }
+            
+            // Calculate real packet loss trend
+            if (prev_loss[interface_idx] >= 0) {
+                int loss_diff = (int)obs.packet_loss_pct - (int)prev_loss[interface_idx];
+                obs.packet_loss_trend = (int8_t)fmax(-127, fmin(127, loss_diff * 10));
+            } else {
+                obs.packet_loss_trend = 0;
+            }
+            
+            // Update previous values
+            prev_latency[interface_idx] = obs.latency_ms;
+            prev_loss[interface_idx] = obs.packet_loss_pct;
+        }
+        
+        // Calculate real performance degradation score
+        obs.performance_degradation = 0;
+        if (obs.latency_ms > 100) obs.performance_degradation += 50;
+        if (obs.packet_loss_pct > 5) obs.performance_degradation += 50;
+        if (obs.latency_trend > 10) obs.performance_degradation += 30;
+        if (obs.packet_loss_trend > 5) obs.performance_degradation += 30;
+        obs.performance_degradation = fmin(255, obs.performance_degradation);
         
         // Update interface observation
         ml_monitor_update_interface_observation(g_phase7_system, model->interface_id, &obs);

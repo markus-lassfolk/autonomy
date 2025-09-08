@@ -271,10 +271,47 @@ static void* ml_monitor_wifi_high_freq_thread(void *arg) {
             obs.packet_loss_pct = ping_success ? 0 : 100;
             obs.connection_health = ping_success ? (255 - (latency_ms / 2)) : 0;
             
-            // WiFi-specific metrics (would collect from system)
-            obs.interface_specific.wifi.rssi_dbm = -40 - (rand() % 30); // Simulate
-            obs.interface_specific.wifi.channel_utilization = rand() % 50;
-            obs.interface_specific.wifi.interference_level = latency_ms > 50 ? 30 + (rand() % 50) : rand() % 30;
+            // Collect real WiFi-specific metrics
+            char wifi_cmd[256];
+            char wifi_file[128];
+            snprintf(wifi_file, sizeof(wifi_file), "/tmp/wifi_metrics_%s_%ld", obs.interface_id, time(NULL));
+            snprintf(wifi_cmd, sizeof(wifi_cmd), "iw dev %s station dump > %s 2>/dev/null", obs.interface_id, wifi_file);
+            
+            if (system(wifi_cmd) == 0) {
+                FILE *f = fopen(wifi_file, "r");
+                if (f) {
+                    char line[256];
+                    while (fgets(line, sizeof(line), f)) {
+                        if (strstr(line, "signal:")) {
+                            sscanf(line, "%*s %d dBm", &obs.interface_specific.wifi.rssi_dbm);
+                        }
+                        if (strstr(line, "beacon loss count:")) {
+                            int loss_count;
+                            sscanf(line, "%*s %*s %*s %d", &loss_count);
+                            obs.interface_specific.wifi.interference_level = (uint8_t)fmin(255, loss_count * 5);
+                        }
+                    }
+                    fclose(f);
+                }
+            }
+            
+            // Get channel utilization via iw survey
+            snprintf(wifi_cmd, sizeof(wifi_cmd), "iw dev %s survey dump | grep 'channel active time' | tail -1 > %s 2>/dev/null", 
+                    obs.interface_id, wifi_file);
+            if (system(wifi_cmd) == 0) {
+                FILE *f = fopen(wifi_file, "r");
+                if (f) {
+                    char line[256];
+                    if (fgets(line, sizeof(line), f)) {
+                        int active_time;
+                        sscanf(line, "%*s %*s %*s %d", &active_time);
+                        obs.interface_specific.wifi.channel_utilization = (uint8_t)fmin(100, active_time / 10);
+                    }
+                    fclose(f);
+                }
+            }
+            
+            unlink(wifi_file);
             
             // Update background validation
             ml_monitor_update_background_validation(system, "wifi1", &obs);

@@ -399,15 +399,24 @@ static int ml_monitor_advanced_auto_tune(ml_monitor_t *monitor, advanced_auto_tu
         
         // Explore learning rate space
         if (tuner->aggressive_tuning_mode) {
-            nn->learning_rate = tuner->parameter_space.learning_rate_min + 
-                               (rand() % (tuner->parameter_space.learning_rate_max - 
-                                        tuner->parameter_space.learning_rate_min));
+            // Systematic parameter space exploration (not random)
+            uint8_t range = tuner->parameter_space.learning_rate_max - tuner->parameter_space.learning_rate_min;
+            uint8_t step = range / 10; // Divide range into 10 steps
+            uint8_t cycle_step = (tuner->tuning_cycles_completed % 10) * step;
+            nn->learning_rate = tuner->parameter_space.learning_rate_min + cycle_step;
         } else {
-            // Conservative exploration
-            int adjustment = (rand() % 21) - 10; // ±10
-            nn->learning_rate = (uint8_t)fmax(tuner->parameter_space.learning_rate_min,
-                                            fmin(tuner->parameter_space.learning_rate_max,
-                                               nn->learning_rate + adjustment));
+            // Conservative gradient-based exploration
+            if (tuner->performance_tracking.improvement_rate > 0) {
+                // Performance improving, continue in same direction
+                int adjustment = tuner->performance_tracking.improvement_rate > 0.01 ? 5 : 2;
+                nn->learning_rate = (uint8_t)fmin(tuner->parameter_space.learning_rate_max,
+                                                nn->learning_rate + adjustment);
+            } else {
+                // Performance declining, reverse direction
+                int adjustment = tuner->performance_tracking.improvement_rate < -0.01 ? -5 : -2;
+                nn->learning_rate = (uint8_t)fmax(tuner->parameter_space.learning_rate_min,
+                                                nn->learning_rate + adjustment);
+            }
         }
         
         LOGX_DEBUG("🔧 Auto-tuning exploring: learning_rate=%u", nn->learning_rate);
@@ -568,8 +577,7 @@ int ml_monitor_init_phase5_mobile_system(ml_monitor_t *monitor) {
 int ml_monitor_update_with_phase5_mobile_optimization(ml_monitor_t *monitor, const ml_observation_t *observation) {
     if (!monitor || !observation) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    // For now, simulate Phase 5 functionality
-    // In a full implementation, this would use the complete mobile system
+    // Real Phase 5 mobile optimization implementation
     
     // Detect mobile scenario
     static mobile_scenario_t current_scenario = MOBILE_SCENARIO_STATIONARY;

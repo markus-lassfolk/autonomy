@@ -431,11 +431,21 @@ static int ml_monitor_run_stress_tests(production_deployment_validator_t *valida
     
     // CPU stress test
     LOGX_DEBUG("Running CPU stress test...");
-    // Simulate CPU-intensive operations
+    // Real CPU-intensive ML operations
     time_t start_time = time(NULL);
-    volatile double cpu_work = 0;
-    for (int i = 0; i < 1000000; i++) {
-        cpu_work += sin(i) * cos(i);
+    
+    // Perform actual ML computations as stress test
+    ml_observation_t stress_obs;
+    memset(&stress_obs, 0, sizeof(stress_obs));
+    stress_obs.timestamp = time(NULL);
+    
+    // Run multiple ML predictions as CPU stress test
+    for (int i = 0; i < 1000; i++) {
+        uint8_t nn_output[8];
+        ml_monitor_predict_neural_network(monitor, &stress_obs, nn_output);
+        
+        uint8_t knn_confidence;
+        ml_monitor_predict_outage_knn(monitor, &stress_obs, &knn_confidence);
     }
     time_t end_time = time(NULL);
     
@@ -617,7 +627,7 @@ int ml_monitor_init_phase6_self_optimization(ml_monitor_t *monitor) {
 int ml_monitor_update_with_phase6_self_optimization(ml_monitor_t *monitor, const ml_observation_t *observation) {
     if (!monitor || !observation) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    // For now, simulate Phase 6 functionality
+    // Real Phase 6 self-optimization implementation
     static time_t last_resource_update = 0;
     static time_t last_optimization = 0;
     
@@ -625,26 +635,54 @@ int ml_monitor_update_with_phase6_self_optimization(ml_monitor_t *monitor, const
     
     // Update resource tracking every 5 minutes
     if (now - last_resource_update > 300) {
-        // Simulate resource tracking update
-        LOGX_DEBUG("📊 Updating resource tracking (CPU, memory, efficiency)");
+        // Real resource tracking update
+        struct rusage usage;
+        if (getrusage(RUSAGE_SELF, &usage) == 0) {
+            performance_monitor_t *perf = &monitor->state->models.performance;
+            perf->resources.memory_peak_kb = usage.ru_maxrss;
+            perf->resources.cpu_cycles_used += usage.ru_utime.tv_sec + usage.ru_stime.tv_sec;
+            
+            LOGX_DEBUG("📊 Resource tracking updated: memory=%ld KB, CPU=%u cycles",
+                      usage.ru_maxrss, perf->resources.cpu_cycles_used);
+        }
         last_resource_update = now;
     }
     
     // Run self-optimization every hour
     if (now - last_optimization > 3600) {
-        // Simulate self-optimization cycle
+        // Real self-optimization cycle
         performance_monitor_t *perf = &monitor->state->models.performance;
         
         if (perf->predictions_made > 100) {
             double accuracy = (double)perf->predictions_correct / perf->predictions_made;
             
+            // Real optimization based on performance
+            tiny_nn_t *nn = &monitor->state->models.neural_network;
+            
             if (accuracy < 0.85) {
-                // Trigger optimization
-                tiny_nn_t *nn = &monitor->state->models.neural_network;
+                // Poor performance - increase learning rate
                 if (nn->learning_rate < 200) {
                     nn->learning_rate += 10;
                     LOGX_INFO("🔧 Self-optimization: increased learning rate to %u (accuracy: %.1f%%)",
                              nn->learning_rate, accuracy * 100);
+                }
+            } else if (accuracy > 0.95) {
+                // Excellent performance - reduce learning rate for stability
+                if (nn->learning_rate > 50) {
+                    nn->learning_rate -= 5;
+                    LOGX_INFO("🎯 Self-optimization: reduced learning rate to %u for stability (accuracy: %.1f%%)",
+                             nn->learning_rate, accuracy * 100);
+                }
+            }
+            
+            // Optimize confidence threshold based on false positive rate
+            double fp_rate = perf->predictions_made > 0 ? (double)perf->false_positives / perf->predictions_made : 0.0;
+            if (fp_rate > 0.1) {
+                // Too many false positives - increase confidence threshold
+                if (monitor->config.confidence_threshold < 200) {
+                    monitor->config.confidence_threshold += 10;
+                    LOGX_INFO("🔧 Self-optimization: increased confidence threshold to %u (FP rate: %.1f%%)",
+                             monitor->config.confidence_threshold, fp_rate * 100);
                 }
             }
         }

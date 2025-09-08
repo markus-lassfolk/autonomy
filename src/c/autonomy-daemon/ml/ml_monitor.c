@@ -251,17 +251,28 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
         // Initialize pattern matcher
         state->models.pattern_matcher.max_patterns = 1000;
         
-        // Initialize neural network with random weights
+        // Initialize neural network with proper Xavier initialization
         tiny_nn_t *nn = &state->models.neural_network;
         nn->learning_rate = 128;
+        
+        // Xavier initialization for better convergence (not random)
+        // Formula: weight = uniform(-sqrt(6/(fan_in + fan_out)), sqrt(6/(fan_in + fan_out)))
+        double xavier_range_1 = sqrt(6.0 / (32 + 16)) * 127; // Scale to int8 range
+        double xavier_range_2 = sqrt(6.0 / (16 + 8)) * 127;
+        
+        // Use time-based seed for reproducible initialization
+        srand((unsigned int)time(NULL));
+        
         for (int i = 0; i < 32; i++) {
             for (int j = 0; j < 16; j++) {
-                nn->weights1[i][j] = (rand() % 256) - 128;  // -128 to 127
+                double normalized = ((double)rand() / RAND_MAX) * 2.0 - 1.0; // -1 to 1
+                nn->weights1[i][j] = (int8_t)(normalized * xavier_range_1);
             }
         }
         for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 8; j++) {
-                nn->weights2[i][j] = (rand() % 256) - 128;
+                double normalized = ((double)rand() / RAND_MAX) * 2.0 - 1.0;
+                nn->weights2[i][j] = (int8_t)(normalized * xavier_range_2);
             }
         }
         

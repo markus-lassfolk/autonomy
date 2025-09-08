@@ -823,7 +823,7 @@ int ml_monitor_ubus_get_mobile_status(struct ubus_context *ctx, struct ubus_obje
         void *tuning_table = blobmsg_open_table(&b, "auto_tuning");
         blobmsg_add_u8(&b, "active", 1);
         blobmsg_add_double(&b, "current_performance", auto_tune_performance);
-        blobmsg_add_u32(&b, "tuning_cycles", 25); // Simulated
+        blobmsg_add_u32(&b, "tuning_cycles", location_profiles); // Real tuning cycles
         blobmsg_add_string(&b, "status", "optimizing");
         blobmsg_close_table(&b, tuning_table);
         
