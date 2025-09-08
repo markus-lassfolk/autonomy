@@ -1,4 +1,5 @@
 #include "ml_monitor.h"
+#include "ml_monitor_analytics.h"
 #include "../utils/logx.h"
 #include "../utils/uci_manager.h"
 #include "../core/types.h"
@@ -314,6 +315,15 @@ ml_monitor_t* ml_monitor_init(const ml_monitor_config_t *config) {
         LOGX_ERROR("Failed to initialize ML storage");
         free(monitor);
         return NULL;
+    }
+    
+    // Initialize analytics system
+    int analytics_result = ml_monitor_analytics_init();
+    if (analytics_result != ML_MONITOR_SUCCESS) {
+        LOGX_ERROR("Failed to initialize ML analytics: %d", analytics_result);
+        // Continue without analytics - not critical
+    } else {
+        LOGX_INFO("📊 ML Analytics system initialized");
     }
     
     // Initialize mutex

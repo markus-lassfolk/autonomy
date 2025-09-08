@@ -28,6 +28,11 @@
 #define ML_MONITOR_UBUS_METHOD_PREDICT_INTERFACE_OUTAGE "predict_interface_outage"
 #define ML_MONITOR_UBUS_METHOD_UPDATE_MWAN3_WEIGHTS "update_mwan3_weights"
 #define ML_MONITOR_UBUS_METHOD_VALIDATE_FAILOVER "validate_failover_prediction"
+#define ML_MONITOR_UBUS_METHOD_GET_ANALYTICS_SUMMARY "get_analytics_summary"
+#define ML_MONITOR_UBUS_METHOD_GET_INTERFACE_SCORE_HISTORY "get_interface_score_history"
+#define ML_MONITOR_UBUS_METHOD_GET_ACCURACY_TRENDS "get_accuracy_trends"
+#define ML_MONITOR_UBUS_METHOD_GET_IMPACT_SUMMARY "get_impact_summary"
+#define ML_MONITOR_UBUS_METHOD_GET_CURRENT_INTERFACE_SCORES "get_current_interface_scores"
 
 // UBUS object name
 #define ML_MONITOR_UBUS_OBJECT "ml_monitor"

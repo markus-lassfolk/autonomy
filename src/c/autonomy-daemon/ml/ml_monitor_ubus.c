@@ -1093,6 +1093,23 @@ extern int ml_monitor_ubus_validate_failover_prediction(struct ubus_context *ctx
                                                        struct ubus_request_data *req, const char *method,
                                                        struct blob_attr *msg);
 
+// ML Analytics UBUS methods
+extern int ml_monitor_ubus_get_analytics_summary(struct ubus_context *ctx, struct ubus_object *obj,
+                                                struct ubus_request_data *req, const char *method,
+                                                struct blob_attr *msg);
+extern int ml_monitor_ubus_get_interface_score_history(struct ubus_context *ctx, struct ubus_object *obj,
+                                                      struct ubus_request_data *req, const char *method,
+                                                      struct blob_attr *msg);
+extern int ml_monitor_ubus_get_accuracy_trends(struct ubus_context *ctx, struct ubus_object *obj,
+                                              struct ubus_request_data *req, const char *method,
+                                              struct blob_attr *msg);
+extern int ml_monitor_ubus_get_impact_summary(struct ubus_context *ctx, struct ubus_object *obj,
+                                             struct ubus_request_data *req, const char *method,
+                                             struct blob_attr *msg);
+extern int ml_monitor_ubus_get_current_interface_scores(struct ubus_context *ctx, struct ubus_object *obj,
+                                                       struct ubus_request_data *req, const char *method,
+                                                       struct blob_attr *msg);
+
 
 // UBUS method definitions
 static const struct ubus_method ml_monitor_methods[] = {
@@ -1119,6 +1136,11 @@ static const struct ubus_method ml_monitor_methods[] = {
     UBUS_METHOD(ML_MONITOR_UBUS_METHOD_PREDICT_INTERFACE_OUTAGE, ml_monitor_ubus_predict_interface_outage, NULL),
     UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_UPDATE_MWAN3_WEIGHTS, ml_monitor_ubus_update_mwan3_weights),
     UBUS_METHOD(ML_MONITOR_UBUS_METHOD_VALIDATE_FAILOVER, ml_monitor_ubus_validate_failover_prediction, NULL),
+    UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_GET_ANALYTICS_SUMMARY, ml_monitor_ubus_get_analytics_summary),
+    UBUS_METHOD(ML_MONITOR_UBUS_METHOD_GET_INTERFACE_SCORE_HISTORY, ml_monitor_ubus_get_interface_score_history, NULL),
+    UBUS_METHOD(ML_MONITOR_UBUS_METHOD_GET_ACCURACY_TRENDS, ml_monitor_ubus_get_accuracy_trends, NULL),
+    UBUS_METHOD(ML_MONITOR_UBUS_METHOD_GET_IMPACT_SUMMARY, ml_monitor_ubus_get_impact_summary, NULL),
+    UBUS_METHOD_NOARG(ML_MONITOR_UBUS_METHOD_GET_CURRENT_INTERFACE_SCORES, ml_monitor_ubus_get_current_interface_scores),
 };
 
 // UBUS object type
