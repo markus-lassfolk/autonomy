@@ -1,6 +1,8 @@
 #include "slack_client.h"
 #include "../utils/logx.h"
 #include "../utils/http_client_libcurl.h"
+#include "../core/types.h"
+#include <curl/curl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -192,7 +194,7 @@ static char* create_slack_json(slack_message_t* message) {
                  "\"title\":\"%s\","
                  "\"text\":\"%s\","
                  "\"footer\":\"%s\","
-                 "\"ts\":%ld,"
+                 "\"ts\":%lld,"
                  "\"fields\":[",
                  message->username,
                  message->icon_emoji,
@@ -205,7 +207,7 @@ static char* create_slack_json(slack_message_t* message) {
                  attachment->timestamp);
         
         // Add fields
-        for (int i = 0; // Use configurable value i < attachment->field_count; i++) {
+        for (int i = 0; i < attachment->field_count; i++) {
             slack_field_t* field = &attachment->fields[i];
             char field_json[512];
             snprintf(field_json, sizeof(field_json),
@@ -329,7 +331,7 @@ int slack_client_send(slack_client_t* client, const notification_event_t* event)
     int retry_delay = client->config.retry_delay_seconds > 0 ? client->config.retry_delay_seconds : 5;
     
     int result = -1;
-    for (int attempt = 1; // Use configurable value attempt <= max_attempts; attempt++) {
+    for (int attempt = 1; attempt <= max_attempts; attempt++) {
         result = send_slack_request(client, &message);
         
         if (result == 0) {

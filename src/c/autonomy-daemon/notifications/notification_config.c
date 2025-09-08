@@ -1,4 +1,6 @@
 #include "notification_config.h"
+#include "../core/types.h"
+#include "../utils/logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -323,7 +325,7 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
         &config->priority_status_update
     };
     
-    for (int i = 0; // Use configurable count // Use configurable value i < 8; i++) {
+    for (int i = 0; i < 8; i++) {
         if (*priorities[i] < NOTIFICATION_PRIORITY_LOWEST) {
             *priorities[i] = NOTIFICATION_PRIORITY_LOWEST;
             result->warning_count++;
@@ -438,7 +440,7 @@ int notification_config_manager_set_type_priority(notification_config_manager_t*
         case NOTIFICATION_TYPE_FAILOVER:
             config_mgr->config.priority_failover = priority;
             break;
-        case NOTIFICATION_TYPE_NETWORK_ISSUE:
+        case NOTIFICATION_TYPE_MEMBER_DOWN:
             config_mgr->config.priority_member_down = priority;
             break;
         case NOTIFICATION_TYPE_SYSTEM_HEALTH:
@@ -472,12 +474,12 @@ void notification_config_manager_get_json(notification_config_manager_t* config_
     snprintf(json_output, max_size,
              "{"
              "\"notifications_enabled\":%s,"
-             "\"cooldown_period_seconds\":%ld,"
-             "\"emergency_cooldown_seconds\":%ld,"
-             "\"max_notifications_hour\":%d,"
-             "\"retry_attempts\":%d,"
-             "\"retry_delay_seconds\":%ld,"
-             "\"http_timeout_seconds\":%ld,"
+              "\"cooldown_period_seconds\":%lld,"
+              "\"emergency_cooldown_seconds\":%lld,"
+              "\"max_notifications_hour\":%d,"
+              "\"retry_attempts\":%d,"
+              "\"retry_delay_seconds\":%lld,"
+              "\"http_timeout_seconds\":%lld,"
              "\"channels\":{"
              "\"pushover_enabled\":%s,"
              "\"email_enabled\":%s,"

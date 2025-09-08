@@ -4,6 +4,7 @@
 #include "notification_types.h"
 #include <stdbool.h>
 #include <time.h>
+#include <pthread.h>
 
 // Template variable
 typedef struct {

@@ -15,6 +15,7 @@ const char* notification_type_to_string(notification_type_t type) {
         case NOTIFICATION_TYPE_RECOVERY: return "recovery";
         case NOTIFICATION_TYPE_STATUS_UPDATE: return "status_update";
         case NOTIFICATION_TYPE_SUMMARY: return "summary";
+        case NOTIFICATION_TYPE_DATA_LIMIT: return "data_limit";
         case NOTIFICATION_TYPE_DATA_LIMIT_FAILOVER: return "data_limit_failover";
         case NOTIFICATION_TYPE_DATA_LIMIT_FAILBACK: return "data_limit_failback";
         case NOTIFICATION_TYPE_DATA_LIMIT_DAILY_80: return "data_limit_daily_80";
@@ -33,7 +34,7 @@ const char* notification_type_to_string(notification_type_t type) {
 }
 
 // String to notification type conversion
-static notification_type_t string_to_notification_type(const char* str) {
+notification_type_t string_to_notification_type(const char* str) {
     if (!str) return NOTIFICATION_TYPE_INFO;
     
     if (strcmp(str, "failover") == 0) return NOTIFICATION_TYPE_FAILOVER;
@@ -46,6 +47,7 @@ static notification_type_t string_to_notification_type(const char* str) {
     if (strcmp(str, "recovery") == 0) return NOTIFICATION_TYPE_RECOVERY;
     if (strcmp(str, "status_update") == 0) return NOTIFICATION_TYPE_STATUS_UPDATE;
     if (strcmp(str, "summary") == 0) return NOTIFICATION_TYPE_SUMMARY;
+    if (strcmp(str, "data_limit") == 0) return NOTIFICATION_TYPE_DATA_LIMIT;
     if (strcmp(str, "data_limit_failover") == 0) return NOTIFICATION_TYPE_DATA_LIMIT_FAILOVER;
     if (strcmp(str, "data_limit_failback") == 0) return NOTIFICATION_TYPE_DATA_LIMIT_FAILBACK;
     if (strcmp(str, "data_limit_daily_80") == 0) return NOTIFICATION_TYPE_DATA_LIMIT_DAILY_80;
@@ -105,7 +107,7 @@ const char* notification_channel_to_string(notification_channel_t channel) {
 }
 
 // String to notification channel conversion
-static notification_channel_t string_to_notification_channel(const char* str) {
+notification_channel_t string_to_notification_channel(const char* str) {
     if (!str) return NOTIFICATION_CHANNEL_WEBHOOK;
     
     if (strcmp(str, "pushover") == 0) return NOTIFICATION_CHANNEL_PUSHOVER;

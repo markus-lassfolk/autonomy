@@ -5,6 +5,10 @@
 #include <time.h>
 #include <math.h>
 
+// Forward declarations for static functions
+static int get_priority_rate_limit(const adaptive_rate_limiter_t* limiter, notification_priority_t priority);
+static int get_priority_cooldown(const adaptive_rate_limiter_t* limiter, notification_priority_t priority);
+
 // Initialize rate limiter
 int adaptive_rate_limiter_init(adaptive_rate_limiter_t* limiter, const rate_limiter_config_t* config) {
     if (!limiter || !config) {
@@ -141,7 +145,7 @@ void adaptive_rate_limiter_adjust_rate(adaptive_rate_limiter_t* limiter, bool su
 }
 
 // Get priority-specific rate limit
-static int get_priority_rate_limit(adaptive_rate_limiter_t* limiter, notification_priority_t priority) {
+static int get_priority_rate_limit(const adaptive_rate_limiter_t* limiter, notification_priority_t priority) {
     if (!limiter) return 1;
     
     switch (priority) {
@@ -161,7 +165,7 @@ static int get_priority_rate_limit(adaptive_rate_limiter_t* limiter, notificatio
 }
 
 // Get priority-specific cooldown period
-static int get_priority_cooldown(adaptive_rate_limiter_t* limiter, notification_priority_t priority) {
+static int get_priority_cooldown(const adaptive_rate_limiter_t* limiter, notification_priority_t priority) {
     if (!limiter) return 60; // Default 1 minute
     
     switch (priority) {

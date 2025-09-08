@@ -138,9 +138,9 @@ void email_client_format_subject(email_client_t* client, const notification_even
     if (!client || !event || !subject) return;
     
     if (strlen(client->config.custom_subject_prefix) > 0) {
-        snprintf(subject, max_size, "%s %s", client->config.custom_subject_prefix, event->title);
+        snprintf(subject, max_size, "%.50s %.100s", client->config.custom_subject_prefix, event->title);
     } else {
-        snprintf(subject, max_size, "[autonomy] %s", event->title);
+        snprintf(subject, max_size, "[autonomy] %.100s", event->title);
     }
 }
 

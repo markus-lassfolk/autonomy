@@ -13,6 +13,7 @@
 // Comprehensive notification configuration
 typedef struct {
     // Global notification settings
+    bool enabled;
     bool notifications_enabled;
     time_t cooldown_period_seconds;
     time_t emergency_cooldown_seconds;
@@ -37,6 +38,11 @@ typedef struct {
     
     bool email_enabled;
     email_config_t email_config;
+    char email_smtp_server[256];
+    int email_smtp_port;
+    char email_username[128];
+    char email_password[128];
+    char email_recipients[512];
     
     bool slack_enabled;
     slack_config_t slack_config;
@@ -46,6 +52,12 @@ typedef struct {
     
     bool webhook_enabled;
     webhook_config_t webhook_config;
+    char webhook_url[512];
+    int webhook_timeout;
+    
+    bool telegram_enabled;
+    char telegram_bot_token[256];
+    char telegram_chat_id[128];
     
     bool sms_enabled;
     char sms_provider[128];
@@ -68,6 +80,11 @@ typedef struct {
     bool priority_optimization_enabled;
     bool delivery_optimization_enabled;
     bool acknowledgment_tracking_enabled;
+    
+    // Rate limiting settings
+    bool rate_limit_enabled;
+    int rate_limit_max_per_hour;
+    int rate_limit_max_per_day;
 } comprehensive_notification_config_t;
 
 // Configuration validation result

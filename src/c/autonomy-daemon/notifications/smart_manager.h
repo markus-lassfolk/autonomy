@@ -14,7 +14,7 @@ typedef struct {
     char timezone[64];
 } time_range_t;
 
-// Suppression rule
+// Smart suppression rule
 typedef struct {
     char id[64];
     char name[128];
@@ -27,7 +27,7 @@ typedef struct {
     int time_ranges_count;
     time_t created_at;
     time_t expires_at;
-} suppression_rule_t;
+} smart_suppression_rule_t;
 
 // Smart manager statistics
 typedef struct {
@@ -67,7 +67,7 @@ typedef struct {
     int history_count;
     
     // Suppression rules
-    suppression_rule_t* suppression_rules;
+    smart_suppression_rule_t* suppression_rules;
     int max_suppression_rules;
     int suppression_rules_count;
     
@@ -88,7 +88,7 @@ void smart_notification_manager_cleanup(void);
 int smart_notification_manager_send(const notification_event_t* event);
 
 // Add suppression rule
-int smart_notification_manager_add_suppression_rule(const suppression_rule_t* rule);
+int smart_notification_manager_add_suppression_rule(const smart_suppression_rule_t* rule);
 
 // Remove suppression rule
 int smart_notification_manager_remove_suppression_rule(const char* rule_id);

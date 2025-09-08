@@ -1,4 +1,5 @@
 #include "priority_queue.h"
+#include "../core/types.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

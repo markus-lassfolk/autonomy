@@ -204,7 +204,7 @@ int data_limit_notification_manager_notify_failover_to_limited(const char* from_
     
     // Generate ID
     time_t now = time(NULL);
-    snprintf(event.id, sizeof(event.id), "failover_%ld", now);
+    snprintf(event.id, sizeof(event.id), "failover_%lld", (long long)now);
     
     // Set priority based on usage
     if (data_limit->usage_percentage > 80) {
@@ -234,8 +234,7 @@ int data_limit_notification_manager_notify_failover_to_limited(const char* from_
     if (smart_notification_manager_is_initialized()) {
         return smart_notification_manager_send(&event);
     } else {
-        return notification_manager_send(event.type, event.title, event.message, 
-                                       event.priority, NULL);
+        return smart_notification_manager_send(&event); 
     }
 }
 
@@ -259,7 +258,7 @@ int data_limit_notification_manager_notify_failback_from_limited(const char* fro
     
     // Generate ID
     time_t now = time(NULL);
-    snprintf(event.id, sizeof(event.id), "failback_%ld", now);
+    snprintf(event.id, sizeof(event.id), "failback_%lld", (long long)now);
     
     snprintf(event.title, sizeof(event.title), "✅ Failback to Unlimited Connection");
     snprintf(event.message, sizeof(event.message),
@@ -282,8 +281,7 @@ int data_limit_notification_manager_notify_failback_from_limited(const char* fro
     if (smart_notification_manager_is_initialized()) {
         return smart_notification_manager_send(&event);
     } else {
-        return notification_manager_send(event.type, event.title, event.message, 
-                                       event.priority, NULL);
+        return smart_notification_manager_send(&event); 
     }
 }
 
@@ -325,7 +323,7 @@ int data_limit_notification_manager_notify_daily_usage_threshold(const char* int
     
     // Generate ID
     time_t now = time(NULL);
-    snprintf(event.id, sizeof(event.id), "daily_%s_%d_%ld", interface_name, percentage, now);
+    snprintf(event.id, sizeof(event.id), "daily_%s_%d_%lld", interface_name, percentage, (long long)now);
     
     if (percentage >= 100) {
         snprintf(event.title, sizeof(event.title), "🚨 Daily Data Limit Exceeded!");
@@ -362,8 +360,7 @@ int data_limit_notification_manager_notify_daily_usage_threshold(const char* int
     if (smart_notification_manager_is_initialized()) {
         return smart_notification_manager_send(&event);
     } else {
-        return notification_manager_send(event.type, event.title, event.message, 
-                                       event.priority, NULL);
+        return smart_notification_manager_send(&event); 
     }
 }
 
@@ -417,7 +414,7 @@ int data_limit_notification_manager_notify_monthly_usage_threshold(const char* i
     
     // Generate ID
     time_t now = time(NULL);
-    snprintf(event.id, sizeof(event.id), "monthly_%s_%.0f_%ld", interface_name, data_limit->usage_percentage, now);
+    snprintf(event.id, sizeof(event.id), "monthly_%s_%.0f_%lld", interface_name, data_limit->usage_percentage, (long long)now);
     
     strncpy(event.title, title, sizeof(event.title) - 1);
     
@@ -457,8 +454,7 @@ int data_limit_notification_manager_notify_monthly_usage_threshold(const char* i
     if (smart_notification_manager_is_initialized()) {
         return smart_notification_manager_send(&event);
     } else {
-        return notification_manager_send(event.type, event.title, event.message, 
-                                       event.priority, NULL);
+        return smart_notification_manager_send(&event); 
     }
 }
 
@@ -514,7 +510,7 @@ int data_limit_notification_manager_notify_unexpected_usage_spike(const char* in
     memset(&event, 0, sizeof(event));
     
     // Generate ID
-    snprintf(event.id, sizeof(event.id), "spike_%s_%ld", interface_name, now);
+    snprintf(event.id, sizeof(event.id), "spike_%s_%lld", interface_name, (long long)now);
     
     snprintf(event.title, sizeof(event.title), "📈 Unusual Data Usage Detected");
     snprintf(event.message, sizeof(event.message),
@@ -542,8 +538,7 @@ int data_limit_notification_manager_notify_unexpected_usage_spike(const char* in
     if (smart_notification_manager_is_initialized()) {
         return smart_notification_manager_send(&event);
     } else {
-        return notification_manager_send(event.type, event.title, event.message, 
-                                       event.priority, NULL);
+        return smart_notification_manager_send(&event); 
     }
 }
 
@@ -559,7 +554,7 @@ int data_limit_notification_manager_notify_data_limit_reset(const char* interfac
     
     // Generate ID
     time_t now = time(NULL);
-    snprintf(event.id, sizeof(event.id), "reset_%s_%ld", interface_name, now);
+    snprintf(event.id, sizeof(event.id), "reset_%s_%lld", interface_name, (long long)now);
     
     snprintf(event.title, sizeof(event.title), "🔄 Data Limit Reset");
     snprintf(event.message, sizeof(event.message),
@@ -601,8 +596,7 @@ int data_limit_notification_manager_notify_data_limit_reset(const char* interfac
     if (smart_notification_manager_is_initialized()) {
         return smart_notification_manager_send(&event);
     } else {
-        return notification_manager_send(event.type, event.title, event.message, 
-                                       event.priority, NULL);
+        return smart_notification_manager_send(&event); 
     }
 }
 

@@ -7,6 +7,33 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
+#include <stdint.h>
+
+// Intelligence action types
+typedef enum {
+    INTELLIGENCE_ACTION_HEALTH_DECLINE,
+    INTELLIGENCE_ACTION_NETWORK_DEGRADED,
+    INTELLIGENCE_ACTION_GPS_DEGRADED
+} intelligence_action_t;
+
+// Delivery record for tracking channel effectiveness
+typedef struct {
+    time_t timestamp;
+    bool success;
+    int response_time_ms;
+} delivery_record_t;
+
+// Notification channel effectiveness tracking structure
+typedef struct {
+    char name[64];
+    delivery_record_t delivery_history[10]; // Fixed size for simplicity
+    int delivery_history_count;
+    double effectiveness_score;
+    int total_attempts;
+    int successful_deliveries;
+    int failed_deliveries;
+    time_t last_effectiveness_update;
+} notification_channel_effectiveness_t;
 
 // Intelligence metrics
 typedef struct {
@@ -21,6 +48,17 @@ typedef struct {
     uint64_t learning_iterations;
     double model_accuracy;
     double prediction_confidence;
+    double system_health_score;
+    double network_health_score;
+    double gps_health_score;
+    uint64_t total_predictions;
+    uint64_t successful_predictions;
+    uint64_t recent_predictions;
+    uint64_t recent_successful_predictions;
+    uint64_t total_notifications;
+    uint64_t optimized_deliveries;
+    uint64_t total_analyzed_deliveries;
+    uint64_t intelligent_actions_triggered;
     time_t last_updated;
 } intelligence_metrics_t;
 
@@ -101,6 +139,13 @@ typedef struct {
     // Thread management
     pthread_t intelligence_thread;
     bool thread_running;
+    
+    // System state
+    system_state_t current_system_state;
+    
+    // Channel effectiveness tracking
+    notification_channel_effectiveness_t* channels;
+    int channel_count;
     
     // Mutex for thread safety
     pthread_mutex_t* mutex;

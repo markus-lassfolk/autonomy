@@ -245,7 +245,7 @@ int event_builder_create_failback_event(event_builder_t* builder,
     strncpy(event->message, message_buffer, sizeof(event->message) - 1);
     
     // Set other fields
-    event->type = NOTIFICATION_TYPE_NETWORK_ISSUE;
+    event->type = NOTIFICATION_TYPE_CRITICAL_ERROR;
     event->priority = NOTIFICATION_PRIORITY_NORMAL;
     event->timestamp = now;
     
@@ -310,7 +310,7 @@ int event_builder_create_member_down_event(event_builder_t* builder,
     strncpy(event->message, message_buffer, sizeof(event->message) - 1);
     
     // Set other fields
-    event->type = NOTIFICATION_TYPE_NETWORK_ISSUE;
+    event->type = NOTIFICATION_TYPE_CRITICAL_ERROR;
     event->priority = NOTIFICATION_PRIORITY_HIGH;
     event->timestamp = now;
     strncpy(event->member_name, member->name, sizeof(event->member_name) - 1);
@@ -369,7 +369,7 @@ int event_builder_create_member_up_event(event_builder_t* builder,
     strncpy(event->message, message_buffer, sizeof(event->message) - 1);
     
     // Set other fields
-    event->type = NOTIFICATION_TYPE_NETWORK_ISSUE;
+    event->type = NOTIFICATION_TYPE_CRITICAL_ERROR;
     event->priority = NOTIFICATION_PRIORITY_NORMAL;
     event->timestamp = now;
     strncpy(event->member_name, member->name, sizeof(event->member_name) - 1);

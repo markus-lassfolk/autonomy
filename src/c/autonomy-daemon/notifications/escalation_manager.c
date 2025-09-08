@@ -1,6 +1,8 @@
 #include "escalation_manager.h"
 #include "smart_manager.h"
 #include "emergency_detector.h"
+#include "notification_manager.h"
+#include "../core/types.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -256,10 +258,10 @@ static char* create_escalation_message(escalation_chain_t* chain, escalation_con
              "📋 Incident Details:\n"
              "• Incident ID: %s\n"
              "• Alert Type: %s\n"
-             "• Duration: %ld seconds\n"
+             "• Duration: %lld seconds\n"
              "• Escalation Level: %d/%d\n\n"
              "👤 Escalated To: %s\n"
-             "⏰ Response Required Within: %ld seconds\n\n"
+             "⏰ Response Required Within: %lld seconds\n\n"
              "🔍 Context:\n"
              "• Started: %s"
              "• Previous levels contacted: %d\n"
@@ -318,7 +320,7 @@ static void send_escalation_notification(escalation_chain_t* chain, int level) {
     notification_event_t event;
     memset(&event, 0, sizeof(event));
     
-    snprintf(event.id, sizeof(event.id), "esc_%s_%d_%ld", chain->id, level, now);
+    snprintf(event.id, sizeof(event.id), "esc_%.30s_%d_%lld", chain->id, level, now);
     snprintf(event.title, sizeof(event.title), "🚨 ESCALATION LEVEL %d: %s", 
              level, notification_type_to_string(chain->alert_type));
     
@@ -470,7 +472,7 @@ int escalation_manager_trigger_emergency_escalation(const char* incident_id,
     escalation_chain_t* chain = &g_escalation_manager.active_escalations[index];
     
     time_t now = time(NULL);
-    snprintf(chain->id, sizeof(chain->id), "esc_%s_%ld", incident_id, now);
+    snprintf(chain->id, sizeof(chain->id), "esc_%s_%lld", incident_id, now);
     strncpy(chain->incident_id, incident_id, sizeof(chain->incident_id) - 1);
     chain->alert_type = alert_type;
     chain->start_time = now;

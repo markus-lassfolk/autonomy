@@ -697,6 +697,36 @@ typedef struct {
 } autonomy_config_t;
 
 
+// Forward declarations for system state components
+typedef struct {
+    double cpu_usage;
+    double memory_usage;
+    double temperature;
+    double disk_usage;
+    time_t timestamp;
+} system_health_state_t;
+
+typedef struct {
+    bool primary_interface_up;
+    int backup_interfaces_up;
+    int total_interfaces;
+    double average_packet_loss;
+    double average_latency;
+} network_health_state_t;
+
+// System state structure
+typedef struct {
+    system_health_state_t system_health;
+    network_health_state_t network_health;
+    int state_change_count;
+    double overall_health_score;
+    double network_health_score;
+    double gps_health_score;
+    bool user_presence_detected;
+    bool maintenance_mode;
+    time_t timestamp;
+} system_state_t;
+
 // Function declarations
 void log_message(log_level_t level, const char *format, ...);
 

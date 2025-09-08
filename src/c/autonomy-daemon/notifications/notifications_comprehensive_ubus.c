@@ -7,6 +7,9 @@
 #include <string.h>
 #include <time.h>
 
+// Define missing constants
+// AUTONOMY_SUCCESS and AUTONOMY_ERROR are already defined in core/types.h
+
 // UBUS parameter policies
 enum {
     NOTIF_SEND_TYPE,

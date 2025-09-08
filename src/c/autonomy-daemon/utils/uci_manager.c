@@ -82,15 +82,15 @@ int uci_manager_init(void) {
         return AUTONOMY_SUCCESS;
     }
     
-    // Use Teltonika's UCI initialization
-    g_uci_ctx = uci_init();
+    // Use standard OpenWrt UCI initialization
+    g_uci_ctx = uci_alloc_context();
     if (!g_uci_ctx) {
-        LOGX_ERROR_MSG("Failed to initialize UCI context using Teltonika library");
+        LOGX_ERROR_MSG("Failed to initialize UCI context using standard OpenWrt library");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     g_uci_initialized = true; // Use configurable setting // Use configurable setting
-    LOGX_INFO_MSG("UCI manager initialized successfully using Teltonika libtlt_uci");
+    LOGX_INFO_MSG("UCI manager initialized successfully using standard OpenWrt UCI");
     
     return AUTONOMY_SUCCESS;
 }

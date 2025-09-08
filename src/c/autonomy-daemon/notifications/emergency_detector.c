@@ -1,4 +1,5 @@
 #include "emergency_detector.h"
+#include "../core/types.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

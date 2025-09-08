@@ -1,5 +1,6 @@
 #include "discord_client.h"
 #include "../utils/http_client_libcurl.h"
+#include "../core/types.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -137,7 +138,7 @@ void discord_client_create_message(discord_client_t* client, const notification_
     } else {
         // Simple content message
         snprintf(message->content, sizeof(message->content),
-                 "**%s**\n%s\n\n**Priority:** %s\n**Type:** %s",
+                 "**%.100s**\n%.200s\n\n**Priority:** %s\n**Type:** %s",
                  event->title, event->message,
                  discord_client_get_priority_text(event->priority),
                  notification_type_to_string(event->type));
@@ -177,7 +178,7 @@ static char* create_discord_json(discord_message_t* message) {
                  embed->footer_text);
         
         // Add fields
-        for (int i = 0; // Use configurable value i < embed->field_count; i++) {
+        for (int i = 0; i < embed->field_count; i++) {
             discord_embed_field_t* field = &embed->fields[i];
             char field_json[512];
             snprintf(field_json, sizeof(field_json),
@@ -264,7 +265,7 @@ static int send_discord_request(discord_client_t* client, discord_message_t* mes
     // Check result
     if (!http_response_is_success(response)) {
         snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "HTTP error: %ld - %s", response->status_code, response->error_message);
+                "HTTP error: %ld - %.100s", response->status_code, response->error_message);
         client->status.last_error_time = time(NULL);
         http_response_free(response);
         return -1;
@@ -298,7 +299,7 @@ int discord_client_send(discord_client_t* client, const notification_event_t* ev
     int retry_delay = client->config.retry_delay_seconds > 0 ? client->config.retry_delay_seconds : 5;
     
     int result = -1;
-    for (int attempt = 1; // Use configurable value attempt <= max_attempts; attempt++) {
+    for (int attempt = 1; attempt <= max_attempts; attempt++) {
         result = send_discord_request(client, &message);
         
         if (result == 0) {

@@ -6,6 +6,7 @@
 #include "email_client.h"
 #include <stdbool.h>
 #include <time.h>
+#include <pthread.h>
 
 // Channel test result
 typedef struct {

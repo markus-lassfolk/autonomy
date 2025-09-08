@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include <limits.h>
 
 // Initialize notification statistics
 int notification_statistics_init(notification_statistics_t* stats) {
@@ -242,23 +243,23 @@ void notification_statistics_get_summary(notification_statistics_t* stats, char*
     
     snprintf(summary_json, max_size,
              "{"
-             "\"total_sent\":%lu,"
-             "\"total_failed\":%lu,"
-             "\"total_suppressed\":%lu,"
-             "\"total_deduped\":%lu,"
-             "\"rate_limited\":%lu,"
-             "\"adaptive_adjustments\":%lu,"
+             "\"total_sent\":%llu,"
+             "\"total_failed\":%llu,"
+             "\"total_suppressed\":%llu,"
+             "\"total_deduped\":%llu,"
+             "\"rate_limited\":%llu,"
+             "\"adaptive_adjustments\":%llu,"
              "\"success_rate\":%.3f,"
-             "\"last_hour\":%lu,"
-             "\"last_day\":%lu,"
-             "\"last_week\":%lu,"
-             "\"last_month\":%lu,"
-             "\"average_latency_ms\":%ld,"
-             "\"max_latency_ms\":%ld,"
-             "\"min_latency_ms\":%ld,"
-             "\"latency_samples\":%lu,"
-             "\"last_updated\":%ld,"
-             "\"created_at\":%ld"
+             "\"last_hour\":%llu,"
+             "\"last_day\":%llu,"
+             "\"last_week\":%llu,"
+             "\"last_month\":%llu,"
+             "\"average_latency_ms\":%lld,"
+             "\"max_latency_ms\":%lld,"
+             "\"min_latency_ms\":%lld,"
+             "\"latency_samples\":%llu,"
+             "\"last_updated\":%lld,"
+             "\"created_at\":%lld"
              "}",
              stats->total_sent,
              stats->total_failed,

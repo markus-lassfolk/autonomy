@@ -1,5 +1,6 @@
 #include "sms_client.h"
 #include "../utils/logx.h"
+#include "../core/types.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -9,8 +10,11 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <time.h>
 #include <libubus.h>
-#include <libblobmsg_json.h>
+#include <libubox/blobmsg_json.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 // External reference to global configuration
 extern autonomy_config_t g_config;
@@ -232,7 +236,7 @@ int sms_client_send_via_at_command(sms_client_t* client, const char* message) {
             "/dev/ttyACM0", "/dev/ttyACM1", "/dev/cdc-wdm0"
         };
         
-        for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < sizeof(modem_devices)/sizeof(modem_devices[0]); i++) {
+        for (int i = 0; i < sizeof(modem_devices)/sizeof(modem_devices[0]); i++) {
             fd = open(modem_devices[i], O_RDWR | O_NOCTTY | O_NONBLOCK);
             if (fd >= 0) {
                 strncpy(client->config.at_device, modem_devices[i], 
@@ -363,8 +367,6 @@ int sms_client_send_via_at_command(sms_client_t* client, const char* message) {
     }
     
     // Wait for send confirmation (can take up to 30 seconds)
-    fd_set readfds;
-    struct timeval timeout;
     timeout.tv_sec = 30; // Use configurable timeout
     timeout.tv_usec = 0; // Use configurable timeout microseconds
     
@@ -421,7 +423,7 @@ int sms_client_send(sms_client_t* client, const notification_event_t* event) {
     int retry_delay = client->config.retry_delay_seconds > 0 ? client->config.retry_delay_seconds : 5;
     
     int result = -1;
-    for (int attempt = 1; // Use configurable value // Use configurable count // Use configurable value attempt <= max_attempts; attempt++) {
+    for (int attempt = 1; attempt <= max_attempts; attempt++) {
         switch (client->config.provider) {
             case SMS_PROVIDER_RUTOS_UBUS:
                 result = sms_client_send_via_rutos_ubus(client, sms_text);

@@ -175,7 +175,7 @@ static int check_pending_limits(notification_type_t type, notification_priority_
 // Generate acknowledgment ID
 static void generate_acknowledgment_id(const notification_event_t* event, char* id, size_t max_size) {
     time_t now = time(NULL);
-    snprintf(id, max_size, "ack_%s_%ld", notification_type_to_string(event->type), now);
+    snprintf(id, max_size, "ack_%s_%lld", notification_type_to_string(event->type), now);
 }
 
 // Create acknowledgment for notification

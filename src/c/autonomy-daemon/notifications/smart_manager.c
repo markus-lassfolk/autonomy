@@ -3,6 +3,7 @@
 #include "priority_queue.h"
 #include "adaptive_rate_limiter.h"
 #include "notification_deduplicator.h"
+#include "../core/types.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -57,7 +58,7 @@ int smart_notification_manager_init(const smart_manager_config_t* config) {
     g_smart_manager.history_count = 0;
     
     // Initialize suppression rules
-    g_smart_manager.suppression_rules = malloc(config->max_suppression_rules * sizeof(suppression_rule_t));
+    g_smart_manager.suppression_rules = malloc(config->max_suppression_rules * sizeof(smart_suppression_rule_t));
     if (!g_smart_manager.suppression_rules) {
         free(g_smart_manager.notification_history);
         pthread_mutex_destroy(g_smart_manager.mutex);
@@ -123,7 +124,7 @@ static bool should_suppress_notification(const notification_event_t* event) {
     
     // Check each suppression rule
     for (int i = 0; i < g_smart_manager.suppression_rules_count; i++) {
-        suppression_rule_t* rule = &g_smart_manager.suppression_rules[i];
+        smart_suppression_rule_t* rule = &g_smart_manager.suppression_rules[i];
         
         if (!rule->enabled) continue;
         
@@ -231,10 +232,9 @@ static bool should_suppress_low_priority_today(void) {
     const char* day_names[] = {"sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"};
     const char* current_day_name = day_names[current_day];
     
-    for (int i = 0; i < config->suppress_low_priority_days_count; i++) {
-        if (strcasecmp(config->suppress_low_priority_days[i], current_day_name) == 0) {
-            return true;
-        }
+    // Check if current day is in the suppress_low_priority_days string
+    if (strstr(config->suppress_low_priority_days, current_day_name) != NULL) {
+        return true;
     }
     
     return false;
@@ -308,14 +308,40 @@ int smart_notification_manager_send(const notification_event_t* event) {
         
         if (g_smart_manager.history_count < g_smart_manager.max_history_size) {
             int index = g_smart_manager.history_count;
-            g_smart_manager.notification_history[index] = *event;
+            // Convert notification_event_t to notification_record_t
+            notification_record_t* record = &g_smart_manager.notification_history[index];
+            strncpy(record->id, event->id, sizeof(record->id) - 1);
+            record->id[sizeof(record->id) - 1] = '\0';
+            record->type = event->type;
+            record->priority = event->priority;
+            strncpy(record->title, event->title, sizeof(record->title) - 1);
+            record->title[sizeof(record->title) - 1] = '\0';
+            strncpy(record->message, event->message, sizeof(record->message) - 1);
+            record->message[sizeof(record->message) - 1] = '\0';
+            record->timestamp = event->timestamp;
+            record->success = true; // Assume success for now
+            record->suppressed = false;
+            record->escalated = false;
             g_smart_manager.history_count++;
         } else {
             // Shift history and add at end
             for (int i = 0; i < g_smart_manager.max_history_size - 1; i++) {
                 g_smart_manager.notification_history[i] = g_smart_manager.notification_history[i + 1];
             }
-            g_smart_manager.notification_history[g_smart_manager.max_history_size - 1] = *event;
+            // Convert notification_event_t to notification_record_t for last position
+            notification_record_t* record = &g_smart_manager.notification_history[g_smart_manager.max_history_size - 1];
+            strncpy(record->id, event->id, sizeof(record->id) - 1);
+            record->id[sizeof(record->id) - 1] = '\0';
+            record->type = event->type;
+            record->priority = event->priority;
+            strncpy(record->title, event->title, sizeof(record->title) - 1);
+            record->title[sizeof(record->title) - 1] = '\0';
+            strncpy(record->message, event->message, sizeof(record->message) - 1);
+            record->message[sizeof(record->message) - 1] = '\0';
+            record->timestamp = event->timestamp;
+            record->success = true; // Assume success for now
+            record->suppressed = false;
+            record->escalated = false;
         }
         
         pthread_mutex_unlock(g_smart_manager.mutex);
@@ -349,7 +375,7 @@ int smart_notification_manager_send(const notification_event_t* event) {
 }
 
 // Add suppression rule
-int smart_notification_manager_add_suppression_rule(const suppression_rule_t* rule) {
+int smart_notification_manager_add_suppression_rule(const smart_suppression_rule_t* rule) {
     if (!g_smart_manager_initialized || !rule) {
         return -1;
     }

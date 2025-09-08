@@ -7,11 +7,7 @@
 #include "acknowledgment_tracker.h"
 #include "delivery_optimizer.h"
 
-// Forward declarations for types that may not exist yet
-typedef struct smart_notification_manager smart_notification_manager_t;
-typedef struct intelligence_engine intelligence_engine_t;
-typedef struct acknowledgment_tracker acknowledgment_tracker_t;
-typedef struct delivery_optimizer delivery_optimizer_t;
+// Types are already defined in the included headers
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
@@ -201,6 +197,26 @@ typedef struct {
     bool slack_enabled;                    // Enable Slack
     bool discord_enabled;                  // Enable Discord
     bool telegram_enabled;                 // Enable Telegram
+    
+    // Email configuration
+    char email_smtp_server[256];           // SMTP server
+    int email_smtp_port;                   // SMTP port
+    char email_username[128];              // Email username
+    char email_password[128];              // Email password
+    char email_recipients[512];            // Email recipients
+    
+    // Telegram configuration
+    char telegram_bot_token[128];          // Telegram bot token
+    char telegram_chat_id[64];             // Telegram chat ID
+    
+    // Webhook configuration
+    char webhook_url[512];                 // Webhook URL
+    int webhook_timeout;                   // Webhook timeout
+    
+    // Rate limiting
+    bool rate_limit_enabled;               // Enable rate limiting
+    int rate_limit_max_per_hour;           // Max per hour
+    int rate_limit_max_per_day;            // Max per day
     
     // Quality thresholds
     double min_delivery_confidence;        // Minimum delivery confidence

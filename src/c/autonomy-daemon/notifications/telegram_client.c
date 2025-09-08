@@ -1,5 +1,7 @@
 #include "telegram_client.h"
 #include "../utils/http_client_libcurl.h"
+#include "../core/types.h"
+#include <curl/curl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -284,7 +286,7 @@ static int send_telegram_request(telegram_client_t* client, telegram_message_t* 
     // Check HTTP result
     if (!http_response_is_success(response)) {
         snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "HTTP error: %ld - %s", response->status_code, response->error_message);
+                "HTTP error: %ld - %.100s", response->status_code, response->error_message);
         client->status.last_error_time = time(NULL);
         http_response_free(response);
         return -1;
@@ -350,7 +352,7 @@ int telegram_client_send(telegram_client_t* client, const notification_event_t* 
     int retry_delay = client->config.retry_delay_seconds > 0 ? client->config.retry_delay_seconds : 5;
     
     int result = -1;
-    for (int attempt = 1; // Use configurable value attempt <= max_attempts; attempt++) {
+    for (int attempt = 1; attempt <= max_attempts; attempt++) {
         result = send_telegram_request(client, &message);
         
         if (result == 0) {

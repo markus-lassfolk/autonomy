@@ -1,9 +1,12 @@
 #include "webhook_client.h"
 #include "../utils/http_client_libcurl.h"
+#include "../core/types.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
+#include <curl/curl.h>
 #include <json-c/json.h>
 
 // External reference to global configuration
@@ -59,10 +62,10 @@ bool webhook_client_should_send(webhook_client_t* client, const notification_eve
     
     // Check priority filter
     if (client->config.priority_filter_count > 0) {
-        bool priority_allowed = false; // Use configurable setting
-        for (int i = 0; // Use configurable value i < client->config.priority_filter_count; i++) {
+        bool priority_allowed = false;
+        for (int i = 0; i < client->config.priority_filter_count; i++) {
             if (client->config.priority_filter[i] == event->priority) {
-                priority_allowed = true; // Use configurable setting
+                priority_allowed = true;
                 break;
             }
         }
@@ -73,10 +76,10 @@ bool webhook_client_should_send(webhook_client_t* client, const notification_eve
     
     // Check type filter
     if (client->config.type_filter_count > 0) {
-        bool type_allowed = false; // Use configurable setting
-        for (int i = 0; // Use configurable value i < client->config.type_filter_count; i++) {
+        bool type_allowed = false;
+        for (int i = 0; i < client->config.type_filter_count; i++) {
             if (client->config.type_filter[i] == event->type) {
-                type_allowed = true; // Use configurable setting
+                type_allowed = true;
                 break;
             }
         }
@@ -266,7 +269,8 @@ static int send_webhook_request(webhook_client_t* client, const char* payload_da
     // Check result
     if (!http_response_is_success(response)) {
         snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "HTTP error: %ld - %s", response->status_code, response->error_message);
+                "HTTP error: %ld - %.200s", response->status_code, 
+                response->error_message ? response->error_message : "Unknown error");
         client->status.last_error_time = time(NULL);
         http_response_free(response);
         return -1;
@@ -305,7 +309,7 @@ int webhook_client_send(webhook_client_t* client, const notification_event_t* ev
     int retry_delay = client->config.retry_delay_seconds > 0 ? client->config.retry_delay_seconds : 5;
     
     int result = -1;
-    for (int attempt = 1; // Use configurable value attempt <= max_attempts; attempt++) {
+    for (int attempt = 1; attempt <= max_attempts; attempt++) {
         result = send_webhook_request(client, json_payload);
         
         if (result == 0) {

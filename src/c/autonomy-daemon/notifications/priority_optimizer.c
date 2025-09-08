@@ -326,7 +326,7 @@ static double calculate_business_impact_score(notification_type_t alert_type, co
     // Alert type specific business impact
     switch (alert_type) {
         case NOTIFICATION_TYPE_FAILOVER:
-        case NOTIFICATION_TYPE_NETWORK_ISSUE:
+        case NOTIFICATION_TYPE_CRITICAL_ERROR:
             score += 0.2; // Network issues have business impact
             break;
         case NOTIFICATION_TYPE_SYSTEM_HEALTH:

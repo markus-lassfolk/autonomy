@@ -2,6 +2,7 @@
 #define EMERGENCY_DETECTOR_H
 
 #include "notification_types.h"
+#include "../core/types.h"
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
@@ -15,23 +16,7 @@ typedef enum {
     EMERGENCY_LEVEL_CRITICAL
 } emergency_level_t;
 
-// System health state
-typedef struct {
-    double cpu_usage;
-    double memory_usage;
-    double temperature;
-    double disk_usage;
-    time_t timestamp;
-} system_health_state_t;
-
-// Network health state
-typedef struct {
-    bool primary_interface_up;
-    int backup_interfaces_up;
-    int total_interfaces;
-    double average_packet_loss;
-    double average_latency;
-} network_health_state_t;
+// System health and network health state types are now defined in core/types.h
 
 // Active incident
 typedef struct {
@@ -50,12 +35,7 @@ typedef struct {
     int severity;
 } failure_record_t;
 
-// System state
-typedef struct {
-    system_health_state_t system_health;
-    network_health_state_t network_health;
-    int state_change_count;
-} system_state_t;
+// System state is now defined in core/types.h
 
 // Emergency thresholds
 typedef struct {
