@@ -45,12 +45,12 @@ static char* generate_unique_id(notification_type_t type, time_t timestamp);
 // Initialize comprehensive notifications system
 int notifications_comprehensive_init(const comprehensive_notification_config_t* config) {
     if (g_notifications_comprehensive_initialized) {
-        LOGX_WARN("Comprehensive notifications already initialized");
+        LOGX_WARN_MSG_MSG("Comprehensive notifications already initialized");
         return AUTONOMY_SUCCESS;
     }
     
     if (!config) {
-        LOGX_ERROR("Comprehensive notifications config is NULL");
+        LOGX_ERROR_MSG_MSG("Comprehensive notifications config is NULL");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
@@ -59,7 +59,7 @@ int notifications_comprehensive_init(const comprehensive_notification_config_t* 
     
     // Initialize mutex
     if (pthread_mutex_init(&g_notifications_comprehensive.mutex, NULL) != 0) {
-        LOGX_ERROR("Failed to initialize comprehensive notifications mutex");
+        LOGX_ERROR_MSG("Failed to initialize comprehensive notifications mutex");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -68,7 +68,7 @@ int notifications_comprehensive_init(const comprehensive_notification_config_t* 
     g_notifications_comprehensive.records = calloc(g_notifications_comprehensive.max_records,
                                                    sizeof(comprehensive_notification_record_t));
     if (!g_notifications_comprehensive.records) {
-        LOGX_ERROR("Failed to allocate memory for notification records");
+        LOGX_ERROR_MSG("Failed to allocate memory for notification records");
         pthread_mutex_destroy(&g_notifications_comprehensive.mutex);
         return AUTONOMY_ERROR_SYSTEM;
     }
@@ -80,7 +80,7 @@ int notifications_comprehensive_init(const comprehensive_notification_config_t* 
     g_notifications_comprehensive.delivery_times = calloc(g_notifications_comprehensive.max_samples,
                                                          sizeof(double));
     if (!g_notifications_comprehensive.processing_times || !g_notifications_comprehensive.delivery_times) {
-        LOGX_ERROR("Failed to allocate memory for performance samples");
+        LOGX_ERROR_MSG("Failed to allocate memory for performance samples");
         free(g_notifications_comprehensive.records);
         pthread_mutex_destroy(&g_notifications_comprehensive.mutex);
         return AUTONOMY_ERROR_SYSTEM;
@@ -104,7 +104,7 @@ int notifications_comprehensive_init(const comprehensive_notification_config_t* 
         };
         
         if (smart_notification_manager_init(&smart_config) != 0) {
-            LOGX_ERROR("Failed to initialize smart notification manager");
+            LOGX_ERROR_MSG("Failed to initialize smart notification manager");
             free(g_notifications_comprehensive.records);
             free(g_notifications_comprehensive.processing_times);
             free(g_notifications_comprehensive.delivery_times);
@@ -125,7 +125,7 @@ int notifications_comprehensive_init(const comprehensive_notification_config_t* 
             };
             
             if (intelligence_engine_init(&intelligence_config) != 0) {
-                LOGX_WARN("Failed to initialize intelligence engine");
+                LOGX_WARN_MSG("Failed to initialize intelligence engine");
                 // Continue without intelligence
             }
         }
@@ -135,7 +135,7 @@ int notifications_comprehensive_init(const comprehensive_notification_config_t* 
         
         if (pthread_create(&g_notifications_comprehensive.processing_thread, NULL, 
                           processing_thread_worker, NULL) != 0) {
-            LOGX_ERROR("Failed to create notifications processing thread");
+            LOGX_ERROR_MSG("Failed to create notifications processing thread");
             smart_notification_manager_cleanup();
             free(g_notifications_comprehensive.records);
             free(g_notifications_comprehensive.processing_times);
@@ -146,7 +146,7 @@ int notifications_comprehensive_init(const comprehensive_notification_config_t* 
         
         if (pthread_create(&g_notifications_comprehensive.analytics_thread, NULL, 
                           analytics_thread_worker, NULL) != 0) {
-            LOGX_ERROR("Failed to create notifications analytics thread");
+            LOGX_ERROR_MSG("Failed to create notifications analytics thread");
             g_notifications_comprehensive.threads_running = false;
             pthread_cancel(g_notifications_comprehensive.processing_thread);
             pthread_join(g_notifications_comprehensive.processing_thread, NULL);
@@ -161,7 +161,7 @@ int notifications_comprehensive_init(const comprehensive_notification_config_t* 
     
     g_notifications_comprehensive_initialized = true; // Use configurable setting
     
-    LOGX_INFO("Comprehensive notifications system initialized",
+    LOGX_INFO_MSG("Comprehensive notifications system initialized",
               "enabled", config->enabled,
               "intelligence", config->intelligence_enabled,
               "acknowledgment_tracking", config->acknowledgment_tracking_enabled,
@@ -201,7 +201,7 @@ void notifications_comprehensive_cleanup(void) {
     
     g_notifications_comprehensive_initialized = false; // Use configurable setting
     
-    LOGX_INFO("Comprehensive notifications system cleaned up");
+    LOGX_INFO_MSG("Comprehensive notifications system cleaned up");
 }
 
 // Send comprehensive notification with full intelligence and tracking
@@ -260,7 +260,7 @@ const char* notifications_comprehensive_send(notification_type_t type,
         record->suppressed = true;
         g_notifications_comprehensive.stats.suppressed_notifications++;
         
-        LOGX_DEBUG("Notification suppressed by rules",
+        LOGX_DEBUG_MSG("Notification suppressed by rules",
                   "id", record->id,
                   "type", notification_type_to_string(type),
                   "priority", notification_priority_to_string(priority));
@@ -279,7 +279,7 @@ const char* notifications_comprehensive_send(notification_type_t type,
             record->priority_optimized = true;
             g_notifications_comprehensive.stats.priority_optimizations++;
             
-            LOGX_DEBUG("Notification priority optimized",
+            LOGX_DEBUG_MSG("Notification priority optimized",
                       "id", record->id,
                       "original_priority", notification_priority_to_string(priority),
                       "optimized_priority", notification_priority_to_string(optimized_priority));
@@ -309,7 +309,7 @@ const char* notifications_comprehensive_send(notification_type_t type,
         record->sent_at = time(NULL);
         g_notifications_comprehensive.stats.successful_notifications++;
         
-        LOGX_INFO("Comprehensive notification sent successfully",
+        LOGX_INFO_MSG("Comprehensive notification sent successfully",
                  "id", record->id,
                  "type", notification_type_to_string(type),
                  "priority", notification_priority_to_string(record->priority),
@@ -319,7 +319,7 @@ const char* notifications_comprehensive_send(notification_type_t type,
         record->status = NOTIFICATION_DELIVERY_FAILED;
         g_notifications_comprehensive.stats.failed_notifications++;
         
-        LOGX_ERROR("Comprehensive notification failed",
+        LOGX_ERROR_MSG("Comprehensive notification failed",
                   "id", record->id,
                   "error_code", delivery_result);
     }
@@ -618,7 +618,7 @@ static int send_to_all_selected_channels(const comprehensive_notification_record
     event.details_json[sizeof(event.details_json) - 1] = '\0';
     
     // Use existing notification manager to send
-    int result = notification_manager_send(event.type, event.title, event.message, NULL);
+    int result = notification_manager_send(event.type, event.title, event.message, event.priority, NULL);
     
     // Update channel delivery tracking based on configuration
     // This would be enhanced to track individual channel results
@@ -650,7 +650,7 @@ static char* generate_unique_id(notification_type_t type, time_t timestamp) {
 
 // Background processing thread
 static void* processing_thread_worker(void* arg) {
-    LOGX_INFO("Comprehensive notifications processing thread started");
+    LOGX_INFO_MSG("Comprehensive notifications processing thread started");
     
     while (g_notifications_comprehensive_initialized && g_notifications_comprehensive.threads_running) {
         sleep(30); // Process every 30 seconds
@@ -664,13 +664,13 @@ static void* processing_thread_worker(void* arg) {
         update_comprehensive_statistics();
     }
     
-    LOGX_INFO("Comprehensive notifications processing thread stopped");
+    LOGX_INFO_MSG("Comprehensive notifications processing thread stopped");
     return NULL;
 }
 
 // Background analytics thread
 static void* analytics_thread_worker(void* arg) {
-    LOGX_INFO("Comprehensive notifications analytics thread started");
+    LOGX_INFO_MSG("Comprehensive notifications analytics thread started");
     
     while (g_notifications_comprehensive_initialized && g_notifications_comprehensive.threads_running) {
         sleep(300); // Analyze every 5 minutes
@@ -692,10 +692,10 @@ static void* analytics_thread_worker(void* arg) {
         
         pthread_mutex_unlock(&g_notifications_comprehensive.mutex);
         
-        LOGX_DEBUG("Comprehensive notifications analytics updated");
+        LOGX_DEBUG_MSG("Comprehensive notifications analytics updated");
     }
     
-    LOGX_INFO("Comprehensive notifications analytics thread stopped");
+    LOGX_INFO_MSG("Comprehensive notifications analytics thread stopped");
     return NULL;
 }
 
