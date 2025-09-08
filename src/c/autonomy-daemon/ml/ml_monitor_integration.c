@@ -176,18 +176,35 @@ int ml_monitor_collect_observation(ml_monitor_t *monitor) {
     // Phase 3: Update with enhanced learning
     ml_monitor_update_with_phase3_enhancements(monitor, &observation);
     
+    // Phase 4: Update with ensemble methods and validation
+    ml_monitor_update_with_phase4_enhancements(monitor, &observation);
+    
     // Make predictions if we have enough data
     if (monitor->state->total_observations > 10) {
-        uint8_t knn_confidence;
-        uint8_t knn_prediction = ml_monitor_predict_outage_knn(monitor, &observation, &knn_confidence);
+        // Use advanced ensemble prediction (Phase 4)
+        uint8_t ensemble_probability, ensemble_confidence, ensemble_cause;
+        int ensemble_result = ml_monitor_predict_ensemble(monitor, &observation, 
+                                                        &ensemble_probability, 
+                                                        &ensemble_confidence, 
+                                                        &ensemble_cause);
         
-        uint8_t nn_output[8];
-        ml_monitor_predict_neural_network(monitor, &observation, nn_output);
-        
-        // Update ML features in observation
-        observation.outage_probability = nn_output[0];
-        observation.outage_type = knn_prediction;
-        observation.confidence = knn_confidence;
+        if (ensemble_result == ML_MONITOR_SUCCESS) {
+            // Update ML features with ensemble results
+            observation.outage_probability = ensemble_probability;
+            observation.outage_type = ensemble_cause;
+            observation.confidence = ensemble_confidence;
+        } else {
+            // Fallback to individual models
+            uint8_t knn_confidence;
+            uint8_t knn_prediction = ml_monitor_predict_outage_knn(monitor, &observation, &knn_confidence);
+            
+            uint8_t nn_output[8];
+            ml_monitor_predict_neural_network(monitor, &observation, nn_output);
+            
+            observation.outage_probability = nn_output[0];
+            observation.outage_type = knn_prediction;
+            observation.confidence = knn_confidence;
+        }
         
         // Check for high-confidence predictions
         if (knn_confidence > monitor->config.confidence_threshold && nn_output[0] > 150) {

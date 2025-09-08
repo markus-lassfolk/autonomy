@@ -236,13 +236,20 @@ int main(int argc, char **argv)
                 // Initialize Phase 3 enhancements
                 if (ml_monitor_init_phase3_enhancements(ml_monitor) == ML_MONITOR_SUCCESS) {
                     fprintf(stderr, "ML monitoring Phase 3 enhancements initialized\n");
+                    
+                    // Initialize Phase 4 enhancements
+                    if (ml_monitor_init_phase4_enhancements(ml_monitor) == ML_MONITOR_SUCCESS) {
+                        fprintf(stderr, "ML monitoring Phase 4 enhancements initialized\n");
+                    } else {
+                        fprintf(stderr, "ML monitoring Phase 4 initialization failed, using Phase 3 features\n");
+                    }
                 } else {
                     fprintf(stderr, "ML monitoring Phase 3 initialization failed, using Phase 2 features\n");
                 }
                 
                 // Auto-start ML monitoring if configured
                 if (ml_monitor_start(ml_monitor) == ML_MONITOR_SUCCESS) {
-                    fprintf(stderr, "ML monitoring started automatically with Phase 3 features\n");
+                    fprintf(stderr, "ML monitoring started automatically with Phase 4 features\n");
                 } else {
                     fprintf(stderr, "ML monitoring initialized but not started (manual start required)\n");
                 }
@@ -279,6 +286,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "ML monitoring methods: ml_monitor.status, ml_monitor.start, ml_monitor.stop, ml_monitor.restart\n");
     fprintf(stderr, "ML monitoring config: ml_monitor.get_config, ml_monitor.set_config\n");
     fprintf(stderr, "ML monitoring data: ml_monitor.get_predictions, ml_monitor.get_statistics, ml_monitor.reset_learning, ml_monitor.export_data\n");
+    fprintf(stderr, "ML monitoring Phase 4: ml_monitor.get_ensemble_status, ml_monitor.get_validation_metrics, ml_monitor.trigger_optimization\n");
     fprintf(stderr, "Daemon running, press Ctrl+C to stop\n");
     uloop_run();
 

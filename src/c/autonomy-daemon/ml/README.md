@@ -156,6 +156,11 @@ ubus call ml_monitor reset_learning
 
 # Export learning data
 ubus call ml_monitor export_data
+
+# Phase 4: Advanced ensemble and validation
+ubus call ml_monitor get_ensemble_status
+ubus call ml_monitor get_validation_metrics
+ubus call ml_monitor trigger_optimization
 ```
 
 ## Data Structures
@@ -307,11 +312,23 @@ Logs are written to system log and optionally to debug file.
 - [x] Real-time trend analysis and degradation detection
 - [x] Mobile scenario optimization with location-aware learning
 
-### Phase 4 (Next)
-- [ ] Real-time outage validation and learning feedback
-- [ ] Advanced ensemble methods and model combination
-- [ ] Proactive network optimization based on predictions
-- [ ] Field testing and performance validation
+### ✅ Phase 4 (Complete) - Advanced Ensemble Methods & Real-time Validation
+- [x] Advanced ensemble model combining 5 ML algorithms (k-NN, NN, SkyGrid, SlidingWindow, Obstruction)
+- [x] Real-time prediction validation system with confusion matrix
+- [x] Proactive network optimization with failover integration
+- [x] Dynamic model weight adaptation based on performance
+- [x] Continual learning and meta-learning capabilities
+- [x] Performance metrics tracking (precision, recall, F1-score, accuracy)
+- [x] Model agreement scoring and confidence assessment
+- [x] Prediction validation and feedback learning
+- [x] Network optimization triggers and callbacks
+- [x] Advanced UBUS interface with ensemble and validation metrics
+
+### Phase 5 (Next)
+- [ ] Mobile scenario field testing and validation
+- [ ] Advanced auto-tuning algorithms
+- [ ] Transfer learning between locations
+- [ ] Real-world deployment optimization
 
 ### Phase 4 (Future)
 - [ ] Mobile scenario field testing

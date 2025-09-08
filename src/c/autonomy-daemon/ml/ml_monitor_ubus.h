@@ -15,6 +15,9 @@
 #define ML_MONITOR_UBUS_METHOD_GET_STATISTICS   "get_statistics"
 #define ML_MONITOR_UBUS_METHOD_RESET_LEARNING   "reset_learning"
 #define ML_MONITOR_UBUS_METHOD_EXPORT_DATA      "export_data"
+#define ML_MONITOR_UBUS_METHOD_GET_ENSEMBLE     "get_ensemble_status"
+#define ML_MONITOR_UBUS_METHOD_GET_VALIDATION   "get_validation_metrics"
+#define ML_MONITOR_UBUS_METHOD_TRIGGER_OPTIMIZATION "trigger_optimization"
 
 // UBUS object name
 #define ML_MONITOR_UBUS_OBJECT "ml_monitor"
@@ -59,6 +62,19 @@ int ml_monitor_ubus_reset_learning(struct ubus_context *ctx, struct ubus_object 
 int ml_monitor_ubus_export_data(struct ubus_context *ctx, struct ubus_object *obj,
                                struct ubus_request_data *req, const char *method,
                                struct blob_attr *msg);
+
+// Phase 4 UBUS method handlers
+int ml_monitor_ubus_get_ensemble_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                       struct ubus_request_data *req, const char *method,
+                                       struct blob_attr *msg);
+
+int ml_monitor_ubus_get_validation_metrics(struct ubus_context *ctx, struct ubus_object *obj,
+                                          struct ubus_request_data *req, const char *method,
+                                          struct blob_attr *msg);
+
+int ml_monitor_ubus_trigger_optimization(struct ubus_context *ctx, struct ubus_object *obj,
+                                        struct ubus_request_data *req, const char *method,
+                                        struct blob_attr *msg);
 
 // UBUS initialization and cleanup
 int ml_monitor_ubus_init(struct ubus_context *ctx);

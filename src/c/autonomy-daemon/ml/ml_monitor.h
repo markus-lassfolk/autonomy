@@ -300,6 +300,21 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
 int ml_monitor_integrate_obstruction_analyzer(ml_monitor_t *monitor, const void *obstruction_map);
 int ml_monitor_sliding_window_analysis(ml_monitor_t *monitor, const ml_observation_t *observation);
 
+// Phase 4: Advanced Ensemble Methods & Real-time Validation
+int ml_monitor_init_phase4_enhancements(ml_monitor_t *monitor);
+int ml_monitor_update_with_phase4_enhancements(ml_monitor_t *monitor, const ml_observation_t *observation);
+int ml_monitor_predict_ensemble(ml_monitor_t *monitor, const ml_observation_t *observation,
+                               uint8_t *probability, uint8_t *confidence, uint8_t *cause);
+int ml_monitor_add_prediction_for_validation(ml_monitor_t *monitor, 
+                                           uint8_t probability, uint8_t confidence, 
+                                           uint8_t cause, time_t target_time);
+int ml_monitor_get_phase4_metrics(ml_monitor_t *monitor, 
+                                 double *ensemble_accuracy,
+                                 double *validation_precision,
+                                 double *validation_recall,
+                                 uint32_t *proactive_actions);
+int ml_monitor_trigger_proactive_optimization(ml_monitor_t *monitor, uint8_t probability, uint8_t confidence);
+
 // Learning algorithms
 int ml_monitor_update_sky_grid(ml_monitor_t *monitor, const ml_observation_t *observation);
 int ml_monitor_learn_pattern(ml_monitor_t *monitor, const ml_observation_t *observation, uint8_t actual_outcome);
