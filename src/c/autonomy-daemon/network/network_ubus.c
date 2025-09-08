@@ -179,6 +179,7 @@ int autonomy_network_interfaces_detailed(struct ubus_context *uctx, struct ubus_
         blobmsg_add_string(&bb, "operator", interfaces[i].operator);
         blobmsg_add_u32(&bb, "signal_strength", interfaces[i].signal_strength);
         blobmsg_add_string(&bb, "modem_id", interfaces[i].modem_id);
+        blobmsg_add_string(&bb, "cellular_device_path", interfaces[i].cellular_device_path);
         
         // WiFi info
         blobmsg_add_string(&bb, "ssid", interfaces[i].ssid);

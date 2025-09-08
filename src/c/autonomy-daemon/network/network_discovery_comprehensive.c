@@ -249,6 +249,9 @@ static void get_cellular_interface_details(struct ubus_context *ctx, network_int
         }
         blob_buf_free(&req);
     }
+    
+    // Dynamically detect cellular device path
+    detect_cellular_device_path(iface);
 }
 
 // Get WiFi information
@@ -382,6 +385,112 @@ static void get_friendly_names_from_uci(network_interface_t *interfaces, int cou
     uci_free_context(ctx);
 }
 
+// Dynamically detect cellular device path
+static void detect_cellular_device_path(network_interface_t *iface) {
+    if (!iface) return;
+    
+    // Common modem device paths to check
+    const char* modem_devices[] = {
+        "/dev/ttyUSB0", "/dev/ttyUSB1", "/dev/ttyUSB2", "/dev/ttyUSB3",
+        "/dev/ttyACM0", "/dev/ttyACM1", "/dev/ttyACM2", "/dev/ttyACM3",
+        "/dev/cdc-wdm0", "/dev/cdc-wdm1", "/dev/cdc-wdm2",
+        "/dev/ttyS0", "/dev/ttyS1", "/dev/ttyS2", "/dev/ttyS3"
+    };
+    
+    // Try to find the active cellular device
+    for (int i = 0; i < sizeof(modem_devices)/sizeof(modem_devices[0]); i++) {
+        if (is_cellular_device_active(modem_devices[i])) {
+            strncpy(iface->cellular_device_path, modem_devices[i], 
+                   sizeof(iface->cellular_device_path) - 1);
+            LOGX_DEBUG_MSG("Detected cellular device path: %s for interface %s", 
+                          modem_devices[i], iface->name);
+            return;
+        }
+    }
+    
+    // If no device found, try to get it from UCI configuration
+    get_cellular_device_from_uci(iface);
+    
+    // If still not found, set a default
+    if (strlen(iface->cellular_device_path) == 0) {
+        strcpy(iface->cellular_device_path, "/dev/ttyUSB2"); // Fallback default
+        LOGX_WARN_MSG("No cellular device detected, using default: %s", iface->cellular_device_path);
+    }
+}
+
+// Check if a cellular device is active
+static bool is_cellular_device_active(const char *device_path) {
+    if (!device_path) return false;
+    
+    // Check if device exists and is accessible
+    if (access(device_path, R_OK | W_OK) != 0) {
+        return false;
+    }
+    
+    // Try to send a simple AT command to verify it's a cellular modem
+    char command[512];
+    snprintf(command, sizeof(command), 
+             "echo 'AT' | timeout 2 microcom -t 1000 %s 2>/dev/null | grep -q 'OK'", device_path);
+    
+    int ret = system(command);
+    if (ret == 0) {
+        LOGX_DEBUG_MSG("Cellular device %s is active and responding", device_path);
+        return true;
+    }
+    
+    // Alternative method using gsmctl if available
+    snprintf(command, sizeof(command), 
+             "gsmctl -d %s -A AT 2>/dev/null | grep -q 'OK'", device_path);
+    
+    ret = system(command);
+    if (ret == 0) {
+        LOGX_DEBUG_MSG("Cellular device %s is active (via gsmctl)", device_path);
+        return true;
+    }
+    
+    return false;
+}
+
+// Get cellular device path from UCI configuration
+static void get_cellular_device_from_uci(network_interface_t *iface) {
+    struct uci_context *ctx = uci_alloc_context();
+    if (!ctx) {
+        return;
+    }
+    
+    struct uci_package *pkg = NULL;
+    int ret = uci_load(ctx, "network", &pkg);
+    if (ret != UCI_OK || !pkg) {
+        uci_free_context(ctx);
+        return;
+    }
+    
+    // Look for cellular interface configuration
+    struct uci_element *e;
+    uci_foreach_element(&pkg->sections, e) {
+        struct uci_section *s = uci_to_section(e);
+        const char *type = uci_lookup_option_string(ctx, s, "type");
+        const char *ifname = uci_lookup_option_string(ctx, s, "ifname");
+        const char *device = uci_lookup_option_string(ctx, s, "device");
+        
+        if (type && strcmp(type, "interface") == 0 && ifname && 
+            strcmp(ifname, iface->name) == 0 && device) {
+            
+            // Check if this is a cellular interface
+            if (strstr(device, "ttyUSB") || strstr(device, "ttyACM") || 
+                strstr(device, "cdc-wdm") || strstr(device, "ttyS")) {
+                strncpy(iface->cellular_device_path, device, 
+                       sizeof(iface->cellular_device_path) - 1);
+                LOGX_DEBUG_MSG("Found cellular device path from UCI: %s", device);
+                break;
+            }
+        }
+    }
+    
+    uci_unload(ctx, pkg);
+    uci_free_context(ctx);
+}
+
 // Check if interface should be included in failover
 bool should_include_in_failover(const network_interface_t *iface) {
     if (!iface) return false;
@@ -403,6 +512,35 @@ int network_discovery_get_comprehensive_interfaces(network_interface_t *interfac
     }
     
     return get_comprehensive_interface_info(interfaces, actual_count);
+}
+
+// Get cellular device path for a specific interface
+int get_cellular_device_path(const char *interface_name, char *device_path, size_t path_size) {
+    if (!interface_name || !device_path || path_size == 0) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    network_interface_t interfaces[MAX_INTERFACES];
+    int interface_count = 0;
+    
+    // Get comprehensive interface information
+    int ret = get_comprehensive_interface_info(interfaces, &interface_count);
+    if (ret != AUTONOMY_SUCCESS) {
+        return ret;
+    }
+    
+    // Find the specified interface
+    for (int i = 0; i < interface_count; i++) {
+        if (strcmp(interfaces[i].name, interface_name) == 0 && 
+            strcmp(interfaces[i].type, "cellular") == 0) {
+            
+            strncpy(device_path, interfaces[i].cellular_device_path, path_size - 1);
+            device_path[path_size - 1] = '\0';
+            return AUTONOMY_SUCCESS;
+        }
+    }
+    
+    return AUTONOMY_ERROR_NOT_FOUND;
 }
 
 // Cleanup comprehensive discovery system

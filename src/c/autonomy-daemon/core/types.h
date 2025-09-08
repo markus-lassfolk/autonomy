@@ -275,6 +275,7 @@ typedef struct {
     char operator[64];                  // Cellular operator
     int signal_strength;                // Signal strength
     char modem_id[16];                  // Modem ID (e.g., "2-1")
+    char cellular_device_path[64];      // Cellular device path (e.g., "/dev/ttyUSB2")
     
     // Enhanced cellular information
     struct {
