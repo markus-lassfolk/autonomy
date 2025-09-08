@@ -1,6 +1,7 @@
 #include "starlink_api_version_monitor.h"
 #include "../core/types.h"
 #include "../starlink/starlink_comprehensive.h"
+#include "starlink_grpc_collector.h"
 #include "../notifications/notification_types.h"
 #include "../utils/logx.h"
 #include <stdio.h>
@@ -786,77 +787,36 @@ int validate_api_after_change(const starlink_api_version_change_t* change) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    // Test key API endpoints to validate the new version
-    http_request_config_t request_config = {0};
-    http_response_t response = {0};
+    // Test key gRPC endpoints to validate the new version
+    char response_buffer[8192] = {0};
     int validation_passed = 0; // Use configurable value
     int total_tests = 0; // Use configurable value
     
-    // Test 1: Status endpoint
-    // Get Starlink host from UCI configuration
-    char starlink_host[64] = "192.168.100.1"; // Default fallback
-    FILE *uci_fp = popen("uci get autonomy.starlink.host 2>/dev/null", "r");
-    if (uci_fp) {
-        char uci_host[64];
-        if (fgets(uci_host, sizeof(uci_host), uci_fp)) {
-            char *newline = strchr(uci_host, '\n');
-            if (newline) *newline = '\0';
-            if (strlen(uci_host) > 0) {
-                strncpy(starlink_host, uci_host, sizeof(starlink_host) - 1);
-                starlink_host[sizeof(starlink_host) - 1] = '\0';
-            }
-        }
-        pclose(uci_fp);
-    }
-    snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/status", starlink_host);
-    request_config.method = HTTP_METHOD_GET;
-    request_config.timeout_seconds = 5; // Use configurable timeout
-    request_config.follow_redirects = true;
-    
+    // Test 1: gRPC get_status endpoint
     total_tests++;
-    int result = http_client_make_request(&request_config, &response);
-    if (result == 0 && response.success && response.data) {
-        // Check if response contains expected fields
-        if (strstr(response.data, "\"status\":") || strstr(response.data, "\"connected\":") || 
-            strstr(response.data, "\"uptime\":")) {
-            validation_passed++;
-            LOGX_DEBUG_MSG("Status endpoint validation passed");
-        }
-        if (response.data) free(response.data);
+    if (starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer)) == AUTONOMY_SUCCESS) {
+        validation_passed++;
+        LOGX_DEBUG_MSG("gRPC get_status validation passed");
     } else {
-        LOGX_WARN_MSG("Status endpoint validation failed", "result", result);
+        LOGX_WARN_MSG("gRPC get_status validation failed");
     }
     
-    // Test 2: Diagnostics endpoint
-    snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/diagnostics", starlink_host);
+    // Test 2: gRPC get_diagnostics endpoint
     total_tests++;
-    result = http_client_make_request(&request_config, &response);
-    if (result == 0 && response.success && response.data) {
-        // Check if response contains expected diagnostic fields
-        if (strstr(response.data, "\"location_enabled\":") || strstr(response.data, "\"uncertainty_meters\":") ||
-            strstr(response.data, "\"gps_time_s\":")) {
-            validation_passed++;
-            LOGX_DEBUG_MSG("Diagnostics endpoint validation passed");
-        }
-        if (response.data) free(response.data);
+    if (starlink_grpc_call_get_diagnostics(response_buffer, sizeof(response_buffer)) == AUTONOMY_SUCCESS) {
+        validation_passed++;
+        LOGX_DEBUG_MSG("gRPC get_diagnostics validation passed");
     } else {
-        LOGX_WARN_MSG("Diagnostics endpoint validation failed", "result", result);
+        LOGX_WARN_MSG("gRPC get_diagnostics validation failed");
     }
     
-    // Test 3: History endpoint
-    snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/history", starlink_host);
+    // Test 3: gRPC get_history endpoint
     total_tests++;
-    result = http_client_make_request(&request_config, &response);
-    if (result == 0 && response.success && response.data) {
-        // Check if response contains expected historical data fields
-        if (strstr(response.data, "\"event_count\":") || strstr(response.data, "\"critical_events_24h\":") ||
-            strstr(response.data, "\"outage_count_24h\":")) {
-            validation_passed++;
-            LOGX_DEBUG_MSG("History endpoint validation passed");
-        }
-        if (response.data) free(response.data);
+    if (starlink_grpc_call_get_history(response_buffer, sizeof(response_buffer)) == AUTONOMY_SUCCESS) {
+        validation_passed++;
+        LOGX_DEBUG_MSG("gRPC get_history validation passed");
     } else {
-        LOGX_WARN_MSG("History endpoint validation failed", "result", result);
+        LOGX_WARN_MSG("gRPC get_history validation failed");
     }
     
     // Calculate validation success rate

@@ -1,5 +1,6 @@
 #include "../starlink/starlink_comprehensive.h"
 #include "starlink_modules.h"
+#include "starlink_grpc_collector.h"
 #include "../utils/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -491,76 +492,28 @@ static int collect_from_status_api(starlink_comprehensive_gps_t* gps_data, starl
     return AUTONOMY_ERROR_API_FAILED;
 }
 
-// Collect from get_diagnostics API
+// Collect from get_diagnostics gRPC API
 static int collect_from_diagnostics_api(starlink_comprehensive_gps_t* gps_data) {
-    // Try to connect to Starlink dish diagnostics API
-    http_request_config_t request_config = {0};
-    http_response_t response = {0};
+    // Get latest observation from gRPC collector
+    starlink_observation_t observation = {0};
     
-    // Configure request to Starlink dish diagnostics endpoint
-    snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/diagnostics", g_starlink_comprehensive.config.host);
-    request_config.method = HTTP_METHOD_GET;
-    request_config.timeout_seconds = g_config.starlink_timeout;
-    request_config.follow_redirects = true;
-    
-    // Make HTTP request to Starlink dish
-    int result = http_client_make_request(&request_config, &response);
-    
-    if (result == 0 && response.success && response.data) {
-        // Parse diagnostics response
-        char *location_enabled_start = strstr(response.data, "\"location_enabled\":");
-        char *uncertainty_start = strstr(response.data, "\"uncertainty_meters\":");
-        char *gps_time_start = strstr(response.data, "\"gps_time_s\":");
+    if (starlink_grpc_get_latest_observation(&observation) == AUTONOMY_SUCCESS) {
+        // Extract diagnostics data from gRPC observation
+        gps_data->location_enabled = observation.gps_valid;
+        gps_data->uncertainty_meters = observation.gps_accuracy_m;
+        gps_data->uncertainty_meters_valid = (observation.gps_accuracy_m > 0.0);
+        gps_data->gps_time_s = (double)observation.timestamp;
         
-        // Parse location enabled status
-        if (location_enabled_start) {
-            location_enabled_start = strchr(location_enabled_start, ':');
-            if (location_enabled_start) {
-                gps_data->location_enabled = (strstr(location_enabled_start, "true") != NULL);
-            }
-        } else {
-            gps_data->location_enabled = true; // Use configurable default
-        }
-        
-        // Parse uncertainty
-        if (uncertainty_start) {
-            uncertainty_start = strchr(uncertainty_start, ':');
-            if (uncertainty_start) {
-                gps_data->uncertainty_meters = atof(uncertainty_start + 1);
-                gps_data->uncertainty_meters_valid = true;
-            }
-        } else {
-            gps_data->uncertainty_meters = 15.0; // Default fallback
-            gps_data->uncertainty_meters_valid = true;
-        }
-        
-        // Parse GPS time
-        if (gps_time_start) {
-            gps_time_start = strchr(gps_time_start, ':');
-            if (gps_time_start) {
-                gps_data->gps_time_s = atof(gps_time_start + 1);
-            }
-        } else {
-            gps_data->gps_time_s = (double)time(NULL); // Default fallback
-        }
-        
-        // Clean up response
-        if (response.data) {
-            free(response.data);
-        }
-        
-        LOGX_DEBUG_MSG("Starlink diagnostics data collected successfully", 
+        LOGX_DEBUG_MSG("Starlink diagnostics data collected successfully from gRPC", 
                       "location_enabled", gps_data->location_enabled,
                       "uncertainty_meters", gps_data->uncertainty_meters,
                       "gps_time_s", gps_data->gps_time_s);
         
         return AUTONOMY_SUCCESS;
     } else {
-        LOGX_DEBUG_MSG("Failed to collect Starlink diagnostics data, using defaults", 
-                      "result", result,
-                      "success", response.success);
+        LOGX_DEBUG_MSG("Failed to collect Starlink diagnostics data from gRPC, using defaults");
         
-        // Use default values if API call fails
+        // Use default values if gRPC call fails
         gps_data->location_enabled = true; // Use configurable default
         gps_data->uncertainty_meters = 15.0;
         gps_data->uncertainty_meters_valid = true;
@@ -892,100 +845,83 @@ static void* analysis_thread_worker(void* arg) {
     return NULL;
 }
 
-// Collect historical data from Starlink API
+// Collect historical data from Starlink gRPC API
 int collect_from_history_api(starlink_events_outages_analysis_t* analysis) {
     if (!analysis) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    // Make actual API call to get historical data
-    http_request_config_t request_config = {0};
-    http_response_t response = {0};
+    // Use gRPC collector for structured outage event data
+    starlink_outage_event_t outage_events[100];
+    int actual_outage_count = 0;
     
-    // Configure request to Starlink dish history endpoint
-    snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/history", g_starlink_comprehensive.config.host);
-    request_config.method = HTTP_METHOD_GET;
-    request_config.timeout_seconds = 15; // Use configurable timeout
-    request_config.follow_redirects = true;
-    
-    // Make HTTP request to Starlink dish
-    int result = http_client_make_request(&request_config, &response);
-    
-    if (result == 0 && response.success && response.data) {
-        // Parse historical data from JSON response
-        char *event_count_start = strstr(response.data, "\"event_count\":");
-        char *critical_events_start = strstr(response.data, "\"critical_events_24h\":");
-        char *warning_events_start = strstr(response.data, "\"warning_events_24h\":");
-        char *outage_count_start = strstr(response.data, "\"outage_count_24h\":");
-        char *total_outage_time_start = strstr(response.data, "\"total_outage_time_24h\":");
+    // Get outage events from gRPC collector
+    if (starlink_grpc_get_outage_events(outage_events, 100, &actual_outage_count) == AUTONOMY_SUCCESS) {
+        // Analyze outage events for the last 24 hours
+        time_t now = time(NULL);
+        time_t day_ago = now - (24 * 3600);
         
-        // Parse event count
-        if (event_count_start) {
-            event_count_start = strchr(event_count_start, ':');
-            if (event_count_start) {
-                analysis->event_count = atoi(event_count_start + 1);
+        int critical_events_24h = 0;
+        int warning_events_24h = 0;
+        int outage_count_24h = 0;
+        double total_outage_time_24h = 0.0;
+        double total_duration = 0.0;
+        
+        for (int i = 0; i < actual_outage_count; i++) {
+            if (outage_events[i].t_start >= day_ago) {
+                outage_count_24h++;
+                total_duration += outage_events[i].duration;
+                
+                // Classify severity
+                if (strcmp(outage_events[i].severity, "critical") == 0) {
+                    critical_events_24h++;
+                } else if (strcmp(outage_events[i].severity, "warning") == 0) {
+                    warning_events_24h++;
+                }
+                
+                // Sum outage time
+                total_outage_time_24h += outage_events[i].duration;
             }
         }
         
-        // Parse critical events
-        if (critical_events_start) {
-            critical_events_start = strchr(critical_events_start, ':');
-            if (critical_events_start) {
-                analysis->critical_events_24h = atoi(critical_events_start + 1);
-            }
-        }
+        // Calculate analysis metrics
+        analysis->event_count = actual_outage_count;
+        analysis->critical_events_24h = critical_events_24h;
+        analysis->warning_events_24h = warning_events_24h;
+        analysis->outage_count_24h = outage_count_24h;
+        analysis->total_outage_time_24h = total_outage_time_24h;
+        analysis->avg_outage_duration_s = (outage_count_24h > 0) ? (total_duration / outage_count_24h) : 0.0;
+        analysis->outage_frequency_per_hour = (double)outage_count_24h / 24.0;
         
-        // Parse warning events
-        if (warning_events_start) {
-            warning_events_start = strchr(warning_events_start, ':');
-            if (warning_events_start) {
-                analysis->warning_events_24h = atoi(warning_events_start + 1);
-            }
-        }
+        // Detect patterns
+        analysis->outage_pattern_detected = (outage_count_24h > 5); // More than 5 outages in 24h
+        analysis->event_escalation_detected = (critical_events_24h > 2); // More than 2 critical events
         
-        // Parse outage count
-        if (outage_count_start) {
-            outage_count_start = strchr(outage_count_start, ':');
-            if (outage_count_start) {
-                analysis->outage_count_24h = atoi(outage_count_start + 1);
-            }
-        }
+        // Calculate stability score (0.0 = unstable, 1.0 = stable)
+        double uptime_ratio = 1.0 - (total_outage_time_24h / (24.0 * 3600.0));
+        analysis->stability_score = (uptime_ratio > 0.0) ? uptime_ratio : 0.0;
         
-        // Parse total outage time
-        if (total_outage_time_start) {
-            total_outage_time_start = strchr(total_outage_time_start, ':');
-            if (total_outage_time_start) {
-                analysis->total_outage_time_24h = atof(total_outage_time_start + 1);
-            }
-        }
-        
-        // Clean up response
-        if (response.data) {
-            free(response.data);
-        }
-        
-        LOGX_INFO_MSG("Historical data collected successfully from Starlink API", 
+        LOGX_INFO_MSG("Historical data collected successfully from gRPC collector", 
                       "event_count", analysis->event_count,
                       "critical_events_24h", analysis->critical_events_24h,
                       "warning_events_24h", analysis->warning_events_24h,
-                      "outage_count_24h", analysis->outage_count_24h);
+                      "outage_count_24h", analysis->outage_count_24h,
+                      "stability_score", analysis->stability_score);
     } else {
-        LOGX_WARN_MSG("Failed to collect historical data from Starlink API, using defaults", 
-                      "result", result,
-                      "success", response.success);
+        LOGX_WARN_MSG("Failed to collect historical data from gRPC collector, using defaults");
+        
+        // Initialize analysis with default values
+        analysis->event_count = 0;
+        analysis->critical_events_24h = 0;
+        analysis->warning_events_24h = 0;
+        analysis->outage_count_24h = 0;
+        analysis->total_outage_time_24h = 0.0;
+        analysis->avg_outage_duration_s = 0.0;
+        analysis->outage_frequency_per_hour = 0.0;
+        analysis->outage_pattern_detected = false;
+        analysis->event_escalation_detected = false;
+        analysis->stability_score = 0.90;   // Default good stability
     }
-    
-    // Initialize analysis with default values
-    analysis->event_count = 0;
-    analysis->critical_events_24h = 0;
-    analysis->warning_events_24h = 0;
-    analysis->outage_count = 0;
-    analysis->total_outages_24h = 0;
-    analysis->avg_outage_duration_s = 0.0;
-    analysis->outage_frequency_per_hour = 0.0;
-    analysis->outage_pattern_detected = false;
-    analysis->event_escalation_detected = false;
-    analysis->stability_score = 0.90;   // Default good stability
     
     return AUTONOMY_SUCCESS;
 }

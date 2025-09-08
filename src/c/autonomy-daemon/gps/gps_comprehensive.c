@@ -4,6 +4,7 @@
 #include "gps_opencellid.h"
 #include "opencellid_complete.h"
 #include "gps_google_api.h"
+#include "../starlink/starlink_grpc_collector.h"
 #include "../utils/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -432,85 +433,44 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
             // Check if Starlink GPS is available
             gps_data_t starlink_data;
             
-            // Try to get GPS data from Starlink dish API
-            http_request_config_t request_config = {0};
-            http_response_t response = {0};
+            // Try to get GPS data from Starlink gRPC API
+            starlink_observation_t observation = {0};
             
-            // Get Starlink host from UCI configuration
-            char starlink_host[64] = "192.168.100.1"; // Default fallback
-            FILE *uci_fp = popen("uci get autonomy.starlink.host 2>/dev/null", "r");
-            if (uci_fp) {
-                char uci_host[64];
-                if (fgets(uci_host, sizeof(uci_host), uci_fp)) {
-                    char *newline = strchr(uci_host, '\n');
-                    if (newline) *newline = '\0';
-                    if (strlen(uci_host) > 0) {
-                        strncpy(starlink_host, uci_host, sizeof(starlink_host) - 1);
-                        starlink_host[sizeof(starlink_host) - 1] = '\0';
-                    }
-                }
-                pclose(uci_fp);
-            }
-            snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/status", starlink_host);
-            request_config.method = HTTP_METHOD_GET;
-            request_config.timeout_seconds = g_config.gps_timeout;
-            request_config.follow_redirects = true;
-            
-            int result = http_client_make_request(&request_config, &response);
-            
-            if (result == 0 && response.success && response.data) {
-                // Parse Starlink GPS data from JSON response
-                char *lat_start = strstr(response.data, "\"latitude\":");
-                char *lon_start = strstr(response.data, "\"longitude\":");
-                char *alt_start = strstr(response.data, "\"altitude\":");
-                char *accuracy_start = strstr(response.data, "\"accuracy\":");
-                
-                if (lat_start && lon_start) {
-                    lat_start = strchr(lat_start, ':');
-                    lon_start = strchr(lon_start, ':');
+            if (starlink_grpc_get_latest_observation(&observation) == AUTONOMY_SUCCESS) {
+                // Extract GPS data from gRPC observation
+                if (observation.gps_valid) {
+                    starlink_data.latitude = 0.0; // GPS coordinates not available in status
+                    starlink_data.longitude = 0.0; // GPS coordinates not available in status
+                    starlink_data.altitude = 0.0;
+                    starlink_data.accuracy = observation.gps_accuracy_m;
+                    starlink_data.valid = observation.gps_valid;
+                    starlink_data.timestamp = observation.timestamp;
+                    starlink_data.satellites = observation.gps_satellites;
                     
-                    if (lat_start && lon_start) {
-                        starlink_data.latitude = atof(lat_start + 1);
-                        starlink_data.longitude = atof(lon_start + 1);
-                        starlink_data.valid = true;
-                        
-                        // Parse altitude if available
-                        if (alt_start) {
-                            alt_start = strchr(alt_start, ':');
-                            if (alt_start) {
-                                starlink_data.altitude = atof(alt_start + 1);
-                            }
-                        } else {
-                            starlink_data.altitude = 0.0;
-                        }
-                        
-                        // Parse accuracy if available
-                        if (accuracy_start) {
-                            accuracy_start = strchr(accuracy_start, ':');
-                            if (accuracy_start) {
-                                starlink_data.accuracy = atof(accuracy_start + 1);
-                            }
-                        } else {
-                            starlink_data.accuracy = 15.0; // Default Starlink accuracy
-                        }
-                    }
-                }
-                
-                // Clean up response
-                if (response.data) {
-                    free(response.data);
+                    LOGX_DEBUG_MSG("Starlink GPS data from gRPC", 
+                                  "gps_valid", observation.gps_valid,
+                                  "gps_satellites", observation.gps_satellites,
+                                  "gps_accuracy", observation.gps_accuracy_m);
+                } else {
+                    // Starlink GPS not valid
+                    starlink_data.valid = false;
+                    starlink_data.latitude = 0.0;
+                    starlink_data.longitude = 0.0;
+                    starlink_data.altitude = 0.0;
+                    starlink_data.accuracy = 0.0;
+                    starlink_data.satellites = 0;
+                    starlink_data.timestamp = time(NULL);
                 }
             } else {
-                // Starlink GPS not available
+                // Failed to get gRPC observation
                 starlink_data.valid = false;
                 starlink_data.latitude = 0.0;
                 starlink_data.longitude = 0.0;
                 starlink_data.altitude = 0.0;
                 starlink_data.accuracy = 0.0;
+                starlink_data.satellites = 0;
+                starlink_data.timestamp = time(NULL);
             }
-            
-            starlink_data.satellites = 12; // Starlink typically has good satellite coverage
-            starlink_data.timestamp = time(NULL);
             
             if (starlink_data.valid) {
                 data->latitude = starlink_data.latitude;

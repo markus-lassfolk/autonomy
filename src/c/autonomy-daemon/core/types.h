@@ -424,6 +424,93 @@ typedef enum {
 // Forward declarations for Starlink obstruction types (Core module pattern)
 // Forward declarations for complex Starlink obstruction types (removed - full definitions in starlink_obstruction.h)
 
+// Starlink Outage Event Structure
+typedef struct {
+    time_t t_start;                       // Outage start time
+    time_t t_end;                         // Outage end time
+    double duration;                      // Duration in seconds
+    
+    // Cause flags
+    bool obstructed;                      // Obstruction-related outage
+    bool thermal;                         // Thermal-related outage
+    bool sw_update;                       // Software update outage
+    bool backend;                         // Backend/network outage
+    
+    // Pre-outage metrics
+    double pre_snr;                       // SNR before outage
+    double pre_latency_ms;                // Latency before outage
+    double pre_loss_rate;                 // Loss rate before outage
+    
+    // Post-outage metrics
+    double post_snr;                      // SNR after outage
+    double post_latency_ms;               // Latency after outage
+    double post_loss_rate;                // Loss rate after outage
+    
+    // Boresight and wedge data
+    double boresight_azimuth_deg;         // Boresight azimuth
+    double boresight_elevation_deg;       // Boresight elevation
+    double wedge_fraction_obstructed[12]; // 12 wedge obstruction fractions
+    
+    // GPS data
+    bool gps_valid;                       // GPS validity during outage
+    double gps_accuracy_m;                // GPS accuracy in meters
+    int gps_satellites;                   // Number of GPS satellites
+    
+    // Additional metadata
+    char severity[16];                    // Severity level (critical, warning, info)
+    char description[256];                // Human-readable description
+    time_t detected_at;                   // When this outage was detected
+} starlink_outage_event_t;
+
+// Starlink Observation Snapshot Structure
+typedef struct {
+    time_t timestamp;                     // Observation timestamp
+    
+    // Obstruction data
+    double fraction_obstructed;           // Overall obstruction fraction
+    double wedge_fraction_obstructed[12]; // Per-wedge obstruction
+    double wedge_abs_fraction_obstructed[12]; // Absolute per-wedge obstruction
+    
+    // Signal metrics
+    double snr;                           // Signal-to-noise ratio
+    double pop_ping_latency_ms;           // Point of presence latency
+    double pop_ping_drop_rate;            // Packet drop rate
+    double downlink_throughput_bps;       // Downlink throughput
+    double uplink_throughput_bps;         // Uplink throughput
+    
+    // Thermal flags
+    bool thermal_throttle;                // Thermal throttling active
+    bool thermal_shutdown;                // Thermal shutdown active
+    bool is_snr_above_noise_floor;        // SNR above noise floor
+    bool is_snr_persistently_low;         // SNR persistently low
+    
+    // GPS data
+    bool gps_valid;                       // GPS fix valid
+    int gps_satellites;                   // Number of GPS satellites
+    double gps_accuracy_m;                // GPS accuracy in meters
+    bool inhibit_gps;                     // GPS inhibited
+    
+    // Device state
+    double uptime_s;                      // Device uptime in seconds
+    double boresight_azimuth_deg;         // Boresight azimuth
+    double boresight_elevation_deg;       // Boresight elevation
+    char software_version[32];            // Software version
+    char hardware_version[32];            // Hardware version
+    
+    // Network metrics
+    double eth_speed_mbps;                // Ethernet speed
+    char mobility_class[16];              // Mobility class
+    char class_of_service[16];            // Class of service
+    
+    // Additional flags
+    bool roaming;                         // Roaming status
+    bool mast_not_near_vertical;          // Mast positioning issue
+    bool unexpected_location;             // Unexpected location detected
+    bool slow_ethernet_speeds;            // Slow ethernet speeds
+    bool software_update_reboot;          // Software update reboot pending
+    bool low_power_mode;                  // Low power mode active
+} starlink_observation_t;
+
 // System health structure
 typedef struct {
     char status[32];                    // Overall status

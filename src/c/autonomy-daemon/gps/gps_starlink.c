@@ -1,5 +1,6 @@
 #include "gps_starlink.h"
 #include "../starlink/starlink_comprehensive.h"
+#include "../starlink/starlink_grpc_collector.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
 #include <string.h>
@@ -237,38 +238,34 @@ int gps_starlink_extract_data(void) {
     return AUTONOMY_SUCCESS;
 }
 
-// Extract GPS data from Starlink API
+// Extract GPS data from Starlink gRPC API
 static bool extract_gps_from_starlink_api(void) {
-    // Try to connect to Starlink dish API
-    http_request_config_t request_config = {0};
-    http_response_t response = {0};
+    // Get latest observation from gRPC collector
+    starlink_observation_t observation = {0};
     
-    // Configure request to Starlink dish using configured host
-    snprintf(request_config.url, sizeof(request_config.url), "http://%s/api/v1/status", g_starlink_gps.starlink_ip);
-    request_config.method = HTTP_METHOD_GET;
-    request_config.timeout_seconds = 5; // Use configurable starlink request timeout
-    request_config.follow_redirects = true;
-    
-    // Make HTTP request to Starlink dish
-    int result = http_client_make_request(&request_config, &response);
-    
-    if (result == 0 && response.success && response.data) {
-        // Parse the response
-        bool parse_result = parse_gps_from_response(response.data);
-        
-        // Clean up response
-        if (response.data) {
-            free(response.data);
-        }
-        
-        if (parse_result) {
-            LOGX_DEBUG_MSG("Successfully extracted GPS data from Starlink API");
+    if (starlink_grpc_get_latest_observation(&observation) == AUTONOMY_SUCCESS) {
+        // Extract GPS data from observation
+        if (observation.gps_valid) {
+            pthread_mutex_lock(&g_starlink_gps_mutex);
+            g_starlink_gps_data.latitude = 0.0; // GPS coordinates not available in status
+            g_starlink_gps_data.longitude = 0.0; // GPS coordinates not available in status
+            g_starlink_gps_data.altitude = 0.0;
+            g_starlink_gps_data.accuracy = observation.gps_accuracy_m;
+            g_starlink_gps_data.timestamp = observation.timestamp;
+            g_starlink_gps_data.valid = observation.gps_valid;
+            g_starlink_gps_data.satellites = observation.gps_satellites;
+            pthread_mutex_unlock(&g_starlink_gps_mutex);
+            
+            LOGX_DEBUG_MSG("Successfully extracted GPS data from Starlink gRPC API", 
+                          "gps_valid", observation.gps_valid,
+                          "gps_satellites", observation.gps_satellites,
+                          "gps_accuracy", observation.gps_accuracy_m);
             return true;
+        } else {
+            LOGX_DEBUG_MSG("GPS not valid in Starlink gRPC observation");
         }
     } else {
-        LOGX_DEBUG_MSG("Failed to connect to Starlink dish API", 
-                      "result", result,
-                      "success", response.success);
+        LOGX_DEBUG_MSG("Failed to get Starlink gRPC observation");
     }
     
     return false;
