@@ -8,6 +8,7 @@ This document summarizes the compilation errors encountered when building the au
 - **Source Code**: `/mnt/s/autonomy/src/c/autonomy-daemon`
 - **Error Checker** `/mnt/wsl/SDK/compilation_error_detector.sh`
 - **Build Script**: `/mnt/wsl/SDK/build_autonomy_daemon.sh`
+- **Check Build Status**: `/mnt/wsl/SDK/check_build_status.sh`
 - **Target Device**: RUTOS router at 192.168.80.1
 - **SSH Key**: `~/.ssh/rutos_key`
 - **Deploay Script**: `/mnt/wsl/SDK/deploy_autonomy_daemon.sh`
@@ -223,6 +224,259 @@ If starting fresh or encountering these errors again:
 6. **Fix Variable References**:
    - Replace `buffer` with `monitor->state->recent`
 
+## Systematic Error Detection & Automated Fixes
+
+### Overview
+The `/mnt/wsl/SDK/compilation_error_detector.sh` script is designed to systematically detect and fix common compilation issues across the entire codebase. This approach significantly reduces manual effort and ensures consistency when fixing widespread issues.
+
+### When to Use Automated Fixes
+
+**SAFE for Automated Fixes** (Low Risk of False Positives):
+- LOGX macro name corrections (`LOGX_INFO` → `LOGX_INFO_MSG`)
+- Format specifier fixes (`%ld` → `%lld` for `time_t`)
+- Missing include additions (when pattern is clear)
+- Unicode character removal (emojis, special characters)
+- Double suffix corrections (`_MSG_MSG` → `_MSG`)
+- API function name updates (`blob_put_string` → `blobmsg_add_string`)
+
+**REQUIRES MANUAL REVIEW** (High Risk of False Positives):
+- Type definition conflicts (requires understanding of code structure)
+- Function signature changes (requires understanding of calling code)
+- UCI API usage (requires understanding of context)
+- Variable name changes (requires understanding of scope)
+- Complex struct member fixes (requires understanding of data flow)
+
+### Adding New Detection Patterns
+
+**CRITICAL**: Always add new patterns to `/mnt/wsl/SDK/compilation_error_detector.sh` when you discover recurring issues. This prevents the same problems from appearing in future builds.
+
+#### Pattern Addition Process
+
+1. **Identify the Pattern**: Look for errors that appear in multiple files with the same root cause
+2. **Create Safe Detection**: Write regex patterns that are specific enough to avoid false positives
+3. **Test on Sample Files**: Verify the pattern works correctly on known problematic files
+4. **Add to Script**: Include the pattern in the compilation_error_detector.sh script
+5. **Document the Pattern**: Add the pattern to this documentation
+
+#### Example Pattern Addition
+
+When you discover a new recurring issue like missing includes:
+
+```bash
+# Add to compilation_error_detector.sh
+echo "Fixing missing ctype.h includes..."
+find src/c/autonomy-daemon -name "*.c" -exec grep -l "toupper\|tolower\|isalpha\|isdigit" {} \; | \
+while read file; do
+    if ! grep -q "#include <ctype.h>" "$file"; then
+        echo "Adding ctype.h include to $file"
+        sed -i '1i#include <ctype.h>' "$file"
+    fi
+done
+```
+
+### Current Automated Fixes in compilation_error_detector.sh
+
+The script should include these patterns based on our findings:
+
+#### 1. LOGX Macro Fixes
+```bash
+# Fix LOGX macro names
+find src/c/autonomy-daemon -name "*.c" -exec sed -i 's/LOGX_INFO(/LOGX_INFO_MSG(/g' {} \;
+find src/c/autonomy-daemon -name "*.c" -exec sed -i 's/LOGX_ERROR(/LOGX_ERROR_MSG(/g' {} \;
+find src/c/autonomy-daemon -name "*.c" -exec sed -i 's/LOGX_WARN(/LOGX_WARN_MSG(/g' {} \;
+find src/c/autonomy-daemon -name "*.c" -exec sed -i 's/LOGX_DEBUG(/LOGX_DEBUG_MSG(/g' {} \;
+```
+
+#### 2. Format Specifier Fixes
+```bash
+# Fix time_t format specifiers
+find src/c/autonomy-daemon -name "*.c" -exec sed -i 's/%ld", time_t/%lld", (long long)time_t/g' {} \;
+find src/c/autonomy-daemon -name "*.c" -exec sed -i 's/%ld", now/%lld", (long long)now/g' {} \;
+```
+
+#### 3. Unicode Character Removal
+```bash
+# Remove Unicode characters (emojis, special symbols)
+find src/c/autonomy-daemon -name "*.c" -exec sed -i 's/[^\x00-\x7F]//g' {} \;
+```
+
+#### 4. Double Suffix Fixes
+```bash
+# Fix double _MSG suffixes
+find src/c/autonomy-daemon -name "*.c" -exec sed -i 's/_MSG_MSG/_MSG/g' {} \;
+```
+
+#### 5. API Function Updates
+```bash
+# Fix blob API function names
+find src/c/autonomy-daemon -name "*.c" -exec sed -i 's/blob_put_string(/blobmsg_add_string(/g' {} \;
+```
+
+#### 6. Missing Include Detection
+```bash
+# Add missing includes based on function usage
+find src/c/autonomy-daemon -name "*.c" -exec grep -l "toupper\|tolower\|isalpha\|isdigit" {} \; | \
+while read file; do
+    if ! grep -q "#include <ctype.h>" "$file"; then
+        echo "Adding ctype.h include to $file"
+        sed -i '1i#include <ctype.h>' "$file"
+    fi
+done
+
+find src/c/autonomy-daemon -name "*.c" -exec grep -l "calloc\|malloc\|free" {} \; | \
+while read file; do
+    if ! grep -q "#include <stdlib.h>" "$file"; then
+        echo "Adding stdlib.h include to $file"
+        sed -i '1i#include <stdlib.h>' "$file"
+    fi
+done
+```
+
+### Running the Error Detector
+
+```bash
+# Run the compilation error detector
+/mnt/wsl/SDK/compilation_error_detector.sh
+
+# Check what changes were made
+git diff
+
+# Review changes before committing
+git add -p
+
+# Commit the automated fixes
+git commit -m "Automated fixes: LOGX macros, format specifiers, missing includes"
+```
+
+### Best Practices for Pattern Development
+
+1. **Test Patterns Incrementally**: Add one pattern at a time and test it
+2. **Use Dry Run Mode**: Implement a `--dry-run` option to see what would be changed
+3. **Backup Before Running**: Always create a git commit before running automated fixes
+4. **Review Changes**: Never commit automated changes without reviewing them
+5. **Document Patterns**: Add comments explaining what each pattern does
+6. **Version Control**: Keep the script under version control with clear commit messages
+
+### Systematic Error Search Strategy
+
+**CRITICAL**: When fixing compilation errors, always search for the same error pattern across the entire codebase. The same problematic code often appears in multiple files.
+
+#### When to Use Systematic Search
+
+**ALWAYS search for these patterns when you encounter them:**
+- **Function calls**: `grep -r "function_name" src/` - Find all usages of a problematic function
+- **Type definitions**: `grep -r "typedef.*type_name" src/` - Find duplicate type definitions
+- **Missing includes**: `grep -r "calloc\|malloc" src/` - Find files using functions without proper includes
+- **Format specifiers**: `grep -r "%ld" src/` - Find all time_t format issues
+- **API usage**: `grep -r "old_api_function" src/` - Find all files using deprecated APIs
+
+#### Search Commands for Common Issues
+
+```bash
+# Find all files using a problematic function
+grep -r "obstruction_analyzer_get_instance" src/c/autonomy-daemon/
+
+# Find all files with duplicate type definitions
+grep -r "typedef.*system_health_t" src/c/autonomy-daemon/
+
+# Find all files using calloc without stdlib.h
+grep -r "calloc" src/c/autonomy-daemon/ | grep -v "#include.*stdlib"
+
+# Find all files with time_t format issues
+grep -r "%ld" src/c/autonomy-daemon/ | grep -v "%lld"
+
+# Find all files with LOGX macro issues
+grep -r "LOGX_INFO(" src/c/autonomy-daemon/ | grep -v "LOGX_INFO_MSG("
+```
+
+#### Systematic Fix Process
+
+1. **Identify the Error Pattern**: From build log, identify the specific error
+2. **Search Entire Codebase**: Use grep to find all occurrences of the problematic pattern
+3. **Fix All Instances**: Don't just fix the file mentioned in the error - fix all files with the same issue
+4. **Verify Fixes**: Run compilation error detector to ensure all instances are fixed
+5. **Test Build**: Run build to verify all issues are resolved
+
+#### Example: Fixing Missing Includes
+
+When you find `calloc` used without `#include <stdlib.h>`:
+
+```bash
+# 1. Find all files using calloc
+grep -r "calloc" src/c/autonomy-daemon/ --include="*.c" -l
+
+# 2. Check which ones are missing stdlib.h
+for file in $(grep -r "calloc" src/c/autonomy-daemon/ --include="*.c" -l); do
+    if ! grep -q "#include.*stdlib" "$file"; then
+        echo "Missing stdlib.h in $file"
+    fi
+done
+
+# 3. Fix all files at once
+for file in $(grep -r "calloc" src/c/autonomy-daemon/ --include="*.c" -l); do
+    if ! grep -q "#include.*stdlib" "$file"; then
+        sed -i '1i#include <stdlib.h>' "$file"
+        echo "Added stdlib.h to $file"
+    fi
+done
+```
+
+#### Why This Approach Works
+
+- **Prevents Recurring Errors**: Fixing all instances prevents the same error from appearing in different files
+- **Saves Time**: One systematic fix vs. multiple individual fixes
+- **Ensures Consistency**: All files use the same corrected patterns
+- **Reduces Build Iterations**: Fewer build attempts needed to resolve all issues
+
+### Pattern Safety Guidelines
+
+**SAFE Patterns** (Use These):
+- Exact string replacements with clear context
+- Adding standard library includes based on function usage
+- Fixing known API function name changes
+- Removing problematic characters (Unicode, etc.)
+- Fixing format specifiers with proper casting
+
+**UNSAFE Patterns** (Avoid These):
+- Complex regex that might match unintended text
+- Changes that depend on code structure or context
+- Modifications that could change program logic
+- Patterns that might match comments or strings
+- Changes that require understanding of variable scope
+
+### Integration with Build Process
+
+The compilation_error_detector.sh should be integrated into the build process:
+
+```bash
+# In build_autonomy_daemon.sh, add before compilation:
+echo "Running automated error detection and fixes..."
+/mnt/wsl/SDK/compilation_error_detector.sh
+
+# Check if any changes were made
+if ! git diff --quiet; then
+    echo "Automated fixes applied. Review changes:"
+    git diff --stat
+    echo "Continuing with build..."
+fi
+```
+
+### Maintenance and Updates
+
+**Regular Maintenance Tasks**:
+1. **After Each Build**: Review new errors and add patterns for recurring issues
+2. **Weekly Review**: Check if existing patterns are still needed
+3. **Version Updates**: Update patterns when APIs change
+4. **Documentation**: Keep this section updated with new patterns
+
+**Adding New Patterns Checklist**:
+- [ ] Pattern is safe (low false positive risk)
+- [ ] Pattern is tested on sample files
+- [ ] Pattern is documented in this section
+- [ ] Pattern is added to compilation_error_detector.sh
+- [ ] Pattern is tested in dry-run mode
+- [ ] Pattern is committed to version control
+
 ## CRITICAL DEVELOPMENT RULES
 
 **NEVER SIMPLIFY OR REMOVE FUNCTIONALITY**
@@ -237,7 +491,12 @@ If starting fresh or encountering these errors again:
 ```bash
 # Use the updated build script with automatic cache cleaning
 /mnt/wsl/SDK/build_autonomy_daemon.sh
+
+# Check status of Build Process 
+/mnt/wsl/SDK/check_build_status.sh
+
 ```
+
 
 ### Manual Build Commands
 ```bash
@@ -296,11 +555,33 @@ The build script (`/mnt/wsl/SDK/build_autonomy_daemon.sh`) now automatically per
 ## Build Process Guidelines
 
 **CRITICAL**: Always wait for the build script to complete fully before analyzing results:
-- The build script takes 1-2 minutes to complete
-- Wait for "Command Completed" message at the end
-- Do NOT interrupt the build process
+- The build script takes time to complete 
+- Do NOT interrupt the build process wait until the build status script reports its done. 
+- Use `/mnt/wsl/SDK/check_build_status.sh` to verify status of the build process 
 - Check the build log at `/mnt/wsl/SDK/autonomy_build.log` for detailed error information
 - The terminal output shows summary, but the build log contains the full compilation details
+- Do not count how long something has been running, your sense of time is totally off and never even close to right. 
+
+## Modular Testing Approach (RECOMMENDED)
+
+**When dealing with multiple compilation issues, test individual modules first:**
+
+1. **Identify Problematic Files**: From build logs, identify specific files with errors
+2. **Test Individual Modules**: Compile specific files to isolate issues quickly
+3. **Fix Issues Incrementally**: Fix one file at a time before running full build
+4. **Benefits**:
+   - Faster iteration (seconds vs minutes)
+   - Easier to isolate specific problems
+   - Less time wasted on full builds
+   - Better debugging experience
+
+**Example**: Instead of running full build after each fix, test:
+```bash
+# Test specific problematic file
+arm-openwrt-linux-muslgnueabi-gcc -c [specific_file.c] -o /tmp/test.o
+```
+
+**Note**: Cross-compiler environment setup can be complex, so use the build script for final verification.
 
 ## Cache Management & Best Practices
 
@@ -412,6 +693,14 @@ blobmsg_add_string(&b, "status", "error");
 5. **Missing includes**: Added stdlib.h for calloc function ✅
 6. **Format specifiers**: Fixed %ld vs %lld issues in phase5.c ✅
 
+### Latest Issue (notifications_comprehensive.c) - FIXED
+1. **Missing struct members**: `total_processing_time_ms` and `user_engagement_score` don't exist ✅
+2. **Fixed struct member references**: Updated to use `average_processing_time_ms` and `overall_effectiveness_score` ✅
+
+### Current Issue (ml_monitor_uci.c) - FIXED
+1. **Function definition error**: `invalid storage class for function 'set_uci_option'` ✅
+2. **Fixed function placement**: Moved `set_uci_option` function outside of main function scope ✅
+
 ### Latest Fixes Applied (September 9, 2024)
 1. **UCI API Structure Fix**: Fixed `struct uci_ptr` usage in `ml_monitor_uci.c` ✅
    - Corrected `ptr.value` and `ptr.config` to use proper UCI API structure
@@ -444,9 +733,77 @@ blobmsg_add_string(&b, "status", "error");
 
 ## Next Steps
 
-1. **Test Build**: Run the build process to verify all fixes are working
-2. **Complete Build**: Finish compilation and create IPK package
-3. **Deploy and Test**: Upload IPK to device and test functionality
+1. **Update compilation_error_detector.sh**: Add all the patterns documented above to the script
+2. **Test Build**: Run the build process to verify all fixes are working
+3. **Complete Build**: Finish compilation and create IPK package
+4. **Deploy and Test**: Upload IPK to device and test functionality
+5. **Document New Patterns**: Add any new recurring issues found during build to the error detector script
+
+### Implementation of compilation_error_detector.sh
+
+**CRITICAL**: The compilation_error_detector.sh script should be implemented with all the patterns documented above. Here's the complete script structure:
+
+```bash
+#!/bin/bash
+# compilation_error_detector.sh - Systematic error detection and fixes
+
+set -e
+
+echo "=== Autonomy Daemon Compilation Error Detector ==="
+echo "Running systematic fixes for common compilation issues..."
+
+# Change to source directory
+cd /mnt/s/autonomy/src/c/autonomy-daemon
+
+# 1. Fix LOGX macro names
+echo "1. Fixing LOGX macro names..."
+find . -name "*.c" -exec sed -i 's/LOGX_INFO(/LOGX_INFO_MSG(/g' {} \;
+find . -name "*.c" -exec sed -i 's/LOGX_ERROR(/LOGX_ERROR_MSG(/g' {} \;
+find . -name "*.c" -exec sed -i 's/LOGX_WARN(/LOGX_WARN_MSG(/g' {} \;
+find . -name "*.c" -exec sed -i 's/LOGX_DEBUG(/LOGX_DEBUG_MSG(/g' {} \;
+
+# 2. Fix format specifiers for time_t
+echo "2. Fixing time_t format specifiers..."
+find . -name "*.c" -exec sed -i 's/%ld", time_t/%lld", (long long)time_t/g' {} \;
+find . -name "*.c" -exec sed -i 's/%ld", now/%lld", (long long)now/g' {} \;
+
+# 3. Remove Unicode characters
+echo "3. Removing Unicode characters..."
+find . -name "*.c" -exec sed -i 's/[^\x00-\x7F]//g' {} \;
+
+# 4. Fix double _MSG suffixes
+echo "4. Fixing double _MSG suffixes..."
+find . -name "*.c" -exec sed -i 's/_MSG_MSG/_MSG/g' {} \;
+
+# 5. Fix blob API function names
+echo "5. Fixing blob API function names..."
+find . -name "*.c" -exec sed -i 's/blob_put_string(/blobmsg_add_string(/g' {} \;
+
+# 6. Add missing includes based on function usage
+echo "6. Adding missing includes..."
+
+# Add ctype.h for character functions
+find . -name "*.c" -exec grep -l "toupper\|tolower\|isalpha\|isdigit" {} \; | \
+while read file; do
+    if ! grep -q "#include <ctype.h>" "$file"; then
+        echo "  Adding ctype.h include to $file"
+        sed -i '1i#include <ctype.h>' "$file"
+    fi
+done
+
+# Add stdlib.h for memory functions
+find . -name "*.c" -exec grep -l "calloc\|malloc\|free" {} \; | \
+while read file; do
+    if ! grep -q "#include <stdlib.h>" "$file"; then
+        echo "  Adding stdlib.h include to $file"
+        sed -i '1i#include <stdlib.h>' "$file"
+    fi
+done
+
+echo "=== Error detection and fixes completed ==="
+echo "Review changes with: git diff"
+echo "Commit changes with: git add -p && git commit -m 'Automated fixes'"
+```
 
 ### Build Command
 **CRITICAL: Always use the build script to avoid caching issues**
