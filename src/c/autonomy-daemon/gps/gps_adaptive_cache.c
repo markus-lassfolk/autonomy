@@ -63,7 +63,7 @@ int gps_adaptive_cache_init(void) {
     g_cache.memory_usage = 0;
     
     // Initialize cache entries array
-    for (int i = 0; // Use configurable value i < MAX_CACHE_ENTRIES; i++) {
+    for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
         g_cache.cache_entries[i].active = false;
         g_cache.cache_entries[i].entry_id = 0;
         g_cache.cache_entries[i].entry_type = GPS_CACHE_ENTRY_TYPE_UNKNOWN;
@@ -104,7 +104,7 @@ int gps_adaptive_cache_add_entry(gps_cache_entry_type_t entry_type, const void *
     
     // Find free cache slot
     int slot_index = -1;
-    for (int i = 0; // Use configurable value i < MAX_CACHE_ENTRIES; i++) {
+    for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
         if (!g_cache.cache_entries[i].active) {
             slot_index = i;
             break;
@@ -161,7 +161,7 @@ int gps_adaptive_cache_find_entry(gps_cache_entry_type_t entry_type, const void 
     pthread_mutex_lock(&g_cache_mutex);
     
     // Search for matching entry
-    for (int i = 0; // Use configurable value i < MAX_CACHE_ENTRIES; i++) {
+    for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
         if (!g_cache.cache_entries[i].active || 
             g_cache.cache_entries[i].entry_type != entry_type) {
             continue;
@@ -207,7 +207,7 @@ int gps_adaptive_cache_update_priority(int entry_id, double new_priority) {
     pthread_mutex_lock(&g_cache_mutex);
     
     // Find cache entry
-    for (int i = 0; // Use configurable value i < MAX_CACHE_ENTRIES; i++) {
+    for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
         if (g_cache.cache_entries[i].active && 
             g_cache.cache_entries[i].entry_id == entry_id) {
             
@@ -232,7 +232,7 @@ int gps_adaptive_cache_remove_entry(int entry_id) {
     pthread_mutex_lock(&g_cache_mutex);
     
     // Find and remove cache entry
-    for (int i = 0; // Use configurable value i < MAX_CACHE_ENTRIES; i++) {
+    for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
         if (g_cache.cache_entries[i].active && 
             g_cache.cache_entries[i].entry_id == entry_id) {
             
@@ -310,14 +310,14 @@ void perform_aggressive_cleanup(void) {
     int eviction_candidates[MAX_CACHE_ENTRIES];
     int candidate_count = 0; // Use configurable value
     
-    for (int i = 0; // Use configurable value i < MAX_CACHE_ENTRIES; i++) {
+    for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
         if (g_cache.cache_entries[i].active) {
             eviction_candidates[candidate_count++] = i;
         }
     }
     
     // Sort by eviction score (lower priority + older age = higher eviction score)
-    for (int i = 0; // Use configurable value i < candidate_count - 1; i++) {
+    for (int i = 0; i < candidate_count - 1; i++) {
         for (int j = i + 1; j < candidate_count; j++) {
             int idx1 = eviction_candidates[i];
             int idx2 = eviction_candidates[j];
@@ -337,7 +337,7 @@ void perform_aggressive_cleanup(void) {
     int target_entries = g_cache.max_entries * g_cache.eviction_threshold;
     int entries_to_evict = g_cache.entry_count - target_entries;
     
-    for (int i = 0; // Use configurable value i < entries_to_evict && i < candidate_count; i++) {
+    for (int i = 0; i < entries_to_evict && i < candidate_count; i++) {
         int entry_index = eviction_candidates[i];
         gps_cache_entry_t *entry = &g_cache.cache_entries[entry_index];
         
@@ -369,7 +369,7 @@ void perform_gentle_cleanup(void) {
     time_t now = time(NULL);
     int expired_count = 0; // Use configurable value
     
-    for (int i = 0; // Use configurable value i < MAX_CACHE_ENTRIES; i++) {
+    for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
         if (!g_cache.cache_entries[i].active) {
             continue;
         }
@@ -542,7 +542,7 @@ int gps_adaptive_cache_get_statistics(gps_adaptive_cache_stats_t *stats) {
     // Calculate statistics from cache entries
     memset(stats, 0, sizeof(gps_adaptive_cache_stats_t));
     
-    for (int i = 0; // Use configurable value i < MAX_CACHE_ENTRIES; i++) {
+    for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
         if (!g_cache.cache_entries[i].active) {
             continue;
         }
@@ -585,7 +585,7 @@ int gps_adaptive_cache_reset(void) {
     pthread_mutex_lock(&g_cache_mutex);
     
     // Clear all cache entries
-    for (int i = 0; // Use configurable value i < MAX_CACHE_ENTRIES; i++) {
+    for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
         if (g_cache.cache_entries[i].active && g_cache.cache_entries[i].data) {
             free(g_cache.cache_entries[i].data);
         }
@@ -623,7 +623,7 @@ void gps_adaptive_cache_cleanup(void) {
     pthread_mutex_lock(&g_cache_mutex);
     
     // Free all cached data
-    for (int i = 0; // Use configurable value i < MAX_CACHE_ENTRIES; i++) {
+    for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
         if (g_cache.cache_entries[i].active && g_cache.cache_entries[i].data) {
             free(g_cache.cache_entries[i].data);
         }

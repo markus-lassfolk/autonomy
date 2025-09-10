@@ -18,7 +18,7 @@ void test_satellite_redundancy_analysis(void) {
     
     satellite_redundancy_predictor_t *predictor = satellite_redundancy_init(&config);
     assert(predictor != NULL);
-    printf("✓ Satellite redundancy predictor initialized\n");
+    printf(" Satellite redundancy predictor initialized\n");
     
     // Test with simulated Starlink data
     starlink_status_response_t starlink_data;
@@ -70,7 +70,7 @@ void test_satellite_redundancy_analysis(void) {
            redundancy_feature, risk_feature, diversity_feature);
     
     satellite_redundancy_cleanup(predictor);
-    printf("✓ Satellite redundancy analysis test completed\n");
+    printf(" Satellite redundancy analysis test completed\n");
 }
 
 // Test cellular tower intelligence
@@ -83,7 +83,7 @@ void test_cellular_tower_intelligence(void) {
     
     cellular_tower_intelligence_t *intelligence = cellular_tower_intelligence_init(&config);
     assert(intelligence != NULL);
-    printf("✓ Cellular tower intelligence initialized\n");
+    printf(" Cellular tower intelligence initialized\n");
     
     // Test carrier filtering
     printf("\n  Testing carrier filtering...\n");
@@ -176,7 +176,7 @@ void test_cellular_tower_intelligence(void) {
            tower_density_feature, cell_change_feature, coverage_quality_feature, connectivity_risk_feature);
     
     cellular_tower_intelligence_cleanup(intelligence);
-    printf("✓ Cellular tower intelligence test completed\n");
+    printf(" Cellular tower intelligence test completed\n");
 }
 
 // Test enhanced ML integration
@@ -191,12 +191,12 @@ void test_enhanced_ml_integration(void) {
     
     ml_monitor_t *ml_monitor = ml_monitor_init(&ml_config);
     assert(ml_monitor != NULL);
-    printf("✓ Base ML monitor initialized\n");
+    printf(" Base ML monitor initialized\n");
     
     // Initialize enhanced integration
     int result = ml_enhanced_integration_init(ml_monitor);
     assert(result == ML_MONITOR_SUCCESS);
-    printf("✓ Enhanced ML integration initialized\n");
+    printf(" Enhanced ML integration initialized\n");
     
     // Test enhanced observation collection
     printf("\n  Testing enhanced observation collection...\n");
@@ -254,12 +254,12 @@ void test_enhanced_ml_integration(void) {
     // Cleanup
     ml_enhanced_integration_cleanup();
     ml_monitor_cleanup(ml_monitor);
-    printf("✓ Enhanced ML integration test completed\n");
+    printf(" Enhanced ML integration test completed\n");
 }
 
 // Main test function
 int main(void) {
-    printf("🚀 Enhanced ML Features Test Suite\n");
+    printf(" Enhanced ML Features Test Suite\n");
     printf("=====================================\n");
     
     // Initialize logging
@@ -275,17 +275,17 @@ int main(void) {
     test_cellular_tower_intelligence();
     test_enhanced_ml_integration();
     
-    printf("\n🎉 All Enhanced ML Features Tests Passed!\n");
+    printf("\n All Enhanced ML Features Tests Passed!\n");
     printf("\nKey Features Implemented:\n");
-    printf("✅ Satellite redundancy analysis with count thresholds\n");
-    printf("✅ Early warning system for satellite count drops\n");
-    printf("✅ Satellite redundancy score as ML feature\n");
-    printf("✅ Cellular tower filtering by carrier compatibility\n");
-    printf("✅ Signal strength thresholds for usable towers\n");
-    printf("✅ Tower density analysis for reliability prediction\n");
-    printf("✅ Cell change pattern analysis for connectivity issues\n");
-    printf("✅ Enhanced ML predictions with multi-source data\n");
-    printf("✅ Comprehensive integration with existing ML system\n");
+    printf(" Satellite redundancy analysis with count thresholds\n");
+    printf(" Early warning system for satellite count drops\n");
+    printf(" Satellite redundancy score as ML feature\n");
+    printf(" Cellular tower filtering by carrier compatibility\n");
+    printf(" Signal strength thresholds for usable towers\n");
+    printf(" Tower density analysis for reliability prediction\n");
+    printf(" Cell change pattern analysis for connectivity issues\n");
+    printf(" Enhanced ML predictions with multi-source data\n");
+    printf(" Comprehensive integration with existing ML system\n");
     
     return 0;
 }

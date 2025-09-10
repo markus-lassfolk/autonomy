@@ -1,6 +1,8 @@
 #include "starlink_snow_detection_integration.h"
 #include "starlink_snow_detection.h"
 #include "starlink_snow_detection_ubus.h"
+#include "starlink_comprehensive.h"
+#include "starlink_modules.h"
 #include "../utils/logx.h"
 #include "../utils/http_client_libcurl.h"
 #include "../core/types.h"
@@ -110,7 +112,7 @@ int starlink_snow_detection_integration_start(void) {
     if (result != 0) {
         LOGX_ERROR_MSG("Failed to create integration thread", "result", result);
         pthread_mutex_unlock(&g_integration_mutex);
-        return AUTONOMY_ERROR_THREAD_CREATION;
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
     g_integration_running = true; // Use configurable setting // Use configurable setting
@@ -279,7 +281,7 @@ static int get_obstruction_sample_from_starlink(starlink_obstruction_sample_t *s
     sample->patches_valid = status.obstruction_stats.patches_valid;
 
     // Copy wedge obstruction arrays if present
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < 12; i++) {
+    for (int i = 0; i < 12; i++) {
         sample->wedge_fraction_obstructed[i] = status.obstruction_stats.wedge_fraction_obstructed[i];
         sample->wedge_abs_fraction_obstructed[i] = status.obstruction_stats.wedge_abs_fraction_obstructed[i];
     }
@@ -319,7 +321,7 @@ static int get_obstruction_sample_from_gps(starlink_obstruction_sample_t *sample
     sample->patches_valid = 0;
     sample->time_obstructed = 0.0;
     sample->avg_prolonged_obstruction_interval_s = 0.0; // Use configurable avg prolonged obstruction interval
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < 12; i++) {
+    for (int i = 0; i < 12; i++) {
         sample->wedge_fraction_obstructed[i] = 0.0;
         sample->wedge_abs_fraction_obstructed[i] = 0.0;
     }

@@ -239,6 +239,13 @@ int location_manager_get_status(gps_manager_status_t* status);
  */
 void location_manager_cleanup(void);
 
+/**
+ * Get current location from GPS manager
+ * @param location Pointer to gps_data_t structure to fill
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_manager_get_current_location(gps_data_t *location);
+
 #ifdef __cplusplus
 }
 #endif

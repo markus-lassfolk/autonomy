@@ -8,6 +8,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/socket.h>
 #include <json-c/json.h>
 #include <libubus.h>
 #include <libubox/blobmsg.h>
@@ -20,6 +21,35 @@
 enum {
     DEVICES_DEVICES,
     __DEVICES_MAX
+};
+
+// Survey policy definitions
+enum {
+    SURVEY_CHANNELS,
+    __SURVEY_MAX
+};
+
+// Channel policy definitions
+enum {
+    CHANNEL_NUMBER,
+    CHANNEL_UTILIZATION,
+    CHANNEL_NOISE,
+    __CHANNEL_MAX
+};
+
+// UBUS policy arrays
+static const struct blobmsg_policy devices_policy[] = {
+    [DEVICES_DEVICES] = { .name = "devices", .type = BLOBMSG_TYPE_ARRAY },
+};
+
+static const struct blobmsg_policy survey_policy[] = {
+    [SURVEY_CHANNELS] = { .name = "channels", .type = BLOBMSG_TYPE_ARRAY },
+};
+
+static const struct blobmsg_policy channel_policy[] = {
+    [CHANNEL_NUMBER] = { .name = "number", .type = BLOBMSG_TYPE_INT32 },
+    [CHANNEL_UTILIZATION] = { .name = "utilization", .type = BLOBMSG_TYPE_INT32 },
+    [CHANNEL_NOISE] = { .name = "noise", .type = BLOBMSG_TYPE_INT32 },
 };
 
 // Global enhanced WiFi management instance
@@ -67,6 +97,7 @@ static const char* convert_score_to_rating(double score);
 static int execute_uci_command(const char* command);
 static void* optimization_thread_worker(void* arg);
 static void* scheduler_thread_worker(void* arg);
+static double wifi_calculate_distance(double lat1, double lon1, double lat2, double lon2);
 
 // Initialize enhanced WiFi management system
 int wifi_enhanced_init(const wifi_optimization_config_t* config) {
@@ -242,6 +273,7 @@ int wifi_enhanced_discover_interfaces(void) {
                     }
                 }
                 pclose(fp);
+            }
         }
     } else {
         ubus_free(ctx);
@@ -620,9 +652,9 @@ double calculate_enhanced_channel_score(int channel, wifi_band_t band,
 // Get RSSI weight for interference calculation (matching Go implementation)
 static int get_rssi_weight(int rssi) {
     // RSSI weights based on Go implementation:
-    // ≥ -60dBm (Strong): 30 points
-    // ≥ -70dBm (Moderate): 20 points  
-    // ≥ -80dBm (Weak): 10 points
+    // >= -60dBm (Strong): 30 points
+    // >= -70dBm (Moderate): 20 points  
+    // >= -80dBm (Weak): 10 points
     // < -80dBm (Very Weak): 5 points
     
     if (rssi >= -60) return 30;      // Strong interference
@@ -655,11 +687,11 @@ double wifi_calculate_channel_overlap(int channel1, int channel2, wifi_band_t ba
 
 // Convert score to star rating (matching Go 5-star system)
 static int convert_score_to_stars(double score) {
-    if (score >= g_wifi_enhanced.config.excellent_threshold) return 5; // ⭐⭐⭐⭐⭐
-    if (score >= g_wifi_enhanced.config.good_threshold) return 4;       // ⭐⭐⭐⭐
-    if (score >= g_wifi_enhanced.config.fair_threshold) return 3;       // ⭐⭐⭐
-    if (score >= g_wifi_enhanced.config.poor_threshold) return 2;       // ⭐⭐
-    return 1;                                                           // ⭐
+    if (score >= g_wifi_enhanced.config.excellent_threshold) return 5; // Excellent
+    if (score >= g_wifi_enhanced.config.good_threshold) return 4;       // Good
+    if (score >= g_wifi_enhanced.config.fair_threshold) return 3;       // Fair
+    if (score >= g_wifi_enhanced.config.poor_threshold) return 2;       // Poor
+    return 1;                                                           // Very Poor
 }
 
 // Convert score to rating string
@@ -902,9 +934,9 @@ static void* scheduler_thread_worker(void* arg) {
             }
             
             // Check if we need to change channel
-            if (best_channel != g_wifi_enhanced.current_channel) {
+            if (best_channel != g_wifi_enhanced.current_plan.channel_24) {
                 LOGX_INFO_MSG("WiFi channel optimization recommended", 
-                              "current_channel", g_wifi_enhanced.current_channel,
+                              "current_channel", g_wifi_enhanced.current_plan.channel_24,
                               "recommended_channel", best_channel,
                               "score", best_score);
                 
@@ -916,10 +948,13 @@ static void* scheduler_thread_worker(void* arg) {
                 
                 int result = system(uci_cmd);
                 if (result == 0) {
-                    g_wifi_enhanced.current_channel = best_channel;
-                    g_wifi_enhanced.stats.optimizations_applied++;
+                    g_wifi_enhanced.current_plan.channel_24 = best_channel;
+                    g_wifi_enhanced.stats.total_optimizations++;
+                    g_wifi_enhanced.stats.successful_optimizations++;
                     LOGX_INFO_MSG("WiFi channel changed successfully", "new_channel", best_channel);
                 } else {
+                    g_wifi_enhanced.stats.total_optimizations++;
+                    g_wifi_enhanced.stats.failed_optimizations++;
                     LOGX_ERROR_MSG("Failed to change WiFi channel", "channel", best_channel);
                 }
             }
@@ -932,5 +967,343 @@ static void* scheduler_thread_worker(void* arg) {
     return NULL;
 }
 
-// Additional functions would be implemented here...
-// (optimization algorithms, GPS integration, scheduler, etc.)
+// Get current channel plan
+int wifi_enhanced_get_current_plan(wifi_channel_plan_t* plan) {
+    if (!g_wifi_enhanced_initialized || !plan) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    *plan = g_wifi_enhanced.current_plan;
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Optimize WiFi channels using enhanced algorithms
+int wifi_enhanced_optimize_channels(const char* trigger) {
+    if (!g_wifi_enhanced_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    LOGX_INFO_MSG("Starting WiFi channel optimization", "trigger", trigger ? trigger : "manual");
+    
+    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    
+    // Perform optimization for each interface
+    for (int i = 0; i < g_wifi_enhanced.interface_count; i++) {
+        wifi_interface_t* interface = &g_wifi_enhanced.interfaces[i];
+        
+        if (!interface->active) continue;
+        
+        // Scan channels for this interface
+        wifi_enhanced_channel_score_t scores[64];
+        int score_count = wifi_enhanced_scan_channels(interface->name, scores, 64);
+        
+        if (score_count > 0) {
+            // Find best channel
+            wifi_enhanced_channel_score_t* best_score = &scores[0];
+            
+            // Apply channel plan if improvement is significant
+            if (best_score->raw_score > g_wifi_enhanced.config.min_improvement) {
+                wifi_channel_plan_t new_plan = {0};
+                new_plan.channel_24 = best_score->channel;
+                new_plan.score_24 = (int)best_score->raw_score;
+                new_plan.total_score = new_plan.score_24;
+                new_plan.applied_at = time(NULL);
+                strcpy(new_plan.trigger, trigger ? trigger : "manual");
+                
+                if (wifi_enhanced_apply_channel_plan(&new_plan) == AUTONOMY_SUCCESS) {
+                    g_wifi_enhanced.current_plan = new_plan;
+                    g_wifi_enhanced.stats.total_optimizations++;
+                    g_wifi_enhanced.stats.successful_optimizations++;
+                    g_wifi_enhanced.last_optimization_time = time(NULL);
+                    
+                    LOGX_INFO_MSG("WiFi optimization successful",
+                             "interface", interface->name,
+                             "new_channel", new_plan.channel_24,
+                             "score", new_plan.score_24);
+                } else {
+                    g_wifi_enhanced.stats.failed_optimizations++;
+                    LOGX_ERROR_MSG("Failed to apply WiFi optimization", "interface", interface->name);
+                }
+            } else {
+                g_wifi_enhanced.stats.skipped_optimizations++;
+                LOGX_DEBUG_MSG("WiFi optimization skipped - insufficient improvement",
+                          "interface", interface->name,
+                          "best_score", best_score->raw_score,
+                          "min_required", g_wifi_enhanced.config.min_improvement);
+            }
+        }
+    }
+    
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Apply channel plan
+int wifi_enhanced_apply_channel_plan(const wifi_channel_plan_t* plan) {
+    if (!g_wifi_enhanced_initialized || !plan) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    LOGX_INFO_MSG("Applying WiFi channel plan",
+             "channel_24", plan->channel_24,
+             "channel_5", plan->channel_5,
+             "trigger", plan->trigger);
+    
+    // Apply 2.4GHz channel if specified
+    if (plan->channel_24 > 0) {
+        char uci_cmd[256];
+        snprintf(uci_cmd, sizeof(uci_cmd), 
+                "uci set wireless.radio0.channel=%d && uci commit wireless && wifi reload", 
+                plan->channel_24);
+        
+        int result = system(uci_cmd);
+        if (result != 0) {
+            LOGX_ERROR_MSG("Failed to apply 2.4GHz channel", "channel", plan->channel_24);
+            return AUTONOMY_ERROR_SYSTEM;
+        }
+    }
+    
+    // Apply 5GHz channel if specified
+    if (plan->channel_5 > 0) {
+        char uci_cmd[256];
+        snprintf(uci_cmd, sizeof(uci_cmd), 
+                "uci set wireless.radio1.channel=%d && uci commit wireless && wifi reload", 
+                plan->channel_5);
+        
+        int result = system(uci_cmd);
+        if (result != 0) {
+            LOGX_ERROR_MSG("Failed to apply 5GHz channel", "channel", plan->channel_5);
+            return AUTONOMY_ERROR_SYSTEM;
+        }
+    }
+    
+    LOGX_INFO_MSG("WiFi channel plan applied successfully");
+    return AUTONOMY_SUCCESS;
+}
+
+// Get WiFi interface information
+int wifi_enhanced_get_interfaces(wifi_interface_t* interfaces, int max_interfaces) {
+    if (!g_wifi_enhanced_initialized || !interfaces || max_interfaces <= 0) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    
+    int count = (g_wifi_enhanced.interface_count < max_interfaces) ? 
+                g_wifi_enhanced.interface_count : max_interfaces;
+    
+    for (int i = 0; i < count; i++) {
+        interfaces[i] = g_wifi_enhanced.interfaces[i];
+    }
+    
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    
+    return count;
+}
+
+// Get WiFi optimization statistics
+int wifi_enhanced_get_statistics(wifi_optimization_statistics_t* stats) {
+    if (!g_wifi_enhanced_initialized || !stats) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    *stats = g_wifi_enhanced.stats;
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Reset WiFi optimization statistics
+int wifi_enhanced_reset_statistics(void) {
+    if (!g_wifi_enhanced_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    memset(&g_wifi_enhanced.stats, 0, sizeof(wifi_optimization_statistics_t));
+    g_wifi_enhanced.stats.stats_reset_time = time(NULL);
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    
+    LOGX_INFO_MSG("WiFi optimization statistics reset");
+    return AUTONOMY_SUCCESS;
+}
+
+// Update GPS location for movement-based optimization
+int wifi_enhanced_update_gps_location(const standardized_gps_data_t* gps_data) {
+    if (!g_wifi_enhanced_initialized || !gps_data) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    
+    wifi_movement_state_t* movement = &g_wifi_enhanced.movement_state;
+    
+    // Check if location has changed significantly
+    if (movement->last_location.latitude != 0.0 && movement->last_location.longitude != 0.0) {
+        double distance = wifi_calculate_distance(
+            movement->last_location.latitude, movement->last_location.longitude,
+            gps_data->latitude, gps_data->longitude);
+        
+        if (distance > g_wifi_enhanced.config.gps_movement_threshold_m) {
+            movement->is_stationary = false;
+            movement->last_movement = time(NULL);
+            movement->total_distance_moved_m += distance;
+            movement->movement_events++;
+            
+            LOGX_DEBUG_MSG("GPS movement detected",
+                      "distance_m", distance,
+                      "total_distance_m", movement->total_distance_moved_m);
+        } else {
+            // Check if we've been stationary long enough
+            if (!movement->is_stationary) {
+                movement->is_stationary = true;
+                movement->stationary_start = time(NULL);
+            } else {
+                time_t stationary_duration = time(NULL) - movement->stationary_start;
+                if (stationary_duration >= g_wifi_enhanced.config.gps_stationary_time_s) {
+                    // Trigger optimization if enough time has passed since last optimization
+                    time_t time_since_last = time(NULL) - movement->last_optimization;
+                    if (time_since_last >= g_wifi_enhanced.config.optimization_cooldown_s) {
+                        movement->last_optimization = time(NULL);
+                        movement->location_trigger_active = true;
+                        
+                        LOGX_INFO_MSG("GPS stationary trigger activated",
+                                 "stationary_duration_s", stationary_duration);
+                    }
+                }
+            }
+        }
+    }
+    
+    movement->last_location = *gps_data;
+    
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Get WiFi movement state
+int wifi_enhanced_get_movement_state(wifi_movement_state_t* movement_state) {
+    if (!g_wifi_enhanced_initialized || !movement_state) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    *movement_state = g_wifi_enhanced.movement_state;
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Perform manual WiFi optimization
+int wifi_enhanced_optimize_now(void) {
+    return wifi_enhanced_optimize_channels("manual");
+}
+
+// Enable/disable WiFi optimization
+int wifi_enhanced_set_enabled(bool enabled) {
+    if (!g_wifi_enhanced_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    g_wifi_enhanced.config.enabled = enabled;
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    
+    LOGX_INFO_MSG("WiFi optimization enabled/disabled", "enabled", enabled);
+    return AUTONOMY_SUCCESS;
+}
+
+// Get WiFi optimization configuration
+int wifi_enhanced_get_config(wifi_optimization_config_t* config) {
+    if (!g_wifi_enhanced_initialized || !config) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    *config = g_wifi_enhanced.config;
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Set WiFi optimization configuration
+int wifi_enhanced_set_config(const wifi_optimization_config_t* config) {
+    if (!g_wifi_enhanced_initialized || !config) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    g_wifi_enhanced.config = *config;
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    
+    LOGX_INFO_MSG("WiFi optimization configuration updated");
+    return AUTONOMY_SUCCESS;
+}
+
+// Get WiFi interface info via UBUS iwinfo
+int wifi_enhanced_get_interface_info(const char* device, wifi_interface_t* interface) {
+    if (!device || !interface) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    memset(interface, 0, sizeof(wifi_interface_t));
+    strncpy(interface->name, device, sizeof(interface->name) - 1);
+    interface->name[sizeof(interface->name) - 1] = '\0';
+    
+    // Get interface information via UCI
+    char uci_cmd[256];
+    FILE* fp;
+    
+    // Get current channel
+    snprintf(uci_cmd, sizeof(uci_cmd), "uci get wireless.%s.channel 2>/dev/null", device);
+    fp = popen(uci_cmd, "r");
+    if (fp) {
+        char line[32];
+        if (fgets(line, sizeof(line), fp)) {
+            interface->current_channel = atoi(line);
+        }
+        pclose(fp);
+    }
+    
+    // Get enabled status
+    snprintf(uci_cmd, sizeof(uci_cmd), "uci get wireless.%s.disabled 2>/dev/null", device);
+    fp = popen(uci_cmd, "r");
+    if (fp) {
+        char line[32];
+        if (fgets(line, sizeof(line), fp)) {
+            interface->enabled = (strcmp(line, "0\n") == 0);
+        }
+        pclose(fp);
+    }
+    
+    // Determine band from channel
+    interface->band = wifi_get_band_from_channel(interface->current_channel);
+    
+    interface->active = true;
+    interface->last_update = time(NULL);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Calculate distance between two GPS coordinates
+static double wifi_calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+    const double R = 6371000; // Earth's radius in meters
+    const double PI = 3.14159265359;
+    
+    double dlat = (lat2 - lat1) * PI / 180.0;
+    double dlon = (lon2 - lon1) * PI / 180.0;
+    
+    double a = sin(dlat/2) * sin(dlat/2) + 
+               cos(lat1 * PI / 180.0) * cos(lat2 * PI / 180.0) * 
+               sin(dlon/2) * sin(dlon/2);
+    
+    double c = 2 * atan2(sqrt(a), sqrt(1-a));
+    
+    return R * c;
+}

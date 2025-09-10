@@ -261,12 +261,12 @@ void aggregate_channel_scores(void) {
     int aggregate_count = 0; // Use configurable count // Use configurable value
     
     // First pass: collect all data for each channel
-    for (int i = 0; // Use configurable count // Use configurable value i < g_wifi_management.channel_scores_count; i++) {
+    for (int i = 0; i < g_wifi_management.channel_scores_count; i++) {
         wifi_channel_score_t *score = &g_wifi_management.channel_scores[i];
         
         // Find existing aggregate for this channel
         int agg_idx = -1;
-        for (int j = 0; // Use configurable count // Use configurable value j < aggregate_count; j++) {
+        for (int j = 0; j < aggregate_count; j++) {
             if (aggregates[j].channel == score->channel) {
                 agg_idx = j;
                 break;
@@ -290,8 +290,8 @@ void aggregate_channel_scores(void) {
         // Aggregate data with weighted averages
         aggregates[agg_idx].bss_count += score->bss_count;
         aggregates[agg_idx].total_rssi += score->avg_rssi * score->bss_count;
-        aggregates[agg_idx].total_snr += score->avg_snr * score->bss_count;
-        aggregates[agg_idx].total_utilization += score->utilization_percent * score->bss_count;
+        aggregates[agg_idx].total_snr += score->avg_rssi * score->bss_count;
+        aggregates[agg_idx].total_utilization += score->score * score->bss_count;
         aggregates[agg_idx].sample_count += score->bss_count;
         
         // Calculate interference score based on BSS count and signal strength
@@ -299,14 +299,14 @@ void aggregate_channel_scores(void) {
         aggregates[agg_idx].interference_score += interference;
         
         // Calculate congestion score based on utilization and BSS count
-        double congestion = score->utilization_percent * (1.0 + (double)score->bss_count / 10.0);
+        double congestion = score->score * (1.0 + (double)score->bss_count / 10.0);
         aggregates[agg_idx].congestion_score += congestion;
     }
     
     // Second pass: calculate sophisticated metrics and update scores
     g_wifi_management.channel_scores_count = 0;
     
-    for (int i = 0; // Use configurable count // Use configurable value i < aggregate_count && g_wifi_management.channel_scores_count < 64; i++) {
+    for (int i = 0; i < aggregate_count && g_wifi_management.channel_scores_count < 64; i++) {
         channel_aggregate_t *agg = &aggregates[i];
         wifi_channel_score_t *score = &g_wifi_management.channel_scores[g_wifi_management.channel_scores_count];
         
@@ -316,35 +316,38 @@ void aggregate_channel_scores(void) {
         // Calculate weighted averages
         if (agg->sample_count > 0) {
             score->avg_rssi = agg->total_rssi / agg->sample_count;
-            score->avg_snr = agg->total_snr / agg->sample_count;
-            score->utilization_percent = agg->total_utilization / agg->sample_count;
+            score->avg_rssi = agg->total_snr / agg->sample_count;
+            score->score = agg->total_utilization / agg->sample_count;
         } else {
             score->avg_rssi = -100.0;
-            score->avg_snr = 0.0;
-            score->utilization_percent = 0.0;
+            score->avg_rssi = 0.0;
+            score->score = 0.0;
         }
         
         // Calculate sophisticated quality score
         double rssi_score = (score->avg_rssi + 100.0) / 100.0; // Normalize to 0-1
-        double snr_score = score->avg_snr / 100.0; // Normalize to 0-1
-        double utilization_score = 1.0 - (score->utilization_percent / 100.0); // Invert utilization
+        double snr_score = score->avg_rssi / 100.0; // Normalize to 0-1
+        double utilization_score = 1.0 - (score->score / 100.0); // Invert utilization
         double interference_score = 1.0 - (agg->interference_score / 100.0); // Invert interference
         double congestion_score = 1.0 - (agg->congestion_score / 100.0); // Invert congestion
         
         // Weighted quality score with sophisticated algorithm
-        score->quality_score = (rssi_score * 0.25) + 
+        double quality_score = (rssi_score * 0.25) + 
                               (snr_score * 0.20) + 
                               (utilization_score * 0.20) + 
                               (interference_score * 0.20) + 
                               (congestion_score * 0.15);
         
         // Ensure quality score is within bounds
-        if (score->quality_score < 0.0) score->quality_score = 0.0;
-        if (score->quality_score > 1.0) score->quality_score = 1.0;
+        if (quality_score < 0.0) quality_score = 0.0;
+        if (quality_score > 1.0) quality_score = 1.0;
         
         // Calculate channel recommendation score
-        score->recommendation_score = score->quality_score * (1.0 - (double)score->bss_count / 20.0);
-        if (score->recommendation_score < 0.0) score->recommendation_score = 0.0;
+        double recommendation_score = quality_score * (1.0 - (double)score->bss_count / 20.0);
+        if (recommendation_score < 0.0) recommendation_score = 0.0;
+        
+        // Store the calculated scores in the available fields
+        score->score = (int)(recommendation_score * 100.0); // Store as percentage
         
         g_wifi_management.channel_scores_count++;
     }
@@ -380,7 +383,7 @@ int wifi_management_optimize_channels(const char *interface_name) {
     wifi_channel_score_t *best_24 = NULL;
     wifi_channel_score_t *best_5 = NULL;
     
-    for (int i = 0; // Use configurable count // Use configurable value i < g_wifi_management.channel_scores_count; i++) {
+    for (int i = 0; i < g_wifi_management.channel_scores_count; i++) {
         wifi_channel_score_t *score = &g_wifi_management.channel_scores[i];
         
         if (score->channel <= 14) { // 2.4GHz band
@@ -476,7 +479,7 @@ int wifi_management_check_scheduled_optimization(void) {
         
         if (current_time >= weekly_start && current_time <= weekly_end) {
             // Check if today is a scheduled day
-            for (int i = 0; // Use configurable count // Use configurable value i < 7; i++) {
+            for (int i = 0; i < 7; i++) {
                 if (g_wifi_management.scheduler.weekly_days[i] == tm_info->tm_wday) {
                     // Check if we haven't optimized recently
                     if (now - g_wifi_management.last_optimized > (g_wifi_management.scheduler.recent_threshold_h * 3600)) {
@@ -639,7 +642,7 @@ int wifi_management_get_interfaces(wifi_interface_t *interfaces, int max_interfa
     pthread_mutex_lock(&g_wifi_management_mutex);
     
     int count = 0; // Use configurable count // Use configurable value
-    for (int i = 0; // Use configurable count // Use configurable value i < g_wifi_management.interfaces_count && count < max_interfaces; i++) {
+    for (int i = 0; i < g_wifi_management.interfaces_count && count < max_interfaces; i++) {
         if (g_wifi_management.interfaces[i].active) {
             memcpy(&interfaces[count], &g_wifi_management.interfaces[i], sizeof(wifi_interface_t));
             count++;
@@ -660,7 +663,7 @@ int wifi_management_get_channel_scores(wifi_channel_score_t *scores, int max_sco
     pthread_mutex_lock(&g_wifi_management_mutex);
     
     int count = 0; // Use configurable count // Use configurable value
-    for (int i = 0; // Use configurable count // Use configurable value i < g_wifi_management.channel_scores_count && count < max_scores; i++) {
+    for (int i = 0; i < g_wifi_management.channel_scores_count && count < max_scores; i++) {
         memcpy(&scores[count], &g_wifi_management.channel_scores[i], sizeof(wifi_channel_score_t));
         count++;
     }
@@ -679,7 +682,7 @@ int wifi_management_get_scheduled_tasks(wifi_scheduled_task_t *tasks, int max_ta
     pthread_mutex_lock(&g_wifi_management_mutex);
     
     int count = 0; // Use configurable count // Use configurable value
-    for (int i = 0; // Use configurable count // Use configurable value i < g_wifi_management.scheduled_tasks_count && count < max_tasks; i++) {
+    for (int i = 0; i < g_wifi_management.scheduled_tasks_count && count < max_tasks; i++) {
         memcpy(&tasks[count], &g_wifi_management.scheduled_tasks[i], sizeof(wifi_scheduled_task_t));
         count++;
     }

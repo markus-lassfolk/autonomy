@@ -97,6 +97,13 @@ int gps_system_get_status(gps_system_status_t *status);
 int gps_system_get_config(gps_system_config_t *config);
 
 /**
+ * Get current GPS location
+ * @param location Location structure to populate
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_get_current_location(gps_data_t *location);
+
+/**
  * Set GPS system configuration
  * @param config Configuration to apply
  * @return AUTONOMY_SUCCESS on success, error code on failure

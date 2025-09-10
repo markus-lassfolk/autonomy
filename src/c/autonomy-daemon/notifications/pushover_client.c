@@ -274,8 +274,12 @@ static int send_pushover_request(pushover_client_t* client, pushover_message_t* 
     
     // Check HTTP result
     if (!http_response_is_success(response)) {
+        // Truncate error message to fit in buffer
+        char truncated_error[128];
+        strncpy(truncated_error, response->error_message, sizeof(truncated_error) - 1);
+        truncated_error[sizeof(truncated_error) - 1] = '\0';
         snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "HTTP error: %ld - %s", response->status_code, response->error_message);
+                "HTTP error: %ld - %s", response->status_code, truncated_error);
         client->status.last_error_time = time(NULL);
         http_response_free(response);
         return -1;

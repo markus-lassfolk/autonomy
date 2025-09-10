@@ -1,5 +1,6 @@
 #include "ml_monitor_advanced_networking.h"
 #include "../utils/logx.h"
+#include "../utils/secure_exec.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -23,18 +24,18 @@ static void* ml_monitor_starlink_high_freq_thread(void *arg);
 static void* ml_monitor_wifi_high_freq_thread(void *arg);
 static void* ml_monitor_lan_high_freq_thread(void *arg);
 static void* ml_monitor_cellular_monitor_thread(void *arg);
-static int ml_monitor_perform_ping_test(const char *interface_id, const char *target, uint32_t *latency_ms, bool *success);
-static int ml_monitor_collect_cellular_modem_metrics(const char *interface_id, multi_interface_observation_t *observation);
+int ml_monitor_perform_ping_test(const char *interface_id, const char *target, uint32_t *latency_ms, bool *success);
+int ml_monitor_collect_cellular_modem_metrics(const char *interface_id, multi_interface_observation_t *observation);
 
 // Initialize advanced networking intelligence
 advanced_networking_intelligence_t* ml_monitor_init_advanced_networking(const ml_monitor_config_t *config) {
     if (!config) return NULL;
     
-    LOGX_INFO("🚀 Initializing Advanced Networking Intelligence");
+    LOGX_INFO_MSG(" Initializing Advanced Networking Intelligence");
     
     advanced_networking_intelligence_t *system = calloc(1, sizeof(advanced_networking_intelligence_t));
     if (!system) {
-        LOGX_ERROR("Failed to allocate advanced networking system");
+        LOGX_ERROR_MSG("Failed to allocate advanced networking system");
         return NULL;
     }
     
@@ -90,12 +91,12 @@ advanced_networking_intelligence_t* ml_monitor_init_advanced_networking(const ml
     
     g_advanced_networking = system;
     
-    LOGX_INFO("✅ Advanced networking intelligence initialized");
-    LOGX_INFO("   - High-frequency monitoring: Starlink/WiFi/LAN=1s, Cellular=5s");
-    LOGX_INFO("   - Streaming protection: enabled (2s tolerance, 3s prediction)");
-    LOGX_INFO("   - Flapping prevention: enabled (3 events/hour threshold)");
-    LOGX_INFO("   - Background validation: enabled (what-if analysis)");
-    LOGX_INFO("   - Predictive failover: enabled (vs reactive)");
+    LOGX_INFO_MSG(" Advanced networking intelligence initialized");
+    LOGX_INFO_MSG("   - High-frequency monitoring: Starlink/WiFi/LAN=1s, Cellular=5s");
+    LOGX_INFO_MSG("   - Streaming protection: enabled (2s tolerance, 3s prediction)");
+    LOGX_INFO_MSG("   - Flapping prevention: enabled (3 events/hour threshold)");
+    LOGX_INFO_MSG("   - Background validation: enabled (what-if analysis)");
+    LOGX_INFO_MSG("   - Predictive failover: enabled (vs reactive)");
     
     return system;
 }
@@ -104,39 +105,39 @@ advanced_networking_intelligence_t* ml_monitor_init_advanced_networking(const ml
 int ml_monitor_start_high_frequency_monitoring(advanced_networking_intelligence_t *system) {
     if (!system || g_monitoring_active) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("🔄 Starting high-frequency monitoring threads");
+    LOGX_INFO_MSG(" Starting high-frequency monitoring threads");
     
     g_monitoring_active = true;
     
     // Start Starlink monitoring (1 second interval)
     if (pthread_create(&g_starlink_monitor_thread, NULL, ml_monitor_starlink_high_freq_thread, system) != 0) {
-        LOGX_ERROR("Failed to create Starlink high-frequency monitoring thread");
+        LOGX_ERROR_MSG("Failed to create Starlink high-frequency monitoring thread");
         g_monitoring_active = false;
         return ML_MONITOR_ERROR_THREAD_FAILED;
     }
     
     // Start WiFi monitoring (1 second interval)
     if (pthread_create(&g_wifi_monitor_thread, NULL, ml_monitor_wifi_high_freq_thread, system) != 0) {
-        LOGX_ERROR("Failed to create WiFi high-frequency monitoring thread");
+        LOGX_ERROR_MSG("Failed to create WiFi high-frequency monitoring thread");
         g_monitoring_active = false;
         return ML_MONITOR_ERROR_THREAD_FAILED;
     }
     
     // Start LAN monitoring (1 second interval)
     if (pthread_create(&g_lan_monitor_thread, NULL, ml_monitor_lan_high_freq_thread, system) != 0) {
-        LOGX_ERROR("Failed to create LAN high-frequency monitoring thread");
+        LOGX_ERROR_MSG("Failed to create LAN high-frequency monitoring thread");
         g_monitoring_active = false;
         return ML_MONITOR_ERROR_THREAD_FAILED;
     }
     
     // Start Cellular monitoring (5 second interval - data cost consideration)
     if (pthread_create(&g_cellular_monitor_thread, NULL, ml_monitor_cellular_monitor_thread, system) != 0) {
-        LOGX_ERROR("Failed to create Cellular monitoring thread");
+        LOGX_ERROR_MSG("Failed to create Cellular monitoring thread");
         g_monitoring_active = false;
         return ML_MONITOR_ERROR_THREAD_FAILED;
     }
     
-    LOGX_INFO("✅ All high-frequency monitoring threads started successfully");
+    LOGX_INFO_MSG(" All high-frequency monitoring threads started successfully");
     return ML_MONITOR_SUCCESS;
 }
 
@@ -145,7 +146,7 @@ static void* ml_monitor_starlink_high_freq_thread(void *arg) {
     advanced_networking_intelligence_t *system = (advanced_networking_intelligence_t*)arg;
     if (!system) return NULL;
     
-    LOGX_INFO("📡 Starlink high-frequency monitoring thread started (1 second interval)");
+    LOGX_INFO_MSG(" Starlink high-frequency monitoring thread started (1 second interval)");
     
     while (g_monitoring_active) {
         // Perform ping tests to multiple targets
@@ -181,7 +182,7 @@ static void* ml_monitor_starlink_high_freq_thread(void *arg) {
                                                        &predicted_outage_ms, &confidence);
                 
                 if (should_failover && confidence > 0.7) {
-                    LOGX_WARN("🚨 PREDICTIVE FAILOVER TRIGGER: Starlink outage predicted in %ums (confidence: %.1f%%)",
+                    LOGX_WARN_MSG(" PREDICTIVE FAILOVER TRIGGER: Starlink outage predicted in %ums (confidence: %.1f%%)",
                              predicted_outage_ms, confidence * 100);
                 }
             }
@@ -191,7 +192,7 @@ static void* ml_monitor_starlink_high_freq_thread(void *arg) {
         usleep(system->high_freq_config.monitoring_intervals.starlink_monitor_interval_ms * 1000);
     }
     
-    LOGX_INFO("Starlink high-frequency monitoring thread stopped");
+    LOGX_INFO_MSG("Starlink high-frequency monitoring thread stopped");
     return NULL;
 }
 
@@ -200,7 +201,7 @@ static void* ml_monitor_cellular_monitor_thread(void *arg) {
     advanced_networking_intelligence_t *system = (advanced_networking_intelligence_t*)arg;
     if (!system) return NULL;
     
-    LOGX_INFO("📱 Cellular monitoring thread started (5 second interval - data cost optimized)");
+    LOGX_INFO_MSG(" Cellular monitoring thread started (5 second interval - data cost optimized)");
     
     while (g_monitoring_active) {
         // Collect cellular modem metrics (free - no data cost)
@@ -211,7 +212,7 @@ static void* ml_monitor_cellular_monitor_thread(void *arg) {
             // Update background validation with free modem data
             ml_monitor_update_background_validation(system, "cellular1", &obs);
             
-            LOGX_DEBUG("Cellular modem metrics: signal=%ddBm, quality=%u, latency=%ums",
+            LOGX_DEBUG_MSG("Cellular modem metrics: signal=%ddBm, quality=%u, latency=%ums",
                       obs.interface_specific.cellular.signal_strength_dbm,
                       obs.interface_specific.cellular.signal_quality,
                       obs.latency_ms);
@@ -231,7 +232,7 @@ static void* ml_monitor_cellular_monitor_thread(void *arg) {
                 // Track data usage
                 system->high_freq_config.cellular_optimization.cellular_data_used_today_kb += 1; // ~1KB per ping
                 
-                LOGX_DEBUG("Cellular ping test: latency=%ums, success=%s, data_used=%uKB",
+                LOGX_DEBUG_MSG("Cellular ping test: latency=%ums, success=%s, data_used=%uKB",
                           latency_ms, ping_success ? "yes" : "no",
                           system->high_freq_config.cellular_optimization.cellular_data_used_today_kb);
             }
@@ -242,7 +243,7 @@ static void* ml_monitor_cellular_monitor_thread(void *arg) {
         usleep(system->high_freq_config.monitoring_intervals.cellular_monitor_interval_ms * 1000);
     }
     
-    LOGX_INFO("Cellular monitoring thread stopped");
+    LOGX_INFO_MSG("Cellular monitoring thread stopped");
     return NULL;
 }
 
@@ -251,7 +252,7 @@ static void* ml_monitor_wifi_high_freq_thread(void *arg) {
     advanced_networking_intelligence_t *system = (advanced_networking_intelligence_t*)arg;
     if (!system) return NULL;
     
-    LOGX_INFO("📶 WiFi high-frequency monitoring thread started (1 second interval)");
+    LOGX_INFO_MSG(" WiFi high-frequency monitoring thread started (1 second interval)");
     
     while (g_monitoring_active) {
         // Perform ping test (no cost for WiFi)
@@ -274,7 +275,7 @@ static void* ml_monitor_wifi_high_freq_thread(void *arg) {
             // Collect real WiFi-specific metrics
             char wifi_cmd[256];
             char wifi_file[128];
-            snprintf(wifi_file, sizeof(wifi_file), "/tmp/wifi_metrics_%s_%ld", obs.interface_id, time(NULL));
+            snprintf(wifi_file, sizeof(wifi_file), "/tmp/wifi_metrics_%s_%lld", obs.interface_id, (long long)time(NULL));
             snprintf(wifi_cmd, sizeof(wifi_cmd), "iw dev %s station dump > %s 2>/dev/null", obs.interface_id, wifi_file);
             
             extern int secure_exec_command(const char *command, exec_result_t *result);
@@ -285,7 +286,7 @@ static void* ml_monitor_wifi_high_freq_thread(void *arg) {
                     char line[256];
                     while (fgets(line, sizeof(line), f)) {
                         if (strstr(line, "signal:")) {
-                            sscanf(line, "%*s %d dBm", &obs.interface_specific.wifi.rssi_dbm);
+                            sscanf(line, "%*s %hhd dBm", &obs.interface_specific.wifi.rssi_dbm);
                         }
                         if (strstr(line, "beacon loss count:")) {
                             int loss_count;
@@ -324,7 +325,7 @@ static void* ml_monitor_wifi_high_freq_thread(void *arg) {
         usleep(system->high_freq_config.monitoring_intervals.wifi_monitor_interval_ms * 1000);
     }
     
-    LOGX_INFO("WiFi high-frequency monitoring thread stopped");
+    LOGX_INFO_MSG("WiFi high-frequency monitoring thread stopped");
     return NULL;
 }
 
@@ -333,7 +334,7 @@ static void* ml_monitor_lan_high_freq_thread(void *arg) {
     advanced_networking_intelligence_t *system = (advanced_networking_intelligence_t*)arg;
     if (!system) return NULL;
     
-    LOGX_INFO("🔌 LAN high-frequency monitoring thread started (1 second interval)");
+    LOGX_INFO_MSG(" LAN high-frequency monitoring thread started (1 second interval)");
     
     while (g_monitoring_active) {
         // Perform ping test (no cost for LAN)
@@ -366,12 +367,12 @@ static void* ml_monitor_lan_high_freq_thread(void *arg) {
         usleep(system->high_freq_config.monitoring_intervals.lan_monitor_interval_ms * 1000);
     }
     
-    LOGX_INFO("LAN high-frequency monitoring thread stopped");
+    LOGX_INFO_MSG("LAN high-frequency monitoring thread stopped");
     return NULL;
 }
 
 // Perform real ping test for interface
-static int ml_monitor_perform_ping_test(const char *interface_id, const char *target, uint32_t *latency_ms, bool *success) {
+int ml_monitor_perform_ping_test(const char *interface_id, const char *target, uint32_t *latency_ms, bool *success) {
     if (!interface_id || !target || !latency_ms || !success) return ML_MONITOR_ERROR_INVALID_PARAM;
     
     *latency_ms = 0;
@@ -380,7 +381,7 @@ static int ml_monitor_perform_ping_test(const char *interface_id, const char *ta
     // Execute real ping command
     char ping_cmd[256];
     char result_file[128];
-    snprintf(result_file, sizeof(result_file), "/tmp/ping_result_%s_%ld", interface_id, time(NULL));
+    snprintf(result_file, sizeof(result_file), "/tmp/ping_result_%s_%lld", interface_id, (long long)time(NULL));
     
     // Use ping with specific interface and timeout
     snprintf(ping_cmd, sizeof(ping_cmd), 
@@ -408,7 +409,7 @@ static int ml_monitor_perform_ping_test(const char *interface_id, const char *ta
     unlink(result_file);
     
     if (!*success) {
-        LOGX_DEBUG("Ping failed for %s to %s", interface_id, target);
+        LOGX_DEBUG_MSG("Ping failed for %s to %s", interface_id, target);
         *latency_ms = 9999; // High latency for failed ping
     }
     
@@ -416,7 +417,7 @@ static int ml_monitor_perform_ping_test(const char *interface_id, const char *ta
 }
 
 // Collect cellular modem metrics (free - no data cost)
-static int ml_monitor_collect_cellular_modem_metrics(const char *interface_id, multi_interface_observation_t *observation) {
+int ml_monitor_collect_cellular_modem_metrics(const char *interface_id, multi_interface_observation_t *observation) {
     if (!interface_id || !observation) return ML_MONITOR_ERROR_INVALID_PARAM;
     
     memset(observation, 0, sizeof(multi_interface_observation_t));
@@ -428,7 +429,7 @@ static int ml_monitor_collect_cellular_modem_metrics(const char *interface_id, m
     // Collect real modem metrics using AT commands or UBUS
     char modem_cmd[256];
     char signal_file[128];
-    snprintf(signal_file, sizeof(signal_file), "/tmp/modem_signal_%s_%ld", interface_id, time(NULL));
+    snprintf(signal_file, sizeof(signal_file), "/tmp/modem_signal_%s_%lld", interface_id, (long long)time(NULL));
     
     // Try to get signal strength via ubus (preferred method)
     snprintf(modem_cmd, sizeof(modem_cmd), 
@@ -489,9 +490,9 @@ static int ml_monitor_collect_cellular_modem_metrics(const char *interface_id, m
                 fclose(f);
             }
         } else {
-            LOGX_WARN("Failed to collect cellular modem metrics for %s", interface_id);
+            LOGX_WARN_MSG("Failed to collect cellular modem metrics for %s", interface_id);
             unlink(signal_file);
-            return ML_MONITOR_ERROR_NO_DATA;
+            return AUTONOMY_ERROR_NO_DATA;
         }
     }
     
@@ -545,7 +546,7 @@ int ml_monitor_evaluate_predictive_failover(advanced_networking_intelligence_t *
             *should_failover_now = true;
             *predicted_outage_in_ms = 3000; // Predict 3-second outage
             
-            LOGX_INFO("🎬 STREAMING PROTECTION: Predictive failover triggered for %s (prob=%.1f%%, conf=%.1f%%)",
+            LOGX_INFO_MSG(" STREAMING PROTECTION: Predictive failover triggered for %s (prob=%.1f%%, conf=%.1f%%)",
                      interface_id, outage_probability * 100, *confidence * 100);
         }
     } else {
@@ -554,7 +555,7 @@ int ml_monitor_evaluate_predictive_failover(advanced_networking_intelligence_t *
             *should_failover_now = true;
             *predicted_outage_in_ms = 5000; // Predict 5-second outage
             
-            LOGX_INFO("⚠️ PREDICTIVE FAILOVER: Standard trigger for %s (prob=%.1f%%, conf=%.1f%%)",
+            LOGX_INFO_MSG(" PREDICTIVE FAILOVER: Standard trigger for %s (prob=%.1f%%, conf=%.1f%%)",
                      interface_id, outage_probability * 100, *confidence * 100);
         }
     }
@@ -590,7 +591,22 @@ int ml_monitor_update_connection_stability(advanced_networking_intelligence_t *s
     }
     
     if (stability_index >= 0) {
-        auto *stability = &system->stability_system.interface_stability[stability_index];
+        // Get pointer to interface stability
+        struct {
+            char interface_id[32];
+            double stability_score;
+            double recent_stability;
+            double long_term_stability;
+            uint32_t failover_events_last_hour;
+            uint32_t failover_events_last_day;
+            time_t last_failover_time;
+            bool currently_flapping;
+            time_t flapping_start_time;
+            time_t last_stable_time;
+            uint32_t stable_duration_seconds;
+            bool in_recovery_period;
+            uint32_t recovery_confidence_threshold;
+        } *stability = (void*)&system->stability_system.interface_stability[stability_index];
         
         // Update stability based on observation
         double current_stability = (observation->connection_health / 255.0) * (observation->connection_stability / 255.0);
@@ -610,7 +626,7 @@ int ml_monitor_update_connection_stability(advanced_networking_intelligence_t *s
                     stability->currently_flapping = true;
                     stability->flapping_start_time = current_time;
                     
-                    LOGX_WARN("🔄 FLAPPING DETECTED: %s has %u failovers in last hour - applying penalty",
+                    LOGX_WARN_MSG(" FLAPPING DETECTED: %s has %u failovers in last hour - applying penalty",
                              interface_id, stability->failover_events_last_hour);
                 }
             }
@@ -626,7 +642,7 @@ int ml_monitor_update_connection_stability(advanced_networking_intelligence_t *s
                 stability->stable_duration_seconds > system->stability_system.flapping_prevention.stability_required_for_recovery_seconds) {
                 
                 stability->currently_flapping = false;
-                LOGX_INFO("✅ FLAPPING RECOVERY: %s stable for %u seconds - removing penalty",
+                LOGX_INFO_MSG(" FLAPPING RECOVERY: %s stable for %u seconds - removing penalty",
                          interface_id, stability->stable_duration_seconds);
             }
         }
@@ -649,7 +665,22 @@ int ml_monitor_get_preferred_failover_target(advanced_networking_intelligence_t 
     
     // Evaluate all interfaces as potential targets
     for (int i = 0; i < system->stability_system.interface_count; i++) {
-        auto *stability = &system->stability_system.interface_stability[i];
+        // Get pointer to interface stability
+        struct {
+            char interface_id[32];
+            double stability_score;
+            double recent_stability;
+            double long_term_stability;
+            uint32_t failover_events_last_hour;
+            uint32_t failover_events_last_day;
+            time_t last_failover_time;
+            bool currently_flapping;
+            time_t flapping_start_time;
+            time_t last_stable_time;
+            uint32_t stable_duration_seconds;
+            bool in_recovery_period;
+            uint32_t recovery_confidence_threshold;
+        } *stability = (void*)&system->stability_system.interface_stability[i];
         
         // Skip current interface
         if (strcmp(stability->interface_id, current_interface) == 0) continue;
@@ -660,7 +691,7 @@ int ml_monitor_get_preferred_failover_target(advanced_networking_intelligence_t 
         // FLAPPING PREVENTION: Heavily penalize flapping interfaces
         if (stability->currently_flapping) {
             target_score *= system->stability_system.flapping_prevention.flapping_weight_reduction_factor; // 0.1 = 90% penalty
-            LOGX_DEBUG("Applying flapping penalty to %s: score %.3f → %.3f",
+            LOGX_DEBUG_MSG("Applying flapping penalty to %s: score %.3f  %.3f",
                       stability->interface_id, stability->stability_score, target_score);
         }
         
@@ -680,13 +711,13 @@ int ml_monitor_get_preferred_failover_target(advanced_networking_intelligence_t 
         strncpy(preferred_target, best_target, 32);
         *target_confidence = best_score;
         
-        LOGX_INFO("🎯 PREFERRED FAILOVER TARGET: %s → %s (confidence: %.3f)",
+        LOGX_INFO_MSG(" PREFERRED FAILOVER TARGET: %s  %s (confidence: %.3f)",
                  current_interface, best_target, best_score);
         
         return ML_MONITOR_SUCCESS;
     }
     
-    return ML_MONITOR_ERROR_NOT_FOUND;
+    return AUTONOMY_ERROR_NOT_FOUND;
 }
 
 // Update background validation (YOUR GENIUS INSIGHT: What-if analysis)
@@ -715,9 +746,28 @@ int ml_monitor_update_background_validation(advanced_networking_intelligence_t *
     }
     
     if (bg_index >= 0) {
-        auto *bg_interface = &system->background_intelligence.background_interfaces[bg_index];
+        // Get pointer to background interface
+        struct {
+            char interface_id[32];
+            bool currently_primary;
+            bool background_monitoring_active;
+            struct {
+                uint32_t background_observations;
+                uint32_t predicted_outages_if_primary;
+                uint32_t actual_outages_detected;
+                double accuracy_if_this_was_primary;
+                double performance_if_this_was_primary;
+            } what_if_analysis;
+            struct {
+                uint32_t model_predictions_made;
+                uint32_t model_predictions_correct;
+                double model_accuracy;
+                time_t last_model_update;
+                bool model_needs_retraining;
+            } model_validation;
+        } *bg_interface = (void*)&system->background_intelligence.background_interfaces[bg_index];
         
-        bg_interface->background_observations++;
+        bg_interface->what_if_analysis.background_observations++;
         
         // WHAT-IF ANALYSIS: "What if this interface was primary right now?"
         bool would_have_outage = (observation->packet_loss_pct > 5 || observation->latency_ms > 200);
@@ -725,7 +775,7 @@ int ml_monitor_update_background_validation(advanced_networking_intelligence_t *
         if (would_have_outage) {
             bg_interface->what_if_analysis.predicted_outages_if_primary++;
             
-            LOGX_DEBUG("WHAT-IF: %s would have outage if primary (latency=%ums, loss=%u%%)",
+            LOGX_DEBUG_MSG("WHAT-IF: %s would have outage if primary (latency=%ums, loss=%u%%)",
                       interface_id, observation->latency_ms, observation->packet_loss_pct);
         }
         
@@ -746,8 +796,8 @@ int ml_monitor_update_background_validation(advanced_networking_intelligence_t *
             (double)bg_interface->model_validation.model_predictions_correct / 
             bg_interface->model_validation.model_predictions_made;
         
-        LOGX_DEBUG("Background validation for %s: observations=%u, accuracy=%.3f, what-if-accuracy=%.3f",
-                  interface_id, bg_interface->background_observations,
+        LOGX_DEBUG_MSG("Background validation for %s: observations=%u, accuracy=%.3f, what-if-accuracy=%.3f",
+                  interface_id, bg_interface->what_if_analysis.background_observations,
                   bg_interface->model_validation.model_accuracy,
                   bg_interface->what_if_analysis.accuracy_if_this_was_primary);
     }
@@ -766,7 +816,26 @@ int ml_monitor_get_background_validation_results(advanced_networking_intelligenc
     // Find background interface
     for (int i = 0; i < system->background_intelligence.background_interface_count; i++) {
         if (strcmp(system->background_intelligence.background_interfaces[i].interface_id, interface_id) == 0) {
-            auto *bg_interface = &system->background_intelligence.background_interfaces[i];
+            // Get pointer to background interface
+            struct {
+                char interface_id[32];
+                bool currently_primary;
+                bool background_monitoring_active;
+                struct {
+                    uint32_t background_observations;
+                    uint32_t predicted_outages_if_primary;
+                    uint32_t actual_outages_detected;
+                    double accuracy_if_this_was_primary;
+                    double performance_if_this_was_primary;
+                } what_if_analysis;
+                struct {
+                    uint32_t model_predictions_made;
+                    uint32_t model_predictions_correct;
+                    double model_accuracy;
+                    time_t last_model_update;
+                    bool model_needs_retraining;
+                } model_validation;
+            } *bg_interface = (void*)&system->background_intelligence.background_interfaces[i];
             
             if (accuracy_if_primary) *accuracy_if_primary = bg_interface->what_if_analysis.accuracy_if_this_was_primary;
             if (performance_if_primary) *performance_if_primary = bg_interface->what_if_analysis.performance_if_this_was_primary;
@@ -776,7 +845,7 @@ int ml_monitor_get_background_validation_results(advanced_networking_intelligenc
         }
     }
     
-    return ML_MONITOR_ERROR_NOT_FOUND;
+    return AUTONOMY_ERROR_NOT_FOUND;
 }
 
 // Enable streaming protection mode
@@ -786,13 +855,13 @@ int ml_monitor_enable_streaming_protection(advanced_networking_intelligence_t *s
     system->enable_streaming_protection = enable;
     system->predictive_system.streaming_protection.enable_streaming_protection_mode = enable;
     
-    LOGX_INFO("🎬 Streaming protection %s", enable ? "ENABLED" : "DISABLED");
+    LOGX_INFO_MSG(" Streaming protection %s", enable ? "ENABLED" : "DISABLED");
     if (enable) {
-        LOGX_INFO("   - Tolerance: %ums interruption max", 
+        LOGX_INFO_MSG("   - Tolerance: %ums interruption max", 
                  system->predictive_system.streaming_protection.streaming_tolerance_ms);
-        LOGX_INFO("   - Prediction window: %ums ahead",
+        LOGX_INFO_MSG("   - Prediction window: %ums ahead",
                  system->predictive_system.streaming_protection.streaming_prediction_window_ms);
-        LOGX_INFO("   - Confidence threshold: %.1f%% for action",
+        LOGX_INFO_MSG("   - Confidence threshold: %.1f%% for action",
                  system->predictive_system.streaming_protection.streaming_confidence_threshold * 100);
     }
     

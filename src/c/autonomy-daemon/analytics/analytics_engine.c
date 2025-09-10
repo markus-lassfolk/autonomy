@@ -2,6 +2,9 @@
 #include "performance_analyzer.h"
 #include "trend_analyzer.h"
 #include "health_analyzer.h"
+#include "../utils/logx.h"
+#include "../core/system_management.h"
+#include "../utils/disk_monitor.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -26,6 +29,11 @@ int calculate_health_metrics(health_metrics_t* health);
 static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts);
 static int generate_analytics_recommendations(analytics_recommendation_t* recommendations, 
                                              int max_recommendations);
+
+// Simple network connectivity check
+static int check_network_connectivity(void) {
+    return system("ping -c 1 -W 1 8.8.8.8 > /dev/null 2>&1") == 0 ? 1 : 0;
+}
 
 // Initialize analytics engine
 int analytics_engine_init(const analytics_config_t* config) {
@@ -289,19 +297,26 @@ int calculate_system_overview(system_overview_t* overview) {
     
     // Check memory usage
     unsigned long total_mem, free_mem;
-    if (get_memory_usage(&total_mem, &free_mem) == 0) {
+    if (get_system_memory_usage(&total_mem, &free_mem) == 0) {
         double memory_usage = (double)(total_mem - free_mem) / total_mem;
         health_score += (1.0 - memory_usage) * 100.0; // Higher is better
         health_factors++;
     }
     
-    // Check disk usage
-    if (check_disk_space_available()) {
-        health_score += 100.0; // Disk space available
-        health_factors++;
-    } else {
-        health_score += 50.0; // Disk space low
-        health_factors++;
+    // Check disk usage - simple implementation
+    FILE *df_fp = popen("df / | tail -1 | awk '{print $4}'", "r");
+    if (df_fp) {
+        char buffer[128];
+        if (fgets(buffer, sizeof(buffer), df_fp)) {
+            long available_kb = atol(buffer);
+            if (available_kb > 100000) { // More than 100MB available
+                health_score += 100.0; // Disk space available
+            } else {
+                health_score += 50.0; // Disk space low
+            }
+            health_factors++;
+        }
+        pclose(df_fp);
     }
     
     // Check network connectivity
@@ -315,7 +330,7 @@ int calculate_system_overview(system_overview_t* overview) {
     
     // Check system load
     double load1, load5, load15;
-    if (get_system_load(&load1, &load5, &load15) == 0) {
+    if (get_system_load_average(&load1, &load5, &load15) == 0) {
         double load_factor = 1.0 - (load1 / 4.0); // Assume 4 cores max
         if (load_factor < 0.0) load_factor = 0.0;
         health_score += load_factor * 100.0;
@@ -450,7 +465,7 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     
     // Check memory usage alerts
     unsigned long total_mem, free_mem;
-    if (get_memory_usage(&total_mem, &free_mem) == 0) {
+    if (get_system_memory_usage(&total_mem, &free_mem) == 0) {
         double memory_usage = (double)(total_mem - free_mem) / total_mem * 100.0;
         if (memory_usage > 90.0) {
             if (alert_count < max_alerts) {
@@ -479,8 +494,18 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
         }
     }
     
-    // Check disk space alerts
-    if (!check_disk_space_available()) {
+    // Check disk space alerts - simple implementation
+    FILE *df_fp = popen("df / | tail -1 | awk '{print $4}'", "r");
+    bool disk_space_low = false;
+    if (df_fp) {
+        char buffer[128];
+        if (fgets(buffer, sizeof(buffer), df_fp)) {
+            long available_kb = atol(buffer);
+            disk_space_low = (available_kb <= 100000); // Less than 100MB available
+        }
+        pclose(df_fp);
+    }
+    if (disk_space_low) {
         if (alert_count < max_alerts) {
             strcpy(alerts[alert_count].id, "low_disk_space");
             strcpy(alerts[alert_count].type, "resource");
@@ -509,7 +534,7 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     
     // Check system load alerts
     double load1, load5, load15;
-    if (get_system_load(&load1, &load5, &load15) == 0) {
+    if (get_system_load_average(&load1, &load5, &load15) == 0) {
         if (load1 > 3.0) { // High load on 4-core system
             if (alert_count < max_alerts) {
                 strcpy(alerts[alert_count].id, "high_load");
@@ -558,7 +583,7 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     
     // Memory optimization recommendations
     unsigned long total_mem, free_mem;
-    if (get_memory_usage(&total_mem, &free_mem) == 0) {
+    if (get_system_memory_usage(&total_mem, &free_mem) == 0) {
         double memory_usage = (double)(total_mem - free_mem) / total_mem * 100.0;
         if (memory_usage > 70.0) {
             if (recommendation_count < max_recommendations) {
@@ -576,8 +601,18 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
         }
     }
     
-    // Disk space recommendations
-    if (!check_disk_space_available()) {
+    // Disk space recommendations - simple implementation
+    FILE *df_fp = popen("df / | tail -1 | awk '{print $4}'", "r");
+    bool disk_space_low = false;
+    if (df_fp) {
+        char buffer[128];
+        if (fgets(buffer, sizeof(buffer), df_fp)) {
+            long available_kb = atol(buffer);
+            disk_space_low = (available_kb <= 100000); // Less than 100MB available
+        }
+        pclose(df_fp);
+    }
+    if (disk_space_low) {
         if (recommendation_count < max_recommendations) {
             strcpy(recommendations[recommendation_count].id, "disk_cleanup");
             strcpy(recommendations[recommendation_count].type, "maintenance");
@@ -594,7 +629,7 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     
     // System load recommendations
     double load1, load5, load15;
-    if (get_system_load(&load1, &load5, &load15) == 0) {
+    if (get_system_load_average(&load1, &load5, &load15) == 0) {
         if (load1 > 2.0) {
             if (recommendation_count < max_recommendations) {
                 strcpy(recommendations[recommendation_count].id, "load_optimization");

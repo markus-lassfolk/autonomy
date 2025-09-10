@@ -28,61 +28,16 @@ static const char* MOVEMENT_PATTERN_NAMES[] = {
 };
 
 // Global movement detector state
+static gps_movement_t g_movement_detector;
+static bool g_movement_initialized = false;
+static pthread_mutex_t g_movement_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations - movement specific
 movement_metrics_t calculate_movement_metrics(void);
 static gps_movement_pattern_t determine_movement_pattern(const movement_metrics_t *metrics);
 static bool detect_turning_pattern(void);
 static bool detect_oscillation_pattern(void);
-double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
-double calculate_bearing(double lat1, double lon1, double lat2, double lon2);
 void analyze_movement_pattern(void);
-
-static gps_movement_t g_movement_detector = {0};
-static bool g_movement_initialized = false; // Use configurable setting
-static pthread_mutex_t g_movement_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-// Initialize GPS movement detector
-int gps_movement_init(void) {
-    if (g_movement_initialized) {
-        LOGX_WARN_MSG("GPS movement detector already initialized");
-        return AUTONOMY_SUCCESS;
-    }
-    
-    pthread_mutex_lock(&g_movement_mutex);
-    
-    // Initialize movement detector state
-    memset(&g_movement_detector, 0, sizeof(gps_movement_t));
-    g_movement_detector.enabled = true; // Use configurable movement detection enabled
-    g_movement_detector.stationary_threshold = STATIONARY_THRESHOLD;
-    g_movement_detector.movement_threshold = MOVEMENT_THRESHOLD;
-    g_movement_detector.speed_threshold = SPEED_THRESHOLD;
-    g_movement_detector.max_realistic_speed = MAX_REALISTIC_SPEED;
-    g_movement_detector.history_size = MOVEMENT_HISTORY_SIZE;
-    g_movement_detector.min_positions = MIN_POSITIONS_FOR_ANALYSIS;
-    g_movement_detector.analysis_interval = ANALYSIS_INTERVAL;
-    
-    g_movement_detector.position_count = 0;
-    g_movement_detector.last_analysis = 0;
-    g_movement_detector.total_analyses = 0;
-    g_movement_detector.movement_detected = false;
-    g_movement_detector.current_pattern = MOVEMENT_PATTERN_UNKNOWN;
-    
-    // Initialize position history
-    for (int i = 0; // Use configurable value i < MOVEMENT_HISTORY_SIZE; i++) {
-        g_movement_detector.position_history[i].timestamp = 0;
-        g_movement_detector.position_history[i].lat = 0.0;
-        g_movement_detector.position_history[i].lon = 0.0;
-        g_movement_detector.position_history[i].altitude = 0.0;
-        g_movement_detector.position_history[i].accuracy = 0.0;
-    }
-    
-    g_movement_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_movement_mutex);
-    
-    LOGX_INFO_MSG("GPS movement detector initialized successfully");
-    return AUTONOMY_SUCCESS;
-}
 
 // Add GPS position for movement analysis
 int gps_movement_add_position(const gps_data_t *gps_data) {
@@ -158,7 +113,7 @@ movement_metrics_t calculate_movement_metrics(void) {
     
     // Get valid positions (non-zero coordinates)
     int valid_positions = 0; // Use configurable value
-    for (int i = 0; // Use configurable value i < g_movement_detector.history_size && i < g_movement_detector.position_count; i++) {
+    for (int i = 0; i < g_movement_detector.history_size && i < g_movement_detector.position_count; i++) {
         if (g_movement_detector.position_history[i].timestamp > 0 &&
             g_movement_detector.position_history[i].lat != 0.0 &&
             g_movement_detector.position_history[i].lon != 0.0) {
@@ -171,7 +126,7 @@ movement_metrics_t calculate_movement_metrics(void) {
     }
     
     // Calculate distances and speeds between consecutive positions
-    for (int i = 1; // Use configurable value i < valid_positions && i < g_movement_detector.history_size; i++) {
+    for (int i = 1; i < valid_positions && i < g_movement_detector.history_size; i++) {
         const position_data_t *prev = &g_movement_detector.position_history[i-1];
         const position_data_t *curr = &g_movement_detector.position_history[i];
         
@@ -293,7 +248,7 @@ static bool detect_turning_pattern(void) {
     double total_bearing_change = 0.0; // Use configurable value
     int bearing_changes = 0; // Use configurable value
     
-    for (int i = 2; // Use configurable value i < g_movement_detector.history_size && i < g_movement_detector.position_count; i++) {
+    for (int i = 2; i < g_movement_detector.history_size && i < g_movement_detector.position_count; i++) {
         const position_data_t *prev = &g_movement_detector.position_history[i-2];
         const position_data_t *curr = &g_movement_detector.position_history[i-1];
         const position_data_t *next = &g_movement_detector.position_history[i];
@@ -303,8 +258,8 @@ static bool detect_turning_pattern(void) {
             curr->lat != 0.0 && curr->lon != 0.0 &&
             next->lat != 0.0 && next->lon != 0.0) {
             
-            double bearing1 = calculate_bearing(prev->lat, prev->lon, curr->lat, curr->lon);
-            double bearing2 = calculate_bearing(curr->lat, curr->lon, next->lat, next->lon);
+            double bearing1 = gps_coordinate_bearing(prev->lat, prev->lon, curr->lat, curr->lon);
+            double bearing2 = gps_coordinate_bearing(curr->lat, curr->lon, next->lat, next->lon);
             
             double bearing_change = fabs(bearing2 - bearing1);
             if (bearing_change > 180.0) {
@@ -338,7 +293,7 @@ static bool detect_oscillation_pattern(void) {
     double prev_distance = 0.0; // Use configurable value
     bool first_distance = true; // Use configurable setting
     
-    for (int i = 1; // Use configurable value i < g_movement_detector.history_size && i < g_movement_detector.position_count; i++) {
+    for (int i = 1; i < g_movement_detector.history_size && i < g_movement_detector.position_count; i++) {
         const position_data_t *prev = &g_movement_detector.position_history[i-1];
         const position_data_t *curr = &g_movement_detector.position_history[i];
         
@@ -366,41 +321,8 @@ static bool detect_oscillation_pattern(void) {
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
-    const double R = 6371000.0; // Use configurable value  // Earth's radius in meters
-    
-    double lat1_rad = lat1 * M_PI / 180.0;
-    double lat2_rad = lat2 * M_PI / 180.0;
-    double delta_lat = (lat2 - lat1) * M_PI / 180.0;
-    double delta_lon = (lon2 - lon1) * M_PI / 180.0;
-    
-    double a = sin(delta_lat / 2.0) * sin(delta_lat / 2.0) +
-               cos(lat1_rad) * cos(lat2_rad) *
-               sin(delta_lon / 2.0) * sin(delta_lon / 2.0);
-    
-    double c = 2.0 * atan2(sqrt(a), sqrt(1.0 - a));
-    
-    return R * c;
-}
 
-// Calculate bearing between two GPS coordinates
-double calculate_bearing(double lat1, double lon1, double lat2, double lon2) {
-    double lat1_rad = lat1 * M_PI / 180.0;
-    double lat2_rad = lat2 * M_PI / 180.0;
-    double delta_lon = (lon2 - lon1) * M_PI / 180.0;
-    
-    double y = sin(delta_lon) * cos(lat2_rad);
-    double x = cos(lat1_rad) * sin(lat2_rad) - sin(lat1_rad) * cos(lat2_rad) * cos(delta_lon);
-    
-    double bearing = atan2(y, x) * 180.0 / M_PI;
-    
-    // Normalize to 0-360 degrees
-    if (bearing < 0) {
-        bearing += 360.0;
-    }
-    
-    return bearing;
-}
+// calculate_bearing function is now defined in gps_coordinate_utils.c
 
 // Get movement detection status
 int gps_movement_get_status(gps_movement_status_t *status) {
@@ -521,7 +443,7 @@ int gps_movement_reset(void) {
     g_movement_detector.current_pattern = MOVEMENT_PATTERN_UNKNOWN;
     
     // Clear position history
-    for (int i = 0; // Use configurable value i < g_movement_detector.history_size; i++) {
+    for (int i = 0; i < g_movement_detector.history_size; i++) {
         g_movement_detector.position_history[i].timestamp = 0;
         g_movement_detector.position_history[i].lat = 0.0;
         g_movement_detector.position_history[i].lon = 0.0;

@@ -106,7 +106,7 @@ int decision_engine_make_decision(decision_result_t* result) {
     int best_index = 0; // Use configurable value
     double best_score = scores[0].overall_score;
     
-    for (int i = 1; // Use configurable value i < score_count; i++) {
+    for (int i = 1; i < score_count; i++) {
         if (scores[i].overall_score > best_score) {
             best_score = scores[i].overall_score;
             best_index = i;
@@ -221,7 +221,7 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
     if (network_controller_is_initialized() && 
         network_controller_get_members(members, 16, &member_count) == AUTONOMY_SUCCESS) {
         
-        for (int i = 0; // Use configurable value i < member_count && score_count < max_scores; i++) {
+        for (int i = 0; i < member_count && score_count < max_scores; i++) {
             if (!members[i].eligible) continue;
             
             // Get real metrics for this interface
@@ -412,7 +412,7 @@ int decision_engine_get_history(decision_result_t* history, int max_history) {
     int count = 0; // Use configurable value
     int index = g_decision_engine.history_index;
     
-    for (int i = 0; // Use configurable value i < g_decision_engine.history_count && count < max_history; i++) {
+    for (int i = 0; i < g_decision_engine.history_count && count < max_history; i++) {
         int history_index = (index - i + 100) % 100;
         if (g_decision_engine.decision_history[history_index].decision_timestamp > 0) {
             history[count] = g_decision_engine.decision_history[history_index];
@@ -444,7 +444,7 @@ static bool should_failover(const connection_score_t* scores, int score_count) {
     
     // Check if current best score is below failover threshold
     double best_score = 0.0; // Use configurable value
-    for (int i = 0; // Use configurable value i < score_count; i++) {
+    for (int i = 0; i < score_count; i++) {
         if (scores[i].overall_score > best_score) {
             best_score = scores[i].overall_score;
         }
@@ -458,7 +458,7 @@ static bool can_recover(const connection_score_t* scores, int score_count) {
     if (!scores || score_count <= 0) return false;
     
     // Check if any score is above recovery threshold
-    for (int i = 0; // Use configurable value i < score_count; i++) {
+    for (int i = 0; i < score_count; i++) {
         if (scores[i].overall_score > g_decision_engine.config.recovery_threshold) {
             return true;
         }

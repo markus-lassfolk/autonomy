@@ -254,24 +254,24 @@ static char* create_escalation_message(escalation_chain_t* chain, escalation_con
     time_t duration = time(NULL) - chain->start_time;
     
     snprintf(message, sizeof(message),
-             "🚨 EMERGENCY ESCALATION - Level %d\n\n"
-             "📋 Incident Details:\n"
-             "• Incident ID: %s\n"
-             "• Alert Type: %s\n"
-             "• Duration: %lld seconds\n"
-             "• Escalation Level: %d/%d\n\n"
-             "👤 Escalated To: %s\n"
-             "⏰ Response Required Within: %lld seconds\n\n"
-             "🔍 Context:\n"
-             "• Started: %s"
-             "• Previous levels contacted: %d\n"
-             "• Acknowledgment required to stop escalation\n\n"
-             "⚡ Action Required:\n"
+             " EMERGENCY ESCALATION - Level %d\n\n"
+             " Incident Details:\n"
+             " Incident ID: %s\n"
+             " Alert Type: %s\n"
+             " Duration: %lld seconds\n"
+             " Escalation Level: %d/%d\n\n"
+             " Escalated To: %s\n"
+             " Response Required Within: %lld seconds\n\n"
+             " Context:\n"
+             " Started: %s"
+             " Previous levels contacted: %d\n"
+             " Acknowledgment required to stop escalation\n\n"
+             " Action Required:\n"
              "1. Acknowledge this escalation immediately\n"
              "2. Investigate the incident\n"
              "3. Take corrective action\n"
              "4. Update incident status\n\n"
-             "🆘 To acknowledge: Use escalation ID %s",
+             " To acknowledge: Use escalation ID %s",
              contact->level,
              chain->incident_id,
              notification_type_to_string(chain->alert_type),
@@ -286,7 +286,7 @@ static char* create_escalation_message(escalation_chain_t* chain, escalation_con
     
     // Add context if available
     if (strlen(chain->context_json) > 0) {
-        strncat(message, "\n\n📊 Additional Context:\n", sizeof(message) - strlen(message) - 1);
+        strncat(message, "\n\n Additional Context:\n", sizeof(message) - strlen(message) - 1);
         strncat(message, chain->context_json, sizeof(message) - strlen(message) - 1);
     }
     
@@ -321,7 +321,7 @@ static void send_escalation_notification(escalation_chain_t* chain, int level) {
     memset(&event, 0, sizeof(event));
     
     snprintf(event.id, sizeof(event.id), "esc_%.30s_%d_%lld", chain->id, level, now);
-    snprintf(event.title, sizeof(event.title), "🚨 ESCALATION LEVEL %d: %s", 
+    snprintf(event.title, sizeof(event.title), " ESCALATION LEVEL %d: %s", 
              level, notification_type_to_string(chain->alert_type));
     
     char* message = create_escalation_message(chain, contact);

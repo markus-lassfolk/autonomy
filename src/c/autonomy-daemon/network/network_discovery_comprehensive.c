@@ -19,6 +19,21 @@
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
 
+// Forward declarations for static functions only
+static bool is_interface_in_mwan3(const char *interface_name);
+static void get_mwan3_interface_status(struct ubus_context *ctx, network_interface_t *iface);
+static void update_interface_device_info(struct ubus_context *ctx, network_interface_t *iface);
+static void determine_interface_type_comprehensive(network_interface_t *interface);
+static void get_cellular_interface_details(struct ubus_context *ctx, network_interface_t *interface);
+static void get_wifi_interface_details(struct ubus_context *ctx, network_interface_t *iface);
+static bool is_starlink_ip_range(const char *ip);
+static void get_starlink_dish_info(network_interface_t *iface);
+static void detect_cellular_device_path(network_interface_t *iface);
+static bool is_cellular_device_active(const char *device_path);
+static void get_cellular_device_from_uci(network_interface_t *iface);
+static void calculate_performance_trends(network_interface_t *interface);
+static void update_real_time_ping_metrics(network_interface_t *interface);
+
 // External reference to global configuration
 extern autonomy_config_t g_config;
 
@@ -110,14 +125,14 @@ int get_comprehensive_interface_info(network_interface_t *interfaces, int *count
 }
 
 // Parse network interfaces dump from ubus
-static void parse_network_interfaces_dump(struct ubus_context *ctx, network_interface_t *interfaces, int *count) {
+void parse_network_interfaces_dump(void *ctx, network_interface_t *interfaces, int *count) {
     // This would parse the JSON response from network.interface dump
     // For now, we'll use a simplified approach
     LOGX_DEBUG_MSG("Parsing network interfaces dump");
 }
 
 // Get MWAN3 interface information
-static void get_mwan3_interface_info(struct ubus_context *ctx, network_interface_t *interfaces, int count) {
+void get_mwan3_interface_info(void *ctx, network_interface_t *interfaces, int count) {
     uint32_t id;
     if (ubus_lookup_id(ctx, "mwan3", &id) != 0) {
         LOGX_DEBUG_MSG("MWAN3 not available");
@@ -162,7 +177,7 @@ static void get_mwan3_interface_status(struct ubus_context *ctx, network_interfa
 }
 
 // Get device information from network.device
-static void get_device_information(struct ubus_context *ctx, network_interface_t *interfaces, int count) {
+void get_device_information(void *ctx, network_interface_t *interfaces, int count) {
     uint32_t id;
     if (ubus_lookup_id(ctx, "network.device", &id) != 0) {
         LOGX_DEBUG_MSG("network.device not available");
@@ -222,7 +237,7 @@ static void determine_interface_type_comprehensive(network_interface_t *iface) {
 }
 
 // Get cellular information
-static void get_cellular_information(struct ubus_context *ctx, network_interface_t *interfaces, int count) {
+void get_cellular_information(void *ctx, network_interface_t *interfaces, int count) {
     // Check for cellular interfaces
     for (int i = 0; i < count; i++) {
         if (strcmp(interfaces[i].type, "cellular") == 0) {
@@ -255,7 +270,7 @@ static void get_cellular_interface_details(struct ubus_context *ctx, network_int
 }
 
 // Get WiFi information
-static void get_wifi_information(struct ubus_context *ctx, network_interface_t *interfaces, int count) {
+void get_wifi_information(void *ctx, network_interface_t *interfaces, int count) {
     uint32_t id;
     if (ubus_lookup_id(ctx, "network.wireless", &id) != 0) {
         LOGX_DEBUG_MSG("network.wireless not available");
@@ -286,7 +301,7 @@ static void get_wifi_interface_details(struct ubus_context *ctx, network_interfa
 }
 
 // Detect Starlink connections
-static void detect_starlink_connections(network_interface_t *interfaces, int count) {
+void detect_starlink_connections(network_interface_t *interfaces, int count) {
     for (int i = 0; i < count; i++) {
         // Check for Starlink IP range (100.64.0.0/10)
         if (strlen(interfaces[i].ip_address) > 0 && 
@@ -326,7 +341,7 @@ static void get_starlink_dish_info(network_interface_t *iface) {
 }
 
 // Detect VPN connections
-static void detect_vpn_connections(network_interface_t *interfaces, int count) {
+void detect_vpn_connections(network_interface_t *interfaces, int count) {
     for (int i = 0; i < count; i++) {
         // Check for WireGuard interfaces
         if (strstr(interfaces[i].name, "wg_") || 
@@ -347,7 +362,7 @@ static void detect_vpn_connections(network_interface_t *interfaces, int count) {
 }
 
 // Get friendly names from UCI
-static void get_friendly_names_from_uci(network_interface_t *interfaces, int count) {
+void get_friendly_names_from_uci(network_interface_t *interfaces, int count) {
     struct uci_context *ctx = uci_alloc_context();
     if (!ctx) {
         LOGX_ERROR_MSG("Failed to allocate UCI context");
@@ -515,7 +530,7 @@ int network_discovery_get_comprehensive_interfaces(network_interface_t *interfac
 }
 
 // Get cellular device path for a specific interface
-int get_cellular_device_path(const char *interface_name, char *device_path, size_t path_size) {
+int network_discovery_get_cellular_device_path(const char *interface_name, char *device_path, size_t path_size) {
     if (!interface_name || !device_path || path_size == 0) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -586,7 +601,7 @@ static void get_enhanced_cellular_metrics(network_interface_t *interface) {
     // Get network operator using dynamic device discovery
     extern int get_network_operator(const char *device_path, char *operator_name, size_t name_size);
     char device_path[64];
-    if (get_cellular_device_path(interface->name, device_path, sizeof(device_path)) == AUTONOMY_SUCCESS) {
+    if (network_discovery_get_cellular_device_path(interface->name, device_path, sizeof(device_path)) == AUTONOMY_SUCCESS) {
         get_network_operator(device_path, interface->enhanced_cellular_info.operator_name, 
                            sizeof(interface->enhanced_cellular_info.operator_name));
     }

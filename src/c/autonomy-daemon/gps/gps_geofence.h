@@ -46,6 +46,8 @@ typedef struct {
     time_t last_event;                  // Last event timestamp
     int event_count;                    // Total event count
     gps_geofence_status_t current_status; // Current status
+    long total_time_inside;             // Total time inside geofence
+    long total_time_outside;            // Total time outside geofence
 } gps_geofence_definition_t;
 
 // Geofence configuration
@@ -72,6 +74,18 @@ typedef struct {
     int active_geofences;               // Active geofences
     int total_events;                   // Total events
     time_t last_check;                  // Last check
+    
+    // MQTT configuration
+    char mqtt_broker[256];              // MQTT broker address
+    char mqtt_topic[256];               // MQTT topic
+    
+    // API configuration
+    char timezone_api_key[128];         // Timezone API key
+    
+    // Notification configuration
+    char notification_email[256];       // Email for notifications
+    char notification_phone[64];        // Phone for SMS notifications
+    char webhook_url[512];              // Webhook URL for notifications
     
     // Geofences array
     gps_geofence_definition_t geofences[20]; // Geofences
@@ -176,6 +190,23 @@ int gps_geofence_delete(int geofence_id);
  * @return AUTONOMY_SUCCESS on success, error code on failure
  */
 int gps_geofence_reset(void);
+
+/**
+ * Get active geofences
+ * @param geofences Array to store geofence definitions
+ * @param max_count Maximum number of geofences to return
+ * @return Number of active geofences found
+ */
+int gps_geofence_get_active_geofences(gps_geofence_definition_t *geofences, int max_count);
+
+/**
+ * Check if a point is inside a specific geofence
+ * @param geofence Geofence definition to check against
+ * @param lat Latitude of the point
+ * @param lon Longitude of the point
+ * @return true if point is inside geofence, false otherwise
+ */
+bool gps_geofence_is_point_inside(const gps_geofence_definition_t *geofence, double lat, double lon);
 
 /**
  * Cleanup geofencing system

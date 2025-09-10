@@ -209,19 +209,19 @@ int data_limit_notification_manager_notify_failover_to_limited(const char* from_
     // Set priority based on usage
     if (data_limit->usage_percentage > 80) {
         event.priority = NOTIFICATION_PRIORITY_HIGH;
-        snprintf(event.title, sizeof(event.title), "⚠️ 🔄 Failover to Data-Limited Connection");
+        snprintf(event.title, sizeof(event.title), "  Failover to Data-Limited Connection");
     } else {
         event.priority = NOTIFICATION_PRIORITY_NORMAL;
-        snprintf(event.title, sizeof(event.title), "🔄 Failover to Data-Limited Connection");
+        snprintf(event.title, sizeof(event.title), " Failover to Data-Limited Connection");
     }
     
     snprintf(event.message, sizeof(event.message),
              "Switched from %s to %s\n\n"
-             "📊 Data Status:\n"
-             "• Remaining: %.2f GB (%.1f%%)\n"
-             "• Used: %.2f GB of %d GB\n"
-             "• Resets in: %d days\n\n"
-             "⚠️ Monitor usage carefully!",
+             " Data Status:\n"
+             " Remaining: %.2f GB (%.1f%%)\n"
+             " Used: %.2f GB of %d GB\n"
+             " Resets in: %d days\n\n"
+             " Monitor usage carefully!",
              from_interface, to_interface,
              remaining_gb, 100.0 - data_limit->usage_percentage,
              data_limit->current_usage_mb / 1024.0, data_limit->data_limit_mb / 1024,
@@ -260,14 +260,14 @@ int data_limit_notification_manager_notify_failback_from_limited(const char* fro
     time_t now = time(NULL);
     snprintf(event.id, sizeof(event.id), "failback_%lld", (long long)now);
     
-    snprintf(event.title, sizeof(event.title), "✅ Failback to Unlimited Connection");
+    snprintf(event.title, sizeof(event.title), " Failback to Unlimited Connection");
     snprintf(event.message, sizeof(event.message),
              "Switched back from %s to %s\n\n"
-             "📊 Final Data Usage:\n"
-             "• Remaining: %.2f GB (%.1f%%)\n"
-             "• Total used: %.2f GB of %d GB\n"
-             "• Resets in: %d days\n\n"
-             "🎉 Back to unlimited connectivity!",
+             " Final Data Usage:\n"
+             " Remaining: %.2f GB (%.1f%%)\n"
+             " Total used: %.2f GB of %d GB\n"
+             " Resets in: %d days\n\n"
+             " Back to unlimited connectivity!",
              from_interface, to_interface,
              remaining_gb, 100.0 - data_limit->usage_percentage,
              data_limit->current_usage_mb / 1024.0, data_limit->data_limit_mb / 1024,
@@ -326,10 +326,10 @@ int data_limit_notification_manager_notify_daily_usage_threshold(const char* int
     snprintf(event.id, sizeof(event.id), "daily_%s_%d_%lld", interface_name, percentage, (long long)now);
     
     if (percentage >= 100) {
-        snprintf(event.title, sizeof(event.title), "🚨 Daily Data Limit Exceeded!");
+        snprintf(event.title, sizeof(event.title), " Daily Data Limit Exceeded!");
         event.priority = NOTIFICATION_PRIORITY_HIGH;
     } else {
-        snprintf(event.title, sizeof(event.title), "📊 Daily Data Usage: %d%%", percentage);
+        snprintf(event.title, sizeof(event.title), " Daily Data Usage: %d%%", percentage);
         event.priority = NOTIFICATION_PRIORITY_NORMAL;
     }
     
@@ -338,14 +338,14 @@ int data_limit_notification_manager_notify_daily_usage_threshold(const char* int
     
     snprintf(event.message, sizeof(event.message),
              "Interface: %s\n\n"
-             "📅 Today's Usage:\n"
-             "• Used: %.2f MB (%.1f%%)\n"
-             "• Daily allowance: %.2f MB\n"
-             "• Remaining today: %.2f MB\n\n"
-             "📊 Monthly Status:\n"
-             "• Used: %.2f GB of %d GB\n"
-             "• Remaining: %.2f GB\n"
-             "• Resets in: %d days",
+             " Today's Usage:\n"
+             " Used: %.2f MB (%.1f%%)\n"
+             " Daily allowance: %.2f MB\n"
+             " Remaining today: %.2f MB\n\n"
+             " Monthly Status:\n"
+             " Used: %.2f GB of %d GB\n"
+             " Remaining: %.2f GB\n"
+             " Resets in: %d days",
              interface_name,
              tracker->today_usage_mb, daily_usage_percent,
              tracker->daily_allowance_mb, remaining_daily,
@@ -379,20 +379,20 @@ int data_limit_notification_manager_notify_monthly_usage_threshold(const char* i
     
     if (data_limit->usage_percentage >= 100.0) {
         notify_type = NOTIFICATION_TYPE_DATA_LIMIT;
-        title = "🚨 Monthly Data Limit EXCEEDED!";
-        emoji = "🚨";
+        title = " Monthly Data Limit EXCEEDED!";
+        emoji = "";
         priority = NOTIFICATION_PRIORITY_HIGH;
         snprintf(notification_key, sizeof(notification_key), "monthly_exceeded_%s", interface_name);
     } else if (data_limit->usage_percentage >= 95.0) {
         notify_type = NOTIFICATION_TYPE_DATA_LIMIT;
-        title = "⚠️ Monthly Data Limit: 95% Used";
-        emoji = "⚠️";
+        title = " Monthly Data Limit: 95% Used";
+        emoji = "";
         priority = NOTIFICATION_PRIORITY_HIGH;
         snprintf(notification_key, sizeof(notification_key), "monthly_95_%s", interface_name);
     } else if (data_limit->usage_percentage >= 80.0) {
         notify_type = NOTIFICATION_TYPE_DATA_LIMIT;
-        title = "📊 Monthly Data Limit: 80% Used";
-        emoji = "📊";
+        title = " Monthly Data Limit: 80% Used";
+        emoji = "";
         snprintf(notification_key, sizeof(notification_key), "monthly_80_%s", interface_name);
     } else {
         return 0; // No notification needed
@@ -422,13 +422,13 @@ int data_limit_notification_manager_notify_monthly_usage_threshold(const char* i
         snprintf(event.message, sizeof(event.message),
                  "Interface: %s\n\n"
                  "%s Monthly Status:\n"
-                 "• Used: %.2f GB of %d GB (%.1f%%)\n"
-                 "• Remaining: %.2f GB\n"
-                 "• Resets in: %d days\n\n"
-                 "📅 Daily Allowance:\n"
-                 "• Recommended: %.2f MB/day\n"
-                 "• Today used: %.2f MB\n\n"
-                 "💡 Consider switching to unlimited connection!",
+                 " Used: %.2f GB of %d GB (%.1f%%)\n"
+                 " Remaining: %.2f GB\n"
+                 " Resets in: %d days\n\n"
+                 " Daily Allowance:\n"
+                 " Recommended: %.2f MB/day\n"
+                 " Today used: %.2f MB\n\n"
+                 " Consider switching to unlimited connection!",
                  interface_name, emoji,
                  data_limit->current_usage_mb / 1024.0, data_limit->data_limit_mb / 1024, data_limit->usage_percentage,
                  remaining_gb, data_limit->days_until_reset,
@@ -437,10 +437,10 @@ int data_limit_notification_manager_notify_monthly_usage_threshold(const char* i
         snprintf(event.message, sizeof(event.message),
                  "Interface: %s\n\n"
                  "%s Monthly Status:\n"
-                 "• Used: %.2f GB of %d GB (%.1f%%)\n"
-                 "• Remaining: %.2f GB\n"
-                 "• Resets in: %d days\n\n"
-                 "💡 Consider switching to unlimited connection!",
+                 " Used: %.2f GB of %d GB (%.1f%%)\n"
+                 " Remaining: %.2f GB\n"
+                 " Resets in: %d days\n\n"
+                 " Consider switching to unlimited connection!",
                  interface_name, emoji,
                  data_limit->current_usage_mb / 1024.0, data_limit->data_limit_mb / 1024, data_limit->usage_percentage,
                  remaining_gb, data_limit->days_until_reset);
@@ -512,18 +512,18 @@ int data_limit_notification_manager_notify_unexpected_usage_spike(const char* in
     // Generate ID
     snprintf(event.id, sizeof(event.id), "spike_%s_%lld", interface_name, (long long)now);
     
-    snprintf(event.title, sizeof(event.title), "📈 Unusual Data Usage Detected");
+    snprintf(event.title, sizeof(event.title), " Unusual Data Usage Detected");
     snprintf(event.message, sizeof(event.message),
              "Interface: %s\n\n"
-             "🚨 High usage detected:\n"
-             "• Last %.1f hours: %.2f MB\n"
-             "• Rate: %.2f MB/hour\n"
-             "• Normal rate: %.2f MB/hour\n\n"
-             "📊 Current Status:\n"
-             "• Monthly used: %.1f%%\n"
-             "• Remaining: %.2f GB\n"
-             "• Resets in: %d days\n\n"
-             "💡 Check for background downloads or streaming!",
+             " High usage detected:\n"
+             " Last %.1f hours: %.2f MB\n"
+             " Rate: %.2f MB/hour\n"
+             " Normal rate: %.2f MB/hour\n\n"
+             " Current Status:\n"
+             " Monthly used: %.1f%%\n"
+             " Remaining: %.2f GB\n"
+             " Resets in: %d days\n\n"
+             " Check for background downloads or streaming!",
              interface_name, time_since_last_check_hours, usage_since_last_check,
              hourly_usage_mb, normal_hourly_usage,
              data_limit->usage_percentage,
@@ -556,17 +556,17 @@ int data_limit_notification_manager_notify_data_limit_reset(const char* interfac
     time_t now = time(NULL);
     snprintf(event.id, sizeof(event.id), "reset_%s_%lld", interface_name, (long long)now);
     
-    snprintf(event.title, sizeof(event.title), "🔄 Data Limit Reset");
+    snprintf(event.title, sizeof(event.title), " Data Limit Reset");
     snprintf(event.message, sizeof(event.message),
              "Interface: %s\n\n"
-             "✅ Monthly data limit has reset!\n\n"
-             "📊 New Month:\n"
-             "• Limit: %d GB\n"
-             "• Used: %.2f MB\n"
-             "• Available: %.2f GB\n\n"
-             "📅 Daily Allowance:\n"
-             "• Recommended: %.2f MB/day\n\n"
-             "🎉 Fresh start with full data allowance!",
+             " Monthly data limit has reset!\n\n"
+             " New Month:\n"
+             " Limit: %d GB\n"
+             " Used: %.2f MB\n"
+             " Available: %.2f GB\n\n"
+             " Daily Allowance:\n"
+             " Recommended: %.2f MB/day\n\n"
+             " Fresh start with full data allowance!",
              interface_name,
              data_limit->data_limit_mb / 1024,
              data_limit->current_usage_mb,

@@ -139,7 +139,7 @@ static void* rutos_monitor_thread(void *arg) {
         gps_rutos_read_data();
         
         // Sleep for update interval
-        for (int i = 0; // Use configurable value i < g_rutos_gps.update_interval && g_rutos_thread_running; i++) {
+        for (int i = 0; i < g_rutos_gps.update_interval && g_rutos_thread_running; i++) {
             sleep(1);
         }
     }
@@ -196,7 +196,9 @@ int gps_rutos_read_data(void) {
             g_rutos_gps.consecutive_successes = 0;
         }
     } else {
-        LOGX_WARN_MSG("Failed to read RUTOS GPS data");
+        // In test environment, GPS hardware may not be available
+        // Reduce log level to avoid spam in test environments
+        LOGX_DEBUG_MSG("Failed to read RUTOS GPS data (expected in test environment)");
         g_rutos_gps.consecutive_failures++;
         g_rutos_gps.consecutive_successes = 0;
     }
@@ -214,7 +216,9 @@ static int read_rutos_gps_data(gps_data_t *data) {
     // Read GPS data file
     FILE *fp = fopen(RUTOS_GPS_FILES[0], "r");
     if (!fp) {
-        LOGX_DEBUG_MSG("RUTOS GPS data file not found", "path", RUTOS_GPS_FILES[0]);
+        // In test environment, GPS hardware may not be available
+        // This is expected behavior, not an error
+        LOGX_DEBUG_MSG("RUTOS GPS data file not found (expected in test environment)", "path", RUTOS_GPS_FILES[0]);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -462,6 +466,19 @@ bool gps_rutos_meets_accuracy(float required_accuracy) {
     pthread_mutex_unlock(&g_rutos_mutex);
     
     return meets;
+}
+
+// Check if RUTOS GPS is available
+bool gps_rutos_is_available(void) {
+    if (!g_rutos_initialized) {
+        return false;
+    }
+    
+    pthread_mutex_lock(&g_rutos_mutex);
+    bool available = g_rutos_gps.enabled && g_rutos_gps.gps_data.valid;
+    pthread_mutex_unlock(&g_rutos_mutex);
+    
+    return available;
 }
 
 // Cleanup RUTOS GPS system

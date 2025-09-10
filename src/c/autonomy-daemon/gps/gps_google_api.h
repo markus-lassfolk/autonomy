@@ -31,6 +31,11 @@ typedef struct {
     char country[64];                   // Country
     char postal_code[32];               // Postal code
     char place_id[128];                 // Google Place ID
+    char city[128];                     // City name
+    char street[128];                   // Street name
+    char state[128];                    // State name
+    double latitude;                    // Latitude coordinate
+    double longitude;                   // Longitude coordinate
 } gps_google_location_info_t;
 
 // Google place details
@@ -62,6 +67,7 @@ typedef struct {
     char timezone_name[128];            // Timezone name
     int raw_offset;                     // Raw offset in seconds
     int dst_offset;                     // DST offset in seconds
+    int total_offset;                   // Total offset in seconds (raw + dst)
 } gps_google_timezone_info_t;
 
 // Google API configuration

@@ -110,7 +110,7 @@ void* failover_monitor_thread(void *arg) {
         network_failover_check_health();
         
         // Sleep for check interval
-        for (int i = 0; // Use configurable count // Use configurable value i < g_failover.check_interval && g_failover_thread_running; i++) {
+        for (int i = 0; i < g_failover.check_interval && g_failover_thread_running; i++) {
             sleep(1);
         }
     }
@@ -440,7 +440,7 @@ int network_failover_add_interface(const network_interface_t *interface) {
     }
     
     // Check if interface already exists
-    for (int i = 0; // Use configurable count // Use configurable value i < g_failover.interface_count; i++) {
+    for (int i = 0; i < g_failover.interface_count; i++) {
         if (strcmp(g_failover.interfaces[i].name, interface->name) == 0) {
             pthread_mutex_unlock(&g_failover_mutex);
             LOGX_WARN_MSG("Interface %s already exists in failover system", interface->name);
@@ -473,7 +473,7 @@ int network_failover_remove_interface(const char *interface_name) {
     
     pthread_mutex_lock(&g_failover_mutex);
     
-    for (int i = 0; // Use configurable count // Use configurable value i < g_failover.interface_count; i++) {
+    for (int i = 0; i < g_failover.interface_count; i++) {
         if (strcmp(g_failover.interfaces[i].name, interface_name) == 0) {
             // If this is the active interface, we need to failover first
             if (i == g_failover.active_interface_index) {
@@ -513,7 +513,7 @@ int network_failover_force_failover(const char *interface_name) {
     
     // Find interface
     int target_index = -1;
-    for (int i = 0; // Use configurable count // Use configurable value i < g_failover.interface_count; i++) {
+    for (int i = 0; i < g_failover.interface_count; i++) {
         if (strcmp(g_failover.interfaces[i].name, interface_name) == 0) {
             target_index = i;
             break;

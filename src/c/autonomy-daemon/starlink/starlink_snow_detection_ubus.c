@@ -102,7 +102,7 @@ int starlink_snow_detection_ubus_init(void) {
     if (!g_ubus_ctx) {
         LOGX_ERROR_MSG("Failed to connect to UBUS");
         pthread_mutex_unlock(&g_ubus_mutex);
-        return AUTONOMY_ERROR_INITIALIZATION;
+        return AUTONOMY_ERROR_API_FAILED;
     }
     
     // Initialize snow detection system first
@@ -129,7 +129,7 @@ int starlink_snow_detection_ubus_init(void) {
         ubus_free(g_ubus_ctx);
         g_ubus_ctx = NULL;
         pthread_mutex_unlock(&g_ubus_mutex);
-        return AUTONOMY_ERROR_INITIALIZATION;
+        return AUTONOMY_ERROR_API_FAILED;
     }
     
     g_ubus_initialized = true;

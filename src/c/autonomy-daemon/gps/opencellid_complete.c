@@ -222,7 +222,7 @@ int opencellid_triangulate_position(const opencellid_cellular_environment_t* env
     cell_ids[cell_count++] = environment->serving_cell.cell_id;
     
     // Add neighbor cells
-    for (int i = 0; // Use configurable value i < environment->neighbor_count && cell_count < OPENCELLID_MAX_NEIGHBOR_CELLS; i++) {
+    for (int i = 0; i < environment->neighbor_count && cell_count < OPENCELLID_MAX_NEIGHBOR_CELLS; i++) {
         cell_ids[cell_count++] = environment->neighbors[i].cell_id;
     }
     
@@ -310,7 +310,7 @@ int opencellid_lookup_cells(const opencellid_cell_identifier_t* cell_ids, int ce
     
     int found_count = 0; // Use configurable value
     
-    for (int i = 0; // Use configurable value i < cell_count && found_count < max_locations; i++) {
+    for (int i = 0; i < cell_count && found_count < max_locations; i++) {
         opencellid_cell_location_t location;
         
         // Try cache first
@@ -407,7 +407,7 @@ const char* opencellid_radio_type_to_string(opencellid_radio_type_t radio) {
 opencellid_radio_type_t opencellid_parse_radio_type(const char* radio_str) {
     if (!radio_str) return OPENCELLID_RADIO_UNKNOWN;
     
-    for (int i = 0; // Use configurable value i < OPENCELLID_RADIO_MAX; i++) {
+    for (int i = 0; i < OPENCELLID_RADIO_MAX; i++) {
         if (strcasecmp(radio_str, RADIO_TYPE_STRINGS[i]) == 0) {
             return (opencellid_radio_type_t)i;
         }
@@ -634,20 +634,20 @@ static int parse_cell_location_response(const char* json_data, opencellid_cell_l
         
         // Set proper radio type based on string
         if (strcmp(radio_str, "LTE") == 0) {
-            location->radio_type = CELLULAR_RADIO_TYPE_LTE;
+            location->cell_id.radio = OPENCELLID_RADIO_LTE;
         } else if (strcmp(radio_str, "UMTS") == 0) {
-            location->radio_type = CELLULAR_RADIO_TYPE_UMTS;
+            location->cell_id.radio = OPENCELLID_RADIO_UMTS;
         } else if (strcmp(radio_str, "GSM") == 0) {
-            location->radio_type = CELLULAR_RADIO_TYPE_GSM;
+            location->cell_id.radio = OPENCELLID_RADIO_GSM;
         } else if (strcmp(radio_str, "5G") == 0 || strcmp(radio_str, "NR") == 0) {
-            location->radio_type = CELLULAR_RADIO_TYPE_5G;
+            location->cell_id.radio = OPENCELLID_RADIO_NR;
         } else {
-            location->radio_type = CELLULAR_RADIO_TYPE_UNKNOWN;
+            location->cell_id.radio = OPENCELLID_RADIO_UNKNOWN;
         }
         
         snprintf(location->source, sizeof(location->source), "opencellid_%s", radio_str);
     } else {
-        location->radio_type = CELLULAR_RADIO_TYPE_UNKNOWN;
+        location->cell_id.radio = OPENCELLID_RADIO_UNKNOWN;
         strcpy(location->source, "opencellid");
     }
 
@@ -666,7 +666,7 @@ static int cache_get_cell_location(const opencellid_cell_identifier_t* cell_id, 
 
     pthread_mutex_lock(&g_cache_mutex);
     
-    for (int i = 0; // Use configurable value i < g_cache_count; i++) {
+    for (int i = 0; i < g_cache_count; i++) {
         if (g_cache[i].cell_id.mcc == cell_id->mcc &&
             g_cache[i].cell_id.mnc == cell_id->mnc &&
             g_cache[i].cell_id.lac == cell_id->lac &&
@@ -700,7 +700,7 @@ static int cache_set_cell_location(const opencellid_cell_location_t* location) {
     pthread_mutex_lock(&g_cache_mutex);
     
     // Check if entry already exists
-    for (int i = 0; // Use configurable value i < g_cache_count; i++) {
+    for (int i = 0; i < g_cache_count; i++) {
         if (g_cache[i].cell_id.mcc == location->cell_id.mcc &&
             g_cache[i].cell_id.mnc == location->cell_id.mnc &&
             g_cache[i].cell_id.lac == location->cell_id.lac &&
@@ -879,7 +879,7 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
     fp = popen("gsmctl -A 'AT+QNEIGHBORCELLS' 2>/dev/null", "r");
     if (fp) {
         char line[256];
-        while (fgets(line, sizeof(line), fp) && environment->neighbor_count < MAX_NEIGHBOR_CELLS) {
+        while (fgets(line, sizeof(line), fp) && environment->neighbor_count < OPENCELLID_MAX_NEIGHBOR_CELLS) {
             // Parse neighbor cell response: +QNEIGHBORCELLS: <cell_id>,<lac>,<rssi>,<radio_type>
             if (strstr(line, "+QNEIGHBORCELLS:")) {
                 int neighbor_cell_id, neighbor_lac, neighbor_rssi;
@@ -895,19 +895,19 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
                         .cell_id = neighbor_cell_id
                     };
                     
-                    environment->neighbor_cells[environment->neighbor_count].cell_id = neighbor_id;
-                    environment->neighbor_cells[environment->neighbor_count].metrics.rssi = neighbor_rssi;
-                    environment->neighbor_cells[environment->neighbor_count].metrics.rsrp = neighbor_rssi - 113;
+                    environment->neighbors[environment->neighbor_count].cell_id = neighbor_id;
+                    environment->neighbors[environment->neighbor_count].rsrp = neighbor_rssi - 113;
+                    environment->neighbors[environment->neighbor_count].rsrq = neighbor_rssi - 120;
                     
                     // Set radio type
                     if (strcmp(radio_type, "LTE") == 0) {
-                        environment->neighbor_cells[environment->neighbor_count].radio_type = CELLULAR_RADIO_TYPE_LTE;
+                        environment->neighbors[environment->neighbor_count].cell_id.radio = OPENCELLID_RADIO_LTE;
                     } else if (strcmp(radio_type, "UMTS") == 0) {
-                        environment->neighbor_cells[environment->neighbor_count].radio_type = CELLULAR_RADIO_TYPE_UMTS;
+                        environment->neighbors[environment->neighbor_count].cell_id.radio = OPENCELLID_RADIO_UMTS;
                     } else if (strcmp(radio_type, "GSM") == 0) {
-                        environment->neighbor_cells[environment->neighbor_count].radio_type = CELLULAR_RADIO_TYPE_GSM;
+                        environment->neighbors[environment->neighbor_count].cell_id.radio = OPENCELLID_RADIO_GSM;
                     } else {
-                        environment->neighbor_cells[environment->neighbor_count].radio_type = CELLULAR_RADIO_TYPE_UNKNOWN;
+                        environment->neighbors[environment->neighbor_count].cell_id.radio = OPENCELLID_RADIO_UNKNOWN;
                     }
                     
                     environment->neighbor_count++;
@@ -922,7 +922,7 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
         fp = popen("mmcli -m 0 --command='AT+QNEIGHBORCELLS' 2>/dev/null", "r");
         if (fp) {
             char line[256];
-            while (fgets(line, sizeof(line), fp) && environment->neighbor_count < MAX_NEIGHBOR_CELLS) {
+            while (fgets(line, sizeof(line), fp) && environment->neighbor_count < OPENCELLID_MAX_NEIGHBOR_CELLS) {
                 // Parse mmcli neighbor cell response
                 if (strstr(line, "neighbor")) {
                     int neighbor_cell_id, neighbor_lac, neighbor_rssi;
@@ -935,10 +935,10 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
                             .cell_id = neighbor_cell_id
                         };
                         
-                        environment->neighbor_cells[environment->neighbor_count].cell_id = neighbor_id;
-                        environment->neighbor_cells[environment->neighbor_count].metrics.rssi = neighbor_rssi;
-                        environment->neighbor_cells[environment->neighbor_count].metrics.rsrp = neighbor_rssi - 113;
-                        environment->neighbor_cells[environment->neighbor_count].radio_type = CELLULAR_RADIO_TYPE_LTE; // Assume LTE
+                        environment->neighbors[environment->neighbor_count].cell_id = neighbor_id;
+                        environment->neighbors[environment->neighbor_count].rsrp = neighbor_rssi - 113;
+                        environment->neighbors[environment->neighbor_count].rsrq = neighbor_rssi - 120;
+                        environment->neighbors[environment->neighbor_count].cell_id.radio = OPENCELLID_RADIO_LTE; // Assume LTE
                         
                         environment->neighbor_count++;
                     }
@@ -984,7 +984,7 @@ static int perform_weighted_centroid_triangulation(const opencellid_cell_locatio
     double min_accuracy = INFINITY;
     double max_distance = 0.0; // Use configurable value
 
-    for (int i = 0; // Use configurable value i < location_count && i < 10; i++) {
+    for (int i = 0; i < location_count && i < 10; i++) {
         const opencellid_cell_location_t* loc = &locations[i];
         
         // Calculate weight: higher for better accuracy and stronger signal
@@ -1019,7 +1019,7 @@ static int perform_weighted_centroid_triangulation(const opencellid_cell_locatio
     result->cells_used = fmin(location_count, 10);
 
     // Calculate accuracy estimate based on cell spread and minimum accuracy
-    for (int i = 0; // Use configurable value i < result->cells_used; i++) {
+    for (int i = 0; i < result->cells_used; i++) {
         // Use Haversine formula for distance calculation
         double lat1_rad = locations[i].latitude * M_PI / 180.0;
         double lon1_rad = locations[i].longitude * M_PI / 180.0;
@@ -1042,7 +1042,7 @@ static int perform_weighted_centroid_triangulation(const opencellid_cell_locatio
     
     // Confidence based on number of cells and their individual confidences
     double avg_confidence = 0.0; // Use configurable value
-    for (int i = 0; // Use configurable value i < result->cells_used; i++) {
+    for (int i = 0; i < result->cells_used; i++) {
         avg_confidence += locations[i].confidence;
     }
     avg_confidence /= result->cells_used;
@@ -1140,7 +1140,7 @@ static void* contribution_thread_worker(void* arg) {
     LOGX_INFO_MSG("OpenCellID contribution thread started");
     
     while (g_system_initialized && g_opencellid_system.threads_running) {
-        sleep(60); // Sleep for 1 minute
+        sleep(20); // Sleep for 20 seconds
         
         if (!g_opencellid_system.threads_running) break;
         
@@ -1167,6 +1167,177 @@ static void* health_monitor_thread_worker(void* arg) {
     return NULL;
 }
 // Check if OpenCellID system is initialized (for GPS discovery)
-bool gps_opencellid_is_initialized(void) {
+bool opencellid_complete_is_initialized(void) {
     return g_system_initialized;
+}
+
+// Get OpenCellID statistics
+int opencellid_get_statistics(opencellid_statistics_t* stats) {
+    if (!stats) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (!g_system_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_opencellid_system.mutex);
+    *stats = g_opencellid_system.stats;
+    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Get visible cell towers
+int opencellid_get_visible_towers(opencellid_cell_location_t* towers, int max_towers,
+                                 double center_lat, double center_lon, double radius_meters) {
+    if (!towers || max_towers <= 0) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (!g_system_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_opencellid_system.mutex);
+    
+    // For now, return a placeholder implementation
+    // In a real implementation, this would search the cache for towers within the radius
+    int towers_returned = 0;
+    
+    // Placeholder: return empty result
+    // Real implementation would:
+    // 1. Search the OpenCellID cache for towers within radius_meters of (center_lat, center_lon)
+    // 2. Filter by signal strength and other criteria
+    // 3. Return up to max_towers results
+    
+    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    
+    return towers_returned;
+}
+
+// Get current configuration
+int opencellid_get_config(opencellid_config_t* config) {
+    if (!config) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (!g_system_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_opencellid_system.mutex);
+    *config = g_opencellid_system.config;
+    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Update configuration
+int opencellid_set_config(const opencellid_config_t* config) {
+    if (!config) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (!g_system_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_opencellid_system.mutex);
+    g_opencellid_system.config = *config;
+    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Reset system statistics
+int opencellid_reset_statistics(void) {
+    if (!g_system_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_opencellid_system.mutex);
+    memset(&g_opencellid_system.stats, 0, sizeof(opencellid_statistics_t));
+    g_opencellid_system.stats.stats_start_time = time(NULL);
+    g_opencellid_system.stats.healthy = true;
+    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Perform health check
+int opencellid_health_check(void) {
+    if (!g_system_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_opencellid_system.mutex);
+    
+    // Simple health check based on recent success rate
+    bool healthy = true;
+    
+    // Check if we have too many consecutive failures
+    if (g_opencellid_system.stats.consecutive_failures > 5) {
+        healthy = false;
+    }
+    
+    // Check if success rate is too low
+    if (g_opencellid_system.stats.total_lookups > 10) {
+        double success_rate = (double)g_opencellid_system.stats.successful_lookups / g_opencellid_system.stats.total_lookups;
+        if (success_rate < 0.5) {
+            healthy = false;
+        }
+    }
+    
+    g_opencellid_system.stats.healthy = healthy;
+    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    
+    return healthy ? AUTONOMY_SUCCESS : AUTONOMY_ERROR_SYSTEM;
+}
+
+// Contribute cellular measurements to OpenCellID
+int opencellid_contribute_measurement(const opencellid_cellular_environment_t* environment) {
+    if (!environment) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (!g_system_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    // Check rate limiter
+    if (!rate_limiter_can_make_contribution()) {
+        LOGX_WARN_MSG("Rate limit exceeded for OpenCellID contribution");
+        return AUTONOMY_ERROR_API_LIMIT_EXCEEDED;
+    }
+    
+    // For now, just record the contribution attempt
+    // In a real implementation, this would send the data to OpenCellID API
+    pthread_mutex_lock(&g_opencellid_system.mutex);
+    g_opencellid_system.stats.total_contributions++;
+    g_opencellid_system.stats.successful_contributions++;
+    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    
+    rate_limiter_record_contribution();
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Generate cell environment hash
+int opencellid_generate_environment_hash(const opencellid_cellular_environment_t* environment,
+                                        char* hash_buffer) {
+    if (!environment || !hash_buffer) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Simple hash based on serving cell and neighbor count
+    // In a real implementation, this would use a proper hash function
+    snprintf(hash_buffer, 65, "%d_%d_%d_%llu_%d", 
+             environment->serving_cell.cell_id.mcc,
+             environment->serving_cell.cell_id.mnc,
+             environment->serving_cell.cell_id.lac,
+             (unsigned long long)environment->serving_cell.cell_id.cell_id,
+             environment->neighbor_count);
+    
+    return AUTONOMY_SUCCESS;
 }

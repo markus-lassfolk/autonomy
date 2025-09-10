@@ -555,7 +555,7 @@ int gps_fusion_engine_detect_outliers(const standardized_gps_data_t* source_data
         return 0;
     }
     
-    if (!g_fusion_engine_initialized || !g_fusion_engine.config.enable_outlier_detection) {
+    if (!g_fusion_initialized || !g_fusion_engine.config.enable_outlier_detection) {
         // If outlier detection is disabled, copy all data
         int copy_count = (source_count < max_filtered) ? source_count : max_filtered;
         for (int i = 0; i < copy_count; i++) {
@@ -583,7 +583,7 @@ int gps_fusion_engine_detect_outliers(const standardized_gps_data_t* source_data
     }
     
     for (int i = 0; i < source_count; i++) {
-        distances[i] = gps_calculate_distance_meters(
+        distances[i] = gps_calculate_distance(
             source_data[i].latitude, source_data[i].longitude,
             centroid_lat, centroid_lon
         );
@@ -638,7 +638,7 @@ bool gps_fusion_engine_check_consensus(const standardized_gps_data_t* source_dat
         return false;
     }
     
-    if (!g_fusion_engine_initialized || !g_fusion_engine.config.enable_consensus_checking) {
+    if (!g_fusion_initialized || !g_fusion_engine.config.enable_consensus_checking) {
         return true; // If consensus checking is disabled, assume consensus
     }
     
@@ -655,7 +655,7 @@ bool gps_fusion_engine_check_consensus(const standardized_gps_data_t* source_dat
     
     for (int i = 0; i < source_count; i++) {
         for (int j = i + 1; j < source_count; j++) {
-            double distance = gps_calculate_distance_meters(
+            double distance = gps_calculate_distance(
                 source_data[i].latitude, source_data[i].longitude,
                 source_data[j].latitude, source_data[j].longitude
             );
@@ -693,7 +693,7 @@ int gps_fusion_engine_apply_smoothing(const standardized_gps_data_t* current_dat
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    if (!g_fusion_engine_initialized || !g_fusion_engine.config.enable_temporal_smoothing) {
+    if (!g_fusion_initialized || !g_fusion_engine.config.enable_temporal_smoothing) {
         // If smoothing is disabled, copy data as-is
         *smoothed_result = *current_data;
         return AUTONOMY_SUCCESS;
@@ -760,7 +760,7 @@ int gps_fusion_engine_apply_kalman_filter(const standardized_gps_data_t* measure
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    if (!g_fusion_engine_initialized || !g_fusion_engine.config.enable_kalman_filtering) {
+    if (!g_fusion_initialized || !g_fusion_engine.config.enable_kalman_filtering) {
         // If Kalman filtering is disabled, copy data as-is
         *filtered_result = *measurement;
         return AUTONOMY_SUCCESS;

@@ -1,4 +1,5 @@
 #include "telemetry_store.h"
+#include "../utils/logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -19,6 +20,8 @@ void update_memory_usage(void);
 void check_memory_pressure(void);
 static void downsample_old_data(void);
 int find_member_index(const char* member_name);
+static void downsample_telemetry_data(telemetry_ring_buffer_t* buffer);
+static void compress_telemetry_data(telemetry_ring_buffer_t* buffer);
 
 // Create ring buffer
 telemetry_ring_buffer_t* telemetry_ring_buffer_create(int capacity) {
@@ -526,12 +529,12 @@ static void downsample_old_data(void) {
             telemetry_ring_buffer_remove_before(buffer, cutoff);
             
             // Second pass: downsample data to reduce memory usage
-            if (buffer->count > g_telemetry_store.config.max_samples_per_member) {
+            if (buffer->size > g_telemetry_store.config.max_samples_per_member) {
                 downsample_telemetry_data(buffer);
             }
             
             // Third pass: compress data if still too large
-            if (buffer->count > g_telemetry_store.config.max_samples_per_member * 1.5) {
+            if (buffer->size > g_telemetry_store.config.max_samples_per_member * 1.5) {
                 compress_telemetry_data(buffer);
             }
         }
@@ -596,7 +599,7 @@ void telemetry_store_export_json(time_t since, char* json_output, size_t max_siz
     // Simple JSON export (in production would use proper JSON library)
     snprintf(json_output, max_size,
              "{"
-             "\"timestamp\":%ld,"
+              "\"timestamp\":%lld,"
              "\"members\":%d,"
              "\"total_samples\":%d,"
              "\"total_events\":%d,"
@@ -620,15 +623,15 @@ bool telemetry_store_is_initialized(void) {
 
 // Downsample telemetry data using statistical methods
 static void downsample_telemetry_data(telemetry_ring_buffer_t* buffer) {
-    if (!buffer || buffer->count <= g_telemetry_store.config.max_samples_per_member) {
+    if (!buffer || buffer->size <= g_telemetry_store.config.max_samples_per_member) {
         return;
     }
     
     LOGX_DEBUG_MSG("Downsampling telemetry data from %d to %d samples", 
-                   buffer->count, g_telemetry_store.config.max_samples_per_member);
+                   buffer->size, g_telemetry_store.config.max_samples_per_member);
     
     // Calculate downsampling ratio
-    double ratio = (double)g_telemetry_store.config.max_samples_per_member / buffer->count;
+    double ratio = (double)g_telemetry_store.config.max_samples_per_member / buffer->size;
     int keep_every = (int)(1.0 / ratio);
     
     // Create new buffer with downsampled data
@@ -639,28 +642,29 @@ static void downsample_telemetry_data(telemetry_ring_buffer_t* buffer) {
     }
     
     int new_count = 0;
-    for (int i = 0; i < buffer->count && new_count < g_telemetry_store.config.max_samples_per_member; i++) {
+    for (int i = 0; i < buffer->size && new_count < g_telemetry_store.config.max_samples_per_member; i++) {
         if (i % keep_every == 0) {
             // Keep this sample
-            new_samples[new_count] = buffer->samples[i];
+            new_samples[new_count] = *((telemetry_sample_t*)buffer->data[i]);
             new_count++;
         } else {
             // Aggregate with previous sample for better accuracy
             if (new_count > 0) {
+                telemetry_sample_t* current_sample = (telemetry_sample_t*)buffer->data[i];
                 // Average the values
-                new_samples[new_count-1].timestamp = (new_samples[new_count-1].timestamp + buffer->samples[i].timestamp) / 2;
-                new_samples[new_count-1].signal_strength = (new_samples[new_count-1].signal_strength + buffer->samples[i].signal_strength) / 2.0;
-                new_samples[new_count-1].latency = (new_samples[new_count-1].latency + buffer->samples[i].latency) / 2.0;
-                new_samples[new_count-1].packet_loss = (new_samples[new_count-1].packet_loss + buffer->samples[i].packet_loss) / 2.0;
-                new_samples[new_count-1].bandwidth = (new_samples[new_count-1].bandwidth + buffer->samples[i].bandwidth) / 2.0;
+                new_samples[new_count-1].timestamp = (new_samples[new_count-1].timestamp + current_sample->timestamp) / 2;
+                new_samples[new_count-1].signal_strength = (new_samples[new_count-1].signal_strength + current_sample->signal_strength) / 2.0;
+                new_samples[new_count-1].latency_ms = (new_samples[new_count-1].latency_ms + current_sample->latency_ms) / 2.0;
+                new_samples[new_count-1].loss_percent = (new_samples[new_count-1].loss_percent + current_sample->loss_percent) / 2.0;
+                new_samples[new_count-1].throughput_mbps = (new_samples[new_count-1].throughput_mbps + current_sample->throughput_mbps) / 2.0;
             }
         }
     }
     
     // Replace buffer data
-    free(buffer->samples);
-    buffer->samples = new_samples;
-    buffer->count = new_count;
+    free(buffer->data);
+    buffer->data = (void**)new_samples;
+    buffer->size = new_count;
     buffer->head = new_count % buffer->capacity;
     
     LOGX_DEBUG_MSG("Downsampling completed, new count: %d", new_count);
@@ -668,11 +672,11 @@ static void downsample_telemetry_data(telemetry_ring_buffer_t* buffer) {
 
 // Compress telemetry data using delta compression
 static void compress_telemetry_data(telemetry_ring_buffer_t* buffer) {
-    if (!buffer || buffer->count <= g_telemetry_store.config.max_samples_per_member) {
+    if (!buffer || buffer->size <= g_telemetry_store.config.max_samples_per_member) {
         return;
     }
     
-    LOGX_DEBUG_MSG("Compressing telemetry data from %d samples", buffer->count);
+    LOGX_DEBUG_MSG("Compressing telemetry data from %d samples", buffer->size);
     
     // Create compressed buffer
     telemetry_sample_t* compressed_samples = malloc(g_telemetry_store.config.max_samples_per_member * sizeof(telemetry_sample_t));
@@ -684,8 +688,8 @@ static void compress_telemetry_data(telemetry_ring_buffer_t* buffer) {
     int compressed_count = 0;
     telemetry_sample_t* prev_sample = NULL;
     
-    for (int i = 0; i < buffer->count && compressed_count < g_telemetry_store.config.max_samples_per_member; i++) {
-        telemetry_sample_t* current_sample = &buffer->samples[i];
+    for (int i = 0; i < buffer->size && compressed_count < g_telemetry_store.config.max_samples_per_member; i++) {
+        telemetry_sample_t* current_sample = (telemetry_sample_t*)buffer->data[i];
         
         if (prev_sample == NULL) {
             // First sample - store as-is
@@ -694,9 +698,9 @@ static void compress_telemetry_data(telemetry_ring_buffer_t* buffer) {
         } else {
             // Calculate deltas
             double signal_delta = current_sample->signal_strength - prev_sample->signal_strength;
-            double latency_delta = current_sample->latency - prev_sample->latency;
-            double packet_loss_delta = current_sample->packet_loss - prev_sample->packet_loss;
-            double bandwidth_delta = current_sample->bandwidth - prev_sample->bandwidth;
+            double latency_delta = current_sample->latency_ms - prev_sample->latency_ms;
+            double packet_loss_delta = current_sample->loss_percent - prev_sample->loss_percent;
+            double bandwidth_delta = current_sample->throughput_mbps - prev_sample->throughput_mbps;
             
             // Only store if significant change (compression threshold)
             if (fabs(signal_delta) > 2.0 || fabs(latency_delta) > 5.0 || 
@@ -709,12 +713,12 @@ static void compress_telemetry_data(telemetry_ring_buffer_t* buffer) {
                 compressed_samples[compressed_count-1].timestamp = current_sample->timestamp;
                 compressed_samples[compressed_count-1].signal_strength = 
                     (compressed_samples[compressed_count-1].signal_strength + current_sample->signal_strength) / 2.0;
-                compressed_samples[compressed_count-1].latency = 
-                    (compressed_samples[compressed_count-1].latency + current_sample->latency) / 2.0;
-                compressed_samples[compressed_count-1].packet_loss = 
-                    (compressed_samples[compressed_count-1].packet_loss + current_sample->packet_loss) / 2.0;
-                compressed_samples[compressed_count-1].bandwidth = 
-                    (compressed_samples[compressed_count-1].bandwidth + current_sample->bandwidth) / 2.0;
+                compressed_samples[compressed_count-1].latency_ms = 
+                    (compressed_samples[compressed_count-1].latency_ms + current_sample->latency_ms) / 2.0;
+                compressed_samples[compressed_count-1].loss_percent = 
+                    (compressed_samples[compressed_count-1].loss_percent + current_sample->loss_percent) / 2.0;
+                compressed_samples[compressed_count-1].throughput_mbps = 
+                    (compressed_samples[compressed_count-1].throughput_mbps + current_sample->throughput_mbps) / 2.0;
             }
         }
         
@@ -722,9 +726,9 @@ static void compress_telemetry_data(telemetry_ring_buffer_t* buffer) {
     }
     
     // Replace buffer data
-    free(buffer->samples);
-    buffer->samples = compressed_samples;
-    buffer->count = compressed_count;
+    free(buffer->data);
+    buffer->data = (void**)compressed_samples;
+    buffer->size = compressed_count;
     buffer->head = compressed_count % buffer->capacity;
     
     LOGX_DEBUG_MSG("Compression completed, new count: %d", compressed_count);

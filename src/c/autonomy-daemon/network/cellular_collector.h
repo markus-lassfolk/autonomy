@@ -15,6 +15,8 @@ extern "C" {
 typedef enum {
     CELLULAR_NETWORK_TYPE_UNKNOWN = 0,
     CELLULAR_NETWORK_TYPE_GSM,
+    CELLULAR_NETWORK_TYPE_2G,
+    CELLULAR_NETWORK_TYPE_3G,
     CELLULAR_NETWORK_TYPE_UMTS,
     CELLULAR_NETWORK_TYPE_LTE,
     CELLULAR_NETWORK_TYPE_5G,
@@ -29,6 +31,9 @@ typedef enum {
     CELLULAR_STATE_CONNECTED,
     CELLULAR_STATE_RECONNECTING,
     CELLULAR_STATE_ERROR,
+    CELLULAR_STATE_UNKNOWN,
+    CELLULAR_STATE_SEARCHING,
+    CELLULAR_STATE_DENIED,
     CELLULAR_STATE_MAX
 } cellular_connection_state_t;
 
@@ -37,6 +42,7 @@ typedef enum {
     ROAMING_TYPE_NONE = 0,
     ROAMING_TYPE_NATIONAL,
     ROAMING_TYPE_INTERNATIONAL,
+    ROAMING_TYPE_DOMESTIC,
     ROAMING_TYPE_MAX
 } cellular_roaming_type_t;
 
@@ -49,6 +55,16 @@ typedef enum {
     MODEM_TYPE_PPP,
     MODEM_TYPE_MAX
 } cellular_modem_type_t;
+
+// Cellular SIM status
+typedef enum {
+    CELLULAR_SIM_STATUS_UNKNOWN = 0,
+    CELLULAR_SIM_STATUS_READY,
+    CELLULAR_SIM_STATUS_PIN_REQUIRED,
+    CELLULAR_SIM_STATUS_PUK_REQUIRED,
+    CELLULAR_SIM_STATUS_ERROR,
+    CELLULAR_SIM_STATUS_MAX
+} cellular_sim_status_t;
 
 // Comprehensive cellular information
 typedef struct {
@@ -77,6 +93,14 @@ typedef struct {
     int active_sim;
     char sim_status[32];
     
+    // Device information
+    char manufacturer[64];
+    char model[64];
+    char imei[32];
+    char iccid[32];
+    char mcc[8];
+    char mnc[8];
+    
     // Connection details
     cellular_modem_type_t modem_type;
     char ip_address[16];
@@ -91,8 +115,10 @@ typedef struct {
     
     // Advanced metrics
     char tac[16];                       // Tracking Area Code
+    int lac;                            // Location Area Code
     int earfcn;                         // E-UTRA Absolute Radio Frequency Channel Number
     int pci;                            // Physical Cell ID
+    bool has_cell_info;                 // Whether cell info is available
     
     // Data usage
     uint64_t tx_bytes;

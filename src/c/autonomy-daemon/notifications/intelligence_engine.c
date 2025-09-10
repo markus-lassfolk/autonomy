@@ -139,7 +139,7 @@ static void* intelligence_loop(void* arg) {
     
     while (g_intelligence_engine.thread_running) {
         perform_intelligence_tasks();
-        sleep(60); // Run every minute
+        sleep(20); // Run every 20 seconds
     }
     
     return NULL;

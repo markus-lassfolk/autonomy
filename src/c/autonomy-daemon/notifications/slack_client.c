@@ -70,17 +70,17 @@ const char* slack_client_get_attachment_color(notification_priority_t priority) 
 const char* slack_client_get_priority_text(notification_priority_t priority) {
     switch (priority) {
         case NOTIFICATION_PRIORITY_EMERGENCY:
-            return "🚨 Emergency";
+            return " Emergency";
         case NOTIFICATION_PRIORITY_HIGH:
-            return "⚠️ High";
+            return " High";
         case NOTIFICATION_PRIORITY_NORMAL:
-            return "ℹ️ Normal";
+            return " Normal";
         case NOTIFICATION_PRIORITY_LOW:
-            return "📝 Low";
+            return " Low";
         case NOTIFICATION_PRIORITY_LOWEST:
-            return "💬 Lowest";
+            return " Lowest";
         default:
-            return "ℹ️ Normal";
+            return " Normal";
     }
 }
 
@@ -161,10 +161,17 @@ void slack_client_create_message(slack_client_t* client, const notification_even
             }
         }
     } else {
-        // Simple text message
+        // Simple text message - truncate long strings to prevent buffer overflow
+        char truncated_title[128];
+        char truncated_message[256];
+        strncpy(truncated_title, event->title, sizeof(truncated_title) - 1);
+        truncated_title[sizeof(truncated_title) - 1] = '\0';
+        strncpy(truncated_message, event->message, sizeof(truncated_message) - 1);
+        truncated_message[sizeof(truncated_message) - 1] = '\0';
+        
         snprintf(message->text, sizeof(message->text),
                  "*%s*\n%s\n\n*Priority:* %s\n*Type:* %s",
-                 event->title, event->message,
+                 truncated_title, truncated_message,
                  slack_client_get_priority_text(event->priority),
                  notification_type_to_string(event->type));
     }
@@ -297,8 +304,12 @@ static int send_slack_request(slack_client_t* client, slack_message_t* message) 
     
     // Check result
     if (!http_response_is_success(response)) {
+        // Truncate error message to fit in buffer
+        char truncated_error[128];
+        strncpy(truncated_error, response->error_message, sizeof(truncated_error) - 1);
+        truncated_error[sizeof(truncated_error) - 1] = '\0';
         snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "HTTP error: %ld - %s", response->status_code, response->error_message);
+                "HTTP error: %ld - %s", response->status_code, truncated_error);
         client->status.last_error_time = time(NULL);
         http_response_free(response);
         return -1;

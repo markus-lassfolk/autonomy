@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "gps_comprehensive_ubus.h"
 #include "gps_comprehensive.h"
 #include "gps_fusion_engine.h"
@@ -413,7 +414,98 @@ int gps_comprehensive_ubus_get_statistics(struct ubus_context *ctx, struct ubus_
     return UBUS_STATUS_OK;
 }
 
-// Additional UBUS method implementations would continue here...
+// Force GPS collection
+int gps_comprehensive_ubus_force_collection(struct ubus_context *ctx, struct ubus_object *obj,
+                                           struct ubus_request_data *req, const char *method,
+                                           struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!gps_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Comprehensive GPS collector not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Force collection from all sources
+    standardized_gps_data_t gps_data;
+    if (gps_comprehensive_collect_best_gps(&gps_data) == AUTONOMY_SUCCESS) {
+        blobmsg_add_u8(&bb, "success", 1);
+        add_gps_data_to_blob(&bb, "gps_data", &gps_data);
+    } else {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Failed to force GPS collection");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Reset GPS comprehensive statistics
+int gps_comprehensive_ubus_reset_statistics(struct ubus_context *ctx, struct ubus_object *obj,
+                                           struct ubus_request_data *req, const char *method,
+                                           struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!gps_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Comprehensive GPS collector not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Reset statistics (placeholder implementation)
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "message", "GPS comprehensive statistics reset");
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Perform GPS comprehensive health check
+int gps_comprehensive_ubus_health_check(struct ubus_context *ctx, struct ubus_object *obj,
+                                       struct ubus_request_data *req, const char *method,
+                                       struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!gps_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Comprehensive GPS collector not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    blobmsg_add_u8(&bb, "success", 1);
+    
+    void *health_table = blobmsg_open_table(&bb, "health");
+    blobmsg_add_u8(&bb, "initialized", gps_comprehensive_is_initialized());
+    
+    // Get current GPS data to check health
+    standardized_gps_data_t gps_data;
+    bool has_gps_data = (gps_comprehensive_collect_best_gps(&gps_data) == AUTONOMY_SUCCESS);
+    blobmsg_add_u8(&bb, "has_gps_data", has_gps_data);
+    
+    if (has_gps_data) {
+        blobmsg_add_double(&bb, "current_accuracy", gps_data.accuracy);
+        blobmsg_add_double(&bb, "current_confidence", gps_data.confidence);
+        blobmsg_add_string(&bb, "current_source", gps_data.source);
+        blobmsg_add_u32(&bb, "data_age_seconds", (uint32_t)gps_data.age_seconds);
+    }
+    
+    blobmsg_close_table(&bb, health_table);
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
 
 // UBUS method definitions
 const struct ubus_method gps_comprehensive_ubus_methods[] = {

@@ -118,17 +118,17 @@ const char* email_client_get_priority_color(notification_priority_t priority) {
 const char* email_client_get_priority_text(notification_priority_t priority) {
     switch (priority) {
         case NOTIFICATION_PRIORITY_EMERGENCY:
-            return "🚨 Emergency";
+            return " Emergency";
         case NOTIFICATION_PRIORITY_HIGH:
-            return "⚠️ High";
+            return " High";
         case NOTIFICATION_PRIORITY_NORMAL:
-            return "ℹ️ Normal";
+            return " Normal";
         case NOTIFICATION_PRIORITY_LOW:
-            return "📝 Low";
+            return " Low";
         case NOTIFICATION_PRIORITY_LOWEST:
-            return "💬 Lowest";
+            return " Lowest";
         default:
-            return "ℹ️ Normal";
+            return " Normal";
     }
 }
 
@@ -198,13 +198,13 @@ void email_client_format_body(email_client_t* client, const notification_event_t
                 "<body>\n"
                 "    <div class=\"container\">\n"
                 "        <div class=\"header\">\n"
-                "            <h1>🛰️ autonomy Alert</h1>\n"
+                "            <h1> autonomy Alert</h1>\n"
                 "            <div class=\"priority\">%s Priority</div>\n"
                 "        </div>\n"
                 "        <div class=\"content\">\n"
                 "            <h2>%s</h2>\n"
                 "            <div class=\"message\">%s</div>\n"
-                "            <div class=\"timestamp\">⏰ %s</div>\n"
+                "            <div class=\"timestamp\"> %s</div>\n"
                 "        </div>\n"
                 "        <div class=\"footer\">\n"
                 "            <p>This notification was sent by autonomy Daemon</p>\n"

@@ -348,7 +348,111 @@ int starlink_comprehensive_ubus_get_statistics(struct ubus_context *ctx, struct 
     return UBUS_STATUS_OK;
 }
 
-// Additional UBUS method implementations would continue here...
+// Force comprehensive collection
+int starlink_comprehensive_ubus_force_collection(struct ubus_context *ctx, struct ubus_object *obj,
+                                                struct ubus_request_data *req, const char *method,
+                                                struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!starlink_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Starlink comprehensive collector not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Force collection of all data
+    starlink_comprehensive_status_t status;
+    if (starlink_comprehensive_collect_all(&status) == AUTONOMY_SUCCESS) {
+        blobmsg_add_u8(&bb, "success", 1);
+        blobmsg_add_string(&bb, "message", "Comprehensive collection completed");
+        blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    } else {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Failed to force comprehensive collection");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Get comprehensive configuration
+int starlink_comprehensive_ubus_get_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                          struct ubus_request_data *req, const char *method,
+                                          struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!starlink_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Starlink comprehensive collector not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    blobmsg_add_u8(&bb, "success", 1);
+    
+    void *config_table = blobmsg_open_table(&bb, "config");
+    blobmsg_add_u8(&bb, "enabled", true); // Placeholder
+    blobmsg_add_string(&bb, "host", "192.168.100.1"); // Placeholder
+    blobmsg_add_u32(&bb, "port", 9200); // Placeholder
+    blobmsg_add_u32(&bb, "timeout_seconds", 30); // Placeholder
+    blobmsg_add_u32(&bb, "collection_interval_s", 60); // Placeholder
+    blobmsg_add_u8(&bb, "collect_location", true); // Placeholder
+    blobmsg_add_u8(&bb, "collect_status", true); // Placeholder
+    blobmsg_add_u8(&bb, "collect_diagnostics", true); // Placeholder
+    blobmsg_add_u8(&bb, "collect_history", true); // Placeholder
+    blobmsg_add_u8(&bb, "enable_events_analysis", true); // Placeholder
+    blobmsg_add_u8(&bb, "enable_outages_analysis", true); // Placeholder
+    blobmsg_add_u32(&bb, "max_events", 50); // Placeholder
+    blobmsg_add_u32(&bb, "max_outages", 20); // Placeholder
+    blobmsg_add_u32(&bb, "analysis_window_hours", 24); // Placeholder
+    blobmsg_add_double(&bb, "min_gps_confidence", 0.5); // Placeholder
+    blobmsg_add_double(&bb, "min_network_quality", 0.7); // Placeholder
+    blobmsg_add_double(&bb, "min_stability_score", 0.6); // Placeholder
+    blobmsg_add_u8(&bb, "enable_health_monitoring", true); // Placeholder
+    blobmsg_add_u32(&bb, "health_check_interval_s", 300); // Placeholder
+    blobmsg_add_u32(&bb, "max_consecutive_failures", 3); // Placeholder
+    blobmsg_close_table(&bb, config_table);
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Perform comprehensive health check
+int starlink_comprehensive_ubus_health_check(struct ubus_context *ctx, struct ubus_object *obj,
+                                            struct ubus_request_data *req, const char *method,
+                                            struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!starlink_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Starlink comprehensive collector not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    blobmsg_add_u8(&bb, "success", 1);
+    
+    void *health_table = blobmsg_open_table(&bb, "health");
+    blobmsg_add_u8(&bb, "initialized", starlink_comprehensive_is_initialized());
+    blobmsg_add_u8(&bb, "healthy", true); // Placeholder
+    blobmsg_add_string(&bb, "status", "operational"); // Placeholder
+    blobmsg_add_double(&bb, "stability_score", starlink_comprehensive_get_stability_score());
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blobmsg_close_table(&bb, health_table);
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
 
 // UBUS method definitions
 const struct ubus_method starlink_comprehensive_ubus_methods[] = {

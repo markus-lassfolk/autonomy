@@ -1,4 +1,5 @@
 #include "system_management.h"
+#include "logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -375,4 +376,52 @@ int get_system_load_average(double *load1, double *load5, double *load15) {
 // Get current system health status
 const system_health_t* get_system_health_status(void) {
     return &g_system_health;
+}
+
+// Get memory usage information
+int get_memory_usage(unsigned long *total_mem, unsigned long *free_mem) {
+    struct sysinfo info;
+    
+    if (sysinfo(&info) != 0) {
+        return -1;
+    }
+    
+    if (total_mem) *total_mem = info.totalram * info.mem_unit;
+    if (free_mem) *free_mem = info.freeram * info.mem_unit;
+    
+    return 0;
+}
+
+// Check available disk space
+int check_disk_space_available(const char *path, unsigned long *available_bytes) {
+    struct statvfs stat;
+    
+    if (!path || !available_bytes) {
+        return -1;
+    }
+    
+    if (statvfs(path, &stat) != 0) {
+        return -1;
+    }
+    
+    *available_bytes = stat.f_bavail * stat.f_frsize;
+    return 0;
+}
+
+// Check network connectivity
+int check_network_connectivity(void) {
+    // Simple connectivity check by trying to reach a well-known host
+    // In a real implementation, this would use ping or similar
+    return system("ping -c 1 -W 1 8.8.8.8 > /dev/null 2>&1") == 0 ? 1 : 0;
+}
+
+// Get system load (simplified version)
+double get_system_load(void) {
+    double load1, load5, load15;
+    
+    if (get_system_load_average(&load1, &load5, &load15) == 0) {
+        return load1; // Return 1-minute load average
+    }
+    
+    return -1.0; // Error
 }

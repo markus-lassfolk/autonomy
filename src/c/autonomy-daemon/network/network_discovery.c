@@ -19,6 +19,16 @@
 // External reference to global configuration
 extern autonomy_config_t g_config;
 
+// Forward declarations
+void* discovery_monitor_thread_func(void *arg);
+static void discover_system_interfaces(void);
+static void discover_uci_interfaces(void);
+static void get_interface_details(network_interface_t *iface);
+static void determine_interface_type(network_interface_t *interface);
+static void get_interface_statistics(network_interface_t *interface);
+static void cleanup_stale_interfaces(time_t now);
+static bool interface_exists_in_system(const char *interface_name);
+
 // Network discovery configuration - now uses UCI config values
 // Configuration values are loaded from g_config (UCI system)
 #define LOCAL_LOCAL_MAX_INTERFACES 32            // Maximum interfaces to track
@@ -47,7 +57,7 @@ int network_discovery_init(void) {
     g_discovery.enabled = true; // Use configurable network discovery enabled
     g_discovery.discovery_interval = g_config.network_check_interval;
     g_discovery.interface_timeout = 300; // Use configurable timeout
-    g_discovery.max_interfaces = LOCAL_MAX_INTERFACES;
+    g_discovery.max_interfaces = MAX_INTERFACES;
     g_discovery.last_discovery = 0;
     g_discovery.total_discoveries = 0;
     g_discovery.interface_count = 0;
@@ -101,7 +111,7 @@ void network_discovery_stop_monitoring(void) {
 }
 
 // Network discovery monitoring thread
-static void* discovery_monitor_thread_func(void *arg) {
+void* discovery_monitor_thread_func(void *arg) {
     (void)arg;
     
     LOGX_INFO_MSG("Network discovery monitoring thread started");

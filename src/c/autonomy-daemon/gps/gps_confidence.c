@@ -43,35 +43,9 @@ double calculate_fix_quality_confidence(int fix_quality);
 double calculate_freshness_confidence(time_t timestamp);
 double calculate_consistency_confidence(const gps_data_t *current_gps, 
                                             const gps_confidence_context_t *context);
-double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
 double calculate_expected_movement(int time_diff_seconds, const gps_confidence_context_t *context);
-double calculate_position_consistency(double actual_distance, double expected_movement,
-                                          double current_accuracy, double previous_accuracy);
-
-
-// Initialize GPS confidence calculator
-int gps_confidence_init(void) {
-    if (g_confidence_initialized) {
-        LOGX_WARN_MSG("GPS confidence calculator already initialized");
-        return AUTONOMY_SUCCESS;
-    }
-    
-    // Initialize confidence calculator state
-    memset(&g_confidence_calc, 0, sizeof(gps_confidence_t));
-    g_confidence_calc.enabled = true; // Use configurable gps confidence calculation enabled
-    g_confidence_calc.min_confidence = MIN_CONFIDENCE;
-    g_confidence_calc.max_confidence = MAX_CONFIDENCE;
-    g_confidence_calc.accuracy_weight = ACCURACY_WEIGHT;
-    g_confidence_calc.satellite_weight = SATELLITE_WEIGHT;
-    g_confidence_calc.fix_quality_weight = FIX_QUALITY_WEIGHT;
-    g_confidence_calc.freshness_weight = FRESHNESS_WEIGHT;
-    g_confidence_calc.consistency_weight = CONSISTENCY_WEIGHT;
-    
-    g_confidence_initialized = true; // Use configurable setting // Use configurable setting
-    
-    LOGX_INFO_MSG("GPS confidence calculator initialized successfully");
-    return AUTONOMY_SUCCESS;
-}
+double calculate_position_consistency(double actual_distance, double expected_movement, 
+                                     double current_accuracy, double previous_accuracy);
 
 // Calculate GPS confidence score
 double gps_confidence_calculate(const gps_data_t *gps_data, const gps_confidence_context_t *context) {
@@ -206,7 +180,7 @@ double calculate_consistency_confidence(const gps_data_t *current_gps,
     int valid_positions = 0; // Use configurable value // Use configurable count // Use configurable value
     
     // Calculate consistency with previous positions
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < context->position_count && i < MAX_POSITION_HISTORY; i++) {
+    for (int i = 0; i < context->position_count && i < MAX_POSITION_HISTORY; i++) {
         const gps_data_t *prev_gps = &context->previous_positions[i];
         
         if (prev_gps->timestamp <= 0 || prev_gps->lat == 0.0 || prev_gps->lon == 0.0) {
@@ -239,22 +213,6 @@ double calculate_consistency_confidence(const gps_data_t *current_gps,
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
-    const double R = 6371000.0; // Use configurable value // Use configurable value  // Earth's radius in meters
-    
-    double lat1_rad = lat1 * M_PI / 180.0;
-    double lat2_rad = lat2 * M_PI / 180.0;
-    double delta_lat = (lat2 - lat1) * M_PI / 180.0;
-    double delta_lon = (lon2 - lon1) * M_PI / 180.0;
-    
-    double a = sin(delta_lat / 2.0) * sin(delta_lat / 2.0) +
-               cos(lat1_rad) * cos(lat2_rad) *
-               sin(delta_lon / 2.0) * sin(delta_lon / 2.0);
-    
-    double c = 2.0 * atan2(sqrt(a), sqrt(1.0 - a));
-    
-    return R * c;
-}
 
 // Calculate expected movement based on time difference
 double calculate_expected_movement(int time_diff_seconds, const gps_confidence_context_t *context) {

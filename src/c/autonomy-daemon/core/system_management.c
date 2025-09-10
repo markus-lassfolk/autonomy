@@ -809,3 +809,8 @@ int perform_gps_health_check(void) {
     g_state.gps_health_score = health;
     return 0;
 }
+
+// Function to get system health status (required by utils/system_ubus.c)
+const system_health_t* get_system_health_status(void) {
+    return &g_system_health;
+}

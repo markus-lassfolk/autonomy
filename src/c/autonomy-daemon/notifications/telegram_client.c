@@ -49,17 +49,17 @@ void telegram_client_cleanup(telegram_client_t* client) {
 const char* telegram_client_get_priority_emoji(notification_priority_t priority) {
     switch (priority) {
         case NOTIFICATION_PRIORITY_EMERGENCY:
-            return "🚨";
+            return "";
         case NOTIFICATION_PRIORITY_HIGH:
-            return "⚠️";
+            return "";
         case NOTIFICATION_PRIORITY_NORMAL:
-            return "ℹ️";
+            return "";
         case NOTIFICATION_PRIORITY_LOW:
-            return "📝";
+            return "";
         case NOTIFICATION_PRIORITY_LOWEST:
-            return "💬";
+            return "";
         default:
-            return "ℹ️";
+            return "";
     }
 }
 
@@ -67,17 +67,17 @@ const char* telegram_client_get_priority_emoji(notification_priority_t priority)
 const char* telegram_client_get_priority_text(notification_priority_t priority) {
     switch (priority) {
         case NOTIFICATION_PRIORITY_EMERGENCY:
-            return "🚨 Emergency";
+            return " Emergency";
         case NOTIFICATION_PRIORITY_HIGH:
-            return "⚠️ High";
+            return " High";
         case NOTIFICATION_PRIORITY_NORMAL:
-            return "ℹ️ Normal";
+            return " Normal";
         case NOTIFICATION_PRIORITY_LOW:
-            return "📝 Low";
+            return " Low";
         case NOTIFICATION_PRIORITY_LOWEST:
-            return "💬 Lowest";
+            return " Lowest";
         default:
-            return "ℹ️ Normal";
+            return " Normal";
     }
 }
 
@@ -154,9 +154,9 @@ void telegram_client_create_message(telegram_client_t* client, const notificatio
         snprintf(message->text, sizeof(message->text),
                  "%s *%s*\n\n"
                  "%s\n\n"
-                 "🏷️ *Priority:* %s\n"
-                 "📋 *Type:* %s\n"
-                 "⏰ *Time:* %s\n",
+                 " *Priority:* %s\n"
+                 " *Type:* %s\n"
+                 " *Time:* %s\n",
                  priority_emoji, escaped_title,
                  escaped_message,
                  priority_text,
@@ -165,10 +165,10 @@ void telegram_client_create_message(telegram_client_t* client, const notificatio
         
         // Add context if enabled and available
         if (client->config.include_context && strlen(event->details_json) > 0) {
-            strncat(message->text, "\n📊 *Details:* See context data\n", sizeof(message->text) - strlen(message->text) - 1);
+            strncat(message->text, "\n *Details:* See context data\n", sizeof(message->text) - strlen(message->text) - 1);
         }
         
-        strncat(message->text, "\n🛰️ _autonomy Daemon_", sizeof(message->text) - strlen(message->text) - 1);
+        strncat(message->text, "\n _autonomy Daemon_", sizeof(message->text) - strlen(message->text) - 1);
     } else {
         snprintf(message->text, sizeof(message->text),
                  "%s %s\n\n"

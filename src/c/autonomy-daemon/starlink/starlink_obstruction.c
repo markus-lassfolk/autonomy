@@ -1,4 +1,8 @@
 #include "starlink_obstruction.h"
+#include "starlink_comprehensive.h"
+#include "../external/external_apis.h"
+#include "../gps/gps_manager.h"
+#include "../gps/gps_coordinate_utils.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
 #include <string.h>
@@ -8,9 +12,13 @@
 #include <time.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include "../utils/json_parser.h"
 
 // External reference to global configuration
 extern autonomy_config_t g_config;
+
+// Obstruction analysis configuration - now uses UCI config values
+#define MAX_PATTERNS 100 // Maximum environmental patterns
 
 // k-NN model for pattern learning
 typedef struct {
@@ -19,9 +27,6 @@ typedef struct {
     int n_samples;
     int k;                            // Number of neighbors to consider
 } knn_model_t;
-
-// Obstruction analysis configuration - now uses UCI config values
-static const int MAX_PATTERNS = 100; // Use configurable count // Use configurable value                        // Maximum environmental patterns
 // Configuration values are loaded from g_config (UCI system)
 static const int MIN_OBSERVATIONS_TO_LEARN = 10; // Use configurable count // Use configurable value            // Minimum observations to learn pattern
 // Thresholds now use configurable values from UCI
@@ -90,7 +95,7 @@ int starlink_obstruction_init(void) {
     g_obstruction.last_analysis = 0;
     
     // Initialize pattern storage
-    for (int i = 0; // Use configurable count // Use configurable value i < MAX_PATTERNS; i++) {
+    for (int i = 0; i < MAX_PATTERNS; i++) {
         g_obstruction.patterns[i].active = false;
         g_obstruction.patterns[i].id[0] = '\0';
         g_obstruction.patterns[i].name[0] = '\0';
@@ -102,7 +107,7 @@ int starlink_obstruction_init(void) {
     }
     
     // Initialize active matches
-    for (int i = 0; // Use configurable count // Use configurable value i < MAX_ACTIVE_MATCHES; i++) {
+    for (int i = 0; i < MAX_ACTIVE_MATCHES; i++) {
         g_obstruction.active_matches[i].active = false;
         g_obstruction.active_matches[i].pattern_id[0] = '\0';
         g_obstruction.active_matches[i].pattern_name[0] = '\0';
@@ -115,7 +120,7 @@ int starlink_obstruction_init(void) {
     }
     
     // Initialize match history
-    for (int i = 0; // Use configurable count // Use configurable value i < HISTORY_SIZE; i++) {
+    for (int i = 0; i < HISTORY_SIZE; i++) {
         g_obstruction.match_history[i].active = false;
         g_obstruction.match_history[i].timestamp = 0;
         g_obstruction.match_history[i].pattern_id[0] = '\0';
@@ -194,7 +199,7 @@ int starlink_obstruction_record_observation(const starlink_obstruction_sample_t 
 void add_trend_point(trend_point_array_t *history, time_t timestamp, double value, double quality) {
     // Find next available slot
     int slot_index = -1;
-    for (int i = 0; // Use configurable count // Use configurable value i < history->max_points; i++) {
+    for (int i = 0; i < history->max_points; i++) {
         if (!history->points[i].active) {
             slot_index = i;
             break;
@@ -229,7 +234,7 @@ int find_oldest_trend_point(const trend_point_array_t *history) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; // Use configurable count // Use configurable value i < history->max_points; i++) {
+    for (int i = 0; i < history->max_points; i++) {
         if (history->points[i].active && 
             history->points[i].timestamp < oldest_time) {
             oldest_time = history->points[i].timestamp;
@@ -249,14 +254,14 @@ void update_movement_detection(const starlink_obstruction_sample_t *sample) {
     time_t now = time(NULL);
     
     // Get current GPS location from GPS system
-    gps_data_t current_gps = {0};
-    int gps_ret = gps_get_current_location(&current_gps);
+    location_data_t current_location = {0};
+    int gps_ret = location_manager_get_best_location(&current_location);
     
-    if (gps_ret == AUTONOMY_SUCCESS && current_gps.valid) {
+    if (gps_ret == AUTONOMY_SUCCESS && current_location.valid) {
         // Check for actual GPS movement
         if (last_latitude != 0.0 && last_longitude != 0.0) {
             double distance = gps_coordinate_distance(last_latitude, last_longitude,
-                                                   current_gps.lat, current_gps.lon);
+                                                   current_location.latitude, current_location.longitude);
             
             // Movement threshold: 10 meters
             if (distance > 10.0) {
@@ -268,8 +273,8 @@ void update_movement_detection(const starlink_obstruction_sample_t *sample) {
                     LOGX_DEBUG_MSG("Movement detected via GPS integration",
                                   "distance_moved", distance,
                                   "total_distance", g_obstruction.movement_distance,
-                                  "lat", current_gps.lat,
-                                  "lon", current_gps.lon);
+                                  "lat", current_location.latitude,
+                                  "lon", current_location.longitude);
                 }
             } else {
                 // Check if we've been stationary for a while
@@ -281,8 +286,8 @@ void update_movement_detection(const starlink_obstruction_sample_t *sample) {
             }
         }
         
-        last_latitude = current_gps.lat;
-        last_longitude = current_gps.lon;
+        last_latitude = current_location.latitude;
+        last_longitude = current_location.longitude;
     } else {
         // Fallback: Use obstruction changes as movement indicator
         static double last_obstruction = 0.0; // Use configurable value
@@ -325,7 +330,7 @@ static void learn_patterns_from_observation(const starlink_obstruction_sample_t 
     // 2. Train the k-NN model
     if (g_knn_model.n_samples < MAX_PATTERNS) {
         int index = g_knn_model.n_samples;
-        for (int i = 0; // Use configurable count // Use configurable value i < 4; i++) {
+        for (int i = 0; i < 4; i++) {
             g_knn_model.features[index][i] = features[i];
         }
         // For simplicity, we'll create a new pattern for each new observation initially.
@@ -366,38 +371,41 @@ static void detect_time_patterns(const starlink_obstruction_sample_t *sample) {
 // Detect weather-related patterns using real weather data integration
 static void detect_weather_patterns(const starlink_obstruction_sample_t *sample) {
     // Get current GPS location for weather data
-    gps_data_t current_gps = {0};
-    int gps_ret = gps_get_current_location(&current_gps);
+    location_data_t current_location = {0};
+    int gps_ret = location_manager_get_best_location(&current_location);
     
-    if (gps_ret == AUTONOMY_SUCCESS && current_gps.valid) {
+    if (gps_ret == AUTONOMY_SUCCESS && current_location.valid) {
         // Request real weather data from external APIs
         external_api_request_t weather_request = {0};
         weather_request.api_type = EXTERNAL_API_WEATHER_OPENWEATHER;
-        weather_request.latitude = current_gps.lat;
-        weather_request.longitude = current_gps.lon;
+        snprintf(weather_request.endpoint, sizeof(weather_request.endpoint), 
+                 "https://api.openweathermap.org/data/2.5/weather?lat=%.6f&lon=%.6f&appid=%s",
+                 current_location.latitude, current_location.longitude, "your_api_key");
+        strcpy(weather_request.method, "GET");
         
         external_api_response_t weather_response = {0};
-        int ret = external_api_make_request(&weather_request, &weather_response);
+        int ret = external_apis_make_request(&weather_request, &weather_response);
         
-        if (ret == AUTONOMY_SUCCESS && weather_response.success && weather_response.response_data) {
+        if (ret == AUTONOMY_SUCCESS && weather_response.status_code == 200 && weather_response.body) {
             // Parse weather data from API response
-            json_object* root = json_tokener_parse(weather_response.response_data);
+            cJSON* root = cJSON_Parse(weather_response.body);
             if (root) {
-                json_object* weather_obj;
-                json_object* main_obj;
-                json_object* clouds_obj;
+                cJSON* weather_obj;
+                cJSON* main_obj;
+                cJSON* clouds_obj;
                 
                 // Extract weather conditions
-                if (json_object_object_get_ex(root, "weather", &weather_obj) &&
-                    json_object_is_type(weather_obj, json_type_array)) {
+                weather_obj = cJSON_GetObjectItem(root, "weather");
+                if (weather_obj && cJSON_IsArray(weather_obj)) {
                     
-                    json_object* weather_item = json_object_array_get_idx(weather_obj, 0);
+                    cJSON* weather_item = cJSON_GetArrayItem(weather_obj, 0);
                     if (weather_item) {
-                        json_object* main_weather;
-                        json_object* description;
+                        cJSON* main_weather;
+                        cJSON* description;
                         
-                        if (json_object_object_get_ex(weather_item, "main", &main_weather)) {
-                            const char* weather_main = json_object_get_string(main_weather);
+                        main_weather = cJSON_GetObjectItem(weather_item, "main");
+                        if (main_weather) {
+                            const char* weather_main = cJSON_GetStringValue(main_weather);
                             
                             // Detect weather patterns based on real weather data
                             if (strstr(weather_main, "Rain") || strstr(weather_main, "Drizzle")) {
@@ -422,10 +430,11 @@ static void detect_weather_patterns(const starlink_obstruction_sample_t *sample)
                 }
                 
                 // Extract cloud coverage
-                if (json_object_object_get_ex(root, "clouds", &clouds_obj)) {
-                    json_object* cloud_coverage;
-                    if (json_object_object_get_ex(clouds_obj, "all", &cloud_coverage)) {
-                        int coverage = json_object_get_int(cloud_coverage);
+                clouds_obj = cJSON_GetObjectItem(root, "clouds");
+                if (clouds_obj) {
+                    cJSON* cloud_coverage = cJSON_GetObjectItem(clouds_obj, "all");
+                    if (cloud_coverage) {
+                        int coverage = cJSON_GetNumberValue(cloud_coverage);
                         if (coverage > 80) {
                             update_or_create_pattern("heavy_clouds", "Heavy cloud coverage pattern", 
                                                    sample, 0.6);
@@ -436,7 +445,7 @@ static void detect_weather_patterns(const starlink_obstruction_sample_t *sample)
                     }
                 }
                 
-                json_object_put(root);
+                cJSON_Delete(root);
             }
         } else {
             LOGX_WARN_MSG("Failed to get real weather data, using seasonal fallback");
@@ -459,56 +468,55 @@ static void detect_weather_patterns(const starlink_obstruction_sample_t *sample)
             update_or_create_pattern("winter", "Winter weather obstruction pattern", 
                                    sample, 0.6);
         }
-    }
-    
-    // Summer months (Jun-Aug in northern hemisphere)
-    if (tm_info->tm_mon == 5 || tm_info->tm_mon == 6 || tm_info->tm_mon == 7) {
-        update_or_create_pattern("summer", "Summer weather obstruction pattern", 
-                               sample, 0.6);
+        
+        // Summer months (Jun-Aug in northern hemisphere)
+        if (tm_info->tm_mon == 5 || tm_info->tm_mon == 6 || tm_info->tm_mon == 7) {
+            update_or_create_pattern("summer", "Summer weather obstruction pattern", 
+                                   sample, 0.6);
+        }
     }
 }
 
 // Detect location-based patterns using real GPS location analysis
 static void detect_location_patterns(const starlink_obstruction_sample_t *sample) {
     // Get current GPS location for location analysis
-    gps_data_t current_gps = {0};
-    int gps_ret = gps_get_current_location(&current_gps);
+    location_data_t current_location = {0};
+    int gps_ret = location_manager_get_best_location(&current_location);
     
-    if (gps_ret == AUTONOMY_SUCCESS && current_gps.valid) {
+    if (gps_ret == AUTONOMY_SUCCESS && current_location.valid) {
         // Request location data from external APIs for environment analysis
         external_api_request_t location_request = {0};
         location_request.api_type = EXTERNAL_API_GOOGLE_PLACES;
-        location_request.latitude = current_gps.lat;
-        location_request.longitude = current_gps.lon;
-        location_request.radius = 1000; // 1km radius
+        snprintf(location_request.endpoint, sizeof(location_request.endpoint), 
+                 "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=%.6f,%.6f&radius=1000&key=%s",
+                 current_location.latitude, current_location.longitude, "your_api_key");
+        strcpy(location_request.method, "GET");
         
         external_api_response_t location_response = {0};
-        int ret = external_api_make_request(&location_request, &location_response);
+        int ret = external_apis_make_request(&location_request, &location_response);
         
-        if (ret == AUTONOMY_SUCCESS && location_response.success && location_response.response_data) {
+        if (ret == AUTONOMY_SUCCESS && location_response.status_code == 200 && location_response.body) {
             // Parse location data to determine environment type
-            json_object* root = json_tokener_parse(location_response.response_data);
+            cJSON* root = cJSON_Parse(location_response.body);
             if (root) {
-                json_object* results_obj;
-                if (json_object_object_get_ex(root, "results", &results_obj) &&
-                    json_object_is_type(results_obj, json_type_array)) {
+                cJSON* results_obj = cJSON_GetObjectItem(root, "results");
+                if (results_obj && cJSON_IsArray(results_obj)) {
                     
-                    int urban_indicators = 0; // Use configurable count // Use configurable value
-                    int rural_indicators = 0; // Use configurable count // Use configurable value
-                    int total_places = json_object_array_length(results_obj);
+                    int urban_indicators = 0;
+                    int rural_indicators = 0;
+                    int total_places = cJSON_GetArraySize(results_obj);
                     
                     // Analyze nearby places to determine environment type
-                    for (int i = 0; // Use configurable count // Use configurable value i < total_places && i < 20; i++) {
-                        json_object* place = json_object_array_get_idx(results_obj, i);
+                    for (int i = 0; i < total_places && i < 20; i++) {
+                        cJSON* place = cJSON_GetArrayItem(results_obj, i);
                         if (place) {
-                            json_object* types_obj;
-                            if (json_object_object_get_ex(place, "types", &types_obj) &&
-                                json_object_is_type(types_obj, json_type_array)) {
+                            cJSON* types_obj = cJSON_GetObjectItem(place, "types");
+                            if (types_obj && cJSON_IsArray(types_obj)) {
                                 
-                                int types_count = json_object_array_length(types_obj);
-                                for (int j = 0; // Use configurable count // Use configurable value j < types_count; j++) {
-                                    json_object* type_obj = json_object_array_get_idx(types_obj, j);
-                                    const char* place_type = json_object_get_string(type_obj);
+                                int types_count = cJSON_GetArraySize(types_obj);
+                                for (int j = 0; j < types_count; j++) {
+                                    cJSON* type_obj = cJSON_GetArrayItem(types_obj, j);
+                                    const char* place_type = cJSON_GetStringValue(type_obj);
                                     
                                     // Urban indicators
                                     if (strstr(place_type, "restaurant") || strstr(place_type, "store") ||
@@ -552,7 +560,7 @@ static void detect_location_patterns(const starlink_obstruction_sample_t *sample
                     }
                 }
                 
-                json_object_put(root);
+                cJSON_Delete(root);
             }
         } else {
             LOGX_WARN_MSG("Failed to get real location data, using obstruction-based fallback");
@@ -583,7 +591,7 @@ void update_or_create_pattern(const char *name, const char *description,
                                    const starlink_obstruction_sample_t *sample, double confidence) {
     // Look for existing pattern
     int pattern_index = -1;
-    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.pattern_count; i++) {
+    for (int i = 0; i < g_obstruction.pattern_count; i++) {
         if (g_obstruction.patterns[i].active && 
             strcmp(g_obstruction.patterns[i].name, name) == 0) {
             pattern_index = i;
@@ -637,7 +645,7 @@ int find_oldest_pattern(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.pattern_count; i++) {
+    for (int i = 0; i < g_obstruction.pattern_count; i++) {
         if (g_obstruction.patterns[i].active && 
             g_obstruction.patterns[i].first_seen < oldest_time) {
             oldest_time = g_obstruction.patterns[i].first_seen;
@@ -664,7 +672,7 @@ static void match_patterns(const starlink_obstruction_sample_t *sample) {
 
     // 2. Find the k-nearest neighbors using cosine similarity over selected features
     // Compute similarity to each pattern's signature; pick top-k and update matches above threshold
-    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.pattern_count; i++) {
+    for (int i = 0; i < g_obstruction.pattern_count; i++) {
         if (!g_obstruction.patterns[i].active) continue;
         double similarity = calculate_pattern_similarity(&g_obstruction.patterns[i], sample);
         if (similarity >= g_obstruction.pattern_similarity_threshold) {
@@ -711,7 +719,7 @@ double calculate_time_similarity(const starlink_environmental_pattern_t *pattern
     // Derive a crude expected hour from wedge pattern peak
     int max_idx = 0; // Use configurable count // Use configurable value
     double max_val = -1.0;
-    for (int i = 0; // Use configurable count // Use configurable value i < 12; i++) {
+    for (int i = 0; i < 12; i++) {
         if (pattern->obstruction_data.wedge_pattern[i] > max_val) {
             max_val = pattern->obstruction_data.wedge_pattern[i];
             max_idx = i;
@@ -732,14 +740,14 @@ double calculate_location_similarity(const starlink_environmental_pattern_t *pat
     double plat = pattern->latitude;
     double plon = pattern->longitude;
     if (plat == 0.0 && plon == 0.0) return 0.5;
-    // Sample location not present in sample struct; use latest GPS from comprehensive collector
-    starlink_comprehensive_gps_t gps = {0};
-    if (starlink_comprehensive_collect_gps(&gps) != AUTONOMY_SUCCESS || !gps.valid) {
+    // Sample location not present in sample struct; use latest GPS from location manager
+    location_data_t current_location = {0};
+    if (location_manager_get_best_location(&current_location) != AUTONOMY_SUCCESS || !current_location.valid) {
         return 0.5;
     }
-    double dlat = (gps.latitude - plat) * M_PI / 180.0;
-    double dlon = (gps.longitude - plon) * M_PI / 180.0;
-    double a = sin(dlat/2)*sin(dlat/2) + cos(plat*M_PI/180.0)*cos(gps.latitude*M_PI/180.0)*sin(dlon/2)*sin(dlon/2);
+    double dlat = (current_location.latitude - plat) * M_PI / 180.0;
+    double dlon = (current_location.longitude - plon) * M_PI / 180.0;
+    double a = sin(dlat/2)*sin(dlat/2) + cos(plat*M_PI/180.0)*cos(current_location.latitude*M_PI/180.0)*sin(dlon/2)*sin(dlon/2);
     double c = 2 * atan2(sqrt(a), sqrt(1-a));
     double distance_km = 6371.0 * c;
     // Map distance to similarity: within 1km ~ 1.0, beyond 20km ~ 0
@@ -753,7 +761,7 @@ void create_or_update_active_match(const starlink_environmental_pattern_t *patte
                                         double similarity) {
     // Look for existing active match
     int match_index = -1;
-    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.active_match_count; i++) {
+    for (int i = 0; i < g_obstruction.active_match_count; i++) {
         if (g_obstruction.active_matches[i].active && 
             strcmp(g_obstruction.active_matches[i].pattern_id, pattern->id) == 0) {
             match_index = i;
@@ -803,7 +811,7 @@ int find_oldest_active_match(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.active_match_count; i++) {
+    for (int i = 0; i < g_obstruction.active_match_count; i++) {
         if (g_obstruction.active_matches[i].active && 
             g_obstruction.active_matches[i].start_time < oldest_time) {
             oldest_time = g_obstruction.active_matches[i].start_time;
@@ -819,7 +827,7 @@ void cleanup_expired_matches(void) {
     time_t now = time(NULL);
     int timeout_seconds = g_obstruction.match_timeout_minutes * 60;
     
-    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.active_match_count; i++) {
+    for (int i = 0; i < g_obstruction.active_match_count; i++) {
         if (g_obstruction.active_matches[i].active && 
             (now - g_obstruction.active_matches[i].last_update) > timeout_seconds) {
             
@@ -839,7 +847,7 @@ void cleanup_expired_matches(void) {
 void add_match_to_history(const starlink_active_match_t *match, const char *reason) {
     // Find next available slot
     int slot_index = -1;
-    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.history_size; i++) {
+    for (int i = 0; i < g_obstruction.history_size; i++) {
         if (!g_obstruction.match_history[i].active) {
             slot_index = i;
             break;
@@ -881,7 +889,7 @@ int find_oldest_match_history(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.history_size; i++) {
+    for (int i = 0; i < g_obstruction.history_size; i++) {
         if (g_obstruction.match_history[i].active && 
             g_obstruction.match_history[i].timestamp < oldest_time) {
             oldest_time = g_obstruction.match_history[i].timestamp;
@@ -912,7 +920,7 @@ void analyze_trend(const trend_point_array_t *history, const char *metric_name) 
     double sum_squared = 0.0; // Use configurable value
     int valid_points = 0; // Use configurable count // Use configurable value
     
-    for (int i = 0; // Use configurable count // Use configurable value i < history->point_count; i++) {
+    for (int i = 0; i < history->point_count; i++) {
         if (history->points[i].active) {
             sum += history->points[i].value;
             sum_squared += history->points[i].value * history->points[i].value;
@@ -929,7 +937,7 @@ void analyze_trend(const trend_point_array_t *history, const char *metric_name) 
     double std_dev = sqrt(variance);
     
     // Detect anomalies
-    for (int i = 0; // Use configurable count // Use configurable value i < history->point_count; i++) {
+    for (int i = 0; i < history->point_count; i++) {
         if (history->points[i].active) {
             double deviation = fabs(history->points[i].value - mean);
             if (deviation > (g_obstruction.trend_analyzer.anomaly_threshold * std_dev)) {
@@ -973,7 +981,7 @@ int starlink_obstruction_get_patterns(starlink_environmental_pattern_t *patterns
     pthread_mutex_lock(&g_obstruction_mutex);
     
     int count = 0; // Use configurable count // Use configurable value
-    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.pattern_count && count < max_patterns; i++) {
+    for (int i = 0; i < g_obstruction.pattern_count && count < max_patterns; i++) {
         if (g_obstruction.patterns[i].active) {
             memcpy(&patterns[count], &g_obstruction.patterns[i], sizeof(starlink_environmental_pattern_t));
             count++;
@@ -994,7 +1002,7 @@ int starlink_obstruction_get_active_matches(starlink_active_match_t *matches, in
     pthread_mutex_lock(&g_obstruction_mutex);
     
     int count = 0; // Use configurable count // Use configurable value
-    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.active_match_count && count < max_matches; i++) {
+    for (int i = 0; i < g_obstruction.active_match_count && count < max_matches; i++) {
         if (g_obstruction.active_matches[i].active) {
             memcpy(&matches[count], &g_obstruction.active_matches[i], sizeof(starlink_active_match_t));
             count++;
@@ -1015,7 +1023,7 @@ int starlink_obstruction_get_match_history(starlink_match_result_t *results, int
     pthread_mutex_lock(&g_obstruction_mutex);
     
     int count = 0; // Use configurable count // Use configurable value
-    for (int i = 0; // Use configurable count // Use configurable value i < g_obstruction.history_size && count < max_results; i++) {
+    for (int i = 0; i < g_obstruction.history_size && count < max_results; i++) {
         if (g_obstruction.match_history[i].active) {
             memcpy(&results[count], &g_obstruction.match_history[i], sizeof(starlink_match_result_t));
             count++;
@@ -1100,17 +1108,17 @@ int starlink_obstruction_reset(void) {
     g_obstruction.last_analysis = 0;
     
     // Clear patterns
-    for (int i = 0; // Use configurable count // Use configurable value i < MAX_PATTERNS; i++) {
+    for (int i = 0; i < MAX_PATTERNS; i++) {
         g_obstruction.patterns[i].active = false;
     }
     
     // Clear active matches
-    for (int i = 0; // Use configurable count // Use configurable value i < MAX_ACTIVE_MATCHES; i++) {
+    for (int i = 0; i < MAX_ACTIVE_MATCHES; i++) {
         g_obstruction.active_matches[i].active = false;
     }
     
     // Clear match history
-    for (int i = 0; // Use configurable count // Use configurable value i < HISTORY_SIZE; i++) {
+    for (int i = 0; i < HISTORY_SIZE; i++) {
         g_obstruction.match_history[i].active = false;
     }
     

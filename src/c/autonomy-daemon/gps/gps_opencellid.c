@@ -141,7 +141,7 @@ int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_resp
             response->lat = entry->lat;
             response->lon = entry->lon;
             response->range = entry->range;
-            strcpy(response->radio, gps_opencellid_radio_to_string(cell_key->radio));
+            strcpy(response->radio, gps_opencellid_radio_type_to_string(cell_key->radio));
             
             g_opencellid.stats.cache_hits++;
             
@@ -163,7 +163,7 @@ int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_resp
              cell_key->mnc,
              cell_key->lac,
              cell_key->cell_id,
-             gps_opencellid_radio_to_string(cell_key->radio));
+             gps_opencellid_radio_type_to_string(cell_key->radio));
     
     // Make API request
     http_response_t http_response = {0};
@@ -232,16 +232,16 @@ int gps_opencellid_contribute(const opencellid_contribution_t* contribution) {
     
     // Build contribution JSON
     json_object* json_contrib = json_object_new_object();
-    json_object_object_add(json_contrib, "mcc", json_object_new_int(contribution->mcc));
-    json_object_object_add(json_contrib, "mnc", json_object_new_int(contribution->mnc));
-    json_object_object_add(json_contrib, "lac", json_object_new_int(contribution->lac));
-    json_object_object_add(json_contrib, "cellid", json_object_new_int(contribution->cell_id));
-    json_object_object_add(json_contrib, "lat", json_object_new_double(contribution->lat));
-    json_object_object_add(json_contrib, "lon", json_object_new_double(contribution->lon));
-    json_object_object_add(json_contrib, "signal", json_object_new_int(contribution->signal));
-    json_object_object_add(json_contrib, "measured_at", json_object_new_int64(contribution->measured_at));
-    json_object_object_add(json_contrib, "rating", json_object_new_double(contribution->rating));
-    json_object_object_add(json_contrib, "act", json_object_new_string(contribution->act));
+    json_object_object_add(json_contrib, "mcc", json_object_new_int(contribution->cell_id.mcc));
+    json_object_object_add(json_contrib, "mnc", json_object_new_int(contribution->cell_id.mnc));
+    json_object_object_add(json_contrib, "lac", json_object_new_int(contribution->cell_id.lac));
+    json_object_object_add(json_contrib, "cellid", json_object_new_int64(contribution->cell_id.cell_id));
+    json_object_object_add(json_contrib, "lat", json_object_new_double(contribution->latitude));
+    json_object_object_add(json_contrib, "lon", json_object_new_double(contribution->longitude));
+    json_object_object_add(json_contrib, "signal", json_object_new_int(contribution->rsrp_dbm));
+    json_object_object_add(json_contrib, "measured_at", json_object_new_int64(contribution->timestamp));
+    json_object_object_add(json_contrib, "accuracy", json_object_new_double(contribution->accuracy_meters));
+    json_object_object_add(json_contrib, "radio", json_object_new_string(gps_opencellid_radio_type_to_string(contribution->radio_type)));
     
     const char* json_string = json_object_to_json_string(json_contrib);
     
@@ -261,8 +261,8 @@ int gps_opencellid_contribute(const opencellid_contribution_t* contribution) {
         g_opencellid.stats.last_contribution = time(NULL);
         
         LOGX_INFO_MSG("OpenCellID contribution successful",
-                 "mcc", contribution->mcc,
-                 "mnc", contribution->mnc,
+                  "mcc", contribution->cell_id.mcc,
+                  "mnc", contribution->cell_id.mnc,
                  "cell_id", contribution->cell_id);
     } else {
         LOGX_ERROR_MSG("OpenCellID contribution failed");
@@ -469,7 +469,7 @@ static bool is_cache_entry_expired(const opencellid_cache_entry_t* entry) {
 }
 
 // Convert radio technology enum to string
-const char* gps_opencellid_radio_to_string(opencellid_radio_t radio) {
+const char* gps_opencellid_radio_type_to_string(opencellid_radio_type_t radio) {
     if (radio >= 0 && radio < OPENCELLID_RADIO_MAX) {
         return RADIO_STRINGS[radio];
     }
@@ -477,12 +477,12 @@ const char* gps_opencellid_radio_to_string(opencellid_radio_t radio) {
 }
 
 // Convert radio technology string to enum
-opencellid_radio_t gps_opencellid_parse_radio_type(const char* radio_str) {
+opencellid_radio_type_t gps_opencellid_parse_radio_type(const char* radio_str) {
     if (!radio_str) return OPENCELLID_RADIO_UNKNOWN;
     
     for (int i = 0; i < OPENCELLID_RADIO_MAX; i++) { // Use configurable radio max
         if (strcasecmp(radio_str, RADIO_STRINGS[i]) == 0) {
-            return (opencellid_radio_t)i;
+            return (opencellid_radio_type_t)i;
         }
     }
     
@@ -491,7 +491,7 @@ opencellid_radio_t gps_opencellid_parse_radio_type(const char* radio_str) {
 
 // Create cell key from cell info
 int gps_opencellid_create_cell_key(int mcc, int mnc, int lac, int cell_id, 
-                                   opencellid_radio_t radio, opencellid_cell_key_t* cell_key) {
+                                   opencellid_radio_type_t radio, opencellid_cell_key_t* cell_key) {
     if (!cell_key) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -517,7 +517,7 @@ int gps_opencellid_get_status(opencellid_status_t* status) {
     status->api_key_configured = strlen(g_opencellid.config.api_key) > 0;
     strncpy(status->base_url, g_opencellid.config.base_url, sizeof(status->base_url) - 1);
     status->timeout_seconds = g_opencellid.config.timeout_seconds;
-    status->contribution = g_opencellid.config.contribution;
+    status->contribute_data = g_opencellid.config.contribution.enabled;
     status->cache_entries = g_opencellid.cache_count;
     status->max_cache_entries = g_opencellid.max_cache_entries;
     status->stats = g_opencellid.stats;
@@ -530,12 +530,5 @@ int gps_opencellid_get_status(opencellid_status_t* status) {
 // Check if OpenCellID is initialized
 bool gps_opencellid_is_initialized(void) {
     return g_opencellid_initialized;
-}
-
-// Additional utility functions would be implemented here...
-// (get_config, set_config, set_enabled, clear_cache, reset_stats, etc.)// Check if GPS OpenCellID is initialized
-bool gps_opencellid_is_initialized(void)
-{
-    return g_opencellid.initialized;
 }
 

@@ -32,7 +32,7 @@ static const struct ubus_method autonomy_uci_maintenance_methods[] = {
 };
 
 // UBUS object type
-static const struct ubus_object_type autonomy_uci_maintenance_obj_type = {
+static struct ubus_object_type autonomy_uci_maintenance_obj_type = {
     .name = "autonomy_uci_maintenance",
     .methods = autonomy_uci_maintenance_methods,
     .n_methods = ARRAY_SIZE(autonomy_uci_maintenance_methods),
@@ -162,8 +162,8 @@ static int autonomy_uci_maintenance_perform(struct ubus_context *ctx, struct ubu
     
     // Add result information
     blobmsg_add_string(&bb, "status", "UCI maintenance completed successfully");
-    blobmsg_add_u8(&bb, "issues_found", result.issues_found > 0);
-    blobmsg_add_u32(&bb, "issues_fixed", result.issues_fixed);
+    blobmsg_add_u8(&bb, "issues_found", result.issues_found_count > 0);
+    blobmsg_add_u32(&bb, "issues_fixed", result.issues_fixed_count);
     blobmsg_add_u32(&bb, "backups_created", result.backups_created);
     blobmsg_add_u32(&bb, "backups_restored", result.backups_restored);
     

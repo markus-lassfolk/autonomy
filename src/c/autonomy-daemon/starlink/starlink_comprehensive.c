@@ -348,119 +348,124 @@ static int collect_from_location_api(starlink_comprehensive_gps_t* gps_data) {
         gps_data->longitude = location.lon;
         gps_data->altitude = location.alt;
         
-        // Get real GPS accuracy and velocity data via gRPC
-        char grpc_cmd[512];
-        snprintf(grpc_cmd, sizeof(grpc_cmd),
-                "grpcurl -plaintext -d '{}' %s:%d SpaceX.API.Device.Device/GetStatus 2>/dev/null | "
-                "jq -r '.gps_stats.accuracy_meters // 10.0'",
-                g_starlink_comprehensive.config.dish_ip, 
-                g_starlink_comprehensive.config.dish_port);
-        
-        FILE *accuracy_fp = popen(grpc_cmd, "r");
-        if (accuracy_fp) {
-            char accuracy_str[32];
-            if (fgets(accuracy_str, sizeof(accuracy_str), accuracy_fp)) {
-                gps_data->accuracy = atof(accuracy_str);
+        // Get real GPS accuracy data via gRPC
+        char response_buffer[1024];
+        if (starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer)) == AUTONOMY_SUCCESS) {
+            // Parse JSON response to extract GPS accuracy
+            // Add safety check for empty buffer
+            if (strlen(response_buffer) > 0) {
+                json_object *json_response = json_tokener_parse(response_buffer);
+                if (json_response) {
+                    json_object *gps_stats, *accuracy_obj;
+                    if (json_object_object_get_ex(json_response, "gps_stats", &gps_stats) &&
+                        json_object_object_get_ex(gps_stats, "accuracy_meters", &accuracy_obj)) {
+                        gps_data->accuracy = json_object_get_double(accuracy_obj);
+                    } else {
+                        gps_data->accuracy = 10.0; // Fallback
+                    }
+                    json_object_put(json_response);
+                }
             } else {
                 gps_data->accuracy = 10.0; // Fallback
             }
-            pclose(accuracy_fp);
         } else {
             gps_data->accuracy = 10.0; // Fallback
         }
         
         // Get real velocity data via gRPC
-        snprintf(grpc_cmd, sizeof(grpc_cmd),
-                "grpcurl -plaintext -d '{}' %s:%d SpaceX.API.Device.Device/GetStatus 2>/dev/null | "
-                "jq -r '.gps_stats.velocity_mps // 0.0'",
-                g_starlink_comprehensive.config.dish_ip, 
-                g_starlink_comprehensive.config.dish_port);
-        
-        FILE *velocity_fp = popen(grpc_cmd, "r");
-        if (velocity_fp) {
-            char velocity_str[32];
-            if (fgets(velocity_str, sizeof(velocity_str), velocity_fp)) {
-                double velocity = atof(velocity_str);
-                gps_data->horizontal_speed_mps = velocity;
-                gps_data->vertical_speed_mps = 0.0; // Starlink doesn't provide vertical velocity
+        if (starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer)) == AUTONOMY_SUCCESS) {
+            // Parse JSON response to extract GPS velocity
+            // Add safety check for empty buffer
+            if (strlen(response_buffer) > 0) {
+                json_object *json_response = json_tokener_parse(response_buffer);
+                if (json_response) {
+                    json_object *gps_stats, *velocity_obj;
+                    if (json_object_object_get_ex(json_response, "gps_stats", &gps_stats) &&
+                        json_object_object_get_ex(gps_stats, "velocity_mps", &velocity_obj)) {
+                        double velocity = json_object_get_double(velocity_obj);
+                        gps_data->horizontal_speed_mps = velocity;
+                        gps_data->vertical_speed_mps = 0.0; // Starlink doesn't provide vertical velocity
+                    } else {
+                        gps_data->horizontal_speed_mps = 0.0;
+                        gps_data->vertical_speed_mps = 0.0;
+                    }
+                    json_object_put(json_response);
+                }
             } else {
                 gps_data->horizontal_speed_mps = 0.0;
                 gps_data->vertical_speed_mps = 0.0;
             }
-            pclose(velocity_fp);
         } else {
             gps_data->horizontal_speed_mps = 0.0;
             gps_data->vertical_speed_mps = 0.0;
         }
         
         // Get real GPS source information
-        snprintf(grpc_cmd, sizeof(grpc_cmd),
-                "grpcurl -plaintext -d '{}' %s:%d SpaceX.API.Device.Device/GetStatus 2>/dev/null | "
-                "jq -r '.gps_stats.source // \"STARLINK_GPS\"'",
-                g_starlink_comprehensive.config.dish_ip, 
-                g_starlink_comprehensive.config.dish_port);
-        
-        FILE *source_fp = popen(grpc_cmd, "r");
-        if (source_fp) {
-            char source_str[64];
-            if (fgets(source_str, sizeof(source_str), source_fp)) {
-                // Remove newline
-                source_str[strcspn(source_str, "\n")] = '\0';
-                strncpy(gps_data->gps_source, source_str, sizeof(gps_data->gps_source) - 1);
-                gps_data->gps_source[sizeof(gps_data->gps_source) - 1] = '\0';
+        if (starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer)) == AUTONOMY_SUCCESS) {
+            // Parse JSON response to extract GPS source
+            json_object *json_response = json_tokener_parse(response_buffer);
+            if (json_response) {
+                json_object *gps_stats, *source_obj;
+                if (json_object_object_get_ex(json_response, "gps_stats", &gps_stats) &&
+                    json_object_object_get_ex(gps_stats, "source", &source_obj)) {
+                    const char *source = json_object_get_string(source_obj);
+                    strncpy(gps_data->gps_source, source, sizeof(gps_data->gps_source) - 1);
+                    gps_data->gps_source[sizeof(gps_data->gps_source) - 1] = '\0';
+                } else {
+                    strcpy(gps_data->gps_source, "STARLINK_GPS");
+                }
+                json_object_put(json_response);
             } else {
                 strcpy(gps_data->gps_source, "STARLINK_GPS");
             }
-            pclose(source_fp);
         } else {
             strcpy(gps_data->gps_source, "STARLINK_GPS");
         }
         
         // Get additional GPS metadata
-        snprintf(grpc_cmd, sizeof(grpc_cmd),
-                "grpcurl -plaintext -d '{}' %s:%d SpaceX.API.Device.Device/GetStatus 2>/dev/null | "
-                "jq -r '.gps_stats.satellites // 0'",
-                g_starlink_comprehensive.config.dish_ip, 
-                g_starlink_comprehensive.config.dish_port);
-        
-        FILE *satellites_fp = popen(grpc_cmd, "r");
-        if (satellites_fp) {
-            char satellites_str[16];
-            if (fgets(satellites_str, sizeof(satellites_str), satellites_fp)) {
-                gps_data->satellites = atoi(satellites_str);
+        if (starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer)) == AUTONOMY_SUCCESS) {
+            // Parse JSON response to extract GPS satellites
+            json_object *json_response = json_tokener_parse(response_buffer);
+            if (json_response) {
+                json_object *gps_stats, *satellites_obj;
+                if (json_object_object_get_ex(json_response, "gps_stats", &gps_stats) &&
+                    json_object_object_get_ex(gps_stats, "satellites", &satellites_obj)) {
+                    gps_data->gps_satellites = json_object_get_int(satellites_obj);
+                } else {
+                    gps_data->gps_satellites = 0;
+                }
+                json_object_put(json_response);
             } else {
-                gps_data->satellites = 0;
+                gps_data->gps_satellites = 0;
             }
-            pclose(satellites_fp);
         } else {
-            gps_data->satellites = 0;
+            gps_data->gps_satellites = 0;
         }
         
         // Get HDOP (Horizontal Dilution of Precision)
-        snprintf(grpc_cmd, sizeof(grpc_cmd),
-                "grpcurl -plaintext -d '{}' %s:%d SpaceX.API.Device.Device/GetStatus 2>/dev/null | "
-                "jq -r '.gps_stats.hdop // 1.0'",
-                g_starlink_comprehensive.config.dish_ip, 
-                g_starlink_comprehensive.config.dish_port);
-        
-        FILE *hdop_fp = popen(grpc_cmd, "r");
-        if (hdop_fp) {
-            char hdop_str[16];
-            if (fgets(hdop_str, sizeof(hdop_str), hdop_fp)) {
-                gps_data->hdop = atof(hdop_str);
-            } else {
-                gps_data->hdop = 1.0;
+        if (starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer)) == AUTONOMY_SUCCESS) {
+            // Parse JSON response to extract GPS HDOP
+            json_object *json_response = json_tokener_parse(response_buffer);
+            if (json_response) {
+                json_object *gps_stats, *hdop_obj;
+                if (json_object_object_get_ex(json_response, "gps_stats", &gps_stats) &&
+                    json_object_object_get_ex(gps_stats, "hdop", &hdop_obj)) {
+                    // Note: HDOP is not available in the current struct definition
+                    // This data would need to be added to the struct if needed
+                    double hdop = json_object_get_double(hdop_obj);
+                    LOGX_DEBUG_MSG("Retrieved HDOP from gRPC", "hdop", hdop);
+                }
+                json_object_put(json_response);
             }
-            pclose(hdop_fp);
-        } else {
-            gps_data->hdop = 1.0;
         }
+        
+        // Note: HDOP is not available in the current struct definition
+        // This data would need to be added to the struct if needed
         
         LOGX_DEBUG_MSG("Retrieved real Starlink GPS data via gRPC", 
                        "accuracy", gps_data->accuracy,
                        "velocity", gps_data->horizontal_speed_mps,
-                       "satellites", gps_data->satellites,
-                       "hdop", gps_data->hdop,
+                       "satellites", gps_data->gps_satellites,
                        "source", gps_data->gps_source);
         
         return AUTONOMY_SUCCESS;
@@ -888,8 +893,8 @@ int collect_from_history_api(starlink_events_outages_analysis_t* analysis) {
         analysis->event_count = actual_outage_count;
         analysis->critical_events_24h = critical_events_24h;
         analysis->warning_events_24h = warning_events_24h;
-        analysis->outage_count_24h = outage_count_24h;
-        analysis->total_outage_time_24h = total_outage_time_24h;
+        analysis->total_outages_24h = outage_count_24h;
+        analysis->avg_outage_duration_s = total_outage_time_24h;
         analysis->avg_outage_duration_s = (outage_count_24h > 0) ? (total_duration / outage_count_24h) : 0.0;
         analysis->outage_frequency_per_hour = (double)outage_count_24h / 24.0;
         
@@ -905,7 +910,7 @@ int collect_from_history_api(starlink_events_outages_analysis_t* analysis) {
                       "event_count", analysis->event_count,
                       "critical_events_24h", analysis->critical_events_24h,
                       "warning_events_24h", analysis->warning_events_24h,
-                      "outage_count_24h", analysis->outage_count_24h,
+                      "total_outages_24h", analysis->total_outages_24h,
                       "stability_score", analysis->stability_score);
     } else {
         LOGX_WARN_MSG("Failed to collect historical data from gRPC collector, using defaults");
@@ -914,8 +919,7 @@ int collect_from_history_api(starlink_events_outages_analysis_t* analysis) {
         analysis->event_count = 0;
         analysis->critical_events_24h = 0;
         analysis->warning_events_24h = 0;
-        analysis->outage_count_24h = 0;
-        analysis->total_outage_time_24h = 0.0;
+        analysis->total_outages_24h = 0;
         analysis->avg_outage_duration_s = 0.0;
         analysis->outage_frequency_per_hour = 0.0;
         analysis->outage_pattern_detected = false;
@@ -926,5 +930,47 @@ int collect_from_history_api(starlink_events_outages_analysis_t* analysis) {
     return AUTONOMY_SUCCESS;
 }
 
-// Additional functions would be implemented here...
-// (get_statistics, parse JSON responses, etc.)
+// Get comprehensive Starlink status
+int starlink_comprehensive_get_status(starlink_comprehensive_status_t* status) {
+    if (!status) return AUTONOMY_ERROR_INVALID_PARAM;
+    if (!g_starlink_comprehensive_initialized) return AUTONOMY_ERROR_NOT_INITIALIZED;
+    
+    pthread_mutex_lock(&g_starlink_comprehensive.mutex);
+    *status = g_starlink_comprehensive.status;
+    pthread_mutex_unlock(&g_starlink_comprehensive.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Get comprehensive Starlink statistics
+int starlink_comprehensive_get_statistics(uint64_t* total_collections, uint64_t* successful_collections,
+                                         uint64_t* failed_collections, double* avg_collection_time_ms,
+                                         double* avg_gps_confidence, double* avg_stability_score) {
+    if (!total_collections || !successful_collections || !failed_collections || !avg_collection_time_ms || 
+        !avg_gps_confidence || !avg_stability_score) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    if (!g_starlink_comprehensive_initialized) return AUTONOMY_ERROR_NOT_INITIALIZED;
+    
+    pthread_mutex_lock(&g_starlink_comprehensive.mutex);
+    *total_collections = g_starlink_comprehensive.total_collections;
+    *successful_collections = g_starlink_comprehensive.successful_collections;
+    *failed_collections = g_starlink_comprehensive.failed_collections;
+    *avg_collection_time_ms = g_starlink_comprehensive.average_collection_time_ms;
+    *avg_gps_confidence = g_starlink_comprehensive.average_gps_confidence;
+    *avg_stability_score = g_starlink_comprehensive.average_stability_score;
+    pthread_mutex_unlock(&g_starlink_comprehensive.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Get current stability score
+double starlink_comprehensive_get_stability_score(void) {
+    if (!g_starlink_comprehensive_initialized) return 0.0;
+    
+    pthread_mutex_lock(&g_starlink_comprehensive.mutex);
+    double score = g_starlink_comprehensive.status.stability_score;
+    pthread_mutex_unlock(&g_starlink_comprehensive.mutex);
+    
+    return score;
+}

@@ -22,7 +22,7 @@ int main() {
     
     advanced_networking_intelligence_t *system = ml_monitor_init_advanced_networking(&config);
     assert(system != NULL);
-    printf("✓ Advanced networking intelligence initialized\n");
+    printf(" Advanced networking intelligence initialized\n");
     
     // Test 2: High-frequency monitoring configuration
     printf("Test 2: High-frequency monitoring configuration...\n");
@@ -35,7 +35,7 @@ int main() {
     
     assert(system->high_freq_config.monitoring_intervals.starlink_monitor_interval_ms == 1000);
     assert(system->high_freq_config.monitoring_intervals.cellular_monitor_interval_ms == 5000);
-    printf("✓ High-frequency monitoring configured correctly\n");
+    printf(" High-frequency monitoring configured correctly\n");
     
     // Test 3: Streaming protection mode
     printf("Test 3: Streaming protection mode validation...\n");
@@ -48,7 +48,7 @@ int main() {
     printf("    - Prediction window: %ums ahead\n", system->predictive_system.streaming_protection.streaming_prediction_window_ms);
     printf("    - Confidence threshold: %.1f%% for action\n", system->predictive_system.streaming_protection.streaming_confidence_threshold * 100);
     
-    printf("✓ Streaming protection configured for aggressive failover\n");
+    printf(" Streaming protection configured for aggressive failover\n");
     
     // Test 4: Predictive failover vs reactive
     printf("Test 4: Predictive failover evaluation (vs reactive)...\n");
@@ -67,12 +67,12 @@ int main() {
     printf("    - Confidence: %.1f%%\n", confidence * 100);
     printf("    - Mode: %s\n", system->enable_streaming_protection ? "STREAMING PROTECTION" : "NORMAL");
     
-    printf("✓ Predictive failover evaluation functional\n");
+    printf(" Predictive failover evaluation functional\n");
     
     // Test 5: Connection flapping prevention
     printf("Test 5: Connection flapping prevention system...\n");
     
-    // Simulate flapping scenario: A→B→A→B→A (should detect and prevent)
+    // Simulate flapping scenario: ABABA (should detect and prevent)
     multi_interface_observation_t unstable_obs;
     memset(&unstable_obs, 0, sizeof(unstable_obs));
     
@@ -112,7 +112,7 @@ int main() {
         printf("    - Avoided unstable interface: %s\n", is_flapping ? "YES" : "NO");
     }
     
-    printf("✓ Connection flapping prevention functional\n");
+    printf(" Connection flapping prevention functional\n");
     
     // Test 6: Background validation intelligence
     printf("Test 6: Background validation intelligence (what-if analysis)...\n");
@@ -172,7 +172,7 @@ int main() {
         }
     }
     
-    printf("✓ Background validation intelligence functional\n");
+    printf(" Background validation intelligence functional\n");
     
     // Test 7: Duration windows with user-specified ranges
     printf("Test 7: User-specified duration windows validation...\n");
@@ -193,10 +193,10 @@ int main() {
     
     for (int i = 0; i < 11; i++) {
         const char* predicted_window = get_duration_window_label((int)test_durations[i]);
-        printf("  %.1fs outage → %s window\n", test_durations[i], predicted_window);
+        printf("  %.1fs outage  %s window\n", test_durations[i], predicted_window);
     }
     
-    printf("✓ User-specified duration windows implemented correctly\n");
+    printf(" User-specified duration windows implemented correctly\n");
     
     // Test 8: Streaming interruption cost analysis
     printf("Test 8: Streaming interruption cost analysis...\n");
@@ -229,12 +229,12 @@ int main() {
         }
     }
     
-    printf("✓ Streaming protection cost analysis functional\n");
+    printf(" Streaming protection cost analysis functional\n");
     
     // Test 9: Real-world scenario simulation
     printf("Test 9: Real-world scenario simulation...\n");
     
-    printf("  🎬 SCENARIO: Video streaming on Starlink with backup Cellular\n");
+    printf("   SCENARIO: Video streaming on Starlink with backup Cellular\n");
     printf("  ============================================================\n");
     
     // Simulate Starlink degradation during streaming
@@ -274,17 +274,17 @@ int main() {
         
         // Should trigger predictive failover before streaming is affected
         if (should_failover && second < 5) {
-            printf("    🎯 PREDICTIVE FAILOVER: Triggered at t+%ds BEFORE streaming disruption!\n", second);
+            printf("     PREDICTIVE FAILOVER: Triggered at t+%ds BEFORE streaming disruption!\n", second);
             break;
         }
     }
     
-    printf("✓ Real-world streaming protection scenario validated\n");
+    printf(" Real-world streaming protection scenario validated\n");
     
     // Test 10: Connection flapping prevention scenario
     printf("Test 10: Connection flapping prevention scenario...\n");
     
-    printf("  🔄 SCENARIO: Unstable Cellular causing flapping (A→B→A→B→A)\n");
+    printf("   SCENARIO: Unstable Cellular causing flapping (ABABA)\n");
     printf("  ===========================================================\n");
     
     // Simulate flapping cellular connection
@@ -325,16 +325,16 @@ int main() {
                                                                preferred_target, &target_confidence);
     
     if (target_result == ML_MONITOR_SUCCESS) {
-        printf("    🎯 FLAPPING PREVENTION: Preferred target is %s (avoiding unstable cellular)\n", preferred_target);
+        printf("     FLAPPING PREVENTION: Preferred target is %s (avoiding unstable cellular)\n", preferred_target);
         printf("    Target confidence: %.3f\n", target_confidence);
     }
     
-    printf("✓ Connection flapping prevention functional\n");
+    printf(" Connection flapping prevention functional\n");
     
     // Test 11: Background monitoring of all connections
     printf("Test 11: Background monitoring and what-if analysis...\n");
     
-    printf("  📊 BACKGROUND INTELLIGENCE: Monitoring all connections simultaneously\n");
+    printf("   BACKGROUND INTELLIGENCE: Monitoring all connections simultaneously\n");
     printf("  ====================================================================\n");
     
     // Simulate simultaneous monitoring of all interfaces
@@ -390,7 +390,7 @@ int main() {
         }
     }
     
-    printf("✓ Background monitoring and what-if analysis functional\n");
+    printf(" Background monitoring and what-if analysis functional\n");
     
     // Test 12: Advanced performance metrics
     printf("Test 12: Advanced performance metrics and achievements...\n");
@@ -410,7 +410,7 @@ int main() {
         printf("    - Failover accuracy: %.1f%%\n", failover_accuracy * 100);
     }
     
-    printf("✓ Advanced performance metrics functional\n");
+    printf(" Advanced performance metrics functional\n");
     
     // Test 13: System resource efficiency
     printf("Test 13: System resource efficiency with advanced features...\n");
@@ -423,33 +423,33 @@ int main() {
     printf("  - Streaming protection: Active\n");
     
     assert(system_memory < 512 * 1024); // Less than 512KB for advanced system
-    printf("✓ Resource efficiency maintained with advanced features\n");
+    printf(" Resource efficiency maintained with advanced features\n");
     
     // Test 14: Cleanup
     printf("Test 14: Advanced system cleanup...\n");
     
     ml_monitor_cleanup_advanced_networking(system);
-    printf("✓ Advanced networking system cleanup completed\n");
+    printf(" Advanced networking system cleanup completed\n");
     
     printf("\n===============================================\n");
-    printf("🎉 ADVANCED NETWORKING INTELLIGENCE COMPLETE!\n");
+    printf(" ADVANCED NETWORKING INTELLIGENCE COMPLETE!\n");
     printf("===============================================\n");
     printf("\n");
-    printf("✅ REVOLUTIONARY NETWORKING CAPABILITIES:\n");
-    printf("📡 High-Frequency Monitoring (1-second intervals)\n");
-    printf("🎬 Streaming Protection (2-second tolerance)\n");
-    printf("🔄 Flapping Prevention (stability scoring)\n");
-    printf("📊 Background Validation (what-if analysis)\n");
-    printf("⚡ Predictive Failover (vs reactive)\n");
-    printf("⏱️ Granular Duration Windows (11 ranges)\n");
-    printf("🎛️ Intelligent Target Selection\n");
-    printf("💰 Cost-Optimized Cellular Monitoring\n");
-    printf("🧠 Cross-Interface Intelligence\n");
+    printf(" REVOLUTIONARY NETWORKING CAPABILITIES:\n");
+    printf(" High-Frequency Monitoring (1-second intervals)\n");
+    printf(" Streaming Protection (2-second tolerance)\n");
+    printf(" Flapping Prevention (stability scoring)\n");
+    printf(" Background Validation (what-if analysis)\n");
+    printf(" Predictive Failover (vs reactive)\n");
+    printf(" Granular Duration Windows (11 ranges)\n");
+    printf(" Intelligent Target Selection\n");
+    printf(" Cost-Optimized Cellular Monitoring\n");
+    printf(" Cross-Interface Intelligence\n");
     printf("\n");
-    printf("🚀 READY FOR PRODUCTION DEPLOYMENT!\n");
+    printf(" READY FOR PRODUCTION DEPLOYMENT!\n");
     printf("\nThis advanced networking system provides revolutionary\n");
     printf("network intelligence with streaming protection and\n");
-    printf("intelligent failover management! 🌟\n");
+    printf("intelligent failover management! \n");
     
     return 0;
 }

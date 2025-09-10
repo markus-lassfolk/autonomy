@@ -95,6 +95,17 @@ typedef struct {
     time_t last_collection;
 } network_collector_t;
 
+// Network archive statistics
+typedef struct {
+    int total_entries;
+    float avg_latency_ms;
+    float avg_packet_loss_pct;
+    float avg_bandwidth_mbps;
+    float avg_jitter_ms;
+    time_t oldest_entry;
+    time_t newest_entry;
+} network_archive_stats_t;
+
 // Initialize network collector
 int network_collector_init(void);
 
@@ -128,5 +139,11 @@ int network_collector_get_status(network_collector_status_t *status);
 
 // Cleanup network collector
 void network_collector_cleanup(void);
+
+// Archive-specific functions
+int network_collector_archive_metrics(const network_metrics_t *metrics, const char *archive_path);
+int network_collector_load_archived_metrics(const char *archive_path, network_metrics_t *metrics, int max_count);
+int network_collector_cleanup_archived_metrics(const char *archive_path, int keep_days);
+int network_collector_get_archive_stats(const char *archive_path, network_archive_stats_t *stats);
 
 #endif // NETWORK_COLLECTOR_H

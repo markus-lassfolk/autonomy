@@ -422,7 +422,7 @@ static int detect_version_change(const starlink_api_version_t* new_version) {
                 char emergency_message[512];
                 
                 snprintf(emergency_title, sizeof(emergency_title),
-                        "🚨 Starlink API Breaking Change Detected");
+                        "ALERT: Starlink API Breaking Change Detected");
                 
                 snprintf(emergency_message, sizeof(emergency_message),
                         "Starlink API version changed from %s to %s and validation failed. "
@@ -492,7 +492,7 @@ static int send_version_change_notification(const starlink_api_version_change_t*
     // Create notification based on severity
     switch (change->severity) {
         case API_VERSION_CHANGE_MAJOR:
-            snprintf(title, sizeof(title), "🚨 Starlink API Major Version Change");
+            snprintf(title, sizeof(title), "ALERT: Starlink API Major Version Change");
             snprintf(message, sizeof(message),
                     "Starlink API has undergone a MAJOR version change from %s to %s. "
                     "This may introduce breaking changes. Please review system functionality.",
@@ -501,7 +501,7 @@ static int send_version_change_notification(const starlink_api_version_change_t*
             break;
             
         case API_VERSION_CHANGE_MODERATE:
-            snprintf(title, sizeof(title), "⚠️ Starlink API Version Update");
+            snprintf(title, sizeof(title), "WARNING: Starlink API Version Update");
             snprintf(message, sizeof(message),
                     "Starlink API version updated from %s to %s. "
                     "Monitor system for any functional changes.",
@@ -510,18 +510,18 @@ static int send_version_change_notification(const starlink_api_version_change_t*
             break;
             
         case API_VERSION_CHANGE_MINOR:
-            snprintf(title, sizeof(title), "ℹ️ Starlink API Minor Update");
+            snprintf(title, sizeof(title), "INFO: Starlink API Minor Update");
             snprintf(message, sizeof(message),
-                    "Starlink API minor update detected: %s → %s. "
+                    "Starlink API minor update detected: %s -> %s. "
                     "Likely bug fixes or minor improvements.",
                     change->old_version.software_version,
                     change->new_version.software_version);
             break;
             
         default:
-            snprintf(title, sizeof(title), "❓ Starlink API Change");
+            snprintf(title, sizeof(title), " Starlink API Change");
             snprintf(message, sizeof(message),
-                    "Starlink API change detected but severity unknown: %s → %s",
+                    "Starlink API change detected but severity unknown: %s  %s",
                     change->old_version.software_version,
                     change->new_version.software_version);
             break;
@@ -835,4 +835,93 @@ int validate_api_after_change(const starlink_api_version_change_t* change) {
                        "success_rate", success_rate);
         return AUTONOMY_ERROR_API_FAILED;
     }
+}
+
+// Get API version monitor statistics
+int starlink_api_version_monitor_get_statistics(starlink_api_version_monitor_stats_t* stats) {
+    if (!stats) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (!g_api_version_monitor_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_api_version_monitor.mutex);
+    *stats = g_api_version_monitor.stats;
+    pthread_mutex_unlock(&g_api_version_monitor.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Get current Starlink API version
+int starlink_api_version_monitor_get_current_version(starlink_api_version_t* version) {
+    if (!version) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (!g_api_version_monitor_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_api_version_monitor.mutex);
+    *version = g_api_version_monitor.current_version;
+    pthread_mutex_unlock(&g_api_version_monitor.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Validate API endpoint
+int starlink_api_version_monitor_validate_endpoint(starlink_api_endpoint_t endpoint) {
+    if (!g_api_version_monitor_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    char response_buffer[4096];
+    int result = AUTONOMY_ERROR_API_FAILED;
+    
+    switch (endpoint) {
+        case STARLINK_API_ENDPOINT_GET_STATUS:
+            result = starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer));
+            break;
+        case STARLINK_API_ENDPOINT_GET_LOCATION:
+            result = starlink_grpc_call_get_location(response_buffer, sizeof(response_buffer));
+            break;
+        case STARLINK_API_ENDPOINT_GET_DIAGNOSTICS:
+            result = starlink_grpc_call_get_diagnostics(response_buffer, sizeof(response_buffer));
+            break;
+        case STARLINK_API_ENDPOINT_GET_HISTORY:
+            result = starlink_grpc_call_get_history(response_buffer, sizeof(response_buffer));
+            break;
+        default:
+            return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    return result;
+}
+
+// Get API version change history
+int starlink_api_version_monitor_get_change_history(starlink_api_version_change_t* changes, int max_changes) {
+    if (!changes || max_changes <= 0) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (!g_api_version_monitor_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_api_version_monitor.mutex);
+    
+    int changes_returned = 0;
+    int start_index = g_api_version_monitor.change_records_index;
+    
+    for (int i = 0; i < max_changes && i < g_api_version_monitor.change_records_count; i++) {
+        int index = (start_index - i - 1 + g_api_version_monitor.change_records_count) % g_api_version_monitor.change_records_count;
+        changes[changes_returned] = g_api_version_monitor.change_records[index];
+        changes_returned++;
+    }
+    
+    pthread_mutex_unlock(&g_api_version_monitor.mutex);
+    
+    return changes_returned;
 }

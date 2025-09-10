@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <strings.h>
+#include <ctype.h>
 
 // Initialize event builder
 int event_builder_init(event_builder_t* builder) {
@@ -23,18 +24,18 @@ void event_builder_cleanup(event_builder_t* builder) {
 
 // Get emoji for member class
 const char* event_builder_get_member_emoji(const char* member_class) {
-    if (!member_class) return "⚠️";
+    if (!member_class) return "";
     
     if (strcasecmp(member_class, "starlink") == 0) {
-        return "🛰️";
+        return "";
     } else if (strcasecmp(member_class, "cellular") == 0) {
-        return "📱";
+        return "";
     } else if (strcasecmp(member_class, "wifi") == 0) {
-        return "📶";
+        return "";
     } else if (strcasecmp(member_class, "lan") == 0) {
-        return "🌐";
+        return "";
     } else {
-        return "⚠️";
+        return "";
     }
 }
 
@@ -44,22 +45,22 @@ void event_builder_format_failover_reason(const char* reason, char* formatted_re
     if (!reason || !formatted_reason || !reason_emoji) return;
     
     if (strcasecmp(reason, "predictive") == 0) {
-        strncpy(reason_emoji, "🔮", max_size - 1);
+        strncpy(reason_emoji, "", max_size - 1);
         strncpy(formatted_reason, "Predictive failover triggered", max_size - 1);
     } else if (strcasecmp(reason, "quality") == 0) {
-        strncpy(reason_emoji, "📶", max_size - 1);
+        strncpy(reason_emoji, "", max_size - 1);
         strncpy(formatted_reason, "Signal quality degraded", max_size - 1);
     } else if (strcasecmp(reason, "latency") == 0) {
-        strncpy(reason_emoji, "🐌", max_size - 1);
+        strncpy(reason_emoji, "", max_size - 1);
         strncpy(formatted_reason, "High latency detected", max_size - 1);
     } else if (strcasecmp(reason, "loss") == 0) {
-        strncpy(reason_emoji, "📉", max_size - 1);
+        strncpy(reason_emoji, "", max_size - 1);
         strncpy(formatted_reason, "Packet loss detected", max_size - 1);
     } else if (strcasecmp(reason, "manual") == 0) {
-        strncpy(reason_emoji, "👤", max_size - 1);
+        strncpy(reason_emoji, "", max_size - 1);
         strncpy(formatted_reason, "Manual failover requested", max_size - 1);
     } else {
-        strncpy(reason_emoji, "🔄", max_size - 1);
+        strncpy(reason_emoji, "", max_size - 1);
         strncpy(formatted_reason, "Failover triggered", max_size - 1);
     }
 }
@@ -74,11 +75,11 @@ void event_builder_format_metrics(const event_metrics_t* metrics, const char* me
     if (metrics->has_latency) {
         char latency_icon[8];
         if (metrics->latency_ms > 500) {
-            strncpy(latency_icon, "🔴", sizeof(latency_icon) - 1);
+            strncpy(latency_icon, "", sizeof(latency_icon) - 1);
         } else if (metrics->latency_ms > 200) {
-            strncpy(latency_icon, "🟡", sizeof(latency_icon) - 1);
+            strncpy(latency_icon, "", sizeof(latency_icon) - 1);
         } else {
-            strncpy(latency_icon, "🟢", sizeof(latency_icon) - 1);
+            strncpy(latency_icon, "", sizeof(latency_icon) - 1);
         }
         
         char temp[128];
@@ -89,11 +90,11 @@ void event_builder_format_metrics(const event_metrics_t* metrics, const char* me
     if (metrics->has_loss) {
         char loss_icon[8];
         if (metrics->loss_percent > 5) {
-            strncpy(loss_icon, "🔴", sizeof(loss_icon) - 1);
+            strncpy(loss_icon, "", sizeof(loss_icon) - 1);
         } else if (metrics->loss_percent > 1) {
-            strncpy(loss_icon, "🟡", sizeof(loss_icon) - 1);
+            strncpy(loss_icon, "", sizeof(loss_icon) - 1);
         } else {
-            strncpy(loss_icon, "🟢", sizeof(loss_icon) - 1);
+            strncpy(loss_icon, "", sizeof(loss_icon) - 1);
         }
         
         char temp[128];
@@ -103,18 +104,18 @@ void event_builder_format_metrics(const event_metrics_t* metrics, const char* me
     
     if (metrics->has_jitter) {
         char temp[128];
-        snprintf(temp, sizeof(temp), "📈 Jitter: %.1f ms\n", metrics->jitter_ms);
+        snprintf(temp, sizeof(temp), " Jitter: %.1f ms\n", metrics->jitter_ms);
         strncat(formatted, temp, max_size - strlen(formatted) - 1);
     }
     
     if (metrics->has_obstruction && member_class && strcasecmp(member_class, "starlink") == 0) {
         char obstruction_icon[8];
         if (metrics->obstruction_pct > 15) {
-            strncpy(obstruction_icon, "🔴", sizeof(obstruction_icon) - 1);
+            strncpy(obstruction_icon, "", sizeof(obstruction_icon) - 1);
         } else if (metrics->obstruction_pct > 5) {
-            strncpy(obstruction_icon, "🟡", sizeof(obstruction_icon) - 1);
+            strncpy(obstruction_icon, "", sizeof(obstruction_icon) - 1);
         } else {
-            strncpy(obstruction_icon, "🟢", sizeof(obstruction_icon) - 1);
+            strncpy(obstruction_icon, "", sizeof(obstruction_icon) - 1);
         }
         
         char temp[128];
@@ -124,13 +125,13 @@ void event_builder_format_metrics(const event_metrics_t* metrics, const char* me
     
     if (metrics->has_rsrp && member_class && strcasecmp(member_class, "cellular") == 0) {
         char temp[128];
-        snprintf(temp, sizeof(temp), "• RSRP: %d dBm\n", metrics->rsrp);
+        snprintf(temp, sizeof(temp), " RSRP: %d dBm\n", metrics->rsrp);
         strncat(formatted, temp, max_size - strlen(formatted) - 1);
     }
     
     if (metrics->has_rsrq && member_class && strcasecmp(member_class, "cellular") == 0) {
         char temp[128];
-        snprintf(temp, sizeof(temp), "• RSRQ: %d dB\n", metrics->rsrq);
+        snprintf(temp, sizeof(temp), " RSRQ: %d dB\n", metrics->rsrq);
         strncat(formatted, temp, max_size - strlen(formatted) - 1);
     }
 }
@@ -150,7 +151,7 @@ int event_builder_create_failover_event(event_builder_t* builder,
     
     // Generate ID
     time_t now = time(NULL);
-    snprintf(event->id, sizeof(event->id), "failover_%ld", now);
+    snprintf(event->id, sizeof(event->id), "failover_%lld", (long long)now);
     
     // Format reason
     char reason_emoji[16];
@@ -177,7 +178,7 @@ int event_builder_create_failover_event(event_builder_t* builder,
     }
     
     if (metrics) {
-        strncat(message_buffer, "\n📊 Current Metrics:\n", sizeof(message_buffer) - strlen(message_buffer) - 1);
+        strncat(message_buffer, "\n Current Metrics:\n", sizeof(message_buffer) - strlen(message_buffer) - 1);
         char metrics_str[512];
         event_builder_format_metrics(metrics, to_member ? to_member->class : NULL, metrics_str, sizeof(metrics_str));
         strncat(message_buffer, metrics_str, sizeof(message_buffer) - strlen(message_buffer) - 1);
@@ -214,10 +215,10 @@ int event_builder_create_failback_event(event_builder_t* builder,
     
     // Generate ID
     time_t now = time(NULL);
-    snprintf(event->id, sizeof(event->id), "failback_%ld", now);
+    snprintf(event->id, sizeof(event->id), "failback_%lld", (long long)now);
     
     // Create title
-    strncpy(event->title, "✅ Network Restored", sizeof(event->title) - 1);
+    strncpy(event->title, " Network Restored", sizeof(event->title) - 1);
     
     // Create message
     char message_buffer[2048];
@@ -272,7 +273,11 @@ int event_builder_create_member_down_event(event_builder_t* builder,
     
     // Generate ID
     time_t now = time(NULL);
-    snprintf(event->id, sizeof(event->id), "member_down_%s_%ld", member->name, now);
+    // Truncate member name to fit in ID buffer (64 bytes total, need space for prefix and timestamp)
+    char truncated_name[32];
+    strncpy(truncated_name, member->name, sizeof(truncated_name) - 1);
+    truncated_name[sizeof(truncated_name) - 1] = '\0';
+    snprintf(event->id, sizeof(event->id), "member_down_%s_%lld", truncated_name, (long long)now);
     
     // Get emoji for member class
     const char* emoji = event_builder_get_member_emoji(member->class);
@@ -336,7 +341,11 @@ int event_builder_create_member_up_event(event_builder_t* builder,
     
     // Generate ID
     time_t now = time(NULL);
-    snprintf(event->id, sizeof(event->id), "member_up_%s_%ld", member->name, now);
+    // Truncate member name to fit in ID buffer (64 bytes total, need space for prefix and timestamp)
+    char truncated_name[32];
+    strncpy(truncated_name, member->name, sizeof(truncated_name) - 1);
+    truncated_name[sizeof(truncated_name) - 1] = '\0';
+    snprintf(event->id, sizeof(event->id), "member_up_%s_%lld", truncated_name, (long long)now);
     
     // Get emoji for member class
     const char* emoji = event_builder_get_member_emoji(member->class);
@@ -397,10 +406,14 @@ int event_builder_create_predictive_event(event_builder_t* builder,
     
     // Generate ID
     time_t now = time(NULL);
-    snprintf(event->id, sizeof(event->id), "predictive_%s_%ld", member->name, now);
+    // Truncate member name to fit in ID buffer (64 bytes total, need space for prefix and timestamp)
+    char truncated_name[32];
+    strncpy(truncated_name, member->name, sizeof(truncated_name) - 1);
+    truncated_name[sizeof(truncated_name) - 1] = '\0';
+    snprintf(event->id, sizeof(event->id), "predictive_%s_%lld", truncated_name, (long long)now);
     
     // Create title
-    strncpy(event->title, "🔮 Predictive Warning", sizeof(event->title) - 1);
+    strncpy(event->title, " Predictive Warning", sizeof(event->title) - 1);
     
     // Create message
     char message_buffer[2048];
@@ -455,10 +468,10 @@ int event_builder_create_critical_error_event(event_builder_t* builder,
     
     // Generate ID
     time_t now = time(NULL);
-    snprintf(event->id, sizeof(event->id), "critical_%ld", now);
+    snprintf(event->id, sizeof(event->id), "critical_%lld", (long long)now);
     
     // Create title
-    strncpy(event->title, "🚨 CRITICAL: System Error", sizeof(event->title) - 1);
+    strncpy(event->title, " CRITICAL: System Error", sizeof(event->title) - 1);
     
     // Create message
     char message_buffer[2048];
@@ -504,10 +517,10 @@ int event_builder_create_test_event(event_builder_t* builder,
     
     // Generate ID
     time_t now = time(NULL);
-    snprintf(event->id, sizeof(event->id), "test_%ld", now);
+    snprintf(event->id, sizeof(event->id), "test_%lld", (long long)now);
     
     // Create test notification
-    strncpy(event->title, "🧪 Test Notification", sizeof(event->title) - 1);
+    strncpy(event->title, " Test Notification", sizeof(event->title) - 1);
     strncpy(event->message, "This is a test notification from autonomy.\n\nIf you receive this, notifications are working correctly!", sizeof(event->message) - 1);
     
     event->type = NOTIFICATION_TYPE_STATUS_UPDATE;
@@ -535,7 +548,7 @@ int event_builder_create_custom_event(event_builder_t* builder,
     
     // Generate ID
     time_t now = time(NULL);
-    snprintf(event->id, sizeof(event->id), "custom_%ld", now);
+    snprintf(event->id, sizeof(event->id), "custom_%lld", (long long)now);
     
     // Set fields
     strncpy(event->title, title, sizeof(event->title) - 1);

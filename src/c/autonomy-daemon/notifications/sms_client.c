@@ -122,16 +122,16 @@ void sms_client_format_message(sms_client_t* client, const notification_event_t*
         const char* priority_emoji = ""; // Use configurable string
         switch (event->priority) {
             case NOTIFICATION_PRIORITY_EMERGENCY:
-                priority_emoji = "🚨"; // Use configurable string
+                priority_emoji = ""; // Use configurable string
                 break;
             case NOTIFICATION_PRIORITY_HIGH:
-                priority_emoji = "⚠️"; // Use configurable string
+                priority_emoji = ""; // Use configurable string
                 break;
             case NOTIFICATION_PRIORITY_NORMAL:
-                priority_emoji = "ℹ️"; // Use configurable string
+                priority_emoji = ""; // Use configurable string
                 break;
             default:
-                priority_emoji = "📝"; // Use configurable string
+                priority_emoji = ""; // Use configurable string
                 break;
         }
         

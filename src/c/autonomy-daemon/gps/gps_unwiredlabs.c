@@ -1,4 +1,5 @@
 #include "gps_unwiredlabs.h"
+#include "../utils/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -426,7 +427,7 @@ bool unwiredlabs_api_validate_token(void) {
     char validation_url[512];
     snprintf(validation_url, sizeof(validation_url),
             "https://us1.unwiredlabs.com/v2/balance.php?token=%s", 
-            g_unwiredlabs_config.api_token);
+            g_unwiredlabs_config.token);
     
     FILE *http_fp = popen("curl -s --connect-timeout 10 --max-time 30", "w");
     if (http_fp) {

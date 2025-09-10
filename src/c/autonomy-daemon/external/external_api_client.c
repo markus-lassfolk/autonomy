@@ -202,9 +202,9 @@ static int api_send_request(const api_request_t* request, api_response_t* respon
         http_request_add_header_kv(http_req, "Content-Type", "application/json");
     }
     
-    // Add custom headers
-    for (int i = 0; i < request->header_count; i++) {
-        http_request_add_header(http_req, request->headers[i]);
+    // Add custom headers if provided
+    if (request->headers && strlen(request->headers) > 0) {
+        http_request_add_header(http_req, request->headers);
     }
     
     // Set authentication if provided
@@ -217,9 +217,9 @@ static int api_send_request(const api_request_t* request, api_response_t* respon
     // Set SSL verification based on config
     http_req->verify_ssl = g_external_api_client.config.use_ssl;
     
-    // Set timeouts
-    http_req->connect_timeout_ms = g_external_api_client.config.timeout_ms;
-    http_req->request_timeout_ms = g_external_api_client.config.timeout_ms;
+    // Set timeouts (convert seconds to milliseconds)
+    http_req->connect_timeout_ms = g_external_api_client.config.timeout_seconds * 1000;
+    http_req->request_timeout_ms = g_external_api_client.config.timeout_seconds * 1000;
     
     // Execute request
     http_response_t* http_resp = http_request(http_req);
@@ -250,7 +250,7 @@ static int api_send_request(const api_request_t* request, api_response_t* respon
         response->headers[0] = '\0';
     }
     
-    response->response_time = http_resp->total_time;
+    response->timestamp = time(NULL);
     
     // Cleanup
     http_response_free(http_resp);

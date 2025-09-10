@@ -78,6 +78,9 @@ int gps_rutos_set_config(const gps_rutos_config_t *config);
 // Enable/disable RUTOS GPS
 int gps_rutos_set_enabled(bool enabled);
 
+// Check if RUTOS GPS is available
+bool gps_rutos_is_available(void);
+
 // Check if RUTOS GPS data is recent
 bool gps_rutos_is_data_recent(int max_age_seconds);
 

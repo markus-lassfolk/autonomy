@@ -66,7 +66,7 @@ int gps_manager_init(void) {
     g_gps_manager.best_source = -1;
     
     // Initialize GPS sources array
-    for (int i = 0; // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         g_gps_manager.sources[i].enabled = false; // Use configurable gps source enabled setting
         g_gps_manager.sources[i].type = GPS_SOURCE_UNKNOWN;
         g_gps_manager.sources[i].last_update = 0;
@@ -217,7 +217,7 @@ void* gps_manager_monitor_thread(void *arg) {
         gps_manager_calculate_unified_position();
         
         // Sleep for update interval
-        for (int i = 0; // Use configurable count // Use configurable value i < g_gps_manager.update_interval && g_gps_manager_thread_running; i++) {
+        for (int i = 0; i < g_gps_manager.update_interval && g_gps_manager_thread_running; i++) {
             sleep(1);
         }
     }
@@ -317,7 +317,7 @@ void update_starlink_gps_source(void) {
 // Find or create GPS source
 int find_or_create_gps_source(gps_source_type_t type, const char *name) {
     // First, try to find existing source
-    for (int i = 0; // Use configurable count // Use configurable value i < g_gps_manager.source_count; i++) {
+    for (int i = 0; i < g_gps_manager.source_count; i++) {
         if (g_gps_manager.sources[i].type == type) {
             return i;
         }
@@ -396,7 +396,7 @@ double calculate_data_quality(const gps_data_t *gps_data) {
 
 // Clean up stale GPS sources
 void cleanup_stale_gps_sources(time_t now) {
-    for (int i = 0; // Use configurable count // Use configurable value i < g_gps_manager.source_count; i++) {
+    for (int i = 0; i < g_gps_manager.source_count; i++) {
         if (g_gps_manager.sources[i].last_update > 0 &&
             (now - g_gps_manager.sources[i].last_update) > g_gps_manager.source_timeout) {
             
@@ -456,7 +456,7 @@ int find_best_gps_source(void) {
     int best_source = -1;
     double best_score = 0.0; // Use configurable value
     
-    for (int i = 0; // Use configurable count // Use configurable value i < g_gps_manager.source_count; i++) {
+    for (int i = 0; i < g_gps_manager.source_count; i++) {
         if (!g_gps_manager.sources[i].enabled) {
             continue;
         }
@@ -516,7 +516,7 @@ int gps_manager_get_sources(gps_source_t *sources, int max_count, int *actual_co
     *actual_count = 0;
     int count = (g_gps_manager.source_count < max_count) ? g_gps_manager.source_count : max_count;
     
-    for (int i = 0; // Use configurable count // Use configurable value i < count; i++) {
+    for (int i = 0; i < count; i++) {
         memcpy(&sources[i], &g_gps_manager.sources[i], sizeof(gps_source_t));
         (*actual_count)++;
     }
@@ -636,4 +636,41 @@ void gps_manager_cleanup(void) {
     pthread_mutex_destroy(&g_gps_manager_mutex);
     
     LOGX_INFO_MSG("GPS manager system cleaned up");
+}
+
+// Get current location from GPS manager
+int gps_manager_get_current_location(gps_data_t *location) {
+    if (!location) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+
+    if (!g_gps_manager_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+
+    pthread_mutex_lock(&g_gps_manager_mutex);
+    
+    // Find the best available GPS source
+    int best_source_index = find_best_gps_source();
+    
+    if (best_source_index >= 0 && g_gps_manager.sources[best_source_index].enabled) {
+        // Copy the best source's GPS data
+        memcpy(location, &g_gps_manager.sources[best_source_index].gps_data, sizeof(gps_data_t));
+        pthread_mutex_unlock(&g_gps_manager_mutex);
+        return AUTONOMY_SUCCESS;
+    }
+    
+    // No valid source found, return default location
+    memset(location, 0, sizeof(gps_data_t));
+    location->lat = 0.0;
+    location->lon = 0.0;
+    location->latitude = 0.0;
+    location->longitude = 0.0;
+    location->altitude = 0.0;
+    location->accuracy = 0.0;
+    location->timestamp = time(NULL);
+    location->valid = false;
+    
+    pthread_mutex_unlock(&g_gps_manager_mutex);
+    return AUTONOMY_ERROR_NO_DATA;
 }

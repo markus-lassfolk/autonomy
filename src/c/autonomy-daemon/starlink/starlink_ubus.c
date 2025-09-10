@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "starlink_types.h"
 #include "starlink_obstruction.h"
 #include <libubus.h>

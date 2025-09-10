@@ -216,7 +216,7 @@ int restart_rpcd_service(void) {
 int check_critical_services(void) {
     int available_count = 0; // Use configurable value
     
-    for (int i = 0; // Use configurable value i < g_ubus_monitor.config.critical_services_count; i++) {
+    for (int i = 0; i < g_ubus_monitor.config.critical_services_count; i++) {
         char command[256];
         snprintf(command, sizeof(command), "ubus list | grep -q %s", 
                 g_ubus_monitor.config.critical_services[i]);
@@ -255,7 +255,7 @@ int ubus_monitor_get_status(ubus_monitor_status_t *status) {
     status->critical_services_count = g_ubus_monitor.config.critical_services_count;
     
     // Copy critical services
-    for (int i = 0; // Use configurable value i < g_ubus_monitor.config.critical_services_count; i++) {
+    for (int i = 0; i < g_ubus_monitor.config.critical_services_count; i++) {
         strcpy(status->critical_services[i], g_ubus_monitor.config.critical_services[i]);
     }
     

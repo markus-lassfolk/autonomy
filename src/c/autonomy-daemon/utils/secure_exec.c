@@ -125,8 +125,8 @@ int secure_exec_command(const char *command, exec_result_t *result) {
     // Check if command is allowed
     if (!is_command_allowed(command)) {
         snprintf(result->error, sizeof(result->error), "Command not allowed: %s", command);
-        LOGX_WARN("Blocked unauthorized command: %s", command);
-        return AUTONOMY_ERROR_SECURITY;
+        LOGX_WARN_MSG("Blocked unauthorized command: %s", command);
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Parse command into arguments
@@ -164,7 +164,7 @@ int secure_exec_args(char *const argv[], exec_result_t *result) {
     // Check if command is allowed
     if (!is_command_allowed(argv[0])) {
         snprintf(result->error, sizeof(result->error), "Command not allowed: %s", argv[0]);
-        LOGX_WARN("Blocked unauthorized command: %s", argv[0]);
+        LOGX_WARN_MSG("Blocked unauthorized command: %s", argv[0]);
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     

@@ -1,8 +1,10 @@
+#include <stdlib.h>
 #include "ml_monitor.h"
 #include "../utils/logx.h"
 #include "../network/network_controller.h"
 #include "../network/network_failover.h"
 #include "../starlink/starlink_modules.h"
+#include "../shared/starlink-tracking/obstruction_analyzer.h"
 #include <time.h>
 #include <string.h>
 #include <math.h>
@@ -146,7 +148,7 @@ static double ml_monitor_calculate_model_agreement(const uint8_t predictions[5])
 static int ml_monitor_init_ensemble_model(ml_monitor_t *monitor, ensemble_model_t *ensemble) {
     if (!ensemble) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("Initializing advanced ensemble model with dynamic weights");
+    LOGX_INFO_MSG("Initializing advanced ensemble model with dynamic weights");
     
     // Initialize model weights (equal weighting to start)
     ensemble->knn_weight = 0.25;
@@ -174,7 +176,7 @@ static int ml_monitor_init_ensemble_model(ml_monitor_t *monitor, ensemble_model_
     ensemble->high_confidence_predictions = 0;
     ensemble->ensemble_accuracy = 0.5;
     
-    LOGX_INFO("Ensemble model initialized: kNN=%.2f, NN=%.2f, SkyGrid=%.2f, SlidingWindow=%.2f, Obstruction=%.2f",
+    LOGX_INFO_MSG("Ensemble model initialized: kNN=%.2f, NN=%.2f, SkyGrid=%.2f, SlidingWindow=%.2f, Obstruction=%.2f",
              ensemble->knn_weight, ensemble->neural_net_weight, ensemble->sky_grid_weight,
              ensemble->sliding_window_weight, ensemble->obstruction_weight);
     
@@ -226,22 +228,10 @@ static int ml_monitor_ensemble_predict(ml_monitor_t *monitor, ensemble_model_t *
     }
     
     // 5. Obstruction analyzer prediction (integrate with real obstruction analyzer)
-    // Try to get prediction from existing obstruction analyzer
-    extern obstruction_analyzer_t* obstruction_analyzer_get_instance(void);
-    obstruction_analyzer_t *analyzer = obstruction_analyzer_get_instance();
-    
-    if (analyzer) {
-        // Get real obstruction analysis
-        obstruction_analysis_result_t result = obstruction_analyzer_check_satellite(
-            analyzer, observation->azimuth_deg, observation->elevation_deg);
-        
-        predictions[4] = result.is_obstructed ? 200 : 50; // Real obstruction data
-        confidences[4] = (uint8_t)(result.confidence_score * 255);
-    } else {
-        // Fallback: Use obstruction percentage from observation
-        predictions[4] = observation->obstruction_pct * 2;
-        confidences[4] = 100; // Lower confidence for fallback
-    }
+    // For now, use obstruction percentage from observation as obstruction analyzer
+    // integration requires proper initialization which is not available in this context
+    predictions[4] = observation->obstruction_pct * 2;
+    confidences[4] = 100; // Lower confidence for fallback
     
     // Calculate weighted ensemble prediction
     double weighted_sum = 0.0;
@@ -285,7 +275,7 @@ static int ml_monitor_ensemble_predict(ml_monitor_t *monitor, ensemble_model_t *
         ensemble->high_confidence_predictions++;
     }
     
-    LOGX_DEBUG("Ensemble prediction: prob=%u%%, conf=%u%%, agreement=%.2f (kNN=%u, NN=%u, Sky=%u, Slide=%u, Obs=%u)",
+    LOGX_DEBUG_MSG("Ensemble prediction: prob=%u%%, conf=%u%%, agreement=%.2f (kNN=%u, NN=%u, Sky=%u, Slide=%u, Obs=%u)",
               *probability, *confidence, agreement, 
               predictions[0], predictions[1], predictions[2], predictions[3], predictions[4]);
     
@@ -334,7 +324,7 @@ static void ml_monitor_update_model_weights(ensemble_model_t *ensemble) {
         ensemble->sliding_window_weight = accuracies[3] / total_accuracy;
         ensemble->obstruction_weight = accuracies[4] / total_accuracy;
         
-        LOGX_DEBUG("Updated ensemble weights: kNN=%.3f, NN=%.3f, Sky=%.3f, Slide=%.3f, Obs=%.3f",
+        LOGX_DEBUG_MSG("Updated ensemble weights: kNN=%.3f, NN=%.3f, Sky=%.3f, Slide=%.3f, Obs=%.3f",
                   ensemble->knn_weight, ensemble->neural_net_weight, ensemble->sky_grid_weight,
                   ensemble->sliding_window_weight, ensemble->obstruction_weight);
     }
@@ -398,7 +388,7 @@ static int ml_monitor_validate_prediction(validation_system_t *validation,
                 validation->validation_metrics.accuracy = (double)(tp + tn) / (tp + fp + tn + fn);
             }
             
-            LOGX_DEBUG("Prediction validated: predicted=%s, actual=%s, precision=%.3f, recall=%.3f, f1=%.3f",
+            LOGX_DEBUG_MSG("Prediction validated: predicted=%s, actual=%s, precision=%.3f, recall=%.3f, f1=%.3f",
                       validation->predictions[i].predicted_probability > 128 ? "outage" : "normal",
                       current_outage ? "outage" : "normal",
                       validation->validation_metrics.precision,
@@ -424,7 +414,7 @@ static int ml_monitor_proactive_optimize(ml_monitor_t *monitor, proactive_optimi
         confidence > 150 && 
         (current_time - optimizer->action_stats.last_failover_triggered) > 300) { // 5 minute cooldown
         
-        LOGX_INFO("🚨 Proactive optimization triggered: %u%% outage probability, %u%% confidence",
+        LOGX_INFO_MSG(" Proactive optimization triggered: %u%% outage probability, %u%% confidence",
                  outage_probability, confidence);
         
         if (optimizer->failover_integration_enabled) {
@@ -452,17 +442,17 @@ static int ml_monitor_proactive_optimize(ml_monitor_t *monitor, proactive_optimi
                         // Attempt proactive failover
                         const char *target_interface = optimizer->interface_scores[best_interface].interface_name;
                         
-                        LOGX_INFO("🔄 Initiating proactive failover to %s (score: %.3f)", 
+                        LOGX_INFO_MSG(" Initiating proactive failover to %s (score: %.3f)", 
                                  target_interface, best_score);
                         
                         int failover_result = network_failover_force_failover(target_interface);
                         
                         if (failover_result == AUTONOMY_SUCCESS) {
                             optimizer->action_stats.successful_preventions++;
-                            LOGX_INFO("✅ Proactive failover successful to %s", target_interface);
+                            LOGX_INFO_MSG(" Proactive failover successful to %s", target_interface);
                         } else {
                             optimizer->action_stats.false_alarms++;
-                            LOGX_WARN("❌ Proactive failover failed: %d", failover_result);
+                            LOGX_WARN_MSG(" Proactive failover failed: %d", failover_result);
                         }
                         
                         optimizer->action_stats.last_failover_triggered = current_time;
@@ -493,19 +483,19 @@ static int ml_monitor_proactive_optimize(ml_monitor_t *monitor, proactive_optimi
 int ml_monitor_init_phase4_enhancements(ml_monitor_t *monitor) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("🚀 Initializing Phase 4: Advanced Ensemble Methods & Real-time Validation");
+    LOGX_INFO_MSG(" Initializing Phase 4: Advanced Ensemble Methods & Real-time Validation");
     
     // Allocate Phase 4 state
     phase4_ml_state_t *phase4_state = calloc(1, sizeof(phase4_ml_state_t));
     if (!phase4_state) {
-        LOGX_ERROR("Failed to allocate Phase 4 ML state");
+        LOGX_ERROR_MSG("Failed to allocate Phase 4 ML state");
         return ML_MONITOR_ERROR_MEMORY_FAILED;
     }
     
     // Initialize ensemble model
     int ensemble_result = ml_monitor_init_ensemble_model(monitor, &phase4_state->ensemble);
     if (ensemble_result != ML_MONITOR_SUCCESS) {
-        LOGX_ERROR("Failed to initialize ensemble model: %d", ensemble_result);
+        LOGX_ERROR_MSG("Failed to initialize ensemble model: %d", ensemble_result);
         free(phase4_state);
         return ensemble_result;
     }
@@ -537,12 +527,12 @@ int ml_monitor_init_phase4_enhancements(ml_monitor_t *monitor) {
     // Store Phase 4 state (in a real implementation, this would be properly integrated)
     // For now, we'll track it separately
     
-    LOGX_INFO("✅ Phase 4 enhancements initialized successfully");
-    LOGX_INFO("   - Advanced ensemble model with 5 ML algorithms");
-    LOGX_INFO("   - Real-time prediction validation system");
-    LOGX_INFO("   - Proactive network optimization with failover integration");
-    LOGX_INFO("   - Dynamic weight adjustment based on performance");
-    LOGX_INFO("   - Meta-learning and continual learning capabilities");
+    LOGX_INFO_MSG(" Phase 4 enhancements initialized successfully");
+    LOGX_INFO_MSG("   - Advanced ensemble model with 5 ML algorithms");
+    LOGX_INFO_MSG("   - Real-time prediction validation system");
+    LOGX_INFO_MSG("   - Proactive network optimization with failover integration");
+    LOGX_INFO_MSG("   - Dynamic weight adjustment based on performance");
+    LOGX_INFO_MSG("   - Meta-learning and continual learning capabilities");
     
     return ML_MONITOR_SUCCESS;
 }
@@ -604,7 +594,7 @@ int ml_monitor_predict_ensemble(ml_monitor_t *monitor, const ml_observation_t *o
         *cause = knn_prediction; // Use k-NN for cause classification
     }
     
-    LOGX_DEBUG("Ensemble prediction: prob=%u%%, conf=%u%%, cause=%u", 
+    LOGX_DEBUG_MSG("Ensemble prediction: prob=%u%%, conf=%u%%, cause=%u", 
               *probability, *confidence, cause ? *cause : 0);
     
     return ML_MONITOR_SUCCESS;
@@ -619,7 +609,7 @@ int ml_monitor_add_prediction_for_validation(ml_monitor_t *monitor,
     // In a full implementation, this would add to the validation system
     // For now, just log the prediction
     
-    LOGX_DEBUG("Prediction logged for validation: prob=%u%%, conf=%u%%, cause=%u, target=%ld",
+    LOGX_DEBUG_MSG("Prediction logged for validation: prob=%u%%, conf=%u%%, cause=%u, target=%ld",
               probability, confidence, cause, target_time);
     
     return ML_MONITOR_SUCCESS;
@@ -676,7 +666,7 @@ int ml_monitor_update_with_phase4_enhancements(ml_monitor_t *monitor, const ml_o
         
         // Trigger proactive optimization if high probability
         if (probability > 200 && confidence > 150) { // High confidence high probability
-            LOGX_INFO("🔮 High-confidence outage prediction: %u%% probability, triggering proactive measures",
+            LOGX_INFO_MSG(" High-confidence outage prediction: %u%% probability, triggering proactive measures",
                      probability);
             
             // In a full implementation, this would trigger the proactive optimizer

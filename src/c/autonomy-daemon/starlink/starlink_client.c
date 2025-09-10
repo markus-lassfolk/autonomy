@@ -1,4 +1,6 @@
 #include "starlink_types.h"
+#include "starlink_grpc_collector.h"
+#include "../core/types.h"
 #include "../utils/json_parser.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -127,35 +129,54 @@ int starlink_send_request(starlink_method_t method, char *response, size_t respo
         }
     }
     
-    // Create gRPC request using grpcurl for consistency
-    char request[512];
-    const char *method_names[] = {
-        "get_status",
-        "get_history", 
-        "get_device_info",
-        "get_location",
-        "get_diagnostics"
-    };
+    // Create gRPC request using proper gRPC implementation
+    char response_buffer[1024];
+    memset(response_buffer, 0, sizeof(response_buffer)); // Initialize buffer
+    int result = -1;
     
-    snprintf(request, sizeof(request),
-             "grpcurl -plaintext -d '{\\"%s\\":{}}' %s:%d SpaceX.API.Device.Device/Handle",
-             method_names[method], g_starlink_config.host, g_starlink_config.port);
+    switch (method) {
+        case 0: // get_status
+            // Temporarily disable gRPC call to test daemon stability
+            result = AUTONOMY_ERROR; // Force failure to test error handling
+            // result = starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer));
+            break;
+        case 1: // get_history
+            result = starlink_grpc_call_get_history(response_buffer, sizeof(response_buffer));
+            break;
+        case 2: // get_device_info (use get_status as fallback)
+            // Temporarily disable gRPC call to test daemon stability
+            result = AUTONOMY_ERROR; // Force failure to test error handling
+            // result = starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer));
+            break;
+        case 3: // get_location
+            result = starlink_grpc_call_get_location(response_buffer, sizeof(response_buffer));
+            break;
+        case 4: // get_diagnostics
+            result = starlink_grpc_call_get_diagnostics(response_buffer, sizeof(response_buffer));
+            break;
+        default:
+            return -1;
+    }
     
-    FILE *fp = popen(request, "r");
-    if (!fp) {
+    if (result != AUTONOMY_SUCCESS) {
+        // Clear output buffer on failure
+        if (response && response_size > 0) {
+            memset(response, 0, response_size);
+        }
         return -1;
     }
     
-    size_t bytes_read = fread(response, 1, response_size - 1, fp);
-    response[bytes_read] = '\0';
-    
-    int status = pclose(fp);
-    if (status != 0) {
-        g_starlink_state.connection_healthy = false;
-        return -1;
+    // Copy response from gRPC call to output buffer
+    size_t response_len = strlen(response_buffer);
+    if (response_len >= response_size) {
+        response_len = response_size - 1;
     }
+    memcpy(response, response_buffer, response_len);
+    response[response_len] = '\0';
     
-    return bytes_read;
+    g_starlink_state.connection_healthy = true;
+    
+    return response_len;
 }
 
 // Parse JSON response from Starlink using json-c

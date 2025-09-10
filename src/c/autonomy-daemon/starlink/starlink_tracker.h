@@ -18,6 +18,13 @@ typedef struct {
     bool enable_health_monitoring;
     bool enable_performance_tracking;
     bool enable_location_tracking;
+    
+    // Additional configuration fields
+    char api_endpoint[256];
+    char api_key[128];
+    int update_interval_seconds;
+    double dish_latitude;
+    double dish_longitude;
 } starlink_tracker_config_t;
 
 // Starlink tracker status

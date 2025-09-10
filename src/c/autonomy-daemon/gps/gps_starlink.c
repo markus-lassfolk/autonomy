@@ -185,7 +185,7 @@ static void* starlink_gps_monitor_thread(void *arg) {
         gps_starlink_extract_data();
         
         // Sleep for update interval
-        for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < g_starlink_gps.update_interval && g_starlink_gps_thread_running; i++) {
+        for (int i = 0; i < g_starlink_gps.update_interval && g_starlink_gps_thread_running; i++) {
             sleep(1);
         }
     }
@@ -247,13 +247,13 @@ static bool extract_gps_from_starlink_api(void) {
         // Extract GPS data from observation
         if (observation.gps_valid) {
             pthread_mutex_lock(&g_starlink_gps_mutex);
-            g_starlink_gps_data.latitude = 0.0; // GPS coordinates not available in status
-            g_starlink_gps_data.longitude = 0.0; // GPS coordinates not available in status
-            g_starlink_gps_data.altitude = 0.0;
-            g_starlink_gps_data.accuracy = observation.gps_accuracy_m;
-            g_starlink_gps_data.timestamp = observation.timestamp;
-            g_starlink_gps_data.valid = observation.gps_valid;
-            g_starlink_gps_data.satellites = observation.gps_satellites;
+            g_starlink_gps.gps_data.latitude = 0.0; // GPS coordinates not available in status
+            g_starlink_gps.gps_data.longitude = 0.0; // GPS coordinates not available in status
+            g_starlink_gps.gps_data.altitude = 0.0;
+            g_starlink_gps.gps_data.accuracy = observation.gps_accuracy_m;
+            g_starlink_gps.gps_data.timestamp = observation.timestamp;
+            g_starlink_gps.gps_data.valid = observation.gps_valid;
+            g_starlink_gps.gps_data.satellites = observation.gps_satellites;
             pthread_mutex_unlock(&g_starlink_gps_mutex);
             
             LOGX_DEBUG_MSG("Successfully extracted GPS data from Starlink gRPC API", 
@@ -315,12 +315,12 @@ static bool parse_gps_from_response(const char *response) {
                 
                 // Update global GPS data
                 pthread_mutex_lock(&g_starlink_gps_mutex);
-                g_starlink_gps_data.latitude = latitude;
-                g_starlink_gps_data.longitude = longitude;
-                g_starlink_gps_data.altitude = altitude;
-                g_starlink_gps_data.accuracy = accuracy;
-                g_starlink_gps_data.timestamp = time(NULL);
-                g_starlink_gps_data.valid = true;
+                g_starlink_gps.gps_data.latitude = latitude;
+                g_starlink_gps.gps_data.longitude = longitude;
+                g_starlink_gps.gps_data.altitude = altitude;
+                g_starlink_gps.gps_data.accuracy = accuracy;
+                g_starlink_gps.gps_data.timestamp = time(NULL);
+                g_starlink_gps.gps_data.valid = true;
                 pthread_mutex_unlock(&g_starlink_gps_mutex);
                 
                 LOGX_DEBUG_MSG("Parsed GPS data from Starlink API", 

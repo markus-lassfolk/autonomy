@@ -62,7 +62,9 @@ typedef struct __attribute__((packed)) {
             char carrier[4];            // Carrier code
             uint8_t band;               // Frequency band
             uint8_t cell_id[3];         // Cell tower ID
-            uint8_t reserved[1];
+            int8_t rsrp_dbm;            // Reference Signal Received Power
+            int8_t rsrq_db;             // Reference Signal Received Quality
+            int8_t sinr_db;             // Signal-to-Interference-plus-Noise Ratio
         } cellular;
         
         // WiFi-specific  
@@ -316,6 +318,9 @@ int ml_monitor_validate_failover_prediction(multi_interface_ml_system_t *system,
                                            const char *interface_id,
                                            bool actual_outage_occurred,
                                            uint32_t actual_duration_seconds);
+
+// System access functions
+multi_interface_ml_system_t* ml_monitor_get_multi_interface_system(void);
 
 // Enhanced prediction functions
 int ml_monitor_predict_interface_performance(multi_interface_ml_system_t *system,

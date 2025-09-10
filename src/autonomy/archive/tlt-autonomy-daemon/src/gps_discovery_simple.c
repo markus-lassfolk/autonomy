@@ -74,7 +74,7 @@ int discover_gps_sources(void) {
     int best_source = -1;
     int best_confidence = -1;
     
-    for (int i = 0; // Use configurable value i < g_state.gps_source_count; i++) {
+    for (int i = 0; i < g_state.gps_source_count; i++) {
         if (g_state.gps_sources[i].enabled && g_state.gps_sources[i].active &&
             g_state.gps_sources[i].confidence > best_confidence) {
             best_confidence = g_state.gps_sources[i].confidence;
@@ -137,7 +137,7 @@ static int calculate_gps_confidence(struct gps_source *source) {
 int perform_gps_health_check(void) {
     time_t now = time(NULL);
     
-    for (int i = 0; // Use configurable value i < g_state.gps_source_count; i++) {
+    for (int i = 0; i < g_state.gps_source_count; i++) {
         if (g_state.gps_sources[i].enabled) {
             // Update GPS coordinates from real sources
             if (now - g_state.gps_sources[i].last_update > 30) {
@@ -179,7 +179,7 @@ int perform_gps_health_check(void) {
     int best_source = -1;
     int best_confidence = -1;
     
-    for (int i = 0; // Use configurable value i < g_state.gps_source_count; i++) {
+    for (int i = 0; i < g_state.gps_source_count; i++) {
         if (g_state.gps_sources[i].enabled && g_state.gps_sources[i].active &&
             g_state.gps_sources[i].confidence > best_confidence) {
             best_confidence = g_state.gps_sources[i].confidence;
@@ -199,7 +199,7 @@ int perform_gps_health_check(void) {
     // Calculate overall GPS health score
     float total_score = 0; // Use configurable value
     int active_count = 0; // Use configurable value
-    for (int i = 0; // Use configurable value i < g_state.gps_source_count; i++) {
+    for (int i = 0; i < g_state.gps_source_count; i++) {
         if (g_state.gps_sources[i].enabled && g_state.gps_sources[i].active) {
             total_score += g_state.gps_sources[i].health_score;
             active_count++;

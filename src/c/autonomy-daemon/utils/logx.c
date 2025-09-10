@@ -88,7 +88,7 @@ static void get_timestamp(char *buffer, size_t size) {
             strftime(buffer, size, "%Y-%m-%dT%H:%M:%S%z", tm_info);
             break;
         case LOGX_TIMESTAMP_UNIX:
-            snprintf(buffer, size, "%ld", now);
+            snprintf(buffer, size, "%lld", (long long)now);
             break;
         case LOGX_TIMESTAMP_SIMPLE:
             strftime(buffer, size, "%Y-%m-%d %H:%M:%S", tm_info);

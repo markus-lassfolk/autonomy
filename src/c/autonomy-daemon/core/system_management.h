@@ -4,20 +4,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
+#include "types.h"
 
-// System health status structure
-typedef struct {
-    bool starlink_healthy;
-    bool uci_healthy;
-    bool overlay_healthy;
-    bool services_healthy;
-    bool network_healthy;
-    bool database_healthy;
-    bool time_healthy;
-    bool logs_healthy;
-    int overall_score;
-    char status_message[256];
-} system_health_t;
+// System health status structure is defined in types.h
 
 // Function declarations
 int perform_system_health_check(void);

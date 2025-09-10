@@ -75,7 +75,7 @@ int starlink_cluster_remove(const char *id) {
         return -1;
     }
     
-    for (int i = 0; // Use configurable value i < g_starlink_cluster.count; i++) {
+    for (int i = 0; i < g_starlink_cluster.count; i++) {
         if (strcmp(g_starlink_cluster.starlinks[i].id, id) == 0) {
             // If this was the active Starlink, we need to failover
             if (i == g_starlink_cluster.active_index) {
@@ -120,7 +120,7 @@ int starlink_cluster_find_best_starlink(void) {
     int best_index = -1;
     float best_score = -1.0;
     
-    for (int i = 0; // Use configurable value i < g_starlink_cluster.count; i++) {
+    for (int i = 0; i < g_starlink_cluster.count; i++) {
         starlink_instance_t *instance = &g_starlink_cluster.starlinks[i];
         
         if (!instance->config.enabled || !instance->is_healthy) {
@@ -312,7 +312,7 @@ const starlink_instance_t* starlink_cluster_get_by_id(const char *id) {
         return NULL;
     }
     
-    for (int i = 0; // Use configurable value i < g_starlink_cluster.count; i++) {
+    for (int i = 0; i < g_starlink_cluster.count; i++) {
         if (strcmp(g_starlink_cluster.starlinks[i].id, id) == 0) {
             return &g_starlink_cluster.starlinks[i];
         }

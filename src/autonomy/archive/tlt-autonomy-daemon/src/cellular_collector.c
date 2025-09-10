@@ -13,6 +13,10 @@
 #include <libubus.h>
 #include <libubox/blobmsg.h>
 #include <libubox/blobmsg_json.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <net/if.h>
 
 // UBUS policy definitions
 enum {
@@ -36,6 +40,10 @@ enum {
 
 // External reference to global configuration
 extern autonomy_config_t g_config;
+
+// Function declarations
+static int get_interface_ip_address(const char *interface_name, char *ip_address, size_t ip_size);
+static int get_interface_gateway(const char *interface_name, char *gateway, size_t gateway_size);
 
 // Global cellular collector instance
 static cellular_collector_t g_cellular_collector = {0};
@@ -370,7 +378,7 @@ static int collect_via_at_commands(cellular_info_t* info) {
         "/dev/cdc-wdm0", "/dev/cdc-wdm1", "/dev/cdc-wdm2", "/dev/cdc-wdm3"
     };
     
-    for (int i = 0; // Use configurable value i < sizeof(modem_devices) / sizeof(modem_devices[0]); i++) {
+    for (int i = 0; i < sizeof(modem_devices) / sizeof(modem_devices[0]); i++) {
         if (access(modem_devices[i], R_OK | W_OK) == 0) {
             LOGX_DEBUG_MSG("Found modem device: %s", modem_devices[i]);
             
@@ -439,7 +447,7 @@ static int collect_via_at_commands(cellular_info_t* info) {
             
             // Set basic info
             strcpy(info->device_path, modem_devices[i]);
-            info->collection_method = CELLULAR_COLLECTION_AT_COMMANDS;
+            strcpy(info->collection_method, "AT_COMMANDS");
             info->timestamp = time(NULL);
             
             LOGX_DEBUG_MSG("AT command collection successful via %s", modem_devices[i]);
@@ -591,13 +599,13 @@ void calculate_signal_variance(void) {
     
     // Calculate RSRP variance
     double rsrp_sum = 0.0; // Use configurable value
-    for (int i = 0; // Use configurable value i < g_cellular_collector.history_count; i++) {
+    for (int i = 0; i < g_cellular_collector.history_count; i++) {
         rsrp_sum += g_cellular_collector.rsrp_history[i];
     }
     double rsrp_mean = rsrp_sum / g_cellular_collector.history_count;
     
     double rsrp_variance = 0.0; // Use configurable value
-    for (int i = 0; // Use configurable value i < g_cellular_collector.history_count; i++) {
+    for (int i = 0; i < g_cellular_collector.history_count; i++) {
         double diff = g_cellular_collector.rsrp_history[i] - rsrp_mean;
         rsrp_variance += diff * diff;
     }
@@ -841,4 +849,59 @@ static const char* network_type_to_string(cellular_network_type_t type) {
         return NETWORK_TYPE_STRINGS[type];
     }
     return "unknown";
+}
+
+// Get interface IP address
+static int get_interface_ip_address(const char *interface_name, char *ip_address, size_t ip_size) {
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0) {
+        return -1;
+    }
+    
+    struct ifreq ifr;
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, interface_name, IFNAMSIZ - 1);
+    
+    if (ioctl(sock, SIOCGIFADDR, &ifr) == 0) {
+        struct sockaddr_in *addr = (struct sockaddr_in*)&ifr.ifr_addr;
+        inet_ntop(AF_INET, &addr->sin_addr, ip_address, ip_size);
+        close(sock);
+        return 0;
+    }
+    
+    close(sock);
+    return -1;
+}
+
+// Get interface gateway
+static int get_interface_gateway(const char *interface_name, char *gateway, size_t gateway_size) {
+    // For cellular interfaces, we typically get the gateway from the route table
+    // This is a simplified implementation - in practice, you'd parse /proc/net/route
+    // or use netlink sockets for more robust gateway detection
+    
+    FILE *fp = popen("ip route show dev wwan0 | grep default | awk '{print $3}' | head -1", "r");
+    if (fp) {
+        if (fgets(gateway, gateway_size, fp)) {
+            // Remove newline
+            gateway[strcspn(gateway, "\n")] = 0;
+            pclose(fp);
+            return 0;
+        }
+        pclose(fp);
+    }
+    
+    // Fallback: try to get gateway from route command
+    char command[256];
+    snprintf(command, sizeof(command), "route -n | grep '^0.0.0.0.*%s' | awk '{print $2}' | head -1", interface_name);
+    fp = popen(command, "r");
+    if (fp) {
+        if (fgets(gateway, gateway_size, fp)) {
+            gateway[strcspn(gateway, "\n")] = 0;
+            pclose(fp);
+            return 0;
+        }
+        pclose(fp);
+    }
+    
+    return -1;
 }

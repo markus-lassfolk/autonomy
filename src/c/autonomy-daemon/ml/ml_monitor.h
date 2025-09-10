@@ -268,10 +268,12 @@ typedef struct {
 // Initialization and cleanup
 ml_monitor_t* ml_monitor_init(const ml_monitor_config_t *config);
 void ml_monitor_cleanup(ml_monitor_t *monitor);
+ml_monitor_t* ml_monitor_get_instance(void);
 
 // Configuration management (UCI integration)
 int ml_monitor_load_config_from_uci(ml_monitor_config_t *config);
 int ml_monitor_save_config_to_uci(const ml_monitor_config_t *config);
+int ml_monitor_validate_config(const ml_monitor_config_t *config);
 void ml_monitor_config_init_defaults(ml_monitor_config_t *config);
 int ml_monitor_update_config(ml_monitor_t *monitor, const ml_monitor_config_t *config);
 

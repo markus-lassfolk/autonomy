@@ -167,7 +167,7 @@ int starlink_collect_data(starlink_collection_result_t *result) {
         obstruction_sample.patches_valid = result->status.obstruction_stats.patches_valid;
         
         // Copy wedge obstruction patterns
-        for (int i = 0; // Use configurable value i < 12; i++) {
+        for (int i = 0; i < 12; i++) {
             obstruction_sample.wedge_fraction_obstructed[i] = result->status.obstruction_stats.wedge_fraction_obstructed[i];
             obstruction_sample.wedge_abs_fraction_obstructed[i] = result->status.obstruction_stats.wedge_abs_fraction_obstructed[i];
         }

@@ -47,11 +47,11 @@ int discover_cellular_devices(cellular_device_info_t *devices, int max_devices, 
             get_network_operator(device_path, device->operator_name, sizeof(device->operator_name));
             
             (*actual_count)++;
-            LOGX_INFO("📱 Discovered cellular device: %s", device_path);
+            LOGX_INFO_MSG(" Discovered cellular device: %s", device_path);
         }
     }
     
-    LOGX_INFO("📱 Cellular device discovery complete: found %d devices", *actual_count);
+    LOGX_INFO_MSG(" Cellular device discovery complete: found %d devices", *actual_count);
     return AUTONOMY_SUCCESS;
 }
 
@@ -75,7 +75,7 @@ int get_cellular_device_path(const char *interface_name, char *device_path, size
     strncpy(device_path, devices[0].device_path, path_size - 1);
     device_path[path_size - 1] = '\0';
     
-    LOGX_DEBUG("📱 Using cellular device %s for interface %s", device_path, interface_name);
+    LOGX_DEBUG_MSG(" Using cellular device %s for interface %s", device_path, interface_name);
     return AUTONOMY_SUCCESS;
 }
 
@@ -89,14 +89,14 @@ int get_signal_strength(const char *device_path, int *rssi, int *ber) {
     int ret = secure_cellular_at_command(device_path, "AT+CSQ", &result);
     
     if (ret != AUTONOMY_SUCCESS || !result.success) {
-        LOGX_DEBUG("📱 Failed to get signal strength from %s: %s", device_path, result.error);
+        LOGX_DEBUG_MSG(" Failed to get signal strength from %s: %s", device_path, result.error);
         return ret;
     }
     
     // Parse result: +CSQ: rssi,ber
     char *csq_line = strstr(result.output, "+CSQ:");
     if (csq_line && sscanf(csq_line, "+CSQ: %d,%d", rssi, ber) == 2) {
-        LOGX_DEBUG("📱 Signal strength from %s: RSSI=%d, BER=%d", device_path, *rssi, *ber);
+        LOGX_DEBUG_MSG(" Signal strength from %s: RSSI=%d, BER=%d", device_path, *rssi, *ber);
         return AUTONOMY_SUCCESS;
     }
     

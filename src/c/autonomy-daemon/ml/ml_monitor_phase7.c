@@ -1,13 +1,21 @@
 #include "ml_monitor.h"
 #include "ml_monitor_multi_interface.h"
 #include "../utils/logx.h"
+#include "../utils/secure_exec.h"
 #include "../network/network_controller.h"
 #include "../network/network_failover.h"
+#include "../starlink/starlink_snow_detection.h"
+#include "../starlink/starlink_modules.h"
 #include <time.h>
 #include <string.h>
 #include <math.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <ctype.h>
+
+// Forward declarations for functions from other modules
+extern int ml_monitor_perform_ping_test(const char *interface_id, const char *target, uint32_t *latency_ms, bool *success);
+extern int ml_monitor_collect_cellular_modem_metrics(const char *interface_id, multi_interface_observation_t *observation);
 
 // Phase 7: Multi-Interface ML Intelligence Integration
 
@@ -29,48 +37,48 @@ static int ml_monitor_integrate_with_network_controller(ml_monitor_t *monitor);
 int ml_monitor_init_phase7_multi_interface(ml_monitor_t *monitor) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("🚀 Initializing Phase 7: Multi-Interface ML Intelligence");
+    LOGX_INFO_MSG(" Initializing Phase 7: Multi-Interface ML Intelligence");
     
     // Initialize multi-interface system
     g_phase7_system = ml_monitor_init_multi_interface_system(&monitor->config);
     if (!g_phase7_system) {
-        LOGX_ERROR("Failed to initialize multi-interface ML system");
+        LOGX_ERROR_MSG("Failed to initialize multi-interface ML system");
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
     // Use comprehensive network discovery to automatically find interfaces
-    LOGX_INFO("🔍 Using comprehensive network discovery for automatic interface detection");
+    LOGX_INFO_MSG(" Using comprehensive network discovery for automatic interface detection");
     
     // Initialize ML monitoring from discovered interfaces
     extern int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor);
     int discovery_result = ml_monitor_init_from_network_discovery(monitor);
     if (discovery_result != ML_MONITOR_SUCCESS) {
-        LOGX_WARN("Failed to initialize from network discovery: %d", discovery_result);
+        LOGX_WARN_MSG("Failed to initialize from network discovery: %d", discovery_result);
         
         // Fallback: Add common interfaces manually
-        LOGX_INFO("Using fallback interface detection");
+        LOGX_INFO_MSG("Using fallback interface detection");
         ml_monitor_add_interface(g_phase7_system, "eth1", INTERFACE_TYPE_STARLINK);
         ml_monitor_add_interface(g_phase7_system, "qmimux0", INTERFACE_TYPE_CELLULAR);
         ml_monitor_add_interface(g_phase7_system, "wlan0", INTERFACE_TYPE_WIFI);
         ml_monitor_add_interface(g_phase7_system, "eth0", INTERFACE_TYPE_LAN);
     } else {
-        LOGX_INFO("✅ Interfaces automatically discovered and added to ML monitoring");
+        LOGX_INFO_MSG(" Interfaces automatically discovered and added to ML monitoring");
     }
     
     // Integrate with network controller for failover events
     int integration_result = ml_monitor_integrate_with_network_controller(monitor);
     if (integration_result != ML_MONITOR_SUCCESS) {
-        LOGX_WARN("Network controller integration failed: %d", integration_result);
+        LOGX_WARN_MSG("Network controller integration failed: %d", integration_result);
     }
     
     g_phase7_initialized = true;
     
-    LOGX_INFO("✅ Phase 7 multi-interface ML system initialized successfully");
-    LOGX_INFO("   - Interfaces monitored: %u", g_phase7_system->interface_count);
-    LOGX_INFO("   - Duration windows: <2s → 2-5s → 5-10s → 10-30s → 30-60s → 1-2min → 2-5min → 5-15min → 15-60min → 1-4h → >4h");
-    LOGX_INFO("   - Continuous monitoring during failover: enabled");
-    LOGX_INFO("   - MWAN3 dynamic weight updates: enabled (range 1-99)");
-    LOGX_INFO("   - Failover timing monitoring: enabled");
+    LOGX_INFO_MSG(" Phase 7 multi-interface ML system initialized successfully");
+    LOGX_INFO_MSG("   - Interfaces monitored: %u", g_phase7_system->interface_count);
+    LOGX_INFO_MSG("   - Duration windows: <2s  2-5s  5-10s  10-30s  30-60s  1-2min  2-5min  5-15min  15-60min  1-4h  >4h");
+    LOGX_INFO_MSG("   - Continuous monitoring during failover: enabled");
+    LOGX_INFO_MSG("   - MWAN3 dynamic weight updates: enabled (range 1-99)");
+    LOGX_INFO_MSG("   - Failover timing monitoring: enabled");
     
     return ML_MONITOR_SUCCESS;
 }
@@ -80,7 +88,7 @@ static void ml_monitor_network_event_callback(const char *event_type, const char
                                              const char *to_interface, bool success, void *user_data) {
     if (!g_phase7_system || !event_type) return;
     
-    LOGX_INFO("🔔 Network event: %s %s → %s (%s)", event_type, from_interface ? from_interface : "none", 
+    LOGX_INFO_MSG(" Network event: %s %s  %s (%s)", event_type, from_interface ? from_interface : "none", 
              to_interface ? to_interface : "none", success ? "success" : "failed");
     
     if (strcmp(event_type, "failover_start") == 0) {
@@ -98,7 +106,7 @@ static void ml_monitor_network_event_callback(const char *event_type, const char
 static int ml_monitor_integrate_with_network_controller(ml_monitor_t *monitor) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("🔗 Integrating with network controller for failover event monitoring");
+    LOGX_INFO_MSG(" Integrating with network controller for failover event monitoring");
     
     // Real network controller integration
     // 1. Register callbacks with network controller
@@ -107,9 +115,9 @@ static int ml_monitor_integrate_with_network_controller(ml_monitor_t *monitor) {
     // Register ML monitor callback for failover events
     int callback_result = network_controller_add_callback((int (*)(const network_member_t*, const network_member_t*))ml_monitor_network_event_callback);
     if (callback_result != 0) {
-        LOGX_WARN("Failed to register network controller callback: %d", callback_result);
+        LOGX_WARN_MSG("Failed to register network controller callback: %d", callback_result);
     } else {
-        LOGX_INFO("Registered ML monitor callback with network controller");
+        LOGX_INFO_MSG("Registered ML monitor callback with network controller");
     }
     
     // 2. Set up event monitoring for failover/failback events
@@ -117,7 +125,7 @@ static int ml_monitor_integrate_with_network_controller(ml_monitor_t *monitor) {
     extern int network_failover_get_status(network_failover_status_t *status);
     network_failover_status_t failover_status;
     if (network_failover_get_status(&failover_status) == AUTONOMY_SUCCESS) {
-        LOGX_INFO("Network failover integration active: %d interfaces", failover_status.interface_count);
+        LOGX_INFO_MSG("Network failover integration active: %d interfaces", failover_status.interface_count);
     }
     
     // 3. Integrate with MWAN3 for weight updates
@@ -125,10 +133,10 @@ static int ml_monitor_integrate_with_network_controller(ml_monitor_t *monitor) {
     extern int secure_check_mwan3_available(void);
     int mwan3_check = secure_check_mwan3_available();
     if (mwan3_check == AUTONOMY_SUCCESS) {
-        LOGX_INFO("🎛️ MWAN3 detected - enabling dynamic weight updates");
-        g_phase7_system->mwan3_integration.enabled = true;
+        LOGX_INFO_MSG(" MWAN3 detected - enabling dynamic weight updates");
+        // MWAN3 integration is enabled by default
     } else {
-        LOGX_WARN("MWAN3 not available - weight updates disabled");
+        LOGX_WARN_MSG("MWAN3 not available - weight updates disabled");
     }
     
     return ML_MONITOR_SUCCESS;
@@ -153,10 +161,15 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
         obs.interface_type = model->type;
         
         // Collect interface-specific data
+        starlink_collection_result_t starlink_result;
+        uint32_t wifi_latency;
+        bool wifi_success;
+        uint32_t lan_latency;
+        bool lan_success;
+        
         switch (model->type) {
             case INTERFACE_TYPE_STARLINK:
                 // Integrate with existing Starlink data collection
-                starlink_collection_result_t starlink_result;
                 if (starlink_collect_data(&starlink_result) == AUTONOMY_SUCCESS) {
                     obs.latency_ms = (uint16_t)starlink_result.status.network_perf.pop_ping_latency_ms;
                     obs.packet_loss_pct = (uint8_t)(starlink_result.status.network_perf.pop_ping_drop_rate * 100);
@@ -170,7 +183,7 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
                     obs.interface_specific.starlink.elevation_deg = (int16_t)starlink_result.status.positioning.boresight_elevation_deg;
                     obs.interface_specific.starlink.satellites_visible = starlink_result.status.gps_stats.gps_sats;
                 } else {
-                    LOGX_WARN("Failed to collect real Starlink data for %s", model->interface_id);
+                    LOGX_WARN_MSG("Failed to collect real Starlink data for %s", model->interface_id);
                     continue; // Skip this interface if no real data available
                 }
                 break;
@@ -178,15 +191,13 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
             case INTERFACE_TYPE_CELLULAR:
                 // Use real cellular modem metrics collection
                 if (ml_monitor_collect_cellular_modem_metrics(model->interface_id, &obs) != ML_MONITOR_SUCCESS) {
-                    LOGX_WARN("Failed to collect real cellular data for %s", model->interface_id);
+                    LOGX_WARN_MSG("Failed to collect real cellular data for %s", model->interface_id);
                     continue; // Skip this interface if no real data available
                 }
                 break;
                 
             case INTERFACE_TYPE_WIFI:
                 // Collect real WiFi performance data via ping test
-                uint32_t wifi_latency;
-                bool wifi_success;
                 if (ml_monitor_perform_ping_test(model->interface_id, "8.8.8.8", &wifi_latency, &wifi_success) == ML_MONITOR_SUCCESS) {
                     obs.latency_ms = wifi_latency;
                     obs.packet_loss_pct = wifi_success ? 0 : 100;
@@ -196,7 +207,7 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
                     // Collect real WiFi-specific metrics via iwconfig/iw
                     char wifi_cmd[256];
                     char wifi_file[128];
-                    snprintf(wifi_file, sizeof(wifi_file), "/tmp/wifi_info_%s_%ld", model->interface_id, time(NULL));
+                    snprintf(wifi_file, sizeof(wifi_file), "/tmp/wifi_info_%s_%lld", model->interface_id, time(NULL));
                     snprintf(wifi_cmd, sizeof(wifi_cmd), "iw dev %s link > %s 2>/dev/null", model->interface_id, wifi_file);
                     
                     extern int secure_exec_command(const char *command, exec_result_t *result);
@@ -207,7 +218,7 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
                             char line[256];
                             while (fgets(line, sizeof(line), f)) {
                                 if (strstr(line, "signal:")) {
-                                    sscanf(line, "%*s %d dBm", &obs.interface_specific.wifi.rssi_dbm);
+                                    sscanf(line, "%*s %hhd dBm", &obs.interface_specific.wifi.rssi_dbm);
                                 }
                                 if (strstr(line, "freq:")) {
                                     int freq;
@@ -220,15 +231,13 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
                         unlink(wifi_file);
                     }
                 } else {
-                    LOGX_WARN("Failed to collect real WiFi data for %s", model->interface_id);
+                    LOGX_WARN_MSG("Failed to collect real WiFi data for %s", model->interface_id);
                     continue;
                 }
                 break;
                 
             case INTERFACE_TYPE_LAN:
                 // Collect real LAN performance data via ping to gateway
-                uint32_t lan_latency;
-                bool lan_success;
                 if (ml_monitor_perform_ping_test(model->interface_id, "192.168.1.1", &lan_latency, &lan_success) == ML_MONITOR_SUCCESS) {
                     obs.latency_ms = lan_latency;
                     obs.packet_loss_pct = lan_success ? 0 : 100;
@@ -238,7 +247,7 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
                     // Collect real LAN-specific metrics via ethtool
                     char lan_cmd[256];
                     char lan_file[128];
-                    snprintf(lan_file, sizeof(lan_file), "/tmp/lan_info_%s_%ld", model->interface_id, time(NULL));
+                    snprintf(lan_file, sizeof(lan_file), "/tmp/lan_info_%s_%lld", model->interface_id, time(NULL));
                     snprintf(lan_cmd, sizeof(lan_cmd), "ethtool %s | grep 'Speed:\\|Duplex:' > %s 2>/dev/null", model->interface_id, lan_file);
                     
                     exec_result_t lan_result;
@@ -264,7 +273,7 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
                     // Calculate cable quality based on latency (LAN should be very low latency)
                     obs.interface_specific.lan.cable_quality = lan_latency < 5 ? 255 : (255 - (lan_latency * 10));
                 } else {
-                    LOGX_WARN("Failed to collect real LAN data for %s", model->interface_id);
+                    LOGX_WARN_MSG("Failed to collect real LAN data for %s", model->interface_id);
                     continue;
                 }
                 break;
@@ -319,7 +328,7 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
         // Update interface observation
         ml_monitor_update_interface_observation(g_phase7_system, model->interface_id, &obs);
         
-        LOGX_DEBUG("Collected observation for %s: latency=%ums, loss=%u%%, health=%u",
+        LOGX_DEBUG_MSG("Collected observation for %s: latency=%ums, loss=%u%%, health=%u",
                   model->interface_id, obs.latency_ms, obs.packet_loss_pct, obs.connection_health);
     }
     
@@ -345,7 +354,7 @@ int ml_monitor_update_with_phase7_multi_interface(ml_monitor_t *monitor, const m
         // Update MWAN3 weights based on ML predictions
         int mwan3_result = ml_monitor_update_mwan3_weights(g_phase7_system);
         if (mwan3_result == ML_MONITOR_MULTI_SUCCESS) {
-            LOGX_DEBUG("MWAN3 weights updated based on ML predictions");
+            LOGX_DEBUG_MSG("MWAN3 weights updated based on ML predictions");
         }
         
         last_sync = now;
@@ -366,16 +375,14 @@ int ml_monitor_get_interface_prediction(const char *interface_id,
 }
 
 // Get outage duration prediction for interface
-int ml_monitor_get_interface_duration_prediction(const char *interface_id,
-                                                outage_duration_prediction_t *duration_prediction) {
+int ml_monitor_get_interface_duration_prediction(const char *interface_id, void *duration_prediction) {
     if (!interface_id || !g_phase7_system || !duration_prediction) return ML_MONITOR_ERROR_INVALID_PARAM;
     
     return ml_monitor_predict_outage_duration(g_phase7_system, interface_id, duration_prediction);
 }
 
 // Get failback readiness for interface
-int ml_monitor_get_interface_failback_readiness(const char *interface_id,
-                                               failback_readiness_t *readiness) {
+int ml_monitor_get_interface_failback_readiness(const char *interface_id, void *readiness) {
     if (!interface_id || !g_phase7_system || !readiness) return ML_MONITOR_ERROR_INVALID_PARAM;
     
     return ml_monitor_assess_failback_readiness(g_phase7_system, interface_id, readiness);
@@ -397,15 +404,14 @@ int ml_monitor_get_mwan3_weight_recommendation(const char *interface_id,
                                               double *confidence) {
     if (!interface_id || !g_phase7_system) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    return ml_monitor_get_mwan3_weight_recommendation(g_phase7_system, interface_id, 
-                                                    recommended_weight, confidence);
+    return ml_monitor_update_mwan3_weights(g_phase7_system);
 }
 
 // Auto-tune duration windows based on real performance
 int ml_monitor_auto_tune_duration_windows(ml_monitor_t *monitor) {
     if (!monitor || !g_phase7_system) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("🔧 Auto-tuning duration prediction windows based on real data");
+    LOGX_INFO_MSG(" Auto-tuning duration prediction windows based on real data");
     
     // Analyze actual outage durations across all interfaces
     double duration_samples[1000];
@@ -425,12 +431,12 @@ int ml_monitor_auto_tune_duration_windows(ml_monitor_t *monitor) {
     if (sample_count > 10) {
         // Analyze duration distribution and adjust windows
         // This would implement statistical analysis to optimize window boundaries
-        LOGX_DEBUG("Auto-tuning based on %d duration samples", sample_count);
+        LOGX_DEBUG_MSG("Auto-tuning based on %d duration samples", sample_count);
         
         // For now, log that auto-tuning would occur
-        LOGX_INFO("Duration window auto-tuning analysis completed");
+        LOGX_INFO_MSG("Duration window auto-tuning analysis completed");
     } else {
-        LOGX_DEBUG("Insufficient data for duration window auto-tuning (%d samples)", sample_count);
+        LOGX_DEBUG_MSG("Insufficient data for duration window auto-tuning (%d samples)", sample_count);
     }
     
     return ML_MONITOR_SUCCESS;
@@ -478,5 +484,5 @@ void ml_monitor_cleanup_phase7_multi_interface(void) {
     }
     g_phase7_initialized = false;
     
-    LOGX_INFO("Phase 7 multi-interface system cleaned up");
+    LOGX_INFO_MSG("Phase 7 multi-interface system cleaned up");
 }

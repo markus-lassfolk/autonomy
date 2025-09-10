@@ -117,12 +117,49 @@ int ml_monitor_ubus_enable_autonomous_mode(struct ubus_context *ctx, struct ubus
                                           struct ubus_request_data *req, const char *method,
                                           struct blob_attr *msg);
 
+// Phase 7 UBUS method handlers
+int ml_monitor_ubus_get_multi_interface_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                              struct ubus_request_data *req, const char *method,
+                                              struct blob_attr *msg);
+
+int ml_monitor_ubus_predict_interface_outage(struct ubus_context *ctx, struct ubus_object *obj,
+                                            struct ubus_request_data *req, const char *method,
+                                            struct blob_attr *msg);
+
+int ml_monitor_ubus_update_mwan3_weights(struct ubus_context *ctx, struct ubus_object *obj,
+                                        struct ubus_request_data *req, const char *method,
+                                        struct blob_attr *msg);
+
+int ml_monitor_ubus_validate_failover_prediction(struct ubus_context *ctx, struct ubus_object *obj,
+                                                struct ubus_request_data *req, const char *method,
+                                                struct blob_attr *msg);
+
+int ml_monitor_ubus_get_analytics_summary(struct ubus_context *ctx, struct ubus_object *obj,
+                                         struct ubus_request_data *req, const char *method,
+                                         struct blob_attr *msg);
+
+int ml_monitor_ubus_get_interface_score_history(struct ubus_context *ctx, struct ubus_object *obj,
+                                               struct ubus_request_data *req, const char *method,
+                                               struct blob_attr *msg);
+
+int ml_monitor_ubus_get_accuracy_trends(struct ubus_context *ctx, struct ubus_object *obj,
+                                       struct ubus_request_data *req, const char *method,
+                                       struct blob_attr *msg);
+
+int ml_monitor_ubus_get_impact_summary(struct ubus_context *ctx, struct ubus_object *obj,
+                                      struct ubus_request_data *req, const char *method,
+                                      struct blob_attr *msg);
+
+int ml_monitor_ubus_get_current_interface_scores(struct ubus_context *ctx, struct ubus_object *obj,
+                                                struct ubus_request_data *req, const char *method,
+                                                struct blob_attr *msg);
+
 // UBUS initialization and cleanup
 int ml_monitor_ubus_init(struct ubus_context *ctx);
 void ml_monitor_ubus_cleanup(struct ubus_context *ctx);
 
 // UBUS object registration
-int ml_monitor_ubus_add_object(struct ubus_context *ctx);
+// Note: ml_monitor_ubus_add_object is no longer needed with static initialization
 void ml_monitor_ubus_remove_object(struct ubus_context *ctx);
 
 #endif // ML_MONITOR_UBUS_H

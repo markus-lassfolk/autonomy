@@ -9,6 +9,7 @@
 #include <math.h>
 #include <libubus.h>
 #include <libubox/blobmsg.h>
+#include <sqlite3.h>
 
 // UBUS policy definitions
 enum {
@@ -324,8 +325,8 @@ static int analyze_telemetry_data(const char* member_name, member_health_t* heal
         char query[512];
         snprintf(query, sizeof(query),
                 "SELECT signal_strength, latency, packet_loss, uptime FROM telemetry_data "
-                "WHERE member_name = '%s' AND timestamp > %ld ORDER BY timestamp DESC LIMIT 100",
-                member_name, time(NULL) - 3600); // Last hour
+                 "WHERE member_name = '%s' AND timestamp > %lld ORDER BY timestamp DESC LIMIT 100",
+                 member_name, (long long)(time(NULL) - 3600)); // Last hour
         
         sqlite3_stmt* stmt;
         ret = sqlite3_prepare_v2(db, query, -1, &stmt, NULL);

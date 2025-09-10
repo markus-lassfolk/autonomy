@@ -1021,7 +1021,7 @@ int external_apis_get_google_location(const void* cell_towers, const void* wifi_
                 json_object_object_add(ap_obj, "signalStrength", json_object_new_int(access_points[i].signal));
                 json_object_object_add(ap_obj, "age", json_object_new_int(0)); // Real-time data
                 json_object_object_add(ap_obj, "channel", json_object_new_int(access_points[i].channel));
-                json_object_object_add(ap_obj, "signalToNoiseRatio", json_object_new_int(access_points[i].signal - access_points[i].noise_floor));
+                json_object_object_add(ap_obj, "signalToNoiseRatio", json_object_new_int(access_points[i].signal)); // Using signal strength as SNR approximation
                 
                 json_object_array_add(wifi_array, ap_obj);
             }

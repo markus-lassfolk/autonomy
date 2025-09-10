@@ -28,14 +28,14 @@ int main() {
     
     ml_monitor_t *monitor = ml_monitor_init(&config);
     assert(monitor != NULL);
-    printf("✓ ML monitor initialized\n");
+    printf(" ML monitor initialized\n");
     
     // Initialize all phases sequentially
     assert(ml_monitor_init_phase3_enhancements(monitor) == ML_MONITOR_SUCCESS);
     assert(ml_monitor_init_phase4_enhancements(monitor) == ML_MONITOR_SUCCESS);
     assert(ml_monitor_init_phase5_mobile_system(monitor) == ML_MONITOR_SUCCESS);
     assert(ml_monitor_init_phase6_self_optimization(monitor) == ML_MONITOR_SUCCESS);
-    printf("✓ All 6 phases initialized successfully - complete ML system ready\n");
+    printf(" All 6 phases initialized successfully - complete ML system ready\n");
     
     // Test 2: Production-scale data processing
     printf("Test 2: Production-scale data processing and optimization...\n");
@@ -95,11 +95,11 @@ int main() {
         }
     }
     
-    printf("✓ Production-scale processing completed: 1000 observations\n");
+    printf(" Production-scale processing completed: 1000 observations\n");
     printf("  - Mobile scenarios: Highway travel simulation\n");
     printf("  - Performance degradation: Gradual SNR/latency degradation\n");
     printf("  - Weather impact: Rain simulation in middle section\n");
-    printf("  - Location changes: Stockholm → Highway → Gothenburg\n");
+    printf("  - Location changes: Stockholm  Highway  Gothenburg\n");
     
     // Test 3: Self-optimization validation
     printf("Test 3: Self-optimization system validation...\n");
@@ -131,7 +131,7 @@ int main() {
     
     assert(perf->metrics.accuracy_pct > 85); // Expect >85% accuracy
     assert(production_ready == true); // Should be production ready
-    printf("✓ Self-optimization system validation successful\n");
+    printf(" Self-optimization system validation successful\n");
     
     // Test 4: Production deployment validation
     printf("Test 4: Comprehensive production deployment validation...\n");
@@ -140,7 +140,7 @@ int main() {
     int validation_result = ml_monitor_run_production_validation(monitor, validation_report, sizeof(validation_report));
     
     if (validation_result == ML_MONITOR_SUCCESS) {
-        printf("✅ PRODUCTION VALIDATION PASSED\n");
+        printf(" PRODUCTION VALIDATION PASSED\n");
         printf("Validation Report Summary:\n");
         
         // Print first few lines of validation report
@@ -152,9 +152,9 @@ int main() {
             line_count++;
         }
         
-        printf("✓ Production deployment validation: APPROVED\n");
+        printf(" Production deployment validation: APPROVED\n");
     } else {
-        printf("⚠ Production validation needs attention\n");
+        printf(" Production validation needs attention\n");
         printf("Validation report available for review\n");
     }
     
@@ -173,7 +173,7 @@ int main() {
     
     // Verify resource constraints
     assert(total_memory < 3 * 1024 * 1024); // Less than 3MB even with all features
-    printf("✓ Resource efficiency validated - within embedded constraints\n");
+    printf(" Resource efficiency validated - within embedded constraints\n");
     
     // Test 6: Complete feature validation
     printf("Test 6: Complete feature validation across all phases...\n");
@@ -202,20 +202,20 @@ int main() {
     printf("  - Basic predictions: %u%% confidence\n", basic_conf);
     printf("  - Enhanced predictions: %u%% confidence\n", enhanced_conf);
     printf("  - Ensemble predictions: %u%% probability, %u%% confidence\n", ensemble_prob, ensemble_conf);
-    printf("✓ All prediction methods functional and integrated\n");
+    printf(" All prediction methods functional and integrated\n");
     
     // Test 7: Autonomous mode capability
     printf("Test 7: Autonomous mode and self-optimization...\n");
     
     int autonomous_result = ml_monitor_enable_autonomous_mode(monitor);
     if (autonomous_result == ML_MONITOR_SUCCESS) {
-        printf("✓ Autonomous mode enabled successfully\n");
+        printf(" Autonomous mode enabled successfully\n");
         
         int disable_result = ml_monitor_disable_autonomous_mode(monitor);
         assert(disable_result == ML_MONITOR_SUCCESS);
-        printf("✓ Autonomous mode disabled successfully\n");
+        printf(" Autonomous mode disabled successfully\n");
     } else {
-        printf("⚠ Autonomous mode not available (expected in test environment)\n");
+        printf(" Autonomous mode not available (expected in test environment)\n");
     }
     
     // Test 8: Final system health check
@@ -233,25 +233,25 @@ int main() {
     assert(monitor->state->models.neural_network.update_count >= 0);
     assert(monitor->state->models.location_learner.observations_here > 0);
     
-    printf("  - System initialization: ✓ Complete\n");
-    printf("  - Data integrity: ✓ Verified\n");
-    printf("  - Learning models: ✓ Active\n");
-    printf("  - Memory usage: ✓ Within limits\n");
-    printf("  - Performance: ✓ Above targets\n");
-    printf("  - Integration: ✓ All phases working\n");
-    printf("✓ Final system health check: PASSED\n");
+    printf("  - System initialization:  Complete\n");
+    printf("  - Data integrity:  Verified\n");
+    printf("  - Learning models:  Active\n");
+    printf("  - Memory usage:  Within limits\n");
+    printf("  - Performance:  Above targets\n");
+    printf("  - Integration:  All phases working\n");
+    printf(" Final system health check: PASSED\n");
     
     // Test 9: Production deployment readiness
     printf("Test 9: Production deployment readiness assessment...\n");
     
-    printf("📊 PRODUCTION READINESS SUMMARY:\n");
+    printf(" PRODUCTION READINESS SUMMARY:\n");
     printf("================================\n");
-    printf("Phase 1 - Foundation: ✅ COMPLETE\n");
-    printf("Phase 2 - Real Data Integration: ✅ COMPLETE\n");
-    printf("Phase 3 - Advanced Sky Grid: ✅ COMPLETE\n");
-    printf("Phase 4 - Ensemble Methods: ✅ COMPLETE\n");
-    printf("Phase 5 - Mobile Optimization: ✅ COMPLETE\n");
-    printf("Phase 6 - Self-Optimization: ✅ COMPLETE\n");
+    printf("Phase 1 - Foundation:  COMPLETE\n");
+    printf("Phase 2 - Real Data Integration:  COMPLETE\n");
+    printf("Phase 3 - Advanced Sky Grid:  COMPLETE\n");
+    printf("Phase 4 - Ensemble Methods:  COMPLETE\n");
+    printf("Phase 5 - Mobile Optimization:  COMPLETE\n");
+    printf("Phase 6 - Self-Optimization:  COMPLETE\n");
     printf("\n");
     printf("PERFORMANCE METRICS:\n");
     printf("- Prediction Accuracy: %u%% (Target: >85%%)\n", perf->metrics.accuracy_pct);
@@ -260,14 +260,14 @@ int main() {
     printf("- System Health: %.1f%% (Target: >90%%)\n", system_health * 100);
     printf("\n");
     printf("ADVANCED FEATURES:\n");
-    printf("✓ 5-Algorithm Ensemble (k-NN, NN, SkyGrid, SlidingWindow, Obstruction)\n");
-    printf("✓ Real-time Prediction Validation\n");
-    printf("✓ Proactive Network Optimization\n");
-    printf("✓ Mobile Scenario Intelligence\n");
-    printf("✓ Transfer Learning Between Locations\n");
-    printf("✓ Advanced Auto-tuning\n");
-    printf("✓ Self-Optimization Engine\n");
-    printf("✓ Production Deployment Validation\n");
+    printf(" 5-Algorithm Ensemble (k-NN, NN, SkyGrid, SlidingWindow, Obstruction)\n");
+    printf(" Real-time Prediction Validation\n");
+    printf(" Proactive Network Optimization\n");
+    printf(" Mobile Scenario Intelligence\n");
+    printf(" Transfer Learning Between Locations\n");
+    printf(" Advanced Auto-tuning\n");
+    printf(" Self-Optimization Engine\n");
+    printf(" Production Deployment Validation\n");
     printf("\n");
     
     // Test 10: Stress testing simulation
@@ -284,7 +284,7 @@ int main() {
         
         ml_monitor_add_observation(monitor, &stress_obs);
     }
-    printf("  ✓ Memory stress test passed\n");
+    printf("   Memory stress test passed\n");
     
     // CPU stress test (prediction intensive)
     printf("  Running CPU stress test...\n");
@@ -298,7 +298,7 @@ int main() {
     }
     time_t cpu_end = time(NULL);
     double cpu_duration = difftime(cpu_end, cpu_start);
-    printf("  ✓ CPU stress test passed (50 predictions in %.1f seconds)\n", cpu_duration);
+    printf("   CPU stress test passed (50 predictions in %.1f seconds)\n", cpu_duration);
     
     // Mobile scenario stress test
     printf("  Running mobile scenario stress test...\n");
@@ -313,9 +313,9 @@ int main() {
         ml_monitor_update_with_phase5_mobile_optimization(monitor, &mobile_obs);
         ml_monitor_update_with_phase6_self_optimization(monitor, &mobile_obs);
     }
-    printf("  ✓ Mobile scenario stress test passed\n");
+    printf("   Mobile scenario stress test passed\n");
     
-    printf("✓ All stress tests completed successfully\n");
+    printf(" All stress tests completed successfully\n");
     
     // Test 11: Final validation and cleanup
     printf("Test 11: Final validation and system cleanup...\n");
@@ -328,41 +328,41 @@ int main() {
     assert(monitor->state->total_observations > 1100); // Original + stress tests
     assert(monitor->state->magic == 0x4D4C5354);
     
-    printf("✓ Final state validation: %u total observations\n", monitor->state->total_observations);
+    printf(" Final state validation: %u total observations\n", monitor->state->total_observations);
     
     // Cleanup
     ml_monitor_cleanup(monitor);
-    printf("✓ Complete system cleanup successful\n");
+    printf(" Complete system cleanup successful\n");
     
     printf("\n=========================================================================\n");
-    printf("🎉 PHASE 6 COMPLETE - PRODUCTION DEPLOYMENT READY! 🎉\n");
+    printf(" PHASE 6 COMPLETE - PRODUCTION DEPLOYMENT READY! \n");
     printf("=========================================================================\n");
     printf("\n");
-    printf("✅ ALL 6 PHASES SUCCESSFULLY IMPLEMENTED AND VALIDATED\n");
+    printf(" ALL 6 PHASES SUCCESSFULLY IMPLEMENTED AND VALIDATED\n");
     printf("\n");
     printf("SYSTEM CAPABILITIES:\n");
-    printf("🧠 5-Algorithm Ensemble ML System\n");
-    printf("📊 Real-time Prediction Validation\n");
-    printf("🚀 Proactive Network Optimization\n");
-    printf("📱 Mobile Scenario Intelligence\n");
-    printf("📚 Transfer Learning Between Locations\n");
-    printf("🔧 Advanced Auto-tuning\n");
-    printf("🤖 Self-Optimization Engine\n");
-    printf("🔍 Production Deployment Validation\n");
+    printf(" 5-Algorithm Ensemble ML System\n");
+    printf(" Real-time Prediction Validation\n");
+    printf(" Proactive Network Optimization\n");
+    printf(" Mobile Scenario Intelligence\n");
+    printf(" Transfer Learning Between Locations\n");
+    printf(" Advanced Auto-tuning\n");
+    printf(" Self-Optimization Engine\n");
+    printf(" Production Deployment Validation\n");
     printf("\n");
     printf("PERFORMANCE ACHIEVEMENTS:\n");
-    printf("🎯 87%% Prediction Accuracy (Target: >85%%)\n");
-    printf("💾 <3MB Memory Usage (Target: <2MB with optimizations)\n");
-    printf("⚡ <100ms Response Time\n");
-    printf("🚐 Mobile Scenario Support (RV, Highway, Urban, Stationary)\n");
-    printf("🌍 Multi-location Learning and Transfer\n");
-    printf("📈 Continuous Performance Improvement\n");
+    printf(" 87%% Prediction Accuracy (Target: >85%%)\n");
+    printf(" <3MB Memory Usage (Target: <2MB with optimizations)\n");
+    printf(" <100ms Response Time\n");
+    printf(" Mobile Scenario Support (RV, Highway, Urban, Stationary)\n");
+    printf(" Multi-location Learning and Transfer\n");
+    printf(" Continuous Performance Improvement\n");
     printf("\n");
-    printf("PRODUCTION STATUS: ✅ APPROVED FOR DEPLOYMENT\n");
+    printf("PRODUCTION STATUS:  APPROVED FOR DEPLOYMENT\n");
     printf("\n");
     printf("The embedded ML monitoring system is now PRODUCTION READY\n");
     printf("for RUTOS Starlink deployments with state-of-the-art\n");
-    printf("machine learning capabilities! 🚀\n");
+    printf("machine learning capabilities! \n");
     
     return 0;
 }

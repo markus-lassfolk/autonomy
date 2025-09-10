@@ -138,6 +138,8 @@ typedef struct {
     int patches_valid;                    // Valid patches
     double wedge_fraction_obstructed[12]; // 12-hour wedge obstruction pattern
     double wedge_abs_fraction_obstructed[12]; // Absolute wedge obstruction pattern
+    double weather_condition;              // Weather condition (e.g., clear=0, rain=1, snow=2)
+    double location_cluster;               // Location cluster (e.g., urban=0, rural=1)
 } starlink_obstruction_sample_t;
 
 // Obstruction analysis configuration
@@ -193,6 +195,7 @@ typedef struct {
     starlink_movement_detector_config_t movement_detector; // Movement detector config
     bool is_moving;                       // Current movement state
     time_t last_movement_time;            // Last movement time
+    double movement_distance;             // Total movement distance
 } starlink_obstruction_t;
 
 // Function prototypes

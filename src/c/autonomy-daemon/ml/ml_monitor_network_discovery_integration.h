@@ -37,6 +37,9 @@ int ml_monitor_get_enhanced_interface_info(const char *interface_name,
                                          double *health_score,
                                          interface_type_t *ml_type);
 
+// Map network discovery interface type to ML interface type
+interface_type_t ml_monitor_map_interface_type(const network_interface_t *interface);
+
 // Get interface type string for logging
 const char* ml_monitor_get_interface_type_string(interface_type_t type);
 

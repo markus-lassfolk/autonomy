@@ -4,6 +4,7 @@
 #include "gps_opencellid.h"
 #include "opencellid_complete.h"
 #include "gps_google_api.h"
+#include "../external/external_apis.h"
 #include "../starlink/starlink_grpc_collector.h"
 #include "../utils/logx.h"
 #include <stdio.h>
@@ -513,8 +514,8 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
         
         case GPS_SOURCE_GOOGLE: {
             // Use Google Geolocation API via external_apis if configured
-            google_location_data_t location_data = {0};
-            int gl_rc = external_apis_google_geolocate(NULL, NULL, &location_data);
+            external_location_data_t location_data = {0};
+            int gl_rc = external_apis_get_google_location(NULL, NULL, &location_data);
             if (gl_rc == AUTONOMY_SUCCESS) {
                 data->latitude = location_data.latitude;
                 data->longitude = location_data.longitude;
@@ -523,7 +524,7 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                 data->timestamp = location_data.timestamp;
                 data->valid = true;
                 data->source_priority = 4; // Lower priority than Starlink/OpenCell
-                strncpy(data->gps_source, "google_geolocation", sizeof(data->gps_source) - 1);
+                strncpy(data->source, "google_geolocation", sizeof(data->source) - 1);
                 strncpy(data->raw_json, location_data.source, sizeof(data->raw_json) - 1);
                 ret = AUTONOMY_SUCCESS;
             } else {
@@ -1165,4 +1166,55 @@ static void* health_monitor_thread_worker(void* arg) {
     
     LOGX_INFO_MSG("GPS health monitor thread stopped");
     return NULL;
+}
+
+// Collect GPS data from best available source (alias for collect_best)
+int gps_comprehensive_collect_best_gps(standardized_gps_data_t* result) {
+    return gps_comprehensive_collect_best(result);
+}
+
+// Get current location from comprehensive GPS system
+int gps_comprehensive_get_current_location(gps_data_t *location) {
+    if (!location) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+
+    if (!g_collector_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+
+    standardized_gps_data_t standardized_data;
+    int result = gps_comprehensive_collect_best(&standardized_data);
+    
+    if (result == AUTONOMY_SUCCESS) {
+        // Convert standardized data to gps_data_t format
+        location->lat = standardized_data.latitude;
+        location->lon = standardized_data.longitude;
+        location->latitude = standardized_data.latitude;
+        location->longitude = standardized_data.longitude;
+        location->altitude = standardized_data.altitude;
+        location->accuracy = standardized_data.accuracy;
+        location->speed = standardized_data.speed;
+        location->heading = standardized_data.heading;
+        location->timestamp = standardized_data.timestamp;
+        location->satellites = standardized_data.satellites_used;
+        location->hdop = standardized_data.hdop;
+        location->vdop = standardized_data.vdop;
+        location->valid = standardized_data.valid;
+        
+        return AUTONOMY_SUCCESS;
+    }
+    
+    // Return default/unknown location on failure
+    memset(location, 0, sizeof(gps_data_t));
+    location->lat = 0.0;
+    location->lon = 0.0;
+    location->latitude = 0.0;
+    location->longitude = 0.0;
+    location->altitude = 0.0;
+    location->accuracy = 0.0;
+    location->timestamp = time(NULL);
+    location->valid = false;
+    
+    return AUTONOMY_ERROR_NO_DATA;
 }

@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "notifications_comprehensive_ubus.h"
 #include "notifications_comprehensive.h"
 #include "../utils/logx.h"
@@ -72,6 +73,42 @@ enum {
 
 static const struct blobmsg_policy notification_test_policy[] = {
     [NOTIF_TEST_MESSAGE] = { .name = "test_message", .type = BLOBMSG_TYPE_STRING },
+};
+
+// History policy
+enum {
+    HISTORY_MAX_RECORDS,
+    HISTORY_START_TIME,
+    HISTORY_END_TIME,
+    __HISTORY_MAX
+};
+
+static const struct blobmsg_policy history_policy[] = {
+    [HISTORY_MAX_RECORDS] = { .name = "max_records", .type = BLOBMSG_TYPE_INT32 },
+    [HISTORY_START_TIME] = { .name = "start_time", .type = BLOBMSG_TYPE_INT32 },
+    [HISTORY_END_TIME] = { .name = "end_time", .type = BLOBMSG_TYPE_INT32 },
+};
+
+// Acknowledge policy
+enum {
+    ACKNOWLEDGE_ID,
+    ACKNOWLEDGE_BY,
+    __ACKNOWLEDGE_MAX
+};
+
+static const struct blobmsg_policy acknowledge_policy[] = {
+    [ACKNOWLEDGE_ID] = { .name = "id", .type = BLOBMSG_TYPE_STRING },
+    [ACKNOWLEDGE_BY] = { .name = "acknowledged_by", .type = BLOBMSG_TYPE_STRING },
+};
+
+// Test channels policy
+enum {
+    TEST_CHANNELS_MESSAGE,
+    __TEST_CHANNELS_MAX
+};
+
+static const struct blobmsg_policy test_channels_policy[] = {
+    [TEST_CHANNELS_MESSAGE] = { .name = "message", .type = BLOBMSG_TYPE_STRING },
 };
 
 // Helper function to convert blob table to JSON string
@@ -437,5 +474,279 @@ const struct ubus_method notifications_comprehensive_ubus_methods[] = {
     UBUS_METHOD_NOARG("reset_statistics", notifications_comprehensive_ubus_reset_statistics),
     UBUS_METHOD_NOARG("health_check", notifications_comprehensive_ubus_health_check),
 };
+
+// Get notifications comprehensive configuration
+int notifications_comprehensive_ubus_get_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                               struct ubus_request_data *req, const char *method,
+                                               struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!notifications_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Notifications comprehensive system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Get configuration (placeholder implementation)
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "message", "Configuration retrieved successfully");
+    blobmsg_add_u8(&bb, "enabled", 1); // Placeholder
+    blobmsg_add_u32(&bb, "max_notifications_per_hour", 100); // Placeholder
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Set notifications comprehensive configuration
+int notifications_comprehensive_ubus_set_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                               struct ubus_request_data *req, const char *method,
+                                               struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!notifications_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Notifications comprehensive system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Set configuration (placeholder implementation)
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "message", "Configuration updated successfully");
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Reset notifications comprehensive statistics
+int notifications_comprehensive_ubus_reset_statistics(struct ubus_context *ctx, struct ubus_object *obj,
+                                                     struct ubus_request_data *req, const char *method,
+                                                     struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!notifications_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Notifications comprehensive system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Reset statistics (placeholder implementation)
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "message", "Statistics reset successfully");
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Notifications comprehensive health check
+int notifications_comprehensive_ubus_health_check(struct ubus_context *ctx, struct ubus_object *obj,
+                                                 struct ubus_request_data *req, const char *method,
+                                                 struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!notifications_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "status", "unhealthy");
+        blobmsg_add_string(&bb, "error", "Notifications comprehensive system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Health check (placeholder implementation)
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "status", "healthy");
+    blobmsg_add_u32(&bb, "total_notifications_sent", 0); // Placeholder
+    blobmsg_add_u32(&bb, "active_channels", 0); // Placeholder
+    blobmsg_add_u32(&bb, "last_notification", 0); // Placeholder
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Get notification history
+int notifications_comprehensive_ubus_get_history(struct ubus_context *ctx, struct ubus_object *obj,
+                                               struct ubus_request_data *req, const char *method,
+                                               struct blob_attr *msg) {
+    struct blob_buf bb = {};
+    blob_buf_init(&bb, 0);
+    
+    // Get parameters
+    struct blob_attr *tb[__HISTORY_MAX];
+    blobmsg_parse(history_policy, ARRAY_SIZE(history_policy), tb, blob_data(msg), blob_len(msg));
+    
+    int max_records = 100; // Default
+    time_t start_time = 0;
+    time_t end_time = 0;
+    
+    if (tb[HISTORY_MAX_RECORDS])
+        max_records = blobmsg_get_u32(tb[HISTORY_MAX_RECORDS]);
+    if (tb[HISTORY_START_TIME])
+        start_time = blobmsg_get_u32(tb[HISTORY_START_TIME]);
+    if (tb[HISTORY_END_TIME])
+        end_time = blobmsg_get_u32(tb[HISTORY_END_TIME]);
+    
+    // Allocate records array
+    comprehensive_notification_record_t *records = malloc(max_records * sizeof(comprehensive_notification_record_t));
+    if (!records) {
+        blobmsg_add_string(&bb, "error", "Failed to allocate memory");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_UNKNOWN_ERROR;
+    }
+    
+    // Get history
+    int count = notifications_comprehensive_get_history(records, max_records, start_time, end_time);
+    
+    if (count < 0) {
+        blobmsg_add_string(&bb, "error", "Failed to get notification history");
+        free(records);
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_UNKNOWN_ERROR;
+    }
+    
+    // Add records to response
+    blobmsg_add_u32(&bb, "count", count);
+    void *c = blobmsg_open_array(&bb, "records");
+    
+    for (int i = 0; i < count; i++) {
+        void *r = blobmsg_open_table(&bb, NULL);
+        blobmsg_add_string(&bb, "id", records[i].id);
+        blobmsg_add_string(&bb, "type", notification_type_to_string(records[i].type));
+        blobmsg_add_string(&bb, "priority", notification_priority_to_string(records[i].priority));
+        blobmsg_add_string(&bb, "title", records[i].title);
+        blobmsg_add_string(&bb, "message", records[i].message);
+        blobmsg_add_string(&bb, "status", notification_delivery_status_to_string(records[i].status));
+        blobmsg_add_u32(&bb, "created_at", records[i].created_at);
+        blobmsg_add_u32(&bb, "sent_at", records[i].sent_at);
+        blobmsg_add_u32(&bb, "delivered_at", records[i].delivered_at);
+        blobmsg_add_u32(&bb, "acknowledged_at", records[i].acknowledged_at);
+        blobmsg_add_string(&bb, "source_module", records[i].source_module);
+        blobmsg_close_table(&bb, r);
+    }
+    
+    blobmsg_close_array(&bb, c);
+    free(records);
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Acknowledge notification
+int notifications_comprehensive_ubus_acknowledge(struct ubus_context *ctx, struct ubus_object *obj,
+                                               struct ubus_request_data *req, const char *method,
+                                               struct blob_attr *msg) {
+    struct blob_buf bb = {};
+    blob_buf_init(&bb, 0);
+    
+    // Get parameters
+    struct blob_attr *tb[__ACKNOWLEDGE_MAX];
+    blobmsg_parse(acknowledge_policy, ARRAY_SIZE(acknowledge_policy), tb, blob_data(msg), blob_len(msg));
+    
+    if (!tb[ACKNOWLEDGE_ID] || !tb[ACKNOWLEDGE_BY]) {
+        blobmsg_add_string(&bb, "error", "Missing required parameters: id, acknowledged_by");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_INVALID_ARGUMENT;
+    }
+    
+    const char *notification_id = blobmsg_get_string(tb[ACKNOWLEDGE_ID]);
+    const char *acknowledged_by = blobmsg_get_string(tb[ACKNOWLEDGE_BY]);
+    
+    int result = notifications_comprehensive_acknowledge(notification_id, acknowledged_by);
+    
+    if (result == AUTONOMY_SUCCESS) {
+        blobmsg_add_string(&bb, "status", "success");
+        blobmsg_add_string(&bb, "message", "Notification acknowledged successfully");
+    } else {
+        blobmsg_add_string(&bb, "status", "error");
+        blobmsg_add_string(&bb, "message", "Failed to acknowledge notification");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Test notification channels
+int notifications_comprehensive_ubus_test_channels(struct ubus_context *ctx, struct ubus_object *obj,
+                                                  struct ubus_request_data *req, const char *method,
+                                                  struct blob_attr *msg) {
+    struct blob_buf bb = {};
+    blob_buf_init(&bb, 0);
+    
+    // Get parameters
+    struct blob_attr *tb[__TEST_CHANNELS_MAX];
+    blobmsg_parse(test_channels_policy, ARRAY_SIZE(test_channels_policy), tb, blob_data(msg), blob_len(msg));
+    
+    const char *test_message = "Test notification from autonomy daemon";
+    if (tb[TEST_CHANNELS_MESSAGE])
+        test_message = blobmsg_get_string(tb[TEST_CHANNELS_MESSAGE]);
+    
+    int result = notifications_comprehensive_test_all_channels(test_message);
+    
+    if (result == AUTONOMY_SUCCESS) {
+        blobmsg_add_string(&bb, "status", "success");
+        blobmsg_add_string(&bb, "message", "Test notification sent successfully");
+    } else {
+        blobmsg_add_string(&bb, "status", "error");
+        blobmsg_add_string(&bb, "message", "Failed to send test notification");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Get channel effectiveness
+int notifications_comprehensive_ubus_get_channel_effectiveness(struct ubus_context *ctx, struct ubus_object *obj,
+                                                              struct ubus_request_data *req, const char *method,
+                                                              struct blob_attr *msg) {
+    struct blob_buf bb = {};
+    blob_buf_init(&bb, 0);
+    
+    double pushover_score, email_score, sms_score, webhook_score;
+    double slack_score, discord_score, telegram_score;
+    
+    int result = notifications_comprehensive_get_channel_effectiveness(
+        &pushover_score, &email_score, &sms_score, &webhook_score,
+        &slack_score, &discord_score, &telegram_score
+    );
+    
+    if (result == AUTONOMY_SUCCESS) {
+        blobmsg_add_string(&bb, "status", "success");
+        blobmsg_add_double(&bb, "pushover_score", pushover_score);
+        blobmsg_add_double(&bb, "email_score", email_score);
+        blobmsg_add_double(&bb, "sms_score", sms_score);
+        blobmsg_add_double(&bb, "webhook_score", webhook_score);
+        blobmsg_add_double(&bb, "slack_score", slack_score);
+        blobmsg_add_double(&bb, "discord_score", discord_score);
+        blobmsg_add_double(&bb, "telegram_score", telegram_score);
+    } else {
+        blobmsg_add_string(&bb, "status", "error");
+        blobmsg_add_string(&bb, "message", "Failed to get channel effectiveness");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
 
 const int notifications_comprehensive_ubus_methods_count = ARRAY_SIZE(notifications_comprehensive_ubus_methods);

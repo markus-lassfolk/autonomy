@@ -55,7 +55,7 @@ static const struct ubus_method autonomy_overlay_management_methods[] = {
 };
 
 // UBUS object type
-static const struct ubus_object_type autonomy_overlay_management_obj_type = {
+static struct ubus_object_type autonomy_overlay_management_obj_type = {
     .name = "autonomy_overlay_management",
     .methods = autonomy_overlay_management_methods,
     .n_methods = ARRAY_SIZE(autonomy_overlay_management_methods),

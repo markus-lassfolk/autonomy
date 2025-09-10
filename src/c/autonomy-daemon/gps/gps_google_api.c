@@ -244,7 +244,7 @@ static void parse_reverse_geocode_response(const gps_google_api_response_t *resp
         
         // Parse address components for detailed information
         int components_count = json_get_array_size(doc, "results[0].address_components");
-        for (int i = 0; // Use configurable value i < components_count; i++) {
+        for (int i = 0; i < components_count; i++) {
             char path[256];
             char type[64];
             
@@ -431,7 +431,7 @@ int gps_google_api_get_timezone(double lat, double lon, time_t timestamp,
     
     // Build request parameters
     char params[512];
-    snprintf(params, sizeof(params), "location=%.6f,%.6f&timestamp=%ld", lat, lon, timestamp);
+    snprintf(params, sizeof(params), "location=%.6f,%.6f&timestamp=%lld", lat, lon, (long long)timestamp);
     
     // Perform API request
     gps_google_api_response_t response;

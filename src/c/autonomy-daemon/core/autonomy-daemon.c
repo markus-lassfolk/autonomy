@@ -17,10 +17,14 @@
 
 // Include our modular headers
 #include "../core/types.h"
+#include "version.h"
 #include "autonomy_modules.h"
 #include "../starlink/starlink_modules.h"
 #include "../starlink/starlink_tracker.h"
+#include "../starlink/starlink_grpc_collector.h"
 #include "../utils/uci_manager.h"
+#include "../utils/logx.h"
+#include "../utils/debug_trace.h"
 #include "../ml/ml_monitor.h"
 #include "../ml/ml_monitor_ubus.h"
 #include <sys/socket.h>
@@ -52,22 +56,8 @@ autonomy_state_t g_state = {
 // Global Starlink tracker
 static starlink_tracker_t *g_starlink_tracker = NULL;
 
-// Global system health
-system_health_t g_system_health = {
-    .status = "unknown",
-    .starlink_health = 0,
-    .uci_health = 0,
-    .overlay_health = 0,
-    .services_health = 0,
-    .network_health = 0,
-    .database_health = 0,
-    .time_health = 0,
-    .logs_health = 0,
-    .gps_health = 0,
-    .overall_health = 0,
-    .overall_score = 0,
-    .last_check = 0
-};
+// Global system health (defined in core/system_management.c)
+extern system_health_t g_system_health;
 
 static struct ubus_context *ctx;
 struct uci_context *uci_ctx;
@@ -141,39 +131,79 @@ static struct ubus_object autonomy_obj = {
 
 int main(int argc, char **argv)
 {
-    fprintf(stderr, "Autonomy daemon starting...\n");
+    // Initialize comprehensive debugging system
+    debug_trace_init(DEBUG_TRACE_TRACE);  // Enable maximum debugging
+    
+    DEBUG_TRACE_ENTER();
+    DEBUG_TRACE_INFO("Starting Telia Autonomy Network Management Daemon");
+    
+    // Display version and build information
+    fprintf(stderr, "========================================\n");
+    fprintf(stderr, "Telia Autonomy Network Management Daemon\n");
+    fprintf(stderr, "========================================\n");
+    fprintf(stderr, "%s\n", autonomy_daemon_get_build_info_string());
+    fprintf(stderr, "========================================\n");
+    fprintf(stderr, "Starting daemon...\n");
+    
+    DEBUG_TRACE_INFO("Build info: %s", autonomy_daemon_get_build_info_string());
+    
+    DEBUG_TRACE_STEP(1, "Initializing uloop");
     uloop_init();
     fprintf(stderr, "uloop initialized\n");
+    DEBUG_TRACE_INFO("uloop initialized successfully");
+    
+    // Initialize logging system
+    DEBUG_TRACE_STEP(2, "Initializing logging system");
+    logx_init(NULL);
+    fprintf(stderr, "Logging system initialized\n");
+    DEBUG_TRACE_INFO("Logging system initialized successfully");
+    
+    DEBUG_TRACE_STEP(3, "Setting up signal handlers");
     signal(SIGPIPE, SIG_IGN);
     signal(SIGTERM, handle_sig);
     signal(SIGINT, handle_sig);
     fprintf(stderr, "Signal handlers set\n");
+    DEBUG_TRACE_INFO("Signal handlers set successfully");
 
     // Initialize UCI manager and load configuration
+    DEBUG_TRACE_STEP(4, "Initializing UCI manager");
     if (uci_manager_init() != AUTONOMY_SUCCESS) {
+        DEBUG_TRACE_ERROR("Failed to initialize UCI manager");
         fprintf(stderr, "Failed to initialize UCI manager\n");
         return 1;
     }
+    DEBUG_TRACE_INFO("UCI manager initialized successfully");
     
+    DEBUG_TRACE_STEP(5, "Loading configuration from UCI");
     if (uci_manager_load_config(&g_config) != AUTONOMY_SUCCESS) {
+        DEBUG_TRACE_WARN("Failed to load configuration from UCI, using defaults");
         fprintf(stderr, "Failed to load configuration from UCI, using defaults\n");
         // Use default configuration if UCI loading fails
         const autonomy_config_t *default_config = uci_manager_get_default_config();
         if (default_config) {
             g_config = *default_config;
+            DEBUG_TRACE_INFO("Using default configuration");
         }
+    } else {
+        DEBUG_TRACE_INFO("Configuration loaded from UCI successfully");
     }
     fprintf(stderr, "Configuration loaded from UCI\n");
 
     // Check if another instance is running
-    if (check_pid_file() == -1) {
-        return 1;
-    }
+    fprintf(stderr, "Skipping PID file check for debugging...\n");
+    // if (check_pid_file() == -1) {
+    //     fprintf(stderr, "PID file check failed\n");
+    //     return 1;
+    // }
+    // fprintf(stderr, "PID file check passed\n");
 
-    // Create PID file
-    if (create_pid_file() == -1) {
-        return 1;
-    }
+    // // Create PID file
+    // fprintf(stderr, "Creating PID file...\n");
+    // if (create_pid_file() == -1) {
+    //     fprintf(stderr, "PID file creation failed\n");
+    //     return 1;
+    // }
+    // fprintf(stderr, "PID file created successfully\n");
 
     fprintf(stderr, "Attempting to connect to ubus...\n");
     ctx = ubus_connect(NULL);
@@ -182,6 +212,8 @@ int main(int argc, char **argv)
         return 1;
     }
     fprintf(stderr, "Connected to ubus successfully\n");
+    fprintf(stderr, "UBUS context: %p\n", ctx);
+    fprintf(stderr, "About to call ubus_add_uloop...\n");
     ubus_add_uloop(ctx);
     fprintf(stderr, "Added uloop to ubus context\n");
 
@@ -190,14 +222,30 @@ int main(int argc, char **argv)
         fprintf(stderr, "Failed to load UCI configuration, using defaults.\n");
     }
 
-    // Initialize network interfaces
-    if (discover_network_interfaces() == -1) {
-        fprintf(stderr, "Failed to initialize network interfaces.\n");
+    // Initialize network health monitoring
+    if (perform_network_health_check() != 0) {
+        fprintf(stderr, "Failed to initialize network health monitoring.\n");
+    }
+    
+    // Initialize comprehensive network discovery system
+    extern int network_discovery_comprehensive_init(void);
+    if (network_discovery_comprehensive_init() != AUTONOMY_SUCCESS) {
+        fprintf(stderr, "Failed to initialize comprehensive network discovery.\n");
+    } else {
+        fprintf(stderr, "Comprehensive network discovery initialized successfully.\n");
+    }
+    
+    // Initialize network controller
+    extern int network_controller_init(const void* config);
+    if (network_controller_init(NULL) != AUTONOMY_SUCCESS) {
+        fprintf(stderr, "Failed to initialize network controller.\n");
+    } else {
+        fprintf(stderr, "Network controller initialized successfully.\n");
     }
 
-    // Initialize GPS sources
-    if (discover_gps_sources() == -1) {
-        fprintf(stderr, "Failed to initialize GPS sources.\n");
+    // Initialize GPS health monitoring
+    if (perform_gps_health_check() != 0) {
+        fprintf(stderr, "Failed to initialize GPS health monitoring.\n");
     }
 
     // Initialize Starlink tracking module
@@ -206,13 +254,30 @@ int main(int argc, char **argv)
         fprintf(stderr, "Starlink tracking module initialized successfully\n");
         
         // Initialize tracking UBUS interface
-        if (starlink_tracker_ubus_init(ctx, g_starlink_tracker) == 0) {
+        fprintf(stderr, "DEBUG: About to call starlink_tracker_ubus_init\n");
+        int result = starlink_tracker_ubus_init(ctx, g_starlink_tracker);
+        fprintf(stderr, "DEBUG: starlink_tracker_ubus_init returned: %d\n", result);
+        if (result == 0) {
             fprintf(stderr, "Starlink tracking UBUS interface registered\n");
         } else {
             fprintf(stderr, "Failed to register Starlink tracking UBUS interface\n");
         }
     } else {
         fprintf(stderr, "Starlink tracking module initialization failed (check credentials)\n");
+    }
+
+    // Initialize Starlink gRPC collector
+    if (starlink_grpc_collector_init() == AUTONOMY_SUCCESS) {
+        fprintf(stderr, "Starlink gRPC collector initialized successfully\n");
+        
+        // Start gRPC collector thread
+        if (starlink_grpc_collector_start() == AUTONOMY_SUCCESS) {
+            fprintf(stderr, "Starlink gRPC collector thread started\n");
+        } else {
+            fprintf(stderr, "Failed to start Starlink gRPC collector thread\n");
+        }
+    } else {
+        fprintf(stderr, "Starlink gRPC collector initialization failed\n");
     }
 
     // Initialize ML monitoring module
@@ -225,11 +290,7 @@ int main(int argc, char **argv)
                 
                 // Initialize ML monitoring UBUS interface
                 if (ml_monitor_ubus_init(ctx) == ML_MONITOR_SUCCESS) {
-                    if (ml_monitor_ubus_add_object(ctx) == 0) {
-                        fprintf(stderr, "ML monitoring UBUS interface registered\n");
-                    } else {
-                        fprintf(stderr, "Failed to register ML monitoring UBUS interface\n");
-                    }
+                    fprintf(stderr, "ML monitoring UBUS interface registered\n");
                 } else {
                     fprintf(stderr, "Failed to initialize ML monitoring UBUS interface\n");
                 }

@@ -1,5 +1,6 @@
 #include "performance_monitor.h"
 #include "../utils/logx.h"
+#include "../core/types.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -171,7 +172,7 @@ int performance_monitor_get_history(performance_metrics_t* history, int max_hist
     int count = 0; // Use configurable count // Use configurable value
     int index = g_performance_monitor.history_index;
     
-    for (int i = 0; // Use configurable count // Use configurable value i < g_performance_monitor.history_count && count < max_history; i++) {
+    for (int i = 0; i < g_performance_monitor.history_count && count < max_history; i++) {
         int history_index = (index - i + 100) % 100;
         if (g_performance_monitor.metrics_history[history_index].last_update > 0) {
             history[count] = g_performance_monitor.metrics_history[history_index];

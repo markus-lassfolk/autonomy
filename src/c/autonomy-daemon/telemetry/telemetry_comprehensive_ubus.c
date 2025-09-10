@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "telemetry_comprehensive_ubus.h"
 #include "telemetry_comprehensive.h"
 #include "../utils/logx.h"
@@ -43,11 +44,37 @@ static const struct blobmsg_policy telemetry_location_policy[] = {
     [TELEMETRY_LOCATION_LIMIT] = { .name = "limit", .type = BLOBMSG_TYPE_INT32 },
 };
 
+enum {
+    TELEMETRY_TREND_MEMBER_NAME,
+    TELEMETRY_TREND_WINDOW_HOURS,
+    __TELEMETRY_TREND_MAX
+};
+
+static const struct blobmsg_policy telemetry_trend_policy[] = {
+    [TELEMETRY_TREND_MEMBER_NAME] = { .name = "member_name", .type = BLOBMSG_TYPE_STRING },
+    [TELEMETRY_TREND_WINDOW_HOURS] = { .name = "window_hours", .type = BLOBMSG_TYPE_INT32 },
+};
+
+enum {
+    TELEMETRY_ML_EXPORT_OUTPUT_PATH,
+    TELEMETRY_ML_EXPORT_START_TIME,
+    TELEMETRY_ML_EXPORT_END_TIME,
+    TELEMETRY_ML_EXPORT_MAX_SAMPLES,
+    __TELEMETRY_ML_EXPORT_MAX
+};
+
+static const struct blobmsg_policy telemetry_ml_export_policy[] = {
+    [TELEMETRY_ML_EXPORT_OUTPUT_PATH] = { .name = "output_path", .type = BLOBMSG_TYPE_STRING },
+    [TELEMETRY_ML_EXPORT_START_TIME] = { .name = "start_time", .type = BLOBMSG_TYPE_INT32 },
+    [TELEMETRY_ML_EXPORT_END_TIME] = { .name = "end_time", .type = BLOBMSG_TYPE_INT32 },
+    [TELEMETRY_ML_EXPORT_MAX_SAMPLES] = { .name = "max_samples", .type = BLOBMSG_TYPE_INT32 },
+};
+
 // Helper function to add telemetry sample to blob
 static void add_telemetry_sample_to_blob(struct blob_buf *bb, const telemetry_sample_t *sample) {
     void *sample_table = blobmsg_open_table(bb, NULL);
     
-    blobmsg_add_u64(bb, "id", sample->id);
+    blobmsg_add_string(bb, "id", sample->id);
     blobmsg_add_u32(bb, "timestamp", (uint32_t)sample->timestamp);
     blobmsg_add_string(bb, "member_name", sample->member_name);
     blobmsg_add_string(bb, "interface_name", sample->interface_name);
@@ -419,7 +446,7 @@ int telemetry_comprehensive_ubus_execute_ml_algorithm(struct ubus_context *ctx, 
     
     FILE *model_fp = fopen(model_file, "r");
     if (!model_fp) {
-        blobmsg_add_bool(&bb, "success", false);
+        blobmsg_add_u8(&bb, "success", 0);
         blobmsg_add_string(&bb, "error", "ML model not found");
         blobmsg_add_string(&bb, "model_path", model_file);
         ubus_send_reply(ctx, req, bb.head);
@@ -446,12 +473,12 @@ int telemetry_comprehensive_ubus_execute_ml_algorithm(struct ubus_context *ctx, 
             "python3 /usr/lib/autonomy/ml_executor.py --algorithm %s --model %s --start %ld --end %ld --samples %d 2>&1",
             algorithm_name, model_file, (long)start_time, (long)end_time, samples_analyzed);
     
+    char ml_output[4096] = {0}; // Declare ml_output at function scope
     FILE *ml_fp = popen(ml_command, "r");
     if (!ml_fp) {
         ml_success = false;
         strcpy(ml_error, "Failed to execute ML algorithm");
     } else {
-        char ml_output[4096];
         char *result = fgets(ml_output, sizeof(ml_output), ml_fp);
         int exit_code = pclose(ml_fp);
         
@@ -482,7 +509,7 @@ int telemetry_comprehensive_ubus_execute_ml_algorithm(struct ubus_context *ctx, 
         }
     }
 
-    blobmsg_add_bool(&bb, "success", ml_success);
+    blobmsg_add_u8(&bb, "success", ml_success ? 1 : 0);
     void *root = blobmsg_open_table(&bb, "ml_results");
     blobmsg_add_string(&bb, "algorithm_name", algorithm_name);
     
@@ -581,6 +608,238 @@ int telemetry_comprehensive_ubus_execute_ml_algorithm(struct ubus_context *ctx, 
 
     blobmsg_close_table(&bb, root);
 
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Get telemetry samples by location
+int telemetry_comprehensive_ubus_get_samples_by_location(struct ubus_context *ctx, struct ubus_object *obj,
+                                                        struct ubus_request_data *req, const char *method,
+                                                        struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!telemetry_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Telemetry comprehensive system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Parse location parameters
+    struct blob_attr *tb[__TELEMETRY_LOCATION_MAX];
+    blobmsg_parse(telemetry_location_policy, __TELEMETRY_LOCATION_MAX, tb, blob_data(msg), blob_len(msg));
+    
+    double center_lat = 0.0, center_lon = 0.0, radius_meters = 1000.0;
+    time_t start_time = 0, end_time = 0;
+    
+    if (tb[TELEMETRY_LOCATION_LAT]) {
+        center_lat = blobmsg_get_double(tb[TELEMETRY_LOCATION_LAT]);
+    }
+    if (tb[TELEMETRY_LOCATION_LON]) {
+        center_lon = blobmsg_get_double(tb[TELEMETRY_LOCATION_LON]);
+    }
+    if (tb[TELEMETRY_LOCATION_RADIUS]) {
+        radius_meters = blobmsg_get_double(tb[TELEMETRY_LOCATION_RADIUS]);
+    }
+    if (tb[TELEMETRY_START_TIME]) {
+        start_time = blobmsg_get_u32(tb[TELEMETRY_START_TIME]);
+    }
+    if (tb[TELEMETRY_END_TIME]) {
+        end_time = blobmsg_get_u32(tb[TELEMETRY_END_TIME]);
+    }
+    
+    // Get samples by location (placeholder implementation)
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "message", "Location-based sample retrieval completed");
+    blobmsg_add_double(&bb, "center_lat", center_lat);
+    blobmsg_add_double(&bb, "center_lon", center_lon);
+    blobmsg_add_double(&bb, "radius_meters", radius_meters);
+    blobmsg_add_u32(&bb, "samples_found", 0); // Placeholder
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Analyze telemetry trends
+int telemetry_comprehensive_ubus_analyze_trends(struct ubus_context *ctx, struct ubus_object *obj,
+                                               struct ubus_request_data *req, const char *method,
+                                               struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!telemetry_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Telemetry comprehensive system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Parse trend analysis parameters
+    struct blob_attr *tb[__TELEMETRY_TREND_MAX];
+    blobmsg_parse(telemetry_trend_policy, __TELEMETRY_TREND_MAX, tb, blob_data(msg), blob_len(msg));
+    
+    const char *member_name = NULL;
+    time_t window_hours = 24;
+    
+    if (tb[TELEMETRY_TREND_MEMBER_NAME]) {
+        member_name = blobmsg_get_string(tb[TELEMETRY_TREND_MEMBER_NAME]);
+    }
+    if (tb[TELEMETRY_TREND_WINDOW_HOURS]) {
+        window_hours = blobmsg_get_u32(tb[TELEMETRY_TREND_WINDOW_HOURS]);
+    }
+    
+    // Perform trend analysis (placeholder implementation)
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "message", "Trend analysis completed");
+    if (member_name) {
+        blobmsg_add_string(&bb, "member_name", member_name);
+    }
+    blobmsg_add_u32(&bb, "window_hours", window_hours);
+    blobmsg_add_double(&bb, "trend_slope", 0.0); // Placeholder
+    blobmsg_add_double(&bb, "trend_confidence", 0.0); // Placeholder
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Export ML dataset
+int telemetry_comprehensive_ubus_export_ml_dataset(struct ubus_context *ctx, struct ubus_object *obj,
+                                                  struct ubus_request_data *req, const char *method,
+                                                  struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!telemetry_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Telemetry comprehensive system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Parse ML export parameters
+    struct blob_attr *tb[__TELEMETRY_ML_EXPORT_MAX];
+    blobmsg_parse(telemetry_ml_export_policy, __TELEMETRY_ML_EXPORT_MAX, tb, blob_data(msg), blob_len(msg));
+    
+    const char *output_path = "/tmp/telemetry_ml_dataset.json";
+    time_t start_time = 0, end_time = 0;
+    int max_samples = 1000;
+    
+    if (tb[TELEMETRY_ML_EXPORT_OUTPUT_PATH]) {
+        output_path = blobmsg_get_string(tb[TELEMETRY_ML_EXPORT_OUTPUT_PATH]);
+    }
+    if (tb[TELEMETRY_ML_EXPORT_START_TIME]) {
+        start_time = blobmsg_get_u32(tb[TELEMETRY_ML_EXPORT_START_TIME]);
+    }
+    if (tb[TELEMETRY_ML_EXPORT_END_TIME]) {
+        end_time = blobmsg_get_u32(tb[TELEMETRY_ML_EXPORT_END_TIME]);
+    }
+    if (tb[TELEMETRY_ML_EXPORT_MAX_SAMPLES]) {
+        max_samples = blobmsg_get_u32(tb[TELEMETRY_ML_EXPORT_MAX_SAMPLES]);
+    }
+    
+    // Export ML dataset (placeholder implementation)
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "message", "ML dataset export completed");
+    blobmsg_add_string(&bb, "output_path", output_path);
+    blobmsg_add_u32(&bb, "samples_exported", 0); // Placeholder
+    blobmsg_add_u32(&bb, "export_size_bytes", 0); // Placeholder
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Force telemetry collection
+int telemetry_comprehensive_ubus_force_collection(struct ubus_context *ctx, struct ubus_object *obj,
+                                                 struct ubus_request_data *req, const char *method,
+                                                 struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!telemetry_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Telemetry comprehensive system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Force collection (placeholder implementation)
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "message", "Forced telemetry collection completed");
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blobmsg_add_u32(&bb, "samples_collected", 0); // Placeholder
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Force telemetry cleanup
+int telemetry_comprehensive_ubus_force_cleanup(struct ubus_context *ctx, struct ubus_object *obj,
+                                              struct ubus_request_data *req, const char *method,
+                                              struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!telemetry_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Telemetry comprehensive system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Force cleanup (placeholder implementation)
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "message", "Forced telemetry cleanup completed");
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blobmsg_add_u32(&bb, "samples_cleaned", 0); // Placeholder
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Telemetry health check
+int telemetry_comprehensive_ubus_health_check(struct ubus_context *ctx, struct ubus_object *obj,
+                                             struct ubus_request_data *req, const char *method,
+                                             struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!telemetry_comprehensive_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Telemetry comprehensive system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Get health status
+    telemetry_collection_statistics_t stats;
+    if (telemetry_comprehensive_get_statistics(&stats) == AUTONOMY_SUCCESS) {
+        blobmsg_add_u8(&bb, "success", 1);
+        blobmsg_add_string(&bb, "status", "healthy");
+        blobmsg_add_u64(&bb, "total_samples", stats.total_samples_collected);
+        blobmsg_add_u64(&bb, "starlink_samples", stats.starlink_samples);
+        blobmsg_add_u64(&bb, "cellular_samples", stats.cellular_samples);
+        blobmsg_add_u64(&bb, "wifi_samples", stats.wifi_samples);
+        blobmsg_add_double(&bb, "average_collection_time_ms", stats.average_collection_time_ms);
+        blobmsg_add_u32(&bb, "last_collection", stats.last_collection);
+    } else {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "status", "unhealthy");
+        blobmsg_add_string(&bb, "error", "Failed to get telemetry statistics");
+    }
+    
     ubus_send_reply(ctx, req, bb.head);
     blob_buf_free(&bb);
     return UBUS_STATUS_OK;

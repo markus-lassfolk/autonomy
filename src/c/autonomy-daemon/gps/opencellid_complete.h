@@ -90,6 +90,7 @@ typedef struct {
     opencellid_cell_identifier_t cell_id;   // Cell identifier
     int rsrp;                               // RSRP measurement
     int rsrq;                               // RSRQ measurement
+    int sinr;                               // SINR measurement
     uint16_t pci;                           // Physical Cell ID
     uint32_t earfcn;                        // Frequency
     char type[16];                          // "intra", "inter", "neighbor"

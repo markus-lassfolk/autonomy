@@ -26,12 +26,12 @@ int main() {
     
     ml_monitor_t *monitor = ml_monitor_init(&config);
     assert(monitor != NULL);
-    printf("✓ ML monitor initialized\n");
+    printf(" ML monitor initialized\n");
     
     // Initialize Phase 3 enhancements
     int phase3_result = ml_monitor_init_phase3_enhancements(monitor);
     assert(phase3_result == ML_MONITOR_SUCCESS);
-    printf("✓ Phase 3 enhancements initialized successfully\n");
+    printf(" Phase 3 enhancements initialized successfully\n");
     
     // Test 2: Advanced sky grid with high-resolution mapping
     printf("Test 2: Advanced sky grid with obstruction analyzer integration...\n");
@@ -65,7 +65,7 @@ int main() {
         }
     }
     
-    printf("✓ Advanced sky grid updated with %u observations\n", monitor->state->total_observations);
+    printf(" Advanced sky grid updated with %u observations\n", monitor->state->total_observations);
     
     // Test 3: Sliding window feature extraction
     printf("Test 3: Sliding window predictor with feature extraction...\n");
@@ -107,7 +107,7 @@ int main() {
         ml_monitor_update_with_phase3_enhancements(monitor, &sliding_obs[i]);
     }
     
-    printf("✓ Sliding window populated with 60 observations showing degradation trend\n");
+    printf(" Sliding window populated with 60 observations showing degradation trend\n");
     
     // Test 4: Enhanced 15-minute predictions
     printf("Test 4: Enhanced 15-minute predictions with sliding window...\n");
@@ -118,7 +118,7 @@ int main() {
     int pred_result = ml_monitor_predict_next_15_minutes_enhanced(monitor, probabilities, &confidence);
     assert(pred_result == ML_MONITOR_SUCCESS);
     
-    printf("✓ Enhanced predictions generated with %u%% confidence\n", confidence);
+    printf(" Enhanced predictions generated with %u%% confidence\n", confidence);
     
     // Analyze prediction curve
     int high_prob_intervals = 0;
@@ -137,7 +137,7 @@ int main() {
     
     // Expect some high probability predictions due to degradation trend
     assert(high_prob_intervals > 0);
-    printf("✓ Prediction curve shows expected degradation pattern\n");
+    printf(" Prediction curve shows expected degradation pattern\n");
     
     // Test 5: Sky grid resolution and accuracy
     printf("Test 5: Sky grid resolution and coordinate mapping...\n");
@@ -170,7 +170,7 @@ int main() {
         }
     }
     
-    printf("✓ Sky grid coordinate mapping validated\n");
+    printf(" Sky grid coordinate mapping validated\n");
     
     // Test 6: Mobile scenario with location changes
     printf("Test 6: Mobile scenario with location changes...\n");
@@ -199,7 +199,7 @@ int main() {
     bool location_changed = (learner->current_lat_e7 != original_lat) || 
                            (learner->current_lon_e7 != original_lon);
     assert(location_changed);
-    printf("✓ Location change detected and processed\n");
+    printf(" Location change detected and processed\n");
     
     // Test 7: Performance and resource monitoring
     printf("Test 7: Performance monitoring and resource tracking...\n");
@@ -229,7 +229,7 @@ int main() {
     printf("  - False negatives: %u\n", perf->false_negatives);
     
     assert(perf->metrics.accuracy_pct > 80); // Expect good accuracy
-    printf("✓ Performance metrics within expected ranges\n");
+    printf(" Performance metrics within expected ranges\n");
     
     // Test 8: Advanced feature extraction
     printf("Test 8: Advanced feature extraction and trend analysis...\n");
@@ -243,7 +243,7 @@ int main() {
     printf("  - Trend analysis algorithms integrated\n");
     printf("  - Volatility calculation implemented\n");
     printf("  - Feature extraction pipeline active\n");
-    printf("✓ Advanced feature extraction validated\n");
+    printf(" Advanced feature extraction validated\n");
     
     // Test 9: Integration resilience
     printf("Test 9: Integration resilience and fallback mechanisms...\n");
@@ -255,7 +255,7 @@ int main() {
     int fallback_result = ml_monitor_predict_next_15_minutes(monitor, fallback_probs, &fallback_confidence);
     assert(fallback_result == ML_MONITOR_SUCCESS);
     
-    printf("✓ Fallback mechanisms working (confidence: %u%%)\n", fallback_confidence);
+    printf(" Fallback mechanisms working (confidence: %u%%)\n", fallback_confidence);
     
     // Test 10: Memory and storage efficiency
     printf("Test 10: Memory efficiency and storage optimization...\n");
@@ -269,7 +269,7 @@ int main() {
     
     // Verify we're still within embedded constraints
     assert(total_memory < 2 * 1024 * 1024); // Less than 2MB
-    printf("✓ Memory usage within embedded constraints\n");
+    printf(" Memory usage within embedded constraints\n");
     
     // Test 11: Cleanup and persistence
     printf("Test 11: Data persistence and cleanup...\n");
@@ -283,22 +283,22 @@ int main() {
     assert(monitor->state->version == 1);
     assert(monitor->state->total_observations > 0);
     
-    printf("✓ Data persistence and integrity verified\n");
+    printf(" Data persistence and integrity verified\n");
     
     // Cleanup
     ml_monitor_cleanup(monitor);
-    printf("✓ Cleanup completed successfully\n");
+    printf(" Cleanup completed successfully\n");
     
     printf("\n=============================================================\n");
     printf("Phase 3 Advanced Features Testing Completed!\n");
-    printf("✅ Enhanced sky grid with obstruction integration\n");
-    printf("✅ Sliding window predictor with trend analysis\n");
-    printf("✅ Advanced feature extraction pipeline\n");
-    printf("✅ Mobile scenario adaptation\n");
-    printf("✅ Performance monitoring and optimization\n");
-    printf("✅ Integration resilience and fallbacks\n");
-    printf("✅ Memory efficiency maintained\n");
-    printf("\nPhase 3 implementation is production ready! 🚀\n");
+    printf(" Enhanced sky grid with obstruction integration\n");
+    printf(" Sliding window predictor with trend analysis\n");
+    printf(" Advanced feature extraction pipeline\n");
+    printf(" Mobile scenario adaptation\n");
+    printf(" Performance monitoring and optimization\n");
+    printf(" Integration resilience and fallbacks\n");
+    printf(" Memory efficiency maintained\n");
+    printf("\nPhase 3 implementation is production ready! \n");
     
     return 0;
 }

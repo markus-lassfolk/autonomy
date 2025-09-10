@@ -18,6 +18,13 @@ extern autonomy_config_t g_config;
 static struct uci_context *g_uci_ctx = NULL;
 static bool g_uci_initialized = false; // Use configurable setting // Use configurable setting
 
+// Forward declarations for UCI wrapper functions
+const char* ucix_get_option(struct uci_context *ctx, const char *package, const char *section, const char *option);
+int ucix_get_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int default_value);
+int ucix_add_option(struct uci_context *ctx, const char *package, const char *section, const char *option, const char *value);
+int ucix_add_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int value);
+int ucix_logged_commit(struct uci_context *ctx, const char *package);
+
 // Configuration package name
 #define UCI_PACKAGE "autonomy"
 
@@ -93,6 +100,13 @@ int uci_manager_init(void) {
     LOGX_INFO_MSG("UCI manager initialized successfully using standard OpenWrt UCI");
     
     return AUTONOMY_SUCCESS;
+}
+
+// UCI cleanup wrapper function
+void uci_cleanup(struct uci_context *ctx) {
+    if (ctx) {
+        uci_free_context(ctx);
+    }
 }
 
 // Cleanup UCI manager
@@ -606,4 +620,96 @@ void uci_manager_convert_from_snow_config(const starlink_snow_detection_config_t
     strncpy(autonomy_config->snow_weather_api_key, snow_config->weather_api_key,
             sizeof(autonomy_config->snow_weather_api_key) - 1);
     autonomy_config->snow_weather_api_key[sizeof(autonomy_config->snow_weather_api_key) - 1] = '\0';
+}
+
+// UCI wrapper functions for easier configuration management
+
+// Get string option with default value
+const char* ucix_get_option(struct uci_context *ctx, const char *package, const char *section, const char *option) {
+    struct uci_ptr ptr;
+    char path[256];
+    
+    if (!ctx || !package || !section || !option) {
+        return NULL;
+    }
+    
+    snprintf(path, sizeof(path), "%s.%s.%s", package, section, option);
+    
+    if (uci_lookup_ptr(ctx, &ptr, path, true) != UCI_OK) {
+        return NULL;
+    }
+    
+    if (ptr.o && ptr.o->v.string) {
+        return ptr.o->v.string;
+    }
+    
+    return NULL;
+}
+
+// Get integer option with default value
+int ucix_get_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int default_value) {
+    const char *value = ucix_get_option(ctx, package, section, option);
+    
+    if (value) {
+        return atoi(value);
+    }
+    
+    return default_value;
+}
+
+// Add string option
+int ucix_add_option(struct uci_context *ctx, const char *package, const char *section, const char *option, const char *value) {
+    struct uci_ptr ptr;
+    char path[256];
+    
+    if (!ctx || !package || !section || !option || !value) {
+        return -1;
+    }
+    
+    snprintf(path, sizeof(path), "%s.%s.%s", package, section, option);
+    
+    if (uci_lookup_ptr(ctx, &ptr, path, true) != UCI_OK) {
+        return -1;
+    }
+    
+    ptr.value = value;
+    ptr.flags |= UCI_LOOKUP_COMPLETE;
+    
+    if (uci_set(ctx, &ptr) != UCI_OK) {
+        return -1;
+    }
+    
+    return 0;
+}
+
+// Add integer option
+int ucix_add_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int value) {
+    char value_str[32];
+    snprintf(value_str, sizeof(value_str), "%d", value);
+    return ucix_add_option(ctx, package, section, option, value_str);
+}
+
+// Commit changes with logging
+int ucix_logged_commit(struct uci_context *ctx, const char *package) {
+    if (!ctx) {
+        return -1;
+    }
+    
+    // Get the package structure if package name is provided
+    struct uci_package *pkg = NULL;
+    if (package) {
+        pkg = uci_lookup_package(ctx, package);
+        if (!pkg) {
+            LOGX_ERROR_MSG("Package not found: %s", package);
+            return -1;
+        }
+    }
+    
+    if (uci_commit(ctx, &pkg, false) != UCI_OK) {
+        LOGX_ERROR_MSG("Failed to commit UCI changes for package: %s", package ? package : "all");
+        return -1;
+    }
+    
+    LOGX_INFO_MSG("Successfully committed UCI changes for package: %s", package ? package : "all");
+    return 0;
 }

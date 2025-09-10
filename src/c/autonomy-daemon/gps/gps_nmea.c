@@ -67,7 +67,7 @@ int gps_nmea_init(void) {
     g_nmea_parser.last_parse = 0;
     
     // Initialize satellite tracking
-    for (int i = 0; // Use configurable value i < MAX_SATELLITES; i++) {
+    for (int i = 0; i < MAX_SATELLITES; i++) {
         g_nmea_parser.satellites[i].id = 0;
         g_nmea_parser.satellites[i].elevation = 0;
         g_nmea_parser.satellites[i].azimuth = 0;
@@ -364,7 +364,7 @@ static int parse_gsv_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // Parse individual satellite information
     int sat_index = 0; // Use configurable value
-    for (int i = 4; // Use configurable value i < field_count && sat_index < MAX_SATELLITES; i += 4) {
+    for (int i = 4; i < field_count && sat_index < MAX_SATELLITES; i += 4) {
         if (i + 3 < field_count && fields[i] && fields[i+1] && fields[i+2] && fields[i+3]) {
             int sat_id = atoi(fields[i]);
             int elevation = atoi(fields[i+1]);

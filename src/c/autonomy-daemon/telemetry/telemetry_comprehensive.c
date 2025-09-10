@@ -868,36 +868,36 @@ static int insert_decision_to_database(const decision_record_t* decision) {
     sqlite3_bind_double(stmt, param++, decision->gps_accuracy);
     sqlite3_bind_text(stmt, param++, decision->gps_source, -1, SQLITE_STATIC);
     // Continue with remaining fields...
-    sqlite3_bind_double(stmt, param++, decision->network_latency);
-    sqlite3_bind_double(stmt, param++, decision->network_throughput);
-    sqlite3_bind_double(stmt, param++, decision->network_packet_loss);
-    sqlite3_bind_double(stmt, param++, decision->network_jitter);
-    sqlite3_bind_double(stmt, param++, decision->signal_strength);
-    sqlite3_bind_double(stmt, param++, decision->signal_quality);
-    sqlite3_bind_double(stmt, param++, decision->battery_level);
-    sqlite3_bind_double(stmt, param++, decision->cpu_usage);
-    sqlite3_bind_double(stmt, param++, decision->memory_usage);
-    sqlite3_bind_double(stmt, param++, decision->disk_usage);
-    sqlite3_bind_double(stmt, param++, decision->temperature);
-    sqlite3_bind_double(stmt, param++, decision->uptime);
-    sqlite3_bind_double(stmt, param++, decision->load_average);
-    sqlite3_bind_double(stmt, param++, decision->network_errors);
-    sqlite3_bind_double(stmt, param++, decision->connection_attempts);
-    sqlite3_bind_double(stmt, param++, decision->success_rate);
-    sqlite3_bind_double(stmt, param++, decision->cost_score);
-    sqlite3_bind_double(stmt, param++, decision->reliability_score);
-    sqlite3_bind_double(stmt, param++, decision->performance_score);
-    sqlite3_bind_double(stmt, param++, decision->overall_score);
-    sqlite3_bind_text(stmt, param++, decision->selected_interface, -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, param++, decision->decision_reason, -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, param++, decision->fallback_interface, -1, SQLITE_STATIC);
-    sqlite3_bind_int(stmt, param++, decision->failover_count);
-    sqlite3_bind_int(stmt, param++, decision->retry_count);
-    sqlite3_bind_int(stmt, param++, decision->timeout_count);
-    sqlite3_bind_int(stmt, param++, decision->error_count);
-    sqlite3_bind_int(stmt, param++, decision->warning_count);
-    sqlite3_bind_int(stmt, param++, decision->info_count);
-    sqlite3_bind_text(stmt, param++, decision->metadata, -1, SQLITE_STATIC);
+    sqlite3_bind_double(stmt, param++, decision->from_latency);
+    sqlite3_bind_double(stmt, param++, 0.0); // network_throughput - not available
+    sqlite3_bind_double(stmt, param++, decision->from_loss);
+    sqlite3_bind_double(stmt, param++, 0.0); // network_jitter - not available
+    sqlite3_bind_double(stmt, param++, 0.0); // signal_strength - not available
+    sqlite3_bind_double(stmt, param++, 0.0); // signal_quality - not available
+    sqlite3_bind_double(stmt, param++, 0.0); // battery_level - not available
+    sqlite3_bind_double(stmt, param++, 0.0); // cpu_usage - not available
+    sqlite3_bind_double(stmt, param++, 0.0); // memory_usage - not available
+    sqlite3_bind_double(stmt, param++, 0.0); // disk_usage - not available
+    sqlite3_bind_double(stmt, param++, 0.0); // temperature - not available
+    sqlite3_bind_double(stmt, param++, 0.0); // uptime - not available
+    sqlite3_bind_double(stmt, param++, 0.0); // load_average - not available
+    sqlite3_bind_double(stmt, param++, 0.0); // network_errors - not available
+    sqlite3_bind_double(stmt, param++, 0.0); // connection_attempts - not available
+    sqlite3_bind_double(stmt, param++, decision->success ? 1.0 : 0.0); // success_rate
+    sqlite3_bind_double(stmt, param++, decision->to_score); // cost_score
+    sqlite3_bind_double(stmt, param++, decision->from_score); // reliability_score
+    sqlite3_bind_double(stmt, param++, decision->score_difference); // performance_score
+    sqlite3_bind_double(stmt, param++, decision->confidence); // overall_score
+    sqlite3_bind_text(stmt, param++, decision->to_interface, -1, SQLITE_STATIC); // selected_interface
+    sqlite3_bind_text(stmt, param++, decision->reasoning, -1, SQLITE_STATIC); // decision_reason
+    sqlite3_bind_text(stmt, param++, decision->from_interface, -1, SQLITE_STATIC); // fallback_interface
+    sqlite3_bind_int(stmt, param++, 0); // failover_count - not available
+    sqlite3_bind_int(stmt, param++, 0); // retry_count - not available
+    sqlite3_bind_int(stmt, param++, 0); // timeout_count - not available
+    sqlite3_bind_int(stmt, param++, decision->success ? 0 : 1); // error_count
+    sqlite3_bind_int(stmt, param++, 0); // warning_count - not available
+    sqlite3_bind_int(stmt, param++, 1); // info_count - not available
+    sqlite3_bind_text(stmt, param++, decision->context_json, -1, SQLITE_STATIC); // metadata
     
     // Execute statement
     result = sqlite3_step(stmt);
@@ -955,7 +955,7 @@ static int export_ml_dataset(void) {
     
     // Create export directory if it doesn't exist
     char export_dir[256];
-    snprintf(export_dir, sizeof(export_dir), "%s/ml_exports", g_telemetry_comprehensive.config.data_directory);
+    snprintf(export_dir, sizeof(export_dir), "/tmp/ml_exports");
     
     struct stat st = {0};
     if (stat(export_dir, &st) == -1) {
@@ -1072,7 +1072,7 @@ int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
              "COUNT(CASE WHEN status = 'connected' THEN 1 END) as connected_count, "
              "COUNT(CASE WHEN status = 'disconnected' THEN 1 END) as disconnected_count "
              "FROM telemetry_samples "
-             "WHERE timestamp BETWEEN %ld AND %ld",
+              "WHERE timestamp BETWEEN %lld AND %lld",
              start_time, end_time);
     
     sqlite3_stmt* stmt;
@@ -1081,7 +1081,7 @@ int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
         snprintf(results_json, 2048, 
                  "{\"success\": false, \"algorithm_name\": \"%s\", \"error\": \"Database query failed\"}", 
                  algorithm_name);
-        return AUTONOMY_ERROR_DATABASE;
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
     int sample_count = 0;
@@ -1114,7 +1114,7 @@ int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
     char test_script[512];
     snprintf(test_script, sizeof(test_script),
              "python3 /usr/lib/autonomy/ml/test_algorithm.py "
-             "--algorithm %s --start-time %ld --end-time %ld "
+              "--algorithm %s --start-time %lld --end-time %lld "
              "--data-dir /var/lib/autonomy/telemetry "
              "--output /tmp/ml_test_results.json 2>/dev/null",
              algorithm_name, start_time, end_time);
@@ -1130,7 +1130,7 @@ int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
             snprintf(results_json, 2048,
                      "{\"success\": true, "
                      "\"algorithm_name\": \"%s\", "
-                     "\"time_range\": {\"start\": %ld, \"end\": %ld}, "
+                      "\"time_range\": {\"start\": %lld, \"end\": %lld}, "
                      "\"samples_analyzed\": %d, "
                      "\"data_quality\": {"
                      "\"avg_latency\": %.2f, "
@@ -1159,7 +1159,7 @@ int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
         snprintf(results_json, 2048,
                  "{\"success\": true, "
                  "\"algorithm_name\": \"%s\", "
-                 "\"time_range\": {\"start\": %ld, \"end\": %ld}, "
+                      "\"time_range\": {\"start\": %lld, \"end\": %lld}, "
                  "\"samples_analyzed\": %d, "
                  "\"statistical_analysis\": {"
                  "\"connection_rate\": %.3f, "
@@ -1181,4 +1181,103 @@ int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
                    "success", test_result == 0);
     
     return AUTONOMY_SUCCESS;
+}
+
+// Get telemetry comprehensive statistics
+int telemetry_comprehensive_get_statistics(telemetry_collection_statistics_t* stats) {
+    if (!stats) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (!g_telemetry_comprehensive_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_telemetry_comprehensive.mutex);
+    *stats = g_telemetry_comprehensive.stats;
+    pthread_mutex_unlock(&g_telemetry_comprehensive.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Get historical telemetry samples
+int telemetry_comprehensive_get_historical_samples(const char* member_name,
+                                                  time_t start_time,
+                                                  time_t end_time,
+                                                  telemetry_sample_t* samples,
+                                                  int max_samples) {
+    if (!samples || max_samples <= 0) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (!g_telemetry_comprehensive_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_telemetry_comprehensive.mutex);
+    
+    int samples_returned = 0;
+    int start_index = g_telemetry_comprehensive.samples_buffer_head;
+    
+    for (int i = 0; i < max_samples && i < g_telemetry_comprehensive.samples_buffer_count; i++) {
+        int index = (start_index - i - 1 + g_telemetry_comprehensive.samples_buffer_size) % g_telemetry_comprehensive.samples_buffer_size;
+        
+        // Filter by member name if specified
+        if (member_name && strcmp(g_telemetry_comprehensive.samples_buffer[index].member_name, member_name) != 0) {
+            continue;
+        }
+        
+        // Filter by time range if specified
+        if (start_time > 0 && g_telemetry_comprehensive.samples_buffer[index].timestamp < start_time) {
+            continue;
+        }
+        if (end_time > 0 && g_telemetry_comprehensive.samples_buffer[index].timestamp > end_time) {
+            continue;
+        }
+        
+        samples[samples_returned] = g_telemetry_comprehensive.samples_buffer[index];
+        samples_returned++;
+    }
+    
+    pthread_mutex_unlock(&g_telemetry_comprehensive.mutex);
+    
+    return samples_returned;
+}
+
+// Get decision history
+int telemetry_comprehensive_get_decision_history(time_t start_time,
+                                                time_t end_time,
+                                                decision_record_t* decisions,
+                                                int max_decisions) {
+    if (!decisions || max_decisions <= 0) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (!g_telemetry_comprehensive_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_telemetry_comprehensive.mutex);
+    
+    int decisions_returned = 0;
+    int start_index = g_telemetry_comprehensive.decisions_buffer_head;
+    
+    for (int i = 0; i < max_decisions && i < g_telemetry_comprehensive.decisions_buffer_count; i++) {
+        int index = (start_index - i - 1 + g_telemetry_comprehensive.decisions_buffer_size) % g_telemetry_comprehensive.decisions_buffer_size;
+        
+        // Filter by time range if specified
+        if (start_time > 0 && g_telemetry_comprehensive.decisions_buffer[index].timestamp < start_time) {
+            continue;
+        }
+        if (end_time > 0 && g_telemetry_comprehensive.decisions_buffer[index].timestamp > end_time) {
+            continue;
+        }
+        
+        decisions[decisions_returned] = g_telemetry_comprehensive.decisions_buffer[index];
+        decisions_returned++;
+    }
+    
+    pthread_mutex_unlock(&g_telemetry_comprehensive.mutex);
+    
+    return decisions_returned;
 }

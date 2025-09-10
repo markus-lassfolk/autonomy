@@ -26,7 +26,7 @@ int main() {
     
     ml_monitor_t *monitor = ml_monitor_init(&config);
     assert(monitor != NULL);
-    printf("✓ ML monitor initialized\n");
+    printf(" ML monitor initialized\n");
     
     // Initialize all phases sequentially
     assert(ml_monitor_init_phase3_enhancements(monitor) == ML_MONITOR_SUCCESS);
@@ -34,7 +34,7 @@ int main() {
     assert(ml_monitor_init_phase5_mobile_system(monitor) == ML_MONITOR_SUCCESS);
     assert(ml_monitor_init_phase6_self_optimization(monitor) == ML_MONITOR_SUCCESS);
     assert(ml_monitor_init_phase7_multi_interface(monitor) == ML_MONITOR_SUCCESS);
-    printf("✓ All 7 phases initialized successfully - complete multi-interface ML system ready\n");
+    printf(" All 7 phases initialized successfully - complete multi-interface ML system ready\n");
     
     // Test 2: Corrected duration windows validation
     printf("Test 2: User-specified duration windows validation...\n");
@@ -48,7 +48,7 @@ int main() {
     for (int i = 0; i < DURATION_WINDOW_COUNT; i++) {
         printf("    %d. %s\n", i + 1, DURATION_WINDOWS[i]);
     }
-    printf("✓ User-specified duration windows implemented correctly\n");
+    printf(" User-specified duration windows implemented correctly\n");
     
     // Test 3: Multi-interface monitoring simulation
     printf("Test 3: Multi-interface monitoring with realistic scenarios...\n");
@@ -127,11 +127,11 @@ int main() {
                                                   obs.interface_id, &obs);
         }
         
-        printf("  ✓ %s (%s): Generated 50 observations\n", 
+        printf("   %s (%s): Generated 50 observations\n", 
                test_scenarios[scenario].interface_id, test_scenarios[scenario].scenario);
     }
     
-    printf("✓ Multi-interface monitoring with %d interfaces, 300 total observations\n", scenario_count);
+    printf(" Multi-interface monitoring with %d interfaces, 300 total observations\n", scenario_count);
     
     // Test 4: Interface-specific predictions
     printf("Test 4: Interface-specific predictions with enhanced metrics...\n");
@@ -146,7 +146,7 @@ int main() {
                test_scenarios[i].interface_id, outage_prob, performance_score, confidence);
     }
     
-    printf("✓ Interface-specific predictions functional across all types\n");
+    printf(" Interface-specific predictions functional across all types\n");
     
     // Test 5: Enhanced duration prediction with corrected windows
     printf("Test 5: Enhanced duration prediction with user-specified windows...\n");
@@ -175,7 +175,7 @@ int main() {
         printf("    Reasoning: %s\n", duration_pred.reasoning);
     }
     
-    printf("✓ Enhanced duration prediction with practical windows functional\n");
+    printf(" Enhanced duration prediction with practical windows functional\n");
     
     // Test 6: MWAN3 weight optimization with corrected range
     printf("Test 6: MWAN3 weight optimization (1-99 range)...\n");
@@ -195,7 +195,7 @@ int main() {
         }
     }
     
-    printf("✓ MWAN3 weight optimization with correct 1-99 range functional\n");
+    printf(" MWAN3 weight optimization with correct 1-99 range functional\n");
     
     // Test 7: Failover timing monitoring
     printf("Test 7: Failover timing monitoring and cost analysis...\n");
@@ -208,10 +208,10 @@ int main() {
         uint32_t expected_failback_ms;
         const char* scenario;
     } failover_tests[] = {
-        {"starlink1", "cellular1", 2500, 4000, "Starlink obstruction → Cellular"},
-        {"wifi1", "cellular1", 1500, 3000, "WiFi failure → Cellular"},
-        {"cellular1", "starlink1", 3000, 2000, "Cellular failure → Starlink"},
-        {"lan1", "wifi1", 1000, 2000, "LAN failure → WiFi backup"}
+        {"starlink1", "cellular1", 2500, 4000, "Starlink obstruction  Cellular"},
+        {"wifi1", "cellular1", 1500, 3000, "WiFi failure  Cellular"},
+        {"cellular1", "starlink1", 3000, 2000, "Cellular failure  Starlink"},
+        {"lan1", "wifi1", 1000, 2000, "LAN failure  WiFi backup"}
     };
     
     for (int i = 0; i < 4; i++) {
@@ -237,7 +237,7 @@ int main() {
         }
     }
     
-    printf("✓ Failover timing monitoring and cost analysis functional\n");
+    printf(" Failover timing monitoring and cost analysis functional\n");
     
     // Test 8: Continuous monitoring during failover
     printf("Test 8: Continuous monitoring during failover validation...\n");
@@ -276,11 +276,11 @@ int main() {
     int readiness_result = ml_monitor_get_interface_failback_readiness("starlink1", &readiness);
     assert(readiness_result == ML_MONITOR_SUCCESS);
     
-    printf("  ✓ Continuous monitoring detected Starlink recovery\n");
-    printf("  ✓ Failback readiness: %u%% success probability, %us recommended delay\n",
+    printf("   Continuous monitoring detected Starlink recovery\n");
+    printf("   Failback readiness: %u%% success probability, %us recommended delay\n",
            readiness.failback_success_probability, readiness.recommended_failback_delay);
     
-    printf("✓ Continuous monitoring during failover validated\n");
+    printf(" Continuous monitoring during failover validated\n");
     
     // Test 9: True/False validation learning
     printf("Test 9: True/False validation and learning improvement...\n");
@@ -308,7 +308,7 @@ int main() {
         printf("  %s: %s\n", validation_tests[i].interface_id, validation_tests[i].outcome);
     }
     
-    printf("✓ True/False validation learning system functional\n");
+    printf(" True/False validation learning system functional\n");
     
     // Test 10: MWAN3 integration with realistic weight updates
     printf("Test 10: MWAN3 integration with realistic weight updates...\n");
@@ -329,7 +329,7 @@ int main() {
     printf("  - MWAN3 integration: %s\n", mwan3_active ? "active" : "inactive");
     
     assert(interfaces_monitored >= 5); // Should monitor multiple interfaces
-    printf("✓ MWAN3 integration and weight management functional\n");
+    printf(" MWAN3 integration and weight management functional\n");
     
     // Test 11: Cost-benefit analysis validation
     printf("Test 11: Cost-benefit analysis for different outage durations...\n");
@@ -356,7 +356,7 @@ int main() {
         }
     }
     
-    printf("✓ Cost-benefit analysis correctly recommends failover for longer outages\n");
+    printf(" Cost-benefit analysis correctly recommends failover for longer outages\n");
     
     // Test 12: Auto-tuning of duration windows
     printf("Test 12: Auto-tuning of duration windows based on real data...\n");
@@ -364,33 +364,33 @@ int main() {
     int tuning_result = ml_monitor_auto_tune_duration_windows(monitor);
     assert(tuning_result == ML_MONITOR_SUCCESS);
     
-    printf("  ✓ Duration window auto-tuning analysis completed\n");
-    printf("  ✓ System learns optimal duration thresholds from real data\n");
-    printf("✓ Auto-tuning of duration windows functional\n");
+    printf("   Duration window auto-tuning analysis completed\n");
+    printf("   System learns optimal duration thresholds from real data\n");
+    printf(" Auto-tuning of duration windows functional\n");
     
     // Test 13: Complete system validation
     printf("Test 13: Complete multi-interface system validation...\n");
     
-    printf("  📊 PHASE 7 MULTI-INTERFACE SYSTEM SUMMARY:\n");
+    printf("   PHASE 7 MULTI-INTERFACE SYSTEM SUMMARY:\n");
     printf("  ==========================================\n");
-    printf("  ✅ Continuous monitoring during failover\n");
-    printf("  ✅ Enhanced network performance ML (latency/packet loss focus)\n");
-    printf("  ✅ Intelligent failback prediction\n");
-    printf("  ✅ Granular duration prediction (11 windows)\n");
-    printf("  ✅ Multi-interface monitoring (6 interfaces tested)\n");
-    printf("  ✅ Hybrid per-device + per-type models\n");
-    printf("  ✅ Dynamic MWAN3 weight optimization (1-99 range)\n");
-    printf("  ✅ Failover timing monitoring\n");
-    printf("  ✅ True/False validation learning\n");
-    printf("  ✅ Cost-benefit analysis\n");
-    printf("  ✅ Auto-tuning of duration windows\n");
+    printf("   Continuous monitoring during failover\n");
+    printf("   Enhanced network performance ML (latency/packet loss focus)\n");
+    printf("   Intelligent failback prediction\n");
+    printf("   Granular duration prediction (11 windows)\n");
+    printf("   Multi-interface monitoring (6 interfaces tested)\n");
+    printf("   Hybrid per-device + per-type models\n");
+    printf("   Dynamic MWAN3 weight optimization (1-99 range)\n");
+    printf("   Failover timing monitoring\n");
+    printf("   True/False validation learning\n");
+    printf("   Cost-benefit analysis\n");
+    printf("   Auto-tuning of duration windows\n");
     
     // Memory usage validation
     size_t total_memory = monitor->storage_size + sizeof(multi_interface_ml_system_t);
-    printf("  💾 Total memory usage: %.1f MB (with multi-interface)\n", total_memory / (1024.0 * 1024.0));
+    printf("   Total memory usage: %.1f MB (with multi-interface)\n", total_memory / (1024.0 * 1024.0));
     
     assert(total_memory < 4 * 1024 * 1024); // Less than 4MB even with multi-interface
-    printf("✓ Complete system validation successful\n");
+    printf(" Complete system validation successful\n");
     
     // Test 14: Cleanup
     printf("Test 14: System cleanup with Phase 7 enhancements...\n");
@@ -400,37 +400,37 @@ int main() {
     
     // Cleanup main monitor
     ml_monitor_cleanup(monitor);
-    printf("✓ Complete system cleanup successful\n");
+    printf(" Complete system cleanup successful\n");
     
     printf("\n==========================================================\n");
-    printf("🎉 PHASE 7 COMPLETE - MULTI-INTERFACE INTELLIGENCE! 🎉\n");
+    printf(" PHASE 7 COMPLETE - MULTI-INTERFACE INTELLIGENCE! \n");
     printf("==========================================================\n");
     printf("\n");
-    printf("✅ ALL 7 PHASES SUCCESSFULLY IMPLEMENTED:\n");
-    printf("1️⃣ Foundation & Data Structures\n");
-    printf("2️⃣ Real Data Integration\n");
-    printf("3️⃣ Advanced Sky Grid & Sliding Window\n");
-    printf("4️⃣ Ensemble Methods & Real-time Validation\n");
-    printf("5️⃣ Mobile Optimization & Field Testing\n");
-    printf("6️⃣ Self-Optimization & Production Deployment\n");
-    printf("7️⃣ Multi-Interface Intelligence (NEW)\n");
+    printf(" ALL 7 PHASES SUCCESSFULLY IMPLEMENTED:\n");
+    printf("1 Foundation & Data Structures\n");
+    printf("2 Real Data Integration\n");
+    printf("3 Advanced Sky Grid & Sliding Window\n");
+    printf("4 Ensemble Methods & Real-time Validation\n");
+    printf("5 Mobile Optimization & Field Testing\n");
+    printf("6 Self-Optimization & Production Deployment\n");
+    printf("7 Multi-Interface Intelligence (NEW)\n");
     printf("\n");
-    printf("🚀 REVOLUTIONARY NETWORK INTELLIGENCE SYSTEM:\n");
-    printf("🔗 Multi-Interface Monitoring (Starlink, Cellular, WiFi, LAN)\n");
-    printf("🧠 Hybrid Per-Device + Per-Type ML Models\n");
-    printf("📊 Enhanced Network Performance Prediction\n");
-    printf("🔄 Continuous Monitoring During Failover\n");
-    printf("📈 Latency & Packet Loss ML (Primary Indicators)\n");
-    printf("⏪ Intelligent Failback Prediction\n");
-    printf("⏱️ Granular Duration Prediction (11 Time Windows)\n");
-    printf("⚖️ Real Cost-Benefit Analysis\n");
-    printf("🎛️ Dynamic MWAN3 Weight Optimization (1-99)\n");
-    printf("⏱️ Failover Timing Monitoring\n");
-    printf("📡 True/False Validation Learning\n");
+    printf(" REVOLUTIONARY NETWORK INTELLIGENCE SYSTEM:\n");
+    printf(" Multi-Interface Monitoring (Starlink, Cellular, WiFi, LAN)\n");
+    printf(" Hybrid Per-Device + Per-Type ML Models\n");
+    printf(" Enhanced Network Performance Prediction\n");
+    printf(" Continuous Monitoring During Failover\n");
+    printf(" Latency & Packet Loss ML (Primary Indicators)\n");
+    printf(" Intelligent Failback Prediction\n");
+    printf(" Granular Duration Prediction (11 Time Windows)\n");
+    printf(" Real Cost-Benefit Analysis\n");
+    printf(" Dynamic MWAN3 Weight Optimization (1-99)\n");
+    printf(" Failover Timing Monitoring\n");
+    printf(" True/False Validation Learning\n");
     printf("\n");
-    printf("🏆 PRODUCTION READY FOR COMPREHENSIVE NETWORK INTELLIGENCE!\n");
+    printf(" PRODUCTION READY FOR COMPREHENSIVE NETWORK INTELLIGENCE!\n");
     printf("\nThis system provides revolutionary network management\n");
-    printf("with intelligent failover decisions across all connection types! 🌟\n");
+    printf("with intelligent failover decisions across all connection types! \n");
     
     return 0;
 }

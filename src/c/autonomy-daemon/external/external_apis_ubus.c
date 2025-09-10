@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "external_apis_ubus.h"
 #include "external_apis.h"
 #include "../utils/logx.h"
@@ -223,7 +224,7 @@ int external_apis_ubus_get_statistics(struct ubus_context *ctx, struct ubus_obje
     if (api_count > 0) {
         void *apis_array = blobmsg_open_array(&bb, "apis");
         
-        for (int i = 0; // Use configurable value i < api_count; i++) {
+        for (int i = 0; i < api_count; i++) {
             void *api_table = blobmsg_open_table(&bb, NULL);
             
             blobmsg_add_string(&bb, "api", external_api_type_to_string((external_api_type_t)i));
@@ -275,7 +276,7 @@ int external_apis_ubus_health_check(struct ubus_context *ctx, struct ubus_object
         void *health_table = blobmsg_open_table(&bb, "health_check");
         void *api_health_array = blobmsg_open_array(&bb, "api_health");
         
-        for (int i = 0; // Use configurable value i < EXTERNAL_API_MAX; i++) {
+        for (int i = 0; i < EXTERNAL_API_MAX; i++) {
             api_status_t status = external_apis_get_status((external_api_type_t)i);
             
             switch (status) {
@@ -325,7 +326,225 @@ int external_apis_ubus_health_check(struct ubus_context *ctx, struct ubus_object
     return UBUS_STATUS_OK;
 }
 
-// Additional UBUS method implementations would continue here...
+// Get external API configuration
+int external_apis_ubus_get_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                 struct ubus_request_data *req, const char *method,
+                                 struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!external_apis_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "External APIs not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    blobmsg_add_u8(&bb, "success", 1);
+    
+    // Get configuration for each API type
+    void *config_array = blobmsg_open_array(&bb, "configs");
+    
+    for (int i = 0; i < EXTERNAL_API_MAX; i++) {
+        external_api_statistics_t stats;
+        if (external_apis_get_statistics((external_api_type_t)i, &stats) == AUTONOMY_SUCCESS) {
+            void *api_table = blobmsg_open_table(&bb, NULL);
+            
+            blobmsg_add_string(&bb, "api", external_api_type_to_string((external_api_type_t)i));
+            blobmsg_add_string(&bb, "status", external_api_status_to_string(stats.status));
+            blobmsg_add_u64(&bb, "total_requests", stats.total_requests);
+            blobmsg_add_u64(&bb, "successful_requests", stats.successful_requests);
+            blobmsg_add_u64(&bb, "failed_requests", stats.failed_requests);
+            blobmsg_add_double(&bb, "success_rate", stats.success_rate);
+            blobmsg_add_double(&bb, "avg_response_time_ms", stats.average_response_time_ms);
+            blobmsg_add_u32(&bb, "requests_this_hour", stats.requests_this_hour);
+            blobmsg_add_u32(&bb, "requests_this_day", stats.requests_this_day);
+            blobmsg_add_double(&bb, "cost_this_month", stats.cost_this_month);
+            blobmsg_add_u32(&bb, "consecutive_failures", stats.consecutive_failures);
+            blobmsg_add_u32(&bb, "last_success", (uint32_t)stats.last_success);
+            
+            blobmsg_close_table(&bb, api_table);
+        }
+    }
+    
+    blobmsg_close_array(&bb, config_array);
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Configure external API
+int external_apis_ubus_configure(struct ubus_context *ctx, struct ubus_object *obj,
+                                struct ubus_request_data *req, const char *method,
+                                struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!external_apis_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "External APIs not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    struct blob_attr *tb[__EXTERNAL_API_CONFIG_MAX];
+    blobmsg_parse(external_api_config_policy, __EXTERNAL_API_CONFIG_MAX, tb, blob_data(msg), blob_len(msg));
+    
+    if (!tb[EXTERNAL_API_CONFIG_API]) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Missing API parameter");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    const char* api_name = blobmsg_get_string(tb[EXTERNAL_API_CONFIG_API]);
+    external_api_type_t api_type = external_api_parse_type(api_name);
+    
+    if (api_type == EXTERNAL_API_MAX) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Invalid API type");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // For now, just enable/disable the API based on the enabled parameter
+    if (tb[EXTERNAL_API_CONFIG_ENABLED]) {
+        bool enabled = blobmsg_get_bool(tb[EXTERNAL_API_CONFIG_ENABLED]);
+        if (external_apis_set_enabled(api_type, enabled) == AUTONOMY_SUCCESS) {
+            blobmsg_add_u8(&bb, "success", 1);
+            blobmsg_add_string(&bb, "message", "API configuration updated");
+        } else {
+            blobmsg_add_u8(&bb, "success", 0);
+            blobmsg_add_string(&bb, "error", "Failed to update API configuration");
+        }
+    } else {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "No configuration parameters provided");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Reset external API statistics
+int external_apis_ubus_reset_statistics(struct ubus_context *ctx, struct ubus_object *obj,
+                                       struct ubus_request_data *req, const char *method,
+                                       struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!external_apis_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "External APIs not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    struct blob_attr *tb[__EXTERNAL_API_CONFIG_MAX];
+    blobmsg_parse(external_api_config_policy, __EXTERNAL_API_CONFIG_MAX, tb, blob_data(msg), blob_len(msg));
+    
+    if (tb[EXTERNAL_API_CONFIG_API]) {
+        const char* api_name = blobmsg_get_string(tb[EXTERNAL_API_CONFIG_API]);
+        external_api_type_t api_type = external_api_parse_type(api_name);
+        
+        if (api_type != EXTERNAL_API_MAX) {
+            if (external_apis_reset_statistics(api_type) == AUTONOMY_SUCCESS) {
+                blobmsg_add_u8(&bb, "success", 1);
+                blobmsg_add_string(&bb, "message", "API statistics reset");
+            } else {
+                blobmsg_add_u8(&bb, "success", 0);
+                blobmsg_add_string(&bb, "error", "Failed to reset API statistics");
+            }
+        } else {
+            blobmsg_add_u8(&bb, "success", 0);
+            blobmsg_add_string(&bb, "error", "Invalid API type");
+        }
+    } else {
+        // Reset all API statistics
+        bool all_success = true;
+        for (int i = 0; i < EXTERNAL_API_MAX; i++) {
+            if (external_apis_reset_statistics((external_api_type_t)i) != AUTONOMY_SUCCESS) {
+                all_success = false;
+            }
+        }
+        
+        if (all_success) {
+            blobmsg_add_u8(&bb, "success", 1);
+            blobmsg_add_string(&bb, "message", "All API statistics reset");
+        } else {
+            blobmsg_add_u8(&bb, "success", 0);
+            blobmsg_add_string(&bb, "error", "Some API statistics failed to reset");
+        }
+    }
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Test external API connection
+int external_apis_ubus_test_connection(struct ubus_context *ctx, struct ubus_object *obj,
+                                      struct ubus_request_data *req, const char *method,
+                                      struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!external_apis_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "External APIs not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    struct blob_attr *tb[__EXTERNAL_API_CONFIG_MAX];
+    blobmsg_parse(external_api_config_policy, __EXTERNAL_API_CONFIG_MAX, tb, blob_data(msg), blob_len(msg));
+    
+    if (!tb[EXTERNAL_API_CONFIG_API]) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Missing API parameter");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    const char* api_name = blobmsg_get_string(tb[EXTERNAL_API_CONFIG_API]);
+    external_api_type_t api_type = external_api_parse_type(api_name);
+    
+    if (api_type == EXTERNAL_API_MAX) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Invalid API type");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Perform health check for the API
+    if (external_apis_is_healthy(api_type)) {
+        blobmsg_add_u8(&bb, "success", 1);
+        
+        void *test_table = blobmsg_open_table(&bb, "test_result");
+        blobmsg_add_string(&bb, "api", api_name);
+        blobmsg_add_u8(&bb, "connected", true);
+        blobmsg_add_string(&bb, "status", "healthy");
+        blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+        blobmsg_close_table(&bb, test_table);
+    } else {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "API is not healthy or available");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
 
 // UBUS method definitions
 const struct ubus_method external_apis_ubus_methods[] = {

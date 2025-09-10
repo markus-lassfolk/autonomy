@@ -622,7 +622,7 @@ static int create_new_location_reference(double latitude, double longitude, doub
         sqlite3_finalize(stmt);
     }
     
-    return AUTONOMY_ERROR_DATABASE;
+    return AUTONOMY_ERROR_SYSTEM;
 }
 
 // Find nearby location reference
@@ -677,4 +677,34 @@ static int find_nearby_location_reference(double latitude, double longitude, uin
 
 bool gps_location_reference_is_initialized(void) {
     return g_location_ref_initialized;
+}
+
+// Get location reference system status
+int gps_location_reference_get_status(gps_location_reference_stats_t *status) {
+    if (!g_location_ref_initialized || !status) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_location_ref_manager.mutex);
+    
+    *status = g_location_ref_manager.stats;
+    
+    pthread_mutex_unlock(&g_location_ref_manager.mutex);
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Reduce coordinate precision to specified meters
+double gps_reduce_coordinate_precision(double coordinate, double precision_meters) {
+    if (precision_meters <= 0.0) {
+        return coordinate;
+    }
+    
+    // Convert precision from meters to degrees (approximate)
+    // 1 degree latitude ≈ 111,000 meters
+    // 1 degree longitude ≈ 111,000 * cos(latitude) meters
+    double precision_degrees = precision_meters / 111000.0;
+    
+    // Round to the nearest precision step
+    return round(coordinate / precision_degrees) * precision_degrees;
 }

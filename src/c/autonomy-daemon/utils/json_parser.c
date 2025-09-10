@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <stdarg.h>
 
 // Global error state
 static char g_json_error[256] = {0};
@@ -391,6 +392,8 @@ bool json_parse_openweather_current(const char* json_str, weather_data_t* weathe
     json_get_double(doc, "main.pressure", &weather->pressure);
     json_get_double(doc, "wind.speed", &weather->wind_speed);
     json_get_double(doc, "wind.deg", &weather->wind_direction);
+    json_get_double(doc, "rain.1h", &weather->precipitation);  // 1-hour precipitation
+    json_get_double(doc, "clouds.all", &weather->cloud_cover);  // Cloud cover percentage
     
     json_get_string(doc, "weather.0.description", weather->description, sizeof(weather->description));
     json_get_string(doc, "weather.0.icon", weather->icon, sizeof(weather->icon));
@@ -461,7 +464,7 @@ bool json_parse_gps_data(const char* json_str, gps_data_t* gps) {
     json_get_double(doc, "accuracy", &gps->accuracy);
     json_get_double(doc, "speed", &gps->speed);
     json_get_double(doc, "heading", &gps->heading);
-    json_get_string(doc, "provider", gps->provider, sizeof(gps->provider));
+    json_get_string(doc, "provider", gps->source, sizeof(gps->source));
 
     int timestamp_int;
     if (json_get_int(doc, "timestamp", &timestamp_int)) {

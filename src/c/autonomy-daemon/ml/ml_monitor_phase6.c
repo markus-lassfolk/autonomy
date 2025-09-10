@@ -4,6 +4,7 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/resource.h>
@@ -175,7 +176,7 @@ static int ml_monitor_run_self_optimization_cycle(ml_monitor_t *monitor, self_op
 static int ml_monitor_validate_production_deployment(production_deployment_validator_t *validator);
 static double ml_monitor_calculate_resource_efficiency(const advanced_resource_tracker_t *tracker);
 static int ml_monitor_optimize_memory_usage(ml_monitor_t *monitor);
-static int ml_monitor_run_stress_tests(production_deployment_validator_t *validator);
+static int ml_monitor_run_stress_tests(ml_monitor_t *monitor, production_deployment_validator_t *validator);
 
 // Update advanced resource tracking
 static int ml_monitor_update_resource_tracking(advanced_resource_tracker_t *tracker) {
@@ -234,7 +235,7 @@ static int ml_monitor_update_resource_tracking(advanced_resource_tracker_t *trac
     tracker->efficiency.resource_efficiency_score = ml_monitor_calculate_resource_efficiency(tracker);
     tracker->efficiency.last_efficiency_calculation = time(NULL);
     
-    LOGX_DEBUG("Resource tracking: CPU=%.1f%%, Memory=%zu KB, Efficiency=%.3f",
+    LOGX_DEBUG_MSG("Resource tracking: CPU=%.1f%%, Memory=%zu KB, Efficiency=%.3f",
               tracker->cpu.cpu_usage_percent, tracker->memory.current_memory_kb,
               tracker->efficiency.resource_efficiency_score);
     
@@ -275,7 +276,7 @@ static int ml_monitor_run_self_optimization_cycle(ml_monitor_t *monitor, self_op
         return ML_MONITOR_SUCCESS;
     }
     
-    LOGX_INFO("🔧 Running self-optimization cycle %u", engine->optimization_cycles_completed + 1);
+    LOGX_INFO_MSG(" Running self-optimization cycle %u", engine->optimization_cycles_completed + 1);
     
     // Get current performance metrics
     performance_monitor_t *perf = &monitor->state->models.performance;
@@ -288,7 +289,7 @@ static int ml_monitor_run_self_optimization_cycle(ml_monitor_t *monitor, self_op
     if (engine->strategies.enable_algorithm_selection) {
         if (current_accuracy < engine->targets.target_accuracy) {
             // Enable more aggressive ensemble methods
-            LOGX_DEBUG("Optimizing algorithm selection for better accuracy");
+            LOGX_DEBUG_MSG("Optimizing algorithm selection for better accuracy");
             optimization_made = true;
         }
     }
@@ -301,14 +302,14 @@ static int ml_monitor_run_self_optimization_cycle(ml_monitor_t *monitor, self_op
             // Increase learning rate for better adaptation
             if (nn->learning_rate < 200) {
                 nn->learning_rate += 10;
-                LOGX_DEBUG("Self-optimization: increased learning rate to %u", nn->learning_rate);
+                LOGX_DEBUG_MSG("Self-optimization: increased learning rate to %u", nn->learning_rate);
                 optimization_made = true;
             }
         } else if (current_accuracy > 0.95) {
             // Reduce learning rate for stability
             if (nn->learning_rate > 50) {
                 nn->learning_rate -= 5;
-                LOGX_DEBUG("Self-optimization: reduced learning rate to %u for stability", nn->learning_rate);
+                LOGX_DEBUG_MSG("Self-optimization: reduced learning rate to %u for stability", nn->learning_rate);
                 optimization_made = true;
             }
         }
@@ -332,7 +333,7 @@ static int ml_monitor_run_self_optimization_cycle(ml_monitor_t *monitor, self_op
             // Very stable location with good accuracy, can reduce collection frequency
             if (monitor->config.collection_interval_seconds < 30) {
                 // This would be done through configuration update in practice
-                LOGX_DEBUG("Self-optimization: suggesting reduced collection frequency for stable location");
+                LOGX_DEBUG_MSG("Self-optimization: suggesting reduced collection frequency for stable location");
                 optimization_made = true;
             }
         }
@@ -348,10 +349,10 @@ static int ml_monitor_run_self_optimization_cycle(ml_monitor_t *monitor, self_op
             engine->results.accuracy_improvement = current_accuracy;
         }
         
-        LOGX_INFO("✅ Self-optimization cycle completed successfully");
+        LOGX_INFO_MSG(" Self-optimization cycle completed successfully");
     } else {
         engine->results.failed_optimizations++;
-        LOGX_DEBUG("Self-optimization: no optimizations needed this cycle");
+        LOGX_DEBUG_MSG("Self-optimization: no optimizations needed this cycle");
     }
     
     engine->last_optimization_cycle = current_time;
@@ -364,14 +365,14 @@ static int ml_monitor_run_self_optimization_cycle(ml_monitor_t *monitor, self_op
 static int ml_monitor_optimize_memory_usage(ml_monitor_t *monitor) {
     if (!monitor || !monitor->state) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_DEBUG("Running memory optimization");
+    LOGX_DEBUG_MSG("Running memory optimization");
     
     // Strategy 1: Compact observation buffer if it's getting large
     observation_buffer_t *buffer = &monitor->state->recent;
     
     if (buffer->count > buffer->max_observations * 0.9) {
         // Consider reducing buffer size or implementing compression
-        LOGX_DEBUG("Observation buffer is 90% full, considering optimization");
+        LOGX_DEBUG_MSG("Observation buffer is 90% full, considering optimization");
         
         // In a full implementation, we might:
         // - Compress older observations
@@ -385,7 +386,7 @@ static int ml_monitor_optimize_memory_usage(ml_monitor_t *monitor) {
     
     if (matcher->count > matcher->max_patterns * 0.9) {
         // Remove least useful patterns
-        LOGX_DEBUG("Pattern library is 90% full, optimizing patterns");
+        LOGX_DEBUG_MSG("Pattern library is 90% full, optimizing patterns");
         
         // In a full implementation, we might:
         // - Remove patterns with low confidence
@@ -410,7 +411,7 @@ static int ml_monitor_optimize_memory_usage(ml_monitor_t *monitor) {
             }
         }
         
-        LOGX_DEBUG("Applied memory optimization: sky grid decay");
+        LOGX_DEBUG_MSG("Applied memory optimization: sky grid decay");
         return ML_MONITOR_SUCCESS;
     }
     
@@ -418,19 +419,19 @@ static int ml_monitor_optimize_memory_usage(ml_monitor_t *monitor) {
 }
 
 // Run comprehensive stress tests
-static int ml_monitor_run_stress_tests(production_deployment_validator_t *validator) {
-    if (!validator) return ML_MONITOR_ERROR_INVALID_PARAM;
+static int ml_monitor_run_stress_tests(ml_monitor_t *monitor, production_deployment_validator_t *validator) {
+    if (!monitor || !validator) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("🧪 Running comprehensive stress tests for production validation");
+    LOGX_INFO_MSG(" Running comprehensive stress tests for production validation");
     
     // Memory stress test
-    LOGX_DEBUG("Running memory stress test...");
+    LOGX_DEBUG_MSG("Running memory stress test...");
     // In a real implementation, this would allocate memory up to limits
     validator->stress_tests.passed_memory_stress_test = true;
-    LOGX_DEBUG("✅ Memory stress test passed");
+    LOGX_DEBUG_MSG(" Memory stress test passed");
     
     // CPU stress test
-    LOGX_DEBUG("Running CPU stress test...");
+    LOGX_DEBUG_MSG("Running CPU stress test...");
     // Real CPU-intensive ML operations
     time_t start_time = time(NULL);
     
@@ -451,23 +452,23 @@ static int ml_monitor_run_stress_tests(production_deployment_validator_t *valida
     
     double stress_duration = difftime(end_time, start_time);
     validator->stress_tests.passed_cpu_stress_test = (stress_duration < 5.0); // Should complete in <5 seconds
-    LOGX_DEBUG("✅ CPU stress test passed (%.2f seconds)", stress_duration);
+    LOGX_DEBUG_MSG(" CPU stress test passed (%.2f seconds)", stress_duration);
     
     // Accuracy stress test
-    LOGX_DEBUG("Running accuracy stress test...");
+    LOGX_DEBUG_MSG("Running accuracy stress test...");
     // This would test prediction accuracy under various conditions
     validator->stress_tests.passed_accuracy_stress_test = true;
-    LOGX_DEBUG("✅ Accuracy stress test passed");
+    LOGX_DEBUG_MSG(" Accuracy stress test passed");
     
     // Mobile stress test
-    LOGX_DEBUG("Running mobile scenario stress test...");
+    LOGX_DEBUG_MSG("Running mobile scenario stress test...");
     // This would test rapid scenario changes and adaptation
     validator->stress_tests.passed_mobile_stress_test = true;
-    LOGX_DEBUG("✅ Mobile stress test passed");
+    LOGX_DEBUG_MSG(" Mobile stress test passed");
     
     validator->stress_tests.stress_test_completion = time(NULL);
     
-    LOGX_INFO("🎉 All stress tests completed successfully");
+    LOGX_INFO_MSG(" All stress tests completed successfully");
     return ML_MONITOR_SUCCESS;
 }
 
@@ -475,7 +476,7 @@ static int ml_monitor_run_stress_tests(production_deployment_validator_t *valida
 static int ml_monitor_validate_production_deployment(production_deployment_validator_t *validator) {
     if (!validator) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("🔍 Validating production deployment readiness");
+    LOGX_INFO_MSG(" Validating production deployment readiness");
     
     // Check memory requirements
     validator->readiness_checks.memory_requirements_met = 
@@ -539,7 +540,7 @@ static int ml_monitor_validate_production_deployment(production_deployment_valid
     
     validator->validation.validation_timestamp = time(NULL);
     
-    LOGX_INFO("🎯 Production validation completed: %s", 
+    LOGX_INFO_MSG(" Production validation completed: %s", 
              validator->validation.production_ready ? "READY" : "NEEDS WORK");
     
     return ML_MONITOR_SUCCESS;
@@ -549,12 +550,12 @@ static int ml_monitor_validate_production_deployment(production_deployment_valid
 int ml_monitor_init_phase6_self_optimization(ml_monitor_t *monitor) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("🚀 Initializing Phase 6: Self-Optimizing System & Production Deployment");
+    LOGX_INFO_MSG(" Initializing Phase 6: Self-Optimizing System & Production Deployment");
     
     // Allocate Phase 6 system
     phase6_system_t *phase6_system = calloc(1, sizeof(phase6_system_t));
     if (!phase6_system) {
-        LOGX_ERROR("Failed to allocate Phase 6 system");
+        LOGX_ERROR_MSG("Failed to allocate Phase 6 system");
         return ML_MONITOR_ERROR_MEMORY_FAILED;
     }
     
@@ -610,12 +611,12 @@ int ml_monitor_init_phase6_self_optimization(ml_monitor_t *monitor) {
     strncpy(phase6_system->system_health.health_status, "optimal", 
             sizeof(phase6_system->system_health.health_status) - 1);
     
-    LOGX_INFO("✅ Phase 6 self-optimizing system initialized successfully");
-    LOGX_INFO("   - Advanced resource tracking and optimization");
-    LOGX_INFO("   - Autonomous self-optimization engine");
-    LOGX_INFO("   - Production deployment validation");
-    LOGX_INFO("   - Comprehensive stress testing framework");
-    LOGX_INFO("   - Target accuracy: %.1f%%, Memory: %zu KB, Response: %.1f ms",
+    LOGX_INFO_MSG(" Phase 6 self-optimizing system initialized successfully");
+    LOGX_INFO_MSG("   - Advanced resource tracking and optimization");
+    LOGX_INFO_MSG("   - Autonomous self-optimization engine");
+    LOGX_INFO_MSG("   - Production deployment validation");
+    LOGX_INFO_MSG("   - Comprehensive stress testing framework");
+    LOGX_INFO_MSG("   - Target accuracy: %.1f%%, Memory: %zu KB, Response: %.1f ms",
              engine->targets.target_accuracy * 100,
              engine->targets.target_memory_usage_kb,
              engine->targets.target_response_time_ms);
@@ -642,7 +643,7 @@ int ml_monitor_update_with_phase6_self_optimization(ml_monitor_t *monitor, const
             perf->resources.memory_peak_kb = usage.ru_maxrss;
             perf->resources.cpu_cycles_used += usage.ru_utime.tv_sec + usage.ru_stime.tv_sec;
             
-            LOGX_DEBUG("📊 Resource tracking updated: memory=%ld KB, CPU=%u cycles",
+            LOGX_DEBUG_MSG(" Resource tracking updated: memory=%ld KB, CPU=%u cycles",
                       usage.ru_maxrss, perf->resources.cpu_cycles_used);
         }
         last_resource_update = now;
@@ -663,14 +664,14 @@ int ml_monitor_update_with_phase6_self_optimization(ml_monitor_t *monitor, const
                 // Poor performance - increase learning rate
                 if (nn->learning_rate < 200) {
                     nn->learning_rate += 10;
-                    LOGX_INFO("🔧 Self-optimization: increased learning rate to %u (accuracy: %.1f%%)",
+                    LOGX_INFO_MSG(" Self-optimization: increased learning rate to %u (accuracy: %.1f%%)",
                              nn->learning_rate, accuracy * 100);
                 }
             } else if (accuracy > 0.95) {
                 // Excellent performance - reduce learning rate for stability
                 if (nn->learning_rate > 50) {
                     nn->learning_rate -= 5;
-                    LOGX_INFO("🎯 Self-optimization: reduced learning rate to %u for stability (accuracy: %.1f%%)",
+                    LOGX_INFO_MSG(" Self-optimization: reduced learning rate to %u for stability (accuracy: %.1f%%)",
                              nn->learning_rate, accuracy * 100);
                 }
             }
@@ -681,7 +682,7 @@ int ml_monitor_update_with_phase6_self_optimization(ml_monitor_t *monitor, const
                 // Too many false positives - increase confidence threshold
                 if (monitor->config.confidence_threshold < 200) {
                     monitor->config.confidence_threshold += 10;
-                    LOGX_INFO("🔧 Self-optimization: increased confidence threshold to %u (FP rate: %.1f%%)",
+                    LOGX_INFO_MSG(" Self-optimization: increased confidence threshold to %u (FP rate: %.1f%%)",
                              monitor->config.confidence_threshold, fp_rate * 100);
                 }
             }
@@ -741,7 +742,7 @@ int ml_monitor_get_phase6_status(ml_monitor_t *monitor,
 int ml_monitor_run_production_validation(ml_monitor_t *monitor, char *validation_report, size_t report_size) {
     if (!monitor || !validation_report) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("🔍 Running comprehensive production deployment validation");
+    LOGX_INFO_MSG(" Running comprehensive production deployment validation");
     
     // Collect current metrics
     performance_monitor_t *perf = &monitor->state->models.performance;
@@ -761,13 +762,13 @@ int ml_monitor_run_production_validation(ml_monitor_t *monitor, char *validation
     // Generate validation report
     snprintf(validation_report, report_size,
             "=== ML MONITOR PRODUCTION DEPLOYMENT VALIDATION ===\n"
-            "Timestamp: %ld\n"
+            "Timestamp: %lld\n"
             "Version: Phase 6 - Self-Optimizing System\n\n"
             "REQUIREMENTS VALIDATION:\n"
-            "✓ Memory Usage: %s (%.1f MB / 2.0 MB limit)\n"
-            "✓ Prediction Accuracy: %s (%.1f%% / 85%% minimum)\n"
-            "✓ Integration: %s (All phases integrated)\n"
-            "✓ Stability: %s (All stress tests passed)\n\n"
+            " Memory Usage: %s (%.1f MB / 2.0 MB limit)\n"
+            " Prediction Accuracy: %s (%.1f%% / 85%% minimum)\n"
+            " Integration: %s (All phases integrated)\n"
+            " Stability: %s (All stress tests passed)\n\n"
             "PERFORMANCE METRICS:\n"
             "- Total Observations: %u\n"
             "- Predictions Made: %u\n"
@@ -777,15 +778,15 @@ int ml_monitor_run_production_validation(ml_monitor_t *monitor, char *validation
             "- Location Changes: %u\n"
             "- Mobile Scenarios: 5 supported\n\n"
             "ADVANCED FEATURES:\n"
-            "✓ 5-Algorithm Ensemble\n"
-            "✓ Real-time Validation\n"
-            "✓ Proactive Optimization\n"
-            "✓ Mobile Intelligence\n"
-            "✓ Transfer Learning\n"
-            "✓ Self-Optimization\n\n"
+            " 5-Algorithm Ensemble\n"
+            " Real-time Validation\n"
+            " Proactive Optimization\n"
+            " Mobile Intelligence\n"
+            " Transfer Learning\n"
+            " Self-Optimization\n\n"
             "DEPLOYMENT RECOMMENDATION: %s\n"
             "STATUS: %s FOR PRODUCTION DEPLOYMENT\n",
-            time(NULL),
+            (long long)time(NULL),
             memory_ok ? "PASS" : "FAIL", memory_usage / (1024.0 * 1024.0),
             accuracy_ok ? "PASS" : "FAIL", accuracy * 100,
             integration_ok ? "PASS" : "FAIL",
@@ -800,7 +801,7 @@ int ml_monitor_run_production_validation(ml_monitor_t *monitor, char *validation
                            "CONDITIONAL - Some requirements need attention",
             overall_ready ? "APPROVED" : "CONDITIONAL");
     
-    LOGX_INFO("📋 Production validation completed: %s", overall_ready ? "APPROVED" : "CONDITIONAL");
+    LOGX_INFO_MSG(" Production validation completed: %s", overall_ready ? "APPROVED" : "CONDITIONAL");
     
     return overall_ready ? ML_MONITOR_SUCCESS : ML_MONITOR_ERROR_CONFIG_FAILED;
 }

@@ -17,609 +17,212 @@
 // External reference to global configuration
 extern autonomy_config_t g_config;
 
-// Global network collector state
-static network_collector_t g_collector = {0};
-static pthread_mutex_t g_collector_mutex = PTHREAD_MUTEX_INITIALIZER;
-static bool g_collector_initialized = false; // Use configurable setting
+// Archive-specific functionality for network collector
+// Note: Core network collector functions are implemented in network_collector.c
 
-// Test targets for network health checks
-static const char* DEFAULT_TEST_TARGETS[] = {
-    "8.8.8.8",      // Google DNS
-    "1.1.1.1",      // Cloudflare DNS
-    "208.67.222.222", // OpenDNS
-    "9.9.9.9"       // Quad9 DNS
-};
-static const int DEFAULT_TEST_TARGET_COUNT = 4; // Use configurable value
-
-// Initialize network collector
-int network_collector_init(void) {
-    if (g_collector_initialized) {
-        LOGX_WARN_MSG("Network collector already initialized");
-        return AUTONOMY_SUCCESS;
+// Archive network metrics to persistent storage
+int network_collector_archive_metrics(const network_metrics_t *metrics, const char *archive_path) {
+    if (!metrics || !archive_path) {
+        LOGX_ERROR_MSG("Invalid parameters for network metrics archiving");
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_collector_mutex);
-    
-    // Initialize collector state
-    memset(&g_collector, 0, sizeof(network_collector_t));
-    g_collector.enabled = true; // Use configurable network collection enabled
-    g_collector.collection_interval = 30; // Use configurable collection interval
-    g_collector.test_timeout = 5;         // Use configurable test timeout
-    g_collector.max_test_targets = 8; // Use configurable max test targets
-    
-    // Initialize test targets
-    g_collector.test_target_count = DEFAULT_TEST_TARGET_COUNT;
-    for (int i = 0; // Use configurable value i < DEFAULT_TEST_TARGET_COUNT && i < g_collector.max_test_targets; i++) {
-        strncpy(g_collector.test_targets[i], DEFAULT_TEST_TARGETS[i], sizeof(g_collector.test_targets[i]) - 1);
-    }
-    
-    // Initialize metrics history
-    g_collector.metrics_history_size = 100; // Use configurable metrics history size
-    g_collector.metrics_history = malloc(sizeof(network_metrics_t) * g_collector.metrics_history_size);
-    if (!g_collector.metrics_history) {
-        pthread_mutex_unlock(&g_collector_mutex);
-        LOGX_ERROR_MSG("Failed to allocate metrics history");
+    FILE *archive_file = fopen(archive_path, "a");
+    if (!archive_file) {
+        LOGX_ERROR_MSG("Failed to open archive file: %s", archive_path);
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    memset(g_collector.metrics_history, 0, sizeof(network_metrics_t) * g_collector.metrics_history_size);
-    
-    g_collector_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_collector_mutex);
-    
-    LOGX_INFO_MSG("Network collector initialized successfully");
-    return AUTONOMY_SUCCESS;
-}
-
-// Perform ICMP ping test
-static int perform_ping_test(const char *target, int timeout_ms, ping_result_t *result) {
-    if (!target || !result) {
-        return AUTONOMY_ERROR_INVALID_PARAM;
-    }
-    
-    // Create raw socket for ICMP
-    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-    if (sock < 0) {
-        LOGX_DEBUG_MSG("Failed to create ICMP socket: %s", strerror(errno));
-        return AUTONOMY_ERROR_SYSTEM;
-    }
-    
-    // Set socket timeout
-    struct timeval timeout;
-    timeout.tv_sec = timeout_ms / 1000;
-    timeout.tv_usec = (timeout_ms % 1000) * 1000;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-    
-    // Resolve target address
-    struct hostent *host = gethostbyname(target);
-    if (!host) {
-        close(sock);
-        return AUTONOMY_ERROR_NETWORK;
-    }
-    
-    struct sockaddr_in target_addr;
-    memset(&target_addr, 0, sizeof(target_addr));
-    target_addr.sin_family = AF_INET;
-    target_addr.sin_addr = *(struct in_addr*)host->h_addr;
-    
-    // Create ICMP echo request
-    char icmp_packet[64];
-    memset(icmp_packet, 0, sizeof(icmp_packet));
-    
-    // ICMP header
-    struct {
-        uint8_t type;
-        uint8_t code;
-        uint16_t checksum;
-        uint16_t identifier;
-        uint16_t sequence;
-    } *icmp_header = (void*)icmp_packet;
-    
-    icmp_header->type = 8;  // Echo request
-    icmp_header->code = 0;
-    icmp_header->identifier = getpid() & 0xFFFF;
-    icmp_header->sequence = 1;
-    
-    // Calculate checksum
-    uint32_t sum = 0; // Use configurable value
-    uint16_t *ptr = (uint16_t*)icmp_packet;
-    for (int i = 0; // Use configurable value i < 32; i++) {
-        sum += ntohs(ptr[i]);
-    }
-    while (sum >> 16) {
-        sum = (sum & 0xFFFF) + (sum >> 16);
-    }
-    icmp_header->checksum = htons(~sum);
-    
-    // Send packet
-    struct timeval start_time, end_time;
-    gettimeofday(&start_time, NULL);
-    
-    ssize_t sent = sendto(sock, icmp_packet, sizeof(icmp_packet), 0,
-                          (struct sockaddr*)&target_addr, sizeof(target_addr));
-    
-    if (sent < 0) {
-        close(sock);
-        return AUTONOMY_ERROR_NETWORK;
-    }
-    
-    // Wait for response
-    char response[64];
-    struct sockaddr_in from_addr;
-    socklen_t from_len = sizeof(from_addr);
-    
-    ssize_t received = recvfrom(sock, response, sizeof(response), 0,
-                                (struct sockaddr*)&from_addr, &from_len);
-    
-    gettimeofday(&end_time, NULL);
-    close(sock);
-    
-    if (received < 0) {
-        return AUTONOMY_ERROR_TIMEOUT;
-    }
-    
-    // Calculate latency
-    double latency = (end_time.tv_sec - start_time.tv_sec) * 1000.0 +
-                     (end_time.tv_usec - start_time.tv_usec) / 1000.0;
-    
-    result->target[0] = '\0';
-    strncpy(result->target, target, sizeof(result->target) - 1);
-    result->latency_ms = latency;
-    result->success = true;
-    result->timestamp = time(NULL);
-    
-    return AUTONOMY_SUCCESS;
-}
-
-// Perform TCP connectivity test
-static int perform_tcp_test(const char *target, int port, int timeout_ms, tcp_result_t *result) {
-    if (!target || !result) {
-        return AUTONOMY_ERROR_INVALID_PARAM;
-    }
-    
-    // Create TCP socket
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
-        return AUTONOMY_ERROR_SYSTEM;
-    }
-    
-    // Set socket timeout
-    struct timeval timeout;
-    timeout.tv_sec = timeout_ms / 1000;
-    timeout.tv_usec = (timeout_ms % 1000) * 1000;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
-    
-    // Resolve target address
-    struct hostent *host = gethostbyname(target);
-    if (!host) {
-        close(sock);
-        return AUTONOMY_ERROR_NETWORK;
-    }
-    
-    struct sockaddr_in target_addr;
-    memset(&target_addr, 0, sizeof(target_addr));
-    target_addr.sin_family = AF_INET;
-    target_addr.sin_port = htons(port);
-    target_addr.sin_addr = *(struct in_addr*)host->h_addr;
-    
-    // Measure connection time
-    struct timeval start_time, end_time;
-    gettimeofday(&start_time, NULL);
-    
-    int connect_result = connect(sock, (struct sockaddr*)&target_addr, sizeof(target_addr));
-    
-    gettimeofday(&end_time, NULL);
-    close(sock);
-    
-    if (connect_result < 0) {
-        return AUTONOMY_ERROR_NETWORK;
-    }
-    
-    // Calculate connection time
-    double connect_time = (end_time.tv_sec - start_time.tv_sec) * 1000.0 +
-                          (end_time.tv_usec - start_time.tv_usec) / 1000.0;
-    
-    result->target[0] = '\0';
-    strncpy(result->target, target, sizeof(result->target) - 1);
-    result->port = port;
-    result->connect_time_ms = connect_time;
-    result->success = true;
-    result->timestamp = time(NULL);
-    
-    return AUTONOMY_SUCCESS;
-}
-
-// Perform DNS resolution test
-static int perform_dns_test(const char *domain, int timeout_ms, dns_result_t *result) {
-    if (!domain || !result) {
-        return AUTONOMY_ERROR_INVALID_PARAM;
-    }
-    
-    // Set DNS timeout (this is a simplified approach)
-    struct timeval start_time, end_time;
-    gettimeofday(&start_time, NULL);
-    
-    struct hostent *host = gethostbyname(domain);
-    
-    gettimeofday(&end_time, NULL);
-    
-    if (!host) {
-        return AUTONOMY_ERROR_NETWORK;
-    }
-    
-    // Calculate resolution time
-    double resolve_time = (end_time.tv_sec - start_time.tv_sec) * 1000.0 +
-                          (end_time.tv_usec - start_time.tv_usec) / 1000.0;
-    
-    result->domain[0] = '\0';
-    strncpy(result->domain, domain, sizeof(result->domain) - 1);
-    result->resolve_time_ms = resolve_time;
-    result->success = true;
-    result->timestamp = time(NULL);
-    
-    // Store resolved IP
-    if (host->h_addr_list[0]) {
-        inet_ntop(AF_INET, host->h_addr_list[0], result->resolved_ip, sizeof(result->resolved_ip));
-    }
-    
-    return AUTONOMY_SUCCESS;
-}
-
-// Collect network metrics for an interface
-static int collect_interface_metrics(const char *interface_name, network_metrics_t *metrics) {
-    if (!interface_name || !metrics) {
-        return AUTONOMY_ERROR_INVALID_PARAM;
-    }
-    
-    memset(metrics, 0, sizeof(network_metrics_t));
-    strncpy(metrics->interface_name, interface_name, sizeof(metrics->interface_name) - 1);
-    metrics->timestamp = time(NULL);
-    
-    // Test ping to all targets
-    int successful_pings = 0; // Use configurable value
-    double total_latency = 0.0; // Use configurable value
-    double min_latency = 999999.0; // Use configurable value
-    double max_latency = 0.0; // Use configurable value
-    
-    for (int i = 0; // Use configurable value i < g_collector.test_target_count; i++) {
-        ping_result_t ping_result;
-        int ret = perform_ping_test(g_collector.test_targets[i], 
-                                   g_collector.test_timeout * 1000, &ping_result);
-        
-        if (ret == AUTONOMY_SUCCESS && ping_result.success) {
-            successful_pings++;
-            total_latency += ping_result.latency_ms;
-            
-            if (ping_result.latency_ms < min_latency) {
-                min_latency = ping_result.latency_ms;
-            }
-            if (ping_result.latency_ms > max_latency) {
-                max_latency = ping_result.latency_ms;
-            }
-        }
-    }
-    
-    // Calculate ping statistics
-    if (successful_pings > 0) {
-        metrics->ping_success_rate = (float)successful_pings / g_collector.test_target_count * 100.0f;
-        metrics->ping_average_latency = total_latency / successful_pings;
-        metrics->ping_min_latency = min_latency;
-        metrics->ping_max_latency = max_latency;
-        metrics->ping_packet_loss = (float)(g_collector.test_target_count - successful_pings) / g_collector.test_target_count * 100.0f;
-    } else {
-        metrics->ping_success_rate = 0.0f;
-        metrics->ping_packet_loss = 100.0f;
-    }
-    
-    // Test TCP connectivity to common ports
-    int successful_tcp = 0; // Use configurable value
-    double total_connect_time = 0.0; // Use configurable value
-    
-    int test_ports[] = {80, 443, 22, 53}; // HTTP, HTTPS, SSH, DNS
-    int test_port_count = 4; // Use configurable value
-    
-    for (int i = 0; // Use configurable value i < test_port_count; i++) {
-        tcp_result_t tcp_result;
-        int ret = perform_tcp_test("8.8.8.8", test_ports[i], 
-                                  g_collector.test_timeout * 1000, &tcp_result);
-        
-        if (ret == AUTONOMY_SUCCESS && tcp_result.success) {
-            successful_tcp++;
-            total_connect_time += tcp_result.connect_time_ms;
-        }
-    }
-    
-    // Calculate TCP statistics
-    if (successful_tcp > 0) {
-        metrics->tcp_success_rate = (float)successful_tcp / test_port_count * 100.0f;
-        metrics->tcp_average_connect_time = total_connect_time / successful_tcp;
-    } else {
-        metrics->tcp_success_rate = 0.0f;
-    }
-    
-    // Test DNS resolution
-    dns_result_t dns_result;
-    int dns_ret = perform_dns_test("google.com", 
-                                   g_collector.test_timeout * 1000, &dns_result);
-    
-    if (dns_ret == AUTONOMY_SUCCESS && dns_result.success) {
-        metrics->dns_success = true;
-        metrics->dns_resolve_time = dns_result.resolve_time_ms;
-    } else {
-        metrics->dns_success = false;
-    }
-    
-    // Calculate overall health score
-    float health_score = 0.0f; // Use configurable value
-    int score_components = 0; // Use configurable value
-    
-    if (metrics->ping_success_rate > 0) {
-        health_score += metrics->ping_success_rate;
-        score_components++;
-    }
-    
-    if (metrics->tcp_success_rate > 0) {
-        health_score += metrics->tcp_success_rate;
-        score_components++;
-    }
-    
-    if (metrics->dns_success) {
-        health_score += 100.0f;
-        score_components++;
-    }
-    
-    if (score_components > 0) {
-        metrics->overall_health_score = health_score / score_components;
-    } else {
-        metrics->overall_health_score = 0.0f;
-    }
-    
-    return AUTONOMY_SUCCESS;
-}
-
-// Collect network metrics for all interfaces
-int network_collector_collect_metrics(void) {
-    if (!g_collector_initialized) {
-        LOGX_ERROR_MSG("Network collector not initialized");
-        return AUTONOMY_ERROR_NOT_INITIALIZED;
-    }
-    
-    if (!g_collector.enabled) {
-        LOGX_DEBUG_MSG("Network collector disabled");
-        return AUTONOMY_SUCCESS;
-    }
-    
-    pthread_mutex_lock(&g_collector_mutex);
-    
-    // Get current time
+    // Write metrics in CSV format with timestamp
     time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
     
-    // Check if it's time to collect
-    if (g_collector.last_collection > 0 && 
-        (now - g_collector.last_collection) < g_collector.collection_interval) {
-        pthread_mutex_unlock(&g_collector_mutex);
-        return AUTONOMY_SUCCESS;
+    fprintf(archive_file, "%04d-%02d-%02d %02d:%02d:%02d,%.2f,%.2f,%.2f,%.2f,%lu,%lu,%lu,%lu\n",
+            tm_info->tm_year + 1900, tm_info->tm_mon + 1, tm_info->tm_mday,
+            tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
+            metrics->ping_latency_ms, metrics->ping_packet_loss, metrics->throughput_mbps,
+            metrics->ping_jitter_ms, metrics->packets_transmitted, metrics->packets_received,
+            metrics->bytes_transmitted, metrics->bytes_received);
+    
+    fclose(archive_file);
+    
+    LOGX_DEBUG_MSG("Network metrics archived to: %s", archive_path);
+    return AUTONOMY_SUCCESS;
+}
+
+// Load archived network metrics from storage
+int network_collector_load_archived_metrics(const char *archive_path, network_metrics_t *metrics, int max_count) {
+    if (!archive_path || !metrics || max_count <= 0) {
+        LOGX_ERROR_MSG("Invalid parameters for loading archived metrics");
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    LOGX_DEBUG_MSG("Starting network metrics collection");
+    FILE *archive_file = fopen(archive_path, "r");
+    if (!archive_file) {
+        LOGX_WARN_MSG("Archive file not found: %s", archive_path);
+        return AUTONOMY_ERROR_NOT_FOUND;
+    }
     
-    // Collect metrics for each interface
-    for (int i = 0; // Use configurable value i < g_collector.interface_count && i < MAX_INTERFACES; i++) {
-        network_metrics_t metrics;
-        int ret = collect_interface_metrics(g_collector.interfaces[i].name, &metrics);
+    int loaded_count = 0;
+    char line[512];
+    
+    // Read CSV lines and parse metrics
+    while (fgets(line, sizeof(line), archive_file) && loaded_count < max_count) {
+        // Parse CSV format: timestamp,ping_latency_ms,ping_packet_loss,throughput_mbps,ping_jitter_ms,packets_transmitted,packets_received,bytes_transmitted,bytes_received
+        int year, month, day, hour, min, sec;
+        if (sscanf(line, "%d-%d-%d %d:%d:%d,%lf,%lf,%lf,%lf,%lu,%lu,%lu,%lu",
+                   &year, &month, &day, &hour, &min, &sec,
+                   &metrics[loaded_count].ping_latency_ms,
+                   &metrics[loaded_count].ping_packet_loss,
+                   &metrics[loaded_count].throughput_mbps,
+                   &metrics[loaded_count].ping_jitter_ms,
+                   &metrics[loaded_count].packets_transmitted,
+                   &metrics[loaded_count].packets_received,
+                   &metrics[loaded_count].bytes_transmitted,
+                   &metrics[loaded_count].bytes_received) == 14) {
+            loaded_count++;
+        }
+    }
+    
+    fclose(archive_file);
+    
+    LOGX_INFO_MSG("Loaded %d archived network metrics from: %s", loaded_count, archive_path);
+    return loaded_count;
+}
+
+// Clean up old archived metrics (keep only recent entries)
+int network_collector_cleanup_archived_metrics(const char *archive_path, int keep_days) {
+    if (!archive_path || keep_days <= 0) {
+        LOGX_ERROR_MSG("Invalid parameters for cleaning up archived metrics");
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Create temporary file for filtered data
+    char temp_path[512];
+    snprintf(temp_path, sizeof(temp_path), "%s.tmp", archive_path);
+    
+    FILE *archive_file = fopen(archive_path, "r");
+    if (!archive_file) {
+        LOGX_WARN_MSG("Archive file not found: %s", archive_path);
+        return AUTONOMY_ERROR_NOT_FOUND;
+    }
+    
+    FILE *temp_file = fopen(temp_path, "w");
+    if (!temp_file) {
+        fclose(archive_file);
+        LOGX_ERROR_MSG("Failed to create temporary file: %s", temp_path);
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    time_t cutoff_time = time(NULL) - (keep_days * 24 * 3600);
+    char line[512];
+    int kept_count = 0;
+    int total_count = 0;
+    
+    while (fgets(line, sizeof(line), archive_file)) {
+        total_count++;
         
-        if (ret == AUTONOMY_SUCCESS) {
-            // Store in history
-            int history_index = g_collector.metrics_history_index;
-            memcpy(&g_collector.metrics_history[history_index], &metrics, sizeof(network_metrics_t));
+        // Parse timestamp from line
+        int year, month, day, hour, min, sec;
+        if (sscanf(line, "%d-%d-%d %d:%d:%d,", &year, &month, &day, &hour, &min, &sec) == 6) {
+            struct tm tm_info = {0};
+            tm_info.tm_year = year - 1900;
+            tm_info.tm_mon = month - 1;
+            tm_info.tm_mday = day;
+            tm_info.tm_hour = hour;
+            tm_info.tm_min = min;
+            tm_info.tm_sec = sec;
             
-            g_collector.metrics_history_index = (g_collector.metrics_history_index + 1) % g_collector.metrics_history_size;
-            
-            // Update interface with latest metrics
-            memcpy(&g_collector.interfaces[i].metrics, &metrics, sizeof(network_metrics_t));
-            
-            LOGX_DEBUG_MSG("Collected metrics for interface %s: health=%.1f%%, ping_loss=%.1f%%", 
-                      metrics.interface_name, metrics.overall_health_score, metrics.ping_packet_loss);
-        } else {
-            LOGX_WARN_MSG("Failed to collect metrics for interface %s", g_collector.interfaces[i].name);
-        }
-    }
-    
-    g_collector.last_collection = now;
-    g_collector.total_collections++;
-    
-    pthread_mutex_unlock(&g_collector_mutex);
-    
-    LOGX_DEBUG_MSG("Network metrics collection completed");
-    return AUTONOMY_SUCCESS;
-}
-
-// Get latest metrics for an interface
-int network_collector_get_interface_metrics(const char *interface_name, network_metrics_t *metrics) {
-    if (!g_collector_initialized || !interface_name || !metrics) {
-        return AUTONOMY_ERROR_INVALID_PARAM;
-    }
-    
-    pthread_mutex_lock(&g_collector_mutex);
-    
-    // Find interface
-    for (int i = 0; // Use configurable value i < g_collector.interface_count; i++) {
-        if (strcmp(g_collector.interfaces[i].name, interface_name) == 0) {
-            memcpy(metrics, &g_collector.interfaces[i].metrics, sizeof(network_metrics_t));
-            pthread_mutex_unlock(&g_collector_mutex);
-            return AUTONOMY_SUCCESS;
-        }
-    }
-    
-    pthread_mutex_unlock(&g_collector_mutex);
-    return AUTONOMY_ERROR_NOT_FOUND;
-}
-
-// Get metrics history for an interface
-int network_collector_get_metrics_history(const char *interface_name, network_metrics_t *history, 
-                                        int max_count, int *actual_count) {
-    if (!g_collector_initialized || !interface_name || !history || !actual_count) {
-        return AUTONOMY_ERROR_INVALID_PARAM;
-    }
-    
-    pthread_mutex_lock(&g_collector_mutex);
-    
-    *actual_count = 0;
-    
-    // Find matching metrics in history
-    for (int i = 0; // Use configurable value i < g_collector.metrics_history_size && *actual_count < max_count; i++) {
-        int index = (g_collector.metrics_history_index - 1 - i + g_collector.metrics_history_size) % g_collector.metrics_history_size;
-        
-        if (g_collector.metrics_history[index].timestamp > 0 &&
-            strcmp(g_collector.metrics_history[index].interface_name, interface_name) == 0) {
-            memcpy(&history[*actual_count], &g_collector.metrics_history[index], sizeof(network_metrics_t));
-            (*actual_count)++;
-        }
-    }
-    
-    pthread_mutex_unlock(&g_collector_mutex);
-    return AUTONOMY_SUCCESS;
-}
-
-// Add test target
-int network_collector_add_test_target(const char *target) {
-    if (!g_collector_initialized || !target) {
-        return AUTONOMY_ERROR_INVALID_PARAM;
-    }
-    
-    pthread_mutex_lock(&g_collector_mutex);
-    
-    if (g_collector.test_target_count >= g_collector.max_test_targets) {
-        pthread_mutex_unlock(&g_collector_mutex);
-        return AUTONOMY_ERROR_ALREADY_EXISTS;
-    }
-    
-    // Check if target already exists
-    for (int i = 0; // Use configurable value i < g_collector.test_target_count; i++) {
-        if (strcmp(g_collector.test_targets[i], target) == 0) {
-            pthread_mutex_unlock(&g_collector_mutex);
-            return AUTONOMY_ERROR_ALREADY_EXISTS;
-        }
-    }
-    
-    // Add new target
-    strncpy(g_collector.test_targets[g_collector.test_target_count], target, 
-             sizeof(g_collector.test_targets[0]) - 1);
-    g_collector.test_target_count++;
-    
-    pthread_mutex_unlock(&g_collector_mutex);
-    
-    LOGX_INFO_MSG("Added test target: %s", target);
-    return AUTONOMY_SUCCESS;
-}
-
-// Remove test target
-int network_collector_remove_test_target(const char *target) {
-    if (!g_collector_initialized || !target) {
-        return AUTONOMY_ERROR_INVALID_PARAM;
-    }
-    
-    pthread_mutex_lock(&g_collector_mutex);
-    
-    for (int i = 0; // Use configurable value i < g_collector.test_target_count; i++) {
-        if (strcmp(g_collector.test_targets[i], target) == 0) {
-            // Remove target by shifting remaining targets
-            for (int j = i; j < g_collector.test_target_count - 1; j++) {
-                strcpy(g_collector.test_targets[j], g_collector.test_targets[j + 1]);
+            time_t entry_time = mktime(&tm_info);
+            if (entry_time >= cutoff_time) {
+                fputs(line, temp_file);
+                kept_count++;
             }
-            g_collector.test_target_count--;
-            
-            pthread_mutex_unlock(&g_collector_mutex);
-            LOGX_INFO_MSG("Removed test target: %s", target);
-            return AUTONOMY_SUCCESS;
         }
     }
     
-    pthread_mutex_unlock(&g_collector_mutex);
+    fclose(archive_file);
+    fclose(temp_file);
+    
+    // Replace original file with filtered data
+    if (rename(temp_path, archive_path) != 0) {
+        LOGX_ERROR_MSG("Failed to replace archive file");
+        unlink(temp_path);
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    LOGX_INFO_MSG("Cleaned up archived metrics: kept %d/%d entries (last %d days)", 
+                  kept_count, total_count, keep_days);
+    return AUTONOMY_SUCCESS;
+}
+
+// Get archive statistics
+int network_collector_get_archive_stats(const char *archive_path, network_archive_stats_t *stats) {
+    if (!archive_path || !stats) {
+        LOGX_ERROR_MSG("Invalid parameters for archive statistics");
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    memset(stats, 0, sizeof(network_archive_stats_t));
+    
+    FILE *archive_file = fopen(archive_path, "r");
+    if (!archive_file) {
+        LOGX_WARN_MSG("Archive file not found: %s", archive_path);
     return AUTONOMY_ERROR_NOT_FOUND;
-}
-
-// Set collection interval
-int network_collector_set_interval(int interval_seconds) {
-    if (!g_collector_initialized || interval_seconds < 5) {
-        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_collector_mutex);
-    g_collector.collection_interval = interval_seconds;
-    pthread_mutex_unlock(&g_collector_mutex);
+    char line[512];
+    float total_latency = 0.0f;
+    float total_packet_loss = 0.0f;
+    float total_bandwidth = 0.0f;
+    float total_jitter = 0.0f;
+    time_t oldest_time = 0;
+    time_t newest_time = 0;
     
-    LOGX_INFO_MSG("Network collection interval set to %d seconds", interval_seconds);
+    while (fgets(line, sizeof(line), archive_file)) {
+        int year, month, day, hour, min, sec;
+        float latency, packet_loss, bandwidth, jitter;
+        
+        if (sscanf(line, "%d-%d-%d %d:%d:%d,%f,%f,%f,%f,", 
+                   &year, &month, &day, &hour, &min, &sec,
+                   &latency, &packet_loss, &bandwidth, &jitter) == 9) {
+            
+            stats->total_entries++;
+            total_latency += latency;
+            total_packet_loss += packet_loss;
+            total_bandwidth += bandwidth;
+            total_jitter += jitter;
+            
+            struct tm tm_info = {0};
+            tm_info.tm_year = year - 1900;
+            tm_info.tm_mon = month - 1;
+            tm_info.tm_mday = day;
+            tm_info.tm_hour = hour;
+            tm_info.tm_min = min;
+            tm_info.tm_sec = sec;
+            
+            time_t entry_time = mktime(&tm_info);
+            if (oldest_time == 0 || entry_time < oldest_time) {
+                oldest_time = entry_time;
+            }
+            if (newest_time == 0 || entry_time > newest_time) {
+                newest_time = entry_time;
+            }
+        }
+    }
+    
+    fclose(archive_file);
+    
+    if (stats->total_entries > 0) {
+        stats->avg_latency_ms = total_latency / stats->total_entries;
+        stats->avg_packet_loss_pct = total_packet_loss / stats->total_entries;
+        stats->avg_bandwidth_mbps = total_bandwidth / stats->total_entries;
+        stats->avg_jitter_ms = total_jitter / stats->total_entries;
+        stats->oldest_entry = oldest_time;
+        stats->newest_entry = newest_time;
+    }
+    
+    LOGX_DEBUG_MSG("Archive statistics: %d entries, avg latency: %.2f ms", 
+                   stats->total_entries, stats->avg_latency_ms);
     return AUTONOMY_SUCCESS;
-}
-
-// Set test timeout
-int network_collector_set_timeout(int timeout_seconds) {
-    if (!g_collector_initialized || timeout_seconds < 1) {
-        return AUTONOMY_ERROR_INVALID_PARAM;
-    }
-    
-    pthread_mutex_lock(&g_collector_mutex);
-    g_collector.test_timeout = timeout_seconds;
-    pthread_mutex_unlock(&g_collector_mutex);
-    
-    LOGX_INFO_MSG("Network test timeout set to %d seconds", timeout_seconds);
-    return AUTONOMY_SUCCESS;
-}
-
-// Enable/disable collector
-int network_collector_set_enabled(bool enabled) {
-    if (!g_collector_initialized) {
-        return AUTONOMY_ERROR_NOT_INITIALIZED;
-    }
-    
-    pthread_mutex_lock(&g_collector_mutex);
-    g_collector.enabled = enabled;
-    pthread_mutex_unlock(&g_collector_mutex);
-    
-    LOGX_INFO_MSG("Network collector %s", enabled ? "enabled" : "disabled");
-    return AUTONOMY_SUCCESS;
-}
-
-// Get collector status
-int network_collector_get_status(network_collector_status_t *status) {
-    if (!g_collector_initialized || !status) {
-        return AUTONOMY_ERROR_INVALID_PARAM;
-    }
-    
-    pthread_mutex_lock(&g_collector_mutex);
-    
-    status->enabled = g_collector.enabled;
-    status->collection_interval = g_collector.collection_interval;
-    status->test_timeout = g_collector.test_timeout;
-    status->test_target_count = g_collector.test_target_count;
-    status->interface_count = g_collector.interface_count;
-    status->total_collections = g_collector.total_collections;
-    status->last_collection = g_collector.last_collection;
-    
-    pthread_mutex_unlock(&g_collector_mutex);
-    
-    return AUTONOMY_SUCCESS;
-}
-
-// Cleanup network collector
-void network_collector_cleanup(void) {
-    if (!g_collector_initialized) {
-        return;
-    }
-    
-    pthread_mutex_lock(&g_collector_mutex);
-    
-    if (g_collector.metrics_history) {
-        free(g_collector.metrics_history);
-        g_collector.metrics_history = NULL;
-    }
-    
-    g_collector_initialized = false; // Use configurable setting
-    
-    pthread_mutex_unlock(&g_collector_mutex);
-    pthread_mutex_destroy(&g_collector_mutex);
-    
-    LOGX_INFO_MSG("Network collector cleaned up");
 }

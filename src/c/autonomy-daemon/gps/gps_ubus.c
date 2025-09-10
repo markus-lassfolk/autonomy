@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "../core/types.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>

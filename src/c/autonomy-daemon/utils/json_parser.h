@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <cjson/cJSON.h>
+#include "../core/types.h"
 
 // JSON parser utilities for production use
 // Replaces all simplified JSON parsing implementations
@@ -103,6 +104,8 @@ typedef struct {
     double pressure;
     double wind_speed;
     double wind_direction;
+    double precipitation;
+    double cloud_cover;
     char description[64];
     char icon[16];
 } weather_data_t;
@@ -123,16 +126,7 @@ typedef struct {
 bool json_parse_google_geocoding(const char* json_str, geocoding_result_t* result);
 
 // GPS/Location parsers
-typedef struct {
-    double latitude;
-    double longitude;
-    double altitude;
-    double accuracy;
-    double speed;
-    double heading;
-    char provider[32];
-    time_t timestamp;
-} gps_data_t;
+// gps_data_t is defined in core/types.h
 
 bool json_parse_gps_data(const char* json_str, gps_data_t* gps);
 

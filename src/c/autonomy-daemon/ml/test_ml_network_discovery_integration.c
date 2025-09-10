@@ -21,7 +21,7 @@ int main() {
     
     ml_monitor_t *monitor = ml_monitor_init(&config);
     assert(monitor != NULL);
-    printf("✓ ML monitor initialized\n");
+    printf(" ML monitor initialized\n");
     
     // Initialize all phases including Phase 7
     assert(ml_monitor_init_phase3_enhancements(monitor) == ML_MONITOR_SUCCESS);
@@ -29,7 +29,7 @@ int main() {
     assert(ml_monitor_init_phase5_mobile_system(monitor) == ML_MONITOR_SUCCESS);
     assert(ml_monitor_init_phase6_self_optimization(monitor) == ML_MONITOR_SUCCESS);
     assert(ml_monitor_init_phase7_multi_interface(monitor) == ML_MONITOR_SUCCESS);
-    printf("✓ All phases initialized\n");
+    printf(" All phases initialized\n");
     
     // Test 2: Network discovery integration
     printf("Test 2: Network discovery integration and interface detection...\n");
@@ -37,7 +37,7 @@ int main() {
     // Test network discovery initialization
     int discovery_result = ml_monitor_init_from_network_discovery(monitor);
     if (discovery_result == ML_MONITOR_SUCCESS) {
-        printf("✓ Network discovery integration successful\n");
+        printf(" Network discovery integration successful\n");
         
         multi_interface_ml_system_t *multi_system = ml_monitor_get_multi_interface_system();
         if (multi_system) {
@@ -45,7 +45,7 @@ int main() {
             printf("  - MWAN3 interfaces configured: %u\n", multi_system->mwan3_integration.mwan3_interface_count);
         }
     } else {
-        printf("⚠ Network discovery integration failed (expected in test environment): %d\n", discovery_result);
+        printf(" Network discovery integration failed (expected in test environment): %d\n", discovery_result);
         printf("  This is normal in a test environment without real network interfaces\n");
     }
     
@@ -67,14 +67,14 @@ int main() {
         const char* type_str = ml_monitor_get_interface_type_string(ml_type);
         bool suitable = ml_monitor_is_interface_suitable_for_ml(&test_interfaces[i]);
         
-        printf("  %s (%s) → %s, suitable=%s\n", 
+        printf("  %s (%s)  %s, suitable=%s\n", 
                test_interfaces[i].name, test_interfaces[i].type, type_str, suitable ? "yes" : "no");
         
         assert(strcmp(type_str, expected_types[i]) == 0);
         assert(suitable == true);
     }
     
-    printf("✓ Interface type mapping and classification functional\n");
+    printf(" Interface type mapping and classification functional\n");
     
     // Test 4: Network interface to observation conversion
     printf("Test 4: Network interface to ML observation conversion...\n");
@@ -90,7 +90,7 @@ int main() {
         assert(strcmp(obs.interface_id, test_interfaces[i].name) == 0);
     }
     
-    printf("✓ Network interface to ML observation conversion functional\n");
+    printf(" Network interface to ML observation conversion functional\n");
     
     // Test 5: Enhanced interface information retrieval
     printf("Test 5: Enhanced interface information retrieval...\n");
@@ -111,30 +111,30 @@ int main() {
                test_interfaces[i].name, info_result);
     }
     
-    printf("✓ Enhanced interface information retrieval tested\n");
+    printf(" Enhanced interface information retrieval tested\n");
     
     // Test 6: Periodic sync functionality
     printf("Test 6: Periodic network discovery sync...\n");
     
     int sync_result = ml_monitor_periodic_network_discovery_sync(monitor);
     printf("  Periodic sync result: %d\n", sync_result);
-    printf("✓ Periodic sync functionality tested\n");
+    printf(" Periodic sync functionality tested\n");
     
     // Test 7: Integration benefits validation
     printf("Test 7: Integration benefits validation...\n");
     
-    printf("  🔍 NETWORK DISCOVERY INTEGRATION BENEFITS:\n");
+    printf("   NETWORK DISCOVERY INTEGRATION BENEFITS:\n");
     printf("  ==========================================\n");
-    printf("  ✅ Automatic interface detection (no hardcoded names)\n");
-    printf("  ✅ Interface type classification (Starlink, Cellular, WiFi, LAN)\n");
-    printf("  ✅ MWAN3 integration (only monitor MWAN3-tracked interfaces)\n");
-    printf("  ✅ Health-based filtering (only monitor healthy interfaces)\n");
-    printf("  ✅ Real-time sync (detect new/removed interfaces)\n");
-    printf("  ✅ Enhanced metadata (friendly names, MWAN3 names, etc.)\n");
-    printf("  ✅ ML recommendations (reliability scores, weight recommendations)\n");
-    printf("  ✅ Failover suitability assessment\n");
+    printf("   Automatic interface detection (no hardcoded names)\n");
+    printf("   Interface type classification (Starlink, Cellular, WiFi, LAN)\n");
+    printf("   MWAN3 integration (only monitor MWAN3-tracked interfaces)\n");
+    printf("   Health-based filtering (only monitor healthy interfaces)\n");
+    printf("   Real-time sync (detect new/removed interfaces)\n");
+    printf("   Enhanced metadata (friendly names, MWAN3 names, etc.)\n");
+    printf("   ML recommendations (reliability scores, weight recommendations)\n");
+    printf("   Failover suitability assessment\n");
     
-    printf("✓ Integration benefits validated\n");
+    printf(" Integration benefits validated\n");
     
     // Test 8: System resource efficiency
     printf("Test 8: System resource efficiency with network discovery integration...\n");
@@ -146,32 +146,32 @@ int main() {
     printf("  - Total system memory: <4MB (with all features)\n");
     
     assert(integration_memory < 100 * 1024); // Less than 100KB for integration
-    printf("✓ Resource efficiency maintained with network discovery integration\n");
+    printf(" Resource efficiency maintained with network discovery integration\n");
     
     // Test 9: Cleanup
     printf("Test 9: System cleanup with network discovery integration...\n");
     
     ml_monitor_cleanup(monitor);
-    printf("✓ System cleanup completed\n");
+    printf(" System cleanup completed\n");
     
     printf("\n===============================================\n");
-    printf("🎉 NETWORK DISCOVERY INTEGRATION COMPLETE!\n");
+    printf(" NETWORK DISCOVERY INTEGRATION COMPLETE!\n");
     printf("===============================================\n");
     printf("\n");
-    printf("✅ REVOLUTIONARY NETWORK INTELLIGENCE:\n");
-    printf("🔍 Automatic Interface Detection\n");
-    printf("📊 Enhanced Interface Classification\n");
-    printf("🎛️ MWAN3 Integration and Filtering\n");
-    printf("💡 ML-Driven Interface Recommendations\n");
-    printf("🔄 Real-time Interface Sync\n");
-    printf("📈 Health-Based Interface Selection\n");
-    printf("🎯 Failover Suitability Assessment\n");
-    printf("⚖️ Enhanced Cost-Benefit Analysis\n");
+    printf(" REVOLUTIONARY NETWORK INTELLIGENCE:\n");
+    printf(" Automatic Interface Detection\n");
+    printf(" Enhanced Interface Classification\n");
+    printf(" MWAN3 Integration and Filtering\n");
+    printf(" ML-Driven Interface Recommendations\n");
+    printf(" Real-time Interface Sync\n");
+    printf(" Health-Based Interface Selection\n");
+    printf(" Failover Suitability Assessment\n");
+    printf(" Enhanced Cost-Benefit Analysis\n");
     printf("\n");
-    printf("🚀 PRODUCTION READY WITH AUTOMATIC DISCOVERY!\n");
+    printf(" PRODUCTION READY WITH AUTOMATIC DISCOVERY!\n");
     printf("\nThe ML monitoring system now automatically discovers\n");
     printf("and monitors all network interfaces using the enhanced\n");
-    printf("network discovery system! 🌟\n");
+    printf("network discovery system! \n");
     
     return 0;
 }

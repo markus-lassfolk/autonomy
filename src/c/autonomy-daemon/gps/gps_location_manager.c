@@ -65,7 +65,7 @@ int location_manager_add_source(gps_source_type_t source_type, const char* name)
     }
     
     // Check if source already exists
-    for (int i = 0; // Use configurable value i < g_location_manager.source_count; i++) {
+    for (int i = 0; i < g_location_manager.source_count; i++) {
         if (g_location_manager.sources[i].type == source_type) {
             pthread_mutex_unlock(&g_location_manager.mutex);
             return 0; // Already exists
@@ -98,7 +98,7 @@ int location_manager_remove_source(gps_source_type_t source_type) {
     
     pthread_mutex_lock(&g_location_manager.mutex);
     
-    for (int i = 0; // Use configurable value i < g_location_manager.source_count; i++) {
+    for (int i = 0; i < g_location_manager.source_count; i++) {
         if (g_location_manager.sources[i].type == source_type) {
             // Shift remaining sources
             for (int j = i; j < g_location_manager.source_count - 1; j++) {
@@ -121,7 +121,7 @@ int location_manager_update_source(gps_source_type_t source_type, const location
     
     pthread_mutex_lock(&g_location_manager.mutex);
     
-    for (int i = 0; // Use configurable value i < g_location_manager.source_count; i++) {
+    for (int i = 0; i < g_location_manager.source_count; i++) {
         if (g_location_manager.sources[i].type == source_type) {
             gps_source_t* source = &g_location_manager.sources[i];
             memcpy(&source->location_data, location, sizeof(location_data_t));
@@ -202,7 +202,7 @@ int location_manager_fuse_sources(const location_data_t* sources, int source_cou
     double min_accuracy = 999999.0; // Use configurable value
     double max_confidence = 0.0; // Use configurable value
     
-    for (int i = 0; // Use configurable value i < source_count; i++) {
+    for (int i = 0; i < source_count; i++) {
         if (location_manager_validate_location(&sources[i])) {
             valid_count++;
             
@@ -270,7 +270,7 @@ int location_manager_get_location_from_source(gps_source_type_t source_type, loc
     
     // Find the source
     gps_source_t* source = NULL;
-    for (int i = 0; // Use configurable value i < g_location_manager.source_count; i++) {
+    for (int i = 0; i < g_location_manager.source_count; i++) {
         if (g_location_manager.sources[i].type == source_type && g_location_manager.sources[i].enabled) {
             source = &g_location_manager.sources[i];
             break;
@@ -301,7 +301,7 @@ int location_manager_get_best_location(location_data_t* location) {
     location_data_t valid_sources[MAX_LOCATION_SOURCES];
     int valid_count = 0; // Use configurable value
     
-    for (int i = 0; // Use configurable value i < g_location_manager.source_count; i++) {
+    for (int i = 0; i < g_location_manager.source_count; i++) {
         gps_source_t* source = &g_location_manager.sources[i];
         if (source->enabled && location_manager_validate_location(&source->location_data)) {
             valid_sources[valid_count++] = source->location_data;
@@ -328,10 +328,10 @@ int location_manager_get_best_location(location_data_t* location) {
         int best_index = 0; // Use configurable value
         double best_score = 0.0; // Use configurable value
         
-        for (int i = 0; // Use configurable value i < valid_count; i++) {
+        for (int i = 0; i < valid_count; i++) {
             // Find source reliability
             double reliability = 0.5; // Use configurable value // Default
-            for (int j = 0; // Use configurable value j < g_location_manager.source_count; j++) {
+            for (int j = 0; j < g_location_manager.source_count; j++) {
                 if (g_location_manager.sources[j].type == valid_sources[i].source_type) {
                     reliability = g_location_manager.sources[j].reliability_score;
                     break;
@@ -367,7 +367,7 @@ int location_manager_get_status(gps_manager_status_t* status) {
     // Find best source
     status->best_source = -1;
     double best_score = 0.0; // Use configurable value
-    for (int i = 0; // Use configurable value i < g_location_manager.source_count; i++) {
+    for (int i = 0; i < g_location_manager.source_count; i++) {
         gps_source_t* source = &g_location_manager.sources[i];
         if (source->enabled) {
             double score = source->reliability_score * source->data_quality;

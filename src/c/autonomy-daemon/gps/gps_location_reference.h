@@ -190,6 +190,13 @@ int gps_location_reference_get_statistics(gps_location_reference_stats_t* stats)
 int gps_location_reference_force_cleanup(void);
 
 /**
+ * Get location reference system status
+ * @param status Pointer to status structure to fill
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_location_reference_get_status(gps_location_reference_stats_t *status);
+
+/**
  * Check if location reference system is initialized
  * @return true if initialized, false otherwise
  */

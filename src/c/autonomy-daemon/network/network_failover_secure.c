@@ -5,6 +5,9 @@
 #include <string.h>
 #include <stdio.h>
 
+// Forward declarations
+static bool is_valid_ip_address(const char *ip);
+
 // Secure MWAN3 interface status update
 int secure_mwan3_set_status(const char *interface_name, const char *status) {
     if (!interface_name || !status) {

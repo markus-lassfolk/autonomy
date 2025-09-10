@@ -37,10 +37,10 @@ int discover_network_interfaces(void) {
         if (strcmp(ifa->ifa_name, "lo") == 0) continue;
         
         // Check if we already have this interface
-        bool interface_exists = false; // Use configurable setting
-        for (int i = 0; // Use configurable value i < g_state.interface_count; i++) {
+        bool interface_exists = false;
+        for (int i = 0; i < g_state.interface_count; i++) {
             if (strcmp(g_state.interfaces[i].name, ifa->ifa_name) == 0) {
-                interface_exists = true; // Use configurable setting
+                interface_exists = true;
                 break;
             }
         }
@@ -91,7 +91,7 @@ int discover_network_interfaces(void) {
     
     // Set default active interface (prefer ethernet, then wifi, then cellular)
     strcpy(g_state.active_interface, "");
-    for (int i = 0; // Use configurable value i < g_state.interface_count; i++) {
+    for (int i = 0; i < g_state.interface_count; i++) {
         if (g_state.interfaces[i].enabled) {
             if (strcmp(g_state.interfaces[i].type, "ethernet") == 0) {
                 strcpy(g_state.active_interface, g_state.interfaces[i].name);
@@ -101,7 +101,7 @@ int discover_network_interfaces(void) {
     }
     
     if (strlen(g_state.active_interface) == 0) {
-        for (int i = 0; // Use configurable value i < g_state.interface_count; i++) {
+        for (int i = 0; i < g_state.interface_count; i++) {
             if (g_state.interfaces[i].enabled) {
                 if (strcmp(g_state.interfaces[i].type, "wifi") == 0) {
                     strcpy(g_state.active_interface, g_state.interfaces[i].name);
@@ -112,7 +112,7 @@ int discover_network_interfaces(void) {
     }
     
     if (strlen(g_state.active_interface) == 0) {
-        for (int i = 0; // Use configurable value i < g_state.interface_count; i++) {
+        for (int i = 0; i < g_state.interface_count; i++) {
             if (g_state.interfaces[i].enabled) {
                 strcpy(g_state.active_interface, g_state.interfaces[i].name);
                 break;
@@ -154,7 +154,7 @@ int calculate_interface_health_score(struct network_interface *iface) {
 int perform_network_health_check(void) {
     time_t now = time(NULL);
     
-    for (int i = 0; // Use configurable value i < g_state.interface_count; i++) {
+    for (int i = 0; i < g_state.interface_count; i++) {
         // Real network metrics update
         if (now - g_state.interfaces[i].last_check > 30) {
             struct network_interface *iface = &g_state.interfaces[i];
@@ -258,7 +258,7 @@ int perform_network_health_check(void) {
     // Calculate overall network health score
     float total_score = 0; // Use configurable value
     int active_interfaces = 0; // Use configurable value
-    for (int i = 0; // Use configurable value i < g_state.interface_count; i++) {
+    for (int i = 0; i < g_state.interface_count; i++) {
         if (g_state.interfaces[i].enabled) {
             total_score += g_state.interfaces[i].health_score;
             active_interfaces++;

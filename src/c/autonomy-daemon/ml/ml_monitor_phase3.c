@@ -1,11 +1,12 @@
 #include "ml_monitor.h"
 #include "../utils/logx.h"
 #include "../starlink/starlink_modules.h"
-#include "../../starlink-tracking/obstruction_analyzer.h"
-#include "../../starlink-tracking/starlink_tracker.h"
+#include "../shared/starlink-tracking/obstruction_analyzer.h"
+#include "../shared/starlink-tracking/starlink_tracker.h"
 #include <time.h>
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
 
@@ -38,7 +39,7 @@ typedef struct {
 
 // Enhanced sky grid with obstruction analyzer integration
 typedef struct {
-    compact_sky_grid_t ml_grid;              // Our ML grid (90x45, 4° resolution)
+    compact_sky_grid_t ml_grid;              // Our ML grid (90x45, 4 resolution)
     obstruction_analyzer_t *obstruction_analyzer; // Existing obstruction analyzer
     
     // Integration mapping
@@ -82,12 +83,12 @@ static uint8_t ml_monitor_calculate_volatility(const uint16_t *values, int count
 static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
     if (!monitor || !monitor->state) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("Initializing enhanced sky grid with obstruction analyzer integration");
+    LOGX_INFO_MSG("Initializing enhanced sky grid with obstruction analyzer integration");
     
     // Allocate enhanced sky grid structure
     enhanced_sky_grid_t *enhanced_grid = calloc(1, sizeof(enhanced_sky_grid_t));
     if (!enhanced_grid) {
-        LOGX_ERROR("Failed to allocate enhanced sky grid");
+        LOGX_ERROR_MSG("Failed to allocate enhanced sky grid");
         return ML_MONITOR_ERROR_MEMORY_FAILED;
     }
     
@@ -105,7 +106,7 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
     
     enhanced_grid->obstruction_analyzer = obstruction_analyzer_init(&obstruction_config);
     if (!enhanced_grid->obstruction_analyzer) {
-        LOGX_WARN("Failed to initialize obstruction analyzer, continuing with ML-only mode");
+        LOGX_WARN_MSG("Failed to initialize obstruction analyzer, continuing with ML-only mode");
     }
     
     // Initialize coordinate mapping between ML grid (90x45) and polar projection (123x123)
@@ -124,7 +125,7 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
     // Store in monitor (replace simple sky grid)
     monitor->state->models.sky_grid = enhanced_grid->ml_grid;
     
-    LOGX_INFO("Enhanced sky grid initialized successfully (ML: 90x45, Obstruction: 123x123)");
+    LOGX_INFO_MSG("Enhanced sky grid initialized successfully (ML: 90x45, Obstruction: 123x123)");
     return ML_MONITOR_SUCCESS;
 }
 
@@ -147,12 +148,12 @@ static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor,
                                               (observation->flags & ML_OBS_FLAG_OUTAGE) ? 1 : 0);
     
     if (ml_result != ML_MONITOR_SUCCESS) {
-        LOGX_WARN("Failed to update ML sky grid: %d", ml_result);
+        LOGX_WARN_MSG("Failed to update ML sky grid: %d", ml_result);
         return ml_result;
     }
     
     // Convert ML grid coordinates to obstruction analyzer coordinates
-    int ml_az_bin = observation->azimuth_deg / 4;  // 4° resolution
+    int ml_az_bin = observation->azimuth_deg / 4;  // 4 resolution
     int ml_el_bin = observation->elevation_deg / 4;
     
     if (ml_az_bin >= 0 && ml_az_bin < 90 && ml_el_bin >= 0 && ml_el_bin < 45) {
@@ -161,7 +162,7 @@ static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor,
         // Cross-validate with obstruction analyzer if available
         // This would check against the 123x123 polar projection
         
-        LOGX_DEBUG("ML sky grid updated: az=%d°, el=%d°, prob=%u%% (bin [%d,%d])",
+        LOGX_DEBUG_MSG("ML sky grid updated: az=%d, el=%d, prob=%u%% (bin [%d,%d])",
                   observation->azimuth_deg, observation->elevation_deg, 
                   ml_obstruction_prob, ml_az_bin, ml_el_bin);
     }
@@ -179,7 +180,7 @@ static int ml_monitor_fuse_obstruction_data(enhanced_sky_grid_t *enhanced_grid, 
     for (int az_bin = 0; az_bin < 90; az_bin++) {
         for (int el_bin = 0; el_bin < 45; el_bin++) {
             // Convert ML grid coordinates to obstruction map coordinates
-            double azimuth = az_bin * 4.0;  // ML grid uses 4° resolution
+            double azimuth = az_bin * 4.0;  // ML grid uses 4 resolution
             double elevation = el_bin * 4.0;
             
             // Get obstruction data for this position
@@ -209,7 +210,7 @@ static int ml_monitor_fuse_obstruction_data(enhanced_sky_grid_t *enhanced_grid, 
         }
     }
     
-    LOGX_DEBUG("Sky grid fusion completed: %u fused, %u ML-only predictions",
+    LOGX_DEBUG_MSG("Sky grid fusion completed: %u fused, %u ML-only predictions",
               enhanced_grid->stats.fused_predictions, enhanced_grid->stats.ml_only_predictions);
     
     return ML_MONITOR_SUCCESS;
@@ -398,7 +399,7 @@ static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_pred
     uint8_t data_quality = (predictor->window_size * 255) / 60;
     predictor->confidence = (agreement * data_quality) / 255;
     
-    LOGX_DEBUG("Sliding window prediction: 5min=%u%%, 15min=%u%%, confidence=%u%%, cause=%u",
+    LOGX_DEBUG_MSG("Sliding window prediction: 5min=%u%%, 15min=%u%%, confidence=%u%%, cause=%u",
               predictor->outage_probability_5min, predictor->outage_probability_15min, 
               predictor->confidence, predictor->likely_cause);
     
@@ -415,7 +416,7 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
     
     // Need sufficient data for enhanced predictions
     if (monitor->state->total_observations < 100) {
-        LOGX_DEBUG("Insufficient data for enhanced predictions (%u observations)", monitor->state->total_observations);
+        LOGX_DEBUG_MSG("Insufficient data for enhanced predictions (%u observations)", monitor->state->total_observations);
         memset(probabilities, 0, 60);
         return ML_MONITOR_SUCCESS;
     }
@@ -426,7 +427,7 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
     // Get current observation
     ml_observation_t current_obs;
     if (ml_monitor_collect_observation(monitor) != ML_MONITOR_SUCCESS) {
-        LOGX_WARN("Failed to collect current observation for enhanced prediction");
+        LOGX_WARN_MSG("Failed to collect current observation for enhanced prediction");
         memset(probabilities, 0, 60);
         return ML_MONITOR_ERROR_PREDICTION_FAILED;
     }
@@ -438,7 +439,7 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
     // Make sliding window prediction
     int result = ml_monitor_sliding_window_predict(monitor, &predictor, &current_obs);
     if (result != ML_MONITOR_SUCCESS) {
-        LOGX_ERROR("Sliding window prediction failed: %d", result);
+        LOGX_ERROR_MSG("Sliding window prediction failed: %d", result);
         memset(probabilities, 0, 60);
         return result;
     }
@@ -453,14 +454,14 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
         
         // Add some randomness based on volatility
         double volatility_factor = predictor.features.snr_volatility / 255.0;
-        double random_factor = (sin(i * 0.1) * volatility_factor * 20); // ±20 based on volatility
+        double random_factor = (sin(i * 0.1) * volatility_factor * 20); // 20 based on volatility
         
         probabilities[i] = (uint8_t)fmax(0, fmin(255, base_prob + random_factor));
     }
     
     *confidence = predictor.confidence;
     
-    LOGX_DEBUG("Generated enhanced 15-minute predictions with %u%% confidence", *confidence);
+    LOGX_DEBUG_MSG("Generated enhanced 15-minute predictions with %u%% confidence", *confidence);
     return ML_MONITOR_SUCCESS;
 }
 
@@ -468,20 +469,20 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
 int ml_monitor_init_phase3_enhancements(ml_monitor_t *monitor) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("🚀 Initializing Phase 3: Advanced Sky Grid & Sliding Window Predictions");
+    LOGX_INFO_MSG(" Initializing Phase 3: Advanced Sky Grid & Sliding Window Predictions");
     
     // Initialize enhanced sky grid with obstruction analyzer integration
     int sky_result = ml_monitor_init_enhanced_sky_grid(monitor);
     if (sky_result != ML_MONITOR_SUCCESS) {
-        LOGX_WARN("Enhanced sky grid initialization failed: %d", sky_result);
+        LOGX_WARN_MSG("Enhanced sky grid initialization failed: %d", sky_result);
         return sky_result;
     }
     
-    LOGX_INFO("✅ Phase 3 enhancements initialized successfully");
-    LOGX_INFO("   - Enhanced sky grid with obstruction analyzer integration");
-    LOGX_INFO("   - Sliding window predictor with 15-minute horizon");
-    LOGX_INFO("   - Advanced feature extraction and trend analysis");
-    LOGX_INFO("   - Model fusion with existing obstruction data");
+    LOGX_INFO_MSG(" Phase 3 enhancements initialized successfully");
+    LOGX_INFO_MSG("   - Enhanced sky grid with obstruction analyzer integration");
+    LOGX_INFO_MSG("   - Sliding window predictor with 15-minute horizon");
+    LOGX_INFO_MSG("   - Advanced feature extraction and trend analysis");
+    LOGX_INFO_MSG("   - Model fusion with existing obstruction data");
     
     return ML_MONITOR_SUCCESS;
 }
@@ -493,7 +494,7 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
     // Integrate with obstruction analyzer
     int integration_result = ml_monitor_integrate_with_obstruction_analyzer(monitor, observation);
     if (integration_result != ML_MONITOR_SUCCESS) {
-        LOGX_DEBUG("Obstruction analyzer integration warning: %d", integration_result);
+        LOGX_DEBUG_MSG("Obstruction analyzer integration warning: %d", integration_result);
         // Continue with ML-only updates
     }
     

@@ -47,7 +47,7 @@ int gps_system_init(void) {
     g_gps_system.last_health_check = 0;
     
     // Initialize module status array
-    for (int i = 0; // Use configurable value i < GPS_MAX_MODULES; i++) {
+    for (int i = 0; i < GPS_MAX_MODULES; i++) {
         g_gps_system.module_status[i].module_type = GPS_MODULE_TYPE_UNKNOWN;
         g_gps_system.module_status[i].initialized = false;
         g_gps_system.module_status[i].enabled = false; // Use configurable gps module enabled setting
@@ -169,7 +169,7 @@ int gps_system_init(void) {
     if (!google_api_key || strlen(google_api_key) == 0) {
         LOGX_ERROR_MSG("Google API key not configured - GPS Google API services will be disabled");
         // Don't initialize Google API if no key is available
-        return AUTONOMY_ERROR_CONFIGURATION;
+        return AUTONOMY_ERROR_NOT_CONFIGURED;
     }
     
     result = gps_google_api_init(google_api_key);
@@ -217,7 +217,7 @@ int gps_system_init(void) {
     if (!weather_api_key || strlen(weather_api_key) == 0) {
         LOGX_ERROR_MSG("Weather API key not configured - GPS weather services will be disabled");
         // Don't initialize weather API if no key is available
-        return AUTONOMY_ERROR_CONFIGURATION;
+        return AUTONOMY_ERROR_NOT_CONFIGURED;
     }
     
     result = gps_weather_init(weather_api_key);
@@ -385,7 +385,7 @@ void update_module_status(gps_module_type_t module_type, bool initialized, bool 
     pthread_mutex_lock(&g_gps_system_mutex);
     
     // Find module in status array
-    for (int i = 0; // Use configurable value i < GPS_MAX_MODULES; i++) {
+    for (int i = 0; i < GPS_MAX_MODULES; i++) {
         if (g_gps_system.module_status[i].module_type == GPS_MODULE_TYPE_UNKNOWN) {
             // Add new module
             g_gps_system.module_status[i].module_type = module_type;
@@ -453,7 +453,7 @@ int gps_system_health_check(void) {
 
 // Check individual module health
 void check_module_health(void) {
-    for (int i = 0; // Use configurable value i < GPS_MAX_MODULES; i++) {
+    for (int i = 0; i < GPS_MAX_MODULES; i++) {
         if (g_gps_system.module_status[i].module_type == GPS_MODULE_TYPE_UNKNOWN) {
             continue;
         }
@@ -484,7 +484,7 @@ void update_system_health(void) {
     double total_health = 0.0; // Use configurable value
     int active_count = 0; // Use configurable value
     
-    for (int i = 0; // Use configurable value i < GPS_MAX_MODULES; i++) {
+    for (int i = 0; i < GPS_MAX_MODULES; i++) {
         if (g_gps_system.module_status[i].module_type != GPS_MODULE_TYPE_UNKNOWN && 
             g_gps_system.module_status[i].enabled) {
             total_health += g_gps_system.module_status[i].health_score;
@@ -518,7 +518,7 @@ int gps_system_get_status(gps_system_status_t *status) {
     
     // Copy module status information
     int active_modules = 0; // Use configurable value
-    for (int i = 0; // Use configurable value i < GPS_MAX_MODULES && active_modules < GPS_MAX_MODULES; i++) {
+    for (int i = 0; i < GPS_MAX_MODULES && active_modules < GPS_MAX_MODULES; i++) {
         if (g_gps_system.module_status[i].module_type != GPS_MODULE_TYPE_UNKNOWN) {
             memcpy(&status->module_status[active_modules], &g_gps_system.module_status[i], 
                    sizeof(gps_module_status_t));
@@ -598,7 +598,7 @@ int gps_system_reset(void) {
     g_gps_system.last_health_check = 0;
     
     // Clear all module status
-    for (int i = 0; // Use configurable value i < GPS_MAX_MODULES; i++) {
+    for (int i = 0; i < GPS_MAX_MODULES; i++) {
         g_gps_system.module_status[i].module_type = GPS_MODULE_TYPE_UNKNOWN;
         g_gps_system.module_status[i].initialized = false;
         g_gps_system.module_status[i].enabled = false; // Use configurable gps module enabled setting
@@ -642,4 +642,40 @@ void gps_system_cleanup(void) {
     g_gps_system_initialized = false; // Use configurable setting
     
     LOGX_INFO_MSG("GPS system cleaned up");
+}
+
+// Get current GPS location
+int gps_get_current_location(gps_data_t *location) {
+    if (!location) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    if (!g_gps_system_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_gps_system_mutex);
+    
+    // Try to get location from GPS comprehensive system
+    if (gps_comprehensive_get_current_location(location) == AUTONOMY_SUCCESS) {
+        pthread_mutex_unlock(&g_gps_system_mutex);
+        return AUTONOMY_SUCCESS;
+    }
+    
+    // Fallback to GPS manager
+    if (gps_manager_get_current_location(location) == AUTONOMY_SUCCESS) {
+        pthread_mutex_unlock(&g_gps_system_mutex);
+        return AUTONOMY_SUCCESS;
+    }
+    
+    // Return default/unknown location
+    memset(location, 0, sizeof(gps_data_t));
+    location->lat = 0.0;
+    location->lon = 0.0;
+    location->altitude = 0.0;
+    location->accuracy = 0.0;
+    location->timestamp = time(NULL);
+    
+    pthread_mutex_unlock(&g_gps_system_mutex);
+    return AUTONOMY_ERROR_NO_DATA;
 }

@@ -370,11 +370,7 @@ static int collect_via_ubus(cellular_info_t* info) {
         }
     }
 
-    struct ubus_request req = {
-        .data_cb = gsm_status_callback
-    };
-
-    int ret = ubus_invoke(ctx, id, "status", bb.head, &req, NULL, 5000);
+    int ret = ubus_invoke(ctx, id, "status", bb.head, gsm_status_callback, NULL, 5000);
 
     blob_buf_free(&bb);
     ubus_free(ctx);
@@ -653,7 +649,7 @@ static int collect_via_at_commands(cellular_info_t* info) {
     // Get SIM card status
     if (send_at_command(fd, "AT+CPIN?", response, sizeof(response), 2000) == 0) {
         if (strstr(response, "READY")) {
-            info->sim_status = CELLULAR_SIM_STATUS_READY;
+            strncpy(info->sim_status, "READY", sizeof(info->sim_status) - 1);
             
             // Get ICCID if SIM is ready
             if (send_at_command(fd, "AT+CCID", response, sizeof(response), 2000) == 0) {
@@ -668,9 +664,9 @@ static int collect_via_at_commands(cellular_info_t* info) {
                 }
             }
         } else if (strstr(response, "SIM PIN")) {
-            info->sim_status = CELLULAR_SIM_STATUS_PIN_REQUIRED;
+            strncpy(info->sim_status, "PIN_REQUIRED", sizeof(info->sim_status) - 1);
         } else {
-            info->sim_status = CELLULAR_SIM_STATUS_ERROR;
+            strncpy(info->sim_status, "ERROR", sizeof(info->sim_status) - 1);
         }
     }
     
@@ -682,12 +678,12 @@ static int collect_via_at_commands(cellular_info_t* info) {
             int mcc, mnc, cellid, pci, tac, band;
             if (sscanf(line, "+QENG: \"servingcell\",\"%*[^\"]\",\"%*[^\"]\",\"%*[^\"]\",\"%d\",\"%d\",%*d,%*d,%d,%*x,%d,%*d,%d,%d",
                       &mcc, &mnc, &cellid, &pci, &tac, &band) >= 4) {
-                info->mcc = mcc;
-                info->mnc = mnc;
-                info->cell_id = cellid;
+                snprintf(info->mcc, sizeof(info->mcc), "%d", mcc);
+                snprintf(info->mnc, sizeof(info->mnc), "%d", mnc);
+                snprintf(info->cell_id, sizeof(info->cell_id), "%d", cellid);
                 info->pci = pci;
-                info->tac = tac;
-                info->band = band;
+                snprintf(info->tac, sizeof(info->tac), "%d", tac);
+                snprintf(info->band, sizeof(info->band), "%d", band);
                 info->has_cell_info = true;
             }
         }
@@ -698,7 +694,7 @@ static int collect_via_at_commands(cellular_info_t* info) {
                 int n, stat, lac, ci;
                 if (sscanf(response, "\r\n+CGREG: %d,%d,\"%x\",\"%x\"", &n, &stat, &lac, &ci) >= 4) {
                     info->lac = lac;
-                    info->cell_id = ci;
+                    snprintf(info->cell_id, sizeof(info->cell_id), "%d", ci);
                     info->has_cell_info = true;
                 }
             }

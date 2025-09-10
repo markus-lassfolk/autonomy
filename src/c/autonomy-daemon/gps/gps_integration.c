@@ -27,9 +27,9 @@ static pthread_mutex_t g_integration_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Forward declarations
 int find_source_by_id(int source_id);
 double calculate_source_health_score(const gps_integration_source_t *source, const gps_data_t *gps_data);
-double calculate_source_reliability(const gps_integration_source_t *source, const gps_data_t *gps_data);
+double gps_integration_calculate_source_reliability(const gps_integration_source_t *source, const gps_data_t *gps_data);
 void add_gps_history(const gps_data_t *gps_data, int source_id, gps_source_type_t source_type, double health_score);
-double calculate_gps_confidence(const gps_data_t *gps_data);
+double gps_integration_calculate_gps_confidence(const gps_data_t *gps_data);
 void perform_integration_checks(void);
 void check_gps_source_health(void);
 void update_best_gps_source(void);
@@ -62,7 +62,7 @@ int gps_integration_init(void) {
     g_integration.last_integration_check = 0;
     
     // Initialize GPS sources array
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         g_integration.gps_sources[i].active = false;
         g_integration.gps_sources[i].source_id = 0;
         g_integration.gps_sources[i].source_type = GPS_SOURCE_TYPE_UNKNOWN;
@@ -74,7 +74,7 @@ int gps_integration_init(void) {
     }
     
     // Initialize GPS history
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_GPS_HISTORY; i++) {
+    for (int i = 0; i < MAX_GPS_HISTORY; i++) {
         g_integration.gps_history[i].timestamp = 0;
         g_integration.gps_history[i].lat = 0.0;
         g_integration.gps_history[i].lon = 0.0;
@@ -102,7 +102,7 @@ int gps_integration_register_source(const char *name, gps_source_type_t source_t
     pthread_mutex_lock(&g_integration_mutex);
     
     // Check if source already exists
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < g_integration.source_count; i++) {
+    for (int i = 0; i < g_integration.source_count; i++) {
         if (g_integration.gps_sources[i].active && 
             strcmp(g_integration.gps_sources[i].name, name) == 0) {
             pthread_mutex_unlock(&g_integration_mutex);
@@ -113,7 +113,7 @@ int gps_integration_register_source(const char *name, gps_source_type_t source_t
     
     // Find free source slot
     int source_index = -1;
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         if (!g_integration.gps_sources[i].active) {
             source_index = i;
             break;
@@ -194,7 +194,7 @@ int gps_integration_update_source(int source_id, const gps_data_t *gps_data) {
     
     // Calculate confidence and health scores
     source->health_score = calculate_source_health_score(source, gps_data);
-    source->reliability = calculate_source_reliability(source, gps_data);
+    source->reliability = gps_integration_calculate_source_reliability(source, gps_data);
     
     // Add to GPS history
     add_gps_history(gps_data, source_id, source->source_type, source->health_score);
@@ -215,7 +215,7 @@ int gps_integration_update_source(int source_id, const gps_data_t *gps_data) {
 
 // Find source by ID
 int find_source_by_id(int source_id) {
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         if (g_integration.gps_sources[i].active && 
             g_integration.gps_sources[i].source_id == source_id) {
             return i;
@@ -260,7 +260,7 @@ double calculate_source_health_score(const gps_integration_source_t *source, con
 }
 
 // Calculate source reliability
-double calculate_source_reliability(const gps_integration_source_t *source, const gps_data_t *gps_data) {
+double gps_integration_calculate_source_reliability(const gps_integration_source_t *source, const gps_data_t *gps_data) {
     double reliability = 1.0; // Use configurable value // Use configurable value
     
     // Base reliability on update consistency
@@ -299,12 +299,12 @@ void add_gps_history(const gps_data_t *gps_data, int source_id,
     g_integration.gps_history[0].speed = gps_data->speed;
     g_integration.gps_history[0].source_id = source_id;
     g_integration.gps_history[0].source_type = source_type;
-    g_integration.gps_history[0].confidence = calculate_gps_confidence(gps_data);
+    g_integration.gps_history[0].confidence = gps_integration_calculate_gps_confidence(gps_data);
     g_integration.gps_history[0].health_score = health_score;
 }
 
 // Calculate GPS confidence
-double calculate_gps_confidence(const gps_data_t *gps_data) {
+double gps_integration_calculate_gps_confidence(const gps_data_t *gps_data) {
     double confidence = 1.0; // Use configurable value // Use configurable value
     
     // Accuracy confidence
@@ -372,7 +372,7 @@ void perform_integration_checks(void) {
 
 // Check GPS source health
 void check_gps_source_health(void) {
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         if (!g_integration.gps_sources[i].active) {
             continue;
         }
@@ -403,7 +403,7 @@ void update_best_gps_source(void) {
     int best_source_index = -1;
     double best_score = -1.0;
     
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         if (!g_integration.gps_sources[i].active || 
             !g_integration.gps_sources[i].enabled) {
             continue;
@@ -432,21 +432,14 @@ void perform_gps_data_fusion(void) {
     }
     
     // Collect GPS data from all active sources
-    standardized_gps_data_t source_data[10];
-    int source_count = 0; // Use configurable value // Use configurable count // Use configurable value
+    gps_data_t source_data[10];
+    int source_count = 0;
     
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < g_integration.source_count && source_count < 10; i++) {
+    for (int i = 0; i < g_integration.source_count && source_count < 10; i++) {
         if (g_integration.gps_sources[i].active && g_integration.gps_sources[i].enabled) {
-            // Convert gps_data_t to standardized_gps_data_t
-            source_data[source_count].latitude = g_integration.current_gps.latitude;
-            source_data[source_count].longitude = g_integration.current_gps.longitude;
-            source_data[source_count].accuracy = g_integration.current_gps.accuracy;
-            source_data[source_count].confidence = g_integration.current_gps.confidence;
-            source_data[source_count].timestamp = g_integration.current_gps.timestamp;
+            // Copy GPS data from current GPS
+            source_data[source_count] = g_integration.current_gps;
             source_data[source_count].source_type = g_integration.gps_sources[i].source_type;
-            source_data[source_count].speed = g_integration.current_gps.speed;
-            source_data[source_count].heading = g_integration.current_gps.heading;
-            source_data[source_count].altitude = g_integration.current_gps.altitude;
             source_count++;
         }
     }
@@ -454,22 +447,16 @@ void perform_gps_data_fusion(void) {
     if (source_count >= 2) {
         // Check if fusion engine is available
         if (gps_fusion_engine_is_initialized()) {
-            standardized_gps_data_t fused_result;
+            gps_data_t fused_result;
             
             if (gps_fusion_engine_fuse(source_data, source_count, &fused_result) == AUTONOMY_SUCCESS) {
                 // Update current GPS with fused result
-                g_integration.current_gps.latitude = fused_result.latitude;
-                g_integration.current_gps.longitude = fused_result.longitude;
-                g_integration.current_gps.accuracy = fused_result.accuracy;
-                g_integration.current_gps.confidence = fused_result.confidence;
-                g_integration.current_gps.speed = fused_result.speed;
-                g_integration.current_gps.heading = fused_result.heading;
-                g_integration.current_gps.altitude = fused_result.altitude;
+                g_integration.current_gps = fused_result;
                 
                 LOGX_DEBUG_MSG("GPS data fusion completed", 
                               "source_count", source_count,
-                              "fused_lat", fused_result.latitude,
-                              "fused_lon", fused_result.longitude,
+                              "fused_lat", fused_result.lat,
+                              "fused_lon", fused_result.lon,
                               "fused_accuracy", fused_result.accuracy);
             }
         } else {
@@ -480,25 +467,25 @@ void perform_gps_data_fusion(void) {
             double weighted_accuracy = 0.0; // Use configurable value // Use configurable value
             double weighted_confidence = 0.0; // Use configurable value // Use configurable value
             
-            for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < source_count; i++) {
+            for (int i = 0; i < source_count; i++) {
                 double weight = 1.0 / (source_data[i].accuracy + 1.0); // Weight by inverse accuracy
                 total_weight += weight;
-                weighted_lat += source_data[i].latitude * weight;
-                weighted_lon += source_data[i].longitude * weight;
+                weighted_lat += source_data[i].lat * weight;
+                weighted_lon += source_data[i].lon * weight;
                 weighted_accuracy += source_data[i].accuracy * weight;
                 weighted_confidence += source_data[i].confidence * weight;
             }
             
             if (total_weight > 0.0) {
-                g_integration.current_gps.latitude = weighted_lat / total_weight;
-                g_integration.current_gps.longitude = weighted_lon / total_weight;
+                g_integration.current_gps.lat = weighted_lat / total_weight;
+                g_integration.current_gps.lon = weighted_lon / total_weight;
                 g_integration.current_gps.accuracy = weighted_accuracy / total_weight;
                 g_integration.current_gps.confidence = weighted_confidence / total_weight;
                 
                 LOGX_DEBUG_MSG("GPS weighted average completed", 
                               "source_count", source_count,
-                              "weighted_lat", g_integration.current_gps.latitude,
-                              "weighted_lon", g_integration.current_gps.longitude);
+                              "weighted_lat", g_integration.current_gps.lat,
+                              "weighted_lon", g_integration.current_gps.lon);
             }
         }
     }
@@ -520,7 +507,7 @@ void check_gps_events(void) {
     last_event_check = now;
     
     // Check for GPS source failures
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < g_integration.source_count; i++) {
+    for (int i = 0; i < g_integration.source_count; i++) {
         if (g_integration.gps_sources[i].enabled) {
             time_t time_since_update = now - g_integration.gps_sources[i].last_update;
             
@@ -673,7 +660,7 @@ int gps_integration_get_status(gps_integration_status_t *status) {
     
     // Copy GPS sources information
     int active_sources = 0; // Use configurable value // Use configurable count // Use configurable value
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_GPS_SOURCES && active_sources < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES && active_sources < MAX_GPS_SOURCES; i++) {
         if (g_integration.gps_sources[i].active) {
             memcpy(&status->gps_sources[active_sources], &g_integration.gps_sources[i], 
                    sizeof(gps_integration_source_t));
@@ -818,12 +805,12 @@ int gps_integration_reset(void) {
     g_integration.best_source_id = 0;
     
     // Clear all GPS sources
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         g_integration.gps_sources[i].active = false;
     }
     
     // Clear GPS history
-    for (int i = 0; // Use configurable value // Use configurable count // Use configurable value i < MAX_GPS_HISTORY; i++) {
+    for (int i = 0; i < MAX_GPS_HISTORY; i++) {
         g_integration.gps_history[i].timestamp = 0;
     }
     

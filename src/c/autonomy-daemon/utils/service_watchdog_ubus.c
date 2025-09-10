@@ -46,7 +46,7 @@ static const struct ubus_method autonomy_service_watchdog_methods[] = {
 };
 
 // UBUS object type
-static const struct ubus_object_type autonomy_service_watchdog_obj_type = {
+static struct ubus_object_type autonomy_service_watchdog_obj_type = {
     .name = "autonomy_service_watchdog",
     .methods = autonomy_service_watchdog_methods,
     .n_methods = ARRAY_SIZE(autonomy_service_watchdog_methods),

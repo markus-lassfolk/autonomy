@@ -18,13 +18,13 @@
 // Initialize cellular tower intelligence
 cellular_tower_intelligence_t* cellular_tower_intelligence_init(const cellular_tower_config_t *config) {
     if (!config) {
-        LOGX_ERROR("Invalid configuration parameter");
+        LOGX_ERROR_MSG("Invalid configuration parameter");
         return NULL;
     }
     
     cellular_tower_intelligence_t *intelligence = calloc(1, sizeof(cellular_tower_intelligence_t));
     if (!intelligence) {
-        LOGX_ERROR("Failed to allocate memory for cellular tower intelligence");
+        LOGX_ERROR_MSG("Failed to allocate memory for cellular tower intelligence");
         return NULL;
     }
     
@@ -50,7 +50,7 @@ cellular_tower_intelligence_t* cellular_tower_intelligence_init(const cellular_t
     intelligence->history.density_history_index = 0;
     intelligence->history.density_history_count = 0;
     
-    LOGX_INFO("Cellular tower intelligence initialized with carrier filtering: %s, min_rsrp=%d dBm",
+    LOGX_INFO_MSG("Cellular tower intelligence initialized with carrier filtering: %s, min_rsrp=%d dBm",
               intelligence->config.enable_carrier_filtering ? "enabled" : "disabled",
               intelligence->config.min_rsrp_dbm);
     
@@ -61,7 +61,7 @@ cellular_tower_intelligence_t* cellular_tower_intelligence_init(const cellular_t
 void cellular_tower_intelligence_cleanup(cellular_tower_intelligence_t *intelligence) {
     if (!intelligence) return;
     
-    LOGX_DEBUG("Cleaning up cellular tower intelligence");
+    LOGX_DEBUG_MSG("Cleaning up cellular tower intelligence");
     free(intelligence);
 }
 
@@ -236,7 +236,7 @@ int cellular_tower_intelligence_filter_usable_towers(cellular_tower_intelligence
         }
     }
     
-    LOGX_DEBUG("Filtered %d usable towers from %d neighbors", *usable_count, neighbor_count);
+    LOGX_DEBUG_MSG("Filtered %d usable towers from %d neighbors", *usable_count, neighbor_count);
     
     return CELLULAR_TOWER_INTELLIGENCE_SUCCESS;
 }
@@ -330,7 +330,7 @@ int cellular_tower_intelligence_analyze_density(cellular_tower_intelligence_t *i
     intelligence->ml_tower_density_feature = (uint8_t)(intelligence->density_analysis.density_score * 255);
     intelligence->ml_coverage_quality_feature = (uint8_t)(intelligence->density_analysis.coverage_score * 255);
     
-    LOGX_DEBUG("Tower density analysis: usable=%d, home=%d, roaming=%d, density_score=%.2f, reliability_score=%.2f",
+    LOGX_DEBUG_MSG("Tower density analysis: usable=%d, home=%d, roaming=%d, density_score=%.2f, reliability_score=%.2f",
                intelligence->density_analysis.usable_towers_in_radius,
                intelligence->density_analysis.home_carrier_towers,
                intelligence->density_analysis.roaming_towers,
@@ -388,7 +388,7 @@ int cellular_tower_intelligence_analyze_cell_changes(cellular_tower_intelligence
         
         strncpy(intelligence->last_serving_cell, current_cell_id, sizeof(intelligence->last_serving_cell) - 1);
         
-        LOGX_DEBUG("Cell change detected: %s -> %s", intelligence->last_serving_cell, current_cell_id);
+        LOGX_DEBUG_MSG("Cell change detected: %s -> %s", intelligence->last_serving_cell, current_cell_id);
     }
     
     // Analyze change patterns
@@ -442,7 +442,7 @@ int cellular_tower_intelligence_analyze_cell_changes(cellular_tower_intelligence
     intelligence->ml_cell_change_feature = (uint8_t)(intelligence->cell_change_analysis.change_frequency_score * 255);
     intelligence->ml_connectivity_risk_feature = (uint8_t)(intelligence->cell_change_analysis.connectivity_risk_score * 255);
     
-    LOGX_DEBUG("Cell change analysis: changes_last_hour=%d, frequency_score=%.2f, risk_score=%.2f",
+    LOGX_DEBUG_MSG("Cell change analysis: changes_last_hour=%d, frequency_score=%.2f, risk_score=%.2f",
                intelligence->cell_change_analysis.changes_last_hour,
                intelligence->cell_change_analysis.change_frequency_score,
                intelligence->cell_change_analysis.connectivity_risk_score);
@@ -552,5 +552,42 @@ int cellular_tower_intelligence_set_connectivity_risk_callback(cellular_tower_in
     intelligence->connectivity_risk_callback = callback;
     intelligence->callback_user_data = user_data;
     
+    return CELLULAR_TOWER_INTELLIGENCE_SUCCESS;
+}
+
+// Analyze cellular towers
+int cellular_tower_intelligence_analyze_towers(cellular_tower_intelligence_t *intelligence,
+                                              const opencellid_cellular_environment_t *environment,
+                                              const cellular_info_t *cellular_info) {
+    if (!intelligence || !environment || !cellular_info) {
+        return CELLULAR_TOWER_INTELLIGENCE_ERROR_INVALID_PARAM;
+    }
+
+    // Update last analysis time
+    intelligence->last_update_time = time(NULL);
+
+    // Perform tower density analysis if we have usable towers
+    if (intelligence->usable_tower_count > 0) {
+        // Use current GPS location if available
+        double current_lat = 0.0, current_lon = 0.0;
+        
+        // Try to get current location from environment GPS data
+        if (environment->gps_valid && environment->gps_latitude != 0.0 && environment->gps_longitude != 0.0) {
+            current_lat = environment->gps_latitude;
+            current_lon = environment->gps_longitude;
+        }
+
+        // Perform density analysis
+        cellular_tower_intelligence_analyze_density(intelligence, 
+                                                   intelligence->usable_towers,
+                                                   intelligence->usable_tower_count,
+                                                   current_lat, current_lon);
+    }
+
+    // Update ML features based on analysis
+    intelligence->ml_tower_density_feature = (uint8_t)(intelligence->density_analysis.density_score * 255);
+    intelligence->ml_coverage_quality_feature = (uint8_t)(intelligence->density_analysis.coverage_score * 255);
+    intelligence->ml_connectivity_risk_feature = (uint8_t)(intelligence->cell_change_analysis.connectivity_risk_score * 255);
+
     return CELLULAR_TOWER_INTELLIGENCE_SUCCESS;
 }

@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "../core/types.h"
 #include "network_discovery_comprehensive.h"
 #include <libubus.h>

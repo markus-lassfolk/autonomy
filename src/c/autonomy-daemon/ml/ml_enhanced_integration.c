@@ -2,12 +2,14 @@
 #include "ml_satellite_redundancy.h"
 #include "ml_cellular_tower_intelligence.h"
 #include "../starlink/starlink_types.h"
+#include "../starlink/starlink_modules.h"
 #include "../gps/opencellid_complete.h"
 #include "../network/cellular_collector.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
 #include <string.h>
 #include <time.h>
+#include <stdlib.h>
 
 // Enhanced ML integration system
 typedef struct {
@@ -41,21 +43,25 @@ typedef struct {
 // Global enhanced integration instance
 static ml_enhanced_integration_t *g_enhanced_integration = NULL;
 
+// Forward declarations for callback functions
+static void ml_enhanced_integration_satellite_warning_callback(const satellite_redundancy_assessment_t *assessment, void *user_data);
+static void ml_enhanced_integration_cellular_risk_callback(double risk_score, void *user_data);
+
 // Initialize enhanced ML integration
 int ml_enhanced_integration_init(ml_monitor_t *ml_monitor) {
     if (!ml_monitor) {
-        LOGX_ERROR("Invalid ML monitor parameter");
+        LOGX_ERROR_MSG("Invalid ML monitor parameter");
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
     if (g_enhanced_integration) {
-        LOGX_WARN("Enhanced ML integration already initialized");
+        LOGX_WARN_MSG("Enhanced ML integration already initialized");
         return ML_MONITOR_SUCCESS;
     }
     
     g_enhanced_integration = calloc(1, sizeof(ml_enhanced_integration_t));
     if (!g_enhanced_integration) {
-        LOGX_ERROR("Failed to allocate memory for enhanced ML integration");
+        LOGX_ERROR_MSG("Failed to allocate memory for enhanced ML integration");
         return ML_MONITOR_ERROR_MEMORY_FAILED;
     }
     
@@ -68,7 +74,7 @@ int ml_enhanced_integration_init(ml_monitor_t *ml_monitor) {
     satellite_redundancy_config_init_defaults(&g_enhanced_integration->satellite_config);
     g_enhanced_integration->satellite_redundancy = satellite_redundancy_init(&g_enhanced_integration->satellite_config);
     if (!g_enhanced_integration->satellite_redundancy) {
-        LOGX_ERROR("Failed to initialize satellite redundancy analysis");
+        LOGX_ERROR_MSG("Failed to initialize satellite redundancy analysis");
         free(g_enhanced_integration);
         g_enhanced_integration = NULL;
         return ML_MONITOR_ERROR_MEMORY_FAILED;
@@ -78,7 +84,7 @@ int ml_enhanced_integration_init(ml_monitor_t *ml_monitor) {
     cellular_tower_config_init_defaults(&g_enhanced_integration->cellular_config);
     g_enhanced_integration->cellular_intelligence = cellular_tower_intelligence_init(&g_enhanced_integration->cellular_config);
     if (!g_enhanced_integration->cellular_intelligence) {
-        LOGX_ERROR("Failed to initialize cellular tower intelligence");
+        LOGX_ERROR_MSG("Failed to initialize cellular tower intelligence");
         satellite_redundancy_cleanup(g_enhanced_integration->satellite_redundancy);
         free(g_enhanced_integration);
         g_enhanced_integration = NULL;
@@ -94,7 +100,7 @@ int ml_enhanced_integration_init(ml_monitor_t *ml_monitor) {
                                                               ml_enhanced_integration_cellular_risk_callback,
                                                               g_enhanced_integration);
     
-    LOGX_INFO("Enhanced ML integration initialized with satellite redundancy and cellular tower intelligence");
+    LOGX_INFO_MSG("Enhanced ML integration initialized with satellite redundancy and cellular tower intelligence");
     
     return ML_MONITOR_SUCCESS;
 }
@@ -103,7 +109,7 @@ int ml_enhanced_integration_init(ml_monitor_t *ml_monitor) {
 void ml_enhanced_integration_cleanup(void) {
     if (!g_enhanced_integration) return;
     
-    LOGX_DEBUG("Cleaning up enhanced ML integration");
+    LOGX_DEBUG_MSG("Cleaning up enhanced ML integration");
     
     if (g_enhanced_integration->satellite_redundancy) {
         satellite_redundancy_cleanup(g_enhanced_integration->satellite_redundancy);
@@ -126,7 +132,7 @@ int ml_enhanced_integration_collect_observation(ml_observation_t *observation) {
     // Collect base observation from ML monitor
     int result = ml_monitor_collect_observation(g_enhanced_integration->ml_monitor);
     if (result != ML_MONITOR_SUCCESS) {
-        LOGX_WARN("Failed to collect base ML observation");
+        LOGX_WARN_MSG("Failed to collect base ML observation");
         return result;
     }
     
@@ -140,10 +146,10 @@ int ml_enhanced_integration_collect_observation(ml_observation_t *observation) {
     // Enhance with satellite redundancy analysis
     if (g_enhanced_integration->satellite_redundancy) {
         // Get Starlink data for satellite analysis
-        starlink_status_response_t starlink_data;
+        starlink_collection_result_t starlink_data;
         if (starlink_collect_data(&starlink_data) == AUTONOMY_SUCCESS) {
-            // Assess satellite redundancy
-            satellite_redundancy_assess_current(g_enhanced_integration->satellite_redundancy, &starlink_data);
+        // Assess satellite redundancy
+        satellite_redundancy_assess_current(g_enhanced_integration->satellite_redundancy, &starlink_data.status);
             
             // Get satellite redundancy assessment
             satellite_redundancy_assessment_t assessment;
@@ -153,7 +159,7 @@ int ml_enhanced_integration_collect_observation(ml_observation_t *observation) {
                 
                 g_enhanced_integration->stats.satellite_assessments++;
                 
-                LOGX_DEBUG("Enhanced observation with satellite redundancy: visible=%d, redundancy=%.2f, risk_level=%d",
+                LOGX_DEBUG_MSG("Enhanced observation with satellite redundancy: visible=%d, redundancy=%.2f, risk_level=%d",
                            assessment.total_visible, assessment.redundancy_score, assessment.risk_level);
             }
         }
@@ -198,7 +204,7 @@ int ml_enhanced_integration_collect_observation(ml_observation_t *observation) {
                 g_enhanced_integration->stats.cellular_analyses++;
                 g_enhanced_integration->stats.carrier_filtered_towers += usable_count;
                 
-                LOGX_DEBUG("Enhanced observation with cellular intelligence: usable_towers=%d, density_score=%.2f, risk_score=%.2f",
+                LOGX_DEBUG_MSG("Enhanced observation with cellular intelligence: usable_towers=%d, density_score=%.2f, risk_score=%.2f",
                            usable_count,
                            g_enhanced_integration->cellular_intelligence->density_analysis.density_score,
                            g_enhanced_integration->cellular_intelligence->cell_change_analysis.connectivity_risk_score);
@@ -274,20 +280,20 @@ int ml_enhanced_integration_predict_outage(uint8_t *probability, uint8_t *confid
     
     g_enhanced_integration->stats.ml_predictions_enhanced++;
     
-    LOGX_DEBUG("Enhanced outage prediction: probability=%d, confidence=%d, cause=%d",
+    LOGX_DEBUG_MSG("Enhanced outage prediction: probability=%d, confidence=%d, cause=%d",
                *probability, *confidence, *cause);
     
     return ML_MONITOR_SUCCESS;
 }
 
 // Satellite early warning callback
-void ml_enhanced_integration_satellite_warning_callback(const satellite_redundancy_assessment_t *assessment, void *user_data) {
+static void ml_enhanced_integration_satellite_warning_callback(const satellite_redundancy_assessment_t *assessment, void *user_data) {
     if (!assessment || !user_data) return;
     
     ml_enhanced_integration_t *integration = (ml_enhanced_integration_t*)user_data;
     integration->stats.early_warnings_triggered++;
     
-    LOGX_WARN("Satellite redundancy early warning: visible=%d, unobstructed=%d, risk_level=%d, redundancy=%.2f",
+    LOGX_WARN_MSG("Satellite redundancy early warning: visible=%d, unobstructed=%d, risk_level=%d, redundancy=%.2f",
               assessment->total_visible, assessment->unobstructed_count, 
               assessment->risk_level, assessment->redundancy_score);
     
@@ -298,13 +304,13 @@ void ml_enhanced_integration_satellite_warning_callback(const satellite_redundan
 }
 
 // Cellular connectivity risk callback
-void ml_enhanced_integration_cellular_risk_callback(double risk_score, void *user_data) {
+static void ml_enhanced_integration_cellular_risk_callback(double risk_score, void *user_data) {
     if (!user_data) return;
     
     ml_enhanced_integration_t *integration = (ml_enhanced_integration_t*)user_data;
     
     if (risk_score > 0.8) { // High risk threshold
-        LOGX_WARN("High cellular connectivity risk detected: %.2f", risk_score);
+        LOGX_WARN_MSG("High cellular connectivity risk detected: %.2f", risk_score);
         
         // Could trigger additional actions here, such as:
         // - Adjusting cellular interface weights
@@ -313,8 +319,8 @@ void ml_enhanced_integration_cellular_risk_callback(double risk_score, void *use
     }
 }
 
-// Get enhanced integration statistics
-int ml_enhanced_integration_get_stats(struct {
+// Enhanced integration statistics structure
+typedef struct {
     uint32_t satellite_assessments;
     uint32_t cellular_analyses;
     uint32_t ml_predictions_enhanced;
@@ -322,7 +328,10 @@ int ml_enhanced_integration_get_stats(struct {
     uint32_t carrier_filtered_towers;
     uint32_t integration_cycles;
     time_t last_update;
-} *stats) {
+} ml_enhanced_integration_stats_t;
+
+// Get enhanced integration statistics
+int ml_enhanced_integration_get_stats(ml_enhanced_integration_stats_t *stats) {
     if (!g_enhanced_integration || !stats) {
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
@@ -351,7 +360,7 @@ int ml_enhanced_integration_set_enabled(bool enabled) {
     
     g_enhanced_integration->enhanced_features_enabled = enabled;
     
-    LOGX_INFO("Enhanced ML integration features %s", enabled ? "enabled" : "disabled");
+    LOGX_INFO_MSG("Enhanced ML integration features %s", enabled ? "enabled" : "disabled");
     
     return ML_MONITOR_SUCCESS;
 }

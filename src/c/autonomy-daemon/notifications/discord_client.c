@@ -65,17 +65,17 @@ int discord_client_get_embed_color(notification_priority_t priority) {
 const char* discord_client_get_priority_text(notification_priority_t priority) {
     switch (priority) {
         case NOTIFICATION_PRIORITY_EMERGENCY:
-            return "🚨 Emergency";
+            return " Emergency";
         case NOTIFICATION_PRIORITY_HIGH:
-            return "⚠️ High";
+            return " High";
         case NOTIFICATION_PRIORITY_NORMAL:
-            return "ℹ️ Normal";
+            return " Normal";
         case NOTIFICATION_PRIORITY_LOW:
-            return "📝 Low";
+            return " Low";
         case NOTIFICATION_PRIORITY_LOWEST:
-            return "💬 Lowest";
+            return " Lowest";
         default:
-            return "ℹ️ Normal";
+            return " Normal";
     }
 }
 

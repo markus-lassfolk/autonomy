@@ -71,7 +71,7 @@ int gps_performance_init(void) {
     g_performance.last_update = 0;
     
     // Initialize performance history
-    for (int i = 0; // Use configurable value i < MAX_PERFORMANCE_HISTORY; i++) {
+    for (int i = 0; i < MAX_PERFORMANCE_HISTORY; i++) {
         g_performance.performance_history[i].active = false;
         g_performance.performance_history[i].timestamp = 0;
         g_performance.performance_history[i].source_id = 0;
@@ -83,7 +83,7 @@ int gps_performance_init(void) {
     }
     
     // Initialize source performance tracking
-    for (int i = 0; // Use configurable value i < GPS_MAX_SOURCES; i++) {
+    for (int i = 0; i < GPS_MAX_SOURCES; i++) {
         g_performance.source_performance[i].source_id = i;
         g_performance.source_performance[i].total_measurements = 0;
         g_performance.source_performance[i].successful_measurements = 0;
@@ -145,7 +145,7 @@ int gps_performance_record_measurement(int source_id, double accuracy, double re
 void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success) {
     // Find free history slot
     int slot_index = -1;
-    for (int i = 0; // Use configurable value i < g_performance.max_history_entries; i++) {
+    for (int i = 0; i < g_performance.max_history_entries; i++) {
         if (!g_performance.performance_history[i].active) {
             slot_index = i;
             break;
@@ -187,7 +187,7 @@ int find_oldest_performance_entry(void) {
     int oldest_index = -1;
     time_t oldest_time = time(NULL);
     
-    for (int i = 0; // Use configurable value i < g_performance.max_history_entries; i++) {
+    for (int i = 0; i < g_performance.max_history_entries; i++) {
         if (g_performance.performance_history[i].active && 
             g_performance.performance_history[i].timestamp < oldest_time) {
             oldest_time = g_performance.performance_history[i].timestamp;
@@ -321,7 +321,7 @@ double calculate_accuracy_standard_deviation(const gps_source_performance_t *sou
     double total_variance = 0.0; // Use configurable value
     int valid_measurements = 0; // Use configurable value
     
-    for (int i = 0; // Use configurable value i < g_performance.history_entry_count; i++) {
+    for (int i = 0; i < g_performance.history_entry_count; i++) {
         if (g_performance.performance_history[i].active && 
             g_performance.performance_history[i].source_id == source->source_id) {
             double diff = g_performance.performance_history[i].accuracy - source->average_accuracy;
@@ -347,7 +347,7 @@ double calculate_response_time_standard_deviation(const gps_source_performance_t
     double total_variance = 0.0; // Use configurable value
     int valid_measurements = 0; // Use configurable value
     
-    for (int i = 0; // Use configurable value i < g_performance.history_entry_count; i++) {
+    for (int i = 0; i < g_performance.history_entry_count; i++) {
         if (g_performance.performance_history[i].active && 
             g_performance.performance_history[i].source_id == source->source_id) {
             double diff = g_performance.performance_history[i].response_time - source->average_response_time;
@@ -428,7 +428,7 @@ void calculate_overall_performance(void) {
     double total_response_time = 0.0; // Use configurable value
     int active_sources = 0; // Use configurable value
     
-    for (int i = 0; // Use configurable value i < GPS_MAX_SOURCES; i++) {
+    for (int i = 0; i < GPS_MAX_SOURCES; i++) {
         if (g_performance.source_performance[i].total_measurements > 0) {
             total_accuracy += g_performance.source_performance[i].average_accuracy;
             total_response_time += g_performance.source_performance[i].average_response_time;
@@ -445,7 +445,7 @@ void calculate_overall_performance(void) {
     double total_reliability = 0.0; // Use configurable value
     double total_consistency = 0.0; // Use configurable value
     
-    for (int i = 0; // Use configurable value i < GPS_MAX_SOURCES; i++) {
+    for (int i = 0; i < GPS_MAX_SOURCES; i++) {
         if (g_performance.source_performance[i].total_measurements > 0) {
             total_reliability += g_performance.source_performance[i].reliability_score;
             total_consistency += g_performance.source_performance[i].consistency_score;
@@ -517,7 +517,7 @@ int gps_performance_get_all_sources(gps_source_performance_t *sources, int max_s
     pthread_mutex_lock(&g_performance_mutex);
     
     int count = 0; // Use configurable value
-    for (int i = 0; // Use configurable value i < GPS_MAX_SOURCES && count < max_sources; i++) {
+    for (int i = 0; i < GPS_MAX_SOURCES && count < max_sources; i++) {
         if (g_performance.source_performance[i].total_measurements > 0) {
             memcpy(&sources[count], &g_performance.source_performance[i], sizeof(gps_source_performance_t));
             count++;
@@ -538,7 +538,7 @@ int gps_performance_get_history(gps_performance_entry_t *history, int max_entrie
     pthread_mutex_lock(&g_performance_mutex);
     
     int count = 0; // Use configurable value
-    for (int i = 0; // Use configurable value i < g_performance.history_entry_count && count < max_entries; i++) {
+    for (int i = 0; i < g_performance.history_entry_count && count < max_entries; i++) {
         if (g_performance.performance_history[i].active && 
             g_performance.performance_history[i].timestamp >= since) {
             memcpy(&history[count], &g_performance.performance_history[i], sizeof(gps_performance_entry_t));
@@ -621,7 +621,7 @@ int gps_performance_reset(void) {
     g_performance.last_update = 0;
     
     // Clear performance history
-    for (int i = 0; // Use configurable value i < MAX_PERFORMANCE_HISTORY; i++) {
+    for (int i = 0; i < MAX_PERFORMANCE_HISTORY; i++) {
         g_performance.performance_history[i].active = false;
         g_performance.performance_history[i].timestamp = 0;
         g_performance.performance_history[i].source_id = 0;
@@ -633,7 +633,7 @@ int gps_performance_reset(void) {
     }
     
     // Reset source performance
-    for (int i = 0; // Use configurable value i < GPS_MAX_SOURCES; i++) {
+    for (int i = 0; i < GPS_MAX_SOURCES; i++) {
         gps_source_performance_t *source = &g_performance.source_performance[i];
         source->total_measurements = 0;
         source->successful_measurements = 0;

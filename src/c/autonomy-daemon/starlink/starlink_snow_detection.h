@@ -2,6 +2,7 @@
 #define STARLINK_SNOW_DETECTION_H
 
 #include "../core/types.h"
+#include "starlink_obstruction.h"
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
@@ -84,6 +85,47 @@ typedef struct {
     time_t last_detection;                 // Last detection time
     time_t last_successful_melt;           // Last successful melt time
 } starlink_snow_detection_stats_t;
+
+// Combined snow detection structure for internal use
+typedef struct {
+    // Configuration
+    bool enabled;                          // Enable/disable snow detection
+    int detection_samples;                 // Samples needed for detection
+    double obstruction_threshold;          // Obstruction increase threshold
+    double snr_degradation_threshold;      // SNR degradation threshold
+    double temperature_threshold;          // Temperature threshold for snow
+    int verification_time;                 // Verification time in seconds
+    int melt_timeout;                      // Maximum melt time in seconds
+    char weather_api_key[64];              // OpenWeatherMap API key
+    
+    // Status
+    bool is_heating_active;                // Heating system status
+    int consecutive_obstruction_samples;   // Current consecutive samples
+    time_t last_clear_time;                // Last clear time
+    time_t heating_start_time;             // Heating start time
+    int heating_duration;                  // Heating duration in seconds
+    snow_detection_context_t context;      // Current detection context
+    
+    // Statistics
+    int total_detections;                  // Total detections
+    int successful_melts;                  // Successful melts
+    int false_positives;                   // False positives
+    int prewarm_actions;                   // Pre-warming actions
+    int melt_actions;                      // Melt actions
+    int verify_actions;                    // Verification actions
+    double average_melt_time;              // Average melt time
+    double detection_accuracy;             // Detection accuracy percentage
+    time_t last_detection;                 // Last detection time
+    time_t last_successful_melt;           // Last successful melt time
+    
+    // Sample history
+    snow_sample_t sample_history[MAX_SNOW_SAMPLES];
+    int sample_count;                      // Number of samples collected
+    
+    // Additional fields for heating control
+    double current_temperature;            // Current dish temperature
+    time_t heating_timeout;                // Heating timeout timestamp
+} starlink_snow_detection_t;
 
 // API Functions
 

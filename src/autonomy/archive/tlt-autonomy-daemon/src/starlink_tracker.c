@@ -71,17 +71,26 @@ starlink_tracker_t* starlink_tracker_init_from_uci(struct uci_context *uci_ctx)
 // Initialize starlink tracker UBUS interface
 int starlink_tracker_ubus_init(struct ubus_context *ctx, starlink_tracker_t *tracker)
 {
+    fprintf(stderr, "DEBUG: starlink_tracker_ubus_init called\n");
     if (!tracker || !ctx) {
         LOGX_ERROR_MSG("Invalid parameters for starlink tracker UBUS init");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
 
-    pthread_mutex_lock(&g_tracker_mutex);
+    fprintf(stderr, "DEBUG: About to lock mutex\n");
+    // Temporarily disable mutex locking to test
+    // pthread_mutex_lock(&g_tracker_mutex);
+    fprintf(stderr, "DEBUG: Mutex locked, setting ubus_ctx\n");
     tracker->ubus_ctx = ctx;
+    fprintf(stderr, "DEBUG: Setting ubus_enabled\n");
     g_tracker_status.ubus_enabled = true; // Use configurable ubus enabled setting
-    pthread_mutex_unlock(&g_tracker_mutex);
+    fprintf(stderr, "DEBUG: About to unlock mutex\n");
+    // pthread_mutex_unlock(&g_tracker_mutex);
+    fprintf(stderr, "DEBUG: Mutex unlocked\n");
 
     LOGX_INFO_MSG("Starlink tracker UBUS interface initialized");
+    fprintf(stderr, "DEBUG: starlink_tracker_ubus_init completed successfully\n");
+    fprintf(stderr, "DEBUG: About to return AUTONOMY_SUCCESS\n");
     return AUTONOMY_SUCCESS;
 }
 

@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <time.h>
 
 // Maximum lengths for credentials
 #define CRED_MAX_KEY_LENGTH 256

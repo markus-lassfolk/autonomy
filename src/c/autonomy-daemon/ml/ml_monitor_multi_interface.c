@@ -1,5 +1,6 @@
 #include "ml_monitor_multi_interface.h"
 #include "../utils/logx.h"
+#include "../utils/secure_exec.h"
 #include "../network/network_controller.h"
 #include "../network/network_failover.h"
 #include <stdlib.h>
@@ -16,11 +17,11 @@ static multi_interface_ml_system_t *g_multi_interface_system = NULL;
 multi_interface_ml_system_t* ml_monitor_init_multi_interface_system(const ml_monitor_config_t *config) {
     if (!config) return NULL;
     
-    LOGX_INFO("🚀 Initializing Multi-Interface ML Intelligence System");
+    LOGX_INFO_MSG(" Initializing Multi-Interface ML Intelligence System");
     
     multi_interface_ml_system_t *system = calloc(1, sizeof(multi_interface_ml_system_t));
     if (!system) {
-        LOGX_ERROR("Failed to allocate multi-interface ML system");
+        LOGX_ERROR_MSG("Failed to allocate multi-interface ML system");
         return NULL;
     }
     
@@ -54,12 +55,12 @@ multi_interface_ml_system_t* ml_monitor_init_multi_interface_system(const ml_mon
     
     g_multi_interface_system = system;
     
-    LOGX_INFO("✅ Multi-interface ML system initialized successfully");
-    LOGX_INFO("   - Cross-interface correlation learning: enabled");
-    LOGX_INFO("   - Continuous monitoring during failover: enabled");
-    LOGX_INFO("   - Predictive failback: enabled");
-    LOGX_INFO("   - Outage duration prediction: enabled");
-    LOGX_INFO("   - Dynamic MWAN3 weight updates: enabled");
+    LOGX_INFO_MSG(" Multi-interface ML system initialized successfully");
+    LOGX_INFO_MSG("   - Cross-interface correlation learning: enabled");
+    LOGX_INFO_MSG("   - Continuous monitoring during failover: enabled");
+    LOGX_INFO_MSG("   - Predictive failback: enabled");
+    LOGX_INFO_MSG("   - Outage duration prediction: enabled");
+    LOGX_INFO_MSG("   - Dynamic MWAN3 weight updates: enabled");
     
     return system;
 }
@@ -73,7 +74,7 @@ int ml_monitor_add_interface(multi_interface_ml_system_t *system, const char *in
     // Check if interface already exists
     for (int i = 0; i < system->interface_count; i++) {
         if (strcmp(system->interface_models[i].interface_id, interface_id) == 0) {
-            LOGX_WARN("Interface %s already exists", interface_id);
+            LOGX_WARN_MSG("Interface %s already exists", interface_id);
             return ML_MONITOR_MULTI_SUCCESS; // Already exists
         }
     }
@@ -105,7 +106,7 @@ int ml_monitor_add_interface(multi_interface_ml_system_t *system, const char *in
     system->interface_count++;
     
     const char* type_names[] = {"Starlink", "Cellular", "WiFi", "LAN", "Unknown"};
-    LOGX_INFO("📡 Added interface for ML monitoring: %s (%s)", 
+    LOGX_INFO_MSG(" Added interface for ML monitoring: %s (%s)", 
              interface_id, type_names[type]);
     
     return ML_MONITOR_MULTI_SUCCESS;
@@ -129,7 +130,7 @@ int ml_monitor_update_interface_observation(multi_interface_ml_system_t *system,
     }
     
     if (!model) {
-        LOGX_WARN("Interface %s not found for observation update", interface_id);
+        LOGX_WARN_MSG("Interface %s not found for observation update", interface_id);
         return ML_MONITOR_MULTI_ERROR_NOT_FOUND;
     }
     
@@ -163,7 +164,7 @@ int ml_monitor_update_interface_observation(multi_interface_ml_system_t *system,
     // Update cross-interface correlations
     ml_monitor_update_cross_interface_correlations(system);
     
-    LOGX_DEBUG("Updated %s observation: latency=%.1fms, reliability=%.3f, stability=%.3f",
+    LOGX_DEBUG_MSG("Updated %s observation: latency=%.1fms, reliability=%.3f, stability=%.3f",
               interface_id, model->performance.typical_latency_ms, 
               model->performance.typical_reliability, model->performance.performance_stability);
     
@@ -241,7 +242,7 @@ int ml_monitor_predict_interface_performance(multi_interface_ml_system_t *system
     model->performance.total_predictions++;
     model->performance.last_prediction = time(NULL);
     
-    LOGX_DEBUG("Interface %s prediction: outage=%u%%, performance=%u%%, confidence=%u%%",
+    LOGX_DEBUG_MSG("Interface %s prediction: outage=%u%%, performance=%u%%, confidence=%u%%",
               interface_id, *outage_probability, *performance_score, *confidence);
     
     return ML_MONITOR_MULTI_SUCCESS;
@@ -372,8 +373,8 @@ int ml_monitor_predict_outage_duration(multi_interface_ml_system_t *system,
             avg_duration_seconds, duration_prediction->total_estimated_failover_cost,
             duration_prediction->cost_benefit_ratio);
     
-    LOGX_DEBUG("Duration prediction for %s: %.1f minutes, recommend_failover=%s",
-              interface_id, avg_duration_minutes, 
+    LOGX_DEBUG_MSG("Duration prediction for %s: %.1f minutes, recommend_failover=%s",
+              interface_id, avg_duration_seconds, 
               duration_prediction->recommend_failover ? "yes" : "no");
     
     return ML_MONITOR_MULTI_SUCCESS;
@@ -436,7 +437,7 @@ int ml_monitor_assess_failback_readiness(multi_interface_ml_system_t *system,
     readiness->optimal_failback_window_start = 60;   // 1 minute
     readiness->optimal_failback_window_end = 600;    // 10 minutes
     
-    LOGX_DEBUG("Failback readiness for %s: success_prob=%u%%, delay=%u seconds",
+    LOGX_DEBUG_MSG("Failback readiness for %s: success_prob=%u%%, delay=%u seconds",
               interface_id, readiness->failback_success_probability, 
               readiness->recommended_failback_delay);
     
@@ -459,7 +460,7 @@ int ml_monitor_update_mwan3_weights(multi_interface_ml_system_t *system) {
         return ML_MONITOR_MULTI_SUCCESS;
     }
     
-    LOGX_INFO("🔧 Updating MWAN3 weights based on ML predictions");
+    LOGX_INFO_MSG(" Updating MWAN3 weights based on ML predictions");
     
     bool weights_changed = false;
     
@@ -487,7 +488,7 @@ int ml_monitor_update_mwan3_weights(multi_interface_ml_system_t *system) {
                     double sensitivity = system->mwan3_integration.weight_adjustment_sensitivity;
                     
                     // ML score adjustment: -0.5 to +0.5 range maps to weight adjustment
-                    int adjustment = (int)((overall_ml_score - 0.5) * 98 * sensitivity); // Max ±49 adjustment
+                    int adjustment = (int)((overall_ml_score - 0.5) * 98 * sensitivity); // Max 49 adjustment
                     int new_weight = base_weight + adjustment;
                     
                     // FIXED: Clamp weight to MWAN3 range 1-99 (not 1-100)
@@ -501,7 +502,7 @@ int ml_monitor_update_mwan3_weights(multi_interface_ml_system_t *system) {
                         
                         weights_changed = true;
                         
-                        LOGX_INFO("📊 Updated MWAN3 weight for %s: %d → %d (ML score: %.3f)",
+                        LOGX_INFO_MSG(" Updated MWAN3 weight for %s: %d  %d (ML score: %.3f)",
                                  model->interface_id, base_weight, new_weight, overall_ml_score);
                     }
                     break;
@@ -514,9 +515,9 @@ int ml_monitor_update_mwan3_weights(multi_interface_ml_system_t *system) {
     if (weights_changed && system->mwan3_integration.auto_apply_weight_changes) {
         int apply_result = ml_monitor_apply_mwan3_weight_changes(system);
         if (apply_result == ML_MONITOR_MULTI_SUCCESS) {
-            LOGX_INFO("✅ MWAN3 weight changes applied successfully");
+            LOGX_INFO_MSG(" MWAN3 weight changes applied successfully");
         } else {
-            LOGX_WARN("Failed to apply MWAN3 weight changes: %d", apply_result);
+            LOGX_WARN_MSG("Failed to apply MWAN3 weight changes: %d", apply_result);
         }
     }
     
@@ -528,7 +529,7 @@ int ml_monitor_update_mwan3_weights(multi_interface_ml_system_t *system) {
 int ml_monitor_apply_mwan3_weight_changes(multi_interface_ml_system_t *system) {
     if (!system) return ML_MONITOR_MULTI_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("🔧 Applying ML-optimized weights to MWAN3 configuration");
+    LOGX_INFO_MSG(" Applying ML-optimized weights to MWAN3 configuration");
     
     // Execute real MWAN3 UCI configuration updates
     bool changes_made = false;
@@ -540,46 +541,47 @@ int ml_monitor_apply_mwan3_weight_changes(multi_interface_ml_system_t *system) {
                 system->mwan3_integration.mwan3_interfaces[i].interface_name,
                 system->mwan3_integration.mwan3_interfaces[i].current_weight);
         
-        LOGX_DEBUG("Executing: %s", uci_command);
+        LOGX_DEBUG_MSG("Executing: %s", uci_command);
         
         // Execute actual UCI command securely
         extern int secure_uci_command(const char *uci_args, exec_result_t *result);
         exec_result_t uci_result;
         char uci_args[256];
         snprintf(uci_args, sizeof(uci_args), "set mwan3.%s.weight=%d", 
-                interface_name, new_weight);
+                system->mwan3_integration.mwan3_interfaces[i].interface_name, 
+                system->mwan3_integration.mwan3_interfaces[i].current_weight);
         
         if (secure_uci_command(uci_args, &uci_result) == AUTONOMY_SUCCESS && uci_result.success) {
             changes_made = true;
-            LOGX_INFO("Updated MWAN3 weight for %s: %d",
+            LOGX_INFO_MSG("Updated MWAN3 weight for %s: %d",
                      system->mwan3_integration.mwan3_interfaces[i].interface_name,
                      system->mwan3_integration.mwan3_interfaces[i].current_weight);
         } else {
-            LOGX_ERROR("Failed to update MWAN3 weight for %s (exit code: %d)",
+            LOGX_ERROR_MSG("Failed to update MWAN3 weight for %s (exit code: %d)",
                       system->mwan3_integration.mwan3_interfaces[i].interface_name, uci_result);
         }
     }
     
     if (changes_made) {
         // Commit UCI changes securely
-        LOGX_DEBUG("Executing: uci commit mwan3");
+        LOGX_DEBUG_MSG("Executing: uci commit mwan3");
         exec_result_t commit_result;
         if (secure_uci_command("commit mwan3", &commit_result) != AUTONOMY_SUCCESS || !commit_result.success) {
-            LOGX_ERROR("Failed to commit MWAN3 UCI changes (exit code: %d)", commit_result);
+            LOGX_ERROR_MSG("Failed to commit MWAN3 UCI changes (exit code: %d)", commit_result);
             return ML_MONITOR_MULTI_ERROR_MWAN3_FAILED;
         }
         
         // Reload MWAN3 configuration securely
-        LOGX_DEBUG("Executing: ubus call mwan3 reload");
+        LOGX_DEBUG_MSG("Executing: ubus call mwan3 reload");
         exec_result_t reload_result;
         if (secure_exec_command("ubus call mwan3 reload", &reload_result) != AUTONOMY_SUCCESS || !reload_result.success) {
-            LOGX_ERROR("Failed to reload MWAN3 configuration (exit code: %d)", reload_result);
+            LOGX_ERROR_MSG("Failed to reload MWAN3 configuration (exit code: %d)", reload_result);
             return ML_MONITOR_MULTI_ERROR_MWAN3_FAILED;
         }
         
-        LOGX_INFO("✅ MWAN3 weight changes applied and committed successfully");
+        LOGX_INFO_MSG(" MWAN3 weight changes applied and committed successfully");
     } else {
-        LOGX_DEBUG("No MWAN3 weight changes needed");
+        LOGX_DEBUG_MSG("No MWAN3 weight changes needed");
     }
     return ML_MONITOR_MULTI_SUCCESS;
 }
@@ -661,15 +663,15 @@ int ml_monitor_validate_failover_prediction(multi_interface_ml_system_t *system,
     // Update validation statistics
     if (actual_outage_occurred) {
         model->performance.correct_predictions++;
-        model->failover_learning.average_outage_duration_minutes = 
-            (model->failover_learning.average_outage_duration_minutes * 0.9) + 
+        model->failover_learning.average_outage_duration_seconds =
+            (model->failover_learning.average_outage_duration_seconds * 0.9) +
             (actual_duration_seconds / 60.0) * 0.1;
         
-        LOGX_INFO("✅ Failover prediction validated: %s had outage for %u seconds",
+        LOGX_INFO_MSG(" Failover prediction validated: %s had outage for %u seconds",
                  interface_id, actual_duration_seconds);
     } else {
         // False positive - learn from this
-        LOGX_INFO("📚 Learning from false positive: %s did not have predicted outage", interface_id);
+        LOGX_INFO_MSG(" Learning from false positive: %s did not have predicted outage", interface_id);
     }
     
     // Update accuracy
@@ -685,7 +687,7 @@ int ml_monitor_validate_failover_prediction(multi_interface_ml_system_t *system,
 int ml_monitor_start_failover_timing(multi_interface_ml_system_t *system, const char *from_interface, const char *to_interface) {
     if (!system || !from_interface || !to_interface) return ML_MONITOR_MULTI_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("⏱️ Starting failover timing: %s → %s", from_interface, to_interface);
+    LOGX_INFO_MSG("Starting failover timing: %s -> %s", from_interface, to_interface);
     
     // Store failover start time (in practice, this would be stored in a timing structure)
     static time_t failover_start_time = 0;
@@ -703,7 +705,7 @@ int ml_monitor_complete_failover_timing(multi_interface_ml_system_t *system, con
     time_t failover_end_time = time(NULL);
     uint32_t failover_duration_ms = (failover_end_time - failover_start_time) * 1000; // Convert to ms
     
-    LOGX_INFO("⏱️ Failover completed: %s → %s, duration=%ums, success=%s",
+    LOGX_INFO_MSG("Failover completed: %s -> %s, duration=%ums, success=%s",
              from_interface, to_interface, failover_duration_ms, success ? "yes" : "no");
     
     // Find interface model to update timing statistics
@@ -751,7 +753,7 @@ int ml_monitor_complete_failover_timing(multi_interface_ml_system_t *system, con
 int ml_monitor_start_failback_timing(multi_interface_ml_system_t *system, const char *from_interface, const char *to_interface) {
     if (!system || !from_interface || !to_interface) return ML_MONITOR_MULTI_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("⏪ Starting failback timing: %s → %s", from_interface, to_interface);
+    LOGX_INFO_MSG("Starting failback timing: %s -> %s", from_interface, to_interface);
     
     // Store failback start time
     static time_t failback_start_time = 0;
@@ -769,7 +771,7 @@ int ml_monitor_complete_failback_timing(multi_interface_ml_system_t *system, con
     time_t failback_end_time = time(NULL);
     uint32_t failback_duration_ms = (failback_end_time - failback_start_time) * 1000;
     
-    LOGX_INFO("⏪ Failback completed: %s → %s, duration=%ums, success=%s",
+    LOGX_INFO_MSG("Failback completed: %s -> %s, duration=%ums, success=%s",
              from_interface, to_interface, failback_duration_ms, success ? "yes" : "no");
     
     // Find interface model to update timing statistics
@@ -848,4 +850,126 @@ int ml_monitor_get_failover_timing_stats(multi_interface_ml_system_t *system, co
 // Get global multi-interface system instance
 multi_interface_ml_system_t* ml_monitor_get_multi_interface_system(void) {
     return g_multi_interface_system;
+}
+
+// Cleanup multi-interface ML monitoring system
+void ml_monitor_cleanup_multi_interface_system(multi_interface_ml_system_t *system) {
+    if (!system) {
+        return;
+    }
+    
+    LOGX_INFO_MSG("Cleaning up Multi-Interface ML Intelligence System");
+    
+    // Cleanup interface models
+    for (int i = 0; i < system->interface_count; i++) {
+        interface_ml_model_t *model = &system->interface_models[i];
+        
+        // Clear observation data
+        model->models.base_observation_count = 0;
+        model->models.personal_observation_count = 0;
+        
+        // Reset performance tracking
+        model->performance.total_predictions = 0;
+        model->performance.correct_predictions = 0;
+        model->performance.accuracy = 0.0;
+        model->performance.last_prediction = 0;
+        
+        // Reset failover learning
+        model->failover_learning.failover_events = 0;
+        model->failover_learning.successful_failovers = 0;
+        model->failover_learning.failback_events = 0;
+        model->failover_learning.successful_failbacks = 0;
+        model->failover_learning.average_outage_duration_seconds = 0.0;
+        
+        // Clear timing measurements
+        memset(&model->failover_learning.timing_measurements, 0, 
+               sizeof(model->failover_learning.timing_measurements));
+        
+        // Reset cost analysis
+        model->failover_learning.measured_failover_cost = 0.0;
+        model->failover_learning.measured_failback_cost = 0.0;
+        model->failover_learning.disruption_cost_per_ms = 0.0;
+    }
+    
+    // Clear base models
+    for (int i = 0; i < INTERFACE_TYPE_MAX; i++) {
+        system->base_models.pattern_counts[i] = 0;
+    }
+    
+    // Reset cross-interface learning
+    system->cross_learning.enable_cross_interface_correlation = false;
+    system->cross_learning.enable_ensemble_across_interfaces = false;
+    
+    // Reset failover intelligence
+    system->failover_intelligence.continuous_monitoring_during_failover = false;
+    system->failover_intelligence.enable_predictive_failback = false;
+    system->failover_intelligence.enable_outage_duration_prediction = false;
+    
+    // Reset MWAN3 integration
+    system->mwan3_integration.enable_dynamic_weight_updates = false;
+    system->mwan3_integration.auto_apply_weight_changes = false;
+    system->mwan3_integration.mwan3_interface_count = 0;
+    
+    // Clear interface count
+    system->interface_count = 0;
+    
+    // Free the system if it's the global instance
+    if (system == g_multi_interface_system) {
+        g_multi_interface_system = NULL;
+    }
+    
+    LOGX_INFO_MSG("Multi-Interface ML Intelligence System cleaned up");
+}
+
+// Get MWAN3 weight recommendation for multi-interface system
+int ml_monitor_get_mwan3_weight_recommendation_multi(multi_interface_ml_system_t *system,
+                                                    const char *interface_id,
+                                                    int *recommended_weight,
+                                                    double *confidence) {
+    if (!system || !interface_id || !recommended_weight || !confidence) {
+        return ML_MONITOR_MULTI_ERROR_INVALID_PARAM;
+    }
+    
+    // Find interface model
+    interface_ml_model_t *model = NULL;
+    for (int i = 0; i < system->interface_count; i++) {
+        if (strcmp(system->interface_models[i].interface_id, interface_id) == 0) {
+            model = &system->interface_models[i];
+            break;
+        }
+    }
+    
+    if (!model) {
+        return ML_MONITOR_MULTI_ERROR_NOT_FOUND;
+    }
+    
+    // Calculate recommended weight based on ML predictions
+    int base_weight = 50; // Default weight
+    
+    // Adjust weight based on performance predictions
+    if (model->performance.accuracy > 0.8) {
+        // High accuracy - increase weight
+        base_weight += (int)(model->performance.accuracy * 30);
+    } else if (model->performance.accuracy < 0.5) {
+        // Low accuracy - decrease weight
+        base_weight -= (int)((0.5 - model->performance.accuracy) * 40);
+    }
+    
+    // Adjust based on reliability prediction
+    if (model->failover_learning.successful_failovers > model->failover_learning.failover_events * 0.8) {
+        // High success rate - increase weight
+        base_weight += 10;
+    } else if (model->failover_learning.successful_failovers < model->failover_learning.failover_events * 0.5) {
+        // Low success rate - decrease weight
+        base_weight -= 15;
+    }
+    
+    // Clamp weight to valid range (1-99)
+    if (base_weight < 1) base_weight = 1;
+    if (base_weight > 99) base_weight = 99;
+    
+    *recommended_weight = base_weight;
+    *confidence = model->performance.accuracy;
+    
+    return ML_MONITOR_MULTI_SUCCESS;
 }

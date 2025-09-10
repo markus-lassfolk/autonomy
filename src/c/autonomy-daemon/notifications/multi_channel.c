@@ -389,7 +389,7 @@ int multi_channel_notifier_test_channels(multi_channel_notifier_t* notifier,
     
     time_t now = time(NULL);
     snprintf(test_event.id, sizeof(test_event.id), "test_%lld", now);
-    strncpy(test_event.title, "🧪 autonomy Notification Test", sizeof(test_event.title) - 1);
+    strncpy(test_event.title, " autonomy Notification Test", sizeof(test_event.title) - 1);
     strncpy(test_event.message, "This is a test notification to verify channel configuration.", sizeof(test_event.message) - 1);
     test_event.type = NOTIFICATION_TYPE_STATUS_UPDATE;
     test_event.priority = NOTIFICATION_PRIORITY_LOW;

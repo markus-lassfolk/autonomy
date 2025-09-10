@@ -120,14 +120,14 @@ int alert_template_manager_load_defaults(void) {
     load_default_template(
         NOTIFICATION_TYPE_FAILOVER,
         "Network Failover",
-        "🔄 Failover: {{from_interface}} → {{to_interface}}",
+        " Failover: {{from_interface}}  {{to_interface}}",
         "Network failover executed from {{from_interface}} to {{to_interface}}.\n\n"
-        "📊 Performance Impact:\n"
-        "• Previous latency: {{latency}}ms\n"
-        "• Packet loss: {{loss}}%\n"
-        "• Reason: {{reason}}\n\n"
-        "🌍 Location: {{latitude}}, {{longitude}} (±{{accuracy}}m)\n"
-        "⏰ Time: {{timestamp}}",
+        " Performance Impact:\n"
+        " Previous latency: {{latency}}ms\n"
+        " Packet loss: {{loss}}%\n"
+        " Reason: {{reason}}\n\n"
+        " Location: {{latitude}}, {{longitude}} ({{accuracy}}m)\n"
+        " Time: {{timestamp}}",
         NOTIFICATION_PRIORITY_HIGH
     );
     
@@ -135,17 +135,17 @@ int alert_template_manager_load_defaults(void) {
     load_default_template(
         NOTIFICATION_TYPE_SYSTEM_HEALTH,
         "System Health Alert",
-        "🏥 System Health Alert: {{component}}",
+        " System Health Alert: {{component}}",
         "System health issue detected in {{component}}.\n\n"
-        "🔍 Health Status:\n"
-        "• Component: {{component}}\n"
-        "• Status: {{status}}\n"
-        "• Severity: {{severity}}\n\n"
-        "📊 System Metrics:\n"
-        "• CPU: {{cpu_usage}}%\n"
-        "• Memory: {{memory_usage}}%\n"
-        "• Temperature: {{temperature}}°C\n\n"
-        "⏰ Time: {{timestamp}}",
+        " Health Status:\n"
+        " Component: {{component}}\n"
+        " Status: {{status}}\n"
+        " Severity: {{severity}}\n\n"
+        " System Metrics:\n"
+        " CPU: {{cpu_usage}}%\n"
+        " Memory: {{memory_usage}}%\n"
+        " Temperature: {{temperature}}C\n\n"
+        " Time: {{timestamp}}",
         NOTIFICATION_PRIORITY_HIGH
     );
     
@@ -153,14 +153,14 @@ int alert_template_manager_load_defaults(void) {
     load_default_template(
         NOTIFICATION_TYPE_DATA_LIMIT,
         "Data Limit Alert",
-        "📊 Data Limit Alert: {{usage_percent}}% used",
+        " Data Limit Alert: {{usage_percent}}% used",
         "Data usage approaching limit on {{interface}}.\n\n"
-        "📈 Usage Statistics:\n"
-        "• Used: {{data_used}}GB / {{data_limit}}GB ({{usage_percent}}%)\n"
-        "• Days remaining: {{days_remaining}}\n"
-        "• Daily average: {{daily_average}}GB\n\n"
-        "💡 Recommendation: Monitor usage carefully\n"
-        "⏰ Time: {{timestamp}}",
+        " Usage Statistics:\n"
+        " Used: {{data_used}}GB / {{data_limit}}GB ({{usage_percent}}%)\n"
+        " Days remaining: {{days_remaining}}\n"
+        " Daily average: {{daily_average}}GB\n\n"
+        " Recommendation: Monitor usage carefully\n"
+        " Time: {{timestamp}}",
         NOTIFICATION_PRIORITY_NORMAL
     );
     
@@ -168,16 +168,16 @@ int alert_template_manager_load_defaults(void) {
     load_default_template(
         NOTIFICATION_TYPE_MEMBER_DOWN, // Use existing type instead of NETWORK_ISSUE
         "Network Issue",
-        "🌐 Network Issue: {{interface}}",
+        " Network Issue: {{interface}}",
         "Network problems detected on {{interface}}.\n\n"
-        "📡 Connection Status:\n"
-        "• Interface: {{interface}}\n"
-        "• Issue type: {{issue_type}}\n"
-        "• Duration: {{duration}}\n\n"
-        "📊 Performance Impact:\n"
-        "• Latency: {{latency}}ms\n"
-        "• Packet loss: {{loss}}%\n\n"
-        "⏰ Time: {{timestamp}}",
+        " Connection Status:\n"
+        " Interface: {{interface}}\n"
+        " Issue type: {{issue_type}}\n"
+        " Duration: {{duration}}\n\n"
+        " Performance Impact:\n"
+        " Latency: {{latency}}ms\n"
+        " Packet loss: {{loss}}%\n\n"
+        " Time: {{timestamp}}",
         NOTIFICATION_PRIORITY_NORMAL
     );
     
@@ -185,12 +185,12 @@ int alert_template_manager_load_defaults(void) {
     load_default_template(
         NOTIFICATION_TYPE_STATUS_UPDATE,
         "Status Update",
-        "📊 Status Update",
+        " Status Update",
         "System status update:\n\n"
         "{{summary}}\n\n"
-        "📊 Current Status:\n"
+        " Current Status:\n"
         "{{status_details}}\n\n"
-        "⏰ Time: {{timestamp}}",
+        " Time: {{timestamp}}",
         NOTIFICATION_PRIORITY_LOW
     );
     

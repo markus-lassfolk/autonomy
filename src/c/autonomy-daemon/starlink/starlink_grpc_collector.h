@@ -72,6 +72,7 @@ int starlink_grpc_get_latest_observation(starlink_observation_t* observation);
 int starlink_grpc_call_get_history(char* response_buffer, size_t buffer_size);
 int starlink_grpc_call_get_status(char* response_buffer, size_t buffer_size);
 int starlink_grpc_call_get_diagnostics(char* response_buffer, size_t buffer_size);
+int starlink_grpc_call_get_location(char* response_buffer, size_t buffer_size);
 
 // JSON parsing functions
 int starlink_grpc_parse_history_response(const char* json_response, starlink_observation_t* observations, int max_count, int* actual_count);

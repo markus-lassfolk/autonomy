@@ -5,6 +5,8 @@
 #include <errno.h>
 #include <signal.h>
 #include <syslog.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 #define PID_FILE "/var/run/autonomy-daemon.pid"
 

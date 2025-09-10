@@ -38,6 +38,25 @@ typedef struct {
     bool last_detection_status;            // Last detection status
 } starlink_snow_detection_integration_status_t;
 
+// Integration state (internal use)
+typedef struct {
+    bool enabled;                          // Enable/disable integration
+    int check_interval;                    // Periodic check interval in seconds
+    int sample_interval;                   // Sample collection interval in seconds
+    int max_retries;                       // Maximum retry attempts
+    time_t last_sample_time;               // Last sample collection time
+    time_t last_check_time;                // Last periodic check time
+    int total_samples;                     // Total samples collected
+    int successful_samples;                // Successful samples
+    int failed_samples;                    // Failed samples
+    int snow_detections;                   // Total snow detections
+    int heating_activations;               // Total heating activations
+    time_t last_snow_detection;            // Last snow detection time
+    time_t last_heating_activation;        // Last heating activation time
+    bool last_heating_status;              // Last heating status
+    bool last_detection_status;            // Last detection status
+} starlink_snow_detection_integration_t;
+
 // API Functions
 
 // Initialization and cleanup

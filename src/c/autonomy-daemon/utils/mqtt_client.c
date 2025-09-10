@@ -16,6 +16,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <math.h>
+#include <sys/select.h>
 
 // External reference to global configuration
 extern autonomy_config_t g_config;
@@ -30,6 +31,7 @@ static bool g_mqtt_client_initialized = false;
 #define MQTT_PUBLISH_PACKET 0x30
 #define MQTT_SUBSCRIBE_PACKET 0x80
 #define MQTT_SUBACK_PACKET 0x90
+#define MQTT_UNSUBACK_PACKET 0xB0
 #define MQTT_PINGREQ_PACKET 0xC0
 #define MQTT_PINGRESP_PACKET 0xD0
 #define MQTT_DISCONNECT_PACKET 0xE0
@@ -44,6 +46,7 @@ static int mqtt_create_connect_packet(uint8_t* packet, const mqtt_config_t* conf
 static int mqtt_create_publish_packet(uint8_t* packet, const char* topic, 
                                      const char* payload, int qos, bool retain);
 static int mqtt_create_subscribe_packet(uint8_t* packet, const char* topic, int qos);
+static int mqtt_create_unsubscribe_packet(const char* topic, uint8_t* packet, int max_len);
 static int mqtt_parse_connack(const uint8_t* packet, int length);
 static int mqtt_parse_suback(const uint8_t* packet, int length);
 static void* mqtt_keepalive_thread(void* arg);
@@ -416,17 +419,9 @@ int mqtt_client_unsubscribe(const char* topic) {
         }
     }
     
-    // Remove from subscription list (if we maintain one)
-    for (int i = 0; i < g_mqtt_client.subscription_count; i++) {
-        if (strcmp(g_mqtt_client.subscriptions[i], topic) == 0) {
-            // Shift remaining subscriptions
-            for (int j = i; j < g_mqtt_client.subscription_count - 1; j++) {
-                strcpy(g_mqtt_client.subscriptions[j], g_mqtt_client.subscriptions[j + 1]);
-            }
-            g_mqtt_client.subscription_count--;
-            break;
-        }
-    }
+    // Note: Subscription tracking would need to be added to mqtt_client_t structure
+    // For now, we just log the unsubscribe action
+    LOGX_INFO_MSG("Unsubscribed from topic: %s", topic);
     
     pthread_mutex_unlock(g_mqtt_client.mutex);
     
@@ -908,110 +903,6 @@ static int mqtt_create_unsubscribe_packet(const char* topic, uint8_t* packet, in
     return pos;
 }
 
-// Create MQTT SUBSCRIBE packet
-static int mqtt_create_subscribe_packet(const char* topic, int qos, uint8_t* packet, int max_len) {
-    if (!topic || !packet || max_len < 20 || qos < 0 || qos > 2) {
-        return -1;
-    }
-    
-    int topic_len = strlen(topic);
-    int packet_len = 2 + 2 + topic_len + 1; // packet_id + topic_length + topic + qos
-    
-    if (packet_len + 2 > max_len) { // +2 for fixed header
-        return -1;
-    }
-    
-    int pos = 0;
-    
-    // Fixed header
-    packet[pos++] = 0x82; // SUBSCRIBE packet type with flags
-    // Encode remaining length properly (MQTT variable length encoding)
-    if (packet_len < 128) {
-        packet[pos++] = packet_len;
-    } else if (packet_len < 16384) {
-        packet[pos++] = (packet_len & 0x7F) | 0x80;
-        packet[pos++] = (packet_len >> 7) & 0x7F;
-    } else {
-        packet[pos++] = (packet_len & 0x7F) | 0x80;
-        packet[pos++] = ((packet_len >> 7) & 0x7F) | 0x80;
-        packet[pos++] = (packet_len >> 14) & 0x7F;
-    }
-    
-    // Variable header - Packet identifier
-    static uint16_t packet_id = 1;
-    packet[pos++] = (packet_id >> 8) & 0xFF;
-    packet[pos++] = packet_id & 0xFF;
-    packet_id++;
-    
-    // Payload - Topic filter and QoS
-    packet[pos++] = (topic_len >> 8) & 0xFF;
-    packet[pos++] = topic_len & 0xFF;
-    memcpy(packet + pos, topic, topic_len);
-    pos += topic_len;
-    packet[pos++] = qos; // QoS level
-    
-    return pos;
-}
-
-// Create MQTT PUBLISH packet
-static int mqtt_create_publish_packet(const char* topic, const char* payload, int qos, bool retain, uint8_t* packet, int max_len) {
-    if (!topic || !payload || !packet || max_len < 50 || qos < 0 || qos > 2) {
-        return -1;
-    }
-    
-    int topic_len = strlen(topic);
-    int payload_len = strlen(payload);
-    int packet_len = 2 + topic_len + payload_len; // topic_length + topic + payload
-    
-    if (qos > 0) {
-        packet_len += 2; // Add packet identifier for QoS > 0
-    }
-    
-    if (packet_len + 2 > max_len) { // +2 for fixed header minimum
-        return -1;
-    }
-    
-    int pos = 0;
-    
-    // Fixed header
-    uint8_t flags = 0x30; // PUBLISH packet type
-    if (retain) flags |= 0x01;
-    if (qos == 1) flags |= 0x02;
-    else if (qos == 2) flags |= 0x04;
-    
-    packet[pos++] = flags;
-    // Encode remaining length properly (MQTT variable length encoding)
-    if (packet_len < 128) {
-        packet[pos++] = packet_len;
-    } else if (packet_len < 16384) {
-        packet[pos++] = (packet_len & 0x7F) | 0x80;
-        packet[pos++] = (packet_len >> 7) & 0x7F;
-    } else {
-        packet[pos++] = (packet_len & 0x7F) | 0x80;
-        packet[pos++] = ((packet_len >> 7) & 0x7F) | 0x80;
-        packet[pos++] = (packet_len >> 14) & 0x7F;
-    }
-    
-    // Variable header - Topic name
-    packet[pos++] = (topic_len >> 8) & 0xFF;
-    packet[pos++] = topic_len & 0xFF;
-    memcpy(packet + pos, topic, topic_len);
-    pos += topic_len;
-    
-    // Packet identifier (only for QoS > 0)
-    if (qos > 0) {
-        static uint16_t packet_id = 1;
-        packet[pos++] = (packet_id >> 8) & 0xFF;
-        packet[pos++] = packet_id & 0xFF;
-        packet_id++;
-    }
-    
-    // Payload
-    memcpy(packet + pos, payload, payload_len);
-    pos += payload_len;
-    
-    return pos;
-}
 
 // Create MQTT PINGREQ packet
 static int mqtt_create_pingreq_packet(uint8_t* packet, int max_len) {

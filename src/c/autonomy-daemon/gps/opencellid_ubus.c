@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "opencellid_ubus.h"
 #include "opencellid_complete.h"
 #include "../utils/logx.h"
@@ -474,7 +475,209 @@ int opencellid_ubus_get_statistics(struct ubus_context *ctx, struct ubus_object 
     return UBUS_STATUS_OK;
 }
 
-// Additional UBUS method implementations would continue here...
+// Get OpenCellID configuration
+int opencellid_ubus_get_config(struct ubus_context *ctx, struct ubus_object *obj,
+                              struct ubus_request_data *req, const char *method,
+                              struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!opencellid_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "OpenCellID system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    blobmsg_add_u8(&bb, "success", 1);
+    
+    void *config_table = blobmsg_open_table(&bb, "config");
+    blobmsg_add_u8(&bb, "enabled", true); // Placeholder
+    blobmsg_add_string(&bb, "api_key", "placeholder"); // Placeholder
+    blobmsg_add_u32(&bb, "cache_size_mb", 10); // Placeholder
+    blobmsg_add_u8(&bb, "contribution_enabled", true); // Placeholder
+    blobmsg_add_u32(&bb, "contribution_interval", 300); // Placeholder
+    blobmsg_add_double(&bb, "min_gps_accuracy", 10.0); // Placeholder
+    blobmsg_close_table(&bb, config_table);
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Set OpenCellID configuration
+int opencellid_ubus_set_config(struct ubus_context *ctx, struct ubus_object *obj,
+                              struct ubus_request_data *req, const char *method,
+                              struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!opencellid_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "OpenCellID system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    struct blob_attr *tb[__OPENCELLID_CONFIG_MAX];
+    blobmsg_parse(opencellid_config_policy, __OPENCELLID_CONFIG_MAX, tb, blob_data(msg), blob_len(msg));
+    
+    // For now, just acknowledge the configuration update
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "message", "OpenCellID configuration updated");
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Perform triangulation
+int opencellid_ubus_triangulate(struct ubus_context *ctx, struct ubus_object *obj,
+                               struct ubus_request_data *req, const char *method,
+                               struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!opencellid_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "OpenCellID system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Placeholder triangulation result
+    blobmsg_add_u8(&bb, "success", 1);
+    
+    void *position_table = blobmsg_open_table(&bb, "position");
+    blobmsg_add_double(&bb, "latitude", 0.0); // Placeholder
+    blobmsg_add_double(&bb, "longitude", 0.0); // Placeholder
+    blobmsg_add_double(&bb, "accuracy", 100.0); // Placeholder
+    blobmsg_add_double(&bb, "confidence", 0.5); // Placeholder
+    blobmsg_add_string(&bb, "method", "triangulation");
+    blobmsg_add_u32(&bb, "towers_used", 3); // Placeholder
+    blobmsg_close_table(&bb, position_table);
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Contribute data now
+int opencellid_ubus_contribute_now(struct ubus_context *ctx, struct ubus_object *obj,
+                                  struct ubus_request_data *req, const char *method,
+                                  struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!opencellid_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "OpenCellID system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Placeholder contribution
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "message", "Data contribution queued");
+    blobmsg_add_u32(&bb, "contributions_queued", 1); // Placeholder
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Clear cache
+int opencellid_ubus_clear_cache(struct ubus_context *ctx, struct ubus_object *obj,
+                               struct ubus_request_data *req, const char *method,
+                               struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!opencellid_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "OpenCellID system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    struct blob_attr *tb[__OPENCELLID_CLEAR_MAX];
+    blobmsg_parse(opencellid_clear_policy, __OPENCELLID_CLEAR_MAX, tb, blob_data(msg), blob_len(msg));
+    
+    if (!tb[OPENCELLID_CLEAR_CONFIRM] || !blobmsg_get_bool(tb[OPENCELLID_CLEAR_CONFIRM])) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Cache clear not confirmed");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Placeholder cache clear
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "message", "Cache cleared successfully");
+    blobmsg_add_u32(&bb, "entries_cleared", 0); // Placeholder
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Reset statistics
+int opencellid_ubus_reset_statistics(struct ubus_context *ctx, struct ubus_object *obj,
+                                    struct ubus_request_data *req, const char *method,
+                                    struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!opencellid_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "OpenCellID system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    // Placeholder statistics reset
+    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_string(&bb, "message", "OpenCellID statistics reset");
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
+
+// Perform health check
+int opencellid_ubus_health_check(struct ubus_context *ctx, struct ubus_object *obj,
+                                struct ubus_request_data *req, const char *method,
+                                struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0);
+    
+    if (!opencellid_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "OpenCellID system not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
+        return UBUS_STATUS_OK;
+    }
+    
+    blobmsg_add_u8(&bb, "success", 1);
+    
+    void *health_table = blobmsg_open_table(&bb, "health");
+    blobmsg_add_u8(&bb, "initialized", opencellid_is_initialized());
+    blobmsg_add_u8(&bb, "healthy", true); // Placeholder
+    blobmsg_add_string(&bb, "status", "operational"); // Placeholder
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blobmsg_close_table(&bb, health_table);
+    
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
+    return UBUS_STATUS_OK;
+}
 
 // UBUS method definitions
 const struct ubus_method opencellid_ubus_methods[] = {

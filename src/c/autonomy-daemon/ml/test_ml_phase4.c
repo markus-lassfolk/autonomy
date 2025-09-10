@@ -27,7 +27,7 @@ int main() {
     
     ml_monitor_t *monitor = ml_monitor_init(&config);
     assert(monitor != NULL);
-    printf("✓ ML monitor initialized\n");
+    printf(" ML monitor initialized\n");
     
     // Initialize Phase 3 and 4 enhancements
     int phase3_result = ml_monitor_init_phase3_enhancements(monitor);
@@ -35,7 +35,7 @@ int main() {
     
     int phase4_result = ml_monitor_init_phase4_enhancements(monitor);
     assert(phase4_result == ML_MONITOR_SUCCESS);
-    printf("✓ Phase 4 advanced ensemble methods initialized successfully\n");
+    printf(" Phase 4 advanced ensemble methods initialized successfully\n");
     
     // Test 2: Ensemble prediction with multiple models
     printf("Test 2: Advanced ensemble prediction with 5 ML models...\n");
@@ -74,7 +74,7 @@ int main() {
         ml_monitor_update_with_phase4_enhancements(monitor, &obs);
     }
     
-    printf("✓ Built dataset with 200 observations showing degradation pattern\n");
+    printf(" Built dataset with 200 observations showing degradation pattern\n");
     
     // Test ensemble prediction
     ml_observation_t test_obs;
@@ -94,7 +94,7 @@ int main() {
                                                      &ensemble_prob, &ensemble_conf, &ensemble_cause);
     assert(ensemble_result == ML_MONITOR_SUCCESS);
     
-    printf("✓ Ensemble prediction: %u%% probability, %u%% confidence, cause=%u\n",
+    printf(" Ensemble prediction: %u%% probability, %u%% confidence, cause=%u\n",
            ensemble_prob, ensemble_conf, ensemble_cause);
     
     // Test 3: Real-time validation system
@@ -112,7 +112,7 @@ int main() {
         assert(validation_result == ML_MONITOR_SUCCESS);
     }
     
-    printf("✓ Added 10 predictions to validation system\n");
+    printf(" Added 10 predictions to validation system\n");
     
     // Test 4: Phase 4 performance metrics
     printf("Test 4: Advanced performance metrics and validation...\n");
@@ -137,7 +137,7 @@ int main() {
     
     assert(ensemble_accuracy > 0.8); // Expect >80% accuracy
     assert(f1_score > 0.7); // Expect reasonable F1 score
-    printf("✓ Performance metrics within expected ranges\n");
+    printf(" Performance metrics within expected ranges\n");
     
     // Test 5: Proactive optimization triggers
     printf("Test 5: Proactive network optimization system...\n");
@@ -146,7 +146,7 @@ int main() {
     int optimization_result = ml_monitor_trigger_proactive_optimization(monitor, 220, 190);
     assert(optimization_result == ML_MONITOR_SUCCESS);
     
-    printf("✓ Proactive optimization trigger tested (220%% prob, 190%% conf)\n");
+    printf(" Proactive optimization trigger tested (220%% prob, 190%% conf)\n");
     
     // Test 6: Model weight adaptation
     printf("Test 6: Dynamic model weight adaptation...\n");
@@ -172,7 +172,7 @@ int main() {
            perf->metrics.accuracy_pct, perf->metrics.precision_pct);
     
     assert(perf->metrics.accuracy_pct > 80);
-    printf("✓ Model weight adaptation system functional\n");
+    printf(" Model weight adaptation system functional\n");
     
     // Test 7: Continual learning capabilities
     printf("Test 7: Continual learning and meta-learning...\n");
@@ -193,7 +193,7 @@ int main() {
         ml_monitor_update_with_phase4_enhancements(monitor, &learning_obs);
     }
     
-    printf("✓ Continual learning system processed 50 learning observations\n");
+    printf(" Continual learning system processed 50 learning observations\n");
     
     // Test 8: Network integration readiness
     printf("Test 8: Network optimization integration readiness...\n");
@@ -205,7 +205,7 @@ int main() {
     printf("  - Network failover integration: Ready\n");
     printf("  - Proactive optimization triggers: Functional\n");
     printf("  - Interface scoring system: Implemented\n");
-    printf("✓ Network optimization integration ready\n");
+    printf(" Network optimization integration ready\n");
     
     // Test 9: Advanced prediction confidence
     printf("Test 9: Advanced prediction confidence and agreement scoring...\n");
@@ -227,7 +227,7 @@ int main() {
     assert(enhanced_result == ML_MONITOR_SUCCESS);
     
     printf("  - Enhanced 15-min predictions: %u%% confidence\n", enhanced_conf);
-    printf("✓ Advanced prediction confidence system functional\n");
+    printf(" Advanced prediction confidence system functional\n");
     
     // Test 10: System resource efficiency
     printf("Test 10: System resource efficiency with all Phase 4 features...\n");
@@ -244,7 +244,7 @@ int main() {
     
     // Verify we're still within embedded constraints
     assert(total_memory < 2 * 1024 * 1024); // Less than 2MB even with all features
-    printf("✓ Resource efficiency maintained with all Phase 4 features\n");
+    printf(" Resource efficiency maintained with all Phase 4 features\n");
     
     // Test 11: End-to-end prediction pipeline
     printf("Test 11: End-to-end prediction pipeline validation...\n");
@@ -280,7 +280,7 @@ int main() {
     
     // Expect high probability due to poor conditions
     assert(pipeline_prob > 100); // Should predict high outage probability
-    printf("✓ End-to-end pipeline correctly identifies high-risk conditions\n");
+    printf(" End-to-end pipeline correctly identifies high-risk conditions\n");
     
     // Test 12: Cleanup with all Phase 4 features
     printf("Test 12: Cleanup with Phase 4 enhancements...\n");
@@ -293,26 +293,26 @@ int main() {
     assert(monitor->state->magic == 0x4D4C5354);
     assert(monitor->state->total_observations > 250); // Should have all test data
     
-    printf("✓ Data integrity verified with %u total observations\n", 
+    printf(" Data integrity verified with %u total observations\n", 
            monitor->state->total_observations);
     
     // Cleanup
     ml_monitor_cleanup(monitor);
-    printf("✓ Phase 4 cleanup completed successfully\n");
+    printf(" Phase 4 cleanup completed successfully\n");
     
     printf("\n==========================================================================\n");
     printf("Phase 4 Advanced Ensemble & Validation Testing Completed!\n");
-    printf("✅ Advanced ensemble methods (5 ML algorithms)\n");
-    printf("✅ Real-time prediction validation system\n");
-    printf("✅ Proactive network optimization integration\n");
-    printf("✅ Dynamic model weight adaptation\n");
-    printf("✅ Continual learning and meta-learning\n");
-    printf("✅ Performance metrics and confusion matrix\n");
-    printf("✅ End-to-end prediction pipeline\n");
-    printf("✅ Resource efficiency maintained (<2MB)\n");
-    printf("\nPhase 4 implementation is production ready! 🎉\n");
+    printf(" Advanced ensemble methods (5 ML algorithms)\n");
+    printf(" Real-time prediction validation system\n");
+    printf(" Proactive network optimization integration\n");
+    printf(" Dynamic model weight adaptation\n");
+    printf(" Continual learning and meta-learning\n");
+    printf(" Performance metrics and confusion matrix\n");
+    printf(" End-to-end prediction pipeline\n");
+    printf(" Resource efficiency maintained (<2MB)\n");
+    printf("\nPhase 4 implementation is production ready! \n");
     printf("\nML Monitor now features state-of-the-art ensemble methods\n");
-    printf("with real-time validation and proactive optimization! 🚀\n");
+    printf("with real-time validation and proactive optimization! \n");
     
     return 0;
 }

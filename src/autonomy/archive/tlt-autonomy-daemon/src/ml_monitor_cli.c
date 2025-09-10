@@ -14,7 +14,7 @@ static bool g_running = true;
 
 void signal_handler(int sig) {
     g_running = false;
-    printf("\n🛑 Stopping ML monitor...\n");
+    printf("\n Stopping ML monitor...\n");
 }
 
 void print_usage(const char *program_name) {
@@ -39,19 +39,19 @@ void print_usage(const char *program_name) {
 }
 
 void print_summary() {
-    printf("🧠 ML Network Intelligence Summary\n");
+    printf(" ML Network Intelligence Summary\n");
     printf("==================================\n\n");
     
     ml_analytics_data_t analytics;
     int result = ml_monitor_analytics_get_data(&analytics);
     
     if (result != ML_MONITOR_SUCCESS) {
-        printf("❌ Failed to get analytics data (code: %d)\n", result);
+        printf(" Failed to get analytics data (code: %d)\n", result);
         return;
     }
     
     // Overall statistics
-    printf("📊 Overall Statistics:\n");
+    printf(" Overall Statistics:\n");
     printf("  Total Predictions: %u\n", analytics.summary_stats.total_predictions);
     printf("  Correct Predictions: %u\n", analytics.summary_stats.correct_predictions);
     printf("  Overall Accuracy: %.1f%%\n", analytics.summary_stats.overall_accuracy_pct);
@@ -71,10 +71,10 @@ void print_summary() {
     printf("  Average User Experience: %.1f/100\n", analytics.summary_stats.average_user_experience);
     
     time_t uptime = time(NULL) - analytics.summary_stats.stats_start_time;
-    printf("  System Uptime: %ld hours\n\n", uptime / 3600);
+    printf("  System Uptime: %lld hours\n\n", (long long)(uptime / 3600));
     
     // Per-interface summary
-    printf("📡 Interface Summary:\n");
+    printf(" Interface Summary:\n");
     bool found_active = false;
     for (int i = 0; i < MAX_INTERFACES; i++) {
         if (!analytics.interface_summary[i].is_active) continue;
@@ -90,7 +90,7 @@ void print_summary() {
         printf("    Worst Score: %.1f\n", analytics.interface_summary[i].worst_score);
         
         time_t last_update_ago = time(NULL) - analytics.interface_summary[i].last_update;
-        printf("    Last Update: %ld minutes ago\n", last_update_ago / 60);
+        printf("    Last Update: %lld minutes ago\n", (long long)(last_update_ago / 60));
         printf("\n");
     }
     
@@ -100,14 +100,14 @@ void print_summary() {
 }
 
 void print_interface_details(const char *interface_name) {
-    printf("📡 Interface Details: %s\n", interface_name);
+    printf(" Interface Details: %s\n", interface_name);
     printf("========================\n\n");
     
     ml_interface_score_t score;
     int result = ml_monitor_analytics_calculate_interface_score(interface_name, &score);
     
     if (result != ML_MONITOR_SUCCESS) {
-        printf("❌ Failed to get interface details (code: %d)\n", result);
+        printf(" Failed to get interface details (code: %d)\n", result);
         return;
     }
     
@@ -120,17 +120,17 @@ void print_interface_details(const char *interface_name) {
     else if (score.overall_score >= 50.0) rating = "POOR";
     else rating = "VERY POOR";
     
-    printf("🎯 Overall ML Score: %.1f (%s)\n\n", score.overall_score, rating);
+    printf(" Overall ML Score: %.1f (%s)\n\n", score.overall_score, rating);
     
     // Component scores
-    printf("📊 Component Scores:\n");
+    printf(" Component Scores:\n");
     printf("  Accuracy Score: %.1f\n", score.accuracy_score);
     printf("  Stability Score: %.1f\n", score.stability_score);
     printf("  Performance Score: %.1f\n", score.performance_score);
     printf("  Trend Score: %.1f\n\n", score.trend_score);
     
     // Current metrics
-    printf("📈 Current Metrics:\n");
+    printf(" Current Metrics:\n");
     printf("  Latency: %u ms\n", score.current_latency_ms);
     printf("  Packet Loss: %u%%\n", score.current_loss_pct);
     printf("  Signal Strength: %d dBm\n", score.current_signal_dbm);
@@ -138,7 +138,7 @@ void print_interface_details(const char *interface_name) {
     printf("  Recent Predictions Correct: %u/10\n\n", score.recent_predictions_correct);
     
     // Score contributors
-    printf("🎛️ Score Contributors (Impact on Overall Score):\n");
+    printf(" Score Contributors (Impact on Overall Score):\n");
     printf("  Latency Impact: %+.1f\n", score.score_contributors.latency_impact);
     printf("  Loss Impact: %+.1f\n", score.score_contributors.loss_impact);
     printf("  Signal Impact: %+.1f\n", score.score_contributors.signal_impact);
@@ -148,7 +148,7 @@ void print_interface_details(const char *interface_name) {
 }
 
 void print_accuracy_trend(uint32_t hours) {
-    printf("🎯 Prediction Accuracy Trend (%u hours)\n", hours);
+    printf(" Prediction Accuracy Trend (%u hours)\n", hours);
     printf("======================================\n\n");
     
     double accuracy_pct;
@@ -157,7 +157,7 @@ void print_accuracy_trend(uint32_t hours) {
     int result = ml_monitor_analytics_get_accuracy_trend(NULL, hours, &accuracy_pct, &trend_direction);
     
     if (result != ML_MONITOR_SUCCESS) {
-        printf("❌ Failed to get accuracy trend (code: %d)\n", result);
+        printf(" Failed to get accuracy trend (code: %d)\n", result);
         return;
     }
     
@@ -167,13 +167,13 @@ void print_accuracy_trend(uint32_t hours) {
     const char *trend_icon;
     if (trend_direction > 0) {
         trend_desc = "IMPROVING";
-        trend_icon = "📈";
+        trend_icon = "";
     } else if (trend_direction < 0) {
         trend_desc = "DECLINING";
-        trend_icon = "📉";
+        trend_icon = "";
     } else {
         trend_desc = "STABLE";
-        trend_icon = "📊";
+        trend_icon = "";
     }
     
     printf("Trend: %s %s\n\n", trend_icon, trend_desc);
@@ -191,7 +191,7 @@ void print_accuracy_trend(uint32_t hours) {
             ml_monitor_analytics_get_accuracy_trend(analytics.interface_summary[i].interface_id, 
                                                    hours, &iface_accuracy, &iface_trend);
             
-            const char *iface_trend_icon = iface_trend > 0 ? "📈" : iface_trend < 0 ? "📉" : "📊";
+            const char *iface_trend_icon = iface_trend > 0 ? "" : iface_trend < 0 ? "" : "";
             printf("  %s: %.1f%% %s\n", 
                    analytics.interface_summary[i].interface_id, 
                    iface_accuracy, 
@@ -203,7 +203,7 @@ void print_accuracy_trend(uint32_t hours) {
 }
 
 void print_impact_summary(uint32_t hours) {
-    printf("⚡ ML Impact Summary (%u hours)\n", hours);
+    printf(" ML Impact Summary (%u hours)\n", hours);
     printf("=============================\n\n");
     
     int32_t total_improvement_ms;
@@ -214,7 +214,7 @@ void print_impact_summary(uint32_t hours) {
                                                         &stability_improvement_pct, &actions_taken);
     
     if (result != ML_MONITOR_SUCCESS) {
-        printf("❌ Failed to get impact summary (code: %d)\n", result);
+        printf(" Failed to get impact summary (code: %d)\n", result);
         return;
     }
     
@@ -238,31 +238,31 @@ void print_impact_summary(uint32_t hours) {
     
     // Impact assessment
     if (total_improvement_ms > 300000) {
-        printf("Assessment: 🌟 MAJOR IMPROVEMENT\n");
+        printf("Assessment:  MAJOR IMPROVEMENT\n");
     } else if (total_improvement_ms > 60000) {
-        printf("Assessment: ⭐ SIGNIFICANT IMPROVEMENT\n");
+        printf("Assessment:  SIGNIFICANT IMPROVEMENT\n");
     } else if (total_improvement_ms > 10000) {
-        printf("Assessment: ✅ MODERATE IMPROVEMENT\n");
+        printf("Assessment:  MODERATE IMPROVEMENT\n");
     } else if (total_improvement_ms > 0) {
-        printf("Assessment: 🔹 MINOR IMPROVEMENT\n");
+        printf("Assessment:  MINOR IMPROVEMENT\n");
     } else if (total_improvement_ms == 0) {
-        printf("Assessment: ➖ NO MEASURABLE IMPACT\n");
+        printf("Assessment:  NO MEASURABLE IMPACT\n");
     } else {
-        printf("Assessment: ⚠️ NEGATIVE IMPACT\n");
+        printf("Assessment:  NEGATIVE IMPACT\n");
     }
     
     printf("\n");
 }
 
 void print_interface_list() {
-    printf("📡 Monitored Interfaces\n");
+    printf(" Monitored Interfaces\n");
     printf("======================\n\n");
     
     ml_analytics_data_t analytics;
     int result = ml_monitor_analytics_get_data(&analytics);
     
     if (result != ML_MONITOR_SUCCESS) {
-        printf("❌ Failed to get interface list (code: %d)\n", result);
+        printf(" Failed to get interface list (code: %d)\n", result);
         return;
     }
     
@@ -271,7 +271,7 @@ void print_interface_list() {
         if (!analytics.interface_summary[i].is_active) continue;
         found_active = true;
         
-        printf("🔸 %s\n", analytics.interface_summary[i].interface_id);
+        printf(" %s\n", analytics.interface_summary[i].interface_id);
         printf("   Score: %.1f", analytics.interface_summary[i].current_score);
         
         if (analytics.interface_summary[i].current_score >= 90.0) {
@@ -299,7 +299,7 @@ void print_interface_list() {
 }
 
 void watch_mode(int refresh_seconds) {
-    printf("👁️ ML Monitor Watch Mode (refresh: %ds)\n", refresh_seconds);
+    printf(" ML Monitor Watch Mode (refresh: %ds)\n", refresh_seconds);
     printf("Press Ctrl+C to exit\n\n");
     
     signal(SIGINT, signal_handler);
@@ -311,7 +311,7 @@ void watch_mode(int refresh_seconds) {
         
         // Show timestamp
         time_t now = time(NULL);
-        printf("🕒 %s", ctime(&now));
+        printf(" %s", ctime(&now));
         
         // Show summary
         print_summary();
@@ -324,7 +324,7 @@ void watch_mode(int refresh_seconds) {
 }
 
 int export_data(const char *format) {
-    printf("📤 Exporting ML analytics data (%s format)\n", format);
+    printf(" Exporting ML analytics data (%s format)\n", format);
     
     char filename[256];
     time_t now = time(NULL);
@@ -337,9 +337,9 @@ int export_data(const char *format) {
     int result = ml_monitor_analytics_export_data(format, filename);
     
     if (result == ML_MONITOR_SUCCESS) {
-        printf("✅ Data exported to: %s\n", filename);
+        printf(" Data exported to: %s\n", filename);
     } else {
-        printf("❌ Export failed (code: %d)\n", result);
+        printf(" Export failed (code: %d)\n", result);
     }
     
     return result;

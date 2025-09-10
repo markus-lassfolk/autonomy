@@ -26,13 +26,13 @@ int main() {
     
     ml_monitor_t *monitor = ml_monitor_init(&config);
     assert(monitor != NULL);
-    printf("✓ ML monitor initialized\n");
+    printf(" ML monitor initialized\n");
     
     // Initialize all phases
     assert(ml_monitor_init_phase3_enhancements(monitor) == ML_MONITOR_SUCCESS);
     assert(ml_monitor_init_phase4_enhancements(monitor) == ML_MONITOR_SUCCESS);
     assert(ml_monitor_init_phase5_mobile_system(monitor) == ML_MONITOR_SUCCESS);
-    printf("✓ Phase 5 mobile optimization system initialized successfully\n");
+    printf(" Phase 5 mobile optimization system initialized successfully\n");
     
     // Test 2: Mobile scenario simulation - RV road trip
     printf("Test 2: Mobile scenario simulation - RV road trip...\n");
@@ -117,7 +117,7 @@ int main() {
                obs.snr_x100 / 100.0, road_trip[i].lat, road_trip[i].lon);
     }
     
-    printf("✓ Simulated complete RV road trip with %d waypoints\n", trip_points);
+    printf(" Simulated complete RV road trip with %d waypoints\n", trip_points);
     
     // Test 3: Mobile scenario detection and adaptation
     printf("Test 3: Mobile scenario detection and learning adaptation...\n");
@@ -131,7 +131,7 @@ int main() {
     
     assert(monitor->state->location_changes > 5); // Should detect multiple location changes
     assert(learner->history_count > 0); // Should have location history
-    printf("✓ Mobile scenario detection and adaptation working\n");
+    printf(" Mobile scenario detection and adaptation working\n");
     
     // Test 4: Advanced auto-tuning performance
     printf("Test 4: Advanced auto-tuning and parameter optimization...\n");
@@ -152,9 +152,9 @@ int main() {
     }
     
     uint8_t final_lr = nn->learning_rate;
-    printf("  - Learning rate adaptation: %u → %u\n", initial_lr, final_lr);
+    printf("  - Learning rate adaptation: %u  %u\n", initial_lr, final_lr);
     printf("  - Auto-tuning cycles completed: 10\n");
-    printf("✓ Advanced auto-tuning system functional\n");
+    printf(" Advanced auto-tuning system functional\n");
     
     // Test 5: Transfer learning between locations
     printf("Test 5: Transfer learning and location profile management...\n");
@@ -168,7 +168,7 @@ int main() {
                learner->history[i].last_visit);
     }
     
-    printf("✓ Transfer learning and location profiles functional\n");
+    printf(" Transfer learning and location profiles functional\n");
     
     // Test 6: Field testing data export
     printf("Test 6: Field testing data export and analysis...\n");
@@ -189,7 +189,7 @@ int main() {
     }
     fclose(export_file);
     
-    printf("✓ Field testing data export successful (%d lines)\n", line_count);
+    printf(" Field testing data export successful (%d lines)\n", line_count);
     
     // Test 7: Mobile status and performance metrics
     printf("Test 7: Mobile status and performance metrics...\n");
@@ -209,7 +209,7 @@ int main() {
     printf("  - Auto-tuning performance: %.1f%%\n", auto_tune_performance * 100);
     
     assert(auto_tune_performance > 0.8); // Expect good performance
-    printf("✓ Mobile status and performance metrics validated\n");
+    printf(" Mobile status and performance metrics validated\n");
     
     // Test 8: Advanced ensemble with mobile optimization
     printf("Test 8: Advanced ensemble predictions with mobile optimization...\n");
@@ -234,7 +234,7 @@ int main() {
     printf("  - Mobile ensemble prediction: %u%% probability, %u%% confidence\n", 
            mobile_prob, mobile_conf);
     printf("  - Mobile scenario cause prediction: %u\n", mobile_cause);
-    printf("✓ Mobile-optimized ensemble predictions functional\n");
+    printf(" Mobile-optimized ensemble predictions functional\n");
     
     // Test 9: Performance across different scenarios
     printf("Test 9: Performance validation across mobile scenarios...\n");
@@ -255,7 +255,7 @@ int main() {
     printf("  - False negatives: %u\n", perf->false_negatives);
     
     assert(perf->metrics.accuracy_pct > 85); // Expect high accuracy
-    printf("✓ Performance validation successful across mobile scenarios\n");
+    printf(" Performance validation successful across mobile scenarios\n");
     
     // Test 10: Memory efficiency with all features
     printf("Test 10: Memory efficiency with complete Phase 5 system...\n");
@@ -273,21 +273,21 @@ int main() {
     
     // Verify we're still within embedded constraints
     assert(total_memory < 3 * 1024 * 1024); // Less than 3MB even with all features
-    printf("✓ Memory efficiency maintained with complete Phase 5 system\n");
+    printf(" Memory efficiency maintained with complete Phase 5 system\n");
     
     // Test 11: Field testing mode
     printf("Test 11: Field testing mode and data collection...\n");
     
     int field_test_result = ml_monitor_enable_field_testing_mode(monitor, "rv_deployment_test");
     if (field_test_result == ML_MONITOR_SUCCESS) {
-        printf("✓ Field testing mode enabled successfully\n");
+        printf(" Field testing mode enabled successfully\n");
         
         // Disable field testing
         int disable_result = ml_monitor_disable_field_testing_mode(monitor);
         assert(disable_result == ML_MONITOR_SUCCESS);
-        printf("✓ Field testing mode disabled successfully\n");
+        printf(" Field testing mode disabled successfully\n");
     } else {
-        printf("⚠ Field testing mode not available (expected in test environment)\n");
+        printf(" Field testing mode not available (expected in test environment)\n");
     }
     
     // Test 12: Complete system validation
@@ -314,7 +314,7 @@ int main() {
     ml_monitor_update_with_phase5_mobile_optimization(monitor, &mobile_obs);
     printf("  - Mobile optimization: Active and functional\n");
     
-    printf("✓ Complete system validation successful - all phases working together\n");
+    printf(" Complete system validation successful - all phases working together\n");
     
     // Test 13: Cleanup and data persistence
     printf("Test 13: System cleanup with Phase 5 enhancements...\n");
@@ -328,29 +328,29 @@ int main() {
     assert(monitor->state->total_observations > 250);
     assert(monitor->state->location_changes > 5);
     
-    printf("✓ Data persistence validated: %u observations, %u location changes\n",
+    printf(" Data persistence validated: %u observations, %u location changes\n",
            monitor->state->total_observations, monitor->state->location_changes);
     
     // Cleanup
     ml_monitor_cleanup(monitor);
-    printf("✓ Phase 5 cleanup completed successfully\n");
+    printf(" Phase 5 cleanup completed successfully\n");
     
     // Clean up export file
     unlink(export_path);
     
     printf("\n===============================================================\n");
     printf("Phase 5 Mobile Optimization & Field Testing Completed!\n");
-    printf("✅ Mobile scenario detection and adaptation\n");
-    printf("✅ Advanced auto-tuning with parameter optimization\n");
-    printf("✅ Transfer learning between locations\n");
-    printf("✅ Field testing framework and data export\n");
-    printf("✅ RV deployment scenario validation\n");
-    printf("✅ Performance optimization across mobile scenarios\n");
-    printf("✅ Complete system integration (all 5 phases)\n");
-    printf("✅ Memory efficiency maintained (<3MB total)\n");
-    printf("\nPhase 5 implementation is production ready! 🎉\n");
+    printf(" Mobile scenario detection and adaptation\n");
+    printf(" Advanced auto-tuning with parameter optimization\n");
+    printf(" Transfer learning between locations\n");
+    printf(" Field testing framework and data export\n");
+    printf(" RV deployment scenario validation\n");
+    printf(" Performance optimization across mobile scenarios\n");
+    printf(" Complete system integration (all 5 phases)\n");
+    printf(" Memory efficiency maintained (<3MB total)\n");
+    printf("\nPhase 5 implementation is production ready! \n");
     printf("\nML Monitor now supports sophisticated mobile scenarios\n");
-    printf("with RV deployment optimization and field testing! 🚐📡\n");
+    printf("with RV deployment optimization and field testing! \n");
     
     return 0;
 }

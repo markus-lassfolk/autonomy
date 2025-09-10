@@ -42,41 +42,6 @@ static bool validate_position_data(const gps_data_t *gps_data, gps_validation_re
 static bool validate_temporal_data(const gps_data_t *gps_data, gps_validation_result_t *result);
 static bool validate_consistency(const gps_data_t *gps_data, gps_validation_result_t *result);
 static double estimate_expected_accuracy(int satellites, int fix_quality);
-double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
-void update_validation_statistics(const gps_validation_result_t *result);
-
-
-// Initialize GPS accuracy validator
-int gps_accuracy_init(void) {
-    if (g_accuracy_initialized) {
-        LOGX_WARN_MSG("GPS accuracy validator already initialized");
-        return AUTONOMY_SUCCESS;
-    }
-    
-    // Initialize accuracy validator state
-    memset(&g_accuracy_validator, 0, sizeof(gps_accuracy_t));
-    g_accuracy_validator.enabled = true; // Use configurable gps accuracy validation enabled
-    g_accuracy_validator.min_accuracy = MIN_ACCURACY;
-    g_accuracy_validator.max_accuracy = MAX_ACCURACY;
-    g_accuracy_validator.suspicious_accuracy = SUSPICIOUS_ACCURACY;
-    g_accuracy_validator.poor_accuracy = POOR_ACCURACY;
-    g_accuracy_validator.min_satellites = MIN_SATELLITES;
-    g_accuracy_validator.max_satellites = MAX_SATELLITES;
-    g_accuracy_validator.max_speed = MAX_SPEED;
-    g_accuracy_validator.max_altitude = MAX_ALTITUDE;
-    g_accuracy_validator.min_altitude = MIN_ALTITUDE;
-    
-    g_accuracy_validator.validation_count = 0;
-    g_accuracy_validator.valid_count = 0;
-    g_accuracy_validator.invalid_count = 0;
-    g_accuracy_validator.suspicious_count = 0;
-    g_accuracy_validator.last_validation = 0;
-    
-    g_accuracy_initialized = true; // Use configurable setting // Use configurable setting
-    
-    LOGX_INFO_MSG("GPS accuracy validator initialized successfully");
-    return AUTONOMY_SUCCESS;
-}
 
 // Validate GPS accuracy
 int gps_accuracy_validate(const gps_data_t *gps_data, gps_validation_result_t *result) {
@@ -333,22 +298,6 @@ static double estimate_expected_accuracy(int satellites, int fix_quality) {
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
-double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2) {
-    const double R = 6371000.0; // Use configurable value // Use configurable value  // Earth's radius in meters
-    
-    double lat1_rad = lat1 * M_PI / 180.0;
-    double lat2_rad = lat2 * M_PI / 180.0;
-    double delta_lat = (lat2 - lat1) * M_PI / 180.0;
-    double delta_lon = (lon2 - lon1) * M_PI / 180.0;
-    
-    double a = sin(delta_lat / 2.0) * sin(delta_lat / 2.0) +
-               cos(lat1_rad) * cos(lat2_rad) *
-               sin(delta_lon / 2.0) * sin(delta_lon / 2.0);
-    
-    double c = 2.0 * atan2(sqrt(a), sqrt(1.0 - a));
-    
-    return R * c;
-}
 
 // Update validation statistics
 void update_validation_statistics(const gps_validation_result_t *result) {

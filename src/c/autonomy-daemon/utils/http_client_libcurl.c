@@ -1,6 +1,7 @@
 #include "http_client_libcurl.h"
 #include "json_parser.h"
 #include "logx.h"
+#include "../core/types.h"
 #include <curl/curl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -518,4 +519,55 @@ void http_client_get_stats(http_client_stats_t* stats) {
     pthread_mutex_lock(&g_http_client.mutex);
     *stats = g_http_client.stats;
     pthread_mutex_unlock(&g_http_client.mutex);
+}
+
+// Missing function implementations
+int http_request_set_body(http_request_t* request, const char* body, const char* content_type) {
+    if (!request || !body) return -1;
+    
+    // Free existing body
+    if (request->body) {
+        free(request->body);
+    }
+    
+    // Set new body
+    request->body = strdup(body);
+    request->body_size = strlen(body);
+    
+    // Set content type if provided
+    if (content_type) {
+        http_request_add_header_kv(request, "Content-Type", content_type);
+    }
+    
+    return 0;
+}
+
+int http_request_set_json_body(http_request_t* request, const char* json) {
+    return http_request_set_body(request, json, "application/json");
+}
+
+int http_request_set_auth_bearer(http_request_t* request, const char* token) {
+    if (!request || !token) return -1;
+    
+    char auth_header[512];
+    snprintf(auth_header, sizeof(auth_header), "Bearer %s", token);
+    return http_request_add_header_kv(request, "Authorization", auth_header);
+}
+
+int http_request_set_auth_basic(http_request_t* request, const char* username, const char* password) {
+    if (!request || !username || !password) return -1;
+    
+    char auth_header[512];
+    snprintf(auth_header, sizeof(auth_header), "Basic %s:%s", username, password);
+    return http_request_add_header_kv(request, "Authorization", auth_header);
+}
+
+// HTTP client get function
+http_response_t* http_client_get(const char* url) {
+    return http_get(url);
+}
+
+// HTTP response cleanup function
+void http_response_cleanup(http_response_t* response) {
+    http_response_free(response);
 }

@@ -1,4 +1,5 @@
 #include "security_monitor.h"
+#include "../core/types.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -440,7 +441,7 @@ int perform_file_integrity_check(security_scan_result_t* result) {
         }
     }
     
-    result->file_integrity_issues = issues_found;
+    result->vulnerabilities_found += issues_found;
     return 0;
 }
 
@@ -523,18 +524,16 @@ int perform_network_security_check(security_scan_result_t* result) {
             if (token_count >= 5 && tokens[4]) {
                 // Parse foreign address:port from tokens[4]
                 if (sscanf(tokens[4], "%63[^:]:%d", foreign_addr, &foreign_port) == 2) {
-                            // Check for connections to common malware C&C ports
-                            const int suspicious_ports[] = {4444, 5555, 6666, 7777, 8888, 9999, 31337};
-                            for (int i = 0; i < sizeof(suspicious_ports)/sizeof(suspicious_ports[0]); i++) {
-                                if (foreign_port == suspicious_ports[i]) {
-                                    snprintf(issue_details, sizeof(issue_details),
-                                            "Suspicious connection to %s:%d detected",
-                                            foreign_addr, foreign_port);
-                                    update_security_events("suspicious_connection", issue_details,
-                                                         "network", foreign_addr, THREAT_LEVEL_CRITICAL);
-                                    issues_found++;
-                                }
-                            }
+                    // Check for connections to common malware C&C ports
+                    const int suspicious_ports[] = {4444, 5555, 6666, 7777, 8888, 9999, 31337};
+                    for (int i = 0; i < sizeof(suspicious_ports)/sizeof(suspicious_ports[0]); i++) {
+                        if (foreign_port == suspicious_ports[i]) {
+                            snprintf(issue_details, sizeof(issue_details),
+                                    "Suspicious connection to %s:%d detected",
+                                    foreign_addr, foreign_port);
+                            update_security_events("suspicious_connection", issue_details,
+                                                 "network", foreign_addr, THREAT_LEVEL_CRITICAL);
+                            issues_found++;
                         }
                     }
                 }
@@ -666,7 +665,7 @@ int perform_network_security_check(security_scan_result_t* result) {
         }
     }
     
-    result->network_security_issues = issues_found;
+    result->vulnerabilities_found += issues_found;
     return 0;
 }
 
@@ -706,13 +705,13 @@ int perform_access_control_check(security_scan_result_t* result) {
             update_security_events("access_control", 
                                   "Excessive failed login attempts detected",
                                   "authentication", "system", THREAT_LEVEL_HIGH);
-            result->issues_found++;
+            result->vulnerabilities_found++;
             return -1;
         } else if (failed_attempts > 3) {
             update_security_events("access_control", 
                                   "Multiple failed login attempts detected",
                                   "authentication", "system", THREAT_LEVEL_MEDIUM);
-            result->issues_found++;
+            result->vulnerabilities_found++;
         }
     }
     
@@ -726,7 +725,7 @@ int perform_access_control_check(security_scan_result_t* result) {
                 update_security_events("access_control", 
                                       "Excessive sudo usage detected",
                                       "privilege_escalation", "system", THREAT_LEVEL_MEDIUM);
-                result->issues_found++;
+                result->vulnerabilities_found++;
             }
         }
         pclose(sudo_log);
@@ -781,14 +780,14 @@ int perform_configuration_check(security_scan_result_t* result) {
             update_security_events("configuration", 
                                   "SSH root login is enabled - security risk",
                                   "ssh_config", "system", THREAT_LEVEL_HIGH);
-            result->issues_found++;
+            result->vulnerabilities_found++;
         }
         
         if (permit_empty_passwords) {
             update_security_events("configuration", 
                                   "SSH allows empty passwords - critical security risk",
                                   "ssh_config", "system", THREAT_LEVEL_CRITICAL);
-            result->issues_found++;
+            result->vulnerabilities_found++;
         }
     }
     
@@ -811,7 +810,7 @@ int perform_configuration_check(security_scan_result_t* result) {
                 snprintf(msg, sizeof(msg), "Critical file %s is world-writable", critical_files[i]);
                 update_security_events("configuration", msg,
                                       "file_permissions", "filesystem", THREAT_LEVEL_CRITICAL);
-                result->issues_found++;
+                result->vulnerabilities_found++;
             }
             
             // Check if shadow file is readable by others
@@ -820,7 +819,7 @@ int perform_configuration_check(security_scan_result_t* result) {
                 update_security_events("configuration", 
                                       "/etc/shadow is readable by non-root users",
                                       "file_permissions", "filesystem", THREAT_LEVEL_HIGH);
-                result->issues_found++;
+                result->vulnerabilities_found++;
             }
         }
     }
@@ -837,7 +836,7 @@ int perform_configuration_check(security_scan_result_t* result) {
             snprintf(msg, sizeof(msg), "SUID/SGID binary found in unusual location: %s", path);
             update_security_events("configuration", msg,
                                   "suid_binary", "filesystem", THREAT_LEVEL_MEDIUM);
-            result->issues_found++;
+            result->vulnerabilities_found++;
         }
         pclose(suid_cmd);
     }
@@ -863,7 +862,7 @@ static int perform_threat_detection(security_scan_result_t* result) {
                 update_security_events("threat_detection", 
                                       "Rapid increase in listening ports detected",
                                       "port_scanning", "network", THREAT_LEVEL_HIGH);
-                result->issues_found++;
+                result->vulnerabilities_found++;
             }
             prev_port_count = listening_ports;
         }
@@ -882,7 +881,7 @@ static int perform_threat_detection(security_scan_result_t* result) {
             snprintf(msg, sizeof(msg), "Suspicious process detected: %s", process_line);
             update_security_events("threat_detection", msg,
                                   "malicious_process", "system", THREAT_LEVEL_HIGH);
-            result->issues_found++;
+            result->vulnerabilities_found++;
         }
         pclose(proc_cmd);
     }
@@ -900,7 +899,7 @@ static int perform_threat_detection(security_scan_result_t* result) {
                 update_security_events("threat_detection", 
                                       "Sudden CPU usage spike detected - possible crypto mining",
                                       "resource_abuse", "system", THREAT_LEVEL_MEDIUM);
-                result->issues_found++;
+                result->vulnerabilities_found++;
             }
             prev_cpu_usage = cpu_usage;
         }
@@ -919,7 +918,7 @@ static int perform_threat_detection(security_scan_result_t* result) {
                 update_security_events("threat_detection", 
                                       "New cron jobs detected - potential persistence mechanism",
                                       "persistence", "system", THREAT_LEVEL_MEDIUM);
-                result->issues_found++;
+                result->vulnerabilities_found++;
             }
             prev_cron_count = cron_count;
         }
@@ -936,7 +935,7 @@ static int perform_threat_detection(security_scan_result_t* result) {
                 update_security_events("threat_detection", 
                                       "High number of SSH connections detected",
                                       "brute_force", "network", THREAT_LEVEL_HIGH);
-                result->issues_found++;
+                result->vulnerabilities_found++;
             }
         }
         pclose(conn_cmd);

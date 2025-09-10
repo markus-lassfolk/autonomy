@@ -1,4 +1,6 @@
 #include "predictive_engine.h"
+#include "../core/types.h"
+#include "../utils/logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -19,6 +21,7 @@ static void generate_failover_predictions(void);
 static void generate_performance_predictions(void);
 static void generate_maintenance_predictions(void);
 static void generate_capacity_predictions(void);
+static void perform_statistical_training(void);
 double calculate_prediction_confidence(const prediction_result_t* prediction);
 
 // Initialize predictive engine
@@ -131,8 +134,7 @@ int predictive_engine_train_models(void) {
     // 1. Collect training data from telemetry
     char training_data_cmd[512];
     snprintf(training_data_cmd, sizeof(training_data_cmd),
-            "python3 /usr/lib/autonomy/ml/train_models.py --data-dir /var/lib/autonomy/telemetry --output-dir /var/lib/autonomy/ml/models --algorithm %s 2>/dev/null",
-            g_predictive_engine.config.algorithm_name);
+            "python3 /usr/lib/autonomy/ml/train_models.py --data-dir /var/lib/autonomy/telemetry --output-dir /var/lib/autonomy/ml/models --algorithm random_forest 2>/dev/null");
     
     int training_result = system(training_data_cmd);
     if (training_result != 0) {

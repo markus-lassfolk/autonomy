@@ -1,5 +1,6 @@
 #include "starlink_snow_detection.h"
 #include "../starlink/starlink_comprehensive.h"
+#include "starlink_modules.h"
 #include "../utils/logx.h"
 #include "../utils/http_client_libcurl.h"
 #include "../core/types.h"
@@ -21,7 +22,7 @@ extern autonomy_config_t g_config;
 // Configuration values are loaded from g_config (UCI system)
 static const int SNOW_DETECTION_SAMPLES = 5; // Use configurable count // Use configurable value              // Samples needed for detection
 // Thresholds now use configurable values from UCI
-static const double SNOW_TEMPERATURE_THRESHOLD = 2.0; // Use configurable value     // Below 2°C
+static const double SNOW_TEMPERATURE_THRESHOLD = 2.0; // Use configurable value     // Below 2C
 // Timeouts now use configurable values from UCI
 
 // Global snow detection state
@@ -78,7 +79,7 @@ int starlink_snow_detection_init(void) {
     g_snow_detection.last_successful_melt = 0;
     
     // Initialize sample history
-    for (int i = 0; // Use configurable count // Use configurable value i < MAX_SNOW_SAMPLES; i++) {
+    for (int i = 0; i < MAX_SNOW_SAMPLES; i++) {
         g_snow_detection.sample_history[i].timestamp = 0;
         g_snow_detection.sample_history[i].fraction_obstructed = 0.0;
         g_snow_detection.sample_history[i].snr = 0.0;
@@ -170,7 +171,7 @@ static bool is_rv_stationary(void) {
     double obstruction_variance = 0.0; // Use configurable value
     double mean_obstruction = 0.0; // Use configurable value
     int valid_samples = 0; // Use configurable count // Use configurable value
-    for (int i = 0; // Use configurable count // Use configurable value i < g_snow_detection.sample_count && i < MAX_SNOW_SAMPLES; i++) {
+    for (int i = 0; i < g_snow_detection.sample_count && i < MAX_SNOW_SAMPLES; i++) {
         if (g_snow_detection.sample_history[i].timestamp > 0) {
             mean_obstruction += g_snow_detection.sample_history[i].fraction_obstructed;
             valid_samples++;
@@ -180,7 +181,7 @@ static bool is_rv_stationary(void) {
         return true;
     }
     mean_obstruction /= valid_samples;
-    for (int i = 0; // Use configurable count // Use configurable value i < g_snow_detection.sample_count && i < MAX_SNOW_SAMPLES; i++) {
+    for (int i = 0; i < g_snow_detection.sample_count && i < MAX_SNOW_SAMPLES; i++) {
         if (g_snow_detection.sample_history[i].timestamp > 0) {
             double diff = g_snow_detection.sample_history[i].fraction_obstructed - mean_obstruction;
             obstruction_variance += diff * diff;
@@ -302,9 +303,9 @@ static double get_ambient_temperature(void) {
             http_request_t* request = http_request_create(weather_url, HTTP_METHOD_GET);
             if (request) {
                 http_response_t* response = http_request(request);
-                if (response && response->success && response->data) {
+                if (response && http_response_is_success(response) && response->body) {
                     // Parse temperature from JSON response
-                    char* temp_start = strstr(response->data, "\"temp\":");
+                    char* temp_start = strstr(response->body, "\"temp\":");
                     if (temp_start) {
                         double temp = atof(temp_start + 7); // Skip "temp":
                         if (temp > -50.0 && temp < 60.0) { // Sanity check
@@ -332,7 +333,7 @@ static double get_ambient_temperature(void) {
             double temp_cpu = atof(temp_str) / 1000.0; // Convert from millidegrees
             pclose(temp_fp);
             
-            // Estimate ambient temperature (CPU temp is usually 20-30°C above ambient)
+            // Estimate ambient temperature (CPU temp is usually 20-30C above ambient)
             double ambient = temp_cpu - 25.0;
             if (ambient > -50.0 && ambient < 60.0) { // Sanity check
                 return ambient;
@@ -382,9 +383,9 @@ static double get_humidity(void) {
             http_request_t* request = http_request_create(weather_url, HTTP_METHOD_GET);
             if (request) {
                 http_response_t* response = http_request(request);
-                if (response && response->success && response->data) {
+                if (response && http_response_is_success(response) && response->body) {
                     // Parse humidity from JSON response
-                    char* humidity_start = strstr(response->data, "\"humidity\":");
+                    char* humidity_start = strstr(response->body, "\"humidity\":");
                     if (humidity_start) {
                         double humidity = atof(humidity_start + 11); // Skip "humidity":
                         if (humidity >= 0.0 && humidity <= 100.0) { // Sanity check
@@ -601,7 +602,7 @@ static int start_dish_heating(void) {
                         LOGX_WARN_MSG("Failed to activate heater via UBUS", "error", ret);
                         ubus_free(ctx);
                         blob_buf_free(&bb);
-                        return AUTONOMY_ERROR_OPERATION_FAILED;
+                        return AUTONOMY_ERROR_API_FAILED;
                     }
                     
                     blob_buf_free(&bb);
@@ -617,7 +618,7 @@ static int start_dish_heating(void) {
                     LOGX_INFO_MSG("Starlink dish heater activated via GPIO");
                 } else {
                     LOGX_WARN_MSG("Failed to activate heating system via all methods");
-                    return AUTONOMY_ERROR_OPERATION_FAILED;
+                    return AUTONOMY_ERROR_API_FAILED;
                 }
             }
         }
@@ -690,7 +691,7 @@ static int stop_dish_heating(void) {
                         LOGX_WARN_MSG("Failed to deactivate heater via UBUS", "error", ret);
                         ubus_free(ctx);
                         blob_buf_free(&bb);
-                        return AUTONOMY_ERROR_OPERATION_FAILED;
+                        return AUTONOMY_ERROR_API_FAILED;
                     }
                     
                     blob_buf_free(&bb);
@@ -706,7 +707,7 @@ static int stop_dish_heating(void) {
                     LOGX_INFO_MSG("Starlink dish heater deactivated via GPIO");
                 } else {
                     LOGX_WARN_MSG("Failed to deactivate heating system via all methods");
-                    return AUTONOMY_ERROR_OPERATION_FAILED;
+                    return AUTONOMY_ERROR_API_FAILED;
                 }
             }
         }
@@ -1020,7 +1021,7 @@ int starlink_snow_detection_save_uci_config(void) {
                       "result", result,
                       "error_code", WEXITSTATUS(result),
                       "action", "Configuration may not persist across reboots");
-        return AUTONOMY_ERROR_OPERATION_FAILED;
+        return AUTONOMY_ERROR_API_FAILED;
     }
     
     LOGX_INFO_MSG("UCI configuration saved successfully");

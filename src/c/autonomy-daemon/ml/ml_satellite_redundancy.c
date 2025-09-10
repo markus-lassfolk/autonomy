@@ -16,13 +16,13 @@
 // Initialize satellite redundancy predictor
 satellite_redundancy_predictor_t* satellite_redundancy_init(const satellite_redundancy_config_t *config) {
     if (!config) {
-        LOGX_ERROR("Invalid configuration parameter");
+        LOGX_ERROR_MSG("Invalid configuration parameter");
         return NULL;
     }
     
     satellite_redundancy_predictor_t *predictor = calloc(1, sizeof(satellite_redundancy_predictor_t));
     if (!predictor) {
-        LOGX_ERROR("Failed to allocate memory for satellite redundancy predictor");
+        LOGX_ERROR_MSG("Failed to allocate memory for satellite redundancy predictor");
         return NULL;
     }
     
@@ -47,7 +47,7 @@ satellite_redundancy_predictor_t* satellite_redundancy_init(const satellite_redu
     memset(&predictor->current_assessment, 0, sizeof(satellite_redundancy_assessment_t));
     memset(&predictor->last_assessment, 0, sizeof(satellite_redundancy_assessment_t));
     
-    LOGX_INFO("Satellite redundancy predictor initialized with thresholds: critical=%d, warning=%d, safe=%d, optimal=%d",
+    LOGX_INFO_MSG("Satellite redundancy predictor initialized with thresholds: critical=%d, warning=%d, safe=%d, optimal=%d",
               predictor->config.critical_threshold,
               predictor->config.warning_threshold,
               predictor->config.safe_threshold,
@@ -60,7 +60,7 @@ satellite_redundancy_predictor_t* satellite_redundancy_init(const satellite_redu
 void satellite_redundancy_cleanup(satellite_redundancy_predictor_t *predictor) {
     if (!predictor) return;
     
-    LOGX_DEBUG("Cleaning up satellite redundancy predictor");
+    LOGX_DEBUG_MSG("Cleaning up satellite redundancy predictor");
     free(predictor);
 }
 
@@ -103,7 +103,7 @@ int satellite_redundancy_assess_current(satellite_redundancy_predictor_t *predic
     
     // Extract satellite data from Starlink status
     predictor->current_assessment.total_visible = starlink_data->gps_stats.gps_sats;
-    predictor->current_assessment.obstruction_pct = (uint8_t)(starlink_data->obstruction_stats.fraction_obstructed * 100);
+    predictor->current_assessment.obstruction_risk = starlink_data->obstruction_stats.fraction_obstructed;
     
     // Calculate unobstructed count (estimate based on obstruction percentage)
     double obstruction_ratio = starlink_data->obstruction_stats.fraction_obstructed;
@@ -165,7 +165,7 @@ int satellite_redundancy_assess_current(satellite_redundancy_predictor_t *predic
     // Update history
     uint8_t idx = predictor->history.write_index;
     predictor->history.satellite_counts[idx] = predictor->current_assessment.total_visible;
-    predictor->history.obstruction_counts[idx] = predictor->current_assessment.obstruction_pct;
+    predictor->history.obstruction_counts[idx] = (uint8_t)(predictor->current_assessment.obstruction_risk * 100);
     predictor->history.redundancy_scores[idx] = predictor->current_assessment.redundancy_score;
     
     predictor->history.write_index = (predictor->history.write_index + 1) % 60;
@@ -189,7 +189,7 @@ int satellite_redundancy_assess_current(satellite_redundancy_predictor_t *predic
         }
     }
     
-    LOGX_DEBUG("Satellite redundancy assessment: visible=%d, unobstructed=%d, redundancy=%.2f, risk_level=%d",
+    LOGX_DEBUG_MSG("Satellite redundancy assessment: visible=%d, unobstructed=%d, redundancy=%.2f, risk_level=%d",
                predictor->current_assessment.total_visible,
                predictor->current_assessment.unobstructed_count,
                predictor->current_assessment.redundancy_score,
@@ -274,11 +274,10 @@ int satellite_redundancy_trigger_early_warning(satellite_redundancy_predictor_t 
     }
     
     predictor->early_warning_active = true;
-    predictor->early_warning_triggered = true;
     predictor->last_warning_time = time(NULL);
     predictor->warning_count++;
     
-    LOGX_WARN("Satellite redundancy early warning triggered: visible=%d, unobstructed=%d, risk_level=%d",
+    LOGX_WARN_MSG("Satellite redundancy early warning triggered: visible=%d, unobstructed=%d, risk_level=%d",
               predictor->current_assessment.total_visible,
               predictor->current_assessment.unobstructed_count,
               predictor->current_assessment.risk_level);
@@ -299,9 +298,8 @@ int satellite_redundancy_clear_early_warning(satellite_redundancy_predictor_t *p
     
     if (predictor->early_warning_active) {
         predictor->early_warning_active = false;
-        predictor->early_warning_triggered = false;
         
-        LOGX_INFO("Satellite redundancy early warning cleared");
+        LOGX_INFO_MSG("Satellite redundancy early warning cleared");
     }
     
     return SATELLITE_REDUNDANCY_SUCCESS;

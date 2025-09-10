@@ -4,10 +4,10 @@
 CC ?= gcc
 CFLAGS ?= -Wall -Wextra -std=c99 -O2
 LDFLAGS ?= 
-LIBS = -lubus -lblobmsg_json -lubox -ljson-c -luci -lcurl -lm -lpthread
+LIBS = -lubus -lblobmsg_json -lubox -ljson-c -lcjson -luci -lcurl -lm -lpthread -lsqlite3 -lcrypto -lssl
 
 # Source files - include all C files from subdirectories
-SOURCES = $(shell find . -name "*.c" -not -name "test_*.c" -not -path "./testing/*")
+SOURCES = $(shell find . -name "*.c" -not -name "test_*.c" -not -path "./testing/*" -not -path "./starlink/starlink_tracker.c" -not -path "./utils/cellular_collector.c" -not -path "./ubus/system_ubus.c" -not -path "./utils/system_management.c" -not -path "./network/network.c" -not -path "./gps/gps.c" -not -path "./utils/http_client.c" -not -name "network_discovery_simple.c" -not -name "gps_discovery_simple.c" -not -name "ml_monitor_cli.c")
 
 # Object files
 OBJECTS = $(SOURCES:.c=.o)

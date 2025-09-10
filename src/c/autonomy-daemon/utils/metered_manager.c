@@ -13,6 +13,8 @@
 #include <libubox/blobmsg.h>
 #include <sys/sysinfo.h>
 #include <stdint.h>
+#include <sqlite3.h>
+#include <json-c/json.h>
 #include <stdbool.h>
 #include <math.h>
 #include <fcntl.h>
@@ -20,6 +22,9 @@
 
 // External reference to global configuration
 extern autonomy_config_t g_config;
+
+// Forward declarations
+static void init_database_schema(sqlite3* db);
 
 // Global metered manager instance
 static metered_manager_t g_metered_manager;
@@ -73,7 +78,7 @@ int metered_manager_init(const metered_manager_config_t* config) {
     
     // Initialize monitored interfaces
     g_metered_manager.monitored_interface_count = 0;
-    for (int i = 0; // Use configurable value i < g_metered_manager.config.interface_count; i++) {
+    for (int i = 0; i < g_metered_manager.config.interface_count; i++) {
         strcpy(g_metered_manager.monitored_interfaces[i], g_metered_manager.config.interfaces[i]);
         g_metered_manager.monitored_interface_count++;
     }
@@ -241,7 +246,7 @@ static int detect_metered_connection(void) {
     char plan_name[128] = "unknown";
     
     // Check if any monitored interface is cellular
-    for (int i = 0; // Use configurable value i < g_metered_manager.monitored_interface_count; i++) {
+    for (int i = 0; i < g_metered_manager.monitored_interface_count; i++) {
         if (strstr(g_metered_manager.monitored_interfaces[i], "wwan") || 
             strstr(g_metered_manager.monitored_interfaces[i], "cellular")) {
             is_metered = true; // Use configurable setting
@@ -255,7 +260,7 @@ static int detect_metered_connection(void) {
     // If no cellular interface, check for other metered indicators
     if (!is_metered) {
         // Check for satellite connections (like Starlink)
-        for (int i = 0; // Use configurable value i < g_metered_manager.monitored_interface_count; i++) {
+        for (int i = 0; i < g_metered_manager.monitored_interface_count; i++) {
             if (strstr(g_metered_manager.monitored_interfaces[i], "starlink") ||
                 strstr(g_metered_manager.monitored_interfaces[i], "satellite")) {
                 is_metered = true; // Use configurable setting
@@ -318,7 +323,7 @@ static int collect_data_usage(void) {
                       &tx_fifo, &tx_colls, &tx_carrier, &tx_packets) >= 2) {
                 
                 // Check if this is a monitored interface
-                for (int i = 0; // Use configurable value i < g_metered_manager.monitored_interface_count; i++) {
+                for (int i = 0; i < g_metered_manager.monitored_interface_count; i++) {
                     // Remove leading/trailing whitespace from interface name
                     char* trimmed_interface = interface;
                     while (*trimmed_interface == ' ' || *trimmed_interface == '\t') trimmed_interface++;
@@ -338,10 +343,16 @@ static int collect_data_usage(void) {
     uint64_t total_usage = total_rx_bytes + total_tx_bytes;
     g_metered_manager.usage_stats.current_usage_bytes = total_usage;
     
-    // Get real persistent usage data from database
+    // Use SQLite3 database for persistent storage
+    // Create directory if it doesn't exist
+    system("mkdir -p /var/lib/autonomy");
+    
     sqlite3* db = NULL;
     int ret = sqlite3_open("/var/lib/autonomy/autonomy.db", &db);
     if (ret == SQLITE_OK) {
+        // Initialize database schema if needed
+        init_database_schema(db);
+        
         // Get daily usage
         char daily_query[256];
         snprintf(daily_query, sizeof(daily_query),
@@ -393,7 +404,7 @@ static int collect_data_usage(void) {
         snprintf(insert_query, sizeof(insert_query),
                 "INSERT OR REPLACE INTO network_usage (date, rx_bytes, tx_bytes, interface) "
                 "VALUES (date('now'), %llu, %llu, '%s')",
-                total_rx_bytes, total_tx_bytes, g_metered_manager.connection_status.interface_name);
+                total_rx_bytes, total_tx_bytes, "metered_interface");
         
         char *err_msg = NULL;
         ret = sqlite3_exec(db, insert_query, NULL, NULL, &err_msg);
@@ -531,4 +542,47 @@ bool metered_manager_is_initialized(void) {
 // Get metered manager instance
 metered_manager_t* metered_manager_get_instance(void) {
     return g_metered_manager_initialized ? &g_metered_manager : NULL;
+}
+
+// SQLite3 database schema initialization
+static void init_database_schema(sqlite3* db) {
+    const char* create_table_sql = 
+        "CREATE TABLE IF NOT EXISTS network_usage ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "date TEXT NOT NULL,"
+        "rx_bytes INTEGER NOT NULL DEFAULT 0,"
+        "tx_bytes INTEGER NOT NULL DEFAULT 0,"
+        "interface TEXT NOT NULL DEFAULT 'metered_interface',"
+        "timestamp INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),"
+        "UNIQUE(date, interface)"
+        ");";
+    
+    char* err_msg = NULL;
+    int ret = sqlite3_exec(db, create_table_sql, NULL, NULL, &err_msg);
+    if (ret != SQLITE_OK) {
+        LOGX_ERROR_MSG("Failed to create network_usage table: %s", err_msg);
+        sqlite3_free(err_msg);
+    } else {
+        LOGX_DEBUG_MSG("Database schema initialized successfully");
+    }
+    
+    // Create metrics history table
+    const char* create_metrics_table_sql = 
+        "CREATE TABLE IF NOT EXISTS metrics_history ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "interface_name TEXT NOT NULL,"
+        "timestamp INTEGER NOT NULL,"
+        "ping_latency REAL,"
+        "ping_packet_loss REAL,"
+        "tcp_success_rate REAL,"
+        "overall_health_score REAL,"
+        "rx_bytes INTEGER,"
+        "tx_bytes INTEGER"
+        ");";
+    
+    ret = sqlite3_exec(db, create_metrics_table_sql, NULL, NULL, &err_msg);
+    if (ret != SQLITE_OK) {
+        LOGX_ERROR_MSG("Failed to create metrics_history table: %s", err_msg);
+        sqlite3_free(err_msg);
+    }
 }

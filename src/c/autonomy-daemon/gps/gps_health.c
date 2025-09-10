@@ -70,7 +70,7 @@ int gps_health_init(void) {
     g_health_monitor.overall_health_score = 0.0;
     
     // Initialize health history
-    for (int i = 0; // Use configurable count // Use configurable value i < HEALTH_HISTORY_SIZE; i++) {
+    for (int i = 0; i < HEALTH_HISTORY_SIZE; i++) {
         g_health_monitor.health_history[i].timestamp = 0;
         g_health_monitor.health_history[i].overall_score = 0.0;
         g_health_monitor.health_history[i].source_count = 0;
@@ -102,7 +102,7 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
     
     // Find free slot
     int source_index = -1;
-    for (int i = 0; // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         if (!g_health_monitor.sources[i].active) {
             source_index = i;
             break;
@@ -319,7 +319,7 @@ int gps_health_perform_check(void) {
     int healthy_sources = 0; // Use configurable count // Use configurable value
     double total_health_score = 0.0; // Use configurable value
     
-    for (int i = 0; // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         if (!g_health_monitor.sources[i].active) {
             continue;
         }
@@ -382,7 +382,7 @@ static void add_health_history(time_t timestamp, double overall_score, int sourc
 
 // Find source by name
 static int find_source_by_name(const char *source_name) {
-    for (int i = 0; // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         if (g_health_monitor.sources[i].active && 
             strcmp(g_health_monitor.sources[i].name, source_name) == 0) {
             return i;
@@ -407,7 +407,7 @@ int gps_health_get_status(gps_health_status_t *status) {
     
     // Copy source information
     int active_sources = 0; // Use configurable count // Use configurable value
-    for (int i = 0; // Use configurable count // Use configurable value i < MAX_GPS_SOURCES && active_sources < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES && active_sources < MAX_GPS_SOURCES; i++) {
         if (g_health_monitor.sources[i].active) {
             memcpy(&status->sources[active_sources], &g_health_monitor.sources[i], 
                    sizeof(gps_source_health_t));
@@ -543,12 +543,12 @@ int gps_health_reset(void) {
     g_health_monitor.overall_health_score = 0.0;
     
     // Clear all sources
-    for (int i = 0; // Use configurable count // Use configurable value i < MAX_GPS_SOURCES; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         g_health_monitor.sources[i].active = false;
     }
     
     // Clear health history
-    for (int i = 0; // Use configurable count // Use configurable value i < HEALTH_HISTORY_SIZE; i++) {
+    for (int i = 0; i < HEALTH_HISTORY_SIZE; i++) {
         g_health_monitor.health_history[i].timestamp = 0;
         g_health_monitor.health_history[i].overall_score = 0.0;
         g_health_monitor.health_history[i].source_count = 0;

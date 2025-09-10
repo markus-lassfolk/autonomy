@@ -226,6 +226,13 @@ void gps_comprehensive_cleanup(void);
 int gps_comprehensive_collect_best(standardized_gps_data_t* result);
 
 /**
+ * Collect GPS data from best available source (alias for collect_best)
+ * @param result GPS data result
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_comprehensive_collect_best_gps(standardized_gps_data_t* result);
+
+/**
  * Collect GPS data from all sources and perform fusion
  * @param result Fusion result with all source data
  * @return AUTONOMY_SUCCESS on success, error code on failure
@@ -368,6 +375,13 @@ double gps_calculate_bearing(double lat1, double lon1, double lat2, double lon2)
  * @return Speed in m/s
  */
 double gps_calculate_speed(double distance, double time_diff);
+
+/**
+ * Get current location from comprehensive GPS system
+ * @param location Pointer to gps_data_t structure to fill
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int gps_comprehensive_get_current_location(gps_data_t *location);
 
 #ifdef __cplusplus
 }

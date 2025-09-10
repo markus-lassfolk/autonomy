@@ -4,6 +4,7 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
 
@@ -256,7 +257,7 @@ static int ml_monitor_detect_mobile_scenario(mobile_scenario_detector_t *detecto
     mobile_scenario_t new_scenario = ml_monitor_classify_mobile_scenario(detector);
     
     if (new_scenario != detector->current_scenario) {
-        LOGX_INFO("📱 Mobile scenario changed: %d → %d (speed: %.1f km/h, variance: %.1f)",
+        LOGX_INFO_MSG(" Mobile scenario changed: %d  %d (speed: %.1f km/h, variance: %.1f)",
                  detector->current_scenario, new_scenario, 
                  detector->movement.average_speed, detector->movement.speed_variance);
         
@@ -309,31 +310,31 @@ static int ml_monitor_adapt_to_mobile_scenario(ml_monitor_t *monitor, mobile_sce
         case MOBILE_SCENARIO_STATIONARY:
             // Stable learning, can be more conservative
             nn->learning_rate = 64;  // Lower learning rate for stability
-            LOGX_DEBUG("🏠 Adapted to stationary scenario: conservative learning");
+            LOGX_DEBUG_MSG(" Adapted to stationary scenario: conservative learning");
             break;
             
         case MOBILE_SCENARIO_SLOW_MOBILE:
             // Moderate adaptation needed
             nn->learning_rate = 128; // Standard learning rate
-            LOGX_DEBUG("🚶 Adapted to slow mobile scenario: balanced learning");
+            LOGX_DEBUG_MSG(" Adapted to slow mobile scenario: balanced learning");
             break;
             
         case MOBILE_SCENARIO_URBAN:
             // Frequent changes, need rapid adaptation
             nn->learning_rate = 180; // Higher learning rate
-            LOGX_DEBUG("🏙️ Adapted to urban scenario: rapid learning");
+            LOGX_DEBUG_MSG(" Adapted to urban scenario: rapid learning");
             break;
             
         case MOBILE_SCENARIO_HIGHWAY:
             // High speed, preserve knowledge but adapt quickly
             nn->learning_rate = 150; // Moderate-high learning rate
-            LOGX_DEBUG("🛣️ Adapted to highway scenario: adaptive learning");
+            LOGX_DEBUG_MSG(" Adapted to highway scenario: adaptive learning");
             break;
             
         default:
             // Unknown scenario, use defaults
             nn->learning_rate = 128;
-            LOGX_DEBUG("❓ Unknown scenario: using default learning");
+            LOGX_DEBUG_MSG(" Unknown scenario: using default learning");
             break;
     }
     
@@ -381,7 +382,7 @@ static int ml_monitor_advanced_auto_tune(ml_monitor_t *monitor, advanced_auto_tu
         
         tuner->performance_tracking.cycles_since_improvement = 0;
         
-        LOGX_INFO("🎯 Auto-tuning found better configuration: %.1f%% accuracy (LR=%u)",
+        LOGX_INFO_MSG(" Auto-tuning found better configuration: %.1f%% accuracy (LR=%u)",
                  current_accuracy * 100, nn->learning_rate);
     } else {
         tuner->performance_tracking.cycles_since_improvement++;
@@ -391,7 +392,7 @@ static int ml_monitor_advanced_auto_tune(ml_monitor_t *monitor, advanced_auto_tu
     if (tuner->performance_tracking.cycles_since_improvement > 20) {
         // No improvement for 20 cycles, consider convergence
         tuner->performance_tracking.converged = true;
-        LOGX_INFO("🏁 Auto-tuning converged at %.1f%% accuracy", 
+        LOGX_INFO_MSG(" Auto-tuning converged at %.1f%% accuracy", 
                  tuner->performance_tracking.best_performance * 100);
     } else if (tuner->performance_tracking.improvement_rate < 0.001) {
         // Very slow improvement, try different parameters
@@ -419,7 +420,7 @@ static int ml_monitor_advanced_auto_tune(ml_monitor_t *monitor, advanced_auto_tu
             }
         }
         
-        LOGX_DEBUG("🔧 Auto-tuning exploring: learning_rate=%u", nn->learning_rate);
+        LOGX_DEBUG_MSG(" Auto-tuning exploring: learning_rate=%u", nn->learning_rate);
     }
     
     tuner->last_tuning_action = current_time;
@@ -482,14 +483,14 @@ static int ml_monitor_transfer_learning_update(transfer_learning_system_t *trans
     if (best_profile_index >= 0) {
         location_profile_t *source_profile = &transfer_system->location_profiles[best_profile_index];
         
-        LOGX_INFO("🔄 Transfer learning from similar location: similarity=%.3f", best_similarity);
+        LOGX_INFO_MSG(" Transfer learning from similar location: similarity=%.3f", best_similarity);
         
         // Transfer optimal parameters
         if (transfer_system->transfer_config.enable_parameter_transfer) {
             // In a full implementation, we'd transfer learned parameters
             transfer_system->transfer_stats.successful_transfers++;
             
-            LOGX_DEBUG("📚 Transferred parameters from location profile %d", best_profile_index);
+            LOGX_DEBUG_MSG(" Transferred parameters from location profile %d", best_profile_index);
         }
         
         // Transfer patterns
@@ -497,13 +498,13 @@ static int ml_monitor_transfer_learning_update(transfer_learning_system_t *trans
             // In a full implementation, we'd transfer learned patterns
             transfer_system->transfer_stats.partial_transfers++;
             
-            LOGX_DEBUG("🎭 Transferred patterns from similar location");
+            LOGX_DEBUG_MSG(" Transferred patterns from similar location");
         }
         
         return ML_MONITOR_SUCCESS;
     }
     
-    LOGX_DEBUG("No similar location found for transfer learning");
+    LOGX_DEBUG_MSG("No similar location found for transfer learning");
     return ML_MONITOR_SUCCESS;
 }
 
@@ -511,12 +512,12 @@ static int ml_monitor_transfer_learning_update(transfer_learning_system_t *trans
 int ml_monitor_init_phase5_mobile_system(ml_monitor_t *monitor) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("🚀 Initializing Phase 5: Mobile-Optimized Learning & Field Testing");
+    LOGX_INFO_MSG(" Initializing Phase 5: Mobile-Optimized Learning & Field Testing");
     
     // Allocate Phase 5 mobile system
     phase5_mobile_system_t *mobile_system = calloc(1, sizeof(phase5_mobile_system_t));
     if (!mobile_system) {
-        LOGX_ERROR("Failed to allocate Phase 5 mobile system");
+        LOGX_ERROR_MSG("Failed to allocate Phase 5 mobile system");
         return ML_MONITOR_ERROR_MEMORY_FAILED;
     }
     
@@ -564,11 +565,11 @@ int ml_monitor_init_phase5_mobile_system(ml_monitor_t *monitor) {
             sizeof(mobile_system->field_testing.field_test_id) - 1);
     mobile_system->field_testing.field_test_start = time(NULL);
     
-    LOGX_INFO("✅ Phase 5 mobile optimization system initialized successfully");
-    LOGX_INFO("   - Mobile scenario detection and adaptation");
-    LOGX_INFO("   - Advanced auto-tuning with parameter exploration");
-    LOGX_INFO("   - Transfer learning between locations");
-    LOGX_INFO("   - Field testing and validation framework");
+    LOGX_INFO_MSG(" Phase 5 mobile optimization system initialized successfully");
+    LOGX_INFO_MSG("   - Mobile scenario detection and adaptation");
+    LOGX_INFO_MSG("   - Advanced auto-tuning with parameter exploration");
+    LOGX_INFO_MSG("   - Transfer learning between locations");
+    LOGX_INFO_MSG("   - Field testing and validation framework");
     
     return ML_MONITOR_SUCCESS;
 }
@@ -598,7 +599,7 @@ int ml_monitor_update_with_phase5_mobile_optimization(ml_monitor_t *monitor, con
         }
         
         if (new_scenario != current_scenario) {
-            LOGX_INFO("📱 Mobile scenario detected: %d (speed: %u km/h)", 
+            LOGX_INFO_MSG(" Mobile scenario detected: %d (speed: %u km/h)", 
                      new_scenario, observation->speed_kmh);
             
             // Adapt ML system to new scenario
@@ -624,14 +625,14 @@ int ml_monitor_update_with_phase5_mobile_optimization(ml_monitor_t *monitor, con
                 // Poor performance, increase learning rate
                 if (nn->learning_rate < 200) {
                     nn->learning_rate += 10;
-                    LOGX_DEBUG("🔧 Auto-tune: increased learning rate to %u (accuracy: %.1f%%)",
+                    LOGX_DEBUG_MSG(" Auto-tune: increased learning rate to %u (accuracy: %.1f%%)",
                               nn->learning_rate, accuracy * 100);
                 }
             } else if (accuracy > 0.9) {
                 // Excellent performance, can reduce learning rate for stability
                 if (nn->learning_rate > 50) {
                     nn->learning_rate -= 5;
-                    LOGX_DEBUG("🎯 Auto-tune: reduced learning rate to %u (accuracy: %.1f%%)",
+                    LOGX_DEBUG_MSG(" Auto-tune: reduced learning rate to %u (accuracy: %.1f%%)",
                               nn->learning_rate, accuracy * 100);
                 }
             }
@@ -645,10 +646,8 @@ int ml_monitor_update_with_phase5_mobile_optimization(ml_monitor_t *monitor, con
 
 // Get mobile optimization status
 int ml_monitor_get_mobile_status(ml_monitor_t *monitor, 
-                                mobile_scenario_t *scenario,
-                                double *learning_rate_multiplier,
-                                uint32_t *location_profiles,
-                                double *auto_tune_performance) {
+                                int *scenario, double *learning_rate_multiplier,
+                                uint32_t *location_profiles, double *auto_tune_performance) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
     // Return real mobile status from actual system state
@@ -695,7 +694,7 @@ int ml_monitor_get_mobile_status(ml_monitor_t *monitor,
 int ml_monitor_export_field_testing_data(ml_monitor_t *monitor, const char *export_path) {
     if (!monitor || !export_path) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO("📊 Exporting field testing data to: %s", export_path);
+    LOGX_INFO_MSG(" Exporting field testing data to: %s", export_path);
     
     // In a full implementation, this would export:
     // - All observations with mobile scenario annotations
@@ -706,13 +705,13 @@ int ml_monitor_export_field_testing_data(ml_monitor_t *monitor, const char *expo
     
     FILE *export_file = fopen(export_path, "w");
     if (!export_file) {
-        LOGX_ERROR("Failed to open export file: %s", export_path);
+        LOGX_ERROR_MSG("Failed to open export file: %s", export_path);
         return ML_MONITOR_ERROR_STORAGE_FAILED;
     }
     
     // Write header
     fprintf(export_file, "# ML Monitor Field Testing Data Export\n");
-    fprintf(export_file, "# Generated: %ld\n", time(NULL));
+    fprintf(export_file, "# Generated: %lld\n", time(NULL));
     fprintf(export_file, "# Total Observations: %u\n", monitor->state->total_observations);
     fprintf(export_file, "# Location Changes: %u\n", monitor->state->location_changes);
     
@@ -736,6 +735,6 @@ int ml_monitor_export_field_testing_data(ml_monitor_t *monitor, const char *expo
     
     fclose(export_file);
     
-    LOGX_INFO("Field testing data exported successfully");
+    LOGX_INFO_MSG("Field testing data exported successfully");
     return ML_MONITOR_SUCCESS;
 }

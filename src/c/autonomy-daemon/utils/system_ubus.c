@@ -327,7 +327,7 @@ int autonomy_system_restart_services(struct ubus_context *uctx, struct ubus_obje
         }
     } else {
         // Restart default services
-        for (int i = 0; // Use configurable value i < 4; i++) {
+        for (int i = 0; i < 4; i++) {
             char restart_cmd[256];
             if (force_restart) {
                 snprintf(restart_cmd, sizeof(restart_cmd), 
@@ -381,4 +381,9 @@ int autonomy_system_restart_services(struct ubus_context *uctx, struct ubus_obje
     ubus_send_reply(uctx, req, bb.head);
     blob_buf_free(&bb);
     return 0;
+}
+
+// Missing blobmsg_add_bool function implementation
+void blobmsg_add_bool(struct blob_buf *buf, const char *name, bool value) {
+    blobmsg_add_u8(buf, name, value ? 1 : 0);
 }

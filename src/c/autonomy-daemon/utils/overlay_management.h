@@ -122,6 +122,18 @@ int overlay_management_reset(void);
  */
 void overlay_management_cleanup(void);
 
+/**
+ * Perform emergency cleanup
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int overlay_management_perform_emergency_cleanup(void);
+
+/**
+ * Perform routine cleanup
+ * @return AUTONOMY_SUCCESS on success, error code on failure
+ */
+int overlay_management_perform_cleanup(void);
+
 #ifdef __cplusplus
 }
 #endif

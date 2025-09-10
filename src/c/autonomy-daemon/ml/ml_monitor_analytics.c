@@ -34,7 +34,7 @@ int ml_monitor_analytics_init(void) {
     g_analytics_initialized = true;
     pthread_mutex_unlock(&g_analytics_mutex);
     
-    LOGX_INFO("📊 ML Analytics system initialized");
+    LOGX_INFO_MSG(" ML Analytics system initialized");
     return ML_MONITOR_SUCCESS;
 }
 
@@ -97,7 +97,7 @@ int ml_monitor_analytics_record_prediction(const ml_prediction_result_t *result)
     
     pthread_mutex_unlock(&g_analytics_mutex);
     
-    LOGX_DEBUG("📊 Recorded prediction result for %s: %s (confidence: %u%%)",
+    LOGX_DEBUG_MSG(" Recorded prediction result for %s: %s (confidence: %u%%)",
               result->interface_id, 
               result->prediction_correct ? "CORRECT" : "INCORRECT",
               result->confidence_level);
@@ -129,7 +129,7 @@ int ml_monitor_analytics_update_interface_score(const ml_interface_score_t *scor
     
     if (interface_slot == -1) {
         pthread_mutex_unlock(&g_analytics_mutex);
-        return ML_MONITOR_ERROR_NO_RESOURCES;
+        return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
     // Add to circular buffer for this interface
@@ -154,7 +154,7 @@ int ml_monitor_analytics_update_interface_score(const ml_interface_score_t *scor
     
     pthread_mutex_unlock(&g_analytics_mutex);
     
-    LOGX_DEBUG("📊 Updated interface score for %s: %.1f (latency impact: %+.1f, loss impact: %+.1f)",
+    LOGX_DEBUG_MSG(" Updated interface score for %s: %.1f (latency impact: %+.1f, loss impact: %+.1f)",
               score->interface_id, score->overall_score,
               score->score_contributors.latency_impact,
               score->score_contributors.loss_impact);
@@ -201,7 +201,7 @@ int ml_monitor_analytics_record_impact_event(const ml_impact_event_t *event) {
     
     pthread_mutex_unlock(&g_analytics_mutex);
     
-    LOGX_INFO("📊 Recorded ML impact event for %s: improvement %+dms, UX score %.1f",
+    LOGX_INFO_MSG(" Recorded ML impact event for %s: improvement %+dms, UX score %.1f",
              event->interface_id, event->ml_improvement_ms, event->user_experience_score);
     
     return ML_MONITOR_SUCCESS;
@@ -233,7 +233,7 @@ int ml_monitor_analytics_calculate_interface_score(const char *interface_id, ml_
     }
     
     if (!interface) {
-        return ML_MONITOR_ERROR_NOT_FOUND;
+        return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     // Initialize score structure
@@ -246,7 +246,7 @@ int ml_monitor_analytics_calculate_interface_score(const char *interface_id, ml_
     score->current_latency_ms = interface->real_time_metrics.ping_latency_ms;
     score->current_loss_pct = 100 - interface->real_time_metrics.ping_success_rate;
     
-    if (interface->interface_type == INTERFACE_TYPE_CELLULAR) {
+    if (strcmp(interface->type, "cellular") == 0) {
         score->current_signal_dbm = interface->enhanced_cellular_info.signal_strength_dbm;
     } else {
         score->current_signal_dbm = interface->signal_strength;
@@ -425,7 +425,7 @@ int ml_monitor_analytics_get_interface_score_history(const char *interface_id,
     if (interface_slot == -1) {
         *actual_count = 0;
         pthread_mutex_unlock(&g_analytics_mutex);
-        return ML_MONITOR_ERROR_NOT_FOUND;
+        return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     // Copy score history
@@ -584,5 +584,5 @@ void ml_monitor_analytics_cleanup(void) {
     
     pthread_mutex_destroy(&g_analytics_mutex);
     
-    LOGX_INFO("📊 ML Analytics system cleaned up");
+    LOGX_INFO_MSG(" ML Analytics system cleaned up");
 }

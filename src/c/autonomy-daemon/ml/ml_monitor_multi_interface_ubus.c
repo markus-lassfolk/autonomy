@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "ml_monitor_multi_interface.h"
 #include "ml_monitor_ubus.h"
 #include "../utils/logx.h"
@@ -185,7 +186,7 @@ int ml_monitor_ubus_update_mwan3_weights(struct ubus_context *ctx, struct ubus_o
         
         blobmsg_add_u32(&b, "timestamp", time(NULL));
         
-        LOGX_INFO("MWAN3 weights updated via UBUS");
+        LOGX_INFO_MSG("MWAN3 weights updated via UBUS");
     } else {
         blobmsg_add_string(&b, "error", "Failed to update MWAN3 weights");
         blobmsg_add_u32(&b, "code", result);
@@ -241,7 +242,7 @@ int ml_monitor_ubus_add_interface_monitoring(struct ubus_context *ctx, struct ub
         blobmsg_add_u32(&b, "total_interfaces", system->interface_count);
         
         const char* type_names[] = {"Starlink", "Cellular", "WiFi", "LAN", "Unknown"};
-        LOGX_INFO("Added interface %s (%s) to ML monitoring", interface_id, type_names[type]);
+        LOGX_INFO_MSG("Added interface %s (%s) to ML monitoring", interface_id, type_names[type]);
     } else {
         blobmsg_add_string(&b, "error", "Failed to add interface");
         blobmsg_add_u32(&b, "code", result);
@@ -299,7 +300,7 @@ int ml_monitor_ubus_validate_failover_prediction(struct ubus_context *ctx, struc
         blobmsg_add_u32(&b, "duration_seconds", duration_seconds);
         blobmsg_add_u32(&b, "validation_timestamp", time(NULL));
         
-        LOGX_INFO("Failover prediction validated for %s: outage=%s, duration=%u seconds",
+        LOGX_INFO_MSG("Failover prediction validated for %s: outage=%s, duration=%u seconds",
                  interface_id, actual_outage ? "yes" : "no", duration_seconds);
     } else {
         blobmsg_add_string(&b, "error", "Failed to validate prediction");
