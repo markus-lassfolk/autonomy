@@ -5,7 +5,7 @@
 #include <time.h>
 #include <string.h>
 
-extern struct autonomy_state g_state;
+extern autonomy_state_t g_state;
 
 // GPS method handlers
 int autonomy_gps_status(struct ubus_context *uctx, struct ubus_object *obj,

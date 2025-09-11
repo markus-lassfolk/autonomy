@@ -57,43 +57,7 @@ struct autonomy_config {
     char config_file[128];
 };
 
-// Autonomy daemon state
-struct autonomy_state {
-    time_t start_time;
-    char version[32];
-    char status[32];
-    int member_count;
-    char current_member[64];
-    time_t last_failover;
-    float memory_mb;
-    int goroutines;
-    char device_id[64];
-    int health_checks_run;
-    int health_issues_found;
-    
-    // Network management
-    struct network_interface interfaces[10];
-    int interface_count;
-    char active_interface[32];
-    int failover_enabled;
-    time_t last_network_check;
-    float network_health_score;
-    
-    // GPS & Location management
-    struct gps_source gps_sources[8];
-    int gps_source_count;
-    char active_gps_source[32];
-    float current_lat;
-    float current_lon;
-    float current_accuracy;
-    int current_confidence;
-    time_t last_gps_update;
-    float gps_health_score;
-    char location_status[16];
-    int movement_detected;
-    time_t last_movement_check;
-    int gps_enabled;
-};
+// Autonomy daemon state - moved to typedef below
 
 // Return codes
 #define AUTONOMY_SUCCESS 0
@@ -230,124 +194,6 @@ typedef struct {
     double dns_resolve_time;            // DNS resolution time
 } network_metrics_t;
 
-// Network interface structure
-typedef struct {
-    // Basic interface info
-    char name[32];                      // Interface name (e.g., "eth0", "wlan0")
-    char friendly_name[64];             // Friendly name as seen in RUTOS UI
-    char type[32];                      // Interface type (ethernet, wifi, cellular, starlink, vpn)
-    char subtype[32];                   // More specific type (sim, wireguard, etc.)
-    
-    // Network configuration
-    bool is_up;                         // Interface is up
-    bool is_default_route;              // Is default route
-    char ip_address[16];                // IP address
-    char netmask[16];                   // Netmask
-    char gateway[16];                   // Gateway
-    char mac_address[18];               // MAC address
-    int mtu;                            // MTU size
-    int metric;                         // Route metric
-    char dns_servers[128];              // DNS servers (comma-separated)
-    char protocol[16];                  // Protocol (static, dhcp, wwan, etc.)
-    char device[32];                    // Physical device name
-    
-    // MWAN3 integration
-    char mwan3_name[32];                // MWAN3 interface name
-    bool mwan3_tracking_enabled;        // Is this interface tracked by MWAN3?
-    bool mwan3_available;               // Is this interface available in MWAN3?
-    char mwan3_status[16];              // MWAN3 status (online, offline, standby, etc.)
-    int mwan3_metric;                   // MWAN3 metric value
-    
-    // VPN detection
-    bool is_vpn;                        // Is this a VPN interface?
-    char vpn_type[32];                  // VPN type (wireguard, openvpn, etc.)
-    char vpn_name[64];                  // VPN connection name
-    
-    // Starlink specific
-    bool is_starlink;                   // Is this a Starlink connection?
-    char starlink_dish_id[32];          // Starlink dish identifier
-    char starlink_dish_name[64];        // Starlink dish friendly name
-    char starlink_ip[16];               // Starlink IP address
-    
-    // Cellular specific
-    char modem_model[64];               // Cellular modem model
-    char sim_id[16];                    // SIM identifier
-    char operator[64];                  // Cellular operator
-    int signal_strength;                // Signal strength
-    char modem_id[16];                  // Modem ID (e.g., "2-1")
-    char cellular_device_path[64];      // Cellular device path (e.g., "/dev/ttyUSB2")
-    
-    // Enhanced cellular information
-    struct {
-        char operator_name[32];         // Network operator name
-        char network_technology[16];    // 2G/3G/4G/5G
-        int signal_strength_dbm;        // Real-time signal strength in dBm
-        char cell_id[16];               // Current cell tower ID
-        int signal_quality;             // Signal quality (0-100)
-        int rsrp_dbm;                   // Reference Signal Received Power
-        int rsrq_db;                    // Reference Signal Received Quality
-        int sinr_db;                    // Signal-to-Interference-plus-Noise Ratio
-    } enhanced_cellular_info;
-    
-    // WiFi specific
-    char ssid[64];                      // WiFi SSID
-    char wifi_band[16];                 // WiFi band (2.4G, 5G)
-    char wifi_mode[16];                 // WiFi mode (ap, sta)
-    char wifi_encryption[16];           // WiFi encryption type
-    
-    // Statistics and health
-    uint64_t rx_bytes;                  // Received bytes
-    uint64_t tx_bytes;                  // Transmitted bytes
-    uint64_t rx_packets;                // Received packets
-    uint64_t tx_packets;                // Transmitted packets
-    uint64_t rx_errors;                 // Receive errors
-    uint64_t tx_errors;                 // Transmit errors
-    uint64_t rx_dropped;                // Dropped received packets
-    uint64_t tx_dropped;                // Dropped transmitted packets
-    double health_score;                // Interface health score
-    double latency;                     // Latency in ms
-    double packet_loss;                 // Packet loss percentage
-    
-    // Enhanced real-time metrics
-    struct {
-        uint32_t ping_latency_ms;       // Real-time ping latency
-        uint8_t ping_success_rate;      // Ping success rate over last minute (0-100)
-        time_t last_ping_test;          // Last ping test timestamp
-        uint32_t consecutive_ping_failures; // Consecutive ping failures
-        uint32_t total_ping_tests;      // Total ping tests performed
-        uint32_t successful_pings;      // Successful ping tests
-        uint16_t ping_jitter_ms;        // Ping jitter in milliseconds
-        uint16_t ping_min_ms;           // Minimum ping latency
-        uint16_t ping_max_ms;           // Maximum ping latency
-        bool mwan3_ping_active;         // Is MWAN3 actively pinging this interface?
-        uint16_t mwan3_ping_interval;   // MWAN3 ping interval in seconds
-        time_t last_mwan3_ping;         // Last MWAN3 ping timestamp
-        uint8_t mwan3_ping_success_rate; // MWAN3 ping success rate
-    } real_time_metrics;
-    
-    // Interface performance history for trend analysis
-    struct {
-        uint16_t latency_history[60];   // Last 60 latency measurements (1 per minute)
-        uint8_t loss_history[60];       // Last 60 loss measurements (percentage)
-        uint8_t health_history[60];     // Last 60 health scores
-        uint8_t history_index;          // Current history index (circular buffer)
-        time_t history_start_time;      // When history collection started
-        uint32_t history_count;         // Number of valid history entries
-        double latency_trend;           // Latency trend (-1 to 1, negative = improving)
-        double loss_trend;              // Loss trend (-1 to 1, negative = improving)
-        double health_trend;            // Health trend (-1 to 1, negative = degrading)
-    } performance_history;
-    
-    // Timestamps and status
-    time_t last_check;                  // Last health check
-    time_t last_seen;                   // Last time interface was seen
-    time_t last_health_check;           // Last health check timestamp
-    network_metrics_t metrics;          // Current metrics
-    bool enabled;                       // Interface enabled for failover
-    bool up;                            // Interface is up (alias for is_up)
-    int index;                          // Interface index
-    bool discovered;                    // Interface was discovered
-} network_interface_t;
 
 // GPS geofence system status
 typedef struct {
@@ -618,6 +464,125 @@ typedef struct {
     time_t last_check;                  // Last health check time
 } system_health_t;
 
+// Network interface structure
+typedef struct {
+    // Basic interface info
+    char name[32];                      // Interface name (e.g., "eth0", "wlan0")
+    char friendly_name[64];             // Friendly name as seen in RUTOS UI
+    char type[32];                      // Interface type (ethernet, wifi, cellular, starlink, vpn)
+    char subtype[32];                   // More specific type (sim, wireguard, etc.)
+    
+    // Network configuration
+    bool is_up;                         // Interface is up
+    bool is_default_route;              // Is default route
+    char ip_address[16];                // IP address
+    char netmask[16];                   // Netmask
+    char gateway[16];                   // Gateway
+    char mac_address[18];               // MAC address
+    int mtu;                            // MTU size
+    int metric;                         // Route metric
+    char dns_servers[128];              // DNS servers (comma-separated)
+    char protocol[16];                  // Protocol (static, dhcp, wwan, etc.)
+    char device[32];                    // Physical device name
+    
+    // MWAN3 integration
+    char mwan3_name[32];                // MWAN3 interface name
+    bool mwan3_tracking_enabled;        // Is this interface tracked by MWAN3?
+    bool mwan3_available;               // Is this interface available in MWAN3?
+    char mwan3_status[16];              // MWAN3 status (online, offline, standby, etc.)
+    int mwan3_metric;                   // MWAN3 metric value
+    
+    // VPN detection
+    bool is_vpn;                        // Is this a VPN interface?
+    char vpn_type[32];                  // VPN type (wireguard, openvpn, etc.)
+    char vpn_name[64];                  // VPN connection name
+    
+    // Starlink specific
+    bool is_starlink;                   // Is this a Starlink connection?
+    char starlink_dish_id[32];          // Starlink dish identifier
+    char starlink_dish_name[64];        // Starlink dish friendly name
+    char starlink_ip[16];               // Starlink IP address
+    
+    // Cellular specific
+    char modem_model[64];               // Cellular modem model
+    char sim_id[16];                    // SIM identifier
+    char operator[64];                  // Cellular operator
+    int signal_strength;                // Signal strength
+    char modem_id[16];                  // Modem ID (e.g., "2-1")
+    char cellular_device_path[64];      // Cellular device path (e.g., "/dev/ttyUSB2")
+    
+    // Enhanced cellular information
+    struct {
+        char operator_name[32];         // Network operator name
+        char network_technology[16];    // 2G/3G/4G/5G
+        int signal_strength_dbm;        // Real-time signal strength in dBm
+        char cell_id[16];               // Current cell tower ID
+        int signal_quality;             // Signal quality (0-100)
+        int rsrp_dbm;                   // Reference Signal Received Power
+        int rsrq_db;                    // Reference Signal Received Quality
+        int sinr_db;                    // Signal-to-Interference-plus-Noise Ratio
+    } enhanced_cellular_info;
+    
+    // WiFi specific
+    char ssid[64];                      // WiFi SSID
+    char wifi_band[16];                 // WiFi band (2.4G, 5G)
+    char wifi_mode[16];                 // WiFi mode (ap, sta)
+    char wifi_encryption[16];           // WiFi encryption type
+    
+    // Statistics and health
+    uint64_t rx_bytes;                  // Received bytes
+    uint64_t tx_bytes;                  // Transmitted bytes
+    uint64_t rx_packets;                // Received packets
+    uint64_t tx_packets;                // Transmitted packets
+    uint64_t rx_errors;                 // Receive errors
+    uint64_t tx_errors;                 // Transmit errors
+    uint64_t rx_dropped;                // Dropped received packets
+    uint64_t tx_dropped;                // Dropped transmitted packets
+    double health_score;                // Interface health score
+    double latency;                     // Latency in ms
+    double packet_loss;                 // Packet loss percentage
+    
+    // Enhanced real-time metrics
+    struct {
+        uint32_t ping_latency_ms;       // Real-time ping latency
+        uint8_t ping_success_rate;      // Ping success rate over last minute (0-100)
+        time_t last_ping_test;          // Last ping test timestamp
+        uint32_t consecutive_ping_failures; // Consecutive ping failures
+        uint32_t total_ping_tests;      // Total ping tests performed
+        uint32_t successful_pings;      // Successful ping tests
+        uint16_t ping_jitter_ms;        // Ping jitter in milliseconds
+        uint16_t ping_min_ms;           // Minimum ping latency
+        uint16_t ping_max_ms;           // Maximum ping latency
+        bool mwan3_ping_active;         // Is MWAN3 actively pinging this interface?
+        uint16_t mwan3_ping_interval;   // MWAN3 ping interval in seconds
+        time_t last_mwan3_ping;         // Last MWAN3 ping timestamp
+        uint8_t mwan3_ping_success_rate; // MWAN3 ping success rate
+    } real_time_metrics;
+    
+    // Interface performance history for trend analysis
+    struct {
+        uint16_t latency_history[60];   // Last 60 latency measurements (1 per minute)
+        uint8_t loss_history[60];       // Last 60 loss measurements (percentage)
+        uint8_t health_history[60];     // Last 60 health scores
+        uint8_t history_index;          // Current history index (circular buffer)
+        time_t history_start_time;      // When history collection started
+        uint32_t history_count;         // Number of valid history entries
+        double latency_trend;           // Latency trend (-1 to 1, negative = improving)
+        double loss_trend;              // Loss trend (-1 to 1, negative = improving)
+        double health_trend;            // Health trend (-1 to 1, negative = degrading)
+    } performance_history;
+    
+    // Timestamps and status
+    time_t last_check;                  // Last health check
+    time_t last_seen;                   // Last time interface was seen
+    time_t last_health_check;           // Last health check timestamp
+    network_metrics_t metrics;          // Current metrics
+    bool enabled;                       // Interface enabled for failover
+    bool up;                            // Interface is up (alias for is_up)
+    int index;                          // Interface index
+    bool discovered;                    // Interface was discovered
+} network_interface_t;
+
 // Autonomy state structure
 typedef struct {
     bool running;                       // Whether daemon is running
@@ -638,6 +603,16 @@ typedef struct {
     double network_health_score;        // Network health score
     int gps_source_count;               // Number of GPS sources
     double gps_health_score;            // GPS health score
+    
+    // Network management fields
+    char active_interface[32];          // Active network interface name
+    time_t last_network_check;          // Last network check time
+    time_t last_failover;               // Last failover time
+    network_interface_t interfaces[10]; // Network interfaces array
+    
+    // GPS management fields
+    char active_gps_source[32];         // Active GPS source name
+    struct gps_source gps_sources[10];  // GPS sources array
 } autonomy_state_t;
 
 // Autonomy daemon configuration

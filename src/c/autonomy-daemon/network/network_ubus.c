@@ -1,12 +1,13 @@
 #include <stdlib.h>
 #include "../core/types.h"
+#include "../core/autonomy_modules.h"
 #include "network_discovery_comprehensive.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <time.h>
 #include <string.h>
 
-extern struct autonomy_state g_state;
+extern autonomy_state_t g_state;
 
 // Network management method handlers
 int autonomy_network_status(struct ubus_context *uctx, struct ubus_object *obj,
@@ -44,11 +45,11 @@ int autonomy_network_interfaces(struct ubus_context *uctx, struct ubus_object *o
         blobmsg_add_string(&bb, "type", g_state.interfaces[i].type);
         blobmsg_add_u8(&bb, "enabled", g_state.interfaces[i].enabled);
         blobmsg_add_double(&bb, "latency", g_state.interfaces[i].latency);
-        blobmsg_add_double(&bb, "loss", g_state.interfaces[i].loss);
+        blobmsg_add_double(&bb, "loss", g_state.interfaces[i].packet_loss);
         blobmsg_add_u32(&bb, "signal_strength", g_state.interfaces[i].signal_strength);
-        blobmsg_add_u32(&bb, "bandwidth", g_state.interfaces[i].bandwidth);
+        blobmsg_add_u32(&bb, "bandwidth", g_state.interfaces[i].metrics.throughput_mbps);
         blobmsg_add_u32(&bb, "health_score", g_state.interfaces[i].health_score);
-        blobmsg_add_string(&bb, "status", g_state.interfaces[i].status);
+        blobmsg_add_string(&bb, "status", g_state.interfaces[i].mwan3_status);
         blobmsg_close_table(&bb, iface);
     }
     blobmsg_close_array(&bb, interfaces);

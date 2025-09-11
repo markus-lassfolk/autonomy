@@ -14,7 +14,7 @@
 #include <dirent.h>
 #include <sys/wait.h>
 
-extern struct autonomy_state g_state;
+extern autonomy_state_t g_state;
 
 // UBUS policy definitions
 enum {

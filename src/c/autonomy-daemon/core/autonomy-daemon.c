@@ -33,24 +33,30 @@
 autonomy_config_t g_config;
 
 autonomy_state_t g_state = {
-    .running = 0,
+    .running = false,
+    .gps_enabled = true,
+    .current_lat = 0.0,
+    .current_lon = 0.0,
+    .current_accuracy = 0.0,
+    .current_confidence = 0.0,
+    .last_gps_update = 0,
+    .location_status = "unknown",
+    .movement_detected = false,
+    .last_movement_check = 0,
     .start_time = 0,
     .health_checks_run = 0,
     .health_issues_found = 0,
     .interface_count = 0,
-    .failover_enabled = 0,
+    .failover_enabled = false,
     .network_health_score = 0.0,
     .gps_source_count = 0,
-    .gps_enabled = 1,
     .gps_health_score = 0.0,
-    .current_lat = 0.0,
-    .current_lon = 0.0,
-    .current_accuracy = 0.0,
-    .current_confidence = 0,
-    .last_gps_update = 0,
-    .location_status = "unknown",
-    .movement_detected = 0,
-    .last_movement_check = 0
+    .active_interface = "",
+    .last_network_check = 0,
+    .last_failover = 0,
+    .interfaces = {{0}},  // Initialize all interfaces to zero
+    .active_gps_source = "",
+    .gps_sources = {{0}}  // Initialize all GPS sources to zero
 };
 
 // Global Starlink tracker
