@@ -84,7 +84,7 @@ static void get_timestamp(char *buffer, size_t size) {
     struct tm tm_info;
     
     if (localtime_r(&now, &tm_info) == NULL) {
-        strcpy(buffer, "1970-01-01T00:00:00+0000");
+        snprintf(buffer, size, "1970-01-01T00:00:00+0000");
         return;
     }
     
