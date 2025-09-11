@@ -78,7 +78,7 @@ typedef struct {
 // Analytics data storage (circular buffers)
 typedef struct {
     // Prediction results (last 100) - OPTIMIZED SIZE
-    ml_prediction_result_t prediction_results[100];  // Reduced from 500 to 100 for memory efficiency
+    ml_prediction_result_t prediction_results[100];  // Reduced from 1000 to 100 for memory efficiency
     uint32_t prediction_results_count;
     uint32_t prediction_results_index;
     
