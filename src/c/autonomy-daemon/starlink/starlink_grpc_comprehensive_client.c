@@ -333,14 +333,10 @@ int starlink_grpc_comprehensive_call(
     unsigned char frame[1024];
     size_t frame_len = 0;
     
-    // Add gRPC header (simplified)
-    frame[frame_len++] = 0x00; // Compression flag
-    frame[frame_len++] = 0x00; // Message type
-    frame[frame_len++] = 0x00; // Message type
-    frame[frame_len++] = 0x00; // Message type
-    frame[frame_len++] = 0x00; // Message type
+    // Add gRPC header (standard: 1 byte compression flag + 4 bytes message length)
+    frame[frame_len++] = 0x00; // Compression flag (no compression)
     
-    // Add message length (simplified)
+    // Add message length (big-endian)
     uint32_t msg_len = htonl(request_size);
     memcpy(&frame[frame_len], &msg_len, 4);
     frame_len += 4;

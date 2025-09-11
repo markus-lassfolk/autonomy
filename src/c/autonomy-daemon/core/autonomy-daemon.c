@@ -19,6 +19,12 @@
 #endif
 #include <ucontext.h>  // For signal context
 #include <dlfcn.h>     // For symbol resolution
+#ifdef __x86_64__
+#include <sys/reg.h>   // For x86_64 register definitions
+#endif
+#ifdef __i386__
+#include <sys/reg.h>   // For i386 register definitions
+#endif
 
 // Include our modular headers
 #include "../core/types.h"
@@ -29,6 +35,7 @@
 #include "../starlink/starlink_grpc_collector.h"
 #include "../utils/uci_manager.h"
 #include "../utils/logx.h"
+#include "../utils/memory_debug.h"
 #include "../utils/debug_trace.h"
 #include "../ml/ml_monitor.h"
 #include "../ml/ml_monitor_ubus.h"
@@ -90,6 +97,15 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     fprintf(stderr, "=== END MEMORY MAP ===\n\n");
     
     print_memory_info();
+    
+    // Print memory debugging information
+    fprintf(stderr, "\n=== MEMORY DEBUG INFO ===\n");
+    memory_debug_print_stats();
+    memory_debug_check_all_allocations();
+    memory_debug_detect_leaks();
+    memory_debug_scan_memory_for_corruption();
+    fprintf(stderr, "=== END MEMORY DEBUG INFO ===\n\n");
+    
     print_backtrace();
     
     // Additional debugging info for systems without backtrace
@@ -103,9 +119,25 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     if (context) {
         ucontext_t *uc = (ucontext_t *)context;
         fprintf(stderr, "=== REGISTER STATE ===\n");
+#if defined(__arm__)
         fprintf(stderr, "Program counter: %p\n", (void*)uc->uc_mcontext.arm_pc);
         fprintf(stderr, "Stack pointer: %p\n", (void*)uc->uc_mcontext.arm_sp);
         fprintf(stderr, "Link register: %p\n", (void*)uc->uc_mcontext.arm_lr);
+#elif defined(__aarch64__)
+        fprintf(stderr, "Program counter: %p\n", (void*)uc->uc_mcontext.pc);
+        fprintf(stderr, "Stack pointer: %p\n", (void*)uc->uc_mcontext.sp);
+        fprintf(stderr, "Link register: %p\n", (void*)uc->uc_mcontext.regs[30]);
+#elif defined(__x86_64__)
+        fprintf(stderr, "Program counter: %p\n", (void*)uc->uc_mcontext.gregs[REG_RIP]);
+        fprintf(stderr, "Stack pointer: %p\n", (void*)uc->uc_mcontext.gregs[REG_RSP]);
+        fprintf(stderr, "Base pointer: %p\n", (void*)uc->uc_mcontext.gregs[REG_RBP]);
+#elif defined(__i386__)
+        fprintf(stderr, "Program counter: %p\n", (void*)uc->uc_mcontext.gregs[REG_EIP]);
+        fprintf(stderr, "Stack pointer: %p\n", (void*)uc->uc_mcontext.gregs[REG_ESP]);
+        fprintf(stderr, "Base pointer: %p\n", (void*)uc->uc_mcontext.gregs[REG_EBP]);
+#else
+        fprintf(stderr, "Register state reporting not available for this architecture.\n");
+#endif
         fprintf(stderr, "=== END REGISTER STATE ===\n\n");
     }
     
@@ -260,6 +292,9 @@ int main(int argc, char **argv)
 {
     // Initialize comprehensive debugging system
     debug_trace_init(DEBUG_TRACE_TRACE);  // Enable maximum debugging
+    
+    // Initialize memory debugging system
+    memory_debug_init();
     
     DEBUG_TRACE_ENTER();
     DEBUG_TRACE_INFO("Starting Telia Autonomy Network Management Daemon");
@@ -429,12 +464,23 @@ int main(int argc, char **argv)
                 // Initialize Phase 3 enhancements
                 fprintf(stderr, "DEBUG: About to call ml_monitor_init_phase3_enhancements\n");
                 fprintf(stderr, "DEBUG: ml_monitor pointer: %p\n", (void*)ml_monitor);
+                
                 int phase3_result = ml_monitor_init_phase3_enhancements(ml_monitor);
+                
                 fprintf(stderr, "DEBUG: ml_monitor_init_phase3_enhancements returned: %d\n", phase3_result);
+                fprintf(stderr, "DEBUG: ml_monitor pointer after Phase 3: %p\n", (void*)ml_monitor);
+                if (ml_monitor == NULL) {
+                    fprintf(stderr, "ERROR: ml_monitor pointer is NULL after Phase 3!\n");
+                    return -1;
+                }
                 if (phase3_result == ML_MONITOR_SUCCESS) {
                     fprintf(stderr, "ML monitoring Phase 3 enhancements initialized\n");
                     fprintf(stderr, "DEBUG: ml_monitor_init_phase3_enhancements completed successfully\n");
                     
+                    fprintf(stderr, "DEBUG: About to print Phase 3 success message\n");
+                    fprintf(stderr, "DEBUG: Phase 3 success message printed\n");
+                    
+                    fprintf(stderr, "DEBUG: About to start Phase 4 initialization\n");
                     // Initialize Phase 4 enhancements
                     fprintf(stderr, "DEBUG: About to call ml_monitor_init_phase4_enhancements\n");
                     if (ml_monitor_init_phase4_enhancements(ml_monitor) == ML_MONITOR_SUCCESS) {
@@ -541,6 +587,9 @@ int main(int argc, char **argv)
     }
     remove_pid_file();
     uloop_done();
+
+    // Cleanup memory debugging system
+    memory_debug_cleanup();
 
     fprintf(stderr, "Autonomy daemon stopped\n");
     return 0;

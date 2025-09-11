@@ -84,19 +84,34 @@ static const autonomy_config_t DEFAULT_CONFIG = {
 
 // Initialize UCI manager using Teltonika's library
 int uci_manager_init(void) {
+    fprintf(stderr, "DEBUG: uci_manager_init called\n");
+    fflush(stderr);
+    
     if (g_uci_initialized) {
+        fprintf(stderr, "DEBUG: UCI manager already initialized\n");
         LOGX_WARN_MSG("UCI manager already initialized");
         return AUTONOMY_SUCCESS;
     }
     
+    fprintf(stderr, "DEBUG: About to call uci_alloc_context()\n");
+    fflush(stderr);
+    
     // Use standard OpenWrt UCI initialization
     g_uci_ctx = uci_alloc_context();
+    fprintf(stderr, "DEBUG: uci_alloc_context() returned: %p\n", (void*)g_uci_ctx);
+    fflush(stderr);
+    
     if (!g_uci_ctx) {
+        fprintf(stderr, "ERROR: Failed to initialize UCI context using standard OpenWrt library\n");
         LOGX_ERROR_MSG("Failed to initialize UCI context using standard OpenWrt library");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
+    fprintf(stderr, "DEBUG: UCI context allocated successfully\n");
+    fflush(stderr);
+    
     g_uci_initialized = true; // Use configurable setting // Use configurable setting
+    fprintf(stderr, "DEBUG: UCI manager initialization completed\n");
     LOGX_INFO_MSG("UCI manager initialized successfully using standard OpenWrt UCI");
     
     return AUTONOMY_SUCCESS;
@@ -124,21 +139,35 @@ void uci_manager_cleanup(void) {
 
 // Load configuration from UCI using Teltonika library
 int uci_manager_load_config(autonomy_config_t *config) {
+    fprintf(stderr, "DEBUG: uci_manager_load_config called\n");
+    fflush(stderr);
+    
     if (!g_uci_initialized || !config) {
+        fprintf(stderr, "ERROR: UCI manager not initialized or invalid config pointer\n");
         LOGX_ERROR_MSG("UCI manager not initialized or invalid config pointer");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
+    fprintf(stderr, "DEBUG: UCI manager is initialized, loading config\n");
     LOGX_INFO_MSG("Loading configuration from UCI using Teltonika library");
     
     // Start with defaults
+    fprintf(stderr, "DEBUG: Setting default configuration\n");
     *config = DEFAULT_CONFIG;
+    fprintf(stderr, "DEBUG: Default configuration set\n");
     
     // Load daemon settings using ucix_get_option functions
     char *value;
     
+    fprintf(stderr, "DEBUG: About to load daemon settings\n");
+    fflush(stderr);
+    
     // Daemon mode
+    fprintf(stderr, "DEBUG: Loading daemon_mode setting\n");
+    fflush(stderr);
     config->daemon_mode = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "general", "daemon_mode", 1) != 0;
+    fprintf(stderr, "DEBUG: daemon_mode loaded: %d\n", config->daemon_mode);
+    fflush(stderr);
     
     // Debug mode
     config->debug_mode = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "general", "debug_mode", 0) != 0;
@@ -629,31 +658,51 @@ const char* ucix_get_option(struct uci_context *ctx, const char *package, const 
     struct uci_ptr ptr;
     char path[256];
     
+    fprintf(stderr, "DEBUG: ucix_get_option called: %s.%s.%s\n", package, section, option);
+    fflush(stderr);
+    
     if (!ctx || !package || !section || !option) {
+        fprintf(stderr, "ERROR: ucix_get_option - invalid parameters\n");
         return NULL;
     }
     
     snprintf(path, sizeof(path), "%s.%s.%s", package, section, option);
+    fprintf(stderr, "DEBUG: ucix_get_option - looking up path: %s\n", path);
+    fflush(stderr);
     
     if (uci_lookup_ptr(ctx, &ptr, path, true) != UCI_OK) {
+        fprintf(stderr, "DEBUG: ucix_get_option - uci_lookup_ptr failed for %s\n", path);
+        fflush(stderr);
         return NULL;
     }
     
     if (ptr.o && ptr.o->v.string) {
+        fprintf(stderr, "DEBUG: ucix_get_option - found value: %s\n", ptr.o->v.string);
+        fflush(stderr);
         return ptr.o->v.string;
     }
     
+    fprintf(stderr, "DEBUG: ucix_get_option - no value found for %s\n", path);
+    fflush(stderr);
     return NULL;
 }
 
 // Get integer option with default value
 int ucix_get_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int default_value) {
+    fprintf(stderr, "DEBUG: ucix_get_option_int called: %s.%s.%s (default: %d)\n", package, section, option, default_value);
+    fflush(stderr);
+    
     const char *value = ucix_get_option(ctx, package, section, option);
     
     if (value) {
-        return atoi(value);
+        int result = atoi(value);
+        fprintf(stderr, "DEBUG: ucix_get_option_int - parsed value: %d\n", result);
+        fflush(stderr);
+        return result;
     }
     
+    fprintf(stderr, "DEBUG: ucix_get_option_int - using default value: %d\n", default_value);
+    fflush(stderr);
     return default_value;
 }
 

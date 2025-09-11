@@ -438,13 +438,13 @@ int parse_json_to_observation_partial(const char *json_data, const char *api_met
             if (lla) {
                 json_object *lat, *lon, *alt;
                 if (json_object_object_get_ex(lla, "lat", &lat)) {
-                    observation->gps_accuracy_m = json_object_get_double(lat); // Store lat in gps_accuracy_m temporarily
+                    observation->latitude = json_object_get_double(lat);
                 }
                 if (json_object_object_get_ex(lla, "lon", &lon)) {
-                    // Store lon in a temporary field - we might need to extend the structure
+                    observation->longitude = json_object_get_double(lon);
                 }
                 if (json_object_object_get_ex(lla, "alt", &alt)) {
-                    // Store alt in a temporary field
+                    observation->altitude = json_object_get_double(alt);
                 }
             }
         }

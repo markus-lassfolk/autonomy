@@ -17,7 +17,8 @@ static multi_interface_ml_system_t *g_multi_interface_system = NULL;
 multi_interface_ml_system_t* ml_monitor_init_multi_interface_system(const ml_monitor_config_t *config) {
     if (!config) return NULL;
     
-    LOGX_INFO_MSG(" Initializing Multi-Interface ML Intelligence System");
+    // Use simple fprintf to avoid LOGX crashes
+    fprintf(stderr, "Initializing Multi-Interface ML Intelligence System\n");
     
     multi_interface_ml_system_t *system = calloc(1, sizeof(multi_interface_ml_system_t));
     if (!system) {
@@ -55,12 +56,8 @@ multi_interface_ml_system_t* ml_monitor_init_multi_interface_system(const ml_mon
     
     g_multi_interface_system = system;
     
-    LOGX_INFO_MSG(" Multi-interface ML system initialized successfully");
-    LOGX_INFO_MSG("   - Cross-interface correlation learning: enabled");
-    LOGX_INFO_MSG("   - Continuous monitoring during failover: enabled");
-    LOGX_INFO_MSG("   - Predictive failback: enabled");
-    LOGX_INFO_MSG("   - Outage duration prediction: enabled");
-    LOGX_INFO_MSG("   - Dynamic MWAN3 weight updates: enabled");
+    // Use single consolidated message to avoid multiple LOGX calls
+    fprintf(stderr, "Multi-interface ML system initialized successfully - Cross-interface correlation, continuous monitoring, predictive failback, outage prediction, dynamic MWAN3 updates\n");
     
     return system;
 }

@@ -28,7 +28,7 @@ int ml_monitor_analytics_init(void) {
     pthread_mutex_lock(&g_analytics_mutex);
     fprintf(stderr, "DEBUG: ml_monitor_analytics_init - mutex locked\n");
     
-    // Allocate analytics data dynamically due to large size (2.55 MB)
+    // Allocate analytics data dynamically - optimized for memory efficiency
     fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to allocate analytics data\n");
     fprintf(stderr, "DEBUG: sizeof(ml_analytics_data_t): %zu bytes (%.2f MB)\n", 
             sizeof(ml_analytics_data_t), sizeof(ml_analytics_data_t) / (1024.0 * 1024.0));
@@ -44,19 +44,19 @@ int ml_monitor_analytics_init(void) {
     fflush(stderr);
     
     // Initialize fields individually
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing prediction results\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing prediction results (max 100)\n");
     g_analytics_data->prediction_results_count = 0;
     g_analytics_data->prediction_results_index = 0;
     fprintf(stderr, "DEBUG: ml_monitor_analytics_init - prediction results initialized\n");
     
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing interface scores\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing interface scores (max 360 per interface)\n");
     for (int i = 0; i < MAX_INTERFACES; i++) {
         g_analytics_data->interface_scores_count[i] = 0;
         g_analytics_data->interface_scores_index[i] = 0;
     }
     fprintf(stderr, "DEBUG: ml_monitor_analytics_init - interface scores initialized\n");
     
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing impact events\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing impact events (max 100)\n");
     g_analytics_data->impact_events_count = 0;
     g_analytics_data->impact_events_index = 0;
     fprintf(stderr, "DEBUG: ml_monitor_analytics_init - impact events initialized\n");
@@ -102,50 +102,50 @@ int ml_monitor_analytics_record_prediction(const ml_prediction_result_t *result)
     pthread_mutex_lock(&g_analytics_mutex);
     
     // Add to circular buffer
-    uint32_t idx = g_analytics_data.prediction_results_index;
-    g_analytics_data.prediction_results[idx] = *result;
+    uint32_t idx = g_analytics_data->prediction_results_index;
+    g_analytics_data->prediction_results[idx] = *result;
     
-    g_analytics_data.prediction_results_index = (idx + 1) % 1000;
-    if (g_analytics_data.prediction_results_count < 1000) {
-        g_analytics_data.prediction_results_count++;
+    g_analytics_data->prediction_results_index = (idx + 1) % 100;  // Updated from 500 to 100 for memory efficiency
+    if (g_analytics_data->prediction_results_count < 100) {  // Updated from 500 to 100 for memory efficiency
+        g_analytics_data->prediction_results_count++;
     }
     
     // Update summary statistics
-    g_analytics_data.summary_stats.total_predictions++;
+    g_analytics_data->summary_stats.total_predictions++;
     if (result->prediction_correct) {
-        g_analytics_data.summary_stats.correct_predictions++;
+        g_analytics_data->summary_stats.correct_predictions++;
     }
     
-    if (g_analytics_data.summary_stats.total_predictions > 0) {
-        g_analytics_data.summary_stats.overall_accuracy_pct = 
-            (double)g_analytics_data.summary_stats.correct_predictions * 100.0 / 
-            g_analytics_data.summary_stats.total_predictions;
+    if (g_analytics_data->summary_stats.total_predictions > 0) {
+        g_analytics_data->summary_stats.overall_accuracy_pct = 
+            (double)g_analytics_data->summary_stats.correct_predictions * 100.0 / 
+            g_analytics_data->summary_stats.total_predictions;
     }
     
     // Update interface summary
     for (int i = 0; i < MAX_INTERFACES; i++) {
-        if (strcmp(g_analytics_data.interface_summary[i].interface_id, result->interface_id) == 0 ||
-            !g_analytics_data.interface_summary[i].is_active) {
+        if (strcmp(g_analytics_data->interface_summary[i].interface_id, result->interface_id) == 0 ||
+            !g_analytics_data->interface_summary[i].is_active) {
             
-            if (!g_analytics_data.interface_summary[i].is_active) {
-                strncpy(g_analytics_data.interface_summary[i].interface_id, result->interface_id, 31);
-                g_analytics_data.interface_summary[i].is_active = true;
-                g_analytics_data.interface_summary[i].predictions_made = 0;
-                g_analytics_data.interface_summary[i].predictions_correct = 0;
+            if (!g_analytics_data->interface_summary[i].is_active) {
+                strncpy(g_analytics_data->interface_summary[i].interface_id, result->interface_id, 31);
+                g_analytics_data->interface_summary[i].is_active = true;
+                g_analytics_data->interface_summary[i].predictions_made = 0;
+                g_analytics_data->interface_summary[i].predictions_correct = 0;
             }
             
-            g_analytics_data.interface_summary[i].predictions_made++;
+            g_analytics_data->interface_summary[i].predictions_made++;
             if (result->prediction_correct) {
-                g_analytics_data.interface_summary[i].predictions_correct++;
+                g_analytics_data->interface_summary[i].predictions_correct++;
             }
             
-            if (g_analytics_data.interface_summary[i].predictions_made > 0) {
-                g_analytics_data.interface_summary[i].accuracy_pct = 
-                    (double)g_analytics_data.interface_summary[i].predictions_correct * 100.0 / 
-                    g_analytics_data.interface_summary[i].predictions_made;
+            if (g_analytics_data->interface_summary[i].predictions_made > 0) {
+                g_analytics_data->interface_summary[i].accuracy_pct = 
+                    (double)g_analytics_data->interface_summary[i].predictions_correct * 100.0 / 
+                    g_analytics_data->interface_summary[i].predictions_made;
             }
             
-            g_analytics_data.interface_summary[i].last_update = time(NULL);
+            g_analytics_data->interface_summary[i].last_update = time(NULL);
             break;
         }
     }
@@ -171,13 +171,13 @@ int ml_monitor_analytics_update_interface_score(const ml_interface_score_t *scor
     // Find interface slot
     int interface_slot = -1;
     for (int i = 0; i < MAX_INTERFACES; i++) {
-        if (strcmp(g_analytics_data.interface_summary[i].interface_id, score->interface_id) == 0) {
+        if (strcmp(g_analytics_data->interface_summary[i].interface_id, score->interface_id) == 0) {
             interface_slot = i;
             break;
-        } else if (!g_analytics_data.interface_summary[i].is_active) {
+        } else if (!g_analytics_data->interface_summary[i].is_active) {
             interface_slot = i;
-            strncpy(g_analytics_data.interface_summary[i].interface_id, score->interface_id, 31);
-            g_analytics_data.interface_summary[i].is_active = true;
+            strncpy(g_analytics_data->interface_summary[i].interface_id, score->interface_id, 31);
+            g_analytics_data->interface_summary[i].is_active = true;
             break;
         }
     }
@@ -188,23 +188,23 @@ int ml_monitor_analytics_update_interface_score(const ml_interface_score_t *scor
     }
     
     // Add to circular buffer for this interface
-    uint32_t idx = g_analytics_data.interface_scores_index[interface_slot];
-    g_analytics_data.interface_scores[interface_slot][idx] = *score;
+    uint32_t idx = g_analytics_data->interface_scores_index[interface_slot];
+    g_analytics_data->interface_scores[interface_slot][idx] = *score;
     
-    g_analytics_data.interface_scores_index[interface_slot] = (idx + 1) % 1440;
-    if (g_analytics_data.interface_scores_count[interface_slot] < 1440) {
-        g_analytics_data.interface_scores_count[interface_slot]++;
+    g_analytics_data->interface_scores_index[interface_slot] = (idx + 1) % 360;  // Updated from 720 to 360 for memory efficiency
+    if (g_analytics_data->interface_scores_count[interface_slot] < 360) {  // Updated from 720 to 360 for memory efficiency
+        g_analytics_data->interface_scores_count[interface_slot]++;
     }
     
     // Update interface summary
-    g_analytics_data.interface_summary[interface_slot].current_score = score->overall_score;
-    g_analytics_data.interface_summary[interface_slot].last_update = time(NULL);
+    g_analytics_data->interface_summary[interface_slot].current_score = score->overall_score;
+    g_analytics_data->interface_summary[interface_slot].last_update = time(NULL);
     
-    if (score->overall_score > g_analytics_data.interface_summary[interface_slot].best_score) {
-        g_analytics_data.interface_summary[interface_slot].best_score = score->overall_score;
+    if (score->overall_score > g_analytics_data->interface_summary[interface_slot].best_score) {
+        g_analytics_data->interface_summary[interface_slot].best_score = score->overall_score;
     }
-    if (score->overall_score < g_analytics_data.interface_summary[interface_slot].worst_score) {
-        g_analytics_data.interface_summary[interface_slot].worst_score = score->overall_score;
+    if (score->overall_score < g_analytics_data->interface_summary[interface_slot].worst_score) {
+        g_analytics_data->interface_summary[interface_slot].worst_score = score->overall_score;
     }
     
     pthread_mutex_unlock(&g_analytics_mutex);
@@ -226,32 +226,32 @@ int ml_monitor_analytics_record_impact_event(const ml_impact_event_t *event) {
     pthread_mutex_lock(&g_analytics_mutex);
     
     // Add to circular buffer
-    uint32_t idx = g_analytics_data.impact_events_index;
-    g_analytics_data.impact_events[idx] = *event;
+    uint32_t idx = g_analytics_data->impact_events_index;
+    g_analytics_data->impact_events[idx] = *event;
     
-    g_analytics_data.impact_events_index = (idx + 1) % 500;
-    if (g_analytics_data.impact_events_count < 500) {
-        g_analytics_data.impact_events_count++;
+    g_analytics_data->impact_events_index = (idx + 1) % 100;  // Updated from 250 to 100 for memory efficiency
+    if (g_analytics_data->impact_events_count < 100) {  // Updated from 250 to 100 for memory efficiency
+        g_analytics_data->impact_events_count++;
     }
     
     // Update summary statistics
     if (event->ml_triggered_failover || event->ml_prevented_unnecessary_failover || event->ml_optimized_weights) {
-        g_analytics_data.summary_stats.ml_triggered_actions++;
+        g_analytics_data->summary_stats.ml_triggered_actions++;
     }
     
     if (event->ml_improvement_ms > 0) {
-        g_analytics_data.summary_stats.successful_optimizations++;
-        g_analytics_data.summary_stats.total_improvement_ms += event->ml_improvement_ms;
+        g_analytics_data->summary_stats.successful_optimizations++;
+        g_analytics_data->summary_stats.total_improvement_ms += event->ml_improvement_ms;
     }
     
     // Update average user experience
-    if (g_analytics_data.impact_events_count > 0) {
+    if (g_analytics_data->impact_events_count > 0) {
         double total_ux = 0;
-        uint32_t count = g_analytics_data.impact_events_count;
+        uint32_t count = g_analytics_data->impact_events_count;
         for (uint32_t i = 0; i < count; i++) {
-            total_ux += g_analytics_data.impact_events[i].user_experience_score;
+            total_ux += g_analytics_data->impact_events[i].user_experience_score;
         }
-        g_analytics_data.summary_stats.average_user_experience = total_ux / count;
+        g_analytics_data->summary_stats.average_user_experience = total_ux / count;
     }
     
     pthread_mutex_unlock(&g_analytics_mutex);
@@ -315,9 +315,9 @@ int ml_monitor_analytics_calculate_interface_score(const char *interface_id, ml_
     // Get prediction accuracy
     pthread_mutex_lock(&g_analytics_mutex);
     for (int i = 0; i < MAX_INTERFACES; i++) {
-        if (strcmp(g_analytics_data.interface_summary[i].interface_id, interface_id) == 0) {
+        if (strcmp(g_analytics_data->interface_summary[i].interface_id, interface_id) == 0) {
             score->recent_predictions_correct = 
-                g_analytics_data.interface_summary[i].predictions_correct;
+                g_analytics_data->interface_summary[i].predictions_correct;
             break;
         }
     }
@@ -471,7 +471,7 @@ int ml_monitor_analytics_get_interface_score_history(const char *interface_id,
     // Find interface slot
     int interface_slot = -1;
     for (int i = 0; i < MAX_INTERFACES; i++) {
-        if (strcmp(g_analytics_data.interface_summary[i].interface_id, interface_id) == 0) {
+        if (strcmp(g_analytics_data->interface_summary[i].interface_id, interface_id) == 0) {
             interface_slot = i;
             break;
         }
@@ -484,12 +484,12 @@ int ml_monitor_analytics_get_interface_score_history(const char *interface_id,
     }
     
     // Copy score history
-    uint32_t available_scores = g_analytics_data.interface_scores_count[interface_slot];
+    uint32_t available_scores = g_analytics_data->interface_scores_count[interface_slot];
     uint32_t scores_to_copy = fmin(available_scores, max_scores);
     
     for (uint32_t i = 0; i < scores_to_copy; i++) {
-        uint32_t src_idx = (g_analytics_data.interface_scores_index[interface_slot] - scores_to_copy + i + 1440) % 1440;
-        scores[i] = g_analytics_data.interface_scores[interface_slot][src_idx];
+        uint32_t src_idx = (g_analytics_data->interface_scores_index[interface_slot] - scores_to_copy + i + 360) % 360;  // Updated from 720 to 360 for memory efficiency
+        scores[i] = g_analytics_data->interface_scores[interface_slot][src_idx];
     }
     
     *actual_count = scores_to_copy;
@@ -514,9 +514,9 @@ int ml_monitor_analytics_get_accuracy_trend(const char *interface_id,
     uint32_t correct_predictions = 0;
     
     // Analyze predictions within time window
-    uint32_t count = g_analytics_data.prediction_results_count;
+    uint32_t count = g_analytics_data->prediction_results_count;
     for (uint32_t i = 0; i < count; i++) {
-        ml_prediction_result_t *result = &g_analytics_data.prediction_results[i];
+        ml_prediction_result_t *result = &g_analytics_data->prediction_results[i];
         
         if (result->timestamp < cutoff_time) continue;
         
@@ -542,7 +542,7 @@ int ml_monitor_analytics_get_accuracy_trend(const char *interface_id,
         
         uint32_t processed = 0;
         for (uint32_t i = 0; i < count && processed < total_predictions; i++) {
-            ml_prediction_result_t *result = &g_analytics_data.prediction_results[i];
+            ml_prediction_result_t *result = &g_analytics_data->prediction_results[i];
             
             if (result->timestamp < cutoff_time) continue;
             if (interface_id && strcmp(result->interface_id, interface_id) != 0) continue;
@@ -597,9 +597,9 @@ int ml_monitor_analytics_get_impact_summary(uint32_t hours,
     double total_stability_improvement = 0.0;
     uint32_t stability_events = 0;
     
-    uint32_t count = g_analytics_data.impact_events_count;
+    uint32_t count = g_analytics_data->impact_events_count;
     for (uint32_t i = 0; i < count; i++) {
-        ml_impact_event_t *event = &g_analytics_data.impact_events[i];
+        ml_impact_event_t *event = &g_analytics_data->impact_events[i];
         
         if (event->timestamp < cutoff_time) continue;
         
