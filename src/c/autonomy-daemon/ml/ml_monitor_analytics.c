@@ -105,8 +105,8 @@ int ml_monitor_analytics_record_prediction(const ml_prediction_result_t *result)
     uint32_t idx = g_analytics_data->prediction_results_index;
     g_analytics_data->prediction_results[idx] = *result;
     
-    g_analytics_data->prediction_results_index = (idx + 1) % 100;  // Updated from 500 to 100 for memory efficiency
-    if (g_analytics_data->prediction_results_count < 100) {  // Updated from 500 to 100 for memory efficiency
+    g_analytics_data->prediction_results_index = (idx + 1) % 100;  // Updated from 1000 to 100 for memory efficiency
+    if (g_analytics_data->prediction_results_count < 100) {  // Updated from 1000 to 100 for memory efficiency
         g_analytics_data->prediction_results_count++;
     }
     
