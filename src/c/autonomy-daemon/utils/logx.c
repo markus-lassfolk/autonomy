@@ -81,20 +81,25 @@ int logx_init(const logx_config_t *config) {
 // Get current timestamp string
 static void get_timestamp(char *buffer, size_t size) {
     time_t now = time(NULL);
-    struct tm *tm_info = localtime(&now);
+    struct tm tm_info;
+    
+    if (localtime_r(&now, &tm_info) == NULL) {
+        snprintf(buffer, size, "1970-01-01T00:00:00+0000");
+        return;
+    }
     
     switch (g_logx_config.timestamp_format) {
         case LOGX_TIMESTAMP_ISO8601:
-            strftime(buffer, size, "%Y-%m-%dT%H:%M:%S%z", tm_info);
+            strftime(buffer, size, "%Y-%m-%dT%H:%M:%S%z", &tm_info);
             break;
         case LOGX_TIMESTAMP_UNIX:
             snprintf(buffer, size, "%lld", (long long)now);
             break;
         case LOGX_TIMESTAMP_SIMPLE:
-            strftime(buffer, size, "%Y-%m-%d %H:%M:%S", tm_info);
+            strftime(buffer, size, "%Y-%m-%d %H:%M:%S", &tm_info);
             break;
         default:
-            strftime(buffer, size, "%Y-%m-%dT%H:%M:%S%z", tm_info);
+            strftime(buffer, size, "%Y-%m-%dT%H:%M:%S%z", &tm_info);
     }
 }
 
@@ -146,44 +151,74 @@ void rotate_log_files(void) {
 static void format_message(char *buffer, size_t size, logx_level_t level, 
                           const char *file, int line, const char *func, 
                           const char *format, va_list args) {
+    // Use smaller stack buffers to reduce stack pressure
     char timestamp[64];
-    char message[1024];
+    char message[512];  // Reduced from 1024 to 512
     
     get_timestamp(timestamp, sizeof(timestamp));
     
-    // Format the actual message
-    vsnprintf(message, sizeof(message), format, args);
+    // Format the actual message - create a copy of va_list to avoid reuse issues
+    va_list args_copy;
+    va_copy(args_copy, args);
+    vsnprintf(message, sizeof(message), format, args_copy);
+    va_end(args_copy);
+    
+    // Bounds check for level to prevent buffer overflow
+    const char* level_name = "UNKNOWN";
+    if (level >= 0 && level < (sizeof(LOGX_LEVEL_NAMES) / sizeof(LOGX_LEVEL_NAMES[0]))) {
+        level_name = LOGX_LEVEL_NAMES[level];
+    }
+    
+    // Null pointer checks for safety
+    if (!file) file = "unknown";
+    if (!func) func = "unknown";
+    if (!format) format = "no message";
     
     if (g_logx_config.format == LOGX_FORMAT_STRUCTURED) {
         // Structured format: {"timestamp":"...","level":"...","file":"...","line":...,"func":"...","message":"..."}
         snprintf(buffer, size, 
                 "{\"timestamp\":\"%s\",\"level\":\"%s\",\"file\":\"%s\",\"line\":%d,\"func\":\"%s\",\"message\":\"%s\"}",
-                timestamp, LOGX_LEVEL_NAMES[level], file, line, func, message);
+                timestamp, level_name, file, line, func, message);
     } else {
         // Simple format: [timestamp] LEVEL file:line:func message
         snprintf(buffer, size, "[%s] %s %s:%d:%s %s",
-                timestamp, LOGX_LEVEL_NAMES[level], file, line, func, message);
+                timestamp, level_name, file, line, func, message);
     }
 }
 
 // Core logging function
 void logx_log(logx_level_t level, const char *file, int line, const char *func, const char *format, ...) {
+    // Safety checks to prevent crashes
+    if (!format) {
+        fprintf(stderr, "LOGX: NULL format string provided\n");
+        return;
+    }
+    
     if (level < g_logx_config.level) {
         return;
     }
     
-    char formatted_message[2048];
+    // Use dynamic allocation to avoid stack overflow
+    char *formatted_message = malloc(2048);
+    if (!formatted_message) {
+        // Fallback to simple output if allocation fails
+        fprintf(stderr, "LOGX: Memory allocation failed for log message\n");
+        return;
+    }
+    
     va_list args;
     va_start(args, format);
-    format_message(formatted_message, sizeof(formatted_message), level, file, line, func, format, args);
+    format_message(formatted_message, 2048, level, file, line, func, format, args);
     va_end(args);
     
     // Output to stderr if enabled
     if (g_logx_config.output & LOGX_OUTPUT_STDERR) {
         if (isatty(STDERR_FILENO)) {
-            // Colored output for terminal
+            // Colored output for terminal - with bounds checking
+            const char* color = (level >= 0 && level < (sizeof(LOGX_LEVEL_COLORS) / sizeof(LOGX_LEVEL_COLORS[0]))) 
+                               ? LOGX_LEVEL_COLORS[level] : "";
             fprintf(stderr, "%s%s%s\n", 
-                    LOGX_LEVEL_COLORS[level], 
+                    color, 
                     formatted_message, 
                     LOGX_RESET_COLOR);
         } else {
@@ -193,60 +228,27 @@ void logx_log(logx_level_t level, const char *file, int line, const char *func, 
     
     // Output to syslog if enabled
     if (g_logx_config.output & LOGX_OUTPUT_SYSLOG) {
-        syslog(LOGX_SYSLOG_PRIORITIES[level], "%s", formatted_message);
+        int priority = (level >= 0 && level < (sizeof(LOGX_SYSLOG_PRIORITIES) / sizeof(LOGX_SYSLOG_PRIORITIES[0]))) 
+                      ? LOGX_SYSLOG_PRIORITIES[level] : LOG_INFO;
+        syslog(priority, "%s", formatted_message);
     }
     
     // Output to file if enabled
     if (g_logx_config.output & LOGX_OUTPUT_FILE) {
         write_to_file(formatted_message);
     }
-}
-
-// Convenience logging functions
-static void logx_trace(const char *file, int line, const char *func, const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    logx_log(LOGX_LEVEL_TRACE, file, line, func, format, args);
-    va_end(args);
-}
-
-static void logx_debug(const char *file, int line, const char *func, const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    logx_log(LOGX_LEVEL_DEBUG, file, line, func, format, args);
-    va_end(args);
-}
-
-static void logx_info(const char *file, int line, const char *func, const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    logx_log(LOGX_LEVEL_INFO, file, line, func, format, args);
-    va_end(args);
-}
-
-static void logx_warn(const char *file, int line, const char *func, const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    logx_log(LOGX_LEVEL_WARN, file, line, func, format, args);
-    va_end(args);
-}
-
-static void logx_error(const char *file, int line, const char *func, const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    logx_log(LOGX_LEVEL_ERROR, file, line, func, format, args);
-    va_end(args);
-}
-
-static void logx_fatal(const char *file, int line, const char *func, const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    logx_log(LOGX_LEVEL_FATAL, file, line, func, format, args);
-    va_end(args);
     
-    // Fatal errors should exit
-    exit(1);
+    // Free the allocated memory
+    free(formatted_message);
 }
+
+// Convenience logging functions - REMOVED to fix va_list issue
+// These functions were causing stack corruption by passing va_list to logx_log
+// which expects variadic arguments. The macros in logx.h are used instead.
+
+// Removed logx_error and logx_fatal convenience functions to fix va_list issue
+// These functions were causing stack corruption by passing va_list to logx_log
+// which expects variadic arguments. The macros in logx.h are used instead.
 
 // Set log level
 static void logx_set_level(logx_level_t level) {

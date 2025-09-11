@@ -424,6 +424,9 @@ typedef struct {
     bool gps_valid;                       // GPS fix valid
     int gps_satellites;                   // Number of GPS satellites
     double gps_accuracy_m;                // GPS accuracy in meters
+    double latitude;                      // GPS latitude
+    double longitude;                     // GPS longitude
+    double altitude;                      // GPS altitude
     bool inhibit_gps;                     // GPS inhibited
     
     // Device state

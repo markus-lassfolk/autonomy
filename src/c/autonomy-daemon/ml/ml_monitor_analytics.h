@@ -77,18 +77,18 @@ typedef struct {
 
 // Analytics data storage (circular buffers)
 typedef struct {
-    // Prediction results (last 1000)
-    ml_prediction_result_t prediction_results[1000];
+    // Prediction results (last 100) - OPTIMIZED SIZE
+    ml_prediction_result_t prediction_results[100];  // Reduced from 1000 to 100 for memory efficiency
     uint32_t prediction_results_count;
     uint32_t prediction_results_index;
     
-    // Interface scores (last 24 hours, 1 per minute)
-    ml_interface_score_t interface_scores[MAX_INTERFACES][1440];
+    // Interface scores (last 6 hours, 1 per minute) - OPTIMIZED SIZE
+    ml_interface_score_t interface_scores[MAX_INTERFACES][360];  // Reduced from 720 to 360 (6 hours)
     uint32_t interface_scores_count[MAX_INTERFACES];
     uint32_t interface_scores_index[MAX_INTERFACES];
     
-    // Impact events (last 500)
-    ml_impact_event_t impact_events[500];
+    // Impact events (last 100) - OPTIMIZED SIZE
+    ml_impact_event_t impact_events[100];  // Reduced from 250 to 100 for memory efficiency
     uint32_t impact_events_count;
     uint32_t impact_events_index;
     
@@ -126,6 +126,11 @@ typedef struct {
  * @return ML_MONITOR_SUCCESS on success
  */
 int ml_monitor_analytics_init(void);
+
+/**
+ * Cleanup ML analytics system
+ */
+void ml_monitor_analytics_cleanup(void);
 
 /**
  * Record a prediction result

@@ -3,8 +3,8 @@ CFLAGS ?= -O2 -Wall -Wextra -I../../src/c/autonomy-daemon/starlink
 LDFLAGS ?=
 LIBS = -lcurl
 
-SRC = starlink_grpc_standalone.c \
-      ../../src/c/autonomy-daemon/starlink/protobuf_wire.c
+SRC = starlink_grpc_client.c \
+      protobuf_wire.c
 
 TARGET = starlink-grpc-client
 

@@ -37,7 +37,8 @@ static int ml_monitor_integrate_with_network_controller(ml_monitor_t *monitor);
 int ml_monitor_init_phase7_multi_interface(ml_monitor_t *monitor) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO_MSG(" Initializing Phase 7: Multi-Interface ML Intelligence");
+    // Use simple fprintf to avoid LOGX crashes
+    fprintf(stderr, "Initializing Phase 7: Multi-Interface ML Intelligence\n");
     
     // Initialize multi-interface system
     g_phase7_system = ml_monitor_init_multi_interface_system(&monitor->config);
@@ -47,38 +48,38 @@ int ml_monitor_init_phase7_multi_interface(ml_monitor_t *monitor) {
     }
     
     // Use comprehensive network discovery to automatically find interfaces
-    LOGX_INFO_MSG(" Using comprehensive network discovery for automatic interface detection");
+    // Use simple fprintf to avoid LOGX crashes
+    fprintf(stderr, "Using comprehensive network discovery for automatic interface detection\n");
     
     // Initialize ML monitoring from discovered interfaces
     extern int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor);
     int discovery_result = ml_monitor_init_from_network_discovery(monitor);
     if (discovery_result != ML_MONITOR_SUCCESS) {
-        LOGX_WARN_MSG("Failed to initialize from network discovery: %d", discovery_result);
+        // Use simple fprintf to avoid LOGX crashes
+        fprintf(stderr, "Failed to initialize from network discovery: %d\n", discovery_result);
         
         // Fallback: Add common interfaces manually
-        LOGX_INFO_MSG("Using fallback interface detection");
+        fprintf(stderr, "Using fallback interface detection\n");
         ml_monitor_add_interface(g_phase7_system, "eth1", INTERFACE_TYPE_STARLINK);
         ml_monitor_add_interface(g_phase7_system, "qmimux0", INTERFACE_TYPE_CELLULAR);
         ml_monitor_add_interface(g_phase7_system, "wlan0", INTERFACE_TYPE_WIFI);
         ml_monitor_add_interface(g_phase7_system, "eth0", INTERFACE_TYPE_LAN);
     } else {
-        LOGX_INFO_MSG(" Interfaces automatically discovered and added to ML monitoring");
+        // Use simple fprintf to avoid LOGX crashes
+        fprintf(stderr, "Interfaces automatically discovered and added to ML monitoring\n");
     }
     
     // Integrate with network controller for failover events
     int integration_result = ml_monitor_integrate_with_network_controller(monitor);
     if (integration_result != ML_MONITOR_SUCCESS) {
-        LOGX_WARN_MSG("Network controller integration failed: %d", integration_result);
+        // Use simple fprintf to avoid LOGX crashes
+        fprintf(stderr, "Network controller integration failed: %d\n", integration_result);
     }
     
     g_phase7_initialized = true;
     
-    LOGX_INFO_MSG(" Phase 7 multi-interface ML system initialized successfully");
-    LOGX_INFO_MSG("   - Interfaces monitored: %u", g_phase7_system->interface_count);
-    LOGX_INFO_MSG("   - Duration windows: <2s  2-5s  5-10s  10-30s  30-60s  1-2min  2-5min  5-15min  15-60min  1-4h  >4h");
-    LOGX_INFO_MSG("   - Continuous monitoring during failover: enabled");
-    LOGX_INFO_MSG("   - MWAN3 dynamic weight updates: enabled (range 1-99)");
-    LOGX_INFO_MSG("   - Failover timing monitoring: enabled");
+    // Use single consolidated message to avoid multiple LOGX calls
+    fprintf(stderr, "Phase 7 multi-interface ML system initialized successfully - Interfaces: %u, duration windows, continuous monitoring, MWAN3 updates, failover timing\n", g_phase7_system->interface_count);
     
     return ML_MONITOR_SUCCESS;
 }
