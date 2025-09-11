@@ -196,57 +196,74 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
 
 // Initialize ML monitor
 ml_monitor_t* ml_monitor_init(const ml_monitor_config_t *config) {
+    fprintf(stderr, "DEBUG: ml_monitor_init called\n");
     if (!config) {
         LOGX_ERROR_MSG("Invalid configuration provided to ML monitor");
+        fprintf(stderr, "DEBUG: ml_monitor_init failed - NULL config\n");
         return NULL;
     }
     
     if (g_ml_monitor) {
         LOGX_WARN_MSG("ML monitor already initialized");
+        fprintf(stderr, "DEBUG: ml_monitor_init - already initialized\n");
         return g_ml_monitor;
     }
     
     LOGX_INFO_MSG("Initializing ML monitor");
+    fprintf(stderr, "DEBUG: ml_monitor_init - starting initialization\n");
     
     ml_monitor_t *monitor = calloc(1, sizeof(ml_monitor_t));
     if (!monitor) {
         LOGX_ERROR_MSG("Failed to allocate ML monitor structure");
+        fprintf(stderr, "DEBUG: ml_monitor_init failed - calloc failed\n");
         return NULL;
     }
+    fprintf(stderr, "DEBUG: ml_monitor_init - allocated monitor structure\n");
     
     // Copy configuration
     memcpy(&monitor->config, config, sizeof(ml_monitor_config_t));
+    fprintf(stderr, "DEBUG: ml_monitor_init - copied configuration\n");
     
     // Initialize storage
+    fprintf(stderr, "DEBUG: ml_monitor_init - about to initialize storage\n");
     monitor->state = ml_monitor_init_storage(config->storage_path, &monitor->storage_size);
     if (!monitor->state) {
         LOGX_ERROR_MSG("Failed to initialize ML storage");
+        fprintf(stderr, "DEBUG: ml_monitor_init failed - storage initialization failed\n");
         free(monitor);
         return NULL;
     }
+    fprintf(stderr, "DEBUG: ml_monitor_init - storage initialized successfully\n");
     
     // Initialize analytics system
+    fprintf(stderr, "DEBUG: ml_monitor_init - about to initialize analytics\n");
     int analytics_result = ml_monitor_analytics_init();
     if (analytics_result != ML_MONITOR_SUCCESS) {
         LOGX_ERROR_MSG("Failed to initialize ML analytics: %d", analytics_result);
+        fprintf(stderr, "DEBUG: ml_monitor_init - analytics initialization failed: %d\n", analytics_result);
         // Continue without analytics - not critical
     } else {
         LOGX_INFO_MSG(" ML Analytics system initialized");
+        fprintf(stderr, "DEBUG: ml_monitor_init - analytics initialized successfully\n");
     }
     
     // Initialize mutex
+    fprintf(stderr, "DEBUG: ml_monitor_init - about to initialize mutex\n");
     if (pthread_mutex_init(&monitor->state_mutex, NULL) != 0) {
         LOGX_ERROR_MSG("Failed to initialize ML monitor mutex");
+        fprintf(stderr, "DEBUG: ml_monitor_init failed - mutex initialization failed\n");
         munmap(monitor->state, monitor->storage_size);
         free(monitor);
         return NULL;
     }
+    fprintf(stderr, "DEBUG: ml_monitor_init - mutex initialized successfully\n");
     
     monitor->initialized = true;
     g_ml_monitor = monitor;
     
     LOGX_INFO_MSG("ML monitor initialized successfully (memory usage: %zu KB)", 
-             monitor->storage_size / 1024);
+                  monitor->storage_size / 1024);
+    fprintf(stderr, "DEBUG: ml_monitor_init completed successfully\n");
     
     return monitor;
 }
@@ -733,30 +750,48 @@ static void* ml_monitor_prediction_thread(void *arg) {
 
 // Start ML monitor
 int ml_monitor_start(ml_monitor_t *monitor) {
-    if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
-    if (!monitor->initialized) return ML_MONITOR_ERROR_NOT_INITIALIZED;
-    if (monitor->running) return ML_MONITOR_ERROR_ALREADY_RUNNING;
+    fprintf(stderr, "DEBUG: ml_monitor_start called\n");
+    if (!monitor) {
+        fprintf(stderr, "DEBUG: ml_monitor_start failed - NULL monitor\n");
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
+    if (!monitor->initialized) {
+        fprintf(stderr, "DEBUG: ml_monitor_start failed - not initialized\n");
+        return ML_MONITOR_ERROR_NOT_INITIALIZED;
+    }
+    if (monitor->running) {
+        fprintf(stderr, "DEBUG: ml_monitor_start failed - already running\n");
+        return ML_MONITOR_ERROR_ALREADY_RUNNING;
+    }
     
     LOGX_INFO_MSG("Starting ML monitor");
+    fprintf(stderr, "DEBUG: ml_monitor_start - starting initialization\n");
     
     monitor->should_stop = false;
     
     // Start collection thread
+    fprintf(stderr, "DEBUG: ml_monitor_start - about to create collection thread\n");
     if (pthread_create(&monitor->collection_thread, NULL, ml_monitor_collection_thread, monitor) != 0) {
         LOGX_ERROR_MSG("Failed to create ML collection thread");
+        fprintf(stderr, "DEBUG: ml_monitor_start failed - collection thread creation failed\n");
         return ML_MONITOR_ERROR_THREAD_FAILED;
     }
+    fprintf(stderr, "DEBUG: ml_monitor_start - collection thread created successfully\n");
     
     // Start prediction thread
+    fprintf(stderr, "DEBUG: ml_monitor_start - about to create prediction thread\n");
     if (pthread_create(&monitor->prediction_thread, NULL, ml_monitor_prediction_thread, monitor) != 0) {
         LOGX_ERROR_MSG("Failed to create ML prediction thread");
+        fprintf(stderr, "DEBUG: ml_monitor_start failed - prediction thread creation failed\n");
         monitor->should_stop = true;
         pthread_join(monitor->collection_thread, NULL);
         return ML_MONITOR_ERROR_THREAD_FAILED;
     }
+    fprintf(stderr, "DEBUG: ml_monitor_start - prediction thread created successfully\n");
     
     monitor->running = true;
     LOGX_INFO_MSG("ML monitor started successfully");
+    fprintf(stderr, "DEBUG: ml_monitor_start completed successfully\n");
     
     return ML_MONITOR_SUCCESS;
 }

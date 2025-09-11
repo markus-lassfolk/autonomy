@@ -14,6 +14,11 @@
 #include <syslog.h>
 #include <stdarg.h>
 #include <math.h>
+#ifdef __GLIBC__
+#include <execinfo.h>  // For backtrace (GNU libc only)
+#endif
+#include <ucontext.h>  // For signal context
+#include <dlfcn.h>     // For symbol resolution
 
 // Include our modular headers
 #include "../core/types.h"
@@ -31,6 +36,122 @@
 
 // Global variables
 autonomy_config_t g_config;
+
+// Forward declarations
+static void print_memory_info(void);
+static void print_backtrace(void);
+static void crash_handler(int sig, siginfo_t *info, void *context);
+static void setup_crash_handlers(void);
+
+// Crash debugging functions
+static void print_backtrace(void) {
+#ifdef __GLIBC__
+    void *array[20];
+    size_t size;
+    char **strings;
+    size_t i;
+
+    fprintf(stderr, "\n=== BACKTRACE ===\n");
+    size = backtrace(array, 20);
+    strings = backtrace_symbols(array, size);
+
+    if (strings != NULL) {
+        for (i = 0; i < size; i++) {
+            fprintf(stderr, "[%zu] %s\n", i, strings[i]);
+        }
+        free(strings);
+    }
+    fprintf(stderr, "=== END BACKTRACE ===\n\n");
+#else
+    fprintf(stderr, "\n=== BACKTRACE ===\n");
+    fprintf(stderr, "Backtrace not available (not using GNU libc)\n");
+    fprintf(stderr, "=== END BACKTRACE ===\n\n");
+#endif
+}
+
+static void crash_handler(int sig, siginfo_t *info, void *context) {
+    fprintf(stderr, "\n=== CRASH DETECTED ===\n");
+    fprintf(stderr, "Signal: %d (%s)\n", sig, strsignal(sig));
+    fprintf(stderr, "Signal code: %d\n", info->si_code);
+    fprintf(stderr, "Fault address: %p\n", info->si_addr);
+    fprintf(stderr, "PID: %d\n", getpid());
+    fprintf(stderr, "UID: %d\n", getuid());
+    
+    // Print memory map info if available
+    fprintf(stderr, "\n=== MEMORY MAP ===\n");
+    FILE *maps = fopen("/proc/self/maps", "r");
+    if (maps) {
+        char line[256];
+        while (fgets(line, sizeof(line), maps)) {
+            fprintf(stderr, "%s", line);
+        }
+        fclose(maps);
+    }
+    fprintf(stderr, "=== END MEMORY MAP ===\n\n");
+    
+    print_memory_info();
+    print_backtrace();
+    
+    // Additional debugging info for systems without backtrace
+    fprintf(stderr, "=== STACK INFO ===\n");
+    fprintf(stderr, "Current function: crash_handler\n");
+    fprintf(stderr, "Signal: %d (%s)\n", sig, strsignal(sig));
+    fprintf(stderr, "Fault address: %p\n", info->si_addr);
+    fprintf(stderr, "=== END STACK INFO ===\n\n");
+    
+    // Try to get more detailed info about the fault
+    if (context) {
+        ucontext_t *uc = (ucontext_t *)context;
+        fprintf(stderr, "=== REGISTER STATE ===\n");
+        fprintf(stderr, "Program counter: %p\n", (void*)uc->uc_mcontext.arm_pc);
+        fprintf(stderr, "Stack pointer: %p\n", (void*)uc->uc_mcontext.arm_sp);
+        fprintf(stderr, "Link register: %p\n", (void*)uc->uc_mcontext.arm_lr);
+        fprintf(stderr, "=== END REGISTER STATE ===\n\n");
+    }
+    
+    fprintf(stderr, "=== CRASH END ===\n");
+    fflush(stderr);
+    
+    // Exit with the signal number
+    _exit(sig);
+}
+
+static void setup_crash_handlers(void) {
+    struct sigaction sa;
+    
+    // Set up signal handler for crashes
+    sa.sa_sigaction = crash_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_SIGINFO | SA_RESTART;
+    
+    // Handle common crash signals
+    sigaction(SIGSEGV, &sa, NULL);  // Segmentation fault
+    sigaction(SIGBUS, &sa, NULL);   // Bus error
+    sigaction(SIGFPE, &sa, NULL);   // Floating point exception
+    sigaction(SIGILL, &sa, NULL);   // Illegal instruction
+    sigaction(SIGABRT, &sa, NULL);  // Abort signal
+    
+    fprintf(stderr, "DEBUG: Crash handlers installed\n");
+}
+
+// Memory debugging utility
+static void print_memory_info(void) {
+    FILE *status = fopen("/proc/self/status", "r");
+    if (status) {
+        char line[256];
+        fprintf(stderr, "\n=== MEMORY STATUS ===\n");
+        while (fgets(line, sizeof(line), status)) {
+            if (strstr(line, "VmSize") || strstr(line, "VmRSS") || 
+                strstr(line, "VmPeak") || strstr(line, "VmHWM") ||
+                strstr(line, "VmData") || strstr(line, "VmStk") ||
+                strstr(line, "VmExe") || strstr(line, "VmLib")) {
+                fprintf(stderr, "%s", line);
+            }
+        }
+        fclose(status);
+        fprintf(stderr, "=== END MEMORY STATUS ===\n\n");
+    }
+}
 
 autonomy_state_t g_state = {
     .running = false,
@@ -168,6 +289,10 @@ int main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
     signal(SIGTERM, handle_sig);
     signal(SIGINT, handle_sig);
+    
+    // Set up crash debugging handlers
+    setup_crash_handlers();
+    
     fprintf(stderr, "Signal handlers set\n");
     DEBUG_TRACE_INFO("Signal handlers set successfully");
 
@@ -302,24 +427,37 @@ int main(int argc, char **argv)
                 }
                 
                 // Initialize Phase 3 enhancements
-                if (ml_monitor_init_phase3_enhancements(ml_monitor) == ML_MONITOR_SUCCESS) {
+                fprintf(stderr, "DEBUG: About to call ml_monitor_init_phase3_enhancements\n");
+                fprintf(stderr, "DEBUG: ml_monitor pointer: %p\n", (void*)ml_monitor);
+                int phase3_result = ml_monitor_init_phase3_enhancements(ml_monitor);
+                fprintf(stderr, "DEBUG: ml_monitor_init_phase3_enhancements returned: %d\n", phase3_result);
+                if (phase3_result == ML_MONITOR_SUCCESS) {
                     fprintf(stderr, "ML monitoring Phase 3 enhancements initialized\n");
+                    fprintf(stderr, "DEBUG: ml_monitor_init_phase3_enhancements completed successfully\n");
                     
                     // Initialize Phase 4 enhancements
+                    fprintf(stderr, "DEBUG: About to call ml_monitor_init_phase4_enhancements\n");
                     if (ml_monitor_init_phase4_enhancements(ml_monitor) == ML_MONITOR_SUCCESS) {
                         fprintf(stderr, "ML monitoring Phase 4 enhancements initialized\n");
+                        fprintf(stderr, "DEBUG: ml_monitor_init_phase4_enhancements completed successfully\n");
                         
                         // Initialize Phase 5 mobile optimization
+                        fprintf(stderr, "DEBUG: About to call ml_monitor_init_phase5_mobile_system\n");
                         if (ml_monitor_init_phase5_mobile_system(ml_monitor) == ML_MONITOR_SUCCESS) {
                             fprintf(stderr, "ML monitoring Phase 5 mobile optimization initialized\n");
+                            fprintf(stderr, "DEBUG: ml_monitor_init_phase5_mobile_system completed successfully\n");
                             
                             // Initialize Phase 6 self-optimization
+                            fprintf(stderr, "DEBUG: About to call ml_monitor_init_phase6_self_optimization\n");
                             if (ml_monitor_init_phase6_self_optimization(ml_monitor) == ML_MONITOR_SUCCESS) {
                                 fprintf(stderr, "ML monitoring Phase 6 self-optimization initialized\n");
+                                fprintf(stderr, "DEBUG: ml_monitor_init_phase6_self_optimization completed successfully\n");
                                 
                                 // Initialize Phase 7 multi-interface intelligence
+                                fprintf(stderr, "DEBUG: About to call ml_monitor_init_phase7_multi_interface\n");
                                 if (ml_monitor_init_phase7_multi_interface(ml_monitor) == ML_MONITOR_SUCCESS) {
                                     fprintf(stderr, "ML monitoring Phase 7 multi-interface intelligence initialized\n");
+                                    fprintf(stderr, "DEBUG: ml_monitor_init_phase7_multi_interface completed successfully\n");
                                 } else {
                                     fprintf(stderr, "ML monitoring Phase 7 initialization failed, using Phase 6 features\n");
                                 }
@@ -337,10 +475,13 @@ int main(int argc, char **argv)
                 }
                 
                 // Auto-start ML monitoring if configured
+                fprintf(stderr, "DEBUG: About to call ml_monitor_start\n");
                 if (ml_monitor_start(ml_monitor) == ML_MONITOR_SUCCESS) {
                     fprintf(stderr, "ML monitoring started automatically with Phase 7 multi-interface intelligence\n");
+                    fprintf(stderr, "DEBUG: ml_monitor_start completed successfully\n");
                 } else {
                     fprintf(stderr, "ML monitoring initialized but not started (manual start required)\n");
+                    fprintf(stderr, "DEBUG: ml_monitor_start failed\n");
                 }
             } else {
                 fprintf(stderr, "ML monitoring module initialization failed\n");

@@ -481,9 +481,14 @@ static int ml_monitor_proactive_optimize(ml_monitor_t *monitor, proactive_optimi
 
 // Initialize Phase 4 enhancements
 int ml_monitor_init_phase4_enhancements(ml_monitor_t *monitor) {
-    if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
+    fprintf(stderr, "DEBUG: ml_monitor_init_phase4_enhancements called\n");
+    if (!monitor) {
+        fprintf(stderr, "DEBUG: ml_monitor_init_phase4_enhancements failed - NULL monitor\n");
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
     
     LOGX_INFO_MSG(" Initializing Phase 4: Advanced Ensemble Methods & Real-time Validation");
+    fprintf(stderr, "DEBUG: ml_monitor_init_phase4_enhancements - starting initialization\n");
     
     // Allocate Phase 4 state
     phase4_ml_state_t *phase4_state = calloc(1, sizeof(phase4_ml_state_t));

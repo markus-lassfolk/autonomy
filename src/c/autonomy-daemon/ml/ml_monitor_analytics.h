@@ -128,6 +128,11 @@ typedef struct {
 int ml_monitor_analytics_init(void);
 
 /**
+ * Cleanup ML analytics system
+ */
+void ml_monitor_analytics_cleanup(void);
+
+/**
  * Record a prediction result
  * @param result Prediction result to record
  * @return ML_MONITOR_SUCCESS on success
