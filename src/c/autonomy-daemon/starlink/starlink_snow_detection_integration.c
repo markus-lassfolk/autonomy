@@ -3,8 +3,8 @@
 #include "starlink_snow_detection_ubus.h"
 #include "starlink_comprehensive.h"
 #include "starlink_modules.h"
-#include "../utils/logx.h"
-#include "../utils/http_client_libcurl.h"
+#include "../shared/logging/logx.h"
+#include "../shared/utils/http_client_libcurl.h"
 #include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>

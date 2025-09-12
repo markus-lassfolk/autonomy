@@ -35,7 +35,7 @@ static void parse_recipients(email_client_t* client, const char* recipients_str)
     
     client->recipient_count = 0;
     char temp[1024];
-    strncpy(temp, recipients_str, sizeof(temp) - 1);
+    safe_strncpy(temp, recipients_str, sizeof(temp));
     temp[sizeof(temp) - 1] = '\0';
     
     char* token = strtok(temp, ",");
@@ -75,7 +75,7 @@ int email_client_init(email_client_t* client, const email_config_t* config) {
     
     // Initialize status
     client->status.enabled = config->enabled;
-    strncpy(client->status.smtp_host, config->smtp_host, sizeof(client->status.smtp_host) - 1);
+    safe_strncpy(client->status.smtp_host, config->smtp_host, sizeof(client->status.smtp_host));
     client->status.smtp_port = config->smtp_port;
     client->status.total_sent = 0;
     client->status.total_failed = 0;
@@ -280,7 +280,7 @@ static char* create_email_message(email_client_t* client, const char* recipient,
 static int send_email_smtp(email_client_t* client, const char* recipient, const char* message) {
     CURL* curl = curl_easy_init();
     if (!curl) {
-        strncpy(client->status.last_error, "Failed to initialize curl", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Failed to initialize curl", sizeof(client->status.last_error));
         return -1;
     }
     
@@ -360,7 +360,7 @@ int email_client_send(email_client_t* client, const notification_event_t* event)
     }
     
     if (client->recipient_count == 0) {
-        strncpy(client->status.last_error, "No recipients configured", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "No recipients configured", sizeof(client->status.last_error));
         client->status.last_error_time = time(NULL);
         client->status.total_failed++;
         return -1;

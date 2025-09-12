@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "ml_monitor.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../network/network_controller.h"
 #include "../network/network_failover.h"
 #include "../starlink/starlink_modules.h"

@@ -1,5 +1,5 @@
 #include "telemetry_store.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

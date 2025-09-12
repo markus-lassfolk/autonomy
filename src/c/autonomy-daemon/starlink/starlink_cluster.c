@@ -1,4 +1,5 @@
 #include "starlink_types.h"
+#include "../shared/utils/string_utils.h"
 #include "starlink_obstruction.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,7 +52,7 @@ int starlink_cluster_add(const char *id, const starlink_config_t *config) {
     
     // Initialize instance
     memset(instance, 0, sizeof(starlink_instance_t));
-    strncpy(instance->id, id, sizeof(instance->id) - 1);
+    safe_strncpy(instance->id, id, sizeof(instance->id));
     memcpy(&instance->config, config, sizeof(starlink_config_t));
     
     // Set default values

@@ -2,7 +2,7 @@
 #include "ml_monitor_analytics.h"
 #include "ml_monitor_ubus.h"
 #include "ml_monitor_network_discovery_integration.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
 #include <string.h>

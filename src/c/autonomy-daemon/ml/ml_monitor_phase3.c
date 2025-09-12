@@ -1,5 +1,5 @@
 #include "ml_monitor.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../starlink/starlink_modules.h"
 #include "../shared/starlink-tracking/obstruction_analyzer.h"
 #include "../shared/starlink-tracking/starlink_tracker.h"

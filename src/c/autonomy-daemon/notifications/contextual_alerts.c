@@ -197,12 +197,12 @@ int contextual_alert_manager_update_state(const char* key, const char* value, ti
         }
         
         key_index = g_contextual_manager.state_keys_count;
-        strncpy(g_contextual_manager.last_known_state[key_index].key, key, sizeof(g_contextual_manager.last_known_state[key_index].key) - 1);
+        safe_strncpy(g_contextual_manager.last_known_state[key_index].key, key, sizeof(g_contextual_manager.last_known_state[key_index].key));
         g_contextual_manager.state_keys_count++;
     }
     
     // Update value and timestamp
-    strncpy(g_contextual_manager.last_known_state[key_index].value, value, sizeof(g_contextual_manager.last_known_state[key_index].value) - 1);
+    safe_strncpy(g_contextual_manager.last_known_state[key_index].value, value, sizeof(g_contextual_manager.last_known_state[key_index].value));
     g_contextual_manager.last_known_state[key_index].timestamp = timestamp;
     
     pthread_mutex_unlock(g_contextual_manager.mutex);
@@ -260,12 +260,12 @@ int contextual_alert_manager_send_alert(alert_type_t alert_type, const char* tit
     
     // Use template if available, otherwise use provided values
     if (template) {
-        strncpy(event.title, template->title, sizeof(event.title) - 1);
-        strncpy(event.message, template->message, sizeof(event.message) - 1);
+        safe_strncpy(event.title, template->title, sizeof(event.title));
+        safe_strncpy(event.message, template->message, sizeof(event.message));
         event.priority = template->priority;
     } else {
-        strncpy(event.title, title, sizeof(event.title) - 1);
-        strncpy(event.message, message, sizeof(event.message) - 1);
+        safe_strncpy(event.title, title, sizeof(event.title));
+        safe_strncpy(event.message, message, sizeof(event.message));
         event.priority = NOTIFICATION_PRIORITY_NORMAL;
     }
     
@@ -278,8 +278,8 @@ int contextual_alert_manager_send_alert(alert_type_t alert_type, const char* tit
         if (event.location) {
             event.location->latitude = location->latitude;
             event.location->longitude = location->longitude;
-            strncpy(event.location->address, location->address, sizeof(event.location->address) - 1);
-            strncpy(event.location->source, "contextual", sizeof(event.location->source) - 1);
+            safe_strncpy(event.location->address, location->address, sizeof(event.location->address));
+            safe_strncpy(event.location->source, "contextual", sizeof(event.location->source));
         }
     }
     
@@ -303,8 +303,8 @@ int contextual_alert_manager_send_alert(alert_type_t alert_type, const char* tit
                 int index = g_contextual_manager.alert_history_count;
                 g_contextual_manager.alert_history[index].alert_type = alert_type;
                 g_contextual_manager.alert_history[index].timestamp = now;
-                strncpy(g_contextual_manager.alert_history[index].title, event.title, sizeof(g_contextual_manager.alert_history[index].title) - 1);
-                strncpy(g_contextual_manager.alert_history[index].message, event.message, sizeof(g_contextual_manager.alert_history[index].message) - 1);
+                safe_strncpy(g_contextual_manager.alert_history[index].title, event.title, sizeof(g_contextual_manager.alert_history[index].title));
+                safe_strncpy(g_contextual_manager.alert_history[index].message, event.message, sizeof(g_contextual_manager.alert_history[index].message));
                 g_contextual_manager.alert_history_count++;
             } else {
                 // Shift history and add at end
@@ -314,8 +314,8 @@ int contextual_alert_manager_send_alert(alert_type_t alert_type, const char* tit
                 int index = g_contextual_manager.max_alert_history - 1;
                 g_contextual_manager.alert_history[index].alert_type = alert_type;
                 g_contextual_manager.alert_history[index].timestamp = now;
-                strncpy(g_contextual_manager.alert_history[index].title, event.title, sizeof(g_contextual_manager.alert_history[index].title) - 1);
-                strncpy(g_contextual_manager.alert_history[index].message, event.message, sizeof(g_contextual_manager.alert_history[index].message) - 1);
+                safe_strncpy(g_contextual_manager.alert_history[index].title, event.title, sizeof(g_contextual_manager.alert_history[index].title));
+                safe_strncpy(g_contextual_manager.alert_history[index].message, event.message, sizeof(g_contextual_manager.alert_history[index].message));
             }
             
             pthread_mutex_unlock(g_contextual_manager.mutex);

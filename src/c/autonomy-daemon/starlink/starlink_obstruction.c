@@ -3,8 +3,9 @@
 #include "../external/external_apis.h"
 #include "../gps/gps_manager.h"
 #include "../gps/gps_coordinate_utils.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -12,7 +13,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <stdbool.h>
-#include "../utils/json_parser.h"
+#include "../shared/utils/json_parser.h"
 
 // External reference to global configuration
 extern autonomy_config_t g_config;
@@ -614,10 +615,10 @@ void update_or_create_pattern(const char *name, const char *description,
         starlink_environmental_pattern_t *pattern = &g_obstruction.patterns[pattern_index];
         
         pattern->active = true;
-        strncpy(pattern->name, name, sizeof(pattern->name) - 1);
+        safe_strncpy(pattern->name, name, sizeof(pattern->name));
         pattern->name[sizeof(pattern->name) - 1] = '\0';
         pattern->name[sizeof(pattern->name) - 1] = '\0';
-        strncpy(pattern->description, description, sizeof(pattern->description) - 1);
+        safe_strncpy(pattern->description, description, sizeof(pattern->description));
         pattern->description[sizeof(pattern->description) - 1] = '\0';
         pattern->description[sizeof(pattern->description) - 1] = '\0';
         
@@ -784,10 +785,10 @@ void create_or_update_active_match(const starlink_environmental_pattern_t *patte
         starlink_active_match_t *match = &g_obstruction.active_matches[match_index];
         
         match->active = true;
-        strncpy(match->pattern_id, pattern->id, sizeof(match->pattern_id) - 1);
+        safe_strncpy(match->pattern_id, pattern->id, sizeof(match->pattern_id));
         match->pattern_id[sizeof(match->pattern_id) - 1] = '\0';
         match->pattern_id[sizeof(match->pattern_id) - 1] = '\0';
-        strncpy(match->pattern_name, pattern->name, sizeof(match->pattern_name) - 1);
+        safe_strncpy(match->pattern_name, pattern->name, sizeof(match->pattern_name));
         match->pattern_name[sizeof(match->pattern_name) - 1] = '\0';
         match->pattern_name[sizeof(match->pattern_name) - 1] = '\0';
         
@@ -867,16 +868,16 @@ void add_match_to_history(const starlink_active_match_t *match, const char *reas
         
         result->active = true;
         result->timestamp = match->last_update;
-        strncpy(result->pattern_id, match->pattern_id, sizeof(result->pattern_id) - 1);
+        safe_strncpy(result->pattern_id, match->pattern_id, sizeof(result->pattern_id));
         result->pattern_id[sizeof(result->pattern_id) - 1] = '\0';
         result->pattern_id[sizeof(result->pattern_id) - 1] = '\0';
-        strncpy(result->pattern_name, match->pattern_name, sizeof(result->pattern_name) - 1);
+        safe_strncpy(result->pattern_name, match->pattern_name, sizeof(result->pattern_name));
         result->pattern_name[sizeof(result->pattern_name) - 1] = '\0';
         result->pattern_name[sizeof(result->pattern_name) - 1] = '\0';
         result->similarity = match->similarity;
         result->confidence = match->confidence;
         result->success = (match->status == MATCH_STATUS_CONFIRMED);
-        strncpy(result->reason, reason, sizeof(result->reason) - 1);
+        safe_strncpy(result->reason, reason, sizeof(result->reason));
         result->reason[sizeof(result->reason) - 1] = '\0';
         result->reason[sizeof(result->reason) - 1] = '\0';
         result->duration = match->last_update - match->start_time;

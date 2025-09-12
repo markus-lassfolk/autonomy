@@ -1,7 +1,7 @@
 #include "ml_enhanced_integration.h"
 #include "ml_satellite_redundancy.h"
 #include "ml_cellular_tower_intelligence.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

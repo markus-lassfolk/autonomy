@@ -1,7 +1,7 @@
 #include "http_client_libcurl.h"
 #include "json_parser.h"
-#include "logx.h"
-#include "../core/types.h"
+#include "../logging/logx.h"
+#include "../../core/types.h"
 #include <curl/curl.h>
 #include <stdio.h>
 #include <stdlib.h>

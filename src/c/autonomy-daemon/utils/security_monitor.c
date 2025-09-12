@@ -56,7 +56,7 @@ int security_monitor_init(const security_monitor_config_t* config) {
     }
     
     // Initialize mutex
-    g_security_monitor.mutex = malloc(sizeof(pthread_mutex_t));
+    g_security_monitor.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
     if (!g_security_monitor.mutex) {
         return -1;
     }
@@ -411,7 +411,7 @@ int perform_file_integrity_check(security_scan_result_t* result) {
     
     // Check for suspicious files in system directories
     const char* system_dirs[] = {"/tmp", "/var/tmp", "/dev/shm"};
-    for (int i = 0; i < sizeof(system_dirs)/sizeof(system_dirs[0]); i++) {
+    for (size_t i = 0; i < sizeof(system_dirs)/sizeof(system_dirs[0]); i++) {
         DIR* dir = opendir(system_dirs[i]);
         if (dir) {
             struct dirent* entry;
@@ -419,7 +419,7 @@ int perform_file_integrity_check(security_scan_result_t* result) {
                 if (entry->d_type == DT_REG) {
                     // Check for suspicious file extensions
                     const char* suspicious_exts[] = {".sh", ".py", ".pl", ".rb", ".php", ".elf"};
-                    for (int j = 0; j < sizeof(suspicious_exts)/sizeof(suspicious_exts[0]); j++) {
+                    for (size_t j = 0; j < sizeof(suspicious_exts)/sizeof(suspicious_exts[0]); j++) {
                         if (strstr(entry->d_name, suspicious_exts[j])) {
                             char full_path[512];
                             snprintf(full_path, sizeof(full_path), "%s/%s", system_dirs[i], entry->d_name);
@@ -481,7 +481,7 @@ int perform_network_security_check(security_scan_result_t* result) {
         while (fgets(line, sizeof(line), netstat_pipe)) {
             // Parse netstat output
             if (strstr(line, "LISTEN") || strstr(line, "0.0.0.0:") || strstr(line, ":::")) {
-                for (int i = 0; i < sizeof(risky_ports)/sizeof(risky_ports[0]); i++) {
+                for (size_t i = 0; i < sizeof(risky_ports)/sizeof(risky_ports[0]); i++) {
                     char port_str[32];
                     snprintf(port_str, sizeof(port_str), ":%d", risky_ports[i].port);
                     
@@ -526,7 +526,7 @@ int perform_network_security_check(security_scan_result_t* result) {
                 if (sscanf(tokens[4], "%63[^:]:%d", foreign_addr, &foreign_port) == 2) {
                     // Check for connections to common malware C&C ports
                     const int suspicious_ports[] = {4444, 5555, 6666, 7777, 8888, 9999, 31337};
-                    for (int i = 0; i < sizeof(suspicious_ports)/sizeof(suspicious_ports[0]); i++) {
+                    for (size_t i = 0; i < sizeof(suspicious_ports)/sizeof(suspicious_ports[0]); i++) {
                         if (foreign_port == suspicious_ports[i]) {
                             snprintf(issue_details, sizeof(issue_details),
                                     "Suspicious connection to %s:%d detected",
@@ -587,7 +587,7 @@ int perform_network_security_check(security_scan_result_t* result) {
                     char* iface_start = strchr(line, ' ');
                     if (iface_start && iface_start < colon) {
                         int len = colon - iface_start - 1;
-                        if (len < sizeof(current_iface)) {
+                        if (len < (int)sizeof(current_iface)) {
                             strncpy(current_iface, iface_start + 1, len);
                             current_iface[len] = '\0';
                         }
@@ -990,7 +990,7 @@ void update_security_events(const char* event_type, const char* description,
 
 // Generate unique event ID
 static char* generate_event_id(void) {
-    char* event_id = malloc(64);
+    char* event_id = (char*)malloc(64);
     if (!event_id) return NULL;
     
     time_t now = time(NULL);

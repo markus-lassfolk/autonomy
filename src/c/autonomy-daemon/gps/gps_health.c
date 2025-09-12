@@ -1,6 +1,7 @@
 #include "gps_health.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -118,7 +119,7 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
     // Initialize source
     gps_source_health_t *source = &g_health_monitor.sources[source_index];
     source->active = true;
-    strncpy(source->name, source_name, sizeof(source->name) - 1);
+    safe_strncpy(source->name, source_name, sizeof(source->name));
     source->source_type = source_type;
     source->registration_time = time(NULL);
     source->last_update = 0;

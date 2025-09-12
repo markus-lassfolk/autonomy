@@ -1,5 +1,5 @@
 #include "ml_satellite_redundancy.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
 #include <string.h>
 #include <math.h>

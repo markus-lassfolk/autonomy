@@ -1,5 +1,6 @@
 #include "alert_templates.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -97,9 +98,9 @@ static void load_default_template(notification_type_t type, const char* name, co
     alert_template_t* template = &g_alert_template_manager.templates[g_alert_template_manager.template_count];
     
     template->alert_type = type;
-    strncpy(template->name, name, sizeof(template->name) - 1);
-    strncpy(template->title_template, title_template, sizeof(template->title_template) - 1);
-    strncpy(template->message_template, message_template, sizeof(template->message_template) - 1);
+    safe_strncpy(template->name, name, sizeof(template->name));
+    safe_strncpy(template->title_template, title_template, sizeof(template->title_template));
+    safe_strncpy(template->message_template, message_template, sizeof(template->message_template));
     template->default_priority = priority;
     template->enabled = true; // Use configurable template enabled setting
     template->required_context_count = 0;
@@ -254,8 +255,8 @@ int alert_template_manager_add_context_variable(template_context_t* context,
     }
     
     template_variable_t* var = &context->variables[context->variable_count];
-    strncpy(var->name, name, sizeof(var->name) - 1);
-    strncpy(var->value, value, sizeof(var->value) - 1);
+    safe_strncpy(var->name, name, sizeof(var->name));
+    safe_strncpy(var->value, value, sizeof(var->value));
     context->variable_count++;
     
     return 0;

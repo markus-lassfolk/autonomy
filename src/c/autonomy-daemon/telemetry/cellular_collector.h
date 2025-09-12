@@ -54,7 +54,7 @@ typedef struct {
     double rsrp;                    // Reference Signal Received Power
     double rsrq;                    // Reference Signal Received Quality
     double sinr;                    // Signal-to-Interference-plus-Noise Ratio
-    char operator[64];              // Network operator name
+    char operator_name[64];         // Network operator name
     uint32_t cell_id;               // Cell tower ID
     double signal_quality;          // Signal quality percentage (0-100)
     double reliability_score;       // Reliability score (0-1)

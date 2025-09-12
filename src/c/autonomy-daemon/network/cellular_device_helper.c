@@ -1,6 +1,6 @@
 #include "cellular_device_helper.h"
 #include "../utils/secure_exec.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -33,7 +33,7 @@ int discover_cellular_devices(cellular_device_info_t *devices, int max_devices, 
             
             // Initialize device info
             memset(device, 0, sizeof(cellular_device_info_t));
-            strncpy(device->device_path, device_path, sizeof(device->device_path) - 1);
+            safe_strncpy(device->device_path, device_path, sizeof(device->device_path));
             device->is_available = true;
             
             // Try to get signal strength to verify device is working

@@ -1,6 +1,8 @@
 #include "../external/external_apis.h"
 #include "../wifi/wifi_enhanced.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
+#include "../shared/utils/json_parser.h"
+//#include "../utils/http_client.h" // Reverted due to type conflicts
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1014,16 +1016,15 @@ int external_apis_get_google_location(const void* cell_towers, const void* wifi_
             LOGX_DEBUG_MSG("Found %d WiFi access points for location request", ap_count);
             
             for (int i = 0; i < ap_count && i < 32; i++) {
+                // Build WiFi AP object using json-c
                 json_object* ap_obj = json_object_new_object();
-                
-                // Add WiFi AP data in Google Location Services format
-                json_object_object_add(ap_obj, "macAddress", json_object_new_string(access_points[i].bssid));
-                json_object_object_add(ap_obj, "signalStrength", json_object_new_int(access_points[i].signal));
-                json_object_object_add(ap_obj, "age", json_object_new_int(0)); // Real-time data
-                json_object_object_add(ap_obj, "channel", json_object_new_int(access_points[i].channel));
-                json_object_object_add(ap_obj, "signalToNoiseRatio", json_object_new_int(access_points[i].signal)); // Using signal strength as SNR approximation
-                
-                json_object_array_add(wifi_array, ap_obj);
+                if (ap_obj) {
+                    json_object_object_add(ap_obj, "macAddress", json_object_new_string(access_points[i].bssid));
+                    json_object_object_add(ap_obj, "signalStrength", json_object_new_int(access_points[i].signal));
+                    json_object_object_add(ap_obj, "channel", json_object_new_int(access_points[i].channel));
+                    json_object_object_add(ap_obj, "age", json_object_new_int(0)); // Real-time data
+                    json_object_array_add(wifi_array, ap_obj);
+                }
             }
         } else {
             LOGX_DEBUG_MSG("No WiFi access points found for location request");

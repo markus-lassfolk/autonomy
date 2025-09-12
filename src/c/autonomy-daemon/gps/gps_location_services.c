@@ -1,9 +1,10 @@
 #include "gps_coordinate_utils.h"
 #include "gps_location_services.h"
 #include "gps_google_api.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../utils/http_client.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -68,17 +69,17 @@ int gps_location_services_reverse_geocode(double lat, double lon, gps_location_i
         
         location_info->lat = cache_entry->lat;
         location_info->lon = cache_entry->lon;
-        strncpy(location_info->place_name, cache_entry->place_name, sizeof(location_info->place_name) - 1);
+        safe_strncpy(location_info->place_name, cache_entry->place_name, sizeof(location_info->place_name));
         location_info->place_name[sizeof(location_info->place_name) - 1] = '\0';
-        strncpy(location_info->address, cache_entry->address, sizeof(location_info->address) - 1);
+        safe_strncpy(location_info->address, cache_entry->address, sizeof(location_info->address));
         location_info->address[sizeof(location_info->address) - 1] = '\0';
-        strncpy(location_info->country, cache_entry->country, sizeof(location_info->country) - 1);
+        safe_strncpy(location_info->country, cache_entry->country, sizeof(location_info->country));
         location_info->country[sizeof(location_info->country) - 1] = '\0';
-        strncpy(location_info->state, cache_entry->state, sizeof(location_info->state) - 1);
+        safe_strncpy(location_info->state, cache_entry->state, sizeof(location_info->state));
         location_info->state[sizeof(location_info->state) - 1] = '\0';
-        strncpy(location_info->city, cache_entry->city, sizeof(location_info->city) - 1);
+        safe_strncpy(location_info->city, cache_entry->city, sizeof(location_info->city));
         location_info->city[sizeof(location_info->city) - 1] = '\0';
-        strncpy(location_info->postal_code, cache_entry->postal_code, sizeof(location_info->postal_code) - 1);
+        safe_strncpy(location_info->postal_code, cache_entry->postal_code, sizeof(location_info->postal_code));
         location_info->postal_code[sizeof(location_info->postal_code) - 1] = '\0';
         location_info->service_used = cache_entry->service_used;
         location_info->timestamp = cache_entry->timestamp;
@@ -163,17 +164,17 @@ void add_location_to_cache(const gps_location_info_t *location_info) {
     cache_entry->timestamp = time(NULL);
     cache_entry->lat = location_info->lat;
     cache_entry->lon = location_info->lon;
-    strncpy(cache_entry->place_name, location_info->place_name, sizeof(cache_entry->place_name) - 1);
+    safe_strncpy(cache_entry->place_name, location_info->place_name, sizeof(cache_entry->place_name));
     cache_entry->place_name[sizeof(cache_entry->place_name) - 1] = '\0';
-    strncpy(cache_entry->address, location_info->address, sizeof(cache_entry->address) - 1);
+    safe_strncpy(cache_entry->address, location_info->address, sizeof(cache_entry->address));
     cache_entry->address[sizeof(cache_entry->address) - 1] = '\0';
-    strncpy(cache_entry->country, location_info->country, sizeof(cache_entry->country) - 1);
+    safe_strncpy(cache_entry->country, location_info->country, sizeof(cache_entry->country));
     cache_entry->country[sizeof(cache_entry->country) - 1] = '\0';
-    strncpy(cache_entry->state, location_info->state, sizeof(cache_entry->state) - 1);
+    safe_strncpy(cache_entry->state, location_info->state, sizeof(cache_entry->state));
     cache_entry->state[sizeof(cache_entry->state) - 1] = '\0';
-    strncpy(cache_entry->city, location_info->city, sizeof(cache_entry->city) - 1);
+    safe_strncpy(cache_entry->city, location_info->city, sizeof(cache_entry->city));
     cache_entry->city[sizeof(cache_entry->city) - 1] = '\0';
-    strncpy(cache_entry->postal_code, location_info->postal_code, sizeof(cache_entry->postal_code) - 1);
+    safe_strncpy(cache_entry->postal_code, location_info->postal_code, sizeof(cache_entry->postal_code));
     cache_entry->postal_code[sizeof(cache_entry->postal_code) - 1] = '\0';
     cache_entry->service_used = location_info->service_used;
     
@@ -323,12 +324,12 @@ int try_google_service(double lat, double lon, gps_location_info_t *location_inf
     location_info->timestamp = time(NULL);
     
     // Copy Google API response data
-    strncpy(location_info->place_name, google_location.formatted_address, sizeof(location_info->place_name) - 1);
-    strncpy(location_info->address, google_location.formatted_address, sizeof(location_info->address) - 1);
-    strncpy(location_info->country, google_location.country, sizeof(location_info->country) - 1);
-    strncpy(location_info->state, google_location.administrative_area, sizeof(location_info->state) - 1);
-    strncpy(location_info->city, google_location.locality, sizeof(location_info->city) - 1);
-    strncpy(location_info->postal_code, google_location.postal_code, sizeof(location_info->postal_code) - 1);
+    safe_strncpy(location_info->place_name, google_location.formatted_address, sizeof(location_info->place_name));
+    safe_strncpy(location_info->address, google_location.formatted_address, sizeof(location_info->address));
+    safe_strncpy(location_info->country, google_location.country, sizeof(location_info->country));
+    safe_strncpy(location_info->state, google_location.administrative_area, sizeof(location_info->state));
+    safe_strncpy(location_info->city, google_location.locality, sizeof(location_info->city));
+    safe_strncpy(location_info->postal_code, google_location.postal_code, sizeof(location_info->postal_code));
     
     // Ensure null termination
     location_info->place_name[sizeof(location_info->place_name) - 1] = '\0';
@@ -476,23 +477,23 @@ int try_custom_service(double lat, double lon, gps_location_info_t *location_inf
                 pclose(script_fp);
                 
                 if (token_count >= 1) {
-                    strncpy(location_info->place_name, tokens[0], sizeof(location_info->place_name) - 1);
+                    safe_strncpy(location_info->place_name, tokens[0], sizeof(location_info->place_name));
                     location_info->place_name[sizeof(location_info->place_name) - 1] = '\0';
                     
                     if (token_count >= 2) {
-                        strncpy(location_info->address, tokens[1], sizeof(location_info->address) - 1);
+                        safe_strncpy(location_info->address, tokens[1], sizeof(location_info->address));
                         location_info->address[sizeof(location_info->address) - 1] = '\0';
                     }
                     if (token_count >= 3) {
-                        strncpy(location_info->city, tokens[2], sizeof(location_info->city) - 1);
+                        safe_strncpy(location_info->city, tokens[2], sizeof(location_info->city));
                         location_info->city[sizeof(location_info->city) - 1] = '\0';
                     }
                     if (token_count >= 4) {
-                        strncpy(location_info->state, tokens[3], sizeof(location_info->state) - 1);
+                        safe_strncpy(location_info->state, tokens[3], sizeof(location_info->state));
                         location_info->state[sizeof(location_info->state) - 1] = '\0';
                     }
                     if (token_count >= 5) {
-                        strncpy(location_info->country, tokens[4], sizeof(location_info->country) - 1);
+                        safe_strncpy(location_info->country, tokens[4], sizeof(location_info->country));
                         location_info->country[sizeof(location_info->country) - 1] = '\0';
                     }
                     
@@ -520,15 +521,15 @@ int try_custom_service(double lat, double lon, gps_location_info_t *location_inf
              "Location at %.4f, %.4f", lat, lon);
     
     // Set default address components
-    strncpy(location_info->address, "Unknown Address", sizeof(location_info->address) - 1);
+    safe_strncpy(location_info->address, "Unknown Address", sizeof(location_info->address));
     location_info->address[sizeof(location_info->address) - 1] = '\0';
-    strncpy(location_info->country, "Unknown Country", sizeof(location_info->country) - 1);
+    safe_strncpy(location_info->country, "Unknown Country", sizeof(location_info->country));
     location_info->country[sizeof(location_info->country) - 1] = '\0';
-    strncpy(location_info->state, "Unknown State", sizeof(location_info->state) - 1);
+    safe_strncpy(location_info->state, "Unknown State", sizeof(location_info->state));
     location_info->state[sizeof(location_info->state) - 1] = '\0';
-    strncpy(location_info->city, "Unknown City", sizeof(location_info->city) - 1);
+    safe_strncpy(location_info->city, "Unknown City", sizeof(location_info->city));
     location_info->city[sizeof(location_info->city) - 1] = '\0';
-    strncpy(location_info->postal_code, "00000", sizeof(location_info->postal_code) - 1);
+    safe_strncpy(location_info->postal_code, "00000", sizeof(location_info->postal_code));
     location_info->postal_code[sizeof(location_info->postal_code) - 1] = '\0';
     
     LOGX_DEBUG_MSG("Custom service fallback response for (%.6f, %.6f)", lat, lon);

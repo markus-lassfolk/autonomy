@@ -163,7 +163,7 @@ static daily_usage_tracker_t* get_daily_usage_tracker(const char* interface_name
     int index = g_data_limit_manager.tracked_interfaces_count;
     daily_usage_tracker_t* tracker = &g_data_limit_manager.daily_usage_trackers[index];
     
-    strncpy(tracker->interface_name, interface_name, sizeof(tracker->interface_name) - 1);
+    safe_strncpy(tracker->interface_name, interface_name, sizeof(tracker->interface_name));
     tracker->last_reset_date = time(NULL) - (30 * 24 * 60 * 60); // 30 days ago
     
     // Calculate daily allowance
@@ -416,7 +416,7 @@ int data_limit_notification_manager_notify_monthly_usage_threshold(const char* i
     time_t now = time(NULL);
     snprintf(event.id, sizeof(event.id), "monthly_%s_%.0f_%lld", interface_name, data_limit->usage_percentage, (long long)now);
     
-    strncpy(event.title, title, sizeof(event.title) - 1);
+    safe_strncpy(event.title, title, sizeof(event.title));
     
     if (tracker) {
         snprintf(event.message, sizeof(event.message),

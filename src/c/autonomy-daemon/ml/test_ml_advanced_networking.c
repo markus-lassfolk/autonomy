@@ -77,7 +77,7 @@ int main() {
     memset(&unstable_obs, 0, sizeof(unstable_obs));
     
     unstable_obs.timestamp = time(NULL);
-    strncpy(unstable_obs.interface_id, "cellular1", sizeof(unstable_obs.interface_id) - 1);
+    safe_strncpy(unstable_obs.interface_id, "cellular1", sizeof(unstable_obs.interface_id));
     unstable_obs.interface_type = INTERFACE_TYPE_CELLULAR;
     
     // Simulate unstable connection
@@ -128,7 +128,7 @@ int main() {
             memset(&bg_obs, 0, sizeof(bg_obs));
             
             bg_obs.timestamp = time(NULL) + (i * 5);
-            strncpy(bg_obs.interface_id, interfaces[intf], sizeof(bg_obs.interface_id) - 1);
+            safe_strncpy(bg_obs.interface_id, interfaces[intf], sizeof(bg_obs.interface_id));
             bg_obs.interface_type = intf; // Corresponds to interface type enum
             
             // Simulate realistic performance for each type
@@ -243,7 +243,7 @@ int main() {
         memset(&starlink_obs, 0, sizeof(starlink_obs));
         
         starlink_obs.timestamp = time(NULL) + second;
-        strncpy(starlink_obs.interface_id, "starlink1", sizeof(starlink_obs.interface_id) - 1);
+        safe_strncpy(starlink_obs.interface_id, "starlink1", sizeof(starlink_obs.interface_id));
         starlink_obs.interface_type = INTERFACE_TYPE_STARLINK;
         
         // Simulate gradual degradation
@@ -293,7 +293,7 @@ int main() {
         memset(&cellular_obs, 0, sizeof(cellular_obs));
         
         cellular_obs.timestamp = time(NULL) + (event * 300); // Every 5 minutes
-        strncpy(cellular_obs.interface_id, "cellular1", sizeof(cellular_obs.interface_id) - 1);
+        safe_strncpy(cellular_obs.interface_id, "cellular1", sizeof(cellular_obs.interface_id));
         cellular_obs.interface_type = INTERFACE_TYPE_CELLULAR;
         
         // Simulate unstable performance
@@ -346,7 +346,7 @@ int main() {
             memset(&bg_obs, 0, sizeof(bg_obs));
             
             bg_obs.timestamp = time(NULL) + obs;
-            strncpy(bg_obs.interface_id, all_interfaces[intf], sizeof(bg_obs.interface_id) - 1);
+            safe_strncpy(bg_obs.interface_id, all_interfaces[intf], sizeof(bg_obs.interface_id));
             bg_obs.interface_type = intf;
             
             // Realistic performance per interface type

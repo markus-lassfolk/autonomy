@@ -53,7 +53,7 @@ int main() {
         memset(&obs, 0, sizeof(obs));
         
         obs.timestamp = time(NULL) + (i * 15);
-        strncpy(obs.interface_id, "starlink1", sizeof(obs.interface_id) - 1);
+        safe_strncpy(obs.interface_id, "starlink1", sizeof(obs.interface_id));
         obs.interface_type = INTERFACE_TYPE_STARLINK;
         
         // Starlink performance characteristics
@@ -86,7 +86,7 @@ int main() {
         memset(&obs, 0, sizeof(obs));
         
         obs.timestamp = time(NULL) + (i * 15);
-        strncpy(obs.interface_id, "cellular1", sizeof(obs.interface_id) - 1);
+        safe_strncpy(obs.interface_id, "cellular1", sizeof(obs.interface_id));
         obs.interface_type = INTERFACE_TYPE_CELLULAR;
         
         // Cellular performance characteristics (typically higher latency)
@@ -118,7 +118,7 @@ int main() {
         memset(&obs, 0, sizeof(obs));
         
         obs.timestamp = time(NULL) + (i * 15);
-        strncpy(obs.interface_id, "wifi1", sizeof(obs.interface_id) - 1);
+        safe_strncpy(obs.interface_id, "wifi1", sizeof(obs.interface_id));
         obs.interface_type = INTERFACE_TYPE_WIFI;
         
         // WiFi performance characteristics

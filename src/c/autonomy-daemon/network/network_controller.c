@@ -1,6 +1,7 @@
 #include "network_controller.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -232,7 +233,7 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
                                         output, sizeof(output)) != 0) {
             // Truncate output to fit in error message buffer
             char truncated_output[128];
-            strncpy(truncated_output, output, sizeof(truncated_output) - 1);
+            safe_strncpy(truncated_output, output, sizeof(truncated_output));
             truncated_output[sizeof(truncated_output) - 1] = '\0';
             
             snprintf(result->error_message, sizeof(result->error_message),
@@ -252,7 +253,7 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
                                     output, sizeof(output)) != 0) {
         // Truncate output to fit in error message buffer
         char truncated_output[128];
-        strncpy(truncated_output, output, sizeof(truncated_output) - 1);
+        safe_strncpy(truncated_output, output, sizeof(truncated_output));
         truncated_output[sizeof(truncated_output) - 1] = '\0';
         
         snprintf(result->error_message, sizeof(result->error_message),
@@ -268,7 +269,7 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
                                     output, sizeof(output)) != 0) {
         // Truncate output to fit in error message buffer
         char truncated_output[128];
-        strncpy(truncated_output, output, sizeof(truncated_output) - 1);
+        safe_strncpy(truncated_output, output, sizeof(truncated_output));
         truncated_output[sizeof(truncated_output) - 1] = '\0';
         
         snprintf(result->error_message, sizeof(result->error_message),
@@ -353,7 +354,7 @@ static int switch_via_manual(const network_member_t* from, const network_member_
                                     output, sizeof(output)) != 0) {
         // Truncate output to fit in error message buffer
         char truncated_output[128];
-        strncpy(truncated_output, output, sizeof(truncated_output) - 1);
+        safe_strncpy(truncated_output, output, sizeof(truncated_output));
         truncated_output[sizeof(truncated_output) - 1] = '\0';
         
         snprintf(result->error_message, sizeof(result->error_message),
@@ -465,7 +466,7 @@ int network_controller_set_members(const network_member_t* members, int count) {
         LOGX_DEBUG_MSG("Member added",
                   "name", members[i].name,
                   "interface", members[i].interface,
-                  "class", members[i].class,
+                  "class", members[i].interface_class,
                   "weight", members[i].weight,
                   "eligible", members[i].eligible);
     }
@@ -511,17 +512,17 @@ int network_controller_validate_member(const network_member_t* member) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    if (strlen(member->class) == 0) {
+    if (strlen(member->interface_class) == 0) {
         LOGX_ERROR_MSG("Member class is required");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Validate class
-    if (strcmp(member->class, "starlink") != 0 &&
-        strcmp(member->class, "cellular") != 0 &&
-        strcmp(member->class, "wifi") != 0 &&
-        strcmp(member->class, "lan") != 0) {
-        LOGX_ERROR_MSG("Invalid member class", "class", member->class);
+    if (strcmp(member->interface_class, "starlink") != 0 &&
+        strcmp(member->interface_class, "cellular") != 0 &&
+        strcmp(member->interface_class, "wifi") != 0 &&
+        strcmp(member->interface_class, "lan") != 0) {
+        LOGX_ERROR_MSG("Invalid member class", "class", member->interface_class);
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     

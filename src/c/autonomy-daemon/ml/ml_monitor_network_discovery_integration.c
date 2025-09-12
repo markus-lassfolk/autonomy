@@ -1,7 +1,7 @@
 #include "ml_monitor.h"
 #include "ml_monitor_multi_interface.h"
 #include "../network/network_discovery_comprehensive.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -40,10 +40,26 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     
     // Use enhanced discovery to get detailed metrics
     extern int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count);
+    
+    // Add null pointer checks
+    if (!discovered_interfaces) {
+        printf("ERROR: Invalid parameters for network discovery\n");
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
+    
+    // Initialize interface count to 0
+    interface_count = 0;
+    
     int discovery_result = get_enhanced_comprehensive_interface_info(discovered_interfaces, &interface_count);
     if (discovery_result != AUTONOMY_SUCCESS) {
         printf("ERROR: Failed to get enhanced comprehensive interface info: %d\n", discovery_result);
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
+    }
+    
+    // Validate interface count
+    if (interface_count < 0 || interface_count > MAX_INTERFACES) {
+        printf("ERROR: Invalid interface count: %d\n", interface_count);
+        return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
     printf("INFO: Discovered %d network interfaces for ML monitoring\n", interface_count);
@@ -249,7 +265,7 @@ int ml_monitor_convert_network_interface_to_observation(const network_interface_
     memset(observation, 0, sizeof(multi_interface_observation_t));
     
     observation->timestamp = time(NULL);
-    strncpy(observation->interface_id, interface->name, sizeof(observation->interface_id) - 1);
+    safe_strncpy(observation->interface_id, interface->name, sizeof(observation->interface_id));
     observation->interface_type = ml_monitor_map_interface_type(interface);
     
     // Convert network discovery data to ML observation (prioritize real-time metrics)

@@ -509,7 +509,7 @@ typedef struct {
     // Cellular specific
     char modem_model[64];               // Cellular modem model
     char sim_id[16];                    // SIM identifier
-    char operator[64];                  // Cellular operator
+    char operator_name[64];             // Cellular operator
     int signal_strength;                // Signal strength
     char modem_id[16];                  // Modem ID (e.g., "2-1")
     char cellular_device_path[64];      // Cellular device path (e.g., "/dev/ttyUSB2")

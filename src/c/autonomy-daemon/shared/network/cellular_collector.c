@@ -1,6 +1,6 @@
 #include "cellular_collector.h"
-#include "../utils/logx.h"
-#include "../core/types.h"
+#include "../logging/logx.h"
+#include "../../core/types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

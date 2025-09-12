@@ -93,7 +93,7 @@ int performance_analyzer_analyze(performance_analysis_t* result) {
     
     // Analyze each member
     for (int i = 0; i < member_count; i++) {
-        strncpy(result->member_names[i], member_names[i], sizeof(result->member_names[i]) - 1);
+        safe_strncpy(result->member_names[i], member_names[i], sizeof(result->member_names[i]));
         result->member_names[i][sizeof(result->member_names[i]) - 1] = '\0';
         
         // Get performance for this member

@@ -1,6 +1,6 @@
 #include "network_failover_secure.h"
 #include "../utils/secure_exec.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
 #include <string.h>
 #include <stdio.h>

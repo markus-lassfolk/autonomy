@@ -1,13 +1,16 @@
 #include "service_watchdog.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include "../notifications/notification_manager.h"
 #include "../notifications/notification_types.h"
+#include "../shared/utils/string_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "../shared/utils/string_utils.h"
 #include <signal.h>
 #include <time.h>
 #include <errno.h>
@@ -300,7 +303,7 @@ static void send_notification(const char *type, const char *message) {
     // Create notification event
     notification_event_t event = {0};
     strcpy(event.title, "Service Watchdog Alert");
-    strncpy(event.message, message, sizeof(event.message) - 1);
+    safe_strncpy(event.message, message, sizeof(event.message));
     event.message[sizeof(event.message) - 1] = '\0';
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
     event.timestamp = time(NULL);

@@ -1,6 +1,7 @@
 #include "network_discovery_comprehensive.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -72,6 +73,11 @@ int network_discovery_comprehensive_init(void) {
 int get_comprehensive_interface_info(network_interface_t *interfaces, int *count) {
     if (!g_comprehensive_initialized) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    // Add null pointer checks
+    if (!interfaces || !count) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     *count = 0;
@@ -212,27 +218,27 @@ static void determine_interface_type_comprehensive(network_interface_t *iface) {
     
     // Check interface name patterns
     if (strncmp(iface->name, "eth", 3) == 0) {
-        strncpy(iface->type, "ethernet", sizeof(iface->type) - 1);
+        safe_strncpy(iface->type, "ethernet", sizeof(iface->type));
     } else if (strncmp(iface->name, "wlan", 4) == 0) {
-        strncpy(iface->type, "wifi", sizeof(iface->type) - 1);
+        safe_strncpy(iface->type, "wifi", sizeof(iface->type));
     } else if (strncmp(iface->name, "wwan", 4) == 0 || 
                strncmp(iface->name, "qmimux", 6) == 0) {
-        strncpy(iface->type, "cellular", sizeof(iface->type) - 1);
-        strncpy(iface->subtype, "sim", sizeof(iface->subtype) - 1);
+        safe_strncpy(iface->type, "cellular", sizeof(iface->type));
+        safe_strncpy(iface->subtype, "sim", sizeof(iface->subtype));
     } else if (strncmp(iface->name, "tun", 3) == 0 || strncmp(iface->name, "tap", 3) == 0) {
-        strncpy(iface->type, "vpn", sizeof(iface->type) - 1);
-        strncpy(iface->subtype, "openvpn", sizeof(iface->subtype) - 1);
+        safe_strncpy(iface->type, "vpn", sizeof(iface->type));
+        safe_strncpy(iface->subtype, "openvpn", sizeof(iface->subtype));
         iface->is_vpn = true;
     } else if (strncmp(iface->name, "wg_", 3) == 0) {
-        strncpy(iface->type, "vpn", sizeof(iface->type) - 1);
-        strncpy(iface->subtype, "wireguard", sizeof(iface->subtype) - 1);
+        safe_strncpy(iface->type, "vpn", sizeof(iface->type));
+        safe_strncpy(iface->subtype, "wireguard", sizeof(iface->subtype));
         iface->is_vpn = true;
     } else if (strncmp(iface->name, "br", 2) == 0) {
-        strncpy(iface->type, "bridge", sizeof(iface->type) - 1);
+        safe_strncpy(iface->type, "bridge", sizeof(iface->type));
     } else if (strncmp(iface->name, "vlan", 4) == 0) {
-        strncpy(iface->type, "vlan", sizeof(iface->type) - 1);
+        safe_strncpy(iface->type, "vlan", sizeof(iface->type));
     } else {
-        strncpy(iface->type, "unknown", sizeof(iface->type) - 1);
+        safe_strncpy(iface->type, "unknown", sizeof(iface->type));
     }
 }
 

@@ -2,7 +2,7 @@
 #include "performance_analyzer.h"
 #include "trend_analyzer.h"
 #include "health_analyzer.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/system_management.h"
 #include "../utils/disk_monitor.h"
 #include <stdlib.h>
@@ -61,7 +61,7 @@ int analytics_engine_init(const analytics_config_t* config) {
     }
     
     // Initialize mutex
-    g_analytics_engine.mutex = malloc(sizeof(pthread_mutex_t));
+    g_analytics_engine.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
     if (!g_analytics_engine.mutex) {
         return -1;
     }
@@ -78,7 +78,7 @@ int analytics_engine_init(const analytics_config_t* config) {
     g_analytics_engine.status.update_duration_avg_ms = 0.0;
     
     // Initialize dashboard metrics
-    g_analytics_engine.dashboard_metrics = malloc(sizeof(dashboard_metrics_t));
+    g_analytics_engine.dashboard_metrics = (dashboard_metrics_t*)malloc(sizeof(dashboard_metrics_t));
     if (!g_analytics_engine.dashboard_metrics) {
         pthread_mutex_destroy(g_analytics_engine.mutex);
         free(g_analytics_engine.mutex);
@@ -735,7 +735,7 @@ int analytics_engine_get_member_analytics(const char* member_name, int hours,
     
     // Convert to performance metrics format
     analytics->member_count = 1;
-    strncpy(analytics->member_names[0], member_name, sizeof(analytics->member_names[0]) - 1);
+    safe_strncpy(analytics->member_names[0], member_name, sizeof(analytics->member_names[0]));
     analytics->member_names[0][sizeof(analytics->member_names[0]) - 1] = '\0';
     analytics->average_latency[0] = performance.average_latency;
     analytics->average_loss[0] = performance.average_loss;

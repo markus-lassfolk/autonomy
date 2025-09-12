@@ -57,7 +57,7 @@ int decision_engine_init(const decision_engine_config_t* config) {
     }
     
     // Initialize mutex
-    g_decision_engine.mutex = malloc(sizeof(pthread_mutex_t));
+    g_decision_engine.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
     if (!g_decision_engine.mutex) {
         return -1;
     }
@@ -142,6 +142,7 @@ int decision_engine_make_decision(decision_result_t* result) {
     // Log decision to comprehensive telemetry system
     if (telemetry_comprehensive_is_initialized() && (needs_failover || result->confidence > 0.8)) {
         decision_record_t telemetry_decision = {0};
+        telemetry_decision.timestamp = time(NULL);
         
         // Generate decision ID
         snprintf(telemetry_decision.decision_id, sizeof(telemetry_decision.decision_id),
@@ -149,7 +150,7 @@ int decision_engine_make_decision(decision_result_t* result) {
         
         strcpy(telemetry_decision.decision_type, needs_failover ? "failover" : "evaluation");
         strcpy(telemetry_decision.trigger, "periodic_evaluation");
-        strncpy(telemetry_decision.reasoning, result->reason, sizeof(telemetry_decision.reasoning) - 1);
+        safe_strncpy(telemetry_decision.reasoning, result->reason, sizeof(telemetry_decision.reasoning));
         telemetry_decision.reasoning[sizeof(telemetry_decision.reasoning) - 1] = '\0';
         telemetry_decision.confidence = result->confidence;
         
@@ -166,7 +167,7 @@ int decision_engine_make_decision(decision_result_t* result) {
             telemetry_decision.gps_latitude = gps_data.latitude;
             telemetry_decision.gps_longitude = gps_data.longitude;
             telemetry_decision.gps_accuracy = gps_data.accuracy;
-            strncpy(telemetry_decision.gps_source, gps_data.source, sizeof(telemetry_decision.gps_source) - 1);
+            safe_strncpy(telemetry_decision.gps_source, gps_data.source, sizeof(telemetry_decision.gps_source));
             telemetry_decision.gps_source[sizeof(telemetry_decision.gps_source) - 1] = '\0';
         }
         
@@ -269,10 +270,10 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                 scores[score_count].throughput_score = throughput_score;
                 
                 // Class-specific scoring
-                if (strcmp(members[i].class, "starlink") == 0) {
+                if (strcmp(members[i].interface_class, "starlink") == 0) {
                     scores[score_count].cost_score = 0.6; // Higher cost but good performance
                     scores[score_count].reliability_score = 0.8;
-                } else if (strcmp(members[i].class, "cellular") == 0) {
+                } else if (strcmp(members[i].interface_class, "cellular") == 0) {
                     scores[score_count].cost_score = 0.4; // Expensive
                     scores[score_count].reliability_score = 0.7;
                     
@@ -283,10 +284,10 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                         scores[score_count].signal_score = cellular_info.signal_quality / 100.0;
                         scores[score_count].reliability_score = cellular_info.stability_score / 100.0;
                     }
-                } else if (strcmp(members[i].class, "wifi") == 0) {
+                } else if (strcmp(members[i].interface_class, "wifi") == 0) {
                     scores[score_count].cost_score = 0.9; // Usually free
                     scores[score_count].reliability_score = 0.6; // Variable
-                } else if (strcmp(members[i].class, "lan") == 0) {
+                } else if (strcmp(members[i].interface_class, "lan") == 0) {
                     scores[score_count].cost_score = 1.0; // Free
                     scores[score_count].reliability_score = 0.9; // Very reliable
                 }
@@ -326,11 +327,11 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                     }
                 } else {
                     // No historical data - use interface type defaults
-                    if (strcmp(members[i].class, "starlink") == 0) {
+                    if (strcmp(members[i].interface_class, "starlink") == 0) {
                         historical_score = 0.8; // Use configurable value // Starlink generally reliable
-                    } else if (strcmp(members[i].class, "cellular") == 0) {
+                    } else if (strcmp(members[i].interface_class, "cellular") == 0) {
                         historical_score = 0.6; // Use configurable value // Cellular can be variable
-                    } else if (strcmp(members[i].class, "wifi") == 0) {
+                    } else if (strcmp(members[i].interface_class, "wifi") == 0) {
                         historical_score = 0.7; // Use configurable value // WiFi depends on environment
                     }
                 }
