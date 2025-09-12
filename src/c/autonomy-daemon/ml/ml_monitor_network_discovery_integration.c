@@ -42,7 +42,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     extern int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count);
     
     // Add null pointer checks
-    if (!discovered_interfaces || !&interface_count) {
+    if (!discovered_interfaces) {
         printf("ERROR: Invalid parameters for network discovery\n");
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }

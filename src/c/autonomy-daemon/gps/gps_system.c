@@ -69,6 +69,10 @@ static gps_system_t g_gps_system = {0};
 static bool g_gps_system_initialized = false; // Use configurable setting
 static pthread_mutex_t g_gps_system_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Global API key storage for proper cleanup
+static char* g_google_api_key = NULL;
+static char* g_weather_api_key = NULL;
+
 // Initialize GPS system
 int gps_system_init(void) {
     if (g_gps_system_initialized) {
@@ -184,10 +188,7 @@ int gps_system_init(void) {
     }
     
     // Initialize GPS Google API with proper API key loading
-    char* google_api_key = NULL;
-    
-    // Try to get from environment variable first
-    google_api_key = getenv("GOOGLE_API_KEY");
+    char* google_api_key = getenv("GOOGLE_API_KEY");
     
     // If not found in environment, try to get from UCI configuration
     if (!google_api_key) {
@@ -199,16 +200,17 @@ int gps_system_init(void) {
                 char *newline = strchr(key_buffer, '\n');
                 if (newline) *newline = '\0';
                 
-                // Allocate memory for the key
-                google_api_key = (char*)malloc(strlen(key_buffer) + 1);
-                if (google_api_key) {
+                // Allocate memory for the key and store globally for cleanup
+                g_google_api_key = (char*)malloc(strlen(key_buffer) + 1);
+                if (g_google_api_key) {
                     // Remove quotes if present
                     if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
                         key_buffer[strlen(key_buffer)-1] = '\0';
-                        strcpy(google_api_key, key_buffer + 1);
+                        strcpy(g_google_api_key, key_buffer + 1);
                     } else {
-                        strcpy(google_api_key, key_buffer);
+                        strcpy(g_google_api_key, key_buffer);
                     }
+                    google_api_key = g_google_api_key;
                 }
             }
             pclose(uci_fp);
@@ -236,10 +238,7 @@ int gps_system_init(void) {
     }
     
     // Initialize GPS Weather integration with proper API key loading
-    char* weather_api_key = NULL;
-    
-    // Try to get from environment variable first
-    weather_api_key = getenv("WEATHER_API_KEY");
+    char* weather_api_key = getenv("WEATHER_API_KEY");
     
     // If not found in environment, try to get from UCI configuration
     if (!weather_api_key) {
@@ -251,16 +250,17 @@ int gps_system_init(void) {
                 char *newline = strchr(key_buffer, '\n');
                 if (newline) *newline = '\0';
                 
-                // Allocate memory for the key
-                weather_api_key = (char*)malloc(strlen(key_buffer) + 1);
-                if (weather_api_key) {
+                // Allocate memory for the key and store globally for cleanup
+                g_weather_api_key = (char*)malloc(strlen(key_buffer) + 1);
+                if (g_weather_api_key) {
                     // Remove quotes if present
                     if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
                         key_buffer[strlen(key_buffer)-1] = '\0';
-                        strcpy(weather_api_key, key_buffer + 1);
+                        strcpy(g_weather_api_key, key_buffer + 1);
                     } else {
-                        strcpy(weather_api_key, key_buffer);
+                        strcpy(g_weather_api_key, key_buffer);
                     }
+                    weather_api_key = g_weather_api_key;
                 }
             }
             pclose(uci_fp);
@@ -691,6 +691,16 @@ void gps_system_cleanup(void) {
     gps_terrain_cleanup();
     gps_performance_cleanup();
     gps_error_recovery_cleanup();
+    
+    // Free allocated API keys
+    if (g_google_api_key) {
+        free(g_google_api_key);
+        g_google_api_key = NULL;
+    }
+    if (g_weather_api_key) {
+        free(g_weather_api_key);
+        g_weather_api_key = NULL;
+    }
     
     pthread_mutex_destroy(&g_gps_system_mutex);
     g_gps_system_initialized = false; // Use configurable setting

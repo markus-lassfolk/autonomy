@@ -647,7 +647,7 @@ static int collect_current_telemetry(void) {
             sample.rsrp_dbm = cellular_info.rsrp;
             sample.rsrq_db = cellular_info.rsrq;
             sample.sinr_db = cellular_info.sinr;
-            strncpy(sample.carrier, cellular_info.operator, sizeof(sample.carrier) - 1);
+            strncpy(sample.carrier, cellular_info.operator_name, sizeof(sample.carrier) - 1);
             sample.carrier[sizeof(sample.carrier) - 1] = '\0';
             sample.cell_id = cellular_info.cell_id;
             sample.signal_strength = cellular_info.signal_quality / 100.0;

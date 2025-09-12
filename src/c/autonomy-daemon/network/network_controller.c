@@ -511,17 +511,17 @@ int network_controller_validate_member(const network_member_t* member) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    if (strlen(member->class) == 0) {
+    if (strlen(member->interface_class) == 0) {
         LOGX_ERROR_MSG("Member class is required");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Validate class
-    if (strcmp(member->class, "starlink") != 0 &&
-        strcmp(member->class, "cellular") != 0 &&
-        strcmp(member->class, "wifi") != 0 &&
-        strcmp(member->class, "lan") != 0) {
-        LOGX_ERROR_MSG("Invalid member class", "class", member->class);
+    if (strcmp(member->interface_class, "starlink") != 0 &&
+        strcmp(member->interface_class, "cellular") != 0 &&
+        strcmp(member->interface_class, "wifi") != 0 &&
+        strcmp(member->interface_class, "lan") != 0) {
+        LOGX_ERROR_MSG("Invalid member class", "class", member->interface_class);
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
