@@ -61,6 +61,12 @@ int ml_monitor_init_phase7_multi_interface(ml_monitor_t *monitor) {
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
+    // Add safety check for g_phase7_system
+    if (!g_phase7_system) {
+        fprintf(stderr, "ERROR: Phase 7 system not initialized\n");
+        return ML_MONITOR_ERROR_NOT_INITIALIZED;
+    }
+    
     int discovery_result = ml_monitor_init_from_network_discovery(monitor);
     if (discovery_result != ML_MONITOR_SUCCESS) {
         // Use simple fprintf to avoid LOGX crashes
