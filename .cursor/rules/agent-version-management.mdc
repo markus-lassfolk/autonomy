@@ -1,0 +1,55 @@
+---
+description: Agent rules for systematic version management and synchronization
+alwaysApply: false
+---
+
+# Agent Rules: Version Management and Synchronization
+
+## When to Use This Rule
+Use this rule when making any changes to the codebase, before building, or when asked to update versions.
+
+## Version Update Process
+1. **Update VERSION file**: Increment build number in [VERSION](mdc:VERSION)
+2. **Update version.h**: Update build number and version string in [src/c/autonomy-daemon/core/version.h](mdc:src/c/autonomy-daemon/core/version.h)
+3. **Update ubus_methods.c**: Update hardcoded version strings in [src/c/autonomy-daemon/ubus/ubus_methods.c](mdc:src/c/autonomy-daemon/ubus/ubus_methods.c)
+4. **Verify synchronization**: All three files must have matching version numbers
+
+## Version File Locations
+- **Main version**: [VERSION](mdc:VERSION) - Contains AUTONOMY_VERSION_BUILD
+- **C header**: [src/c/autonomy-daemon/core/version.h](mdc:src/c/autonomy-daemon/core/version.h) - Contains AUTONOMY_DAEMON_VERSION_BUILD
+- **UBUS methods**: [src/c/autonomy-daemon/ubus/ubus_methods.c](mdc:src/c/autonomy-daemon/ubus/ubus_methods.c) - Contains hardcoded version strings
+
+## Version Update Commands
+```bash
+# Update VERSION file
+AUTONOMY_VERSION_BUILD=206  # Increment this number
+AUTONOMY_VERSION_FULL=5.8.4-206
+
+# Update version.h
+#define AUTONOMY_DAEMON_VERSION_BUILD 206
+#define AUTONOMY_DAEMON_VERSION_FULL "5.8.4-206"
+
+# Update ubus_methods.c
+blobmsg_add_string(&bb, "version", "5.8.4-206");
+```
+
+## Version Verification
+- **Before testing**: Always verify daemon reports correct version
+- **Command**: `ssh -i ~/.ssh/rutos_key root@192.168.80.1 "LD_LIBRARY_PATH=/usr/local/usr/lib:/usr/lib timeout 10 /usr/local/usr/bin/autonomy-daemon --version"`
+- **Expected output**: Version: 5.8.4-X | Build: [current date] | Git: [info] | Runtime: [current UTC time]
+
+## Version Mismatch Resolution
+If daemon reports old version after deployment:
+1. Check all three version files are updated
+2. Clean build caches completely
+3. Rebuild with build script
+4. Redeploy with deploy script
+5. Verify version again
+
+## Success Criteria
+- All version files updated with same build number
+- Daemon reports correct version after deployment
+- No version mismatches in logs
+- Version verification passes before testing
+- CHANGELOG.md updated with new version entry
+- PROJECT_STATUS.md updated with current version information

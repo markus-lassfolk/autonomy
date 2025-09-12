@@ -65,7 +65,7 @@ int gps_clustering_init(void) {
     g_clustering.last_clustering = 0;
     
     // Initialize clusters array
-    for (int i = 0; i < MAX_CLUSTERS; i++) {
+    for (int i = 0; i < 10; i++) {
         g_clustering.clusters[i].active = false;
         g_clustering.clusters[i].position_count = 0;
         g_clustering.clusters[i].last_update = 0;
@@ -509,7 +509,7 @@ int gps_clustering_reset(void) {
     g_clustering.last_clustering = 0;
     
     // Clear all clusters
-    for (int i = 0; i < g_clustering.max_clusters; i++) {
+    for (int i = 0; i < 10; i++) {
         g_clustering.clusters[i].active = false;
         g_clustering.clusters[i].position_count = 0;
         g_clustering.clusters[i].last_update = 0;

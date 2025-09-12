@@ -15,6 +15,11 @@
 // External reference to global configuration
 extern autonomy_config_t g_config;
 
+// Forward declarations
+static int calculate_channel_score(const wifi_channel_score_t* score);
+static void aggregate_channel_scores(void);
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
+
 // WiFi management configuration
 static const int MAX_CHANNEL_SCORES = 100; // Use configurable count // Use configurable value           // Maximum channel scores to store
 static const int MAX_SCHEDULED_TASKS = 50; // Use configurable count // Use configurable value           // Maximum scheduled tasks
@@ -24,9 +29,6 @@ static const int VHT80_THRESHOLD = -70;              // VHT80 threshold in dBm
 static const int VHT40_THRESHOLD = -75;              // VHT40 threshold in dBm
 static const int STRONG_RSSI_THRESHOLD = -60;        // Strong interferer threshold
 static const int WEAK_RSSI_THRESHOLD = -80;          // Weak interferer threshold
-
-// Forward declarations
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
 
 // Global WiFi management state
 static wifi_management_t g_wifi_management = {0};
@@ -237,7 +239,7 @@ int calculate_channel_score(const wifi_channel_score_t *score) {
         base_score -= 20; // High noise
     }
     
-    return fmax(0, base_score);
+    return (base_score < 0) ? 0 : base_score;
 }
 
 // Aggregate scores for same channels with sophisticated algorithms
@@ -577,8 +579,8 @@ int wifi_management_update_gps_location(double lat, double lon, double accuracy,
                 // Trigger optimization
                 pthread_mutex_unlock(&g_wifi_management_mutex);
                 
-                LOGX_INFO_MSG("GPS-triggered WiFi optimization: stationary for %ld seconds", 
-                         timestamp - g_wifi_management.gps_integration.stationary_start);
+                LOGX_INFO_MSG("GPS-triggered WiFi optimization: stationary for %lld seconds", 
+                         (long long)(timestamp - g_wifi_management.gps_integration.stationary_start));
                 
                 // Find first available interface for optimization
                 if (g_wifi_management.interfaces_count > 0) {

@@ -8,8 +8,7 @@
 #include <time.h>
 #include <sys/socket.h>
 
-// Maximum number of interfaces
-#define MAX_INTERFACES 16
+// MAX_INTERFACES is defined in ../core/types.h
 
 // Maximum number of test targets
 #define MAX_TEST_TARGETS 8
@@ -40,29 +39,7 @@ typedef struct {
     time_t timestamp;
 } dns_result_t;
 
-// Network metrics for an interface
-typedef struct {
-    char interface_name[32];
-    time_t timestamp;
-    
-    // Ping metrics
-    float ping_success_rate;      // Percentage of successful pings
-    double ping_average_latency;  // Average latency in ms
-    double ping_min_latency;      // Minimum latency in ms
-    double ping_max_latency;      // Maximum latency in ms
-    float ping_packet_loss;       // Packet loss percentage
-    
-    // TCP metrics
-    float tcp_success_rate;       // Percentage of successful TCP connections
-    double tcp_average_connect_time; // Average connection time in ms
-    
-    // DNS metrics
-    bool dns_success;             // DNS resolution success
-    double dns_resolve_time;      // DNS resolution time in ms
-    
-    // Overall health
-    float overall_health_score;   // Overall health score (0-100)
-}; // Note: network_metrics_t defined in ../core/types.h
+// Network metrics for an interface - using network_metrics_t from ../core/types.h
 
 // Network collector status
 typedef struct {

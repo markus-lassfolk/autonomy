@@ -69,12 +69,12 @@ enum {
  * Initialize UBUS interface for weather-based snow melt control
  * @return AUTONOMY_SUCCESS on success, error code on failure
  */
-int starlink_weather_snow_melt_ubus_init(void);
+int starlink_weather_snow_melt_ubus_init(struct ubus_context *ctx);
 
 /**
  * Cleanup UBUS interface for weather-based snow melt control
  */
-void starlink_weather_snow_melt_ubus_cleanup(void);
+void starlink_weather_snow_melt_ubus_cleanup(struct ubus_context *ctx);
 
 /**
  * UBUS method handlers

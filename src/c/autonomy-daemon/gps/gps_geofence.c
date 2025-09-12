@@ -730,7 +730,7 @@ void send_geofence_notifications(gps_geofence_definition_t *geofence,
                 "\"latitude\":%.6f,\"longitude\":%.6f,\"timestamp\":%lld}",
                 geofence->name, status_name, previous_name, gps_data->lat, gps_data->lon, gps_data->timestamp);
         
-        char webhook_cmd[1024];
+        char webhook_cmd[2048];  // Increased buffer size to handle long webhook URLs
         snprintf(webhook_cmd, sizeof(webhook_cmd),
                 "curl -X POST -H 'Content-Type: application/json' -d '%s' %s 2>/dev/null",
                 webhook_data, g_geofence.webhook_url);
@@ -745,7 +745,7 @@ void send_geofence_notifications(gps_geofence_definition_t *geofence,
                 "{\"geofence\":\"%s\",\"status\":\"%s\",\"lat\":%.6f,\"lon\":%.6f}",
                 geofence->name, status_name, gps_data->lat, gps_data->lon);
         
-        char mqtt_cmd[1024];
+        char mqtt_cmd[2048];  // Increased buffer size to handle long MQTT commands
         snprintf(mqtt_cmd, sizeof(mqtt_cmd),
                 "mosquitto_pub -h %s -t '%s' -m '%s' 2>/dev/null",
                 g_geofence.mqtt_broker, g_geofence.mqtt_topic, mqtt_data);
@@ -791,7 +791,7 @@ void update_system_config_for_geofence(gps_geofence_definition_t *geofence,
 void trigger_location_based_services(gps_geofence_definition_t *geofence, 
                                            const gps_data_t *gps_data) {
     // Update timezone based on location
-    char timezone_cmd[256];
+    char timezone_cmd[1024];  // Increased buffer size to handle long timezone commands
     snprintf(timezone_cmd, sizeof(timezone_cmd),
             "timedatectl set-timezone $(curl -s 'http://api.timezonedb.com/v2.1/get-time-zone?key=%s&format=json&by=position&lat=%.6f&lng=%.6f' | jq -r '.zoneName') 2>/dev/null",
             g_geofence.timezone_api_key, gps_data->lat, gps_data->lon);

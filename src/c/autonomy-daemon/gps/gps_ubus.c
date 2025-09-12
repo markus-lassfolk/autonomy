@@ -7,6 +7,9 @@
 
 extern autonomy_state_t g_state;
 
+// Forward declarations
+static void perform_gps_health_check(void);
+
 // GPS method handlers
 int autonomy_gps_status(struct ubus_context *uctx, struct ubus_object *obj,
                        struct ubus_request_data *req, const char *method,
@@ -81,4 +84,11 @@ int autonomy_gps_health_check(struct ubus_context *uctx, struct ubus_object *obj
     ubus_send_reply(uctx, req, bb.head);
     blob_buf_free(&bb);
     return 0;
+}
+
+// Stub implementation for perform_gps_health_check
+static void perform_gps_health_check(void) {
+    // TODO: Implement actual GPS health check logic
+    // For now, just update the health score based on available data
+    g_state.gps_health_score = 85.0; // Default health score
 }

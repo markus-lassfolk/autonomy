@@ -230,8 +230,13 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
         
         if (execute_command_with_timeout(command, g_network_controller.config.switch_timeout_seconds, 
                                         output, sizeof(output)) != 0) {
+            // Truncate output to fit in error message buffer
+            char truncated_output[128];
+            strncpy(truncated_output, output, sizeof(truncated_output) - 1);
+            truncated_output[sizeof(truncated_output) - 1] = '\0';
+            
             snprintf(result->error_message, sizeof(result->error_message),
-                    "Failed to disable member %s: %s", from->name, output);
+                    "Failed to disable member %s: %s", from->name, truncated_output);
             return AUTONOMY_ERROR_SYSTEM;
         }
         
@@ -245,8 +250,13 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
     
     if (execute_command_with_timeout(command, g_network_controller.config.switch_timeout_seconds,
                                     output, sizeof(output)) != 0) {
+        // Truncate output to fit in error message buffer
+        char truncated_output[128];
+        strncpy(truncated_output, output, sizeof(truncated_output) - 1);
+        truncated_output[sizeof(truncated_output) - 1] = '\0';
+        
         snprintf(result->error_message, sizeof(result->error_message),
-                "Failed to enable member %s: %s", to->name, output);
+                "Failed to enable member %s: %s", to->name, truncated_output);
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -256,8 +266,13 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
     snprintf(command, sizeof(command), "%s restart 2>&1", g_network_controller.config.mwan3_path);
     if (execute_command_with_timeout(command, g_network_controller.config.switch_timeout_seconds,
                                     output, sizeof(output)) != 0) {
+        // Truncate output to fit in error message buffer
+        char truncated_output[128];
+        strncpy(truncated_output, output, sizeof(truncated_output) - 1);
+        truncated_output[sizeof(truncated_output) - 1] = '\0';
+        
         snprintf(result->error_message, sizeof(result->error_message),
-                "Failed to restart MWAN3: %s", output);
+                "Failed to restart MWAN3: %s", truncated_output);
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -336,8 +351,13 @@ static int switch_via_manual(const network_member_t* from, const network_member_
     snprintf(command, sizeof(command), "ifup %s 2>&1", to->interface);
     if (execute_command_with_timeout(command, g_network_controller.config.switch_timeout_seconds,
                                     output, sizeof(output)) != 0) {
+        // Truncate output to fit in error message buffer
+        char truncated_output[128];
+        strncpy(truncated_output, output, sizeof(truncated_output) - 1);
+        truncated_output[sizeof(truncated_output) - 1] = '\0';
+        
         snprintf(result->error_message, sizeof(result->error_message),
-                "Failed to bring up interface %s: %s", to->interface, output);
+                "Failed to bring up interface %s: %s", to->interface, truncated_output);
         return AUTONOMY_ERROR_SYSTEM;
     }
     

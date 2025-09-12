@@ -643,7 +643,7 @@ void execute_custom_action(const gps_event_definition_t *event, const gps_data_t
     // Execute based on action type
     if (strcmp(action_type, "script") == 0) {
         // Execute custom script
-        char script_path[256];
+        char script_path[512];  // Increased buffer size to handle long script names
         snprintf(script_path, sizeof(script_path), "/var/lib/autonomy/scripts/%s", action_data);
         
         if (access(script_path, F_OK | X_OK) == 0) {
@@ -669,7 +669,7 @@ void execute_custom_action(const gps_event_definition_t *event, const gps_data_t
         }
     } else if (strcmp(action_type, "file") == 0) {
         // Write to custom file
-        char file_path[256];
+        char file_path[512];  // Increased buffer size to handle long file names
         snprintf(file_path, sizeof(file_path), "/var/lib/autonomy/actions/%s", action_data);
         
         FILE* fp = fopen(file_path, "a");

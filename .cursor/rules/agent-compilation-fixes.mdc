@@ -1,0 +1,51 @@
+---
+description: Agent rules for systematic compilation error detection and fixing
+alwaysApply: false
+---
+
+# Agent Rules: Compilation Error Detection and Fixing
+
+## When to Use This Rule
+Use this rule when encountering compilation errors, build failures, or when asked to fix build issues.
+
+## Systematic Error Detection Process
+1. **Run compilation error detector first**: `/mnt/wsl/SDK/compilation_error_detector.sh`
+2. **Search for error patterns across entire codebase**: Use grep to find all instances of the same error
+3. **Warnings**: Also address and solve warnings in the build-log. 
+4. **Fix all instances systematically**: Don't just fix the file mentioned in the error
+5. **Update error detector script**: Add new patterns to prevent future occurrences
+
+## Common Error Patterns to Search For
+- **LOGX macro issues**: `grep -r "LOGX_INFO(" src/c/autonomy-daemon/` (should be LOGX_INFO_MSG)
+- **Missing includes**: `grep -r "calloc\|malloc" src/c/autonomy-daemon/` (check for stdlib.h)
+- **Format specifiers**: `grep -r "%ld" src/c/autonomy-daemon/` (should be %lld for time_t)
+- **Type conflicts**: `grep -r "typedef.*gps_data_t" src/c/autonomy-daemon/`
+- **Function signatures**: `grep -r "function_name" src/c/autonomy-daemon/`
+
+## Automated Fix Commands
+```bash
+# Fix LOGX macros
+find src/c/autonomy-daemon -name "*.c" -exec sed -i 's/LOGX_INFO(/LOGX_INFO_MSG(/g' {} \;
+find src/c/autonomy-daemon -name "*.c" -exec sed -i 's/LOGX_ERROR(/LOGX_ERROR_MSG(/g' {} \;
+
+# Fix format specifiers
+find src/c/autonomy-daemon -name "*.c" -exec sed -i 's/%ld", time_t/%lld", (long long)time_t/g' {} \;
+
+# Remove Unicode characters
+find src/c/autonomy-daemon -name "*.c" -exec sed -i 's/[^\x00-\x7F]//g' {} \;
+```
+
+## Manual Review Required
+- Type definition conflicts
+- Function signature changes
+- UCI API usage modifications
+- Variable name changes
+- Complex struct member fixes
+
+## Success Criteria
+- All compilation errors resolved
+- No new warnings introduced
+- Error detector script updated with new patterns
+- Build completes successfully
+- CHANGELOG.md updated with fix details
+- PROJECT_STATUS.md updated with compilation status

@@ -227,7 +227,7 @@ int external_apis_get_elevation(double latitude, double longitude, external_elev
             LOGX_WARN_MSG("Google Elevation API rate limited");
             g_external_apis.stats[EXTERNAL_API_GOOGLE_ELEVATION].rate_limited_requests++;
         } else {
-            char url[512];
+            char url[1024];  // Increased buffer size to handle long URLs
             snprintf(url, sizeof(url), 
                     "%s/json?locations=%.6f,%.6f&key=%s",
                     g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].base_url,
@@ -373,7 +373,7 @@ int external_apis_get_weather(double latitude, double longitude, external_weathe
             LOGX_WARN_MSG("OpenWeatherMap API rate limited");
             g_external_apis.stats[EXTERNAL_API_WEATHER_OPENWEATHER].rate_limited_requests++;
         } else {
-            char url[512];
+            char url[1024];  // Increased buffer size to handle long URLs
             snprintf(url, sizeof(url),
                     "%s/weather?lat=%.6f&lon=%.6f&appid=%s&units=metric",
                     g_external_apis.configs[EXTERNAL_API_WEATHER_OPENWEATHER].base_url,

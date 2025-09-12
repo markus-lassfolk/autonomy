@@ -3,6 +3,7 @@
 #include "../starlink/starlink_comprehensive.h"
 #include "starlink_grpc_collector.h"
 #include "../notifications/notification_types.h"
+#include "../notifications/notifications_comprehensive.h"
 #include "../utils/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -338,7 +339,7 @@ static int detect_version_change(const starlink_api_version_t* new_version) {
     
     // Generate unique change ID
     snprintf(change->change_id, sizeof(change->change_id), 
-             "api_change_%ld_%d", time(NULL), g_api_version_monitor.change_records_count);
+              "api_change_%lld_%d", (long long)time(NULL), g_api_version_monitor.change_records_count);
     
     change->detected_at = time(NULL);
     change->endpoint = STARLINK_API_ENDPOINT_GET_STATUS; // Detected via get_status
@@ -714,8 +715,8 @@ static int save_version_to_storage(const starlink_api_version_t* version) {
     fprintf(fp, "minor_version=%d\n", version->minor_version);
     fprintf(fp, "patch_version=%d\n", version->patch_version);
     fprintf(fp, "build_identifier=%s\n", version->build_identifier);
-    fprintf(fp, "first_detected=%ld\n", version->first_detected);
-    fprintf(fp, "last_seen=%ld\n", version->last_seen);
+     fprintf(fp, "first_detected=%lld\n", (long long)version->first_detected);
+    fprintf(fp, "last_seen=%lld\n", (long long)version->last_seen);
     
     fclose(fp);
     

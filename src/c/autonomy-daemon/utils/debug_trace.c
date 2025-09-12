@@ -32,7 +32,7 @@ const char* debug_trace_get_timestamp(void) {
     tm_info = localtime(&tv.tv_sec);
     
     strftime(timestamp_buffer, sizeof(timestamp_buffer), "%Y-%m-%d %H:%M:%S", tm_info);
-    snprintf(timestamp_buffer + 19, sizeof(timestamp_buffer) - 19, ".%06ld", tv.tv_usec);
+    snprintf(timestamp_buffer + 19, sizeof(timestamp_buffer) - 19, ".%06lld", (long long)tv.tv_usec);
     
     return timestamp_buffer;
 }

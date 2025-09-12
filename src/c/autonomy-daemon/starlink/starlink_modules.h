@@ -25,6 +25,9 @@ bool starlink_is_healthy(void);
 const starlink_config_t* starlink_get_config(void);
 void starlink_client_cleanup(void);
 
+// Starlink cluster functions
+int starlink_cluster_failover_to(int index, const char *reason);
+
 // Starlink collector functions
 int starlink_collector_init(int collection_interval);
 bool starlink_should_collect(void);

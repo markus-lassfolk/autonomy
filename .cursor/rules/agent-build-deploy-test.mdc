@@ -1,0 +1,99 @@
+---
+description: Agent rules for systematic build, deploy, and test workflow
+alwaysApply: false
+---
+
+# Agent Rules: Build, Deploy, and Test Workflow
+
+## When to Use This Rule
+Use this rule when asked to build, deploy, test, or when following the systematic development workflow.
+
+## Complete Workflow Process
+1. **Update versions** (if code changes made)
+2. **Build with build script**
+3. **Check build status** (wait if in progress)
+4. **Deploy with deploy script**
+5. **Verify version**
+6. **Run 5-minute test**
+7. **Analyze results and fix issues**
+
+## Build Process
+```bash
+# Step 1: Build
+/mnt/wsl/SDK/build_autonomy_daemon.sh
+
+# Step 2: Check status (wait 30sec if in progress, max 10 minutes)
+/mnt/wsl/SDK/check_build_status.sh
+
+# Step 3: Verify IPK created
+ls -la /mnt/wsl/SDK/rutos-ipq40xx-rutx-sdk/bin/packages/arm_cortex-a7_neon-vfpv4/autonomy/*.ipk
+```
+
+## Deployment Process
+```bash
+# Deploy to RUTOS device
+/mnt/wsl/SDK/deploy_autonomy_daemon.sh
+
+# Alternative manual deployment
+scp -i ~/.ssh/rutos_key /mnt/wsl/SDK/rutos-ipq40xx-rutx-sdk/bin/packages/arm_cortex-a7_neon-vfpv4/autonomy/tlt-autonomy-daemon_*.ipk root@192.168.80.1:/tmp/
+ssh -i ~/.ssh/rutos_key root@192.168.80.1 "cd /tmp && opkg install --force-depends tlt-autonomy-daemon_*.ipk"
+```
+
+## Testing Process
+```bash
+# Step 1: Quick version check
+ssh -i ~/.ssh/rutos_key root@192.168.80.1 "LD_LIBRARY_PATH=/usr/local/usr/lib:/usr/lib timeout 10 /usr/local/usr/bin/autonomy-daemon --version"
+
+# Step 2: Full 5-minute test
+ssh -i ~/.ssh/rutos_key root@192.168.80.1 "LD_LIBRARY_PATH=/usr/local/usr/lib:/usr/lib timeout 300 /usr/local/usr/bin/autonomy-daemon --foreground" 2>&1 | tee /tmp/daemon_test_$(date +%Y%m%d_%H%M%S).log
+
+# Step 3: Download and analyze log
+scp -i ~/.ssh/rutos_key root@192.168.80.1:/tmp/daemon_test_*.log ./
+```
+
+## Log Analysis
+Check for:
+- Segmentation faults
+- Error messages
+- Warning messages
+- Failed initializations
+- Missing dependencies
+- Network connectivity issues
+- UBUS registration failures
+- Conflicts and interoperability issues
+- Missing functions
+- Missing data
+- Loops
+
+## Build Status Monitoring
+- **Wait 30 seconds** between status checks if build is in progress
+- **Maximum build time**: 10 minutes
+- **Check elapsed time** in status message
+- **Stop if build exceeds** maximum time
+
+## Success Criteria
+- ✅ Build completes successfully
+- ✅ IPK package created
+- ✅ Deployment successful
+- ✅ Version verification passes
+- ✅ 5-minute test runs without crashes or freezes
+- ✅ No ERROR or WARNING messages in logs
+- ✅ All UBUS methods registered and providing real data
+- ✅ Starlink gRPC communication working
+
+## Failure Resolution
+If any step fails:
+1. **Analyze the failure** from logs
+2. **Fix the root cause** (don't work around it)
+3. **Update version** if code changes made
+4. **Update documentation** (CHANGELOG.md and PROJECT_STATUS.md)
+5. **Repeat the workflow** from the beginning
+6. **Document the issue** and resolution
+
+## Documentation Updates
+- **After successful build**: Update PROJECT_STATUS.md with build success
+- **After successful deployment**: Update PROJECT_STATUS.md with deployment status
+- **After successful testing**: Update PROJECT_STATUS.md with test results
+- **After fixing issues**: Use `./scripts/update_project_docs.sh changelog` to add "Fixed" entry with proper date
+- **After version updates**: Update version information in both files
+- **Update dates**: Use `./scripts/update_project_docs.sh update-date` to update PROJECT_STATUS.md date

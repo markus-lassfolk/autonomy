@@ -1,0 +1,87 @@
+---
+description: Agent rules for systematic debugging and root cause analysis
+alwaysApply: false
+---
+
+# Agent Rules: Debugging and Root Cause Analysis
+
+## When to Use This Rule
+Use this rule when encountering runtime issues, segmentation faults, or when asked to debug problems.
+
+## Debugging Process
+1. **Identify the problem** from logs and error messages
+2. **Add extensive debug logging** temporarily if needed
+3. **Analyze the root cause** systematically
+4. **Fix the actual issue** (not symptoms)
+5. **Remove debug logging** after resolution
+6. **Test the fix** thoroughly
+
+## Common Runtime Issues
+- **Segmentation faults**: Usually missing includes, uninitialized variables, or UBUS issues
+- **Freezing/hanging**: Infinite loops, deadlocks, or blocking operations
+- **Memory leaks**: Missing free() calls or improper memory management
+- **UBUS registration failures**: Missing function implementations or object structure issues
+- **gRPC communication failures**: Network connectivity or protocol issues
+
+## Debug Logging Strategy
+```c
+// Add temporary debug logging
+LOGX_DEBUG_MSG("DEBUG: Function %s called with param=%d", __func__, param);
+LOGX_DEBUG_MSG("DEBUG: Variable value: %s", variable);
+LOGX_DEBUG_MSG("DEBUG: Memory address: %p", pointer);
+```
+
+## Root Cause Analysis
+1. **Check error messages** in logs
+2. **Verify function implementations** exist and are complete
+3. **Check memory management** (malloc/free pairs)
+4. **Verify UBUS object structure** initialization
+5. **Check network connectivity** for gRPC issues
+6. **Verify configuration** and UCI settings
+
+## Systematic Debugging Commands
+```bash
+# Check for segmentation faults
+grep -i "segmentation" /tmp/daemon_test_*.log
+
+# Check for errors and warnings
+grep -i "error\|warning" /tmp/daemon_test_*.log
+
+# Check for missing functions
+grep -i "undefined\|not found" /tmp/daemon_test_*.log
+
+# Check for UBUS issues
+grep -i "ubus\|registration" /tmp/daemon_test_*.log
+
+# Check for gRPC issues
+grep -i "grpc\|connection" /tmp/daemon_test_*.log
+```
+
+## Memory Debugging
+- **Check malloc/free pairs**: Ensure every malloc has a corresponding free
+- **Verify pointer initialization**: Check for NULL pointer dereferences
+- **Check buffer bounds**: Ensure no buffer overflows
+- **Use valgrind** if available for memory leak detection
+
+## UBUS Debugging
+- **Check function implementations**: Ensure all declared functions are implemented
+- **Verify object structure**: Check UBUS object initialization
+- **Check method registration**: Ensure all methods are properly registered
+- **Verify parameter handling**: Check blobmsg parameter parsing
+
+## Network Debugging
+- **Check connectivity**: Verify network connections work
+- **Check gRPC protocol**: Ensure proper gRPC implementation
+- **Check timeout handling**: Verify timeout and retry logic
+- **Check error handling**: Ensure graceful failure handling
+
+## Success Criteria
+- ✅ Root cause identified and documented
+- ✅ Actual issue fixed (not workaround)
+- ✅ Debug logging removed after resolution
+- ✅ All related issues resolved
+- ✅ Comprehensive testing completed
+- ✅ No regression introduced
+- ✅ Documentation updated with resolution
+- ✅ CHANGELOG.md updated with fix details
+- ✅ PROJECT_STATUS.md updated with issue resolution

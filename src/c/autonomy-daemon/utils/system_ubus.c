@@ -11,6 +11,11 @@
 // External reference to global configuration
 extern autonomy_config_t g_config;
 
+// Implementation for missing blobmsg_add_bool function
+void blobmsg_add_bool(struct blob_buf *buf, const char *name, bool value) {
+    blobmsg_add_u8(buf, name, value ? 1 : 0);
+}
+
 // UBUS policy definitions
 enum {
     MAINTENANCE_TYPE,
@@ -226,7 +231,7 @@ int autonomy_system_maintenance(struct ubus_context *uctx, struct ubus_object *o
     FILE* status_fp = fopen("/var/lib/autonomy/maintenance_status", "w");
     if (status_fp) {
         fprintf(status_fp, "maintenance_type=%s\n", maintenance_type);
-        fprintf(status_fp, "maintenance_start=%ld\n", maintenance_start);
+        fprintf(status_fp, "maintenance_start=%lld\n", (long long)maintenance_start);
         fprintf(status_fp, "maintenance_duration=%d\n", duration_minutes);
         fprintf(status_fp, "maintenance_success=%s\n", maintenance_success ? "true" : "false");
         fprintf(status_fp, "maintenance_log=%s\n", maintenance_log);
@@ -363,7 +368,7 @@ int autonomy_system_restart_services(struct ubus_context *uctx, struct ubus_obje
     // Update restart status file
     FILE* status_fp = fopen("/var/lib/autonomy/restart_status", "w");
     if (status_fp) {
-        fprintf(status_fp, "restart_start=%ld\n", restart_start);
+        fprintf(status_fp, "restart_start=%lld\n", (long long)restart_start);
         fprintf(status_fp, "restart_success=%s\n", restart_success ? "true" : "false");
         fprintf(status_fp, "services_restarted=%d\n", services_restarted);
         fprintf(status_fp, "force_restart=%s\n", force_restart ? "true" : "false");
@@ -383,7 +388,3 @@ int autonomy_system_restart_services(struct ubus_context *uctx, struct ubus_obje
     return 0;
 }
 
-// Missing blobmsg_add_bool function implementation
-void blobmsg_add_bool(struct blob_buf *buf, const char *name, bool value) {
-    blobmsg_add_u8(buf, name, value ? 1 : 0);
-}

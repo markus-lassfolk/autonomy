@@ -18,6 +18,13 @@ extern autonomy_config_t g_config;
 // Global failover state
 static network_failover_t g_failover = {0};
 static pthread_mutex_t g_failover_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// Forward declarations
+static int find_best_interface(void);
+static int perform_failover(int target_interface);
+static int activate_interface(int interface_index);
+static int deactivate_interface_routing(int interface_index);
+static int activate_interface_routing(int interface_index);
 static bool g_failover_initialized = false; // Use configurable setting
 static pthread_t g_failover_thread = 0; // Use configurable count // Use configurable value
 static bool g_failover_thread_running = false; // Use configurable setting

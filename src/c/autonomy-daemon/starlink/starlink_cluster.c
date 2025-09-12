@@ -17,6 +17,10 @@ extern autonomy_config_t g_config;
 // Global Starlink cluster
 static starlink_cluster_t g_starlink_cluster = {0};
 
+// Forward declarations
+static int starlink_cluster_find_best_starlink(void);
+int starlink_cluster_failover_to(int index, const char *reason);
+
 // Initialize Starlink cluster
 int starlink_cluster_init(void) {
     memset(&g_starlink_cluster, 0, sizeof(starlink_cluster_t));

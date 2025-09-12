@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-#define MAX_GPS_SOURCES 8
+// MAX_GPS_SOURCES is defined in ../core/types.h
 
 // GPS source health
 typedef struct {

@@ -315,7 +315,7 @@ static int perform_weighted_average_fusion(gps_data_t *fused_data) {
     int valid_sources = 0; // Use configurable value
     
     // Calculate weighted averages
-    for (int i = 0; i < MAX_FUSION_SOURCES; i++) {
+    for (int i = 0; i < MAX_FUSION_SOURCES && i < g_fusion.max_sources; i++) {
         if (!g_fusion.sources[i].active) {
             continue;
         }
@@ -775,7 +775,7 @@ double calculate_fusion_quality(void) {
     double total_quality = 0.0; // Use configurable value
     int valid_sources = 0; // Use configurable value
     
-    for (int i = 0; i < MAX_FUSION_SOURCES; i++) {
+    for (int i = 0; i < MAX_FUSION_SOURCES && i < g_fusion.max_sources; i++) {
         if (!g_fusion.sources[i].active) {
             continue;
         }
@@ -944,7 +944,7 @@ int gps_fusion_reset(void) {
     g_fusion.fusion_quality = 0.0;
     
     // Clear all sources
-    for (int i = 0; i < MAX_FUSION_SOURCES; i++) {
+    for (int i = 0; i < MAX_FUSION_SOURCES && i < g_fusion.max_sources; i++) {
         g_fusion.sources[i].active = false;
     }
     

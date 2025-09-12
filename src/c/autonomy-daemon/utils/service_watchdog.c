@@ -22,7 +22,9 @@ extern autonomy_config_t g_config;
 static service_watchdog_t g_service_watchdog;
 
 // Forward declarations
+int check_service(const char *service);
 int check_service_status(const char *service);
+int check_service_status_method(const char *service);
 int check_process_running(const char *service);
 int check_init_script(const char *service);
 static int has_recent_activity(const char *service);
@@ -172,7 +174,7 @@ int check_init_script(const char *service) {
     }
     
     // Try to run status command
-    char command[256];
+    char command[512];  // Increased buffer size to handle long script paths
     snprintf(command, sizeof(command), "%s status > /dev/null 2>&1", script_path);
     
     int exit_code = system(command);

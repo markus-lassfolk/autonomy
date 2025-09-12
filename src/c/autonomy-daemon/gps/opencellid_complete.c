@@ -331,7 +331,7 @@ int opencellid_lookup_cells(const opencellid_cell_identifier_t* cell_ids, int ce
         }
         
         // Make API request
-        char url[512];
+        char url[1024];  // Increased buffer size to handle long URLs
         snprintf(url, sizeof(url), 
                 "%s/cell/get?key=%s&mcc=%d&mnc=%d&lac=%d&cellid=%llu&radio=%s&format=json",
                 g_opencellid_system.config.base_url,

@@ -64,7 +64,7 @@ typedef struct {
     char issues[512];
     time_t last_check;
     trend_t trend;
-}; // Note: member_health_t defined in health_analyzer.h
+} member_health_t; // Note: member_health_t defined in health_analyzer.h
 
 // Health metrics
 typedef struct {

@@ -1,6 +1,7 @@
 #include "../core/types.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <uci.h>
 
 extern struct autonomy_config g_config;

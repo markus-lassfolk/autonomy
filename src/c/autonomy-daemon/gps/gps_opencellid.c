@@ -154,7 +154,7 @@ int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_resp
     g_opencellid.stats.cache_misses++;
     
     // Build API URL
-    char url[OPENCELLID_MAX_URL_LEN];
+    char url[1024];  // Increased buffer size to handle long URLs
     snprintf(url, sizeof(url),
              "%s?key=%s&mcc=%s&mnc=%s&lac=%s&cellid=%s&radio=%s&format=json",
              g_opencellid.config.base_url,
@@ -246,7 +246,7 @@ int gps_opencellid_contribute(const opencellid_contribution_t* contribution) {
     const char* json_string = json_object_to_json_string(json_contrib);
     
     // Build contribution URL
-    char url[OPENCELLID_MAX_URL_LEN];
+    char url[1024];  // Increased buffer size to handle long URLs
     snprintf(url, sizeof(url), "%s/measure/add?key=%s", 
              g_opencellid.config.base_url, g_opencellid.config.api_key);
     

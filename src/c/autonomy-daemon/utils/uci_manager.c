@@ -176,11 +176,10 @@ int uci_manager_load_config(autonomy_config_t *config) {
     config->log_level = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "general", "log_level", 2);
     
     // Log file
-    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "general", "log_file");
-    if (value) {
-        strncpy(config->log_file, value, sizeof(config->log_file) - 1);
+    const char *log_file_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "general", "log_file");
+    if (log_file_value) {
+        strncpy(config->log_file, log_file_value, sizeof(config->log_file) - 1);
         config->log_file[sizeof(config->log_file) - 1] = '\0';
-        free(value);
     }
     
     // PID file timeout
@@ -200,10 +199,9 @@ int uci_manager_load_config(autonomy_config_t *config) {
     config->gps_cache_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "cache_timeout", 300);
     
     // Min GPS accuracy (double value)
-    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "gps", "min_accuracy");
-    if (value) {
-        config->min_gps_accuracy = atof(value);
-        free(value);
+    const char *gps_accuracy_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "gps", "min_accuracy");
+    if (gps_accuracy_value) {
+        config->min_gps_accuracy = atof(gps_accuracy_value);
     }
     
     // Starlink settings
@@ -213,11 +211,10 @@ int uci_manager_load_config(autonomy_config_t *config) {
     config->starlink_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "timeout", 10);
     
     // Starlink host
-    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "starlink", "host");
-    if (value) {
-        strncpy(config->starlink_host, value, sizeof(config->starlink_host) - 1);
+    const char *starlink_host_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "starlink", "host");
+    if (starlink_host_value) {
+        strncpy(config->starlink_host, starlink_host_value, sizeof(config->starlink_host) - 1);
         config->starlink_host[sizeof(config->starlink_host) - 1] = '\0';
-        free(value);
     }
     
     // System monitoring
@@ -230,32 +227,28 @@ int uci_manager_load_config(autonomy_config_t *config) {
     config->notifications_enabled = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "notifications", "enabled", 1) != 0;
     
     // Email settings
-    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_from");
-    if (value) {
-        strncpy(config->email_from, value, sizeof(config->email_from) - 1);
+    const char *email_from_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_from");
+    if (email_from_value) {
+        strncpy(config->email_from, email_from_value, sizeof(config->email_from) - 1);
         config->email_from[sizeof(config->email_from) - 1] = '\0';
-        free(value);
     }
     
-    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_to");
-    if (value) {
-        strncpy(config->email_to, value, sizeof(config->email_to) - 1);
+    const char *email_to_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_to");
+    if (email_to_value) {
+        strncpy(config->email_to, email_to_value, sizeof(config->email_to) - 1);
         config->email_to[sizeof(config->email_to) - 1] = '\0';
-        free(value);
     }
     
-    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_smtp");
-    if (value) {
-        strncpy(config->email_smtp, value, sizeof(config->email_smtp) - 1);
+    const char *email_smtp_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_smtp");
+    if (email_smtp_value) {
+        strncpy(config->email_smtp, email_smtp_value, sizeof(config->email_smtp) - 1);
         config->email_smtp[sizeof(config->email_smtp) - 1] = '\0';
-        free(value);
     }
     
-    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "webhook_url");
-    if (value) {
-        strncpy(config->webhook_url, value, sizeof(config->webhook_url) - 1);
+    const char *webhook_url_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "webhook_url");
+    if (webhook_url_value) {
+        strncpy(config->webhook_url, webhook_url_value, sizeof(config->webhook_url) - 1);
         config->webhook_url[sizeof(config->webhook_url) - 1] = '\0';
-        free(value);
     }
     
     // Snow detection settings
@@ -265,30 +258,26 @@ int uci_manager_load_config(autonomy_config_t *config) {
     config->snow_melt_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "melt_timeout", 1800);
     
     // Snow detection thresholds (double values)
-    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "obstruction_threshold");
-    if (value) {
-        config->snow_obstruction_threshold = atof(value);
-        free(value);
+    const char *obstruction_threshold_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "obstruction_threshold");
+    if (obstruction_threshold_value) {
+        config->snow_obstruction_threshold = atof(obstruction_threshold_value);
     }
     
-    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "snr_degradation_threshold");
-    if (value) {
-        config->snow_snr_degradation_threshold = atof(value);
-        free(value);
+    const char *snr_degradation_threshold_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "snr_degradation_threshold");
+    if (snr_degradation_threshold_value) {
+        config->snow_snr_degradation_threshold = atof(snr_degradation_threshold_value);
     }
     
-    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "temperature_threshold");
-    if (value) {
-        config->snow_temperature_threshold = atof(value);
-        free(value);
+    const char *temperature_threshold_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "temperature_threshold");
+    if (temperature_threshold_value) {
+        config->snow_temperature_threshold = atof(temperature_threshold_value);
     }
     
     // Weather API key
-    value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "weather_api_key");
-    if (value) {
-        strncpy(config->snow_weather_api_key, value, sizeof(config->snow_weather_api_key) - 1);
+    const char *weather_api_key_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "weather_api_key");
+    if (weather_api_key_value) {
+        strncpy(config->snow_weather_api_key, weather_api_key_value, sizeof(config->snow_weather_api_key) - 1);
         config->snow_weather_api_key[sizeof(config->snow_weather_api_key) - 1] = '\0';
-        free(value);
     }
     
     LOGX_INFO_MSG("Configuration loaded successfully from UCI using Teltonika library");
