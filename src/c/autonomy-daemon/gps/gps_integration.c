@@ -17,7 +17,7 @@ static int generate_source_id(void);
 int gps_fusion_engine_is_initialized(void);
 int gps_fusion_engine_fuse(const gps_data_t *sources, int source_count, gps_data_t *result);
 int gps_location_reference_is_initialized(void);
-int gps_location_reference_get_or_create(const char *name, double lat, double lon, int *location_id);
+int gps_location_reference_get_or_create(double latitude, double longitude, double accuracy, const char* gps_source, uint32_t* location_id);
 void gps_location_reference_update_usage(int location_id, double signal_quality, int latency_ms);
 double gps_calculate_distance_meters(double lat1, double lon1, double lat2, double lon2);
 

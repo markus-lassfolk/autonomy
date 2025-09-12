@@ -66,7 +66,7 @@ int gps_manager_init(void) {
     g_gps_manager.best_source = -1;
     
     // Initialize GPS sources array
-    for (int i = 0; i < MAX_GPS_SOURCES && i < g_gps_manager.max_sources; i++) {
+    for (int i = 0; i < MAX_GPS_SOURCES; i++) {
         g_gps_manager.sources[i].enabled = false; // Use configurable gps source enabled setting
         g_gps_manager.sources[i].type = GPS_SOURCE_UNKNOWN;
         g_gps_manager.sources[i].last_update = 0;

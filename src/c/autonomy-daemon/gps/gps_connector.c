@@ -25,7 +25,8 @@ static void gps_connector_check_module_health(void);
 static void gps_connector_update_system_health(void);
 static void perform_module_coordination(void);
 int gps_integration_get_status(gps_integration_status_t *status);
-int gps_location_reference_get_status(gps_location_reference_status_t *status);
+int gps_location_reference_get_status(gps_location_reference_stats_t *status);
+bool gps_location_reference_is_initialized(void);
 int gps_health_get_status(gps_health_status_t *status);
 int gps_starlink_get_status(gps_starlink_status_t *status);
 
@@ -298,7 +299,7 @@ void perform_module_coordination(void) {
     last_coordination = now;
     
     // 1. Ensure GPS integration is working with other modules
-    gps_connector_status_t integration_status;
+    gps_integration_status_t integration_status;
     if (gps_integration_get_status(&integration_status) == AUTONOMY_SUCCESS) {
         // Check if GPS fusion is active (simplified check)
         if (integration_status.enabled) {
@@ -307,15 +308,12 @@ void perform_module_coordination(void) {
     }
     
     // 2. Coordinate GPS events with location services
-    gps_connector_status_t location_status;
-    if (gps_location_reference_get_status(&location_status) == AUTONOMY_SUCCESS) {
-        if (location_status.enabled) {
-            LOGX_DEBUG_MSG("Location reference service is active");
-        }
+    if (gps_location_reference_is_initialized()) {
+        LOGX_DEBUG_MSG("Location reference service is active");
     }
     
     // 3. Ensure GPS health monitoring is active
-    gps_connector_status_t health_status;
+    gps_health_status_t health_status;
     if (gps_health_get_status(&health_status) == AUTONOMY_SUCCESS) {
         if (health_status.enabled) {
             LOGX_DEBUG_MSG("GPS health monitoring is active");
@@ -323,7 +321,7 @@ void perform_module_coordination(void) {
     }
     
     // 4. Coordinate with Starlink GPS if available
-    gps_connector_status_t starlink_status;
+    gps_starlink_status_t starlink_status;
     if (gps_starlink_get_status(&starlink_status) == AUTONOMY_SUCCESS) {
         if (starlink_status.enabled) {
             // Starlink GPS is available, ensure it's integrated

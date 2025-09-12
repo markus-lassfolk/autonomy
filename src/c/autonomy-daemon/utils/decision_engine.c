@@ -281,7 +281,7 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                     if (cellular_collector_is_initialized() && 
                         cellular_collector_collect(&cellular_info) == AUTONOMY_SUCCESS) {
                         scores[score_count].signal_score = cellular_info.signal_quality / 100.0;
-                        scores[score_count].reliability_score = cellular_info.reliability_score / 100.0;
+                        scores[score_count].reliability_score = cellular_info.stability_score / 100.0;
                     }
                 } else if (strcmp(members[i].class, "wifi") == 0) {
                     scores[score_count].cost_score = 0.9; // Usually free

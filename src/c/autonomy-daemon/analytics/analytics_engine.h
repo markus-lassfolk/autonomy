@@ -57,14 +57,7 @@ typedef struct {
     int member_count;
 } member_performance_metrics_t;
 
-// Member health
-typedef struct {
-    double score;
-    char status[32];
-    char issues[512];
-    time_t last_check;
-    trend_t trend;
-} member_health_t; // Note: member_health_t defined in health_analyzer.h
+// Member health - defined in health_analyzer.h
 
 // Health metrics
 typedef struct {
