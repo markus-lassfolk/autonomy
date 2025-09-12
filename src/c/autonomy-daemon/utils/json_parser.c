@@ -461,9 +461,18 @@ bool json_parse_gps_data(const char* json_str, gps_data_t* gps) {
     json_get_double(doc, "latitude", &gps->latitude);
     json_get_double(doc, "longitude", &gps->longitude);
     json_get_double(doc, "altitude", &gps->altitude);
-    json_get_double(doc, "accuracy", &gps->accuracy);
-    json_get_double(doc, "speed", &gps->speed);
-    json_get_double(doc, "heading", &gps->heading);
+    
+    // Handle float fields with temporary double variables
+    double temp_accuracy, temp_speed, temp_heading;
+    if (json_get_double(doc, "accuracy", &temp_accuracy)) {
+        gps->accuracy = (float)temp_accuracy;
+    }
+    if (json_get_double(doc, "speed", &temp_speed)) {
+        gps->speed = (float)temp_speed;
+    }
+    if (json_get_double(doc, "heading", &temp_heading)) {
+        gps->heading = (float)temp_heading;
+    }
     json_get_string(doc, "provider", gps->source, sizeof(gps->source));
 
     int timestamp_int;

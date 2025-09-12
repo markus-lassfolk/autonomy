@@ -37,7 +37,7 @@ int network_collector_archive_metrics(const network_metrics_t *metrics, const ch
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     
-    fprintf(archive_file, "%04d-%02d-%02d %02d:%02d:%02d,%.2f,%.2f,%.2f,%.2f,%lu,%lu,%lu,%lu\n",
+    fprintf(archive_file, "%04d-%02d-%02d %02d:%02d:%02d,%.2f,%.2f,%.2f,%.2f,%llu,%llu,%llu,%llu\n",
             tm_info->tm_year + 1900, tm_info->tm_mon + 1, tm_info->tm_mday,
             tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
             metrics->ping_latency_ms, metrics->ping_packet_loss, metrics->throughput_mbps,
@@ -70,7 +70,7 @@ int network_collector_load_archived_metrics(const char *archive_path, network_me
     while (fgets(line, sizeof(line), archive_file) && loaded_count < max_count) {
         // Parse CSV format: timestamp,ping_latency_ms,ping_packet_loss,throughput_mbps,ping_jitter_ms,packets_transmitted,packets_received,bytes_transmitted,bytes_received
         int year, month, day, hour, min, sec;
-        if (sscanf(line, "%d-%d-%d %d:%d:%d,%lf,%lf,%lf,%lf,%lu,%lu,%lu,%lu",
+        if (sscanf(line, "%d-%d-%d %d:%d:%d,%lf,%lf,%lf,%lf,%llu,%llu,%llu,%llu",
                    &year, &month, &day, &hour, &min, &sec,
                    &metrics[loaded_count].ping_latency_ms,
                    &metrics[loaded_count].ping_packet_loss,

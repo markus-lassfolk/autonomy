@@ -1,6 +1,8 @@
 #include "gps_system.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
+#include "gps_comprehensive.h"
+#include "gps_manager.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -12,6 +14,50 @@
 
 // External reference to global configuration
 extern autonomy_config_t g_config;
+
+// Forward declarations for GPS module functions
+int gps_connector_init(void);
+int gps_integration_init(void);
+int gps_events_init(void);
+int gps_location_services_init(void);
+int gps_clustering_init(void);
+int gps_health_init(void);
+int gps_fusion_init(void);
+int gps_geofence_init(void);
+int gps_coordinate_utils_init(void);
+int gps_obstruction_init(void);
+int gps_adaptive_cache_init(void);
+int gps_google_api_init(const char *api_key);
+int gps_cell_tower_init(void);
+int gps_weather_init(const char *api_key);
+int gps_terrain_init(void);
+int gps_performance_init(void);
+int gps_error_recovery_init(void);
+void register_gps_modules(void);
+int gps_connector_register_module(const char *name, gps_module_type_t type);
+void update_module_status(gps_module_type_t module_type, bool initialized, bool enabled, double health_score);
+int gps_connector_get_status(gps_connector_status_t *status);
+void check_module_health(void);
+void update_system_health(void);
+void gps_connector_cleanup(void);
+void gps_integration_cleanup(void);
+void gps_events_cleanup(void);
+void gps_location_services_cleanup(void);
+void gps_clustering_cleanup(void);
+void gps_health_cleanup(void);
+void gps_fusion_cleanup(void);
+void gps_geofence_cleanup(void);
+void gps_coordinate_utils_cleanup(void);
+void gps_obstruction_cleanup(void);
+void gps_adaptive_cache_cleanup(void);
+void gps_google_api_cleanup(void);
+void gps_cell_tower_cleanup(void);
+void gps_weather_cleanup(void);
+void gps_terrain_cleanup(void);
+void gps_performance_cleanup(void);
+void gps_error_recovery_cleanup(void);
+int gps_comprehensive_get_current_location(gps_data_t *location);
+int gps_manager_get_current_location(gps_data_t *location);
 
 // GPS system configuration
 static const int GPS_SYSTEM_INIT_TIMEOUT = 30; // Use configurable value           // 30 second initialization timeout
@@ -256,8 +302,8 @@ int gps_system_init(void) {
     g_gps_system.init_complete_time = time(NULL);
     pthread_mutex_unlock(&g_gps_system_mutex);
     
-    LOGX_INFO_MSG("GPS system initialization completed successfully in %ld seconds", 
-               g_gps_system.init_complete_time - g_gps_system.init_start_time);
+    LOGX_INFO_MSG("GPS system initialization completed successfully in %lld seconds", 
+               (long long)(g_gps_system.init_complete_time - g_gps_system.init_start_time));
     
     g_gps_system_initialized = true; // Use configurable setting
     return AUTONOMY_SUCCESS;
@@ -465,8 +511,8 @@ void check_module_health(void) {
         if (module->last_operation > 0 && 
             (now - module->last_operation) > 300) {  // 5 minutes
             module->health_score *= 0.9;  // Reduce health score
-            LOGX_WARN_MSG("GPS module %d is stale (last operation: %ld seconds ago)", 
-                      module->module_type, now - module->last_operation);
+            LOGX_WARN_MSG("GPS module %d is stale (last operation: %lld seconds ago)", 
+                      module->module_type, (long long)(now - module->last_operation));
         }
         
         // Disable module if health is too low

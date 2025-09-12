@@ -1,0 +1,80 @@
+---
+description: Protection rules for build process to prevent interruptions
+alwaysApply: true
+---
+
+# Build Process Protection Rules
+
+## CRITICAL: Never Interrupt Build Process
+- **NEVER interrupt or cancel** `/mnt/wsl/SDK/build_autonomy_daemon.sh` when it's running
+- **ALWAYS let the build complete** - builds can take 5-15 minutes depending on system load
+- **NEVER use Ctrl+C or cancel** during build execution
+- **WAIT for completion** - even if it seems slow or stuck
+
+## Build Process Behavior
+- **Normal build time**: 5-15 minutes depending on system load and cache state
+- **First-time builds**: Can take longer due to dependency compilation
+- **Cache cleaning**: Build script performs thorough cache cleanup which takes time
+- **SDK compilation**: Uses cross-compilation which is inherently slower
+
+## What to Do During Build
+- **Be patient**: Let the build run to completion
+- **Monitor progress**: Watch for actual error messages, not just slow progress
+- **Check build log**: Only after build completes, check `/mnt/wsl/SDK/autonomy_build.log` for issues
+- **Wait for success/failure**: Build will either complete successfully or show clear error messages
+
+## When Build is Actually Stuck
+- **Only interrupt if**: Build has been running for more than 20 minutes with no output
+- **Check system resources**: Ensure sufficient disk space and memory
+- **Kill build process**: Only as last resort if system is unresponsive
+- **Clean and retry**: After killing, clean build directories and retry
+
+## Build Success Indicators
+- ✅ **"Build completed successfully"** message
+- ✅ **IPK package created** in output directory
+- ✅ **Version incremented** in version files
+- ✅ **No error messages** in final output
+
+## Build Failure Indicators
+- ❌ **"ERROR: package/feeds/autonomy/tlt-autonomy-daemon failed to build"**
+- ❌ **Compilation errors** with specific file and line numbers
+- ❌ **Linking errors** with undefined references
+- ❌ **Exit code 1** from make commands
+
+## Post-Build Actions
+- **If successful**: Proceed with deployment and testing
+- **If failed**: Analyze build log for specific errors and fix them
+- **Never retry immediately**: Fix the actual errors before rebuilding
+- **Use error detector**: Run `/mnt/wsl/SDK/compilation_error_detector.sh` for automated fixes
+
+## Early Exit Handling
+- **If build must be interrupted**: Provide clear summary of what was happening
+- **Document the interruption**: Note the build phase when interrupted
+- **Check build log**: Analyze `/mnt/wsl/SDK/autonomy_build.log` for last successful step
+- **Identify the issue**: Determine if it was a real problem or just slow progress
+- **Clean state**: Run clean commands before next build attempt
+
+## Early Exit Summary Format
+When a build is interrupted, provide:
+```
+## Build Interruption Summary
+- **Time interrupted**: [timestamp]
+- **Build phase**: [e.g., "compilation", "linking", "package creation"]
+- **Last successful step**: [what completed successfully]
+- **Reason for interruption**: [why it was stopped]
+- **Next actions**: [what to do next]
+```
+
+## Post-Interruption Actions
+- **Clean build state**: Remove corrupted build artifacts
+- **Check system resources**: Ensure sufficient disk space and memory
+- **Analyze build log**: Look for actual errors vs. normal slow progress
+- **Fix identified issues**: Address any real problems found
+- **Retry with patience**: Start new build and let it complete
+
+## Important Reminders
+- **Build process is slow by design** - this is normal for embedded cross-compilation
+- **Interrupting builds causes corruption** - can lead to inconsistent build state
+- **Cache cleaning takes time** - this is necessary for reliable builds
+- **SDK toolchain is complex** - requires patience for proper operation
+- **Always provide summary** - if interrupted, document what happened and why

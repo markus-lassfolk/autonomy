@@ -435,7 +435,7 @@ int mqtt_client_publish_telemetry(const telemetry_sample_t* sample) {
     // Create JSON payload
     char payload[1024];
     snprintf(payload, sizeof(payload),
-             "{\"timestamp\":%ld,\"member\":\"%s\",\"latency\":%.2f,\"loss\":%.2f,"
+             "{\"timestamp\":%lld,\"member\":\"%s\",\"latency\":%.2f,\"loss\":%.2f,"
              "\"signal\":%.2f,\"throughput\":%.2f}",
              sample->timestamp, sample->member_name,
              sample->has_latency ? sample->latency_ms : 0.0,
@@ -454,9 +454,9 @@ int mqtt_client_publish_event(const telemetry_event_t* event) {
     if (!event) return -1;
     
     // Create JSON payload
-    char payload[1024];
+    char payload[2048];  // Increased buffer size
     snprintf(payload, sizeof(payload),
-             "{\"timestamp\":%ld,\"type\":\"%s\",\"severity\":\"%s\","
+             "{\"timestamp\":%lld,\"type\":\"%s\",\"severity\":\"%s\","
              "\"message\":\"%s\",\"data\":\"%s\"}",
              event->timestamp, event->type, event->severity,
              event->message, event->data);
@@ -472,7 +472,7 @@ int mqtt_client_publish_system_status(void) {
     // Create system status payload
     char payload[1024];
     snprintf(payload, sizeof(payload),
-             "{\"timestamp\":%ld,\"status\":\"running\",\"uptime\":%ld,"
+             "{\"timestamp\":%lld,\"status\":\"running\",\"uptime\":%lld,"
              "\"version\":\"6.1.0\",\"components\":\"all_active\"}",
              time(NULL), time(NULL));
     

@@ -1,7 +1,7 @@
 #include "decision_engine.h"
 #include "../network/network_controller.h"
 #include "../network/network_collector.h"
-#include "../telemetry/cellular_collector.h"
+#include "../network/cellular_collector.h"
 #include "../telemetry/telemetry_comprehensive.h"
 #include "../gps/gps_comprehensive.h"
 #include <stdlib.h>
@@ -145,7 +145,7 @@ int decision_engine_make_decision(decision_result_t* result) {
         
         // Generate decision ID
         snprintf(telemetry_decision.decision_id, sizeof(telemetry_decision.decision_id),
-                "decision_%ld_%d", time(NULL), g_decision_engine.decision_count);
+                "decision_%lld_%d", (long long)time(NULL), g_decision_engine.decision_count);
         
         strcpy(telemetry_decision.decision_type, needs_failover ? "failover" : "evaluation");
         strcpy(telemetry_decision.trigger, "periodic_evaluation");
@@ -250,7 +250,7 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                 }
                 
                 // Adjust based on interface utilization if available
-                char util_cmd[256];
+                char util_cmd[512];  // Increased buffer size
                 snprintf(util_cmd, sizeof(util_cmd), "cat /sys/class/net/%s/statistics/rx_bytes /sys/class/net/%s/statistics/tx_bytes 2>/dev/null", 
                         members[i].interface, members[i].interface);
                 FILE *util_fp = popen(util_cmd, "r");

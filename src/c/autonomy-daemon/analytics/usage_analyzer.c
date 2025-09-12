@@ -185,7 +185,8 @@ void analyze_data_usage(const telemetry_sample_t* samples, int sample_count,
             strcpy(usage->trend, "stable");
         }
     } else {
-        strcpy(usage->trend, "insufficient_data");
+        strncpy(usage->trend, "insufficient_data", sizeof(usage->trend) - 1);
+        usage->trend[sizeof(usage->trend) - 1] = '\0';
     }
     
     // Simple projection (24-hour trend)

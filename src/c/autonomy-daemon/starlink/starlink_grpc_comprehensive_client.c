@@ -255,7 +255,7 @@ void starlink_grpc_handle_access_denied(const char *method, const unsigned char 
         strstr((const char*)response, "403")) {
         if (!g_starlink_grpc_config.silent_mode) {
             starlink_grpc_print_timestamp();
-            printf("⚠️  Access Denied for method '%s' - This endpoint may be restricted\n", method);
+            printf("  Access Denied for method '%s' - This endpoint may be restricted\n", method);
         }
     }
 }

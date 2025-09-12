@@ -445,9 +445,18 @@ int credential_save_to_uci(const char* service_name) {
     for (size_t i = 0; i < g_credential_manager.credential_count; i++) {
         credential_t* cred = &g_credential_manager.credentials[i];
         if (strcmp(cred->service_name, service_name) == 0) {
+            // Truncate values if too long to prevent buffer overflow
+            char truncated_service[32], truncated_key[32], truncated_value[128];
+            strncpy(truncated_service, service_name, sizeof(truncated_service) - 1);
+            truncated_service[sizeof(truncated_service) - 1] = '\0';
+            strncpy(truncated_key, cred->key, sizeof(truncated_key) - 1);
+            truncated_key[sizeof(truncated_key) - 1] = '\0';
+            strncpy(truncated_value, cred->value, sizeof(truncated_value) - 1);
+            truncated_value[sizeof(truncated_value) - 1] = '\0';
+            
             snprintf(cmd, sizeof(cmd), 
                     "uci set autonomy.credentials.%s_%s='%s' && uci commit autonomy",
-                    service_name, cred->key, cred->value);
+                    truncated_service, truncated_key, truncated_value);
             system(cmd);
         }
     }

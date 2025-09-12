@@ -213,9 +213,14 @@ int check_uci_corruption(uci_maintenance_result_t *result) {
                         issue->type[sizeof(issue->type) - 1] = '\0';
                         strncpy(issue->section, entry->d_name, sizeof(issue->section) - 1);
                         issue->section[sizeof(issue->section) - 1] = '\0';
+                        // Truncate filename if too long to prevent buffer overflow
+                        char truncated_name[64];
+                        strncpy(truncated_name, entry->d_name, sizeof(truncated_name) - 1);
+                        truncated_name[sizeof(truncated_name) - 1] = '\0';
+                        
                         snprintf(issue->description, sizeof(issue->description) - 1,
                                 "UCI file %s appears corrupted (size: %lld bytes)", 
-                                entry->d_name, (long long)st.st_size);
+                                truncated_name, (long long)st.st_size);
                         strncpy(issue->severity, "critical", sizeof(issue->severity) - 1);
                         issue->severity[sizeof(issue->severity) - 1] = '\0';
                         issue->can_auto_fix = true;
@@ -263,8 +268,13 @@ int check_unwanted_config_files(uci_maintenance_result_t *result) {
                     issue->type[sizeof(issue->type) - 1] = '\0';
                     strncpy(issue->section, filename, sizeof(issue->section) - 1);
                     issue->section[sizeof(issue->section) - 1] = '\0';
+                    // Truncate filename if too long to prevent buffer overflow
+                    char truncated_filename[64];
+                    strncpy(truncated_filename, filename, sizeof(truncated_filename) - 1);
+                    truncated_filename[sizeof(truncated_filename) - 1] = '\0';
+                    
                     snprintf(issue->description, sizeof(issue->description) - 1,
-                            "Unwanted file %s found in /etc/config", filename);
+                            "Unwanted file %s found in /etc/config", truncated_filename);
                     strncpy(issue->severity, "warning", sizeof(issue->severity) - 1);
                     issue->severity[sizeof(issue->severity) - 1] = '\0';
                     issue->can_auto_fix = true;

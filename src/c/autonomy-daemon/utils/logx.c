@@ -10,6 +10,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+// Forward declarations
+static void rotate_log_files(void);
+
 // Global logging configuration
 static logx_config_t g_logx_config = {
     .level = LOGX_LEVEL_INFO,
@@ -128,8 +131,8 @@ static void write_to_file(const char *message) {
 
 // Rotate log files
 void rotate_log_files(void) {
-    char old_name[256];
-    char new_name[256];
+    char old_name[512];  // Increased buffer size
+    char new_name[512];  // Increased buffer size
     
     // Remove oldest log file
     snprintf(old_name, sizeof(old_name), "%s.%d", g_logx_config.file_path, g_logx_config.max_files - 1);

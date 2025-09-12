@@ -35,8 +35,8 @@ int example_init_snow_melt_control(void) {
     
     printf("INFO: Snow melt control system initialized successfully\n");
     
-    // Initialize UBUS interface
-    result = starlink_weather_snow_melt_ubus_init();
+    // Initialize UBUS interface (pass NULL context for example)
+    result = starlink_weather_snow_melt_ubus_init(NULL);
     if (result != AUTONOMY_SUCCESS) {
         printf("WARN: Failed to initialize UBUS interface: %d\n", result);
         // Continue without UBUS - system will still work
@@ -61,7 +61,7 @@ int example_configure_snow_melt_control(void) {
     
     // Update configuration with example values
     config.enabled = true;
-    config.temperature_threshold_celsius = 5.0;  // Snow melt OFF when above +5°C
+    config.temperature_threshold_celsius = 5.0;  // Snow melt OFF when above +5C
     config.weather_check_interval_minutes = 15;  // Check weather every 15 minutes
     config.preheat_duration_minutes = 30;        // Pre-heat for 30 minutes
     config.use_forecast = true;                  // Use weather forecast
@@ -86,7 +86,7 @@ int example_configure_snow_melt_control(void) {
     }
     
     printf("INFO: Snow melt control system configured successfully\n");
-    printf("INFO: Temperature threshold: %.1f°C\n", config.temperature_threshold_celsius);
+    printf("INFO: Temperature threshold: %.1fC\n", config.temperature_threshold_celsius);
     printf("INFO: Weather check interval: %d minutes\n", config.weather_check_interval_minutes);
     printf("INFO: Preheat duration: %d minutes\n", config.preheat_duration_minutes);
     printf("INFO: Using forecast: %s\n", config.use_forecast ? "Yes" : "No");
@@ -116,11 +116,11 @@ int example_monitor_snow_melt_control(void) {
         printf("System enabled: %s\n", status.enabled ? "Yes" : "No");
         printf("Current mode: %s\n", starlink_weather_snow_melt_mode_to_string(status.current_mode));
         printf("Previous mode: %s\n", starlink_weather_snow_melt_mode_to_string(status.previous_mode));
-        printf("Current temperature: %.1f°C\n", status.current_temperature);
+        printf("Current temperature: %.1fC\n", status.current_temperature);
         printf("Current weather: %s\n", starlink_weather_snow_melt_weather_condition_to_string(status.current_weather));
         printf("Forecast weather: %s\n", starlink_weather_snow_melt_weather_condition_to_string(status.forecast_weather));
         printf("Precipitation expected: %s\n", status.precipitation_expected ? "Yes" : "No");
-        printf("Last weather check: %ld\n", status.last_weather_check);
+         printf("Last weather check: %lld\n", (long long)status.last_weather_check);
         printf("Last weather description: %s\n", status.last_weather_description);
         
         if (status.current_mode == SNOW_MELT_PREHEAT) {
@@ -170,13 +170,13 @@ int example_show_statistics(void) {
     printf("Average weather check time: %.2f ms\n", stats.average_weather_check_time_ms);
     
     if (stats.last_automatic_activation > 0) {
-        printf("Last automatic activation: %ld\n", stats.last_automatic_activation);
+         printf("Last automatic activation: %lld\n", (long long)stats.last_automatic_activation);
     }
     if (stats.last_preheat_activation > 0) {
-        printf("Last preheat activation: %ld\n", stats.last_preheat_activation);
+        printf("Last preheat activation: %lld\n", (long long)stats.last_preheat_activation);
     }
     if (stats.last_manual_activation > 0) {
-        printf("Last manual activation: %ld\n", stats.last_manual_activation);
+        printf("Last manual activation: %lld\n", (long long)stats.last_manual_activation);
     }
     
     return AUTONOMY_SUCCESS;
@@ -231,7 +231,7 @@ void example_cleanup(void) {
     printf("INFO: Cleaning up snow melt control system...\n");
     
     // Cleanup UBUS interface
-    starlink_weather_snow_melt_ubus_cleanup();
+    starlink_weather_snow_melt_ubus_cleanup(NULL);
     
     // Cleanup snow melt control system
     starlink_weather_snow_melt_control_cleanup();
@@ -308,7 +308,7 @@ int starlink_weather_snow_melt_example_main(int argc, char *argv[]) {
  * 2. Add cleanup in main daemon shutdown:
  *    ```c
  *    // In cleanup function
- *    starlink_weather_snow_melt_ubus_cleanup();
+ *    starlink_weather_snow_melt_ubus_cleanup(NULL);
  *    starlink_weather_snow_melt_control_cleanup();
  *    ```
  * 
@@ -335,7 +335,7 @@ int starlink_weather_snow_melt_example_main(int argc, char *argv[]) {
  *    # Enable the system
  *    uci set autonomy.snow_melt_control.enabled='1'
  *    
- *    # Set temperature threshold (default: 5.0°C)
+ *    # Set temperature threshold (default: 5.0C)
  *    uci set autonomy.snow_melt_control.temperature_threshold='5.0'
  *    
  *    # Set weather check interval (default: 15 minutes)
@@ -397,8 +397,8 @@ int starlink_weather_snow_melt_example_main(int argc, char *argv[]) {
  * 
  * The system implements the following logic based on your requirements:
  * 
- * 1. SNOW_MELT_OFF: When temperature is above +5°C
- * 2. SNOW_MELT_AUTOMATIC: When temperature is below +5°C but no precipitation
+ * 1. SNOW_MELT_OFF: When temperature is above +5C
+ * 2. SNOW_MELT_AUTOMATIC: When temperature is below +5C but no precipitation
  * 3. SNOW_MELT_PREHEAT: When snow or heavy rain is expected within 30 minutes (or 1 hour if forecast available)
  * 4. SNOW_MELT_PREHEAT: When current weather shows snow or heavy rain
  * 

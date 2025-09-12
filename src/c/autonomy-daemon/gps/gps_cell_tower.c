@@ -16,6 +16,8 @@ extern autonomy_config_t g_config;
 static void calculate_triangulated_position(void);
 static void calculate_single_tower_position(void);
 static void add_position_history(void);
+static int find_oldest_tower(void);
+static int generate_tower_id(void);
 
 // Cell tower positioning configuration
 static const int MAX_CELL_TOWERS = 100; // Use configurable value                     // Maximum cell towers to track

@@ -426,7 +426,7 @@ int perform_file_integrity_check(security_scan_result_t* result) {
                             
                             struct stat st;
                             if (stat(full_path, &st) == 0 && (st.st_mode & S_IXUSR)) {
-                                char issue_details[512];
+                                char issue_details[1024];  // Increased buffer size
                                 snprintf(issue_details, sizeof(issue_details),
                                         "Suspicious executable file found: %s", full_path);
                                 update_security_events("suspicious_file", issue_details,
@@ -877,7 +877,7 @@ static int perform_threat_detection(security_scan_result_t* result) {
             // Remove newline
             process_line[strcspn(process_line, "\n")] = 0;
             
-            char msg[1024];
+            char msg[2048];  // Increased buffer size
             snprintf(msg, sizeof(msg), "Suspicious process detected: %s", process_line);
             update_security_events("threat_detection", msg,
                                   "malicious_process", "system", THREAT_LEVEL_HIGH);
@@ -994,7 +994,7 @@ static char* generate_event_id(void) {
     if (!event_id) return NULL;
     
     time_t now = time(NULL);
-    snprintf(event_id, 64, "SEC_%ld_%d", now, rand() % 10000);
+    snprintf(event_id, 64, "SEC_%lld_%d", (long long)now, rand() % 10000);
     
     return event_id;
 }

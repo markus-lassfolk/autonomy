@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <sqlite3.h>
+#include <unistd.h>
 
 // Global GPS location reference manager
 static gps_location_reference_manager_t g_location_ref_manager = {0};
@@ -701,8 +702,8 @@ double gps_reduce_coordinate_precision(double coordinate, double precision_meter
     }
     
     // Convert precision from meters to degrees (approximate)
-    // 1 degree latitude ≈ 111,000 meters
-    // 1 degree longitude ≈ 111,000 * cos(latitude) meters
+    // 1 degree latitude  111,000 meters
+    // 1 degree longitude  111,000 * cos(latitude) meters
     double precision_degrees = precision_meters / 111000.0;
     
     // Round to the nearest precision step

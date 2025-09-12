@@ -1,6 +1,10 @@
 #include "gps_connector.h"
 #include "../utils/logx.h"
 #include "../core/types.h"
+#include "gps_integration.h"
+#include "gps_location_reference.h"
+#include "gps_health.h"
+#include "gps_starlink.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -12,6 +16,18 @@
 
 // External reference to global configuration
 extern autonomy_config_t g_config;
+
+// Forward declarations
+static int generate_module_id(void);
+static int find_module_by_id(int module_id);
+static void perform_connector_checks(void);
+static void gps_connector_check_module_health(void);
+static void gps_connector_update_system_health(void);
+static void perform_module_coordination(void);
+int gps_integration_get_status(gps_integration_status_t *status);
+int gps_location_reference_get_status(gps_location_reference_status_t *status);
+int gps_health_get_status(gps_health_status_t *status);
+int gps_starlink_get_status(gps_starlink_status_t *status);
 
 // GPS connector configuration
 static const int MAX_CONNECTED_MODULES = 20; // Use configurable value // Use configurable count // Use configurable value             // Maximum connected modules
@@ -232,8 +248,8 @@ void gps_connector_check_module_health(void) {
         if (module->last_operation > 0 && 
             (now - module->last_operation) > g_connector.health_timeout) {
             module->health_score *= 0.9;  // Reduce health score
-            LOGX_WARN_MSG("GPS module '%s' is stale (last operation: %ld seconds ago)", 
-                      module->name, now - module->last_operation);
+            LOGX_WARN_MSG("GPS module '%s' is stale (last operation: %lld seconds ago)", 
+                      module->name, (long long)(now - module->last_operation));
         }
         
         // Disable module if health is too low

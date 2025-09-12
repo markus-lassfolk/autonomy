@@ -4,8 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// External UBUS context - should be defined in main daemon
-extern struct ubus_context *g_ubus_ctx;
+// UBUS context will be passed as parameter to init/cleanup functions
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
@@ -73,18 +72,16 @@ static struct ubus_object starlink_weather_snow_melt_ubus_object = {
 };
 
 // Initialize UBUS interface for weather-based snow melt control
-int starlink_weather_snow_melt_ubus_init(void) {
+int starlink_weather_snow_melt_ubus_init(struct ubus_context *ctx) {
     printf("INFO: Initializing UBUS interface for weather-based snow melt control\n");
     
-    // Get UBUS context
-    extern struct ubus_context *g_ubus_ctx;
-    if (!g_ubus_ctx) {
+    if (!ctx) {
         printf("ERROR: UBUS context not available\n");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     // Add object to UBUS
-    int result = ubus_add_object(g_ubus_ctx, &starlink_weather_snow_melt_ubus_object);
+    int result = ubus_add_object(ctx, &starlink_weather_snow_melt_ubus_object);
     if (result != 0) {
         printf("ERROR: Failed to add snow melt control object to UBUS: %d\n", result);
         return AUTONOMY_ERROR_SYSTEM;
@@ -96,13 +93,11 @@ int starlink_weather_snow_melt_ubus_init(void) {
 }
 
 // Cleanup UBUS interface for weather-based snow melt control
-void starlink_weather_snow_melt_ubus_cleanup(void) {
+void starlink_weather_snow_melt_ubus_cleanup(struct ubus_context *ctx) {
     printf("INFO: Cleaning up UBUS interface for weather-based snow melt control\n");
     
-    // Get UBUS context
-    extern struct ubus_context *g_ubus_ctx;
-    if (g_ubus_ctx) {
-        ubus_remove_object(g_ubus_ctx, &starlink_weather_snow_melt_ubus_object);
+    if (ctx) {
+        ubus_remove_object(ctx, &starlink_weather_snow_melt_ubus_object);
     }
     
     printf("INFO: UBUS interface for weather-based snow melt control cleaned up\n");

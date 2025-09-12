@@ -15,6 +15,10 @@
 // External reference to global configuration
 extern autonomy_config_t g_config;
 
+// Forward declarations
+static double calculate_channel_score(const wifi_channel_score_t* score);
+static void aggregate_channel_scores(void);
+
 // WiFi management configuration
 static const int MAX_CHANNEL_SCORES = 100; // Use configurable count // Use configurable value           // Maximum channel scores to store
 static const int MAX_SCHEDULED_TASKS = 50; // Use configurable count // Use configurable value           // Maximum scheduled tasks
@@ -219,7 +223,7 @@ int wifi_management_scan_channels(const char *interface_name) {
 }
 
 // Calculate channel interference score
-int calculate_channel_score(const wifi_channel_score_t *score) {
+double calculate_channel_score(const wifi_channel_score_t *score) {
     int base_score = 100; // Use configurable count // Use configurable value
     
     // Penalize based on signal strength (stronger = more interference)
@@ -577,8 +581,8 @@ int wifi_management_update_gps_location(double lat, double lon, double accuracy,
                 // Trigger optimization
                 pthread_mutex_unlock(&g_wifi_management_mutex);
                 
-                LOGX_INFO_MSG("GPS-triggered WiFi optimization: stationary for %ld seconds", 
-                         timestamp - g_wifi_management.gps_integration.stationary_start);
+                LOGX_INFO_MSG("GPS-triggered WiFi optimization: stationary for %lld seconds", 
+                         (long long)(timestamp - g_wifi_management.gps_integration.stationary_start));
                 
                 // Find first available interface for optimization
                 if (g_wifi_management.interfaces_count > 0) {

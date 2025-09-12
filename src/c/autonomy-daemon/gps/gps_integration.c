@@ -12,6 +12,15 @@
 // External reference to global configuration
 extern autonomy_config_t g_config;
 
+// Forward declarations
+static int generate_source_id(void);
+int gps_fusion_engine_is_initialized(void);
+int gps_fusion_engine_fuse(const gps_data_t *sources, int source_count, gps_data_t *result);
+int gps_location_reference_is_initialized(void);
+int gps_location_reference_get_or_create(const char *name, double lat, double lon, int *location_id);
+void gps_location_reference_update_usage(int location_id, double signal_quality, int latency_ms);
+double gps_calculate_distance_meters(double lat1, double lon1, double lat2, double lon2);
+
 // GPS integration configuration
 // Note: MAX_GPS_SOURCES is defined in ../core/types.h
 static const int GPS_UPDATE_INTERVAL = 1; // Use configurable value // Use configurable count // Use configurable value               // 1 second GPS update interval
@@ -384,8 +393,8 @@ void check_gps_source_health(void) {
         if (source->last_update > 0 && 
             (now - source->last_update) > 300) {  // 5 minutes
             source->health_score *= 0.8;  // Reduce health score
-            LOGX_WARN_MSG("GPS source '%s' is stale (last update: %ld seconds ago)", 
-                      source->name, now - source->last_update);
+            LOGX_WARN_MSG("GPS source '%s' is stale (last update: %lld seconds ago)", 
+                      source->name, (long long)(now - source->last_update));
         }
         
         // Disable source if health is too low

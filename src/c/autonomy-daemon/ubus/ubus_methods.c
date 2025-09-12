@@ -19,7 +19,7 @@ int autonomy_status(struct ubus_context *uctx, struct ubus_object *obj,
     blob_buf_init(&bb, 0);
     blobmsg_add_string(&bb, "state", "running");
     blobmsg_add_u32(&bb, "uptime", (uint32_t)time(NULL));
-    blobmsg_add_string(&bb, "version", "5.8.4-205");
+    blobmsg_add_string(&bb, "version", "5.8.4-214");
     blobmsg_add_string(&bb, "note", "autonomy daemon is running");
     
     ubus_send_reply(uctx, req, bb.head);
@@ -36,7 +36,7 @@ int autonomy_health(struct ubus_context *uctx, struct ubus_object *obj,
     blob_buf_init(&bb, 0);
     blobmsg_add_string(&bb, "status", "healthy");
     blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
-    blobmsg_add_string(&bb, "version", "5.8.4-205");
+    blobmsg_add_string(&bb, "version", "5.8.4-214");
     
     ubus_send_reply(uctx, req, bb.head);
     blob_buf_free(&bb);

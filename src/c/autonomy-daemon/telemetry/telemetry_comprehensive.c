@@ -365,7 +365,7 @@ int telemetry_comprehensive_collect_sample(const char* member_name,
     telemetry_sample_t* buffer_sample = &g_telemetry_comprehensive.samples_buffer[g_telemetry_comprehensive.samples_buffer_head];
     *buffer_sample = *sample;
     
-    snprintf(buffer_sample->id, sizeof(buffer_sample->id), "%lu", g_telemetry_comprehensive.next_sample_id++);
+    snprintf(buffer_sample->id, sizeof(buffer_sample->id), "%llu", (unsigned long long)g_telemetry_comprehensive.next_sample_id++);
     buffer_sample->timestamp = time(NULL);
     strncpy(buffer_sample->member_name, member_name, sizeof(buffer_sample->member_name) - 1);
     buffer_sample->member_name[sizeof(buffer_sample->member_name) - 1] = '\0';
@@ -626,9 +626,9 @@ static int collect_current_telemetry(void) {
     }
     
     // Collect cellular metrics if enabled
-    if (g_telemetry_comprehensive.config.collect_cellular_metrics && cellular_collector_is_initialized()) {
+    if (g_telemetry_comprehensive.config.collect_cellular_metrics && cellular_collector_is_available()) {
         cellular_info_t cellular_info;
-        if (cellular_collector_collect(&cellular_info) == AUTONOMY_SUCCESS) {
+        if (cellular_collector_get_info(&cellular_info) == AUTONOMY_SUCCESS) {
             telemetry_sample_t sample = {0};
             
             // Fill GPS data
