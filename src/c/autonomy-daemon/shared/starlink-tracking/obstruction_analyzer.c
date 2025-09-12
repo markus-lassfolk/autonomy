@@ -24,14 +24,14 @@ void obstruction_analyzer_config_init_defaults(obstruction_analysis_config_t *co
 
 // Initialize obstruction analyzer
 obstruction_analyzer_t* obstruction_analyzer_init(const obstruction_analysis_config_t *config) {
-    obstruction_analyzer_t *analyzer = calloc(1, sizeof(obstruction_analyzer_t));
+    obstruction_analyzer_t *analyzer = calloc(1, sizeof(obstruction_analyzer_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!analyzer) {
         return NULL;
     }
     
     // Set default configuration if none provided
     if (config) {
-        memcpy(&analyzer->config, config, sizeof(obstruction_analysis_config_t));
+        memcpy(&analyzer->config, config, sizeof(obstruction_analysis_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         analyzer->config.snr_threshold = OBSTRUCTION_SNR_THRESHOLD;
         analyzer->config.min_elevation = MIN_ELEVATION_DEGREES;
@@ -51,10 +51,10 @@ obstruction_analyzer_t* obstruction_analyzer_init(const obstruction_analysis_con
     
     // Allocate smoothing buffer
     analyzer->smoothing_buffer_size = OBSTRUCTION_GRID_WIDTH * OBSTRUCTION_GRID_HEIGHT;
-    analyzer->smoothing_buffer = calloc(analyzer->smoothing_buffer_size, sizeof(double));
+    analyzer->smoothing_buffer = calloc(analyzer->smoothing_buffer_size, sizeof(double)\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!analyzer->smoothing_buffer) {
-        free(analyzer);
+        free(analyzer\n"\n"\n"\n"\n"\n"\n"\n");
         return NULL;
     }
     
@@ -68,14 +68,14 @@ void obstruction_analyzer_cleanup(obstruction_analyzer_t *analyzer) {
     }
     
     if (analyzer->current_map.cells) {
-        free(analyzer->current_map.cells);
+        free(analyzer->current_map.cells\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (analyzer->smoothing_buffer) {
-        free(analyzer->smoothing_buffer);
+        free(analyzer->smoothing_buffer\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    free(analyzer);
+    free(analyzer\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Parse dish gRPC response for obstruction map and location
@@ -84,7 +84,7 @@ int obstruction_analyzer_parse_dish_response(const char *response, obstruction_m
         return OBSTRUCTION_ERROR_INVALID_PARAM;
     }
     
-    json_object *root = json_tokener_parse(response);
+    json_object *root = json_tokener_parse(response\n"\n"\n"\n"\n"\n"\n"\n");
     if (!root) {
         return OBSTRUCTION_ERROR_PARSE_FAILED;
     }
@@ -98,15 +98,15 @@ int obstruction_analyzer_parse_dish_response(const char *response, obstruction_m
             // Get SNR values array
             json_object *snr_array;
             if (json_object_object_get_ex(obstruction_map_obj, "snr", &snr_array)) {
-                int array_length = json_object_array_length(snr_array);
+                int array_length = json_object_array_length(snr_array\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 // Allocate cells
                 if (map->cells) {
-                    free(map->cells);
+                    free(map->cells\n"\n"\n"\n"\n"\n"\n"\n");
                 }
-                map->cells = calloc(array_length, sizeof(obstruction_cell_t));
+                map->cells = calloc(array_length, sizeof(obstruction_cell_t)\n"\n"\n"\n"\n"\n"\n"\n");
                 if (!map->cells) {
-                    json_object_put(root);
+                    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
                     return OBSTRUCTION_ERROR_MEMORY_FAILED;
                 }
                 
@@ -114,8 +114,8 @@ int obstruction_analyzer_parse_dish_response(const char *response, obstruction_m
                 
                 // Parse SNR values and calculate positions
                 for (int i = 0; i < array_length; i++) {
-                    json_object *snr_value = json_object_array_get_idx(snr_array, i);
-                    double snr = json_object_get_double(snr_value);
+                    json_object *snr_value = json_object_array_get_idx(snr_array, i\n"\n"\n"\n"\n"\n"\n"\n");
+                    double snr = json_object_get_double(snr_value\n"\n"\n"\n"\n"\n"\n"\n");
                     
                     // Calculate azimuth and elevation from grid index
                     int row = i / map->grid_width;
@@ -124,10 +124,10 @@ int obstruction_analyzer_parse_dish_response(const char *response, obstruction_m
                     map->cells[i].azimuth = col * map->azimuth_resolution;
                     map->cells[i].elevation = (map->grid_height - 1 - row) * map->elevation_resolution;
                     map->cells[i].snr_quality = snr;
-                    map->cells[i].is_obstructed = (snr < OBSTRUCTION_SNR_THRESHOLD);
+                    map->cells[i].is_obstructed = (snr < OBSTRUCTION_SNR_THRESHOLD\n"\n"\n"\n"\n"\n"\n"\n");
                 }
                 
-                map->last_update = time(NULL);
+                map->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
@@ -139,18 +139,18 @@ int obstruction_analyzer_parse_dish_response(const char *response, obstruction_m
             json_object *lat_obj, *lon_obj, *alt_obj;
             
             if (json_object_object_get_ex(location_response, "latitude", &lat_obj)) {
-                location->latitude = json_object_get_double(lat_obj);
+                location->latitude = json_object_get_double(lat_obj\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             if (json_object_object_get_ex(location_response, "longitude", &lon_obj)) {
-                location->longitude = json_object_get_double(lon_obj);
+                location->longitude = json_object_get_double(lon_obj\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             if (json_object_object_get_ex(location_response, "altitude", &alt_obj)) {
-                location->altitude = json_object_get_double(alt_obj);
+                location->altitude = json_object_get_double(alt_obj\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
-            location->last_update = time(NULL);
+            location->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Parse diagnostics for boresight if present
@@ -161,17 +161,17 @@ int obstruction_analyzer_parse_dish_response(const char *response, obstruction_m
                 json_object *boresight_az, *boresight_el;
                 
                 if (json_object_object_get_ex(alignment_stats, "boresightAzimuthDeg", &boresight_az)) {
-                    location->boresight_azimuth = json_object_get_double(boresight_az);
+                    location->boresight_azimuth = json_object_get_double(boresight_az\n"\n"\n"\n"\n"\n"\n"\n");
                 }
                 
                 if (json_object_object_get_ex(alignment_stats, "boresightElevationDeg", &boresight_el)) {
-                    location->boresight_elevation = json_object_get_double(boresight_el);
+                    location->boresight_elevation = json_object_get_double(boresight_el\n"\n"\n"\n"\n"\n"\n"\n");
                 }
             }
         }
     }
     
-    json_object_put(root);
+    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
     return OBSTRUCTION_SUCCESS;
 }
 
@@ -181,19 +181,19 @@ int obstruction_analyzer_update_map(obstruction_analyzer_t *analyzer, const char
         return OBSTRUCTION_ERROR_INVALID_PARAM;
     }
     
-    int result = obstruction_analyzer_parse_dish_response(grpc_response, &analyzer->current_map, NULL);
+    int result = obstruction_analyzer_parse_dish_response(grpc_response, &analyzer->current_map, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == OBSTRUCTION_SUCCESS) {
         analyzer->total_analyses++;
-        analyzer->last_analysis = time(NULL);
+        analyzer->last_analysis = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Apply smoothing if configured
         if (analyzer->config.smoothing_window_size > 1) {
-            obstruction_analyzer_apply_smoothing(analyzer, &analyzer->current_map);
+            obstruction_analyzer_apply_smoothing(analyzer, &analyzer->current_map\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Update statistics
-        obstruction_map_stats_t stats = obstruction_analyzer_get_map_stats(&analyzer->current_map);
+        obstruction_map_stats_t stats = obstruction_analyzer_get_map_stats(&analyzer->current_map\n"\n"\n"\n"\n"\n"\n"\n");
         analyzer->obstructed_count = stats.obstructed_cells;
         analyzer->clear_count = stats.clear_cells;
         analyzer->average_snr = stats.average_snr;
@@ -202,8 +202,8 @@ int obstruction_analyzer_update_map(obstruction_analyzer_t *analyzer, const char
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), 
                     "Updated obstruction map: %d cells, %.1f%% obstructed, avg SNR %.2f", 
-                    stats.total_cells, stats.obstruction_percentage, stats.average_snr);
-            analyzer->log_callback(1, log_msg, analyzer->log_user_data);
+                    stats.total_cells, stats.obstruction_percentage, stats.average_snr\n"\n"\n"\n"\n"\n"\n"\n");
+            analyzer->log_callback(1, log_msg, analyzer->log_user_data\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
@@ -221,7 +221,7 @@ obstruction_analysis_result_t obstruction_analyzer_check_satellite(
     if (!analyzer) {
         result.is_obstructed = true;
         result.confidence_score = 0.0;
-        strncpy(result.analysis_details, "Invalid analyzer", sizeof(result.analysis_details) - 1);
+        strncpy(result.analysis_details, "Invalid analyzer", sizeof(result.analysis_details) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         return result;
     }
     
@@ -231,7 +231,7 @@ obstruction_analysis_result_t obstruction_analyzer_check_satellite(
         result.confidence_score = 1.0;
         snprintf(result.analysis_details, sizeof(result.analysis_details), 
                 "Below minimum elevation (%.1f < %.1f)", 
-                satellite_elevation, analyzer->config.min_elevation);
+                satellite_elevation, analyzer->config.min_elevation\n"\n"\n"\n"\n"\n"\n"\n");
         return result;
     }
     
@@ -240,34 +240,34 @@ obstruction_analysis_result_t obstruction_analyzer_check_satellite(
         result.confidence_score = 1.0;
         snprintf(result.analysis_details, sizeof(result.analysis_details), 
                 "Above maximum elevation (%.1f > %.1f)", 
-                satellite_elevation, analyzer->config.max_elevation);
+                satellite_elevation, analyzer->config.max_elevation\n"\n"\n"\n"\n"\n"\n"\n");
         return result;
     }
     
     // Normalize azimuth to [0, 360)
-    double norm_azimuth = obstruction_analyzer_normalize_azimuth(satellite_azimuth);
+    double norm_azimuth = obstruction_analyzer_normalize_azimuth(satellite_azimuth\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Get SNR quality from obstruction map
-    result.snr_quality = obstruction_analyzer_interpolate_snr(&analyzer->current_map, norm_azimuth, satellite_elevation);
+    result.snr_quality = obstruction_analyzer_interpolate_snr(&analyzer->current_map, norm_azimuth, satellite_elevation\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Determine obstruction threshold (adaptive or fixed)
     double threshold = analyzer->config.snr_threshold;
     if (analyzer->config.use_adaptive_threshold) {
-        threshold = obstruction_analyzer_calculate_adaptive_threshold(analyzer, &analyzer->current_map);
+        threshold = obstruction_analyzer_calculate_adaptive_threshold(analyzer, &analyzer->current_map\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Determine obstruction status
-    result.is_obstructed = (result.snr_quality < threshold);
+    result.is_obstructed = (result.snr_quality < threshold\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate confidence based on how far from threshold
-    double distance_from_threshold = fabs(result.snr_quality - threshold);
+    double distance_from_threshold = fabs(result.snr_quality - threshold\n"\n"\n"\n"\n"\n"\n"\n");
     result.confidence_score = fmin(1.0, distance_from_threshold * 2.0); // Scale factor
     
     // Create analysis details
     snprintf(result.analysis_details, sizeof(result.analysis_details), 
             "Az: %.1f, El: %.1f, SNR: %.2f, Threshold: %.2f, %s", 
             norm_azimuth, satellite_elevation, result.snr_quality, threshold,
-            result.is_obstructed ? "OBSTRUCTED" : "CLEAR");
+            result.is_obstructed ? "OBSTRUCTED" : "CLEAR"\n"\n"\n"\n"\n"\n"\n"\n");
     
     return result;
 }
@@ -284,16 +284,16 @@ int obstruction_analyzer_get_grid_cell(
     }
     
     // Normalize coordinates
-    double norm_azimuth = obstruction_analyzer_normalize_azimuth(azimuth);
-    double norm_elevation = obstruction_analyzer_clamp_elevation(elevation);
+    double norm_azimuth = obstruction_analyzer_normalize_azimuth(azimuth\n"\n"\n"\n"\n"\n"\n"\n");
+    double norm_elevation = obstruction_analyzer_clamp_elevation(elevation\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate grid indices
-    int col = (int)(norm_azimuth / map->azimuth_resolution);
-    int row = map->grid_height - 1 - (int)(norm_elevation / map->elevation_resolution);
+    int col = (int)(norm_azimuth / map->azimuth_resolution\n"\n"\n"\n"\n"\n"\n"\n");
+    int row = map->grid_height - 1 - (int)(norm_elevation / map->elevation_resolution\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Clamp indices to valid range
-    col = (col < 0) ? 0 : ((col >= map->grid_width) ? map->grid_width - 1 : col);
-    row = (row < 0) ? 0 : ((row >= map->grid_height) ? map->grid_height - 1 : row);
+    col = (col < 0) ? 0 : ((col >= map->grid_width) ? map->grid_width - 1 : col\n"\n"\n"\n"\n"\n"\n"\n");
+    row = (row < 0) ? 0 : ((row >= map->grid_height) ? map->grid_height - 1 : row\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate linear index
     int index = row * map->grid_width + col;
@@ -303,7 +303,7 @@ int obstruction_analyzer_get_grid_cell(
     }
     
     // Copy cell data
-    memcpy(cell, &map->cells[index], sizeof(obstruction_cell_t));
+    memcpy(cell, &map->cells[index], sizeof(obstruction_cell_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     return OBSTRUCTION_SUCCESS;
 }
@@ -319,24 +319,24 @@ double obstruction_analyzer_interpolate_snr(
     }
     
     // Normalize coordinates
-    double norm_azimuth = obstruction_analyzer_normalize_azimuth(azimuth);
-    double norm_elevation = obstruction_analyzer_clamp_elevation(elevation);
+    double norm_azimuth = obstruction_analyzer_normalize_azimuth(azimuth\n"\n"\n"\n"\n"\n"\n"\n");
+    double norm_elevation = obstruction_analyzer_clamp_elevation(elevation\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate fractional grid position
     double col_f = norm_azimuth / map->azimuth_resolution;
-    double row_f = (map->grid_height - 1) - (norm_elevation / map->elevation_resolution);
+    double row_f = (map->grid_height - 1) - (norm_elevation / map->elevation_resolution\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Get integer indices
-    int col0 = (int)floor(col_f);
-    int row0 = (int)floor(row_f);
+    int col0 = (int)floor(col_f\n"\n"\n"\n"\n"\n"\n"\n");
+    int row0 = (int)floor(row_f\n"\n"\n"\n"\n"\n"\n"\n");
     int col1 = col0 + 1;
     int row1 = row0 + 1;
     
     // Clamp to valid range
-    col0 = (col0 < 0) ? 0 : ((col0 >= map->grid_width) ? map->grid_width - 1 : col0);
-    col1 = (col1 < 0) ? 0 : ((col1 >= map->grid_width) ? map->grid_width - 1 : col1);
-    row0 = (row0 < 0) ? 0 : ((row0 >= map->grid_height) ? map->grid_height - 1 : row0);
-    row1 = (row1 < 0) ? 0 : ((row1 >= map->grid_height) ? map->grid_height - 1 : row1);
+    col0 = (col0 < 0) ? 0 : ((col0 >= map->grid_width) ? map->grid_width - 1 : col0\n"\n"\n"\n"\n"\n"\n"\n");
+    col1 = (col1 < 0) ? 0 : ((col1 >= map->grid_width) ? map->grid_width - 1 : col1\n"\n"\n"\n"\n"\n"\n"\n");
+    row0 = (row0 < 0) ? 0 : ((row0 >= map->grid_height) ? map->grid_height - 1 : row0\n"\n"\n"\n"\n"\n"\n"\n");
+    row1 = (row1 < 0) ? 0 : ((row1 >= map->grid_height) ? map->grid_height - 1 : row1\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Get the four corner values
     int idx00 = row0 * map->grid_width + col0;
@@ -348,8 +348,8 @@ double obstruction_analyzer_interpolate_snr(
     if (idx00 >= map->num_cells || idx01 >= map->num_cells || 
         idx10 >= map->num_cells || idx11 >= map->num_cells) {
         // Fallback to nearest neighbor
-        int nearest_idx = ((int)round(row_f)) * map->grid_width + ((int)round(col_f));
-        nearest_idx = (nearest_idx < 0) ? 0 : ((nearest_idx >= map->num_cells) ? map->num_cells - 1 : nearest_idx);
+        int nearest_idx = ((int)round(row_f)) * map->grid_width + ((int)round(col_f)\n"\n"\n"\n"\n"\n"\n"\n");
+        nearest_idx = (nearest_idx < 0) ? 0 : ((nearest_idx >= map->num_cells) ? map->num_cells - 1 : nearest_idx\n"\n"\n"\n"\n"\n"\n"\n");
         return map->cells[nearest_idx].snr_quality;
     }
     
@@ -392,9 +392,9 @@ void obstruction_analyzer_dish_to_absolute_coords(
     
     // Convert dish-relative spherical coordinates to Cartesian unit vector
     // In dish coordinate system: x=forward, y=right, z=up
-    double dish_x = cos(dish_el_rad) * cos(dish_az_rad);
-    double dish_y = cos(dish_el_rad) * sin(dish_az_rad);
-    double dish_z = sin(dish_el_rad);
+    double dish_x = cos(dish_el_rad) * cos(dish_az_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double dish_y = cos(dish_el_rad) * sin(dish_az_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double dish_z = sin(dish_el_rad\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Build rotation matrix to transform from dish coordinates to absolute coordinates
     // This requires two rotations:
@@ -402,14 +402,14 @@ void obstruction_analyzer_dish_to_absolute_coords(
     // 2. Rotation around Y-axis by (90 - boresight elevation)
     
     // First rotation matrix (azimuth rotation around Z-axis)
-    double cos_az = cos(bore_az_rad);
-    double sin_az = sin(bore_az_rad);
+    double cos_az = cos(bore_az_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double sin_az = sin(bore_az_rad\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Second rotation matrix (elevation rotation around Y-axis)
     // Note: We rotate by (/2 - elevation) to align with horizon
     double pitch_angle = M_PI/2 - bore_el_rad;
-    double cos_pitch = cos(pitch_angle);
-    double sin_pitch = sin(pitch_angle);
+    double cos_pitch = cos(pitch_angle\n"\n"\n"\n"\n"\n"\n"\n");
+    double sin_pitch = sin(pitch_angle\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Combined rotation matrix application
     // Step 1: Apply elevation rotation (around Y-axis)
@@ -423,24 +423,24 @@ void obstruction_analyzer_dish_to_absolute_coords(
     double absolute_z = temp_z;
     
     // Convert back to spherical coordinates
-    double r_xy = sqrt(absolute_x * absolute_x + absolute_y * absolute_y);
+    double r_xy = sqrt(absolute_x * absolute_x + absolute_y * absolute_y\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate absolute azimuth and elevation
     *absolute_az = atan2(absolute_y, absolute_x) * 180.0 / M_PI;
     *absolute_el = atan2(absolute_z, r_xy) * 180.0 / M_PI;
     
     // Normalize azimuth to [0, 360) range
-    *absolute_az = obstruction_analyzer_normalize_azimuth(*absolute_az);
+    *absolute_az = obstruction_analyzer_normalize_azimuth(*absolute_az\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Clamp elevation to [0, 90] range
-    *absolute_el = obstruction_analyzer_clamp_elevation(*absolute_el);
+    *absolute_el = obstruction_analyzer_clamp_elevation(*absolute_el\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Validate the transformed coordinates
     if (*absolute_az < 0.0 || *absolute_az >= 360.0) {
-        *absolute_az = obstruction_analyzer_normalize_azimuth(*absolute_az);
+        *absolute_az = obstruction_analyzer_normalize_azimuth(*absolute_az\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (*absolute_el < 0.0 || *absolute_el > 90.0) {
-        *absolute_el = obstruction_analyzer_clamp_elevation(*absolute_el);
+        *absolute_el = obstruction_analyzer_clamp_elevation(*absolute_el\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -465,21 +465,21 @@ void obstruction_analyzer_absolute_to_dish_coords(
     double bore_el_rad = boresight_elevation * M_PI / 180.0;
     
     // Convert absolute spherical coordinates to Cartesian unit vector
-    double absolute_x = cos(abs_el_rad) * cos(abs_az_rad);
-    double absolute_y = cos(abs_el_rad) * sin(abs_az_rad);
-    double absolute_z = sin(abs_el_rad);
+    double absolute_x = cos(abs_el_rad) * cos(abs_az_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double absolute_y = cos(abs_el_rad) * sin(abs_az_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double absolute_z = sin(abs_el_rad\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Build inverse rotation matrix (transpose of forward rotation)
     // This requires two inverse rotations:
     // 1. Inverse rotation around Z-axis by -boresight azimuth
     // 2. Inverse rotation around Y-axis by -(90 - boresight elevation)
     
-    double cos_az = cos(-bore_az_rad);
-    double sin_az = sin(-bore_az_rad);
+    double cos_az = cos(-bore_az_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double sin_az = sin(-bore_az_rad\n"\n"\n"\n"\n"\n"\n"\n");
     
-    double pitch_angle = -(M_PI/2 - bore_el_rad);
-    double cos_pitch = cos(pitch_angle);
-    double sin_pitch = sin(pitch_angle);
+    double pitch_angle = -(M_PI/2 - bore_el_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double cos_pitch = cos(pitch_angle\n"\n"\n"\n"\n"\n"\n"\n");
+    double sin_pitch = sin(pitch_angle\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Apply inverse rotations in reverse order
     // Step 1: Apply inverse azimuth rotation (around Z-axis)
@@ -493,7 +493,7 @@ void obstruction_analyzer_absolute_to_dish_coords(
     double dish_z = -temp_x * sin_pitch + temp_z * cos_pitch;
     
     // Convert back to spherical coordinates in dish reference frame
-    double r_xy = sqrt(dish_x * dish_x + dish_y * dish_y);
+    double r_xy = sqrt(dish_x * dish_x + dish_y * dish_y\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate dish-relative azimuth and elevation
     *dish_relative_az = atan2(dish_y, dish_x) * 180.0 / M_PI;
@@ -531,13 +531,13 @@ double obstruction_analyzer_clamp_elevation(double elevation) {
 
 // Check if elevation is in valid range
 bool obstruction_analyzer_is_elevation_valid(double elevation) {
-    return (elevation >= 0.0 && elevation <= 90.0);
+    return (elevation >= 0.0 && elevation <= 90.0\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if azimuth is in valid range
 bool obstruction_analyzer_is_azimuth_valid(double azimuth) {
     // Azimuth can be any value, we'll normalize it
-    return !isnan(azimuth) && !isinf(azimuth);
+    return !isnan(azimuth) && !isinf(azimuth\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Calculate adaptive threshold based on map statistics
@@ -575,10 +575,10 @@ double obstruction_analyzer_calculate_adaptive_threshold(
         }
     }
     
-    double std_dev = sqrt(variance_sum / valid_count);
+    double std_dev = sqrt(variance_sum / valid_count\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Adaptive threshold = mean - (factor * std_dev)
-    double adaptive_threshold = mean_snr - (analyzer->config.adaptive_threshold_factor * std_dev);
+    double adaptive_threshold = mean_snr - (analyzer->config.adaptive_threshold_factor * std_dev\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Ensure threshold is reasonable
     if (adaptive_threshold < 0.1) {
@@ -686,7 +686,7 @@ int obstruction_analyzer_apply_smoothing(obstruction_analyzer_t *analyzer, obstr
     // Update map with smoothed values
     for (int i = 0; i < map->num_cells; i++) {
         map->cells[i].snr_quality = smoothed[i];
-        map->cells[i].is_obstructed = (smoothed[i] < analyzer->config.snr_threshold);
+        map->cells[i].is_obstructed = (smoothed[i] < analyzer->config.snr_threshold\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return OBSTRUCTION_SUCCESS;
@@ -706,7 +706,7 @@ int obstruction_analyzer_check_multiple_satellites(
     for (int i = 0; i < num_satellites; i++) {
         results[i] = obstruction_analyzer_check_satellite(analyzer, 
                                                           satellites[i].azimuth, 
-                                                          satellites[i].elevation);
+                                                          satellites[i].elevation\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return OBSTRUCTION_SUCCESS;
@@ -718,13 +718,13 @@ int obstruction_analyzer_export_map_csv(const obstruction_map_t *map, const char
         return OBSTRUCTION_ERROR_INVALID_PARAM;
     }
     
-    FILE *fp = fopen(filename, "w");
+    FILE *fp = fopen(filename, "w"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!fp) {
         return OBSTRUCTION_ERROR_INVALID_PARAM;
     }
     
     // Write CSV header
-    fprintf(fp, "Row,Col,Azimuth,Elevation,SNR,IsObstructed\n");
+    fprintf(fp, "Row,Col,Azimuth,Elevation,SNR,IsObstructed\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Write data
     for (int row = 0; row < map->grid_height; row++) {
@@ -736,12 +736,12 @@ int obstruction_analyzer_export_map_csv(const obstruction_map_t *map, const char
                        map->cells[idx].azimuth,
                        map->cells[idx].elevation,
                        map->cells[idx].snr_quality,
-                       map->cells[idx].is_obstructed ? 1 : 0);
+                       map->cells[idx].is_obstructed ? 1 : 0\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
     
-    fclose(fp);
+    fclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
     return OBSTRUCTION_SUCCESS;
 }
 
@@ -751,17 +751,17 @@ int obstruction_analyzer_print_map_summary(const obstruction_map_t *map) {
         return OBSTRUCTION_ERROR_INVALID_PARAM;
     }
     
-    obstruction_map_stats_t stats = obstruction_analyzer_get_map_stats(map);
+    obstruction_map_stats_t stats = obstruction_analyzer_get_map_stats(map\n"\n"\n"\n"\n"\n"\n"\n");
     
-    printf("Obstruction Map Summary:\n");
-    printf("  Total cells: %d\n", stats.total_cells);
-    printf("  Obstructed cells: %d\n", stats.obstructed_cells);
-    printf("  Clear cells: %d\n", stats.clear_cells);
-    printf("  Obstruction percentage: %.1f%%\n", stats.obstruction_percentage);
-    printf("  Average SNR: %.3f\n", stats.average_snr);
-    printf("  Min SNR: %.3f\n", stats.min_snr);
-    printf("  Max SNR: %.3f\n", stats.max_snr);
-    printf("  Last update: %s", ctime(&stats.analysis_time));
+    printf("Obstruction Map Summary:\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  Total cells: %d\n", stats.total_cells\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  Obstructed cells: %d\n", stats.obstructed_cells\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  Clear cells: %d\n", stats.clear_cells\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  Obstruction percentage: %.1f%%\n", stats.obstruction_percentage\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  Average SNR: %.3f\n", stats.average_snr\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  Min SNR: %.3f\n", stats.min_snr\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  Max SNR: %.3f\n", stats.max_snr\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  Last update: %s", ctime(&stats.analysis_time)\n"\n"\n"\n"\n"\n"\n"\n");
     
     return OBSTRUCTION_SUCCESS;
 }

@@ -24,14 +24,14 @@ static security_monitor_t g_security_monitor;
 static bool g_security_monitor_initialized = false;
 
 // Forward declarations
-int perform_file_integrity_check(security_scan_result_t* result);
-int perform_network_security_check(security_scan_result_t* result);
-int perform_access_control_check(security_scan_result_t* result);
-int perform_configuration_check(security_scan_result_t* result);
-static int perform_threat_detection(security_scan_result_t* result);
+int perform_file_integrity_check(security_scan_result_t* result\n"\n"\n"\n"\n"\n"\n"\n");
+int perform_network_security_check(security_scan_result_t* result\n"\n"\n"\n"\n"\n"\n"\n");
+int perform_access_control_check(security_scan_result_t* result\n"\n"\n"\n"\n"\n"\n"\n");
+int perform_configuration_check(security_scan_result_t* result\n"\n"\n"\n"\n"\n"\n"\n");
+static int perform_threat_detection(security_scan_result_t* result\n"\n"\n"\n"\n"\n"\n"\n");
 void update_security_events(const char* event_type, const char* description, 
-                                  const char* source, const char* target, threat_level_t level);
-static char* generate_event_id(void);
+                                  const char* source, const char* target, threat_level_t level\n"\n"\n"\n"\n"\n"\n"\n");
+static char* generate_event_id(void\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize security monitor
 int security_monitor_init(const security_monitor_config_t* config) {
@@ -39,7 +39,7 @@ int security_monitor_init(const security_monitor_config_t* config) {
         return 0; // Already initialized
     }
     
-    memset(&g_security_monitor, 0, sizeof(security_monitor_t));
+    memset(&g_security_monitor, 0, sizeof(security_monitor_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set configuration
     if (config) {
@@ -56,12 +56,12 @@ int security_monitor_init(const security_monitor_config_t* config) {
     }
     
     // Initialize mutex
-    g_security_monitor.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+    g_security_monitor.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_security_monitor.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_security_monitor.mutex, NULL);
+    pthread_mutex_init(g_security_monitor.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize security events
     g_security_monitor.event_count = 0;
@@ -76,8 +76,8 @@ void security_monitor_cleanup(void) {
     if (!g_security_monitor_initialized) return;
     
     if (g_security_monitor.mutex) {
-        pthread_mutex_destroy(g_security_monitor.mutex);
-        free(g_security_monitor.mutex);
+        pthread_mutex_destroy(g_security_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_security_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     g_security_monitor.mutex = NULL;
@@ -90,10 +90,10 @@ int security_monitor_perform_scan(void) {
         return -1;
     }
     
-    pthread_mutex_lock(g_security_monitor.mutex);
+    pthread_mutex_lock(g_security_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     security_scan_result_t result;
-    memset(&result, 0, sizeof(security_scan_result_t));
+    memset(&result, 0, sizeof(security_scan_result_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     int vulnerabilities_found = 0;
     int critical_vulnerabilities = 0;
@@ -139,23 +139,23 @@ int security_monitor_perform_scan(void) {
     // Update scan results
     result.vulnerabilities_found = vulnerabilities_found;
     result.critical_vulnerabilities = critical_vulnerabilities;
-    result.scan_timestamp = time(NULL);
+    result.scan_timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Generate scan summary
     snprintf(result.scan_summary, sizeof(result.scan_summary),
              "Security scan completed: %d vulnerabilities found (%d critical)",
-             vulnerabilities_found, critical_vulnerabilities);
+             vulnerabilities_found, critical_vulnerabilities\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update last scan results
     g_security_monitor.last_scan = result;
     
     // Update statistics
-    g_security_monitor.last_scan_time = time(NULL);
+    g_security_monitor.last_scan_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     g_security_monitor.scan_count++;
     g_security_monitor.threat_detections = vulnerabilities_found;
     g_security_monitor.critical_threats = critical_vulnerabilities;
     
-    pthread_mutex_unlock(g_security_monitor.mutex);
+    pthread_mutex_unlock(g_security_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -166,9 +166,9 @@ int security_monitor_get_scan_results(security_scan_result_t* results) {
         return -1;
     }
     
-    pthread_mutex_lock(g_security_monitor.mutex);
+    pthread_mutex_lock(g_security_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *results = g_security_monitor.last_scan;
-    pthread_mutex_unlock(g_security_monitor.mutex);
+    pthread_mutex_unlock(g_security_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -179,7 +179,7 @@ int security_monitor_get_events(security_event_t* events, int max_events) {
         return -1;
     }
     
-    pthread_mutex_lock(g_security_monitor.mutex);
+    pthread_mutex_lock(g_security_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     int count = 0;
     int index = g_security_monitor.event_index;
@@ -192,7 +192,7 @@ int security_monitor_get_events(security_event_t* events, int max_events) {
         }
     }
     
-    pthread_mutex_unlock(g_security_monitor.mutex);
+    pthread_mutex_unlock(g_security_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return count;
 }
@@ -203,17 +203,17 @@ int security_monitor_acknowledge_event(const char* event_id) {
         return -1;
     }
     
-    pthread_mutex_lock(g_security_monitor.mutex);
+    pthread_mutex_lock(g_security_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < g_security_monitor.event_count; i++) {
         if (strcmp(g_security_monitor.security_events[i].event_id, event_id) == 0) {
             g_security_monitor.security_events[i].acknowledged = true;
-            pthread_mutex_unlock(g_security_monitor.mutex);
+            pthread_mutex_unlock(g_security_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return 0;
         }
     }
     
-    pthread_mutex_unlock(g_security_monitor.mutex);
+    pthread_mutex_unlock(g_security_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return -1;
 }
 
@@ -224,32 +224,32 @@ int security_monitor_report_threat(threat_level_t level, const char* description
         return -1;
     }
     
-    update_security_events("threat_detected", description, source, target, level);
+    update_security_events("threat_detected", description, source, target, level\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
 
 // Calculate file checksum using SHA256
 static int calculate_file_checksum(const char* filepath, char* checksum, size_t checksum_size) {
-    FILE* fp = fopen(filepath, "rb");
+    FILE* fp = fopen(filepath, "rb"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!fp) return -1;
     
     // Use OpenSSL directly for SHA256 calculation (secure approach)
-    fclose(fp);
+    fclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
     
-    FILE* file = fopen(filepath, "rb");
+    FILE* file = fopen(filepath, "rb"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!file) return -1;
     
     // Initialize OpenSSL SHA256 context
-    EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
+    EVP_MD_CTX* mdctx = EVP_MD_CTX_new(\n"\n"\n"\n"\n"\n"\n"\n");
     if (!mdctx) {
-        fclose(file);
+        fclose(file\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
     if (EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL) != 1) {
-        EVP_MD_CTX_free(mdctx);
-        fclose(file);
+        EVP_MD_CTX_free(mdctx\n"\n"\n"\n"\n"\n"\n"\n");
+        fclose(file\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -258,26 +258,26 @@ static int calculate_file_checksum(const char* filepath, char* checksum, size_t 
     size_t bytes_read;
     while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0) {
         if (EVP_DigestUpdate(mdctx, buffer, bytes_read) != 1) {
-            EVP_MD_CTX_free(mdctx);
-            fclose(file);
+            EVP_MD_CTX_free(mdctx\n"\n"\n"\n"\n"\n"\n"\n");
+            fclose(file\n"\n"\n"\n"\n"\n"\n"\n");
             return -1;
         }
     }
-    fclose(file);
+    fclose(file\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Finalize digest
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned int hash_len;
     if (EVP_DigestFinal_ex(mdctx, hash, &hash_len) != 1) {
-        EVP_MD_CTX_free(mdctx);
+        EVP_MD_CTX_free(mdctx\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
-    EVP_MD_CTX_free(mdctx);
+    EVP_MD_CTX_free(mdctx\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Convert to hex string
     for (unsigned int i = 0; i < hash_len && i < (checksum_size - 1) / 2; i++) {
-        snprintf(&checksum[i * 2], 3, "%02x", hash[i]);
+        snprintf(&checksum[i * 2], 3, "%02x", hash[i]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     checksum[hash_len * 2] = '\0';
     return 0;
@@ -309,7 +309,7 @@ int perform_file_integrity_check(security_scan_result_t* result) {
         {"/etc/crontab", 0644, 0, 0, false, false, "/var/lib/autonomy/hashes/etc_crontab.sha256"}
     };
     
-    int critical_file_count = sizeof(critical_files) / sizeof(critical_files[0]);
+    int critical_file_count = sizeof(critical_files) / sizeof(critical_files[0]\n"\n"\n"\n"\n"\n"\n"\n");
     int issues_found = 0;
     
     for (int i = 0; i < critical_file_count; i++) {
@@ -323,10 +323,10 @@ int perform_file_integrity_check(security_scan_result_t* result) {
             if (actual_perms != critical_files[i].expected_mode) {
                 snprintf(issue_details, sizeof(issue_details),
                         "File %s has permissions %04o, expected %04o",
-                        critical_files[i].path, actual_perms, critical_files[i].expected_mode);
+                        critical_files[i].path, actual_perms, critical_files[i].expected_mode\n"\n"\n"\n"\n"\n"\n"\n");
                 update_security_events("file_permission", issue_details,
                                      critical_files[i].path, "system", 
-                                     (actual_perms & 0002) ? THREAT_LEVEL_CRITICAL : THREAT_LEVEL_HIGH);
+                                     (actual_perms & 0002) ? THREAT_LEVEL_CRITICAL : THREAT_LEVEL_HIGH\n"\n"\n"\n"\n"\n"\n"\n");
                 issue_detected = true;
                 issues_found++;
             }
@@ -335,9 +335,9 @@ int perform_file_integrity_check(security_scan_result_t* result) {
             if (st.st_uid != critical_files[i].expected_uid) {
                 snprintf(issue_details, sizeof(issue_details),
                         "File %s owned by UID %d, expected %d",
-                        critical_files[i].path, st.st_uid, critical_files[i].expected_uid);
+                        critical_files[i].path, st.st_uid, critical_files[i].expected_uid\n"\n"\n"\n"\n"\n"\n"\n");
                 update_security_events("file_ownership", issue_details,
-                                     critical_files[i].path, "system", THREAT_LEVEL_HIGH);
+                                     critical_files[i].path, "system", THREAT_LEVEL_HIGH\n"\n"\n"\n"\n"\n"\n"\n");
                 issue_detected = true;
                 issues_found++;
             }
@@ -346,16 +346,16 @@ int perform_file_integrity_check(security_scan_result_t* result) {
             if (critical_files[i].check_setuid) {
                 if (!(st.st_mode & S_ISUID)) {
                     snprintf(issue_details, sizeof(issue_details),
-                            "File %s missing SUID bit", critical_files[i].path);
+                            "File %s missing SUID bit", critical_files[i].path\n"\n"\n"\n"\n"\n"\n"\n");
                     update_security_events("file_permission", issue_details,
-                                         critical_files[i].path, "system", THREAT_LEVEL_MEDIUM);
+                                         critical_files[i].path, "system", THREAT_LEVEL_MEDIUM\n"\n"\n"\n"\n"\n"\n"\n");
                     issues_found++;
                 }
             } else if (st.st_mode & S_ISUID) {
                 snprintf(issue_details, sizeof(issue_details),
-                        "Unexpected SUID bit on %s", critical_files[i].path);
+                        "Unexpected SUID bit on %s", critical_files[i].path\n"\n"\n"\n"\n"\n"\n"\n");
                 update_security_events("file_permission", issue_details,
-                                     critical_files[i].path, "system", THREAT_LEVEL_CRITICAL);
+                                     critical_files[i].path, "system", THREAT_LEVEL_CRITICAL\n"\n"\n"\n"\n"\n"\n"\n");
                 issue_detected = true;
                 issues_found++;
             }
@@ -367,7 +367,7 @@ int perform_file_integrity_check(security_scan_result_t* result) {
                 
                 if (calculate_file_checksum(critical_files[i].path, current_hash, sizeof(current_hash)) == 0) {
                     // Read stored hash
-                    FILE* hash_file = fopen(critical_files[i].stored_hash_path, "r");
+                    FILE* hash_file = fopen(critical_files[i].stored_hash_path, "r"\n"\n"\n"\n"\n"\n"\n"\n");
                     if (hash_file) {
                         if (fgets(stored_hash, sizeof(stored_hash), hash_file)) {
                             // Remove newline
@@ -376,35 +376,35 @@ int perform_file_integrity_check(security_scan_result_t* result) {
                             if (strcmp(current_hash, stored_hash) != 0) {
                                 snprintf(issue_details, sizeof(issue_details),
                                         "File %s has been modified (hash mismatch)",
-                                        critical_files[i].path);
+                                        critical_files[i].path\n"\n"\n"\n"\n"\n"\n"\n");
                                 update_security_events("file_integrity", issue_details,
-                                                     critical_files[i].path, "system", THREAT_LEVEL_CRITICAL);
+                                                     critical_files[i].path, "system", THREAT_LEVEL_CRITICAL\n"\n"\n"\n"\n"\n"\n"\n");
                                 issue_detected = true;
                                 issues_found++;
                             }
                         }
-                        fclose(hash_file);
+                        fclose(hash_file\n"\n"\n"\n"\n"\n"\n"\n");
                     }
                 }
             }
             
             // Check for recent modifications
-            time_t now = time(NULL);
+            time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             if (difftime(now, st.st_mtime) < 3600) { // Modified within last hour
                 snprintf(issue_details, sizeof(issue_details),
-                        "Critical file %s was recently modified", critical_files[i].path);
+                        "Critical file %s was recently modified", critical_files[i].path\n"\n"\n"\n"\n"\n"\n"\n");
                 update_security_events("file_modification", issue_details,
                                      critical_files[i].path, "system", 
-                                     issue_detected ? THREAT_LEVEL_CRITICAL : THREAT_LEVEL_MEDIUM);
+                                     issue_detected ? THREAT_LEVEL_CRITICAL : THREAT_LEVEL_MEDIUM\n"\n"\n"\n"\n"\n"\n"\n");
                 issues_found++;
             }
         } else {
             // File doesn't exist
             char issue_details[256];
             snprintf(issue_details, sizeof(issue_details),
-                    "Critical file %s is missing", critical_files[i].path);
+                    "Critical file %s is missing", critical_files[i].path\n"\n"\n"\n"\n"\n"\n"\n");
             update_security_events("file_missing", issue_details,
-                                 critical_files[i].path, "system", THREAT_LEVEL_HIGH);
+                                 critical_files[i].path, "system", THREAT_LEVEL_HIGH\n"\n"\n"\n"\n"\n"\n"\n");
             issues_found++;
         }
     }
@@ -412,7 +412,7 @@ int perform_file_integrity_check(security_scan_result_t* result) {
     // Check for suspicious files in system directories
     const char* system_dirs[] = {"/tmp", "/var/tmp", "/dev/shm"};
     for (size_t i = 0; i < sizeof(system_dirs)/sizeof(system_dirs[0]); i++) {
-        DIR* dir = opendir(system_dirs[i]);
+        DIR* dir = opendir(system_dirs[i]\n"\n"\n"\n"\n"\n"\n"\n");
         if (dir) {
             struct dirent* entry;
             while ((entry = readdir(dir)) != NULL) {
@@ -422,22 +422,22 @@ int perform_file_integrity_check(security_scan_result_t* result) {
                     for (size_t j = 0; j < sizeof(suspicious_exts)/sizeof(suspicious_exts[0]); j++) {
                         if (strstr(entry->d_name, suspicious_exts[j])) {
                             char full_path[512];
-                            snprintf(full_path, sizeof(full_path), "%s/%s", system_dirs[i], entry->d_name);
+                            snprintf(full_path, sizeof(full_path), "%s/%s", system_dirs[i], entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
                             
                             struct stat st;
                             if (stat(full_path, &st) == 0 && (st.st_mode & S_IXUSR)) {
                                 char issue_details[1024];  // Increased buffer size
                                 snprintf(issue_details, sizeof(issue_details),
-                                        "Suspicious executable file found: %s", full_path);
+                                        "Suspicious executable file found: %s", full_path\n"\n"\n"\n"\n"\n"\n"\n");
                                 update_security_events("suspicious_file", issue_details,
-                                                     full_path, "system", THREAT_LEVEL_HIGH);
+                                                     full_path, "system", THREAT_LEVEL_HIGH\n"\n"\n"\n"\n"\n"\n"\n");
                                 issues_found++;
                             }
                         }
                     }
                 }
             }
-            closedir(dir);
+            closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
@@ -475,7 +475,7 @@ int perform_network_security_check(security_scan_result_t* result) {
     };
     
     // Check listening ports using netstat
-    FILE* netstat_pipe = popen("netstat -tuln 2>/dev/null", "r");
+    FILE* netstat_pipe = popen("netstat -tuln 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (netstat_pipe) {
         char line[512];
         while (fgets(line, sizeof(line), netstat_pipe)) {
@@ -483,25 +483,25 @@ int perform_network_security_check(security_scan_result_t* result) {
             if (strstr(line, "LISTEN") || strstr(line, "0.0.0.0:") || strstr(line, ":::")) {
                 for (size_t i = 0; i < sizeof(risky_ports)/sizeof(risky_ports[0]); i++) {
                     char port_str[32];
-                    snprintf(port_str, sizeof(port_str), ":%d", risky_ports[i].port);
+                    snprintf(port_str, sizeof(port_str), ":%d", risky_ports[i].port\n"\n"\n"\n"\n"\n"\n"\n");
                     
                     if (strstr(line, port_str)) {
                         snprintf(issue_details, sizeof(issue_details),
                                 "Risky port %d (%s) is open and listening",
-                                risky_ports[i].port, risky_ports[i].service);
+                                risky_ports[i].port, risky_ports[i].service\n"\n"\n"\n"\n"\n"\n"\n");
                         update_security_events("open_port", issue_details,
                                              "network", risky_ports[i].service, 
-                                             risky_ports[i].threat_level);
+                                             risky_ports[i].threat_level\n"\n"\n"\n"\n"\n"\n"\n");
                         issues_found++;
                     }
                 }
             }
         }
-        pclose(netstat_pipe);
+        pclose(netstat_pipe\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Check for established connections to suspicious IPs
-    FILE* conn_pipe = popen("netstat -tun 2>/dev/null | grep ESTABLISHED", "r");
+    FILE* conn_pipe = popen("netstat -tun 2>/dev/null | grep ESTABLISHED", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (conn_pipe) {
         char line[512];
         while (fgets(line, sizeof(line), conn_pipe)) {
@@ -513,12 +513,12 @@ int perform_network_security_check(security_scan_result_t* result) {
             // netstat format: Proto Recv-Q Send-Q Local Address Foreign Address State
             char* tokens[6];
             int token_count = 0;
-            char* line_copy = strdup(line);
-            char* token = strtok(line_copy, " \t");
+            char* line_copy = strdup(line\n"\n"\n"\n"\n"\n"\n"\n");
+            char* token = strtok(line_copy, " \t"\n"\n"\n"\n"\n"\n"\n"\n");
             
             while (token && token_count < 6) {
                 tokens[token_count++] = token;
-                token = strtok(NULL, " \t");
+                token = strtok(NULL, " \t"\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             if (token_count >= 5 && tokens[4]) {
@@ -530,21 +530,21 @@ int perform_network_security_check(security_scan_result_t* result) {
                         if (foreign_port == suspicious_ports[i]) {
                             snprintf(issue_details, sizeof(issue_details),
                                     "Suspicious connection to %s:%d detected",
-                                    foreign_addr, foreign_port);
+                                    foreign_addr, foreign_port\n"\n"\n"\n"\n"\n"\n"\n");
                             update_security_events("suspicious_connection", issue_details,
-                                                 "network", foreign_addr, THREAT_LEVEL_CRITICAL);
+                                                 "network", foreign_addr, THREAT_LEVEL_CRITICAL\n"\n"\n"\n"\n"\n"\n"\n");
                             issues_found++;
                         }
                     }
                 }
             }
-            free(line_copy);
+            free(line_copy\n"\n"\n"\n"\n"\n"\n"\n");
         }
-        pclose(conn_pipe);
+        pclose(conn_pipe\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Check firewall status
-    FILE* iptables_pipe = popen("iptables -L -n 2>/dev/null | head -n 1", "r");
+    FILE* iptables_pipe = popen("iptables -L -n 2>/dev/null | head -n 1", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (iptables_pipe) {
         char line[256];
         bool firewall_active = false;
@@ -552,29 +552,29 @@ int perform_network_security_check(security_scan_result_t* result) {
         if (fgets(line, sizeof(line), iptables_pipe)) {
             if (strstr(line, "Chain INPUT")) {
                 // Check if there are any rules
-                FILE* rule_count_pipe = popen("iptables -L INPUT -n 2>/dev/null | wc -l", "r");
+                FILE* rule_count_pipe = popen("iptables -L INPUT -n 2>/dev/null | wc -l", "r"\n"\n"\n"\n"\n"\n"\n"\n");
                 if (rule_count_pipe) {
                     int rule_count = 0;
                     if (fscanf(rule_count_pipe, "%d", &rule_count) == 1 && rule_count > 2) {
                         firewall_active = true;
                     }
-                    pclose(rule_count_pipe);
+                    pclose(rule_count_pipe\n"\n"\n"\n"\n"\n"\n"\n");
                 }
             }
         }
-        pclose(iptables_pipe);
+        pclose(iptables_pipe\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (!firewall_active) {
             snprintf(issue_details, sizeof(issue_details),
-                    "Firewall appears to be disabled or has no rules configured");
+                    "Firewall appears to be disabled or has no rules configured"\n"\n"\n"\n"\n"\n"\n"\n");
             update_security_events("firewall_disabled", issue_details,
-                                 "network", "system", THREAT_LEVEL_HIGH);
+                                 "network", "system", THREAT_LEVEL_HIGH\n"\n"\n"\n"\n"\n"\n"\n");
             issues_found++;
         }
     }
     
     // Check for promiscuous mode interfaces (potential packet sniffing)
-    FILE* ifconfig_pipe = popen("ip link show 2>/dev/null", "r");
+    FILE* ifconfig_pipe = popen("ip link show 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (ifconfig_pipe) {
         char line[512];
         char current_iface[32] = {0};
@@ -582,13 +582,13 @@ int perform_network_security_check(security_scan_result_t* result) {
         while (fgets(line, sizeof(line), ifconfig_pipe)) {
             // Parse interface name
             if (line[0] != ' ') {
-                char* colon = strchr(line, ':');
+                char* colon = strchr(line, ':'\n"\n"\n"\n"\n"\n"\n"\n");
                 if (colon) {
-                    char* iface_start = strchr(line, ' ');
+                    char* iface_start = strchr(line, ' '\n"\n"\n"\n"\n"\n"\n"\n");
                     if (iface_start && iface_start < colon) {
                         int len = colon - iface_start - 1;
                         if (len < (int)sizeof(current_iface)) {
-                            strncpy(current_iface, iface_start + 1, len);
+                            strncpy(current_iface, iface_start + 1, len\n"\n"\n"\n"\n"\n"\n"\n");
                             current_iface[len] = '\0';
                         }
                     }
@@ -599,33 +599,33 @@ int perform_network_security_check(security_scan_result_t* result) {
             if (strstr(line, "PROMISC") && strlen(current_iface) > 0) {
                 snprintf(issue_details, sizeof(issue_details),
                         "Network interface %s is in promiscuous mode (possible packet sniffing)",
-                        current_iface);
+                        current_iface\n"\n"\n"\n"\n"\n"\n"\n");
                 update_security_events("promiscuous_interface", issue_details,
-                                     "network", current_iface, THREAT_LEVEL_CRITICAL);
+                                     "network", current_iface, THREAT_LEVEL_CRITICAL\n"\n"\n"\n"\n"\n"\n"\n");
                 issues_found++;
             }
         }
-        pclose(ifconfig_pipe);
+        pclose(ifconfig_pipe\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Check for unusual network protocols
-    FILE* proto_pipe = popen("netstat -anp 2>/dev/null | grep -v 'tcp\\|udp\\|unix' | grep -v 'Active\\|Proto'", "r");
+    FILE* proto_pipe = popen("netstat -anp 2>/dev/null | grep -v 'tcp\\|udp\\|unix' | grep -v 'Active\\|Proto'", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (proto_pipe) {
         char line[512];
         while (fgets(line, sizeof(line), proto_pipe)) {
             if (strlen(line) > 10) {
                 snprintf(issue_details, sizeof(issue_details),
-                        "Unusual network protocol detected: %.100s", line);
+                        "Unusual network protocol detected: %.100s", line\n"\n"\n"\n"\n"\n"\n"\n");
                 update_security_events("unusual_protocol", issue_details,
-                                     "network", "system", THREAT_LEVEL_MEDIUM);
+                                     "network", "system", THREAT_LEVEL_MEDIUM\n"\n"\n"\n"\n"\n"\n"\n");
                 issues_found++;
             }
         }
-        pclose(proto_pipe);
+        pclose(proto_pipe\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Check SSH configuration for security issues
-    FILE* sshd_config = fopen("/etc/ssh/sshd_config", "r");
+    FILE* sshd_config = fopen("/etc/ssh/sshd_config", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (sshd_config) {
         char line[256];
         bool permit_root_login = false;
@@ -646,21 +646,21 @@ int perform_network_security_check(security_scan_result_t* result) {
                 pubkey_auth = true;
             }
         }
-        fclose(sshd_config);
+        fclose(sshd_config\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (permit_root_login) {
             snprintf(issue_details, sizeof(issue_details),
-                    "SSH server allows root login");
+                    "SSH server allows root login"\n"\n"\n"\n"\n"\n"\n"\n");
             update_security_events("ssh_config", issue_details,
-                                 "network", "sshd", THREAT_LEVEL_HIGH);
+                                 "network", "sshd", THREAT_LEVEL_HIGH\n"\n"\n"\n"\n"\n"\n"\n");
             issues_found++;
         }
         
         if (password_auth && !pubkey_auth) {
             snprintf(issue_details, sizeof(issue_details),
-                    "SSH server uses password authentication without public key requirement");
+                    "SSH server uses password authentication without public key requirement"\n"\n"\n"\n"\n"\n"\n"\n");
             update_security_events("ssh_config", issue_details,
-                                 "network", "sshd", THREAT_LEVEL_MEDIUM);
+                                 "network", "sshd", THREAT_LEVEL_MEDIUM\n"\n"\n"\n"\n"\n"\n"\n");
             issues_found++;
         }
     }
@@ -676,11 +676,11 @@ int perform_access_control_check(security_scan_result_t* result) {
     // Production access control check
     
     // Check /var/log/auth.log for failed authentication attempts
-    FILE* auth_log = fopen("/var/log/auth.log", "r");
+    FILE* auth_log = fopen("/var/log/auth.log", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (auth_log) {
         char line[1024];
         int failed_attempts = 0; // Use configurable failed attempts counter
-        time_t current_time = time(NULL);
+        time_t current_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         time_t check_time = current_time - 3600; // Last hour
         
         while (fgets(line, sizeof(line), auth_log)) {
@@ -699,51 +699,51 @@ int perform_access_control_check(security_scan_result_t* result) {
                 }
             }
         }
-        fclose(auth_log);
+        fclose(auth_log\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (failed_attempts > 10) {
             update_security_events("access_control", 
                                   "Excessive failed login attempts detected",
-                                  "authentication", "system", THREAT_LEVEL_HIGH);
+                                  "authentication", "system", THREAT_LEVEL_HIGH\n"\n"\n"\n"\n"\n"\n"\n");
             result->vulnerabilities_found++;
             return -1;
         } else if (failed_attempts > 3) {
             update_security_events("access_control", 
                                   "Multiple failed login attempts detected",
-                                  "authentication", "system", THREAT_LEVEL_MEDIUM);
+                                  "authentication", "system", THREAT_LEVEL_MEDIUM\n"\n"\n"\n"\n"\n"\n"\n");
             result->vulnerabilities_found++;
         }
     }
     
     // Check for unusual sudo usage
-    FILE* sudo_log = popen("journalctl --since='1 hour ago' -u sudo 2>/dev/null | grep 'COMMAND=' | wc -l", "r");
+    FILE* sudo_log = popen("journalctl --since='1 hour ago' -u sudo 2>/dev/null | grep 'COMMAND=' | wc -l", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (sudo_log) {
         char count_str[32];
         if (fgets(count_str, sizeof(count_str), sudo_log)) {
-            int sudo_count = atoi(count_str);
+            int sudo_count = atoi(count_str\n"\n"\n"\n"\n"\n"\n"\n");
             if (sudo_count > 50) {
                 update_security_events("access_control", 
                                       "Excessive sudo usage detected",
-                                      "privilege_escalation", "system", THREAT_LEVEL_MEDIUM);
+                                      "privilege_escalation", "system", THREAT_LEVEL_MEDIUM\n"\n"\n"\n"\n"\n"\n"\n");
                 result->vulnerabilities_found++;
             }
         }
-        pclose(sudo_log);
+        pclose(sudo_log\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Check for active root sessions
-    FILE* who_cmd = popen("who | grep 'root' | wc -l", "r");
+    FILE* who_cmd = popen("who | grep 'root' | wc -l", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (who_cmd) {
         char count_str[32];
         if (fgets(count_str, sizeof(count_str), who_cmd)) {
-            int root_sessions = atoi(count_str);
+            int root_sessions = atoi(count_str\n"\n"\n"\n"\n"\n"\n"\n");
             if (root_sessions > 0) {
                 update_security_events("access_control", 
                                       "Active root session detected",
-                                      "privilege_escalation", "system", THREAT_LEVEL_LOW);
+                                      "privilege_escalation", "system", THREAT_LEVEL_LOW\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
-        pclose(who_cmd);
+        pclose(who_cmd\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return 0;
@@ -756,7 +756,7 @@ int perform_configuration_check(security_scan_result_t* result) {
     // Production configuration security check
     
     // Check SSH configuration
-    FILE* ssh_config = fopen("/etc/ssh/sshd_config", "r");
+    FILE* ssh_config = fopen("/etc/ssh/sshd_config", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (ssh_config) {
         char line[512];
         bool permit_root_login = false;
@@ -774,19 +774,19 @@ int perform_configuration_check(security_scan_result_t* result) {
                 permit_empty_passwords = true;
             }
         }
-        fclose(ssh_config);
+        fclose(ssh_config\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (permit_root_login) {
             update_security_events("configuration", 
                                   "SSH root login is enabled - security risk",
-                                  "ssh_config", "system", THREAT_LEVEL_HIGH);
+                                  "ssh_config", "system", THREAT_LEVEL_HIGH\n"\n"\n"\n"\n"\n"\n"\n");
             result->vulnerabilities_found++;
         }
         
         if (permit_empty_passwords) {
             update_security_events("configuration", 
                                   "SSH allows empty passwords - critical security risk",
-                                  "ssh_config", "system", THREAT_LEVEL_CRITICAL);
+                                  "ssh_config", "system", THREAT_LEVEL_CRITICAL\n"\n"\n"\n"\n"\n"\n"\n");
             result->vulnerabilities_found++;
         }
     }
@@ -807,9 +807,9 @@ int perform_configuration_check(security_scan_result_t* result) {
             // Check if world-writable
             if (file_stat.st_mode & S_IWOTH) {
                 char msg[512];
-                snprintf(msg, sizeof(msg), "Critical file %s is world-writable", critical_files[i]);
+                snprintf(msg, sizeof(msg), "Critical file %s is world-writable", critical_files[i]\n"\n"\n"\n"\n"\n"\n"\n");
                 update_security_events("configuration", msg,
-                                      "file_permissions", "filesystem", THREAT_LEVEL_CRITICAL);
+                                      "file_permissions", "filesystem", THREAT_LEVEL_CRITICAL\n"\n"\n"\n"\n"\n"\n"\n");
                 result->vulnerabilities_found++;
             }
             
@@ -818,14 +818,14 @@ int perform_configuration_check(security_scan_result_t* result) {
                 (file_stat.st_mode & (S_IRGRP | S_IROTH))) {
                 update_security_events("configuration", 
                                       "/etc/shadow is readable by non-root users",
-                                      "file_permissions", "filesystem", THREAT_LEVEL_HIGH);
+                                      "file_permissions", "filesystem", THREAT_LEVEL_HIGH\n"\n"\n"\n"\n"\n"\n"\n");
                 result->vulnerabilities_found++;
             }
         }
     }
     
     // Check for SUID/SGID binaries in unusual locations
-    FILE* suid_cmd = popen("find /home /tmp /var/tmp -type f \\( -perm -4000 -o -perm -2000 \\) 2>/dev/null", "r");
+    FILE* suid_cmd = popen("find /home /tmp /var/tmp -type f \\( -perm -4000 -o -perm -2000 \\) 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (suid_cmd) {
         char path[512];
         while (fgets(path, sizeof(path), suid_cmd)) {
@@ -833,12 +833,12 @@ int perform_configuration_check(security_scan_result_t* result) {
             path[strcspn(path, "\n")] = 0;
             
             char msg[1024];
-            snprintf(msg, sizeof(msg), "SUID/SGID binary found in unusual location: %s", path);
+            snprintf(msg, sizeof(msg), "SUID/SGID binary found in unusual location: %s", path\n"\n"\n"\n"\n"\n"\n"\n");
             update_security_events("configuration", msg,
-                                  "suid_binary", "filesystem", THREAT_LEVEL_MEDIUM);
+                                  "suid_binary", "filesystem", THREAT_LEVEL_MEDIUM\n"\n"\n"\n"\n"\n"\n"\n");
             result->vulnerabilities_found++;
         }
-        pclose(suid_cmd);
+        pclose(suid_cmd\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return 0;
@@ -851,26 +851,26 @@ static int perform_threat_detection(security_scan_result_t* result) {
     // Production threat detection system
     
     // Check for port scanning attempts
-    FILE* netstat_cmd = popen("ss -tuln | grep ':' | wc -l", "r");
+    FILE* netstat_cmd = popen("ss -tuln | grep ':' | wc -l", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (netstat_cmd) {
         char count_str[32];
         if (fgets(count_str, sizeof(count_str), netstat_cmd)) {
-            int listening_ports = atoi(count_str);
+            int listening_ports = atoi(count_str\n"\n"\n"\n"\n"\n"\n"\n");
             static int prev_port_count = 0;
             
             if (prev_port_count > 0 && listening_ports > prev_port_count + 10) {
                 update_security_events("threat_detection", 
                                       "Rapid increase in listening ports detected",
-                                      "port_scanning", "network", THREAT_LEVEL_HIGH);
+                                      "port_scanning", "network", THREAT_LEVEL_HIGH\n"\n"\n"\n"\n"\n"\n"\n");
                 result->vulnerabilities_found++;
             }
             prev_port_count = listening_ports;
         }
-        pclose(netstat_cmd);
+        pclose(netstat_cmd\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Check for suspicious processes
-    FILE* proc_cmd = popen("ps aux | grep -E '(nmap|nikto|sqlmap|metasploit|nc|netcat)' | grep -v grep", "r");
+    FILE* proc_cmd = popen("ps aux | grep -E '(nmap|nikto|sqlmap|metasploit|nc|netcat)' | grep -v grep", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (proc_cmd) {
         char process_line[1024];
         while (fgets(process_line, sizeof(process_line), proc_cmd)) {
@@ -878,67 +878,67 @@ static int perform_threat_detection(security_scan_result_t* result) {
             process_line[strcspn(process_line, "\n")] = 0;
             
             char msg[2048];  // Increased buffer size
-            snprintf(msg, sizeof(msg), "Suspicious process detected: %s", process_line);
+            snprintf(msg, sizeof(msg), "Suspicious process detected: %s", process_line\n"\n"\n"\n"\n"\n"\n"\n");
             update_security_events("threat_detection", msg,
-                                  "malicious_process", "system", THREAT_LEVEL_HIGH);
+                                  "malicious_process", "system", THREAT_LEVEL_HIGH\n"\n"\n"\n"\n"\n"\n"\n");
             result->vulnerabilities_found++;
         }
-        pclose(proc_cmd);
+        pclose(proc_cmd\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Check for unusual CPU/Memory usage patterns
-    FILE* cpu_cmd = popen("top -bn1 | grep 'Cpu(s)' | awk '{print $2}' | cut -d'%' -f1", "r");
+    FILE* cpu_cmd = popen("top -bn1 | grep 'Cpu(s)' | awk '{print $2}' | cut -d'%' -f1", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (cpu_cmd) {
         char cpu_str[32];
         if (fgets(cpu_str, sizeof(cpu_str), cpu_cmd)) {
-            float cpu_usage = atof(cpu_str);
+            float cpu_usage = atof(cpu_str\n"\n"\n"\n"\n"\n"\n"\n");
             static float prev_cpu_usage = 0.0;
             
             // Detect sudden CPU spikes
             if (cpu_usage > 90.0 && prev_cpu_usage < 20.0) {
                 update_security_events("threat_detection", 
                                       "Sudden CPU usage spike detected - possible crypto mining",
-                                      "resource_abuse", "system", THREAT_LEVEL_MEDIUM);
+                                      "resource_abuse", "system", THREAT_LEVEL_MEDIUM\n"\n"\n"\n"\n"\n"\n"\n");
                 result->vulnerabilities_found++;
             }
             prev_cpu_usage = cpu_usage;
         }
-        pclose(cpu_cmd);
+        pclose(cpu_cmd\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Check for new cronjobs
-    FILE* cron_cmd = popen("crontab -l 2>/dev/null | grep -v '^#' | wc -l", "r");
+    FILE* cron_cmd = popen("crontab -l 2>/dev/null | grep -v '^#' | wc -l", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (cron_cmd) {
         char count_str[32];
         if (fgets(count_str, sizeof(count_str), cron_cmd)) {
-            int cron_count = atoi(count_str);
+            int cron_count = atoi(count_str\n"\n"\n"\n"\n"\n"\n"\n");
             static int prev_cron_count = -1;
             
             if (prev_cron_count >= 0 && cron_count > prev_cron_count) {
                 update_security_events("threat_detection", 
                                       "New cron jobs detected - potential persistence mechanism",
-                                      "persistence", "system", THREAT_LEVEL_MEDIUM);
+                                      "persistence", "system", THREAT_LEVEL_MEDIUM\n"\n"\n"\n"\n"\n"\n"\n");
                 result->vulnerabilities_found++;
             }
             prev_cron_count = cron_count;
         }
-        pclose(cron_cmd);
+        pclose(cron_cmd\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Check for unusual network connections
-    FILE* conn_cmd = popen("ss -tuln | grep ':22 ' | wc -l", "r");
+    FILE* conn_cmd = popen("ss -tuln | grep ':22 ' | wc -l", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (conn_cmd) {
         char count_str[32];
         if (fgets(count_str, sizeof(count_str), conn_cmd)) {
-            int ssh_connections = atoi(count_str);
+            int ssh_connections = atoi(count_str\n"\n"\n"\n"\n"\n"\n"\n");
             if (ssh_connections > 10) {
                 update_security_events("threat_detection", 
                                       "High number of SSH connections detected",
-                                      "brute_force", "network", THREAT_LEVEL_HIGH);
+                                      "brute_force", "network", THREAT_LEVEL_HIGH\n"\n"\n"\n"\n"\n"\n"\n");
                 result->vulnerabilities_found++;
             }
         }
-        pclose(conn_cmd);
+        pclose(conn_cmd\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return 0;
@@ -952,32 +952,32 @@ void update_security_events(const char* event_type, const char* description,
     security_event_t* event = &g_security_monitor.security_events[g_security_monitor.event_index];
     
     // Generate unique event ID
-    char* event_id = generate_event_id();
-    strcpy(event->event_id, event_id);
-    free(event_id);
+    char* event_id = generate_event_id(\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(event->event_id, event_id\n"\n"\n"\n"\n"\n"\n"\n");
+    free(event_id\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set event details
     event->threat_level = level;
-    strcpy(event->event_type, event_type);
-    strcpy(event->description, description);
-    strcpy(event->source, source ? source : "unknown");
-    strcpy(event->target, target ? target : "unknown");
-    event->timestamp = time(NULL);
+    strcpy(event->event_type, event_type\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(event->description, description\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(event->source, source ? source : "unknown"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(event->target, target ? target : "unknown"\n"\n"\n"\n"\n"\n"\n"\n");
+    event->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     event->acknowledged = false;
     
     // Set mitigation based on threat level
     switch (level) {
         case THREAT_LEVEL_CRITICAL:
-            strcpy(event->mitigation, "Immediate action required - isolate system");
+            strcpy(event->mitigation, "Immediate action required - isolate system"\n"\n"\n"\n"\n"\n"\n"\n");
             break;
         case THREAT_LEVEL_HIGH:
-            strcpy(event->mitigation, "Investigate and remediate within 1 hour");
+            strcpy(event->mitigation, "Investigate and remediate within 1 hour"\n"\n"\n"\n"\n"\n"\n"\n");
             break;
         case THREAT_LEVEL_MEDIUM:
-            strcpy(event->mitigation, "Review and address within 24 hours");
+            strcpy(event->mitigation, "Review and address within 24 hours"\n"\n"\n"\n"\n"\n"\n"\n");
             break;
         case THREAT_LEVEL_LOW:
-            strcpy(event->mitigation, "Monitor and address during next maintenance");
+            strcpy(event->mitigation, "Monitor and address during next maintenance"\n"\n"\n"\n"\n"\n"\n"\n");
             break;
     }
     
@@ -990,11 +990,11 @@ void update_security_events(const char* event_type, const char* description,
 
 // Generate unique event ID
 static char* generate_event_id(void) {
-    char* event_id = (char*)malloc(64);
+    char* event_id = (char*)malloc(64\n"\n"\n"\n"\n"\n"\n"\n");
     if (!event_id) return NULL;
     
-    time_t now = time(NULL);
-    snprintf(event_id, 64, "SEC_%lld_%d", (long long)now, rand() % 10000);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(event_id, 64, "SEC_%lld_%d", (long long)now, rand() % 10000\n"\n"\n"\n"\n"\n"\n"\n");
     
     return event_id;
 }
@@ -1003,9 +1003,9 @@ static char* generate_event_id(void) {
 void security_monitor_get_status(security_monitor_t* status) {
     if (!status || !g_security_monitor_initialized) return;
     
-    pthread_mutex_lock(g_security_monitor.mutex);
+    pthread_mutex_lock(g_security_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *status = g_security_monitor;
-    pthread_mutex_unlock(g_security_monitor.mutex);
+    pthread_mutex_unlock(g_security_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if security monitor is initialized

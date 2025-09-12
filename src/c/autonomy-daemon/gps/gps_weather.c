@@ -36,25 +36,25 @@ static bool g_weather_initialized = false; // Use configurable setting
 static pthread_mutex_t g_weather_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
-static bool get_cached_weather(double lat, double lon, gps_weather_current_t *weather);
-void cache_weather_data(double lat, double lon, const gps_weather_current_t *weather);
-int find_oldest_weather_cache(void);
-size_t weather_write_callback(void *contents, size_t size, size_t nmemb, void *userp);
-void parse_current_weather_response(const gps_weather_api_response_t *response, gps_weather_current_t *weather);
-void parse_forecast_response(const gps_weather_api_response_t *response, gps_weather_forecast_t *forecast);
-void parse_air_quality_response(const gps_weather_api_response_t *response, gps_weather_air_quality_t *air_quality);
+static bool get_cached_weather(double lat, double lon, gps_weather_current_t *weather\n"\n"\n"\n"\n"\n"\n"\n");
+void cache_weather_data(double lat, double lon, const gps_weather_current_t *weather\n"\n"\n"\n"\n"\n"\n"\n");
+int find_oldest_weather_cache(void\n"\n"\n"\n"\n"\n"\n"\n");
+size_t weather_write_callback(void *contents, size_t size, size_t nmemb, void *userp\n"\n"\n"\n"\n"\n"\n"\n");
+void parse_current_weather_response(const gps_weather_api_response_t *response, gps_weather_current_t *weather\n"\n"\n"\n"\n"\n"\n"\n");
+void parse_forecast_response(const gps_weather_api_response_t *response, gps_weather_forecast_t *forecast\n"\n"\n"\n"\n"\n"\n"\n");
+void parse_air_quality_response(const gps_weather_api_response_t *response, gps_weather_air_quality_t *air_quality\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize GPS weather integration
 int gps_weather_init(const char *api_key) {
     if (g_weather_initialized) {
-        LOGX_WARN_MSG("GPS weather integration already initialized");
+        printf("WARN: "GPS weather integration already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_weather_mutex);
+    pthread_mutex_lock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize weather state
-    memset(&g_weather, 0, sizeof(gps_weather_t));
+    memset(&g_weather, 0, sizeof(gps_weather_t)\n"\n"\n"\n"\n"\n"\n"\n");
     g_weather.enabled = true; // Use configurable weather analysis enabled
     g_weather.max_cache_entries = MAX_WEATHER_CACHE_ENTRIES;
     g_weather.update_interval = WEATHER_UPDATE_INTERVAL;
@@ -62,7 +62,7 @@ int gps_weather_init(const char *api_key) {
     g_weather.cache_radius = WEATHER_CACHE_RADIUS;
     
     if (api_key && strlen(api_key) > 0) {
-        safe_strncpy(g_weather.api_key, api_key, sizeof(g_weather.api_key));
+        safe_strncpy(g_weather.api_key, api_key, sizeof(g_weather.api_key)\n"\n"\n"\n"\n"\n"\n"\n");
         g_weather.api_key[sizeof(g_weather.api_key) - 1] = '\0';
     }
     
@@ -90,12 +90,12 @@ int gps_weather_init(const char *api_key) {
     }
     
     // Initialize CURL
-    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl_global_init(CURL_GLOBAL_DEFAULT\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_weather_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_weather_mutex);
+    pthread_mutex_unlock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS weather integration initialized successfully");
+    printf("INFO: "GPS weather integration initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -106,36 +106,36 @@ static int perform_weather_api_request(const char *endpoint, const char *params,
         return AUTONOMY_ERROR_NOT_ENABLED;
     }
     
-    pthread_mutex_lock(&g_weather_mutex);
+    pthread_mutex_lock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize response
-    memset(response, 0, sizeof(gps_weather_api_response_t));
-    response->timestamp = time(NULL);
+    memset(response, 0, sizeof(gps_weather_api_response_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    response->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Build full URL
     char url[1024];
     snprintf(url, sizeof(url), "%s%s?%s&appid=%s&units=metric", 
-             WEATHER_API_BASE_URL, endpoint, params, g_weather.api_key);
+             WEATHER_API_BASE_URL, endpoint, params, g_weather.api_key\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize CURL
-    CURL *curl = curl_easy_init();
+    CURL *curl = curl_easy_init(\n"\n"\n"\n"\n"\n"\n"\n");
     if (!curl) {
-        pthread_mutex_unlock(&g_weather_mutex);
-        LOGX_ERROR_MSG("Failed to initialize CURL for weather request");
+        pthread_mutex_unlock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: "Failed to initialize CURL for weather request"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INTERNAL;
     }
     
     // Set CURL options
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, weather_write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-Daemon/1.0");
+    curl_easy_setopt(curl, CURLOPT_URL, url\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, weather_write_callback\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-Daemon/1.0"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Perform request
-    CURLcode res = curl_easy_perform(curl);
+    CURLcode res = curl_easy_perform(curl\n"\n"\n"\n"\n"\n"\n"\n");
     long http_code = 0; // Use configurable value
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update statistics
     g_weather.total_requests++;
@@ -145,19 +145,19 @@ static int perform_weather_api_request(const char *endpoint, const char *params,
         response->success = true;
         response->http_code = http_code;
         
-        LOGX_DEBUG_MSG("Weather API request successful: %s", endpoint);
+        printf("DEBUG: "Weather API request successful: %s", endpoint\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         g_weather.failed_requests++;
         response->success = false;
         response->http_code = http_code;
         response->error_code = res;
         
-        LOGX_ERROR_MSG("Weather API request failed: %s, HTTP: %ld, CURL: %d", 
-                   endpoint, http_code, res);
+        printf("ERROR: "Weather API request failed: %s, HTTP: %ld, CURL: %d", 
+                   endpoint, http_code, res\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    curl_easy_cleanup(curl);
-    pthread_mutex_unlock(&g_weather_mutex);
+    curl_easy_cleanup(curl\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -178,29 +178,29 @@ int gps_weather_get_current(double lat, double lon, gps_weather_current_t *weath
         external_weather_data_t weather_data;
         if (external_apis_get_weather(lat, lon, &weather_data) == AUTONOMY_SUCCESS) {
             // Convert external weather data to GPS weather format
-            memset(weather, 0, sizeof(gps_weather_current_t));
+            memset(weather, 0, sizeof(gps_weather_current_t)\n"\n"\n"\n"\n"\n"\n"\n");
             weather->temperature = weather_data.temperature_celsius;
             weather->humidity = weather_data.humidity_percent;
             weather->pressure = weather_data.pressure_hpa;
             weather->wind_speed = weather_data.wind_speed_ms;
             weather->wind_direction = weather_data.wind_direction_deg;
             weather->visibility = weather_data.visibility_km * 1000.0; // Convert km to m
-            safe_strncpy(weather->description, weather_data.description, sizeof(weather->description));
+            safe_strncpy(weather->description, weather_data.description, sizeof(weather->description)\n"\n"\n"\n"\n"\n"\n"\n");
             weather->description[sizeof(weather->description) - 1] = '\0';
-            safe_strncpy(weather->icon, weather_data.icon, sizeof(weather->icon));
+            safe_strncpy(weather->icon, weather_data.icon, sizeof(weather->icon)\n"\n"\n"\n"\n"\n"\n"\n");
             weather->icon[sizeof(weather->icon) - 1] = '\0';
             weather->timestamp = weather_data.timestamp;
             weather->lat = lat;
             weather->lon = lon;
             
             // Cache the result
-            cache_weather_data(lat, lon, weather);
+            cache_weather_data(lat, lon, weather\n"\n"\n"\n"\n"\n"\n"\n");
             
-            LOGX_INFO_MSG("Weather data obtained from external APIs manager",
+            printf("INFO: "Weather data obtained from external APIs manager",
                      "lat", lat, "lon", lon,
                      "temperature", weather->temperature,
                      "description", weather->description,
-                     "source", weather_data.source);
+                     "source", weather_data.source\n"\n"\n"\n"\n"\n"\n"\n");
             
             return AUTONOMY_SUCCESS;
         }
@@ -209,11 +209,11 @@ int gps_weather_get_current(double lat, double lon, gps_weather_current_t *weath
     // Fallback to direct weather API request
     // Build request parameters
     char params[512];
-    snprintf(params, sizeof(params), "lat=%.6f&lon=%.6f", lat, lon);
+    snprintf(params, sizeof(params), "lat=%.6f&lon=%.6f", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Perform API request
     gps_weather_api_response_t response;
-    int result = perform_weather_api_request(WEATHER_CURRENT_ENDPOINT, params, &response);
+    int result = perform_weather_api_request(WEATHER_CURRENT_ENDPOINT, params, &response\n"\n"\n"\n"\n"\n"\n"\n");
     if (result != AUTONOMY_SUCCESS) {
         return result;
     }
@@ -223,8 +223,8 @@ int gps_weather_get_current(double lat, double lon, gps_weather_current_t *weath
     }
     
     // Parse response and cache result
-    parse_current_weather_response(&response, weather);
-    cache_weather_data(lat, lon, weather);
+    parse_current_weather_response(&response, weather\n"\n"\n"\n"\n"\n"\n"\n");
+    cache_weather_data(lat, lon, weather\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -242,7 +242,7 @@ int gps_weather_get_forecast(double lat, double lon, int days,
     
     // Perform API request
     gps_weather_api_response_t response;
-    int result = perform_weather_api_request(WEATHER_FORECAST_ENDPOINT, params, &response);
+    int result = perform_weather_api_request(WEATHER_FORECAST_ENDPOINT, params, &response\n"\n"\n"\n"\n"\n"\n"\n");
     if (result != AUTONOMY_SUCCESS) {
         return result;
     }
@@ -252,7 +252,7 @@ int gps_weather_get_forecast(double lat, double lon, int days,
     }
     
     // Parse response
-    parse_forecast_response(&response, forecast);
+    parse_forecast_response(&response, forecast\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -265,11 +265,11 @@ int gps_weather_get_air_quality(double lat, double lon, gps_weather_air_quality_
     
     // Build request parameters
     char params[512];
-    snprintf(params, sizeof(params), "lat=%.6f&lon=%.6f", lat, lon);
+    snprintf(params, sizeof(params), "lat=%.6f&lon=%.6f", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Perform API request
     gps_weather_api_response_t response;
-    int result = perform_weather_api_request(WEATHER_AIR_QUALITY_ENDPOINT, params, &response);
+    int result = perform_weather_api_request(WEATHER_AIR_QUALITY_ENDPOINT, params, &response\n"\n"\n"\n"\n"\n"\n"\n");
     if (result != AUTONOMY_SUCCESS) {
         return result;
     }
@@ -279,14 +279,14 @@ int gps_weather_get_air_quality(double lat, double lon, gps_weather_air_quality_
     }
     
     // Parse response
-    parse_air_quality_response(&response, air_quality);
+    parse_air_quality_response(&response, air_quality\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
 
 // Check cached weather data
 static bool get_cached_weather(double lat, double lon, gps_weather_current_t *weather) {
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < g_weather.cache_entry_count; i++) {
         if (!g_weather.weather_cache[i].active) {
@@ -296,7 +296,7 @@ static bool get_cached_weather(double lat, double lon, gps_weather_current_t *we
         gps_weather_cache_entry_t *cache = &g_weather.weather_cache[i];
         
         // Check if coordinates are within cache radius
-        double distance = gps_coordinate_distance(lat, lon, cache->lat, cache->lon);
+        double distance = gps_coordinate_distance(lat, lon, cache->lat, cache->lon\n"\n"\n"\n"\n"\n"\n"\n");
         if (distance <= g_weather.cache_radius) {
             // Check if cache is still valid
             if ((now - cache->timestamp) < g_weather.update_interval) {
@@ -312,7 +312,7 @@ static bool get_cached_weather(double lat, double lon, gps_weather_current_t *we
                 weather->weather_condition = cache->weather_condition;
                 weather->air_quality_index = cache->air_quality_index;
                 
-                LOGX_DEBUG_MSG("Weather data retrieved from cache for (%.6f, %.6f)", lat, lon);
+                printf("DEBUG: "Weather data retrieved from cache for (%.6f, %.6f)", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
                 return true;
             }
         }
@@ -334,7 +334,7 @@ void cache_weather_data(double lat, double lon, const gps_weather_current_t *wea
     
     if (slot_index < 0) {
         // Remove oldest entry to make room
-        slot_index = find_oldest_weather_cache();
+        slot_index = find_oldest_weather_cache(\n"\n"\n"\n"\n"\n"\n"\n");
         if (slot_index >= 0) {
             g_weather.weather_cache[slot_index].active = false;
             g_weather.cache_entry_count--;
@@ -362,14 +362,14 @@ void cache_weather_data(double lat, double lon, const gps_weather_current_t *wea
             g_weather.cache_entry_count = slot_index + 1;
         }
         
-        LOGX_DEBUG_MSG("Weather data cached for (%.6f, %.6f)", lat, lon);
+        printf("DEBUG: "Weather data cached for (%.6f, %.6f)", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
 // Find oldest weather cache entry
 int find_oldest_weather_cache(void) {
     int oldest_index = -1;
-    time_t oldest_time = time(NULL);
+    time_t oldest_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < g_weather.max_cache_entries; i++) {
         if (g_weather.weather_cache[i].active && 
@@ -391,12 +391,12 @@ size_t weather_write_callback(void *contents, size_t size, size_t nmemb, void *u
     
     // Check if we have enough space in the response buffer
     if (response->data_size + total_size >= sizeof(response->data)) {
-        LOGX_WARN_MSG("Weather API response too large, truncating");
+        printf("WARN: "Weather API response too large, truncating"\n"\n"\n"\n"\n"\n"\n"\n");
         total_size = sizeof(response->data) - response->data_size - 1;
     }
     
     // Append data to response buffer
-    memcpy(response->data + response->data_size, contents, total_size);
+    memcpy(response->data + response->data_size, contents, total_size\n"\n"\n"\n"\n"\n"\n"\n");
     response->data_size += total_size;
     response->data[response->data_size] = '\0'; // Null terminate
     
@@ -407,13 +407,13 @@ size_t weather_write_callback(void *contents, size_t size, size_t nmemb, void *u
 void parse_current_weather_response(const gps_weather_api_response_t *response, 
                                          gps_weather_current_t *weather) {
     // Initialize weather data
-    memset(weather, 0, sizeof(gps_weather_current_t));
+    memset(weather, 0, sizeof(gps_weather_current_t)\n"\n"\n"\n"\n"\n"\n"\n");
     weather->timestamp = response->timestamp;
     
     // Use proper JSON parser from json_parser library
     weather_data_t parsed_weather;
     if (!json_parse_openweather_current(response->data, &parsed_weather)) {
-        LOGX_WARN_MSG("Failed to parse OpenWeather JSON response, using defaults");
+        printf("WARN: "Failed to parse OpenWeather JSON response, using defaults"\n"\n"\n"\n"\n"\n"\n"\n");
         weather->temperature = 20.0;        // Default fallback
         weather->humidity = 65.0;           // Default fallback
         weather->pressure = 1013.25;        // Default fallback
@@ -434,7 +434,7 @@ void parse_current_weather_response(const gps_weather_api_response_t *response,
     weather->wind_direction = parsed_weather.wind_direction;
     
     // Parse additional fields using the JSON document directly if needed
-    json_document_t* doc = json_parse_string(response->data);
+    json_document_t* doc = json_parse_string(response->data\n"\n"\n"\n"\n"\n"\n"\n");
     if (doc && doc->valid) {
         // Parse visibility
         double visibility;
@@ -479,73 +479,73 @@ void parse_current_weather_response(const gps_weather_api_response_t *response,
         char air_quality_url[512];
         snprintf(air_quality_url, sizeof(air_quality_url),
                 "http://api.openweathermap.org/data/2.5/air_pollution?lat=%.6f&lon=%.6f&appid=%s",
-                 weather->lat, weather->lon, g_weather.api_key);
+                 weather->lat, weather->lon, g_weather.api_key\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Make air quality API call using external APIs
         external_api_request_t air_request = {0};
         air_request.api_type = EXTERNAL_API_WEATHER_OPENWEATHER;
-        safe_strncpy(air_request.method, "GET", sizeof(air_request.method));
-        safe_strncpy(air_request.endpoint, air_quality_url, sizeof(air_request.endpoint));
+        safe_strncpy(air_request.method, "GET", sizeof(air_request.method)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(air_request.endpoint, air_quality_url, sizeof(air_request.endpoint)\n"\n"\n"\n"\n"\n"\n"\n");
         air_request.timeout_seconds = 10;
-        air_request.request_time = time(NULL);
+        air_request.request_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         external_api_response_t air_response = {0};
-        int air_result = external_apis_make_request(&air_request, &air_response);
+        int air_result = external_apis_make_request(&air_request, &air_response\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (air_result == 0 && air_response.success && air_response.body) {
             // Parse air quality data from JSON
-            json_document_t *air_doc = json_parse_string(air_response.body);
+            json_document_t *air_doc = json_parse_string(air_response.body\n"\n"\n"\n"\n"\n"\n"\n");
             if (air_doc && air_doc->root) {
-                cJSON *air_obj = cJSON_GetObjectItem(air_doc->root, "list");
+                cJSON *air_obj = cJSON_GetObjectItem(air_doc->root, "list"\n"\n"\n"\n"\n"\n"\n"\n");
                 if (air_obj && cJSON_IsArray(air_obj) && cJSON_GetArraySize(air_obj) > 0) {
-                    cJSON *air_item = cJSON_GetArrayItem(air_obj, 0);
+                    cJSON *air_item = cJSON_GetArrayItem(air_obj, 0\n"\n"\n"\n"\n"\n"\n"\n");
                     if (air_item) {
-                        cJSON *main_obj = cJSON_GetObjectItem(air_item, "main");
+                        cJSON *main_obj = cJSON_GetObjectItem(air_item, "main"\n"\n"\n"\n"\n"\n"\n"\n");
                         if (main_obj) {
-                            cJSON *aqi_obj = cJSON_GetObjectItem(main_obj, "aqi");
+                            cJSON *aqi_obj = cJSON_GetObjectItem(main_obj, "aqi"\n"\n"\n"\n"\n"\n"\n"\n");
                             if (aqi_obj) {
-                                weather->air_quality_index = (int)cJSON_GetNumberValue(aqi_obj);
+                                weather->air_quality_index = (int)cJSON_GetNumberValue(aqi_obj\n"\n"\n"\n"\n"\n"\n"\n");
                             }
                         }
                         
                         // Get detailed air quality components
-                        cJSON *components_obj = cJSON_GetObjectItem(air_item, "components");
+                        cJSON *components_obj = cJSON_GetObjectItem(air_item, "components"\n"\n"\n"\n"\n"\n"\n"\n");
                         if (components_obj) {
                             // Note: gps_weather_current_t doesn't have pm25, pm10, no2, o3 members
                             // These would need to be stored in a separate air quality structure
                             // For now, we just log that we have the data
-                            LOGX_DEBUG_MSG("Air quality components available but not stored in current weather structure");
+                            printf("DEBUG: "Air quality components available but not stored in current weather structure"\n"\n"\n"\n"\n"\n"\n"\n");
                         }
                     }
                 }
-                json_document_free(air_doc);
+                json_document_free(air_doc\n"\n"\n"\n"\n"\n"\n"\n");
             }
         } else {
             // Fallback: try to get air quality from local sensors or cached data
-            FILE *air_file = fopen("/var/lib/autonomy/weather/air_quality.json", "r");
+            FILE *air_file = fopen("/var/lib/autonomy/weather/air_quality.json", "r"\n"\n"\n"\n"\n"\n"\n"\n");
             if (air_file) {
                 char buffer[1024];
                 if (fgets(buffer, sizeof(buffer), air_file)) {
-                    json_document_t *air_doc = json_parse_string(buffer);
+                    json_document_t *air_doc = json_parse_string(buffer\n"\n"\n"\n"\n"\n"\n"\n");
                     if (air_doc && air_doc->root) {
-                        cJSON *aqi_obj = cJSON_GetObjectItem(air_doc->root, "aqi");
+                        cJSON *aqi_obj = cJSON_GetObjectItem(air_doc->root, "aqi"\n"\n"\n"\n"\n"\n"\n"\n");
                         if (aqi_obj) {
-                            weather->air_quality_index = (int)cJSON_GetNumberValue(aqi_obj);
+                            weather->air_quality_index = (int)cJSON_GetNumberValue(aqi_obj\n"\n"\n"\n"\n"\n"\n"\n");
                         }
                     }
-                    json_document_free(air_doc);
+                    json_document_free(air_doc\n"\n"\n"\n"\n"\n"\n"\n");
                 }
-                fclose(air_file);
+                fclose(air_file\n"\n"\n"\n"\n"\n"\n"\n");
             } else {
                 // Final fallback to moderate air quality
                 weather->air_quality_index = 50;
-                LOGX_WARN_MSG("Could not get air quality data, using default moderate value");
+                printf("WARN: "Could not get air quality data, using default moderate value"\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
         
         // Note: external_api_response_t.body is a fixed-size array, no need to free
         
-        json_document_free(doc);
+        json_document_free(doc\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         // Use defaults for fields we couldn't parse
         weather->visibility = 10000.0;
@@ -554,29 +554,29 @@ void parse_current_weather_response(const gps_weather_api_response_t *response,
         weather->air_quality_index = 50;
     }
     
-    LOGX_DEBUG_MSG("Successfully parsed current weather response");
+    printf("DEBUG: "Successfully parsed current weather response"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Parse forecast response
 void parse_forecast_response(const gps_weather_api_response_t *response, 
                                   gps_weather_forecast_t *forecast) {
     // Initialize forecast data
-    memset(forecast, 0, sizeof(gps_weather_forecast_t));
+    memset(forecast, 0, sizeof(gps_weather_forecast_t)\n"\n"\n"\n"\n"\n"\n"\n");
     forecast->timestamp = response->timestamp;
     forecast->forecast_count = 0;
     
     // Use proper JSON parser
-    json_document_t* doc = json_parse_string(response->data);
+    json_document_t* doc = json_parse_string(response->data\n"\n"\n"\n"\n"\n"\n"\n");
     if (!doc || !doc->valid) {
-        LOGX_WARN_MSG("Failed to parse forecast JSON response");
+        printf("WARN: "Failed to parse forecast JSON response"\n"\n"\n"\n"\n"\n"\n"\n");
         return;
     }
     
     // Get the list array from the response
-    int list_size = json_get_array_size(doc, "list");
+    int list_size = json_get_array_size(doc, "list"\n"\n"\n"\n"\n"\n"\n"\n");
     if (list_size <= 0) {
-        LOGX_WARN_MSG("No forecast data in response");
-        json_document_free(doc);
+        printf("WARN: "No forecast data in response"\n"\n"\n"\n"\n"\n"\n"\n");
+        json_document_free(doc\n"\n"\n"\n"\n"\n"\n"\n");
         return;
     }
     
@@ -593,45 +593,45 @@ void parse_forecast_response(const gps_weather_api_response_t *response,
         
         // Parse timestamp
         int dt;
-        snprintf(path, sizeof(path), "list[%d].dt", i);
+        snprintf(path, sizeof(path), "list[%d].dt", i\n"\n"\n"\n"\n"\n"\n"\n");
         if (json_get_int(doc, path, &dt)) {
             forecast->forecasts[i].timestamp = (time_t)dt;
         }
         
         // Parse temperature
-        snprintf(path, sizeof(path), "list[%d].main.temp", i);
-        json_get_double(doc, path, &forecast->forecasts[i].temperature);
+        snprintf(path, sizeof(path), "list[%d].main.temp", i\n"\n"\n"\n"\n"\n"\n"\n");
+        json_get_double(doc, path, &forecast->forecasts[i].temperature\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Parse min/max temperatures
-        snprintf(path, sizeof(path), "list[%d].main.temp_min", i);
+        snprintf(path, sizeof(path), "list[%d].main.temp_min", i\n"\n"\n"\n"\n"\n"\n"\n");
         json_get_double(doc, path, &forecast->forecasts[i].temperature); // Note: no temp_min in structure
         
-        snprintf(path, sizeof(path), "list[%d].main.temp_max", i);
+        snprintf(path, sizeof(path), "list[%d].main.temp_max", i\n"\n"\n"\n"\n"\n"\n"\n");
         json_get_double(doc, path, &forecast->forecasts[i].temperature); // Note: no temp_max in structure
         
         // Parse humidity
-        snprintf(path, sizeof(path), "list[%d].main.humidity", i);
-        json_get_double(doc, path, &forecast->forecasts[i].humidity);
+        snprintf(path, sizeof(path), "list[%d].main.humidity", i\n"\n"\n"\n"\n"\n"\n"\n");
+        json_get_double(doc, path, &forecast->forecasts[i].humidity\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Parse pressure
-        snprintf(path, sizeof(path), "list[%d].main.pressure", i);
-        json_get_double(doc, path, &forecast->forecasts[i].pressure);
+        snprintf(path, sizeof(path), "list[%d].main.pressure", i\n"\n"\n"\n"\n"\n"\n"\n");
+        json_get_double(doc, path, &forecast->forecasts[i].pressure\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Parse wind
-        snprintf(path, sizeof(path), "list[%d].wind.speed", i);
-        json_get_double(doc, path, &forecast->forecasts[i].wind_speed);
+        snprintf(path, sizeof(path), "list[%d].wind.speed", i\n"\n"\n"\n"\n"\n"\n"\n");
+        json_get_double(doc, path, &forecast->forecasts[i].wind_speed\n"\n"\n"\n"\n"\n"\n"\n");
         
-        snprintf(path, sizeof(path), "list[%d].wind.deg", i);
-        json_get_double(doc, path, &forecast->forecasts[i].wind_direction);
+        snprintf(path, sizeof(path), "list[%d].wind.deg", i\n"\n"\n"\n"\n"\n"\n"\n");
+        json_get_double(doc, path, &forecast->forecasts[i].wind_direction\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Parse precipitation probability
-        snprintf(path, sizeof(path), "list[%d].pop", i);
+        snprintf(path, sizeof(path), "list[%d].pop", i\n"\n"\n"\n"\n"\n"\n"\n");
         // Note: gps_weather_current_t doesn't have precipitation_probability member
-        // json_get_double(doc, path, &forecast->forecasts[i].precipitation_probability);
+        // json_get_double(doc, path, &forecast->forecasts[i].precipitation_probability\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Parse weather condition
         char weather_main[64];
-        snprintf(path, sizeof(path), "list[%d].weather[0].main", i);
+        snprintf(path, sizeof(path), "list[%d].weather[0].main", i\n"\n"\n"\n"\n"\n"\n"\n");
         if (json_get_string(doc, path, weather_main, sizeof(weather_main))) {
             // Map weather condition strings to enum
             if (strcasecmp(weather_main, "Clear") == 0) {
@@ -650,86 +650,86 @@ void parse_forecast_response(const gps_weather_api_response_t *response,
         }
     }
     
-    json_document_free(doc);
-    LOGX_DEBUG_MSG("Successfully parsed forecast response with %d entries", forecast->forecast_count);
+    json_document_free(doc\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("DEBUG: "Successfully parsed forecast response with %d entries", forecast->forecast_count\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Parse air quality response
 void parse_air_quality_response(const gps_weather_api_response_t *response, 
                                      gps_weather_air_quality_t *air_quality) {
     // Initialize air quality data
-    memset(air_quality, 0, sizeof(gps_weather_air_quality_t));
+    memset(air_quality, 0, sizeof(gps_weather_air_quality_t)\n"\n"\n"\n"\n"\n"\n"\n");
     air_quality->timestamp = response->timestamp;
     
     // Use proper JSON parser
-    json_document_t* doc = json_parse_string(response->data);
+    json_document_t* doc = json_parse_string(response->data\n"\n"\n"\n"\n"\n"\n"\n");
     if (!doc || !doc->valid) {
-        LOGX_WARN_MSG("Failed to parse air quality JSON response, trying fallback methods");
+        printf("WARN: "Failed to parse air quality JSON response, trying fallback methods"\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Try to get air quality from local sensors
-        FILE *sensor_file = fopen("/var/lib/autonomy/sensors/air_quality.txt", "r");
+        FILE *sensor_file = fopen("/var/lib/autonomy/sensors/air_quality.txt", "r"\n"\n"\n"\n"\n"\n"\n"\n");
         if (sensor_file) {
             char buffer[256];
             if (fgets(buffer, sizeof(buffer), sensor_file)) {
                 sscanf(buffer, "AQI:%d CO:%lf NO2:%lf O3:%lf PM25:%lf PM10:%lf",
                        &air_quality->air_quality_index, &air_quality->co, &air_quality->no2, 
-                       &air_quality->o3, &air_quality->pm2_5, &air_quality->pm10);
-                fclose(sensor_file);
-                LOGX_INFO_MSG("Using air quality data from local sensors");
+                       &air_quality->o3, &air_quality->pm2_5, &air_quality->pm10\n"\n"\n"\n"\n"\n"\n"\n");
+                fclose(sensor_file\n"\n"\n"\n"\n"\n"\n"\n");
+                printf("INFO: "Using air quality data from local sensors"\n"\n"\n"\n"\n"\n"\n"\n");
                 return;
             }
-            fclose(sensor_file);
+            fclose(sensor_file\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Try to get from cached weather data
-        FILE *cache_file = fopen("/var/lib/autonomy/weather/cached_air_quality.json", "r");
+        FILE *cache_file = fopen("/var/lib/autonomy/weather/cached_air_quality.json", "r"\n"\n"\n"\n"\n"\n"\n"\n");
         if (cache_file) {
             char buffer[1024];
             if (fgets(buffer, sizeof(buffer), cache_file)) {
-                json_document_t *cache_doc = json_parse_string(buffer);
+                json_document_t *cache_doc = json_parse_string(buffer\n"\n"\n"\n"\n"\n"\n"\n");
                 if (cache_doc && cache_doc->root) {
-                    cJSON *aqi_obj = cJSON_GetObjectItem(cache_doc->root, "aqi");
-                    cJSON *co_obj = cJSON_GetObjectItem(cache_doc->root, "co");
-                    cJSON *no2_obj = cJSON_GetObjectItem(cache_doc->root, "no2");
-                    cJSON *o3_obj = cJSON_GetObjectItem(cache_doc->root, "o3");
-                    cJSON *pm25_obj = cJSON_GetObjectItem(cache_doc->root, "pm25");
-                    cJSON *pm10_obj = cJSON_GetObjectItem(cache_doc->root, "pm10");
+                    cJSON *aqi_obj = cJSON_GetObjectItem(cache_doc->root, "aqi"\n"\n"\n"\n"\n"\n"\n"\n");
+                    cJSON *co_obj = cJSON_GetObjectItem(cache_doc->root, "co"\n"\n"\n"\n"\n"\n"\n"\n");
+                    cJSON *no2_obj = cJSON_GetObjectItem(cache_doc->root, "no2"\n"\n"\n"\n"\n"\n"\n"\n");
+                    cJSON *o3_obj = cJSON_GetObjectItem(cache_doc->root, "o3"\n"\n"\n"\n"\n"\n"\n"\n");
+                    cJSON *pm25_obj = cJSON_GetObjectItem(cache_doc->root, "pm25"\n"\n"\n"\n"\n"\n"\n"\n");
+                    cJSON *pm10_obj = cJSON_GetObjectItem(cache_doc->root, "pm10"\n"\n"\n"\n"\n"\n"\n"\n");
                     
-                    if (aqi_obj) air_quality->air_quality_index = (int)cJSON_GetNumberValue(aqi_obj);
-                    if (co_obj) air_quality->co = cJSON_GetNumberValue(co_obj);
-                    if (no2_obj) air_quality->no2 = cJSON_GetNumberValue(no2_obj);
-                    if (o3_obj) air_quality->o3 = cJSON_GetNumberValue(o3_obj);
-                    if (pm25_obj) air_quality->pm2_5 = cJSON_GetNumberValue(pm25_obj);
-                    if (pm10_obj) air_quality->pm10 = cJSON_GetNumberValue(pm10_obj);
+                    if (aqi_obj) air_quality->air_quality_index = (int)cJSON_GetNumberValue(aqi_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                    if (co_obj) air_quality->co = cJSON_GetNumberValue(co_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                    if (no2_obj) air_quality->no2 = cJSON_GetNumberValue(no2_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                    if (o3_obj) air_quality->o3 = cJSON_GetNumberValue(o3_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                    if (pm25_obj) air_quality->pm2_5 = cJSON_GetNumberValue(pm25_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                    if (pm10_obj) air_quality->pm10 = cJSON_GetNumberValue(pm10_obj\n"\n"\n"\n"\n"\n"\n"\n");
                     
-                    fclose(cache_file);
-                    json_document_free(cache_doc);
-                    LOGX_INFO_MSG("Using cached air quality data");
+                    fclose(cache_file\n"\n"\n"\n"\n"\n"\n"\n");
+                    json_document_free(cache_doc\n"\n"\n"\n"\n"\n"\n"\n");
+                    printf("INFO: "Using cached air quality data"\n"\n"\n"\n"\n"\n"\n"\n");
                     return;
                 }
-                json_document_free(cache_doc);
+                json_document_free(cache_doc\n"\n"\n"\n"\n"\n"\n"\n");
             }
-            fclose(cache_file);
+            fclose(cache_file\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Final fallback: try to estimate from weather conditions
         if (response->data && strlen(response->data) > 0) {
             // Try to extract any available data from the response
-            char *aqi_start = strstr(response->data, "\"aqi\":");
+            char *aqi_start = strstr(response->data, "\"aqi\":"\n"\n"\n"\n"\n"\n"\n"\n");
             if (aqi_start) {
-                air_quality->air_quality_index = atoi(aqi_start + 6);
+                air_quality->air_quality_index = atoi(aqi_start + 6\n"\n"\n"\n"\n"\n"\n"\n");
             } else {
                 air_quality->air_quality_index = 50;  // Moderate default
             }
             
             // Estimate other values based on AQI
-            air_quality->co = 233.65 * (air_quality->air_quality_index / 50.0);
-            air_quality->no2 = 1.87 * (air_quality->air_quality_index / 50.0);
-            air_quality->o3 = 38.85 * (air_quality->air_quality_index / 50.0);
-            air_quality->pm2_5 = 15.0 * (air_quality->air_quality_index / 50.0);
-            air_quality->pm10 = 25.0 * (air_quality->air_quality_index / 50.0);
+            air_quality->co = 233.65 * (air_quality->air_quality_index / 50.0\n"\n"\n"\n"\n"\n"\n"\n");
+            air_quality->no2 = 1.87 * (air_quality->air_quality_index / 50.0\n"\n"\n"\n"\n"\n"\n"\n");
+            air_quality->o3 = 38.85 * (air_quality->air_quality_index / 50.0\n"\n"\n"\n"\n"\n"\n"\n");
+            air_quality->pm2_5 = 15.0 * (air_quality->air_quality_index / 50.0\n"\n"\n"\n"\n"\n"\n"\n");
+            air_quality->pm10 = 25.0 * (air_quality->air_quality_index / 50.0\n"\n"\n"\n"\n"\n"\n"\n");
             
-            LOGX_WARN_MSG("Using estimated air quality values based on partial data");
+            printf("WARN: "Using estimated air quality values based on partial data"\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
             // Ultimate fallback to moderate values
             air_quality->air_quality_index = 50;  // Moderate default
@@ -753,19 +753,19 @@ void parse_air_quality_response(const gps_weather_api_response_t *response,
     }
     
     // Parse individual pollutant components
-    json_get_double(doc, "list[0].components.co", &air_quality->co);
+    json_get_double(doc, "list[0].components.co", &air_quality->co\n"\n"\n"\n"\n"\n"\n"\n");
     // Note: gps_weather_air_quality_t doesn't have 'no' member
-    json_get_double(doc, "list[0].components.no2", &air_quality->no2);
-    json_get_double(doc, "list[0].components.o3", &air_quality->o3);
-    json_get_double(doc, "list[0].components.so2", &air_quality->so2);
-    json_get_double(doc, "list[0].components.pm2_5", &air_quality->pm2_5);
-    json_get_double(doc, "list[0].components.pm10", &air_quality->pm10);
+    json_get_double(doc, "list[0].components.no2", &air_quality->no2\n"\n"\n"\n"\n"\n"\n"\n");
+    json_get_double(doc, "list[0].components.o3", &air_quality->o3\n"\n"\n"\n"\n"\n"\n"\n");
+    json_get_double(doc, "list[0].components.so2", &air_quality->so2\n"\n"\n"\n"\n"\n"\n"\n");
+    json_get_double(doc, "list[0].components.pm2_5", &air_quality->pm2_5\n"\n"\n"\n"\n"\n"\n"\n");
+    json_get_double(doc, "list[0].components.pm10", &air_quality->pm10\n"\n"\n"\n"\n"\n"\n"\n");
     // Note: gps_weather_air_quality_t doesn't have 'nh3' member
     
-    json_document_free(doc);
+    json_document_free(doc\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("Successfully parsed air quality response: AQI=%d, PM2.5=%.2f, PM10=%.2f", 
-                   air_quality->air_quality_index, air_quality->pm2_5, air_quality->pm10);
+    printf("DEBUG: "Successfully parsed air quality response: AQI=%d, PM2.5=%.2f, PM10=%.2f", 
+                   air_quality->air_quality_index, air_quality->pm2_5, air_quality->pm10\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get weather integration status
@@ -774,7 +774,7 @@ int gps_weather_get_status(gps_weather_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_weather_mutex);
+    pthread_mutex_lock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_weather.enabled;
     status->cache_entry_count = g_weather.cache_entry_count;
@@ -791,7 +791,7 @@ int gps_weather_get_status(gps_weather_status_t *status) {
         status->success_rate = 0.0;
     }
     
-    pthread_mutex_unlock(&g_weather_mutex);
+    pthread_mutex_unlock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -802,17 +802,17 @@ int gps_weather_get_config(gps_weather_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_weather_mutex);
+    pthread_mutex_lock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     config->enabled = g_weather.enabled;
     config->max_cache_entries = g_weather.max_cache_entries;
     config->update_interval = g_weather.update_interval;
     config->max_forecast_days = g_weather.max_forecast_days;
     config->cache_radius = g_weather.cache_radius;
-    safe_strncpy(config->api_key, g_weather.api_key, sizeof(config->api_key));
+    safe_strncpy(config->api_key, g_weather.api_key, sizeof(config->api_key)\n"\n"\n"\n"\n"\n"\n"\n");
     config->api_key[sizeof(config->api_key) - 1] = '\0';
     
-    pthread_mutex_unlock(&g_weather_mutex);
+    pthread_mutex_unlock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -823,7 +823,7 @@ int gps_weather_set_config(const gps_weather_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_weather_mutex);
+    pthread_mutex_lock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_weather.enabled = config->enabled;
     g_weather.max_cache_entries = config->max_cache_entries;
@@ -832,13 +832,13 @@ int gps_weather_set_config(const gps_weather_config_t *config) {
     g_weather.cache_radius = config->cache_radius;
     
     if (strlen(config->api_key) > 0) {
-        safe_strncpy(g_weather.api_key, config->api_key, sizeof(g_weather.api_key));
+        safe_strncpy(g_weather.api_key, config->api_key, sizeof(g_weather.api_key)\n"\n"\n"\n"\n"\n"\n"\n");
         g_weather.api_key[sizeof(g_weather.api_key) - 1] = '\0';
     }
     
-    pthread_mutex_unlock(&g_weather_mutex);
+    pthread_mutex_unlock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS weather integration configuration updated");
+    printf("INFO: "GPS weather integration configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -848,11 +848,11 @@ int gps_weather_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_weather_mutex);
+    pthread_mutex_lock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_weather.enabled = enabled;
-    pthread_mutex_unlock(&g_weather_mutex);
+    pthread_mutex_unlock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS weather integration %s", enabled ? "enabled" : "disabled");
+    printf("INFO: "GPS weather integration %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -863,11 +863,11 @@ int gps_weather_force_update(void) {
     }
     
     // Reset last update time to force immediate update
-    pthread_mutex_lock(&g_weather_mutex);
+    pthread_mutex_lock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_weather.last_update = 0;
-    pthread_mutex_unlock(&g_weather_mutex);
+    pthread_mutex_unlock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS weather update forced");
+    printf("INFO: "GPS weather update forced"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -877,10 +877,10 @@ int gps_weather_get_statistics(gps_weather_stats_t *stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_weather_mutex);
+    pthread_mutex_lock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate statistics from weather cache
-    memset(stats, 0, sizeof(gps_weather_stats_t));
+    memset(stats, 0, sizeof(gps_weather_stats_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < g_weather.cache_entry_count; i++) {
         if (!g_weather.weather_cache[i].active) {
@@ -908,7 +908,7 @@ int gps_weather_get_statistics(gps_weather_stats_t *stats) {
     stats->successful_requests = g_weather.successful_requests;
     stats->failed_requests = g_weather.failed_requests;
     
-    pthread_mutex_unlock(&g_weather_mutex);
+    pthread_mutex_unlock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -919,7 +919,7 @@ int gps_weather_reset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_weather_mutex);
+    pthread_mutex_lock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_weather.cache_entry_count = 0;
     g_weather.total_requests = 0;
@@ -944,9 +944,9 @@ int gps_weather_reset(void) {
         g_weather.weather_cache[i].air_quality_index = 0;
     }
     
-    pthread_mutex_unlock(&g_weather_mutex);
+    pthread_mutex_unlock(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS weather integration reset");
+    printf("INFO: "GPS weather integration reset"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -956,9 +956,9 @@ void gps_weather_cleanup(void) {
         return;
     }
     
-    curl_global_cleanup();
-    pthread_mutex_destroy(&g_weather_mutex);
+    curl_global_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_weather_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_weather_initialized = false; // Use configurable setting
     
-    LOGX_INFO_MSG("GPS weather integration cleaned up");
+    printf("INFO: "GPS weather integration cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }

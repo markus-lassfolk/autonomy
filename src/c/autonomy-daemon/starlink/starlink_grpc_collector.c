@@ -19,7 +19,7 @@ static size_t write_callback(void *contents, size_t size, size_t nmemb, void *us
     char *buffer = (char *)userp;
     
     // Append to buffer (simple implementation)
-    strncat(buffer, (char *)contents, realsize);
+    strncat(buffer, (char *)contents, realsize\n"\n"\n"\n"\n"\n"\n"\n");
     return realsize;
 }
 
@@ -31,24 +31,24 @@ starlink_grpc_collector_t g_starlink_grpc_collector = {0};
 
 // Initialize the gRPC collector
 int starlink_grpc_collector_init(void) {
-    LOGX_INFO_MSG("Initializing Starlink gRPC collector with comprehensive client");
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init called\n");
+    printf("INFO: "Initializing Starlink gRPC collector with comprehensive client"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: starlink_grpc_collector_init called\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize mutex
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - about to initialize mutex\n");
+    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - about to initialize mutex\n"\n"\n"\n"\n"\n"\n"\n"\n");
     if (pthread_mutex_init(&g_starlink_grpc_collector.mutex, NULL) != 0) {
-        LOGX_ERROR_MSG("Failed to initialize gRPC collector mutex");
-        fprintf(stderr, "DEBUG: starlink_grpc_collector_init failed - mutex initialization failed\n");
+        printf("ERROR: "Failed to initialize gRPC collector mutex"\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "DEBUG: starlink_grpc_collector_init failed - mutex initialization failed\n"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR;
     }
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - mutex initialized successfully\n");
+    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - mutex initialized successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize the comprehensive gRPC client
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - about to initialize daemon config\n");
+    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - about to initialize daemon config\n"\n"\n"\n"\n"\n"\n"\n"\n");
     starlink_grpc_daemon_config_t daemon_config = {0};
     
     // Set up client configuration
-    strcpy(daemon_config.client_config.host, "192.168.100.1");
+    strcpy(daemon_config.client_config.host, "192.168.100.1"\n"\n"\n"\n"\n"\n"\n"\n");
     daemon_config.client_config.port = 9200;
     daemon_config.client_config.timeout = 10;
     daemon_config.client_config.retries = 3;
@@ -61,22 +61,22 @@ int starlink_grpc_collector_init(void) {
     daemon_config.retry_delay_ms = 1000;
     daemon_config.enable_monitoring = false; // We'll handle monitoring separately
     daemon_config.monitoring_interval_seconds = 30;
-    strcpy(daemon_config.log_prefix, "STARLINK-GRPC");
+    strcpy(daemon_config.log_prefix, "STARLINK-GRPC"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize the daemon integration
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - about to initialize daemon integration\n");
+    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - about to initialize daemon integration\n"\n"\n"\n"\n"\n"\n"\n"\n");
     if (starlink_grpc_daemon_integration_init(&daemon_config) != 0) {
-        LOGX_ERROR_MSG("Failed to initialize comprehensive gRPC client");
-        fprintf(stderr, "DEBUG: starlink_grpc_collector_init failed - daemon integration failed\n");
+        printf("ERROR: "Failed to initialize comprehensive gRPC client"\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "DEBUG: starlink_grpc_collector_init failed - daemon integration failed\n"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR;
     }
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - daemon integration initialized successfully\n");
+    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - daemon integration initialized successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set configuration from UCI config with fallback defaults
     if (strlen(g_config.starlink_host) > 0) {
-        safe_strncpy(g_starlink_grpc_collector.host, g_config.starlink_host, sizeof(g_starlink_grpc_collector.host));
+        safe_strncpy(g_starlink_grpc_collector.host, g_config.starlink_host, sizeof(g_starlink_grpc_collector.host)\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        safe_strncpy(g_starlink_grpc_collector.host, "192.168.100.1", sizeof(g_starlink_grpc_collector.host));
+        safe_strncpy(g_starlink_grpc_collector.host, "192.168.100.1", sizeof(g_starlink_grpc_collector.host)\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_config.starlink_port > 0) {
@@ -92,10 +92,10 @@ int starlink_grpc_collector_init(void) {
     }
     g_starlink_grpc_collector.enabled = true;
     
-    LOGX_INFO_MSG("Starlink gRPC collector configured", 
+    printf("INFO: "Starlink gRPC collector configured", 
                   "host", g_starlink_grpc_collector.host,
                   "port", g_starlink_grpc_collector.port,
-                  "timeout", g_starlink_grpc_collector.timeout_seconds);
+                  "timeout", g_starlink_grpc_collector.timeout_seconds\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize data arrays
     g_starlink_grpc_collector.outage_count = 0;
@@ -110,32 +110,32 @@ int starlink_grpc_collector_init(void) {
     g_starlink_grpc_collector.last_successful_collection = 0;
     g_starlink_grpc_collector.consecutive_failures = 0;
     
-    LOGX_INFO_MSG("Starlink gRPC collector initialized successfully");
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init completed successfully\n");
+    printf("INFO: "Starlink gRPC collector initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: starlink_grpc_collector_init completed successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup the gRPC collector
 int starlink_grpc_collector_cleanup(void) {
-    LOGX_INFO_MSG("Cleaning up Starlink gRPC collector");
+    printf("INFO: "Cleaning up Starlink gRPC collector"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Stop collection thread if running
-    starlink_grpc_collector_stop();
+    starlink_grpc_collector_stop(\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Cleanup the comprehensive gRPC client
-    starlink_grpc_daemon_integration_cleanup();
+    starlink_grpc_daemon_integration_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Destroy mutex
-    pthread_mutex_destroy(&g_starlink_grpc_collector.mutex);
+    pthread_mutex_destroy(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Starlink gRPC collector cleanup completed");
+    printf("INFO: "Starlink gRPC collector cleanup completed"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Start the collection thread
 int starlink_grpc_collector_start(void) {
     if (g_starlink_grpc_collector.thread_running) {
-        LOGX_WARN_MSG("gRPC collector thread already running");
+        printf("WARN: "gRPC collector thread already running"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
@@ -143,12 +143,12 @@ int starlink_grpc_collector_start(void) {
     
     if (pthread_create(&g_starlink_grpc_collector.collection_thread, NULL, 
                       (void*)starlink_grpc_collector_thread, NULL) != 0) {
-        LOGX_ERROR_MSG("Failed to create gRPC collector thread");
+        printf("ERROR: "Failed to create gRPC collector thread"\n"\n"\n"\n"\n"\n"\n"\n");
         g_starlink_grpc_collector.thread_running = false;
         return AUTONOMY_ERROR;
     }
     
-    LOGX_INFO_MSG("Starlink gRPC collector thread started");
+    printf("INFO: "Starlink gRPC collector thread started"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -161,31 +161,31 @@ int starlink_grpc_collector_stop(void) {
     g_starlink_grpc_collector.thread_running = false;
     
     if (pthread_join(g_starlink_grpc_collector.collection_thread, NULL) != 0) {
-        LOGX_WARN_MSG("Failed to join gRPC collector thread");
+        printf("WARN: "Failed to join gRPC collector thread"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    LOGX_INFO_MSG("Starlink gRPC collector thread stopped");
+    printf("INFO: "Starlink gRPC collector thread stopped"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Main collection thread function
 void starlink_grpc_collector_thread(void* arg) {
-    LOGX_INFO_MSG("Starlink gRPC collector thread started");
+    printf("INFO: "Starlink gRPC collector thread started"\n"\n"\n"\n"\n"\n"\n"\n");
     
     while (g_starlink_grpc_collector.thread_running) {
         if (g_starlink_grpc_collector.enabled) {
             // Collect observation data
-            starlink_grpc_collect_observation();
+            starlink_grpc_collect_observation(\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Detect outage events
-            starlink_grpc_detect_outage_events();
+            starlink_grpc_detect_outage_events(\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Sleep for observation interval
-        sleep(OBSERVATION_INTERVAL);
+        sleep(OBSERVATION_INTERVAL\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    LOGX_INFO_MSG("Starlink gRPC collector thread exiting");
+    printf("INFO: "Starlink gRPC collector thread exiting"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Collect observation data using gRPC
@@ -193,11 +193,11 @@ int starlink_grpc_collect_observation(void) {
     starlink_observation_t observation = {0};
     
     // Get current timestamp
-    observation.timestamp = time(NULL);
+    observation.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Use the new comprehensive multi-call approach
     if (starlink_grpc_daemon_get_observation(&observation) == 0) {
-        pthread_mutex_lock(&g_starlink_grpc_collector.mutex);
+        pthread_mutex_lock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Store observation
         int index = g_starlink_grpc_collector.current_observation_index;
@@ -212,33 +212,33 @@ int starlink_grpc_collect_observation(void) {
         g_starlink_grpc_collector.last_observation = observation;
         g_starlink_grpc_collector.last_observation_time = observation.timestamp;
         g_starlink_grpc_collector.total_observations_collected++;
-        g_starlink_grpc_collector.last_successful_collection = time(NULL);
+        g_starlink_grpc_collector.last_successful_collection = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         g_starlink_grpc_collector.consecutive_failures = 0;
             
-            pthread_mutex_unlock(&g_starlink_grpc_collector.mutex);
+            pthread_mutex_unlock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             
-            LOGX_DEBUG_MSG("Collected Starlink observation", 
+            printf("DEBUG: "Collected Starlink observation", 
                           "timestamp", observation.timestamp,
                           "snr", observation.snr,
-                          "obstructed", observation.fraction_obstructed > 0.1);
+                          "obstructed", observation.fraction_obstructed > 0.1\n"\n"\n"\n"\n"\n"\n"\n");
             
             return AUTONOMY_SUCCESS;
     }
     
     g_starlink_grpc_collector.consecutive_failures++;
-    LOGX_WARN_MSG("Failed to collect Starlink observation", 
-                  "consecutive_failures", g_starlink_grpc_collector.consecutive_failures);
+    printf("WARN: "Failed to collect Starlink observation", 
+                  "consecutive_failures", g_starlink_grpc_collector.consecutive_failures\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_ERROR;
 }
 
 // Detect outage events from observations
 int starlink_grpc_detect_outage_events(void) {
-    pthread_mutex_lock(&g_starlink_grpc_collector.mutex);
+    pthread_mutex_lock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if we have enough observations
     if (g_starlink_grpc_collector.observation_count < 2) {
-        pthread_mutex_unlock(&g_starlink_grpc_collector.mutex);
+        pthread_mutex_unlock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
@@ -271,25 +271,25 @@ int starlink_grpc_detect_outage_events(void) {
         outage.gps_valid = current.gps_valid;
         outage.gps_accuracy_m = current.gps_accuracy_m;
         outage.gps_satellites = current.gps_satellites;
-        outage.detected_at = time(NULL);
+        outage.detected_at = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Copy wedge data
         memcpy(outage.wedge_fraction_obstructed, current.wedge_fraction_obstructed, 
-               sizeof(outage.wedge_fraction_obstructed));
+               sizeof(outage.wedge_fraction_obstructed)\n"\n"\n"\n"\n"\n"\n"\n");
         
-        strcpy(outage.severity, "warning");
+        strcpy(outage.severity, "warning"\n"\n"\n"\n"\n"\n"\n"\n");
         snprintf(outage.description, sizeof(outage.description), 
                 "Outage detected: obstruction=%.2f, snr=%.1f, drop_rate=%.2f",
-                current.fraction_obstructed, current.snr, current.pop_ping_drop_rate);
+                current.fraction_obstructed, current.snr, current.pop_ping_drop_rate\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Persist outage event
-        starlink_grpc_persist_outage_event(&outage);
+        starlink_grpc_persist_outage_event(&outage\n"\n"\n"\n"\n"\n"\n"\n");
         g_starlink_grpc_collector.last_obstructed = true;
         
-        LOGX_WARN_MSG("Starlink outage detected", 
+        printf("WARN: "Starlink outage detected", 
                       "t_start", outage.t_start,
                       "obstruction", current.fraction_obstructed,
-                      "snr", current.snr);
+                      "snr", current.snr\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Detect outage end
@@ -301,22 +301,22 @@ int starlink_grpc_detect_outage_events(void) {
             
             if (last_outage->t_end == 0) { // Outage not yet ended
                 last_outage->t_end = current.timestamp;
-                last_outage->duration = difftime(current.timestamp, last_outage->t_start);
+                last_outage->duration = difftime(current.timestamp, last_outage->t_start\n"\n"\n"\n"\n"\n"\n"\n");
                 last_outage->post_snr = current.snr;
                 last_outage->post_latency_ms = current.pop_ping_latency_ms;
                 last_outage->post_loss_rate = current.pop_ping_drop_rate;
                 
-                LOGX_INFO_MSG("Starlink outage ended", 
+                printf("INFO: "Starlink outage ended", 
                               "duration", last_outage->duration,
                               "t_start", last_outage->t_start,
-                              "t_end", last_outage->t_end);
+                              "t_end", last_outage->t_end\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
         
         g_starlink_grpc_collector.last_obstructed = false;
     }
     
-    pthread_mutex_unlock(&g_starlink_grpc_collector.mutex);
+    pthread_mutex_unlock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -326,7 +326,7 @@ int starlink_grpc_persist_outage_event(const starlink_outage_event_t* event) {
         return AUTONOMY_ERROR;
     }
     
-    pthread_mutex_lock(&g_starlink_grpc_collector.mutex);
+    pthread_mutex_lock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Store outage event
     int index = g_starlink_grpc_collector.outage_count % MAX_OUTAGE_EVENTS;
@@ -334,10 +334,10 @@ int starlink_grpc_persist_outage_event(const starlink_outage_event_t* event) {
     g_starlink_grpc_collector.outage_count++;
     g_starlink_grpc_collector.total_outages_detected++;
     
-    pthread_mutex_unlock(&g_starlink_grpc_collector.mutex);
+    pthread_mutex_unlock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Log outage event
-    starlink_grpc_log_outage_event(event);
+    starlink_grpc_log_outage_event(event\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -348,7 +348,7 @@ int starlink_grpc_get_outage_events(starlink_outage_event_t* events, int max_cou
         return AUTONOMY_ERROR;
     }
     
-    pthread_mutex_lock(&g_starlink_grpc_collector.mutex);
+    pthread_mutex_lock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     int count = (g_starlink_grpc_collector.outage_count < max_count) ? 
                 g_starlink_grpc_collector.outage_count : max_count;
@@ -361,7 +361,7 @@ int starlink_grpc_get_outage_events(starlink_outage_event_t* events, int max_cou
     
     *actual_count = count;
     
-    pthread_mutex_unlock(&g_starlink_grpc_collector.mutex);
+    pthread_mutex_unlock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -372,7 +372,7 @@ int starlink_grpc_get_observations(starlink_observation_t* observations, int max
         return AUTONOMY_ERROR;
     }
     
-    pthread_mutex_lock(&g_starlink_grpc_collector.mutex);
+    pthread_mutex_lock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     int count = (g_starlink_grpc_collector.observation_count < max_count) ? 
                 g_starlink_grpc_collector.observation_count : max_count;
@@ -385,7 +385,7 @@ int starlink_grpc_get_observations(starlink_observation_t* observations, int max
     
     *actual_count = count;
     
-    pthread_mutex_unlock(&g_starlink_grpc_collector.mutex);
+    pthread_mutex_unlock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -396,16 +396,16 @@ int starlink_grpc_get_latest_observation(starlink_observation_t* observation) {
         return AUTONOMY_ERROR;
     }
     
-    pthread_mutex_lock(&g_starlink_grpc_collector.mutex);
+    pthread_mutex_lock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *observation = g_starlink_grpc_collector.last_observation;
-    pthread_mutex_unlock(&g_starlink_grpc_collector.mutex);
+    pthread_mutex_unlock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
 
 // Log outage event
 void starlink_grpc_log_outage_event(const starlink_outage_event_t* event) {
-    LOGX_WARN_MSG("Starlink outage event persisted", 
+    printf("WARN: "Starlink outage event persisted", 
                   "t_start", event->t_start,
                   "duration", event->duration,
                   "obstructed", event->obstructed,
@@ -414,7 +414,7 @@ void starlink_grpc_log_outage_event(const starlink_outage_event_t* event) {
                   "backend", event->backend,
                   "pre_snr", event->pre_snr,
                   "post_snr", event->post_snr,
-                  "severity", event->severity);
+                  "severity", event->severity\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // gRPC API call functions - using proper gRPC over HTTP/2 implementation
@@ -424,13 +424,13 @@ int starlink_grpc_call_get_history(char* response_buffer, size_t buffer_size) {
     if (starlink_grpc_comprehensive_call("get_history", NULL, 0, &response) == 0) {
         if (response.success && response.response_data) {
             size_t copy_size = (response.response_size < buffer_size - 1) ? response.response_size : buffer_size - 1;
-            memcpy(response_buffer, response.response_data, copy_size);
+            memcpy(response_buffer, response.response_data, copy_size\n"\n"\n"\n"\n"\n"\n"\n");
             response_buffer[copy_size] = '\0';
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_SUCCESS;
         }
         if (response.response_data) {
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     return AUTONOMY_ERROR;
@@ -442,13 +442,13 @@ int starlink_grpc_call_get_history_old(char* response_buffer, size_t buffer_size
     
     char url[512];
     snprintf(url, sizeof(url), "http://%s:%d/SpaceX.API.Device.Device/Handle", 
-             g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
+             g_starlink_grpc_collector.host, g_starlink_grpc_collector.port\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Create proper gRPC message (following gRPC wire format)
     // gRPC uses length-prefixed messages: [1 byte compression flag][4 bytes message length][message data]
     char grpc_message[512];
     char json_payload[256] = "{\"get_history\":{}}";
-    uint32_t message_length = strlen(json_payload);
+    uint32_t message_length = strlen(json_payload\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Build gRPC message with proper framing
     grpc_message[0] = 0; // No compression
@@ -456,49 +456,49 @@ int starlink_grpc_call_get_history_old(char* response_buffer, size_t buffer_size
     grpc_message[2] = (message_length >> 16) & 0xFF;
     grpc_message[3] = (message_length >> 8) & 0xFF;
     grpc_message[4] = message_length & 0xFF;
-    memcpy(&grpc_message[5], json_payload, message_length);
+    memcpy(&grpc_message[5], json_payload, message_length\n"\n"\n"\n"\n"\n"\n"\n");
     
     CURL *curl;
     CURLcode res;
     struct curl_slist *headers = NULL;
     
-    curl = curl_easy_init();
+    curl = curl_easy_init(\n"\n"\n"\n"\n"\n"\n"\n");
     if (!curl) {
-        LOGX_ERROR_MSG("Failed to initialize curl for gRPC call");
+        printf("ERROR: "Failed to initialize curl for gRPC call"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR;
     }
     
     // Set up proper gRPC headers (following gRPC specification)
-    headers = curl_slist_append(headers, "Content-Type: application/grpc");
-    headers = curl_slist_append(headers, "grpc-encoding: identity");
-    headers = curl_slist_append(headers, "grpc-accept-encoding: identity");
-    headers = curl_slist_append(headers, "grpc-max-receive-message-length: 16777216");
-    headers = curl_slist_append(headers, "User-Agent: grpc-c/1.0");
+    headers = curl_slist_append(headers, "Content-Type: application/grpc"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "grpc-encoding: identity"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "grpc-accept-encoding: identity"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "grpc-max-receive-message-length: 16777216"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "User-Agent: grpc-c/1.0"\n"\n"\n"\n"\n"\n"\n"\n");
     
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, grpc_message);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, 5 + message_length);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response_buffer);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_URL, url\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, grpc_message\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, 5 + message_length\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response_buffer\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L\n"\n"\n"\n"\n"\n"\n"\n");
     
-    res = curl_easy_perform(curl);
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
+    res = curl_easy_perform(curl\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_slist_free_all(headers\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_cleanup(curl\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (res != CURLE_OK) {
         // Use simple printf instead of LOGX to avoid potential segfault
-        printf("ERROR: gRPC call failed: %s\n", curl_easy_strerror(res));
+        printf("ERROR: gRPC call failed: %s\n", curl_easy_strerror(res)\n"\n"\n"\n"\n"\n"\n"\n");
         // Clear response buffer to prevent garbage data
         if (response_buffer && buffer_size > 0) {
-            memset(response_buffer, 0, buffer_size);
+            memset(response_buffer, 0, buffer_size\n"\n"\n"\n"\n"\n"\n"\n");
         }
         return AUTONOMY_ERROR;
     }
     
-    LOGX_DEBUG_MSG("gRPC get_history call successful");
+    printf("DEBUG: "gRPC get_history call successful"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -508,13 +508,13 @@ int starlink_grpc_call_get_status(char* response_buffer, size_t buffer_size) {
     if (starlink_grpc_comprehensive_call("get_status", NULL, 0, &response) == 0) {
         if (response.success && response.response_data) {
             size_t copy_size = (response.response_size < buffer_size - 1) ? response.response_size : buffer_size - 1;
-            memcpy(response_buffer, response.response_data, copy_size);
+            memcpy(response_buffer, response.response_data, copy_size\n"\n"\n"\n"\n"\n"\n"\n");
             response_buffer[copy_size] = '\0';
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_SUCCESS;
         }
         if (response.response_data) {
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     return AUTONOMY_ERROR;
@@ -524,12 +524,12 @@ int starlink_grpc_call_get_status_old(char* response_buffer, size_t buffer_size)
     // Implement gRPC call using proper gRPC over HTTP/2 protocol
     char url[512];
     snprintf(url, sizeof(url), "http://%s:%d/SpaceX.API.Device.Device/Handle", 
-             g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
+             g_starlink_grpc_collector.host, g_starlink_grpc_collector.port\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Create proper gRPC message with gRPC wire format
     char grpc_message[512];
     char json_payload[256] = "{\"get_status\":{}}";
-    uint32_t message_length = strlen(json_payload);
+    uint32_t message_length = strlen(json_payload\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Build gRPC message with proper framing
     grpc_message[0] = 0; // No compression
@@ -537,49 +537,49 @@ int starlink_grpc_call_get_status_old(char* response_buffer, size_t buffer_size)
     grpc_message[2] = (message_length >> 16) & 0xFF;
     grpc_message[3] = (message_length >> 8) & 0xFF;
     grpc_message[4] = message_length & 0xFF;
-    memcpy(&grpc_message[5], json_payload, message_length);
+    memcpy(&grpc_message[5], json_payload, message_length\n"\n"\n"\n"\n"\n"\n"\n");
     
     CURL *curl;
     CURLcode res;
     struct curl_slist *headers = NULL;
     
-    curl = curl_easy_init();
+    curl = curl_easy_init(\n"\n"\n"\n"\n"\n"\n"\n");
     if (!curl) {
-        LOGX_ERROR_MSG("Failed to initialize curl for gRPC call");
+        printf("ERROR: "Failed to initialize curl for gRPC call"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR;
     }
     
     // Set up proper gRPC headers
-    headers = curl_slist_append(headers, "Content-Type: application/grpc");
-    headers = curl_slist_append(headers, "grpc-encoding: identity");
-    headers = curl_slist_append(headers, "grpc-accept-encoding: identity");
-    headers = curl_slist_append(headers, "grpc-max-receive-message-length: 16777216");
-    headers = curl_slist_append(headers, "User-Agent: grpc-c/1.0");
+    headers = curl_slist_append(headers, "Content-Type: application/grpc"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "grpc-encoding: identity"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "grpc-accept-encoding: identity"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "grpc-max-receive-message-length: 16777216"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "User-Agent: grpc-c/1.0"\n"\n"\n"\n"\n"\n"\n"\n");
     
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, grpc_message);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, 5 + message_length);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response_buffer);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_URL, url\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, grpc_message\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, 5 + message_length\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response_buffer\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L\n"\n"\n"\n"\n"\n"\n"\n");
     
-    res = curl_easy_perform(curl);
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
+    res = curl_easy_perform(curl\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_slist_free_all(headers\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_cleanup(curl\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (res != CURLE_OK) {
         // Use simple printf instead of LOGX to avoid potential segfault
-        printf("ERROR: gRPC call failed: %s\n", curl_easy_strerror(res));
+        printf("ERROR: gRPC call failed: %s\n", curl_easy_strerror(res)\n"\n"\n"\n"\n"\n"\n"\n");
         // Clear response buffer to prevent garbage data
         if (response_buffer && buffer_size > 0) {
-            memset(response_buffer, 0, buffer_size);
+            memset(response_buffer, 0, buffer_size\n"\n"\n"\n"\n"\n"\n"\n");
         }
         return AUTONOMY_ERROR;
     }
     
-    LOGX_DEBUG_MSG("gRPC get_status call successful");
+    printf("DEBUG: "gRPC get_status call successful"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -589,13 +589,13 @@ int starlink_grpc_call_get_diagnostics(char* response_buffer, size_t buffer_size
     if (starlink_grpc_comprehensive_call("get_diagnostics", NULL, 0, &response) == 0) {
         if (response.success && response.response_data) {
             size_t copy_size = (response.response_size < buffer_size - 1) ? response.response_size : buffer_size - 1;
-            memcpy(response_buffer, response.response_data, copy_size);
+            memcpy(response_buffer, response.response_data, copy_size\n"\n"\n"\n"\n"\n"\n"\n");
             response_buffer[copy_size] = '\0';
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_SUCCESS;
         }
         if (response.response_data) {
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     return AUTONOMY_ERROR;
@@ -605,12 +605,12 @@ int starlink_grpc_call_get_diagnostics_old(char* response_buffer, size_t buffer_
     // Implement gRPC call using proper gRPC over HTTP/2 protocol
     char url[512];
     snprintf(url, sizeof(url), "http://%s:%d/SpaceX.API.Device.Device/Handle", 
-             g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
+             g_starlink_grpc_collector.host, g_starlink_grpc_collector.port\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Create proper gRPC message with gRPC wire format
     char grpc_message[512];
     char json_payload[256] = "{\"get_diagnostics\":{}}";
-    uint32_t message_length = strlen(json_payload);
+    uint32_t message_length = strlen(json_payload\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Build gRPC message with proper framing
     grpc_message[0] = 0; // No compression
@@ -618,49 +618,49 @@ int starlink_grpc_call_get_diagnostics_old(char* response_buffer, size_t buffer_
     grpc_message[2] = (message_length >> 16) & 0xFF;
     grpc_message[3] = (message_length >> 8) & 0xFF;
     grpc_message[4] = message_length & 0xFF;
-    memcpy(&grpc_message[5], json_payload, message_length);
+    memcpy(&grpc_message[5], json_payload, message_length\n"\n"\n"\n"\n"\n"\n"\n");
     
     CURL *curl;
     CURLcode res;
     struct curl_slist *headers = NULL;
     
-    curl = curl_easy_init();
+    curl = curl_easy_init(\n"\n"\n"\n"\n"\n"\n"\n");
     if (!curl) {
-        LOGX_ERROR_MSG("Failed to initialize curl for gRPC call");
+        printf("ERROR: "Failed to initialize curl for gRPC call"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR;
     }
     
     // Set up proper gRPC headers
-    headers = curl_slist_append(headers, "Content-Type: application/grpc");
-    headers = curl_slist_append(headers, "grpc-encoding: identity");
-    headers = curl_slist_append(headers, "grpc-accept-encoding: identity");
-    headers = curl_slist_append(headers, "grpc-max-receive-message-length: 16777216");
-    headers = curl_slist_append(headers, "User-Agent: grpc-c/1.0");
+    headers = curl_slist_append(headers, "Content-Type: application/grpc"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "grpc-encoding: identity"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "grpc-accept-encoding: identity"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "grpc-max-receive-message-length: 16777216"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "User-Agent: grpc-c/1.0"\n"\n"\n"\n"\n"\n"\n"\n");
     
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, grpc_message);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, 5 + message_length);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response_buffer);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_URL, url\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, grpc_message\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, 5 + message_length\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response_buffer\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L\n"\n"\n"\n"\n"\n"\n"\n");
     
-    res = curl_easy_perform(curl);
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
+    res = curl_easy_perform(curl\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_slist_free_all(headers\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_cleanup(curl\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (res != CURLE_OK) {
         // Use simple printf instead of LOGX to avoid potential segfault
-        printf("ERROR: gRPC call failed: %s\n", curl_easy_strerror(res));
+        printf("ERROR: gRPC call failed: %s\n", curl_easy_strerror(res)\n"\n"\n"\n"\n"\n"\n"\n");
         // Clear response buffer to prevent garbage data
         if (response_buffer && buffer_size > 0) {
-            memset(response_buffer, 0, buffer_size);
+            memset(response_buffer, 0, buffer_size\n"\n"\n"\n"\n"\n"\n"\n");
         }
         return AUTONOMY_ERROR;
     }
     
-    LOGX_DEBUG_MSG("gRPC get_diagnostics call successful");
+    printf("DEBUG: "gRPC get_diagnostics call successful"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -670,13 +670,13 @@ int starlink_grpc_call_get_location(char* response_buffer, size_t buffer_size) {
     if (starlink_grpc_comprehensive_call("get_location", NULL, 0, &response) == 0) {
         if (response.success && response.response_data) {
             size_t copy_size = (response.response_size < buffer_size - 1) ? response.response_size : buffer_size - 1;
-            memcpy(response_buffer, response.response_data, copy_size);
+            memcpy(response_buffer, response.response_data, copy_size\n"\n"\n"\n"\n"\n"\n"\n");
             response_buffer[copy_size] = '\0';
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_SUCCESS;
         }
         if (response.response_data) {
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     return AUTONOMY_ERROR;
@@ -686,12 +686,12 @@ int starlink_grpc_call_get_location_old(char* response_buffer, size_t buffer_siz
     // Implement gRPC call using proper gRPC over HTTP/2 protocol
     char url[512];
     snprintf(url, sizeof(url), "http://%s:%d/SpaceX.API.Device.Device/Handle", 
-             g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
+             g_starlink_grpc_collector.host, g_starlink_grpc_collector.port\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Create proper gRPC message with gRPC wire format
     char grpc_message[512];
     char json_payload[256] = "{\"get_location\":{}}";
-    uint32_t message_length = strlen(json_payload);
+    uint32_t message_length = strlen(json_payload\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Build gRPC message with proper framing
     grpc_message[0] = 0; // No compression
@@ -699,49 +699,49 @@ int starlink_grpc_call_get_location_old(char* response_buffer, size_t buffer_siz
     grpc_message[2] = (message_length >> 16) & 0xFF;
     grpc_message[3] = (message_length >> 8) & 0xFF;
     grpc_message[4] = message_length & 0xFF;
-    memcpy(&grpc_message[5], json_payload, message_length);
+    memcpy(&grpc_message[5], json_payload, message_length\n"\n"\n"\n"\n"\n"\n"\n");
     
     CURL *curl;
     CURLcode res;
     struct curl_slist *headers = NULL;
     
-    curl = curl_easy_init();
+    curl = curl_easy_init(\n"\n"\n"\n"\n"\n"\n"\n");
     if (!curl) {
-        LOGX_ERROR_MSG("Failed to initialize curl for gRPC call");
+        printf("ERROR: "Failed to initialize curl for gRPC call"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR;
     }
     
     // Set up proper gRPC headers
-    headers = curl_slist_append(headers, "Content-Type: application/grpc");
-    headers = curl_slist_append(headers, "grpc-encoding: identity");
-    headers = curl_slist_append(headers, "grpc-accept-encoding: identity");
-    headers = curl_slist_append(headers, "grpc-max-receive-message-length: 16777216");
-    headers = curl_slist_append(headers, "User-Agent: grpc-c/1.0");
+    headers = curl_slist_append(headers, "Content-Type: application/grpc"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "grpc-encoding: identity"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "grpc-accept-encoding: identity"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "grpc-max-receive-message-length: 16777216"\n"\n"\n"\n"\n"\n"\n"\n");
+    headers = curl_slist_append(headers, "User-Agent: grpc-c/1.0"\n"\n"\n"\n"\n"\n"\n"\n");
     
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, grpc_message);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, 5 + message_length);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response_buffer);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_URL, url\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, grpc_message\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, 5 + message_length\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response_buffer\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L\n"\n"\n"\n"\n"\n"\n"\n");
     
-    res = curl_easy_perform(curl);
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
+    res = curl_easy_perform(curl\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_slist_free_all(headers\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_cleanup(curl\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (res != CURLE_OK) {
         // Use simple printf instead of LOGX to avoid potential segfault
-        printf("ERROR: gRPC call failed: %s\n", curl_easy_strerror(res));
+        printf("ERROR: gRPC call failed: %s\n", curl_easy_strerror(res)\n"\n"\n"\n"\n"\n"\n"\n");
         // Clear response buffer to prevent garbage data
         if (response_buffer && buffer_size > 0) {
-            memset(response_buffer, 0, buffer_size);
+            memset(response_buffer, 0, buffer_size\n"\n"\n"\n"\n"\n"\n"\n");
         }
         return AUTONOMY_ERROR;
     }
     
-    LOGX_DEBUG_MSG("gRPC get_location call successful");
+    printf("DEBUG: "gRPC get_location call successful"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -751,13 +751,13 @@ int starlink_grpc_call_get_device_info(char* response_buffer, size_t buffer_size
     if (starlink_grpc_comprehensive_call("get_device_info", NULL, 0, &response) == 0) {
         if (response.success && response.response_data) {
             size_t copy_size = (response.response_size < buffer_size - 1) ? response.response_size : buffer_size - 1;
-            memcpy(response_buffer, response.response_data, copy_size);
+            memcpy(response_buffer, response.response_data, copy_size\n"\n"\n"\n"\n"\n"\n"\n");
             response_buffer[copy_size] = '\0';
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_SUCCESS;
         }
         if (response.response_data) {
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     return AUTONOMY_ERROR;
@@ -769,13 +769,13 @@ int starlink_grpc_call_dish_get_config(char* response_buffer, size_t buffer_size
     if (starlink_grpc_comprehensive_call("dish_get_config", NULL, 0, &response) == 0) {
         if (response.success && response.response_data) {
             size_t copy_size = (response.response_size < buffer_size - 1) ? response.response_size : buffer_size - 1;
-            memcpy(response_buffer, response.response_data, copy_size);
+            memcpy(response_buffer, response.response_data, copy_size\n"\n"\n"\n"\n"\n"\n"\n");
             response_buffer[copy_size] = '\0';
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_SUCCESS;
         }
         if (response.response_data) {
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     return AUTONOMY_ERROR;
@@ -787,13 +787,13 @@ int starlink_grpc_call_dish_set_config(const char* config_kv, char* response_buf
     if (starlink_grpc_comprehensive_call("dish_set_config", config_kv, strlen(config_kv), &response) == 0) {
         if (response.success && response.response_data) {
             size_t copy_size = (response.response_size < buffer_size - 1) ? response.response_size : buffer_size - 1;
-            memcpy(response_buffer, response.response_data, copy_size);
+            memcpy(response_buffer, response.response_data, copy_size\n"\n"\n"\n"\n"\n"\n"\n");
             response_buffer[copy_size] = '\0';
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_SUCCESS;
         }
         if (response.response_data) {
-            free(response.response_data);
+            free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     return AUTONOMY_ERROR;
@@ -805,9 +805,9 @@ int starlink_grpc_parse_status_response(const char* json_response, starlink_obse
         return AUTONOMY_ERROR;
     }
     
-    json_object* root = json_tokener_parse(json_response);
+    json_object* root = json_tokener_parse(json_response\n"\n"\n"\n"\n"\n"\n"\n");
     if (!root) {
-        LOGX_ERROR_MSG("Failed to parse gRPC status response JSON");
+        printf("ERROR: "Failed to parse gRPC status response JSON"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR;
     }
     
@@ -819,16 +819,16 @@ int starlink_grpc_parse_status_response(const char* json_response, starlink_obse
         if (json_object_object_get_ex(dish_get_status, "obstructionStats", &obstruction_stats)) {
             json_object* fraction_obstructed;
             if (json_object_object_get_ex(obstruction_stats, "fractionObstructed", &fraction_obstructed)) {
-                observation->fraction_obstructed = json_object_get_double(fraction_obstructed);
+                observation->fraction_obstructed = json_object_get_double(fraction_obstructed\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             // Parse wedge obstruction data
             json_object* wedge_fraction_obstructed;
             if (json_object_object_get_ex(obstruction_stats, "wedgeFractionObstructed", &wedge_fraction_obstructed)) {
-                int array_len = json_object_array_length(wedge_fraction_obstructed);
+                int array_len = json_object_array_length(wedge_fraction_obstructed\n"\n"\n"\n"\n"\n"\n"\n");
                 for (int i = 0; i < array_len && i < 12; i++) {
-                    json_object* wedge = json_object_array_get_idx(wedge_fraction_obstructed, i);
-                    observation->wedge_fraction_obstructed[i] = json_object_get_double(wedge);
+                    json_object* wedge = json_object_array_get_idx(wedge_fraction_obstructed, i\n"\n"\n"\n"\n"\n"\n"\n");
+                    observation->wedge_fraction_obstructed[i] = json_object_get_double(wedge\n"\n"\n"\n"\n"\n"\n"\n");
                 }
             }
         }
@@ -836,27 +836,27 @@ int starlink_grpc_parse_status_response(const char* json_response, starlink_obse
         // Parse signal metrics
         json_object* snr;
         if (json_object_object_get_ex(dish_get_status, "snr", &snr)) {
-            observation->snr = json_object_get_double(snr);
+            observation->snr = json_object_get_double(snr\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         json_object* pop_ping_latency_ms;
         if (json_object_object_get_ex(dish_get_status, "popPingLatencyMs", &pop_ping_latency_ms)) {
-            observation->pop_ping_latency_ms = json_object_get_double(pop_ping_latency_ms);
+            observation->pop_ping_latency_ms = json_object_get_double(pop_ping_latency_ms\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         json_object* pop_ping_drop_rate;
         if (json_object_object_get_ex(dish_get_status, "popPingDropRate", &pop_ping_drop_rate)) {
-            observation->pop_ping_drop_rate = json_object_get_double(pop_ping_drop_rate);
+            observation->pop_ping_drop_rate = json_object_get_double(pop_ping_drop_rate\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         json_object* downlink_throughput_bps;
         if (json_object_object_get_ex(dish_get_status, "downlinkThroughputBps", &downlink_throughput_bps)) {
-            observation->downlink_throughput_bps = json_object_get_double(downlink_throughput_bps);
+            observation->downlink_throughput_bps = json_object_get_double(downlink_throughput_bps\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         json_object* uplink_throughput_bps;
         if (json_object_object_get_ex(dish_get_status, "uplinkThroughputBps", &uplink_throughput_bps)) {
-            observation->uplink_throughput_bps = json_object_get_double(uplink_throughput_bps);
+            observation->uplink_throughput_bps = json_object_get_double(uplink_throughput_bps\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Parse GPS stats
@@ -864,17 +864,17 @@ int starlink_grpc_parse_status_response(const char* json_response, starlink_obse
         if (json_object_object_get_ex(dish_get_status, "gpsStats", &gps_stats)) {
             json_object* gps_valid;
             if (json_object_object_get_ex(gps_stats, "gpsValid", &gps_valid)) {
-                observation->gps_valid = json_object_get_boolean(gps_valid);
+                observation->gps_valid = json_object_get_boolean(gps_valid\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             json_object* gps_sats;
             if (json_object_object_get_ex(gps_stats, "gpsSats", &gps_sats)) {
-                observation->gps_satellites = json_object_get_int(gps_sats);
+                observation->gps_satellites = json_object_get_int(gps_sats\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             json_object* inhibit_gps;
             if (json_object_object_get_ex(gps_stats, "inhibitGps", &inhibit_gps)) {
-                observation->inhibit_gps = json_object_get_boolean(inhibit_gps);
+                observation->inhibit_gps = json_object_get_boolean(inhibit_gps\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
         
@@ -883,34 +883,34 @@ int starlink_grpc_parse_status_response(const char* json_response, starlink_obse
         if (json_object_object_get_ex(dish_get_status, "deviceState", &device_state)) {
             json_object* uptime_s;
             if (json_object_object_get_ex(device_state, "uptimeS", &uptime_s)) {
-                observation->uptime_s = json_object_get_double(uptime_s);
+                observation->uptime_s = json_object_get_double(uptime_s\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
         
         // Parse boresight data
         json_object* boresight_azimuth_deg;
         if (json_object_object_get_ex(dish_get_status, "boresightAzimuthDeg", &boresight_azimuth_deg)) {
-            observation->boresight_azimuth_deg = json_object_get_double(boresight_azimuth_deg);
+            observation->boresight_azimuth_deg = json_object_get_double(boresight_azimuth_deg\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         json_object* boresight_elevation_deg;
         if (json_object_object_get_ex(dish_get_status, "boresightElevationDeg", &boresight_elevation_deg)) {
-            observation->boresight_elevation_deg = json_object_get_double(boresight_elevation_deg);
+            observation->boresight_elevation_deg = json_object_get_double(boresight_elevation_deg\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Parse flags
         json_object* is_snr_above_noise_floor;
         if (json_object_object_get_ex(dish_get_status, "isSnrAboveNoiseFloor", &is_snr_above_noise_floor)) {
-            observation->is_snr_above_noise_floor = json_object_get_boolean(is_snr_above_noise_floor);
+            observation->is_snr_above_noise_floor = json_object_get_boolean(is_snr_above_noise_floor\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         json_object* is_snr_persistently_low;
         if (json_object_object_get_ex(dish_get_status, "isSnrPersistentlyLow", &is_snr_persistently_low)) {
-            observation->is_snr_persistently_low = json_object_get_boolean(is_snr_persistently_low);
+            observation->is_snr_persistently_low = json_object_get_boolean(is_snr_persistently_low\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    json_object_put(root);
+    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -919,9 +919,9 @@ int starlink_grpc_parse_diagnostics_response(const char* json_response, starlink
         return AUTONOMY_ERROR;
     }
     
-    json_object* root = json_tokener_parse(json_response);
+    json_object* root = json_tokener_parse(json_response\n"\n"\n"\n"\n"\n"\n"\n");
     if (!root) {
-        LOGX_ERROR_MSG("Failed to parse gRPC diagnostics response JSON");
+        printf("ERROR: "Failed to parse gRPC diagnostics response JSON"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR;
     }
     
@@ -933,42 +933,42 @@ int starlink_grpc_parse_diagnostics_response(const char* json_response, starlink
         if (json_object_object_get_ex(dish_get_diagnostics, "alerts", &alerts)) {
             json_object* thermal_throttle;
             if (json_object_object_get_ex(alerts, "thermalThrottle", &thermal_throttle)) {
-                observation->thermal_throttle = json_object_get_boolean(thermal_throttle);
+                observation->thermal_throttle = json_object_get_boolean(thermal_throttle\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             json_object* thermal_shutdown;
             if (json_object_object_get_ex(alerts, "thermalShutdown", &thermal_shutdown)) {
-                observation->thermal_shutdown = json_object_get_boolean(thermal_shutdown);
+                observation->thermal_shutdown = json_object_get_boolean(thermal_shutdown\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             json_object* roaming;
             if (json_object_object_get_ex(alerts, "roaming", &roaming)) {
-                observation->roaming = json_object_get_boolean(roaming);
+                observation->roaming = json_object_get_boolean(roaming\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             json_object* mast_not_near_vertical;
             if (json_object_object_get_ex(alerts, "mastNotNearVertical", &mast_not_near_vertical)) {
-                observation->mast_not_near_vertical = json_object_get_boolean(mast_not_near_vertical);
+                observation->mast_not_near_vertical = json_object_get_boolean(mast_not_near_vertical\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             json_object* unexpected_location;
             if (json_object_object_get_ex(alerts, "unexpectedLocation", &unexpected_location)) {
-                observation->unexpected_location = json_object_get_boolean(unexpected_location);
+                observation->unexpected_location = json_object_get_boolean(unexpected_location\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             json_object* slow_ethernet_speeds;
             if (json_object_object_get_ex(alerts, "slowEthernetSpeeds", &slow_ethernet_speeds)) {
-                observation->slow_ethernet_speeds = json_object_get_boolean(slow_ethernet_speeds);
+                observation->slow_ethernet_speeds = json_object_get_boolean(slow_ethernet_speeds\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             json_object* software_update_reboot;
             if (json_object_object_get_ex(alerts, "softwareUpdateReboot", &software_update_reboot)) {
-                observation->software_update_reboot = json_object_get_boolean(software_update_reboot);
+                observation->software_update_reboot = json_object_get_boolean(software_update_reboot\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             json_object* low_power_mode;
             if (json_object_object_get_ex(alerts, "lowPowerMode", &low_power_mode)) {
-                observation->low_power_mode = json_object_get_boolean(low_power_mode);
+                observation->low_power_mode = json_object_get_boolean(low_power_mode\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
         
@@ -976,17 +976,17 @@ int starlink_grpc_parse_diagnostics_response(const char* json_response, starlink
         json_object* software_version;
         if (json_object_object_get_ex(dish_get_diagnostics, "softwareVersion", &software_version)) {
             strncpy(observation->software_version, json_object_get_string(software_version), 
-                   sizeof(observation->software_version) - 1);
+                   sizeof(observation->software_version) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         json_object* hardware_version;
         if (json_object_object_get_ex(dish_get_diagnostics, "hardwareVersion", &hardware_version)) {
             strncpy(observation->hardware_version, json_object_get_string(hardware_version), 
-                   sizeof(observation->hardware_version) - 1);
+                   sizeof(observation->hardware_version) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    json_object_put(root);
+    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -997,9 +997,9 @@ int starlink_grpc_parse_history_response(const char* json_response, starlink_obs
     
     *actual_count = 0;
     
-    json_object* root = json_tokener_parse(json_response);
+    json_object* root = json_tokener_parse(json_response\n"\n"\n"\n"\n"\n"\n"\n");
     if (!root) {
-        LOGX_ERROR_MSG("Failed to parse gRPC history response JSON");
+        printf("ERROR: "Failed to parse gRPC history response JSON"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR;
     }
     
@@ -1010,17 +1010,17 @@ int starlink_grpc_parse_history_response(const char* json_response, starlink_obs
         json_object* current;
         int current_index = 0;
         if (json_object_object_get_ex(dish_get_history, "current", &current)) {
-            current_index = json_object_get_int(current);
+            current_index = json_object_get_int(current\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Parse obstructed array for outage detection
         json_object* obstructed_array;
         if (json_object_object_get_ex(dish_get_history, "obstructed", &obstructed_array)) {
-            int array_len = json_object_array_length(obstructed_array);
+            int array_len = json_object_array_length(obstructed_array\n"\n"\n"\n"\n"\n"\n"\n");
             int count = (array_len < max_count) ? array_len : max_count;
             
             for (int i = 0; i < count; i++) {
-                json_object* obstructed = json_object_array_get_idx(obstructed_array, i);
+                json_object* obstructed = json_object_array_get_idx(obstructed_array, i\n"\n"\n"\n"\n"\n"\n"\n");
                 observations[i].timestamp = time(NULL) - (array_len - i) * 15; // Assume 15s intervals
                 observations[i].fraction_obstructed = json_object_get_boolean(obstructed) ? 1.0 : 0.0;
             }
@@ -1032,6 +1032,6 @@ int starlink_grpc_parse_history_response(const char* json_response, starlink_obs
         // (SNR, latency, throughput arrays can be parsed similarly)
     }
     
-    json_object_put(root);
+    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }

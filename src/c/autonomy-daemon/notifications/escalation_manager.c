@@ -18,14 +18,14 @@ static escalation_manager_t g_escalation_manager;
 static bool g_escalation_manager_initialized = false;
 
 // Forward declarations
-static void* escalation_loop(void* arg);
-static void process_escalations(void);
-static void send_escalation_notification(escalation_chain_t* chain, int level);
+static void* escalation_loop(void* arg\n"\n"\n"\n"\n"\n"\n"\n");
+static void process_escalations(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void send_escalation_notification(escalation_chain_t* chain, int level\n"\n"\n"\n"\n"\n"\n"\n");
 static void get_escalation_contacts(notification_type_t alert_type, int severity, 
-                                   escalation_contact_t* contacts, int* contact_count);
-static void record_escalation_completion(escalation_chain_t* chain);
-static double calculate_escalation_effectiveness(escalation_chain_t* chain, time_t response_time);
-static char* create_escalation_message(escalation_chain_t* chain, escalation_contact_t* contact);
+                                   escalation_contact_t* contacts, int* contact_count\n"\n"\n"\n"\n"\n"\n"\n");
+static void record_escalation_completion(escalation_chain_t* chain\n"\n"\n"\n"\n"\n"\n"\n");
+static double calculate_escalation_effectiveness(escalation_chain_t* chain, time_t response_time\n"\n"\n"\n"\n"\n"\n"\n");
+static char* create_escalation_message(escalation_chain_t* chain, escalation_contact_t* contact\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize escalation manager
 int escalation_manager_init(const escalation_manager_config_t* config) {
@@ -37,24 +37,24 @@ int escalation_manager_init(const escalation_manager_config_t* config) {
         return -1;
     }
     
-    memset(&g_escalation_manager, 0, sizeof(escalation_manager_t));
+    memset(&g_escalation_manager, 0, sizeof(escalation_manager_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Copy configuration
     g_escalation_manager.config = *config;
     
     // Initialize mutex
-    g_escalation_manager.mutex = malloc(sizeof(pthread_mutex_t));
+    g_escalation_manager.mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_escalation_manager.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_escalation_manager.mutex, NULL);
+    pthread_mutex_init(g_escalation_manager.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize active escalations
-    g_escalation_manager.active_escalations = malloc(config->max_active_escalations * sizeof(escalation_chain_t));
+    g_escalation_manager.active_escalations = malloc(config->max_active_escalations * sizeof(escalation_chain_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_escalation_manager.active_escalations) {
-        pthread_mutex_destroy(g_escalation_manager.mutex);
-        free(g_escalation_manager.mutex);
+        pthread_mutex_destroy(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -62,11 +62,11 @@ int escalation_manager_init(const escalation_manager_config_t* config) {
     g_escalation_manager.active_escalations_count = 0; // Use configurable escalation count
     
     // Initialize escalation history
-    g_escalation_manager.escalation_history = malloc(config->max_escalation_history * sizeof(escalation_record_t));
+    g_escalation_manager.escalation_history = malloc(config->max_escalation_history * sizeof(escalation_record_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_escalation_manager.escalation_history) {
-        free(g_escalation_manager.active_escalations);
-        pthread_mutex_destroy(g_escalation_manager.mutex);
-        free(g_escalation_manager.mutex);
+        free(g_escalation_manager.active_escalations\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -76,10 +76,10 @@ int escalation_manager_init(const escalation_manager_config_t* config) {
     // Start escalation monitoring thread
     g_escalation_manager.thread_running = true;
     if (pthread_create(&g_escalation_manager.escalation_thread, NULL, escalation_loop, NULL) != 0) {
-        free(g_escalation_manager.escalation_history);
-        free(g_escalation_manager.active_escalations);
-        pthread_mutex_destroy(g_escalation_manager.mutex);
-        free(g_escalation_manager.mutex);
+        free(g_escalation_manager.escalation_history\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_escalation_manager.active_escalations\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -93,19 +93,19 @@ void escalation_manager_cleanup(void) {
     
     // Stop escalation thread
     g_escalation_manager.thread_running = false;
-    pthread_join(g_escalation_manager.escalation_thread, NULL);
+    pthread_join(g_escalation_manager.escalation_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (g_escalation_manager.mutex) {
-        pthread_mutex_destroy(g_escalation_manager.mutex);
-        free(g_escalation_manager.mutex);
+        pthread_mutex_destroy(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_escalation_manager.active_escalations) {
-        free(g_escalation_manager.active_escalations);
+        free(g_escalation_manager.active_escalations\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_escalation_manager.escalation_history) {
-        free(g_escalation_manager.escalation_history);
+        free(g_escalation_manager.escalation_history\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     g_escalation_manager.active_escalations = NULL;
@@ -124,7 +124,7 @@ static void* escalation_loop(void* arg) {
     (void)arg; // Unused parameter
     
     while (g_escalation_manager.thread_running) {
-        process_escalations();
+        process_escalations(\n"\n"\n"\n"\n"\n"\n"\n");
         sleep(30); // Check every 30 seconds
     }
     
@@ -135,9 +135,9 @@ static void* escalation_loop(void* arg) {
 static void process_escalations(void) {
     if (!g_escalation_manager_initialized) return;
     
-    pthread_mutex_lock(g_escalation_manager.mutex);
+    pthread_mutex_lock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < g_escalation_manager.active_escalations_count; i++) {
         escalation_chain_t* chain = &g_escalation_manager.active_escalations[i];
@@ -161,26 +161,26 @@ static void process_escalations(void) {
             }
             
             printf("ESCALATION: Escalating to level %d for chain %s\n", 
-                   chain->current_level, chain->id);
+                   chain->current_level, chain->id\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Send notification for next level (unlock mutex during send)
-            pthread_mutex_unlock(g_escalation_manager.mutex);
-            send_escalation_notification(chain, chain->current_level);
-            pthread_mutex_lock(g_escalation_manager.mutex);
+            pthread_mutex_unlock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            send_escalation_notification(chain, chain->current_level\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_lock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Check for escalation timeout
         if (chain->current_level >= chain->max_level &&
             (now - chain->start_time) > g_escalation_manager.config.escalation_cooldown_seconds) {
             
-            printf("ESCALATION: Chain %s reached maximum level and timed out\n", chain->id);
+            printf("ESCALATION: Chain %s reached maximum level and timed out\n", chain->id\n"\n"\n"\n"\n"\n"\n"\n");
             
             chain->status = ESCALATION_STATUS_COMPLETED;
-            record_escalation_completion(chain);
+            record_escalation_completion(chain\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    pthread_mutex_unlock(g_escalation_manager.mutex);
+    pthread_mutex_unlock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get escalation contacts based on alert type and severity
@@ -193,7 +193,7 @@ static void get_escalation_contacts(notification_type_t alert_type, int severity
     // Level 1: On-Call Engineer
     escalation_contact_t* contact = &contacts[(*contact_count)++];
     contact->level = 1;
-    safe_strncpy(contact->name, "On-Call Engineer", sizeof(contact->name));
+    safe_strncpy(contact->name, "On-Call Engineer", sizeof(contact->name)\n"\n"\n"\n"\n"\n"\n"\n");
     contact->channels[0] = NOTIFICATION_CHANNEL_PUSHOVER;
     contact->channels[1] = NOTIFICATION_CHANNEL_SLACK;
     contact->channel_count = 2;
@@ -206,7 +206,7 @@ static void get_escalation_contacts(notification_type_t alert_type, int severity
     // Level 2: Team Lead
     contact = &contacts[(*contact_count)++];
     contact->level = 2;
-    safe_strncpy(contact->name, "Team Lead", sizeof(contact->name));
+    safe_strncpy(contact->name, "Team Lead", sizeof(contact->name)\n"\n"\n"\n"\n"\n"\n"\n");
     contact->channels[0] = NOTIFICATION_CHANNEL_PUSHOVER;
     contact->channels[1] = NOTIFICATION_CHANNEL_EMAIL;
     contact->channels[2] = NOTIFICATION_CHANNEL_SLACK;
@@ -220,7 +220,7 @@ static void get_escalation_contacts(notification_type_t alert_type, int severity
     // Level 3: Engineering Manager
     contact = &contacts[(*contact_count)++];
     contact->level = 3;
-    safe_strncpy(contact->name, "Engineering Manager", sizeof(contact->name));
+    safe_strncpy(contact->name, "Engineering Manager", sizeof(contact->name)\n"\n"\n"\n"\n"\n"\n"\n");
     contact->channels[0] = NOTIFICATION_CHANNEL_PUSHOVER;
     contact->channels[1] = NOTIFICATION_CHANNEL_EMAIL;
     contact->channels[2] = NOTIFICATION_CHANNEL_SLACK;
@@ -236,7 +236,7 @@ static void get_escalation_contacts(notification_type_t alert_type, int severity
     if (severity >= (int)EMERGENCY_LEVEL_CRITICAL) {
         contact = &contacts[(*contact_count)++];
         contact->level = 4;
-        safe_strncpy(contact->name, "VP Engineering", sizeof(contact->name));
+        safe_strncpy(contact->name, "VP Engineering", sizeof(contact->name)\n"\n"\n"\n"\n"\n"\n"\n");
         contact->channels[0] = NOTIFICATION_CHANNEL_PUSHOVER;
         contact->channels[1] = NOTIFICATION_CHANNEL_EMAIL;
         contact->channels[2] = NOTIFICATION_CHANNEL_TELEGRAM;
@@ -283,12 +283,12 @@ static char* create_escalation_message(escalation_chain_t* chain, escalation_con
              contact->response_timeout_seconds,
              ctime(&chain->start_time),
              contact->level - 1,
-             chain->id);
+             chain->id\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Add context if available
     if (strlen(chain->context_json) > 0) {
-        strncat(message, "\n\n Additional Context:\n", sizeof(message) - strlen(message) - 1);
-        strncat(message, chain->context_json, sizeof(message) - strlen(message) - 1);
+        strncat(message, "\n\n Additional Context:\n", sizeof(message) - strlen(message) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+        strncat(message, chain->context_json, sizeof(message) - strlen(message) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return message;
@@ -308,39 +308,39 @@ static void send_escalation_notification(escalation_chain_t* chain, int level) {
     }
     
     if (!contact) {
-        printf("ERROR: No contact found for escalation level %d\n", level);
+        printf("ERROR: No contact found for escalation level %d\n", level\n"\n"\n"\n"\n"\n"\n"\n");
         return;
     }
     
     // Mark as contacted
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     contact->contacted = true;
     contact->contacted_at = now;
     
     // Create escalation notification
     notification_event_t event;
-    memset(&event, 0, sizeof(event));
+    memset(&event, 0, sizeof(event)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    snprintf(event.id, sizeof(event.id), "esc_%.30s_%d_%lld", chain->id, level, now);
+    snprintf(event.id, sizeof(event.id), "esc_%.30s_%d_%lld", chain->id, level, now\n"\n"\n"\n"\n"\n"\n"\n");
     snprintf(event.title, sizeof(event.title), " ESCALATION LEVEL %d: %s", 
-             level, notification_type_to_string(chain->alert_type));
+             level, notification_type_to_string(chain->alert_type)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    char* message = create_escalation_message(chain, contact);
-    safe_strncpy(event.message, message, sizeof(event.message));
+    char* message = create_escalation_message(chain, contact\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(event.message, message, sizeof(event.message)\n"\n"\n"\n"\n"\n"\n"\n");
     
     event.type = chain->alert_type;
     event.priority = NOTIFICATION_PRIORITY_EMERGENCY;
     event.timestamp = now;
     
     printf("ESCALATION: Sending level %d notification to %s for chain %s\n",
-           level, contact->name, chain->id);
+           level, contact->name, chain->id\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Send through smart manager if available
     if (smart_notification_manager_is_initialized()) {
-        smart_notification_manager_send(&event);
+        smart_notification_manager_send(&event\n"\n"\n"\n"\n"\n"\n"\n");
     } else if (notification_manager_is_initialized()) {
         notification_manager_send(event.type, event.title, event.message, 
-                                event.priority, NULL);
+                                event.priority, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -348,7 +348,7 @@ static void send_escalation_notification(escalation_chain_t* chain, int level) {
 static void record_escalation_completion(escalation_chain_t* chain) {
     if (!chain) return;
     
-    time_t end_time = time(NULL);
+    time_t end_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     time_t duration = end_time - chain->start_time;
     
     // Calculate response time
@@ -358,15 +358,15 @@ static void record_escalation_completion(escalation_chain_t* chain) {
     }
     
     // Calculate effectiveness
-    double effectiveness = calculate_escalation_effectiveness(chain, response_time);
+    double effectiveness = calculate_escalation_effectiveness(chain, response_time\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Add to history
     if (g_escalation_manager.escalation_history_count < g_escalation_manager.max_escalation_history) {
         int index = g_escalation_manager.escalation_history_count;
         escalation_record_t* record = &g_escalation_manager.escalation_history[index];
         
-        safe_strncpy(record->id, chain->id, sizeof(record->id));
-        safe_strncpy(record->incident_id, chain->incident_id, sizeof(record->incident_id));
+        safe_strncpy(record->id, chain->id, sizeof(record->id)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(record->incident_id, chain->incident_id, sizeof(record->incident_id)\n"\n"\n"\n"\n"\n"\n"\n");
         record->alert_type = chain->alert_type;
         record->start_time = chain->start_time;
         record->end_time = end_time;
@@ -387,8 +387,8 @@ static void record_escalation_completion(escalation_chain_t* chain) {
         int index = g_escalation_manager.max_escalation_history - 1;
         escalation_record_t* record = &g_escalation_manager.escalation_history[index];
         
-        safe_strncpy(record->id, chain->id, sizeof(record->id));
-        safe_strncpy(record->incident_id, chain->incident_id, sizeof(record->incident_id));
+        safe_strncpy(record->id, chain->id, sizeof(record->id)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(record->incident_id, chain->incident_id, sizeof(record->incident_id)\n"\n"\n"\n"\n"\n"\n"\n");
         record->alert_type = chain->alert_type;
         record->start_time = chain->start_time;
         record->end_time = end_time;
@@ -452,19 +452,19 @@ int escalation_manager_trigger_emergency_escalation(const char* incident_id,
         return 0; // Escalation disabled
     }
     
-    pthread_mutex_lock(g_escalation_manager.mutex);
+    pthread_mutex_lock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if escalation already exists for this incident
     for (int i = 0; i < g_escalation_manager.active_escalations_count; i++) {
         if (strcmp(g_escalation_manager.active_escalations[i].incident_id, incident_id) == 0) {
-            pthread_mutex_unlock(g_escalation_manager.mutex);
+            pthread_mutex_unlock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return 0; // Already escalating
         }
     }
     
     // Check if we have space for more escalations
     if (g_escalation_manager.active_escalations_count >= g_escalation_manager.max_active_escalations) {
-        pthread_mutex_unlock(g_escalation_manager.mutex);
+        pthread_mutex_unlock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1; // No space
     }
     
@@ -472,9 +472,9 @@ int escalation_manager_trigger_emergency_escalation(const char* incident_id,
     int index = g_escalation_manager.active_escalations_count;
     escalation_chain_t* chain = &g_escalation_manager.active_escalations[index];
     
-    time_t now = time(NULL);
-    snprintf(chain->id, sizeof(chain->id), "esc_%s_%lld", incident_id, now);
-    safe_strncpy(chain->incident_id, incident_id, sizeof(chain->incident_id));
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(chain->id, sizeof(chain->id), "esc_%s_%lld", incident_id, now\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(chain->incident_id, incident_id, sizeof(chain->incident_id)\n"\n"\n"\n"\n"\n"\n"\n");
     chain->alert_type = alert_type;
     chain->start_time = now;
     chain->current_level = 1;
@@ -486,23 +486,23 @@ int escalation_manager_trigger_emergency_escalation(const char* incident_id,
     chain->acknowledged_at = 0;
     
     if (context_json) {
-        safe_strncpy(chain->context_json, context_json, sizeof(chain->context_json));
+        safe_strncpy(chain->context_json, context_json, sizeof(chain->context_json)\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         chain->context_json[0] = '\0';
     }
     
     // Get escalation contacts
-    get_escalation_contacts(alert_type, severity, chain->contacts, &chain->contact_count);
+    get_escalation_contacts(alert_type, severity, chain->contacts, &chain->contact_count\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_escalation_manager.active_escalations_count++;
     
     printf("ESCALATION: Emergency escalation triggered for incident %s (ID: %s)\n",
-           incident_id, chain->id);
+           incident_id, chain->id\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(g_escalation_manager.mutex);
+    pthread_mutex_unlock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Send initial emergency notification
-    send_escalation_notification(chain, 1);
+    send_escalation_notification(chain, 1\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -513,7 +513,7 @@ int escalation_manager_acknowledge_escalation(const char* escalation_id, const c
         return -1;
     }
     
-    pthread_mutex_lock(g_escalation_manager.mutex);
+    pthread_mutex_lock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     escalation_chain_t* chain = NULL;
     for (int i = 0; i < g_escalation_manager.active_escalations_count; i++) {
@@ -524,28 +524,28 @@ int escalation_manager_acknowledge_escalation(const char* escalation_id, const c
     }
     
     if (!chain) {
-        pthread_mutex_unlock(g_escalation_manager.mutex);
+        pthread_mutex_unlock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1; // Escalation not found
     }
     
     if (chain->acknowledged) {
-        pthread_mutex_unlock(g_escalation_manager.mutex);
+        pthread_mutex_unlock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1; // Already acknowledged
     }
     
     // Mark as acknowledged
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     chain->acknowledged = true;
-    safe_strncpy(chain->acknowledged_by, acknowledged_by, sizeof(chain->acknowledged_by));
+    safe_strncpy(chain->acknowledged_by, acknowledged_by, sizeof(chain->acknowledged_by)\n"\n"\n"\n"\n"\n"\n"\n");
     chain->acknowledged_at = now;
     chain->status = ESCALATION_STATUS_PAUSED;
     
-    printf("ESCALATION: Escalation %s acknowledged by %s\n", escalation_id, acknowledged_by);
+    printf("ESCALATION: Escalation %s acknowledged by %s\n", escalation_id, acknowledged_by\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Record completion
-    record_escalation_completion(chain);
+    record_escalation_completion(chain\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(g_escalation_manager.mutex);
+    pthread_mutex_unlock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -555,7 +555,7 @@ int escalation_manager_cancel_escalation(const char* escalation_id, const char* 
         return -1;
     }
     
-    pthread_mutex_lock(g_escalation_manager.mutex);
+    pthread_mutex_lock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     escalation_chain_t* chain = NULL;
     for (int i = 0; i < g_escalation_manager.active_escalations_count; i++) {
@@ -566,19 +566,19 @@ int escalation_manager_cancel_escalation(const char* escalation_id, const char* 
     }
     
     if (!chain) {
-        pthread_mutex_unlock(g_escalation_manager.mutex);
+        pthread_mutex_unlock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1; // Escalation not found
     }
     
     chain->status = ESCALATION_STATUS_CANCELLED;
     
     printf("ESCALATION: Escalation %s cancelled. Reason: %s\n", 
-           escalation_id, reason ? reason : "No reason provided");
+           escalation_id, reason ? reason : "No reason provided"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Record completion
-    record_escalation_completion(chain);
+    record_escalation_completion(chain\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(g_escalation_manager.mutex);
+    pthread_mutex_unlock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -588,7 +588,7 @@ int escalation_manager_get_active_escalations(escalation_chain_t* escalations, i
         return -1;
     }
     
-    pthread_mutex_lock(g_escalation_manager.mutex);
+    pthread_mutex_lock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     int count = (max_escalations < g_escalation_manager.active_escalations_count) ? 
                 max_escalations : g_escalation_manager.active_escalations_count;
@@ -597,7 +597,7 @@ int escalation_manager_get_active_escalations(escalation_chain_t* escalations, i
         escalations[i] = g_escalation_manager.active_escalations[i];
     }
     
-    pthread_mutex_unlock(g_escalation_manager.mutex);
+    pthread_mutex_unlock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return count;
 }
 
@@ -607,7 +607,7 @@ int escalation_manager_get_escalation_history(escalation_record_t* history, int 
         return -1;
     }
     
-    pthread_mutex_lock(g_escalation_manager.mutex);
+    pthread_mutex_lock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     int count = (max_history < g_escalation_manager.escalation_history_count) ? 
                 max_history : g_escalation_manager.escalation_history_count;
@@ -620,7 +620,7 @@ int escalation_manager_get_escalation_history(escalation_record_t* history, int 
         history[i] = g_escalation_manager.escalation_history[start_index + i];
     }
     
-    pthread_mutex_unlock(g_escalation_manager.mutex);
+    pthread_mutex_unlock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return count;
 }
 
@@ -628,7 +628,7 @@ int escalation_manager_get_escalation_history(escalation_record_t* history, int 
 void escalation_manager_get_status(escalation_manager_status_t* status) {
     if (!status || !g_escalation_manager_initialized) return;
     
-    pthread_mutex_lock(g_escalation_manager.mutex);
+    pthread_mutex_lock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_escalation_manager.config.escalation_enabled;
     status->active_escalations_count = g_escalation_manager.active_escalations_count;
@@ -653,7 +653,7 @@ void escalation_manager_get_status(escalation_manager_status_t* status) {
         status->average_effectiveness = 0.0;
     }
     
-    pthread_mutex_unlock(g_escalation_manager.mutex);
+    pthread_mutex_unlock(g_escalation_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if escalation manager is initialized

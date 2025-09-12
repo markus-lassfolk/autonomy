@@ -19,13 +19,13 @@
 // Initialize cellular tower intelligence
 cellular_tower_intelligence_t* cellular_tower_intelligence_init(const cellular_tower_config_t *config) {
     if (!config) {
-        LOGX_ERROR_MSG("Invalid configuration parameter");
+        printf("ERROR: "Invalid configuration parameter"\n"\n"\n"\n"\n"\n"\n"\n");
         return NULL;
     }
     
-    cellular_tower_intelligence_t *intelligence = calloc(1, sizeof(cellular_tower_intelligence_t));
+    cellular_tower_intelligence_t *intelligence = calloc(1, sizeof(cellular_tower_intelligence_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!intelligence) {
-        LOGX_ERROR_MSG("Failed to allocate memory for cellular tower intelligence");
+        printf("ERROR: "Failed to allocate memory for cellular tower intelligence"\n"\n"\n"\n"\n"\n"\n"\n");
         return NULL;
     }
     
@@ -36,24 +36,24 @@ cellular_tower_intelligence_t* cellular_tower_intelligence_init(const cellular_t
     intelligence->usable_tower_count = 0;
     intelligence->analysis_active = false;
     intelligence->last_update_time = 0;
-    memset(intelligence->last_serving_cell, 0, sizeof(intelligence->last_serving_cell));
+    memset(intelligence->last_serving_cell, 0, sizeof(intelligence->last_serving_cell)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize density analysis
-    memset(&intelligence->density_analysis, 0, sizeof(tower_density_analysis_t));
+    memset(&intelligence->density_analysis, 0, sizeof(tower_density_analysis_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize cell change analysis
-    memset(&intelligence->cell_change_analysis, 0, sizeof(cell_change_pattern_analysis_t));
+    memset(&intelligence->cell_change_analysis, 0, sizeof(cell_change_pattern_analysis_t)\n"\n"\n"\n"\n"\n"\n"\n");
     intelligence->cell_change_analysis.change_index = 0;
     intelligence->cell_change_analysis.change_count = 0;
     
     // Initialize history
-    memset(intelligence->history.density_history, 0, sizeof(intelligence->history.density_history));
+    memset(intelligence->history.density_history, 0, sizeof(intelligence->history.density_history)\n"\n"\n"\n"\n"\n"\n"\n");
     intelligence->history.density_history_index = 0;
     intelligence->history.density_history_count = 0;
     
-    LOGX_INFO_MSG("Cellular tower intelligence initialized with carrier filtering: %s, min_rsrp=%d dBm",
+    printf("INFO: "Cellular tower intelligence initialized with carrier filtering: %s, min_rsrp=%d dBm",
               intelligence->config.enable_carrier_filtering ? "enabled" : "disabled",
-              intelligence->config.min_rsrp_dbm);
+              intelligence->config.min_rsrp_dbm\n"\n"\n"\n"\n"\n"\n"\n");
     
     return intelligence;
 }
@@ -62,15 +62,15 @@ cellular_tower_intelligence_t* cellular_tower_intelligence_init(const cellular_t
 void cellular_tower_intelligence_cleanup(cellular_tower_intelligence_t *intelligence) {
     if (!intelligence) return;
     
-    LOGX_DEBUG_MSG("Cleaning up cellular tower intelligence");
-    free(intelligence);
+    printf("DEBUG: "Cleaning up cellular tower intelligence"\n"\n"\n"\n"\n"\n"\n"\n");
+    free(intelligence\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Initialize default configuration
 void cellular_tower_config_init_defaults(cellular_tower_config_t *config) {
     if (!config) return;
     
-    memset(config, 0, sizeof(cellular_tower_config_t));
+    memset(config, 0, sizeof(cellular_tower_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     config->min_rsrp_dbm = DEFAULT_MIN_RSRP_DBM;
     config->min_rsrq_db = DEFAULT_MIN_RSRQ_DB;
@@ -79,8 +79,8 @@ void cellular_tower_config_init_defaults(cellular_tower_config_t *config) {
     config->enable_carrier_filtering = true;
     strcpy(config->allowed_mccs, "310,311,312,313,314,315,316"); // US MCCs
     strcpy(config->allowed_mncs, "260,410,480,311,312,313"); // Major US carriers
-    strcpy(config->home_mcc, "310");
-    strcpy(config->home_mnc, "260");
+    strcpy(config->home_mcc, "310"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(config->home_mnc, "260"\n"\n"\n"\n"\n"\n"\n"\n");
     
     config->allow_roaming = true;
     config->prefer_home_carrier = true;
@@ -104,14 +104,14 @@ bool cellular_tower_is_carrier_compatible(const opencellid_cell_identifier_t *ce
     
     // Check MCC
     char mcc_str[8];
-    snprintf(mcc_str, sizeof(mcc_str), "%d", cell_id->mcc);
+    snprintf(mcc_str, sizeof(mcc_str), "%d", cell_id->mcc\n"\n"\n"\n"\n"\n"\n"\n");
     if (strstr(config->allowed_mccs, mcc_str) == NULL) {
         return false;
     }
     
     // Check MNC
     char mnc_str[8];
-    snprintf(mnc_str, sizeof(mnc_str), "%d", cell_id->mnc);
+    snprintf(mnc_str, sizeof(mnc_str), "%d", cell_id->mnc\n"\n"\n"\n"\n"\n"\n"\n");
     if (strstr(config->allowed_mncs, mnc_str) == NULL) {
         return false;
     }
@@ -126,7 +126,7 @@ bool cellular_tower_meets_signal_thresholds(int rsrp, int rsrq, int sinr,
     
     return (rsrp >= config->min_rsrp_dbm) &&
            (rsrq >= config->min_rsrq_db) &&
-           (sinr >= config->min_sinr_db);
+           (sinr >= config->min_sinr_db\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Calculate usability score for a tower
@@ -178,7 +178,7 @@ double cellular_tower_calculate_usability_score(const usable_tower_info_t *tower
     // Calculate final score
     double final_score = signal_score + carrier_bonus - distance_penalty;
     
-    return fmax(0.0, fmin(1.0, final_score));
+    return fmax(0.0, fmin(1.0, final_score)\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Filter usable towers from neighbor list
@@ -208,7 +208,7 @@ int cellular_tower_intelligence_filter_usable_towers(cellular_tower_intelligence
         
         // Create usable tower entry
         usable_tower_info_t *tower = &usable_towers[*usable_count];
-        memset(tower, 0, sizeof(usable_tower_info_t));
+        memset(tower, 0, sizeof(usable_tower_info_t)\n"\n"\n"\n"\n"\n"\n"\n");
         
         tower->cell_id = neighbor->cell_id;
         tower->rsrp_dbm = neighbor->rsrp;
@@ -220,15 +220,15 @@ int cellular_tower_intelligence_filter_usable_towers(cellular_tower_intelligence
         
         // Determine carrier status
         char mcc_str[8], mnc_str[8];
-        snprintf(mcc_str, sizeof(mcc_str), "%d", neighbor->cell_id.mcc);
-        snprintf(mnc_str, sizeof(mnc_str), "%d", neighbor->cell_id.mnc);
+        snprintf(mcc_str, sizeof(mcc_str), "%d", neighbor->cell_id.mcc\n"\n"\n"\n"\n"\n"\n"\n");
+        snprintf(mnc_str, sizeof(mnc_str), "%d", neighbor->cell_id.mnc\n"\n"\n"\n"\n"\n"\n"\n");
         
         tower->is_home_carrier = (strcmp(mcc_str, intelligence->config.home_mcc) == 0) &&
-                                (strcmp(mnc_str, intelligence->config.home_mnc) == 0);
+                                (strcmp(mnc_str, intelligence->config.home_mnc) == 0\n"\n"\n"\n"\n"\n"\n"\n");
         tower->is_roaming = !tower->is_home_carrier;
         
         // Calculate usability score
-        tower->usability_score = cellular_tower_calculate_usability_score(tower, &intelligence->config);
+        tower->usability_score = cellular_tower_calculate_usability_score(tower, &intelligence->config\n"\n"\n"\n"\n"\n"\n"\n");
         tower->signal_quality_score = (tower->rsrp_dbm + 140) / 90.0; // Normalize RSRP
         tower->is_usable = tower->usability_score > 0.3; // Minimum usability threshold
         
@@ -237,7 +237,7 @@ int cellular_tower_intelligence_filter_usable_towers(cellular_tower_intelligence
         }
     }
     
-    LOGX_DEBUG_MSG("Filtered %d usable towers from %d neighbors", *usable_count, neighbor_count);
+    printf("DEBUG: "Filtered %d usable towers from %d neighbors", *usable_count, neighbor_count\n"\n"\n"\n"\n"\n"\n"\n");
     
     return CELLULAR_TOWER_INTELLIGENCE_SUCCESS;
 }
@@ -253,7 +253,7 @@ int cellular_tower_intelligence_analyze_density(cellular_tower_intelligence_t *i
     }
     
     // Clear previous analysis
-    memset(&intelligence->density_analysis, 0, sizeof(tower_density_analysis_t));
+    memset(&intelligence->density_analysis, 0, sizeof(tower_density_analysis_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     intelligence->density_analysis.total_towers_in_radius = tower_count;
     intelligence->density_analysis.usable_towers_in_radius = 0;
@@ -307,13 +307,13 @@ int cellular_tower_intelligence_analyze_density(cellular_tower_intelligence_t *i
         intelligence->density_analysis.usable_towers_in_radius,
         intelligence->density_analysis.total_towers_in_radius,
         intelligence->density_analysis.average_signal_strength
-    );
+    \n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate coverage score (based on signal strength distribution)
     if (intelligence->density_analysis.usable_towers_in_radius > 0) {
         double coverage_ratio = (double)intelligence->density_analysis.usable_towers_in_radius / 
                                intelligence->density_analysis.total_towers_in_radius;
-        intelligence->density_analysis.coverage_score = fmin(1.0, coverage_ratio * 2.0);
+        intelligence->density_analysis.coverage_score = fmin(1.0, coverage_ratio * 2.0\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         intelligence->density_analysis.coverage_score = 0.0;
     }
@@ -322,21 +322,21 @@ int cellular_tower_intelligence_analyze_density(cellular_tower_intelligence_t *i
     intelligence->density_analysis.reliability_score = 
         (intelligence->density_analysis.density_score * 0.4) +
         (intelligence->density_analysis.coverage_score * 0.3) +
-        ((intelligence->density_analysis.best_signal_strength + 140) / 90.0 * 0.3);
+        ((intelligence->density_analysis.best_signal_strength + 140) / 90.0 * 0.3\n"\n"\n"\n"\n"\n"\n"\n");
     
-    intelligence->density_analysis.reliability_score = fmax(0.0, fmin(1.0, intelligence->density_analysis.reliability_score));
-    intelligence->density_analysis.analysis_time = time(NULL);
+    intelligence->density_analysis.reliability_score = fmax(0.0, fmin(1.0, intelligence->density_analysis.reliability_score)\n"\n"\n"\n"\n"\n"\n"\n");
+    intelligence->density_analysis.analysis_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update ML features
-    intelligence->ml_tower_density_feature = (uint8_t)(intelligence->density_analysis.density_score * 255);
-    intelligence->ml_coverage_quality_feature = (uint8_t)(intelligence->density_analysis.coverage_score * 255);
+    intelligence->ml_tower_density_feature = (uint8_t)(intelligence->density_analysis.density_score * 255\n"\n"\n"\n"\n"\n"\n"\n");
+    intelligence->ml_coverage_quality_feature = (uint8_t)(intelligence->density_analysis.coverage_score * 255\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("Tower density analysis: usable=%d, home=%d, roaming=%d, density_score=%.2f, reliability_score=%.2f",
+    printf("DEBUG: "Tower density analysis: usable=%d, home=%d, roaming=%d, density_score=%.2f, reliability_score=%.2f",
                intelligence->density_analysis.usable_towers_in_radius,
                intelligence->density_analysis.home_carrier_towers,
                intelligence->density_analysis.roaming_towers,
                intelligence->density_analysis.density_score,
-               intelligence->density_analysis.reliability_score);
+               intelligence->density_analysis.reliability_score\n"\n"\n"\n"\n"\n"\n"\n");
     
     return CELLULAR_TOWER_INTELLIGENCE_SUCCESS;
 }
@@ -350,15 +350,15 @@ double cellular_tower_calculate_density_score(int usable_towers, int total_tower
     double count_score = fmin(1.0, (double)usable_towers / 10.0); // Normalize to 10 towers max
     
     // Signal strength score (0.0-1.0)
-    double signal_score = fmax(0.0, fmin(1.0, (average_signal_strength + 140) / 90.0));
+    double signal_score = fmax(0.0, fmin(1.0, (average_signal_strength + 140) / 90.0)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Usability ratio score (0.0-1.0)
     double usability_ratio = (double)usable_towers / total_towers;
     
     // Combined score
-    double density_score = (count_score * 0.4) + (signal_score * 0.4) + (usability_ratio * 0.2);
+    double density_score = (count_score * 0.4) + (signal_score * 0.4) + (usability_ratio * 0.2\n"\n"\n"\n"\n"\n"\n"\n");
     
-    return fmax(0.0, fmin(1.0, density_score));
+    return fmax(0.0, fmin(1.0, density_score)\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Analyze cell change patterns
@@ -369,7 +369,7 @@ int cellular_tower_intelligence_analyze_cell_changes(cellular_tower_intelligence
         return CELLULAR_TOWER_INTELLIGENCE_ERROR_INVALID_PARAM;
     }
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if cell has changed
     if (strcmp(current_cell_id, intelligence->last_serving_cell) != 0) {
@@ -377,7 +377,7 @@ int cellular_tower_intelligence_analyze_cell_changes(cellular_tower_intelligence
         uint8_t idx = intelligence->cell_change_analysis.change_index;
         
         strncpy(intelligence->cell_change_analysis.recent_changes[idx].cell_id, 
-                current_cell_id, sizeof(intelligence->cell_change_analysis.recent_changes[idx].cell_id) - 1);
+                current_cell_id, sizeof(intelligence->cell_change_analysis.recent_changes[idx].cell_id) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         intelligence->cell_change_analysis.recent_changes[idx].change_time = now;
         intelligence->cell_change_analysis.recent_changes[idx].signal_strength = cellular_info ? cellular_info->rsrp : -120;
         intelligence->cell_change_analysis.recent_changes[idx].was_forced = false; // Would need more context to determine
@@ -387,9 +387,9 @@ int cellular_tower_intelligence_analyze_cell_changes(cellular_tower_intelligence
             intelligence->cell_change_analysis.change_count++;
         }
         
-        safe_strncpy(intelligence->last_serving_cell, current_cell_id, sizeof(intelligence->last_serving_cell));
+        safe_strncpy(intelligence->last_serving_cell, current_cell_id, sizeof(intelligence->last_serving_cell)\n"\n"\n"\n"\n"\n"\n"\n");
         
-        LOGX_DEBUG_MSG("Cell change detected: %s -> %s", intelligence->last_serving_cell, current_cell_id);
+        printf("DEBUG: "Cell change detected: %s -> %s", intelligence->last_serving_cell, current_cell_id\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Analyze change patterns
@@ -416,37 +416,37 @@ int cellular_tower_intelligence_analyze_cell_changes(cellular_tower_intelligence
         intelligence->cell_change_analysis.high_mobility_detected = true;
     } else {
         intelligence->cell_change_analysis.change_frequency_score = 
-            1.0 - ((double)intelligence->cell_change_analysis.changes_last_hour / intelligence->config.max_cell_changes_per_hour);
+            1.0 - ((double)intelligence->cell_change_analysis.changes_last_hour / intelligence->config.max_cell_changes_per_hour\n"\n"\n"\n"\n"\n"\n"\n");
         intelligence->cell_change_analysis.high_mobility_detected = false;
     }
     
     // Detect poor coverage pattern
     intelligence->cell_change_analysis.poor_coverage_detected = 
         (intelligence->cell_change_analysis.changes_last_hour > 5) && 
-        (intelligence->density_analysis.average_signal_strength < -100);
+        (intelligence->density_analysis.average_signal_strength < -100\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Detect network congestion pattern
     intelligence->cell_change_analysis.network_congestion_detected = 
         (intelligence->cell_change_analysis.changes_last_hour > 3) && 
-        (intelligence->density_analysis.usable_towers_in_radius > 5);
+        (intelligence->density_analysis.usable_towers_in_radius > 5\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate connectivity risk score
     intelligence->cell_change_analysis.connectivity_risk_score = 
         (1.0 - intelligence->cell_change_analysis.change_frequency_score) * 0.4 +
         (intelligence->cell_change_analysis.poor_coverage_detected ? 0.3 : 0.0) +
-        (intelligence->cell_change_analysis.network_congestion_detected ? 0.3 : 0.0);
+        (intelligence->cell_change_analysis.network_congestion_detected ? 0.3 : 0.0\n"\n"\n"\n"\n"\n"\n"\n");
     
-    intelligence->cell_change_analysis.connectivity_risk_score = fmax(0.0, fmin(1.0, intelligence->cell_change_analysis.connectivity_risk_score));
+    intelligence->cell_change_analysis.connectivity_risk_score = fmax(0.0, fmin(1.0, intelligence->cell_change_analysis.connectivity_risk_score)\n"\n"\n"\n"\n"\n"\n"\n");
     intelligence->cell_change_analysis.last_analysis_time = now;
     
     // Update ML features
-    intelligence->ml_cell_change_feature = (uint8_t)(intelligence->cell_change_analysis.change_frequency_score * 255);
-    intelligence->ml_connectivity_risk_feature = (uint8_t)(intelligence->cell_change_analysis.connectivity_risk_score * 255);
+    intelligence->ml_cell_change_feature = (uint8_t)(intelligence->cell_change_analysis.change_frequency_score * 255\n"\n"\n"\n"\n"\n"\n"\n");
+    intelligence->ml_connectivity_risk_feature = (uint8_t)(intelligence->cell_change_analysis.connectivity_risk_score * 255\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("Cell change analysis: changes_last_hour=%d, frequency_score=%.2f, risk_score=%.2f",
+    printf("DEBUG: "Cell change analysis: changes_last_hour=%d, frequency_score=%.2f, risk_score=%.2f",
                intelligence->cell_change_analysis.changes_last_hour,
                intelligence->cell_change_analysis.change_frequency_score,
-               intelligence->cell_change_analysis.connectivity_risk_score);
+               intelligence->cell_change_analysis.connectivity_risk_score\n"\n"\n"\n"\n"\n"\n"\n");
     
     return CELLULAR_TOWER_INTELLIGENCE_SUCCESS;
 }
@@ -478,10 +478,10 @@ int cellular_tower_intelligence_update_ml_observation(ml_observation_t *observat
     }
     
     // Store tower density in reserved field (upper 8 bits)
-    observation->reserved = (observation->reserved & 0x00FF) | (intelligence->ml_tower_density_feature << 8);
+    observation->reserved = (observation->reserved & 0x00FF) | (intelligence->ml_tower_density_feature << 8\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Store cell change pattern in pattern_hash (upper 8 bits)
-    observation->pattern_hash = (observation->pattern_hash & 0x00FF) | (intelligence->ml_cell_change_feature << 8);
+    observation->pattern_hash = (observation->pattern_hash & 0x00FF) | (intelligence->ml_cell_change_feature << 8\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Store coverage quality in anomaly_score
     observation->anomaly_score = intelligence->ml_coverage_quality_feature;
@@ -565,7 +565,7 @@ int cellular_tower_intelligence_analyze_towers(cellular_tower_intelligence_t *in
     }
 
     // Update last analysis time
-    intelligence->last_update_time = time(NULL);
+    intelligence->last_update_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
 
     // Perform tower density analysis if we have usable towers
     if (intelligence->usable_tower_count > 0) {
@@ -582,13 +582,13 @@ int cellular_tower_intelligence_analyze_towers(cellular_tower_intelligence_t *in
         cellular_tower_intelligence_analyze_density(intelligence, 
                                                    intelligence->usable_towers,
                                                    intelligence->usable_tower_count,
-                                                   current_lat, current_lon);
+                                                   current_lat, current_lon\n"\n"\n"\n"\n"\n"\n"\n");
     }
 
     // Update ML features based on analysis
-    intelligence->ml_tower_density_feature = (uint8_t)(intelligence->density_analysis.density_score * 255);
-    intelligence->ml_coverage_quality_feature = (uint8_t)(intelligence->density_analysis.coverage_score * 255);
-    intelligence->ml_connectivity_risk_feature = (uint8_t)(intelligence->cell_change_analysis.connectivity_risk_score * 255);
+    intelligence->ml_tower_density_feature = (uint8_t)(intelligence->density_analysis.density_score * 255\n"\n"\n"\n"\n"\n"\n"\n");
+    intelligence->ml_coverage_quality_feature = (uint8_t)(intelligence->density_analysis.coverage_score * 255\n"\n"\n"\n"\n"\n"\n"\n");
+    intelligence->ml_connectivity_risk_feature = (uint8_t)(intelligence->cell_change_analysis.connectivity_risk_score * 255\n"\n"\n"\n"\n"\n"\n"\n");
 
     return CELLULAR_TOWER_INTELLIGENCE_SUCCESS;
 }

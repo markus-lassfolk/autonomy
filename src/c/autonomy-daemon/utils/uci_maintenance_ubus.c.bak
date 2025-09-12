@@ -1,0 +1,203 @@
+#include "uci_maintenance.h"
+#include <time.h>
+#include <libubus.h>
+#include <libubox/blobmsg.h>
+#include <libubox/blobmsg_json.h>
+#include <json-c/json.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+// UBUS parameter enums for UCI maintenance
+enum {
+    UCI_MAINTENANCE_OPTIONS_FORCE = 0,
+    UCI_MAINTENANCE_OPTIONS_AUTO_FIX,
+    UCI_MAINTENANCE_OPTIONS_CREATE_BACKUP,
+    __UCI_MAINTENANCE_OPTIONS_MAX
+};
+
+// Forward declarations
+static int autonomy_uci_maintenance_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                          struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n");
+static int autonomy_uci_maintenance_reset(struct ubus_context *ctx, struct ubus_object *obj,
+                                         struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n");
+static int autonomy_uci_maintenance_perform(struct ubus_context *ctx, struct ubus_object *obj,
+                                           struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n");
+
+// UBUS method definitions
+static const struct ubus_method autonomy_uci_maintenance_methods[] = {
+    UBUS_METHOD_NOARG("status", autonomy_uci_maintenance_status),
+    UBUS_METHOD_NOARG("reset", autonomy_uci_maintenance_reset),
+    UBUS_METHOD_NOARG("perform", autonomy_uci_maintenance_perform),
+};
+
+// UBUS object type
+static struct ubus_object_type autonomy_uci_maintenance_obj_type = {
+    .name = "autonomy_uci_maintenance",
+    .methods = autonomy_uci_maintenance_methods,
+    .n_methods = ARRAY_SIZE(autonomy_uci_maintenance_methods),
+};
+
+// UBUS object
+static struct ubus_object autonomy_uci_maintenance_obj = {
+    .name = "uci_maintenance",
+    .type = &autonomy_uci_maintenance_obj_type,
+    .methods = autonomy_uci_maintenance_methods,
+    .n_methods = ARRAY_SIZE(autonomy_uci_maintenance_methods),
+};
+
+/**
+ * Get UCI maintenance status
+ */
+static int autonomy_uci_maintenance_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                         struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
+    struct blob_buf bb = {};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    uci_maintenance_status_t status;
+    int result = uci_maintenance_get_status(&status\n"\n"\n"\n");
+    
+    if (result != AUTONOMY_SUCCESS) {
+        blobmsg_add_string(&bb, "error", "Failed to get UCI maintenance status"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return 0;
+    }
+    
+    // Add statistics
+    blobmsg_add_u32(&bb, "last_maintenance_time", status.last_maintenance_time\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "total_maintenance_runs", status.total_maintenance_runs\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "total_issues_fixed", status.total_issues_fixed\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "total_backups_created", status.total_backups_created\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "total_backups_restored", status.total_backups_restored\n"\n"\n"\n");
+    
+    // Add last maintenance result
+    if (status.last_result) {
+        blobmsg_add_string(&bb, "last_result", status.last_result\n"\n"\n"\n");
+    }
+    
+    // Add last maintenance details
+    if (status.last_details) {
+        blobmsg_add_string(&bb, "last_details", status.last_details\n"\n"\n"\n");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return 0;
+}
+
+/**
+ * Reset UCI maintenance statistics
+ */
+static int autonomy_uci_maintenance_reset(struct ubus_context *ctx, struct ubus_object *obj,
+                                        struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
+    struct blob_buf bb = {};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    int result = uci_maintenance_reset(\n"\n"\n"\n");
+    
+    if (result != AUTONOMY_SUCCESS) {
+        blobmsg_add_string(&bb, "error", "Failed to reset UCI maintenance statistics"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return 0;
+    }
+    
+    blobmsg_add_string(&bb, "status", "UCI maintenance statistics reset successfully"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return 0;
+}
+
+/**
+ * Manually trigger UCI maintenance
+ */
+static int autonomy_uci_maintenance_perform(struct ubus_context *ctx, struct ubus_object *obj,
+                                          struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
+    (void)obj; // Suppress unused parameter warning
+    struct blob_buf bb = {};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    // Parse message to determine maintenance options
+    struct blob_attr *tb[__UCI_MAINTENANCE_OPTIONS_MAX];
+    // Enum defined at top of file
+    
+    static const struct blobmsg_policy policy[__UCI_MAINTENANCE_OPTIONS_MAX] = {
+        [UCI_MAINTENANCE_OPTIONS_FORCE] = { .name = "force", .type = BLOBMSG_TYPE_BOOL },
+        [UCI_MAINTENANCE_OPTIONS_AUTO_FIX] = { .name = "auto_fix", .type = BLOBMSG_TYPE_BOOL },
+        [UCI_MAINTENANCE_OPTIONS_CREATE_BACKUP] = { .name = "create_backup", .type = BLOBMSG_TYPE_BOOL },
+    };
+    
+    blobmsg_parse(policy, __UCI_MAINTENANCE_OPTIONS_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n");
+    
+    // Get maintenance options
+    bool force = false;
+    bool auto_fix = true;
+    bool create_backup = true;
+    
+    if (tb[UCI_MAINTENANCE_OPTIONS_FORCE]) {
+        force = blobmsg_get_bool(tb[UCI_MAINTENANCE_OPTIONS_FORCE]\n"\n"\n"\n");
+    }
+    
+    if (tb[UCI_MAINTENANCE_OPTIONS_AUTO_FIX]) {
+        auto_fix = blobmsg_get_bool(tb[UCI_MAINTENANCE_OPTIONS_AUTO_FIX]\n"\n"\n"\n");
+    }
+    
+    if (tb[UCI_MAINTENANCE_OPTIONS_CREATE_BACKUP]) {
+        create_backup = blobmsg_get_bool(tb[UCI_MAINTENANCE_OPTIONS_CREATE_BACKUP]\n"\n"\n"\n");
+    }
+    
+    // Perform maintenance
+    uci_maintenance_result_t result;
+    int ret = uci_maintenance_perform_maintenance(&result\n"\n"\n"\n");
+    
+    if (ret != AUTONOMY_SUCCESS) {
+        blobmsg_add_string(&bb, "error", "UCI maintenance failed"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return 0;
+    }
+    
+    // Add result information
+    blobmsg_add_string(&bb, "status", "UCI maintenance completed successfully"\n"\n"\n"\n");
+    blobmsg_add_u8(&bb, "issues_found", result.issues_found_count > 0\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "issues_fixed", result.issues_fixed_count\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "backups_created", result.backups_created\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "backups_restored", result.backups_restored\n"\n"\n"\n");
+    
+    if (result.details) {
+        blobmsg_add_string(&bb, "details", result.details\n"\n"\n"\n");
+    }
+    
+    if (result.backup_path) {
+        blobmsg_add_string(&bb, "backup_path", result.backup_path\n"\n"\n"\n");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return 0;
+}
+
+/**
+ * Register UCI maintenance UBUS object
+ */
+int uci_maintenance_ubus_register(struct ubus_context *ctx) {
+    int ret = ubus_add_object(ctx, &autonomy_uci_maintenance_obj\n"\n"\n"\n");
+    if (ret) {
+        fprintf(stderr, "Failed to add UCI maintenance object: %s\n", ubus_strerror(ret)\n"\n"\n"\n");
+        return ret;
+    }
+    
+    fprintf(stderr, "UCI maintenance UBUS object registered successfully\n"\n"\n"\n"\n");
+    return 0;
+}
+
+/**
+ * Unregister UCI maintenance UBUS object
+ */
+void uci_maintenance_ubus_unregister(struct ubus_context *ctx) {
+    ubus_remove_object(ctx, &autonomy_uci_maintenance_obj\n"\n"\n"\n");
+    fprintf(stderr, "UCI maintenance UBUS object unregistered\n"\n"\n"\n"\n");
+}

@@ -60,7 +60,7 @@ bool starlink_should_collect(void) {
         return false;
     }
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     return (now - g_collector_state.last_collection) >= g_collector_state.collection_interval;
 }
 
@@ -73,7 +73,7 @@ int starlink_collect_data(starlink_collection_result_t *result) {
     // Check if we can use cached data
     if (!starlink_should_collect()) {
         if (g_collector_state.last_result.success) {
-            memcpy(result, &g_collector_state.last_result, sizeof(starlink_collection_result_t));
+            memcpy(result, &g_collector_state.last_result, sizeof(starlink_collection_result_t)\n"\n"\n"\n"\n"\n"\n"\n");
             g_collector_state.cache_hit_count++;
             return 0;
         }
@@ -82,8 +82,8 @@ int starlink_collect_data(starlink_collection_result_t *result) {
     g_collector_state.cache_miss_count++;
     
     // Initialize result
-    memset(result, 0, sizeof(starlink_collection_result_t));
-    result->collection_time = time(NULL);
+    memset(result, 0, sizeof(starlink_collection_result_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    result->collection_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Collect status data
     if (starlink_get_status(&result->status) == 0) {
@@ -138,21 +138,21 @@ int starlink_collect_data(starlink_collection_result_t *result) {
         
         // Set health status
         result->health.overall_score = health_score;
-        result->health.is_healthy = (health_score >= 70);
+        result->health.is_healthy = (health_score >= 70\n"\n"\n"\n"\n"\n"\n"\n");
         result->health.last_check = result->collection_time;
         
         if (health_score >= 90) {
-            strcpy(result->health.status, "excellent");
+            strcpy(result->health.status, "excellent"\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (health_score >= 80) {
-            strcpy(result->health.status, "good");
+            strcpy(result->health.status, "good"\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (health_score >= 70) {
-            strcpy(result->health.status, "fair");
+            strcpy(result->health.status, "fair"\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
-            strcpy(result->health.status, "poor");
+            strcpy(result->health.status, "poor"\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Update collector state
-        memcpy(&g_collector_state.last_result, result, sizeof(starlink_collection_result_t));
+        memcpy(&g_collector_state.last_result, result, sizeof(starlink_collection_result_t)\n"\n"\n"\n"\n"\n"\n"\n");
         g_collector_state.last_collection = result->collection_time;
         
         // Perform obstruction analysis
@@ -173,19 +173,19 @@ int starlink_collect_data(starlink_collection_result_t *result) {
         }
         
         // Record obstruction observation for pattern learning
-        starlink_obstruction_record_observation(&obstruction_sample);
+        starlink_obstruction_record_observation(&obstruction_sample\n"\n"\n"\n"\n"\n"\n"\n");
         
     } else {
         result->success = false;
-        strcpy(result->error_message, "Failed to collect Starlink data");
+        strcpy(result->error_message, "Failed to collect Starlink data"\n"\n"\n"\n"\n"\n"\n"\n");
         g_collector_state.error_count++;
         
         // Set error health status
         result->health.overall_score = 0;
         result->health.is_healthy = false;
         result->health.last_check = result->collection_time;
-        strcpy(result->health.status, "error");
-        strcpy(result->health.error_message, "Data collection failed");
+        strcpy(result->health.status, "error"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(result->health.error_message, "Data collection failed"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return 0;
@@ -198,7 +198,7 @@ int starlink_get_cached_data(starlink_collection_result_t *result) {
     }
     
     if (g_collector_state.last_result.success) {
-        memcpy(result, &g_collector_state.last_result, sizeof(starlink_collection_result_t));
+        memcpy(result, &g_collector_state.last_result, sizeof(starlink_collection_result_t)\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
@@ -236,7 +236,7 @@ int starlink_force_collect(starlink_collection_result_t *result) {
     time_t original_last = g_collector_state.last_collection;
     g_collector_state.last_collection = 0;
     
-    int ret = starlink_collect_data(result);
+    int ret = starlink_collect_data(result\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Restore original timestamp
     g_collector_state.last_collection = original_last;
@@ -254,13 +254,13 @@ int starlink_get_health(starlink_health_t *health) {
     
     starlink_collection_result_t result;
     if (starlink_get_cached_data(&result) == 0) {
-        memcpy(health, &result.health, sizeof(starlink_health_t));
+        memcpy(health, &result.health, sizeof(starlink_health_t)\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
     // Try to collect fresh data
     if (starlink_collect_data(&result) == 0 && result.success) {
-        memcpy(health, &result.health, sizeof(starlink_health_t));
+        memcpy(health, &result.health, sizeof(starlink_health_t)\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
@@ -269,6 +269,6 @@ int starlink_get_health(starlink_health_t *health) {
 
 // Cleanup Starlink collector
 void starlink_collector_cleanup(void) {
-    starlink_client_cleanup();
-    memset(&g_collector_state, 0, sizeof(g_collector_state));
+    starlink_client_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_collector_state, 0, sizeof(g_collector_state)\n"\n"\n"\n"\n"\n"\n"\n");
 }

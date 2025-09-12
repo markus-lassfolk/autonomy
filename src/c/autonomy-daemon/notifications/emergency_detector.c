@@ -23,24 +23,24 @@ int emergency_detector_init(const emergency_detector_config_t* config) {
         return -1;
     }
     
-    memset(&g_emergency_detector, 0, sizeof(emergency_detector_t));
+    memset(&g_emergency_detector, 0, sizeof(emergency_detector_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Copy configuration
     g_emergency_detector.config = *config;
     
     // Initialize mutex
-    g_emergency_detector.mutex = malloc(sizeof(pthread_mutex_t));
+    g_emergency_detector.mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_emergency_detector.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_emergency_detector.mutex, NULL);
+    pthread_mutex_init(g_emergency_detector.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize incident tracking
-    g_emergency_detector.active_incidents = malloc(config->max_active_incidents * sizeof(active_incident_t));
+    g_emergency_detector.active_incidents = malloc(config->max_active_incidents * sizeof(active_incident_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_emergency_detector.active_incidents) {
-        pthread_mutex_destroy(g_emergency_detector.mutex);
-        free(g_emergency_detector.mutex);
+        pthread_mutex_destroy(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -48,11 +48,11 @@ int emergency_detector_init(const emergency_detector_config_t* config) {
     g_emergency_detector.active_incidents_count = 0; // Use configurable incident count
     
     // Initialize failure records
-    g_emergency_detector.recent_failures = malloc(config->max_failure_records * sizeof(failure_record_t));
+    g_emergency_detector.recent_failures = malloc(config->max_failure_records * sizeof(failure_record_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_emergency_detector.recent_failures) {
-        free(g_emergency_detector.active_incidents);
-        pthread_mutex_destroy(g_emergency_detector.mutex);
-        free(g_emergency_detector.mutex);
+        free(g_emergency_detector.active_incidents\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -68,16 +68,16 @@ void emergency_detector_cleanup(void) {
     if (!g_emergency_detector_initialized) return;
     
     if (g_emergency_detector.mutex) {
-        pthread_mutex_destroy(g_emergency_detector.mutex);
-        free(g_emergency_detector.mutex);
+        pthread_mutex_destroy(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_emergency_detector.active_incidents) {
-        free(g_emergency_detector.active_incidents);
+        free(g_emergency_detector.active_incidents\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_emergency_detector.recent_failures) {
-        free(g_emergency_detector.recent_failures);
+        free(g_emergency_detector.recent_failures\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     g_emergency_detector.active_incidents = NULL;
@@ -171,9 +171,9 @@ static emergency_level_t check_cascading_failures(void) {
     }
     
     const emergency_thresholds_t* thresholds = &g_emergency_detector.config.emergency_thresholds;
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_lock(g_emergency_detector.mutex);
+    pthread_mutex_lock(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Count recent high-severity incidents
     int recent_high_severity = 0;
@@ -186,7 +186,7 @@ static emergency_level_t check_cascading_failures(void) {
     }
     
     if (recent_high_severity >= thresholds->cascading_failure_count) {
-        pthread_mutex_unlock(g_emergency_detector.mutex);
+        pthread_mutex_unlock(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return EMERGENCY_LEVEL_CRITICAL;
     }
     
@@ -200,7 +200,7 @@ static emergency_level_t check_cascading_failures(void) {
         }
     }
     
-    pthread_mutex_unlock(g_emergency_detector.mutex);
+    pthread_mutex_unlock(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     double failure_rate = (double)recent_failures;
     if (failure_rate >= thresholds->failure_rate_emergency) {
@@ -282,7 +282,7 @@ static emergency_level_t check_temporal_emergency(const system_state_t* system_s
     }
     
     const emergency_thresholds_t* thresholds = &g_emergency_detector.config.emergency_thresholds;
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check for sustained high load
     if (system_state->system_health.cpu_usage > thresholds->cpu_usage_emergency * 0.7 &&
@@ -313,31 +313,31 @@ emergency_level_t emergency_detector_detect_emergency(const system_state_t* syst
     emergency_level_t max_level = EMERGENCY_LEVEL_NONE;
     
     // Check system health emergencies
-    emergency_level_t system_level = check_system_health_emergency(&system_state->system_health);
+    emergency_level_t system_level = check_system_health_emergency(&system_state->system_health\n"\n"\n"\n"\n"\n"\n"\n");
     if (system_level > max_level) {
         max_level = system_level;
     }
     
     // Check network health emergencies
-    emergency_level_t network_level = check_network_health_emergency(&system_state->network_health);
+    emergency_level_t network_level = check_network_health_emergency(&system_state->network_health\n"\n"\n"\n"\n"\n"\n"\n");
     if (network_level > max_level) {
         max_level = network_level;
     }
     
     // Check cascading failure patterns
-    emergency_level_t cascade_level = check_cascading_failures();
+    emergency_level_t cascade_level = check_cascading_failures(\n"\n"\n"\n"\n"\n"\n"\n");
     if (cascade_level > max_level) {
         max_level = cascade_level;
     }
     
     // Check alert-specific emergency conditions
-    emergency_level_t alert_level = check_alert_specific_emergency(alert_type, details_json);
+    emergency_level_t alert_level = check_alert_specific_emergency(alert_type, details_json\n"\n"\n"\n"\n"\n"\n"\n");
     if (alert_level > max_level) {
         max_level = alert_level;
     }
     
     // Check temporal emergency patterns
-    emergency_level_t temporal_level = check_temporal_emergency(system_state);
+    emergency_level_t temporal_level = check_temporal_emergency(system_state\n"\n"\n"\n"\n"\n"\n"\n");
     if (temporal_level > max_level) {
         max_level = temporal_level;
     }
@@ -345,7 +345,7 @@ emergency_level_t emergency_detector_detect_emergency(const system_state_t* syst
     // Log emergency detection
     if (max_level > EMERGENCY_LEVEL_NONE) {
         // Note: In a real implementation, this would use the logging system
-        printf("EMERGENCY: Level %d detected for alert type %d\n", max_level, alert_type);
+        printf("EMERGENCY: Level %d detected for alert type %d\n", max_level, alert_type\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return max_level;
@@ -357,7 +357,7 @@ int emergency_detector_add_incident(const active_incident_t* incident) {
         return -1;
     }
     
-    pthread_mutex_lock(g_emergency_detector.mutex);
+    pthread_mutex_lock(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (g_emergency_detector.active_incidents_count >= g_emergency_detector.max_active_incidents) {
         // Remove oldest incident to make room
@@ -371,7 +371,7 @@ int emergency_detector_add_incident(const active_incident_t* incident) {
     g_emergency_detector.active_incidents[index] = *incident;
     g_emergency_detector.active_incidents_count++;
     
-    pthread_mutex_unlock(g_emergency_detector.mutex);
+    pthread_mutex_unlock(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -381,7 +381,7 @@ int emergency_detector_add_failure(const failure_record_t* failure) {
         return -1;
     }
     
-    pthread_mutex_lock(g_emergency_detector.mutex);
+    pthread_mutex_lock(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (g_emergency_detector.failure_records_count >= g_emergency_detector.max_failure_records) {
         // Remove oldest failure to make room
@@ -395,7 +395,7 @@ int emergency_detector_add_failure(const failure_record_t* failure) {
     g_emergency_detector.recent_failures[index] = *failure;
     g_emergency_detector.failure_records_count++;
     
-    pthread_mutex_unlock(g_emergency_detector.mutex);
+    pthread_mutex_unlock(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -403,7 +403,7 @@ int emergency_detector_add_failure(const failure_record_t* failure) {
 void emergency_detector_get_status(emergency_detector_status_t* status) {
     if (!status || !g_emergency_detector_initialized) return;
     
-    pthread_mutex_lock(g_emergency_detector.mutex);
+    pthread_mutex_lock(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_emergency_detector.config.emergency_detection_enabled;
     status->active_incidents_count = g_emergency_detector.active_incidents_count;
@@ -411,7 +411,7 @@ void emergency_detector_get_status(emergency_detector_status_t* status) {
     status->failure_records_count = g_emergency_detector.failure_records_count;
     status->max_failure_records = g_emergency_detector.max_failure_records;
     
-    pthread_mutex_unlock(g_emergency_detector.mutex);
+    pthread_mutex_unlock(g_emergency_detector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if emergency detector is initialized

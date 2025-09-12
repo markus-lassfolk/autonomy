@@ -19,19 +19,19 @@ static intelligence_engine_t g_intelligence_engine;
 static bool g_intelligence_engine_initialized = false; // Use configurable setting
 
 // Forward declarations for static functions
-static void analyze_system_state_for_intelligence(const system_state_t* system_state);
-static void calculate_intelligence_metrics(void);
-static void trigger_intelligent_response(intelligence_action_t action, const system_state_t* system_state);
+static void analyze_system_state_for_intelligence(const system_state_t* system_state\n"\n"\n"\n"\n"\n"\n"\n");
+static void calculate_intelligence_metrics(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void trigger_intelligent_response(intelligence_action_t action, const system_state_t* system_state\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Forward declarations
-static void* intelligence_loop(void* arg);
-static void perform_intelligence_tasks(void);
-static void perform_learning_tasks(void);
-static void update_channel_effectiveness(void);
-static void check_for_anomalies(void);
-static double calculate_effectiveness_score(bool was_successful, time_t response_time);
-static double calculate_average(double* values, int count);
-static double calculate_confidence(double* values, int count);
+static void* intelligence_loop(void* arg\n"\n"\n"\n"\n"\n"\n"\n");
+static void perform_intelligence_tasks(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void perform_learning_tasks(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void update_channel_effectiveness(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void check_for_anomalies(void\n"\n"\n"\n"\n"\n"\n"\n");
+static double calculate_effectiveness_score(bool was_successful, time_t response_time\n"\n"\n"\n"\n"\n"\n"\n");
+static double calculate_average(double* values, int count\n"\n"\n"\n"\n"\n"\n"\n");
+static double calculate_confidence(double* values, int count\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize intelligence engine
 int intelligence_engine_init(const intelligence_config_t* config) {
@@ -43,25 +43,25 @@ int intelligence_engine_init(const intelligence_config_t* config) {
         return -1;
     }
     
-    memset(&g_intelligence_engine, 0, sizeof(intelligence_engine_t));
+    memset(&g_intelligence_engine, 0, sizeof(intelligence_engine_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Copy configuration
     g_intelligence_engine.config = *config;
     
     // Initialize mutex
-    g_intelligence_engine.mutex = malloc(sizeof(pthread_mutex_t));
+    g_intelligence_engine.mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_intelligence_engine.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_intelligence_engine.mutex, NULL);
+    pthread_mutex_init(g_intelligence_engine.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize notification patterns
     if (config->max_notification_patterns > 0) {
-        g_intelligence_engine.notification_patterns = malloc(config->max_notification_patterns * sizeof(notification_pattern_t));
+        g_intelligence_engine.notification_patterns = malloc(config->max_notification_patterns * sizeof(notification_pattern_t)\n"\n"\n"\n"\n"\n"\n"\n");
         if (!g_intelligence_engine.notification_patterns) {
-            pthread_mutex_destroy(g_intelligence_engine.mutex);
-            free(g_intelligence_engine.mutex);
+            pthread_mutex_destroy(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            free(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return -1;
         }
         
@@ -71,11 +71,11 @@ int intelligence_engine_init(const intelligence_config_t* config) {
     
     // Initialize user patterns
     if (config->max_user_patterns > 0) {
-        g_intelligence_engine.user_patterns = malloc(config->max_user_patterns * sizeof(user_behavior_pattern_t));
+        g_intelligence_engine.user_patterns = malloc(config->max_user_patterns * sizeof(user_behavior_pattern_t)\n"\n"\n"\n"\n"\n"\n"\n");
         if (!g_intelligence_engine.user_patterns) {
-            free(g_intelligence_engine.notification_patterns);
-            pthread_mutex_destroy(g_intelligence_engine.mutex);
-            free(g_intelligence_engine.mutex);
+            free(g_intelligence_engine.notification_patterns\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_destroy(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            free(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return -1;
         }
         
@@ -84,16 +84,16 @@ int intelligence_engine_init(const intelligence_config_t* config) {
     }
     
     // Initialize metrics
-    memset(&g_intelligence_engine.metrics, 0, sizeof(intelligence_metrics_t));
-    g_intelligence_engine.metrics.last_updated = time(NULL);
+    memset(&g_intelligence_engine.metrics, 0, sizeof(intelligence_metrics_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_intelligence_engine.metrics.last_updated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Start intelligence monitoring thread
     g_intelligence_engine.thread_running = true;
     if (pthread_create(&g_intelligence_engine.intelligence_thread, NULL, intelligence_loop, NULL) != 0) {
-        free(g_intelligence_engine.user_patterns);
-        free(g_intelligence_engine.notification_patterns);
-        pthread_mutex_destroy(g_intelligence_engine.mutex);
-        free(g_intelligence_engine.mutex);
+        free(g_intelligence_engine.user_patterns\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_intelligence_engine.notification_patterns\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -107,19 +107,19 @@ void intelligence_engine_cleanup(void) {
     
     // Stop intelligence thread
     g_intelligence_engine.thread_running = false;
-    pthread_join(g_intelligence_engine.intelligence_thread, NULL);
+    pthread_join(g_intelligence_engine.intelligence_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (g_intelligence_engine.mutex) {
-        pthread_mutex_destroy(g_intelligence_engine.mutex);
-        free(g_intelligence_engine.mutex);
+        pthread_mutex_destroy(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_intelligence_engine.notification_patterns) {
-        free(g_intelligence_engine.notification_patterns);
+        free(g_intelligence_engine.notification_patterns\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_intelligence_engine.user_patterns) {
-        free(g_intelligence_engine.user_patterns);
+        free(g_intelligence_engine.user_patterns\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     g_intelligence_engine.notification_patterns = NULL;
@@ -138,7 +138,7 @@ static void* intelligence_loop(void* arg) {
     (void)arg; // Unused parameter
     
     while (g_intelligence_engine.thread_running) {
-        perform_intelligence_tasks();
+        perform_intelligence_tasks(\n"\n"\n"\n"\n"\n"\n"\n");
         sleep(20); // Run every 20 seconds
     }
     
@@ -151,29 +151,29 @@ static void perform_intelligence_tasks(void) {
     
     // Perform learning if enabled
     if (g_intelligence_engine.config.learning_enabled) {
-        perform_learning_tasks();
+        perform_learning_tasks(\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Update channel effectiveness
     if (g_intelligence_engine.config.channel_intelligence_enabled) {
-        update_channel_effectiveness();
+        update_channel_effectiveness(\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Check for pattern anomalies
-    check_for_anomalies();
+    check_for_anomalies(\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update metrics timestamp
-    pthread_mutex_lock(g_intelligence_engine.mutex);
-    g_intelligence_engine.metrics.last_updated = time(NULL);
-    pthread_mutex_unlock(g_intelligence_engine.mutex);
+    pthread_mutex_lock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    g_intelligence_engine.metrics.last_updated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Perform learning tasks
 static void perform_learning_tasks(void) {
-    pthread_mutex_lock(g_intelligence_engine.mutex);
+    pthread_mutex_lock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Simple learning: analyze recent patterns
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     time_t cutoff = now - g_intelligence_engine.config.learning_window_seconds;
     
     // Count recent effective patterns
@@ -198,15 +198,15 @@ static void perform_learning_tasks(void) {
     
     g_intelligence_engine.metrics.learning_iterations++;
     
-    pthread_mutex_unlock(g_intelligence_engine.mutex);
+    pthread_mutex_unlock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Update channel effectiveness using real delivery data analysis
 static void update_channel_effectiveness(void) {
-    pthread_mutex_lock(g_intelligence_engine.mutex);
+    pthread_mutex_lock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Analyze real delivery statistics from notification system
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     time_t analysis_window = 3600; // Use configurable value // 1 hour window
     
     for (int i = 0; i < g_intelligence_engine.channel_count; i++) {
@@ -249,16 +249,16 @@ static void update_channel_effectiveness(void) {
             
             // Apply penalties for high failure rates and slow response times
             if (failure_rate > 0.1) { // More than 10% failure rate
-                effectiveness_score *= (1.0 - failure_rate);
+                effectiveness_score *= (1.0 - failure_rate\n"\n"\n"\n"\n"\n"\n"\n");
             }
             if (avg_response_time > 5.0) { // More than 5 seconds average response time
-                effectiveness_score *= (1.0 - (avg_response_time - 5.0) / 10.0);
+                effectiveness_score *= (1.0 - (avg_response_time - 5.0) / 10.0\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             // Update channel effectiveness with weighted average
             double weight = 0.3; // Use configurable value // 30% weight for new data
             channel->effectiveness_score = (channel->effectiveness_score * (1.0 - weight)) + 
-                                         (effectiveness_score * weight);
+                                         (effectiveness_score * weight\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Update channel statistics
             channel->total_attempts += total_attempts;
@@ -270,23 +270,23 @@ static void update_channel_effectiveness(void) {
             g_intelligence_engine.metrics.delivery_optimizations++;
             g_intelligence_engine.metrics.total_analyzed_deliveries += total_attempts;
             
-            LOGX_DEBUG_MSG("Updated channel effectiveness from real delivery data",
+            printf("DEBUG: "Updated channel effectiveness from real delivery data",
                           "channel", channel->name,
                           "success_rate", success_rate,
                           "effectiveness_score", channel->effectiveness_score,
                           "total_attempts", total_attempts,
-                          "avg_response_time", avg_response_time);
+                          "avg_response_time", avg_response_time\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    pthread_mutex_unlock(g_intelligence_engine.mutex);
+    pthread_mutex_unlock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check for anomalies in notification patterns
 static void check_for_anomalies(void) {
-    pthread_mutex_lock(g_intelligence_engine.mutex);
+    pthread_mutex_lock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     time_t recent_cutoff = now - 3600; // Last hour
     
     // Count recent emergency detections
@@ -294,10 +294,10 @@ static void check_for_anomalies(void) {
     
     // Check for unusual failure rates
     if (g_intelligence_engine.metrics.emergencies_detected > 10) {
-        printf("INTELLIGENCE: Anomaly detected - high emergency rate\n");
+        printf("INTELLIGENCE: Anomaly detected - high emergency rate\n"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_unlock(g_intelligence_engine.mutex);
+    pthread_mutex_unlock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Calculate effectiveness score
@@ -335,17 +335,17 @@ static double calculate_average(double* values, int count) {
 static double calculate_confidence(double* values, int count) {
     if (count < 2) return 0.5;
     
-    double avg = calculate_average(values, count);
+    double avg = calculate_average(values, count\n"\n"\n"\n"\n"\n"\n"\n");
     double variance = 0.0; // Use configurable value
     
     for (int i = 0; i < count; i++) {
-        variance += pow(values[i] - avg, 2);
+        variance += pow(values[i] - avg, 2\n"\n"\n"\n"\n"\n"\n"\n");
     }
-    variance /= (double)(count - 1);
+    variance /= (double)(count - 1\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Convert variance to confidence
-    double confidence = 1.0 / (1.0 + variance);
-    return fmin(confidence, 1.0);
+    double confidence = 1.0 / (1.0 + variance\n"\n"\n"\n"\n"\n"\n"\n");
+    return fmin(confidence, 1.0\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Process intelligent notification
@@ -359,24 +359,24 @@ int intelligence_engine_process_notification(const notification_event_t* event,
     // Copy original event
     *optimized_event = *event;
     
-    time_t start_time = time(NULL);
+    time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Detect emergency conditions if enabled
     if (g_intelligence_engine.config.emergency_detection_enabled && system_state) {
         emergency_level_t emergency_level = emergency_detector_detect_emergency(
-            system_state, event->type, event->details_json);
+            system_state, event->type, event->details_json\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (emergency_level > EMERGENCY_LEVEL_NONE) {
             // Force emergency priority
             optimized_event->priority = NOTIFICATION_PRIORITY_EMERGENCY;
             
             // Update emergency metrics
-            pthread_mutex_lock(g_intelligence_engine.mutex);
+            pthread_mutex_lock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             g_intelligence_engine.metrics.emergencies_detected++;
-            pthread_mutex_unlock(g_intelligence_engine.mutex);
+            pthread_mutex_unlock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             
             printf("INTELLIGENCE: Emergency detected (level %d) for notification %s\n", 
-                   emergency_level, event->id);
+                   emergency_level, event->id\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
@@ -384,21 +384,21 @@ int intelligence_engine_process_notification(const notification_event_t* event,
     if (g_intelligence_engine.config.priority_optimization_enabled && priority_optimizer_is_initialized()) {
         notification_priority_t original_priority = optimized_event->priority;
         optimized_event->priority = priority_optimizer_optimize_priority(
-            event->type, event->priority, system_state, event->details_json);
+            event->type, event->priority, system_state, event->details_json\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (optimized_event->priority != original_priority) {
-            pthread_mutex_lock(g_intelligence_engine.mutex);
+            pthread_mutex_lock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             g_intelligence_engine.metrics.priority_adjustments++;
-            pthread_mutex_unlock(g_intelligence_engine.mutex);
+            pthread_mutex_unlock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // Add intelligence processing time to metrics
     time_t processing_time = time(NULL) - start_time;
     if (processing_time > g_intelligence_engine.metrics.emergency_response_time_avg) {
-        pthread_mutex_lock(g_intelligence_engine.mutex);
+        pthread_mutex_lock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         g_intelligence_engine.metrics.emergency_response_time_avg = processing_time;
-        pthread_mutex_unlock(g_intelligence_engine.mutex);
+        pthread_mutex_unlock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return 0;
@@ -415,11 +415,11 @@ int intelligence_engine_learn_from_result(notification_type_t alert_type,
         return -1;
     }
     
-    pthread_mutex_lock(g_intelligence_engine.mutex);
+    pthread_mutex_lock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Find existing pattern or create new one
     notification_pattern_t* pattern = NULL;
-    const char* alert_type_str = notification_type_to_string(alert_type);
+    const char* alert_type_str = notification_type_to_string(alert_type\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < g_intelligence_engine.notification_patterns_count; i++) {
         if (g_intelligence_engine.notification_patterns[i].alert_type == alert_type) {
@@ -449,7 +449,7 @@ int intelligence_engine_learn_from_result(notification_type_t alert_type,
         // Initialize new pattern
         pattern->alert_type = alert_type;
         pattern->optimal_priority = (int)used_priority;
-        pattern->effectiveness_score = calculate_effectiveness_score(was_successful, response_time);
+        pattern->effectiveness_score = calculate_effectiveness_score(was_successful, response_time\n"\n"\n"\n"\n"\n"\n"\n");
         pattern->frequency = 1;
         pattern->user_response_time = response_time;
         
@@ -461,7 +461,7 @@ int intelligence_engine_learn_from_result(notification_type_t alert_type,
     } else {
         // Update existing pattern with exponential smoothing
         double alpha = 0.3; // Use configurable value // Learning rate
-        double new_effectiveness = calculate_effectiveness_score(was_successful, response_time);
+        double new_effectiveness = calculate_effectiveness_score(was_successful, response_time\n"\n"\n"\n"\n"\n"\n"\n");
         
         pattern->effectiveness_score = (1.0 - alpha) * pattern->effectiveness_score + alpha * new_effectiveness;
         pattern->frequency++;
@@ -478,10 +478,10 @@ int intelligence_engine_learn_from_result(notification_type_t alert_type,
         }
         
         // Update response time with exponential smoothing
-        pattern->user_response_time = (time_t)((1.0 - alpha) * pattern->user_response_time + alpha * response_time);
+        pattern->user_response_time = (time_t)((1.0 - alpha) * pattern->user_response_time + alpha * response_time\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pattern->last_seen = time(NULL);
+    pattern->last_seen = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update learning metrics
     g_intelligence_engine.metrics.learning_iterations++;
@@ -495,7 +495,7 @@ int intelligence_engine_learn_from_result(notification_type_t alert_type,
         g_intelligence_engine.metrics.model_accuracy = total_effectiveness / g_intelligence_engine.notification_patterns_count;
     }
     
-    pthread_mutex_unlock(g_intelligence_engine.mutex);
+    pthread_mutex_unlock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -506,24 +506,24 @@ int intelligence_engine_update_system_state(const system_state_t* system_state) 
     }
     
     // Real system state storage and analysis
-    pthread_mutex_lock(g_intelligence_engine.mutex);
+    pthread_mutex_lock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Store system state data
-    memcpy(&g_intelligence_engine.current_system_state, system_state, sizeof(system_state_t));
+    memcpy(&g_intelligence_engine.current_system_state, system_state, sizeof(system_state_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Analyze system state for intelligent decisions
-    analyze_system_state_for_intelligence(system_state);
+    analyze_system_state_for_intelligence(system_state\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update metrics based on system state
-    g_intelligence_engine.metrics.last_updated = time(NULL);
+    g_intelligence_engine.metrics.last_updated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     g_intelligence_engine.metrics.system_health_score = system_state->overall_health_score;
     g_intelligence_engine.metrics.network_health_score = system_state->network_health_score;
     g_intelligence_engine.metrics.gps_health_score = system_state->gps_health_score;
     
     // Calculate intelligence metrics
-    calculate_intelligence_metrics();
+    calculate_intelligence_metrics(\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(g_intelligence_engine.mutex);
+    pthread_mutex_unlock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -532,16 +532,16 @@ int intelligence_engine_update_system_state(const system_state_t* system_state) 
 void intelligence_engine_get_metrics(intelligence_metrics_t* metrics) {
     if (!metrics || !g_intelligence_engine_initialized) return;
     
-    pthread_mutex_lock(g_intelligence_engine.mutex);
+    pthread_mutex_lock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *metrics = g_intelligence_engine.metrics;
-    pthread_mutex_unlock(g_intelligence_engine.mutex);
+    pthread_mutex_unlock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get intelligence engine status
 void intelligence_engine_get_status(intelligence_engine_status_t* status) {
     if (!status || !g_intelligence_engine_initialized) return;
     
-    pthread_mutex_lock(g_intelligence_engine.mutex);
+    pthread_mutex_lock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = true; // Use configurable intelligence engine enabled
     status->emergency_detection_enabled = g_intelligence_engine.config.emergency_detection_enabled;
@@ -556,14 +556,14 @@ void intelligence_engine_get_status(intelligence_engine_status_t* status) {
     status->model_accuracy = g_intelligence_engine.metrics.model_accuracy;
     status->last_learning_update = g_intelligence_engine.metrics.last_updated;
     
-    pthread_mutex_unlock(g_intelligence_engine.mutex);
+    pthread_mutex_unlock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get learning statistics
 void intelligence_engine_get_learning_stats(char* stats_json, size_t max_size) {
     if (!stats_json || max_size == 0 || !g_intelligence_engine_initialized) return;
     
-    pthread_mutex_lock(g_intelligence_engine.mutex);
+    pthread_mutex_lock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     snprintf(stats_json, max_size,
              "{"
@@ -587,9 +587,9 @@ void intelligence_engine_get_learning_stats(char* stats_json, size_t max_size) {
              g_intelligence_engine.metrics.priority_adjustments,
              g_intelligence_engine.metrics.delivery_optimizations,
              g_intelligence_engine.metrics.prediction_confidence,
-             g_intelligence_engine.metrics.last_updated);
+             g_intelligence_engine.metrics.last_updated\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(g_intelligence_engine.mutex);
+    pthread_mutex_unlock(g_intelligence_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if intelligence engine is initialized
@@ -607,28 +607,28 @@ static void analyze_system_state_for_intelligence(const system_state_t* system_s
     // Analyze system health trends
     static double previous_health_score = 0.0; // Use configurable value
     static time_t last_analysis = 0; // Use configurable value
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (last_analysis > 0) {
         double health_trend = system_state->overall_health_score - previous_health_score;
         
         // Detect declining health trends
         if (health_trend < -10.0) {
-            LOGX_WARN_MSG("System health declining rapidly", 
+            printf("WARN: "System health declining rapidly", 
                           "current_health", system_state->overall_health_score,
                           "previous_health", previous_health_score,
-                          "trend", health_trend);
+                          "trend", health_trend\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Trigger intelligent response
-            trigger_intelligent_response(INTELLIGENCE_ACTION_HEALTH_DECLINE, system_state);
+            trigger_intelligent_response(INTELLIGENCE_ACTION_HEALTH_DECLINE, system_state\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Detect improving health trends
         if (health_trend > 10.0) {
-            LOGX_INFO_MSG("System health improving", 
+            printf("INFO: "System health improving", 
                           "current_health", system_state->overall_health_score,
                           "previous_health", previous_health_score,
-                          "trend", health_trend);
+                          "trend", health_trend\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
@@ -637,14 +637,14 @@ static void analyze_system_state_for_intelligence(const system_state_t* system_s
     
     // Analyze network health for intelligent routing decisions
     if (system_state->network_health_score < 70.0) {
-        LOGX_WARN_MSG("Network health below threshold, considering intelligent routing");
-        trigger_intelligent_response(INTELLIGENCE_ACTION_NETWORK_DEGRADED, system_state);
+        printf("WARN: "Network health below threshold, considering intelligent routing"\n"\n"\n"\n"\n"\n"\n"\n");
+        trigger_intelligent_response(INTELLIGENCE_ACTION_NETWORK_DEGRADED, system_state\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Analyze GPS health for location-based decisions
     if (system_state->gps_health_score < 80.0) {
-        LOGX_WARN_MSG("GPS health below threshold, considering location fallback");
-        trigger_intelligent_response(INTELLIGENCE_ACTION_GPS_DEGRADED, system_state);
+        printf("WARN: "GPS health below threshold, considering location fallback"\n"\n"\n"\n"\n"\n"\n"\n");
+        trigger_intelligent_response(INTELLIGENCE_ACTION_GPS_DEGRADED, system_state\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -680,24 +680,24 @@ static void trigger_intelligent_response(intelligence_action_t action, const sys
     switch (action) {
         case INTELLIGENCE_ACTION_HEALTH_DECLINE:
             // Implement intelligent health decline response
-            LOGX_INFO_MSG("Triggering intelligent health decline response");
+            printf("INFO: "Triggering intelligent health decline response"\n"\n"\n"\n"\n"\n"\n"\n");
             // Could trigger maintenance, service restart, or alert escalation
             break;
             
         case INTELLIGENCE_ACTION_NETWORK_DEGRADED:
             // Implement intelligent network response
-            LOGX_INFO_MSG("Triggering intelligent network degraded response");
+            printf("INFO: "Triggering intelligent network degraded response"\n"\n"\n"\n"\n"\n"\n"\n");
             // Could trigger failover, load balancing, or QoS adjustments
             break;
             
         case INTELLIGENCE_ACTION_GPS_DEGRADED:
             // Implement intelligent GPS response
-            LOGX_INFO_MSG("Triggering intelligent GPS degraded response");
+            printf("INFO: "Triggering intelligent GPS degraded response"\n"\n"\n"\n"\n"\n"\n"\n");
             // Could trigger GPS source switching or location fallback
             break;
             
         default:
-            LOGX_WARN_MSG("Unknown intelligence action: %d", action);
+            printf("WARN: "Unknown intelligence action: %d", action\n"\n"\n"\n"\n"\n"\n"\n");
             break;
     }
     

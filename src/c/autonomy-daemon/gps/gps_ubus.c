@@ -8,7 +8,7 @@
 extern autonomy_state_t g_state;
 
 // Forward declarations
-static void perform_gps_health_check(void);
+static void perform_gps_health_check(void\n"\n"\n"\n"\n"\n"\n"\n");
 
 // GPS method handlers
 int autonomy_gps_status(struct ubus_context *uctx, struct ubus_object *obj,
@@ -17,19 +17,19 @@ int autonomy_gps_status(struct ubus_context *uctx, struct ubus_object *obj,
 {
     struct blob_buf bb = {0};
     
-    blob_buf_init(&bb, 0);
-    blobmsg_add_string(&bb, "active_source", g_state.active_gps_source);
-    blobmsg_add_double(&bb, "current_lat", g_state.current_lat);
-    blobmsg_add_double(&bb, "current_lon", g_state.current_lon);
-    blobmsg_add_double(&bb, "current_accuracy", g_state.current_accuracy);
-    blobmsg_add_u32(&bb, "current_confidence", g_state.current_confidence);
-    blobmsg_add_double(&bb, "gps_health_score", g_state.gps_health_score);
-    blobmsg_add_string(&bb, "location_status", g_state.location_status);
-    blobmsg_add_u8(&bb, "movement_detected", g_state.movement_detected);
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "active_source", g_state.active_gps_source\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_double(&bb, "current_lat", g_state.current_lat\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_double(&bb, "current_lon", g_state.current_lon\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_double(&bb, "current_accuracy", g_state.current_accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "current_confidence", g_state.current_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_double(&bb, "gps_health_score", g_state.gps_health_score\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "location_status", g_state.location_status\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u8(&bb, "movement_detected", g_state.movement_detected\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -39,30 +39,30 @@ int autonomy_gps_sources(struct ubus_context *uctx, struct ubus_object *obj,
 {
     struct blob_buf bb = {0};
     
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Add GPS sources array
-    void *sources = blobmsg_open_array(&bb, "gps_sources");
+    void *sources = blobmsg_open_array(&bb, "gps_sources"\n"\n"\n"\n"\n"\n"\n"\n");
     for (int i = 0; i < g_state.gps_source_count; i++) {
-        void *source = blobmsg_open_table(&bb, NULL);
-        blobmsg_add_string(&bb, "name", g_state.gps_sources[i].name);
-        blobmsg_add_string(&bb, "type", g_state.gps_sources[i].type);
-        blobmsg_add_u8(&bb, "enabled", g_state.gps_sources[i].enabled);
-        blobmsg_add_u8(&bb, "active", g_state.gps_sources[i].active);
-        blobmsg_add_double(&bb, "lat", g_state.gps_sources[i].lat);
-        blobmsg_add_double(&bb, "lon", g_state.gps_sources[i].lon);
-        blobmsg_add_double(&bb, "accuracy", g_state.gps_sources[i].accuracy);
-        blobmsg_add_u32(&bb, "confidence", g_state.gps_sources[i].confidence);
-        blobmsg_add_u32(&bb, "health_score", g_state.gps_sources[i].health_score);
-        blobmsg_add_string(&bb, "status", g_state.gps_sources[i].status);
-        blobmsg_close_table(&bb, source);
+        void *source = blobmsg_open_table(&bb, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "name", g_state.gps_sources[i].name\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "type", g_state.gps_sources[i].type\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "enabled", g_state.gps_sources[i].enabled\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "active", g_state.gps_sources[i].active\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "lat", g_state.gps_sources[i].lat\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "lon", g_state.gps_sources[i].lon\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "accuracy", g_state.gps_sources[i].accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "confidence", g_state.gps_sources[i].confidence\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "health_score", g_state.gps_sources[i].health_score\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "status", g_state.gps_sources[i].status\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_close_table(&bb, source\n"\n"\n"\n"\n"\n"\n"\n");
     }
-    blobmsg_close_array(&bb, sources);
+    blobmsg_close_array(&bb, sources\n"\n"\n"\n"\n"\n"\n"\n");
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -73,16 +73,16 @@ int autonomy_gps_health_check(struct ubus_context *uctx, struct ubus_object *obj
     struct blob_buf bb = {0};
     
     // Perform the GPS health check
-    perform_gps_health_check();
+    perform_gps_health_check(\n"\n"\n"\n"\n"\n"\n"\n");
     
-    blob_buf_init(&bb, 0);
-    blobmsg_add_string(&bb, "result", "gps_health_check_completed");
-    blobmsg_add_double(&bb, "gps_health_score", g_state.gps_health_score);
-    blobmsg_add_string(&bb, "active_source", g_state.active_gps_source);
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "result", "gps_health_check_completed"\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_double(&bb, "gps_health_score", g_state.gps_health_score\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "active_source", g_state.active_gps_source\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 

@@ -10,16 +10,16 @@ static channel_intelligence_t g_channel_intelligence;
 static bool g_channel_intelligence_initialized = false;
 
 // Forward declarations
-static double get_default_channel_effectiveness(notification_channel_t channel);
-static time_t get_default_channel_response_time(notification_channel_t channel);
+static double get_default_channel_effectiveness(notification_channel_t channel\n"\n"\n"\n"\n"\n"\n"\n");
+static time_t get_default_channel_response_time(notification_channel_t channel\n"\n"\n"\n"\n"\n"\n"\n");
 static double calculate_context_adjustment(notification_channel_t channel, notification_type_t alert_type, 
-                                          notification_priority_t priority, const system_state_t* system_state);
-static double calculate_time_adjustment(notification_channel_t channel, const system_state_t* system_state);
-static double calculate_priority_adjustment(notification_channel_t channel, notification_priority_t priority);
+                                          notification_priority_t priority, const system_state_t* system_state\n"\n"\n"\n"\n"\n"\n"\n");
+static double calculate_time_adjustment(notification_channel_t channel, const system_state_t* system_state\n"\n"\n"\n"\n"\n"\n"\n");
+static double calculate_priority_adjustment(notification_channel_t channel, notification_priority_t priority\n"\n"\n"\n"\n"\n"\n"\n");
 static void generate_score_reason(notification_channel_t channel, double final_score, 
                                  double context_adj, double time_adj, double priority_adj,
-                                 char* reason, size_t max_size);
-static int compare_channel_scores(const void* a, const void* b);
+                                 char* reason, size_t max_size\n"\n"\n"\n"\n"\n"\n"\n");
+static int compare_channel_scores(const void* a, const void* b\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize channel intelligence
 int channel_intelligence_init(const channel_intelligence_config_t* config) {
@@ -31,25 +31,25 @@ int channel_intelligence_init(const channel_intelligence_config_t* config) {
         return -1;
     }
     
-    memset(&g_channel_intelligence, 0, sizeof(channel_intelligence_t));
+    memset(&g_channel_intelligence, 0, sizeof(channel_intelligence_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Copy configuration
     g_channel_intelligence.config = *config;
     
     // Initialize mutex
-    g_channel_intelligence.mutex = malloc(sizeof(pthread_mutex_t));
+    g_channel_intelligence.mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_channel_intelligence.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_channel_intelligence.mutex, NULL);
+    pthread_mutex_init(g_channel_intelligence.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize channel effectiveness data
     if (config->max_channel_effectiveness_entries > 0) {
-        g_channel_intelligence.channel_effectiveness = malloc(config->max_channel_effectiveness_entries * sizeof(channel_effectiveness_t));
+        g_channel_intelligence.channel_effectiveness = malloc(config->max_channel_effectiveness_entries * sizeof(channel_effectiveness_t)\n"\n"\n"\n"\n"\n"\n"\n");
         if (!g_channel_intelligence.channel_effectiveness) {
-            pthread_mutex_destroy(g_channel_intelligence.mutex);
-            free(g_channel_intelligence.mutex);
+            pthread_mutex_destroy(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            free(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return -1;
         }
         
@@ -66,12 +66,12 @@ int channel_intelligence_init(const channel_intelligence_config_t* config) {
         for (int i = 0; i < 9 && g_channel_intelligence.channel_effectiveness_count < config->max_channel_effectiveness_entries; i++) {
             channel_effectiveness_t* eff = &g_channel_intelligence.channel_effectiveness[g_channel_intelligence.channel_effectiveness_count];
             eff->channel = channels[i];
-            eff->effectiveness_score = get_default_channel_effectiveness(channels[i]);
-            eff->average_response_time_seconds = get_default_channel_response_time(channels[i]);
+            eff->effectiveness_score = get_default_channel_effectiveness(channels[i]\n"\n"\n"\n"\n"\n"\n"\n");
+            eff->average_response_time_seconds = get_default_channel_response_time(channels[i]\n"\n"\n"\n"\n"\n"\n"\n");
             eff->response_rate = 0.85; // Default response rate
             eff->total_sent = 0;
             eff->total_successful = 0;
-            eff->last_updated = time(NULL);
+            eff->last_updated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             g_channel_intelligence.channel_effectiveness_count++;
         }
     }
@@ -89,12 +89,12 @@ void channel_intelligence_cleanup(void) {
     if (!g_channel_intelligence_initialized) return;
     
     if (g_channel_intelligence.mutex) {
-        pthread_mutex_destroy(g_channel_intelligence.mutex);
-        free(g_channel_intelligence.mutex);
+        pthread_mutex_destroy(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_channel_intelligence.channel_effectiveness) {
-        free(g_channel_intelligence.channel_effectiveness);
+        free(g_channel_intelligence.channel_effectiveness\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     g_channel_intelligence.channel_effectiveness = NULL;
@@ -214,8 +214,8 @@ static double calculate_time_adjustment(notification_channel_t channel, const sy
     (void)system_state; // May be used for user presence in the future
     
     double adjustment = 0.0;
-    time_t now = time(NULL);
-    struct tm* tm_info = localtime(&now);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm* tm_info = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
     int hour = tm_info->tm_hour;
     
     // Time of day preferences
@@ -317,24 +317,24 @@ static void generate_score_reason(notification_channel_t channel, double final_s
                                  char* reason, size_t max_size) {
     double base_effectiveness = final_score - context_adj - time_adj - priority_adj;
     
-    snprintf(reason, max_size, "Base: %.2f", base_effectiveness);
+    snprintf(reason, max_size, "Base: %.2f", base_effectiveness\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (context_adj != 0.0) {
         char temp[64];
-        snprintf(temp, sizeof(temp), ", Context: %+.2f", context_adj);
-        strncat(reason, temp, max_size - strlen(reason) - 1);
+        snprintf(temp, sizeof(temp), ", Context: %+.2f", context_adj\n"\n"\n"\n"\n"\n"\n"\n");
+        strncat(reason, temp, max_size - strlen(reason) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (time_adj != 0.0) {
         char temp[64];
-        snprintf(temp, sizeof(temp), ", Time: %+.2f", time_adj);
-        strncat(reason, temp, max_size - strlen(reason) - 1);
+        snprintf(temp, sizeof(temp), ", Time: %+.2f", time_adj\n"\n"\n"\n"\n"\n"\n"\n");
+        strncat(reason, temp, max_size - strlen(reason) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (priority_adj != 0.0) {
         char temp[64];
-        snprintf(temp, sizeof(temp), ", Priority: %+.2f", priority_adj);
-        strncat(reason, temp, max_size - strlen(reason) - 1);
+        snprintf(temp, sizeof(temp), ", Priority: %+.2f", priority_adj\n"\n"\n"\n"\n"\n"\n"\n");
+        strncat(reason, temp, max_size - strlen(reason) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -357,18 +357,18 @@ void channel_intelligence_calculate_channel_score(notification_channel_t channel
                                                  channel_score_t* score) {
     if (!score) return;
     
-    memset(score, 0, sizeof(channel_score_t));
+    memset(score, 0, sizeof(channel_score_t)\n"\n"\n"\n"\n"\n"\n"\n");
     score->channel = channel;
     
     // Get base effectiveness
-    score->effectiveness = channel_intelligence_get_channel_effectiveness(channel);
-    score->response_time_seconds = channel_intelligence_get_channel_response_time(channel);
+    score->effectiveness = channel_intelligence_get_channel_effectiveness(channel\n"\n"\n"\n"\n"\n"\n"\n");
+    score->response_time_seconds = channel_intelligence_get_channel_response_time(channel\n"\n"\n"\n"\n"\n"\n"\n");
     score->score = score->effectiveness;
     
     // Calculate adjustments
-    double context_adj = calculate_context_adjustment(channel, alert_type, priority, system_state);
-    double time_adj = calculate_time_adjustment(channel, system_state);
-    double priority_adj = calculate_priority_adjustment(channel, priority);
+    double context_adj = calculate_context_adjustment(channel, alert_type, priority, system_state\n"\n"\n"\n"\n"\n"\n"\n");
+    double time_adj = calculate_time_adjustment(channel, system_state\n"\n"\n"\n"\n"\n"\n"\n");
+    double priority_adj = calculate_priority_adjustment(channel, priority\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Apply adjustments
     score->score += context_adj + time_adj + priority_adj;
@@ -382,7 +382,7 @@ void channel_intelligence_calculate_channel_score(notification_channel_t channel
     
     // Generate reason
     generate_score_reason(channel, score->score, context_adj, time_adj, priority_adj,
-                         score->reason, sizeof(score->reason));
+                         score->reason, sizeof(score->reason)\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Score all available channels
@@ -407,11 +407,11 @@ int channel_intelligence_score_all_channels(notification_type_t alert_type,
     // Calculate scores for all channels
     for (int i = 0; i < channel_count; i++) {
         channel_intelligence_calculate_channel_score(channels[i], alert_type, priority, 
-                                                    system_state, base_data_json, &channel_scores[i]);
+                                                    system_state, base_data_json, &channel_scores[i]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Sort by score (highest first)
-    qsort(channel_scores, channel_count, sizeof(channel_score_t), compare_channel_scores);
+    qsort(channel_scores, channel_count, sizeof(channel_score_t), compare_channel_scores\n"\n"\n"\n"\n"\n"\n"\n");
     
     return channel_count;
 }
@@ -433,14 +433,14 @@ int channel_intelligence_select_optimal_channels(notification_type_t alert_type,
         return 1;
     }
     
-    pthread_mutex_lock(g_channel_intelligence.mutex);
+    pthread_mutex_lock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_channel_intelligence.total_selections++;
-    pthread_mutex_unlock(g_channel_intelligence.mutex);
+    pthread_mutex_unlock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Score all channels
     channel_score_t channel_scores[9];
     int score_count = channel_intelligence_score_all_channels(alert_type, priority, system_state, 
-                                                             base_data_json, channel_scores, 9);
+                                                             base_data_json, channel_scores, 9\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (score_count <= 0) {
         // Fallback to default
@@ -509,9 +509,9 @@ int channel_intelligence_select_optimal_channels(notification_type_t alert_type,
     
     // Update statistics
     if (selected_count > 1) {
-        pthread_mutex_lock(g_channel_intelligence.mutex);
+        pthread_mutex_lock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         g_channel_intelligence.intelligent_selections++;
-        pthread_mutex_unlock(g_channel_intelligence.mutex);
+        pthread_mutex_unlock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return selected_count;
@@ -525,7 +525,7 @@ int channel_intelligence_update_effectiveness(notification_channel_t channel,
         return -1;
     }
     
-    pthread_mutex_lock(g_channel_intelligence.mutex);
+    pthread_mutex_lock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Find channel effectiveness entry
     channel_effectiveness_t* eff = NULL;
@@ -537,7 +537,7 @@ int channel_intelligence_update_effectiveness(notification_channel_t channel,
     }
     
     if (!eff) {
-        pthread_mutex_unlock(g_channel_intelligence.mutex);
+        pthread_mutex_unlock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1; // Channel not found
     }
     
@@ -555,66 +555,66 @@ int channel_intelligence_update_effectiveness(notification_channel_t channel,
     // Update response time (exponential moving average)
     if (was_successful && response_time_seconds > 0) {
         eff->average_response_time_seconds = 
-            (time_t)((1.0 - alpha) * eff->average_response_time_seconds + alpha * response_time_seconds);
+            (time_t)((1.0 - alpha) * eff->average_response_time_seconds + alpha * response_time_seconds\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Update response rate
     eff->response_rate = new_success_rate;
-    eff->last_updated = time(NULL);
+    eff->last_updated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(g_channel_intelligence.mutex);
+    pthread_mutex_unlock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
 // Get channel effectiveness
 double channel_intelligence_get_channel_effectiveness(notification_channel_t channel) {
     if (!g_channel_intelligence_initialized) {
-        return get_default_channel_effectiveness(channel);
+        return get_default_channel_effectiveness(channel\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_lock(g_channel_intelligence.mutex);
+    pthread_mutex_lock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Find channel effectiveness entry
     for (int i = 0; i < g_channel_intelligence.channel_effectiveness_count; i++) {
         channel_effectiveness_t* eff = &g_channel_intelligence.channel_effectiveness[i];
         if (eff->channel == channel) {
             double effectiveness = eff->effectiveness_score;
-            pthread_mutex_unlock(g_channel_intelligence.mutex);
+            pthread_mutex_unlock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return effectiveness;
         }
     }
     
-    pthread_mutex_unlock(g_channel_intelligence.mutex);
-    return get_default_channel_effectiveness(channel);
+    pthread_mutex_unlock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    return get_default_channel_effectiveness(channel\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get channel response time
 time_t channel_intelligence_get_channel_response_time(notification_channel_t channel) {
     if (!g_channel_intelligence_initialized) {
-        return get_default_channel_response_time(channel);
+        return get_default_channel_response_time(channel\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_lock(g_channel_intelligence.mutex);
+    pthread_mutex_lock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Find channel effectiveness entry
     for (int i = 0; i < g_channel_intelligence.channel_effectiveness_count; i++) {
         channel_effectiveness_t* eff = &g_channel_intelligence.channel_effectiveness[i];
         if (eff->channel == channel) {
             time_t response_time = eff->average_response_time_seconds;
-            pthread_mutex_unlock(g_channel_intelligence.mutex);
+            pthread_mutex_unlock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return response_time;
         }
     }
     
-    pthread_mutex_unlock(g_channel_intelligence.mutex);
-    return get_default_channel_response_time(channel);
+    pthread_mutex_unlock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    return get_default_channel_response_time(channel\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get channel intelligence status
 void channel_intelligence_get_status(channel_intelligence_status_t* status) {
     if (!status || !g_channel_intelligence_initialized) return;
     
-    pthread_mutex_lock(g_channel_intelligence.mutex);
+    pthread_mutex_lock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_channel_intelligence.config.channel_intelligence_enabled;
     status->learning_enabled = g_channel_intelligence.config.learning_enabled;
@@ -627,14 +627,14 @@ void channel_intelligence_get_status(channel_intelligence_status_t* status) {
     status->selection_accuracy = (g_channel_intelligence.total_selections > 0) ? 
         (double)g_channel_intelligence.intelligent_selections / g_channel_intelligence.total_selections : 0.0;
     
-    pthread_mutex_unlock(g_channel_intelligence.mutex);
+    pthread_mutex_unlock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get channel intelligence statistics
 void channel_intelligence_get_stats(char* stats_json, size_t max_size) {
     if (!stats_json || max_size == 0 || !g_channel_intelligence_initialized) return;
     
-    pthread_mutex_lock(g_channel_intelligence.mutex);
+    pthread_mutex_lock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     snprintf(stats_json, max_size,
              "{"
@@ -651,9 +651,9 @@ void channel_intelligence_get_stats(char* stats_json, size_t max_size) {
              g_channel_intelligence.intelligent_selections,
              g_channel_intelligence.total_selections > 0 ? 
                 (double)g_channel_intelligence.intelligent_selections / g_channel_intelligence.total_selections : 0.0,
-             g_channel_intelligence.channel_effectiveness_count);
+             g_channel_intelligence.channel_effectiveness_count\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(g_channel_intelligence.mutex);
+    pthread_mutex_unlock(g_channel_intelligence.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if channel intelligence is initialized

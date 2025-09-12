@@ -45,7 +45,7 @@ int starlink_client_init(const starlink_config_t *config) {
     }
     
     // Copy configuration
-    memcpy(&g_starlink_config, config, sizeof(starlink_config_t));
+    memcpy(&g_starlink_config, config, sizeof(starlink_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize state
     g_starlink_state.initialized = true;
@@ -59,12 +59,12 @@ int starlink_client_init(const starlink_config_t *config) {
 // Create TCP connection to Starlink dish
 int starlink_connect(void) {
     if (g_starlink_state.socket_fd >= 0) {
-        close(g_starlink_state.socket_fd);
+        close(g_starlink_state.socket_fd\n"\n"\n"\n"\n"\n"\n"\n");
         g_starlink_state.socket_fd = -1;
     }
     
     // Create socket
-    g_starlink_state.socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    g_starlink_state.socket_fd = socket(AF_INET, SOCK_STREAM, 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (g_starlink_state.socket_fd < 0) {
         return -1;
     }
@@ -75,40 +75,40 @@ int starlink_connect(void) {
     timeout.tv_usec = 0;
     
     if (setsockopt(g_starlink_state.socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-        close(g_starlink_state.socket_fd);
+        close(g_starlink_state.socket_fd\n"\n"\n"\n"\n"\n"\n"\n");
         g_starlink_state.socket_fd = -1;
         return -1;
     }
     
     if (setsockopt(g_starlink_state.socket_fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0) {
-        close(g_starlink_state.socket_fd);
+        close(g_starlink_state.socket_fd\n"\n"\n"\n"\n"\n"\n"\n");
         g_starlink_state.socket_fd = -1;
         return -1;
     }
     
     // Resolve hostname
-    struct hostent *server = gethostbyname(g_starlink_config.host);
+    struct hostent *server = gethostbyname(g_starlink_config.host\n"\n"\n"\n"\n"\n"\n"\n");
     if (!server) {
-        close(g_starlink_state.socket_fd);
+        close(g_starlink_state.socket_fd\n"\n"\n"\n"\n"\n"\n"\n");
         g_starlink_state.socket_fd = -1;
         return -1;
     }
     
     // Setup server address
     struct sockaddr_in server_addr;
-    memset(&server_addr, 0, sizeof(server_addr));
+    memset(&server_addr, 0, sizeof(server_addr)\n"\n"\n"\n"\n"\n"\n"\n");
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(g_starlink_config.port);
-    memcpy(&server_addr.sin_addr.s_addr, server->h_addr, server->h_length);
+    server_addr.sin_port = htons(g_starlink_config.port\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(&server_addr.sin_addr.s_addr, server->h_addr, server->h_length\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Connect
     if (connect(g_starlink_state.socket_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-        close(g_starlink_state.socket_fd);
+        close(g_starlink_state.socket_fd\n"\n"\n"\n"\n"\n"\n"\n");
         g_starlink_state.socket_fd = -1;
         return -1;
     }
     
-    g_starlink_state.last_connection = time(NULL);
+    g_starlink_state.last_connection = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     g_starlink_state.connection_healthy = true;
     
     return 0;
@@ -117,7 +117,7 @@ int starlink_connect(void) {
 // Disconnect from Starlink dish
 void starlink_disconnect(void) {
     if (g_starlink_state.socket_fd >= 0) {
-        close(g_starlink_state.socket_fd);
+        close(g_starlink_state.socket_fd\n"\n"\n"\n"\n"\n"\n"\n");
         g_starlink_state.socket_fd = -1;
     }
     g_starlink_state.connection_healthy = false;
@@ -140,21 +140,21 @@ int starlink_send_request(starlink_method_t method, char *response, size_t respo
         case 0: // get_status
             // Temporarily disable gRPC call to test daemon stability
             result = AUTONOMY_ERROR; // Force failure to test error handling
-            // result = starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer));
+            // result = starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer)\n"\n"\n"\n"\n"\n"\n"\n");
             break;
         case 1: // get_history
-            result = starlink_grpc_call_get_history(response_buffer, sizeof(response_buffer));
+            result = starlink_grpc_call_get_history(response_buffer, sizeof(response_buffer)\n"\n"\n"\n"\n"\n"\n"\n");
             break;
         case 2: // get_device_info (use get_status as fallback)
             // Temporarily disable gRPC call to test daemon stability
             result = AUTONOMY_ERROR; // Force failure to test error handling
-            // result = starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer));
+            // result = starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer)\n"\n"\n"\n"\n"\n"\n"\n");
             break;
         case 3: // get_location
-            result = starlink_grpc_call_get_location(response_buffer, sizeof(response_buffer));
+            result = starlink_grpc_call_get_location(response_buffer, sizeof(response_buffer)\n"\n"\n"\n"\n"\n"\n"\n");
             break;
         case 4: // get_diagnostics
-            result = starlink_grpc_call_get_diagnostics(response_buffer, sizeof(response_buffer));
+            result = starlink_grpc_call_get_diagnostics(response_buffer, sizeof(response_buffer)\n"\n"\n"\n"\n"\n"\n"\n");
             break;
         default:
             return -1;
@@ -163,17 +163,17 @@ int starlink_send_request(starlink_method_t method, char *response, size_t respo
     if (result != AUTONOMY_SUCCESS) {
         // Clear output buffer on failure
         if (response && response_size > 0) {
-            memset(response, 0, response_size);
+            memset(response, 0, response_size\n"\n"\n"\n"\n"\n"\n"\n");
         }
         return -1;
     }
     
     // Copy response from gRPC call to output buffer
-    size_t response_len = strlen(response_buffer);
+    size_t response_len = strlen(response_buffer\n"\n"\n"\n"\n"\n"\n"\n");
     if (response_len >= response_size) {
         response_len = response_size - 1;
     }
-    memcpy(response, response_buffer, response_len);
+    memcpy(response, response_buffer, response_len\n"\n"\n"\n"\n"\n"\n"\n");
     response[response_len] = '\0';
     
     g_starlink_state.connection_healthy = true;
@@ -187,35 +187,35 @@ int starlink_parse_response(const char *json_response, starlink_status_response_
         return -1;
     }
     
-    memset(status, 0, sizeof(starlink_status_response_t));
+    memset(status, 0, sizeof(starlink_status_response_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    json_object *root = json_tokener_parse(json_response);
+    json_object *root = json_tokener_parse(json_response\n"\n"\n"\n"\n"\n"\n"\n");
     if (!root) {
         return -1;
     }
     
     // Extract device info
-    json_object *device_info = json_object_object_get(root, "deviceInfo");
+    json_object *device_info = json_object_object_get(root, "deviceInfo"\n"\n"\n"\n"\n"\n"\n"\n");
     if (device_info) {
         json_object_object_foreach(device_info, key, val) {
-            if (strcmp(key, "id") == 0) safe_strncpy(status->device_info.id, json_object_get_string(val), sizeof(status->device_info.id));
-            if (strcmp(key, "hardwareVersion") == 0) safe_strncpy(status->device_info.hardware_version, json_object_get_string(val), sizeof(status->device_info.hardware_version));
-            if (strcmp(key, "softwareVersion") == 0) safe_strncpy(status->device_info.software_version, json_object_get_string(val), sizeof(status->device_info.software_version));
-            if (strcmp(key, "countryCode") == 0) safe_strncpy(status->device_info.country_code, json_object_get_string(val), sizeof(status->device_info.country_code));
+            if (strcmp(key, "id") == 0) safe_strncpy(status->device_info.id, json_object_get_string(val), sizeof(status->device_info.id)\n"\n"\n"\n"\n"\n"\n"\n");
+            if (strcmp(key, "hardwareVersion") == 0) safe_strncpy(status->device_info.hardware_version, json_object_get_string(val), sizeof(status->device_info.hardware_version)\n"\n"\n"\n"\n"\n"\n"\n");
+            if (strcmp(key, "softwareVersion") == 0) safe_strncpy(status->device_info.software_version, json_object_get_string(val), sizeof(status->device_info.software_version)\n"\n"\n"\n"\n"\n"\n"\n");
+            if (strcmp(key, "countryCode") == 0) safe_strncpy(status->device_info.country_code, json_object_get_string(val), sizeof(status->device_info.country_code)\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // Extract device state
-    json_object *device_state = json_object_object_get(root, "deviceState");
+    json_object *device_state = json_object_object_get(root, "deviceState"\n"\n"\n"\n"\n"\n"\n"\n");
     if (device_state) {
         json_object *uptime;
         if (json_object_object_get_ex(device_state, "uptimeS", &uptime)) {
-            status->device_state.uptime_s = json_object_get_uint64(uptime);
+            status->device_state.uptime_s = json_object_get_uint64(uptime\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
 
     // Free the document
-    json_object_put(root);
+    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -227,12 +227,12 @@ int starlink_get_status(starlink_status_response_t *status) {
     }
     
     char response[4096];
-    int result = starlink_send_request(STARLINK_METHOD_GET_STATUS, response, sizeof(response));
+    int result = starlink_send_request(STARLINK_METHOD_GET_STATUS, response, sizeof(response)\n"\n"\n"\n"\n"\n"\n"\n");
     if (result < 0) {
         return -1;
     }
     
-    return starlink_parse_response(response, status);
+    return starlink_parse_response(response, status\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get Starlink device info
@@ -242,14 +242,14 @@ int starlink_get_device_info(starlink_device_info_t *device_info) {
     }
     
     char response[4096];
-    int result = starlink_send_request(STARLINK_METHOD_GET_DEVICE_INFO, response, sizeof(response));
+    int result = starlink_send_request(STARLINK_METHOD_GET_DEVICE_INFO, response, sizeof(response)\n"\n"\n"\n"\n"\n"\n"\n");
     if (result < 0) {
         return -1;
     }
     
     starlink_status_response_t status;
     if (starlink_parse_response(response, &status) == 0) {
-        memcpy(device_info, &status.device_info, sizeof(starlink_device_info_t));
+        memcpy(device_info, &status.device_info, sizeof(starlink_device_info_t)\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
@@ -263,7 +263,7 @@ int starlink_get_location(starlink_lla_position_t *location) {
     }
     
     char response[4096];
-    int result = starlink_send_request(STARLINK_METHOD_GET_LOCATION, response, sizeof(response));
+    int result = starlink_send_request(STARLINK_METHOD_GET_LOCATION, response, sizeof(response)\n"\n"\n"\n"\n"\n"\n"\n");
     if (result < 0) {
         return -1;
     }
@@ -292,6 +292,6 @@ const starlink_config_t* starlink_get_config(void) {
 
 // Cleanup Starlink client
 void starlink_client_cleanup(void) {
-    starlink_disconnect();
+    starlink_disconnect(\n"\n"\n"\n"\n"\n"\n"\n");
     g_starlink_state.initialized = false;
 }

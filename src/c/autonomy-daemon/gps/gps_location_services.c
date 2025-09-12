@@ -15,12 +15,12 @@
 #include <json-c/json.h>
 
 // Forward declarations
-static int try_nominatim_service(double lat, double lon, gps_location_info_t *location_info);
-static int try_google_service(double lat, double lon, gps_location_info_t *location_info);
-static int try_here_service(double lat, double lon, gps_location_info_t *location_info);
-static int try_custom_service(double lat, double lon, gps_location_info_t *location_info);
-static int parse_nominatim_response(const char* json_data, gps_location_info_t *location_info);
-static int parse_here_response(const char* json_data, gps_location_info_t *location_info);
+static int try_nominatim_service(double lat, double lon, gps_location_info_t *location_info\n"\n"\n"\n"\n"\n"\n"\n");
+static int try_google_service(double lat, double lon, gps_location_info_t *location_info\n"\n"\n"\n"\n"\n"\n"\n");
+static int try_here_service(double lat, double lon, gps_location_info_t *location_info\n"\n"\n"\n"\n"\n"\n"\n");
+static int try_custom_service(double lat, double lon, gps_location_info_t *location_info\n"\n"\n"\n"\n"\n"\n"\n");
+static int parse_nominatim_response(const char* json_data, gps_location_info_t *location_info\n"\n"\n"\n"\n"\n"\n"\n");
+static int parse_here_response(const char* json_data, gps_location_info_t *location_info\n"\n"\n"\n"\n"\n"\n"\n");
 
 // External reference to global configuration
 extern autonomy_config_t g_config;
@@ -44,12 +44,12 @@ static bool g_location_services_initialized = false; // Use configurable setting
 static pthread_mutex_t g_location_services_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
-int find_location_in_cache(double lat, double lon);
-void add_location_to_cache(const gps_location_info_t *location_info);
-int find_oldest_cache_entry(void);
-int perform_reverse_geocoding(double lat, double lon, gps_location_info_t *location_info);
-int try_reverse_geocoding_service(gps_location_service_t service, double lat, double lon, gps_location_info_t *location_info);
-void create_basic_location_info(double lat, double lon, gps_location_info_t *location_info);
+int find_location_in_cache(double lat, double lon\n"\n"\n"\n"\n"\n"\n"\n");
+void add_location_to_cache(const gps_location_info_t *location_info\n"\n"\n"\n"\n"\n"\n"\n");
+int find_oldest_cache_entry(void\n"\n"\n"\n"\n"\n"\n"\n");
+int perform_reverse_geocoding(double lat, double lon, gps_location_info_t *location_info\n"\n"\n"\n"\n"\n"\n"\n");
+int try_reverse_geocoding_service(gps_location_service_t service, double lat, double lon, gps_location_info_t *location_info\n"\n"\n"\n"\n"\n"\n"\n");
+void create_basic_location_info(double lat, double lon, gps_location_info_t *location_info\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Reverse geocode GPS coordinates
 int gps_location_services_reverse_geocode(double lat, double lon, gps_location_info_t *location_info) {
@@ -57,64 +57,64 @@ int gps_location_services_reverse_geocode(double lat, double lon, gps_location_i
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_location_services_mutex);
+    pthread_mutex_lock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_location_services.total_requests++;
     
     // Check cache first
-    int cache_index = find_location_in_cache(lat, lon);
+    int cache_index = find_location_in_cache(lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
     if (cache_index >= 0) {
         // Return cached location
         gps_location_cache_entry_t *cache_entry = &g_location_services.location_cache[cache_index];
         
         location_info->lat = cache_entry->lat;
         location_info->lon = cache_entry->lon;
-        safe_strncpy(location_info->place_name, cache_entry->place_name, sizeof(location_info->place_name));
+        safe_strncpy(location_info->place_name, cache_entry->place_name, sizeof(location_info->place_name)\n"\n"\n"\n"\n"\n"\n"\n");
         location_info->place_name[sizeof(location_info->place_name) - 1] = '\0';
-        safe_strncpy(location_info->address, cache_entry->address, sizeof(location_info->address));
+        safe_strncpy(location_info->address, cache_entry->address, sizeof(location_info->address)\n"\n"\n"\n"\n"\n"\n"\n");
         location_info->address[sizeof(location_info->address) - 1] = '\0';
-        safe_strncpy(location_info->country, cache_entry->country, sizeof(location_info->country));
+        safe_strncpy(location_info->country, cache_entry->country, sizeof(location_info->country)\n"\n"\n"\n"\n"\n"\n"\n");
         location_info->country[sizeof(location_info->country) - 1] = '\0';
-        safe_strncpy(location_info->state, cache_entry->state, sizeof(location_info->state));
+        safe_strncpy(location_info->state, cache_entry->state, sizeof(location_info->state)\n"\n"\n"\n"\n"\n"\n"\n");
         location_info->state[sizeof(location_info->state) - 1] = '\0';
-        safe_strncpy(location_info->city, cache_entry->city, sizeof(location_info->city));
+        safe_strncpy(location_info->city, cache_entry->city, sizeof(location_info->city)\n"\n"\n"\n"\n"\n"\n"\n");
         location_info->city[sizeof(location_info->city) - 1] = '\0';
-        safe_strncpy(location_info->postal_code, cache_entry->postal_code, sizeof(location_info->postal_code));
+        safe_strncpy(location_info->postal_code, cache_entry->postal_code, sizeof(location_info->postal_code)\n"\n"\n"\n"\n"\n"\n"\n");
         location_info->postal_code[sizeof(location_info->postal_code) - 1] = '\0';
         location_info->service_used = cache_entry->service_used;
         location_info->timestamp = cache_entry->timestamp;
         
         g_location_services.cache_hits++;
         
-        pthread_mutex_unlock(&g_location_services_mutex);
+        pthread_mutex_unlock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         
-        LOGX_DEBUG_MSG("Location cache hit for (%.6f, %.6f): %s", lat, lon, cache_entry->place_name);
+        printf("DEBUG: "Location cache hit for (%.6f, %.6f): %s", lat, lon, cache_entry->place_name\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
     g_location_services.cache_misses++;
     
     // Perform reverse geocoding
-    int result = perform_reverse_geocoding(lat, lon, location_info);
+    int result = perform_reverse_geocoding(lat, lon, location_info\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == AUTONOMY_SUCCESS) {
         // Add to cache
-        add_location_to_cache(location_info);
+        add_location_to_cache(location_info\n"\n"\n"\n"\n"\n"\n"\n");
         g_location_services.successful_requests++;
     } else {
         g_location_services.failed_requests++;
     }
     
-    g_location_services.last_request = time(NULL);
+    g_location_services.last_request = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(&g_location_services_mutex);
+    pthread_mutex_unlock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return result;
 }
 
 // Find location in cache
 int find_location_in_cache(double lat, double lon) {
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < MAX_LOCATION_CACHE; i++) {
         if (!g_location_services.location_cache[i].active) {
@@ -130,7 +130,7 @@ int find_location_in_cache(double lat, double lon) {
         }
         
         // Check if coordinates are within cache radius
-        double distance = gps_coordinate_distance(lat, lon, cache_entry->lat, cache_entry->lon);
+        double distance = gps_coordinate_distance(lat, lon, cache_entry->lat, cache_entry->lon\n"\n"\n"\n"\n"\n"\n"\n");
         if (distance <= g_location_services.cache_radius) {
             return i;
         }
@@ -152,7 +152,7 @@ void add_location_to_cache(const gps_location_info_t *location_info) {
     
     if (cache_index < 0) {
         // No free slots, remove oldest entry
-        cache_index = find_oldest_cache_entry();
+        cache_index = find_oldest_cache_entry(\n"\n"\n"\n"\n"\n"\n"\n");
         if (cache_index < 0) {
             return;
         }
@@ -161,30 +161,30 @@ void add_location_to_cache(const gps_location_info_t *location_info) {
     // Add location to cache
     gps_location_cache_entry_t *cache_entry = &g_location_services.location_cache[cache_index];
     cache_entry->active = true;
-    cache_entry->timestamp = time(NULL);
+    cache_entry->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     cache_entry->lat = location_info->lat;
     cache_entry->lon = location_info->lon;
-    safe_strncpy(cache_entry->place_name, location_info->place_name, sizeof(cache_entry->place_name));
+    safe_strncpy(cache_entry->place_name, location_info->place_name, sizeof(cache_entry->place_name)\n"\n"\n"\n"\n"\n"\n"\n");
     cache_entry->place_name[sizeof(cache_entry->place_name) - 1] = '\0';
-    safe_strncpy(cache_entry->address, location_info->address, sizeof(cache_entry->address));
+    safe_strncpy(cache_entry->address, location_info->address, sizeof(cache_entry->address)\n"\n"\n"\n"\n"\n"\n"\n");
     cache_entry->address[sizeof(cache_entry->address) - 1] = '\0';
-    safe_strncpy(cache_entry->country, location_info->country, sizeof(cache_entry->country));
+    safe_strncpy(cache_entry->country, location_info->country, sizeof(cache_entry->country)\n"\n"\n"\n"\n"\n"\n"\n");
     cache_entry->country[sizeof(cache_entry->country) - 1] = '\0';
-    safe_strncpy(cache_entry->state, location_info->state, sizeof(cache_entry->state));
+    safe_strncpy(cache_entry->state, location_info->state, sizeof(cache_entry->state)\n"\n"\n"\n"\n"\n"\n"\n");
     cache_entry->state[sizeof(cache_entry->state) - 1] = '\0';
-    safe_strncpy(cache_entry->city, location_info->city, sizeof(cache_entry->city));
+    safe_strncpy(cache_entry->city, location_info->city, sizeof(cache_entry->city)\n"\n"\n"\n"\n"\n"\n"\n");
     cache_entry->city[sizeof(cache_entry->city) - 1] = '\0';
-    safe_strncpy(cache_entry->postal_code, location_info->postal_code, sizeof(cache_entry->postal_code));
+    safe_strncpy(cache_entry->postal_code, location_info->postal_code, sizeof(cache_entry->postal_code)\n"\n"\n"\n"\n"\n"\n"\n");
     cache_entry->postal_code[sizeof(cache_entry->postal_code) - 1] = '\0';
     cache_entry->service_used = location_info->service_used;
     
-    LOGX_DEBUG_MSG("Added location to cache: %s", location_info->place_name);
+    printf("DEBUG: "Added location to cache: %s", location_info->place_name\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Find oldest cache entry
 int find_oldest_cache_entry(void) {
     int oldest_index = -1;
-    time_t oldest_time = time(NULL);
+    time_t oldest_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < MAX_LOCATION_CACHE; i++) {
         if (g_location_services.location_cache[i].active && 
@@ -208,14 +208,14 @@ int perform_reverse_geocoding(double lat, double lon, gps_location_info_t *locat
     };
     
     for (int i = 0; i < sizeof(services) / sizeof(services[0]); i++) {
-        int result = try_reverse_geocoding_service(services[i], lat, lon, location_info);
+        int result = try_reverse_geocoding_service(services[i], lat, lon, location_info\n"\n"\n"\n"\n"\n"\n"\n");
         if (result == AUTONOMY_SUCCESS) {
             return AUTONOMY_SUCCESS;
         }
     }
     
     // If all services fail, create a basic location info
-    create_basic_location_info(lat, lon, location_info);
+    create_basic_location_info(lat, lon, location_info\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -224,13 +224,13 @@ int try_reverse_geocoding_service(gps_location_service_t service, double lat, do
                                         gps_location_info_t *location_info) {
     switch (service) {
         case LOCATION_SERVICE_NOMINATIM:
-            return try_nominatim_service(lat, lon, location_info);
+            return try_nominatim_service(lat, lon, location_info\n"\n"\n"\n"\n"\n"\n"\n");
         case LOCATION_SERVICE_GOOGLE:
-            return try_google_service(lat, lon, location_info);
+            return try_google_service(lat, lon, location_info\n"\n"\n"\n"\n"\n"\n"\n");
         case LOCATION_SERVICE_HERE:
-            return try_here_service(lat, lon, location_info);
+            return try_here_service(lat, lon, location_info\n"\n"\n"\n"\n"\n"\n"\n");
         case LOCATION_SERVICE_CUSTOM:
-            return try_custom_service(lat, lon, location_info);
+            return try_custom_service(lat, lon, location_info\n"\n"\n"\n"\n"\n"\n"\n");
         default:
             return AUTONOMY_ERROR_NOT_SUPPORTED;
     }
@@ -245,13 +245,13 @@ int try_nominatim_service(double lat, double lon, gps_location_info_t *location_
     // Build Nominatim reverse geocoding URL
     snprintf(url, sizeof(url), 
              "https://nominatim.openstreetmap.org/reverse?format=json&lat=%.6f&lon=%.6f&zoom=18&addressdetails=1",
-             lat, lon);
+             lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Make HTTP request using shared HTTP client
-    result = http_client_get(url, 30, &response);
+    result = http_client_get(url, 30, &response\n"\n"\n"\n"\n"\n"\n"\n");
     if (result != 0 || !response.success) {
-        LOGX_ERROR_MSG("Nominatim API request failed for (%.6f, %.6f)", lat, lon);
-        http_response_cleanup(&response);
+        printf("ERROR: "Nominatim API request failed for (%.6f, %.6f)", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
+        http_response_cleanup(&response\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NETWORK;
     }
     
@@ -259,49 +259,49 @@ int try_nominatim_service(double lat, double lon, gps_location_info_t *location_
     location_info->lat = lat;
     location_info->lon = lon;
     location_info->service_used = LOCATION_SERVICE_NOMINATIM;
-    location_info->timestamp = time(NULL);
+    location_info->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Clear all fields first
-    memset(location_info->place_name, 0, sizeof(location_info->place_name));
-    memset(location_info->address, 0, sizeof(location_info->address));
-    memset(location_info->country, 0, sizeof(location_info->country));
-    memset(location_info->state, 0, sizeof(location_info->state));
-    memset(location_info->city, 0, sizeof(location_info->city));
-    memset(location_info->postal_code, 0, sizeof(location_info->postal_code));
+    memset(location_info->place_name, 0, sizeof(location_info->place_name)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(location_info->address, 0, sizeof(location_info->address)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(location_info->country, 0, sizeof(location_info->country)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(location_info->state, 0, sizeof(location_info->state)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(location_info->city, 0, sizeof(location_info->city)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(location_info->postal_code, 0, sizeof(location_info->postal_code)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Parse JSON response
-    result = parse_nominatim_response(response.data, location_info);
+    result = parse_nominatim_response(response.data, location_info\n"\n"\n"\n"\n"\n"\n"\n");
     if (result != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to parse Nominatim response for (%.6f, %.6f)", lat, lon);
-        http_response_cleanup(&response);
+        printf("ERROR: "Failed to parse Nominatim response for (%.6f, %.6f)", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
+        http_response_cleanup(&response\n"\n"\n"\n"\n"\n"\n"\n");
         return result;
     }
     
     // Fallback to basic info if parsing failed to populate fields
     if (strlen(location_info->place_name) == 0) {
         snprintf(location_info->place_name, sizeof(location_info->place_name), 
-                 "Location at %.4f, %.4f", lat, lon);
+                 "Location at %.4f, %.4f", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (strlen(location_info->address) == 0) {
         snprintf(location_info->address, sizeof(location_info->address), 
-                 "Unknown Address");
+                 "Unknown Address"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (strlen(location_info->country) == 0) {
         snprintf(location_info->country, sizeof(location_info->country), 
-                 "Unknown Country");
+                 "Unknown Country"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (strlen(location_info->state) == 0) {
         snprintf(location_info->state, sizeof(location_info->state), 
-                 "Unknown State");
+                 "Unknown State"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (strlen(location_info->city) == 0) {
         snprintf(location_info->city, sizeof(location_info->city), 
-                 "Unknown City");
+                 "Unknown City"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    http_response_cleanup(&response);
+    http_response_cleanup(&response\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("Nominatim service response for (%.6f, %.6f): %s", lat, lon, location_info->place_name);
+    printf("DEBUG: "Nominatim service response for (%.6f, %.6f): %s", lat, lon, location_info->place_name\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -311,9 +311,9 @@ int try_google_service(double lat, double lon, gps_location_info_t *location_inf
     int result;
     
     // Use the existing Google API implementation
-    result = gps_google_api_reverse_geocode(lat, lon, &google_location);
+    result = gps_google_api_reverse_geocode(lat, lon, &google_location\n"\n"\n"\n"\n"\n"\n"\n");
     if (result != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Google API reverse geocoding failed for (%.6f, %.6f)", lat, lon);
+        printf("ERROR: "Google API reverse geocoding failed for (%.6f, %.6f)", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
         return result;
     }
     
@@ -321,15 +321,15 @@ int try_google_service(double lat, double lon, gps_location_info_t *location_inf
     location_info->lat = lat;
     location_info->lon = lon;
     location_info->service_used = LOCATION_SERVICE_GOOGLE;
-    location_info->timestamp = time(NULL);
+    location_info->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Copy Google API response data
-    safe_strncpy(location_info->place_name, google_location.formatted_address, sizeof(location_info->place_name));
-    safe_strncpy(location_info->address, google_location.formatted_address, sizeof(location_info->address));
-    safe_strncpy(location_info->country, google_location.country, sizeof(location_info->country));
-    safe_strncpy(location_info->state, google_location.administrative_area, sizeof(location_info->state));
-    safe_strncpy(location_info->city, google_location.locality, sizeof(location_info->city));
-    safe_strncpy(location_info->postal_code, google_location.postal_code, sizeof(location_info->postal_code));
+    safe_strncpy(location_info->place_name, google_location.formatted_address, sizeof(location_info->place_name)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(location_info->address, google_location.formatted_address, sizeof(location_info->address)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(location_info->country, google_location.country, sizeof(location_info->country)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(location_info->state, google_location.administrative_area, sizeof(location_info->state)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(location_info->city, google_location.locality, sizeof(location_info->city)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(location_info->postal_code, google_location.postal_code, sizeof(location_info->postal_code)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Ensure null termination
     location_info->place_name[sizeof(location_info->place_name) - 1] = '\0';
@@ -339,7 +339,7 @@ int try_google_service(double lat, double lon, gps_location_info_t *location_inf
     location_info->city[sizeof(location_info->city) - 1] = '\0';
     location_info->postal_code[sizeof(location_info->postal_code) - 1] = '\0';
     
-    LOGX_DEBUG_MSG("Google service response for (%.6f, %.6f): %s", lat, lon, location_info->place_name);
+    printf("DEBUG: "Google service response for (%.6f, %.6f): %s", lat, lon, location_info->place_name\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -353,16 +353,16 @@ int try_here_service(double lat, double lon, gps_location_info_t *location_info)
     const char* here_api_key = NULL;
     
     // First try to get from environment variable
-    here_api_key = getenv("HERE_API_KEY");
+    here_api_key = getenv("HERE_API_KEY"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // If not found in environment, try to get from UCI configuration
     if (!here_api_key) {
-        FILE *uci_fp = popen("uci get autonomy.gps.here_api_key 2>/dev/null", "r");
+        FILE *uci_fp = popen("uci get autonomy.gps.here_api_key 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
         if (uci_fp) {
             char key_buffer[256];
             if (fgets(key_buffer, sizeof(key_buffer), uci_fp)) {
                 // Remove newline
-                char *newline = strchr(key_buffer, '\n');
+                char *newline = strchr(key_buffer, '\n'\n"\n"\n"\n"\n"\n"\n"\n");
                 if (newline) *newline = '\0';
                 
                 // Remove quotes if present
@@ -373,26 +373,26 @@ int try_here_service(double lat, double lon, gps_location_info_t *location_info)
                     here_api_key = key_buffer;
                 }
             }
-            pclose(uci_fp);
+            pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // If still no API key, use a default or return error
     if (!here_api_key || strlen(here_api_key) == 0) {
-        LOGX_WARN_MSG("HERE API key not configured, skipping reverse geocoding");
+        printf("WARN: "HERE API key not configured, skipping reverse geocoding"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_CONFIGURED;
     }
     
     // Build HERE reverse geocoding URL
     snprintf(url, sizeof(url), 
              "https://revgeocode.search.hereapi.com/v1/revgeocode?at=%.6f,%.6f&apikey=%s",
-             lat, lon, here_api_key);
+             lat, lon, here_api_key\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Make HTTP request using shared HTTP client
-    result = http_client_get(url, 30, &response);
+    result = http_client_get(url, 30, &response\n"\n"\n"\n"\n"\n"\n"\n");
     if (result != 0 || !response.success) {
-        LOGX_ERROR_MSG("HERE API request failed for (%.6f, %.6f)", lat, lon);
-        http_response_cleanup(&response);
+        printf("ERROR: "HERE API request failed for (%.6f, %.6f)", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
+        http_response_cleanup(&response\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NETWORK;
     }
     
@@ -400,49 +400,49 @@ int try_here_service(double lat, double lon, gps_location_info_t *location_info)
     location_info->lat = lat;
     location_info->lon = lon;
     location_info->service_used = LOCATION_SERVICE_HERE;
-    location_info->timestamp = time(NULL);
+    location_info->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Clear all fields first
-    memset(location_info->place_name, 0, sizeof(location_info->place_name));
-    memset(location_info->address, 0, sizeof(location_info->address));
-    memset(location_info->country, 0, sizeof(location_info->country));
-    memset(location_info->state, 0, sizeof(location_info->state));
-    memset(location_info->city, 0, sizeof(location_info->city));
-    memset(location_info->postal_code, 0, sizeof(location_info->postal_code));
+    memset(location_info->place_name, 0, sizeof(location_info->place_name)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(location_info->address, 0, sizeof(location_info->address)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(location_info->country, 0, sizeof(location_info->country)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(location_info->state, 0, sizeof(location_info->state)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(location_info->city, 0, sizeof(location_info->city)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(location_info->postal_code, 0, sizeof(location_info->postal_code)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Parse JSON response
-    result = parse_here_response(response.data, location_info);
+    result = parse_here_response(response.data, location_info\n"\n"\n"\n"\n"\n"\n"\n");
     if (result != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to parse HERE response for (%.6f, %.6f)", lat, lon);
-        http_response_cleanup(&response);
+        printf("ERROR: "Failed to parse HERE response for (%.6f, %.6f)", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
+        http_response_cleanup(&response\n"\n"\n"\n"\n"\n"\n"\n");
         return result;
     }
     
     // Fallback to basic info if parsing failed to populate fields
     if (strlen(location_info->place_name) == 0) {
         snprintf(location_info->place_name, sizeof(location_info->place_name), 
-                 "Location at %.4f, %.4f", lat, lon);
+                 "Location at %.4f, %.4f", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (strlen(location_info->address) == 0) {
         snprintf(location_info->address, sizeof(location_info->address), 
-                 "Unknown Address");
+                 "Unknown Address"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (strlen(location_info->country) == 0) {
         snprintf(location_info->country, sizeof(location_info->country), 
-                 "Unknown Country");
+                 "Unknown Country"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (strlen(location_info->state) == 0) {
         snprintf(location_info->state, sizeof(location_info->state), 
-                 "Unknown State");
+                 "Unknown State"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (strlen(location_info->city) == 0) {
         snprintf(location_info->city, sizeof(location_info->city), 
-                 "Unknown City");
+                 "Unknown City"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    http_response_cleanup(&response);
+    http_response_cleanup(&response\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("HERE service response for (%.6f, %.6f): %s", lat, lon, location_info->place_name);
+    printf("DEBUG: "HERE service response for (%.6f, %.6f): %s", lat, lon, location_info->place_name\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -450,89 +450,89 @@ int try_here_service(double lat, double lon, gps_location_info_t *location_info)
 int try_custom_service(double lat, double lon, gps_location_info_t *location_info) {
     // Check if custom service script is configured
     char custom_script[256];
-    FILE *uci_fp = popen("uci get autonomy.gps.custom_location_script 2>/dev/null", "r");
+    FILE *uci_fp = popen("uci get autonomy.gps.custom_location_script 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (uci_fp && fgets(custom_script, sizeof(custom_script), uci_fp)) {
-        pclose(uci_fp);
+        pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Remove newline
-        char *newline = strchr(custom_script, '\n');
+        char *newline = strchr(custom_script, '\n'\n"\n"\n"\n"\n"\n"\n"\n");
         if (newline) *newline = '\0';
         
         // Execute custom script with coordinates
         char cmd[512];
-        snprintf(cmd, sizeof(cmd), "%s %.6f %.6f 2>/dev/null", custom_script, lat, lon);
+        snprintf(cmd, sizeof(cmd), "%s %.6f %.6f 2>/dev/null", custom_script, lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
         
-        FILE *script_fp = popen(cmd, "r");
+        FILE *script_fp = popen(cmd, "r"\n"\n"\n"\n"\n"\n"\n"\n");
         if (script_fp) {
             char response[1024];
             if (fgets(response, sizeof(response), script_fp)) {
                 // Parse script response (expected format: "place_name|address|city|state|country")
                 char *tokens[5];
                 int token_count = 0; // Use configurable value
-                char *token = strtok(response, "|");
+                char *token = strtok(response, "|"\n"\n"\n"\n"\n"\n"\n"\n");
                 while (token && token_count < 5) {
                     tokens[token_count++] = token;
-                    token = strtok(NULL, "|");
+                    token = strtok(NULL, "|"\n"\n"\n"\n"\n"\n"\n"\n");
                 }
-                pclose(script_fp);
+                pclose(script_fp\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 if (token_count >= 1) {
-                    safe_strncpy(location_info->place_name, tokens[0], sizeof(location_info->place_name));
+                    safe_strncpy(location_info->place_name, tokens[0], sizeof(location_info->place_name)\n"\n"\n"\n"\n"\n"\n"\n");
                     location_info->place_name[sizeof(location_info->place_name) - 1] = '\0';
                     
                     if (token_count >= 2) {
-                        safe_strncpy(location_info->address, tokens[1], sizeof(location_info->address));
+                        safe_strncpy(location_info->address, tokens[1], sizeof(location_info->address)\n"\n"\n"\n"\n"\n"\n"\n");
                         location_info->address[sizeof(location_info->address) - 1] = '\0';
                     }
                     if (token_count >= 3) {
-                        safe_strncpy(location_info->city, tokens[2], sizeof(location_info->city));
+                        safe_strncpy(location_info->city, tokens[2], sizeof(location_info->city)\n"\n"\n"\n"\n"\n"\n"\n");
                         location_info->city[sizeof(location_info->city) - 1] = '\0';
                     }
                     if (token_count >= 4) {
-                        safe_strncpy(location_info->state, tokens[3], sizeof(location_info->state));
+                        safe_strncpy(location_info->state, tokens[3], sizeof(location_info->state)\n"\n"\n"\n"\n"\n"\n"\n");
                         location_info->state[sizeof(location_info->state) - 1] = '\0';
                     }
                     if (token_count >= 5) {
-                        safe_strncpy(location_info->country, tokens[4], sizeof(location_info->country));
+                        safe_strncpy(location_info->country, tokens[4], sizeof(location_info->country)\n"\n"\n"\n"\n"\n"\n"\n");
                         location_info->country[sizeof(location_info->country) - 1] = '\0';
                     }
                     
                     location_info->lat = lat;
                     location_info->lon = lon;
                     location_info->service_used = LOCATION_SERVICE_CUSTOM;
-                    location_info->timestamp = time(NULL);
+                    location_info->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
                     
                     return AUTONOMY_SUCCESS;
                 }
             }
-            pclose(script_fp);
+            pclose(script_fp\n"\n"\n"\n"\n"\n"\n"\n");
         }
     } else {
-        if (uci_fp) pclose(uci_fp);
+        if (uci_fp) pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Fallback: create basic location info
     location_info->lat = lat;
     location_info->lon = lon;
     location_info->service_used = LOCATION_SERVICE_CUSTOM;
-    location_info->timestamp = time(NULL);
+    location_info->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     snprintf(location_info->place_name, sizeof(location_info->place_name), 
-             "Location at %.4f, %.4f", lat, lon);
+             "Location at %.4f, %.4f", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set default address components
-    safe_strncpy(location_info->address, "Unknown Address", sizeof(location_info->address));
+    safe_strncpy(location_info->address, "Unknown Address", sizeof(location_info->address)\n"\n"\n"\n"\n"\n"\n"\n");
     location_info->address[sizeof(location_info->address) - 1] = '\0';
-    safe_strncpy(location_info->country, "Unknown Country", sizeof(location_info->country));
+    safe_strncpy(location_info->country, "Unknown Country", sizeof(location_info->country)\n"\n"\n"\n"\n"\n"\n"\n");
     location_info->country[sizeof(location_info->country) - 1] = '\0';
-    safe_strncpy(location_info->state, "Unknown State", sizeof(location_info->state));
+    safe_strncpy(location_info->state, "Unknown State", sizeof(location_info->state)\n"\n"\n"\n"\n"\n"\n"\n");
     location_info->state[sizeof(location_info->state) - 1] = '\0';
-    safe_strncpy(location_info->city, "Unknown City", sizeof(location_info->city));
+    safe_strncpy(location_info->city, "Unknown City", sizeof(location_info->city)\n"\n"\n"\n"\n"\n"\n"\n");
     location_info->city[sizeof(location_info->city) - 1] = '\0';
-    safe_strncpy(location_info->postal_code, "00000", sizeof(location_info->postal_code));
+    safe_strncpy(location_info->postal_code, "00000", sizeof(location_info->postal_code)\n"\n"\n"\n"\n"\n"\n"\n");
     location_info->postal_code[sizeof(location_info->postal_code) - 1] = '\0';
     
-    LOGX_DEBUG_MSG("Custom service fallback response for (%.6f, %.6f)", lat, lon);
+    printf("DEBUG: "Custom service fallback response for (%.6f, %.6f)", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -541,17 +541,17 @@ void create_basic_location_info(double lat, double lon, gps_location_info_t *loc
     location_info->lat = lat;
     location_info->lon = lon;
     location_info->service_used = LOCATION_SERVICE_UNKNOWN;
-    location_info->timestamp = time(NULL);
+    location_info->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
 
     // Provide more meaningful information based on coordinates
     char hemisphere_lat = (lat >= 0) ? 'N' : 'S';
     char hemisphere_lon = (lon >= 0) ? 'E' : 'W';
-    double abs_lat = fabs(lat);
-    double abs_lon = fabs(lon);
+    double abs_lat = fabs(lat\n"\n"\n"\n"\n"\n"\n"\n");
+    double abs_lon = fabs(lon\n"\n"\n"\n"\n"\n"\n"\n");
 
     // Create descriptive location name
     snprintf(location_info->place_name, sizeof(location_info->place_name),
-             "%.2f%c, %.2f%c", abs_lat, hemisphere_lat, abs_lon, hemisphere_lon);
+             "%.2f%c, %.2f%c", abs_lat, hemisphere_lat, abs_lon, hemisphere_lon\n"\n"\n"\n"\n"\n"\n"\n");
 
     // Create more detailed address information
     char continent[32] = "Unknown Continent";
@@ -561,43 +561,43 @@ void create_basic_location_info(double lat, double lon, gps_location_info_t *loc
     if (lat >= -60 && lat <= 80) {
         if (lon >= -20 && lon <= 60) { // Europe/Africa
             if (lat >= 35) {
-                strcpy(continent, "Europe");
-                strcpy(region, "Northern Europe");
+                strcpy(continent, "Europe"\n"\n"\n"\n"\n"\n"\n"\n");
+                strcpy(region, "Northern Europe"\n"\n"\n"\n"\n"\n"\n"\n");
             } else if (lat >= 0) {
-                strcpy(continent, "Europe");
-                strcpy(region, "Southern Europe");
+                strcpy(continent, "Europe"\n"\n"\n"\n"\n"\n"\n"\n");
+                strcpy(region, "Southern Europe"\n"\n"\n"\n"\n"\n"\n"\n");
             } else {
-                strcpy(continent, "Africa");
-                strcpy(region, lat >= -20 ? "Northern Africa" : "Southern Africa");
+                strcpy(continent, "Africa"\n"\n"\n"\n"\n"\n"\n"\n");
+                strcpy(region, lat >= -20 ? "Northern Africa" : "Southern Africa"\n"\n"\n"\n"\n"\n"\n"\n");
             }
         } else if (lon >= -130 && lon <= -60) { // Americas
-            strcpy(continent, "North America");
-            strcpy(region, lat >= 30 ? "Northern US/Canada" : "Central/South America");
+            strcpy(continent, "North America"\n"\n"\n"\n"\n"\n"\n"\n");
+            strcpy(region, lat >= 30 ? "Northern US/Canada" : "Central/South America"\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (lon >= 100 && lon <= 180) { // Asia/Pacific
-            strcpy(continent, "Asia");
-            strcpy(region, lat >= 20 ? "East Asia" : "Southeast Asia");
+            strcpy(continent, "Asia"\n"\n"\n"\n"\n"\n"\n"\n");
+            strcpy(region, lat >= 20 ? "East Asia" : "Southeast Asia"\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (lon >= 60 && lon <= 100) { // Middle East/Asia
-            strcpy(continent, "Asia");
-            strcpy(region, "Central Asia");
+            strcpy(continent, "Asia"\n"\n"\n"\n"\n"\n"\n"\n");
+            strcpy(region, "Central Asia"\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
 
     // Create enhanced address
     snprintf(location_info->address, sizeof(location_info->address),
-             "Approximate Location: %s, %s (%.4f, %.4f)", region, continent, lat, lon);
+             "Approximate Location: %s, %s (%.4f, %.4f)", region, continent, lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
 
     // Set basic country/state info
-    snprintf(location_info->country, sizeof(location_info->country), "%s", continent);
-    snprintf(location_info->state, sizeof(location_info->state), "%s", region);
-    snprintf(location_info->city, sizeof(location_info->city), "Unknown City");
+    snprintf(location_info->country, sizeof(location_info->country), "%s", continent\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(location_info->state, sizeof(location_info->state), "%s", region\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(location_info->city, sizeof(location_info->city), "Unknown City"\n"\n"\n"\n"\n"\n"\n"\n");
 
     // Generate a pseudo postal code based on coordinates (for caching purposes)
     int postal_lat = (int)((abs_lat + 90) * 100); // 0-18000
     int postal_lon = (int)((abs_lon + 180) * 100); // 0-36000
     snprintf(location_info->postal_code, sizeof(location_info->postal_code),
-             "%04d-%04d", postal_lat, postal_lon);
+             "%04d-%04d", postal_lat, postal_lon\n"\n"\n"\n"\n"\n"\n"\n");
 
-    LOGX_WARN_MSG("All reverse geocoding services failed, created enhanced location info with geographic context");
+    printf("WARN: "All reverse geocoding services failed, created enhanced location info with geographic context"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
@@ -608,7 +608,7 @@ int gps_location_services_get_status(gps_location_services_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_location_services_mutex);
+    pthread_mutex_lock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_location_services.enabled;
     status->default_service = g_location_services.default_service;
@@ -633,7 +633,7 @@ int gps_location_services_get_status(gps_location_services_status_t *status) {
         status->success_rate = 0.0;
     }
     
-    pthread_mutex_unlock(&g_location_services_mutex);
+    pthread_mutex_unlock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -644,7 +644,7 @@ int gps_location_services_get_config(gps_location_services_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_location_services_mutex);
+    pthread_mutex_lock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     config->enabled = g_location_services.enabled;
     config->max_cache = g_location_services.max_cache;
@@ -653,7 +653,7 @@ int gps_location_services_get_config(gps_location_services_config_t *config) {
     config->cache_radius = g_location_services.cache_radius;
     config->default_service = g_location_services.default_service;
     
-    pthread_mutex_unlock(&g_location_services_mutex);
+    pthread_mutex_unlock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -664,7 +664,7 @@ int gps_location_services_set_config(const gps_location_services_config_t *confi
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_location_services_mutex);
+    pthread_mutex_lock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_location_services.enabled = config->enabled;
     g_location_services.max_cache = config->max_cache;
@@ -673,9 +673,9 @@ int gps_location_services_set_config(const gps_location_services_config_t *confi
     g_location_services.cache_radius = config->cache_radius;
     g_location_services.default_service = config->default_service;
     
-    pthread_mutex_unlock(&g_location_services_mutex);
+    pthread_mutex_unlock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS location services configuration updated");
+    printf("INFO: "GPS location services configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -685,11 +685,11 @@ int gps_location_services_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_location_services_mutex);
+    pthread_mutex_lock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_location_services.enabled = enabled;
-    pthread_mutex_unlock(&g_location_services_mutex);
+    pthread_mutex_unlock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS location services %s", enabled ? "enabled" : "disabled");
+    printf("INFO: "GPS location services %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -699,15 +699,15 @@ int gps_location_services_clear_cache(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_location_services_mutex);
+    pthread_mutex_lock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < MAX_LOCATION_CACHE; i++) {
         g_location_services.location_cache[i].active = false;
     }
     
-    pthread_mutex_unlock(&g_location_services_mutex);
+    pthread_mutex_unlock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS location services cache cleared");
+    printf("INFO: "GPS location services cache cleared"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -717,7 +717,7 @@ int gps_location_services_reset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_location_services_mutex);
+    pthread_mutex_lock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_location_services.cache_hits = 0;
     g_location_services.cache_misses = 0;
@@ -731,9 +731,9 @@ int gps_location_services_reset(void) {
         g_location_services.location_cache[i].active = false;
     }
     
-    pthread_mutex_unlock(&g_location_services_mutex);
+    pthread_mutex_unlock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS location services reset");
+    printf("INFO: "GPS location services reset"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -743,29 +743,29 @@ void gps_location_services_cleanup(void) {
         return;
     }
     
-    pthread_mutex_destroy(&g_location_services_mutex);
+    pthread_mutex_destroy(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_location_services_initialized = false; // Use configurable setting
     
     // Cleanup HTTP client
-    http_client_cleanup();
+    http_client_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS location services cleaned up");
+    printf("INFO: "GPS location services cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // JSON parsing functions (HTTP requests now handled by shared http_client)
 
 // Parse Nominatim API response
 static int parse_nominatim_response(const char* json_data, gps_location_info_t *location_info) {
-    json_object* root = json_tokener_parse(json_data);
+    json_object* root = json_tokener_parse(json_data\n"\n"\n"\n"\n"\n"\n"\n");
     if (!root) {
-        LOGX_ERROR_MSG("Failed to parse Nominatim JSON response");
+        printf("ERROR: "Failed to parse Nominatim JSON response"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_DATA;
     }
     
     // Nominatim returns an array, get the first result
     json_object* results = NULL;
     if (json_object_object_get_ex(root, "results", &results) && json_object_is_type(results, json_type_array)) {
-        json_object* first_result = json_object_array_get_idx(results, 0);
+        json_object* first_result = json_object_array_get_idx(results, 0\n"\n"\n"\n"\n"\n"\n"\n");
         if (first_result) {
             // Parse address components
             json_object* address = NULL;
@@ -776,66 +776,66 @@ static int parse_nominatim_response(const char* json_data, gps_location_info_t *
                 json_object* postcode = NULL;
                 
                 if (json_object_object_get_ex(address, "country", &country)) {
-                    snprintf(location_info->country, sizeof(location_info->country), "%s", json_object_get_string(country));
+                    snprintf(location_info->country, sizeof(location_info->country), "%s", json_object_get_string(country)\n"\n"\n"\n"\n"\n"\n"\n");
                 }
                 if (json_object_object_get_ex(address, "state", &state)) {
-                    snprintf(location_info->state, sizeof(location_info->state), "%s", json_object_get_string(state));
+                    snprintf(location_info->state, sizeof(location_info->state), "%s", json_object_get_string(state)\n"\n"\n"\n"\n"\n"\n"\n");
                 }
                 if (json_object_object_get_ex(address, "city", &city)) {
-                    snprintf(location_info->city, sizeof(location_info->city), "%s", json_object_get_string(city));
+                    snprintf(location_info->city, sizeof(location_info->city), "%s", json_object_get_string(city)\n"\n"\n"\n"\n"\n"\n"\n");
                 }
                 if (json_object_object_get_ex(address, "postcode", &postcode)) {
-                    snprintf(location_info->postal_code, sizeof(location_info->postal_code), "%s", json_object_get_string(postcode));
+                    snprintf(location_info->postal_code, sizeof(location_info->postal_code), "%s", json_object_get_string(postcode)\n"\n"\n"\n"\n"\n"\n"\n");
                 }
             }
             
             // Get display name (place name)
             json_object* display_name = NULL;
             if (json_object_object_get_ex(first_result, "display_name", &display_name)) {
-                snprintf(location_info->place_name, sizeof(location_info->place_name), "%s", json_object_get_string(display_name));
+                snprintf(location_info->place_name, sizeof(location_info->place_name), "%s", json_object_get_string(display_name)\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             // Get formatted address
             json_object* formatted = NULL;
             if (json_object_object_get_ex(first_result, "formatted", &formatted)) {
-                snprintf(location_info->address, sizeof(location_info->address), "%s", json_object_get_string(formatted));
+                snprintf(location_info->address, sizeof(location_info->address), "%s", json_object_get_string(formatted)\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
     
-    json_object_put(root);
+    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Parse Google Geocoding API response
 static int parse_google_response(const char* json_data, gps_location_info_t *location_info) {
-    json_object* root = json_tokener_parse(json_data);
+    json_object* root = json_tokener_parse(json_data\n"\n"\n"\n"\n"\n"\n"\n");
     if (!root) {
-        LOGX_ERROR_MSG("Failed to parse Google JSON response");
+        printf("ERROR: "Failed to parse Google JSON response"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_DATA;
     }
     
     // Check for errors
     json_object* error = NULL;
     if (json_object_object_get_ex(root, "error", &error)) {
-        LOGX_ERROR_MSG("Google API returned error");
-        json_object_put(root);
+        printf("ERROR: "Google API returned error"\n"\n"\n"\n"\n"\n"\n"\n");
+        json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_DATA;
     }
     
     // Get results array
     json_object* results = NULL;
     if (json_object_object_get_ex(root, "results", &results) && json_object_is_type(results, json_type_array)) {
-        json_object* first_result = json_object_array_get_idx(results, 0);
+        json_object* first_result = json_object_array_get_idx(results, 0\n"\n"\n"\n"\n"\n"\n"\n");
         if (first_result) {
             // Parse address components
             json_object* address_components = NULL;
             if (json_object_object_get_ex(first_result, "address_components", &address_components) && 
                 json_object_is_type(address_components, json_type_array)) {
                 
-                int num_components = json_object_array_length(address_components);
+                int num_components = json_object_array_length(address_components\n"\n"\n"\n"\n"\n"\n"\n");
                 for (int i = 0; i < num_components; i++) {
-                    json_object* component = json_object_array_get_idx(address_components, i);
+                    json_object* component = json_object_array_get_idx(address_components, i\n"\n"\n"\n"\n"\n"\n"\n");
                     json_object* types = NULL;
                     json_object* long_name = NULL;
                     
@@ -843,19 +843,19 @@ static int parse_google_response(const char* json_data, gps_location_info_t *loc
                         json_object_object_get_ex(component, "long_name", &long_name)) {
                         
                         // Check component types
-                        int num_types = json_object_array_length(types);
+                        int num_types = json_object_array_length(types\n"\n"\n"\n"\n"\n"\n"\n");
                         for (int j = 0; j < num_types; j++) {
-                            json_object* type = json_object_array_get_idx(types, j);
-                            const char* type_str = json_object_get_string(type);
+                            json_object* type = json_object_array_get_idx(types, j\n"\n"\n"\n"\n"\n"\n"\n");
+                            const char* type_str = json_object_get_string(type\n"\n"\n"\n"\n"\n"\n"\n");
                             
                             if (strcmp(type_str, "country") == 0) {
-                                snprintf(location_info->country, sizeof(location_info->country), "%s", json_object_get_string(long_name));
+                                snprintf(location_info->country, sizeof(location_info->country), "%s", json_object_get_string(long_name)\n"\n"\n"\n"\n"\n"\n"\n");
                             } else if (strcmp(type_str, "administrative_area_level_1") == 0) {
-                                snprintf(location_info->state, sizeof(location_info->state), "%s", json_object_get_string(long_name));
+                                snprintf(location_info->state, sizeof(location_info->state), "%s", json_object_get_string(long_name)\n"\n"\n"\n"\n"\n"\n"\n");
                             } else if (strcmp(type_str, "locality") == 0 || strcmp(type_str, "administrative_area_level_2") == 0) {
-                                snprintf(location_info->city, sizeof(location_info->city), "%s", json_object_get_string(long_name));
+                                snprintf(location_info->city, sizeof(location_info->city), "%s", json_object_get_string(long_name)\n"\n"\n"\n"\n"\n"\n"\n");
                             } else if (strcmp(type_str, "postal_code") == 0) {
-                                snprintf(location_info->postal_code, sizeof(location_info->postal_code), "%s", json_object_get_string(long_name));
+                                snprintf(location_info->postal_code, sizeof(location_info->postal_code), "%s", json_object_get_string(long_name)\n"\n"\n"\n"\n"\n"\n"\n");
                             }
                         }
                     }
@@ -865,32 +865,32 @@ static int parse_google_response(const char* json_data, gps_location_info_t *loc
             // Get formatted address
             json_object* formatted_address = NULL;
             if (json_object_object_get_ex(first_result, "formatted_address", &formatted_address)) {
-                snprintf(location_info->address, sizeof(location_info->address), "%s", json_object_get_string(formatted_address));
+                snprintf(location_info->address, sizeof(location_info->address), "%s", json_object_get_string(formatted_address)\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             // Use formatted address as place name if no specific place name
             if (strlen(location_info->place_name) == 0) {
-                snprintf(location_info->place_name, sizeof(location_info->place_name), "%s", location_info->address);
+                snprintf(location_info->place_name, sizeof(location_info->place_name), "%s", location_info->address\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
     
-    json_object_put(root);
+    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Parse HERE Geocoding API response
 static int parse_here_response(const char* json_data, gps_location_info_t *location_info) {
-    json_object* root = json_tokener_parse(json_data);
+    json_object* root = json_tokener_parse(json_data\n"\n"\n"\n"\n"\n"\n"\n");
     if (!root) {
-        LOGX_ERROR_MSG("Failed to parse HERE JSON response");
+        printf("ERROR: "Failed to parse HERE JSON response"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_DATA;
     }
     
     // Get results array
     json_object* results = NULL;
     if (json_object_object_get_ex(root, "results", &results) && json_object_is_type(results, json_type_array)) {
-        json_object* first_result = json_object_array_get_idx(results, 0);
+        json_object* first_result = json_object_array_get_idx(results, 0\n"\n"\n"\n"\n"\n"\n"\n");
         if (first_result) {
             // Parse address components
             json_object* address = NULL;
@@ -901,43 +901,43 @@ static int parse_here_response(const char* json_data, gps_location_info_t *locat
                 json_object* postal_code = NULL;
                 
                 if (json_object_object_get_ex(address, "country", &country)) {
-                    snprintf(location_info->country, sizeof(location_info->country), "%s", json_object_get_string(country));
+                    snprintf(location_info->country, sizeof(location_info->country), "%s", json_object_get_string(country)\n"\n"\n"\n"\n"\n"\n"\n");
                 }
                 if (json_object_object_get_ex(address, "state", &state)) {
-                    snprintf(location_info->state, sizeof(location_info->state), "%s", json_object_get_string(state));
+                    snprintf(location_info->state, sizeof(location_info->state), "%s", json_object_get_string(state)\n"\n"\n"\n"\n"\n"\n"\n");
                 }
                 if (json_object_object_get_ex(address, "city", &city)) {
-                    snprintf(location_info->city, sizeof(location_info->city), "%s", json_object_get_string(city));
+                    snprintf(location_info->city, sizeof(location_info->city), "%s", json_object_get_string(city)\n"\n"\n"\n"\n"\n"\n"\n");
                 }
                 if (json_object_object_get_ex(address, "postalCode", &postal_code)) {
-                    snprintf(location_info->postal_code, sizeof(location_info->postal_code), "%s", json_object_get_string(postal_code));
+                    snprintf(location_info->postal_code, sizeof(location_info->postal_code), "%s", json_object_get_string(postal_code)\n"\n"\n"\n"\n"\n"\n"\n");
                 }
             }
             
             // Get label (formatted address)
             json_object* label = NULL;
             if (json_object_object_get_ex(first_result, "label", &label)) {
-                snprintf(location_info->address, sizeof(location_info->address), "%s", json_object_get_string(label));
-                snprintf(location_info->place_name, sizeof(location_info->place_name), "%s", json_object_get_string(label));
+                snprintf(location_info->address, sizeof(location_info->address), "%s", json_object_get_string(label)\n"\n"\n"\n"\n"\n"\n"\n");
+                snprintf(location_info->place_name, sizeof(location_info->place_name), "%s", json_object_get_string(label)\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
     
-    json_object_put(root);
+    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Initialize GPS location services
 int gps_location_services_init(void) {
     if (g_location_services_initialized) {
-        LOGX_WARN_MSG("GPS location services already initialized");
+        printf("WARN: "GPS location services already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_location_services_mutex);
+    pthread_mutex_lock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize location services state
-    memset(&g_location_services, 0, sizeof(gps_location_services_t));
+    memset(&g_location_services, 0, sizeof(gps_location_services_t)\n"\n"\n"\n"\n"\n"\n"\n");
     g_location_services.enabled = true;
     g_location_services.max_cache = 1000;
     g_location_services.cache_ttl = 3600; // 1 hour
@@ -947,8 +947,8 @@ int gps_location_services_init(void) {
     
     g_location_services_initialized = true;
     
-    pthread_mutex_unlock(&g_location_services_mutex);
+    pthread_mutex_unlock(&g_location_services_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS location services initialized");
+    printf("INFO: "GPS location services initialized"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }

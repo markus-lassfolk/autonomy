@@ -33,93 +33,93 @@ typedef struct {
 } http_response_t;
 
 // Forward declarations
-static int init_cache(void);
-static int init_rate_limiter(void);
-static int init_contribution_manager(void);
-static int init_http_client(void);
-static void cleanup_cache(void);
-static void cleanup_rate_limiter(void);
-static void cleanup_contribution_manager(void);
-static void cleanup_http_client(void);
+static int init_cache(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int init_rate_limiter(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int init_contribution_manager(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int init_http_client(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void cleanup_cache(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void cleanup_rate_limiter(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void cleanup_contribution_manager(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void cleanup_http_client(void\n"\n"\n"\n"\n"\n"\n"\n");
 
-static size_t opencellid_curl_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response);
-static int make_api_request(const char* url, const char* post_data, http_response_t* response);
-static int parse_cell_location_response(const char* json_data, opencellid_cell_location_t* location);
-static int cache_get_cell_location(const opencellid_cell_identifier_t* cell_id, opencellid_cell_location_t* location);
-static int cache_set_cell_location(const opencellid_cell_location_t* location);
-static int rate_limiter_can_make_lookup(void);
-static int rate_limiter_can_make_contribution(void);
-static void rate_limiter_record_lookup(void);
-static void rate_limiter_record_contribution(void);
+static size_t opencellid_curl_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response\n"\n"\n"\n"\n"\n"\n"\n");
+static int make_api_request(const char* url, const char* post_data, http_response_t* response\n"\n"\n"\n"\n"\n"\n"\n");
+static int parse_cell_location_response(const char* json_data, opencellid_cell_location_t* location\n"\n"\n"\n"\n"\n"\n"\n");
+static int cache_get_cell_location(const opencellid_cell_identifier_t* cell_id, opencellid_cell_location_t* location\n"\n"\n"\n"\n"\n"\n"\n");
+static int cache_set_cell_location(const opencellid_cell_location_t* location\n"\n"\n"\n"\n"\n"\n"\n");
+static int rate_limiter_can_make_lookup(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int rate_limiter_can_make_contribution(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void rate_limiter_record_lookup(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void rate_limiter_record_contribution(void\n"\n"\n"\n"\n"\n"\n"\n");
 
-static int collect_cellular_environment_from_system(opencellid_cellular_environment_t* environment);
+static int collect_cellular_environment_from_system(opencellid_cellular_environment_t* environment\n"\n"\n"\n"\n"\n"\n"\n");
 static int perform_weighted_centroid_triangulation(const opencellid_cell_location_t* locations, 
                                                   int location_count,
                                                   const opencellid_serving_cell_t* serving_cell,
-                                                  opencellid_triangulation_result_t* result);
+                                                  opencellid_triangulation_result_t* result\n"\n"\n"\n"\n"\n"\n"\n");
 static int apply_timing_advance_constraint(const opencellid_serving_cell_t* serving_cell,
-                                         opencellid_triangulation_result_t* result);
+                                         opencellid_triangulation_result_t* result\n"\n"\n"\n"\n"\n"\n"\n");
 static double calculate_tower_weight(const opencellid_cell_location_t* location,
                                    const opencellid_serving_cell_t* serving_cell,
-                                   bool is_serving);
+                                   bool is_serving\n"\n"\n"\n"\n"\n"\n"\n");
 
-static void* contribution_thread_worker(void* arg);
-static void* health_monitor_thread_worker(void* arg);
+static void* contribution_thread_worker(void* arg\n"\n"\n"\n"\n"\n"\n"\n");
+static void* health_monitor_thread_worker(void* arg\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize the complete OpenCellID system
 int opencellid_system_init(const opencellid_config_t* config) {
     if (g_system_initialized) {
-        LOGX_WARN_MSG("OpenCellID system already initialized");
+        printf("WARN: "OpenCellID system already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
     if (!config) {
-        LOGX_ERROR_MSG("OpenCellID config is NULL");
+        printf("ERROR: "OpenCellID config is NULL"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     if (!config->enabled) {
-        LOGX_INFO_MSG("OpenCellID system disabled in configuration");
+        printf("INFO: "OpenCellID system disabled in configuration"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
     if (strlen(config->api_key) == 0) {
-        LOGX_ERROR_MSG("OpenCellID API key not configured");
+        printf("ERROR: "OpenCellID API key not configured"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_CONFIG;
     }
     
-    memset(&g_opencellid_system, 0, sizeof(opencellid_system_t));
+    memset(&g_opencellid_system, 0, sizeof(opencellid_system_t)\n"\n"\n"\n"\n"\n"\n"\n");
     g_opencellid_system.config = *config;
     
     // Initialize mutex
     if (pthread_mutex_init(&g_opencellid_system.mutex, NULL) != 0) {
-        LOGX_ERROR_MSG("Failed to initialize OpenCellID system mutex");
+        printf("ERROR: "Failed to initialize OpenCellID system mutex"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Initialize components
     if (init_cache() != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to initialize OpenCellID cache");
+        printf("ERROR: "Failed to initialize OpenCellID cache"\n"\n"\n"\n"\n"\n"\n"\n");
         goto cleanup;
     }
     
     if (init_rate_limiter() != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to initialize OpenCellID rate limiter");
+        printf("ERROR: "Failed to initialize OpenCellID rate limiter"\n"\n"\n"\n"\n"\n"\n"\n");
         goto cleanup;
     }
     
     if (init_contribution_manager() != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to initialize OpenCellID contribution manager");
+        printf("ERROR: "Failed to initialize OpenCellID contribution manager"\n"\n"\n"\n"\n"\n"\n"\n");
         goto cleanup;
     }
     
     if (init_http_client() != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to initialize OpenCellID HTTP client");
+        printf("ERROR: "Failed to initialize OpenCellID HTTP client"\n"\n"\n"\n"\n"\n"\n"\n");
         goto cleanup;
     }
     
     // Initialize statistics
-    g_opencellid_system.stats.stats_start_time = time(NULL);
+    g_opencellid_system.stats.stats_start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     g_opencellid_system.stats.healthy = true;
     
     // Start background threads
@@ -128,7 +128,7 @@ int opencellid_system_init(const opencellid_config_t* config) {
     if (config->contribution.enabled) {
         if (pthread_create(&g_opencellid_system.contribution_thread, NULL, 
                           contribution_thread_worker, NULL) != 0) {
-            LOGX_ERROR_MSG("Failed to create contribution thread");
+            printf("ERROR: "Failed to create contribution thread"\n"\n"\n"\n"\n"\n"\n"\n");
             goto cleanup;
         }
     }
@@ -136,27 +136,27 @@ int opencellid_system_init(const opencellid_config_t* config) {
     if (config->health_monitoring_enabled) {
         if (pthread_create(&g_opencellid_system.health_thread, NULL, 
                           health_monitor_thread_worker, NULL) != 0) {
-            LOGX_ERROR_MSG("Failed to create health monitor thread");
+            printf("ERROR: "Failed to create health monitor thread"\n"\n"\n"\n"\n"\n"\n"\n");
             goto cleanup;
         }
     }
     
     g_system_initialized = true; // Use configurable setting
     
-    LOGX_INFO_MSG("OpenCellID system initialized successfully",
+    printf("INFO: "OpenCellID system initialized successfully",
               "api_key_configured", strlen(config->api_key) > 0 ? "true" : "false",
               "cache_size_mb", config->cache.max_size_mb,
               "contribution_enabled", config->contribution.enabled ? "true" : "false",
-              "health_monitoring", config->health_monitoring_enabled ? "true" : "false");
+              "health_monitoring", config->health_monitoring_enabled ? "true" : "false"\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
     
 cleanup:
-    cleanup_http_client();
-    cleanup_contribution_manager();
-    cleanup_rate_limiter();
-    cleanup_cache();
-    pthread_mutex_destroy(&g_opencellid_system.mutex);
+    cleanup_http_client(\n"\n"\n"\n"\n"\n"\n"\n");
+    cleanup_contribution_manager(\n"\n"\n"\n"\n"\n"\n"\n");
+    cleanup_rate_limiter(\n"\n"\n"\n"\n"\n"\n"\n");
+    cleanup_cache(\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_ERROR_SYSTEM;
 }
 
@@ -164,33 +164,33 @@ cleanup:
 void opencellid_system_cleanup(void) {
     if (!g_system_initialized) return;
     
-    pthread_mutex_lock(&g_opencellid_system.mutex);
+    pthread_mutex_lock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Stop background threads
     g_opencellid_system.threads_running = false;
     
     if (g_opencellid_system.config.contribution.enabled) {
-        pthread_cancel(g_opencellid_system.contribution_thread);
-        pthread_join(g_opencellid_system.contribution_thread, NULL);
+        pthread_cancel(g_opencellid_system.contribution_thread\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_join(g_opencellid_system.contribution_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_opencellid_system.config.health_monitoring_enabled) {
-        pthread_cancel(g_opencellid_system.health_thread);
-        pthread_join(g_opencellid_system.health_thread, NULL);
+        pthread_cancel(g_opencellid_system.health_thread\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_join(g_opencellid_system.health_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Cleanup components
-    cleanup_http_client();
-    cleanup_contribution_manager();
-    cleanup_rate_limiter();
-    cleanup_cache();
+    cleanup_http_client(\n"\n"\n"\n"\n"\n"\n"\n");
+    cleanup_contribution_manager(\n"\n"\n"\n"\n"\n"\n"\n");
+    cleanup_rate_limiter(\n"\n"\n"\n"\n"\n"\n"\n");
+    cleanup_cache(\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(&g_opencellid_system.mutex);
-    pthread_mutex_destroy(&g_opencellid_system.mutex);
+    pthread_mutex_unlock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_system_initialized = false; // Use configurable setting
     
-    LOGX_INFO_MSG("OpenCellID system cleaned up");
+    printf("INFO: "OpenCellID system cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get current cellular environment
@@ -199,7 +199,7 @@ int opencellid_get_cellular_environment(opencellid_cellular_environment_t* envir
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    return collect_cellular_environment_from_system(environment);
+    return collect_cellular_environment_from_system(environment\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Perform triangulation based on cellular environment
@@ -209,10 +209,10 @@ int opencellid_triangulate_position(const opencellid_cellular_environment_t* env
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_opencellid_system.mutex);
+    pthread_mutex_lock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    memset(result, 0, sizeof(opencellid_triangulation_result_t));
-    result->calculation_time = time(NULL);
+    memset(result, 0, sizeof(opencellid_triangulation_result_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    result->calculation_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Collect cell identifiers for lookup
     opencellid_cell_identifier_t cell_ids[OPENCELLID_MAX_NEIGHBOR_CELLS + 1];
@@ -229,11 +229,11 @@ int opencellid_triangulate_position(const opencellid_cellular_environment_t* env
     // Lookup cell locations
     opencellid_cell_location_t locations[OPENCELLID_MAX_NEIGHBOR_CELLS + 1];
     int locations_found = opencellid_lookup_cells(cell_ids, cell_count, locations, 
-                                                 OPENCELLID_MAX_NEIGHBOR_CELLS + 1);
+                                                 OPENCELLID_MAX_NEIGHBOR_CELLS + 1\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (locations_found <= 0) {
-        LOGX_WARN_MSG("No cell locations found for triangulation");
-        pthread_mutex_unlock(&g_opencellid_system.mutex);
+        printf("WARN: "No cell locations found for triangulation"\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -241,7 +241,7 @@ int opencellid_triangulate_position(const opencellid_cellular_environment_t* env
     
     if (locations_found == 1) {
         // Single cell positioning
-        strcpy(result->method, "single_cell");
+        strcpy(result->method, "single_cell"\n"\n"\n"\n"\n"\n"\n"\n");
         result->latitude = locations[0].latitude;
         result->longitude = locations[0].longitude;
         result->accuracy = locations[0].range;
@@ -251,17 +251,17 @@ int opencellid_triangulate_position(const opencellid_cellular_environment_t* env
         
         g_opencellid_system.stats.single_cell_positions++;
         
-        LOGX_DEBUG_MSG("Single cell positioning",
+        printf("DEBUG: "Single cell positioning",
                   "lat", result->latitude,
                   "lon", result->longitude,
                   "accuracy", result->accuracy,
-                  "confidence", result->confidence);
+                  "confidence", result->confidence\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         // Multi-cell triangulation
         int ret = perform_weighted_centroid_triangulation(locations, locations_found,
-                                                        &environment->serving_cell, result);
+                                                        &environment->serving_cell, result\n"\n"\n"\n"\n"\n"\n"\n");
         if (ret != AUTONOMY_SUCCESS) {
-            pthread_mutex_unlock(&g_opencellid_system.mutex);
+            pthread_mutex_unlock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return ret;
         }
         
@@ -270,16 +270,16 @@ int opencellid_triangulate_position(const opencellid_cellular_environment_t* env
         // Apply timing advance constraint if enabled and available
         if (g_opencellid_system.config.timing_advance_weight > 0.0 &&
             environment->serving_cell.metrics.timing_advance_valid) {
-            apply_timing_advance_constraint(&environment->serving_cell, result);
+            apply_timing_advance_constraint(&environment->serving_cell, result\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
-        LOGX_INFO_MSG("Multi-cell triangulation completed",
+        printf("INFO: "Multi-cell triangulation completed",
                  "method", result->method,
                  "cells_used", result->cells_used,
                  "lat", result->latitude,
                  "lon", result->longitude,
                  "accuracy", result->accuracy,
-                 "confidence", result->confidence);
+                 "confidence", result->confidence\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Update statistics
@@ -296,7 +296,7 @@ int opencellid_triangulate_position(const opencellid_cellular_environment_t* env
     // Store last position
     g_opencellid_system.last_position = *result;
     
-    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    pthread_mutex_unlock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -325,7 +325,7 @@ int opencellid_lookup_cells(const opencellid_cell_identifier_t* cell_ids, int ce
         
         // Check rate limiter
         if (!rate_limiter_can_make_lookup()) {
-            LOGX_WARN_MSG("Rate limit exceeded for OpenCellID lookup");
+            printf("WARN: "Rate limit exceeded for OpenCellID lookup"\n"\n"\n"\n"\n"\n"\n"\n");
             g_opencellid_system.stats.rate_limited_lookups++;
             continue;
         }
@@ -340,21 +340,21 @@ int opencellid_lookup_cells(const opencellid_cell_identifier_t* cell_ids, int ce
                 cell_ids[i].mnc,
                 cell_ids[i].lac,
                 (unsigned long long)cell_ids[i].cell_id,
-                opencellid_radio_type_to_string(cell_ids[i].radio));
+                opencellid_radio_type_to_string(cell_ids[i].radio)\n"\n"\n"\n"\n"\n"\n"\n");
         
         http_response_t response = {0};
-        time_t start_time = time(NULL);
+        time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (make_api_request(url, NULL, &response) == AUTONOMY_SUCCESS && response.data) {
             if (parse_cell_location_response(response.data, &location) == AUTONOMY_SUCCESS) {
                 location.cell_id = cell_ids[i]; // Ensure cell ID is set correctly
-                location.last_updated = time(NULL);
-                strcpy(location.source, "opencellid");
+                location.last_updated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+                strcpy(location.source, "opencellid"\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 locations[found_count++] = location;
                 
                 // Cache the result
-                cache_set_cell_location(&location);
+                cache_set_cell_location(&location\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 g_opencellid_system.stats.successful_lookups++;
                 
@@ -363,15 +363,15 @@ int opencellid_lookup_cells(const opencellid_cell_identifier_t* cell_ids, int ce
                 g_opencellid_system.stats.average_response_time_ms = 
                     (g_opencellid_system.stats.average_response_time_ms * 
                      g_opencellid_system.stats.successful_lookups + response_time) /
-                    (g_opencellid_system.stats.successful_lookups + 1);
+                    (g_opencellid_system.stats.successful_lookups + 1\n"\n"\n"\n"\n"\n"\n"\n");
             } else {
                 // Cache negative result
-                memset(&location, 0, sizeof(location));
+                memset(&location, 0, sizeof(location)\n"\n"\n"\n"\n"\n"\n"\n");
                 location.cell_id = cell_ids[i];
                 location.is_negative = true;
-                location.last_updated = time(NULL);
-                strcpy(location.source, "opencellid_negative");
-                cache_set_cell_location(&location);
+                location.last_updated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+                strcpy(location.source, "opencellid_negative"\n"\n"\n"\n"\n"\n"\n"\n");
+                cache_set_cell_location(&location\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 g_opencellid_system.stats.failed_lookups++;
             }
@@ -380,10 +380,10 @@ int opencellid_lookup_cells(const opencellid_cell_identifier_t* cell_ids, int ce
         }
         
         if (response.data) {
-            free(response.data);
+            free(response.data\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
-        rate_limiter_record_lookup();
+        rate_limiter_record_lookup(\n"\n"\n"\n"\n"\n"\n"\n");
         g_opencellid_system.stats.total_lookups++;
     }
     
@@ -427,9 +427,9 @@ double opencellid_calculate_distance(double lat1, double lon1, double lat2, doub
     
     double a = sin(delta_lat / 2) * sin(delta_lat / 2) +
                cos(lat1_rad) * cos(lat2_rad) *
-               sin(delta_lon / 2) * sin(delta_lon / 2);
+               sin(delta_lon / 2) * sin(delta_lon / 2\n"\n"\n"\n"\n"\n"\n"\n");
     
-    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a)\n"\n"\n"\n"\n"\n"\n"\n");
     
     return R * c;
 }
@@ -441,11 +441,11 @@ static int g_cache_count = 0; // Use configurable value
 static pthread_mutex_t g_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int init_cache(void) {
-    pthread_mutex_lock(&g_cache_mutex);
-    memset(g_cache, 0, sizeof(g_cache));
+    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(g_cache, 0, sizeof(g_cache)\n"\n"\n"\n"\n"\n"\n"\n");
     g_cache_count = 0; // Use configurable value
-    pthread_mutex_unlock(&g_cache_mutex);
-    LOGX_INFO_MSG("OpenCellID cache initialized", "max_entries", MAX_CACHE_ENTRIES);
+    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: "OpenCellID cache initialized", "max_entries", MAX_CACHE_ENTRIES\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -461,15 +461,15 @@ static struct {
 } g_rate_limiter = {0};
 
 static int init_rate_limiter(void) {
-    pthread_mutex_init(&g_rate_limiter.mutex, NULL);
-    time_t now = time(NULL);
+    pthread_mutex_init(&g_rate_limiter.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     g_rate_limiter.hour_reset_time = now;
     g_rate_limiter.day_reset_time = now;
     g_rate_limiter.lookups_this_hour = 0;
     g_rate_limiter.contributions_this_hour = 0;
     g_rate_limiter.lookups_this_day = 0;
     g_rate_limiter.contributions_this_day = 0;
-    LOGX_INFO_MSG("OpenCellID rate limiter initialized");
+    printf("INFO: "OpenCellID rate limiter initialized"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -483,15 +483,15 @@ static struct {
 } g_contribution_manager = {0};
 
 static int init_contribution_manager(void) {
-    pthread_mutex_init(&g_contribution_manager.mutex, NULL);
+    pthread_mutex_init(&g_contribution_manager.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     g_contribution_manager.queue_count = 0;
-    g_contribution_manager.last_submission = time(NULL);
-    LOGX_INFO_MSG("OpenCellID contribution manager initialized");
+    g_contribution_manager.last_submission = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: "OpenCellID contribution manager initialized"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 static int init_http_client(void) {
-    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl_global_init(CURL_GLOBAL_DEFAULT\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -508,20 +508,20 @@ static void cleanup_contribution_manager(void) {
 }
 
 static void cleanup_http_client(void) {
-    curl_global_cleanup();
+    curl_global_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 static size_t opencellid_curl_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response) {
     size_t total_size = size * nmemb;
     
-    char* new_data = realloc(response->data, response->size + total_size + 1);
+    char* new_data = realloc(response->data, response->size + total_size + 1\n"\n"\n"\n"\n"\n"\n"\n");
     if (!new_data) {
-        LOGX_ERROR_MSG("Failed to allocate memory for HTTP response");
+        printf("ERROR: "Failed to allocate memory for HTTP response"\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
     response->data = new_data;
-    memcpy(&(response->data[response->size]), contents, total_size);
+    memcpy(&(response->data[response->size]), contents, total_size\n"\n"\n"\n"\n"\n"\n"\n");
     response->size += total_size;
     response->data[response->size] = '\0';
     
@@ -533,58 +533,58 @@ static int make_api_request(const char* url, const char* post_data, http_respons
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
 
-    CURL* curl = curl_easy_init();
+    CURL* curl = curl_easy_init(\n"\n"\n"\n"\n"\n"\n"\n");
     if (!curl) {
-        LOGX_ERROR_MSG("Failed to initialize CURL for OpenCellID API request");
+        printf("ERROR: "Failed to initialize CURL for OpenCellID API request"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
 
     // Initialize response structure
-    response->data = malloc(1);
+    response->data = malloc(1\n"\n"\n"\n"\n"\n"\n"\n");
     response->size = 0; // Use configurable initial response size
 
     // Configure CURL
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, opencellid_curl_write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-RUTOS/1.0");
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+    curl_easy_setopt(curl, CURLOPT_URL, url\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, opencellid_curl_write_callback\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-RUTOS/1.0"\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L\n"\n"\n"\n"\n"\n"\n"\n");
 
     // Add POST data if provided
     if (post_data) {
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(post_data));
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data\n"\n"\n"\n"\n"\n"\n"\n");
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(post_data)\n"\n"\n"\n"\n"\n"\n"\n");
         
         struct curl_slist* headers = NULL;
-        headers = curl_slist_append(headers, "Content-Type: application/json");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        headers = curl_slist_append(headers, "Content-Type: application/json"\n"\n"\n"\n"\n"\n"\n"\n");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers\n"\n"\n"\n"\n"\n"\n"\n");
     }
 
     // Perform the request
-    CURLcode res = curl_easy_perform(curl);
+    CURLcode res = curl_easy_perform(curl\n"\n"\n"\n"\n"\n"\n"\n");
     long response_code = 0; // Use configurable value
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code\n"\n"\n"\n"\n"\n"\n"\n");
 
-    curl_easy_cleanup(curl);
+    curl_easy_cleanup(curl\n"\n"\n"\n"\n"\n"\n"\n");
 
     if (res != CURLE_OK) {
-        LOGX_ERROR_MSG("OpenCellID API request failed", "error", curl_easy_strerror(res), "url", url);
-        free(response->data);
+        printf("ERROR: "OpenCellID API request failed", "error", curl_easy_strerror(res), "url", url\n"\n"\n"\n"\n"\n"\n"\n");
+        free(response->data\n"\n"\n"\n"\n"\n"\n"\n");
         response->data = NULL;
         return AUTONOMY_ERROR_NETWORK;
     }
 
     if (response_code != 200) {
-        LOGX_ERROR_MSG("OpenCellID API returned error", "http_code", response_code, "url", url);
-        free(response->data);
+        printf("ERROR: "OpenCellID API returned error", "http_code", response_code, "url", url\n"\n"\n"\n"\n"\n"\n"\n");
+        free(response->data\n"\n"\n"\n"\n"\n"\n"\n");
         response->data = NULL;
         return AUTONOMY_ERROR_EXTERNAL_API;
     }
 
-    LOGX_DEBUG_MSG("OpenCellID API request successful", "url", url, "response_size", response->size);
+    printf("DEBUG: "OpenCellID API request successful", "url", url, "response_size", response->size\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -593,36 +593,36 @@ static int parse_cell_location_response(const char* json_data, opencellid_cell_l
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
 
-    json_object* root = json_tokener_parse(json_data);
+    json_object* root = json_tokener_parse(json_data\n"\n"\n"\n"\n"\n"\n"\n");
     if (!root) {
-        LOGX_ERROR_MSG("Failed to parse OpenCellID JSON response");
+        printf("ERROR: "Failed to parse OpenCellID JSON response"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_PARSE;
     }
 
     // Parse latitude
     json_object* lat_obj;
     if (json_object_object_get_ex(root, "lat", &lat_obj)) {
-        location->latitude = json_object_get_double(lat_obj);
+        location->latitude = json_object_get_double(lat_obj\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        LOGX_ERROR_MSG("Missing latitude in OpenCellID response");
-        json_object_put(root);
+        printf("ERROR: "Missing latitude in OpenCellID response"\n"\n"\n"\n"\n"\n"\n"\n");
+        json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_PARSE;
     }
 
     // Parse longitude
     json_object* lon_obj;
     if (json_object_object_get_ex(root, "lon", &lon_obj)) {
-        location->longitude = json_object_get_double(lon_obj);
+        location->longitude = json_object_get_double(lon_obj\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        LOGX_ERROR_MSG("Missing longitude in OpenCellID response");
-        json_object_put(root);
+        printf("ERROR: "Missing longitude in OpenCellID response"\n"\n"\n"\n"\n"\n"\n"\n");
+        json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_PARSE;
     }
 
     // Parse range (accuracy)
     json_object* range_obj;
     if (json_object_object_get_ex(root, "range", &range_obj)) {
-        location->range = json_object_get_double(range_obj);
+        location->range = json_object_get_double(range_obj\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         location->range = 1000.0; // Default accuracy
     }
@@ -630,7 +630,7 @@ static int parse_cell_location_response(const char* json_data, opencellid_cell_l
     // Parse radio type and set proper source
     json_object* radio_obj;
     if (json_object_object_get_ex(root, "radio", &radio_obj)) {
-        const char* radio_str = json_object_get_string(radio_obj);
+        const char* radio_str = json_object_get_string(radio_obj\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Set proper radio type based on string
         if (strcmp(radio_str, "LTE") == 0) {
@@ -645,17 +645,17 @@ static int parse_cell_location_response(const char* json_data, opencellid_cell_l
             location->cell_id.radio = OPENCELLID_RADIO_UNKNOWN;
         }
         
-        snprintf(location->source, sizeof(location->source), "opencellid_%s", radio_str);
+        snprintf(location->source, sizeof(location->source), "opencellid_%s", radio_str\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         location->cell_id.radio = OPENCELLID_RADIO_UNKNOWN;
-        strcpy(location->source, "opencellid");
+        strcpy(location->source, "opencellid"\n"\n"\n"\n"\n"\n"\n"\n");
     }
 
-    location->last_updated = time(NULL);
+    location->last_updated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     location->confidence = 0.7; // Default confidence for OpenCellID data
 
-    json_object_put(root);
-    LOGX_DEBUG_MSG("Parsed OpenCellID location", "lat", location->latitude, "lon", location->longitude, "accuracy", location->range);
+    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("DEBUG: "Parsed OpenCellID location", "lat", location->latitude, "lon", location->longitude, "accuracy", location->range\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -664,7 +664,7 @@ static int cache_get_cell_location(const opencellid_cell_identifier_t* cell_id, 
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
 
-    pthread_mutex_lock(&g_cache_mutex);
+    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < g_cache_count; i++) {
         if (g_cache[i].cell_id.mcc == cell_id->mcc &&
@@ -673,22 +673,22 @@ static int cache_get_cell_location(const opencellid_cell_identifier_t* cell_id, 
             g_cache[i].cell_id.cell_id == cell_id->cell_id) {
             
             // Check if cache entry is still valid (24 hour TTL)
-            time_t now = time(NULL);
+            time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             if (now - g_cache[i].last_updated < 86400) {
                 *location = g_cache[i];
-                pthread_mutex_unlock(&g_cache_mutex);
-                LOGX_DEBUG_MSG("Cache hit for cell", "mcc", cell_id->mcc, "mnc", cell_id->mnc, "lac", cell_id->lac, "cell_id", cell_id->cell_id);
+                pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+                printf("DEBUG: "Cache hit for cell", "mcc", cell_id->mcc, "mnc", cell_id->mnc, "lac", cell_id->lac, "cell_id", cell_id->cell_id\n"\n"\n"\n"\n"\n"\n"\n");
                 return AUTONOMY_SUCCESS;
             } else {
                 // Remove expired entry
-                memmove(&g_cache[i], &g_cache[i+1], (g_cache_count - i - 1) * sizeof(opencellid_cell_location_t));
+                memmove(&g_cache[i], &g_cache[i+1], (g_cache_count - i - 1) * sizeof(opencellid_cell_location_t)\n"\n"\n"\n"\n"\n"\n"\n");
                 g_cache_count--;
                 break;
             }
         }
     }
     
-    pthread_mutex_unlock(&g_cache_mutex);
+    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -697,7 +697,7 @@ static int cache_set_cell_location(const opencellid_cell_location_t* location) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
 
-    pthread_mutex_lock(&g_cache_mutex);
+    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if entry already exists
     for (int i = 0; i < g_cache_count; i++) {
@@ -707,8 +707,8 @@ static int cache_set_cell_location(const opencellid_cell_location_t* location) {
             g_cache[i].cell_id.cell_id == location->cell_id.cell_id) {
             // Update existing entry
             g_cache[i] = *location;
-            g_cache[i].last_updated = time(NULL);
-            pthread_mutex_unlock(&g_cache_mutex);
+            g_cache[i].last_updated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_SUCCESS;
         }
     }
@@ -716,25 +716,25 @@ static int cache_set_cell_location(const opencellid_cell_location_t* location) {
     // Add new entry if space available
     if (g_cache_count < MAX_CACHE_ENTRIES) {
         g_cache[g_cache_count] = *location;
-        g_cache[g_cache_count].last_updated = time(NULL);
+        g_cache[g_cache_count].last_updated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         g_cache_count++;
-        LOGX_DEBUG_MSG("Cached cell location", "mcc", location->cell_id.mcc, "mnc", location->cell_id.mnc, "cache_count", g_cache_count);
+        printf("DEBUG: "Cached cell location", "mcc", location->cell_id.mcc, "mnc", location->cell_id.mnc, "cache_count", g_cache_count\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         // Cache full - remove oldest entry (simple FIFO)
-        memmove(&g_cache[0], &g_cache[1], (MAX_CACHE_ENTRIES - 1) * sizeof(opencellid_cell_location_t));
+        memmove(&g_cache[0], &g_cache[1], (MAX_CACHE_ENTRIES - 1) * sizeof(opencellid_cell_location_t)\n"\n"\n"\n"\n"\n"\n"\n");
         g_cache[MAX_CACHE_ENTRIES - 1] = *location;
-        g_cache[MAX_CACHE_ENTRIES - 1].last_updated = time(NULL);
-        LOGX_DEBUG_MSG("Cache full, replaced oldest entry");
+        g_cache[MAX_CACHE_ENTRIES - 1].last_updated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("DEBUG: "Cache full, replaced oldest entry"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_unlock(&g_cache_mutex);
+    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 static int rate_limiter_can_make_lookup(void) {
-    pthread_mutex_lock(&g_rate_limiter.mutex);
+    pthread_mutex_lock(&g_rate_limiter.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Reset hourly counters if needed
     if (now - g_rate_limiter.hour_reset_time >= 3600) {
@@ -752,25 +752,25 @@ static int rate_limiter_can_make_lookup(void) {
     
     // Check hard limits: 30 lookups per hour, 1000 per day
     bool can_lookup = (g_rate_limiter.lookups_this_hour < 30) && 
-                      (g_rate_limiter.lookups_this_day < 1000);
+                      (g_rate_limiter.lookups_this_day < 1000\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check ratio: maintain 8:1 lookup:contribution ratio (safety margin)
     if (can_lookup && g_rate_limiter.contributions_this_day > 0) {
         double current_ratio = (double)g_rate_limiter.lookups_this_day / g_rate_limiter.contributions_this_day;
         if (current_ratio >= 8.0) {
             can_lookup = false; // Use configurable setting
-            LOGX_DEBUG_MSG("Rate limit: ratio exceeded", "ratio", current_ratio, "lookups", g_rate_limiter.lookups_this_day, "contributions", g_rate_limiter.contributions_this_day);
+            printf("DEBUG: "Rate limit: ratio exceeded", "ratio", current_ratio, "lookups", g_rate_limiter.lookups_this_day, "contributions", g_rate_limiter.contributions_this_day\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    pthread_mutex_unlock(&g_rate_limiter.mutex);
+    pthread_mutex_unlock(&g_rate_limiter.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return can_lookup ? 1 : 0;
 }
 
 static int rate_limiter_can_make_contribution(void) {
-    pthread_mutex_lock(&g_rate_limiter.mutex);
+    pthread_mutex_lock(&g_rate_limiter.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Reset hourly counters if needed
     if (now - g_rate_limiter.hour_reset_time >= 3600) {
@@ -781,26 +781,26 @@ static int rate_limiter_can_make_contribution(void) {
     
     // Check hard limits: 6 contributions per hour, 50 per day
     bool can_contribute = (g_rate_limiter.contributions_this_hour < 6) && 
-                         (g_rate_limiter.contributions_this_day < 50);
+                         (g_rate_limiter.contributions_this_day < 50\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(&g_rate_limiter.mutex);
+    pthread_mutex_unlock(&g_rate_limiter.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return can_contribute ? 1 : 0;
 }
 
 static void rate_limiter_record_lookup(void) {
-    pthread_mutex_lock(&g_rate_limiter.mutex);
+    pthread_mutex_lock(&g_rate_limiter.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_rate_limiter.lookups_this_hour++;
     g_rate_limiter.lookups_this_day++;
-    LOGX_DEBUG_MSG("Recorded OpenCellID lookup", "hour_count", g_rate_limiter.lookups_this_hour, "day_count", g_rate_limiter.lookups_this_day);
-    pthread_mutex_unlock(&g_rate_limiter.mutex);
+    printf("DEBUG: "Recorded OpenCellID lookup", "hour_count", g_rate_limiter.lookups_this_hour, "day_count", g_rate_limiter.lookups_this_day\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_rate_limiter.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 static void rate_limiter_record_contribution(void) {
-    pthread_mutex_lock(&g_rate_limiter.mutex);
+    pthread_mutex_lock(&g_rate_limiter.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_rate_limiter.contributions_this_hour++;
     g_rate_limiter.contributions_this_day++;
-    LOGX_DEBUG_MSG("Recorded OpenCellID contribution", "hour_count", g_rate_limiter.contributions_this_hour, "day_count", g_rate_limiter.contributions_this_day);
-    pthread_mutex_unlock(&g_rate_limiter.mutex);
+    printf("DEBUG: "Recorded OpenCellID contribution", "hour_count", g_rate_limiter.contributions_this_hour, "day_count", g_rate_limiter.contributions_this_day\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_rate_limiter.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 static int collect_cellular_environment_from_system(opencellid_cellular_environment_t* environment) {
@@ -808,13 +808,13 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
 
-    memset(environment, 0, sizeof(opencellid_cellular_environment_t));
-    environment->scan_time = time(NULL);
+    memset(environment, 0, sizeof(opencellid_cellular_environment_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    environment->scan_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
 
     // Use RUTOS gsmctl to get cellular information
-    FILE* fp = popen("gsmctl -A 'AT+COPS=3,2;+COPS?;+CREG?;+CEREG?' 2>/dev/null", "r");
+    FILE* fp = popen("gsmctl -A 'AT+COPS=3,2;+COPS?;+CREG?;+CEREG?' 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!fp) {
-        LOGX_ERROR_MSG("Failed to execute gsmctl for cellular environment");
+        printf("ERROR: "Failed to execute gsmctl for cellular environment"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
 
@@ -828,8 +828,8 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
             char plmn[16];
             if (sscanf(buffer, "+COPS: %*d,%*d,\"%15[^\"]\"", plmn) == 1) {
                 if (strlen(plmn) >= 5) {
-                    mcc = (plmn[0] - '0') * 100 + (plmn[1] - '0') * 10 + (plmn[2] - '0');
-                    mnc = atoi(plmn + 3);
+                    mcc = (plmn[0] - '0') * 100 + (plmn[1] - '0') * 10 + (plmn[2] - '0'\n"\n"\n"\n"\n"\n"\n"\n");
+                    mnc = atoi(plmn + 3\n"\n"\n"\n"\n"\n"\n"\n");
                     found_operator = true; // Use configurable setting
                 }
             }
@@ -838,16 +838,16 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
         else if (strstr(buffer, "+CREG:") || strstr(buffer, "+CEREG:")) {
             char lac_str[16], cid_str[16];
             if (sscanf(buffer, "+C%*[^:]: %*d,%*d,\"%15[^\"]\",\"%15[^\"]\"", lac_str, cid_str) == 2) {
-                lac = (int)strtol(lac_str, NULL, 16);
-                cell_id = (int)strtol(cid_str, NULL, 16);
+                lac = (int)strtol(lac_str, NULL, 16\n"\n"\n"\n"\n"\n"\n"\n");
+                cell_id = (int)strtol(cid_str, NULL, 16\n"\n"\n"\n"\n"\n"\n"\n");
                 found_location = true; // Use configurable setting
             }
         }
     }
-    pclose(fp);
+    pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
 
     if (!found_operator || !found_location) {
-        LOGX_WARN_MSG("Incomplete cellular environment data", "found_operator", found_operator, "found_location", found_location);
+        printf("WARN: "Incomplete cellular environment data", "found_operator", found_operator, "found_location", found_location\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
 
@@ -859,24 +859,24 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
     environment->serving_cell.is_registered = true;
 
     // Get signal strength via gsmctl
-    fp = popen("gsmctl -S 2>/dev/null | grep 'Signal:' | awk '{print $2}'", "r");
+    fp = popen("gsmctl -S 2>/dev/null | grep 'Signal:' | awk '{print $2}'", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (fp) {
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int rssi = atoi(buffer);
+            int rssi = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
             if (rssi > 0) {
                 // Convert RSSI to RSRP approximation
                 environment->serving_cell.metrics.rsrp = rssi - 113; // Rough conversion
                 environment->serving_cell.metrics.rssi = rssi;
             }
         }
-        pclose(fp);
+        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
     }
 
     // Collect neighbor cells
     environment->neighbor_count = 0;
     
     // Get neighbor cell information via AT commands
-    fp = popen("gsmctl -A 'AT+QNEIGHBORCELLS' 2>/dev/null", "r");
+    fp = popen("gsmctl -A 'AT+QNEIGHBORCELLS' 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (fp) {
         char line[256];
         while (fgets(line, sizeof(line), fp) && environment->neighbor_count < OPENCELLID_MAX_NEIGHBOR_CELLS) {
@@ -914,12 +914,12 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
                 }
             }
         }
-        pclose(fp);
+        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Fallback: try to get neighbor cells from system
     if (environment->neighbor_count == 0) {
-        fp = popen("mmcli -m 0 --command='AT+QNEIGHBORCELLS' 2>/dev/null", "r");
+        fp = popen("mmcli -m 0 --command='AT+QNEIGHBORCELLS' 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
         if (fp) {
             char line[256];
             while (fgets(line, sizeof(line), fp) && environment->neighbor_count < OPENCELLID_MAX_NEIGHBOR_CELLS) {
@@ -944,11 +944,11 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
                     }
                 }
             }
-            pclose(fp);
+            pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
 
-    LOGX_DEBUG_MSG("Collected cellular environment", "mcc", mcc, "mnc", mnc, "lac", lac, "cell_id", cell_id, "rsrp", environment->serving_cell.metrics.rsrp);
+    printf("DEBUG: "Collected cellular environment", "mcc", mcc, "mnc", mnc, "lac", lac, "cell_id", cell_id, "rsrp", environment->serving_cell.metrics.rsrp\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -960,9 +960,9 @@ static int perform_weighted_centroid_triangulation(const opencellid_cell_locatio
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
 
-    memset(result, 0, sizeof(opencellid_triangulation_result_t));
-    strcpy(result->method, "weighted_centroid");
-    result->calculation_time = time(NULL);
+    memset(result, 0, sizeof(opencellid_triangulation_result_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(result->method, "weighted_centroid"\n"\n"\n"\n"\n"\n"\n"\n");
+    result->calculation_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
 
     if (location_count == 1) {
         // Single cell - use its location directly
@@ -994,13 +994,13 @@ static int perform_weighted_centroid_triangulation(const opencellid_cell_locatio
                                loc->cell_id.lac == serving_cell->cell_id.lac &&
                                loc->cell_id.cell_id == serving_cell->cell_id.cell_id;
         
-        double weight = calculate_tower_weight(loc, serving_cell, is_serving_cell);
+        double weight = calculate_tower_weight(loc, serving_cell, is_serving_cell\n"\n"\n"\n"\n"\n"\n"\n");
 
         weighted_lat += loc->latitude * weight;
         weighted_lon += loc->longitude * weight;
         total_weight += weight;
         
-        min_accuracy = fmin(min_accuracy, loc->range);
+        min_accuracy = fmin(min_accuracy, loc->range\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Store contributing cells
         if (i < 10) {
@@ -1009,14 +1009,14 @@ static int perform_weighted_centroid_triangulation(const opencellid_cell_locatio
     }
 
     if (total_weight <= 0.0) {
-        LOGX_ERROR_MSG("Invalid weights in OpenCellID triangulation");
+        printf("ERROR: "Invalid weights in OpenCellID triangulation"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_CALCULATION;
     }
 
     // Calculate final position
     result->latitude = weighted_lat / total_weight;
     result->longitude = weighted_lon / total_weight;
-    result->cells_used = fmin(location_count, 10);
+    result->cells_used = fmin(location_count, 10\n"\n"\n"\n"\n"\n"\n"\n");
 
     // Calculate accuracy estimate based on cell spread and minimum accuracy
     for (int i = 0; i < result->cells_used; i++) {
@@ -1029,11 +1029,11 @@ static int perform_weighted_centroid_triangulation(const opencellid_cell_locatio
         double dlat = lat2_rad - lat1_rad;
         double dlon = lon2_rad - lon1_rad;
         
-        double a = sin(dlat/2) * sin(dlat/2) + cos(lat1_rad) * cos(lat2_rad) * sin(dlon/2) * sin(dlon/2);
-        double c = 2 * atan2(sqrt(a), sqrt(1-a));
+        double a = sin(dlat/2) * sin(dlat/2) + cos(lat1_rad) * cos(lat2_rad) * sin(dlon/2) * sin(dlon/2\n"\n"\n"\n"\n"\n"\n"\n");
+        double c = 2 * atan2(sqrt(a), sqrt(1-a)\n"\n"\n"\n"\n"\n"\n"\n");
         double distance_km = 6371.0 * c;
         
-        max_distance = fmax(max_distance, distance_km);
+        max_distance = fmax(max_distance, distance_km\n"\n"\n"\n"\n"\n"\n"\n");
     }
 
     // Accuracy is the larger of: 2x minimum cell accuracy or the spread of cells
@@ -1048,10 +1048,10 @@ static int perform_weighted_centroid_triangulation(const opencellid_cell_locatio
     avg_confidence /= result->cells_used;
     
     // Boost confidence for multiple cells
-    result->confidence = fmin(avg_confidence * (1.0 + 0.1 * (result->cells_used - 1)), 0.9);
+    result->confidence = fmin(avg_confidence * (1.0 + 0.1 * (result->cells_used - 1)), 0.9\n"\n"\n"\n"\n"\n"\n"\n");
 
-    LOGX_DEBUG_MSG("OpenCellID triangulated location", "lat", result->latitude, "lon", result->longitude, 
-                   "accuracy", result->accuracy, "cells", result->cells_used, "confidence", result->confidence);
+    printf("DEBUG: "OpenCellID triangulated location", "lat", result->latitude, "lon", result->longitude, 
+                   "accuracy", result->accuracy, "cells", result->cells_used, "confidence", result->confidence\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -1078,12 +1078,12 @@ static int apply_timing_advance_constraint(const opencellid_serving_cell_t* serv
         // Adjust accuracy based on TA constraint
         if (distance_meters > 0 && distance_meters < 20000) { // Reasonable TA range
             // TA provides additional accuracy constraint
-            result->accuracy = fmin(result->accuracy, distance_meters + 100.0);
+            result->accuracy = fmin(result->accuracy, distance_meters + 100.0\n"\n"\n"\n"\n"\n"\n"\n");
             result->timing_advance_applied = true;
             result->timing_advance_constraint = distance_meters;
             
-            LOGX_DEBUG_MSG("Applied timing advance constraint", "ta", serving_cell->metrics.timing_advance, 
-                          "distance_m", distance_meters, "new_accuracy", result->accuracy);
+            printf("DEBUG: "Applied timing advance constraint", "ta", serving_cell->metrics.timing_advance, 
+                          "distance_m", distance_meters, "new_accuracy", result->accuracy\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
@@ -1101,7 +1101,7 @@ static double calculate_tower_weight(const opencellid_cell_location_t* location,
     
     // Base weight on location accuracy (better accuracy = higher weight)
     if (location->range > 0) {
-        weight = 1.0 / fmax(location->range, 100.0);
+        weight = 1.0 / fmax(location->range, 100.0\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Apply confidence multiplier
@@ -1137,7 +1137,7 @@ static double calculate_tower_weight(const opencellid_cell_location_t* location,
 
 static void* contribution_thread_worker(void* arg) {
     (void)arg;
-    LOGX_INFO_MSG("OpenCellID contribution thread started");
+    printf("INFO: "OpenCellID contribution thread started"\n"\n"\n"\n"\n"\n"\n"\n");
     
     while (g_system_initialized && g_opencellid_system.threads_running) {
         sleep(20); // Sleep for 20 seconds
@@ -1147,13 +1147,13 @@ static void* contribution_thread_worker(void* arg) {
         // Contribution logic would go here
     }
     
-    LOGX_INFO_MSG("OpenCellID contribution thread stopped");
+    printf("INFO: "OpenCellID contribution thread stopped"\n"\n"\n"\n"\n"\n"\n"\n");
     return NULL;
 }
 
 static void* health_monitor_thread_worker(void* arg) {
     (void)arg;
-    LOGX_INFO_MSG("OpenCellID health monitor thread started");
+    printf("INFO: "OpenCellID health monitor thread started"\n"\n"\n"\n"\n"\n"\n"\n");
     
     while (g_system_initialized && g_opencellid_system.threads_running) {
         sleep(300); // Sleep for 5 minutes
@@ -1163,7 +1163,7 @@ static void* health_monitor_thread_worker(void* arg) {
         // Health monitoring logic would go here
     }
     
-    LOGX_INFO_MSG("OpenCellID health monitor thread stopped");
+    printf("INFO: "OpenCellID health monitor thread stopped"\n"\n"\n"\n"\n"\n"\n"\n");
     return NULL;
 }
 // Check if OpenCellID system is initialized (for GPS discovery)
@@ -1181,9 +1181,9 @@ int opencellid_get_statistics(opencellid_statistics_t* stats) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_opencellid_system.mutex);
+    pthread_mutex_lock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *stats = g_opencellid_system.stats;
-    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    pthread_mutex_unlock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1199,7 +1199,7 @@ int opencellid_get_visible_towers(opencellid_cell_location_t* towers, int max_to
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_opencellid_system.mutex);
+    pthread_mutex_lock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // For now, return a placeholder implementation
     // In a real implementation, this would search the cache for towers within the radius
@@ -1211,7 +1211,7 @@ int opencellid_get_visible_towers(opencellid_cell_location_t* towers, int max_to
     // 2. Filter by signal strength and other criteria
     // 3. Return up to max_towers results
     
-    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    pthread_mutex_unlock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return towers_returned;
 }
@@ -1226,9 +1226,9 @@ int opencellid_get_config(opencellid_config_t* config) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_opencellid_system.mutex);
+    pthread_mutex_lock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *config = g_opencellid_system.config;
-    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    pthread_mutex_unlock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1243,9 +1243,9 @@ int opencellid_set_config(const opencellid_config_t* config) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_opencellid_system.mutex);
+    pthread_mutex_lock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_opencellid_system.config = *config;
-    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    pthread_mutex_unlock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1256,11 +1256,11 @@ int opencellid_reset_statistics(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_opencellid_system.mutex);
-    memset(&g_opencellid_system.stats, 0, sizeof(opencellid_statistics_t));
-    g_opencellid_system.stats.stats_start_time = time(NULL);
+    pthread_mutex_lock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_opencellid_system.stats, 0, sizeof(opencellid_statistics_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_opencellid_system.stats.stats_start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     g_opencellid_system.stats.healthy = true;
-    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    pthread_mutex_unlock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1271,7 +1271,7 @@ int opencellid_health_check(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_opencellid_system.mutex);
+    pthread_mutex_lock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Simple health check based on recent success rate
     bool healthy = true;
@@ -1290,7 +1290,7 @@ int opencellid_health_check(void) {
     }
     
     g_opencellid_system.stats.healthy = healthy;
-    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    pthread_mutex_unlock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return healthy ? AUTONOMY_SUCCESS : AUTONOMY_ERROR_SYSTEM;
 }
@@ -1307,18 +1307,18 @@ int opencellid_contribute_measurement(const opencellid_cellular_environment_t* e
     
     // Check rate limiter
     if (!rate_limiter_can_make_contribution()) {
-        LOGX_WARN_MSG("Rate limit exceeded for OpenCellID contribution");
+        printf("WARN: "Rate limit exceeded for OpenCellID contribution"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_API_LIMIT_EXCEEDED;
     }
     
     // For now, just record the contribution attempt
     // In a real implementation, this would send the data to OpenCellID API
-    pthread_mutex_lock(&g_opencellid_system.mutex);
+    pthread_mutex_lock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_opencellid_system.stats.total_contributions++;
     g_opencellid_system.stats.successful_contributions++;
-    pthread_mutex_unlock(&g_opencellid_system.mutex);
+    pthread_mutex_unlock(&g_opencellid_system.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    rate_limiter_record_contribution();
+    rate_limiter_record_contribution(\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1337,7 +1337,7 @@ int opencellid_generate_environment_hash(const opencellid_cellular_environment_t
              environment->serving_cell.cell_id.mnc,
              environment->serving_cell.cell_id.lac,
              (unsigned long long)environment->serving_cell.cell_id.cell_id,
-             environment->neighbor_count);
+             environment->neighbor_count\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }

@@ -33,7 +33,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
     // Use printf as fallback to avoid LOGX crashes
-    printf("INFO: Integrating ML monitoring with comprehensive network discovery\n");
+    printf("INFO: Integrating ML monitoring with comprehensive network discovery\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Get discovered interfaces from network discovery system
     network_interface_t discovered_interfaces[MAX_INTERFACES];
@@ -41,7 +41,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     
     // Add null pointer checks
     if (!discovered_interfaces) {
-        printf("ERROR: Invalid parameters for network discovery\n");
+        printf("ERROR: Invalid parameters for network discovery\n"\n"\n"\n"\n"\n"\n"\n"\n");
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
@@ -52,30 +52,30 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     int discovery_result = AUTONOMY_ERROR_NOT_INITIALIZED;
     
     // First check if the function exists and is safe to call
-    extern int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count);
+    extern int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Add a try-catch-like mechanism using signal handling
-    printf("INFO: Attempting to get enhanced comprehensive interface info\n");
+    printf("INFO: Attempting to get enhanced comprehensive interface info\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // For now, skip the enhanced discovery and go straight to fallback
     // This prevents the crash while we investigate the root cause
-    printf("WARN: Skipping enhanced discovery to prevent crash, using fallback\n");
+    printf("WARN: Skipping enhanced discovery to prevent crash, using fallback\n"\n"\n"\n"\n"\n"\n"\n"\n");
     discovery_result = AUTONOMY_ERROR_NOT_INITIALIZED;
     if (discovery_result != AUTONOMY_SUCCESS) {
-        printf("WARN: Failed to get enhanced comprehensive interface info: %d, using fallback\n", discovery_result);
+        printf("WARN: Failed to get enhanced comprehensive interface info: %d, using fallback\n", discovery_result\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Fallback: Use basic interface detection without network discovery
-        printf("INFO: Using fallback interface detection\n");
+        printf("INFO: Using fallback interface detection\n"\n"\n"\n"\n"\n"\n"\n"\n");
         interface_count = 0;
         
            // Add common interfaces manually as fallback
            if (interface_count < MAX_INTERFACES) {
                network_interface_t *iface = &discovered_interfaces[interface_count++];
-               memset(iface, 0, sizeof(network_interface_t));
-               strncpy(iface->name, "eth1", sizeof(iface->name) - 1);
-               strncpy(iface->type, "starlink", sizeof(iface->type) - 1);
-               strncpy(iface->friendly_name, "Starlink", sizeof(iface->friendly_name) - 1);
-               strncpy(iface->mwan3_name, "eth1", sizeof(iface->mwan3_name) - 1);
+               memset(iface, 0, sizeof(network_interface_t)\n"\n"\n"\n"\n"\n"\n"\n");
+               strncpy(iface->name, "eth1", sizeof(iface->name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+               strncpy(iface->type, "starlink", sizeof(iface->type) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+               strncpy(iface->friendly_name, "Starlink", sizeof(iface->friendly_name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+               strncpy(iface->mwan3_name, "eth1", sizeof(iface->mwan3_name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
                iface->up = true;
                iface->enabled = true;
                iface->mwan3_tracking_enabled = true;
@@ -85,11 +85,11 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
         
         if (interface_count < MAX_INTERFACES) {
             network_interface_t *iface = &discovered_interfaces[interface_count++];
-            memset(iface, 0, sizeof(network_interface_t));
-            strncpy(iface->name, "qmimux0", sizeof(iface->name) - 1);
-            strncpy(iface->type, "cellular", sizeof(iface->type) - 1);
-            strncpy(iface->friendly_name, "Cellular", sizeof(iface->friendly_name) - 1);
-            strncpy(iface->mwan3_name, "qmimux0", sizeof(iface->mwan3_name) - 1);
+            memset(iface, 0, sizeof(network_interface_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(iface->name, "qmimux0", sizeof(iface->name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(iface->type, "cellular", sizeof(iface->type) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(iface->friendly_name, "Cellular", sizeof(iface->friendly_name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(iface->mwan3_name, "qmimux0", sizeof(iface->mwan3_name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             iface->up = true;
             iface->enabled = true;
             iface->mwan3_tracking_enabled = true;
@@ -98,11 +98,11 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
         
         if (interface_count < MAX_INTERFACES) {
             network_interface_t *iface = &discovered_interfaces[interface_count++];
-            memset(iface, 0, sizeof(network_interface_t));
-            strncpy(iface->name, "wlan0", sizeof(iface->name) - 1);
-            strncpy(iface->type, "wifi", sizeof(iface->type) - 1);
-            strncpy(iface->friendly_name, "WiFi", sizeof(iface->friendly_name) - 1);
-            strncpy(iface->mwan3_name, "wlan0", sizeof(iface->mwan3_name) - 1);
+            memset(iface, 0, sizeof(network_interface_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(iface->name, "wlan0", sizeof(iface->name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(iface->type, "wifi", sizeof(iface->type) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(iface->friendly_name, "WiFi", sizeof(iface->friendly_name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(iface->mwan3_name, "wlan0", sizeof(iface->mwan3_name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             iface->up = true;
             iface->enabled = true;
             iface->mwan3_tracking_enabled = true;
@@ -111,34 +111,34 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
         
         if (interface_count < MAX_INTERFACES) {
             network_interface_t *iface = &discovered_interfaces[interface_count++];
-            memset(iface, 0, sizeof(network_interface_t));
-            strncpy(iface->name, "eth0", sizeof(iface->name) - 1);
-            strncpy(iface->type, "ethernet", sizeof(iface->type) - 1);
-            strncpy(iface->friendly_name, "LAN", sizeof(iface->friendly_name) - 1);
-            strncpy(iface->mwan3_name, "eth0", sizeof(iface->mwan3_name) - 1);
+            memset(iface, 0, sizeof(network_interface_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(iface->name, "eth0", sizeof(iface->name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(iface->type, "ethernet", sizeof(iface->type) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(iface->friendly_name, "LAN", sizeof(iface->friendly_name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(iface->mwan3_name, "eth0", sizeof(iface->mwan3_name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             iface->up = true;
             iface->enabled = true;
             iface->mwan3_tracking_enabled = true;
             iface->health_score = 90.0;
         }
         
-        printf("INFO: Fallback interface detection completed with %d interfaces\n", interface_count);
+        printf("INFO: Fallback interface detection completed with %d interfaces\n", interface_count\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Validate interface count
     if (interface_count < 0 || interface_count > MAX_INTERFACES) {
-        printf("ERROR: Invalid interface count: %d\n", interface_count);
+        printf("ERROR: Invalid interface count: %d\n", interface_count\n"\n"\n"\n"\n"\n"\n"\n");
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
-    printf("INFO: Discovered %d network interfaces for ML monitoring\n", interface_count);
+    printf("INFO: Discovered %d network interfaces for ML monitoring\n", interface_count\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize multi-interface system if not already done
-    multi_interface_ml_system_t *multi_system = ml_monitor_get_multi_interface_system();
+    multi_interface_ml_system_t *multi_system = ml_monitor_get_multi_interface_system(\n"\n"\n"\n"\n"\n"\n"\n");
     if (!multi_system) {
-        multi_system = ml_monitor_init_multi_interface_system(&monitor->config);
+        multi_system = ml_monitor_init_multi_interface_system(&monitor->config\n"\n"\n"\n"\n"\n"\n"\n");
         if (!multi_system) {
-            printf("ERROR: Failed to initialize multi-interface ML system\n");
+            printf("ERROR: Failed to initialize multi-interface ML system\n"\n"\n"\n"\n"\n"\n"\n"\n");
             return ML_MONITOR_ERROR_NOT_INITIALIZED;
         }
     }
@@ -151,40 +151,40 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
         
         // Only monitor interfaces that are suitable for ML
         if (!interface->up || !interface->enabled) {
-            printf("DEBUG: Skipping interface %s: not up or enabled\n", interface->name);
+            printf("DEBUG: Skipping interface %s: not up or enabled\n", interface->name\n"\n"\n"\n"\n"\n"\n"\n");
             continue;
         }
         
         // Skip VPN interfaces unless specifically configured
         if (strcmp(interface->type, "vpn") == 0) {
-            printf("DEBUG: Skipping VPN interface %s\n", interface->name);
+            printf("DEBUG: Skipping VPN interface %s\n", interface->name\n"\n"\n"\n"\n"\n"\n"\n");
             continue;
         }
         
         // Only monitor interfaces that are tracked by MWAN3 (for failover relevance)
         if (!interface->mwan3_tracking_enabled) {
-            printf("DEBUG: Skipping interface %s: not tracked by MWAN3\n", interface->name);
+            printf("DEBUG: Skipping interface %s: not tracked by MWAN3\n", interface->name\n"\n"\n"\n"\n"\n"\n"\n");
             continue;
         }
         
         // Map to ML interface type
-        interface_type_t ml_type = ml_monitor_map_interface_type(interface);
+        interface_type_t ml_type = ml_monitor_map_interface_type(interface\n"\n"\n"\n"\n"\n"\n"\n");
         if (ml_type == INTERFACE_TYPE_UNKNOWN) {
-            printf("DEBUG: Skipping interface %s: unknown type for ML\n", interface->name);
+            printf("DEBUG: Skipping interface %s: unknown type for ML\n", interface->name\n"\n"\n"\n"\n"\n"\n"\n");
             continue;
         }
         
         // Add interface to ML monitoring
-        printf("DEBUG: About to add interface %s to ML monitoring\n", interface->name);
-        int add_result = ml_monitor_add_interface(multi_system, interface->name, ml_type);
-        printf("DEBUG: ml_monitor_add_interface returned: %d\n", add_result);
+        printf("DEBUG: About to add interface %s to ML monitoring\n", interface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        int add_result = ml_monitor_add_interface(multi_system, interface->name, ml_type\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("DEBUG: ml_monitor_add_interface returned: %d\n", add_result\n"\n"\n"\n"\n"\n"\n"\n");
         if (add_result == ML_MONITOR_MULTI_SUCCESS) {
             ml_interfaces_added++;
-            printf("DEBUG: ml_interfaces_added is now %d\n", ml_interfaces_added);
+            printf("DEBUG: ml_interfaces_added is now %d\n", ml_interfaces_added\n"\n"\n"\n"\n"\n"\n"\n");
             
             printf("INFO: Added %s (%s) to ML monitoring: %s, MWAN3=%s, health=%.1f\n",
                      interface->name, interface->type, 
-                     interface->friendly_name, interface->mwan3_name, interface->health_score);
+                     interface->friendly_name, interface->mwan3_name, interface->health_score\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Initialize MWAN3 integration for this interface
             if (interface->mwan3_name && strlen(interface->mwan3_name) > 0) {
@@ -194,7 +194,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
                         strlen(multi_system->mwan3_integration.mwan3_interfaces[j].interface_name) == 0) {
                         strncpy(multi_system->mwan3_integration.mwan3_interfaces[j].interface_name,
                                interface->mwan3_name, 
-                               sizeof(multi_system->mwan3_integration.mwan3_interfaces[j].interface_name) - 1);
+                               sizeof(multi_system->mwan3_integration.mwan3_interfaces[j].interface_name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
                         multi_system->mwan3_integration.mwan3_interfaces[j].base_weight = 10; // Default weight
                         multi_system->mwan3_integration.mwan3_interfaces[j].current_weight = 10;
                         multi_system->mwan3_integration.mwan3_interface_count++;
@@ -203,33 +203,33 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
                 }
             }
         } else {
-            printf("WARN: Failed to add interface %s to ML monitoring: %d\n", interface->name, add_result);
+            printf("WARN: Failed to add interface %s to ML monitoring: %d\n", interface->name, add_result\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    printf("DEBUG: Interface addition loop completed successfully\n");
-    printf("DEBUG: ml_interfaces_added = %d, interface_count = %d\n", ml_interfaces_added, interface_count);
+    printf("DEBUG: Interface addition loop completed successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("DEBUG: ml_interfaces_added = %d, interface_count = %d\n", ml_interfaces_added, interface_count\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Log interface count summary
-    printf("DEBUG: About to log interface count summary\n");
-    printf("DEBUG: ml_interfaces_added = %d, interface_count = %d\n", ml_interfaces_added, interface_count);
+    printf("DEBUG: About to log interface count summary\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("DEBUG: ml_interfaces_added = %d, interface_count = %d\n", ml_interfaces_added, interface_count\n"\n"\n"\n"\n"\n"\n"\n");
     printf("INFO: ML monitoring initialized for %d interfaces (from %d discovered)\n", 
-             ml_interfaces_added, interface_count);
-    printf("DEBUG: Interface count summary logged successfully\n");
+             ml_interfaces_added, interface_count\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("DEBUG: Interface count summary logged successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Log interface summary
-    printf("INFO: ML Interface Summary:\n");
+    printf("INFO: ML Interface Summary:\n"\n"\n"\n"\n"\n"\n"\n"\n");
     for (int i = 0; i < interface_count && i < MAX_INTERFACES; i++) {
         network_interface_t *interface = &discovered_interfaces[i];
         if (!interface) {
-            printf("WARN: Null interface at index %d\n", i);
+            printf("WARN: Null interface at index %d\n", i\n"\n"\n"\n"\n"\n"\n"\n");
             continue;
         }
         
         const char* ml_status = "not monitored";
         
         if (interface->up && interface->enabled && interface->mwan3_tracking_enabled) {
-            interface_type_t ml_type = ml_monitor_map_interface_type(interface);
+            interface_type_t ml_type = ml_monitor_map_interface_type(interface\n"\n"\n"\n"\n"\n"\n"\n");
             if (ml_type != INTERFACE_TYPE_UNKNOWN) {
                 ml_status = "monitored";
             }
@@ -242,11 +242,11 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
         const char* mwan3_name = interface->mwan3_name ? interface->mwan3_name : "none";
         
         printf("  - %s (%s): %s, MWAN3=%s, status=%s\n",
-                 name, type, friendly_name, mwan3_name, ml_status);
+                 name, type, friendly_name, mwan3_name, ml_status\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    printf("DEBUG: All logging sections completed successfully\n");
-    printf("DEBUG: About to return ML_MONITOR_SUCCESS from ml_monitor_init_from_network_discovery\n");
+    printf("DEBUG: All logging sections completed successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("DEBUG: About to return ML_MONITOR_SUCCESS from ml_monitor_init_from_network_discovery\n"\n"\n"\n"\n"\n"\n"\n"\n");
     return ML_MONITOR_SUCCESS;
 }
 
@@ -258,15 +258,15 @@ int ml_monitor_sync_with_network_discovery(ml_monitor_t *monitor) {
     network_interface_t current_interfaces[MAX_INTERFACES];
     int current_count = 0;
     
-    int discovery_result = get_comprehensive_interface_info(current_interfaces, &current_count);
+    int discovery_result = get_comprehensive_interface_info(current_interfaces, &current_count\n"\n"\n"\n"\n"\n"\n"\n");
     if (discovery_result != AUTONOMY_SUCCESS) {
-        printf("WARN: Failed to sync with network discovery: %d\n", discovery_result);
+        printf("WARN: Failed to sync with network discovery: %d\n", discovery_result\n"\n"\n"\n"\n"\n"\n"\n");
         return discovery_result;
     }
     
-    multi_interface_ml_system_t *multi_system = ml_monitor_get_multi_interface_system();
+    multi_interface_ml_system_t *multi_system = ml_monitor_get_multi_interface_system(\n"\n"\n"\n"\n"\n"\n"\n");
     if (!multi_system) {
-        printf("WARN: Multi-interface system not initialized\n");
+        printf("WARN: Multi-interface system not initialized\n"\n"\n"\n"\n"\n"\n"\n"\n");
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
@@ -279,7 +279,7 @@ int ml_monitor_sync_with_network_discovery(ml_monitor_t *monitor) {
             continue;
         }
         
-        interface_type_t ml_type = ml_monitor_map_interface_type(interface);
+        interface_type_t ml_type = ml_monitor_map_interface_type(interface\n"\n"\n"\n"\n"\n"\n"\n");
         if (ml_type == INTERFACE_TYPE_UNKNOWN) {
             continue;
         }
@@ -295,10 +295,10 @@ int ml_monitor_sync_with_network_discovery(ml_monitor_t *monitor) {
         
         // Add new interface if not already monitored
         if (!already_monitored) {
-            int add_result = ml_monitor_add_interface(multi_system, interface->name, ml_type);
+            int add_result = ml_monitor_add_interface(multi_system, interface->name, ml_type\n"\n"\n"\n"\n"\n"\n"\n");
             if (add_result == ML_MONITOR_MULTI_SUCCESS) {
                 printf("INFO: Added new interface to ML monitoring: %s (%s)\n", 
-                         interface->name, interface->type);
+                         interface->name, interface->type\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
@@ -316,7 +316,7 @@ int ml_monitor_get_interface_recommendations(const char *interface_name,
                                            bool *recommend_for_failover) {
     if (!interface_name) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    multi_interface_ml_system_t *multi_system = ml_monitor_get_multi_interface_system();
+    multi_interface_ml_system_t *multi_system = ml_monitor_get_multi_interface_system(\n"\n"\n"\n"\n"\n"\n"\n");
     if (!multi_system) {
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
@@ -324,7 +324,7 @@ int ml_monitor_get_interface_recommendations(const char *interface_name,
     // Get ML prediction for this interface
     uint8_t outage_prob, performance_score, confidence;
     int pred_result = ml_monitor_predict_interface_performance(multi_system, interface_name,
-                                                             &outage_prob, &performance_score, &confidence);
+                                                             &outage_prob, &performance_score, &confidence\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (pred_result == ML_MONITOR_MULTI_SUCCESS) {
         if (reliability_score) {
@@ -335,12 +335,12 @@ int ml_monitor_get_interface_recommendations(const char *interface_name,
             // Get MWAN3 weight recommendation
             double weight_confidence;
             ml_monitor_get_mwan3_weight_recommendation_multi(multi_system, interface_name, 
-                                                     recommended_mwan3_weight, &weight_confidence);
+                                                     recommended_mwan3_weight, &weight_confidence\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         if (recommend_for_failover) {
             // Recommend for failover if reliability is good and confidence is high
-            *recommend_for_failover = (*reliability_score > 0.7) && (confidence > 150);
+            *recommend_for_failover = (*reliability_score > 0.7) && (confidence > 150\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         return ML_MONITOR_SUCCESS;
@@ -354,11 +354,11 @@ int ml_monitor_convert_network_interface_to_observation(const network_interface_
                                                        multi_interface_observation_t *observation) {
     if (!interface || !observation) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    memset(observation, 0, sizeof(multi_interface_observation_t));
+    memset(observation, 0, sizeof(multi_interface_observation_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    observation->timestamp = time(NULL);
-    safe_strncpy(observation->interface_id, interface->name, sizeof(observation->interface_id));
-    observation->interface_type = ml_monitor_map_interface_type(interface);
+    observation->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(observation->interface_id, interface->name, sizeof(observation->interface_id)\n"\n"\n"\n"\n"\n"\n"\n");
+    observation->interface_type = ml_monitor_map_interface_type(interface\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Convert network discovery data to ML observation (prioritize real-time metrics)
     if (interface->real_time_metrics.ping_latency_ms > 0) {
@@ -371,7 +371,7 @@ int ml_monitor_convert_network_interface_to_observation(const network_interface_
     if (interface->real_time_metrics.ping_success_rate > 0) {
         observation->packet_loss_pct = 100 - interface->real_time_metrics.ping_success_rate;
     } else {
-        observation->packet_loss_pct = (uint8_t)(interface->packet_loss * 100);
+        observation->packet_loss_pct = (uint8_t)(interface->packet_loss * 100\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     observation->connection_stability = (uint8_t)(interface->health_score * 2.55); // Scale to 0-255
@@ -387,7 +387,7 @@ int ml_monitor_convert_network_interface_to_observation(const network_interface_
         trend_factor += interface->performance_history.loss_trend * 0.1;    // Loss trend impact
         trend_factor += interface->performance_history.health_trend * 0.2;  // Health trend impact
         
-        observation->reliability_score = (uint8_t)(observation->reliability_score * fmax(0.5, fmin(1.5, trend_factor)));
+        observation->reliability_score = (uint8_t)(observation->reliability_score * fmax(0.5, fmin(1.5, trend_factor))\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Interface-specific metrics from network discovery
@@ -421,7 +421,7 @@ int ml_monitor_convert_network_interface_to_observation(const network_interface_
                 } else {
                     // Fallback to basic metrics
                     observation->interface_specific.cellular.signal_strength_dbm = interface->signal_strength;
-                    observation->interface_specific.cellular.signal_quality = (uint8_t)(interface->health_score * 2.55);
+                    observation->interface_specific.cellular.signal_quality = (uint8_t)(interface->health_score * 2.55\n"\n"\n"\n"\n"\n"\n"\n");
                 }
             }
             break;
@@ -463,20 +463,20 @@ int ml_monitor_periodic_network_discovery_sync(ml_monitor_t *monitor) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
     static time_t last_sync = 0;
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Sync every 5 minutes to detect new/removed interfaces
     if (now - last_sync < 300) {
         return ML_MONITOR_SUCCESS;
     }
     
-    printf("DEBUG: Performing periodic sync with network discovery\n");
+    printf("DEBUG: Performing periodic sync with network discovery\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int sync_result = ml_monitor_sync_with_network_discovery(monitor);
+    int sync_result = ml_monitor_sync_with_network_discovery(monitor\n"\n"\n"\n"\n"\n"\n"\n");
     if (sync_result == ML_MONITOR_SUCCESS) {
-        printf("DEBUG: Network discovery sync completed successfully\n");
+        printf("DEBUG: Network discovery sync completed successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        printf("WARN: Network discovery sync failed: %d\n", sync_result);
+        printf("WARN: Network discovery sync failed: %d\n", sync_result\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     last_sync = now;
@@ -498,7 +498,7 @@ bool ml_monitor_is_interface_suitable_for_ml(const network_interface_t *interfac
     }
     
     // Must be a type we can monitor
-    interface_type_t ml_type = ml_monitor_map_interface_type(interface);
+    interface_type_t ml_type = ml_monitor_map_interface_type(interface\n"\n"\n"\n"\n"\n"\n"\n");
     if (ml_type == INTERFACE_TYPE_UNKNOWN) {
         return false;
     }
@@ -558,7 +558,7 @@ ml_monitoring_strategy_t ml_monitor_determine_monitoring_strategy(const network_
 int ml_monitor_get_monitoring_frequency_recommendation(const network_interface_t *interface) {
     if (!interface) return 60; // Default 1 minute
     
-    ml_monitoring_strategy_t strategy = ml_monitor_determine_monitoring_strategy(interface);
+    ml_monitoring_strategy_t strategy = ml_monitor_determine_monitoring_strategy(interface\n"\n"\n"\n"\n"\n"\n"\n");
     
     switch (strategy) {
         case ML_MONITORING_STRATEGY_FULL:
@@ -595,11 +595,11 @@ bool ml_monitor_should_use_mwan3_ping_results(const network_interface_t *interfa
         return false;
     }
     
-    ml_monitoring_strategy_t strategy = ml_monitor_determine_monitoring_strategy(interface);
+    ml_monitoring_strategy_t strategy = ml_monitor_determine_monitoring_strategy(interface\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Use MWAN3 results for cellular (to avoid data costs) or when MWAN3 is very frequent
     return (strategy == ML_MONITORING_STRATEGY_MWAN3_BASED || 
-            strategy == ML_MONITORING_STRATEGY_HYBRID);
+            strategy == ML_MONITORING_STRATEGY_HYBRID\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get enhanced interface information for ML monitoring
@@ -615,7 +615,7 @@ int ml_monitor_get_enhanced_interface_info(const char *interface_name,
     network_interface_t discovered_interfaces[MAX_INTERFACES];
     int interface_count = 0;
     
-    int discovery_result = get_comprehensive_interface_info(discovered_interfaces, &interface_count);
+    int discovery_result = get_comprehensive_interface_info(discovered_interfaces, &interface_count\n"\n"\n"\n"\n"\n"\n"\n");
     if (discovery_result != AUTONOMY_SUCCESS) {
         return discovery_result;
     }
@@ -626,10 +626,10 @@ int ml_monitor_get_enhanced_interface_info(const char *interface_name,
             network_interface_t *interface = &discovered_interfaces[i];
             
             if (friendly_name) {
-                strncpy(friendly_name, interface->friendly_name, 64);
+                strncpy(friendly_name, interface->friendly_name, 64\n"\n"\n"\n"\n"\n"\n"\n");
             }
             if (mwan3_name) {
-                strncpy(mwan3_name, interface->mwan3_name, 32);
+                strncpy(mwan3_name, interface->mwan3_name, 32\n"\n"\n"\n"\n"\n"\n"\n");
             }
             if (mwan3_tracking_enabled) {
                 *mwan3_tracking_enabled = interface->mwan3_tracking_enabled;
@@ -638,7 +638,7 @@ int ml_monitor_get_enhanced_interface_info(const char *interface_name,
                 *health_score = interface->health_score;
             }
             if (ml_type) {
-                *ml_type = ml_monitor_map_interface_type(interface);
+                *ml_type = ml_monitor_map_interface_type(interface\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             return ML_MONITOR_SUCCESS;

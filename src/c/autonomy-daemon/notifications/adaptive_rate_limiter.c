@@ -6,8 +6,8 @@
 #include <math.h>
 
 // Forward declarations for static functions
-static int get_priority_rate_limit(const adaptive_rate_limiter_t* limiter, notification_priority_t priority);
-static int get_priority_cooldown(const adaptive_rate_limiter_t* limiter, notification_priority_t priority);
+static int get_priority_rate_limit(const adaptive_rate_limiter_t* limiter, notification_priority_t priority\n"\n"\n"\n"\n"\n"\n"\n");
+static int get_priority_cooldown(const adaptive_rate_limiter_t* limiter, notification_priority_t priority\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize rate limiter
 int adaptive_rate_limiter_init(adaptive_rate_limiter_t* limiter, const rate_limiter_config_t* config) {
@@ -19,14 +19,14 @@ int adaptive_rate_limiter_init(adaptive_rate_limiter_t* limiter, const rate_limi
     
     // Initialize rate tracking
     limiter->current_rate = config->initial_rate;
-    limiter->last_adjustment = time(NULL);
+    limiter->last_adjustment = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     limiter->success_count = 0;
     limiter->failure_count = 0;
     limiter->total_requests = 0;
     
     // Initialize sliding window
     limiter->window_size = config->window_size_seconds;
-    limiter->window_start = time(NULL);
+    limiter->window_start = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     limiter->request_count = 0;
     
     // Initialize priority-based tracking
@@ -50,7 +50,7 @@ bool adaptive_rate_limiter_allow_request(adaptive_rate_limiter_t* limiter,
                                        notification_priority_t priority) {
     if (!limiter) return false;
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if we need to reset the window
     if (now - limiter->window_start >= limiter->window_size) {
@@ -69,7 +69,7 @@ bool adaptive_rate_limiter_allow_request(adaptive_rate_limiter_t* limiter,
     }
     
     // Check priority-based rate limits
-    int priority_limit = get_priority_rate_limit(limiter, priority);
+    int priority_limit = get_priority_rate_limit(limiter, priority\n"\n"\n"\n"\n"\n"\n"\n");
     if (limiter->priority_request_count[priority] >= priority_limit) {
         return false;
     }
@@ -96,7 +96,7 @@ void adaptive_rate_limiter_record_success(adaptive_rate_limiter_t* limiter) {
     
     // Check if we should increase the rate
     if (limiter->success_count >= limiter->success_threshold) {
-        adaptive_rate_limiter_adjust_rate(limiter, true);
+        adaptive_rate_limiter_adjust_rate(limiter, true\n"\n"\n"\n"\n"\n"\n"\n");
         limiter->success_count = 0;
         limiter->failure_count = 0;
     }
@@ -110,7 +110,7 @@ void adaptive_rate_limiter_record_failure(adaptive_rate_limiter_t* limiter) {
     
     // Check if we should decrease the rate
     if (limiter->failure_count >= limiter->failure_threshold) {
-        adaptive_rate_limiter_adjust_rate(limiter, false);
+        adaptive_rate_limiter_adjust_rate(limiter, false\n"\n"\n"\n"\n"\n"\n"\n");
         limiter->success_count = 0;
         limiter->failure_count = 0;
     }
@@ -120,7 +120,7 @@ void adaptive_rate_limiter_record_failure(adaptive_rate_limiter_t* limiter) {
 void adaptive_rate_limiter_adjust_rate(adaptive_rate_limiter_t* limiter, bool success) {
     if (!limiter) return;
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Don't adjust too frequently
     if (now - limiter->last_adjustment < limiter->config.min_adjustment_interval) {
@@ -129,13 +129,13 @@ void adaptive_rate_limiter_adjust_rate(adaptive_rate_limiter_t* limiter, bool su
     
     if (success) {
         // Increase rate
-        limiter->current_rate = (int)(limiter->current_rate * (1.0 + limiter->adjustment_factor));
+        limiter->current_rate = (int)(limiter->current_rate * (1.0 + limiter->adjustment_factor)\n"\n"\n"\n"\n"\n"\n"\n");
         if (limiter->current_rate > limiter->max_rate) {
             limiter->current_rate = limiter->max_rate;
         }
     } else {
         // Decrease rate
-        limiter->current_rate = (int)(limiter->current_rate * (1.0 - limiter->adjustment_factor));
+        limiter->current_rate = (int)(limiter->current_rate * (1.0 - limiter->adjustment_factor)\n"\n"\n"\n"\n"\n"\n"\n");
         if (limiter->current_rate < limiter->min_rate) {
             limiter->current_rate = limiter->min_rate;
         }
@@ -226,11 +226,11 @@ void adaptive_rate_limiter_reset(adaptive_rate_limiter_t* limiter) {
     if (!limiter) return;
     
     limiter->current_rate = limiter->config.initial_rate;
-    limiter->last_adjustment = time(NULL);
+    limiter->last_adjustment = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     limiter->success_count = 0;
     limiter->failure_count = 0;
     limiter->total_requests = 0;
-    limiter->window_start = time(NULL);
+    limiter->window_start = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     limiter->request_count = 0;
     
     for (int i = 0; i < NOTIFICATION_PRIORITY_EMERGENCY + 1; i++) {
@@ -245,7 +245,7 @@ bool adaptive_rate_limiter_is_emergency_mode(const adaptive_rate_limiter_t* limi
     
     // Emergency mode if we're at minimum rate and have recent failures
     return (limiter->current_rate <= limiter->min_rate && 
-            limiter->failure_count > 0);
+            limiter->failure_count > 0\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get time until next allowed request for priority
@@ -253,13 +253,13 @@ int adaptive_rate_limiter_get_wait_time(const adaptive_rate_limiter_t* limiter,
                                       notification_priority_t priority) {
     if (!limiter) return 0;
     
-    time_t now = time(NULL);
-    int cooldown = get_priority_cooldown(limiter, priority);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    int cooldown = get_priority_cooldown(limiter, priority\n"\n"\n"\n"\n"\n"\n"\n");
     time_t last_request = limiter->priority_last_request[priority];
     
     if (last_request == 0) return 0;
     
-    int wait_time = cooldown - (int)(now - last_request);
+    int wait_time = cooldown - (int)(now - last_request\n"\n"\n"\n"\n"\n"\n"\n");
     return wait_time > 0 ? wait_time : 0;
 }
 

@@ -9,39 +9,39 @@ extern struct uci_context *uci_ctx;
 
 // UCI configuration loading
 int load_uci_config(void) {
-    uci_ctx = uci_alloc_context();
+    uci_ctx = uci_alloc_context(\n"\n"\n"\n"\n"\n"\n"\n");
     if (!uci_ctx) {
         return -1;
     }
     
     struct uci_package *pkg = NULL;
-    int ret = uci_load(uci_ctx, "autonomy", &pkg);
+    int ret = uci_load(uci_ctx, "autonomy", &pkg\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != UCI_OK) {
         // Continue with defaults
         return 0;
     }
     
     // Load configuration values
-    struct uci_section *s = uci_lookup_section(uci_ctx, pkg, "main");
+    struct uci_section *s = uci_lookup_section(uci_ctx, pkg, "main"\n"\n"\n"\n"\n"\n"\n"\n");
     if (s) {
-        const char *log_level = uci_lookup_option_string(uci_ctx, s, "log_level");
+        const char *log_level = uci_lookup_option_string(uci_ctx, s, "log_level"\n"\n"\n"\n"\n"\n"\n"\n");
         if (log_level) {
-            strncpy(g_config.log_level, log_level, sizeof(g_config.log_level) - 1);
+            strncpy(g_config.log_level, log_level, sizeof(g_config.log_level) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
-        const char *enable_gps = uci_lookup_option_string(uci_ctx, s, "enable_gps");
+        const char *enable_gps = uci_lookup_option_string(uci_ctx, s, "enable_gps"\n"\n"\n"\n"\n"\n"\n"\n");
         if (enable_gps) {
             g_config.enable_gps = strcmp(enable_gps, "1") == 0 || strcmp(enable_gps, "true") == 0;
         }
         
-        const char *enable_notifications = uci_lookup_option_string(uci_ctx, s, "enable_notifications");
+        const char *enable_notifications = uci_lookup_option_string(uci_ctx, s, "enable_notifications"\n"\n"\n"\n"\n"\n"\n"\n");
         if (enable_notifications) {
             g_config.enable_notifications = strcmp(enable_notifications, "1") == 0 || strcmp(enable_notifications, "true") == 0;
         }
         
-        const char *health_interval = uci_lookup_option_string(uci_ctx, s, "health_check_interval");
+        const char *health_interval = uci_lookup_option_string(uci_ctx, s, "health_check_interval"\n"\n"\n"\n"\n"\n"\n"\n");
         if (health_interval) {
-            g_config.health_check_interval = atoi(health_interval);
+            g_config.health_check_interval = atoi(health_interval\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     

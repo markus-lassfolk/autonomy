@@ -66,25 +66,25 @@ static const char* NETWORK_TYPE_STRINGS[] = {
 };
 
 // Forward declarations
-static int collect_via_ubus(cellular_info_t* info);
-static int collect_via_gsmctl(cellular_info_t* info);
-static int collect_via_at_commands(cellular_info_t* info);
-static int parse_gsmctl_output(const char* output, cellular_info_t* info);
-static int parse_at_command_response(const char* response, cellular_info_t* info);
-static void update_signal_history(int rsrp, int rsrq, int sinr);
-static void calculate_signal_variance(void);
-static double calculate_signal_quality_score(const cellular_info_t* info);
-static cellular_network_type_t parse_network_type(const char* network_str);
-static const char* network_type_to_string(cellular_network_type_t type);
+static int collect_via_ubus(cellular_info_t* info\n"\n"\n"\n"\n"\n"\n"\n");
+static int collect_via_gsmctl(cellular_info_t* info\n"\n"\n"\n"\n"\n"\n"\n");
+static int collect_via_at_commands(cellular_info_t* info\n"\n"\n"\n"\n"\n"\n"\n");
+static int parse_gsmctl_output(const char* output, cellular_info_t* info\n"\n"\n"\n"\n"\n"\n"\n");
+static int parse_at_command_response(const char* response, cellular_info_t* info\n"\n"\n"\n"\n"\n"\n"\n");
+static void update_signal_history(int rsrp, int rsrq, int sinr\n"\n"\n"\n"\n"\n"\n"\n");
+static void calculate_signal_variance(void\n"\n"\n"\n"\n"\n"\n"\n");
+static double calculate_signal_quality_score(const cellular_info_t* info\n"\n"\n"\n"\n"\n"\n"\n");
+static cellular_network_type_t parse_network_type(const char* network_str\n"\n"\n"\n"\n"\n"\n"\n");
+static const char* network_type_to_string(cellular_network_type_t type\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize cellular collector
 int cellular_collector_init(const cellular_collector_config_t* config) {
     if (g_cellular_collector_initialized) {
-        LOGX_WARN_MSG("Cellular collector already initialized");
+        printf("WARN: "Cellular collector already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    memset(&g_cellular_collector, 0, sizeof(cellular_collector_t));
+    memset(&g_cellular_collector, 0, sizeof(cellular_collector_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set configuration
     if (config) {
@@ -92,8 +92,8 @@ int cellular_collector_init(const cellular_collector_config_t* config) {
     } else {
         // Default configuration using UCI config
         g_cellular_collector.config.enabled = true; // Use configurable cellular collection enabled
-        strcpy(g_cellular_collector.config.modem_device, "/dev/ttyUSB0");
-        strcpy(g_cellular_collector.config.interface_name, "mob1s1a1");
+        strcpy(g_cellular_collector.config.modem_device, "/dev/ttyUSB0"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(g_cellular_collector.config.interface_name, "mob1s1a1"\n"\n"\n"\n"\n"\n"\n"\n");
         g_cellular_collector.config.collection_interval = g_config.network_check_interval;
         g_cellular_collector.config.timeout_seconds = 10; // Use configurable cellular timeout
         g_cellular_collector.config.enable_stability_monitoring = true; // Use configurable stability monitoring
@@ -106,7 +106,7 @@ int cellular_collector_init(const cellular_collector_config_t* config) {
     
     // Initialize mutex
     if (pthread_mutex_init(&g_cellular_collector.mutex, NULL) != 0) {
-        LOGX_ERROR_MSG("Failed to initialize cellular collector mutex");
+        printf("ERROR: "Failed to initialize cellular collector mutex"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -115,7 +115,7 @@ int cellular_collector_init(const cellular_collector_config_t* config) {
     g_cellular_collector.history_index = 0;
     
     g_cellular_collector_initialized = true;
-    LOGX_INFO_MSG("Cellular collector initialized", "device", g_cellular_collector.config.modem_device);
+    printf("INFO: "Cellular collector initialized", "device", g_cellular_collector.config.modem_device\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -124,10 +124,10 @@ int cellular_collector_init(const cellular_collector_config_t* config) {
 void cellular_collector_cleanup(void) {
     if (!g_cellular_collector_initialized) return;
     
-    pthread_mutex_destroy(&g_cellular_collector.mutex);
+    pthread_mutex_destroy(&g_cellular_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_cellular_collector_initialized = false;
     
-    LOGX_INFO_MSG("Cellular collector cleaned up");
+    printf("INFO: "Cellular collector cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Collect cellular metrics
@@ -140,12 +140,12 @@ int cellular_collector_collect(cellular_info_t* info) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_cellular_collector.mutex);
+    pthread_mutex_lock(&g_cellular_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    memset(info, 0, sizeof(cellular_info_t));
-    info->timestamp = time(NULL);
-    strcpy(info->interface_name, g_cellular_collector.config.interface_name);
-    strcpy(info->modem_device, g_cellular_collector.config.modem_device);
+    memset(info, 0, sizeof(cellular_info_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    info->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(info->interface_name, g_cellular_collector.config.interface_name\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(info->modem_device, g_cellular_collector.config.modem_device\n"\n"\n"\n"\n"\n"\n"\n");
     
     int result = AUTONOMY_ERROR_SYSTEM;
     
@@ -153,20 +153,20 @@ int cellular_collector_collect(cellular_info_t* info) {
     // 1. UBUS (fastest and most reliable)
     if (collect_via_ubus(info) == AUTONOMY_SUCCESS) {
         result = AUTONOMY_SUCCESS;
-        LOGX_DEBUG_MSG("Cellular data collected via UBUS");
+        printf("DEBUG: "Cellular data collected via UBUS"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     // 2. gsmctl command
     else if (collect_via_gsmctl(info) == AUTONOMY_SUCCESS) {
         result = AUTONOMY_SUCCESS;
-        LOGX_DEBUG_MSG("Cellular data collected via gsmctl");
+        printf("DEBUG: "Cellular data collected via gsmctl"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     // 3. AT commands (fallback)
     else if (collect_via_at_commands(info) == AUTONOMY_SUCCESS) {
         result = AUTONOMY_SUCCESS;
-        LOGX_DEBUG_MSG("Cellular data collected via AT commands");
+        printf("DEBUG: "Cellular data collected via AT commands"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     else {
-        LOGX_ERROR_MSG("Failed to collect cellular data via any method");
+        printf("ERROR: "Failed to collect cellular data via any method"\n"\n"\n"\n"\n"\n"\n"\n");
         result = AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -174,24 +174,24 @@ int cellular_collector_collect(cellular_info_t* info) {
         // Update statistics
         g_cellular_collector.stats.total_collections++;
         g_cellular_collector.stats.successful_collections++;
-        g_cellular_collector.stats.last_collection = time(NULL);
+        g_cellular_collector.stats.last_collection = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Update signal history for stability analysis
         if (info->has_rsrp && info->has_rsrq && info->has_sinr) {
-            update_signal_history(info->rsrp, info->rsrq, info->sinr);
-            calculate_signal_variance();
+            update_signal_history(info->rsrp, info->rsrq, info->sinr\n"\n"\n"\n"\n"\n"\n"\n");
+            calculate_signal_variance(\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Calculate quality scores
-        info->signal_quality = calculate_signal_quality_score(info);
-        info->stability_score = cellular_collector_calculate_stability_score(info);
-        info->predictive_risk = cellular_collector_calculate_predictive_risk(info);
+        info->signal_quality = calculate_signal_quality_score(info\n"\n"\n"\n"\n"\n"\n"\n");
+        info->stability_score = cellular_collector_calculate_stability_score(info\n"\n"\n"\n"\n"\n"\n"\n");
+        info->predictive_risk = cellular_collector_calculate_predictive_risk(info\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Track cell changes
         if (strlen(info->cell_id) > 0 && 
             strcmp(info->cell_id, g_cellular_collector.last_cell_id) != 0) {
-            strcpy(g_cellular_collector.last_cell_id, info->cell_id);
-            g_cellular_collector.last_cell_change = time(NULL);
+            strcpy(g_cellular_collector.last_cell_id, info->cell_id\n"\n"\n"\n"\n"\n"\n"\n");
+            g_cellular_collector.last_cell_change = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             g_cellular_collector.stats.cell_change_count++;
             info->cell_changes = g_cellular_collector.stats.cell_change_count;
         }
@@ -199,38 +199,38 @@ int cellular_collector_collect(cellular_info_t* info) {
         // Store last successful collection
         g_cellular_collector.last_info = *info;
         
-        LOGX_DEBUG_MSG("Cellular collection successful",
+        printf("DEBUG: "Cellular collection successful",
                   "rsrp", info->rsrp,
                   "rsrq", info->rsrq,
                   "quality", info->signal_quality,
-                  "stability", info->stability_score);
+                  "stability", info->stability_score\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         g_cellular_collector.stats.failed_collections++;
     }
     
-    pthread_mutex_unlock(&g_cellular_collector.mutex);
+    pthread_mutex_unlock(&g_cellular_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return result;
 }
 
 // Collect cellular data via UBUS
 static int collect_via_ubus(cellular_info_t* info) {
-    struct ubus_context* ctx = ubus_connect(NULL);
+    struct ubus_context* ctx = ubus_connect(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     if (!ctx) {
-        LOGX_ERROR_MSG("Failed to connect to UBUS for cellular collection");
+        printf("ERROR: "Failed to connect to UBUS for cellular collection"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
 
     uint32_t id;
     if (ubus_lookup_id(ctx, "gsm", &id) != 0) {
-        LOGX_DEBUG_MSG("GSM service not available via UBUS");
-        ubus_free(ctx);
+        printf("DEBUG: "GSM service not available via UBUS"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
 
     // Call GSM status method
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
 
     // Set up callback to receive response
     struct blob_attr *tb[__GSM_STATUS_MAX];
@@ -244,11 +244,11 @@ static int collect_via_ubus(cellular_info_t* info) {
         callback_called = 1;
 
         // Parse the GSM status response
-        blobmsg_parse(gsm_status_policy, __GSM_STATUS_MAX, tb, blob_data(msg), blob_len(msg));
+        blobmsg_parse(gsm_status_policy, __GSM_STATUS_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
 
         // Extract signal information
         if (tb[GSM_STATUS_RSRP]) {
-            info->rsrp = blobmsg_get_u32(tb[GSM_STATUS_RSRP]);
+            info->rsrp = blobmsg_get_u32(tb[GSM_STATUS_RSRP]\n"\n"\n"\n"\n"\n"\n"\n");
             info->has_rsrp = true;
         } else {
             info->rsrp = 0;
@@ -256,7 +256,7 @@ static int collect_via_ubus(cellular_info_t* info) {
         }
 
         if (tb[GSM_STATUS_RSRQ]) {
-            info->rsrq = blobmsg_get_u32(tb[GSM_STATUS_RSRQ]);
+            info->rsrq = blobmsg_get_u32(tb[GSM_STATUS_RSRQ]\n"\n"\n"\n"\n"\n"\n"\n");
             info->has_rsrq = true;
         } else {
             info->rsrq = 0;
@@ -264,7 +264,7 @@ static int collect_via_ubus(cellular_info_t* info) {
         }
 
         if (tb[GSM_STATUS_SINR]) {
-            info->sinr = blobmsg_get_u32(tb[GSM_STATUS_SINR]);
+            info->sinr = blobmsg_get_u32(tb[GSM_STATUS_SINR]\n"\n"\n"\n"\n"\n"\n"\n");
             info->has_sinr = true;
         } else {
             info->sinr = 0;
@@ -272,7 +272,7 @@ static int collect_via_ubus(cellular_info_t* info) {
         }
 
         if (tb[GSM_STATUS_RSSI]) {
-            info->rssi = blobmsg_get_u32(tb[GSM_STATUS_RSSI]);
+            info->rssi = blobmsg_get_u32(tb[GSM_STATUS_RSSI]\n"\n"\n"\n"\n"\n"\n"\n");
             info->has_rssi = true;
         } else {
             info->rssi = 0;
@@ -281,7 +281,7 @@ static int collect_via_ubus(cellular_info_t* info) {
 
         // Extract network information
         if (tb[GSM_STATUS_NETWORK_TYPE]) {
-            const char* network_str = blobmsg_get_string(tb[GSM_STATUS_NETWORK_TYPE]);
+            const char* network_str = blobmsg_get_string(tb[GSM_STATUS_NETWORK_TYPE]\n"\n"\n"\n"\n"\n"\n"\n");
             if (strcmp(network_str, "LTE") == 0) {
                 info->network_type = CELLULAR_NETWORK_TYPE_LTE;
             } else if (strcmp(network_str, "UMTS") == 0) {
@@ -297,60 +297,60 @@ static int collect_via_ubus(cellular_info_t* info) {
 
         if (tb[GSM_STATUS_OPERATOR]) {
             strncpy(info->operator_name, blobmsg_get_string(tb[GSM_STATUS_OPERATOR]),
-                    sizeof(info->operator_name) - 1);
+                    sizeof(info->operator_name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
-            strcpy(info->operator_name, "Unknown");
+            strcpy(info->operator_name, "Unknown"\n"\n"\n"\n"\n"\n"\n"\n");
         }
 
         if (tb[GSM_STATUS_BAND]) {
             strncpy(info->band, blobmsg_get_string(tb[GSM_STATUS_BAND]),
-                    sizeof(info->band) - 1);
+                    sizeof(info->band) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
-            strcpy(info->band, "Unknown");
+            strcpy(info->band, "Unknown"\n"\n"\n"\n"\n"\n"\n"\n");
         }
 
         if (tb[GSM_STATUS_CELL_ID]) {
             strncpy(info->cell_id, blobmsg_get_string(tb[GSM_STATUS_CELL_ID]),
-                    sizeof(info->cell_id) - 1);
+                    sizeof(info->cell_id) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
-            strcpy(info->cell_id, "Unknown");
+            strcpy(info->cell_id, "Unknown"\n"\n"\n"\n"\n"\n"\n"\n");
         }
 
         if (tb[GSM_STATUS_IP]) {
             strncpy(info->ip_address, blobmsg_get_string(tb[GSM_STATUS_IP]),
-                    sizeof(info->ip_address) - 1);
+                    sizeof(info->ip_address) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
             // Try to get real IP address from network interface
-            FILE *ip_fp = popen("ip addr show wwan0 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1", "r");
+            FILE *ip_fp = popen("ip addr show wwan0 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1", "r"\n"\n"\n"\n"\n"\n"\n"\n");
             if (ip_fp) {
                 if (fgets(info->ip_address, sizeof(info->ip_address), ip_fp)) {
                     // Remove newline
                     info->ip_address[strcspn(info->ip_address, "\n")] = '\0';
                 } else {
-                    strcpy(info->ip_address, "0.0.0.0");
+                    strcpy(info->ip_address, "0.0.0.0"\n"\n"\n"\n"\n"\n"\n"\n");
                 }
-                pclose(ip_fp);
+                pclose(ip_fp\n"\n"\n"\n"\n"\n"\n"\n");
             } else {
-                strcpy(info->ip_address, "0.0.0.0");
+                strcpy(info->ip_address, "0.0.0.0"\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
 
         if (tb[GSM_STATUS_GATEWAY]) {
             strncpy(info->gateway, blobmsg_get_string(tb[GSM_STATUS_GATEWAY]),
-                    sizeof(info->gateway) - 1);
+                    sizeof(info->gateway) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
             // Try to get real gateway from routing table
-            FILE *gw_fp = popen("ip route show dev wwan0 2>/dev/null | grep default | awk '{print $3}' | head -1", "r");
+            FILE *gw_fp = popen("ip route show dev wwan0 2>/dev/null | grep default | awk '{print $3}' | head -1", "r"\n"\n"\n"\n"\n"\n"\n"\n");
             if (gw_fp) {
                 if (fgets(info->gateway, sizeof(info->gateway), gw_fp)) {
                     // Remove newline
                     info->gateway[strcspn(info->gateway, "\n")] = '\0';
                 } else {
-                    strcpy(info->gateway, "0.0.0.0");
+                    strcpy(info->gateway, "0.0.0.0"\n"\n"\n"\n"\n"\n"\n"\n");
                 }
-                pclose(gw_fp);
+                pclose(gw_fp\n"\n"\n"\n"\n"\n"\n"\n");
             } else {
-                strcpy(info->gateway, "0.0.0.0");
+                strcpy(info->gateway, "0.0.0.0"\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
 
@@ -362,7 +362,7 @@ static int collect_via_ubus(cellular_info_t* info) {
         }
 
         if (tb[GSM_STATUS_ROAMING]) {
-            info->roaming = blobmsg_get_bool(tb[GSM_STATUS_ROAMING]);
+            info->roaming = blobmsg_get_bool(tb[GSM_STATUS_ROAMING]\n"\n"\n"\n"\n"\n"\n"\n");
             info->roaming_type = info->roaming ? ROAMING_TYPE_DOMESTIC : ROAMING_TYPE_NONE;
         } else {
             info->roaming = false;
@@ -370,26 +370,26 @@ static int collect_via_ubus(cellular_info_t* info) {
         }
     }
 
-    int ret = ubus_invoke(ctx, id, "status", bb.head, gsm_status_callback, NULL, 5000);
+    int ret = ubus_invoke(ctx, id, "status", bb.head, gsm_status_callback, NULL, 5000\n"\n"\n"\n"\n"\n"\n"\n");
 
-    blob_buf_free(&bb);
-    ubus_free(ctx);
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
 
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to call GSM status via UBUS", "error", ubus_strerror(ret));
+        printf("ERROR: "Failed to call GSM status via UBUS", "error", ubus_strerror(ret)\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
 
     if (!callback_called) {
-        LOGX_WARN_MSG("GSM status UBUS call completed but no response received");
+        printf("WARN: "GSM status UBUS call completed but no response received"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
 
-    LOGX_DEBUG_MSG("Successfully collected cellular data via UBUS",
+    printf("DEBUG: "Successfully collected cellular data via UBUS",
                    "operator", info->operator_name,
                    "network_type", info->network_type,
                    "rsrp", info->rsrp,
-                   "connected", info->connection_state == CELLULAR_STATE_CONNECTED);
+                   "connected", info->connection_state == CELLULAR_STATE_CONNECTED\n"\n"\n"\n"\n"\n"\n"\n");
 
     return AUTONOMY_SUCCESS;
 }
@@ -397,25 +397,25 @@ static int collect_via_ubus(cellular_info_t* info) {
 // Collect cellular data via gsmctl command
 static int collect_via_gsmctl(cellular_info_t* info) {
     char command[256];
-    snprintf(command, sizeof(command), "gsmctl -A AT+CSQ 2>/dev/null");
+    snprintf(command, sizeof(command), "gsmctl -A AT+CSQ 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
     
-    FILE* fp = popen(command, "r");
+    FILE* fp = popen(command, "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!fp) {
-        LOGX_ERROR_MSG("Failed to execute gsmctl command");
+        printf("ERROR: "Failed to execute gsmctl command"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     char output[1024];
-    size_t bytes_read = fread(output, 1, sizeof(output) - 1, fp);
+    size_t bytes_read = fread(output, 1, sizeof(output) - 1, fp\n"\n"\n"\n"\n"\n"\n"\n");
     output[bytes_read] = '\0';
     
-    int exit_code = pclose(fp);
+    int exit_code = pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
     if (exit_code != 0) {
-        LOGX_ERROR_MSG("gsmctl command failed", "exit_code", exit_code);
+        printf("ERROR: "gsmctl command failed", "exit_code", exit_code\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    return parse_gsmctl_output(output, info);
+    return parse_gsmctl_output(output, info\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Collect cellular data via AT commands
@@ -426,14 +426,14 @@ static int send_at_command(int fd, const char* command, char* response, int resp
     }
     
     // Clear any pending data
-    tcflush(fd, TCIOFLUSH);
+    tcflush(fd, TCIOFLUSH\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Send command
     char cmd_with_cr[256];
-    snprintf(cmd_with_cr, sizeof(cmd_with_cr), "%s\r\n", command);
+    snprintf(cmd_with_cr, sizeof(cmd_with_cr), "%s\r\n", command\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (write(fd, cmd_with_cr, strlen(cmd_with_cr)) < 0) {
-        LOGX_ERROR_MSG("Failed to write AT command: %s", strerror(errno));
+        printf("ERROR: "Failed to write AT command: %s", strerror(errno)\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -443,11 +443,11 @@ static int send_at_command(int fd, const char* command, char* response, int resp
     timeout.tv_sec = timeout_ms / 1000;
     timeout.tv_usec = (timeout_ms % 1000) * 1000;
     
-    FD_ZERO(&readfds);
-    FD_SET(fd, &readfds);
+    FD_ZERO(&readfds\n"\n"\n"\n"\n"\n"\n"\n");
+    FD_SET(fd, &readfds\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (select(fd + 1, &readfds, NULL, NULL, &timeout) <= 0) {
-        LOGX_DEBUG_MSG("AT command timeout or error");
+        printf("DEBUG: "AT command timeout or error"\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -455,7 +455,7 @@ static int send_at_command(int fd, const char* command, char* response, int resp
     int total_read = 0;
     int bytes_read;
     while (total_read < response_size - 1) {
-        bytes_read = read(fd, response + total_read, response_size - total_read - 1);
+        bytes_read = read(fd, response + total_read, response_size - total_read - 1\n"\n"\n"\n"\n"\n"\n"\n");
         if (bytes_read <= 0) break;
         total_read += bytes_read;
         
@@ -491,15 +491,15 @@ static int collect_via_at_commands(cellular_info_t* info) {
     
     // Try to open modem device
     for (int i = 0; i < sizeof(modem_devices)/sizeof(modem_devices[0]); i++) {
-        fd = open(modem_devices[i], O_RDWR | O_NOCTTY | O_NONBLOCK);
+        fd = open(modem_devices[i], O_RDWR | O_NOCTTY | O_NONBLOCK\n"\n"\n"\n"\n"\n"\n"\n");
         if (fd >= 0) {
-            LOGX_DEBUG_MSG("Opened modem device: %s", modem_devices[i]);
+            printf("DEBUG: "Opened modem device: %s", modem_devices[i]\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Configure serial port
             struct termios tty;
             if (tcgetattr(fd, &tty) == 0) {
-                cfsetospeed(&tty, B115200);
-                cfsetispeed(&tty, B115200);
+                cfsetospeed(&tty, B115200\n"\n"\n"\n"\n"\n"\n"\n");
+                cfsetispeed(&tty, B115200\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;  // 8-bit chars
                 tty.c_iflag &= ~IGNBRK;                       // disable break processing
@@ -514,7 +514,7 @@ static int collect_via_at_commands(cellular_info_t* info) {
                 tty.c_cflag &= ~CSTOPB;
                 tty.c_cflag &= ~CRTSCTS;
                 
-                tcsetattr(fd, TCSANOW, &tty);
+                tcsetattr(fd, TCSANOW, &tty\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             // Test with AT command
@@ -522,51 +522,51 @@ static int collect_via_at_commands(cellular_info_t* info) {
                 break; // Found working modem
             }
             
-            close(fd);
+            close(fd\n"\n"\n"\n"\n"\n"\n"\n");
             fd = -1;
         }
     }
     
     if (fd < 0) {
-        LOGX_DEBUG_MSG("No cellular modem found on common device paths");
+        printf("DEBUG: "No cellular modem found on common device paths"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     // Get manufacturer info
     if (send_at_command(fd, "AT+CGMI", response, sizeof(response), 2000) == 0) {
-        char* start = strstr(response, "\r\n");
+        char* start = strstr(response, "\r\n"\n"\n"\n"\n"\n"\n"\n"\n");
         if (start) {
             start += 2;
-            char* end = strstr(start, "\r\n");
+            char* end = strstr(start, "\r\n"\n"\n"\n"\n"\n"\n"\n"\n");
             if (end) {
                 *end = '\0';
-                strncpy(info->manufacturer, start, sizeof(info->manufacturer) - 1);
+                strncpy(info->manufacturer, start, sizeof(info->manufacturer) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
     
     // Get model info
     if (send_at_command(fd, "AT+CGMM", response, sizeof(response), 2000) == 0) {
-        char* start = strstr(response, "\r\n");
+        char* start = strstr(response, "\r\n"\n"\n"\n"\n"\n"\n"\n"\n");
         if (start) {
             start += 2;
-            char* end = strstr(start, "\r\n");
+            char* end = strstr(start, "\r\n"\n"\n"\n"\n"\n"\n"\n"\n");
             if (end) {
                 *end = '\0';
-                strncpy(info->model, start, sizeof(info->model) - 1);
+                strncpy(info->model, start, sizeof(info->model) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
     
     // Get IMEI
     if (send_at_command(fd, "AT+CGSN", response, sizeof(response), 2000) == 0) {
-        char* start = strstr(response, "\r\n");
+        char* start = strstr(response, "\r\n"\n"\n"\n"\n"\n"\n"\n"\n");
         if (start) {
             start += 2;
-            char* end = strstr(start, "\r\n");
+            char* end = strstr(start, "\r\n"\n"\n"\n"\n"\n"\n"\n"\n");
             if (end) {
                 *end = '\0';
-                strncpy(info->imei, start, sizeof(info->imei) - 1);
+                strncpy(info->imei, start, sizeof(info->imei) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
@@ -622,7 +622,7 @@ static int collect_via_at_commands(cellular_info_t* info) {
         char oper_name[64];
         if (sscanf(response, "\r\n+COPS: %d,%d,\"%63[^\"]\",%d", 
                    &mode, &format, oper_name, &oper_code) >= 3) {
-            strncpy(info->operator_name, oper_name, sizeof(info->operator_name) - 1);
+            strncpy(info->operator_name, oper_name, sizeof(info->operator_name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Determine network type based on access technology
             switch(oper_code) {
@@ -649,41 +649,41 @@ static int collect_via_at_commands(cellular_info_t* info) {
     // Get SIM card status
     if (send_at_command(fd, "AT+CPIN?", response, sizeof(response), 2000) == 0) {
         if (strstr(response, "READY")) {
-            strncpy(info->sim_status, "READY", sizeof(info->sim_status) - 1);
+            strncpy(info->sim_status, "READY", sizeof(info->sim_status) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Get ICCID if SIM is ready
             if (send_at_command(fd, "AT+CCID", response, sizeof(response), 2000) == 0) {
-                char* start = strstr(response, "\r\n");
+                char* start = strstr(response, "\r\n"\n"\n"\n"\n"\n"\n"\n"\n");
                 if (start) {
                     start += 2;
-                    char* end = strstr(start, "\r\n");
+                    char* end = strstr(start, "\r\n"\n"\n"\n"\n"\n"\n"\n"\n");
                     if (end) {
                         *end = '\0';
-                        strncpy(info->iccid, start, sizeof(info->iccid) - 1);
+                        strncpy(info->iccid, start, sizeof(info->iccid) - 1\n"\n"\n"\n"\n"\n"\n"\n");
                     }
                 }
             }
         } else if (strstr(response, "SIM PIN")) {
-            strncpy(info->sim_status, "PIN_REQUIRED", sizeof(info->sim_status) - 1);
+            strncpy(info->sim_status, "PIN_REQUIRED", sizeof(info->sim_status) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
-            strncpy(info->sim_status, "ERROR", sizeof(info->sim_status) - 1);
+            strncpy(info->sim_status, "ERROR", sizeof(info->sim_status) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // Get cell info (serving cell)
     if (send_at_command(fd, "AT+QENG=\"servingcell\"", response, sizeof(response), 2000) == 0) {
         // Parse Quectel-specific serving cell info
-        char* line = strstr(response, "+QENG:");
+        char* line = strstr(response, "+QENG:"\n"\n"\n"\n"\n"\n"\n"\n");
         if (line) {
             int mcc, mnc, cellid, pci, tac, band;
             if (sscanf(line, "+QENG: \"servingcell\",\"%*[^\"]\",\"%*[^\"]\",\"%*[^\"]\",\"%d\",\"%d\",%*d,%*d,%d,%*x,%d,%*d,%d,%d",
                       &mcc, &mnc, &cellid, &pci, &tac, &band) >= 4) {
-                snprintf(info->mcc, sizeof(info->mcc), "%d", mcc);
-                snprintf(info->mnc, sizeof(info->mnc), "%d", mnc);
-                snprintf(info->cell_id, sizeof(info->cell_id), "%d", cellid);
+                snprintf(info->mcc, sizeof(info->mcc), "%d", mcc\n"\n"\n"\n"\n"\n"\n"\n");
+                snprintf(info->mnc, sizeof(info->mnc), "%d", mnc\n"\n"\n"\n"\n"\n"\n"\n");
+                snprintf(info->cell_id, sizeof(info->cell_id), "%d", cellid\n"\n"\n"\n"\n"\n"\n"\n");
                 info->pci = pci;
-                snprintf(info->tac, sizeof(info->tac), "%d", tac);
-                snprintf(info->band, sizeof(info->band), "%d", band);
+                snprintf(info->tac, sizeof(info->tac), "%d", tac\n"\n"\n"\n"\n"\n"\n"\n");
+                snprintf(info->band, sizeof(info->band), "%d", band\n"\n"\n"\n"\n"\n"\n"\n");
                 info->has_cell_info = true;
             }
         }
@@ -694,19 +694,19 @@ static int collect_via_at_commands(cellular_info_t* info) {
                 int n, stat, lac, ci;
                 if (sscanf(response, "\r\n+CGREG: %d,%d,\"%x\",\"%x\"", &n, &stat, &lac, &ci) >= 4) {
                     info->lac = lac;
-                    snprintf(info->cell_id, sizeof(info->cell_id), "%d", ci);
+                    snprintf(info->cell_id, sizeof(info->cell_id), "%d", ci\n"\n"\n"\n"\n"\n"\n"\n");
                     info->has_cell_info = true;
                 }
             }
         }
     }
     
-    close(fd);
+    close(fd\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update timestamp
-    info->timestamp = time(NULL);
+    info->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("Successfully collected cellular info via AT commands");
+    printf("DEBUG: "Successfully collected cellular info via AT commands"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -717,7 +717,7 @@ static int parse_gsmctl_output(const char* output, cellular_info_t* info) {
     }
     
     // Parse signal quality response: +CSQ: <rssi>,<ber>
-    char* csq_line = strstr(output, "+CSQ:");
+    char* csq_line = strstr(output, "+CSQ:"\n"\n"\n"\n"\n"\n"\n"\n");
     if (csq_line) {
         int rssi, ber;
         if (sscanf(csq_line, "+CSQ: %d,%d", &rssi, &ber) == 2) {
@@ -729,15 +729,15 @@ static int parse_gsmctl_output(const char* output, cellular_info_t* info) {
     }
     
     // Get real network type and connection state
-    char* net_type_line = strstr(output, "+COPS:");
+    char* net_type_line = strstr(output, "+COPS:"\n"\n"\n"\n"\n"\n"\n"\n");
     if (net_type_line) {
         // Parse network type from COPS response
-        char* tech_start = strstr(net_type_line, "(");
+        char* tech_start = strstr(net_type_line, "("\n"\n"\n"\n"\n"\n"\n"\n");
         if (tech_start) {
-            char* tech_end = strstr(tech_start, ")");
+            char* tech_end = strstr(tech_start, ")"\n"\n"\n"\n"\n"\n"\n"\n");
             if (tech_end) {
                 char tech[16] = {0};
-                strncpy(tech, tech_start + 1, tech_end - tech_start - 1);
+                strncpy(tech, tech_start + 1, tech_end - tech_start - 1\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 if (strstr(tech, "LTE") || strstr(tech, "4G")) {
                     info->network_type = CELLULAR_NETWORK_TYPE_LTE;
@@ -754,7 +754,7 @@ static int parse_gsmctl_output(const char* output, cellular_info_t* info) {
         }
     } else {
         // Try to get network type from system
-        FILE *net_fp = popen("cat /sys/class/net/wwan0/operstate 2>/dev/null", "r");
+        FILE *net_fp = popen("cat /sys/class/net/wwan0/operstate 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
         if (net_fp) {
             char state[16];
             if (fgets(state, sizeof(state), net_fp)) {
@@ -764,13 +764,13 @@ static int parse_gsmctl_output(const char* output, cellular_info_t* info) {
                     info->connection_state = CELLULAR_STATE_DISCONNECTED;
                 }
             }
-            pclose(net_fp);
+            pclose(net_fp\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
             info->connection_state = CELLULAR_STATE_UNKNOWN;
         }
         
         // Try to get network type from modem info
-        FILE *modem_fp = popen("mmcli -m 0 --command='AT+QNWINFO' 2>/dev/null | grep -E '(LTE|UMTS|GSM|5G)'", "r");
+        FILE *modem_fp = popen("mmcli -m 0 --command='AT+QNWINFO' 2>/dev/null | grep -E '(LTE|UMTS|GSM|5G)'", "r"\n"\n"\n"\n"\n"\n"\n"\n");
         if (modem_fp) {
             char net_info[64];
             if (fgets(net_info, sizeof(net_info), modem_fp)) {
@@ -786,14 +786,14 @@ static int parse_gsmctl_output(const char* output, cellular_info_t* info) {
                     info->network_type = CELLULAR_NETWORK_TYPE_LTE; // Default fallback
                 }
             }
-            pclose(modem_fp);
+            pclose(modem_fp\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
             info->network_type = CELLULAR_NETWORK_TYPE_LTE; // Default fallback
         }
     }
     
     // Get real connection state
-    char* reg_line = strstr(output, "+CREG:");
+    char* reg_line = strstr(output, "+CREG:"\n"\n"\n"\n"\n"\n"\n"\n");
     if (reg_line) {
         int reg_status;
         if (sscanf(reg_line, "+CREG: %*d,%d", &reg_status) == 1) {
@@ -941,7 +941,7 @@ double cellular_collector_calculate_stability_score(const cellular_info_t* info)
     double stability = g_cellular_collector.stats.stability_score;
     
     // Adjust based on cell changes
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     time_t time_since_change = now - g_cellular_collector.last_cell_change;
     
     if (time_since_change < 300) { // Less than 5 minutes since cell change
@@ -1011,9 +1011,9 @@ int cellular_collector_get_stats(cellular_collector_stats_t* stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_cellular_collector.mutex);
+    pthread_mutex_lock(&g_cellular_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *stats = g_cellular_collector.stats;
-    pthread_mutex_unlock(&g_cellular_collector.mutex);
+    pthread_mutex_unlock(&g_cellular_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1034,11 +1034,11 @@ int cellular_collector_set_config(const cellular_collector_config_t* config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_cellular_collector.mutex);
+    pthread_mutex_lock(&g_cellular_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_cellular_collector.config = *config;
-    pthread_mutex_unlock(&g_cellular_collector.mutex);
+    pthread_mutex_unlock(&g_cellular_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Cellular collector configuration updated");
+    printf("INFO: "Cellular collector configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -1049,7 +1049,7 @@ int cellular_collector_set_enabled(bool enabled) {
     }
     
     g_cellular_collector.config.enabled = enabled;
-    LOGX_INFO_MSG("Cellular collector", "enabled", enabled);
+    printf("INFO: "Cellular collector", "enabled", enabled\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1060,19 +1060,19 @@ int cellular_collector_reset_stats(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_cellular_collector.mutex);
-    memset(&g_cellular_collector.stats, 0, sizeof(cellular_collector_stats_t));
+    pthread_mutex_lock(&g_cellular_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_cellular_collector.stats, 0, sizeof(cellular_collector_stats_t)\n"\n"\n"\n"\n"\n"\n"\n");
     g_cellular_collector.history_count = 0;
     g_cellular_collector.history_index = 0;
-    pthread_mutex_unlock(&g_cellular_collector.mutex);
+    pthread_mutex_unlock(&g_cellular_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Cellular collector statistics reset");
+    printf("INFO: "Cellular collector statistics reset"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Force immediate collection
 int cellular_collector_force_collect(cellular_info_t* info) {
-    return cellular_collector_collect(info);
+    return cellular_collector_collect(info\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if cellular collector is initialized

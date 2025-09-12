@@ -115,19 +115,19 @@ static const struct blobmsg_policy test_channels_policy[] = {
 static char* blob_table_to_json_string(struct blob_attr *table) {
     if (!table) return NULL;
     
-    char* json_str = blobmsg_format_json(table, true);
+    char* json_str = blobmsg_format_json(table, true\n"\n"\n"\n"\n"\n"\n"\n");
     if (!json_str) return NULL;
     
     // Create a copy since blobmsg_format_json returns static buffer
-    char* result = strdup(json_str);
-    free(json_str);
+    char* result = strdup(json_str\n"\n"\n"\n"\n"\n"\n"\n");
+    free(json_str\n"\n"\n"\n"\n"\n"\n"\n");
     
     return result;
 }
 
 // Helper function to add channel delivery tracking to blob
 static void add_delivery_tracking_to_blob(struct blob_buf *bb, const comprehensive_notification_record_t *record) {
-    void *tracking_table = blobmsg_open_table(bb, "delivery_tracking");
+    void *tracking_table = blobmsg_open_table(bb, "delivery_tracking"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Add each channel's delivery status
     const char* channels[] = {"pushover", "email", "sms", "webhook", "slack", "discord", "telegram"};
@@ -137,13 +137,13 @@ static void add_delivery_tracking_to_blob(struct blob_buf *bb, const comprehensi
                       record->webhook_success, record->slack_success, record->discord_success, record->telegram_success};
     
     for (int i = 0; i < 7; i++) {
-        void *channel_table = blobmsg_open_table(bb, channels[i]);
-        blobmsg_add_u8(bb, "sent", sent[i]);
-        blobmsg_add_u8(bb, "success", success[i]);
-        blobmsg_close_table(bb, channel_table);
+        void *channel_table = blobmsg_open_table(bb, channels[i]\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(bb, "sent", sent[i]\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(bb, "success", success[i]\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_close_table(bb, channel_table\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_close_table(bb, tracking_table);
+    blobmsg_close_table(bb, tracking_table\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Send comprehensive notification
@@ -151,18 +151,18 @@ int notifications_comprehensive_ubus_send(struct ubus_context *ctx, struct ubus_
                                          struct ubus_request_data *req, const char *method,
                                          struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!notifications_comprehensive_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0);
-        blobmsg_add_string(&bb, "error", "Comprehensive notifications not initialized");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Comprehensive notifications not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return UBUS_STATUS_OK;
     }
     
     struct blob_attr *tb[__NOTIF_SEND_MAX];
-    blobmsg_parse(notification_send_policy, __NOTIF_SEND_MAX, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(notification_send_policy, __NOTIF_SEND_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     const char* type_str = tb[NOTIF_SEND_TYPE] ? blobmsg_get_string(tb[NOTIF_SEND_TYPE]) : "info";
     const char* priority_str = tb[NOTIF_SEND_PRIORITY] ? blobmsg_get_string(tb[NOTIF_SEND_PRIORITY]) : "normal";
@@ -173,58 +173,58 @@ int notifications_comprehensive_ubus_send(struct ubus_context *ctx, struct ubus_
     // Convert context table to JSON string
     char* context_json = NULL;
     if (tb[NOTIF_SEND_CONTEXT]) {
-        context_json = blob_table_to_json_string(tb[NOTIF_SEND_CONTEXT]);
+        context_json = blob_table_to_json_string(tb[NOTIF_SEND_CONTEXT]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Parse type and priority
-    notification_type_t type = notification_parse_type(type_str);
-    notification_priority_t priority = notification_parse_priority(priority_str);
+    notification_type_t type = notification_parse_type(type_str\n"\n"\n"\n"\n"\n"\n"\n");
+    notification_priority_t priority = notification_parse_priority(priority_str\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Send notification
     const char* notification_id = notifications_comprehensive_send(type, priority, title, message, 
-                                                                  context_json, source_module);
+                                                                  context_json, source_module\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (notification_id) {
-        blobmsg_add_u8(&bb, "success", 1);
+        blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Get notification details for response
         comprehensive_notification_record_t record;
         if (notifications_comprehensive_get_status(notification_id, &record) == AUTONOMY_SUCCESS) {
-            void *notification_table = blobmsg_open_table(&bb, "notification");
+            void *notification_table = blobmsg_open_table(&bb, "notification"\n"\n"\n"\n"\n"\n"\n"\n");
             
-            blobmsg_add_string(&bb, "id", record.id);
-            blobmsg_add_string(&bb, "status", notification_delivery_status_to_string(record.status));
-            blobmsg_add_u32(&bb, "sent_at", (uint32_t)record.sent_at);
+            blobmsg_add_string(&bb, "id", record.id\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_string(&bb, "status", notification_delivery_status_to_string(record.status)\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "sent_at", (uint32_t)record.sent_at\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Add channels used
-            void *channels_array = blobmsg_open_array(&bb, "channels_used");
-            if (record.sent_pushover) blobmsg_add_string(&bb, NULL, "pushover");
-            if (record.sent_email) blobmsg_add_string(&bb, NULL, "email");
-            if (record.sent_sms) blobmsg_add_string(&bb, NULL, "sms");
-            if (record.sent_webhook) blobmsg_add_string(&bb, NULL, "webhook");
-            if (record.sent_slack) blobmsg_add_string(&bb, NULL, "slack");
-            if (record.sent_discord) blobmsg_add_string(&bb, NULL, "discord");
-            if (record.sent_telegram) blobmsg_add_string(&bb, NULL, "telegram");
-            blobmsg_close_array(&bb, channels_array);
+            void *channels_array = blobmsg_open_array(&bb, "channels_used"\n"\n"\n"\n"\n"\n"\n"\n");
+            if (record.sent_pushover) blobmsg_add_string(&bb, NULL, "pushover"\n"\n"\n"\n"\n"\n"\n"\n");
+            if (record.sent_email) blobmsg_add_string(&bb, NULL, "email"\n"\n"\n"\n"\n"\n"\n"\n");
+            if (record.sent_sms) blobmsg_add_string(&bb, NULL, "sms"\n"\n"\n"\n"\n"\n"\n"\n");
+            if (record.sent_webhook) blobmsg_add_string(&bb, NULL, "webhook"\n"\n"\n"\n"\n"\n"\n"\n");
+            if (record.sent_slack) blobmsg_add_string(&bb, NULL, "slack"\n"\n"\n"\n"\n"\n"\n"\n");
+            if (record.sent_discord) blobmsg_add_string(&bb, NULL, "discord"\n"\n"\n"\n"\n"\n"\n"\n");
+            if (record.sent_telegram) blobmsg_add_string(&bb, NULL, "telegram"\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_close_array(&bb, channels_array\n"\n"\n"\n"\n"\n"\n"\n");
             
-            blobmsg_add_double(&bb, "delivery_confidence", record.delivery_confidence);
-            blobmsg_add_double(&bb, "processing_time_ms", record.processing_time_ms);
-            blobmsg_add_u8(&bb, "priority_optimized", record.priority_optimized);
-            blobmsg_add_u8(&bb, "channels_optimized", record.channels_optimized);
+            blobmsg_add_double(&bb, "delivery_confidence", record.delivery_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_double(&bb, "processing_time_ms", record.processing_time_ms\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u8(&bb, "priority_optimized", record.priority_optimized\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u8(&bb, "channels_optimized", record.channels_optimized\n"\n"\n"\n"\n"\n"\n"\n");
             
-            blobmsg_close_table(&bb, notification_table);
+            blobmsg_close_table(&bb, notification_table\n"\n"\n"\n"\n"\n"\n"\n");
         }
     } else {
-        blobmsg_add_u8(&bb, "success", 0);
-        blobmsg_add_string(&bb, "error", "Failed to send notification");
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to send notification"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (context_json) {
-        free(context_json);
+        free(context_json\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return UBUS_STATUS_OK;
 }
 
@@ -233,18 +233,18 @@ int notifications_comprehensive_ubus_send_emergency(struct ubus_context *ctx, st
                                                    struct ubus_request_data *req, const char *method,
                                                    struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!notifications_comprehensive_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0);
-        blobmsg_add_string(&bb, "error", "Comprehensive notifications not initialized");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Comprehensive notifications not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return UBUS_STATUS_OK;
     }
     
     struct blob_attr *tb[__NOTIF_EMERGENCY_MAX];
-    blobmsg_parse(notification_emergency_policy, __NOTIF_EMERGENCY_MAX, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(notification_emergency_policy, __NOTIF_EMERGENCY_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     const char* title = tb[NOTIF_EMERGENCY_TITLE] ? blobmsg_get_string(tb[NOTIF_EMERGENCY_TITLE]) : "Emergency Alert";
     const char* message = tb[NOTIF_EMERGENCY_MESSAGE] ? blobmsg_get_string(tb[NOTIF_EMERGENCY_MESSAGE]) : "";
@@ -253,47 +253,47 @@ int notifications_comprehensive_ubus_send_emergency(struct ubus_context *ctx, st
     // Convert context table to JSON string
     char* context_json = NULL;
     if (tb[NOTIF_EMERGENCY_CONTEXT]) {
-        context_json = blob_table_to_json_string(tb[NOTIF_EMERGENCY_CONTEXT]);
+        context_json = blob_table_to_json_string(tb[NOTIF_EMERGENCY_CONTEXT]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Send emergency notification
     const char* notification_id = notifications_comprehensive_send_emergency(title, message, 
-                                                                            context_json, source_module);
+                                                                            context_json, source_module\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (notification_id) {
-        blobmsg_add_u8(&bb, "success", 1);
+        blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
         
-        void *emergency_table = blobmsg_open_table(&bb, "emergency_notification");
-        blobmsg_add_string(&bb, "id", notification_id);
-        blobmsg_add_u8(&bb, "bypass_used", 1);
+        void *emergency_table = blobmsg_open_table(&bb, "emergency_notification"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "id", notification_id\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "bypass_used", 1\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Get notification details
         comprehensive_notification_record_t record;
         if (notifications_comprehensive_get_status(notification_id, &record) == AUTONOMY_SUCCESS) {
             // Add channels used
-            void *channels_array = blobmsg_open_array(&bb, "channels_used");
-            if (record.sent_pushover) blobmsg_add_string(&bb, NULL, "pushover");
-            if (record.sent_email) blobmsg_add_string(&bb, NULL, "email");
-            if (record.sent_sms) blobmsg_add_string(&bb, NULL, "sms");
-            if (record.sent_webhook) blobmsg_add_string(&bb, NULL, "webhook");
-            blobmsg_close_array(&bb, channels_array);
+            void *channels_array = blobmsg_open_array(&bb, "channels_used"\n"\n"\n"\n"\n"\n"\n"\n");
+            if (record.sent_pushover) blobmsg_add_string(&bb, NULL, "pushover"\n"\n"\n"\n"\n"\n"\n"\n");
+            if (record.sent_email) blobmsg_add_string(&bb, NULL, "email"\n"\n"\n"\n"\n"\n"\n"\n");
+            if (record.sent_sms) blobmsg_add_string(&bb, NULL, "sms"\n"\n"\n"\n"\n"\n"\n"\n");
+            if (record.sent_webhook) blobmsg_add_string(&bb, NULL, "webhook"\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_close_array(&bb, channels_array\n"\n"\n"\n"\n"\n"\n"\n");
             
-            blobmsg_add_double(&bb, "delivery_confidence", record.delivery_confidence);
-            blobmsg_add_double(&bb, "processing_time_ms", record.processing_time_ms);
+            blobmsg_add_double(&bb, "delivery_confidence", record.delivery_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_double(&bb, "processing_time_ms", record.processing_time_ms\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
-        blobmsg_close_table(&bb, emergency_table);
+        blobmsg_close_table(&bb, emergency_table\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_u8(&bb, "success", 0);
-        blobmsg_add_string(&bb, "error", "Failed to send emergency notification");
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to send emergency notification"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (context_json) {
-        free(context_json);
+        free(context_json\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return UBUS_STATUS_OK;
 }
 
@@ -302,71 +302,71 @@ int notifications_comprehensive_ubus_get_status(struct ubus_context *ctx, struct
                                                struct ubus_request_data *req, const char *method,
                                                struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!notifications_comprehensive_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0);
-        blobmsg_add_string(&bb, "error", "Comprehensive notifications not initialized");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Comprehensive notifications not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return UBUS_STATUS_OK;
     }
     
     struct blob_attr *tb[__NOTIF_STATUS_MAX];
-    blobmsg_parse(notification_status_policy, __NOTIF_STATUS_MAX, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(notification_status_policy, __NOTIF_STATUS_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     const char* notification_id = tb[NOTIF_STATUS_ID] ? blobmsg_get_string(tb[NOTIF_STATUS_ID]) : "";
     
     comprehensive_notification_record_t record;
     if (notifications_comprehensive_get_status(notification_id, &record) == AUTONOMY_SUCCESS) {
-        blobmsg_add_u8(&bb, "success", 1);
+        blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
         
-        void *notification_table = blobmsg_open_table(&bb, "notification");
+        void *notification_table = blobmsg_open_table(&bb, "notification"\n"\n"\n"\n"\n"\n"\n"\n");
         
-        blobmsg_add_string(&bb, "id", record.id);
-        blobmsg_add_string(&bb, "type", notification_type_to_string(record.type));
-        blobmsg_add_string(&bb, "priority", notification_priority_to_string(record.priority));
-        blobmsg_add_string(&bb, "title", record.title);
-        blobmsg_add_string(&bb, "status", notification_delivery_status_to_string(record.status));
+        blobmsg_add_string(&bb, "id", record.id\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "type", notification_type_to_string(record.type)\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "priority", notification_priority_to_string(record.priority)\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "title", record.title\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "status", notification_delivery_status_to_string(record.status)\n"\n"\n"\n"\n"\n"\n"\n");
         
-        blobmsg_add_u32(&bb, "created_at", (uint32_t)record.created_at);
-        if (record.sent_at > 0) blobmsg_add_u32(&bb, "sent_at", (uint32_t)record.sent_at);
-        if (record.delivered_at > 0) blobmsg_add_u32(&bb, "delivered_at", (uint32_t)record.delivered_at);
-        if (record.acknowledged_at > 0) blobmsg_add_u32(&bb, "acknowledged_at", (uint32_t)record.acknowledged_at);
+        blobmsg_add_u32(&bb, "created_at", (uint32_t)record.created_at\n"\n"\n"\n"\n"\n"\n"\n");
+        if (record.sent_at > 0) blobmsg_add_u32(&bb, "sent_at", (uint32_t)record.sent_at\n"\n"\n"\n"\n"\n"\n"\n");
+        if (record.delivered_at > 0) blobmsg_add_u32(&bb, "delivered_at", (uint32_t)record.delivered_at\n"\n"\n"\n"\n"\n"\n"\n");
+        if (record.acknowledged_at > 0) blobmsg_add_u32(&bb, "acknowledged_at", (uint32_t)record.acknowledged_at\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Add delivery tracking
-        add_delivery_tracking_to_blob(&bb, &record);
+        add_delivery_tracking_to_blob(&bb, &record\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Add intelligence data
-        void *intelligence_table = blobmsg_open_table(&bb, "intelligence");
-        blobmsg_add_u8(&bb, "priority_optimized", record.priority_optimized);
-        blobmsg_add_u8(&bb, "channels_optimized", record.channels_optimized);
-        blobmsg_add_double(&bb, "delivery_confidence", record.delivery_confidence);
-        blobmsg_add_double(&bb, "processing_time_ms", record.processing_time_ms);
-        blobmsg_close_table(&bb, intelligence_table);
+        void *intelligence_table = blobmsg_open_table(&bb, "intelligence"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "priority_optimized", record.priority_optimized\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "channels_optimized", record.channels_optimized\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "delivery_confidence", record.delivery_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "processing_time_ms", record.processing_time_ms\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_close_table(&bb, intelligence_table\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Add acknowledgment data if applicable
         if (record.acknowledgment_required) {
-            void *ack_table = blobmsg_open_table(&bb, "acknowledgment");
-            blobmsg_add_u8(&bb, "required", record.acknowledgment_required);
-            blobmsg_add_u8(&bb, "acknowledged", record.acknowledged_at > 0);
+            void *ack_table = blobmsg_open_table(&bb, "acknowledgment"\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u8(&bb, "required", record.acknowledgment_required\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u8(&bb, "acknowledged", record.acknowledged_at > 0\n"\n"\n"\n"\n"\n"\n"\n");
             if (record.acknowledgment_expires_at > 0) {
-                blobmsg_add_u32(&bb, "expires_at", (uint32_t)record.acknowledgment_expires_at);
+                blobmsg_add_u32(&bb, "expires_at", (uint32_t)record.acknowledgment_expires_at\n"\n"\n"\n"\n"\n"\n"\n");
             }
             if (strlen(record.acknowledged_by) > 0) {
-                blobmsg_add_string(&bb, "acknowledged_by", record.acknowledged_by);
+                blobmsg_add_string(&bb, "acknowledged_by", record.acknowledged_by\n"\n"\n"\n"\n"\n"\n"\n");
             }
-            blobmsg_close_table(&bb, ack_table);
+            blobmsg_close_table(&bb, ack_table\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
-        blobmsg_close_table(&bb, notification_table);
+        blobmsg_close_table(&bb, notification_table\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_u8(&bb, "success", 0);
-        blobmsg_add_string(&bb, "error", "Notification not found");
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Notification not found"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return UBUS_STATUS_OK;
 }
 
@@ -375,39 +375,39 @@ int notifications_comprehensive_ubus_get_statistics(struct ubus_context *ctx, st
                                                    struct ubus_request_data *req, const char *method,
                                                    struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!notifications_comprehensive_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0);
-        blobmsg_add_string(&bb, "error", "Comprehensive notifications not initialized");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Comprehensive notifications not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return UBUS_STATUS_OK;
     }
     
-    blobmsg_add_u8(&bb, "success", 1);
+    blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
     
     comprehensive_notification_statistics_t stats;
     if (notifications_comprehensive_get_statistics(&stats) == AUTONOMY_SUCCESS) {
-        void *statistics_table = blobmsg_open_table(&bb, "statistics");
+        void *statistics_table = blobmsg_open_table(&bb, "statistics"\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Overall statistics
-        void *overall_table = blobmsg_open_table(&bb, "overall");
-        blobmsg_add_u64(&bb, "total_notifications", stats.total_notifications);
-        blobmsg_add_u64(&bb, "successful_notifications", stats.successful_notifications);
-        blobmsg_add_u64(&bb, "failed_notifications", stats.failed_notifications);
+        void *overall_table = blobmsg_open_table(&bb, "overall"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "total_notifications", stats.total_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "successful_notifications", stats.successful_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "failed_notifications", stats.failed_notifications\n"\n"\n"\n"\n"\n"\n"\n");
         
         double success_rate = stats.total_notifications > 0 ? 
             (double)stats.successful_notifications / stats.total_notifications : 0.0;
-        blobmsg_add_double(&bb, "success_rate", success_rate);
+        blobmsg_add_double(&bb, "success_rate", success_rate\n"\n"\n"\n"\n"\n"\n"\n");
         
-        blobmsg_add_u64(&bb, "suppressed_notifications", stats.suppressed_notifications);
-        blobmsg_add_u64(&bb, "deduplicated_notifications", stats.deduplicated_notifications);
-        blobmsg_add_u64(&bb, "rate_limited_notifications", stats.rate_limited_notifications);
-        blobmsg_close_table(&bb, overall_table);
+        blobmsg_add_u64(&bb, "suppressed_notifications", stats.suppressed_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "deduplicated_notifications", stats.deduplicated_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "rate_limited_notifications", stats.rate_limited_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_close_table(&bb, overall_table\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Channel statistics
-        void *channels_table = blobmsg_open_table(&bb, "channels");
+        void *channels_table = blobmsg_open_table(&bb, "channels"\n"\n"\n"\n"\n"\n"\n"\n");
         const char* channel_names[] = {"pushover", "email", "sms", "webhook", "slack", "discord", "telegram"};
         uint64_t channel_sent[] = {stats.pushover_sent, stats.email_sent, stats.sms_sent, 
                                   stats.webhook_sent, stats.slack_sent, stats.discord_sent, stats.telegram_sent};
@@ -417,43 +417,43 @@ int notifications_comprehensive_ubus_get_statistics(struct ubus_context *ctx, st
         
         for (int i = 0; i < 7; i++) {
             if (channel_sent[i] > 0) {
-                void *channel_table = blobmsg_open_table(&bb, channel_names[i]);
-                blobmsg_add_u64(&bb, "sent", channel_sent[i]);
-                blobmsg_add_double(&bb, "success_rate", channel_rates[i]);
-                blobmsg_close_table(&bb, channel_table);
+                void *channel_table = blobmsg_open_table(&bb, channel_names[i]\n"\n"\n"\n"\n"\n"\n"\n");
+                blobmsg_add_u64(&bb, "sent", channel_sent[i]\n"\n"\n"\n"\n"\n"\n"\n");
+                blobmsg_add_double(&bb, "success_rate", channel_rates[i]\n"\n"\n"\n"\n"\n"\n"\n");
+                blobmsg_close_table(&bb, channel_table\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
-        blobmsg_close_table(&bb, channels_table);
+        blobmsg_close_table(&bb, channels_table\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Priority statistics
-        void *priorities_table = blobmsg_open_table(&bb, "priorities");
-        blobmsg_add_u64(&bb, "emergency", stats.emergency_notifications);
-        blobmsg_add_u64(&bb, "high", stats.high_notifications);
-        blobmsg_add_u64(&bb, "normal", stats.normal_notifications);
-        blobmsg_add_u64(&bb, "low", stats.low_notifications);
-        blobmsg_close_table(&bb, priorities_table);
+        void *priorities_table = blobmsg_open_table(&bb, "priorities"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "emergency", stats.emergency_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "high", stats.high_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "normal", stats.normal_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "low", stats.low_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_close_table(&bb, priorities_table\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Intelligence statistics
-        void *intelligence_table = blobmsg_open_table(&bb, "intelligence");
-        blobmsg_add_u64(&bb, "priority_optimizations", stats.priority_optimizations);
-        blobmsg_add_u64(&bb, "channel_optimizations", stats.channel_optimizations);
-        blobmsg_add_u64(&bb, "delivery_optimizations", stats.delivery_optimizations);
-        blobmsg_add_u64(&bb, "emergency_detections", stats.emergency_detections);
-        blobmsg_close_table(&bb, intelligence_table);
+        void *intelligence_table = blobmsg_open_table(&bb, "intelligence"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "priority_optimizations", stats.priority_optimizations\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "channel_optimizations", stats.channel_optimizations\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "delivery_optimizations", stats.delivery_optimizations\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "emergency_detections", stats.emergency_detections\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_close_table(&bb, intelligence_table\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Performance metrics
-        void *performance_table = blobmsg_open_table(&bb, "performance");
-        blobmsg_add_double(&bb, "avg_processing_time_ms", stats.average_processing_time_ms);
-        blobmsg_add_double(&bb, "avg_delivery_time_ms", stats.average_delivery_time_ms);
-        blobmsg_add_double(&bb, "avg_acknowledgment_time_ms", stats.average_acknowledgment_time_ms);
-        blobmsg_add_double(&bb, "overall_effectiveness", stats.overall_effectiveness_score);
-        blobmsg_close_table(&bb, performance_table);
+        void *performance_table = blobmsg_open_table(&bb, "performance"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "avg_processing_time_ms", stats.average_processing_time_ms\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "avg_delivery_time_ms", stats.average_delivery_time_ms\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "avg_acknowledgment_time_ms", stats.average_acknowledgment_time_ms\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "overall_effectiveness", stats.overall_effectiveness_score\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_close_table(&bb, performance_table\n"\n"\n"\n"\n"\n"\n"\n");
         
-        blobmsg_close_table(&bb, statistics_table);
+        blobmsg_close_table(&bb, statistics_table\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return UBUS_STATUS_OK;
 }
 
@@ -480,24 +480,24 @@ int notifications_comprehensive_ubus_get_config(struct ubus_context *ctx, struct
                                                struct ubus_request_data *req, const char *method,
                                                struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!notifications_comprehensive_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0);
-        blobmsg_add_string(&bb, "error", "Notifications comprehensive system not initialized");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Notifications comprehensive system not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return UBUS_STATUS_OK;
     }
     
     // Get configuration (placeholder implementation)
-    blobmsg_add_u8(&bb, "success", 1);
-    blobmsg_add_string(&bb, "message", "Configuration retrieved successfully");
+    blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "message", "Configuration retrieved successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     blobmsg_add_u8(&bb, "enabled", 1); // Placeholder
     blobmsg_add_u32(&bb, "max_notifications_per_hour", 100); // Placeholder
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return UBUS_STATUS_OK;
 }
 
@@ -506,23 +506,23 @@ int notifications_comprehensive_ubus_set_config(struct ubus_context *ctx, struct
                                                struct ubus_request_data *req, const char *method,
                                                struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!notifications_comprehensive_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0);
-        blobmsg_add_string(&bb, "error", "Notifications comprehensive system not initialized");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Notifications comprehensive system not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return UBUS_STATUS_OK;
     }
     
     // Set configuration (placeholder implementation)
-    blobmsg_add_u8(&bb, "success", 1);
-    blobmsg_add_string(&bb, "message", "Configuration updated successfully");
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "message", "Configuration updated successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return UBUS_STATUS_OK;
 }
 
@@ -531,23 +531,23 @@ int notifications_comprehensive_ubus_reset_statistics(struct ubus_context *ctx, 
                                                      struct ubus_request_data *req, const char *method,
                                                      struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!notifications_comprehensive_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0);
-        blobmsg_add_string(&bb, "error", "Notifications comprehensive system not initialized");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Notifications comprehensive system not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return UBUS_STATUS_OK;
     }
     
     // Reset statistics (placeholder implementation)
-    blobmsg_add_u8(&bb, "success", 1);
-    blobmsg_add_string(&bb, "message", "Statistics reset successfully");
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "message", "Statistics reset successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return UBUS_STATUS_OK;
 }
 
@@ -556,26 +556,26 @@ int notifications_comprehensive_ubus_health_check(struct ubus_context *ctx, stru
                                                  struct ubus_request_data *req, const char *method,
                                                  struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!notifications_comprehensive_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0);
-        blobmsg_add_string(&bb, "status", "unhealthy");
-        blobmsg_add_string(&bb, "error", "Notifications comprehensive system not initialized");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "status", "unhealthy"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Notifications comprehensive system not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return UBUS_STATUS_OK;
     }
     
     // Health check (placeholder implementation)
-    blobmsg_add_u8(&bb, "success", 1);
-    blobmsg_add_string(&bb, "status", "healthy");
+    blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "status", "healthy"\n"\n"\n"\n"\n"\n"\n"\n");
     blobmsg_add_u32(&bb, "total_notifications_sent", 0); // Placeholder
     blobmsg_add_u32(&bb, "active_channels", 0); // Placeholder
     blobmsg_add_u32(&bb, "last_notification", 0); // Placeholder
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return UBUS_STATUS_OK;
 }
 
@@ -584,68 +584,68 @@ int notifications_comprehensive_ubus_get_history(struct ubus_context *ctx, struc
                                                struct ubus_request_data *req, const char *method,
                                                struct blob_attr *msg) {
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Get parameters
     struct blob_attr *tb[__HISTORY_MAX];
-    blobmsg_parse(history_policy, ARRAY_SIZE(history_policy), tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(history_policy, ARRAY_SIZE(history_policy), tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     int max_records = 100; // Default
     time_t start_time = 0;
     time_t end_time = 0;
     
     if (tb[HISTORY_MAX_RECORDS])
-        max_records = blobmsg_get_u32(tb[HISTORY_MAX_RECORDS]);
+        max_records = blobmsg_get_u32(tb[HISTORY_MAX_RECORDS]\n"\n"\n"\n"\n"\n"\n"\n");
     if (tb[HISTORY_START_TIME])
-        start_time = blobmsg_get_u32(tb[HISTORY_START_TIME]);
+        start_time = blobmsg_get_u32(tb[HISTORY_START_TIME]\n"\n"\n"\n"\n"\n"\n"\n");
     if (tb[HISTORY_END_TIME])
-        end_time = blobmsg_get_u32(tb[HISTORY_END_TIME]);
+        end_time = blobmsg_get_u32(tb[HISTORY_END_TIME]\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Allocate records array
-    comprehensive_notification_record_t *records = malloc(max_records * sizeof(comprehensive_notification_record_t));
+    comprehensive_notification_record_t *records = malloc(max_records * sizeof(comprehensive_notification_record_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!records) {
-        blobmsg_add_string(&bb, "error", "Failed to allocate memory");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "error", "Failed to allocate memory"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return UBUS_STATUS_UNKNOWN_ERROR;
     }
     
     // Get history
-    int count = notifications_comprehensive_get_history(records, max_records, start_time, end_time);
+    int count = notifications_comprehensive_get_history(records, max_records, start_time, end_time\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (count < 0) {
-        blobmsg_add_string(&bb, "error", "Failed to get notification history");
-        free(records);
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "error", "Failed to get notification history"\n"\n"\n"\n"\n"\n"\n"\n");
+        free(records\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return UBUS_STATUS_UNKNOWN_ERROR;
     }
     
     // Add records to response
-    blobmsg_add_u32(&bb, "count", count);
-    void *c = blobmsg_open_array(&bb, "records");
+    blobmsg_add_u32(&bb, "count", count\n"\n"\n"\n"\n"\n"\n"\n");
+    void *c = blobmsg_open_array(&bb, "records"\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < count; i++) {
-        void *r = blobmsg_open_table(&bb, NULL);
-        blobmsg_add_string(&bb, "id", records[i].id);
-        blobmsg_add_string(&bb, "type", notification_type_to_string(records[i].type));
-        blobmsg_add_string(&bb, "priority", notification_priority_to_string(records[i].priority));
-        blobmsg_add_string(&bb, "title", records[i].title);
-        blobmsg_add_string(&bb, "message", records[i].message);
-        blobmsg_add_string(&bb, "status", notification_delivery_status_to_string(records[i].status));
-        blobmsg_add_u32(&bb, "created_at", records[i].created_at);
-        blobmsg_add_u32(&bb, "sent_at", records[i].sent_at);
-        blobmsg_add_u32(&bb, "delivered_at", records[i].delivered_at);
-        blobmsg_add_u32(&bb, "acknowledged_at", records[i].acknowledged_at);
-        blobmsg_add_string(&bb, "source_module", records[i].source_module);
-        blobmsg_close_table(&bb, r);
+        void *r = blobmsg_open_table(&bb, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "id", records[i].id\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "type", notification_type_to_string(records[i].type)\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "priority", notification_priority_to_string(records[i].priority)\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "title", records[i].title\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", records[i].message\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "status", notification_delivery_status_to_string(records[i].status)\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "created_at", records[i].created_at\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "sent_at", records[i].sent_at\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "delivered_at", records[i].delivered_at\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "acknowledged_at", records[i].acknowledged_at\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "source_module", records[i].source_module\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_close_table(&bb, r\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_close_array(&bb, c);
-    free(records);
+    blobmsg_close_array(&bb, c\n"\n"\n"\n"\n"\n"\n"\n");
+    free(records\n"\n"\n"\n"\n"\n"\n"\n");
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return UBUS_STATUS_OK;
 }
 
@@ -654,34 +654,34 @@ int notifications_comprehensive_ubus_acknowledge(struct ubus_context *ctx, struc
                                                struct ubus_request_data *req, const char *method,
                                                struct blob_attr *msg) {
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Get parameters
     struct blob_attr *tb[__ACKNOWLEDGE_MAX];
-    blobmsg_parse(acknowledge_policy, ARRAY_SIZE(acknowledge_policy), tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(acknowledge_policy, ARRAY_SIZE(acknowledge_policy), tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!tb[ACKNOWLEDGE_ID] || !tb[ACKNOWLEDGE_BY]) {
-        blobmsg_add_string(&bb, "error", "Missing required parameters: id, acknowledged_by");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "error", "Missing required parameters: id, acknowledged_by"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
     
-    const char *notification_id = blobmsg_get_string(tb[ACKNOWLEDGE_ID]);
-    const char *acknowledged_by = blobmsg_get_string(tb[ACKNOWLEDGE_BY]);
+    const char *notification_id = blobmsg_get_string(tb[ACKNOWLEDGE_ID]\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *acknowledged_by = blobmsg_get_string(tb[ACKNOWLEDGE_BY]\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int result = notifications_comprehensive_acknowledge(notification_id, acknowledged_by);
+    int result = notifications_comprehensive_acknowledge(notification_id, acknowledged_by\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "status", "success");
-        blobmsg_add_string(&bb, "message", "Notification acknowledged successfully");
+        blobmsg_add_string(&bb, "status", "success"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "Notification acknowledged successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "status", "error");
-        blobmsg_add_string(&bb, "message", "Failed to acknowledge notification");
+        blobmsg_add_string(&bb, "status", "error"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "Failed to acknowledge notification"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return UBUS_STATUS_OK;
 }
 
@@ -690,28 +690,28 @@ int notifications_comprehensive_ubus_test_channels(struct ubus_context *ctx, str
                                                   struct ubus_request_data *req, const char *method,
                                                   struct blob_attr *msg) {
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Get parameters
     struct blob_attr *tb[__TEST_CHANNELS_MAX];
-    blobmsg_parse(test_channels_policy, ARRAY_SIZE(test_channels_policy), tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(test_channels_policy, ARRAY_SIZE(test_channels_policy), tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     const char *test_message = "Test notification from autonomy daemon";
     if (tb[TEST_CHANNELS_MESSAGE])
-        test_message = blobmsg_get_string(tb[TEST_CHANNELS_MESSAGE]);
+        test_message = blobmsg_get_string(tb[TEST_CHANNELS_MESSAGE]\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int result = notifications_comprehensive_test_all_channels(test_message);
+    int result = notifications_comprehensive_test_all_channels(test_message\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "status", "success");
-        blobmsg_add_string(&bb, "message", "Test notification sent successfully");
+        blobmsg_add_string(&bb, "status", "success"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "Test notification sent successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "status", "error");
-        blobmsg_add_string(&bb, "message", "Failed to send test notification");
+        blobmsg_add_string(&bb, "status", "error"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "Failed to send test notification"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return UBUS_STATUS_OK;
 }
 
@@ -720,7 +720,7 @@ int notifications_comprehensive_ubus_get_channel_effectiveness(struct ubus_conte
                                                               struct ubus_request_data *req, const char *method,
                                                               struct blob_attr *msg) {
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     double pushover_score, email_score, sms_score, webhook_score;
     double slack_score, discord_score, telegram_score;
@@ -728,25 +728,25 @@ int notifications_comprehensive_ubus_get_channel_effectiveness(struct ubus_conte
     int result = notifications_comprehensive_get_channel_effectiveness(
         &pushover_score, &email_score, &sms_score, &webhook_score,
         &slack_score, &discord_score, &telegram_score
-    );
+    \n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "status", "success");
-        blobmsg_add_double(&bb, "pushover_score", pushover_score);
-        blobmsg_add_double(&bb, "email_score", email_score);
-        blobmsg_add_double(&bb, "sms_score", sms_score);
-        blobmsg_add_double(&bb, "webhook_score", webhook_score);
-        blobmsg_add_double(&bb, "slack_score", slack_score);
-        blobmsg_add_double(&bb, "discord_score", discord_score);
-        blobmsg_add_double(&bb, "telegram_score", telegram_score);
+        blobmsg_add_string(&bb, "status", "success"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "pushover_score", pushover_score\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "email_score", email_score\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "sms_score", sms_score\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "webhook_score", webhook_score\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "slack_score", slack_score\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "discord_score", discord_score\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "telegram_score", telegram_score\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "status", "error");
-        blobmsg_add_string(&bb, "message", "Failed to get channel effectiveness");
+        blobmsg_add_string(&bb, "status", "error"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "Failed to get channel effectiveness"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return UBUS_STATUS_OK;
 }
 
-const int notifications_comprehensive_ubus_methods_count = ARRAY_SIZE(notifications_comprehensive_ubus_methods);
+const int notifications_comprehensive_ubus_methods_count = ARRAY_SIZE(notifications_comprehensive_ubus_methods\n"\n"\n"\n"\n"\n"\n"\n");

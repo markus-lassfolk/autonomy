@@ -33,11 +33,11 @@ static bool g_movement_initialized = false;
 static pthread_mutex_t g_movement_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations - movement specific
-movement_metrics_t calculate_movement_metrics(void);
-static gps_movement_pattern_t determine_movement_pattern(const movement_metrics_t *metrics);
-static bool detect_turning_pattern(void);
-static bool detect_oscillation_pattern(void);
-void analyze_movement_pattern(void);
+movement_metrics_t calculate_movement_metrics(void\n"\n"\n"\n"\n"\n"\n"\n");
+static gps_movement_pattern_t determine_movement_pattern(const movement_metrics_t *metrics\n"\n"\n"\n"\n"\n"\n"\n");
+static bool detect_turning_pattern(void\n"\n"\n"\n"\n"\n"\n"\n");
+static bool detect_oscillation_pattern(void\n"\n"\n"\n"\n"\n"\n"\n");
+void analyze_movement_pattern(void\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Add GPS position for movement analysis
 int gps_movement_add_position(const gps_data_t *gps_data) {
@@ -45,7 +45,7 @@ int gps_movement_add_position(const gps_data_t *gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_movement_mutex);
+    pthread_mutex_lock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Add position to history (circular buffer)
     int index = g_movement_detector.position_count % g_movement_detector.history_size;
@@ -59,16 +59,16 @@ int gps_movement_add_position(const gps_data_t *gps_data) {
     g_movement_detector.position_count++;
     
     // Perform movement analysis if enough data and time has passed
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     if (g_movement_detector.position_count >= g_movement_detector.min_positions &&
         (now - g_movement_detector.last_analysis) >= g_movement_detector.analysis_interval) {
         
-        analyze_movement_pattern();
+        analyze_movement_pattern(\n"\n"\n"\n"\n"\n"\n"\n");
         g_movement_detector.last_analysis = now;
         g_movement_detector.total_analyses++;
     }
     
-    pthread_mutex_unlock(&g_movement_mutex);
+    pthread_mutex_unlock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -80,20 +80,20 @@ void analyze_movement_pattern(void) {
     }
     
     // Calculate movement metrics
-    movement_metrics_t metrics = calculate_movement_metrics();
+    movement_metrics_t metrics = calculate_movement_metrics(\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Determine movement pattern
-    gps_movement_pattern_t pattern = determine_movement_pattern(&metrics);
+    gps_movement_pattern_t pattern = determine_movement_pattern(&metrics\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update movement state
     g_movement_detector.current_pattern = pattern;
-    g_movement_detector.movement_detected = (pattern != MOVEMENT_PATTERN_STATIONARY);
+    g_movement_detector.movement_detected = (pattern != MOVEMENT_PATTERN_STATIONARY\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update current metrics
-    memcpy(&g_movement_detector.current_metrics, &metrics, sizeof(movement_metrics_t));
+    memcpy(&g_movement_detector.current_metrics, &metrics, sizeof(movement_metrics_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("Movement analysis: pattern=%s, speed=%.2f m/s, distance=%.1fm", 
-               MOVEMENT_PATTERN_NAMES[pattern], metrics.current_speed, metrics.total_distance);
+    printf("DEBUG: "Movement analysis: pattern=%s, speed=%.2f m/s, distance=%.1fm", 
+               MOVEMENT_PATTERN_NAMES[pattern], metrics.current_speed, metrics.total_distance\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Calculate movement metrics
@@ -135,7 +135,7 @@ movement_metrics_t calculate_movement_metrics(void) {
             curr->lat != 0.0 && curr->lon != 0.0) {
             
             // Calculate distance
-            double distance = gps_coordinate_distance(prev->lat, prev->lon, curr->lat, curr->lon);
+            double distance = gps_coordinate_distance(prev->lat, prev->lon, curr->lat, curr->lon\n"\n"\n"\n"\n"\n"\n"\n");
             total_distance += distance;
             
             // Calculate time difference
@@ -170,7 +170,7 @@ movement_metrics_t calculate_movement_metrics(void) {
         const position_data_t *curr = &g_movement_detector.position_history[valid_positions-1];
         
         if (prev->timestamp > 0 && curr->timestamp > 0) {
-            double distance = gps_coordinate_distance(prev->lat, prev->lon, curr->lat, curr->lon);
+            double distance = gps_coordinate_distance(prev->lat, prev->lon, curr->lat, curr->lon\n"\n"\n"\n"\n"\n"\n"\n");
             int time_diff = curr->timestamp - prev->timestamp;
             
             if (time_diff > 0) {
@@ -258,10 +258,10 @@ static bool detect_turning_pattern(void) {
             curr->lat != 0.0 && curr->lon != 0.0 &&
             next->lat != 0.0 && next->lon != 0.0) {
             
-            double bearing1 = gps_coordinate_bearing(prev->lat, prev->lon, curr->lat, curr->lon);
-            double bearing2 = gps_coordinate_bearing(curr->lat, curr->lon, next->lat, next->lon);
+            double bearing1 = gps_coordinate_bearing(prev->lat, prev->lon, curr->lat, curr->lon\n"\n"\n"\n"\n"\n"\n"\n");
+            double bearing2 = gps_coordinate_bearing(curr->lat, curr->lon, next->lat, next->lon\n"\n"\n"\n"\n"\n"\n"\n");
             
-            double bearing_change = fabs(bearing2 - bearing1);
+            double bearing_change = fabs(bearing2 - bearing1\n"\n"\n"\n"\n"\n"\n"\n");
             if (bearing_change > 180.0) {
                 bearing_change = 360.0 - bearing_change;
             }
@@ -301,7 +301,7 @@ static bool detect_oscillation_pattern(void) {
             prev->lat != 0.0 && prev->lon != 0.0 &&
             curr->lat != 0.0 && curr->lon != 0.0) {
             
-            double distance = gps_coordinate_distance(prev->lat, prev->lon, curr->lat, curr->lon);
+            double distance = gps_coordinate_distance(prev->lat, prev->lon, curr->lat, curr->lon\n"\n"\n"\n"\n"\n"\n"\n");
             
             if (!first_distance) {
                 // Check if distance is decreasing after increasing (or vice versa)
@@ -330,7 +330,7 @@ int gps_movement_get_status(gps_movement_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_movement_mutex);
+    pthread_mutex_lock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_movement_detector.enabled;
     status->movement_detected = g_movement_detector.movement_detected;
@@ -340,9 +340,9 @@ int gps_movement_get_status(gps_movement_status_t *status) {
     status->total_analyses = g_movement_detector.total_analyses;
     
     // Copy current metrics
-    memcpy(&status->current_metrics, &g_movement_detector.current_metrics, sizeof(movement_metrics_t));
+    memcpy(&status->current_metrics, &g_movement_detector.current_metrics, sizeof(movement_metrics_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(&g_movement_mutex);
+    pthread_mutex_unlock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -353,7 +353,7 @@ int gps_movement_get_config(gps_movement_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_movement_mutex);
+    pthread_mutex_lock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     config->enabled = g_movement_detector.enabled;
     config->stationary_threshold = g_movement_detector.stationary_threshold;
@@ -364,7 +364,7 @@ int gps_movement_get_config(gps_movement_config_t *config) {
     config->min_positions = g_movement_detector.min_positions;
     config->analysis_interval = g_movement_detector.analysis_interval;
     
-    pthread_mutex_unlock(&g_movement_mutex);
+    pthread_mutex_unlock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -375,7 +375,7 @@ int gps_movement_set_config(const gps_movement_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_movement_mutex);
+    pthread_mutex_lock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_movement_detector.enabled = config->enabled;
     g_movement_detector.stationary_threshold = config->stationary_threshold;
@@ -386,9 +386,9 @@ int gps_movement_set_config(const gps_movement_config_t *config) {
     g_movement_detector.min_positions = config->min_positions;
     g_movement_detector.analysis_interval = config->analysis_interval;
     
-    pthread_mutex_unlock(&g_movement_mutex);
+    pthread_mutex_unlock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS movement detector configuration updated");
+    printf("INFO: "GPS movement detector configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -398,11 +398,11 @@ int gps_movement_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_movement_mutex);
+    pthread_mutex_lock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_movement_detector.enabled = enabled;
-    pthread_mutex_unlock(&g_movement_mutex);
+    pthread_mutex_unlock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS movement detector %s", enabled ? "enabled" : "disabled");
+    printf("INFO: "GPS movement detector %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -412,19 +412,19 @@ int gps_movement_force_analysis(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_movement_mutex);
+    pthread_mutex_lock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (g_movement_detector.position_count >= g_movement_detector.min_positions) {
-        analyze_movement_pattern();
-        g_movement_detector.last_analysis = time(NULL);
+        analyze_movement_pattern(\n"\n"\n"\n"\n"\n"\n"\n");
+        g_movement_detector.last_analysis = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         g_movement_detector.total_analyses++;
-        pthread_mutex_unlock(&g_movement_mutex);
+        pthread_mutex_unlock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         
-        LOGX_INFO_MSG("Forced movement analysis completed");
+        printf("INFO: "Forced movement analysis completed"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_unlock(&g_movement_mutex);
+    pthread_mutex_unlock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_ERROR_NO_DATA;
 }
 
@@ -434,7 +434,7 @@ int gps_movement_reset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_movement_mutex);
+    pthread_mutex_lock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_movement_detector.position_count = 0;
     g_movement_detector.last_analysis = 0;
@@ -451,9 +451,9 @@ int gps_movement_reset(void) {
         g_movement_detector.position_history[i].accuracy = 0.0;
     }
     
-    pthread_mutex_unlock(&g_movement_mutex);
+    pthread_mutex_unlock(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS movement detector reset");
+    printf("INFO: "GPS movement detector reset"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -463,8 +463,8 @@ void gps_movement_cleanup(void) {
         return;
     }
     
-    pthread_mutex_destroy(&g_movement_mutex);
+    pthread_mutex_destroy(&g_movement_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_movement_initialized = false; // Use configurable setting
     
-    LOGX_INFO_MSG("GPS movement detector cleaned up");
+    printf("INFO: "GPS movement detector cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }

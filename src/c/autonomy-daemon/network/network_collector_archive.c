@@ -23,43 +23,43 @@ extern autonomy_config_t g_config;
 // Archive network metrics to persistent storage
 int network_collector_archive_metrics(const network_metrics_t *metrics, const char *archive_path) {
     if (!metrics || !archive_path) {
-        LOGX_ERROR_MSG("Invalid parameters for network metrics archiving");
+        printf("ERROR: "Invalid parameters for network metrics archiving"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    FILE *archive_file = fopen(archive_path, "a");
+    FILE *archive_file = fopen(archive_path, "a"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!archive_file) {
-        LOGX_ERROR_MSG("Failed to open archive file: %s", archive_path);
+        printf("ERROR: "Failed to open archive file: %s", archive_path\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Write metrics in CSV format with timestamp
-    time_t now = time(NULL);
-    struct tm *tm_info = localtime(&now);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm *tm_info = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
     
     fprintf(archive_file, "%04d-%02d-%02d %02d:%02d:%02d,%.2f,%.2f,%.2f,%.2f,%llu,%llu,%llu,%llu\n",
             tm_info->tm_year + 1900, tm_info->tm_mon + 1, tm_info->tm_mday,
             tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
             metrics->ping_latency_ms, metrics->ping_packet_loss, metrics->throughput_mbps,
             metrics->ping_jitter_ms, metrics->packets_transmitted, metrics->packets_received,
-            metrics->bytes_transmitted, metrics->bytes_received);
+            metrics->bytes_transmitted, metrics->bytes_received\n"\n"\n"\n"\n"\n"\n"\n");
     
-    fclose(archive_file);
+    fclose(archive_file\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("Network metrics archived to: %s", archive_path);
+    printf("DEBUG: "Network metrics archived to: %s", archive_path\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Load archived network metrics from storage
 int network_collector_load_archived_metrics(const char *archive_path, network_metrics_t *metrics, int max_count) {
     if (!archive_path || !metrics || max_count <= 0) {
-        LOGX_ERROR_MSG("Invalid parameters for loading archived metrics");
+        printf("ERROR: "Invalid parameters for loading archived metrics"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    FILE *archive_file = fopen(archive_path, "r");
+    FILE *archive_file = fopen(archive_path, "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!archive_file) {
-        LOGX_WARN_MSG("Archive file not found: %s", archive_path);
+        printf("WARN: "Archive file not found: %s", archive_path\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -84,37 +84,37 @@ int network_collector_load_archived_metrics(const char *archive_path, network_me
         }
     }
     
-    fclose(archive_file);
+    fclose(archive_file\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Loaded %d archived network metrics from: %s", loaded_count, archive_path);
+    printf("INFO: "Loaded %d archived network metrics from: %s", loaded_count, archive_path\n"\n"\n"\n"\n"\n"\n"\n");
     return loaded_count;
 }
 
 // Clean up old archived metrics (keep only recent entries)
 int network_collector_cleanup_archived_metrics(const char *archive_path, int keep_days) {
     if (!archive_path || keep_days <= 0) {
-        LOGX_ERROR_MSG("Invalid parameters for cleaning up archived metrics");
+        printf("ERROR: "Invalid parameters for cleaning up archived metrics"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Create temporary file for filtered data
     char temp_path[512];
-    snprintf(temp_path, sizeof(temp_path), "%s.tmp", archive_path);
+    snprintf(temp_path, sizeof(temp_path), "%s.tmp", archive_path\n"\n"\n"\n"\n"\n"\n"\n");
     
-    FILE *archive_file = fopen(archive_path, "r");
+    FILE *archive_file = fopen(archive_path, "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!archive_file) {
-        LOGX_WARN_MSG("Archive file not found: %s", archive_path);
+        printf("WARN: "Archive file not found: %s", archive_path\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
-    FILE *temp_file = fopen(temp_path, "w");
+    FILE *temp_file = fopen(temp_path, "w"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!temp_file) {
-        fclose(archive_file);
-        LOGX_ERROR_MSG("Failed to create temporary file: %s", temp_path);
+        fclose(archive_file\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: "Failed to create temporary file: %s", temp_path\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    time_t cutoff_time = time(NULL) - (keep_days * 24 * 3600);
+    time_t cutoff_time = time(NULL) - (keep_days * 24 * 3600\n"\n"\n"\n"\n"\n"\n"\n");
     char line[512];
     int kept_count = 0;
     int total_count = 0;
@@ -133,41 +133,41 @@ int network_collector_cleanup_archived_metrics(const char *archive_path, int kee
             tm_info.tm_min = min;
             tm_info.tm_sec = sec;
             
-            time_t entry_time = mktime(&tm_info);
+            time_t entry_time = mktime(&tm_info\n"\n"\n"\n"\n"\n"\n"\n");
             if (entry_time >= cutoff_time) {
-                fputs(line, temp_file);
+                fputs(line, temp_file\n"\n"\n"\n"\n"\n"\n"\n");
                 kept_count++;
             }
         }
     }
     
-    fclose(archive_file);
-    fclose(temp_file);
+    fclose(archive_file\n"\n"\n"\n"\n"\n"\n"\n");
+    fclose(temp_file\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Replace original file with filtered data
     if (rename(temp_path, archive_path) != 0) {
-        LOGX_ERROR_MSG("Failed to replace archive file");
-        unlink(temp_path);
+        printf("ERROR: "Failed to replace archive file"\n"\n"\n"\n"\n"\n"\n"\n");
+        unlink(temp_path\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    LOGX_INFO_MSG("Cleaned up archived metrics: kept %d/%d entries (last %d days)", 
-                  kept_count, total_count, keep_days);
+    printf("INFO: "Cleaned up archived metrics: kept %d/%d entries (last %d days)", 
+                  kept_count, total_count, keep_days\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Get archive statistics
 int network_collector_get_archive_stats(const char *archive_path, network_archive_stats_t *stats) {
     if (!archive_path || !stats) {
-        LOGX_ERROR_MSG("Invalid parameters for archive statistics");
+        printf("ERROR: "Invalid parameters for archive statistics"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    memset(stats, 0, sizeof(network_archive_stats_t));
+    memset(stats, 0, sizeof(network_archive_stats_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    FILE *archive_file = fopen(archive_path, "r");
+    FILE *archive_file = fopen(archive_path, "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!archive_file) {
-        LOGX_WARN_MSG("Archive file not found: %s", archive_path);
+        printf("WARN: "Archive file not found: %s", archive_path\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -201,7 +201,7 @@ int network_collector_get_archive_stats(const char *archive_path, network_archiv
             tm_info.tm_min = min;
             tm_info.tm_sec = sec;
             
-            time_t entry_time = mktime(&tm_info);
+            time_t entry_time = mktime(&tm_info\n"\n"\n"\n"\n"\n"\n"\n");
             if (oldest_time == 0 || entry_time < oldest_time) {
                 oldest_time = entry_time;
             }
@@ -211,7 +211,7 @@ int network_collector_get_archive_stats(const char *archive_path, network_archiv
         }
     }
     
-    fclose(archive_file);
+    fclose(archive_file\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (stats->total_entries > 0) {
         stats->avg_latency_ms = total_latency / stats->total_entries;
@@ -222,7 +222,7 @@ int network_collector_get_archive_stats(const char *archive_path, network_archiv
         stats->newest_entry = newest_time;
     }
     
-    LOGX_DEBUG_MSG("Archive statistics: %d entries, avg latency: %.2f ms", 
-                   stats->total_entries, stats->avg_latency_ms);
+    printf("DEBUG: "Archive statistics: %d entries, avg latency: %.2f ms", 
+                   stats->total_entries, stats->avg_latency_ms\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }

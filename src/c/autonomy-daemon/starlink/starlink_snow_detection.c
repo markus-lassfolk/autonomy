@@ -32,29 +32,29 @@ static bool g_snow_detection_initialized = false; // Use configurable setting
 static pthread_mutex_t g_snow_detection_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
-static bool is_winter_season(void);
-static bool is_rv_stationary(void);
-static bool check_snow_forecast(void);
-static double get_ambient_temperature(void);
-static double get_humidity(void);
-static void calculate_obstruction_rates(const starlink_obstruction_sample_t *sample);
-static snow_action_t determine_snow_action(void);
-static int execute_snow_action(snow_action_t action);
-static int start_dish_heating(void);
-static int stop_dish_heating(void);
-static int verify_obstruction_cleared(void);
+static bool is_winter_season(void\n"\n"\n"\n"\n"\n"\n"\n");
+static bool is_rv_stationary(void\n"\n"\n"\n"\n"\n"\n"\n");
+static bool check_snow_forecast(void\n"\n"\n"\n"\n"\n"\n"\n");
+static double get_ambient_temperature(void\n"\n"\n"\n"\n"\n"\n"\n");
+static double get_humidity(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void calculate_obstruction_rates(const starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
+static snow_action_t determine_snow_action(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int execute_snow_action(snow_action_t action\n"\n"\n"\n"\n"\n"\n"\n");
+static int start_dish_heating(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int stop_dish_heating(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int verify_obstruction_cleared(void\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize snow detection system
 int starlink_snow_detection_init(void) {
     if (g_snow_detection_initialized) {
-        LOGX_WARN_MSG("Snow detection system already initialized");
+        printf("WARN: "Snow detection system already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_snow_detection_mutex);
+    pthread_mutex_lock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize snow detection state
-    memset(&g_snow_detection, 0, sizeof(starlink_snow_detection_t));
+    memset(&g_snow_detection, 0, sizeof(starlink_snow_detection_t)\n"\n"\n"\n"\n"\n"\n"\n");
     g_snow_detection.enabled = true; // Use configurable snow detection enabled
     g_snow_detection.detection_samples = SNOW_DETECTION_SAMPLES;
     g_snow_detection.obstruction_threshold = g_config.snow_obstruction_threshold;
@@ -63,10 +63,10 @@ int starlink_snow_detection_init(void) {
     g_snow_detection.verification_time = g_config.snow_verification_time;
     g_snow_detection.melt_timeout = g_config.snow_melt_timeout;
     // Initialize with empty API key - will be loaded from UCI
-    memset(g_snow_detection.weather_api_key, 0, sizeof(g_snow_detection.weather_api_key));
+    memset(g_snow_detection.weather_api_key, 0, sizeof(g_snow_detection.weather_api_key)\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_snow_detection.is_heating_active = false;
-    g_snow_detection.last_clear_time = time(NULL);
+    g_snow_detection.last_clear_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     g_snow_detection.consecutive_obstruction_samples = 0;
     g_snow_detection.total_detections = 0;
     g_snow_detection.successful_melts = 0;
@@ -90,9 +90,9 @@ int starlink_snow_detection_init(void) {
     g_snow_detection.sample_count = 0;
     
     g_snow_detection_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_snow_detection_mutex);
+    pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Snow detection system initialized successfully");
+    printf("INFO: "Snow detection system initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -102,57 +102,57 @@ int starlink_snow_detection_process_sample(const starlink_obstruction_sample_t *
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_snow_detection_mutex);
+    pthread_mutex_lock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Add sample to history
     int sample_index = g_snow_detection.sample_count % MAX_SNOW_SAMPLES;
     g_snow_detection.sample_history[sample_index].timestamp = sample->timestamp;
     g_snow_detection.sample_history[sample_index].fraction_obstructed = sample->fraction_obstructed;
     g_snow_detection.sample_history[sample_index].snr = sample->snr;
-    g_snow_detection.sample_history[sample_index].temperature = get_ambient_temperature();
-    g_snow_detection.sample_history[sample_index].humidity = get_humidity();
+    g_snow_detection.sample_history[sample_index].temperature = get_ambient_temperature(\n"\n"\n"\n"\n"\n"\n"\n");
+    g_snow_detection.sample_history[sample_index].humidity = get_humidity(\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (g_snow_detection.sample_count < MAX_SNOW_SAMPLES) {
         g_snow_detection.sample_count++;
     }
     
     // Calculate obstruction and SNR rates
-    calculate_obstruction_rates(sample);
+    calculate_obstruction_rates(sample\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update context
-    g_snow_detection.context.is_stationary = is_rv_stationary();
-    g_snow_detection.context.is_winter_season = is_winter_season();
-    g_snow_detection.context.snow_forecast_active = check_snow_forecast();
-    g_snow_detection.context.temperature = get_ambient_temperature();
-    g_snow_detection.context.humidity = get_humidity();
+    g_snow_detection.context.is_stationary = is_rv_stationary(\n"\n"\n"\n"\n"\n"\n"\n");
+    g_snow_detection.context.is_winter_season = is_winter_season(\n"\n"\n"\n"\n"\n"\n"\n");
+    g_snow_detection.context.snow_forecast_active = check_snow_forecast(\n"\n"\n"\n"\n"\n"\n"\n");
+    g_snow_detection.context.temperature = get_ambient_temperature(\n"\n"\n"\n"\n"\n"\n"\n");
+    g_snow_detection.context.humidity = get_humidity(\n"\n"\n"\n"\n"\n"\n"\n");
     g_snow_detection.context.last_clear_time = g_snow_detection.last_clear_time;
     g_snow_detection.context.consecutive_obstruction_samples = g_snow_detection.consecutive_obstruction_samples;
     
     // Determine snow action
-    snow_action_t action = determine_snow_action();
+    snow_action_t action = determine_snow_action(\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Execute action if needed
     if (action != SNOW_ACTION_NONE) {
-        int result = execute_snow_action(action);
+        int result = execute_snow_action(action\n"\n"\n"\n"\n"\n"\n"\n");
         if (result == AUTONOMY_SUCCESS) {
-            LOGX_INFO_MSG("Snow action executed successfully", "action", action);
+            printf("INFO: "Snow action executed successfully", "action", action\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
-            LOGX_ERROR_MSG("Failed to execute snow action", "action", action, "result", result);
+            printf("ERROR: "Failed to execute snow action", "action", action, "result", result\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    pthread_mutex_unlock(&g_snow_detection_mutex);
+    pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
 
 // Check if it's winter season
 static bool is_winter_season(void) {
-    time_t now = time(NULL);
-    struct tm *tm_info = localtime(&now);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm *tm_info = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Winter months (Dec-Feb in northern hemisphere)
-    return (tm_info->tm_mon == 11 || tm_info->tm_mon == 0 || tm_info->tm_mon == 1);
+    return (tm_info->tm_mon == 11 || tm_info->tm_mon == 0 || tm_info->tm_mon == 1\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if RV is stationary
@@ -189,18 +189,18 @@ static bool is_rv_stationary(void) {
         }
     }
     obstruction_variance /= valid_samples;
-    return (obstruction_variance < 0.01);
+    return (obstruction_variance < 0.01\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Enhanced snow forecast algorithm
 static bool check_snow_forecast(void) {
-    double temp = get_ambient_temperature();
-    double humidity = get_humidity();
+    double temp = get_ambient_temperature(\n"\n"\n"\n"\n"\n"\n"\n");
+    double humidity = get_humidity(\n"\n"\n"\n"\n"\n"\n"\n");
 
     // If we don't have valid weather data, use fallback logic
     if (temp <= -100.0 || humidity < 0.0) {
-        LOGX_WARN_MSG("Invalid weather data for snow forecast, using fallback");
-        return (temp < 2.0 && humidity > 80.0);
+        printf("WARN: "Invalid weather data for snow forecast, using fallback"\n"\n"\n"\n"\n"\n"\n"\n");
+        return (temp < 2.0 && humidity > 80.0\n"\n"\n"\n"\n"\n"\n"\n");
     }
 
     // Enhanced snow prediction algorithm
@@ -237,8 +237,8 @@ static bool check_snow_forecast(void) {
     }
 
     // Seasonal adjustment (winter months increase probability)
-    time_t now = time(NULL);
-    struct tm *local_time = localtime(&now);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm *local_time = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
     int month = local_time->tm_mon + 1; // tm_mon is 0-based
 
     // Winter months: December, January, February, March
@@ -257,7 +257,7 @@ static bool check_snow_forecast(void) {
     // Temperature trend consideration (rapid cooling increases snow potential)
     static double last_temp = 0.0; // Use configurable value
     static time_t last_temp_time = 0; // Use configurable count // Use configurable value
-    time_t current_time = time(NULL);
+    time_t current_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
 
     if (last_temp_time > 0 && (current_time - last_temp_time) < 3600) { // Within last hour
         double temp_drop = last_temp - temp;
@@ -272,13 +272,13 @@ static bool check_snow_forecast(void) {
     last_temp_time = current_time;
 
     // Decision threshold: 60% probability or higher indicates snow risk
-    bool snow_risk = (snow_probability >= 0.6);
+    bool snow_risk = (snow_probability >= 0.6\n"\n"\n"\n"\n"\n"\n"\n");
 
-    LOGX_DEBUG_MSG("Snow forecast analysis",
+    printf("DEBUG: "Snow forecast analysis",
                    "temperature", temp,
                    "humidity", humidity,
                    "probability", snow_probability,
-                   "snow_risk", snow_risk);
+                   "snow_risk", snow_risk\n"\n"\n"\n"\n"\n"\n"\n");
 
     return snow_risk;
 }
@@ -299,40 +299,40 @@ static double get_ambient_temperature(void) {
             char weather_url[512];
             snprintf(weather_url, sizeof(weather_url),
                      "http://api.openweathermap.org/data/2.5/weather?lat=%.6f&lon=%.6f&appid=%s&units=metric",
-                     gps_data.latitude, gps_data.longitude, g_snow_detection.weather_api_key);
+                     gps_data.latitude, gps_data.longitude, g_snow_detection.weather_api_key\n"\n"\n"\n"\n"\n"\n"\n");
             
-            http_request_t* request = http_request_create(weather_url, HTTP_METHOD_GET);
+            http_request_t* request = http_request_create(weather_url, HTTP_METHOD_GET\n"\n"\n"\n"\n"\n"\n"\n");
             if (request) {
-                http_response_t* response = http_request(request);
+                http_response_t* response = http_request(request\n"\n"\n"\n"\n"\n"\n"\n");
                 if (response && http_response_is_success(response) && response->body) {
                     // Parse temperature from JSON response
-                    char* temp_start = strstr(response->body, "\"temp\":");
+                    char* temp_start = strstr(response->body, "\"temp\":"\n"\n"\n"\n"\n"\n"\n"\n");
                     if (temp_start) {
                         double temp = atof(temp_start + 7); // Skip "temp":
                         if (temp > -50.0 && temp < 60.0) { // Sanity check
-                            http_response_free(response);
-                            http_request_free(request);
+                            http_response_free(response\n"\n"\n"\n"\n"\n"\n"\n");
+                            http_request_free(request\n"\n"\n"\n"\n"\n"\n"\n");
                             return temp;
                         }
                     }
-                    http_response_free(response);
+                    http_response_free(response\n"\n"\n"\n"\n"\n"\n"\n");
                 }
-                http_request_free(request);
+                http_request_free(request\n"\n"\n"\n"\n"\n"\n"\n");
             }
         } else {
-            LOGX_WARN_MSG("Weather API key not configured, skipping weather API temperature lookup");
+            printf("WARN: "Weather API key not configured, skipping weather API temperature lookup"\n"\n"\n"\n"\n"\n"\n"\n");
         }
     } else {
-        LOGX_WARN_MSG("Unable to get valid GPS coordinates from Starlink for weather API");
+        printf("WARN: "Unable to get valid GPS coordinates from Starlink for weather API"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Try to get temperature from system thermal sensors
-    FILE *temp_fp = popen("cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | head -1", "r");
+    FILE *temp_fp = popen("cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | head -1", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (temp_fp) {
         char temp_str[32];
         if (fgets(temp_str, sizeof(temp_str), temp_fp)) {
             double temp_cpu = atof(temp_str) / 1000.0; // Convert from millidegrees
-            pclose(temp_fp);
+            pclose(temp_fp\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Estimate ambient temperature (CPU temp is usually 20-30C above ambient)
             double ambient = temp_cpu - 25.0;
@@ -340,26 +340,26 @@ static double get_ambient_temperature(void) {
                 return ambient;
             }
         }
-        pclose(temp_fp);
+        pclose(temp_fp\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Try to get temperature from UCI configuration
-    FILE *uci_fp = popen("uci get autonomy.snow_detection.temperature_override 2>/dev/null", "r");
+    FILE *uci_fp = popen("uci get autonomy.snow_detection.temperature_override 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (uci_fp) {
         char temp_str[32];
         if (fgets(temp_str, sizeof(temp_str), uci_fp)) {
-            pclose(uci_fp);
-            double temp = atof(temp_str);
+            pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
+            double temp = atof(temp_str\n"\n"\n"\n"\n"\n"\n"\n");
             if (temp > -50.0 && temp < 60.0) { // Sanity check
                 return temp;
             }
         } else {
-            pclose(uci_fp);
+            pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // Fallback: return unknown temperature (will be handled by detection logic)
-    LOGX_WARN_MSG("Unable to determine ambient temperature, using fallback");
+    printf("WARN: "Unable to determine ambient temperature, using fallback"\n"\n"\n"\n"\n"\n"\n"\n");
     return 0.0; // Unknown temperature
 }
 
@@ -379,50 +379,50 @@ static double get_humidity(void) {
             char weather_url[512];
             snprintf(weather_url, sizeof(weather_url),
                      "http://api.openweathermap.org/data/2.5/weather?lat=%.6f&lon=%.6f&appid=%s&units=metric",
-                     gps_data.latitude, gps_data.longitude, g_snow_detection.weather_api_key);
+                     gps_data.latitude, gps_data.longitude, g_snow_detection.weather_api_key\n"\n"\n"\n"\n"\n"\n"\n");
             
-            http_request_t* request = http_request_create(weather_url, HTTP_METHOD_GET);
+            http_request_t* request = http_request_create(weather_url, HTTP_METHOD_GET\n"\n"\n"\n"\n"\n"\n"\n");
             if (request) {
-                http_response_t* response = http_request(request);
+                http_response_t* response = http_request(request\n"\n"\n"\n"\n"\n"\n"\n");
                 if (response && http_response_is_success(response) && response->body) {
                     // Parse humidity from JSON response
-                    char* humidity_start = strstr(response->body, "\"humidity\":");
+                    char* humidity_start = strstr(response->body, "\"humidity\":"\n"\n"\n"\n"\n"\n"\n"\n");
                     if (humidity_start) {
                         double humidity = atof(humidity_start + 11); // Skip "humidity":
                         if (humidity >= 0.0 && humidity <= 100.0) { // Sanity check
-                            http_response_free(response);
-                            http_request_free(request);
+                            http_response_free(response\n"\n"\n"\n"\n"\n"\n"\n");
+                            http_request_free(request\n"\n"\n"\n"\n"\n"\n"\n");
                             return humidity;
                         }
                     }
-                    http_response_free(response);
+                    http_response_free(response\n"\n"\n"\n"\n"\n"\n"\n");
                 }
-                http_request_free(request);
+                http_request_free(request\n"\n"\n"\n"\n"\n"\n"\n");
             }
         } else {
-            LOGX_WARN_MSG("Weather API key not configured, skipping weather API humidity lookup");
+            printf("WARN: "Weather API key not configured, skipping weather API humidity lookup"\n"\n"\n"\n"\n"\n"\n"\n");
         }
     } else {
-        LOGX_WARN_MSG("Unable to get valid GPS coordinates from Starlink for weather API");
+        printf("WARN: "Unable to get valid GPS coordinates from Starlink for weather API"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Try to get humidity from UCI configuration
-    FILE *uci_fp = popen("uci get autonomy.snow_detection.humidity_override 2>/dev/null", "r");
+    FILE *uci_fp = popen("uci get autonomy.snow_detection.humidity_override 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (uci_fp) {
         char humidity_str[32];
         if (fgets(humidity_str, sizeof(humidity_str), uci_fp)) {
-            pclose(uci_fp);
-            double humidity = atof(humidity_str);
+            pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
+            double humidity = atof(humidity_str\n"\n"\n"\n"\n"\n"\n"\n");
             if (humidity >= 0.0 && humidity <= 100.0) { // Sanity check
                 return humidity;
             }
         } else {
-            pclose(uci_fp);
+            pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // Fallback: return unknown humidity (will be handled by detection logic)
-    LOGX_WARN_MSG("Unable to determine humidity, using fallback");
+    printf("WARN: "Unable to determine humidity, using fallback"\n"\n"\n"\n"\n"\n"\n"\n");
     return 50.0; // Default humidity
 }
 
@@ -445,7 +445,7 @@ static void calculate_obstruction_rates(const starlink_obstruction_sample_t *sam
     }
     
     // Calculate rates
-    double time_diff = (double)(sample->timestamp - prev_sample->timestamp);
+    double time_diff = (double)(sample->timestamp - prev_sample->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
     if (time_diff > 0) {
         g_snow_detection.context.obstruction_increase_rate = 
             (sample->fraction_obstructed - prev_sample->fraction_obstructed) / time_diff;
@@ -472,9 +472,9 @@ static snow_action_t determine_snow_action(void) {
                 g_snow_detection.context.is_winter_season &&
                 g_snow_detection.context.temperature < g_snow_detection.temperature_threshold) {
                 
-                LOGX_INFO_MSG("Rapid snow accumulation detected", 
+                printf("INFO: "Rapid snow accumulation detected", 
                               "obstruction_rate", g_snow_detection.context.obstruction_increase_rate,
-                              "consecutive_samples", g_snow_detection.consecutive_obstruction_samples);
+                              "consecutive_samples", g_snow_detection.consecutive_obstruction_samples\n"\n"\n"\n"\n"\n"\n"\n");
                 return SNOW_ACTION_MELT;
             }
         }
@@ -487,9 +487,9 @@ static snow_action_t determine_snow_action(void) {
         g_snow_detection.context.temperature < g_snow_detection.temperature_threshold &&
         !g_snow_detection.is_heating_active) {
         
-        LOGX_INFO_MSG("Snow forecast detected, starting pre-warming", 
+        printf("INFO: "Snow forecast detected, starting pre-warming", 
                       "temperature", g_snow_detection.context.temperature,
-                      "humidity", g_snow_detection.context.humidity);
+                      "humidity", g_snow_detection.context.humidity\n"\n"\n"\n"\n"\n"\n"\n");
         return SNOW_ACTION_PREWARM;
     }
     
@@ -499,8 +499,8 @@ static snow_action_t determine_snow_action(void) {
         g_snow_detection.context.is_winter_season &&
         g_snow_detection.context.temperature < g_snow_detection.temperature_threshold) {
         
-        LOGX_INFO_MSG("Gradual SNR degradation detected, verifying obstruction type", 
-                      "snr_degradation_rate", g_snow_detection.context.snr_degradation_rate);
+        printf("INFO: "Gradual SNR degradation detected, verifying obstruction type", 
+                      "snr_degradation_rate", g_snow_detection.context.snr_degradation_rate\n"\n"\n"\n"\n"\n"\n"\n");
         return SNOW_ACTION_VERIFY;
     }
     
@@ -508,7 +508,7 @@ static snow_action_t determine_snow_action(void) {
     if (g_snow_detection.is_heating_active && 
         g_snow_detection.consecutive_obstruction_samples == 0) {
         
-        LOGX_INFO_MSG("Obstruction cleared, stopping heating");
+        printf("INFO: "Obstruction cleared, stopping heating"\n"\n"\n"\n"\n"\n"\n"\n");
         return SNOW_ACTION_CLEANUP;
     }
     
@@ -519,24 +519,24 @@ static snow_action_t determine_snow_action(void) {
 static int execute_snow_action(snow_action_t action) {
     switch (action) {
         case SNOW_ACTION_PREWARM:
-            return start_dish_heating();
+            return start_dish_heating(\n"\n"\n"\n"\n"\n"\n"\n");
             
         case SNOW_ACTION_MELT:
             g_snow_detection.total_detections++;
-            return start_dish_heating();
+            return start_dish_heating(\n"\n"\n"\n"\n"\n"\n"\n");
             
         case SNOW_ACTION_VERIFY:
             // Wait for verification period
-            sleep(g_snow_detection.verification_time);
+            sleep(g_snow_detection.verification_time\n"\n"\n"\n"\n"\n"\n"\n");
             // Re-check obstruction
             if (g_snow_detection.consecutive_obstruction_samples >= 2) {
-                return start_dish_heating();
+                return start_dish_heating(\n"\n"\n"\n"\n"\n"\n"\n");
             }
             break;
             
         case SNOW_ACTION_CLEANUP:
             g_snow_detection.successful_melts++;
-            return stop_dish_heating();
+            return stop_dish_heating(\n"\n"\n"\n"\n"\n"\n"\n");
             
         default:
             break;
@@ -551,74 +551,74 @@ static int start_dish_heating(void) {
         return AUTONOMY_SUCCESS; // Already heating
     }
     
-    LOGX_INFO_MSG("Starting dish heating system");
+    printf("INFO: "Starting dish heating system"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Try to control actual dish heating hardware
     // First, try UCI-configured heating command
     char heating_cmd[256];
-    FILE *uci_fp = popen("uci get autonomy.snow_detection.heating_command 2>/dev/null", "r");
+    FILE *uci_fp = popen("uci get autonomy.snow_detection.heating_command 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (uci_fp && fgets(heating_cmd, sizeof(heating_cmd), uci_fp)) {
-        pclose(uci_fp);
+        pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Remove newline
-        char *newline = strchr(heating_cmd, '\n');
+        char *newline = strchr(heating_cmd, '\n'\n"\n"\n"\n"\n"\n"\n"\n");
         if (newline) *newline = '\0';
         
         // Execute custom heating command
-        int result = system(heating_cmd);
+        int result = system(heating_cmd\n"\n"\n"\n"\n"\n"\n"\n");
         if (result == 0) {
-            LOGX_INFO_MSG("Custom heating command executed successfully");
+            printf("INFO: "Custom heating command executed successfully"\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
-            LOGX_WARN_MSG("Custom heating command failed",
+            printf("WARN: "Custom heating command failed",
                          "command", heating_cmd,
                          "result", result,
                          "error_code", WEXITSTATUS(result),
-                         "action", "Heating system activation failed - will try fallback methods");
+                         "action", "Heating system activation failed - will try fallback methods"\n"\n"\n"\n"\n"\n"\n"\n");
         }
     } else {
-        if (uci_fp) pclose(uci_fp);
+        if (uci_fp) pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Fallback: try standard heating control methods
         // Method 1: GPIO control (if available)
-        FILE *gpio_fp = popen("echo 1 > /sys/class/gpio/gpio18/value 2>/dev/null", "r");
+        FILE *gpio_fp = popen("echo 1 > /sys/class/gpio/gpio18/value 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
         if (gpio_fp) {
-            pclose(gpio_fp);
-            LOGX_INFO_MSG("GPIO heating control activated");
+            pclose(gpio_fp\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("INFO: "GPIO heating control activated"\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
             // Method 2: Real hardware control via UCI/UBUS
-            struct ubus_context* ctx = ubus_connect(NULL);
+            struct ubus_context* ctx = ubus_connect(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             if (ctx) {
                 uint32_t id;
-                int ret = ubus_lookup_id(ctx, "starlink.dish", &id);
+                int ret = ubus_lookup_id(ctx, "starlink.dish", &id\n"\n"\n"\n"\n"\n"\n"\n");
                 if (ret == 0) {
                     struct blob_buf bb = {0};
-                    blob_buf_init(&bb, 0);
-                    blobmsg_add_string(&bb, "action", "heater_on");
-                    blobmsg_add_u32(&bb, "temperature", g_snow_detection.current_temperature);
+                    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+                    blobmsg_add_string(&bb, "action", "heater_on"\n"\n"\n"\n"\n"\n"\n"\n");
+                    blobmsg_add_u32(&bb, "temperature", g_snow_detection.current_temperature\n"\n"\n"\n"\n"\n"\n"\n");
                     
-                    ret = ubus_invoke(ctx, id, "control_heater", bb.head, NULL, NULL, 1000);
+                    ret = ubus_invoke(ctx, id, "control_heater", bb.head, NULL, NULL, 1000\n"\n"\n"\n"\n"\n"\n"\n");
                     if (ret == 0) {
-                        LOGX_INFO_MSG("Starlink dish heater activated via UBUS");
+                        printf("INFO: "Starlink dish heater activated via UBUS"\n"\n"\n"\n"\n"\n"\n"\n");
                     } else {
-                        LOGX_WARN_MSG("Failed to activate heater via UBUS", "error", ret);
-                        ubus_free(ctx);
-                        blob_buf_free(&bb);
+                        printf("WARN: "Failed to activate heater via UBUS", "error", ret\n"\n"\n"\n"\n"\n"\n"\n");
+                        ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+                        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
                         return AUTONOMY_ERROR_API_FAILED;
                     }
                     
-                    blob_buf_free(&bb);
+                    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
                 } else {
-                    LOGX_WARN_MSG("Starlink dish UBUS service not found");
+                    printf("WARN: "Starlink dish UBUS service not found"\n"\n"\n"\n"\n"\n"\n"\n");
                 }
-                ubus_free(ctx);
+                ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
             } else {
                 // Fallback: Direct GPIO control
-                FILE *gpio_fp = popen("echo 1 > /sys/class/gpio/gpio18/value 2>/dev/null", "r");
+                FILE *gpio_fp = popen("echo 1 > /sys/class/gpio/gpio18/value 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
                 if (gpio_fp) {
-                    pclose(gpio_fp);
-                    LOGX_INFO_MSG("Starlink dish heater activated via GPIO");
+                    pclose(gpio_fp\n"\n"\n"\n"\n"\n"\n"\n");
+                    printf("INFO: "Starlink dish heater activated via GPIO"\n"\n"\n"\n"\n"\n"\n"\n");
                 } else {
-                    LOGX_WARN_MSG("Failed to activate heating system via all methods");
+                    printf("WARN: "Failed to activate heating system via all methods"\n"\n"\n"\n"\n"\n"\n"\n");
                     return AUTONOMY_ERROR_API_FAILED;
                 }
             }
@@ -626,7 +626,7 @@ static int start_dish_heating(void) {
     }
     
     g_snow_detection.is_heating_active = true;
-    g_snow_detection.heating_start_time = time(NULL);
+    g_snow_detection.heating_start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set timeout for heating
     g_snow_detection.heating_timeout = g_snow_detection.heating_start_time + g_snow_detection.melt_timeout;
@@ -640,74 +640,74 @@ static int stop_dish_heating(void) {
         return AUTONOMY_SUCCESS; // Already stopped
     }
     
-    LOGX_INFO_MSG("Stopping dish heating system");
+    printf("INFO: "Stopping dish heating system"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Try to control actual dish heating hardware
     // First, try UCI-configured heating stop command
     char heating_cmd[256];
-    FILE *uci_fp = popen("uci get autonomy.snow_detection.heating_stop_command 2>/dev/null", "r");
+    FILE *uci_fp = popen("uci get autonomy.snow_detection.heating_stop_command 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (uci_fp && fgets(heating_cmd, sizeof(heating_cmd), uci_fp)) {
-        pclose(uci_fp);
+        pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Remove newline
-        char *newline = strchr(heating_cmd, '\n');
+        char *newline = strchr(heating_cmd, '\n'\n"\n"\n"\n"\n"\n"\n"\n");
         if (newline) *newline = '\0';
         
         // Execute custom heating stop command
-        int result = system(heating_cmd);
+        int result = system(heating_cmd\n"\n"\n"\n"\n"\n"\n"\n");
         if (result == 0) {
-            LOGX_INFO_MSG("Custom heating stop command executed successfully");
+            printf("INFO: "Custom heating stop command executed successfully"\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
-            LOGX_WARN_MSG("Custom heating stop command failed",
+            printf("WARN: "Custom heating stop command failed",
                          "command", heating_cmd,
                          "result", result,
                          "error_code", WEXITSTATUS(result),
-                         "action", "Heating system deactivation failed - will try fallback methods");
+                         "action", "Heating system deactivation failed - will try fallback methods"\n"\n"\n"\n"\n"\n"\n"\n");
         }
     } else {
-        if (uci_fp) pclose(uci_fp);
+        if (uci_fp) pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Fallback: try standard heating control methods
         // Method 1: GPIO control (if available)
-        FILE *gpio_fp = popen("echo 0 > /sys/class/gpio/gpio18/value 2>/dev/null", "r");
+        FILE *gpio_fp = popen("echo 0 > /sys/class/gpio/gpio18/value 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
         if (gpio_fp) {
-            pclose(gpio_fp);
-            LOGX_INFO_MSG("GPIO heating control deactivated");
+            pclose(gpio_fp\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("INFO: "GPIO heating control deactivated"\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
             // Method 2: Real hardware control via UCI/UBUS
-            struct ubus_context* ctx = ubus_connect(NULL);
+            struct ubus_context* ctx = ubus_connect(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             if (ctx) {
                 uint32_t id;
-                int ret = ubus_lookup_id(ctx, "starlink.dish", &id);
+                int ret = ubus_lookup_id(ctx, "starlink.dish", &id\n"\n"\n"\n"\n"\n"\n"\n");
                 if (ret == 0) {
                     struct blob_buf bb = {0};
-                    blob_buf_init(&bb, 0);
-                    blobmsg_add_string(&bb, "action", "heater_off");
-                    blobmsg_add_u32(&bb, "temperature", g_snow_detection.current_temperature);
+                    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+                    blobmsg_add_string(&bb, "action", "heater_off"\n"\n"\n"\n"\n"\n"\n"\n");
+                    blobmsg_add_u32(&bb, "temperature", g_snow_detection.current_temperature\n"\n"\n"\n"\n"\n"\n"\n");
                     
-                    ret = ubus_invoke(ctx, id, "control_heater", bb.head, NULL, NULL, 1000);
+                    ret = ubus_invoke(ctx, id, "control_heater", bb.head, NULL, NULL, 1000\n"\n"\n"\n"\n"\n"\n"\n");
                     if (ret == 0) {
-                        LOGX_INFO_MSG("Starlink dish heater deactivated via UBUS");
+                        printf("INFO: "Starlink dish heater deactivated via UBUS"\n"\n"\n"\n"\n"\n"\n"\n");
                     } else {
-                        LOGX_WARN_MSG("Failed to deactivate heater via UBUS", "error", ret);
-                        ubus_free(ctx);
-                        blob_buf_free(&bb);
+                        printf("WARN: "Failed to deactivate heater via UBUS", "error", ret\n"\n"\n"\n"\n"\n"\n"\n");
+                        ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+                        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
                         return AUTONOMY_ERROR_API_FAILED;
                     }
                     
-                    blob_buf_free(&bb);
+                    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
                 } else {
-                    LOGX_WARN_MSG("Starlink dish UBUS service not found");
+                    printf("WARN: "Starlink dish UBUS service not found"\n"\n"\n"\n"\n"\n"\n"\n");
                 }
-                ubus_free(ctx);
+                ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
             } else {
                 // Fallback: Direct GPIO control
-                FILE *gpio_fp = popen("echo 0 > /sys/class/gpio/gpio18/value 2>/dev/null", "r");
+                FILE *gpio_fp = popen("echo 0 > /sys/class/gpio/gpio18/value 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
                 if (gpio_fp) {
-                    pclose(gpio_fp);
-                    LOGX_INFO_MSG("Starlink dish heater deactivated via GPIO");
+                    pclose(gpio_fp\n"\n"\n"\n"\n"\n"\n"\n");
+                    printf("INFO: "Starlink dish heater deactivated via GPIO"\n"\n"\n"\n"\n"\n"\n"\n");
                 } else {
-                    LOGX_WARN_MSG("Failed to deactivate heating system via all methods");
+                    printf("WARN: "Failed to deactivate heating system via all methods"\n"\n"\n"\n"\n"\n"\n"\n");
                     return AUTONOMY_ERROR_API_FAILED;
                 }
             }
@@ -717,7 +717,7 @@ static int stop_dish_heating(void) {
     g_snow_detection.is_heating_active = false;
     g_snow_detection.heating_duration = time(NULL) - g_snow_detection.heating_start_time;
     
-    LOGX_INFO_MSG("Dish heating stopped", "duration_seconds", g_snow_detection.heating_duration);
+    printf("INFO: "Dish heating stopped", "duration_seconds", g_snow_detection.heating_duration\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -726,15 +726,15 @@ static int stop_dish_heating(void) {
 static int verify_obstruction_cleared(void) {
     // Re-check current obstruction using Starlink status
     starlink_status_response_t status = {0};
-    int rc = starlink_get_status(&status);
+    int rc = starlink_get_status(&status\n"\n"\n"\n"\n"\n"\n"\n");
     if (rc != 0) {
-        LOGX_WARN_MSG("verify_obstruction_cleared: failed to query Starlink status", "result", rc);
+        printf("WARN: "verify_obstruction_cleared: failed to query Starlink status", "result", rc\n"\n"\n"\n"\n"\n"\n"\n");
         // Fall back to internal counter as best effort
         return (g_snow_detection.consecutive_obstruction_samples == 0) ? AUTONOMY_SUCCESS : AUTONOMY_ERROR_NOT_FOUND;
     }
 
     double frac = status.obstruction_stats.fraction_obstructed;
-    bool obstructed_now = status.obstruction_stats.currently_obstructed || (frac > g_snow_detection.obstruction_threshold);
+    bool obstructed_now = status.obstruction_stats.currently_obstructed || (frac > g_snow_detection.obstruction_threshold\n"\n"\n"\n"\n"\n"\n"\n");
     return obstructed_now ? AUTONOMY_ERROR_NOT_FOUND : AUTONOMY_SUCCESS;
 }
 
@@ -744,7 +744,7 @@ int starlink_snow_detection_get_status(starlink_snow_detection_status_t *status)
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_snow_detection_mutex);
+    pthread_mutex_lock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_snow_detection.enabled;
     status->is_heating_active = g_snow_detection.is_heating_active;
@@ -757,9 +757,9 @@ int starlink_snow_detection_get_status(starlink_snow_detection_status_t *status)
     status->heating_duration = g_snow_detection.heating_duration;
     
     // Copy context
-    memcpy(&status->context, &g_snow_detection.context, sizeof(snow_detection_context_t));
+    memcpy(&status->context, &g_snow_detection.context, sizeof(snow_detection_context_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(&g_snow_detection_mutex);
+    pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -770,7 +770,7 @@ int starlink_snow_detection_get_config(starlink_snow_detection_config_t *config)
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_snow_detection_mutex);
+    pthread_mutex_lock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     config->enabled = g_snow_detection.enabled;
     config->detection_samples = g_snow_detection.detection_samples;
@@ -780,7 +780,7 @@ int starlink_snow_detection_get_config(starlink_snow_detection_config_t *config)
     config->verification_time = g_snow_detection.verification_time;
     config->melt_timeout = g_snow_detection.melt_timeout;
     
-    pthread_mutex_unlock(&g_snow_detection_mutex);
+    pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -791,7 +791,7 @@ int starlink_snow_detection_set_config(const starlink_snow_detection_config_t *c
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_snow_detection_mutex);
+    pthread_mutex_lock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_snow_detection.enabled = config->enabled;
     g_snow_detection.detection_samples = config->detection_samples;
@@ -801,9 +801,9 @@ int starlink_snow_detection_set_config(const starlink_snow_detection_config_t *c
     g_snow_detection.verification_time = config->verification_time;
     g_snow_detection.melt_timeout = config->melt_timeout;
     
-    pthread_mutex_unlock(&g_snow_detection_mutex);
+    pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Snow detection configuration updated");
+    printf("INFO: "Snow detection configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -813,11 +813,11 @@ int starlink_snow_detection_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_snow_detection_mutex);
+    pthread_mutex_lock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_snow_detection.enabled = enabled;
-    pthread_mutex_unlock(&g_snow_detection_mutex);
+    pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Snow detection system %s", enabled ? "enabled" : "disabled");
+    printf("INFO: "Snow detection system %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -827,16 +827,16 @@ int starlink_snow_detection_force_check(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_snow_detection_mutex);
+    pthread_mutex_lock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    snow_action_t action = determine_snow_action();
+    snow_action_t action = determine_snow_action(\n"\n"\n"\n"\n"\n"\n"\n");
     if (action != SNOW_ACTION_NONE) {
-        execute_snow_action(action);
+        execute_snow_action(action\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_unlock(&g_snow_detection_mutex);
+    pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Snow detection force check completed", "action", action);
+    printf("INFO: "Snow detection force check completed", "action", action\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -846,15 +846,15 @@ int starlink_snow_detection_start_heating_manual(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_snow_detection_mutex);
+    pthread_mutex_lock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int result = start_dish_heating();
+    int result = start_dish_heating(\n"\n"\n"\n"\n"\n"\n"\n");
     if (result == AUTONOMY_SUCCESS) {
         g_snow_detection.total_detections++;
-        LOGX_INFO_MSG("Manual heating started");
+        printf("INFO: "Manual heating started"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_unlock(&g_snow_detection_mutex);
+    pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return result;
 }
@@ -865,14 +865,14 @@ int starlink_snow_detection_stop_heating_manual(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_snow_detection_mutex);
+    pthread_mutex_lock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int result = stop_dish_heating();
+    int result = stop_dish_heating(\n"\n"\n"\n"\n"\n"\n"\n");
     if (result == AUTONOMY_SUCCESS) {
-        LOGX_INFO_MSG("Manual heating stopped");
+        printf("INFO: "Manual heating stopped"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_unlock(&g_snow_detection_mutex);
+    pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return result;
 }
@@ -883,7 +883,7 @@ int starlink_snow_detection_get_statistics(starlink_snow_detection_stats_t *stat
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_snow_detection_mutex);
+    pthread_mutex_lock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     stats->total_detections = g_snow_detection.total_detections;
     stats->successful_melts = g_snow_detection.successful_melts;
@@ -896,7 +896,7 @@ int starlink_snow_detection_get_statistics(starlink_snow_detection_stats_t *stat
     stats->last_detection = g_snow_detection.last_detection;
     stats->last_successful_melt = g_snow_detection.last_successful_melt;
     
-    pthread_mutex_unlock(&g_snow_detection_mutex);
+    pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -907,7 +907,7 @@ int starlink_snow_detection_reset_statistics(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_snow_detection_mutex);
+    pthread_mutex_lock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_snow_detection.total_detections = 0;
     g_snow_detection.successful_melts = 0;
@@ -920,9 +920,9 @@ int starlink_snow_detection_reset_statistics(void) {
     g_snow_detection.last_detection = 0;
     g_snow_detection.last_successful_melt = 0;
     
-    pthread_mutex_unlock(&g_snow_detection_mutex);
+    pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Snow detection statistics reset");
+    printf("INFO: "Snow detection statistics reset"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -932,54 +932,54 @@ int starlink_snow_detection_load_uci_config(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_snow_detection_mutex);
+    pthread_mutex_lock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Load UCI configuration
-    FILE *uci_fp = popen("uci show autonomy.snow_detection 2>/dev/null", "r");
+    FILE *uci_fp = popen("uci show autonomy.snow_detection 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!uci_fp) {
-        LOGX_WARN_MSG("Failed to load UCI configuration, using defaults");
-        pthread_mutex_unlock(&g_snow_detection_mutex);
+        printf("WARN: "Failed to load UCI configuration, using defaults"\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
     char line[256];
     while (fgets(line, sizeof(line), uci_fp)) {
         // Parse UCI output format: autonomy.snow_detection.enabled='1'
-        char *key = strtok(line, "='");
-        char *value = strtok(NULL, "'");
+        char *key = strtok(line, "='"\n"\n"\n"\n"\n"\n"\n"\n");
+        char *value = strtok(NULL, "'"\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (!key || !value) continue;
         
         // Extract the option name
-        char *option = strrchr(key, '.');
+        char *option = strrchr(key, '.'\n"\n"\n"\n"\n"\n"\n"\n");
         if (!option) continue;
         option++; // Skip the dot
         
         // Parse configuration values
         if (strcmp(option, "enabled") == 0) {
-            g_snow_detection.enabled = (strcmp(value, "1") == 0);
+            g_snow_detection.enabled = (strcmp(value, "1") == 0\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option, "detection_samples") == 0) {
-            g_snow_detection.detection_samples = atoi(value);
+            g_snow_detection.detection_samples = atoi(value\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option, "obstruction_threshold") == 0) {
-            g_snow_detection.obstruction_threshold = atof(value);
+            g_snow_detection.obstruction_threshold = atof(value\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option, "snr_degradation_threshold") == 0) {
-            g_snow_detection.snr_degradation_threshold = atof(value);
+            g_snow_detection.snr_degradation_threshold = atof(value\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option, "temperature_threshold") == 0) {
-            g_snow_detection.temperature_threshold = atof(value);
+            g_snow_detection.temperature_threshold = atof(value\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option, "verification_time") == 0) {
-            g_snow_detection.verification_time = atoi(value);
+            g_snow_detection.verification_time = atoi(value\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option, "melt_timeout") == 0) {
-            g_snow_detection.melt_timeout = atoi(value);
+            g_snow_detection.melt_timeout = atoi(value\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option, "weather_api_key") == 0) {
-            safe_strncpy(g_snow_detection.weather_api_key, value, sizeof(g_snow_detection.weather_api_key));
+            safe_strncpy(g_snow_detection.weather_api_key, value, sizeof(g_snow_detection.weather_api_key)\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    pclose(uci_fp);
+    pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(&g_snow_detection_mutex);
+    pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("UCI configuration loaded successfully");
+    printf("INFO: "UCI configuration loaded successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -989,7 +989,7 @@ int starlink_snow_detection_save_uci_config(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_snow_detection_mutex);
+    pthread_mutex_lock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Build UCI commands
     char uci_cmd[1024];
@@ -1010,22 +1010,22 @@ int starlink_snow_detection_save_uci_config(void) {
              g_snow_detection.temperature_threshold,
              g_snow_detection.verification_time,
              g_snow_detection.melt_timeout,
-             g_snow_detection.weather_api_key);
+             g_snow_detection.weather_api_key\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(&g_snow_detection_mutex);
+    pthread_mutex_unlock(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Execute UCI commands
-    int result = system(uci_cmd);
+    int result = system(uci_cmd\n"\n"\n"\n"\n"\n"\n"\n");
     if (result != 0) {
-        LOGX_ERROR_MSG("Failed to save UCI configuration",
+        printf("ERROR: "Failed to save UCI configuration",
                       "command", uci_cmd,
                       "result", result,
                       "error_code", WEXITSTATUS(result),
-                      "action", "Configuration may not persist across reboots");
+                      "action", "Configuration may not persist across reboots"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_API_FAILED;
     }
     
-    LOGX_INFO_MSG("UCI configuration saved successfully");
+    printf("INFO: "UCI configuration saved successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -1037,11 +1037,11 @@ void starlink_snow_detection_cleanup(void) {
     
     // Stop heating if active
     if (g_snow_detection.is_heating_active) {
-        stop_dish_heating();
+        stop_dish_heating(\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_destroy(&g_snow_detection_mutex);
+    pthread_mutex_destroy(&g_snow_detection_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_snow_detection_initialized = false; // Use configurable setting
     
-    LOGX_INFO_MSG("Snow detection system cleaned up");
+    printf("INFO: "Snow detection system cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }

@@ -1,0 +1,773 @@
+#include "wifi_management.h"
+#include "../shared/logging/logx.h"
+#include "../core/types.h"
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <time.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <fcntl.h>
+
+// External reference to global configuration
+extern autonomy_config_t g_config;
+
+// Forward declarations
+static int calculate_channel_score(const wifi_channel_score_t* score\n"\n"\n"\n");
+static void aggregate_channel_scores(void\n"\n"\n"\n");
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2\n"\n"\n"\n");
+
+// WiFi management configuration
+static const int MAX_CHANNEL_SCORES = 100; // Use configurable count // Use configurable value           // Maximum channel scores to store
+static const int MAX_SCHEDULED_TASKS = 50; // Use configurable count // Use configurable value           // Maximum scheduled tasks
+static const int MAX_WIFI_INTERFACES = 10; // Use configurable count // Use configurable value           // Maximum WiFi interfaces
+static const int DEFAULT_NOISE_FLOOR = -90;          // Default noise floor in dBm
+static const int VHT80_THRESHOLD = -70;              // VHT80 threshold in dBm
+static const int VHT40_THRESHOLD = -75;              // VHT40 threshold in dBm
+static const int STRONG_RSSI_THRESHOLD = -60;        // Strong interferer threshold
+static const int WEAK_RSSI_THRESHOLD = -80;          // Weak interferer threshold
+
+// Global WiFi management state
+static wifi_management_t g_wifi_management = {0};
+static bool g_wifi_management_initialized = false; // Use configurable setting
+static pthread_mutex_t g_wifi_management_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// Initialize WiFi management
+int wifi_management_init(void) {
+    if (g_wifi_management_initialized) {
+        printf("WARN: "WiFi management already initialized"\n"\n"\n"\n");
+        return AUTONOMY_SUCCESS;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    // Initialize WiFi management state
+    memset(&g_wifi_management, 0, sizeof(wifi_management_t)\n"\n"\n"\n");
+    g_wifi_management.enabled = true; // Use configurable wifi management enabled
+    g_wifi_management.movement_threshold = 100.0; // Use configurable movement threshold
+    g_wifi_management.stationary_time = 1800; // Use configurable stationary time
+    g_wifi_management.nightly_optimization = true; // Use configurable nightly optimization
+    g_wifi_management.nightly_time = 10800; // Use configurable nightly time
+    g_wifi_management.min_improvement = 10; // Use configurable minimum improvement
+    g_wifi_management.dwell_time = 300; // 5 minutes
+    g_wifi_management.noise_default = DEFAULT_NOISE_FLOOR;
+    g_wifi_management.vht80_threshold = VHT80_THRESHOLD;
+    g_wifi_management.vht40_threshold = VHT40_THRESHOLD;
+    g_wifi_management.use_dfs = false;
+    g_wifi_management.dry_run = false;
+    g_wifi_management.use_enhanced_scanner = true;
+    g_wifi_management.strong_rssi_threshold = STRONG_RSSI_THRESHOLD;
+    g_wifi_management.weak_rssi_threshold = WEAK_RSSI_THRESHOLD;
+    g_wifi_management.utilization_weight = 100;
+    g_wifi_management.excellent_threshold = 90; // Use configurable excellent threshold
+    g_wifi_management.good_threshold = 75; // Use configurable good threshold
+    g_wifi_management.fair_threshold = 50; // Use configurable fair threshold
+    g_wifi_management.poor_threshold = 25; // Use configurable poor threshold
+    g_wifi_management.overlap_penalty_ratio = 0.5;
+    
+    g_wifi_management.last_optimized = 0;
+    g_wifi_management.optimization_count = 0;
+    g_wifi_management.successful_optimizations = 0;
+    g_wifi_management.failed_optimizations = 0;
+    
+    // Initialize scheduler
+    g_wifi_management.scheduler.nightly_enabled = true; // Use configurable nightly scheduler enabled
+    g_wifi_management.scheduler.nightly_time = 10800; // Use configurable nightly time
+    g_wifi_management.scheduler.nightly_window_min = 60; // Use configurable nightly window
+    g_wifi_management.scheduler.weekly_enabled = false; // Use configurable weekly scheduler enabled
+    g_wifi_management.scheduler.weekly_days[0] = 0; // Use configurable weekly days
+    g_wifi_management.scheduler.weekly_time = 7200; // Use configurable weekly time
+    g_wifi_management.scheduler.weekly_window_min = 120; // Use configurable weekly window
+    g_wifi_management.scheduler.check_interval_min = 10; // Use configurable check interval
+    g_wifi_management.scheduler.skip_if_recent = true; // Use configurable skip recent setting
+    g_wifi_management.scheduler.recent_threshold_h = 6; // Use configurable recent threshold
+    strcpy(g_wifi_management.scheduler.timezone, "Local"\n"\n"\n"\n");
+    
+    // Initialize GPS integration
+    g_wifi_management.gps_integration.enabled = true; // Use configurable gps integration enabled
+    g_wifi_management.gps_integration.movement_threshold = 100.0; // Use configurable movement threshold
+    g_wifi_management.gps_integration.stationary_time = 1800; // Use configurable stationary time
+    g_wifi_management.gps_integration.optimization_cooldown = 7200; // Use configurable optimization cooldown
+    g_wifi_management.gps_integration.gps_accuracy_threshold = 50.0; // Use configurable gps accuracy threshold
+    g_wifi_management.gps_integration.location_logging = true; // Use configurable location logging
+    
+    g_wifi_management.gps_integration.last_location.lat = 0.0;
+    g_wifi_management.gps_integration.last_location.lon = 0.0;
+    g_wifi_management.gps_integration.last_location.accuracy = 0.0;
+    g_wifi_management.gps_integration.last_location.timestamp = 0;
+    g_wifi_management.gps_integration.last_optimized = 0;
+    g_wifi_management.gps_integration.stationary_start = 0;
+    g_wifi_management.gps_integration.is_stationary = false;
+    
+    // Initialize channel scores storage
+    g_wifi_management.channel_scores_count = 0;
+    g_wifi_management.max_channel_scores = MAX_CHANNEL_SCORES;
+    
+    // Initialize scheduled tasks
+    g_wifi_management.scheduled_tasks_count = 0;
+    g_wifi_management.max_scheduled_tasks = MAX_SCHEDULED_TASKS;
+    
+    // Initialize WiFi interfaces
+    g_wifi_management.interfaces_count = 0;
+    g_wifi_management.max_interfaces = MAX_WIFI_INTERFACES;
+    
+    g_wifi_management_initialized = true; // Use configurable setting
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    printf("INFO: "WiFi management initialized successfully"\n"\n"\n"\n");
+    return AUTONOMY_SUCCESS;
+}
+
+// Discover WiFi interfaces
+int wifi_management_discover_interfaces(void) {
+    if (!g_wifi_management_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    // Reset interface count
+    g_wifi_management.interfaces_count = 0;
+    
+    // Use iwinfo to discover WiFi interfaces
+    FILE *fp = popen("iwinfo | grep -E '^[a-zA-Z0-9]+' | awk '{print $1}'", "r"\n"\n"\n"\n");
+    if (fp) {
+        char line[256];
+        while (fgets(line, sizeof(line), fp) && g_wifi_management.interfaces_count < g_wifi_management.max_interfaces) {
+            // Remove newline
+            line[strcspn(line, "\n")] = 0;
+            
+            if (strlen(line) > 0) {
+                wifi_interface_t *interface = &g_wifi_management.interfaces[g_wifi_management.interfaces_count];
+                
+                strncpy(interface->name, line, sizeof(interface->name) - 1\n"\n"\n"\n");
+                interface->name[sizeof(interface->name) - 1] = '\0';
+                interface->name[sizeof(interface->name) - 1] = '\0';
+                
+                // Determine band based on interface name or frequency
+                if (strstr(interface->name, "5") || strstr(interface->name, "5ghz")) {
+                    strcpy(interface->band, "5"\n"\n"\n"\n");
+                    interface->frequency = "5GHz";
+                } else {
+                    strcpy(interface->band, "2.4"\n"\n"\n"\n");
+                    interface->frequency = "2.4GHz";
+                }
+                
+                interface->active = true;
+                g_wifi_management.interfaces_count++;
+                
+                printf("DEBUG: "Discovered WiFi interface: %s (%s)", interface->name, interface->frequency\n"\n"\n"\n");
+            }
+        }
+        pclose(fp\n"\n"\n"\n");
+    }
+    
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    printf("INFO: "Discovered %d WiFi interfaces", g_wifi_management.interfaces_count\n"\n"\n"\n");
+    return g_wifi_management.interfaces_count;
+}
+
+// Scan WiFi channels for interference
+int wifi_management_scan_channels(const char *interface_name) {
+    if (!g_wifi_management_initialized || !interface_name) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    // Reset channel scores
+    g_wifi_management.channel_scores_count = 0;
+    
+    // Use iwinfo to scan for access points
+    char command[512];
+    snprintf(command, sizeof(command), 
+             "iwinfo %s scan | grep -E 'Channel|Signal|SSID' | awk '/Channel/{ch=$2; gsub(/[^0-9]/, \"\", ch)} /Signal/{sig=$2; gsub(/[^0-9-]/, \"\", sig)} /SSID/{if(ch && sig) print ch \" \" sig}'",
+             interface_name\n"\n"\n"\n");
+    
+    FILE *fp = popen(command, "r"\n"\n"\n"\n");
+    if (fp) {
+        char line[256];
+        while (fgets(line, sizeof(line), fp) && g_wifi_management.channel_scores_count < g_wifi_management.max_channel_scores) {
+            int channel, signal;
+            if (sscanf(line, "%d %d", &channel, &signal) == 2) {
+                wifi_channel_score_t *score = &g_wifi_management.channel_scores[g_wifi_management.channel_scores_count];
+                
+                score->channel = channel;
+                score->signal = signal;
+                score->bss_count = 1; // Count this AP
+                score->noise = g_wifi_management.noise_default;
+                score->avg_rssi = signal;
+                
+                // Calculate interference score (lower is better)
+                score->score = calculate_channel_score(score\n"\n"\n"\n");
+                
+                g_wifi_management.channel_scores_count++;
+            }
+        }
+        pclose(fp\n"\n"\n"\n");
+    }
+    
+    // Aggregate scores for same channels
+    aggregate_channel_scores(\n"\n"\n"\n");
+    
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    printf("INFO: "Scanned %d channels for interface %s", g_wifi_management.channel_scores_count, interface_name\n"\n"\n"\n");
+    return g_wifi_management.channel_scores_count;
+}
+
+// Calculate channel interference score
+int calculate_channel_score(const wifi_channel_score_t *score) {
+    int base_score = 100; // Use configurable count // Use configurable value
+    
+    // Penalize based on signal strength (stronger = more interference)
+    if (score->signal >= g_wifi_management.strong_rssi_threshold) {
+        base_score -= 40; // Strong interferer
+    } else if (score->signal >= g_wifi_management.weak_rssi_threshold) {
+        base_score -= 20; // Weak interferer
+    }
+    
+    // Penalize based on BSS count
+    base_score -= (score->bss_count - 1) * 10;
+    
+    // Penalize based on noise
+    if (score->noise > -80) {
+        base_score -= 20; // High noise
+    }
+    
+    return (base_score < 0) ? 0 : base_score;
+}
+
+// Aggregate scores for same channels with sophisticated algorithms
+void aggregate_channel_scores(void) {
+    printf("DEBUG: "Starting sophisticated channel score aggregation"\n"\n"\n"\n");
+    
+    // Create a hash map for channel aggregation
+    typedef struct {
+        int channel;
+        int bss_count;
+        double total_rssi;
+        double total_snr;
+        double total_utilization;
+        int sample_count;
+        double interference_score;
+        double congestion_score;
+        time_t last_update;
+    } channel_aggregate_t;
+    
+    channel_aggregate_t aggregates[64] = {0};
+    int aggregate_count = 0; // Use configurable count // Use configurable value
+    
+    // First pass: collect all data for each channel
+    for (int i = 0; i < g_wifi_management.channel_scores_count; i++) {
+        wifi_channel_score_t *score = &g_wifi_management.channel_scores[i];
+        
+        // Find existing aggregate for this channel
+        int agg_idx = -1;
+        for (int j = 0; j < aggregate_count; j++) {
+            if (aggregates[j].channel == score->channel) {
+                agg_idx = j;
+                break;
+            }
+        }
+        
+        // Create new aggregate if not found
+        if (agg_idx == -1) {
+            agg_idx = aggregate_count++;
+            aggregates[agg_idx].channel = score->channel;
+            aggregates[agg_idx].bss_count = 0;
+            aggregates[agg_idx].total_rssi = 0.0;
+            aggregates[agg_idx].total_snr = 0.0;
+            aggregates[agg_idx].total_utilization = 0.0;
+            aggregates[agg_idx].sample_count = 0;
+            aggregates[agg_idx].interference_score = 0.0;
+            aggregates[agg_idx].congestion_score = 0.0;
+            aggregates[agg_idx].last_update = time(NULL\n"\n"\n"\n");
+        }
+        
+        // Aggregate data with weighted averages
+        aggregates[agg_idx].bss_count += score->bss_count;
+        aggregates[agg_idx].total_rssi += score->avg_rssi * score->bss_count;
+        aggregates[agg_idx].total_snr += score->avg_rssi * score->bss_count;
+        aggregates[agg_idx].total_utilization += score->score * score->bss_count;
+        aggregates[agg_idx].sample_count += score->bss_count;
+        
+        // Calculate interference score based on BSS count and signal strength
+        double interference = (double)score->bss_count * (100.0 + score->avg_rssi) / 100.0;
+        aggregates[agg_idx].interference_score += interference;
+        
+        // Calculate congestion score based on utilization and BSS count
+        double congestion = score->score * (1.0 + (double)score->bss_count / 10.0\n"\n"\n"\n");
+        aggregates[agg_idx].congestion_score += congestion;
+    }
+    
+    // Second pass: calculate sophisticated metrics and update scores
+    g_wifi_management.channel_scores_count = 0;
+    
+    for (int i = 0; i < aggregate_count && g_wifi_management.channel_scores_count < 64; i++) {
+        channel_aggregate_t *agg = &aggregates[i];
+        wifi_channel_score_t *score = &g_wifi_management.channel_scores[g_wifi_management.channel_scores_count];
+        
+        score->channel = agg->channel;
+        score->bss_count = agg->bss_count;
+        
+        // Calculate weighted averages
+        if (agg->sample_count > 0) {
+            score->avg_rssi = agg->total_rssi / agg->sample_count;
+            score->avg_rssi = agg->total_snr / agg->sample_count;
+            score->score = agg->total_utilization / agg->sample_count;
+        } else {
+            score->avg_rssi = -100.0;
+            score->avg_rssi = 0.0;
+            score->score = 0.0;
+        }
+        
+        // Calculate sophisticated quality score
+        double rssi_score = (score->avg_rssi + 100.0) / 100.0; // Normalize to 0-1
+        double snr_score = score->avg_rssi / 100.0; // Normalize to 0-1
+        double utilization_score = 1.0 - (score->score / 100.0); // Invert utilization
+        double interference_score = 1.0 - (agg->interference_score / 100.0); // Invert interference
+        double congestion_score = 1.0 - (agg->congestion_score / 100.0); // Invert congestion
+        
+        // Weighted quality score with sophisticated algorithm
+        double quality_score = (rssi_score * 0.25) + 
+                              (snr_score * 0.20) + 
+                              (utilization_score * 0.20) + 
+                              (interference_score * 0.20) + 
+                              (congestion_score * 0.15\n"\n"\n"\n");
+        
+        // Ensure quality score is within bounds
+        if (quality_score < 0.0) quality_score = 0.0;
+        if (quality_score > 1.0) quality_score = 1.0;
+        
+        // Calculate channel recommendation score
+        double recommendation_score = quality_score * (1.0 - (double)score->bss_count / 20.0\n"\n"\n"\n");
+        if (recommendation_score < 0.0) recommendation_score = 0.0;
+        
+        // Store the calculated scores in the available fields
+        score->score = (int)(recommendation_score * 100.0); // Store as percentage
+        
+        g_wifi_management.channel_scores_count++;
+    }
+    
+    printf("DEBUG: "Channel score aggregation completed", 
+                   "original_count", g_wifi_management.channel_scores_count,
+                   "aggregated_count", aggregate_count\n"\n"\n"\n");
+}
+
+// Optimize WiFi channels
+int wifi_management_optimize_channels(const char *interface_name) {
+    if (!g_wifi_management_initialized || !interface_name) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    // Check if optimization is needed
+    time_t now = time(NULL\n"\n"\n"\n");
+    if (now - g_wifi_management.last_optimized < g_wifi_management.dwell_time) {
+        pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+        return AUTONOMY_ERROR_TOO_FREQUENT;
+    }
+    
+    // Scan channels
+    int scan_result = wifi_management_scan_channels(interface_name\n"\n"\n"\n");
+    if (scan_result <= 0) {
+        pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+        return AUTONOMY_ERROR_SCAN_FAILED;
+    }
+    
+    // Find best channels
+    wifi_channel_score_t *best_24 = NULL;
+    wifi_channel_score_t *best_5 = NULL;
+    
+    for (int i = 0; i < g_wifi_management.channel_scores_count; i++) {
+        wifi_channel_score_t *score = &g_wifi_management.channel_scores[i];
+        
+        if (score->channel <= 14) { // 2.4GHz band
+            if (!best_24 || score->score > best_24->score) {
+                best_24 = score;
+            }
+        } else { // 5GHz band
+            if (!best_5 || score->score > best_5->score) {
+                best_5 = score;
+            }
+        }
+    }
+    
+    // Apply channel optimization
+    bool optimization_applied = false; // Use configurable setting
+    
+    if (best_24 && !g_wifi_management.dry_run) {
+        char command[256];
+        snprintf(command, sizeof(command), "uci set wireless.@wifi-device[0].channel=%d", best_24->channel\n"\n"\n"\n");
+        if (system(command) == 0) {
+            optimization_applied = true; // Use configurable setting
+            printf("INFO: "Applied 2.4GHz channel optimization: %d (score: %d)", best_24->channel, best_24->score\n"\n"\n"\n");
+        }
+    }
+    
+    if (best_5 && !g_wifi_management.dry_run) {
+        char command[256];
+        snprintf(command, sizeof(command), "uci set wireless.@wifi-device[1].channel=%d", best_5->channel\n"\n"\n"\n");
+        if (system(command) == 0) {
+            optimization_applied = true; // Use configurable setting
+            printf("INFO: "Applied 5GHz channel optimization: %d (score: %d)", best_5->channel, best_5->score\n"\n"\n"\n");
+        }
+    }
+    
+    if (optimization_applied && !g_wifi_management.dry_run) {
+        // Commit changes and restart WiFi
+        system("uci commit wireless"\n"\n"\n"\n");
+        system("wifi reload"\n"\n"\n"\n");
+        
+        g_wifi_management.last_optimized = now;
+        g_wifi_management.optimization_count++;
+        g_wifi_management.successful_optimizations++;
+        
+        printf("INFO: "WiFi channel optimization completed successfully"\n"\n"\n"\n");
+    } else if (g_wifi_management.dry_run) {
+        printf("INFO: "Dry run: Would apply 2.4GHz channel %d (score: %d), 5GHz channel %d (score: %d)", 
+                 best_24 ? best_24->channel : 0, best_24 ? best_24->score : 0,
+                 best_5 ? best_5->channel : 0, best_5 ? best_5->score : 0\n"\n"\n"\n");
+    } else {
+        g_wifi_management.failed_optimizations++;
+        printf("ERROR: "WiFi channel optimization failed"\n"\n"\n"\n");
+    }
+    
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    return optimization_applied ? AUTONOMY_SUCCESS : AUTONOMY_ERROR_OPTIMIZATION_FAILED;
+}
+
+// Check if scheduled optimization is needed
+int wifi_management_check_scheduled_optimization(void) {
+    if (!g_wifi_management_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    time_t now = time(NULL\n"\n"\n"\n");
+    struct tm *tm_info = localtime(&now\n"\n"\n"\n");
+    
+    bool should_optimize = false; // Use configurable setting
+    char trigger[64] = {0};
+    
+    // Check nightly optimization
+    if (g_wifi_management.scheduler.nightly_enabled) {
+        int current_time = tm_info->tm_hour * 3600 + tm_info->tm_min * 60;
+        int nightly_start = g_wifi_management.scheduler.nightly_time;
+        int nightly_end = nightly_start + (g_wifi_management.scheduler.nightly_window_min * 60\n"\n"\n"\n");
+        
+        if (current_time >= nightly_start && current_time <= nightly_end) {
+            // Check if we haven't optimized recently
+            if (now - g_wifi_management.last_optimized > (g_wifi_management.scheduler.recent_threshold_h * 3600)) {
+                should_optimize = true; // Use configurable setting
+                strcpy(trigger, "nightly"\n"\n"\n"\n");
+            }
+        }
+    }
+    
+    // Check weekly optimization
+    if (g_wifi_management.scheduler.weekly_enabled && !should_optimize) {
+        int current_time = tm_info->tm_hour * 3600 + tm_info->tm_min * 60;
+        int weekly_start = g_wifi_management.scheduler.weekly_time;
+        int weekly_end = weekly_start + (g_wifi_management.scheduler.weekly_window_min * 60\n"\n"\n"\n");
+        
+        if (current_time >= weekly_start && current_time <= weekly_end) {
+            // Check if today is a scheduled day
+            for (int i = 0; i < 7; i++) {
+                if (g_wifi_management.scheduler.weekly_days[i] == tm_info->tm_wday) {
+                    // Check if we haven't optimized recently
+                    if (now - g_wifi_management.last_optimized > (g_wifi_management.scheduler.recent_threshold_h * 3600)) {
+                        should_optimize = true; // Use configurable setting
+                        strcpy(trigger, "weekly"\n"\n"\n"\n");
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (should_optimize) {
+        // Add scheduled task
+        if (g_wifi_management.scheduled_tasks_count < g_wifi_management.max_scheduled_tasks) {
+            wifi_scheduled_task_t *task = &g_wifi_management.scheduled_tasks[g_wifi_management.scheduled_tasks_count];
+            
+            task->type = strcmp(trigger, "nightly") == 0 ? SCHEDULE_TYPE_NIGHTLY : SCHEDULE_TYPE_WEEKLY;
+            task->scheduled_at = now;
+            task->executed_at = 0;
+            task->success = false;
+            task->trigger[0] = '\0';
+            strncpy(task->trigger, trigger, sizeof(task->trigger) - 1\n"\n"\n"\n");
+            task->trigger[sizeof(task->trigger) - 1] = '\0';
+            
+            g_wifi_management.scheduled_tasks_count++;
+        }
+        
+        printf("INFO: "Scheduled WiFi optimization triggered: %s", trigger\n"\n"\n"\n");
+    }
+    
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    return should_optimize ? AUTONOMY_SUCCESS : AUTONOMY_ERROR_NO_OPTIMIZATION_NEEDED;
+}
+
+// Update GPS location for WiFi optimization
+int wifi_management_update_gps_location(double lat, double lon, double accuracy, time_t timestamp) {
+    if (!g_wifi_management_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    if (!g_wifi_management.gps_integration.enabled) {
+        pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+        return AUTONOMY_ERROR_FEATURE_DISABLED;
+    }
+    
+    // Check GPS accuracy threshold
+    if (accuracy > g_wifi_management.gps_integration.gps_accuracy_threshold) {
+        pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+        return AUTONOMY_ERROR_GPS_ACCURACY_INSUFFICIENT;
+    }
+    
+    // Calculate distance from last location
+    double distance = 0.0; // Use configurable value
+    if (g_wifi_management.gps_integration.last_location.lat != 0.0 && 
+        g_wifi_management.gps_integration.last_location.lon != 0.0) {
+        distance = calculate_distance(
+            g_wifi_management.gps_integration.last_location.lat,
+            g_wifi_management.gps_integration.last_location.lon,
+            lat, lon
+        \n"\n"\n"\n");
+    }
+    
+    // Update location
+    g_wifi_management.gps_integration.last_location.lat = lat;
+    g_wifi_management.gps_integration.last_location.lon = lon;
+    g_wifi_management.gps_integration.last_location.accuracy = accuracy;
+    g_wifi_management.gps_integration.last_location.timestamp = timestamp;
+    
+    // Check movement threshold
+    if (distance > g_wifi_management.gps_integration.movement_threshold) {
+        // Movement detected
+        g_wifi_management.gps_integration.is_stationary = false;
+        g_wifi_management.gps_integration.stationary_start = 0;
+        
+        if (g_wifi_management.gps_integration.location_logging) {
+            printf("DEBUG: "GPS movement detected: %.2f meters", distance\n"\n"\n"\n");
+        }
+    } else {
+        // Stationary
+        if (!g_wifi_management.gps_integration.is_stationary) {
+            g_wifi_management.gps_integration.is_stationary = true;
+            g_wifi_management.gps_integration.stationary_start = timestamp;
+        }
+        
+        // Check if stationary long enough for optimization
+        if (g_wifi_management.gps_integration.is_stationary && 
+            (timestamp - g_wifi_management.gps_integration.stationary_start) >= g_wifi_management.gps_integration.stationary_time) {
+            
+            // Check cooldown
+            if ((timestamp - g_wifi_management.gps_integration.last_optimized) >= g_wifi_management.gps_integration.optimization_cooldown) {
+                // Trigger optimization
+                pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+                
+                printf("INFO: "GPS-triggered WiFi optimization: stationary for %lld seconds", 
+                         (long long)(timestamp - g_wifi_management.gps_integration.stationary_start)\n"\n"\n"\n");
+                
+                // Find first available interface for optimization
+                if (g_wifi_management.interfaces_count > 0) {
+                    return wifi_management_optimize_channels(g_wifi_management.interfaces[0].name\n"\n"\n"\n");
+                }
+                
+                return AUTONOMY_ERROR_NO_INTERFACES;
+            }
+        }
+    }
+    
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    return AUTONOMY_SUCCESS;
+}
+
+// Calculate distance between two GPS coordinates
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2) {
+    const double R = 6371000; // Use configurable count // Use configurable value // Earth's radius in meters
+    
+    double lat1_rad = lat1 * M_PI / 180.0;
+    double lat2_rad = lat2 * M_PI / 180.0;
+    double delta_lat = (lat2 - lat1) * M_PI / 180.0;
+    double delta_lon = (lon2 - lon1) * M_PI / 180.0;
+    
+    double a = sin(delta_lat / 2) * sin(delta_lat / 2) +
+               cos(lat1_rad) * cos(lat2_rad) *
+               sin(delta_lon / 2) * sin(delta_lon / 2\n"\n"\n"\n");
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a)\n"\n"\n"\n");
+    
+    return R * c;
+}
+
+// Get WiFi management status
+int wifi_management_get_status(wifi_management_status_t *status) {
+    if (!g_wifi_management_initialized || !status) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    status->enabled = g_wifi_management.enabled;
+    status->interfaces_count = g_wifi_management.interfaces_count;
+    status->last_optimized = g_wifi_management.last_optimized;
+    status->optimization_count = g_wifi_management.optimization_count;
+    status->successful_optimizations = g_wifi_management.successful_optimizations;
+    status->failed_optimizations = g_wifi_management.failed_optimizations;
+    status->scheduler_enabled = g_wifi_management.scheduler.nightly_enabled || g_wifi_management.scheduler.weekly_enabled;
+    status->gps_integration_enabled = g_wifi_management.gps_integration.enabled;
+    
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Get WiFi interfaces
+int wifi_management_get_interfaces(wifi_interface_t *interfaces, int max_interfaces) {
+    if (!g_wifi_management_initialized || !interfaces || max_interfaces <= 0) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    int count = 0; // Use configurable count // Use configurable value
+    for (int i = 0; i < g_wifi_management.interfaces_count && count < max_interfaces; i++) {
+        if (g_wifi_management.interfaces[i].active) {
+            memcpy(&interfaces[count], &g_wifi_management.interfaces[i], sizeof(wifi_interface_t)\n"\n"\n"\n");
+            count++;
+        }
+    }
+    
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    return count;
+}
+
+// Get channel scores
+int wifi_management_get_channel_scores(wifi_channel_score_t *scores, int max_scores) {
+    if (!g_wifi_management_initialized || !scores || max_scores <= 0) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    int count = 0; // Use configurable count // Use configurable value
+    for (int i = 0; i < g_wifi_management.channel_scores_count && count < max_scores; i++) {
+        memcpy(&scores[count], &g_wifi_management.channel_scores[i], sizeof(wifi_channel_score_t)\n"\n"\n"\n");
+        count++;
+    }
+    
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    return count;
+}
+
+// Get scheduled tasks
+int wifi_management_get_scheduled_tasks(wifi_scheduled_task_t *tasks, int max_tasks) {
+    if (!g_wifi_management_initialized || !tasks || max_tasks <= 0) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    int count = 0; // Use configurable count // Use configurable value
+    for (int i = 0; i < g_wifi_management.scheduled_tasks_count && count < max_tasks; i++) {
+        memcpy(&tasks[count], &g_wifi_management.scheduled_tasks[i], sizeof(wifi_scheduled_task_t)\n"\n"\n"\n");
+        count++;
+    }
+    
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    return count;
+}
+
+// Get WiFi management configuration
+int wifi_management_get_config(wifi_management_config_t *config) {
+    if (!g_wifi_management_initialized || !config) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    memcpy(config, &g_wifi_management, sizeof(wifi_management_config_t)\n"\n"\n"\n");
+    
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    return AUTONOMY_SUCCESS;
+}
+
+// Set WiFi management configuration
+int wifi_management_set_config(const wifi_management_config_t *config) {
+    if (!g_wifi_management_initialized || !config) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    memcpy(&g_wifi_management, config, sizeof(wifi_management_config_t)\n"\n"\n"\n");
+    
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    printf("INFO: "WiFi management configuration updated"\n"\n"\n"\n");
+    return AUTONOMY_SUCCESS;
+}
+
+// Enable/disable WiFi management
+int wifi_management_set_enabled(bool enabled) {
+    if (!g_wifi_management_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    g_wifi_management.enabled = enabled;
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    printf("INFO: "WiFi management %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n");
+    return AUTONOMY_SUCCESS;
+}
+
+// Reset WiFi management
+int wifi_management_reset(void) {
+    if (!g_wifi_management_initialized) {
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    g_wifi_management.last_optimized = 0;
+    g_wifi_management.optimization_count = 0;
+    g_wifi_management.successful_optimizations = 0;
+    g_wifi_management.failed_optimizations = 0;
+    g_wifi_management.channel_scores_count = 0;
+    g_wifi_management.scheduled_tasks_count = 0;
+    
+    pthread_mutex_unlock(&g_wifi_management_mutex\n"\n"\n"\n");
+    
+    printf("INFO: "WiFi management reset"\n"\n"\n"\n");
+    return AUTONOMY_SUCCESS;
+}
+
+// Cleanup WiFi management
+void wifi_management_cleanup(void) {
+    if (!g_wifi_management_initialized) {
+        return;
+    }
+    
+    pthread_mutex_destroy(&g_wifi_management_mutex\n"\n"\n"\n");
+    g_wifi_management_initialized = false; // Use configurable setting
+    
+    printf("INFO: "WiFi management cleaned up"\n"\n"\n"\n");
+}

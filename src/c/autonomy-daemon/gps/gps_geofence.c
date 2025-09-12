@@ -34,32 +34,32 @@ static bool g_geofence_initialized = false; // Use configurable setting
 static pthread_mutex_t g_geofence_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
-int generate_geofence_id(void);
-gps_geofence_status_t check_position_against_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
-bool check_circle_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
-bool check_rectangle_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
-bool check_polygon_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence);
-static double distance_to_line_segment(double px, double py, double x1, double y1, double x2, double y2);
-void handle_geofence_event(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status, const gps_data_t *gps_data);
-double gps_geofence_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
-void update_system_config_for_geofence(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status);
-void trigger_location_based_services(gps_geofence_definition_t *geofence, const gps_data_t *gps_data);
-void update_geofence_analytics(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status, const gps_data_t *gps_data);
-void execute_custom_geofence_actions(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status, const gps_data_t *gps_data);
-void send_geofence_notifications(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status, const gps_data_t *gps_data);
-void trigger_geofence_actions(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status, const gps_data_t *gps_data);
+int generate_geofence_id(void\n"\n"\n"\n"\n"\n"\n"\n");
+gps_geofence_status_t check_position_against_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence\n"\n"\n"\n"\n"\n"\n"\n");
+bool check_circle_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence\n"\n"\n"\n"\n"\n"\n"\n");
+bool check_rectangle_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence\n"\n"\n"\n"\n"\n"\n"\n");
+bool check_polygon_geofence(const gps_data_t *gps_data, const gps_geofence_definition_t *geofence\n"\n"\n"\n"\n"\n"\n"\n");
+static double distance_to_line_segment(double px, double py, double x1, double y1, double x2, double y2\n"\n"\n"\n"\n"\n"\n"\n");
+void handle_geofence_event(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status, const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+double gps_geofence_coordinate_distance(double lat1, double lon1, double lat2, double lon2\n"\n"\n"\n"\n"\n"\n"\n");
+void update_system_config_for_geofence(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status\n"\n"\n"\n"\n"\n"\n"\n");
+void trigger_location_based_services(gps_geofence_definition_t *geofence, const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+void update_geofence_analytics(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status, const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+void execute_custom_geofence_actions(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status, const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+void send_geofence_notifications(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status, const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+void trigger_geofence_actions(gps_geofence_definition_t *geofence, gps_geofence_status_t previous_status, const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize GPS geofencing system
 int gps_geofence_init(void) {
     if (g_geofence_initialized) {
-        LOGX_WARN_MSG("GPS geofencing system already initialized");
+        printf("WARN: "GPS geofencing system already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex);
+    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize geofencing state
-    memset(&g_geofence, 0, sizeof(gps_geofence_t));
+    memset(&g_geofence, 0, sizeof(gps_geofence_t)\n"\n"\n"\n"\n"\n"\n"\n");
     g_geofence.enabled = true; // Use configurable geofencing enabled
     g_geofence.max_geofences = MAX_GEOFENCES;
     g_geofence.max_points = MAX_GEOFENCE_POINTS;
@@ -85,9 +85,9 @@ int gps_geofence_init(void) {
     }
     
     g_geofence_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_geofence_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS geofencing system initialized successfully");
+    printf("INFO: "GPS geofencing system initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -98,7 +98,7 @@ int gps_geofence_create_circle(const char *name, double center_lat, double cente
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex);
+    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Find free geofence slot
     int geofence_index = -1;
@@ -110,15 +110,15 @@ int gps_geofence_create_circle(const char *name, double center_lat, double cente
     }
     
     if (geofence_index < 0) {
-        pthread_mutex_unlock(&g_geofence_mutex);
-        LOGX_ERROR_MSG("No free slots for geofence creation");
+        pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: "No free slots for geofence creation"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
     // Initialize circular geofence
     gps_geofence_definition_t *geofence = &g_geofence.geofences[geofence_index];
     geofence->active = true;
-    geofence->geofence_id = generate_geofence_id();
+    geofence->geofence_id = generate_geofence_id(\n"\n"\n"\n"\n"\n"\n"\n");
     geofence->geofence_type = GEOFENCE_TYPE_CIRCLE;
     geofence->point_count = 1;
     geofence->buffer_distance = (buffer_distance > 0) ? buffer_distance : g_geofence.default_buffer;
@@ -128,7 +128,7 @@ int gps_geofence_create_circle(const char *name, double center_lat, double cente
     geofence->current_status = GEOFENCE_STATUS_OUTSIDE;
     
     // Set geofence name
-    safe_strncpy(geofence->name, name, sizeof(geofence->name));
+    safe_strncpy(geofence->name, name, sizeof(geofence->name)\n"\n"\n"\n"\n"\n"\n"\n");
     geofence->name[sizeof(geofence->name) - 1] = '\0';
     
     // Set center point
@@ -141,10 +141,10 @@ int gps_geofence_create_circle(const char *name, double center_lat, double cente
     g_geofence.geofence_count++;
     g_geofence.active_geofences++;
     
-    pthread_mutex_unlock(&g_geofence_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Created circular geofence '%s' at (%.6f, %.6f) with radius %.1fm", 
-               name, center_lat, center_lon, radius_meters);
+    printf("INFO: "Created circular geofence '%s' at (%.6f, %.6f) with radius %.1fm", 
+               name, center_lat, center_lon, radius_meters\n"\n"\n"\n"\n"\n"\n"\n");
     
     return geofence->geofence_id;
 }
@@ -156,7 +156,7 @@ int gps_geofence_create_rectangle(const char *name, double min_lat, double max_l
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex);
+    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Find free geofence slot
     int geofence_index = -1;
@@ -168,15 +168,15 @@ int gps_geofence_create_rectangle(const char *name, double min_lat, double max_l
     }
     
     if (geofence_index < 0) {
-        pthread_mutex_unlock(&g_geofence_mutex);
-        LOGX_ERROR_MSG("No free slots for geofence creation");
+        pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: "No free slots for geofence creation"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
     // Initialize rectangular geofence
     gps_geofence_definition_t *geofence = &g_geofence.geofences[geofence_index];
     geofence->active = true;
-    geofence->geofence_id = generate_geofence_id();
+    geofence->geofence_id = generate_geofence_id(\n"\n"\n"\n"\n"\n"\n"\n");
     geofence->geofence_type = GEOFENCE_TYPE_RECTANGLE;
     geofence->point_count = 4;
     geofence->buffer_distance = (buffer_distance > 0) ? buffer_distance : g_geofence.default_buffer;
@@ -186,7 +186,7 @@ int gps_geofence_create_rectangle(const char *name, double min_lat, double max_l
     geofence->current_status = GEOFENCE_STATUS_OUTSIDE;
     
     // Set geofence name
-    safe_strncpy(geofence->name, name, sizeof(geofence->name));
+    safe_strncpy(geofence->name, name, sizeof(geofence->name)\n"\n"\n"\n"\n"\n"\n"\n");
     geofence->name[sizeof(geofence->name) - 1] = '\0';
     
     // Set rectangle corners (clockwise from top-left)
@@ -202,10 +202,10 @@ int gps_geofence_create_rectangle(const char *name, double min_lat, double max_l
     g_geofence.geofence_count++;
     g_geofence.active_geofences++;
     
-    pthread_mutex_unlock(&g_geofence_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Created rectangular geofence '%s' from (%.6f, %.6f) to (%.6f, %.6f)", 
-               name, min_lat, min_lon, max_lat, max_lon);
+    printf("INFO: "Created rectangular geofence '%s' from (%.6f, %.6f) to (%.6f, %.6f)", 
+               name, min_lat, min_lon, max_lat, max_lon\n"\n"\n"\n"\n"\n"\n"\n");
     
     return geofence->geofence_id;
 }
@@ -218,12 +218,12 @@ int gps_geofence_create_polygon(const char *name, const gps_coordinate_t *points
     }
     
     if (point_count > MAX_GEOFENCE_POINTS) {
-        LOGX_ERROR_MSG("Too many points for polygon geofence: %d (max: %d)", 
-                   point_count, MAX_GEOFENCE_POINTS);
+        printf("ERROR: "Too many points for polygon geofence: %d (max: %d)", 
+                   point_count, MAX_GEOFENCE_POINTS\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex);
+    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Find free geofence slot
     int geofence_index = -1;
@@ -235,15 +235,15 @@ int gps_geofence_create_polygon(const char *name, const gps_coordinate_t *points
     }
     
     if (geofence_index < 0) {
-        pthread_mutex_unlock(&g_geofence_mutex);
-        LOGX_ERROR_MSG("No free slots for geofence creation");
+        pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: "No free slots for geofence creation"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
     // Initialize polygon geofence
     gps_geofence_definition_t *geofence = &g_geofence.geofences[geofence_index];
     geofence->active = true;
-    geofence->geofence_id = generate_geofence_id();
+    geofence->geofence_id = generate_geofence_id(\n"\n"\n"\n"\n"\n"\n"\n");
     geofence->geofence_type = GEOFENCE_TYPE_POLYGON;
     geofence->point_count = point_count;
     geofence->buffer_distance = (buffer_distance > 0) ? buffer_distance : g_geofence.default_buffer;
@@ -253,7 +253,7 @@ int gps_geofence_create_polygon(const char *name, const gps_coordinate_t *points
     geofence->current_status = GEOFENCE_STATUS_OUTSIDE;
     
     // Set geofence name
-    safe_strncpy(geofence->name, name, sizeof(geofence->name));
+    safe_strncpy(geofence->name, name, sizeof(geofence->name)\n"\n"\n"\n"\n"\n"\n"\n");
     geofence->name[sizeof(geofence->name) - 1] = '\0';
     
     // Copy points and calculate center
@@ -271,9 +271,9 @@ int gps_geofence_create_polygon(const char *name, const gps_coordinate_t *points
     g_geofence.geofence_count++;
     g_geofence.active_geofences++;
     
-    pthread_mutex_unlock(&g_geofence_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Created polygon geofence '%s' with %d points", name, point_count);
+    printf("INFO: "Created polygon geofence '%s' with %d points", name, point_count\n"\n"\n"\n"\n"\n"\n"\n");
     
     return geofence->geofence_id;
 }
@@ -290,13 +290,13 @@ int gps_geofence_check_position(const gps_data_t *gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex);
+    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if enough time has passed since last check
     if ((now - g_geofence.last_check) < g_geofence.check_interval) {
-        pthread_mutex_unlock(&g_geofence_mutex);
+        pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
@@ -312,15 +312,15 @@ int gps_geofence_check_position(const gps_data_t *gps_data) {
         gps_geofence_status_t previous_status = geofence->current_status;
         
         // Check position against geofence
-        geofence->current_status = check_position_against_geofence(gps_data, geofence);
+        geofence->current_status = check_position_against_geofence(gps_data, geofence\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Check for status change
         if (geofence->current_status != previous_status) {
-            handle_geofence_event(geofence, previous_status, gps_data);
+            handle_geofence_event(geofence, previous_status, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    pthread_mutex_unlock(&g_geofence_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -332,13 +332,13 @@ gps_geofence_status_t check_position_against_geofence(const gps_data_t *gps_data
     
     switch (geofence->geofence_type) {
         case GEOFENCE_TYPE_CIRCLE:
-            inside = check_circle_geofence(gps_data, geofence);
+            inside = check_circle_geofence(gps_data, geofence\n"\n"\n"\n"\n"\n"\n"\n");
             break;
         case GEOFENCE_TYPE_RECTANGLE:
-            inside = check_rectangle_geofence(gps_data, geofence);
+            inside = check_rectangle_geofence(gps_data, geofence\n"\n"\n"\n"\n"\n"\n"\n");
             break;
         case GEOFENCE_TYPE_POLYGON:
-            inside = check_polygon_geofence(gps_data, geofence);
+            inside = check_polygon_geofence(gps_data, geofence\n"\n"\n"\n"\n"\n"\n"\n");
             break;
         default:
             return GEOFENCE_STATUS_UNKNOWN;
@@ -355,7 +355,7 @@ gps_geofence_status_t check_position_against_geofence(const gps_data_t *gps_data
 bool check_circle_geofence(const gps_data_t *gps_data, 
                                   const gps_geofence_definition_t *geofence) {
     double distance = gps_geofence_coordinate_distance(gps_data->lat, gps_data->lon,
-                                       geofence->center_lat, geofence->center_lon);
+                                       geofence->center_lat, geofence->center_lon\n"\n"\n"\n"\n"\n"\n"\n");
     
     double effective_radius = geofence->radius_meters + geofence->buffer_distance;
     
@@ -367,13 +367,13 @@ bool check_rectangle_geofence(const gps_data_t *gps_data,
                                     const gps_geofence_definition_t *geofence) {
     // Simple rectangle check with buffer
     double buffer_lat = geofence->buffer_distance / 111000.0; // Approximate meters to degrees
-    double buffer_lon = geofence->buffer_distance / (111000.0 * cos(geofence->center_lat * M_PI / 180.0));
+    double buffer_lon = geofence->buffer_distance / (111000.0 * cos(geofence->center_lat * M_PI / 180.0)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if point is within buffered rectangle
     bool inside = (gps_data->lat >= geofence->points[3].lat - buffer_lat) &&
                   (gps_data->lat <= geofence->points[0].lat + buffer_lat) &&
                   (gps_data->lon >= geofence->points[0].lon - buffer_lon) &&
-                  (gps_data->lon <= geofence->points[1].lon + buffer_lon);
+                  (gps_data->lon <= geofence->points[1].lon + buffer_lon\n"\n"\n"\n"\n"\n"\n"\n");
     
     return inside;
 }
@@ -409,7 +409,7 @@ bool check_polygon_geofence(const gps_data_t *gps_data,
             const gps_coordinate_t *p2 = &geofence->points[j];
             
             double distance_to_edge = distance_to_line_segment(gps_data->lat, gps_data->lon,
-                                                            p1->lat, p1->lon, p2->lat, p2->lon);
+                                                            p1->lat, p1->lon, p2->lat, p2->lon\n"\n"\n"\n"\n"\n"\n"\n");
             
             if (distance_to_edge <= geofence->buffer_distance) {
                 inside = true; // Use configurable setting
@@ -433,7 +433,7 @@ static double distance_to_line_segment(double px, double py, double x1, double y
     double len_sq = C * C + D * D;
     
     if (len_sq == 0) {
-        return gps_geofence_coordinate_distance(px, py, x1, y1);
+        return gps_geofence_coordinate_distance(px, py, x1, y1\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     double param = dot / len_sq;
@@ -450,14 +450,14 @@ static double distance_to_line_segment(double px, double py, double x1, double y
         yy = y1 + param * D;
     }
     
-    return gps_geofence_coordinate_distance(px, py, xx, yy);
+    return gps_geofence_coordinate_distance(px, py, xx, yy\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Handle geofence event
 void handle_geofence_event(gps_geofence_definition_t *geofence, 
                                  gps_geofence_status_t previous_status,
                                  const gps_data_t *gps_data) {
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     geofence->last_event = now;
     geofence->event_count++;
@@ -467,11 +467,11 @@ void handle_geofence_event(gps_geofence_definition_t *geofence,
     const char *status_name = (geofence->current_status == GEOFENCE_STATUS_INSIDE) ? "INSIDE" : "OUTSIDE";
     const char *previous_name = (previous_status == GEOFENCE_STATUS_INSIDE) ? "INSIDE" : "OUTSIDE";
     
-    LOGX_INFO_MSG("Geofence '%s' event: %s -> %s at (%.6f, %.6f)", 
-               geofence->name, previous_name, status_name, gps_data->lat, gps_data->lon);
+    printf("INFO: "Geofence '%s' event: %s -> %s at (%.6f, %.6f)", 
+               geofence->name, previous_name, status_name, gps_data->lat, gps_data->lon\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Trigger real geofence actions
-    trigger_geofence_actions(geofence, previous_status, gps_data);
+    trigger_geofence_actions(geofence, previous_status, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Calculate distance between two GPS coordinates (Haversine formula)
@@ -483,9 +483,9 @@ double gps_geofence_coordinate_distance(double lat1, double lon1, double lat2, d
     
     double a = sin(delta_lat / 2.0) * sin(delta_lat / 2.0) +
                cos(lat1_rad) * cos(lat2_rad) *
-               sin(delta_lon / 2.0) * sin(delta_lon / 2.0);
+               sin(delta_lon / 2.0) * sin(delta_lon / 2.0\n"\n"\n"\n"\n"\n"\n"\n");
     
-    double c = 2.0 * atan2(sqrt(a), sqrt(1.0 - a));
+    double c = 2.0 * atan2(sqrt(a), sqrt(1.0 - a)\n"\n"\n"\n"\n"\n"\n"\n");
     
     return EARTH_RADIUS * c;
 }
@@ -496,7 +496,7 @@ int gps_geofence_get_status(gps_geofence_system_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex);
+    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_geofence.enabled;
     status->geofence_count = g_geofence.geofence_count;
@@ -509,13 +509,13 @@ int gps_geofence_get_status(gps_geofence_system_status_t *status) {
     for (int i = 0; i < MAX_GEOFENCES && active_geofences < MAX_GEOFENCES; i++) {
         if (g_geofence.geofences[i].active) {
             memcpy(&status->geofences[active_geofences], &g_geofence.geofences[i], 
-                   sizeof(gps_geofence_definition_t));
+                   sizeof(gps_geofence_definition_t)\n"\n"\n"\n"\n"\n"\n"\n");
             active_geofences++;
         }
     }
     status->active_geofence_count = active_geofences;
     
-    pthread_mutex_unlock(&g_geofence_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -526,7 +526,7 @@ int gps_geofence_get_config(gps_geofence_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex);
+    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     config->enabled = g_geofence.enabled;
     config->max_geofences = g_geofence.max_geofences;
@@ -534,7 +534,7 @@ int gps_geofence_get_config(gps_geofence_config_t *config) {
     config->default_buffer = g_geofence.default_buffer;
     config->check_interval = g_geofence.check_interval;
     
-    pthread_mutex_unlock(&g_geofence_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -545,7 +545,7 @@ int gps_geofence_set_config(const gps_geofence_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex);
+    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_geofence.enabled = config->enabled;
     g_geofence.max_geofences = config->max_geofences;
@@ -553,9 +553,9 @@ int gps_geofence_set_config(const gps_geofence_config_t *config) {
     g_geofence.default_buffer = config->default_buffer;
     g_geofence.check_interval = config->check_interval;
     
-    pthread_mutex_unlock(&g_geofence_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS geofencing configuration updated");
+    printf("INFO: "GPS geofencing configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -565,11 +565,11 @@ int gps_geofence_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex);
+    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_geofence.enabled = enabled;
-    pthread_mutex_unlock(&g_geofence_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS geofencing %s", enabled ? "enabled" : "disabled");
+    printf("INFO: "GPS geofencing %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -579,7 +579,7 @@ int gps_geofence_set_geofence_enabled(int geofence_id, bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex);
+    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < MAX_GEOFENCES; i++) {
         if (g_geofence.geofences[i].active && 
@@ -593,14 +593,14 @@ int gps_geofence_set_geofence_enabled(int geofence_id, bool enabled) {
                 g_geofence.active_geofences--;
             }
             
-            pthread_mutex_unlock(&g_geofence_mutex);
+            pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
             
-            LOGX_INFO_MSG("Geofence %d %s", geofence_id, enabled ? "enabled" : "disabled");
+            printf("INFO: "Geofence %d %s", geofence_id, enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_SUCCESS;
         }
     }
     
-    pthread_mutex_unlock(&g_geofence_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -610,7 +610,7 @@ int gps_geofence_delete(int geofence_id) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex);
+    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < MAX_GEOFENCES; i++) {
         if (g_geofence.geofences[i].active && 
@@ -623,14 +623,14 @@ int gps_geofence_delete(int geofence_id) {
             g_geofence.geofences[i].active = false;
             g_geofence.geofence_count--;
             
-            pthread_mutex_unlock(&g_geofence_mutex);
+            pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
             
-            LOGX_INFO_MSG("Deleted geofence %d", geofence_id);
+            printf("INFO: "Deleted geofence %d", geofence_id\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_SUCCESS;
         }
     }
     
-    pthread_mutex_unlock(&g_geofence_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -640,7 +640,7 @@ int gps_geofence_reset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex);
+    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_geofence.geofence_count = 0;
     g_geofence.active_geofences = 0;
@@ -652,9 +652,9 @@ int gps_geofence_reset(void) {
         g_geofence.geofences[i].active = false;
     }
     
-    pthread_mutex_unlock(&g_geofence_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS geofencing system reset");
+    printf("INFO: "GPS geofencing system reset"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -664,32 +664,32 @@ void gps_geofence_cleanup(void) {
         return;
     }
     
-    pthread_mutex_destroy(&g_geofence_mutex);
+    pthread_mutex_destroy(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_geofence_initialized = false; // Use configurable setting
     
-    LOGX_INFO_MSG("GPS geofencing system cleaned up");
+    printf("INFO: "GPS geofencing system cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Trigger real geofence actions
 void trigger_geofence_actions(gps_geofence_definition_t *geofence, 
                                     gps_geofence_status_t previous_status,
                                     const gps_data_t *gps_data) {
-    LOGX_DEBUG_MSG("Triggering geofence actions for %s", geofence->name);
+    printf("DEBUG: "Triggering geofence actions for %s", geofence->name\n"\n"\n"\n"\n"\n"\n"\n");
     
     // 1. Send notifications via multiple channels
-    send_geofence_notifications(geofence, previous_status, gps_data);
+    send_geofence_notifications(geofence, previous_status, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
     
     // 2. Update system configuration based on geofence
-    update_system_config_for_geofence(geofence, previous_status);
+    update_system_config_for_geofence(geofence, previous_status\n"\n"\n"\n"\n"\n"\n"\n");
     
     // 3. Trigger location-based services
-    trigger_location_based_services(geofence, gps_data);
+    trigger_location_based_services(geofence, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
     
     // 4. Update tracking and analytics
-    update_geofence_analytics(geofence, previous_status, gps_data);
+    update_geofence_analytics(geofence, previous_status, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
     
     // 5. Execute custom actions if configured
-    execute_custom_geofence_actions(geofence, previous_status, gps_data);
+    execute_custom_geofence_actions(geofence, previous_status, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Send notifications via multiple channels
@@ -705,10 +705,10 @@ void send_geofence_notifications(gps_geofence_definition_t *geofence,
             "echo 'Geofence Alert: %s transitioned from %s to %s at (%.6f, %.6f) at %s' | "
             "mail -s 'Geofence Alert: %s' %s 2>/dev/null",
             geofence->name, previous_name, status_name, gps_data->lat, gps_data->lon,
-            ctime(&gps_data->timestamp), geofence->name, g_geofence.notification_email);
+            ctime(&gps_data->timestamp), geofence->name, g_geofence.notification_email\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (strlen(g_geofence.notification_email) > 0) {
-        system(email_cmd);
+        system(email_cmd\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Send SMS notification via system
@@ -717,10 +717,10 @@ void send_geofence_notifications(gps_geofence_definition_t *geofence,
             "echo 'Geofence: %s %s->%s at (%.6f,%.6f)' | "
             "gammu sendsms TEXT %s 2>/dev/null",
             geofence->name, previous_name, status_name, gps_data->lat, gps_data->lon,
-            g_geofence.notification_phone);
+            g_geofence.notification_phone\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (strlen(g_geofence.notification_phone) > 0) {
-        system(sms_cmd);
+        system(sms_cmd\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Send webhook notification
@@ -729,14 +729,14 @@ void send_geofence_notifications(gps_geofence_definition_t *geofence,
         snprintf(webhook_data, sizeof(webhook_data),
                 "{\"geofence\":\"%s\",\"status\":\"%s\",\"previous_status\":\"%s\","
                 "\"latitude\":%.6f,\"longitude\":%.6f,\"timestamp\":%lld}",
-                geofence->name, status_name, previous_name, gps_data->lat, gps_data->lon, gps_data->timestamp);
+                geofence->name, status_name, previous_name, gps_data->lat, gps_data->lon, gps_data->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
         
         char webhook_cmd[2048];  // Increased buffer size to handle long webhook URLs
         snprintf(webhook_cmd, sizeof(webhook_cmd),
                 "curl -X POST -H 'Content-Type: application/json' -d '%s' %s 2>/dev/null",
-                webhook_data, g_geofence.webhook_url);
+                webhook_data, g_geofence.webhook_url\n"\n"\n"\n"\n"\n"\n"\n");
         
-        system(webhook_cmd);
+        system(webhook_cmd\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Send to MQTT broker
@@ -744,14 +744,14 @@ void send_geofence_notifications(gps_geofence_definition_t *geofence,
         char mqtt_data[512];
         snprintf(mqtt_data, sizeof(mqtt_data),
                 "{\"geofence\":\"%s\",\"status\":\"%s\",\"lat\":%.6f,\"lon\":%.6f}",
-                geofence->name, status_name, gps_data->lat, gps_data->lon);
+                geofence->name, status_name, gps_data->lat, gps_data->lon\n"\n"\n"\n"\n"\n"\n"\n");
         
         char mqtt_cmd[2048];  // Increased buffer size to handle long MQTT commands
         snprintf(mqtt_cmd, sizeof(mqtt_cmd),
                 "mosquitto_pub -h %s -t '%s' -m '%s' 2>/dev/null",
-                g_geofence.mqtt_broker, g_geofence.mqtt_topic, mqtt_data);
+                g_geofence.mqtt_broker, g_geofence.mqtt_topic, mqtt_data\n"\n"\n"\n"\n"\n"\n"\n");
         
-        system(mqtt_cmd);
+        system(mqtt_cmd\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -761,30 +761,30 @@ void update_system_config_for_geofence(gps_geofence_definition_t *geofence,
     // Update WiFi configuration based on location
     if (geofence->current_status == GEOFENCE_STATUS_INSIDE) {
         // Inside geofence - enable high-performance mode
-        system("uci set wireless.radio0.txpower=20 2>/dev/null");
-        system("uci set wireless.radio0.channel=auto 2>/dev/null");
-        system("uci commit wireless 2>/dev/null");
-        system("wifi reload 2>/dev/null");
+        system("uci set wireless.radio0.txpower=20 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
+        system("uci set wireless.radio0.channel=auto 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
+        system("uci commit wireless 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
+        system("wifi reload 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
         
-        LOGX_INFO_MSG("Updated WiFi configuration for inside geofence: %s", geofence->name);
+        printf("INFO: "Updated WiFi configuration for inside geofence: %s", geofence->name\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         // Outside geofence - enable power-saving mode
-        system("uci set wireless.radio0.txpower=10 2>/dev/null");
-        system("uci set wireless.radio0.channel=6 2>/dev/null");
-        system("uci commit wireless 2>/dev/null");
-        system("wifi reload 2>/dev/null");
+        system("uci set wireless.radio0.txpower=10 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
+        system("uci set wireless.radio0.channel=6 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
+        system("uci commit wireless 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
+        system("wifi reload 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
         
-        LOGX_INFO_MSG("Updated WiFi configuration for outside geofence: %s", geofence->name);
+        printf("INFO: "Updated WiFi configuration for outside geofence: %s", geofence->name\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Update network routing based on geofence
     if (strcmp(geofence->name, "home") == 0) {
         // Home geofence - prioritize local network
-        system("ip route add 192.168.1.0/24 dev br-lan 2>/dev/null");
-        system("ip route add 10.0.0.0/8 dev br-lan 2>/dev/null");
+        system("ip route add 192.168.1.0/24 dev br-lan 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
+        system("ip route add 10.0.0.0/8 dev br-lan 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
     } else if (strcmp(geofence->name, "office") == 0) {
         // Office geofence - prioritize VPN
-        system("ip route add 172.16.0.0/12 dev tun0 2>/dev/null");
+        system("ip route add 172.16.0.0/12 dev tun0 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -795,20 +795,20 @@ void trigger_location_based_services(gps_geofence_definition_t *geofence,
     char timezone_cmd[1024];  // Increased buffer size to handle long timezone commands
     snprintf(timezone_cmd, sizeof(timezone_cmd),
             "timedatectl set-timezone $(curl -s 'http://api.timezonedb.com/v2.1/get-time-zone?key=%s&format=json&by=position&lat=%.6f&lng=%.6f' | jq -r '.zoneName') 2>/dev/null",
-            g_geofence.timezone_api_key, gps_data->lat, gps_data->lon);
+            g_geofence.timezone_api_key, gps_data->lat, gps_data->lon\n"\n"\n"\n"\n"\n"\n"\n");
     
-    system(timezone_cmd);
+    system(timezone_cmd\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update weather services for new location
-    system("systemctl restart weather-service 2>/dev/null");
+    system("systemctl restart weather-service 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update location-based firewall rules
     char firewall_cmd[256];
     snprintf(firewall_cmd, sizeof(firewall_cmd),
-            "uci set firewall.@zone[0].input='ACCEPT' 2>/dev/null");
-    system(firewall_cmd);
-    system("uci commit firewall 2>/dev/null");
-    system("/etc/init.d/firewall reload 2>/dev/null");
+            "uci set firewall.@zone[0].input='ACCEPT' 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
+    system(firewall_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+    system("uci commit firewall 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
+    system("/etc/init.d/firewall reload 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Update geofence analytics
@@ -817,22 +817,22 @@ void update_geofence_analytics(gps_geofence_definition_t *geofence,
                                      const gps_data_t *gps_data) {
     // Store geofence event in database
     sqlite3* db = NULL;
-    int ret = sqlite3_open("/var/lib/autonomy/autonomy.db", &db);
+    int ret = sqlite3_open("/var/lib/autonomy/autonomy.db", &db\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret == SQLITE_OK) {
         char query[512];
         snprintf(query, sizeof(query),
                 "INSERT INTO geofence_events (geofence_name, previous_status, current_status, "
                 "latitude, longitude, timestamp) VALUES ('%s', %d, %d, %.6f, %.6f, %lld)",
                 geofence->name, previous_status, geofence->current_status, 
-                gps_data->lat, gps_data->lon, gps_data->timestamp);
+                gps_data->lat, gps_data->lon, gps_data->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
         
         char *err_msg = NULL;
-        ret = sqlite3_exec(db, query, NULL, NULL, &err_msg);
+        ret = sqlite3_exec(db, query, NULL, NULL, &err_msg\n"\n"\n"\n"\n"\n"\n"\n");
         if (ret != SQLITE_OK) {
-            LOGX_ERROR_MSG("Failed to store geofence event: %s", err_msg);
-            sqlite3_free(err_msg);
+            printf("ERROR: "Failed to store geofence event: %s", err_msg\n"\n"\n"\n"\n"\n"\n"\n");
+            sqlite3_free(err_msg\n"\n"\n"\n"\n"\n"\n"\n");
         }
-        sqlite3_close(db);
+        sqlite3_close(db\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Update geofence statistics
@@ -848,19 +848,19 @@ void execute_custom_geofence_actions(gps_geofence_definition_t *geofence,
     char script_path[256];
     snprintf(script_path, sizeof(script_path), "/usr/lib/autonomy/geofence/%s_%s.sh",
             geofence->name, 
-            (geofence->current_status == GEOFENCE_STATUS_INSIDE) ? "enter" : "exit");
+            (geofence->current_status == GEOFENCE_STATUS_INSIDE) ? "enter" : "exit"\n"\n"\n"\n"\n"\n"\n"\n");
     
     struct stat st;
     if (stat(script_path, &st) == 0 && (st.st_mode & S_IXUSR)) {
         char script_cmd[512];
         snprintf(script_cmd, sizeof(script_cmd), "%s %.6f %.6f %lld 2>/dev/null",
-                script_path, gps_data->lat, gps_data->lon, gps_data->timestamp);
+                script_path, gps_data->lat, gps_data->lon, gps_data->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
         
-        int result = system(script_cmd);
+        int result = system(script_cmd\n"\n"\n"\n"\n"\n"\n"\n");
         if (result == 0) {
-            LOGX_INFO_MSG("Executed custom geofence script: %s", script_path);
+            printf("INFO: "Executed custom geofence script: %s", script_path\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
-            LOGX_WARN_MSG("Custom geofence script failed: %s", script_path);
+            printf("WARN: "Custom geofence script failed: %s", script_path\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
 }
@@ -871,7 +871,7 @@ int gps_geofence_get_active_geofences(gps_geofence_definition_t *geofences, int 
         return 0;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex);
+    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     int count = 0;
     for (int i = 0; i < MAX_GEOFENCES && count < max_count; i++) {
@@ -881,7 +881,7 @@ int gps_geofence_get_active_geofences(gps_geofence_definition_t *geofences, int 
         }
     }
     
-    pthread_mutex_unlock(&g_geofence_mutex);
+    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return count;
 }
 
@@ -893,7 +893,7 @@ bool gps_geofence_is_point_inside(const gps_geofence_definition_t *geofence, dou
     
     switch (geofence->geofence_type) {
         case GEOFENCE_TYPE_CIRCLE: {
-            double distance = gps_geofence_coordinate_distance(lat, lon, geofence->center_lat, geofence->center_lon);
+            double distance = gps_geofence_coordinate_distance(lat, lon, geofence->center_lat, geofence->center_lon\n"\n"\n"\n"\n"\n"\n"\n");
             return distance <= geofence->radius_meters;
         }
         
@@ -913,7 +913,7 @@ bool gps_geofence_is_point_inside(const gps_geofence_definition_t *geofence, dou
                 if (geofence->points[i].lon > max_lon) max_lon = geofence->points[i].lon;
             }
             
-            return (lat >= min_lat && lat <= max_lat && lon >= min_lon && lon <= max_lon);
+            return (lat >= min_lat && lat <= max_lat && lon >= min_lon && lon <= max_lon\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         case GEOFENCE_TYPE_POLYGON: {

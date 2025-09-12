@@ -20,7 +20,7 @@ static const double MAX_LON = 180.0;                       // Maximum longitude
 
 // Initialize GPS coordinate utilities
 int gps_coordinate_utils_init(void) {
-    LOGX_INFO_MSG("GPS coordinate utilities initialized");
+    printf("INFO: "GPS coordinate utilities initialized"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -35,9 +35,9 @@ double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon
     // Haversine formula
     double a = sin(delta_lat / 2.0) * sin(delta_lat / 2.0) +
                cos(lat1_rad) * cos(lat2_rad) *
-               sin(delta_lon / 2.0) * sin(delta_lon / 2.0);
+               sin(delta_lon / 2.0) * sin(delta_lon / 2.0\n"\n"\n"\n"\n"\n"\n"\n");
     
-    double c = 2.0 * atan2(sqrt(a), sqrt(1.0 - a));
+    double c = 2.0 * atan2(sqrt(a), sqrt(1.0 - a)\n"\n"\n"\n"\n"\n"\n"\n");
     
     return EARTH_RADIUS_METERS * c;
 }
@@ -55,14 +55,14 @@ double gps_coordinate_bearing(double lat1, double lon1, double lat2, double lon2
     double delta_lon = (lon2 - lon1) * DEG_TO_RAD;
     
     // Calculate bearing
-    double y = sin(delta_lon) * cos(lat2_rad);
+    double y = sin(delta_lon) * cos(lat2_rad\n"\n"\n"\n"\n"\n"\n"\n");
     double x = cos(lat1_rad) * sin(lat2_rad) -
-               sin(lat1_rad) * cos(lat2_rad) * cos(delta_lon);
+               sin(lat1_rad) * cos(lat2_rad) * cos(delta_lon\n"\n"\n"\n"\n"\n"\n"\n");
     
     double bearing = atan2(y, x) * RAD_TO_DEG;
     
     // Normalize to 0-360 degrees
-    bearing = fmod(bearing + 360.0, 360.0);
+    bearing = fmod(bearing + 360.0, 360.0\n"\n"\n"\n"\n"\n"\n"\n");
     
     return bearing;
 }
@@ -82,10 +82,10 @@ int gps_coordinate_destination(double start_lat, double start_lon, double bearin
     
     // Calculate destination coordinates
     double lat2_rad = asin(sin(lat1_rad) * cos(angular_distance) +
-                           cos(lat1_rad) * sin(angular_distance) * cos(bearing_rad));
+                           cos(lat1_rad) * sin(angular_distance) * cos(bearing_rad)\n"\n"\n"\n"\n"\n"\n"\n");
     
     double lon2_rad = lon1_rad + atan2(sin(bearing_rad) * sin(angular_distance) * cos(lat1_rad),
-                                       cos(angular_distance) - sin(lat1_rad) * sin(lat2_rad));
+                                       cos(angular_distance) - sin(lat1_rad) * sin(lat2_rad)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Convert back to degrees
     *dest_lat = lat2_rad * RAD_TO_DEG;
@@ -111,13 +111,13 @@ int gps_coordinate_midpoint(double lat1, double lon1, double lat2, double lon2,
     double lon2_rad = lon2 * DEG_TO_RAD;
     
     // Calculate midpoint
-    double Bx = cos(lat2_rad) * cos(lon2_rad - lon1_rad);
-    double By = cos(lat2_rad) * sin(lon2_rad - lon1_rad);
+    double Bx = cos(lat2_rad) * cos(lon2_rad - lon1_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double By = cos(lat2_rad) * sin(lon2_rad - lon1_rad\n"\n"\n"\n"\n"\n"\n"\n");
     
     double mid_lat_rad = atan2(sin(lat1_rad) + sin(lat2_rad),
-                               sqrt((cos(lat1_rad) + Bx) * (cos(lat1_rad) + Bx) + By * By));
+                               sqrt((cos(lat1_rad) + Bx) * (cos(lat1_rad) + Bx) + By * By)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    double mid_lon_rad = lon1_rad + atan2(By, cos(lat1_rad) + Bx);
+    double mid_lon_rad = lon1_rad + atan2(By, cos(lat1_rad) + Bx\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Convert back to degrees
     *mid_lat = mid_lat_rad * RAD_TO_DEG;
@@ -145,7 +145,7 @@ double gps_coordinate_polygon_area(const gps_coordinate_t *coordinates, int num_
         double lat2_rad = coordinates[j].lat * DEG_TO_RAD;
         double lon2_rad = coordinates[j].lon * DEG_TO_RAD;
         
-        area += (lon2_rad - lon1_rad) * (2.0 + sin(lat1_rad) + sin(lat2_rad));
+        area += (lon2_rad - lon1_rad) * (2.0 + sin(lat1_rad) + sin(lat2_rad)\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     area = fabs(area) * EARTH_RADIUS_METERS * EARTH_RADIUS_METERS / 2.0;
@@ -200,8 +200,8 @@ int gps_coordinate_polygon_centroid(const gps_coordinate_t *coordinates, int num
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    centroid_x /= (6.0 * area);
-    centroid_y /= (6.0 * area);
+    centroid_x /= (6.0 * area\n"\n"\n"\n"\n"\n"\n"\n");
+    centroid_y /= (6.0 * area\n"\n"\n"\n"\n"\n"\n"\n");
     
     *centroid_lon = centroid_x;
     *centroid_lat = centroid_y;
@@ -237,7 +237,7 @@ double gps_coordinate_dms_to_decimal(int degrees, int minutes, double seconds) {
 // Validate GPS coordinates
 bool gps_coordinate_is_valid(double lat, double lon) {
     return (lat >= MIN_LAT && lat <= MAX_LAT && 
-            lon >= MIN_LON && lon <= MAX_LON);
+            lon >= MIN_LON && lon <= MAX_LON\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Normalize longitude to -180 to 180 range
@@ -260,11 +260,11 @@ double gps_coordinate_great_circle_distance(double lat1, double lon1, double lat
     double lat2_rad = lat2 * DEG_TO_RAD;
     double delta_lon = (lon2 - lon1) * DEG_TO_RAD;
     
-    double cos_delta_lon = cos(delta_lon);
-    double cos_lat1 = cos(lat1_rad);
-    double cos_lat2 = cos(lat2_rad);
-    double sin_lat1 = sin(lat1_rad);
-    double sin_lat2 = sin(lat2_rad);
+    double cos_delta_lon = cos(delta_lon\n"\n"\n"\n"\n"\n"\n"\n");
+    double cos_lat1 = cos(lat1_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double cos_lat2 = cos(lat2_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double sin_lat1 = sin(lat1_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double sin_lat2 = sin(lat2_rad\n"\n"\n"\n"\n"\n"\n"\n");
     
     double cos_angle = sin_lat1 * sin_lat2 + cos_lat1 * cos_lat2 * cos_delta_lon;
     
@@ -272,7 +272,7 @@ double gps_coordinate_great_circle_distance(double lat1, double lon1, double lat
     if (cos_angle > 1.0) cos_angle = 1.0;
     if (cos_angle < -1.0) cos_angle = -1.0;
     
-    double angle = acos(cos_angle);
+    double angle = acos(cos_angle\n"\n"\n"\n"\n"\n"\n"\n");
     
     return EARTH_RADIUS_METERS * angle;
 }
@@ -291,24 +291,24 @@ int gps_coordinate_rhumb_line(double lat1, double lon1, double lat2, double lon2
     
     // Calculate rhumb line bearing
     double lat_avg = (lat1_rad + lat2_rad) / 2.0;
-    double q = cos(lat_avg);
+    double q = cos(lat_avg\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (fabs(q) < 1e-10) {
         // At poles, rhumb line becomes a meridian
         *bearing = (delta_lat > 0) ? 0.0 : 180.0;
-        *distance = EARTH_RADIUS_METERS * fabs(delta_lat);
+        *distance = EARTH_RADIUS_METERS * fabs(delta_lat\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         *bearing = atan2(delta_lon, delta_lat) * RAD_TO_DEG;
         if (*bearing < 0) *bearing += 360.0;
         
         // Calculate rhumb line distance
         double lat_diff = log(tan(lat2_rad / 2.0 + M_PI / 4.0) / 
-                              tan(lat1_rad / 2.0 + M_PI / 4.0));
+                              tan(lat1_rad / 2.0 + M_PI / 4.0)\n"\n"\n"\n"\n"\n"\n"\n");
         double q_squared = q * q;
         double distance_lat = EARTH_RADIUS_METERS * delta_lat;
         double distance_lon = EARTH_RADIUS_METERS * delta_lon * q;
         
-        *distance = sqrt(distance_lat * distance_lat + distance_lon * distance_lon);
+        *distance = sqrt(distance_lat * distance_lat + distance_lon * distance_lon\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return AUTONOMY_SUCCESS;
@@ -330,29 +330,29 @@ int gps_coordinate_great_circle_intersection(double lat1, double lon1, double be
     double bearing2_rad = bearing2 * DEG_TO_RAD;
     
     // Calculate great circle intersection
-    double cos_lat1 = cos(lat1_rad);
-    double sin_lat1 = sin(lat1_rad);
-    double cos_bearing1 = cos(bearing1_rad);
-    double sin_bearing1 = sin(bearing1_rad);
+    double cos_lat1 = cos(lat1_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double sin_lat1 = sin(lat1_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double cos_bearing1 = cos(bearing1_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double sin_bearing1 = sin(bearing1_rad\n"\n"\n"\n"\n"\n"\n"\n");
     
-    double cos_lat2 = cos(lat2_rad);
-    double sin_lat2 = sin(lat2_rad);
-    double cos_bearing2 = cos(bearing2_rad);
-    double sin_bearing2 = sin(bearing2_rad);
+    double cos_lat2 = cos(lat2_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double sin_lat2 = sin(lat2_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double cos_bearing2 = cos(bearing2_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double sin_bearing2 = sin(bearing2_rad\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate intersection point
     double x = cos_lat1 * cos_bearing1 * sin_lat2 - sin_lat1 * cos_lat2 * cos_bearing2;
     double y = cos_lat1 * sin_bearing1 * sin_lat2 - sin_lat1 * cos_lat2 * sin_bearing2;
-    double z = cos_lat1 * cos_lat2 * sin(bearing1_rad - bearing2_rad);
+    double z = cos_lat1 * cos_lat2 * sin(bearing1_rad - bearing2_rad\n"\n"\n"\n"\n"\n"\n"\n");
     
-    double lat_intersect_rad = atan2(z, sqrt(x * x + y * y));
-    double lon_intersect_rad = atan2(y, x);
+    double lat_intersect_rad = atan2(z, sqrt(x * x + y * y)\n"\n"\n"\n"\n"\n"\n"\n");
+    double lon_intersect_rad = atan2(y, x\n"\n"\n"\n"\n"\n"\n"\n");
     
     *intersect_lat = lat_intersect_rad * RAD_TO_DEG;
     *intersect_lon = lon_intersect_rad * RAD_TO_DEG;
     
     // Normalize longitude
-    *intersect_lon = gps_coordinate_normalize_lon(*intersect_lon);
+    *intersect_lon = gps_coordinate_normalize_lon(*intersect_lon\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -380,7 +380,7 @@ int gps_coordinate_closest_point_on_line(double point_lat, double point_lon,
     
     // Calculate parameter t for closest point
     double t = ((p_lat_rad - l1_lat_rad) * dlat + (p_lon_rad - l1_lon_rad) * dlon) /
-               (dlat * dlat + dlon * dlon);
+               (dlat * dlat + dlon * dlon\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Clamp t to [0, 1] to ensure point is on line segment
     if (t < 0.0) t = 0.0;
@@ -395,5 +395,5 @@ int gps_coordinate_closest_point_on_line(double point_lat, double point_lon,
 
 // Cleanup GPS coordinate utilities
 void gps_coordinate_utils_cleanup(void) {
-    LOGX_INFO_MSG("GPS coordinate utilities cleaned up");
+    printf("INFO: "GPS coordinate utilities cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }

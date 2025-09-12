@@ -21,20 +21,20 @@ static bool g_initialized = false;
 // Set error message
 static void set_error(const char* format, ...) {
     va_list args;
-    va_start(args, format);
-    vsnprintf(g_interface_error, sizeof(g_interface_error), format, args);
-    va_end(args);
+    va_start(args, format\n"\n"\n"\n"\n"\n"\n"\n");
+    vsnprintf(g_interface_error, sizeof(g_interface_error), format, args\n"\n"\n"\n"\n"\n"\n"\n");
+    va_end(args\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Initialize interface utilities
 int interface_utils_init(void) {
     if (g_initialized) {
-        LOGX_WARN_MSG("Interface utilities already initialized");
+        printf("WARN: "Interface utilities already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
     g_initialized = true;
-    LOGX_INFO_MSG("Interface utilities initialized");
+    printf("INFO: "Interface utilities initialized"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -45,29 +45,29 @@ void interface_utils_cleanup(void) {
     }
     
     g_initialized = false;
-    LOGX_INFO_MSG("Interface utilities cleaned up");
+    printf("INFO: "Interface utilities cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if interface exists
 bool interface_exists(const char* interface_name) {
     if (!interface_name) {
-        set_error("Invalid interface name");
+        set_error("Invalid interface name"\n"\n"\n"\n"\n"\n"\n"\n");
         return false;
     }
     
-    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    int sock = socket(AF_INET, SOCK_DGRAM, 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (sock < 0) {
-        set_error("Failed to create socket");
+        set_error("Failed to create socket"\n"\n"\n"\n"\n"\n"\n"\n");
         return false;
     }
     
     struct ifreq ifr;
-    safe_strncpy(ifr.ifr_name, interface_name, IFNAMSIZ);
+    safe_strncpy(ifr.ifr_name, interface_name, IFNAMSIZ\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int result = ioctl(sock, SIOCGIFFLAGS, &ifr);
-    close(sock);
+    int result = ioctl(sock, SIOCGIFFLAGS, &ifr\n"\n"\n"\n"\n"\n"\n"\n");
+    close(sock\n"\n"\n"\n"\n"\n"\n"\n");
     
-    return (result == 0);
+    return (result == 0\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if interface is up
@@ -76,86 +76,86 @@ bool interface_is_up(const char* interface_name) {
         return false;
     }
     
-    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    int sock = socket(AF_INET, SOCK_DGRAM, 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (sock < 0) {
-        set_error("Failed to create socket");
+        set_error("Failed to create socket"\n"\n"\n"\n"\n"\n"\n"\n");
         return false;
     }
     
     struct ifreq ifr;
-    safe_strncpy(ifr.ifr_name, interface_name, IFNAMSIZ);
+    safe_strncpy(ifr.ifr_name, interface_name, IFNAMSIZ\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (ioctl(sock, SIOCGIFFLAGS, &ifr) < 0) {
-        close(sock);
-        set_error("Failed to get interface flags");
+        close(sock\n"\n"\n"\n"\n"\n"\n"\n");
+        set_error("Failed to get interface flags"\n"\n"\n"\n"\n"\n"\n"\n");
         return false;
     }
     
-    close(sock);
+    close(sock\n"\n"\n"\n"\n"\n"\n"\n");
     return (ifr.ifr_flags & IFF_UP) != 0;
 }
 
 // Get interface IP address
 int interface_get_ip_address(const char* interface_name, char* ip_address, size_t size) {
     if (!interface_name || !ip_address || size == 0) {
-        set_error("Invalid parameters");
+        set_error("Invalid parameters"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    int sock = socket(AF_INET, SOCK_DGRAM, 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (sock < 0) {
-        set_error("Failed to create socket");
+        set_error("Failed to create socket"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     struct ifreq ifr;
-    safe_strncpy(ifr.ifr_name, interface_name, IFNAMSIZ);
+    safe_strncpy(ifr.ifr_name, interface_name, IFNAMSIZ\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (ioctl(sock, SIOCGIFADDR, &ifr) < 0) {
-        close(sock);
-        set_error("Failed to get interface IP address");
+        close(sock\n"\n"\n"\n"\n"\n"\n"\n");
+        set_error("Failed to get interface IP address"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     struct sockaddr_in* addr_in = (struct sockaddr_in*)&ifr.ifr_addr;
-    safe_strncpy(ip_address, inet_ntoa(addr_in->sin_addr), size);
+    safe_strncpy(ip_address, inet_ntoa(addr_in->sin_addr), size\n"\n"\n"\n"\n"\n"\n"\n");
     
-    close(sock);
+    close(sock\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Interface type detection
 bool interface_is_cellular(const char* interface_name) {
     if (!interface_name) return false;
-    return string_starts_with(interface_name, INTERFACE_CELLULAR_PREFIX);
+    return string_starts_with(interface_name, INTERFACE_CELLULAR_PREFIX\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 bool interface_is_wifi(const char* interface_name) {
     if (!interface_name) return false;
-    return string_starts_with(interface_name, INTERFACE_WIFI_PREFIX);
+    return string_starts_with(interface_name, INTERFACE_WIFI_PREFIX\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 bool interface_is_ethernet(const char* interface_name) {
     if (!interface_name) return false;
-    return string_starts_with(interface_name, INTERFACE_ETHERNET_PREFIX);
+    return string_starts_with(interface_name, INTERFACE_ETHERNET_PREFIX\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 bool interface_is_starlink(const char* interface_name) {
     if (!interface_name) return false;
     return string_contains(interface_name, "starlink") || 
-           string_contains(interface_name, "sl");
+           string_contains(interface_name, "sl"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 bool interface_is_vpn(const char* interface_name) {
     if (!interface_name) return false;
     return string_starts_with(interface_name, INTERFACE_VPN_WG_PREFIX) ||
-           string_starts_with(interface_name, INTERFACE_VPN_OVPN_PREFIX);
+           string_starts_with(interface_name, INTERFACE_VPN_OVPN_PREFIX\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Calculate health score
 double interface_calculate_health_score(const network_interface_unified_t* interface) {
     if (!interface) {
-        set_error("Invalid interface parameter");
+        set_error("Invalid interface parameter"\n"\n"\n"\n"\n"\n"\n"\n");
         return 0.0;
     }
     
@@ -206,7 +206,7 @@ double interface_calculate_health_score(const network_interface_unified_t* inter
 bool interface_name_is_valid(const char* interface_name) {
     if (!interface_name) return false;
     
-    size_t len = strlen(interface_name);
+    size_t len = strlen(interface_name\n"\n"\n"\n"\n"\n"\n"\n");
     if (len == 0 || len >= IFNAMSIZ) return false;
     
     // Check for valid characters (alphanumeric, dash, underscore)
@@ -240,5 +240,5 @@ const char* interface_utils_get_last_error(void) {
 
 // Clear error
 void interface_utils_clear_error(void) {
-    memset(g_interface_error, 0, sizeof(g_interface_error));
+    memset(g_interface_error, 0, sizeof(g_interface_error)\n"\n"\n"\n"\n"\n"\n"\n");
 }

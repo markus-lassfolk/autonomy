@@ -22,10 +22,10 @@ static decision_engine_t g_decision_engine;
 static bool g_decision_engine_initialized = false; // Use configurable setting
 
 // Forward declarations
-double calculate_connection_score(const connection_score_t* score);
-void update_decision_history(decision_result_t* decision);
-static bool should_failover(const connection_score_t* scores, int score_count);
-static bool can_recover(const connection_score_t* scores, int score_count);
+double calculate_connection_score(const connection_score_t* score\n"\n"\n"\n"\n"\n"\n"\n");
+void update_decision_history(decision_result_t* decision\n"\n"\n"\n"\n"\n"\n"\n");
+static bool should_failover(const connection_score_t* scores, int score_count\n"\n"\n"\n"\n"\n"\n"\n");
+static bool can_recover(const connection_score_t* scores, int score_count\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize decision engine
 int decision_engine_init(const decision_engine_config_t* config) {
@@ -33,7 +33,7 @@ int decision_engine_init(const decision_engine_config_t* config) {
         return 0; // Already initialized
     }
     
-    memset(&g_decision_engine, 0, sizeof(decision_engine_t));
+    memset(&g_decision_engine, 0, sizeof(decision_engine_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set configuration
     if (config) {
@@ -58,12 +58,12 @@ int decision_engine_init(const decision_engine_config_t* config) {
     }
     
     // Initialize mutex
-    g_decision_engine.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+    g_decision_engine.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_decision_engine.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_decision_engine.mutex, NULL);
+    pthread_mutex_init(g_decision_engine.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize decision history
     g_decision_engine.history_count = 0;
@@ -78,8 +78,8 @@ void decision_engine_cleanup(void) {
     if (!g_decision_engine_initialized) return;
     
     if (g_decision_engine.mutex) {
-        pthread_mutex_destroy(g_decision_engine.mutex);
-        free(g_decision_engine.mutex);
+        pthread_mutex_destroy(g_decision_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_decision_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     g_decision_engine.mutex = NULL;
@@ -92,14 +92,14 @@ int decision_engine_make_decision(decision_result_t* result) {
         return -1;
     }
     
-    pthread_mutex_lock(g_decision_engine.mutex);
+    pthread_mutex_lock(g_decision_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Evaluate all connections
     connection_score_t scores[16];
-    int score_count = decision_engine_evaluate_connections(scores, 16);
+    int score_count = decision_engine_evaluate_connections(scores, 16\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (score_count <= 0) {
-        pthread_mutex_unlock(g_decision_engine.mutex);
+        pthread_mutex_unlock(g_decision_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -115,51 +115,51 @@ int decision_engine_make_decision(decision_result_t* result) {
     }
     
     // Check if failover is needed
-    bool needs_failover = should_failover(scores, score_count);
+    bool needs_failover = should_failover(scores, score_count\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Populate decision result
-    memset(result, 0, sizeof(decision_result_t));
-    strcpy(result->selected_interface, scores[best_index].interface_name);
+    memset(result, 0, sizeof(decision_result_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(result->selected_interface, scores[best_index].interface_name\n"\n"\n"\n"\n"\n"\n"\n");
     result->confidence = best_score;
     result->requires_failover = needs_failover;
-    result->decision_timestamp = time(NULL);
+    result->decision_timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Copy scores
-    memcpy(result->scores, scores, sizeof(connection_score_t) * score_count);
+    memcpy(result->scores, scores, sizeof(connection_score_t) * score_count\n"\n"\n"\n"\n"\n"\n"\n");
     result->score_count = score_count;
     
     // Generate reason
     if (needs_failover) {
         snprintf(result->reason, sizeof(result->reason),
-                "Failover required due to poor performance on current interface");
+                "Failover required due to poor performance on current interface"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         snprintf(result->reason, sizeof(result->reason),
-                "Best interface selected based on performance scoring");
+                "Best interface selected based on performance scoring"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Update decision history
-    update_decision_history(result);
+    update_decision_history(result\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Log decision to comprehensive telemetry system
     if (telemetry_comprehensive_is_initialized() && (needs_failover || result->confidence > 0.8)) {
         decision_record_t telemetry_decision = {0};
-        telemetry_decision.timestamp = time(NULL);
+        telemetry_decision.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Generate decision ID
         snprintf(telemetry_decision.decision_id, sizeof(telemetry_decision.decision_id),
-                "decision_%lld_%d", (long long)time(NULL), g_decision_engine.decision_count);
+                "decision_%lld_%d", (long long)time(NULL), g_decision_engine.decision_count\n"\n"\n"\n"\n"\n"\n"\n");
         
-        strcpy(telemetry_decision.decision_type, needs_failover ? "failover" : "evaluation");
-        strcpy(telemetry_decision.trigger, "periodic_evaluation");
-        safe_strncpy(telemetry_decision.reasoning, result->reason, sizeof(telemetry_decision.reasoning));
+        strcpy(telemetry_decision.decision_type, needs_failover ? "failover" : "evaluation"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(telemetry_decision.trigger, "periodic_evaluation"\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(telemetry_decision.reasoning, result->reason, sizeof(telemetry_decision.reasoning)\n"\n"\n"\n"\n"\n"\n"\n");
         telemetry_decision.reasoning[sizeof(telemetry_decision.reasoning) - 1] = '\0';
         telemetry_decision.confidence = result->confidence;
         
         // Interface information
         strncpy(telemetry_decision.to_interface, result->selected_interface, 
-                sizeof(telemetry_decision.to_interface) - 1);
+                sizeof(telemetry_decision.to_interface) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         strncpy(telemetry_decision.to_member, result->selected_interface, 
-                sizeof(telemetry_decision.to_member) - 1);
+                sizeof(telemetry_decision.to_member) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Get current GPS position if available
         standardized_gps_data_t gps_data;
@@ -168,7 +168,7 @@ int decision_engine_make_decision(decision_result_t* result) {
             telemetry_decision.gps_latitude = gps_data.latitude;
             telemetry_decision.gps_longitude = gps_data.longitude;
             telemetry_decision.gps_accuracy = gps_data.accuracy;
-            safe_strncpy(telemetry_decision.gps_source, gps_data.source, sizeof(telemetry_decision.gps_source));
+            safe_strncpy(telemetry_decision.gps_source, gps_data.source, sizeof(telemetry_decision.gps_source)\n"\n"\n"\n"\n"\n"\n"\n");
             telemetry_decision.gps_source[sizeof(telemetry_decision.gps_source) - 1] = '\0';
         }
         
@@ -186,23 +186,23 @@ int decision_engine_make_decision(decision_result_t* result) {
         // Create context JSON
         snprintf(telemetry_decision.context_json, sizeof(telemetry_decision.context_json),
                 "{\"score_count\": %d, \"best_score\": %.2f, \"needs_failover\": %s}",
-                score_count, best_score, needs_failover ? "true" : "false");
+                score_count, best_score, needs_failover ? "true" : "false"\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Log to telemetry system
         if (telemetry_comprehensive_log_decision(&telemetry_decision) == AUTONOMY_SUCCESS) {
-            LOGX_DEBUG_MSG("Decision logged to telemetry system", "decision_id", telemetry_decision.decision_id);
+            printf("DEBUG: "Decision logged to telemetry system", "decision_id", telemetry_decision.decision_id\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // Update statistics
-    g_decision_engine.last_decision_time = time(NULL);
+    g_decision_engine.last_decision_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     g_decision_engine.decision_count++;
     
     if (needs_failover) {
         g_decision_engine.failover_count++;
     }
     
-    pthread_mutex_unlock(g_decision_engine.mutex);
+    pthread_mutex_unlock(g_decision_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -229,33 +229,33 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
             // Get real metrics for this interface
             network_metrics_t metrics;
             if (network_collector_get_interface_metrics(members[i].interface, &metrics) == AUTONOMY_SUCCESS) {
-                strcpy(scores[score_count].interface_name, members[i].name);
+                strcpy(scores[score_count].interface_name, members[i].name\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 // Convert metrics to scores (0.0-1.0)
-                scores[score_count].latency_score = fmax(0.0, fmin(1.0, 1.0 - (metrics.ping_average_latency / 1000.0)));
-                scores[score_count].loss_score = fmax(0.0, fmin(1.0, 1.0 - (metrics.ping_packet_loss / 100.0)));
-                scores[score_count].signal_score = fmax(0.0, fmin(1.0, metrics.overall_health_score / 100.0));
+                scores[score_count].latency_score = fmax(0.0, fmin(1.0, 1.0 - (metrics.ping_average_latency / 1000.0))\n"\n"\n"\n"\n"\n"\n"\n");
+                scores[score_count].loss_score = fmax(0.0, fmin(1.0, 1.0 - (metrics.ping_packet_loss / 100.0))\n"\n"\n"\n"\n"\n"\n"\n");
+                scores[score_count].signal_score = fmax(0.0, fmin(1.0, metrics.overall_health_score / 100.0)\n"\n"\n"\n"\n"\n"\n"\n");
                 // Calculate throughput score based on interface speed and utilization
                 double throughput_score = 0.7; // Use configurable value // Default
                 
                 // Try to get interface statistics
                 char speed_cmd[256];
-                snprintf(speed_cmd, sizeof(speed_cmd), "cat /sys/class/net/%s/speed 2>/dev/null", members[i].interface);
-                FILE *speed_fp = popen(speed_cmd, "r");
+                snprintf(speed_cmd, sizeof(speed_cmd), "cat /sys/class/net/%s/speed 2>/dev/null", members[i].interface\n"\n"\n"\n"\n"\n"\n"\n");
+                FILE *speed_fp = popen(speed_cmd, "r"\n"\n"\n"\n"\n"\n"\n"\n");
                 if (speed_fp) {
                     int speed_mbps;
                     if (fscanf(speed_fp, "%d", &speed_mbps) == 1 && speed_mbps > 0) {
                         // Normalize speed score (1000 Mbps = 1.0, 100 Mbps = 0.8, 10 Mbps = 0.6)
-                        throughput_score = fmax(0.3, fmin(1.0, (double)speed_mbps / 1000.0 + 0.3));
+                        throughput_score = fmax(0.3, fmin(1.0, (double)speed_mbps / 1000.0 + 0.3)\n"\n"\n"\n"\n"\n"\n"\n");
                     }
-                    pclose(speed_fp);
+                    pclose(speed_fp\n"\n"\n"\n"\n"\n"\n"\n");
                 }
                 
                 // Adjust based on interface utilization if available
                 char util_cmd[512];  // Increased buffer size
                 snprintf(util_cmd, sizeof(util_cmd), "cat /sys/class/net/%s/statistics/rx_bytes /sys/class/net/%s/statistics/tx_bytes 2>/dev/null", 
-                        members[i].interface, members[i].interface);
-                FILE *util_fp = popen(util_cmd, "r");
+                        members[i].interface, members[i].interface\n"\n"\n"\n"\n"\n"\n"\n");
+                FILE *util_fp = popen(util_cmd, "r"\n"\n"\n"\n"\n"\n"\n"\n");
                 if (util_fp) {
                     unsigned long rx_bytes, tx_bytes;
                     if (fscanf(util_fp, "%lu %lu", &rx_bytes, &tx_bytes) == 2) {
@@ -265,7 +265,7 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                             throughput_score *= 0.9; // Slight penalty for high utilization
                         }
                     }
-                    pclose(util_fp);
+                    pclose(util_fp\n"\n"\n"\n"\n"\n"\n"\n");
                 }
                 
                 scores[score_count].throughput_score = throughput_score;
@@ -298,9 +298,9 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                 
                 // Check for historical data files
                 char hist_file[256];
-                snprintf(hist_file, sizeof(hist_file), "/var/lib/autonomy/decision_history_%s.json", members[i].interface);
+                snprintf(hist_file, sizeof(hist_file), "/var/lib/autonomy/decision_history_%s.json", members[i].interface\n"\n"\n"\n"\n"\n"\n"\n");
                 
-                FILE *hist_fp = fopen(hist_file, "r");
+                FILE *hist_fp = fopen(hist_file, "r"\n"\n"\n"\n"\n"\n"\n"\n");
                 if (hist_fp) {
                     // Simple historical analysis - count successful vs failed decisions
                     char line[512];
@@ -315,7 +315,7 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                             total_decisions++;
                         }
                     }
-                    fclose(hist_fp);
+                    fclose(hist_fp\n"\n"\n"\n"\n"\n"\n"\n");
                     
                     if (total_decisions > 0) {
                         double success_rate = (double)successful_decisions / total_decisions;
@@ -323,7 +323,7 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                         
                         // Boost score for interfaces with good history
                         if (success_rate > 0.8) {
-                            historical_score = fmin(1.0, success_rate + 0.1);
+                            historical_score = fmin(1.0, success_rate + 0.1\n"\n"\n"\n"\n"\n"\n"\n");
                         }
                     }
                 } else {
@@ -338,9 +338,9 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                 }
                 
                 scores[score_count].historical_score = historical_score;
-                scores[score_count].last_update = time(NULL);
+                scores[score_count].last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
                 scores[score_count].is_available = true;
-                scores[score_count].overall_score = decision_engine_calculate_score(&scores[score_count]);
+                scores[score_count].overall_score = decision_engine_calculate_score(&scores[score_count]\n"\n"\n"\n"\n"\n"\n"\n");
                 score_count++;
             }
         }
@@ -348,7 +348,7 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
     
     // If no network controller data, fall back to basic interface enumeration
     if (score_count == 0) {
-        LOGX_WARN_MSG("No network controller data available for decision engine");
+        printf("WARN: "No network controller data available for decision engine"\n"\n"\n"\n"\n"\n"\n"\n");
         return 0; // Return 0 scores rather than simulated data
     }
     
@@ -370,20 +370,20 @@ double decision_engine_calculate_score(const connection_score_t* score) {
         score->reliability_score * weights->reliability_weight +
         score->historical_score * weights->historical_performance_weight;
     
-    return fmax(0.0, fmin(1.0, total_score));
+    return fmax(0.0, fmin(1.0, total_score)\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if failover is needed
 bool decision_engine_needs_failover(void) {
     if (!g_decision_engine_initialized) return false;
     
-    pthread_mutex_lock(g_decision_engine.mutex);
+    pthread_mutex_lock(g_decision_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     connection_score_t scores[16];
-    int score_count = decision_engine_evaluate_connections(scores, 16);
-    bool needs_failover = should_failover(scores, score_count);
+    int score_count = decision_engine_evaluate_connections(scores, 16\n"\n"\n"\n"\n"\n"\n"\n");
+    bool needs_failover = should_failover(scores, score_count\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(g_decision_engine.mutex);
+    pthread_mutex_unlock(g_decision_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return needs_failover;
 }
@@ -392,13 +392,13 @@ bool decision_engine_needs_failover(void) {
 bool decision_engine_can_recover(void) {
     if (!g_decision_engine_initialized) return false;
     
-    pthread_mutex_lock(g_decision_engine.mutex);
+    pthread_mutex_lock(g_decision_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     connection_score_t scores[16];
-    int score_count = decision_engine_evaluate_connections(scores, 16);
+    int score_count = decision_engine_evaluate_connections(scores, 16\n"\n"\n"\n"\n"\n"\n"\n");
     bool recovery_possible = (score_count > 1); // Simple recovery check - multiple options available
     
-    pthread_mutex_unlock(g_decision_engine.mutex);
+    pthread_mutex_unlock(g_decision_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return recovery_possible;
 }
@@ -409,7 +409,7 @@ int decision_engine_get_history(decision_result_t* history, int max_history) {
         return -1;
     }
     
-    pthread_mutex_lock(g_decision_engine.mutex);
+    pthread_mutex_lock(g_decision_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     int count = 0; // Use configurable value
     int index = g_decision_engine.history_index;
@@ -422,7 +422,7 @@ int decision_engine_get_history(decision_result_t* history, int max_history) {
         }
     }
     
-    pthread_mutex_unlock(g_decision_engine.mutex);
+    pthread_mutex_unlock(g_decision_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return count;
 }
@@ -473,9 +473,9 @@ static bool can_recover(const connection_score_t* scores, int score_count) {
 void decision_engine_get_status(decision_engine_t* status) {
     if (!status || !g_decision_engine_initialized) return;
     
-    pthread_mutex_lock(g_decision_engine.mutex);
+    pthread_mutex_lock(g_decision_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *status = g_decision_engine;
-    pthread_mutex_unlock(g_decision_engine.mutex);
+    pthread_mutex_unlock(g_decision_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if decision engine is initialized

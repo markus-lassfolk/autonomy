@@ -18,13 +18,13 @@ static bool g_usage_analyzer_initialized = false;
 
 // Forward declarations
 void analyze_data_usage(const telemetry_sample_t* samples, int sample_count,
-                               data_usage_t* usage);
+                               data_usage_t* usage\n"\n"\n"\n"\n"\n"\n"\n");
 void analyze_bandwidth_usage(const telemetry_sample_t* samples, int sample_count,
-                                   bandwidth_usage_t* usage);
+                                   bandwidth_usage_t* usage\n"\n"\n"\n"\n"\n"\n"\n");
 void analyze_peak_usage(const telemetry_sample_t* samples, int sample_count,
-                              peak_usage_t* usage);
+                              peak_usage_t* usage\n"\n"\n"\n"\n"\n"\n"\n");
 void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_count,
-                                    usage_pattern_t* patterns, int max_patterns);
+                                    usage_pattern_t* patterns, int max_patterns\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize usage analyzer
 int usage_analyzer_init(void) {
@@ -32,15 +32,15 @@ int usage_analyzer_init(void) {
         return 0; // Already initialized
     }
     
-    memset(&g_usage_analyzer, 0, sizeof(usage_analyzer_t));
+    memset(&g_usage_analyzer, 0, sizeof(usage_analyzer_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize mutex
-    g_usage_analyzer.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+    g_usage_analyzer.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_usage_analyzer.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_usage_analyzer.mutex, NULL);
+    pthread_mutex_init(g_usage_analyzer.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize status
     g_usage_analyzer.enabled = true; // Use configurable analyzer setting
@@ -57,12 +57,12 @@ void usage_analyzer_cleanup(void) {
     if (!g_usage_analyzer_initialized) return;
     
     if (g_usage_analyzer.mutex) {
-        pthread_mutex_destroy(g_usage_analyzer.mutex);
-        free(g_usage_analyzer.mutex);
+        pthread_mutex_destroy(g_usage_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_usage_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_usage_analyzer.last_result) {
-        free(g_usage_analyzer.last_result);
+        free(g_usage_analyzer.last_result\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     g_usage_analyzer.mutex = NULL;
@@ -80,64 +80,64 @@ int usage_analyzer_analyze(usage_metrics_t* result) {
         return -1;
     }
     
-    pthread_mutex_lock(g_usage_analyzer.mutex);
+    pthread_mutex_lock(g_usage_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Get all member names
     char member_names[64][128];
-    int member_count = telemetry_store_get_members(member_names, 64);
+    int member_count = telemetry_store_get_members(member_names, 64\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (member_count > 16) {
         member_count = 16; // Limit to 16 members
     }
     
     result->member_count = member_count;
-    result->analysis_timestamp = time(NULL);
+    result->analysis_timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Analyze each member
     for (int i = 0; i < member_count; i++) {
-        safe_strncpy(result->member_names[i], member_names[i], sizeof(result->member_names[i]));
+        safe_strncpy(result->member_names[i], member_names[i], sizeof(result->member_names[i])\n"\n"\n"\n"\n"\n"\n"\n");
         result->member_names[i][sizeof(result->member_names[i]) - 1] = '\0';
         
         // Get samples from last 24 hours
         time_t since = time(NULL) - 86400;
         telemetry_sample_t samples[1000];
-        int sample_count = telemetry_store_get_samples(member_names[i], since, samples, 1000);
+        int sample_count = telemetry_store_get_samples(member_names[i], since, samples, 1000\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (sample_count > 0) {
             // Analyze data usage
-            analyze_data_usage(samples, sample_count, &result->data_usage[i]);
+            analyze_data_usage(samples, sample_count, &result->data_usage[i]\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Analyze bandwidth usage
-            analyze_bandwidth_usage(samples, sample_count, &result->bandwidth_usage[i]);
+            analyze_bandwidth_usage(samples, sample_count, &result->bandwidth_usage[i]\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Analyze peak usage
-            analyze_peak_usage(samples, sample_count, &result->peak_usage[i]);
+            analyze_peak_usage(samples, sample_count, &result->peak_usage[i]\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Calculate usage patterns
-            calculate_usage_patterns(samples, sample_count, result->usage_patterns, 16);
+            calculate_usage_patterns(samples, sample_count, result->usage_patterns, 16\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
             // Set default values for no data
-            memset(&result->data_usage[i], 0, sizeof(data_usage_t));
-            memset(&result->bandwidth_usage[i], 0, sizeof(bandwidth_usage_t));
-            memset(&result->peak_usage[i], 0, sizeof(peak_usage_t));
+            memset(&result->data_usage[i], 0, sizeof(data_usage_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memset(&result->bandwidth_usage[i], 0, sizeof(bandwidth_usage_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memset(&result->peak_usage[i], 0, sizeof(peak_usage_t)\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // Update analyzer status
-    g_usage_analyzer.last_analysis = time(NULL);
+    g_usage_analyzer.last_analysis = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     g_usage_analyzer.analysis_count++;
     
     // Store last result
     if (g_usage_analyzer.last_result) {
-        free(g_usage_analyzer.last_result);
+        free(g_usage_analyzer.last_result\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    g_usage_analyzer.last_result = (usage_metrics_t*)malloc(sizeof(usage_metrics_t));
+    g_usage_analyzer.last_result = (usage_metrics_t*)malloc(sizeof(usage_metrics_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (g_usage_analyzer.last_result) {
         *g_usage_analyzer.last_result = *result;
     }
     
-    pthread_mutex_unlock(g_usage_analyzer.mutex);
+    pthread_mutex_unlock(g_usage_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -168,25 +168,25 @@ void analyze_data_usage(const telemetry_sample_t* samples, int sample_count,
         
         for (int i = 0; i < mid; i++) {
             if (samples[i].has_throughput) {
-                first_half += (uint64_t)(samples[i].throughput_mbps * 125000);
+                first_half += (uint64_t)(samples[i].throughput_mbps * 125000\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
         
         for (int i = mid; i < sample_count; i++) {
             if (samples[i].has_throughput) {
-                second_half += (uint64_t)(samples[i].throughput_mbps * 125000);
+                second_half += (uint64_t)(samples[i].throughput_mbps * 125000\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
         
         if (second_half > first_half) {
-            strcpy(usage->trend, "increasing");
+            strcpy(usage->trend, "increasing"\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (second_half < first_half) {
-            strcpy(usage->trend, "decreasing");
+            strcpy(usage->trend, "decreasing"\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
-            strcpy(usage->trend, "stable");
+            strcpy(usage->trend, "stable"\n"\n"\n"\n"\n"\n"\n"\n");
         }
     } else {
-        safe_strncpy(usage->trend, "insufficient_data", sizeof(usage->trend));
+        safe_strncpy(usage->trend, "insufficient_data", sizeof(usage->trend)\n"\n"\n"\n"\n"\n"\n"\n");
         usage->trend[sizeof(usage->trend) - 1] = '\0';
     }
     
@@ -247,11 +247,11 @@ void analyze_peak_usage(const telemetry_sample_t* samples, int sample_count,
     
     // Determine duration based on sample count
     if (sample_count < 60) {
-        strcpy(usage->duration, "short");
+        strcpy(usage->duration, "short"\n"\n"\n"\n"\n"\n"\n"\n");
     } else if (sample_count < 1440) {
-        strcpy(usage->duration, "medium");
+        strcpy(usage->duration, "medium"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        strcpy(usage->duration, "long");
+        strcpy(usage->duration, "long"\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -268,7 +268,7 @@ void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_coun
         int total_business_hours = 0;
         
         for (int i = 0; i < sample_count; i++) {
-            struct tm* tm_info = localtime(&samples[i].timestamp);
+            struct tm* tm_info = localtime(&samples[i].timestamp\n"\n"\n"\n"\n"\n"\n"\n");
             if (tm_info && tm_info->tm_hour >= 9 && tm_info->tm_hour <= 17) {
                 total_business_hours++;
                 if (samples[i].has_throughput && samples[i].throughput_mbps > 50.0) {
@@ -280,10 +280,10 @@ void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_coun
         if (total_business_hours > 0 && pattern_count < max_patterns) {
             double confidence = (double)business_hour_samples / total_business_hours;
             if (confidence > 0.6) {
-                strcpy(patterns[pattern_count].pattern, "business_hours_peak");
+                strcpy(patterns[pattern_count].pattern, "business_hours_peak"\n"\n"\n"\n"\n"\n"\n"\n");
                 patterns[pattern_count].confidence = confidence;
                 strcpy(patterns[pattern_count].description, 
-                       "High bandwidth usage during business hours (9 AM - 5 PM)");
+                       "High bandwidth usage during business hours (9 AM - 5 PM)"\n"\n"\n"\n"\n"\n"\n"\n");
                 pattern_count++;
             }
         }
@@ -301,10 +301,10 @@ void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_coun
         
         double confidence = (double)low_usage_samples / sample_count;
         if (confidence > 0.8) {
-            strcpy(patterns[pattern_count].pattern, "consistent_low_usage");
+            strcpy(patterns[pattern_count].pattern, "consistent_low_usage"\n"\n"\n"\n"\n"\n"\n"\n");
             patterns[pattern_count].confidence = confidence;
             strcpy(patterns[pattern_count].description, 
-                   "Consistently low bandwidth usage throughout the day");
+                   "Consistently low bandwidth usage throughout the day"\n"\n"\n"\n"\n"\n"\n"\n");
             pattern_count++;
         }
     }
@@ -315,7 +315,7 @@ void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_coun
         int total_evening = 0;
         
         for (int i = 0; i < sample_count; i++) {
-            struct tm* tm_info = localtime(&samples[i].timestamp);
+            struct tm* tm_info = localtime(&samples[i].timestamp\n"\n"\n"\n"\n"\n"\n"\n");
             if (tm_info && tm_info->tm_hour >= 18 && tm_info->tm_hour <= 22) {
                 total_evening++;
                 if (samples[i].has_throughput && samples[i].throughput_mbps > 40.0) {
@@ -327,10 +327,10 @@ void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_coun
         if (total_evening > 0) {
             double confidence = (double)evening_samples / total_evening;
             if (confidence > 0.7) {
-                strcpy(patterns[pattern_count].pattern, "evening_surge");
+                strcpy(patterns[pattern_count].pattern, "evening_surge"\n"\n"\n"\n"\n"\n"\n"\n");
                 patterns[pattern_count].confidence = confidence;
                 strcpy(patterns[pattern_count].description, 
-                       "Bandwidth usage surge during evening hours (6 PM - 10 PM)");
+                       "Bandwidth usage surge during evening hours (6 PM - 10 PM)"\n"\n"\n"\n"\n"\n"\n"\n");
                 pattern_count++;
             }
         }
@@ -342,7 +342,7 @@ void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_coun
         double weekday_avg = 0.0, weekend_avg = 0.0;
         
         for (int i = 0; i < sample_count; i++) {
-            struct tm* tm_info = localtime(&samples[i].timestamp);
+            struct tm* tm_info = localtime(&samples[i].timestamp\n"\n"\n"\n"\n"\n"\n"\n");
             if (tm_info && samples[i].has_throughput) {
                 if (tm_info->tm_wday >= 1 && tm_info->tm_wday <= 5) { // Monday to Friday
                     weekday_avg += samples[i].throughput_mbps;
@@ -358,12 +358,12 @@ void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_coun
             weekday_avg /= weekday_samples;
             weekend_avg /= weekend_samples;
             
-            double difference = fabs(weekday_avg - weekend_avg);
+            double difference = fabs(weekday_avg - weekend_avg\n"\n"\n"\n"\n"\n"\n"\n");
             if (difference > 20.0) { // Significant difference
-                strcpy(patterns[pattern_count].pattern, "weekday_weekend_diff");
-                patterns[pattern_count].confidence = fmin(1.0, difference / 100.0);
+                strcpy(patterns[pattern_count].pattern, "weekday_weekend_diff"\n"\n"\n"\n"\n"\n"\n"\n");
+                patterns[pattern_count].confidence = fmin(1.0, difference / 100.0\n"\n"\n"\n"\n"\n"\n"\n");
                 strcpy(patterns[pattern_count].description, 
-                       "Significant difference between weekday and weekend usage patterns");
+                       "Significant difference between weekday and weekend usage patterns"\n"\n"\n"\n"\n"\n"\n"\n");
                 pattern_count++;
             }
         }
@@ -383,24 +383,24 @@ int usage_analyzer_get_member_usage(const char* member_name, usage_metrics_t* us
     // Get samples from last 24 hours
     time_t since = time(NULL) - 86400;
     telemetry_sample_t samples[1000];
-    int sample_count = telemetry_store_get_samples(member_name, since, samples, 1000);
+    int sample_count = telemetry_store_get_samples(member_name, since, samples, 1000\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (sample_count <= 0) {
         return -1;
     }
     
     // Initialize usage structure
-    memset(usage, 0, sizeof(usage_metrics_t));
+    memset(usage, 0, sizeof(usage_metrics_t)\n"\n"\n"\n"\n"\n"\n"\n");
     usage->member_count = 1;
-    safe_strncpy(usage->member_names[0], member_name, sizeof(usage->member_names[0]));
+    safe_strncpy(usage->member_names[0], member_name, sizeof(usage->member_names[0])\n"\n"\n"\n"\n"\n"\n"\n");
     usage->member_names[0][sizeof(usage->member_names[0]) - 1] = '\0';
-    usage->analysis_timestamp = time(NULL);
+    usage->analysis_timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Analyze usage
-    analyze_data_usage(samples, sample_count, &usage->data_usage[0]);
-    analyze_bandwidth_usage(samples, sample_count, &usage->bandwidth_usage[0]);
-    analyze_peak_usage(samples, sample_count, &usage->peak_usage[0]);
-    calculate_usage_patterns(samples, sample_count, usage->usage_patterns, 16);
+    analyze_data_usage(samples, sample_count, &usage->data_usage[0]\n"\n"\n"\n"\n"\n"\n"\n");
+    analyze_bandwidth_usage(samples, sample_count, &usage->bandwidth_usage[0]\n"\n"\n"\n"\n"\n"\n"\n");
+    analyze_peak_usage(samples, sample_count, &usage->peak_usage[0]\n"\n"\n"\n"\n"\n"\n"\n");
+    calculate_usage_patterns(samples, sample_count, usage->usage_patterns, 16\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -418,13 +418,13 @@ int usage_analyzer_calculate_patterns(const char* member_name, usage_pattern_t* 
     // Get samples from last week
     time_t since = time(NULL) - 604800; // 7 days
     telemetry_sample_t samples[1000];
-    int sample_count = telemetry_store_get_samples(member_name, since, samples, 1000);
+    int sample_count = telemetry_store_get_samples(member_name, since, samples, 1000\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (sample_count <= 0) {
         return 0;
     }
     
-    calculate_usage_patterns(samples, sample_count, patterns, max_patterns);
+    calculate_usage_patterns(samples, sample_count, patterns, max_patterns\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Count valid patterns
     int pattern_count = 0;
@@ -441,9 +441,9 @@ int usage_analyzer_calculate_patterns(const char* member_name, usage_pattern_t* 
 void usage_analyzer_get_status(usage_analyzer_t* status) {
     if (!status || !g_usage_analyzer_initialized) return;
     
-    pthread_mutex_lock(g_usage_analyzer.mutex);
+    pthread_mutex_lock(g_usage_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *status = g_usage_analyzer;
-    pthread_mutex_unlock(g_usage_analyzer.mutex);
+    pthread_mutex_unlock(g_usage_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if usage analyzer is initialized

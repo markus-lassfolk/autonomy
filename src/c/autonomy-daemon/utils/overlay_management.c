@@ -21,27 +21,27 @@ extern autonomy_config_t g_config;
 static overlay_management_t g_overlay_manager;
 
 // Forward declarations
-static int get_overlay_usage(void);
-static int perform_cleanup(void);
-static int perform_emergency_cleanup(void);
-static int64_t cleanup_stale_backups(void);
-static int64_t cleanup_old_logs(void);
-static int64_t cleanup_temp_files(void);
-static int64_t cleanup_maintenance_logs(void);
-static int64_t cleanup_all_backups(void);
-static int64_t cleanup_all_logs(void);
-static int64_t cleanup_all_temp_files(void);
-static int64_t cleanup_system_cache(void);
-static int64_t remove_file_recursive(const char *path);
-static int64_t get_file_size(const char *path);
-static int is_file_older_than(const char *path, int days);
-static void send_notification(const char *type, const char *message);
+static int get_overlay_usage(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int perform_cleanup(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int perform_emergency_cleanup(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int64_t cleanup_stale_backups(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int64_t cleanup_old_logs(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int64_t cleanup_temp_files(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int64_t cleanup_maintenance_logs(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int64_t cleanup_all_backups(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int64_t cleanup_all_logs(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int64_t cleanup_all_temp_files(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int64_t cleanup_system_cache(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int64_t remove_file_recursive(const char *path\n"\n"\n"\n"\n"\n"\n"\n");
+static int64_t get_file_size(const char *path\n"\n"\n"\n"\n"\n"\n"\n");
+static int is_file_older_than(const char *path, int days\n"\n"\n"\n"\n"\n"\n"\n");
+static void send_notification(const char *type, const char *message\n"\n"\n"\n"\n"\n"\n"\n");
 
 /**
  * Initialize overlay management
  */
 int overlay_management_init(void) {
-    memset(&g_overlay_manager, 0, sizeof(overlay_management_t));
+    memset(&g_overlay_manager, 0, sizeof(overlay_management_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set default configuration
     g_overlay_manager.config.enabled = true; // Use configurable overlay management enabled
@@ -70,13 +70,13 @@ int overlay_management_check(void) {
         return AUTONOMY_SUCCESS;
     }
     
-    int usage = get_overlay_usage();
+    int usage = get_overlay_usage(\n"\n"\n"\n"\n"\n"\n"\n");
     if (usage == 0) {
         // Skip if monitoring read-only filesystem
         return AUTONOMY_SUCCESS;
     }
     
-    g_overlay_manager.stats.last_check_time = time(NULL);
+    g_overlay_manager.stats.last_check_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Only monitor when usage is above reasonable threshold (50%)
     if (usage < 50) {
@@ -87,11 +87,11 @@ int overlay_management_check(void) {
         // Critical space usage - perform emergency cleanup
         if (g_overlay_manager.config.notifications_enabled && g_overlay_manager.config.notify_on_critical) {
             char message[256];
-            snprintf(message, sizeof(message), "Critical overlay space usage: %d%%", usage);
-            send_notification("critical", message);
+            snprintf(message, sizeof(message), "Critical overlay space usage: %d%%", usage\n"\n"\n"\n"\n"\n"\n"\n");
+            send_notification("critical", message\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
-        int result = perform_emergency_cleanup();
+        int result = perform_emergency_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
         if (result == AUTONOMY_SUCCESS) {
             g_overlay_manager.stats.emergency_cleanup_count++;
         }
@@ -100,11 +100,11 @@ int overlay_management_check(void) {
         // High space usage - perform routine cleanup
         if (g_overlay_manager.config.notifications_enabled && g_overlay_manager.config.notify_on_fixes) {
             char message[256];
-            snprintf(message, sizeof(message), "High overlay space usage: %d%%", usage);
-            send_notification("warning", message);
+            snprintf(message, sizeof(message), "High overlay space usage: %d%%", usage\n"\n"\n"\n"\n"\n"\n"\n");
+            send_notification("warning", message\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
-        int result = perform_cleanup();
+        int result = perform_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
         if (result == AUTONOMY_SUCCESS) {
             g_overlay_manager.stats.cleanup_count++;
         }
@@ -138,7 +138,7 @@ static int get_overlay_usage(void) {
         return 0;
     }
     
-    int usage_percent = (int)((used_blocks * 100) / total_blocks);
+    int usage_percent = (int)((used_blocks * 100) / total_blocks\n"\n"\n"\n"\n"\n"\n"\n");
     return usage_percent;
 }
 
@@ -149,29 +149,29 @@ static int perform_cleanup(void) {
     int64_t total_freed = 0; // Use configurable value
     
     // Cleanup stale backup files
-    int64_t freed = cleanup_stale_backups();
+    int64_t freed = cleanup_stale_backups(\n"\n"\n"\n"\n"\n"\n"\n");
     if (freed > 0) total_freed += freed;
     
     // Cleanup old log files
-    freed = cleanup_old_logs();
+    freed = cleanup_old_logs(\n"\n"\n"\n"\n"\n"\n"\n");
     if (freed > 0) total_freed += freed;
     
     // Cleanup temporary files
-    freed = cleanup_temp_files();
+    freed = cleanup_temp_files(\n"\n"\n"\n"\n"\n"\n"\n");
     if (freed > 0) total_freed += freed;
     
     // Cleanup maintenance logs
-    freed = cleanup_maintenance_logs();
+    freed = cleanup_maintenance_logs(\n"\n"\n"\n"\n"\n"\n"\n");
     if (freed > 0) total_freed += freed;
     
     if (total_freed > 0) {
         g_overlay_manager.stats.total_bytes_freed += total_freed;
-        g_overlay_manager.stats.last_cleanup_time = time(NULL);
+        g_overlay_manager.stats.last_cleanup_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (g_overlay_manager.config.notifications_enabled && g_overlay_manager.config.notify_on_fixes) {
             char message[256];
-            snprintf(message, sizeof(message), "Overlay cleanup completed: freed %lld bytes", (long long)total_freed);
-            send_notification("fix", message);
+            snprintf(message, sizeof(message), "Overlay cleanup completed: freed %lld bytes", (long long)total_freed\n"\n"\n"\n"\n"\n"\n"\n");
+            send_notification("fix", message\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
@@ -185,26 +185,26 @@ static int perform_emergency_cleanup(void) {
     int64_t total_freed = 0; // Use configurable value
     
     // More aggressive cleanup for emergency situations
-    int64_t freed = cleanup_all_backups();
+    int64_t freed = cleanup_all_backups(\n"\n"\n"\n"\n"\n"\n"\n");
     if (freed > 0) total_freed += freed;
     
-    freed = cleanup_all_logs();
+    freed = cleanup_all_logs(\n"\n"\n"\n"\n"\n"\n"\n");
     if (freed > 0) total_freed += freed;
     
-    freed = cleanup_all_temp_files();
+    freed = cleanup_all_temp_files(\n"\n"\n"\n"\n"\n"\n"\n");
     if (freed > 0) total_freed += freed;
     
-    freed = cleanup_system_cache();
+    freed = cleanup_system_cache(\n"\n"\n"\n"\n"\n"\n"\n");
     if (freed > 0) total_freed += freed;
     
     if (total_freed > 0) {
         g_overlay_manager.stats.total_bytes_freed += total_freed;
-        g_overlay_manager.stats.last_cleanup_time = time(NULL);
+        g_overlay_manager.stats.last_cleanup_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (g_overlay_manager.config.notifications_enabled && g_overlay_manager.config.notify_on_critical) {
             char message[256];
-            snprintf(message, sizeof(message), "Emergency overlay cleanup completed: freed %lld bytes", (long long)total_freed);
-            send_notification("critical", message);
+            snprintf(message, sizeof(message), "Emergency overlay cleanup completed: freed %lld bytes", (long long)total_freed\n"\n"\n"\n"\n"\n"\n"\n");
+            send_notification("critical", message\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
@@ -219,7 +219,7 @@ static int64_t cleanup_stale_backups(void) {
     const char *backup_dirs[] = {"/etc/config", "/root", "/tmp"};
     
     for (int i = 0; i < sizeof(backup_dirs) / sizeof(backup_dirs[0]); i++) {
-        DIR *dir = opendir(backup_dirs[i]);
+        DIR *dir = opendir(backup_dirs[i]\n"\n"\n"\n"\n"\n"\n"\n");
         if (!dir) continue;
         
         struct dirent *entry;
@@ -229,15 +229,15 @@ static int64_t cleanup_stale_backups(void) {
                 strstr(entry->d_name, ".old")) {
                 
                 char full_path[512];
-                snprintf(full_path, sizeof(full_path), "%s/%s", backup_dirs[i], entry->d_name);
+                snprintf(full_path, sizeof(full_path), "%s/%s", backup_dirs[i], entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 if (is_file_older_than(full_path, g_overlay_manager.config.cleanup_retention_days)) {
-                    int64_t freed = remove_file_recursive(full_path);
+                    int64_t freed = remove_file_recursive(full_path\n"\n"\n"\n"\n"\n"\n"\n");
                     if (freed > 0) total_freed += freed;
                 }
             }
         }
-        closedir(dir);
+        closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return total_freed;
@@ -251,7 +251,7 @@ static int64_t cleanup_old_logs(void) {
     const char *log_dirs[] = {"/var/log", "/tmp", "/root"};
     
     for (int i = 0; i < sizeof(log_dirs) / sizeof(log_dirs[0]); i++) {
-        DIR *dir = opendir(log_dirs[i]);
+        DIR *dir = opendir(log_dirs[i]\n"\n"\n"\n"\n"\n"\n"\n");
         if (!dir) continue;
         
         struct dirent *entry;
@@ -261,15 +261,15 @@ static int64_t cleanup_old_logs(void) {
                 strstr(entry->d_name, "autonomy")) {
                 
                 char full_path[512];
-                snprintf(full_path, sizeof(full_path), "%s/%s", log_dirs[i], entry->d_name);
+                snprintf(full_path, sizeof(full_path), "%s/%s", log_dirs[i], entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 if (is_file_older_than(full_path, g_overlay_manager.config.cleanup_retention_days)) {
-                    int64_t freed = remove_file_recursive(full_path);
+                    int64_t freed = remove_file_recursive(full_path\n"\n"\n"\n"\n"\n"\n"\n");
                     if (freed > 0) total_freed += freed;
                 }
             }
         }
-        closedir(dir);
+        closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return total_freed;
@@ -283,7 +283,7 @@ static int64_t cleanup_temp_files(void) {
     const char *temp_dirs[] = {"/tmp", "/var/tmp", "/root/tmp"};
     
     for (int i = 0; i < sizeof(temp_dirs) / sizeof(temp_dirs[0]); i++) {
-        DIR *dir = opendir(temp_dirs[i]);
+        DIR *dir = opendir(temp_dirs[i]\n"\n"\n"\n"\n"\n"\n"\n");
         if (!dir) continue;
         
         struct dirent *entry;
@@ -293,15 +293,15 @@ static int64_t cleanup_temp_files(void) {
                 strstr(entry->d_name, "~")) {
                 
                 char full_path[512];
-                snprintf(full_path, sizeof(full_path), "%s/%s", temp_dirs[i], entry->d_name);
+                snprintf(full_path, sizeof(full_path), "%s/%s", temp_dirs[i], entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 if (is_file_older_than(full_path, 1)) { // Remove temp files older than 1 day
-                    int64_t freed = remove_file_recursive(full_path);
+                    int64_t freed = remove_file_recursive(full_path\n"\n"\n"\n"\n"\n"\n"\n");
                     if (freed > 0) total_freed += freed;
                 }
             }
         }
-        closedir(dir);
+        closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return total_freed;
@@ -317,7 +317,7 @@ static int64_t cleanup_maintenance_logs(void) {
     for (int i = 0; i < sizeof(maintenance_logs) / sizeof(maintenance_logs[0]); i++) {
         if (access(maintenance_logs[i], F_OK) == 0) {
             if (is_file_older_than(maintenance_logs[i], g_overlay_manager.config.cleanup_retention_days)) {
-                int64_t freed = remove_file_recursive(maintenance_logs[i]);
+                int64_t freed = remove_file_recursive(maintenance_logs[i]\n"\n"\n"\n"\n"\n"\n"\n");
                 if (freed > 0) total_freed += freed;
             }
         }
@@ -334,7 +334,7 @@ static int64_t cleanup_all_backups(void) {
     const char *backup_dirs[] = {"/etc/config", "/root", "/tmp"};
     
     for (int i = 0; i < sizeof(backup_dirs) / sizeof(backup_dirs[0]); i++) {
-        DIR *dir = opendir(backup_dirs[i]);
+        DIR *dir = opendir(backup_dirs[i]\n"\n"\n"\n"\n"\n"\n"\n");
         if (!dir) continue;
         
         struct dirent *entry;
@@ -344,13 +344,13 @@ static int64_t cleanup_all_backups(void) {
                 strstr(entry->d_name, ".old")) {
                 
                 char full_path[512];
-                snprintf(full_path, sizeof(full_path), "%s/%s", backup_dirs[i], entry->d_name);
+                snprintf(full_path, sizeof(full_path), "%s/%s", backup_dirs[i], entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
                 
-                int64_t freed = remove_file_recursive(full_path);
+                int64_t freed = remove_file_recursive(full_path\n"\n"\n"\n"\n"\n"\n"\n");
                 if (freed > 0) total_freed += freed;
             }
         }
-        closedir(dir);
+        closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return total_freed;
@@ -364,7 +364,7 @@ static int64_t cleanup_all_logs(void) {
     const char *log_dirs[] = {"/var/log", "/tmp", "/root"};
     
     for (int i = 0; i < sizeof(log_dirs) / sizeof(log_dirs[0]); i++) {
-        DIR *dir = opendir(log_dirs[i]);
+        DIR *dir = opendir(log_dirs[i]\n"\n"\n"\n"\n"\n"\n"\n");
         if (!dir) continue;
         
         struct dirent *entry;
@@ -374,13 +374,13 @@ static int64_t cleanup_all_logs(void) {
                 strstr(entry->d_name, "autonomy")) {
                 
                 char full_path[512];
-                snprintf(full_path, sizeof(full_path), "%s/%s", log_dirs[i], entry->d_name);
+                snprintf(full_path, sizeof(full_path), "%s/%s", log_dirs[i], entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
                 
-                int64_t freed = remove_file_recursive(full_path);
+                int64_t freed = remove_file_recursive(full_path\n"\n"\n"\n"\n"\n"\n"\n");
                 if (freed > 0) total_freed += freed;
             }
         }
-        closedir(dir);
+        closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return total_freed;
@@ -394,7 +394,7 @@ static int64_t cleanup_all_temp_files(void) {
     const char *temp_dirs[] = {"/tmp", "/var/tmp", "/root/tmp"};
     
     for (int i = 0; i < sizeof(temp_dirs) / sizeof(temp_dirs[0]); i++) {
-        DIR *dir = opendir(temp_dirs[i]);
+        DIR *dir = opendir(temp_dirs[i]\n"\n"\n"\n"\n"\n"\n"\n");
         if (!dir) continue;
         
         struct dirent *entry;
@@ -404,13 +404,13 @@ static int64_t cleanup_all_temp_files(void) {
                 strstr(entry->d_name, "~")) {
                 
                 char full_path[512];
-                snprintf(full_path, sizeof(full_path), "%s/%s", temp_dirs[i], entry->d_name);
+                snprintf(full_path, sizeof(full_path), "%s/%s", temp_dirs[i], entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
                 
-                int64_t freed = remove_file_recursive(full_path);
+                int64_t freed = remove_file_recursive(full_path\n"\n"\n"\n"\n"\n"\n"\n");
                 if (freed > 0) total_freed += freed;
             }
         }
-        closedir(dir);
+        closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return total_freed;
@@ -424,7 +424,7 @@ static int64_t cleanup_system_cache(void) {
     const char *cache_dirs[] = {"/tmp", "/var/cache", "/root/.cache"};
     
     for (int i = 0; i < sizeof(cache_dirs) / sizeof(cache_dirs[0]); i++) {
-        DIR *dir = opendir(cache_dirs[i]);
+        DIR *dir = opendir(cache_dirs[i]\n"\n"\n"\n"\n"\n"\n"\n");
         if (!dir) continue;
         
         struct dirent *entry;
@@ -433,13 +433,13 @@ static int64_t cleanup_system_cache(void) {
                 strstr(entry->d_name, ".cache")) {
                 
                 char full_path[512];
-                snprintf(full_path, sizeof(full_path), "%s/%s", cache_dirs[i], entry->d_name);
+                snprintf(full_path, sizeof(full_path), "%s/%s", cache_dirs[i], entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
                 
-                int64_t freed = remove_file_recursive(full_path);
+                int64_t freed = remove_file_recursive(full_path\n"\n"\n"\n"\n"\n"\n"\n");
                 if (freed > 0) total_freed += freed;
             }
         }
-        closedir(dir);
+        closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return total_freed;
@@ -458,7 +458,7 @@ static int64_t remove_file_recursive(const char *path) {
     
     if (S_ISDIR(st.st_mode)) {
         // Directory - remove contents recursively
-        DIR *dir = opendir(path);
+        DIR *dir = opendir(path\n"\n"\n"\n"\n"\n"\n"\n");
         if (dir) {
             struct dirent *entry;
             while ((entry = readdir(dir)) != NULL) {
@@ -467,10 +467,10 @@ static int64_t remove_file_recursive(const char *path) {
                 }
                 
                 char sub_path[512];
-                snprintf(sub_path, sizeof(sub_path), "%s/%s", path, entry->d_name);
-                size += remove_file_recursive(sub_path);
+                snprintf(sub_path, sizeof(sub_path), "%s/%s", path, entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
+                size += remove_file_recursive(sub_path\n"\n"\n"\n"\n"\n"\n"\n");
             }
-            closedir(dir);
+            closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         if (rmdir(path) == 0) {
@@ -507,7 +507,7 @@ static int is_file_older_than(const char *path, int days) {
         return 0;
     }
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     time_t file_time = st.st_mtime;
     time_t threshold = days * 24 * 60 * 60; // days to seconds
     
@@ -520,10 +520,10 @@ static int is_file_older_than(const char *path, int days) {
 static void send_notification(const char *type, const char *message) {
     // Create notification event
     notification_event_t event = {0};
-    strcpy(event.title, "Overlay Management Alert");
-    safe_strncpy(event.message, message, sizeof(event.message));
+    strcpy(event.title, "Overlay Management Alert"\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(event.message, message, sizeof(event.message)\n"\n"\n"\n"\n"\n"\n"\n");
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
-    event.timestamp = time(NULL);
+    event.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Determine priority based on type
     if (strcmp(type, "critical") == 0) {
@@ -536,10 +536,10 @@ static void send_notification(const char *type, const char *message) {
     
     // Send via notification manager if available
     if (notification_manager_is_initialized()) {
-        notification_manager_send_default(event.type, event.title, event.message);
+        notification_manager_send_default(event.type, event.title, event.message\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         // Fallback to stderr logging
-        fprintf(stderr, "OVERLAY NOTIFICATION [%s]: %s\n", type, message);
+        fprintf(stderr, "OVERLAY NOTIFICATION [%s]: %s\n", type, message\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -604,7 +604,7 @@ int overlay_management_set_enabled(bool enabled) {
  * Reset overlay management
  */
 int overlay_management_reset(void) {
-    memset(&g_overlay_manager.stats, 0, sizeof(overlay_management_stats_t));
+    memset(&g_overlay_manager.stats, 0, sizeof(overlay_management_stats_t)\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -619,12 +619,12 @@ void overlay_management_cleanup(void) {
  * Perform emergency cleanup (public wrapper)
  */
 int overlay_management_perform_emergency_cleanup(void) {
-    return perform_emergency_cleanup();
+    return perform_emergency_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 /**
  * Perform routine cleanup (public wrapper)
  */
 int overlay_management_perform_cleanup(void) {
-    return perform_cleanup();
+    return perform_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
 }

@@ -16,7 +16,7 @@ int autonomy_notification_send(struct ubus_context *uctx, struct ubus_object *ob
 {
     struct blob_buf bb = {0};
     
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Parse message attributes
     enum {
@@ -40,23 +40,23 @@ int autonomy_notification_send(struct ubus_context *uctx, struct ubus_object *ob
     };
     
     if (blobmsg_parse(policy, __NOTIFICATION_ATTR_MAX, tb, blob_data(msg), blob_len(msg)) != 0) {
-        blobmsg_add_string(&bb, "status", "error");
-        blobmsg_add_string(&bb, "error", "Invalid message format");
-        ubus_send_reply(uctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "status", "error"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Invalid message format"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
     // Extract notification parameters
-    const char *title = blobmsg_get_string(tb[NOTIFICATION_ATTR_TITLE]);
-    const char *message = blobmsg_get_string(tb[NOTIFICATION_ATTR_MESSAGE]);
-    const char *source = blobmsg_get_string(tb[NOTIFICATION_ATTR_SOURCE]);
+    const char *title = blobmsg_get_string(tb[NOTIFICATION_ATTR_TITLE]\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *message = blobmsg_get_string(tb[NOTIFICATION_ATTR_MESSAGE]\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *source = blobmsg_get_string(tb[NOTIFICATION_ATTR_SOURCE]\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!title || !message || !source) {
-        blobmsg_add_string(&bb, "status", "error");
-        blobmsg_add_string(&bb, "error", "Missing required fields");
-        ubus_send_reply(uctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "status", "error"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Missing required fields"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -66,32 +66,32 @@ int autonomy_notification_send(struct ubus_context *uctx, struct ubus_object *ob
     notification_channel_t channel = NOTIFICATION_CHANNEL_SYSLOG;
     
     if (tb[NOTIFICATION_ATTR_TYPE]) {
-        type = (notification_type_t)blobmsg_get_u32(tb[NOTIFICATION_ATTR_TYPE]);
+        type = (notification_type_t)blobmsg_get_u32(tb[NOTIFICATION_ATTR_TYPE]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (tb[NOTIFICATION_ATTR_PRIORITY]) {
-        priority = (notification_priority_t)blobmsg_get_u32(tb[NOTIFICATION_ATTR_PRIORITY]);
+        priority = (notification_priority_t)blobmsg_get_u32(tb[NOTIFICATION_ATTR_PRIORITY]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (tb[NOTIFICATION_ATTR_CHANNEL]) {
-        channel = (notification_channel_t)blobmsg_get_u32(tb[NOTIFICATION_ATTR_CHANNEL]);
+        channel = (notification_channel_t)blobmsg_get_u32(tb[NOTIFICATION_ATTR_CHANNEL]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Send notification via manager
-    int result = notification_manager_send(type, title, message, priority, NULL);
+    int result = notification_manager_send(type, title, message, priority, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == 0) {
-        blobmsg_add_string(&bb, "status", "success");
-        blobmsg_add_string(&bb, "message", "Notification queued successfully");
+        blobmsg_add_string(&bb, "status", "success"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "Notification queued successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "status", "error");
-        blobmsg_add_string(&bb, "error", "Failed to queue notification");
+        blobmsg_add_string(&bb, "status", "error"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to queue notification"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -102,25 +102,25 @@ int autonomy_notification_status(struct ubus_context *uctx, struct ubus_object *
 {
     struct blob_buf bb = {0};
     
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Get notification statistics
     notification_stats_t stats;
-    notification_manager_get_stats(&stats);
+    notification_manager_get_stats(&stats\n"\n"\n"\n"\n"\n"\n"\n");
     
-    blobmsg_add_string(&bb, "status", "operational");
-    blobmsg_add_u64(&bb, "total_notifications", stats.total_notifications);
-    blobmsg_add_u64(&bb, "sent_notifications", stats.sent_notifications);
-    blobmsg_add_u64(&bb, "failed_notifications", stats.failed_notifications);
-    blobmsg_add_u64(&bb, "acknowledged_notifications", stats.acknowledged_notifications);
-    blobmsg_add_u64(&bb, "suppressed_notifications", stats.suppressed_notifications);
-    blobmsg_add_u32(&bb, "last_notification_time", (uint32_t)stats.last_notification_time);
-    blobmsg_add_u32(&bb, "last_emergency_time", (uint32_t)stats.last_emergency_time);
-    blobmsg_add_u32(&bb, "last_critical_time", (uint32_t)stats.last_critical_time);
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blobmsg_add_string(&bb, "status", "operational"\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u64(&bb, "total_notifications", stats.total_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u64(&bb, "sent_notifications", stats.sent_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u64(&bb, "failed_notifications", stats.failed_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u64(&bb, "acknowledged_notifications", stats.acknowledged_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u64(&bb, "suppressed_notifications", stats.suppressed_notifications\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "last_notification_time", (uint32_t)stats.last_notification_time\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "last_emergency_time", (uint32_t)stats.last_emergency_time\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "last_critical_time", (uint32_t)stats.last_critical_time\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -131,22 +131,22 @@ int autonomy_notification_config(struct ubus_context *uctx, struct ubus_object *
 {
     struct blob_buf bb = {0};
     
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Return basic configuration status
-    blobmsg_add_string(&bb, "status", "operational");
-    blobmsg_add_u32(&bb, "enabled", 1);
-    blobmsg_add_u32(&bb, "max_retries", 3);
-    blobmsg_add_u32(&bb, "retry_delay_seconds", 5);
-    blobmsg_add_u32(&bb, "rate_limiting_enabled", 1);
-    blobmsg_add_u32(&bb, "max_per_hour", 100);
-    blobmsg_add_u32(&bb, "max_per_day", 1000);
-    blobmsg_add_u32(&bb, "min_priority", 0);
-    blobmsg_add_u32(&bb, "emergency_bypass", 1);
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blobmsg_add_string(&bb, "status", "operational"\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "enabled", 1\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "max_retries", 3\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "retry_delay_seconds", 5\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "rate_limiting_enabled", 1\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "max_per_hour", 100\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "max_per_day", 1000\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "min_priority", 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "emergency_bypass", 1\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -157,18 +157,18 @@ int autonomy_notification_process(struct ubus_context *uctx, struct ubus_object 
 {
     struct blob_buf bb = {0};
     
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Process notification queue (placeholder)
     int processed = 0;
     
-    blobmsg_add_string(&bb, "status", "success");
-    blobmsg_add_string(&bb, "message", "Queue processing completed");
-    blobmsg_add_u32(&bb, "processed_count", processed);
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blobmsg_add_string(&bb, "status", "success"\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "message", "Queue processing completed"\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "processed_count", processed\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -179,7 +179,7 @@ int autonomy_notification_acknowledge(struct ubus_context *uctx, struct ubus_obj
 {
     struct blob_buf bb = {0};
     
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Parse message attributes
     enum {
@@ -195,22 +195,22 @@ int autonomy_notification_acknowledge(struct ubus_context *uctx, struct ubus_obj
     };
     
     if (blobmsg_parse(policy, __ACK_ATTR_MAX, tb, blob_data(msg), blob_len(msg)) != 0) {
-        blobmsg_add_string(&bb, "status", "error");
-        blobmsg_add_string(&bb, "error", "Invalid message format");
-        ubus_send_reply(uctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "status", "error"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Invalid message format"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
     // Extract parameters
-    const char *notification_id = blobmsg_get_string(tb[ACK_ATTR_NOTIFICATION_ID]);
-    const char *acknowledged_by = blobmsg_get_string(tb[ACK_ATTR_ACKNOWLEDGED_BY]);
+    const char *notification_id = blobmsg_get_string(tb[ACK_ATTR_NOTIFICATION_ID]\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *acknowledged_by = blobmsg_get_string(tb[ACK_ATTR_ACKNOWLEDGED_BY]\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!notification_id || !acknowledged_by) {
-        blobmsg_add_string(&bb, "status", "error");
-        blobmsg_add_string(&bb, "error", "Missing required fields");
-        ubus_send_reply(uctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "status", "error"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Missing required fields"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -218,16 +218,16 @@ int autonomy_notification_acknowledge(struct ubus_context *uctx, struct ubus_obj
     int result = 0; // Success for now
     
     if (result == 0) {
-        blobmsg_add_string(&bb, "status", "success");
-        blobmsg_add_string(&bb, "message", "Notification acknowledged successfully");
+        blobmsg_add_string(&bb, "status", "success"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "Notification acknowledged successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "status", "error");
-        blobmsg_add_string(&bb, "error", "Failed to acknowledge notification");
+        blobmsg_add_string(&bb, "status", "error"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to acknowledge notification"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }

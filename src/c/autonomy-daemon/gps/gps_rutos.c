@@ -37,22 +37,22 @@ static pthread_t g_rutos_thread = 0; // Use configurable value
 static bool g_rutos_thread_running = false; // Use configurable setting
 
 // Forward declarations
-static void* rutos_monitor_thread(void *arg);
-static int read_rutos_gps_data(gps_data_t *data);
-static bool validate_gps_data(const gps_data_t *data);
-static float calculate_reliability_score(void);
+static void* rutos_monitor_thread(void *arg\n"\n"\n"\n"\n"\n"\n"\n");
+static int read_rutos_gps_data(gps_data_t *data\n"\n"\n"\n"\n"\n"\n"\n");
+static bool validate_gps_data(const gps_data_t *data\n"\n"\n"\n"\n"\n"\n"\n");
+static float calculate_reliability_score(void\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize RUTOS GPS system
 int gps_rutos_init(void) {
     if (g_rutos_initialized) {
-        LOGX_WARN_MSG("RUTOS GPS already initialized");
+        printf("WARN: "RUTOS GPS already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_rutos_mutex);
+    pthread_mutex_lock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize RUTOS GPS state
-    memset(&g_rutos_gps, 0, sizeof(gps_rutos_t));
+    memset(&g_rutos_gps, 0, sizeof(gps_rutos_t)\n"\n"\n"\n"\n"\n"\n"\n");
     g_rutos_gps.enabled = true; // Use configurable rutos gps enabled
     g_rutos_gps.update_interval = RUTOS_GPS_UPDATE_INTERVAL;
     g_rutos_gps.timeout = RUTOS_GPS_TIMEOUT;
@@ -76,9 +76,9 @@ int gps_rutos_init(void) {
     g_rutos_gps.gps_data.vdop = 999.0f;
     
     g_rutos_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_rutos_mutex);
+    pthread_mutex_unlock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("RUTOS GPS system initialized successfully");
+    printf("INFO: "RUTOS GPS system initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -90,24 +90,24 @@ bool gps_rutos_is_initialized(void) {
 // Start RUTOS GPS monitoring thread
 int gps_rutos_start_monitoring(void) {
     if (!g_rutos_initialized) {
-        LOGX_ERROR_MSG("RUTOS GPS not initialized");
+        printf("ERROR: "RUTOS GPS not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     if (g_rutos_thread_running) {
-        LOGX_WARN_MSG("RUTOS GPS monitoring already running");
+        printf("WARN: "RUTOS GPS monitoring already running"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
     // Create monitoring thread
-    int ret = pthread_create(&g_rutos_thread, NULL, rutos_monitor_thread, NULL);
+    int ret = pthread_create(&g_rutos_thread, NULL, rutos_monitor_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to create RUTOS GPS monitoring thread");
+        printf("ERROR: "Failed to create RUTOS GPS monitoring thread"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     g_rutos_thread_running = true; // Use configurable setting
-    LOGX_INFO_MSG("RUTOS GPS monitoring started");
+    printf("INFO: "RUTOS GPS monitoring started"\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -121,30 +121,30 @@ void gps_rutos_stop_monitoring(void) {
     g_rutos_thread_running = false; // Use configurable setting
     
     if (g_rutos_thread != 0) {
-        pthread_join(g_rutos_thread, NULL);
+        pthread_join(g_rutos_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
         g_rutos_thread = 0; // Use configurable value
     }
     
-    LOGX_INFO_MSG("RUTOS GPS monitoring stopped");
+    printf("INFO: "RUTOS GPS monitoring stopped"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // RUTOS GPS monitoring thread
 static void* rutos_monitor_thread(void *arg) {
     (void)arg;
     
-    LOGX_INFO_MSG("RUTOS GPS monitoring thread started");
+    printf("INFO: "RUTOS GPS monitoring thread started"\n"\n"\n"\n"\n"\n"\n"\n");
     
     while (g_rutos_thread_running) {
         // Read GPS data
-        gps_rutos_read_data();
+        gps_rutos_read_data(\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Sleep for update interval
         for (int i = 0; i < g_rutos_gps.update_interval && g_rutos_thread_running; i++) {
-            sleep(1);
+            sleep(1\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    LOGX_INFO_MSG("RUTOS GPS monitoring thread stopped");
+    printf("INFO: "RUTOS GPS monitoring thread stopped"\n"\n"\n"\n"\n"\n"\n"\n");
     return NULL;
 }
 
@@ -154,56 +154,56 @@ int gps_rutos_read_data(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_rutos_mutex);
+    pthread_mutex_lock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if it's time to update
     if (g_rutos_gps.last_update > 0 && 
         (now - g_rutos_gps.last_update) < g_rutos_gps.update_interval) {
-        pthread_mutex_unlock(&g_rutos_mutex);
+        pthread_mutex_unlock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    LOGX_DEBUG_MSG("Reading RUTOS GPS data");
+    printf("DEBUG: "Reading RUTOS GPS data"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Read GPS data file
     gps_data_t new_data;
-    memset(&new_data, 0, sizeof(gps_data_t));
+    memset(&new_data, 0, sizeof(gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int ret = read_rutos_gps_data(&new_data);
+    int ret = read_rutos_gps_data(&new_data\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret == AUTONOMY_SUCCESS) {
         // Validate GPS data
         if (validate_gps_data(&new_data)) {
             // Update GPS data
-            memcpy(&g_rutos_gps.gps_data, &new_data, sizeof(gps_data_t));
+            memcpy(&g_rutos_gps.gps_data, &new_data, sizeof(gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
             g_rutos_gps.last_update = now;
             g_rutos_gps.total_updates++;
             g_rutos_gps.consecutive_successes++;
             g_rutos_gps.consecutive_failures = 0;
             
             // Calculate reliability score
-            g_rutos_gps.reliability_score = calculate_reliability_score();
+            g_rutos_gps.reliability_score = calculate_reliability_score(\n"\n"\n"\n"\n"\n"\n"\n");
             
-            LOGX_DEBUG_MSG("RUTOS GPS data updated",
+            printf("DEBUG: "RUTOS GPS data updated",
                       "lat", new_data.latitude,
                       "lon", new_data.longitude,
                       "accuracy", new_data.accuracy,
-                      "satellites", new_data.satellites);
+                      "satellites", new_data.satellites\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
-            LOGX_WARN_MSG("Invalid GPS data received from RUTOS");
+            printf("WARN: "Invalid GPS data received from RUTOS"\n"\n"\n"\n"\n"\n"\n"\n");
             g_rutos_gps.consecutive_failures++;
             g_rutos_gps.consecutive_successes = 0;
         }
     } else {
         // In test environment, GPS hardware may not be available
         // Reduce log level to avoid spam in test environments
-        LOGX_DEBUG_MSG("Failed to read RUTOS GPS data (expected in test environment)");
+        printf("DEBUG: "Failed to read RUTOS GPS data (expected in test environment)"\n"\n"\n"\n"\n"\n"\n"\n");
         g_rutos_gps.consecutive_failures++;
         g_rutos_gps.consecutive_successes = 0;
     }
     
-    pthread_mutex_unlock(&g_rutos_mutex);
+    pthread_mutex_unlock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -214,11 +214,11 @@ static int read_rutos_gps_data(gps_data_t *data) {
     }
     
     // Read GPS data file
-    FILE *fp = fopen(RUTOS_GPS_FILES[0], "r");
+    FILE *fp = fopen(RUTOS_GPS_FILES[0], "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!fp) {
         // In test environment, GPS hardware may not be available
         // This is expected behavior, not an error
-        LOGX_DEBUG_MSG("RUTOS GPS data file not found (expected in test environment)", "path", RUTOS_GPS_FILES[0]);
+        printf("DEBUG: "RUTOS GPS data file not found (expected in test environment)", "path", RUTOS_GPS_FILES[0]\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -228,55 +228,55 @@ static int read_rutos_gps_data(gps_data_t *data) {
     while (fgets(line, sizeof(line), fp)) {
         if (strncmp(line, "GPS_DATA:", 9) == 0) {
             // Parse GPS data line: GPS_DATA:lat,lon,alt,acc,speed,heading,sats,hdop,vdop
-            char *token = strtok(line + 9, ",");
+            char *token = strtok(line + 9, ","\n"\n"\n"\n"\n"\n"\n"\n");
             if (token) {
-                data->latitude = atof(token);
-                token = strtok(NULL, ",");
+                data->latitude = atof(token\n"\n"\n"\n"\n"\n"\n"\n");
+                token = strtok(NULL, ","\n"\n"\n"\n"\n"\n"\n"\n");
             }
             if (token) {
-                data->longitude = atof(token);
-                token = strtok(NULL, ",");
+                data->longitude = atof(token\n"\n"\n"\n"\n"\n"\n"\n");
+                token = strtok(NULL, ","\n"\n"\n"\n"\n"\n"\n"\n");
             }
             if (token) {
-                data->altitude = atof(token);
-                token = strtok(NULL, ",");
+                data->altitude = atof(token\n"\n"\n"\n"\n"\n"\n"\n");
+                token = strtok(NULL, ","\n"\n"\n"\n"\n"\n"\n"\n");
             }
             if (token) {
-                data->accuracy = atof(token);
-                token = strtok(NULL, ",");
+                data->accuracy = atof(token\n"\n"\n"\n"\n"\n"\n"\n");
+                token = strtok(NULL, ","\n"\n"\n"\n"\n"\n"\n"\n");
             }
             if (token) {
-                data->speed = atof(token);
-                token = strtok(NULL, ",");
+                data->speed = atof(token\n"\n"\n"\n"\n"\n"\n"\n");
+                token = strtok(NULL, ","\n"\n"\n"\n"\n"\n"\n"\n");
             }
             if (token) {
-                data->heading = atof(token);
-                token = strtok(NULL, ",");
+                data->heading = atof(token\n"\n"\n"\n"\n"\n"\n"\n");
+                token = strtok(NULL, ","\n"\n"\n"\n"\n"\n"\n"\n");
             }
             if (token) {
-                data->satellites = atoi(token);
-                token = strtok(NULL, ",");
+                data->satellites = atoi(token\n"\n"\n"\n"\n"\n"\n"\n");
+                token = strtok(NULL, ","\n"\n"\n"\n"\n"\n"\n"\n");
             }
             if (token) {
-                data->hdop = atof(token);
-                token = strtok(NULL, ",");
+                data->hdop = atof(token\n"\n"\n"\n"\n"\n"\n"\n");
+                token = strtok(NULL, ","\n"\n"\n"\n"\n"\n"\n"\n");
             }
             if (token) {
-                data->vdop = atof(token);
+                data->vdop = atof(token\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
-            data->timestamp = time(NULL);
+            data->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             data->valid = true;
             data_found = true; // Use configurable setting
             break;
         }
     }
     
-    fclose(fp);
+    fclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!data_found) {
         // Production system requires real GPS data - no fallback
-        LOGX_ERROR_MSG("Failed to read RUTOS GPS data - no real data available");
+        printf("ERROR: "Failed to read RUTOS GPS data - no real data available"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -291,36 +291,36 @@ static bool validate_gps_data(const gps_data_t *data) {
     
     // Check latitude range (-90 to 90)
     if (data->latitude < -90.0 || data->latitude > 90.0) {
-        LOGX_DEBUG_MSG("Invalid latitude", "value", data->latitude);
+        printf("DEBUG: "Invalid latitude", "value", data->latitude\n"\n"\n"\n"\n"\n"\n"\n");
         return false;
     }
     
     // Check longitude range (-180 to 180)
     if (data->longitude < -180.0 || data->longitude > 180.0) {
-        LOGX_DEBUG_MSG("Invalid longitude", "value", data->longitude);
+        printf("DEBUG: "Invalid longitude", "value", data->longitude\n"\n"\n"\n"\n"\n"\n"\n");
         return false;
     }
     
     // Check accuracy (must be positive and reasonable)
     if (data->accuracy < 0.0 || data->accuracy > 1000.0) {
-        LOGX_DEBUG_MSG("Invalid accuracy", "value", data->accuracy);
+        printf("DEBUG: "Invalid accuracy", "value", data->accuracy\n"\n"\n"\n"\n"\n"\n"\n");
         return false;
     }
     
     // Check satellite count (must be reasonable)
     if (data->satellites < 0 || data->satellites > 20) {
-        LOGX_DEBUG_MSG("Invalid satellite count", "value", data->satellites);
+        printf("DEBUG: "Invalid satellite count", "value", data->satellites\n"\n"\n"\n"\n"\n"\n"\n");
         return false;
     }
     
     // Check HDOP and VDOP (must be positive and reasonable)
     if (data->hdop < 0.0 || data->hdop > 100.0) {
-        LOGX_DEBUG_MSG("Invalid HDOP", "value", data->hdop);
+        printf("DEBUG: "Invalid HDOP", "value", data->hdop\n"\n"\n"\n"\n"\n"\n"\n");
         return false;
     }
     
     if (data->vdop < 0.0 || data->vdop > 100.0) {
-        LOGX_DEBUG_MSG("Invalid VDOP", "value", data->vdop);
+        printf("DEBUG: "Invalid VDOP", "value", data->vdop\n"\n"\n"\n"\n"\n"\n"\n");
         return false;
     }
     
@@ -366,9 +366,9 @@ int gps_rutos_get_data(gps_data_t *data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_rutos_mutex);
-    memcpy(data, &g_rutos_gps.gps_data, sizeof(gps_data_t));
-    pthread_mutex_unlock(&g_rutos_mutex);
+    pthread_mutex_lock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(data, &g_rutos_gps.gps_data, sizeof(gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -379,7 +379,7 @@ int gps_rutos_get_status(gps_rutos_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_rutos_mutex);
+    pthread_mutex_lock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_rutos_gps.enabled;
     status->update_interval = g_rutos_gps.update_interval;
@@ -392,7 +392,7 @@ int gps_rutos_get_status(gps_rutos_status_t *status) {
     status->reliability_score = g_rutos_gps.reliability_score;
     status->data_valid = g_rutos_gps.gps_data.valid;
     
-    pthread_mutex_unlock(&g_rutos_mutex);
+    pthread_mutex_unlock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -403,7 +403,7 @@ int gps_rutos_set_config(const gps_rutos_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_rutos_mutex);
+    pthread_mutex_lock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (config->update_interval > 0) {
         g_rutos_gps.update_interval = config->update_interval;
@@ -419,9 +419,9 @@ int gps_rutos_set_config(const gps_rutos_config_t *config) {
     
     g_rutos_gps.enabled = config->enabled;
     
-    pthread_mutex_unlock(&g_rutos_mutex);
+    pthread_mutex_unlock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("RUTOS GPS configuration updated");
+    printf("INFO: "RUTOS GPS configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -431,11 +431,11 @@ int gps_rutos_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_rutos_mutex);
+    pthread_mutex_lock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_rutos_gps.enabled = enabled;
-    pthread_mutex_unlock(&g_rutos_mutex);
+    pthread_mutex_unlock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("RUTOS GPS state changed", "enabled", enabled ? "true" : "false");
+    printf("INFO: "RUTOS GPS state changed", "enabled", enabled ? "true" : "false"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -445,11 +445,11 @@ bool gps_rutos_is_data_recent(int max_age_seconds) {
         return false;
     }
     
-    pthread_mutex_lock(&g_rutos_mutex);
-    time_t now = time(NULL);
+    pthread_mutex_lock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     bool recent = (g_rutos_gps.last_update > 0 && 
-                   (now - g_rutos_gps.last_update) <= max_age_seconds);
-    pthread_mutex_unlock(&g_rutos_mutex);
+                   (now - g_rutos_gps.last_update) <= max_age_seconds\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return recent;
 }
@@ -460,10 +460,10 @@ bool gps_rutos_meets_accuracy(float required_accuracy) {
         return false;
     }
     
-    pthread_mutex_lock(&g_rutos_mutex);
+    pthread_mutex_lock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     bool meets = (g_rutos_gps.gps_data.valid && 
-                  g_rutos_gps.gps_data.accuracy <= required_accuracy);
-    pthread_mutex_unlock(&g_rutos_mutex);
+                  g_rutos_gps.gps_data.accuracy <= required_accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return meets;
 }
@@ -474,9 +474,9 @@ bool gps_rutos_is_available(void) {
         return false;
     }
     
-    pthread_mutex_lock(&g_rutos_mutex);
+    pthread_mutex_lock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     bool available = g_rutos_gps.enabled && g_rutos_gps.gps_data.valid;
-    pthread_mutex_unlock(&g_rutos_mutex);
+    pthread_mutex_unlock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return available;
 }
@@ -488,13 +488,13 @@ void gps_rutos_cleanup(void) {
     }
     
     // Stop monitoring thread
-    gps_rutos_stop_monitoring();
+    gps_rutos_stop_monitoring(\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_lock(&g_rutos_mutex);
+    pthread_mutex_lock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_rutos_initialized = false; // Use configurable setting
-    pthread_mutex_unlock(&g_rutos_mutex);
+    pthread_mutex_unlock(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_destroy(&g_rutos_mutex);
+    pthread_mutex_destroy(&g_rutos_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("RUTOS GPS system cleaned up");
+    printf("INFO: "RUTOS GPS system cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }

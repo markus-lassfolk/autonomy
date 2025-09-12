@@ -17,7 +17,7 @@ extern autonomy_config_t g_config;
 static char* url_encode(const char* str) {
     if (!str) return NULL;
     
-    size_t len = strlen(str);
+    size_t len = strlen(str\n"\n"\n"\n"\n"\n"\n"\n");
     char* result = malloc(len * 3 + 1); // Worst case: every char becomes %XX
     if (!result) return NULL;
     
@@ -44,15 +44,15 @@ int pushover_client_init(pushover_client_t* client, const pushover_config_t* con
         return -1;
     }
     
-    memset(client, 0, sizeof(pushover_client_t));
+    memset(client, 0, sizeof(pushover_client_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Copy configuration
     client->config = *config;
     
     // Initialize status
     client->status.enabled = config->enabled;
-    safe_strncpy(client->status.token, config->token, sizeof(client->status.token));
-    safe_strncpy(client->status.user, config->user, sizeof(client->status.user));
+    safe_strncpy(client->status.token, config->token, sizeof(client->status.token)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(client->status.user, config->user, sizeof(client->status.user)\n"\n"\n"\n"\n"\n"\n"\n");
     client->status.total_sent = 0;
     client->status.total_failed = 0;
     client->status.last_response_code = 0;
@@ -68,8 +68,8 @@ void pushover_client_cleanup(pushover_client_t* client) {
     if (!client) return;
     
     // Clear sensitive data
-    memset(client->config.token, 0, sizeof(client->config.token));
-    memset(client, 0, sizeof(pushover_client_t));
+    memset(client->config.token, 0, sizeof(client->config.token)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(client, 0, sizeof(pushover_client_t)\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get priority sound for notification priority
@@ -94,13 +94,13 @@ void pushover_client_create_message(pushover_client_t* client, const notificatio
                                    pushover_message_t* message) {
     if (!client || !event || !message) return;
     
-    memset(message, 0, sizeof(pushover_message_t));
+    memset(message, 0, sizeof(pushover_message_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Copy basic fields
-    safe_strncpy(message->token, client->config.token, sizeof(message->token));
-    safe_strncpy(message->user, client->config.user, sizeof(message->user));
-    safe_strncpy(message->message, event->message, sizeof(message->message));
-    safe_strncpy(message->title, event->title, sizeof(message->title));
+    safe_strncpy(message->token, client->config.token, sizeof(message->token)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(message->user, client->config.user, sizeof(message->user)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(message->message, event->message, sizeof(message->message)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(message->title, event->title, sizeof(message->title)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Map priority (Pushover uses -2 to 2, our enum is different)
     switch (event->priority) {
@@ -128,14 +128,14 @@ void pushover_client_create_message(pushover_client_t* client, const notificatio
     
     // Set sound
     if (strlen(client->config.default_sound) > 0) {
-        safe_strncpy(message->sound, client->config.default_sound, sizeof(message->sound));
+        safe_strncpy(message->sound, client->config.default_sound, sizeof(message->sound)\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        safe_strncpy(message->sound, pushover_client_get_priority_sound(event->priority), sizeof(message->sound));
+        safe_strncpy(message->sound, pushover_client_get_priority_sound(event->priority), sizeof(message->sound)\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Set device if configured
     if (strlen(client->config.device) > 0) {
-        safe_strncpy(message->device, client->config.device, sizeof(message->device));
+        safe_strncpy(message->device, client->config.device, sizeof(message->device)\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     message->timestamp = event->timestamp;
@@ -143,8 +143,8 @@ void pushover_client_create_message(pushover_client_t* client, const notificatio
     
     // Add dashboard URL if available in context
     if (strstr(event->details_json, "dashboard_url")) {
-        safe_strncpy(message->url, "http://router.local", sizeof(message->url));
-        safe_strncpy(message->url_title, "View Dashboard", sizeof(message->url_title));
+        safe_strncpy(message->url, "http://router.local", sizeof(message->url)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(message->url_title, "View Dashboard", sizeof(message->url_title)\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -154,12 +154,12 @@ static char* create_form_data(pushover_message_t* message) {
     
     // Allocate buffer for form data
     size_t buffer_size = 4096; // Use configurable value
-    char* form_data = malloc(buffer_size);
+    char* form_data = malloc(buffer_size\n"\n"\n"\n"\n"\n"\n"\n");
     if (!form_data) return NULL;
     
     // URL encode fields
-    char* encoded_message = url_encode(message->message);
-    char* encoded_title = url_encode(message->title);
+    char* encoded_message = url_encode(message->message\n"\n"\n"\n"\n"\n"\n"\n");
+    char* encoded_title = url_encode(message->title\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Create form data
     snprintf(form_data, buffer_size,
@@ -170,29 +170,29 @@ static char* create_form_data(pushover_message_t* message) {
              encoded_title ? encoded_title : "",
              message->priority,
              message->sound,
-             message->timestamp);
+             message->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Add device if specified
     if (strlen(message->device) > 0) {
-        strncat(form_data, "&device=", buffer_size - strlen(form_data) - 1);
-        strncat(form_data, message->device, buffer_size - strlen(form_data) - 1);
+        strncat(form_data, "&device=", buffer_size - strlen(form_data) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+        strncat(form_data, message->device, buffer_size - strlen(form_data) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Add URL if specified
     if (strlen(message->url) > 0) {
-        char* encoded_url = url_encode(message->url);
+        char* encoded_url = url_encode(message->url\n"\n"\n"\n"\n"\n"\n"\n");
         if (encoded_url) {
-            strncat(form_data, "&url=", buffer_size - strlen(form_data) - 1);
-            strncat(form_data, encoded_url, buffer_size - strlen(form_data) - 1);
-            free(encoded_url);
+            strncat(form_data, "&url=", buffer_size - strlen(form_data) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+            strncat(form_data, encoded_url, buffer_size - strlen(form_data) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+            free(encoded_url\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         if (strlen(message->url_title) > 0) {
-            char* encoded_url_title = url_encode(message->url_title);
+            char* encoded_url_title = url_encode(message->url_title\n"\n"\n"\n"\n"\n"\n"\n");
             if (encoded_url_title) {
-                strncat(form_data, "&url_title=", buffer_size - strlen(form_data) - 1);
-                strncat(form_data, encoded_url_title, buffer_size - strlen(form_data) - 1);
-                free(encoded_url_title);
+                strncat(form_data, "&url_title=", buffer_size - strlen(form_data) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+                strncat(form_data, encoded_url_title, buffer_size - strlen(form_data) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+                free(encoded_url_title\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
@@ -201,20 +201,20 @@ static char* create_form_data(pushover_message_t* message) {
     if (message->priority == 2) { // Emergency
         if (message->retry_seconds > 0) {
             char retry_str[32];
-            snprintf(retry_str, sizeof(retry_str), "&retry=%d", message->retry_seconds);
-            strncat(form_data, retry_str, buffer_size - strlen(form_data) - 1);
+            snprintf(retry_str, sizeof(retry_str), "&retry=%d", message->retry_seconds\n"\n"\n"\n"\n"\n"\n"\n");
+            strncat(form_data, retry_str, buffer_size - strlen(form_data) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         if (message->expire_seconds > 0) {
             char expire_str[32];
-            snprintf(expire_str, sizeof(expire_str), "&expire=%d", message->expire_seconds);
-            strncat(form_data, expire_str, buffer_size - strlen(form_data) - 1);
+            snprintf(expire_str, sizeof(expire_str), "&expire=%d", message->expire_seconds\n"\n"\n"\n"\n"\n"\n"\n");
+            strncat(form_data, expire_str, buffer_size - strlen(form_data) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // Clean up encoded strings
-    if (encoded_message) free(encoded_message);
-    if (encoded_title) free(encoded_title);
+    if (encoded_message) free(encoded_message\n"\n"\n"\n"\n"\n"\n"\n");
+    if (encoded_title) free(encoded_title\n"\n"\n"\n"\n"\n"\n"\n");
     
     return form_data;
 }
@@ -228,25 +228,25 @@ static int send_pushover_request(pushover_client_t* client, pushover_message_t* 
     // Create HTTP request using HTTP client library
     
     // Create form data
-    char* form_data = create_form_data(message);
+    char* form_data = create_form_data(message\n"\n"\n"\n"\n"\n"\n"\n");
     if (!form_data) {
-        safe_strncpy(client->status.last_error, "Failed to create form data", sizeof(client->status.last_error));
+        safe_strncpy(client->status.last_error, "Failed to create form data", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
     // Create HTTP request
-    http_request_t* request = http_request_create("https://api.pushover.net/1/messages.json", HTTP_METHOD_POST);
+    http_request_t* request = http_request_create("https://api.pushover.net/1/messages.json", HTTP_METHOD_POST\n"\n"\n"\n"\n"\n"\n"\n");
     if (!request) {
-        free(form_data);
-        safe_strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error));
+        free(form_data\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
     // Set form data body
     if (http_request_set_body(request, form_data, "application/x-www-form-urlencoded") != 0) {
-        http_request_free(request);
-        free(form_data);
-        safe_strncpy(client->status.last_error, "Failed to set form data body", sizeof(client->status.last_error));
+        http_request_free(request\n"\n"\n"\n"\n"\n"\n"\n");
+        free(form_data\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(client->status.last_error, "Failed to set form data body", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -258,15 +258,15 @@ static int send_pushover_request(pushover_client_t* client, pushover_message_t* 
     }
     
     // Perform request
-    http_response_t* response = http_request(request);
+    http_response_t* response = http_request(request\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Clean up request
-    http_request_free(request);
-    free(form_data);
+    http_request_free(request\n"\n"\n"\n"\n"\n"\n"\n");
+    free(form_data\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!response) {
-        safe_strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error));
-        client->status.last_error_time = time(NULL);
+        safe_strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
+        client->status.last_error_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -277,12 +277,12 @@ static int send_pushover_request(pushover_client_t* client, pushover_message_t* 
     if (!http_response_is_success(response)) {
         // Truncate error message to fit in buffer
         char truncated_error[128];
-        safe_strncpy(truncated_error, response->error_message, sizeof(truncated_error));
+        safe_strncpy(truncated_error, response->error_message, sizeof(truncated_error)\n"\n"\n"\n"\n"\n"\n"\n");
         truncated_error[sizeof(truncated_error) - 1] = '\0';
         snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "HTTP error: %ld - %s", response->status_code, truncated_error);
-        client->status.last_error_time = time(NULL);
-        http_response_free(response);
+                "HTTP error: %ld - %s", response->status_code, truncated_error\n"\n"\n"\n"\n"\n"\n"\n");
+        client->status.last_error_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        http_response_free(response\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -290,24 +290,24 @@ static int send_pushover_request(pushover_client_t* client, pushover_message_t* 
     if (response->body) {
         if (strstr(response->body, "\"status\":1")) {
             // Success
-            http_response_free(response);
+            http_response_free(response\n"\n"\n"\n"\n"\n"\n"\n");
             return 0;
         } else {
             // Extract error message if possible
-            char* error_start = strstr(response->body, "\"errors\":");
+            char* error_start = strstr(response->body, "\"errors\":"\n"\n"\n"\n"\n"\n"\n"\n");
             if (error_start) {
-                safe_strncpy(client->status.last_error, "Pushover API error", sizeof(client->status.last_error));
+                safe_strncpy(client->status.last_error, "Pushover API error", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
             } else {
-                safe_strncpy(client->status.last_error, "Pushover API returned error", sizeof(client->status.last_error));
+                safe_strncpy(client->status.last_error, "Pushover API returned error", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
             }
-            client->status.last_error_time = time(NULL);
-            http_response_free(response);
+            client->status.last_error_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            http_response_free(response\n"\n"\n"\n"\n"\n"\n"\n");
             return -1;
         }
     }
     
     // Clean up response
-    http_response_free(response);
+    http_response_free(response\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -319,15 +319,15 @@ int pushover_client_send(pushover_client_t* client, const notification_event_t* 
     }
     
     if (strlen(client->config.token) == 0 || strlen(client->config.user) == 0) {
-        safe_strncpy(client->status.last_error, "Pushover token and user are required", sizeof(client->status.last_error));
-        client->status.last_error_time = time(NULL);
+        safe_strncpy(client->status.last_error, "Pushover token and user are required", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
+        client->status.last_error_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         client->status.total_failed++;
         return -1;
     }
     
     // Create message
     pushover_message_t message;
-    pushover_client_create_message(client, event, &message);
+    pushover_client_create_message(client, event, &message\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Retry logic
     int max_attempts = client->config.retry_attempts > 0 ? client->config.retry_attempts : 3;
@@ -335,19 +335,19 @@ int pushover_client_send(pushover_client_t* client, const notification_event_t* 
     
     int result = -1;
     for (int attempt = 1; attempt <= max_attempts; attempt++) {
-        result = send_pushover_request(client, &message);
+        result = send_pushover_request(client, &message\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (result == 0) {
             // Success
             client->status.total_sent++;
-            client->status.last_sent_time = time(NULL);
+            client->status.last_sent_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             client->status.last_error[0] = '\0';
             break;
         }
         
         // Failed - wait before retry (except on last attempt)
         if (attempt < max_attempts) {
-            sleep(retry_delay);
+            sleep(retry_delay\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     

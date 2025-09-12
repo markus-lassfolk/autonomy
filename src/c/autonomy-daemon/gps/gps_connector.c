@@ -19,17 +19,17 @@
 extern autonomy_config_t g_config;
 
 // Forward declarations
-static int generate_module_id(void);
-static int find_module_by_id(int module_id);
-static void perform_connector_checks(void);
-static void gps_connector_check_module_health(void);
-static void gps_connector_update_system_health(void);
-static void perform_module_coordination(void);
-int gps_integration_get_status(gps_integration_status_t *status);
-int gps_location_reference_get_status(gps_location_reference_stats_t *status);
-bool gps_location_reference_is_initialized(void);
-int gps_health_get_status(gps_health_status_t *status);
-int gps_starlink_get_status(gps_starlink_status_t *status);
+static int generate_module_id(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int find_module_by_id(int module_id\n"\n"\n"\n"\n"\n"\n"\n");
+static void perform_connector_checks(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void gps_connector_check_module_health(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void gps_connector_update_system_health(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void perform_module_coordination(void\n"\n"\n"\n"\n"\n"\n"\n");
+int gps_integration_get_status(gps_integration_status_t *status\n"\n"\n"\n"\n"\n"\n"\n");
+int gps_location_reference_get_status(gps_location_reference_stats_t *status\n"\n"\n"\n"\n"\n"\n"\n");
+bool gps_location_reference_is_initialized(void\n"\n"\n"\n"\n"\n"\n"\n");
+int gps_health_get_status(gps_health_status_t *status\n"\n"\n"\n"\n"\n"\n"\n");
+int gps_starlink_get_status(gps_starlink_status_t *status\n"\n"\n"\n"\n"\n"\n"\n");
 
 // GPS connector configuration
 static const int MAX_CONNECTED_MODULES = 20; // Use configurable value // Use configurable count // Use configurable value             // Maximum connected modules
@@ -52,14 +52,14 @@ static pthread_mutex_t g_connector_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Initialize GPS connector system
 int gps_connector_init(void) {
     if (g_connector_initialized) {
-        LOGX_WARN_MSG("GPS connector already initialized");
+        printf("WARN: "GPS connector already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_connector_mutex);
+    pthread_mutex_lock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize connector state
-    memset(&g_connector, 0, sizeof(gps_connector_t));
+    memset(&g_connector, 0, sizeof(gps_connector_t)\n"\n"\n"\n"\n"\n"\n"\n");
     g_connector.enabled = true; // Use configurable gps connector enabled
     g_connector.max_modules = MAX_CONNECTED_MODULES;
     g_connector.check_interval = CONNECTOR_CHECK_INTERVAL;
@@ -86,9 +86,9 @@ int gps_connector_init(void) {
     }
     
     g_connector_initialized = true; // Use configurable setting // Use configurable setting
-    pthread_mutex_unlock(&g_connector_mutex);
+    pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS connector system initialized successfully");
+    printf("INFO: "GPS connector system initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -98,14 +98,14 @@ int gps_connector_register_module(const char *name, gps_module_type_t module_typ
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_connector_mutex);
+    pthread_mutex_lock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if module already exists
     for (int i = 0; i < g_connector.module_count; i++) {
         if (g_connector.modules[i].active && 
             strcmp(g_connector.modules[i].name, name) == 0) {
-            pthread_mutex_unlock(&g_connector_mutex);
-            LOGX_WARN_MSG("GPS module '%s' already registered", name);
+            pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("WARN: "GPS module '%s' already registered", name\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_ERROR_ALREADY_EXISTS;
         }
     }
@@ -120,33 +120,33 @@ int gps_connector_register_module(const char *name, gps_module_type_t module_typ
     }
     
     if (module_index < 0) {
-        pthread_mutex_unlock(&g_connector_mutex);
-        LOGX_ERROR_MSG("No free slots for GPS module registration");
+        pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: "No free slots for GPS module registration"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
     // Initialize GPS module
     gps_connector_module_t *module = &g_connector.modules[module_index];
     module->active = true;
-    module->module_id = generate_module_id();
+    module->module_id = generate_module_id(\n"\n"\n"\n"\n"\n"\n"\n");
     module->module_type = module_type;
     module->enabled = true; // Use configurable module enabled setting
-    module->last_operation = time(NULL);
+    module->last_operation = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     module->operation_count = 0;
     module->health_score = 100.0;  // Start with perfect health
     module->error_count = 0;
     module->last_error = 0;
     
-    safe_strncpy(module->name, name, sizeof(module->name));
+    safe_strncpy(module->name, name, sizeof(module->name)\n"\n"\n"\n"\n"\n"\n"\n");
     module->name[sizeof(module->name) - 1] = '\0';
     
     g_connector.module_count++;
     g_connector.active_modules++;
     
-    pthread_mutex_unlock(&g_connector_mutex);
+    pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Registered GPS module '%s' (type: %d) with ID %d", 
-               name, module_type, module->module_id);
+    printf("INFO: "Registered GPS module '%s' (type: %d) with ID %d", 
+               name, module_type, module->module_id\n"\n"\n"\n"\n"\n"\n"\n");
     
     return module->module_id;
 }
@@ -163,41 +163,41 @@ int gps_connector_update_module_operation(int module_id, bool operation_successf
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_connector_mutex);
+    pthread_mutex_lock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Find GPS module
-    int module_index = find_module_by_id(module_id);
+    int module_index = find_module_by_id(module_id\n"\n"\n"\n"\n"\n"\n"\n");
     if (module_index < 0) {
-        pthread_mutex_unlock(&g_connector_mutex);
-        LOGX_ERROR_MSG("GPS module %d not found", module_id);
+        pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: "GPS module %d not found", module_id\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     gps_connector_module_t *module = &g_connector.modules[module_index];
     
     // Update module data
-    module->last_operation = time(NULL);
+    module->last_operation = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     module->operation_count++;
     
     if (operation_successful) {
         // Improve health score for successful operations
-        module->health_score = fmin(100.0, module->health_score + 1.0);
+        module->health_score = fmin(100.0, module->health_score + 1.0\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         // Decrease health score for failed operations
-        module->health_score = fmax(0.0, module->health_score - 5.0);
+        module->health_score = fmax(0.0, module->health_score - 5.0\n"\n"\n"\n"\n"\n"\n"\n");
         module->error_count++;
-        module->last_error = time(NULL);
+        module->last_error = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     g_connector.total_operations++;
     
-    pthread_mutex_unlock(&g_connector_mutex);
+    pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Trigger connector checks
-    perform_connector_checks();
+    perform_connector_checks(\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("Updated GPS module %d operation: %s, health: %.1f", 
-               module_id, operation_successful ? "success" : "failure", module->health_score);
+    printf("DEBUG: "Updated GPS module %d operation: %s, health: %.1f", 
+               module_id, operation_successful ? "success" : "failure", module->health_score\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -215,7 +215,7 @@ int find_module_by_id(int module_id) {
 
 // Perform connector checks
 void perform_connector_checks(void) {
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if enough time has passed since last connector check
     if ((now - g_connector.last_check) < g_connector.check_interval) {
@@ -225,15 +225,15 @@ void perform_connector_checks(void) {
     g_connector.last_check = now;
     
     // Check module health
-    gps_connector_check_module_health();
+    gps_connector_check_module_health(\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update system health
-    gps_connector_update_system_health();
+    gps_connector_update_system_health(\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Perform module coordination
-    perform_module_coordination();
+    perform_module_coordination(\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("GPS connector checks completed");
+    printf("DEBUG: "GPS connector checks completed"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check module health
@@ -244,22 +244,22 @@ void gps_connector_check_module_health(void) {
         }
         
         gps_connector_module_t *module = &g_connector.modules[i];
-        time_t now = time(NULL);
+        time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Check if module is stale
         if (module->last_operation > 0 && 
             (now - module->last_operation) > g_connector.health_timeout) {
             module->health_score *= 0.9;  // Reduce health score
-            LOGX_WARN_MSG("GPS module '%s' is stale (last operation: %lld seconds ago)", 
-                      module->name, (long long)(now - module->last_operation));
+            printf("WARN: "GPS module '%s' is stale (last operation: %lld seconds ago)", 
+                      module->name, (long long)(now - module->last_operation)\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Disable module if health is too low
         if (module->health_score < g_connector.health_threshold && module->enabled) {
             module->enabled = false; // Use configurable module enabled setting
             g_connector.active_modules--;
-            LOGX_WARN_MSG("GPS module '%s' disabled due to poor health (score: %.1f)", 
-                      module->name, module->health_score);
+            printf("WARN: "GPS module '%s' disabled due to poor health (score: %.1f)", 
+                      module->name, module->health_score\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
 }
@@ -291,7 +291,7 @@ void perform_module_coordination(void) {
     
     // Coordinate between different GPS modules
     static time_t last_coordination = 0; // Use configurable value // Use configurable count // Use configurable value
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Perform coordination every 30 seconds
     if (now - last_coordination < 30) {
@@ -304,20 +304,20 @@ void perform_module_coordination(void) {
     if (gps_integration_get_status(&integration_status) == AUTONOMY_SUCCESS) {
         // Check if GPS fusion is active (simplified check)
         if (integration_status.enabled) {
-            LOGX_DEBUG_MSG("GPS integration is active");
+            printf("DEBUG: "GPS integration is active"\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // 2. Coordinate GPS events with location services
     if (gps_location_reference_is_initialized()) {
-        LOGX_DEBUG_MSG("Location reference service is active");
+        printf("DEBUG: "Location reference service is active"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // 3. Ensure GPS health monitoring is active
     gps_health_status_t health_status;
     if (gps_health_get_status(&health_status) == AUTONOMY_SUCCESS) {
         if (health_status.enabled) {
-            LOGX_DEBUG_MSG("GPS health monitoring is active");
+            printf("DEBUG: "GPS health monitoring is active"\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
@@ -326,12 +326,12 @@ void perform_module_coordination(void) {
     if (gps_starlink_get_status(&starlink_status) == AUTONOMY_SUCCESS) {
         if (starlink_status.enabled) {
             // Starlink GPS is available, ensure it's integrated
-            LOGX_DEBUG_MSG("Starlink GPS service is active");
+            printf("DEBUG: "Starlink GPS service is active"\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // 5. Update coordination statistics
-    LOGX_DEBUG_MSG("GPS module coordination completed");
+    printf("DEBUG: "GPS module coordination completed"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get connector status
@@ -340,7 +340,7 @@ int gps_connector_get_status(gps_connector_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_connector_mutex);
+    pthread_mutex_lock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_connector.enabled;
     status->module_count = g_connector.module_count;
@@ -354,13 +354,13 @@ int gps_connector_get_status(gps_connector_status_t *status) {
     for (int i = 0; i < MAX_CONNECTED_MODULES && active_modules < MAX_CONNECTED_MODULES; i++) {
         if (g_connector.modules[i].active) {
             memcpy(&status->modules[active_modules], &g_connector.modules[i], 
-                   sizeof(gps_connector_module_t));
+                   sizeof(gps_connector_module_t)\n"\n"\n"\n"\n"\n"\n"\n");
             active_modules++;
         }
     }
     status->active_module_count = active_modules;
     
-    pthread_mutex_unlock(&g_connector_mutex);
+    pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -371,7 +371,7 @@ int gps_connector_get_config(gps_connector_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_connector_mutex);
+    pthread_mutex_lock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     config->enabled = g_connector.enabled;
     config->max_modules = g_connector.max_modules;
@@ -379,7 +379,7 @@ int gps_connector_get_config(gps_connector_config_t *config) {
     config->health_timeout = g_connector.health_timeout;
     config->health_threshold = g_connector.health_threshold;
     
-    pthread_mutex_unlock(&g_connector_mutex);
+    pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -390,7 +390,7 @@ int gps_connector_set_config(const gps_connector_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_connector_mutex);
+    pthread_mutex_lock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_connector.enabled = config->enabled;
     g_connector.max_modules = config->max_modules;
@@ -398,9 +398,9 @@ int gps_connector_set_config(const gps_connector_config_t *config) {
     g_connector.health_timeout = config->health_timeout;
     g_connector.health_threshold = config->health_threshold;
     
-    pthread_mutex_unlock(&g_connector_mutex);
+    pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS connector configuration updated");
+    printf("INFO: "GPS connector configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -410,11 +410,11 @@ int gps_connector_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_connector_mutex);
+    pthread_mutex_lock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_connector.enabled = enabled;
-    pthread_mutex_unlock(&g_connector_mutex);
+    pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS connector %s", enabled ? "enabled" : "disabled");
+    printf("INFO: "GPS connector %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -424,11 +424,11 @@ int gps_connector_set_module_enabled(int module_id, bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_connector_mutex);
+    pthread_mutex_lock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int module_index = find_module_by_id(module_id);
+    int module_index = find_module_by_id(module_id\n"\n"\n"\n"\n"\n"\n"\n");
     if (module_index < 0) {
-        pthread_mutex_unlock(&g_connector_mutex);
+        pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -443,9 +443,9 @@ int gps_connector_set_module_enabled(int module_id, bool enabled) {
         }
     }
     
-    pthread_mutex_unlock(&g_connector_mutex);
+    pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS module %d %s", module_id, enabled ? "enabled" : "disabled");
+    printf("INFO: "GPS module %d %s", module_id, enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -455,11 +455,11 @@ int gps_connector_unregister_module(int module_id) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_connector_mutex);
+    pthread_mutex_lock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int module_index = find_module_by_id(module_id);
+    int module_index = find_module_by_id(module_id\n"\n"\n"\n"\n"\n"\n"\n");
     if (module_index < 0) {
-        pthread_mutex_unlock(&g_connector_mutex);
+        pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -472,9 +472,9 @@ int gps_connector_unregister_module(int module_id) {
     module->active = false;
     g_connector.module_count--;
     
-    pthread_mutex_unlock(&g_connector_mutex);
+    pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Unregistered GPS module %d", module_id);
+    printf("INFO: "Unregistered GPS module %d", module_id\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -484,7 +484,7 @@ int gps_connector_reset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_connector_mutex);
+    pthread_mutex_lock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_connector.module_count = 0;
     g_connector.active_modules = 0;
@@ -497,9 +497,9 @@ int gps_connector_reset(void) {
         g_connector.modules[i].active = false;
     }
     
-    pthread_mutex_unlock(&g_connector_mutex);
+    pthread_mutex_unlock(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS connector system reset");
+    printf("INFO: "GPS connector system reset"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -509,8 +509,8 @@ void gps_connector_cleanup(void) {
         return;
     }
     
-    pthread_mutex_destroy(&g_connector_mutex);
+    pthread_mutex_destroy(&g_connector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_connector_initialized = false; // Use configurable setting // Use configurable setting
     
-    LOGX_INFO_MSG("GPS connector system cleaned up");
+    printf("INFO: "GPS connector system cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }

@@ -35,36 +35,36 @@ static bool g_terrain_initialized = false;
 static pthread_mutex_t g_terrain_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
-void analyze_terrain_characteristics(double lat, double lon, gps_terrain_info_t *terrain_info);
-double calculate_elevation_variance(const double *elevations, int count);
-void analyze_slope_and_gradient(double lat, double lon, gps_terrain_info_t *terrain_info);
-double calculate_slope_direction(const double *slopes);
-void analyze_terrain_roughness(double lat, double lon, gps_terrain_info_t *terrain_info);
-void analyze_drainage_patterns(double lat, double lon, gps_terrain_info_t *terrain_info);
-void analyze_vegetation_and_soil(double lat, double lon, gps_terrain_info_t *terrain_info);
-void determine_terrain_type(gps_terrain_info_t *terrain_info);
-void calculate_terrain_difficulty(gps_terrain_info_t *terrain_info);
-static bool get_cached_terrain(double lat, double lon, gps_terrain_info_t *terrain_info);
-void cache_terrain_data(double lat, double lon, const gps_terrain_info_t *terrain_info);
-int find_oldest_terrain_cache(void);
-double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
-static int perform_terrain_analysis(double lat, double lon, gps_terrain_info_t *terrain_info);
-static int get_real_elevation(double lat, double lon, double* elevation);
-static int get_elevation_from_google_api(double lat, double lon, double* elevation);
-static int get_elevation_from_local_srtm(double lat, double lon, double* elevation);
-static int get_elevation_from_open_elevation_api(double lat, double lon, double* elevation);
+void analyze_terrain_characteristics(double lat, double lon, gps_terrain_info_t *terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
+double calculate_elevation_variance(const double *elevations, int count\n"\n"\n"\n"\n"\n"\n"\n");
+void analyze_slope_and_gradient(double lat, double lon, gps_terrain_info_t *terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
+double calculate_slope_direction(const double *slopes\n"\n"\n"\n"\n"\n"\n"\n");
+void analyze_terrain_roughness(double lat, double lon, gps_terrain_info_t *terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
+void analyze_drainage_patterns(double lat, double lon, gps_terrain_info_t *terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
+void analyze_vegetation_and_soil(double lat, double lon, gps_terrain_info_t *terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
+void determine_terrain_type(gps_terrain_info_t *terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
+void calculate_terrain_difficulty(gps_terrain_info_t *terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
+static bool get_cached_terrain(double lat, double lon, gps_terrain_info_t *terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
+void cache_terrain_data(double lat, double lon, const gps_terrain_info_t *terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
+int find_oldest_terrain_cache(void\n"\n"\n"\n"\n"\n"\n"\n");
+double gps_coordinate_distance(double lat1, double lon1, double lat2, double lon2\n"\n"\n"\n"\n"\n"\n"\n");
+static int perform_terrain_analysis(double lat, double lon, gps_terrain_info_t *terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
+static int get_real_elevation(double lat, double lon, double* elevation\n"\n"\n"\n"\n"\n"\n"\n");
+static int get_elevation_from_google_api(double lat, double lon, double* elevation\n"\n"\n"\n"\n"\n"\n"\n");
+static int get_elevation_from_local_srtm(double lat, double lon, double* elevation\n"\n"\n"\n"\n"\n"\n"\n");
+static int get_elevation_from_open_elevation_api(double lat, double lon, double* elevation\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize GPS terrain analysis
 int gps_terrain_init(void) {
     if (g_terrain_initialized) {
-        LOGX_WARN_MSG("GPS terrain analysis already initialized");
+        printf("WARN: "GPS terrain analysis already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_terrain_mutex);
+    pthread_mutex_lock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize terrain state
-    memset(&g_terrain, 0, sizeof(gps_terrain_t));
+    memset(&g_terrain, 0, sizeof(gps_terrain_t)\n"\n"\n"\n"\n"\n"\n"\n");
     g_terrain.enabled = true; // Use configurable terrain analysis enabled
     g_terrain.max_cache_entries = MAX_TERRAIN_CACHE_ENTRIES;
     g_terrain.update_interval = 3600; // Use configurable interval (1 hour default)
@@ -103,9 +103,9 @@ int gps_terrain_init(void) {
     }
     
     g_terrain_initialized = true;
-    pthread_mutex_unlock(&g_terrain_mutex);
+    pthread_mutex_unlock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS terrain analysis initialized successfully");
+    printf("INFO: "GPS terrain analysis initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -120,23 +120,23 @@ int gps_terrain_analyze(double lat, double lon, gps_terrain_info_t *terrain_info
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_terrain_mutex);
+    pthread_mutex_lock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_terrain.total_analyses++;
     
     // Perform terrain analysis
-    int result = perform_terrain_analysis(lat, lon, terrain_info);
+    int result = perform_terrain_analysis(lat, lon, terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
     if (result == AUTONOMY_SUCCESS) {
         g_terrain.successful_analyses++;
         // Cache the result
-        cache_terrain_data(lat, lon, terrain_info);
+        cache_terrain_data(lat, lon, terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         g_terrain.failed_analyses++;
     }
     
-    g_terrain.last_update = time(NULL);
+    g_terrain.last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(&g_terrain_mutex);
+    pthread_mutex_unlock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return result;
 }
@@ -144,39 +144,39 @@ int gps_terrain_analyze(double lat, double lon, gps_terrain_info_t *terrain_info
 // Perform terrain analysis
 static int perform_terrain_analysis(double lat, double lon, gps_terrain_info_t *terrain_info) {
     // Initialize terrain info
-    memset(terrain_info, 0, sizeof(gps_terrain_info_t));
-    terrain_info->timestamp = time(NULL);
+    memset(terrain_info, 0, sizeof(gps_terrain_info_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    terrain_info->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     terrain_info->lat = lat;
     terrain_info->lon = lon;
     
     // Get real elevation data from external APIs or local data
     if (get_real_elevation(lat, lon, &terrain_info->elevation) != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to get real elevation data for terrain analysis");
+        printf("ERROR: "Failed to get real elevation data for terrain analysis"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     // Analyze terrain characteristics
-    analyze_terrain_characteristics(lat, lon, terrain_info);
+    analyze_terrain_characteristics(lat, lon, terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Analyze slope and gradient
-    analyze_slope_and_gradient(lat, lon, terrain_info);
+    analyze_slope_and_gradient(lat, lon, terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Analyze terrain roughness
-    analyze_terrain_roughness(lat, lon, terrain_info);
+    analyze_terrain_roughness(lat, lon, terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Analyze drainage patterns
-    analyze_drainage_patterns(lat, lon, terrain_info);
+    analyze_drainage_patterns(lat, lon, terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Analyze vegetation and soil
-    analyze_vegetation_and_soil(lat, lon, terrain_info);
+    analyze_vegetation_and_soil(lat, lon, terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Determine terrain type
-    determine_terrain_type(terrain_info);
+    determine_terrain_type(terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate terrain difficulty
-    calculate_terrain_difficulty(terrain_info);
+    calculate_terrain_difficulty(terrain_info\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("Terrain analysis completed for (%.6f, %.6f)", lat, lon);
+    printf("DEBUG: "Terrain analysis completed for (%.6f, %.6f)", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -191,9 +191,9 @@ static int get_real_elevation(double lat, double lon, double* elevation) {
         external_elevation_data_t elevation_data;
         if (external_apis_get_elevation(lat, lon, &elevation_data) == AUTONOMY_SUCCESS) {
             *elevation = elevation_data.elevation;
-            LOGX_DEBUG_MSG("Elevation data obtained from external API",
+            printf("DEBUG: "Elevation data obtained from external API",
                       "lat", lat, "lon", lon, "elevation", *elevation,
-                      "source", elevation_data.source);
+                      "source", elevation_data.source\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_SUCCESS;
         }
     }
@@ -203,7 +203,7 @@ static int get_real_elevation(double lat, double lon, double* elevation) {
         return AUTONOMY_SUCCESS;
     }
     
-    LOGX_ERROR_MSG("All elevation data sources failed for coordinates", "lat", lat, "lon", lon);
+    printf("ERROR: "All elevation data sources failed for coordinates", "lat", lat, "lon", lon\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -213,18 +213,18 @@ static int get_elevation_from_local_srtm(double lat, double lon, double* elevati
     // SRTM data is typically stored in .hgt files organized by 1-degree tiles
     
     // Calculate tile coordinates
-    int lat_tile = (int)floor(lat);
-    int lon_tile = (int)floor(lon);
+    int lat_tile = (int)floor(lat\n"\n"\n"\n"\n"\n"\n"\n");
+    int lon_tile = (int)floor(lon\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Format SRTM filename (e.g., N59E018.hgt for Stockholm area)
     char filename[64];
     snprintf(filename, sizeof(filename), "/usr/share/srtm/%c%02d%c%03d.hgt",
              lat >= 0 ? 'N' : 'S', abs(lat_tile),
-             lon >= 0 ? 'E' : 'W', abs(lon_tile));
+             lon >= 0 ? 'E' : 'W', abs(lon_tile)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    FILE* srtm_file = fopen(filename, "rb");
+    FILE* srtm_file = fopen(filename, "rb"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!srtm_file) {
-        LOGX_DEBUG_MSG("Local SRTM data file not found", "filename", filename);
+        printf("DEBUG: "Local SRTM data file not found", "filename", filename\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -236,25 +236,25 @@ static int get_elevation_from_local_srtm(double lat, double lon, double* elevati
     double lon_frac = lon - lon_tile;
     
     int pixel_lat = (int)((1.0 - lat_frac) * (srtm_size - 1)); // Flip latitude (SRTM is top-down)
-    int pixel_lon = (int)(lon_frac * (srtm_size - 1));
+    int pixel_lon = (int)(lon_frac * (srtm_size - 1)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Ensure pixels are within bounds
     if (pixel_lat < 0 || pixel_lat >= srtm_size || pixel_lon < 0 || pixel_lon >= srtm_size) {
-        fclose(srtm_file);
+        fclose(srtm_file\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Seek to the correct position in the file
     long offset = (long)(pixel_lat * srtm_size + pixel_lon) * 2; // 2 bytes per elevation value
     if (fseek(srtm_file, offset, SEEK_SET) != 0) {
-        fclose(srtm_file);
+        fclose(srtm_file\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Read elevation value (big-endian 16-bit signed integer)
     unsigned char buffer[2];
     if (fread(buffer, 1, 2, srtm_file) != 2) {
-        fclose(srtm_file);
+        fclose(srtm_file\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -263,17 +263,17 @@ static int get_elevation_from_local_srtm(double lat, double lon, double* elevati
     
     // Check for void data (-32768)
     if (elevation_raw == -32768) {
-        fclose(srtm_file);
+        fclose(srtm_file\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     *elevation = (double)elevation_raw;
     
-    fclose(srtm_file);
+    fclose(srtm_file\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("Local SRTM elevation data found",
+    printf("DEBUG: "Local SRTM elevation data found",
               "lat", lat, "lon", lon, "elevation", *elevation,
-              "filename", filename);
+              "filename", filename\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -286,11 +286,11 @@ void analyze_terrain_characteristics(double lat, double lon, gps_terrain_info_t 
     
     for (int i = 0; i < 8; i++) {
         double angle = i * M_PI / 4.0; // 8 directions
-        double offset_lat = lat + (distances[i] / 111000.0) * cos(angle);
-        double offset_lon = lon + (distances[i] / (111000.0 * cos(lat * M_PI / 180.0))) * sin(angle);
+        double offset_lat = lat + (distances[i] / 111000.0) * cos(angle\n"\n"\n"\n"\n"\n"\n"\n");
+        double offset_lon = lon + (distances[i] / (111000.0 * cos(lat * M_PI / 180.0))) * sin(angle\n"\n"\n"\n"\n"\n"\n"\n");
         if (get_real_elevation(offset_lat, offset_lon, &surrounding_elevations[i]) != AUTONOMY_SUCCESS) {
             // If we can't get elevation data, skip terrain characteristics analysis
-            LOGX_WARN_MSG("Failed to get elevation data for terrain characteristics");
+            printf("WARN: "Failed to get elevation data for terrain characteristics"\n"\n"\n"\n"\n"\n"\n"\n");
             return;
         }
     }
@@ -308,7 +308,7 @@ void analyze_terrain_characteristics(double lat, double lon, gps_terrain_info_t 
     
     terrain_info->elevation_range = max_elevation - min_elevation;
     terrain_info->average_elevation = total_elevation / 8.0;
-    terrain_info->elevation_variance = calculate_elevation_variance(surrounding_elevations, 8);
+    terrain_info->elevation_variance = calculate_elevation_variance(surrounding_elevations, 8\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Calculate elevation variance
@@ -337,8 +337,8 @@ void analyze_slope_and_gradient(double lat, double lon, gps_terrain_info_t *terr
     
     for (int i = 0; i < 8; i++) {
         double angle = i * M_PI / 4.0;
-        double offset_lat = lat + (distances[i] / 111000.0) * cos(angle);
-        double offset_lon = lon + (distances[i] / (111000.0 * cos(lat * M_PI / 180.0))) * sin(angle);
+        double offset_lat = lat + (distances[i] / 111000.0) * cos(angle\n"\n"\n"\n"\n"\n"\n"\n");
+        double offset_lon = lon + (distances[i] / (111000.0 * cos(lat * M_PI / 180.0))) * sin(angle\n"\n"\n"\n"\n"\n"\n"\n");
         double offset_elevation;
         if (get_real_elevation(offset_lat, offset_lon, &offset_elevation) != AUTONOMY_SUCCESS) {
             continue; // Skip this point if elevation data unavailable
@@ -360,23 +360,23 @@ void analyze_slope_and_gradient(double lat, double lon, gps_terrain_info_t *terr
     // Calculate average slope
     double total_slope = 0.0;
     for (int i = 0; i < 8; i++) {
-        total_slope += fabs(slopes[i]);
+        total_slope += fabs(slopes[i]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     terrain_info->average_slope = total_slope / 8.0;
     
     // Determine slope direction
-    terrain_info->slope_direction = calculate_slope_direction(slopes);
+    terrain_info->slope_direction = calculate_slope_direction(slopes\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Calculate slope direction
 double calculate_slope_direction(const double *slopes) {
     // Find the direction with the steepest slope
     int steepest_index = 0;
-    double steepest_slope = fabs(slopes[0]);
+    double steepest_slope = fabs(slopes[0]\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 1; i < 8; i++) {
         if (fabs(slopes[i]) > steepest_slope) {
-            steepest_slope = fabs(slopes[i]);
+            steepest_slope = fabs(slopes[i]\n"\n"\n"\n"\n"\n"\n"\n");
             steepest_index = i;
         }
     }
@@ -392,8 +392,8 @@ void analyze_terrain_roughness(double lat, double lon, gps_terrain_info_t *terra
     
     for (int y = -2; y <= 2; y++) {
         for (int x = -2; x <= 2; x++) {
-            double offset_lat = lat + (y * 50.0 / 111000.0);
-            double offset_lon = lon + (x * 50.0 / (111000.0 * cos(lat * M_PI / 180.0)));
+            double offset_lat = lat + (y * 50.0 / 111000.0\n"\n"\n"\n"\n"\n"\n"\n");
+            double offset_lon = lon + (x * 50.0 / (111000.0 * cos(lat * M_PI / 180.0))\n"\n"\n"\n"\n"\n"\n"\n");
             double sample_elevation;
             if (get_real_elevation(offset_lat, offset_lon, &sample_elevation) == AUTONOMY_SUCCESS) {
                 sample_elevations[sample_index++] = sample_elevation;
@@ -412,12 +412,12 @@ void analyze_terrain_roughness(double lat, double lon, gps_terrain_info_t *terra
         }
     }
     
-    terrain_info->roughness = sqrt(total_diff_squared / 24.0);
+    terrain_info->roughness = sqrt(total_diff_squared / 24.0\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Analyze drainage patterns using sophisticated hydrological models
 void analyze_drainage_patterns(double lat, double lon, gps_terrain_info_t *terrain_info) {
-    LOGX_DEBUG_MSG("Starting sophisticated drainage pattern analysis");
+    printf("DEBUG: "Starting sophisticated drainage pattern analysis"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Create elevation grid for hydrological analysis
     const int grid_size = 9; // 3x3 grid around the point
@@ -436,8 +436,8 @@ void analyze_drainage_patterns(double lat, double lon, gps_terrain_info_t *terra
     // Populate elevation grid
     for (int i = 0; i < grid_size; i++) {
         for (int j = 0; j < grid_size; j++) {
-            double offset_lat = lat + ((i - grid_size/2) * grid_spacing / 111000.0);
-            double offset_lon = lon + ((j - grid_size/2) * grid_spacing / (111000.0 * cos(lat * M_PI / 180.0)));
+            double offset_lat = lat + ((i - grid_size/2) * grid_spacing / 111000.0\n"\n"\n"\n"\n"\n"\n"\n");
+            double offset_lon = lon + ((j - grid_size/2) * grid_spacing / (111000.0 * cos(lat * M_PI / 180.0))\n"\n"\n"\n"\n"\n"\n"\n");
             
             if (get_real_elevation(offset_lat, offset_lon, &elevation_grid[i][j]) == AUTONOMY_SUCCESS) {
                 valid_grid[i][j] = true;
@@ -499,7 +499,7 @@ void analyze_drainage_patterns(double lat, double lon, gps_terrain_info_t *terra
     }
     
     if (total_flow_directions > 0) {
-        drainage_density = (double)total_flow_directions / (grid_size * grid_size);
+        drainage_density = (double)total_flow_directions / (grid_size * grid_size\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Calculate flow accumulation using multiple algorithms
@@ -548,7 +548,7 @@ void analyze_drainage_patterns(double lat, double lon, gps_terrain_info_t *terra
     }
     
     // Combine both algorithms for robust flow accumulation
-    flow_accumulation = (flow_accumulation_d8 * 0.6) + (flow_accumulation_mfd * 0.4);
+    flow_accumulation = (flow_accumulation_d8 * 0.6) + (flow_accumulation_mfd * 0.4\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate drainage network characteristics
     double drainage_frequency = drainage_density * 100.0; // Convert to percentage
@@ -560,11 +560,11 @@ void analyze_drainage_patterns(double lat, double lon, gps_terrain_info_t *terra
     terrain_info->drainage = flow_accumulation;
     terrain_info->max_slope = max_slope;
     
-    LOGX_DEBUG_MSG("Drainage analysis completed", 
+    printf("DEBUG: "Drainage analysis completed", 
                    "flow_accumulation", flow_accumulation,
                    "drainage_density", drainage_density,
                    "stream_power", stream_power,
-                   "topographic_wetness", topographic_wetness);
+                   "topographic_wetness", topographic_wetness\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Analyze vegetation and soil using real satellite data and soil databases
@@ -574,18 +574,18 @@ void analyze_vegetation_and_soil(double lat, double lon, gps_terrain_info_t *ter
     terrain_info->soil_type = 0;
     terrain_info->water_bodies = 0;
     
-    LOGX_DEBUG_MSG("Starting real vegetation and soil analysis", "lat", lat, "lon", lon);
+    printf("DEBUG: "Starting real vegetation and soil analysis", "lat", lat, "lon", lon\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set default values for vegetation and soil analysis
     terrain_info->vegetation_density = 0.5; // Default moderate vegetation
     terrain_info->soil_type = 1; // Default soil type
     terrain_info->water_bodies = 0; // Default no water bodies
         
-    LOGX_DEBUG_MSG("Vegetation and soil analysis completed",
+    printf("DEBUG: "Vegetation and soil analysis completed",
                   "lat", lat, "lon", lon,
                   "vegetation_density", terrain_info->vegetation_density,
                   "soil_type", terrain_info->soil_type,
-                  "water_bodies", terrain_info->water_bodies);
+                  "water_bodies", terrain_info->water_bodies\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Determine terrain type
@@ -636,7 +636,7 @@ void calculate_terrain_difficulty(gps_terrain_info_t *terrain_info) {
     // Drainage factor (10%)
     difficulty += (1.0 - terrain_info->drainage_efficiency) * 10.0;
     
-    terrain_info->difficulty_score = fmin(100.0, difficulty);
+    terrain_info->difficulty_score = fmin(100.0, difficulty\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Classify difficulty level
     if (terrain_info->difficulty_score < 20.0) {
@@ -654,7 +654,7 @@ void calculate_terrain_difficulty(gps_terrain_info_t *terrain_info) {
 
 // Check cached terrain data
 static bool get_cached_terrain(double lat, double lon, gps_terrain_info_t *terrain_info) {
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < g_terrain.cache_entry_count; i++) {
         if (!g_terrain.terrain_cache[i].active) {
@@ -664,7 +664,7 @@ static bool get_cached_terrain(double lat, double lon, gps_terrain_info_t *terra
         gps_terrain_cache_entry_t *cache = &g_terrain.terrain_cache[i];
         
         // Check if coordinates are within cache radius
-        double distance = gps_coordinate_distance(lat, lon, cache->lat, cache->lon);
+        double distance = gps_coordinate_distance(lat, lon, cache->lat, cache->lon\n"\n"\n"\n"\n"\n"\n"\n");
         if (distance <= g_terrain.cache_radius) {
             // Check if cache is still valid
             if ((now - cache->timestamp) < g_terrain.update_interval) {
@@ -679,7 +679,7 @@ static bool get_cached_terrain(double lat, double lon, gps_terrain_info_t *terra
                 terrain_info->soil_type = cache->soil_type;
                 terrain_info->water_bodies = cache->water_bodies;
                 
-                LOGX_DEBUG_MSG("Terrain data retrieved from cache for (%.6f, %.6f)", lat, lon);
+                printf("DEBUG: "Terrain data retrieved from cache for (%.6f, %.6f)", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
                 return true;
             }
         }
@@ -701,7 +701,7 @@ void cache_terrain_data(double lat, double lon, const gps_terrain_info_t *terrai
     
     if (slot_index < 0) {
         // Remove oldest entry to make room
-        slot_index = find_oldest_terrain_cache();
+        slot_index = find_oldest_terrain_cache(\n"\n"\n"\n"\n"\n"\n"\n");
         if (slot_index >= 0) {
             g_terrain.terrain_cache[slot_index].active = false;
             g_terrain.cache_entry_count--;
@@ -728,14 +728,14 @@ void cache_terrain_data(double lat, double lon, const gps_terrain_info_t *terrai
             g_terrain.cache_entry_count = slot_index + 1;
         }
         
-        LOGX_DEBUG_MSG("Terrain data cached for (%.6f, %.6f)", lat, lon);
+        printf("DEBUG: "Terrain data cached for (%.6f, %.6f)", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
 // Find oldest terrain cache entry
 int find_oldest_terrain_cache(void) {
     int oldest_index = -1;
-    time_t oldest_time = time(NULL);
+    time_t oldest_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < g_terrain.max_cache_entries; i++) {
         if (g_terrain.terrain_cache[i].active && 
@@ -756,7 +756,7 @@ int gps_terrain_get_status(gps_terrain_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_terrain_mutex);
+    pthread_mutex_lock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_terrain.enabled;
     status->cache_entry_count = g_terrain.cache_entry_count;
@@ -773,7 +773,7 @@ int gps_terrain_get_status(gps_terrain_status_t *status) {
         status->success_rate = 0.0;
     }
     
-    pthread_mutex_unlock(&g_terrain_mutex);
+    pthread_mutex_unlock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -784,7 +784,7 @@ int gps_terrain_get_config(gps_terrain_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_terrain_mutex);
+    pthread_mutex_lock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     config->enabled = g_terrain.enabled;
     config->max_cache_entries = g_terrain.max_cache_entries;
@@ -793,7 +793,7 @@ int gps_terrain_get_config(gps_terrain_config_t *config) {
     config->max_elevation_points = g_terrain.max_elevation_points;
     config->min_elevation_difference = g_terrain.min_elevation_difference;
     
-    pthread_mutex_unlock(&g_terrain_mutex);
+    pthread_mutex_unlock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -804,7 +804,7 @@ int gps_terrain_set_config(const gps_terrain_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_terrain_mutex);
+    pthread_mutex_lock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_terrain.enabled = config->enabled;
     g_terrain.max_cache_entries = config->max_cache_entries;
@@ -813,9 +813,9 @@ int gps_terrain_set_config(const gps_terrain_config_t *config) {
     g_terrain.max_elevation_points = config->max_elevation_points;
     g_terrain.min_elevation_difference = config->min_elevation_difference;
     
-    pthread_mutex_unlock(&g_terrain_mutex);
+    pthread_mutex_unlock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS terrain analysis configuration updated");
+    printf("INFO: "GPS terrain analysis configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -825,11 +825,11 @@ int gps_terrain_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_terrain_mutex);
+    pthread_mutex_lock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_terrain.enabled = enabled;
-    pthread_mutex_unlock(&g_terrain_mutex);
+    pthread_mutex_unlock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS terrain analysis %s", enabled ? "enabled" : "disabled");
+    printf("INFO: "GPS terrain analysis %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -840,11 +840,11 @@ int gps_terrain_force_update(void) {
     }
     
     // Reset last update time to force immediate update
-    pthread_mutex_lock(&g_terrain_mutex);
+    pthread_mutex_lock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_terrain.last_update = 0;
-    pthread_mutex_unlock(&g_terrain_mutex);
+    pthread_mutex_unlock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS terrain update forced");
+    printf("INFO: "GPS terrain update forced"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -854,10 +854,10 @@ int gps_terrain_get_statistics(gps_terrain_stats_t *stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_terrain_mutex);
+    pthread_mutex_lock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate statistics from terrain cache
-    memset(stats, 0, sizeof(gps_terrain_stats_t));
+    memset(stats, 0, sizeof(gps_terrain_stats_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < g_terrain.cache_entry_count; i++) {
         if (!g_terrain.terrain_cache[i].active) {
@@ -873,7 +873,7 @@ int gps_terrain_get_statistics(gps_terrain_stats_t *stats) {
         
         // Calculate averages
         stats->total_elevation += cache->elevation;
-        stats->total_slope += fabs(cache->slope);
+        stats->total_slope += fabs(cache->slope\n"\n"\n"\n"\n"\n"\n"\n");
         stats->total_roughness += cache->roughness;
         stats->total_entries++;
     }
@@ -888,7 +888,7 @@ int gps_terrain_get_statistics(gps_terrain_stats_t *stats) {
     stats->successful_analyses = g_terrain.successful_analyses;
     stats->failed_analyses = g_terrain.failed_analyses;
     
-    pthread_mutex_unlock(&g_terrain_mutex);
+    pthread_mutex_unlock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -899,7 +899,7 @@ int gps_terrain_reset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_terrain_mutex);
+    pthread_mutex_lock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_terrain.cache_entry_count = 0;
     g_terrain.total_analyses = 0;
@@ -923,9 +923,9 @@ int gps_terrain_reset(void) {
         g_terrain.terrain_cache[i].water_bodies = 0;
     }
     
-    pthread_mutex_unlock(&g_terrain_mutex);
+    pthread_mutex_unlock(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS terrain analysis reset");
+    printf("INFO: "GPS terrain analysis reset"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -935,8 +935,8 @@ void gps_terrain_cleanup(void) {
         return;
     }
     
-    pthread_mutex_destroy(&g_terrain_mutex);
+    pthread_mutex_destroy(&g_terrain_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_terrain_initialized = false;
     
-    LOGX_INFO_MSG("GPS terrain analysis cleaned up");
+    printf("INFO: "GPS terrain analysis cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }

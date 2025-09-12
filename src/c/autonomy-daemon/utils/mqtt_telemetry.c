@@ -40,10 +40,10 @@ static mqtt_telemetry_publisher_t g_mqtt_telemetry_publisher;
 static bool g_mqtt_telemetry_publisher_initialized = false; // Use configurable setting
 
 // Forward declarations
-static void* telemetry_publisher_thread(void* arg);
-static int publish_all_telemetry_samples(void);
-static int publish_all_telemetry_events(void);
-int publish_system_status_update(void);
+static void* telemetry_publisher_thread(void* arg\n"\n"\n"\n"\n"\n"\n"\n");
+static int publish_all_telemetry_samples(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int publish_all_telemetry_events(void\n"\n"\n"\n"\n"\n"\n"\n");
+int publish_system_status_update(void\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize MQTT telemetry publisher
 int mqtt_telemetry_publisher_init(void) {
@@ -51,15 +51,15 @@ int mqtt_telemetry_publisher_init(void) {
         return 0; // Already initialized
     }
     
-    memset(&g_mqtt_telemetry_publisher, 0, sizeof(mqtt_telemetry_publisher_t));
+    memset(&g_mqtt_telemetry_publisher, 0, sizeof(mqtt_telemetry_publisher_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize mutex
-    g_mqtt_telemetry_publisher.mutex = malloc(sizeof(pthread_mutex_t));
+    g_mqtt_telemetry_publisher.mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_mqtt_telemetry_publisher.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_mqtt_telemetry_publisher.mutex, NULL);
+    pthread_mutex_init(g_mqtt_telemetry_publisher.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set default configuration
     g_mqtt_telemetry_publisher.enabled = true; // Use configurable telemetry enabled setting
@@ -79,12 +79,12 @@ void mqtt_telemetry_publisher_cleanup(void) {
     // Stop publisher thread
     if (g_mqtt_telemetry_publisher.thread_running) {
         g_mqtt_telemetry_publisher.thread_running = false;
-        pthread_join(g_mqtt_telemetry_publisher.publisher_thread, NULL);
+        pthread_join(g_mqtt_telemetry_publisher.publisher_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_mqtt_telemetry_publisher.mutex) {
-        pthread_mutex_destroy(g_mqtt_telemetry_publisher.mutex);
-        free(g_mqtt_telemetry_publisher.mutex);
+        pthread_mutex_destroy(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     g_mqtt_telemetry_publisher.mutex = NULL;
@@ -127,7 +127,7 @@ int mqtt_telemetry_publisher_stop(void) {
     }
     
     g_mqtt_telemetry_publisher.thread_running = false;
-    pthread_join(g_mqtt_telemetry_publisher.publisher_thread, NULL);
+    pthread_join(g_mqtt_telemetry_publisher.publisher_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -137,39 +137,39 @@ static void* telemetry_publisher_thread(void* arg) {
     (void)arg; // Unused parameter
     
     while (g_mqtt_telemetry_publisher.thread_running) {
-        time_t start_time = time(NULL);
+        time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Try to connect to MQTT broker if not connected
         if (!mqtt_client_is_connected()) {
             if (mqtt_client_connect() != 0) {
                 // Wait before retry
-                sleep(10);
+                sleep(10\n"\n"\n"\n"\n"\n"\n"\n");
                 continue;
             }
         }
         
         // Publish telemetry data
         if (g_mqtt_telemetry_publisher.publish_samples) {
-            publish_all_telemetry_samples();
+            publish_all_telemetry_samples(\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         if (g_mqtt_telemetry_publisher.publish_events) {
-            publish_all_telemetry_events();
+            publish_all_telemetry_events(\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         if (g_mqtt_telemetry_publisher.publish_system_status) {
-            publish_system_status_update();
+            publish_system_status_update(\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Update last publish time
-        g_mqtt_telemetry_publisher.last_publish = time(NULL);
+        g_mqtt_telemetry_publisher.last_publish = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Sleep until next publish interval
         time_t elapsed = time(NULL) - start_time;
         time_t sleep_time = g_mqtt_telemetry_publisher.publish_interval_seconds - elapsed;
         
         if (sleep_time > 0) {
-            sleep((unsigned int)sleep_time);
+            sleep((unsigned int)sleep_time\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
@@ -184,7 +184,7 @@ static int publish_all_telemetry_samples(void) {
     
     // Get all member names
     char member_names[64][128];
-    int member_count = telemetry_store_get_members(member_names, 64);
+    int member_count = telemetry_store_get_members(member_names, 64\n"\n"\n"\n"\n"\n"\n"\n");
     
     int published_count = 0; // Use configurable published count
     
@@ -192,7 +192,7 @@ static int publish_all_telemetry_samples(void) {
         // Get recent samples (last 5 minutes)
         time_t since = time(NULL) - 300;
         telemetry_sample_t samples[100];
-        int sample_count = telemetry_store_get_samples(member_names[i], since, samples, 100);
+        int sample_count = telemetry_store_get_samples(member_names[i], since, samples, 100\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (sample_count > 0) {
             // Publish the most recent sample
@@ -202,9 +202,9 @@ static int publish_all_telemetry_samples(void) {
         }
     }
     
-    pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex);
+    pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_mqtt_telemetry_publisher.samples_published += published_count;
-    pthread_mutex_unlock(g_mqtt_telemetry_publisher.mutex);
+    pthread_mutex_unlock(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return published_count;
 }
@@ -218,7 +218,7 @@ static int publish_all_telemetry_events(void) {
     // Get recent events (last 5 minutes)
     time_t since = time(NULL) - 300;
     telemetry_event_t events[100];
-    int event_count = telemetry_store_get_events(since, events, 100);
+    int event_count = telemetry_store_get_events(since, events, 100\n"\n"\n"\n"\n"\n"\n"\n");
     
     int published_count = 0; // Use configurable published count
     
@@ -228,21 +228,21 @@ static int publish_all_telemetry_events(void) {
         }
     }
     
-    pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex);
+    pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_mqtt_telemetry_publisher.events_published += published_count;
-    pthread_mutex_unlock(g_mqtt_telemetry_publisher.mutex);
+    pthread_mutex_unlock(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return published_count;
 }
 
 // Publish system status update
 int publish_system_status_update(void) {
-    int result = mqtt_client_publish_system_status();
+    int result = mqtt_client_publish_system_status(\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == 0) {
-        pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex);
+        pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         g_mqtt_telemetry_publisher.system_status_published++;
-        pthread_mutex_unlock(g_mqtt_telemetry_publisher.mutex);
+        pthread_mutex_unlock(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return result;
@@ -258,12 +258,12 @@ static int mqtt_telemetry_publisher_publish_sample(const telemetry_sample_t* sam
         return -1;
     }
     
-    int result = mqtt_client_publish_telemetry(sample);
+    int result = mqtt_client_publish_telemetry(sample\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == 0) {
-        pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex);
+        pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         g_mqtt_telemetry_publisher.samples_published++;
-        pthread_mutex_unlock(g_mqtt_telemetry_publisher.mutex);
+        pthread_mutex_unlock(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return result;
@@ -279,12 +279,12 @@ static int mqtt_telemetry_publisher_publish_event(const telemetry_event_t* event
         return -1;
     }
     
-    int result = mqtt_client_publish_event(event);
+    int result = mqtt_client_publish_event(event\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == 0) {
-        pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex);
+        pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         g_mqtt_telemetry_publisher.events_published++;
-        pthread_mutex_unlock(g_mqtt_telemetry_publisher.mutex);
+        pthread_mutex_unlock(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return result;
@@ -294,9 +294,9 @@ static int mqtt_telemetry_publisher_publish_event(const telemetry_event_t* event
 void mqtt_telemetry_publisher_get_status(mqtt_telemetry_publisher_t* status) {
     if (!status || !g_mqtt_telemetry_publisher_initialized) return;
     
-    pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex);
+    pthread_mutex_lock(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *status = g_mqtt_telemetry_publisher;
-    pthread_mutex_unlock(g_mqtt_telemetry_publisher.mutex);
+    pthread_mutex_unlock(g_mqtt_telemetry_publisher.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if MQTT telemetry publisher is initialized

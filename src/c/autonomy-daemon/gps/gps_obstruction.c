@@ -31,22 +31,22 @@ static bool g_obstruction_initialized = false; // Use configurable setting
 static pthread_mutex_t g_obstruction_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
-double calculate_signal_quality(const gps_data_t *gps_data);
-static gps_obstruction_type_t detect_obstruction_type(const gps_data_t *gps_data, double signal_quality, double *confidence);
-void record_obstruction(gps_obstruction_type_t obstruction_type, double confidence, double signal_quality, const gps_data_t *gps_data);
-void analyze_satellite_obstructions(const gps_data_t *gps_data);
+double calculate_signal_quality(const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+static gps_obstruction_type_t detect_obstruction_type(const gps_data_t *gps_data, double signal_quality, double *confidence\n"\n"\n"\n"\n"\n"\n"\n");
+void record_obstruction(gps_obstruction_type_t obstruction_type, double confidence, double signal_quality, const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+void analyze_satellite_obstructions(const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize GPS obstruction analysis
 int gps_obstruction_init(void) {
     if (g_obstruction_initialized) {
-        LOGX_WARN_MSG("GPS obstruction analysis already initialized");
+        printf("WARN: "GPS obstruction analysis already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex);
+    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize obstruction state
-    memset(&g_obstruction, 0, sizeof(gps_obstruction_t));
+    memset(&g_obstruction, 0, sizeof(gps_obstruction_t)\n"\n"\n"\n"\n"\n"\n"\n");
     g_obstruction.enabled = true; // Use configurable gps obstruction detection enabled
     g_obstruction.max_records = MAX_OBSTRUCTION_RECORDS;
     g_obstruction.analysis_interval = OBSTRUCTION_ANALYSIS_INTERVAL;
@@ -82,9 +82,9 @@ int gps_obstruction_init(void) {
     }
     
     g_obstruction_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_obstruction_mutex);
+    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS obstruction analysis initialized successfully");
+    printf("INFO: "GPS obstruction analysis initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -94,13 +94,13 @@ int gps_obstruction_analyze_gps_data(const gps_data_t *gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex);
+    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if enough time has passed since last analysis
     if ((now - g_obstruction.last_analysis) < g_obstruction.analysis_interval) {
-        pthread_mutex_unlock(&g_obstruction_mutex);
+        pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
@@ -110,27 +110,27 @@ int gps_obstruction_analyze_gps_data(const gps_data_t *gps_data) {
     // Perform obstruction analysis
     gps_obstruction_type_t obstruction_type = GPS_OBSTRUCTION_TYPE_UNKNOWN;
     double confidence = 0.0; // Use configurable value
-    double signal_quality = calculate_signal_quality(gps_data);
+    double signal_quality = calculate_signal_quality(gps_data\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Detect obstructions based on GPS data characteristics
-    obstruction_type = detect_obstruction_type(gps_data, signal_quality, &confidence);
+    obstruction_type = detect_obstruction_type(gps_data, signal_quality, &confidence\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Record obstruction if detected
     if (obstruction_type != GPS_OBSTRUCTION_TYPE_UNKNOWN && confidence > g_obstruction.detection_threshold) {
-        record_obstruction(obstruction_type, confidence, signal_quality, gps_data);
+        record_obstruction(obstruction_type, confidence, signal_quality, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
         g_obstruction.obstruction_detected = true;
         g_obstruction.obstruction_count++;
         
-        LOGX_INFO_MSG("GPS obstruction detected: type=%d, confidence=%.2f, signal_quality=%.2f", 
-                   obstruction_type, confidence, signal_quality);
+        printf("INFO: "GPS obstruction detected: type=%d, confidence=%.2f, signal_quality=%.2f", 
+                   obstruction_type, confidence, signal_quality\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         g_obstruction.obstruction_detected = false;
     }
     
     // Analyze satellite-specific obstructions
-    analyze_satellite_obstructions(gps_data);
+    analyze_satellite_obstructions(gps_data\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(&g_obstruction_mutex);
+    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -140,33 +140,33 @@ double calculate_signal_quality(const gps_data_t *gps_data) {
     double signal_quality = 1.0; // Use configurable value
     
     // Satellite count factor (0-1)
-    double satellite_factor = fmin(gps_data->satellites / 12.0, 1.0);
+    double satellite_factor = fmin(gps_data->satellites / 12.0, 1.0\n"\n"\n"\n"\n"\n"\n"\n");
     signal_quality *= satellite_factor;
     
     // Accuracy factor (0-1)
     double accuracy_factor = 1.0; // Use configurable value
     if (gps_data->accuracy > 0) {
-        accuracy_factor = fmax(0.0, 1.0 - (gps_data->accuracy / 100.0));
+        accuracy_factor = fmax(0.0, 1.0 - (gps_data->accuracy / 100.0)\n"\n"\n"\n"\n"\n"\n"\n");
     }
     signal_quality *= accuracy_factor;
     
     // Fix quality factor (0-1)
     double fix_quality_factor = 1.0; // Use configurable value
     if (gps_data->fix_quality >= 0) {
-        fix_quality_factor = fmax(0.0, gps_data->fix_quality / 2.0);
+        fix_quality_factor = fmax(0.0, gps_data->fix_quality / 2.0\n"\n"\n"\n"\n"\n"\n"\n");
     }
     signal_quality *= fix_quality_factor;
     
     // Age factor (0-1)
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     double age_factor = 1.0; // Use configurable value
     if (gps_data->timestamp > 0) {
-        double age_seconds = (double)(now - gps_data->timestamp);
+        double age_seconds = (double)(now - gps_data->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
         age_factor = fmax(0.0, 1.0 - (age_seconds / 300.0)); // 5 minute decay
     }
     signal_quality *= age_factor;
     
-    return fmax(0.0, fmin(1.0, signal_quality));
+    return fmax(0.0, fmin(1.0, signal_quality)\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Detect obstruction type based on GPS data
@@ -238,11 +238,11 @@ void record_obstruction(gps_obstruction_type_t obstruction_type, double confiden
     // Shift obstruction records array
     for (int i = g_obstruction.max_records - 1; i > 0; i--) {
         memcpy(&g_obstruction.obstruction_records[i], &g_obstruction.obstruction_records[i-1], 
-               sizeof(gps_obstruction_record_t));
+               sizeof(gps_obstruction_record_t)\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Add new record
-    g_obstruction.obstruction_records[0].timestamp = time(NULL);
+    g_obstruction.obstruction_records[0].timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     g_obstruction.obstruction_records[0].obstruction_type = obstruction_type;
     g_obstruction.obstruction_records[0].confidence = confidence;
     g_obstruction.obstruction_records[0].signal_quality = signal_quality;
@@ -275,7 +275,7 @@ void analyze_satellite_obstructions(const gps_data_t *gps_data) {
     
     if (total_satellites > 0) {
         // For now, just log the satellite count since we don't have individual satellite data
-        LOGX_DEBUG_MSG("GPS has %d satellites in view", total_satellites);
+        printf("DEBUG: "GPS has %d satellites in view", total_satellites\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Simple obstruction detection based on satellite count and accuracy
         if (total_satellites < 4) {
@@ -286,7 +286,7 @@ void analyze_satellite_obstructions(const gps_data_t *gps_data) {
         }
         
         // Calculate average signal strength based on accuracy (inverse relationship)
-        avg_signal_strength = 100.0 - (gps_data->accuracy * 5.0);
+        avg_signal_strength = 100.0 - (gps_data->accuracy * 5.0\n"\n"\n"\n"\n"\n"\n"\n");
         if (avg_signal_strength < 0) avg_signal_strength = 0;
         if (avg_signal_strength > 100) avg_signal_strength = 100;
         
@@ -301,21 +301,21 @@ void analyze_satellite_obstructions(const gps_data_t *gps_data) {
         double obstruction_percentage = (double)obstructed_satellites / total_satellites * 100.0;
         
         // Log obstruction analysis results
-        LOGX_DEBUG_MSG("Satellite obstruction analysis completed", 
+        printf("DEBUG: "Satellite obstruction analysis completed", 
                       "total_satellites", total_satellites,
                       "obstructed_satellites", obstructed_satellites,
                       "obstruction_percentage", obstruction_percentage,
                       "avg_signal_strength", avg_signal_strength,
                       "min_signal_strength", min_signal_strength,
-                      "max_signal_strength", max_signal_strength);
+                      "max_signal_strength", max_signal_strength\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Issue warnings for significant obstructions
         if (obstruction_percentage > 50.0) {
-            LOGX_WARN_MSG("High satellite obstruction detected", 
-                          "obstruction_percentage", obstruction_percentage);
+            printf("WARN: "High satellite obstruction detected", 
+                          "obstruction_percentage", obstruction_percentage\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (obstruction_percentage > 25.0) {
-            LOGX_INFO_MSG("Moderate satellite obstruction detected", 
-                          "obstruction_percentage", obstruction_percentage);
+            printf("INFO: "Moderate satellite obstruction detected", 
+                          "obstruction_percentage", obstruction_percentage\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
 }
@@ -326,7 +326,7 @@ int gps_obstruction_get_status(gps_obstruction_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex);
+    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_obstruction.enabled;
     status->obstruction_detected = g_obstruction.obstruction_detected;
@@ -339,13 +339,13 @@ int gps_obstruction_get_status(gps_obstruction_status_t *status) {
     for (int i = 0; i < g_obstruction.max_records && recent_records < 50; i++) {
         if (g_obstruction.obstruction_records[i].timestamp > 0) {
             memcpy(&status->recent_records[recent_records], &g_obstruction.obstruction_records[i], 
-                   sizeof(gps_obstruction_record_t));
+                   sizeof(gps_obstruction_record_t)\n"\n"\n"\n"\n"\n"\n"\n");
             recent_records++;
         }
     }
     status->recent_record_count = recent_records;
     
-    pthread_mutex_unlock(&g_obstruction_mutex);
+    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -356,7 +356,7 @@ int gps_obstruction_get_config(gps_obstruction_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex);
+    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     config->enabled = g_obstruction.enabled;
     config->max_records = g_obstruction.max_records;
@@ -365,7 +365,7 @@ int gps_obstruction_get_config(gps_obstruction_config_t *config) {
     config->detection_threshold = g_obstruction.detection_threshold;
     config->max_satellite_obstructions = g_obstruction.max_satellite_obstructions;
     
-    pthread_mutex_unlock(&g_obstruction_mutex);
+    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -376,7 +376,7 @@ int gps_obstruction_set_config(const gps_obstruction_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex);
+    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_obstruction.enabled = config->enabled;
     g_obstruction.max_records = config->max_records;
@@ -385,9 +385,9 @@ int gps_obstruction_set_config(const gps_obstruction_config_t *config) {
     g_obstruction.detection_threshold = config->detection_threshold;
     g_obstruction.max_satellite_obstructions = config->max_satellite_obstructions;
     
-    pthread_mutex_unlock(&g_obstruction_mutex);
+    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS obstruction analysis configuration updated");
+    printf("INFO: "GPS obstruction analysis configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -397,11 +397,11 @@ int gps_obstruction_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex);
+    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_obstruction.enabled = enabled;
-    pthread_mutex_unlock(&g_obstruction_mutex);
+    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS obstruction analysis %s", enabled ? "enabled" : "disabled");
+    printf("INFO: "GPS obstruction analysis %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -412,11 +412,11 @@ int gps_obstruction_force_analysis(void) {
     }
     
     // Reset last analysis time to force immediate analysis
-    pthread_mutex_lock(&g_obstruction_mutex);
+    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_obstruction.last_analysis = 0;
-    pthread_mutex_unlock(&g_obstruction_mutex);
+    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS obstruction analysis forced");
+    printf("INFO: "GPS obstruction analysis forced"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -426,10 +426,10 @@ int gps_obstruction_get_statistics(gps_obstruction_stats_t *stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex);
+    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate statistics from obstruction records
-    memset(stats, 0, sizeof(gps_obstruction_stats_t));
+    memset(stats, 0, sizeof(gps_obstruction_stats_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < g_obstruction.record_count; i++) {
         gps_obstruction_record_t *record = &g_obstruction.obstruction_records[i];
@@ -456,7 +456,7 @@ int gps_obstruction_get_statistics(gps_obstruction_stats_t *stats) {
     stats->total_obstructions = g_obstruction.obstruction_count;
     stats->total_analyses = g_obstruction.total_analyses;
     
-    pthread_mutex_unlock(&g_obstruction_mutex);
+    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -467,7 +467,7 @@ int gps_obstruction_reset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex);
+    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_obstruction.record_count = 0;
     g_obstruction.obstruction_detected = false;
@@ -496,9 +496,9 @@ int gps_obstruction_reset(void) {
         g_obstruction.satellite_obstructions[i].detection_count = 0;
     }
     
-    pthread_mutex_unlock(&g_obstruction_mutex);
+    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS obstruction analysis reset");
+    printf("INFO: "GPS obstruction analysis reset"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -508,8 +508,8 @@ void gps_obstruction_cleanup(void) {
         return;
     }
     
-    pthread_mutex_destroy(&g_obstruction_mutex);
+    pthread_mutex_destroy(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_obstruction_initialized = false; // Use configurable setting
     
-    LOGX_INFO_MSG("GPS obstruction analysis cleaned up");
+    printf("INFO: "GPS obstruction analysis cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }

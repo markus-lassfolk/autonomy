@@ -15,10 +15,10 @@ int notification_config_manager_init(notification_config_manager_t* config_mgr) 
         return -1;
     }
     
-    memset(config_mgr, 0, sizeof(notification_config_manager_t));
+    memset(config_mgr, 0, sizeof(notification_config_manager_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Load default configuration
-    return notification_config_manager_load_defaults(config_mgr);
+    return notification_config_manager_load_defaults(config_mgr\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Clean up notification configuration manager
@@ -26,10 +26,10 @@ void notification_config_manager_cleanup(notification_config_manager_t* config_m
     if (!config_mgr) return;
     
     // Clear sensitive data
-    memset(config_mgr->config.pushover_config.token, 0, sizeof(config_mgr->config.pushover_config.token));
-    memset(config_mgr->config.email_config.password, 0, sizeof(config_mgr->config.email_config.password));
+    memset(config_mgr->config.pushover_config.token, 0, sizeof(config_mgr->config.pushover_config.token)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(config_mgr->config.email_config.password, 0, sizeof(config_mgr->config.email_config.password)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    memset(config_mgr, 0, sizeof(notification_config_manager_t));
+    memset(config_mgr, 0, sizeof(notification_config_manager_t)\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Load default configuration
@@ -70,13 +70,13 @@ int notification_config_manager_load_defaults(notification_config_manager_t* con
     config->ubus_enabled = true; // Use configurable ubus enabled setting
     
     // Initialize channel configurations with defaults
-    memset(&config->pushover_config, 0, sizeof(pushover_config_t));
+    memset(&config->pushover_config, 0, sizeof(pushover_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
     config->pushover_config.enabled = false; // Use configurable pushover enabled
     config->pushover_config.timeout_seconds = 30; // Use configurable pushover timeout
     config->pushover_config.retry_attempts = 3; // Use configurable pushover retry attempts
     config->pushover_config.retry_delay_seconds = 5; // Use configurable pushover retry delay
     
-    memset(&config->email_config, 0, sizeof(email_config_t));
+    memset(&config->email_config, 0, sizeof(email_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
     config->email_config.enabled = false; // Use configurable email enabled
     config->email_config.smtp_port = 587; // Use configurable smtp port
     config->email_config.timeout_seconds = 30; // Use configurable email timeout
@@ -87,7 +87,7 @@ int notification_config_manager_load_defaults(notification_config_manager_t* con
     config->email_config.html_format = true; // Use configurable html format
     config->email_config.include_context = true; // Use configurable context inclusion
     
-    memset(&config->slack_config, 0, sizeof(slack_config_t));
+    memset(&config->slack_config, 0, sizeof(slack_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
     config->slack_config.enabled = false; // Use configurable slack enabled
     config->slack_config.timeout_seconds = 30; // Use configurable slack timeout
     config->slack_config.retry_attempts = 3; // Use configurable slack retry attempts
@@ -95,7 +95,7 @@ int notification_config_manager_load_defaults(notification_config_manager_t* con
     config->slack_config.use_attachments = true; // Use configurable slack attachments
     config->slack_config.include_context = true; // Use configurable slack context
     
-    memset(&config->discord_config, 0, sizeof(discord_config_t));
+    memset(&config->discord_config, 0, sizeof(discord_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
     config->discord_config.enabled = false; // Use configurable discord enabled
     config->discord_config.timeout_seconds = 30; // Use configurable discord timeout
     config->discord_config.retry_attempts = 3; // Use configurable discord retry attempts
@@ -103,10 +103,10 @@ int notification_config_manager_load_defaults(notification_config_manager_t* con
     config->discord_config.use_embeds = true; // Use configurable discord embeds
     config->discord_config.include_context = true; // Use configurable discord context
     
-    memset(&config->webhook_config, 0, sizeof(webhook_config_t));
+    memset(&config->webhook_config, 0, sizeof(webhook_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
     config->webhook_config.enabled = false; // Use configurable webhook enabled
-    safe_strncpy(config->webhook_config.method, "POST", sizeof(config->webhook_config.method));
-    safe_strncpy(config->webhook_config.content_type, "application/json", sizeof(config->webhook_config.content_type));
+    safe_strncpy(config->webhook_config.method, "POST", sizeof(config->webhook_config.method)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(config->webhook_config.content_type, "application/json", sizeof(config->webhook_config.content_type)\n"\n"\n"\n"\n"\n"\n"\n");
     config->webhook_config.timeout_seconds = 30; // Use configurable webhook timeout
     config->webhook_config.retry_attempts = 3; // Use configurable webhook retry attempts
     config->webhook_config.retry_delay_seconds = 5; // Use configurable webhook retry delay
@@ -115,8 +115,8 @@ int notification_config_manager_load_defaults(notification_config_manager_t* con
     
     // Quiet hours settings
     config->quiet_hours_enabled = false; // Use configurable quiet hours enabled
-    safe_strncpy(config->quiet_hours_start, "22:00", sizeof(config->quiet_hours_start));
-    safe_strncpy(config->quiet_hours_end, "08:00", sizeof(config->quiet_hours_end));
+    safe_strncpy(config->quiet_hours_start, "22:00", sizeof(config->quiet_hours_start)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(config->quiet_hours_end, "08:00", sizeof(config->quiet_hours_end)\n"\n"\n"\n"\n"\n"\n"\n");
     config->suppress_low_priority_weekends = false; // Use configurable weekend suppression
     
     // Intelligence settings
@@ -130,7 +130,7 @@ int notification_config_manager_load_defaults(notification_config_manager_t* con
     
     // Update metadata
     config_mgr->config_loaded = true;
-    config_mgr->last_loaded = time(NULL);
+    config_mgr->last_loaded = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     config_mgr->last_validated = 0;
     
     return 0;
@@ -143,93 +143,93 @@ int notification_config_manager_load_from_uci(notification_config_manager_t* con
     }
     
     // Start with defaults
-    int result = notification_config_manager_load_defaults(config_mgr);
+    int result = notification_config_manager_load_defaults(config_mgr\n"\n"\n"\n"\n"\n"\n"\n");
     if (result != 0) {
         return result;
     }
     
     // Load UCI configuration
-    FILE *uci_fp = popen("uci show autonomy.notifications 2>/dev/null", "r");
+    FILE *uci_fp = popen("uci show autonomy.notifications 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!uci_fp) {
-        LOGX_WARN_MSG("Failed to read UCI configuration, using defaults");
-        config_mgr->last_loaded = time(NULL);
+        printf("WARN: "Failed to read UCI configuration, using defaults"\n"\n"\n"\n"\n"\n"\n"\n");
+        config_mgr->last_loaded = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
     char line[512];
     while (fgets(line, sizeof(line), uci_fp)) {
         // Parse UCI output format: autonomy.notifications.option='value'
-        char *option_start = strchr(line, '.');
+        char *option_start = strchr(line, '.'\n"\n"\n"\n"\n"\n"\n"\n");
         if (!option_start) continue;
         option_start++; // Skip the dot
         
-        char *value_start = strchr(option_start, '=');
+        char *value_start = strchr(option_start, '='\n"\n"\n"\n"\n"\n"\n"\n");
         if (!value_start) continue;
         *value_start = '\0';
         value_start++;
         
         // Remove quotes and newline
-        char *value_end = strchr(value_start, '\'');
+        char *value_end = strchr(value_start, '\''\n"\n"\n"\n"\n"\n"\n"\n");
         if (value_end) {
             *value_end = '\0';
         }
-        value_end = strchr(value_start, '\n');
+        value_end = strchr(value_start, '\n'\n"\n"\n"\n"\n"\n"\n"\n");
         if (value_end) {
             *value_end = '\0';
         }
         
         // Map UCI options to configuration
         if (strcmp(option_start, "enabled") == 0) {
-            config_mgr->config.enabled = (strcmp(value_start, "1") == 0);
+            config_mgr->config.enabled = (strcmp(value_start, "1") == 0\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "email_enabled") == 0) {
-            config_mgr->config.email_enabled = (strcmp(value_start, "1") == 0);
+            config_mgr->config.email_enabled = (strcmp(value_start, "1") == 0\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "email_smtp_server") == 0) {
             strncpy(config_mgr->config.email_smtp_server, value_start, 
-                   sizeof(config_mgr->config.email_smtp_server) - 1);
+                   sizeof(config_mgr->config.email_smtp_server) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "email_smtp_port") == 0) {
-            config_mgr->config.email_smtp_port = atoi(value_start);
+            config_mgr->config.email_smtp_port = atoi(value_start\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "email_username") == 0) {
             strncpy(config_mgr->config.email_username, value_start, 
-                   sizeof(config_mgr->config.email_username) - 1);
+                   sizeof(config_mgr->config.email_username) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "email_password") == 0) {
             strncpy(config_mgr->config.email_password, value_start, 
-                   sizeof(config_mgr->config.email_password) - 1);
+                   sizeof(config_mgr->config.email_password) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "email_recipients") == 0) {
             strncpy(config_mgr->config.email_recipients, value_start, 
-                   sizeof(config_mgr->config.email_recipients) - 1);
+                   sizeof(config_mgr->config.email_recipients) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "telegram_enabled") == 0) {
-            config_mgr->config.telegram_enabled = (strcmp(value_start, "1") == 0);
+            config_mgr->config.telegram_enabled = (strcmp(value_start, "1") == 0\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "telegram_bot_token") == 0) {
             strncpy(config_mgr->config.telegram_bot_token, value_start, 
-                   sizeof(config_mgr->config.telegram_bot_token) - 1);
+                   sizeof(config_mgr->config.telegram_bot_token) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "telegram_chat_id") == 0) {
             strncpy(config_mgr->config.telegram_chat_id, value_start, 
-                   sizeof(config_mgr->config.telegram_chat_id) - 1);
+                   sizeof(config_mgr->config.telegram_chat_id) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "webhook_enabled") == 0) {
-            config_mgr->config.webhook_enabled = (strcmp(value_start, "1") == 0);
+            config_mgr->config.webhook_enabled = (strcmp(value_start, "1") == 0\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "webhook_url") == 0) {
             strncpy(config_mgr->config.webhook_url, value_start, 
-                   sizeof(config_mgr->config.webhook_url) - 1);
+                   sizeof(config_mgr->config.webhook_url) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "webhook_timeout") == 0) {
-            config_mgr->config.webhook_timeout = atoi(value_start);
+            config_mgr->config.webhook_timeout = atoi(value_start\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "rate_limit_enabled") == 0) {
-            config_mgr->config.rate_limit_enabled = (strcmp(value_start, "1") == 0);
+            config_mgr->config.rate_limit_enabled = (strcmp(value_start, "1") == 0\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "rate_limit_max_per_hour") == 0) {
-            config_mgr->config.rate_limit_max_per_hour = atoi(value_start);
+            config_mgr->config.rate_limit_max_per_hour = atoi(value_start\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcmp(option_start, "rate_limit_max_per_day") == 0) {
-            config_mgr->config.rate_limit_max_per_day = atoi(value_start);
+            config_mgr->config.rate_limit_max_per_day = atoi(value_start\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    pclose(uci_fp);
+    pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
     
-    config_mgr->last_loaded = time(NULL);
+    config_mgr->last_loaded = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("Notification configuration loaded from UCI", 
+    printf("INFO: "Notification configuration loaded from UCI", 
                   "enabled", config_mgr->config.enabled,
                   "email_enabled", config_mgr->config.email_enabled,
                   "telegram_enabled", config_mgr->config.telegram_enabled,
-                  "webhook_enabled", config_mgr->config.webhook_enabled);
+                  "webhook_enabled", config_mgr->config.webhook_enabled\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -241,7 +241,7 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
         return -1;
     }
     
-    memset(result, 0, sizeof(config_validation_result_t));
+    memset(result, 0, sizeof(config_validation_result_t)\n"\n"\n"\n"\n"\n"\n"\n");
     result->is_valid = true;
     
     comprehensive_notification_config_t* config = &config_mgr->config;
@@ -249,13 +249,13 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
     // Validate Pushover configuration
     if (config->pushover_enabled) {
         if (strlen(config->pushover_config.token) == 0) {
-            strncat(result->error_messages, "Pushover token required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
+            strncat(result->error_messages, "Pushover token required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             result->error_count++;
             result->is_valid = false;
             config->pushover_enabled = false; // Use configurable pushover enabled setting
         }
         if (strlen(config->pushover_config.user) == 0) {
-            strncat(result->error_messages, "Pushover user required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
+            strncat(result->error_messages, "Pushover user required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             result->error_count++;
             result->is_valid = false;
             config->pushover_enabled = false; // Use configurable pushover enabled setting
@@ -265,19 +265,19 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
     // Validate email configuration
     if (config->email_enabled) {
         if (strlen(config->email_config.smtp_host) == 0) {
-            strncat(result->error_messages, "Email SMTP host required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
+            strncat(result->error_messages, "Email SMTP host required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             result->error_count++;
             result->is_valid = false;
             config->email_enabled = false; // Use configurable email enabled setting
         }
         if (strlen(config->email_config.from_address) == 0) {
-            strncat(result->error_messages, "Email from address required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
+            strncat(result->error_messages, "Email from address required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             result->error_count++;
             result->is_valid = false;
             config->email_enabled = false; // Use configurable email enabled setting
         }
         if (strlen(config->email_config.recipients) == 0) {
-            strncat(result->error_messages, "Email recipients required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
+            strncat(result->error_messages, "Email recipients required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             result->error_count++;
             result->is_valid = false;
             config->email_enabled = false; // Use configurable email enabled setting
@@ -287,7 +287,7 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
     // Validate Slack configuration
     if (config->slack_enabled) {
         if (strlen(config->slack_config.webhook_url) == 0) {
-            strncat(result->error_messages, "Slack webhook URL required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
+            strncat(result->error_messages, "Slack webhook URL required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             result->error_count++;
             result->is_valid = false;
             config->slack_enabled = false; // Use configurable slack enabled setting
@@ -297,7 +297,7 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
     // Validate Discord configuration
     if (config->discord_enabled) {
         if (strlen(config->discord_config.webhook_url) == 0) {
-            strncat(result->error_messages, "Discord webhook URL required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
+            strncat(result->error_messages, "Discord webhook URL required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             result->error_count++;
             result->is_valid = false;
             config->discord_enabled = false; // Use configurable discord enabled setting
@@ -307,7 +307,7 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
     // Validate webhook configuration
     if (config->webhook_enabled) {
         if (strlen(config->webhook_config.url) == 0) {
-            strncat(result->error_messages, "Webhook URL required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1);
+            strncat(result->error_messages, "Webhook URL required; ", sizeof(result->error_messages) - strlen(result->error_messages) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             result->error_count++;
             result->is_valid = false;
             config->webhook_enabled = false; // Use configurable webhook enabled setting
@@ -370,7 +370,7 @@ int notification_config_manager_validate(notification_config_manager_t* config_m
     
     // Update validation metadata
     config_mgr->last_validation = *result;
-    config_mgr->last_validated = time(NULL);
+    config_mgr->last_validated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     return result->is_valid ? 0 : -1;
 }
@@ -466,7 +466,7 @@ void notification_config_manager_get_json(notification_config_manager_t* config_
     if (!config_mgr || !json_output || max_size == 0) return;
     
     if (!config_mgr->config_loaded) {
-        strncpy(json_output, "{\"error\":\"Configuration not loaded\"}", max_size - 1);
+        strncpy(json_output, "{\"error\":\"Configuration not loaded\"}", max_size - 1\n"\n"\n"\n"\n"\n"\n"\n");
         return;
     }
     
@@ -532,7 +532,7 @@ void notification_config_manager_get_json(notification_config_manager_t* config_
              config->quiet_hours_enabled ? "true" : "false",
              config->quiet_hours_start,
              config->quiet_hours_end,
-             config->suppress_low_priority_weekends ? "true" : "false");
+             config->suppress_low_priority_weekends ? "true" : "false"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Reload configuration from UCI
@@ -542,7 +542,7 @@ int notification_config_manager_reload(notification_config_manager_t* config_mgr
     }
     
     // This would reload from UCI
-    return notification_config_manager_load_from_uci(config_mgr);
+    return notification_config_manager_load_from_uci(config_mgr\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if configuration is valid

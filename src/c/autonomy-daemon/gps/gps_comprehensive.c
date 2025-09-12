@@ -39,46 +39,46 @@ static const char* FIX_QUALITY_STRINGS[] = {
 };
 
 // Forward declarations
-static int collect_from_source(gps_source_type_t source_type, standardized_gps_data_t* data);
-static int perform_multi_source_fusion(gps_fusion_result_t* result);
-static int collect_with_hybrid_prioritization(standardized_gps_data_t* result);
+static int collect_from_source(gps_source_type_t source_type, standardized_gps_data_t* data\n"\n"\n"\n"\n"\n"\n"\n");
+static int perform_multi_source_fusion(gps_fusion_result_t* result\n"\n"\n"\n"\n"\n"\n"\n");
+static int collect_with_hybrid_prioritization(standardized_gps_data_t* result\n"\n"\n"\n"\n"\n"\n"\n");
 static double calculate_source_confidence(const standardized_gps_data_t* data, 
-                                         const gps_source_health_t* health);
+                                         const gps_source_health_t* health\n"\n"\n"\n"\n"\n"\n"\n");
 static void update_source_health(gps_source_type_t source_type, bool success,
-                                double collection_time_ms, const standardized_gps_data_t* data);
-static void finalize_gps_data(standardized_gps_data_t* data);
-static bool validate_gps_coordinates(double latitude, double longitude);
-static bool validate_gps_accuracy(double accuracy);
-static bool validate_gps_timestamp(time_t timestamp);
-static void* collection_thread_worker(void* arg);
-static void* health_monitor_thread_worker(void* arg);
+                                double collection_time_ms, const standardized_gps_data_t* data\n"\n"\n"\n"\n"\n"\n"\n");
+static void finalize_gps_data(standardized_gps_data_t* data\n"\n"\n"\n"\n"\n"\n"\n");
+static bool validate_gps_coordinates(double latitude, double longitude\n"\n"\n"\n"\n"\n"\n"\n");
+static bool validate_gps_accuracy(double accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+static bool validate_gps_timestamp(time_t timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+static void* collection_thread_worker(void* arg\n"\n"\n"\n"\n"\n"\n"\n");
+static void* health_monitor_thread_worker(void* arg\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize comprehensive GPS collector
 int gps_comprehensive_init(const gps_comprehensive_config_t* config) {
     if (g_collector_initialized) {
-        LOGX_WARN_MSG("Comprehensive GPS collector already initialized");
+        printf("WARN: "Comprehensive GPS collector already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
     if (!config) {
-        LOGX_ERROR_MSG("GPS comprehensive config is NULL");
+        printf("ERROR: "GPS comprehensive config is NULL"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    memset(&g_gps_collector, 0, sizeof(gps_comprehensive_collector_t));
+    memset(&g_gps_collector, 0, sizeof(gps_comprehensive_collector_t)\n"\n"\n"\n"\n"\n"\n"\n");
     g_gps_collector.config = *config;
     
     // Initialize mutex
     if (pthread_mutex_init(&g_gps_collector.mutex, NULL) != 0) {
-        LOGX_ERROR_MSG("Failed to initialize GPS collector mutex");
+        printf("ERROR: "Failed to initialize GPS collector mutex"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Initialize source health tracking
     for (int i = 0; i < GPS_SOURCE_MAX; i++) {
         g_gps_collector.source_health[i].source_type = (gps_source_type_t)i;
-        strcpy(g_gps_collector.source_health[i].source_name, gps_source_type_to_string((gps_source_type_t)i));
-        g_gps_collector.source_health[i].first_seen = time(NULL);
+        strcpy(g_gps_collector.source_health[i].source_name, gps_source_type_to_string((gps_source_type_t)i)\n"\n"\n"\n"\n"\n"\n"\n");
+        g_gps_collector.source_health[i].first_seen = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         g_gps_collector.source_health[i].health_score = 1.0; // Start with full health
         g_gps_collector.source_health[i].best_accuracy = 999999.0; // Initialize to very high value
     }
@@ -86,7 +86,7 @@ int gps_comprehensive_init(const gps_comprehensive_config_t* config) {
     // Initialize movement state
     g_gps_collector.movement_state.is_moving = false;
     g_gps_collector.movement_state.was_moving = false;
-    g_gps_collector.movement_state.stationary_start = time(NULL);
+    g_gps_collector.movement_state.stationary_start = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Start background threads if enabled
     if (config->enable_health_monitoring) {
@@ -94,19 +94,19 @@ int gps_comprehensive_init(const gps_comprehensive_config_t* config) {
         
         if (pthread_create(&g_gps_collector.health_monitor_thread, NULL, 
                           health_monitor_thread_worker, NULL) != 0) {
-            LOGX_ERROR_MSG("Failed to create GPS health monitor thread");
-            pthread_mutex_destroy(&g_gps_collector.mutex);
+            printf("ERROR: "Failed to create GPS health monitor thread"\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_destroy(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_ERROR_SYSTEM;
         }
     }
     
     g_collector_initialized = true;
     
-    LOGX_INFO_MSG("Comprehensive GPS collector initialized",
+    printf("INFO: "Comprehensive GPS collector initialized",
               "movement_detection", config->enable_movement_detection ? "true" : "false",
               "hybrid_prioritization", config->enable_hybrid_prioritization ? "true" : "false",
               "data_fusion", config->enable_data_fusion ? "true" : "false",
-              "health_monitoring", config->enable_health_monitoring ? "true" : "false");
+              "health_monitoring", config->enable_health_monitoring ? "true" : "false"\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -115,22 +115,22 @@ int gps_comprehensive_init(const gps_comprehensive_config_t* config) {
 void gps_comprehensive_cleanup(void) {
     if (!g_collector_initialized) return;
     
-    pthread_mutex_lock(&g_gps_collector.mutex);
+    pthread_mutex_lock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Stop background threads
     g_gps_collector.threads_running = false;
     
     if (g_gps_collector.config.enable_health_monitoring) {
-        pthread_cancel(g_gps_collector.health_monitor_thread);
-        pthread_join(g_gps_collector.health_monitor_thread, NULL);
+        pthread_cancel(g_gps_collector.health_monitor_thread\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_join(g_gps_collector.health_monitor_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_unlock(&g_gps_collector.mutex);
-    pthread_mutex_destroy(&g_gps_collector.mutex);
+    pthread_mutex_unlock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_collector_initialized = false;
     
-    LOGX_INFO_MSG("Comprehensive GPS collector cleaned up");
+    printf("INFO: "Comprehensive GPS collector cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Collect GPS data from best available source
@@ -139,13 +139,13 @@ int gps_comprehensive_collect_best(standardized_gps_data_t* result) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_gps_collector.mutex);
+    pthread_mutex_lock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    memset(result, 0, sizeof(standardized_gps_data_t));
+    memset(result, 0, sizeof(standardized_gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     int ret;
     if (g_gps_collector.config.enable_hybrid_prioritization) {
-        ret = collect_with_hybrid_prioritization(result);
+        ret = collect_with_hybrid_prioritization(result\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         // Traditional priority-based collection
         ret = AUTONOMY_ERROR_NOT_FOUND;
@@ -163,17 +163,17 @@ int gps_comprehensive_collect_best(standardized_gps_data_t* result) {
     }
     
     if (ret == AUTONOMY_SUCCESS) {
-        finalize_gps_data(result);
+        finalize_gps_data(result\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Update movement detection
         if (g_gps_collector.config.enable_movement_detection) {
-            gps_comprehensive_detect_movement(result);
+            gps_comprehensive_detect_movement(result\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Update statistics
         g_gps_collector.total_collections++;
         g_gps_collector.successful_collections++;
-        g_gps_collector.last_collection = time(NULL);
+        g_gps_collector.last_collection = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Store as last known position
         g_gps_collector.last_known = *result;
@@ -181,7 +181,7 @@ int gps_comprehensive_collect_best(standardized_gps_data_t* result) {
         g_gps_collector.failed_collections++;
     }
     
-    pthread_mutex_unlock(&g_gps_collector.mutex);
+    pthread_mutex_unlock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return ret;
 }
@@ -192,19 +192,19 @@ int gps_comprehensive_collect_all_and_fuse(gps_fusion_result_t* result) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_gps_collector.mutex);
+    pthread_mutex_lock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    memset(result, 0, sizeof(gps_fusion_result_t));
-    result->fusion_time = time(NULL);
+    memset(result, 0, sizeof(gps_fusion_result_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    result->fusion_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int ret = perform_multi_source_fusion(result);
+    int ret = perform_multi_source_fusion(result\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (ret == AUTONOMY_SUCCESS) {
         g_gps_collector.fusion_operations++;
         g_gps_collector.last_fusion = *result;
     }
     
-    pthread_mutex_unlock(&g_gps_collector.mutex);
+    pthread_mutex_unlock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return ret;
 }
@@ -214,9 +214,9 @@ static int collect_with_hybrid_prioritization(standardized_gps_data_t* result) {
     standardized_gps_data_t all_source_data[GPS_SOURCE_MAX];
     int sources_collected = 0;
     
-    LOGX_DEBUG_MSG("Starting hybrid GPS collection",
+    printf("DEBUG: "Starting hybrid GPS collection",
               "min_confidence", g_gps_collector.config.min_acceptable_confidence,
-              "fallback_threshold", g_gps_collector.config.fallback_confidence_threshold);
+              "fallback_threshold", g_gps_collector.config.fallback_confidence_threshold\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Step 1: Try each source in priority order, collecting confidence data
     gps_source_type_t priority_order[] = {GPS_SOURCE_RUTOS, GPS_SOURCE_STARLINK, 
@@ -230,41 +230,41 @@ static int collect_with_hybrid_prioritization(standardized_gps_data_t* result) {
             all_source_data[sources_collected] = data;
             sources_collected++;
             
-            LOGX_DEBUG_MSG("GPS source collected",
+            printf("DEBUG: "GPS source collected",
                       "source", gps_source_type_to_string(source_type),
                       "confidence", data.confidence,
                       "accuracy", data.accuracy,
-                      "priority", i + 1);
+                      "priority", i + 1\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Apply hybrid logic
             if (i == 0) { // RUTOS (highest priority)
                 if (data.confidence >= g_gps_collector.config.fallback_confidence_threshold) {
-                    LOGX_INFO_MSG("GPS source selected",
+                    printf("INFO: "GPS source selected",
                              "source", gps_source_type_to_string(source_type),
                              "reason", "high_confidence_primary",
-                             "confidence", data.confidence);
+                             "confidence", data.confidence\n"\n"\n"\n"\n"\n"\n"\n");
                     *result = data;
                     return AUTONOMY_SUCCESS;
                 }
-                LOGX_DEBUG_MSG("GPS primary source low confidence",
+                printf("DEBUG: "GPS primary source low confidence",
                           "source", gps_source_type_to_string(source_type),
                           "confidence", data.confidence,
-                          "threshold", g_gps_collector.config.fallback_confidence_threshold);
+                          "threshold", g_gps_collector.config.fallback_confidence_threshold\n"\n"\n"\n"\n"\n"\n"\n");
             } else if (i == 1) { // Starlink (second priority)
                 if (data.confidence >= g_gps_collector.config.fallback_confidence_threshold) {
-                    LOGX_INFO_MSG("GPS source selected",
+                    printf("INFO: "GPS source selected",
                              "source", gps_source_type_to_string(source_type),
                              "reason", "high_confidence_secondary",
-                             "confidence", data.confidence);
+                             "confidence", data.confidence\n"\n"\n"\n"\n"\n"\n"\n");
                     *result = data;
                     return AUTONOMY_SUCCESS;
                 }
             } else { // OpenCellID, Google, or other sources
                 if (data.confidence >= g_gps_collector.config.fallback_confidence_threshold) {
-                    LOGX_INFO_MSG("GPS source selected",
+                    printf("INFO: "GPS source selected",
                              "source", gps_source_type_to_string(source_type),
                              "reason", "high_confidence_fallback",
-                             "confidence", data.confidence);
+                             "confidence", data.confidence\n"\n"\n"\n"\n"\n"\n"\n");
                     *result = data;
                     return AUTONOMY_SUCCESS;
                 }
@@ -296,19 +296,19 @@ static int collect_with_hybrid_prioritization(standardized_gps_data_t* result) {
             }
         }
         
-        LOGX_WARN_MSG("GPS using low confidence source",
+        printf("WARN: "GPS using low confidence source",
                  "source", best_data->source,
                  "confidence", best_data->confidence,
-                 "min_required", g_gps_collector.config.min_acceptable_confidence);
+                 "min_required", g_gps_collector.config.min_acceptable_confidence\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     *result = *best_data;
     
-    LOGX_INFO_MSG("GPS source selected",
+    printf("INFO: "GPS source selected",
              "source", best_data->source,
              "reason", "best_available",
              "confidence", best_data->confidence,
-             "accuracy", best_data->accuracy);
+             "accuracy", best_data->accuracy\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -317,12 +317,12 @@ static int collect_with_hybrid_prioritization(standardized_gps_data_t* result) {
 static int collect_from_source(gps_source_type_t source_type, standardized_gps_data_t* data) {
     if (!data) return AUTONOMY_ERROR_INVALID_PARAM;
     
-    memset(data, 0, sizeof(standardized_gps_data_t));
+    memset(data, 0, sizeof(standardized_gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
     data->source_type = source_type;
-    strcpy(data->source, gps_source_type_to_string(source_type));
-    data->collection_time = time(NULL);
+    strcpy(data->source, gps_source_type_to_string(source_type)\n"\n"\n"\n"\n"\n"\n"\n");
+    data->collection_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
-    time_t start_time = time(NULL);
+    time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     int ret = AUTONOMY_ERROR_NOT_FOUND;
     
     switch (source_type) {
@@ -331,25 +331,25 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
             gps_data_t rutos_data;
             
             // Try to get GPS data from RUTOS GPS daemon
-            FILE *gps_fp = popen("gpspipe -w -n 1 2>/dev/null", "r");
+            FILE *gps_fp = popen("gpspipe -w -n 1 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
             if (gps_fp) {
                 char gps_line[512];
                 if (fgets(gps_line, sizeof(gps_line), gps_fp)) {
                     // Parse NMEA or JSON GPS data
                     if (strstr(gps_line, "GPGGA") || strstr(gps_line, "GPRMC")) {
                         // Parse NMEA sentence
-                        char *lat_start = strstr(gps_line, ",");
+                        char *lat_start = strstr(gps_line, ","\n"\n"\n"\n"\n"\n"\n"\n");
                         if (lat_start) {
-                            lat_start = strchr(lat_start + 1, ',');
+                            lat_start = strchr(lat_start + 1, ','\n"\n"\n"\n"\n"\n"\n"\n");
                             if (lat_start) {
-                                lat_start = strchr(lat_start + 1, ',');
+                                lat_start = strchr(lat_start + 1, ','\n"\n"\n"\n"\n"\n"\n"\n");
                                 if (lat_start) {
-                                    rutos_data.latitude = atof(lat_start + 1);
-                                    char *lon_start = strchr(lat_start + 1, ',');
+                                    rutos_data.latitude = atof(lat_start + 1\n"\n"\n"\n"\n"\n"\n"\n");
+                                    char *lon_start = strchr(lat_start + 1, ','\n"\n"\n"\n"\n"\n"\n"\n");
                                     if (lon_start) {
-                                        lon_start = strchr(lon_start + 1, ',');
+                                        lon_start = strchr(lon_start + 1, ','\n"\n"\n"\n"\n"\n"\n"\n");
                                         if (lon_start) {
-                                            rutos_data.longitude = atof(lon_start + 1);
+                                            rutos_data.longitude = atof(lon_start + 1\n"\n"\n"\n"\n"\n"\n"\n");
                                             rutos_data.valid = true;
                                         }
                                     }
@@ -358,42 +358,42 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                         }
                     } else if (strstr(gps_line, "\"lat\":") && strstr(gps_line, "\"lon\":")) {
                         // Parse JSON GPS data
-                        char *lat_start = strstr(gps_line, "\"lat\":");
-                        char *lon_start = strstr(gps_line, "\"lon\":");
+                        char *lat_start = strstr(gps_line, "\"lat\":"\n"\n"\n"\n"\n"\n"\n"\n");
+                        char *lon_start = strstr(gps_line, "\"lon\":"\n"\n"\n"\n"\n"\n"\n"\n");
                         if (lat_start && lon_start) {
-                            lat_start = strchr(lat_start, ':');
-                            lon_start = strchr(lon_start, ':');
+                            lat_start = strchr(lat_start, ':'\n"\n"\n"\n"\n"\n"\n"\n");
+                            lon_start = strchr(lon_start, ':'\n"\n"\n"\n"\n"\n"\n"\n");
                             if (lat_start && lon_start) {
-                                rutos_data.latitude = atof(lat_start + 1);
-                                rutos_data.longitude = atof(lon_start + 1);
+                                rutos_data.latitude = atof(lat_start + 1\n"\n"\n"\n"\n"\n"\n"\n");
+                                rutos_data.longitude = atof(lon_start + 1\n"\n"\n"\n"\n"\n"\n"\n");
                                 rutos_data.valid = true;
                             }
                         }
                     }
                 }
-                pclose(gps_fp);
+                pclose(gps_fp\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             // If GPS parsing failed, try alternative method
             if (!rutos_data.valid) {
-                FILE *alt_fp = popen("ubus call gps get_status 2>/dev/null", "r");
+                FILE *alt_fp = popen("ubus call gps get_status 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
                 if (alt_fp) {
                     char ubus_line[512];
                     if (fgets(ubus_line, sizeof(ubus_line), alt_fp)) {
                         // Parse UBUS GPS response
-                        char *lat_start = strstr(ubus_line, "\"latitude\":");
-                        char *lon_start = strstr(ubus_line, "\"longitude\":");
+                        char *lat_start = strstr(ubus_line, "\"latitude\":"\n"\n"\n"\n"\n"\n"\n"\n");
+                        char *lon_start = strstr(ubus_line, "\"longitude\":"\n"\n"\n"\n"\n"\n"\n"\n");
                         if (lat_start && lon_start) {
-                            lat_start = strchr(lat_start, ':');
-                            lon_start = strchr(lon_start, ':');
+                            lat_start = strchr(lat_start, ':'\n"\n"\n"\n"\n"\n"\n"\n");
+                            lon_start = strchr(lon_start, ':'\n"\n"\n"\n"\n"\n"\n"\n");
                             if (lat_start && lon_start) {
-                                rutos_data.latitude = atof(lat_start + 1);
-                                rutos_data.longitude = atof(lon_start + 1);
+                                rutos_data.latitude = atof(lat_start + 1\n"\n"\n"\n"\n"\n"\n"\n");
+                                rutos_data.longitude = atof(lon_start + 1\n"\n"\n"\n"\n"\n"\n"\n");
                                 rutos_data.valid = true;
                             }
                         }
                     }
-                    pclose(alt_fp);
+                    pclose(alt_fp\n"\n"\n"\n"\n"\n"\n"\n");
                 }
             }
             
@@ -408,7 +408,7 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                 rutos_data.accuracy = 10.0; // Default accuracy
                 rutos_data.satellites = 8;  // Default satellite count
             }
-            rutos_data.timestamp = time(NULL);
+            rutos_data.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             
             if (rutos_data.valid) {
                 data->latitude = rutos_data.latitude;
@@ -424,7 +424,7 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                 data->timestamp = rutos_data.timestamp;
                 data->valid = true;
                 data->source_priority = 1; // Highest priority
-                strcpy(data->raw_nmea, "RUTOS NMEA data");
+                strcpy(data->raw_nmea, "RUTOS NMEA data"\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 ret = AUTONOMY_SUCCESS;
             }
@@ -449,10 +449,10 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                     starlink_data.timestamp = observation.timestamp;
                     starlink_data.satellites = observation.gps_satellites;
                     
-                    LOGX_DEBUG_MSG("Starlink GPS data from gRPC", 
+                    printf("DEBUG: "Starlink GPS data from gRPC", 
                                   "gps_valid", observation.gps_valid,
                                   "gps_satellites", observation.gps_satellites,
-                                  "gps_accuracy", observation.gps_accuracy_m);
+                                  "gps_accuracy", observation.gps_accuracy_m\n"\n"\n"\n"\n"\n"\n"\n");
                 } else {
                     // Starlink GPS not valid
                     starlink_data.valid = false;
@@ -461,7 +461,7 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                     starlink_data.altitude = 0.0;
                     starlink_data.accuracy = 0.0;
                     starlink_data.satellites = 0;
-                    starlink_data.timestamp = time(NULL);
+                    starlink_data.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
                 }
             } else {
                 // Failed to get gRPC observation
@@ -471,7 +471,7 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                 starlink_data.altitude = 0.0;
                 starlink_data.accuracy = 0.0;
                 starlink_data.satellites = 0;
-                starlink_data.timestamp = time(NULL);
+                starlink_data.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             if (starlink_data.valid) {
@@ -483,7 +483,7 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                 data->timestamp = starlink_data.timestamp;
                 data->valid = true;
                 data->source_priority = 2; // Second priority
-                strcpy(data->raw_json, "Starlink GPS JSON");
+                strcpy(data->raw_json, "Starlink GPS JSON"\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 ret = AUTONOMY_SUCCESS;
             }
@@ -505,7 +505,7 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                     data->timestamp = triangulation.calculation_time;
                     data->valid = true;
                     data->source_priority = 3; // Third priority
-                    strcpy(data->raw_json, triangulation.method);
+                    strcpy(data->raw_json, triangulation.method\n"\n"\n"\n"\n"\n"\n"\n");
                     
                     ret = AUTONOMY_SUCCESS;
                 }
@@ -516,7 +516,7 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
         case GPS_SOURCE_GOOGLE: {
             // Use Google Geolocation API via external_apis if configured
             external_location_data_t location_data = {0};
-            int gl_rc = external_apis_get_google_location(NULL, NULL, &location_data);
+            int gl_rc = external_apis_get_google_location(NULL, NULL, &location_data\n"\n"\n"\n"\n"\n"\n"\n");
             if (gl_rc == AUTONOMY_SUCCESS) {
                 data->latitude = location_data.latitude;
                 data->longitude = location_data.longitude;
@@ -525,8 +525,8 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                 data->timestamp = location_data.timestamp;
                 data->valid = true;
                 data->source_priority = 4; // Lower priority than Starlink/OpenCell
-                safe_strncpy(data->source, "google_geolocation", sizeof(data->source));
-                safe_strncpy(data->raw_json, location_data.source, sizeof(data->raw_json));
+                safe_strncpy(data->source, "google_geolocation", sizeof(data->source)\n"\n"\n"\n"\n"\n"\n"\n");
+                safe_strncpy(data->raw_json, location_data.source, sizeof(data->raw_json)\n"\n"\n"\n"\n"\n"\n"\n");
                 ret = AUTONOMY_SUCCESS;
             } else {
                 ret = AUTONOMY_ERROR_NOT_FOUND;
@@ -540,17 +540,17 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
     }
     
     // Calculate collection time
-    time_t end_time = time(NULL);
+    time_t end_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     data->collection_duration_ms = difftime(end_time, start_time) * 1000.0;
     
     // Calculate confidence if not already set
     if (ret == AUTONOMY_SUCCESS && data->confidence == 0.0) {
         gps_source_health_t* health = &g_gps_collector.source_health[source_type];
-        data->confidence = calculate_source_confidence(data, health);
+        data->confidence = calculate_source_confidence(data, health\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Update source health
-    update_source_health(source_type, ret == AUTONOMY_SUCCESS, data->collection_duration_ms, data);
+    update_source_health(source_type, ret == AUTONOMY_SUCCESS, data->collection_duration_ms, data\n"\n"\n"\n"\n"\n"\n"\n");
     
     return ret;
 }
@@ -564,7 +564,7 @@ static int perform_multi_source_fusion(gps_fusion_result_t* result) {
     double weighted_accuracy = 0.0;
     double total_confidence = 0.0;
     
-    strcpy(result->fusion_method, "weighted_fusion");
+    strcpy(result->fusion_method, "weighted_fusion"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Collect data from all available sources
     for (int i = 0; i < GPS_SOURCE_MAX; i++) {
@@ -578,12 +578,12 @@ static int perform_multi_source_fusion(gps_fusion_result_t* result) {
             
             // Accuracy weighting (better accuracy = higher weight)
             if (data.accuracy > 0) {
-                double accuracy_factor = 1.0 / (1.0 + data.accuracy / 100.0);
+                double accuracy_factor = 1.0 / (1.0 + data.accuracy / 100.0\n"\n"\n"\n"\n"\n"\n"\n");
                 weight *= accuracy_factor * g_gps_collector.config.fusion_weight_accuracy;
             }
             
             // Freshness weighting (newer data = higher weight)
-            double age_seconds = difftime(time(NULL), data.timestamp);
+            double age_seconds = difftime(time(NULL), data.timestamp\n"\n"\n"\n"\n"\n"\n"\n");
             double freshness_factor = exp(-age_seconds / 300.0); // Decay over 5 minutes
             weight *= freshness_factor * g_gps_collector.config.fusion_weight_freshness;
             
@@ -598,25 +598,25 @@ static int perform_multi_source_fusion(gps_fusion_result_t* result) {
             total_weight += weight;
             total_confidence += data.confidence;
             
-            LOGX_DEBUG_MSG("GPS fusion source",
+            printf("DEBUG: "GPS fusion source",
                       "source", data.source,
                       "weight", weight,
                       "confidence", data.confidence,
                       "accuracy", data.accuracy,
-                      "age_seconds", age_seconds);
+                      "age_seconds", age_seconds\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     if (sources_collected == 0) {
-        strcpy(result->fusion_reasoning, "no_sources_available");
+        strcpy(result->fusion_reasoning, "no_sources_available"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     if (sources_collected == 1) {
         // Single source, no fusion needed
         result->fused_data = result->source_data[0];
-        strcpy(result->fusion_method, "single_source");
-        strcpy(result->fusion_reasoning, "only_one_source_available");
+        strcpy(result->fusion_method, "single_source"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(result->fusion_reasoning, "only_one_source_available"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         // Multi-source fusion
         if (total_weight > 0) {
@@ -641,29 +641,29 @@ static int perform_multi_source_fusion(gps_fusion_result_t* result) {
             result->fused_data.accuracy /= sources_collected;
             result->fused_data.confidence = total_confidence / sources_collected;
             
-            strcpy(result->fusion_method, "simple_average");
+            strcpy(result->fusion_method, "simple_average"\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Set fusion metadata
-        result->fused_data.timestamp = time(NULL);
+        result->fused_data.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         result->fused_data.valid = true;
-        strcpy(result->fused_data.source, "fused");
+        strcpy(result->fused_data.source, "fused"\n"\n"\n"\n"\n"\n"\n"\n");
         result->fused_data.source_type = GPS_SOURCE_MAX; // Special value for fused data
         
         snprintf(result->fusion_reasoning, sizeof(result->fusion_reasoning),
-                "fused_%d_sources_weight_%.2f", sources_collected, total_weight);
+                "fused_%d_sources_weight_%.2f", sources_collected, total_weight\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     result->sources_used = sources_collected;
     result->fusion_confidence = result->fused_data.confidence;
     
-    LOGX_INFO_MSG("GPS fusion completed",
+    printf("INFO: "GPS fusion completed",
              "method", result->fusion_method,
              "sources_used", sources_collected,
              "confidence", result->fusion_confidence,
              "accuracy", result->fused_data.accuracy,
              "lat", result->fused_data.latitude,
-             "lon", result->fused_data.longitude);
+             "lon", result->fused_data.longitude\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -683,7 +683,7 @@ int gps_comprehensive_detect_movement(const standardized_gps_data_t* current_dat
     double distance = gps_calculate_distance(
         g_gps_collector.last_known.latitude, g_gps_collector.last_known.longitude,
         current_data->latitude, current_data->longitude
-    );
+    \n"\n"\n"\n"\n"\n"\n"\n");
     
     bool has_moved = distance > g_gps_collector.config.movement_threshold_m;
     bool was_moving = g_gps_collector.movement_state.is_moving;
@@ -691,13 +691,13 @@ int gps_comprehensive_detect_movement(const standardized_gps_data_t* current_dat
     if (has_moved && !was_moving) {
         // Movement detected
         g_gps_collector.movement_state.is_moving = true;
-        g_gps_collector.movement_state.movement_start = time(NULL);
+        g_gps_collector.movement_state.movement_start = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         g_gps_collector.movement_detections++;
         
         // Calculate speed
-        double time_diff = difftime(current_data->timestamp, g_gps_collector.last_known.timestamp);
+        double time_diff = difftime(current_data->timestamp, g_gps_collector.last_known.timestamp\n"\n"\n"\n"\n"\n"\n"\n");
         if (time_diff > 0) {
-            double speed = gps_calculate_speed(distance, time_diff);
+            double speed = gps_calculate_speed(distance, time_diff\n"\n"\n"\n"\n"\n"\n"\n");
             g_gps_collector.movement_state.current_speed_ms = speed;
             
             if (speed > g_gps_collector.movement_state.max_speed_ms) {
@@ -707,25 +707,25 @@ int gps_comprehensive_detect_movement(const standardized_gps_data_t* current_dat
         
         g_gps_collector.movement_state.total_distance_m += distance;
         g_gps_collector.movement_state.movement_events++;
-        g_gps_collector.movement_state.last_movement_event = time(NULL);
+        g_gps_collector.movement_state.last_movement_event = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
-        LOGX_INFO_MSG("Movement detected",
+        printf("INFO: "Movement detected",
                  "distance_m", distance,
                  "threshold_m", g_gps_collector.config.movement_threshold_m,
                  "speed_ms", g_gps_collector.movement_state.current_speed_ms,
                  "from_lat", g_gps_collector.last_known.latitude,
                  "from_lon", g_gps_collector.last_known.longitude,
                  "to_lat", current_data->latitude,
-                 "to_lon", current_data->longitude);
+                 "to_lon", current_data->longitude\n"\n"\n"\n"\n"\n"\n"\n");
         
     } else if (!has_moved && was_moving) {
         // Stopped moving
         g_gps_collector.movement_state.is_moving = false;
-        g_gps_collector.movement_state.stationary_start = time(NULL);
+        g_gps_collector.movement_state.stationary_start = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
-        LOGX_INFO_MSG("Movement stopped",
+        printf("INFO: "Movement stopped",
                  "distance_m", distance,
-                 "threshold_m", g_gps_collector.config.movement_threshold_m);
+                 "threshold_m", g_gps_collector.config.movement_threshold_m\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     g_gps_collector.movement_state.was_moving = was_moving;
@@ -784,7 +784,7 @@ static double calculate_source_confidence(const standardized_gps_data_t* data,
         }
         
         // Freshness bonus (newer data = higher confidence)
-        double age_seconds = difftime(time(NULL), data->timestamp);
+        double age_seconds = difftime(time(NULL), data->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
         if (age_seconds <= 30) confidence += 0.1;
         else if (age_seconds <= 60) confidence += 0.05;
         else if (age_seconds > 300) confidence -= 0.2; // Penalty for old data
@@ -814,14 +814,14 @@ static void update_source_health(gps_source_type_t source_type, bool success,
     gps_source_health_t* health = &g_gps_collector.source_health[source_type];
     
     health->total_collections++;
-    health->last_collection_attempt = time(NULL);
-    health->last_seen = time(NULL);
+    health->last_collection_attempt = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    health->last_seen = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (success) {
         health->successful_collections++;
         health->consecutive_successes++;
         health->consecutive_failures = 0;
-        health->last_success = time(NULL);
+        health->last_success = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (data) {
             // Update performance metrics
@@ -852,7 +852,7 @@ static void update_source_health(gps_source_type_t source_type, bool success,
         health->failed_collections++;
         health->consecutive_failures++;
         health->consecutive_successes = 0;
-        health->last_failure = time(NULL);
+        health->last_failure = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Calculate success rate
@@ -865,24 +865,24 @@ static void update_source_health(gps_source_type_t source_type, bool success,
     
     // Penalty for consecutive failures
     if (health->consecutive_failures > 0) {
-        health_score *= (1.0 - (health->consecutive_failures * 0.1));
+        health_score *= (1.0 - (health->consecutive_failures * 0.1)\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Bonus for consecutive successes
     if (health->consecutive_successes > 5) {
-        health_score = fmin(1.0, health_score * 1.1);
+        health_score = fmin(1.0, health_score * 1.1\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    health->health_score = fmax(0.0, health_score);
-    health->healthy = (health->health_score > g_gps_collector.config.min_health_score);
-    health->available = health->healthy && (health->consecutive_failures < g_gps_collector.config.max_consecutive_failures);
+    health->health_score = fmax(0.0, health_score\n"\n"\n"\n"\n"\n"\n"\n");
+    health->healthy = (health->health_score > g_gps_collector.config.min_health_score\n"\n"\n"\n"\n"\n"\n"\n");
+    health->available = health->healthy && (health->consecutive_failures < g_gps_collector.config.max_consecutive_failures\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("GPS source health updated",
+    printf("DEBUG: "GPS source health updated",
               "source", gps_source_type_to_string(source_type),
               "success", success ? "true" : "false",
               "health_score", health->health_score,
               "success_rate", health->success_rate,
-              "consecutive_failures", health->consecutive_failures);
+              "consecutive_failures", health->consecutive_failures\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Finalize GPS data (final processing)
@@ -890,12 +890,12 @@ static void finalize_gps_data(standardized_gps_data_t* data) {
     if (!data) return;
     
     // Calculate age
-    data->age_seconds = difftime(time(NULL), data->timestamp);
+    data->age_seconds = difftime(time(NULL), data->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Apply staleness penalty
     if (data->age_seconds > g_gps_collector.config.staleness_threshold_s) {
         data->staleness_penalty = data->age_seconds / g_gps_collector.config.staleness_threshold_s;
-        data->confidence *= (1.0 - fmin(0.5, data->staleness_penalty * 0.1));
+        data->confidence *= (1.0 - fmin(0.5, data->staleness_penalty * 0.1)\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Apply accuracy bonus
@@ -928,7 +928,7 @@ int gps_comprehensive_health_check(void) {
         gps_source_health_t* health = &g_gps_collector.source_health[i];
         if (!health->healthy) {
             all_healthy = false;
-            LOGX_WARN_MSG("GPS source unhealthy", "source", gps_source_type_to_string((gps_source_type_t)i));
+            printf("WARN: "GPS source unhealthy", "source", gps_source_type_to_string((gps_source_type_t)i)\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
@@ -941,9 +941,9 @@ int gps_comprehensive_get_source_health(gps_source_type_t source_type, gps_sourc
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_gps_collector.mutex);
+    pthread_mutex_lock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *health = g_gps_collector.source_health[source_type];
-    pthread_mutex_unlock(&g_gps_collector.mutex);
+    pthread_mutex_unlock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -954,14 +954,14 @@ int gps_comprehensive_get_all_source_health(gps_source_health_t* health_array, i
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_gps_collector.mutex);
+    pthread_mutex_lock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     int count = (max_sources < GPS_SOURCE_MAX) ? max_sources : GPS_SOURCE_MAX;
     for (int i = 0; i < count; i++) {
         health_array[i] = g_gps_collector.source_health[i];
     }
     
-    pthread_mutex_unlock(&g_gps_collector.mutex);
+    pthread_mutex_unlock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return count;
 }
@@ -972,9 +972,9 @@ int gps_comprehensive_get_movement_state(gps_movement_state_t* movement_state) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_gps_collector.mutex);
+    pthread_mutex_lock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *movement_state = g_gps_collector.movement_state;
-    pthread_mutex_unlock(&g_gps_collector.mutex);
+    pthread_mutex_unlock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1031,7 +1031,7 @@ double gps_comprehensive_calculate_confidence(const standardized_gps_data_t* gps
     confidence *= source_health->health_score;
     
     // Factor in data freshness
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     int age_seconds = now - gps_data->timestamp;
     if (age_seconds < 60) {
         confidence += 0.2; // Fresh data
@@ -1093,9 +1093,9 @@ double gps_calculate_distance(double lat1, double lon1, double lat2, double lon2
     
     double a = sin(delta_lat / 2) * sin(delta_lat / 2) +
                cos(lat1_rad) * cos(lat2_rad) *
-               sin(delta_lon / 2) * sin(delta_lon / 2);
+               sin(delta_lon / 2) * sin(delta_lon / 2\n"\n"\n"\n"\n"\n"\n"\n");
     
-    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a)\n"\n"\n"\n"\n"\n"\n"\n");
     
     return R * c;
 }
@@ -1106,14 +1106,14 @@ double gps_calculate_bearing(double lat1, double lon1, double lat2, double lon2)
     double lat2_rad = lat2 * M_PI / 180.0;
     double delta_lon = (lon2 - lon1) * M_PI / 180.0;
     
-    double y = sin(delta_lon) * cos(lat2_rad);
-    double x = cos(lat1_rad) * sin(lat2_rad) - sin(lat1_rad) * cos(lat2_rad) * cos(delta_lon);
+    double y = sin(delta_lon) * cos(lat2_rad\n"\n"\n"\n"\n"\n"\n"\n");
+    double x = cos(lat1_rad) * sin(lat2_rad) - sin(lat1_rad) * cos(lat2_rad) * cos(delta_lon\n"\n"\n"\n"\n"\n"\n"\n");
     
-    double bearing_rad = atan2(y, x);
+    double bearing_rad = atan2(y, x\n"\n"\n"\n"\n"\n"\n"\n");
     double bearing_deg = bearing_rad * 180.0 / M_PI;
     
     // Normalize to 0-360 degrees
-    return fmod(bearing_deg + 360.0, 360.0);
+    return fmod(bearing_deg + 360.0, 360.0\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Calculate speed from distance and time
@@ -1137,7 +1137,7 @@ int gps_comprehensive_get_statistics(uint64_t* total_collections,
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_gps_collector.mutex);
+    pthread_mutex_lock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (total_collections) *total_collections = g_gps_collector.total_collections;
     if (successful_collections) *successful_collections = g_gps_collector.successful_collections;
@@ -1145,7 +1145,7 @@ int gps_comprehensive_get_statistics(uint64_t* total_collections,
     if (fusion_operations) *fusion_operations = g_gps_collector.fusion_operations;
     if (movement_detections) *movement_detections = g_gps_collector.movement_detections;
     
-    pthread_mutex_unlock(&g_gps_collector.mutex);
+    pthread_mutex_unlock(&g_gps_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1154,24 +1154,24 @@ int gps_comprehensive_get_statistics(uint64_t* total_collections,
 static void* health_monitor_thread_worker(void* arg) {
     (void)arg; // Suppress unused parameter warning
     
-    LOGX_INFO_MSG("GPS health monitor thread started");
+    printf("INFO: "GPS health monitor thread started"\n"\n"\n"\n"\n"\n"\n"\n");
     
     while (g_collector_initialized && g_gps_collector.threads_running) {
-        sleep(g_gps_collector.config.health_check_interval_s);
+        sleep(g_gps_collector.config.health_check_interval_s\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (!g_gps_collector.threads_running) break;
         
         // Perform health check for all sources
-        gps_comprehensive_health_check();
+        gps_comprehensive_health_check(\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    LOGX_INFO_MSG("GPS health monitor thread stopped");
+    printf("INFO: "GPS health monitor thread stopped"\n"\n"\n"\n"\n"\n"\n"\n");
     return NULL;
 }
 
 // Collect GPS data from best available source (alias for collect_best)
 int gps_comprehensive_collect_best_gps(standardized_gps_data_t* result) {
-    return gps_comprehensive_collect_best(result);
+    return gps_comprehensive_collect_best(result\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get current location from comprehensive GPS system
@@ -1185,7 +1185,7 @@ int gps_comprehensive_get_current_location(gps_data_t *location) {
     }
 
     standardized_gps_data_t standardized_data;
-    int result = gps_comprehensive_collect_best(&standardized_data);
+    int result = gps_comprehensive_collect_best(&standardized_data\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == AUTONOMY_SUCCESS) {
         // Convert standardized data to gps_data_t format
@@ -1207,14 +1207,14 @@ int gps_comprehensive_get_current_location(gps_data_t *location) {
     }
     
     // Return default/unknown location on failure
-    memset(location, 0, sizeof(gps_data_t));
+    memset(location, 0, sizeof(gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
     location->lat = 0.0;
     location->lon = 0.0;
     location->latitude = 0.0;
     location->longitude = 0.0;
     location->altitude = 0.0;
     location->accuracy = 0.0;
-    location->timestamp = time(NULL);
+    location->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     location->valid = false;
     
     return AUTONOMY_ERROR_NO_DATA;

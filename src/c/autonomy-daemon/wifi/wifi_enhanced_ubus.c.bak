@@ -1,0 +1,757 @@
+#include <stdlib.h>
+#include "wifi_enhanced_ubus.h"
+#include "wifi_enhanced.h"
+#include "../shared/logging/logx.h"
+#include <libubus.h>
+#include <libubox/blobmsg_json.h>
+#include <json-c/json.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+
+// UBUS parameter policies
+enum {
+    WIFI_DEVICE_PARAM,
+    __WIFI_DEVICE_MAX
+};
+
+static const struct blobmsg_policy wifi_device_policy[] = {
+    [WIFI_DEVICE_PARAM] = { .name = "device", .type = BLOBMSG_TYPE_STRING },
+};
+
+enum {
+    WIFI_OPTIMIZE_TRIGGER,
+    WIFI_OPTIMIZE_FORCE,
+    __WIFI_OPTIMIZE_MAX
+};
+
+static const struct blobmsg_policy wifi_optimize_policy[] = {
+    [WIFI_OPTIMIZE_TRIGGER] = { .name = "trigger", .type = BLOBMSG_TYPE_STRING },
+    [WIFI_OPTIMIZE_FORCE] = { .name = "force", .type = BLOBMSG_TYPE_BOOL },
+};
+
+enum {
+    WIFI_CONFIG_ENABLED,
+    WIFI_CONFIG_MOVEMENT_THRESHOLD,
+    WIFI_CONFIG_NIGHTLY_OPT,
+    WIFI_CONFIG_MIN_IMPROVEMENT,
+    WIFI_CONFIG_DRY_RUN,
+    WIFI_CONFIG_GPS_INTEGRATION,
+    __WIFI_CONFIG_MAX
+};
+
+static const struct blobmsg_policy wifi_config_policy[] = {
+    [WIFI_CONFIG_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
+    [WIFI_CONFIG_MOVEMENT_THRESHOLD] = { .name = "movement_threshold_m", .type = BLOBMSG_TYPE_DOUBLE },
+    [WIFI_CONFIG_NIGHTLY_OPT] = { .name = "nightly_optimization", .type = BLOBMSG_TYPE_BOOL },
+    [WIFI_CONFIG_MIN_IMPROVEMENT] = { .name = "min_improvement", .type = BLOBMSG_TYPE_INT32 },
+    [WIFI_CONFIG_DRY_RUN] = { .name = "dry_run", .type = BLOBMSG_TYPE_BOOL },
+    [WIFI_CONFIG_GPS_INTEGRATION] = { .name = "gps_integration_enabled", .type = BLOBMSG_TYPE_BOOL },
+};
+
+// Helper function to add WiFi interface to blob
+static void add_wifi_interface_to_blob(struct blob_buf *bb, const wifi_interface_t *interface) {
+    void *interface_table = blobmsg_open_table(bb, NULL\n"\n"\n"\n");
+    
+    blobmsg_add_string(bb, "name", interface->name\n"\n"\n"\n");
+    blobmsg_add_string(bb, "device", interface->device\n"\n"\n"\n");
+    blobmsg_add_string(bb, "band", wifi_band_to_string(interface->band)\n"\n"\n"\n");
+    blobmsg_add_string(bb, "frequency", interface->frequency\n"\n"\n"\n");
+    blobmsg_add_u8(bb, "active", interface->active\n"\n"\n"\n");
+    blobmsg_add_u8(bb, "enabled", interface->enabled\n"\n"\n"\n");
+    blobmsg_add_u8(bb, "ap_mode", interface->ap_mode\n"\n"\n"\n");
+    blobmsg_add_u8(bb, "sta_mode", interface->sta_mode\n"\n"\n"\n");
+    blobmsg_add_u32(bb, "current_channel", interface->current_channel\n"\n"\n"\n");
+    blobmsg_add_string(bb, "current_width", wifi_width_to_string(interface->current_width)\n"\n"\n"\n");
+    blobmsg_add_u32(bb, "tx_power", interface->tx_power\n"\n"\n"\n");
+    blobmsg_add_string(bb, "country_code", interface->country_code\n"\n"\n"\n");
+    
+    if (interface->connected) {
+        blobmsg_add_u8(bb, "connected", interface->connected\n"\n"\n"\n");
+        blobmsg_add_string(bb, "connected_bssid", interface->connected_bssid\n"\n"\n"\n");
+    }
+    
+    blobmsg_add_u32(bb, "signal_strength", interface->signal_strength\n"\n"\n"\n");
+    blobmsg_add_u32(bb, "noise_floor", interface->noise_floor\n"\n"\n"\n");
+    
+    blobmsg_add_u64(bb, "tx_packets", interface->tx_packets\n"\n"\n"\n");
+    blobmsg_add_u64(bb, "rx_packets", interface->rx_packets\n"\n"\n"\n");
+    blobmsg_add_u64(bb, "tx_bytes", interface->tx_bytes\n"\n"\n"\n");
+    blobmsg_add_u64(bb, "rx_bytes", interface->rx_bytes\n"\n"\n"\n");
+    blobmsg_add_u64(bb, "tx_errors", interface->tx_errors\n"\n"\n"\n");
+    blobmsg_add_u64(bb, "rx_errors", interface->rx_errors\n"\n"\n"\n");
+    
+    blobmsg_add_u32(bb, "last_update", (uint32_t)interface->last_update\n"\n"\n"\n");
+    
+    blobmsg_close_table(bb, interface_table\n"\n"\n"\n");
+}
+
+// Helper function to add channel score to blob
+static void add_channel_score_to_blob(struct blob_buf *bb, const wifi_enhanced_channel_score_t *score) {
+    void *channel_table = blobmsg_open_table(bb, NULL\n"\n"\n"\n");
+    
+    blobmsg_add_u32(bb, "channel", score->channel\n"\n"\n"\n");
+    blobmsg_add_string(bb, "band", wifi_band_to_string(score->band)\n"\n"\n"\n");
+    blobmsg_add_double(bb, "score", score->raw_score\n"\n"\n"\n");
+    blobmsg_add_u32(bb, "stars", score->stars\n"\n"\n"\n");
+    blobmsg_add_string(bb, "rating", score->rating\n"\n"\n"\n");
+    
+    blobmsg_add_u32(bb, "co_channel_aps", score->co_channel_aps\n"\n"\n"\n");
+    blobmsg_add_u32(bb, "overlap_aps", score->overlap_aps\n"\n"\n"\n");
+    blobmsg_add_double(bb, "utilization_percent", score->utilization_percent\n"\n"\n"\n");
+    blobmsg_add_u32(bb, "noise_floor", score->noise_floor\n"\n"\n"\n");
+    
+    blobmsg_add_double(bb, "co_channel_penalty", score->co_channel_penalty\n"\n"\n"\n");
+    blobmsg_add_double(bb, "overlap_penalty", score->overlap_penalty\n"\n"\n"\n");
+    blobmsg_add_double(bb, "utilization_penalty", score->utilization_penalty\n"\n"\n"\n");
+    
+    blobmsg_add_u32(bb, "strong_interferers", score->strong_interferer_count\n"\n"\n"\n");
+    blobmsg_add_u32(bb, "weak_interferers", score->weak_interferer_count\n"\n"\n"\n");
+    blobmsg_add_u32(bb, "analysis_time", (uint32_t)score->analysis_time\n"\n"\n"\n");
+    blobmsg_add_string(bb, "analysis_method", score->analysis_method\n"\n"\n"\n");
+    
+    blobmsg_close_table(bb, channel_table\n"\n"\n"\n");
+}
+
+// Get WiFi interfaces and their status
+int wifi_enhanced_ubus_get_interfaces(struct ubus_context *ctx, struct ubus_object *obj,
+                                     struct ubus_request_data *req, const char *method,
+                                     struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    if (!wifi_enhanced_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Enhanced WiFi management not initialized"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return UBUS_STATUS_OK;
+    }
+    
+    blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n");
+    
+    wifi_interface_t interfaces[16];
+    int interface_count = wifi_enhanced_get_interfaces(interfaces, 16\n"\n"\n"\n");
+    
+    if (interface_count > 0) {
+        void *interfaces_array = blobmsg_open_array(&bb, "interfaces"\n"\n"\n"\n");
+        for (int i = 0; i < interface_count; i++) {
+            add_wifi_interface_to_blob(&bb, &interfaces[i]\n"\n"\n"\n");
+        }
+        blobmsg_close_array(&bb, interfaces_array\n"\n"\n"\n");
+    } else {
+        blobmsg_add_string(&bb, "message", "No WiFi interfaces found"\n"\n"\n"\n");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return UBUS_STATUS_OK;
+}
+
+// Perform WiFi channel scan and analysis
+int wifi_enhanced_ubus_scan_channels(struct ubus_context *ctx, struct ubus_object *obj,
+                                    struct ubus_request_data *req, const char *method,
+                                    struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    if (!wifi_enhanced_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Enhanced WiFi management not initialized"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return UBUS_STATUS_OK;
+    }
+    
+    struct blob_attr *tb[__WIFI_DEVICE_MAX];
+    blobmsg_parse(wifi_device_policy, __WIFI_DEVICE_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n");
+    
+    const char* device = tb[WIFI_DEVICE_PARAM] ? blobmsg_get_string(tb[WIFI_DEVICE_PARAM]) : "radio0";
+    
+    wifi_enhanced_channel_score_t scores[64];
+    int score_count = wifi_enhanced_scan_channels(device, scores, 64\n"\n"\n"\n");
+    
+    if (score_count > 0) {
+        blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n");
+        
+        void *scan_table = blobmsg_open_table(&bb, "scan_results"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "device", device\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "band", score_count > 0 ? wifi_band_to_string(scores[0].band) : "unknown"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "scan_time", (uint32_t)time(NULL)\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "channels_analyzed", score_count\n"\n"\n"\n");
+        
+        void *channels_array = blobmsg_open_array(&bb, "channels"\n"\n"\n"\n");
+        for (int i = 0; i < score_count; i++) {
+            add_channel_score_to_blob(&bb, &scores[i]\n"\n"\n"\n");
+        }
+        blobmsg_close_array(&bb, channels_array\n"\n"\n"\n");
+        
+        blobmsg_close_table(&bb, scan_table\n"\n"\n"\n");
+    } else {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "WiFi channel scan failed"\n"\n"\n"\n");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return UBUS_STATUS_OK;
+}
+
+// Optimize WiFi channels using enhanced algorithms
+int wifi_enhanced_ubus_optimize_channels(struct ubus_context *ctx, struct ubus_object *obj,
+                                        struct ubus_request_data *req, const char *method,
+                                        struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    if (!wifi_enhanced_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Enhanced WiFi management not initialized"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return UBUS_STATUS_OK;
+    }
+    
+    struct blob_attr *tb[__WIFI_OPTIMIZE_MAX];
+    blobmsg_parse(wifi_optimize_policy, __WIFI_OPTIMIZE_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n");
+    
+    const char* trigger = tb[WIFI_OPTIMIZE_TRIGGER] ? blobmsg_get_string(tb[WIFI_OPTIMIZE_TRIGGER]) : "manual";
+    bool force = tb[WIFI_OPTIMIZE_FORCE] ? blobmsg_get_bool(tb[WIFI_OPTIMIZE_FORCE]) : false;
+    
+    // Get current plan for comparison
+    wifi_channel_plan_t old_plan, new_plan;
+    bool had_old_plan = (wifi_enhanced_get_current_plan(&old_plan) == AUTONOMY_SUCCESS\n"\n"\n"\n");
+    
+    // Perform optimization
+    if (wifi_enhanced_optimize_channels(trigger) == AUTONOMY_SUCCESS) {
+        bool had_new_plan = (wifi_enhanced_get_current_plan(&new_plan) == AUTONOMY_SUCCESS\n"\n"\n"\n");
+        
+        blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n");
+        
+        void *optimization_table = blobmsg_open_table(&bb, "optimization"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "trigger", trigger\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "performed", 1\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "force", force\n"\n"\n"\n");
+        
+        if (had_old_plan && had_new_plan) {
+            double improvement = new_plan.total_score - old_plan.total_score;
+            blobmsg_add_double(&bb, "improvement", improvement\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "min_improvement", g_wifi_enhanced.config.min_improvement\n"\n"\n"\n");
+            
+            void *old_plan_table = blobmsg_open_table(&bb, "old_plan"\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "channel_24", old_plan.channel_24\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "channel_5", old_plan.channel_5\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "total_score", old_plan.total_score\n"\n"\n"\n");
+            blobmsg_close_table(&bb, old_plan_table\n"\n"\n"\n");
+            
+            void *new_plan_table = blobmsg_open_table(&bb, "new_plan"\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "channel_24", new_plan.channel_24\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "channel_5", new_plan.channel_5\n"\n"\n"\n");
+            blobmsg_add_string(&bb, "width_5", wifi_width_to_string(new_plan.width_5)\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "total_score", new_plan.total_score\n"\n"\n"\n");
+            blobmsg_close_table(&bb, new_plan_table\n"\n"\n"\n");
+        }
+        
+        blobmsg_add_u8(&bb, "applied", new_plan.successful\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "optimization_time", (uint32_t)time(NULL)\n"\n"\n"\n");
+        
+        blobmsg_close_table(&bb, optimization_table\n"\n"\n"\n");
+    } else {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "WiFi optimization failed"\n"\n"\n"\n");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return UBUS_STATUS_OK;
+}
+
+// Get current WiFi channel plan
+int wifi_enhanced_ubus_get_current_plan(struct ubus_context *ctx, struct ubus_object *obj,
+                                       struct ubus_request_data *req, const char *method,
+                                       struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    if (!wifi_enhanced_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Enhanced WiFi management not initialized"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return UBUS_STATUS_OK;
+    }
+    
+    wifi_channel_plan_t plan;
+    if (wifi_enhanced_get_current_plan(&plan) == AUTONOMY_SUCCESS) {
+        blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n");
+        
+        void *plan_table = blobmsg_open_table(&bb, "current_plan"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "channel_24", plan.channel_24\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "channel_5", plan.channel_5\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "width_5", wifi_width_to_string(plan.width_5)\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "score_24", plan.score_24\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "score_5", plan.score_5\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "total_score", plan.total_score\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "applied_at", (uint32_t)plan.applied_at\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "country", plan.country\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "reg_domain", plan.reg_domain\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "trigger", plan.trigger\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "successful", plan.successful\n"\n"\n"\n");
+        blobmsg_close_table(&bb, plan_table\n"\n"\n"\n");
+    } else {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "No current channel plan available"\n"\n"\n"\n");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return UBUS_STATUS_OK;
+}
+
+// Get WiFi optimization statistics
+int wifi_enhanced_ubus_get_statistics(struct ubus_context *ctx, struct ubus_object *obj,
+                                     struct ubus_request_data *req, const char *method,
+                                     struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    if (!wifi_enhanced_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Enhanced WiFi management not initialized"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return UBUS_STATUS_OK;
+    }
+    
+    blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n");
+    
+    wifi_optimization_statistics_t stats;
+    if (wifi_enhanced_get_statistics(&stats) == AUTONOMY_SUCCESS) {
+        void *stats_table = blobmsg_open_table(&bb, "statistics"\n"\n"\n"\n");
+        
+        blobmsg_add_u64(&bb, "total_optimizations", stats.total_optimizations\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "successful_optimizations", stats.successful_optimizations\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "failed_optimizations", stats.failed_optimizations\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "skipped_optimizations", stats.skipped_optimizations\n"\n"\n"\n");
+        
+        blobmsg_add_u64(&bb, "scans_performed", stats.scans_performed\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "successful_scans", stats.successful_scans\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "failed_scans", stats.failed_scans\n"\n"\n"\n");
+        
+        blobmsg_add_double(&bb, "avg_scan_time_ms", stats.average_scan_time_ms\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "avg_optimization_time_ms", stats.average_optimization_time_ms\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "avg_improvement", stats.average_improvement\n"\n"\n"\n");
+        
+        blobmsg_add_u64(&bb, "movement_triggered", stats.movement_triggered\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "scheduled_triggered", stats.scheduled_triggered\n"\n"\n"\n");
+        blobmsg_add_u64(&bb, "manual_triggered", stats.manual_triggered\n"\n"\n"\n");
+        
+        blobmsg_add_u32(&bb, "last_optimization", (uint32_t)stats.last_optimization\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "last_scan", (uint32_t)stats.last_scan\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "stats_reset_time", (uint32_t)stats.stats_reset_time\n"\n"\n"\n");
+        
+        blobmsg_close_table(&bb, stats_table\n"\n"\n"\n");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return UBUS_STATUS_OK;
+}
+
+// Get WiFi movement integration status
+int wifi_enhanced_ubus_get_movement_status(struct ubus_context *ctx, struct ubus_object *obj,
+                                          struct ubus_request_data *req, const char *method,
+                                          struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    if (!wifi_enhanced_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Enhanced WiFi management not initialized"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return UBUS_STATUS_OK;
+    }
+    
+    blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n");
+    
+    wifi_movement_state_t movement_state;
+    if (wifi_enhanced_get_movement_state(&movement_state) == AUTONOMY_SUCCESS) {
+        void *movement_table = blobmsg_open_table(&bb, "movement"\n"\n"\n"\n");
+        
+        blobmsg_add_u8(&bb, "gps_integration_enabled", movement_state.gps_integration_enabled\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "is_stationary", movement_state.is_stationary\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "stationary_start", (uint32_t)movement_state.stationary_start\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "last_movement", (uint32_t)movement_state.last_movement\n"\n"\n"\n");
+        
+        if (movement_state.last_location.valid) {
+            void *location_table = blobmsg_open_table(&bb, "last_location"\n"\n"\n"\n");
+            blobmsg_add_double(&bb, "latitude", movement_state.last_location.latitude\n"\n"\n"\n");
+            blobmsg_add_double(&bb, "longitude", movement_state.last_location.longitude\n"\n"\n"\n");
+            blobmsg_add_double(&bb, "accuracy", movement_state.last_location.accuracy\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "timestamp", (uint32_t)movement_state.last_location.timestamp\n"\n"\n"\n");
+            blobmsg_close_table(&bb, location_table\n"\n"\n"\n");
+        }
+        
+        blobmsg_add_double(&bb, "total_distance_moved_m", movement_state.total_distance_moved_m\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "movement_events", movement_state.movement_events\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "last_optimization", (uint32_t)movement_state.last_optimization\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "location_trigger_active", movement_state.location_trigger_active\n"\n"\n"\n");
+        
+        blobmsg_close_table(&bb, movement_table\n"\n"\n"\n");
+        
+        // Add configuration
+        void *config_table = blobmsg_open_table(&bb, "config"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "movement_threshold_m", g_wifi_enhanced.config.movement_threshold_m\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "stationary_time_s", g_wifi_enhanced.config.stationary_time_s\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "optimization_cooldown_s", g_wifi_enhanced.config.optimization_cooldown_s\n"\n"\n"\n");
+        blobmsg_close_table(&bb, config_table\n"\n"\n"\n");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return UBUS_STATUS_OK;
+}
+
+// Get WiFi optimization configuration
+int wifi_enhanced_ubus_get_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                 struct ubus_request_data *req, const char *method,
+                                 struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    if (!wifi_enhanced_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Enhanced WiFi management not initialized"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return UBUS_STATUS_OK;
+    }
+    
+    blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n");
+    
+    wifi_optimization_config_t config;
+    if (wifi_enhanced_get_config(&config) == AUTONOMY_SUCCESS) {
+        void *config_table = blobmsg_open_table(&bb, "config"\n"\n"\n"\n");
+        
+        blobmsg_add_u8(&bb, "enabled", config.enabled\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "movement_threshold_m", config.movement_threshold_m\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "stationary_time_s", config.stationary_time_s\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "nightly_optimization", config.nightly_optimization\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "nightly_time_seconds", config.nightly_time_seconds\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "min_improvement", config.min_improvement\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "dwell_time_s", config.dwell_time_s\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "noise_default", config.noise_default\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "vht80_threshold", config.vht80_threshold\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "vht40_threshold", config.vht40_threshold\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "use_dfs", config.use_dfs\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "dry_run", config.dry_run\n"\n"\n"\n");
+        
+        blobmsg_add_u8(&bb, "use_enhanced_scanner", config.use_enhanced_scanner\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "strong_rssi_threshold", config.strong_rssi_threshold\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "weak_rssi_threshold", config.weak_rssi_threshold\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "utilization_weight", config.utilization_weight\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "excellent_threshold", config.excellent_threshold\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "good_threshold", config.good_threshold\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "fair_threshold", config.fair_threshold\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "poor_threshold", config.poor_threshold\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "overlap_penalty_ratio", config.overlap_penalty_ratio\n"\n"\n"\n");
+        
+        blobmsg_add_u8(&bb, "gps_integration_enabled", config.gps_integration_enabled\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "gps_movement_threshold_m", config.gps_movement_threshold_m\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "gps_stationary_time_s", config.gps_stationary_time_s\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "optimization_cooldown_s", config.optimization_cooldown_s\n"\n"\n"\n");
+        
+        blobmsg_close_table(&bb, config_table\n"\n"\n"\n");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return UBUS_STATUS_OK;
+}
+
+// Set WiFi optimization configuration
+int wifi_enhanced_ubus_set_config(struct ubus_context *ctx, struct ubus_object *obj,
+                                 struct ubus_request_data *req, const char *method,
+                                 struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    if (!wifi_enhanced_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Enhanced WiFi management not initialized"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return UBUS_STATUS_OK;
+    }
+    
+    struct blob_attr *tb[__WIFI_CONFIG_MAX];
+    blobmsg_parse(wifi_config_policy, __WIFI_CONFIG_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n");
+    
+    wifi_optimization_config_t config;
+    if (wifi_enhanced_get_config(&config) == AUTONOMY_SUCCESS) {
+        // Update only provided parameters
+        if (tb[WIFI_CONFIG_ENABLED]) {
+            config.enabled = blobmsg_get_bool(tb[WIFI_CONFIG_ENABLED]\n"\n"\n"\n");
+        }
+        if (tb[WIFI_CONFIG_MOVEMENT_THRESHOLD]) {
+            config.movement_threshold_m = blobmsg_get_double(tb[WIFI_CONFIG_MOVEMENT_THRESHOLD]\n"\n"\n"\n");
+        }
+        if (tb[WIFI_CONFIG_NIGHTLY_OPT]) {
+            config.nightly_optimization = blobmsg_get_bool(tb[WIFI_CONFIG_NIGHTLY_OPT]\n"\n"\n"\n");
+        }
+        if (tb[WIFI_CONFIG_MIN_IMPROVEMENT]) {
+            config.min_improvement = blobmsg_get_u32(tb[WIFI_CONFIG_MIN_IMPROVEMENT]\n"\n"\n"\n");
+        }
+        if (tb[WIFI_CONFIG_DRY_RUN]) {
+            config.dry_run = blobmsg_get_bool(tb[WIFI_CONFIG_DRY_RUN]\n"\n"\n"\n");
+        }
+        if (tb[WIFI_CONFIG_GPS_INTEGRATION]) {
+            config.gps_integration_enabled = blobmsg_get_bool(tb[WIFI_CONFIG_GPS_INTEGRATION]\n"\n"\n"\n");
+        }
+        
+        if (wifi_enhanced_set_config(&config) == AUTONOMY_SUCCESS) {
+            blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n");
+            blobmsg_add_string(&bb, "message", "WiFi optimization configuration updated"\n"\n"\n"\n");
+        } else {
+            blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+            blobmsg_add_string(&bb, "error", "Failed to update WiFi optimization configuration"\n"\n"\n"\n");
+        }
+    } else {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to get current WiFi optimization configuration"\n"\n"\n"\n");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return UBUS_STATUS_OK;
+}
+
+// Update GPS location for movement-based optimization
+int wifi_enhanced_ubus_update_gps_location(struct ubus_context *ctx, struct ubus_object *obj,
+                                          struct ubus_request_data *req, const char *method,
+                                          struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    if (!wifi_enhanced_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Enhanced WiFi management not initialized"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return UBUS_STATUS_OK;
+    }
+    
+    // Parse GPS data from message
+    standardized_gps_data_t gps_data = {0};
+    
+    // For now, create a placeholder GPS data structure
+    // In a real implementation, this would parse the GPS data from the UBUS message
+    gps_data.latitude = 0.0;
+    gps_data.longitude = 0.0;
+    gps_data.accuracy = 0.0;
+    gps_data.timestamp = time(NULL\n"\n"\n"\n");
+    gps_data.valid = true;
+    
+    if (wifi_enhanced_update_gps_location(&gps_data) == AUTONOMY_SUCCESS) {
+        blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "GPS location updated for WiFi optimization"\n"\n"\n"\n");
+    } else {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to update GPS location"\n"\n"\n"\n");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return UBUS_STATUS_OK;
+}
+
+// Reset WiFi optimization statistics
+int wifi_enhanced_ubus_reset_statistics(struct ubus_context *ctx, struct ubus_object *obj,
+                                       struct ubus_request_data *req, const char *method,
+                                       struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    if (!wifi_enhanced_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Enhanced WiFi management not initialized"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return UBUS_STATUS_OK;
+    }
+    
+    if (wifi_enhanced_reset_statistics() == AUTONOMY_SUCCESS) {
+        blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "WiFi optimization statistics reset"\n"\n"\n"\n");
+    } else {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to reset WiFi optimization statistics"\n"\n"\n"\n");
+    }
+    
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return UBUS_STATUS_OK;
+}
+
+// Perform WiFi health check
+int wifi_enhanced_ubus_health_check(struct ubus_context *ctx, struct ubus_object *obj,
+                                   struct ubus_request_data *req, const char *method,
+                                   struct blob_attr *msg) {
+    struct blob_buf bb = {0};
+    blob_buf_init(&bb, 0\n"\n"\n"\n");
+    
+    if (!wifi_enhanced_is_initialized()) {
+        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Enhanced WiFi management not initialized"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n");
+        return UBUS_STATUS_OK;
+    }
+    
+    blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n");
+    
+    void *health_table = blobmsg_open_table(&bb, "health"\n"\n"\n"\n");
+    blobmsg_add_u8(&bb, "initialized", wifi_enhanced_is_initialized()\n"\n"\n"\n");
+    blobmsg_add_u8(&bb, "threads_running", g_wifi_enhanced.threads_running\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "interface_count", g_wifi_enhanced.interface_count\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "last_scan_time", (uint32_t)g_wifi_enhanced.last_scan_time\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "last_optimization_time", (uint32_t)g_wifi_enhanced.last_optimization_time\n"\n"\n"\n");
+    
+    // Check if any interfaces are active
+    bool has_active_interfaces = false;
+    for (int i = 0; i < g_wifi_enhanced.interface_count; i++) {
+        if (g_wifi_enhanced.interfaces[i].active) {
+            has_active_interfaces = true;
+            break;
+        }
+    }
+    blobmsg_add_u8(&bb, "has_active_interfaces", has_active_interfaces\n"\n"\n"\n");
+    
+    blobmsg_close_table(&bb, health_table\n"\n"\n"\n");
+    
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n");
+    return UBUS_STATUS_OK;
+}
+
+// Perform UBUS iwinfo scan (for external APIs)
+int wifi_enhanced_ubus_scan(const char* device, wifi_access_point_t* access_points, int max_aps) {
+    if (!device || !access_points || max_aps <= 0) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Execute ubus iwinfo scan command
+    char command[256];
+    snprintf(command, sizeof(command), "ubus -S -t 30 call iwinfo scan '{\"device\":\"%s\"}'", device\n"\n"\n"\n");
+    
+    FILE* fp = popen(command, "r"\n"\n"\n"\n");
+    if (!fp) {
+        printf("ERROR: "Failed to execute ubus iwinfo scan", "device", device\n"\n"\n"\n");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Read JSON response
+    char json_buffer[32768]; // 32KB buffer for scan results
+    size_t bytes_read = fread(json_buffer, 1, sizeof(json_buffer) - 1, fp\n"\n"\n"\n");
+    json_buffer[bytes_read] = '\0';
+    
+    int exit_code = pclose(fp\n"\n"\n"\n");
+    if (exit_code != 0) {
+        printf("ERROR: "ubus iwinfo scan command failed", "device", device, "exit_code", exit_code\n"\n"\n"\n");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    // Parse JSON response
+    json_object* root = json_tokener_parse(json_buffer\n"\n"\n"\n");
+    if (!root) {
+        printf("ERROR: "Failed to parse iwinfo scan JSON response", "device", device\n"\n"\n"\n");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    json_object* results_obj;
+    if (!json_object_object_get_ex(root, "results", &results_obj)) {
+        printf("ERROR: "No results in iwinfo scan response", "device", device\n"\n"\n"\n");
+        json_object_put(root\n"\n"\n"\n");
+        return AUTONOMY_ERROR_SYSTEM;
+    }
+    
+    int results_len = json_object_array_length(results_obj\n"\n"\n"\n");
+    int ap_count = 0;
+    
+    for (int i = 0; i < results_len && ap_count < max_aps; i++) {
+        json_object* ap_obj = json_object_array_get_idx(results_obj, i\n"\n"\n"\n");
+        if (!ap_obj) continue;
+        
+        wifi_access_point_t* ap = &access_points[ap_count];
+        memset(ap, 0, sizeof(wifi_access_point_t)\n"\n"\n"\n");
+        
+        // Extract AP information
+        json_object* ssid_obj, *bssid_obj, *channel_obj, *signal_obj, *htmode_obj;
+        json_object* frequency_obj, *bandwidth_obj;
+        
+        if (json_object_object_get_ex(ap_obj, "ssid", &ssid_obj)) {
+            const char* ssid = json_object_get_string(ssid_obj\n"\n"\n"\n");
+            strncpy(ap->ssid, ssid, sizeof(ap->ssid) - 1\n"\n"\n"\n");
+            ap->ssid[sizeof(ap->ssid) - 1] = '\0';
+        }
+        
+        if (json_object_object_get_ex(ap_obj, "bssid", &bssid_obj)) {
+            const char* bssid = json_object_get_string(bssid_obj\n"\n"\n"\n");
+            strncpy(ap->bssid, bssid, sizeof(ap->bssid) - 1\n"\n"\n"\n");
+            ap->bssid[sizeof(ap->bssid) - 1] = '\0';
+        }
+        
+        if (json_object_object_get_ex(ap_obj, "channel", &channel_obj)) {
+            ap->channel = json_object_get_int(channel_obj\n"\n"\n"\n");
+        }
+        
+        if (json_object_object_get_ex(ap_obj, "signal", &signal_obj)) {
+            ap->signal = json_object_get_int(signal_obj\n"\n"\n"\n");
+        }
+        
+        if (json_object_object_get_ex(ap_obj, "htmode", &htmode_obj)) {
+            const char* htmode = json_object_get_string(htmode_obj\n"\n"\n"\n");
+            strncpy(ap->htmode, htmode, sizeof(ap->htmode) - 1\n"\n"\n"\n");
+            ap->htmode[sizeof(ap->htmode) - 1] = '\0';
+        }
+        
+        if (json_object_object_get_ex(ap_obj, "frequency", &frequency_obj)) {
+            ap->frequency = json_object_get_int64(frequency_obj\n"\n"\n"\n");
+        }
+        
+        if (json_object_object_get_ex(ap_obj, "bandwidth", &bandwidth_obj)) {
+            ap->bandwidth = json_object_get_int(bandwidth_obj\n"\n"\n"\n");
+        }
+        
+        ap->last_seen = time(NULL\n"\n"\n"\n");
+        ap->quality = wifi_calculate_signal_quality(ap->signal, -90); // Assume -90dBm noise floor
+        
+        ap_count++;
+    }
+    
+    json_object_put(root\n"\n"\n"\n");
+    
+    printf("DEBUG: "UBUS iwinfo scan completed",
+              "device", device,
+              "aps_found", ap_count\n"\n"\n"\n");
+    
+    return ap_count;
+}
+
+// UBUS method definitions
+const struct ubus_method wifi_enhanced_ubus_methods[] = {
+    UBUS_METHOD_NOARG("get_interfaces", wifi_enhanced_ubus_get_interfaces),
+    UBUS_METHOD("scan_channels", wifi_enhanced_ubus_scan_channels, wifi_device_policy),
+    UBUS_METHOD("optimize_channels", wifi_enhanced_ubus_optimize_channels, wifi_optimize_policy),
+    UBUS_METHOD_NOARG("get_current_plan", wifi_enhanced_ubus_get_current_plan),
+    UBUS_METHOD_NOARG("get_statistics", wifi_enhanced_ubus_get_statistics),
+    UBUS_METHOD_NOARG("get_movement_status", wifi_enhanced_ubus_get_movement_status),
+    UBUS_METHOD_NOARG("get_config", wifi_enhanced_ubus_get_config),
+    UBUS_METHOD("set_config", wifi_enhanced_ubus_set_config, wifi_config_policy),
+    UBUS_METHOD("update_gps_location", wifi_enhanced_ubus_update_gps_location, NULL),
+    UBUS_METHOD_NOARG("reset_statistics", wifi_enhanced_ubus_reset_statistics),
+    UBUS_METHOD_NOARG("health_check", wifi_enhanced_ubus_health_check),
+};
+
+const int wifi_enhanced_ubus_methods_count = ARRAY_SIZE(wifi_enhanced_ubus_methods\n"\n"\n"\n");

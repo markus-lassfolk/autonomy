@@ -28,10 +28,10 @@ static bool g_external_api_client_initialized = false;
 static int g_api_socket = -1;
 
 // Forward declarations
-static int api_send_request(const api_request_t* request, api_response_t* response);
-static int api_connect_to_endpoint(void);
-static int api_disconnect(void);
-double calculate_response_time(time_t start_time);
+static int api_send_request(const api_request_t* request, api_response_t* response\n"\n"\n"\n"\n"\n"\n"\n");
+static int api_connect_to_endpoint(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int api_disconnect(void\n"\n"\n"\n"\n"\n"\n"\n");
+double calculate_response_time(time_t start_time\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize external API client
 int external_api_client_init(const api_endpoint_config_t* config) {
@@ -39,31 +39,31 @@ int external_api_client_init(const api_endpoint_config_t* config) {
         return 0; // Already initialized
     }
     
-    memset(&g_external_api_client, 0, sizeof(external_api_client_t));
+    memset(&g_external_api_client, 0, sizeof(external_api_client_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set configuration
     if (config) {
         g_external_api_client.config = *config;
     } else {
         // Default configuration
-        strcpy(g_external_api_client.config.base_url, "https://api.example.com");
-        strcpy(g_external_api_client.config.api_key, "");
-        strcpy(g_external_api_client.config.username, "");
-        strcpy(g_external_api_client.config.password, "");
+        strcpy(g_external_api_client.config.base_url, "https://api.example.com"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(g_external_api_client.config.api_key, ""\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(g_external_api_client.config.username, ""\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(g_external_api_client.config.password, ""\n"\n"\n"\n"\n"\n"\n"\n");
         g_external_api_client.config.timeout_seconds = 30; // Use configurable timeout
         g_external_api_client.config.use_ssl = true; // Use configurable SSL setting
-        strcpy(g_external_api_client.config.ca_cert_path, "/etc/ssl/certs/ca-certificates.crt");
-        strcpy(g_external_api_client.config.client_cert_path, "");
-        strcpy(g_external_api_client.config.client_key_path, "");
+        strcpy(g_external_api_client.config.ca_cert_path, "/etc/ssl/certs/ca-certificates.crt"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(g_external_api_client.config.client_cert_path, ""\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(g_external_api_client.config.client_key_path, ""\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Initialize mutex
-    g_external_api_client.mutex = malloc(sizeof(pthread_mutex_t));
+    g_external_api_client.mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_external_api_client.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_external_api_client.mutex, NULL);
+    pthread_mutex_init(g_external_api_client.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_external_api_client_initialized = true;
     return 0;
@@ -75,16 +75,16 @@ void external_api_client_cleanup(void) {
     
     // Disconnect if connected
     if (g_external_api_client.connected) {
-        api_disconnect();
+        api_disconnect(\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_external_api_client.mutex) {
-        pthread_mutex_destroy(g_external_api_client.mutex);
-        free(g_external_api_client.mutex);
+        pthread_mutex_destroy(g_external_api_client.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_external_api_client.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_api_socket >= 0) {
-        close(g_api_socket);
+        close(g_api_socket\n"\n"\n"\n"\n"\n"\n"\n");
         g_api_socket = -1;
     }
     
@@ -98,19 +98,19 @@ int external_api_client_send_request(const api_request_t* request, api_response_
         return -1;
     }
     
-    pthread_mutex_lock(g_external_api_client.mutex);
+    pthread_mutex_lock(g_external_api_client.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Ensure connection
     if (!g_external_api_client.connected) {
         if (api_connect_to_endpoint() != 0) {
-            pthread_mutex_unlock(g_external_api_client.mutex);
+            pthread_mutex_unlock(g_external_api_client.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return -1;
         }
     }
     
     // Send request
-    time_t start_time = time(NULL);
-    int result = api_send_request(request, response);
+    time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = api_send_request(request, response\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == 0) {
         // Update statistics
@@ -118,7 +118,7 @@ int external_api_client_send_request(const api_request_t* request, api_response_
         g_external_api_client.successful_requests++;
         
         // Calculate response time
-        double response_time = calculate_response_time(start_time);
+        double response_time = calculate_response_time(start_time\n"\n"\n"\n"\n"\n"\n"\n");
         g_external_api_client.average_response_time = 
             (g_external_api_client.average_response_time * (g_external_api_client.successful_requests - 1) + response_time) / 
             g_external_api_client.successful_requests;
@@ -130,9 +130,9 @@ int external_api_client_send_request(const api_request_t* request, api_response_
         response->success = false;
     }
     
-    response->timestamp = time(NULL);
+    response->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(g_external_api_client.mutex);
+    pthread_mutex_unlock(g_external_api_client.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return result;
 }
@@ -143,16 +143,16 @@ int external_api_client_test_connection(void) {
         return -1;
     }
     
-    pthread_mutex_lock(g_external_api_client.mutex);
+    pthread_mutex_lock(g_external_api_client.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int result = api_connect_to_endpoint();
+    int result = api_connect_to_endpoint(\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == 0) {
         g_external_api_client.connected = true;
-        g_external_api_client.last_connection = time(NULL);
+        g_external_api_client.last_connection = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_unlock(g_external_api_client.mutex);
+    pthread_mutex_unlock(g_external_api_client.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return result;
 }
@@ -165,27 +165,27 @@ static int api_send_request(const api_request_t* request, api_response_t* respon
     
     // Build full URL
     char full_url[1024];
-    snprintf(full_url, sizeof(full_url), "%s%s", g_external_api_client.config.base_url, request->endpoint);
+    snprintf(full_url, sizeof(full_url), "%s%s", g_external_api_client.config.base_url, request->endpoint\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Create HTTP request using libcurl
     http_request_t* http_req = NULL;
     
     if (strcmp(request->method, "GET") == 0) {
-        http_req = http_request_create(full_url, HTTP_METHOD_GET);
+        http_req = http_request_create(full_url, HTTP_METHOD_GET\n"\n"\n"\n"\n"\n"\n"\n");
     } else if (strcmp(request->method, "POST") == 0) {
-        http_req = http_request_create(full_url, HTTP_METHOD_POST);
+        http_req = http_request_create(full_url, HTTP_METHOD_POST\n"\n"\n"\n"\n"\n"\n"\n");
         if (request->body && strlen(request->body) > 0) {
-            http_req->body = strdup(request->body);
-            http_req->body_size = strlen(request->body);
+            http_req->body = strdup(request->body\n"\n"\n"\n"\n"\n"\n"\n");
+            http_req->body_size = strlen(request->body\n"\n"\n"\n"\n"\n"\n"\n");
         }
     } else if (strcmp(request->method, "PUT") == 0) {
-        http_req = http_request_create(full_url, HTTP_METHOD_PUT);
+        http_req = http_request_create(full_url, HTTP_METHOD_PUT\n"\n"\n"\n"\n"\n"\n"\n");
         if (request->body && strlen(request->body) > 0) {
-            http_req->body = strdup(request->body);
-            http_req->body_size = strlen(request->body);
+            http_req->body = strdup(request->body\n"\n"\n"\n"\n"\n"\n"\n");
+            http_req->body_size = strlen(request->body\n"\n"\n"\n"\n"\n"\n"\n");
         }
     } else if (strcmp(request->method, "DELETE") == 0) {
-        http_req = http_request_create(full_url, HTTP_METHOD_DELETE);
+        http_req = http_request_create(full_url, HTTP_METHOD_DELETE\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         return -1; // Unsupported method
     }
@@ -195,23 +195,23 @@ static int api_send_request(const api_request_t* request, api_response_t* respon
     }
     
     // Set common headers
-    http_request_add_header_kv(http_req, "User-Agent", "Autonomy-Daemon/6.1.0");
-    http_request_add_header_kv(http_req, "Accept", "application/json");
+    http_request_add_header_kv(http_req, "User-Agent", "Autonomy-Daemon/6.1.0"\n"\n"\n"\n"\n"\n"\n"\n");
+    http_request_add_header_kv(http_req, "Accept", "application/json"\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (http_req->body) {
-        http_request_add_header_kv(http_req, "Content-Type", "application/json");
+        http_request_add_header_kv(http_req, "Content-Type", "application/json"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Add custom headers if provided
     if (request->headers && strlen(request->headers) > 0) {
-        http_request_add_header(http_req, request->headers);
+        http_request_add_header(http_req, request->headers\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Set authentication if provided
     if (g_external_api_client.config.api_key && strlen(g_external_api_client.config.api_key) > 0) {
         char auth_header[512];
-        snprintf(auth_header, sizeof(auth_header), "Authorization: Bearer %s", g_external_api_client.config.api_key);
-        http_request_add_header(http_req, auth_header);
+        snprintf(auth_header, sizeof(auth_header), "Authorization: Bearer %s", g_external_api_client.config.api_key\n"\n"\n"\n"\n"\n"\n"\n");
+        http_request_add_header(http_req, auth_header\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Set SSL verification based on config
@@ -222,10 +222,10 @@ static int api_send_request(const api_request_t* request, api_response_t* respon
     http_req->request_timeout_ms = g_external_api_client.config.timeout_seconds * 1000;
     
     // Execute request
-    http_response_t* http_resp = http_request(http_req);
+    http_response_t* http_resp = http_request(http_req\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!http_resp) {
-        http_request_free(http_req);
+        http_request_free(http_req\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -235,7 +235,7 @@ static int api_send_request(const api_request_t* request, api_response_t* respon
     if (http_resp->body && http_resp->body_size > 0) {
         size_t copy_size = (http_resp->body_size < sizeof(response->body) - 1) ? 
                           http_resp->body_size : sizeof(response->body) - 1;
-        memcpy(response->body, http_resp->body, copy_size);
+        memcpy(response->body, http_resp->body, copy_size\n"\n"\n"\n"\n"\n"\n"\n");
         response->body[copy_size] = '\0';
     } else {
         response->body[0] = '\0';
@@ -244,17 +244,17 @@ static int api_send_request(const api_request_t* request, api_response_t* respon
     if (http_resp->headers && http_resp->header_size > 0) {
         size_t copy_size = (http_resp->header_size < sizeof(response->headers) - 1) ? 
                           http_resp->header_size : sizeof(response->headers) - 1;
-        memcpy(response->headers, http_resp->headers, copy_size);
+        memcpy(response->headers, http_resp->headers, copy_size\n"\n"\n"\n"\n"\n"\n"\n");
         response->headers[copy_size] = '\0';
     } else {
         response->headers[0] = '\0';
     }
     
-    response->timestamp = time(NULL);
+    response->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Cleanup
-    http_response_free(http_resp);
-    http_request_free(http_req);
+    http_response_free(http_resp\n"\n"\n"\n"\n"\n"\n"\n");
+    http_request_free(http_req\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -272,54 +272,54 @@ static int api_connect_to_endpoint(void) {
     // Extract host from base URL
     const char* url = g_external_api_client.config.base_url;
     if (strncmp(url, "http://", 7) == 0) {
-        strcpy(host, url + 7);
+        strcpy(host, url + 7\n"\n"\n"\n"\n"\n"\n"\n");
     } else if (strncmp(url, "https://", 8) == 0) {
-        strcpy(host, url + 8);
+        strcpy(host, url + 8\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        strcpy(host, url);
+        strcpy(host, url\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Remove path from host
-    char* path_start = strchr(host, '/');
+    char* path_start = strchr(host, '/'\n"\n"\n"\n"\n"\n"\n"\n");
     if (path_start) {
         *path_start = '\0';
     }
     
     // Check for custom port
-    char* port_start = strchr(host, ':');
+    char* port_start = strchr(host, ':'\n"\n"\n"\n"\n"\n"\n"\n");
     if (port_start) {
         *port_start = '\0';
-        port = atoi(port_start + 1);
+        port = atoi(port_start + 1\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Create socket
-    g_api_socket = socket(AF_INET, SOCK_STREAM, 0);
+    g_api_socket = socket(AF_INET, SOCK_STREAM, 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (g_api_socket < 0) {
         return -1;
     }
     
     // Set socket options
-    int flags = fcntl(g_api_socket, F_GETFL, 0);
-    fcntl(g_api_socket, F_SETFL, flags | O_NONBLOCK);
+    int flags = fcntl(g_api_socket, F_GETFL, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    fcntl(g_api_socket, F_SETFL, flags | O_NONBLOCK\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Resolve host address
-    struct hostent* host_info = gethostbyname(host);
+    struct hostent* host_info = gethostbyname(host\n"\n"\n"\n"\n"\n"\n"\n");
     if (!host_info) {
-        close(g_api_socket);
+        close(g_api_socket\n"\n"\n"\n"\n"\n"\n"\n");
         g_api_socket = -1;
         return -1;
     }
     
     struct sockaddr_in server_addr;
-    memset(&server_addr, 0, sizeof(server_addr));
+    memset(&server_addr, 0, sizeof(server_addr)\n"\n"\n"\n"\n"\n"\n"\n");
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port);
-    memcpy(&server_addr.sin_addr, host_info->h_addr, host_info->h_length);
+    server_addr.sin_port = htons(port\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(&server_addr.sin_addr, host_info->h_addr, host_info->h_length\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Connect to server
-    int connect_result = connect(g_api_socket, (struct sockaddr*)&server_addr, sizeof(server_addr));
+    int connect_result = connect(g_api_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)\n"\n"\n"\n"\n"\n"\n"\n");
     if (connect_result < 0 && errno != EINPROGRESS) {
-        close(g_api_socket);
+        close(g_api_socket\n"\n"\n"\n"\n"\n"\n"\n");
         g_api_socket = -1;
         return -1;
     }
@@ -329,18 +329,18 @@ static int api_connect_to_endpoint(void) {
     pfd.fd = g_api_socket;
     pfd.events = POLLOUT;
     
-    int poll_result = poll(&pfd, 1, g_external_api_client.config.timeout_seconds * 1000);
+    int poll_result = poll(&pfd, 1, g_external_api_client.config.timeout_seconds * 1000\n"\n"\n"\n"\n"\n"\n"\n");
     if (poll_result <= 0) {
-        close(g_api_socket);
+        close(g_api_socket\n"\n"\n"\n"\n"\n"\n"\n");
         g_api_socket = -1;
         return -1;
     }
     
     // Check connection status
     int error = 0;
-    socklen_t error_len = sizeof(error);
+    socklen_t error_len = sizeof(error\n"\n"\n"\n"\n"\n"\n"\n");
     if (getsockopt(g_api_socket, SOL_SOCKET, SO_ERROR, &error, &error_len) < 0 || error != 0) {
-        close(g_api_socket);
+        close(g_api_socket\n"\n"\n"\n"\n"\n"\n"\n");
         g_api_socket = -1;
         return -1;
     }
@@ -351,7 +351,7 @@ static int api_connect_to_endpoint(void) {
 // Disconnect from API endpoint
 static int api_disconnect(void) {
     if (g_api_socket >= 0) {
-        close(g_api_socket);
+        close(g_api_socket\n"\n"\n"\n"\n"\n"\n"\n");
         g_api_socket = -1;
     }
     
@@ -362,17 +362,17 @@ static int api_disconnect(void) {
 
 // Calculate response time
 double calculate_response_time(time_t start_time) {
-    time_t end_time = time(NULL);
-    return difftime(end_time, start_time);
+    time_t end_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    return difftime(end_time, start_time\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get API client status
 void external_api_client_get_status(external_api_client_t* status) {
     if (!status || !g_external_api_client_initialized) return;
     
-    pthread_mutex_lock(g_external_api_client.mutex);
+    pthread_mutex_lock(g_external_api_client.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *status = g_external_api_client;
-    pthread_mutex_unlock(g_external_api_client.mutex);
+    pthread_mutex_unlock(g_external_api_client.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if API client is initialized

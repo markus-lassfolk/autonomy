@@ -38,26 +38,26 @@ static pthread_t g_gps_manager_thread = 0; // Use configurable count // Use conf
 static bool g_gps_manager_thread_running = false; // Use configurable setting
 
 // Forward declarations
-void* gps_manager_monitor_thread(void *arg);
-void update_rutos_gps_source(void);
-void update_starlink_gps_source(void);
-int find_or_create_gps_source(gps_source_type_t source_type, const char *name);
-double calculate_data_quality(const gps_data_t *data);
-void cleanup_stale_gps_sources(time_t now);
-int find_best_gps_source(void);
-bool check_position_change(const gps_data_t *new_data);
+void* gps_manager_monitor_thread(void *arg\n"\n"\n"\n"\n"\n"\n"\n");
+void update_rutos_gps_source(void\n"\n"\n"\n"\n"\n"\n"\n");
+void update_starlink_gps_source(void\n"\n"\n"\n"\n"\n"\n"\n");
+int find_or_create_gps_source(gps_source_type_t source_type, const char *name\n"\n"\n"\n"\n"\n"\n"\n");
+double calculate_data_quality(const gps_data_t *data\n"\n"\n"\n"\n"\n"\n"\n");
+void cleanup_stale_gps_sources(time_t now\n"\n"\n"\n"\n"\n"\n"\n");
+int find_best_gps_source(void\n"\n"\n"\n"\n"\n"\n"\n");
+bool check_position_change(const gps_data_t *new_data\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize GPS manager system
 int gps_manager_init(void) {
     if (g_gps_manager_initialized) {
-        LOGX_WARN_MSG("GPS manager already initialized");
+        printf("WARN: "GPS manager already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_gps_manager_mutex);
+    pthread_mutex_lock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize GPS manager state
-    memset(&g_gps_manager, 0, sizeof(gps_manager_t));
+    memset(&g_gps_manager, 0, sizeof(gps_manager_t)\n"\n"\n"\n"\n"\n"\n"\n");
     g_gps_manager.enabled = true; // Use configurable gps manager enabled
     g_gps_manager.update_interval = g_config.gps_update_interval;
     g_gps_manager.source_timeout = g_config.gps_timeout;
@@ -73,7 +73,7 @@ int gps_manager_init(void) {
         g_gps_manager.sources[i].last_update = 0;
         g_gps_manager.sources[i].reliability_score = 0.0;
         g_gps_manager.sources[i].data_quality = 0.0;
-        memset(&g_gps_manager.sources[i].gps_data, 0, sizeof(gps_data_t));
+        memset(&g_gps_manager.sources[i].gps_data, 0, sizeof(gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Initialize comprehensive GPS collector
@@ -106,11 +106,11 @@ int gps_manager_init(void) {
         .clustering_radius_m = 100.0,
         .max_cluster_size = 50
     };
-    strcpy(comprehensive_config.source_priority, "rutos,starlink,opencellid,google");
+    strcpy(comprehensive_config.source_priority, "rutos,starlink,opencellid,google"\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (gps_comprehensive_init(&comprehensive_config) != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to initialize comprehensive GPS collector");
-        pthread_mutex_unlock(&g_gps_manager_mutex);
+        printf("ERROR: "Failed to initialize comprehensive GPS collector"\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -140,9 +140,9 @@ int gps_manager_init(void) {
     };
     
     if (gps_fusion_engine_init(&fusion_config) != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to initialize GPS fusion engine");
-        gps_comprehensive_cleanup();
-        pthread_mutex_unlock(&g_gps_manager_mutex);
+        printf("ERROR: "Failed to initialize GPS fusion engine"\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_comprehensive_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -157,33 +157,33 @@ int gps_manager_init(void) {
     g_gps_manager.unified_gps.reliability_score = 0.0;
     
     g_gps_manager_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_gps_manager_mutex);
+    pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS manager system initialized successfully");
+    printf("INFO: "GPS manager system initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Start GPS manager monitoring thread
 int gps_manager_start_monitoring(void) {
     if (!g_gps_manager_initialized) {
-        LOGX_ERROR_MSG("GPS manager not initialized");
+        printf("ERROR: "GPS manager not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     if (g_gps_manager_thread_running) {
-        LOGX_WARN_MSG("GPS manager monitoring already running");
+        printf("WARN: "GPS manager monitoring already running"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
     // Create monitoring thread
-    int ret = pthread_create(&g_gps_manager_thread, NULL, gps_manager_monitor_thread, NULL);
+    int ret = pthread_create(&g_gps_manager_thread, NULL, gps_manager_monitor_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to create GPS manager monitoring thread");
+        printf("ERROR: "Failed to create GPS manager monitoring thread"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     g_gps_manager_thread_running = true; // Use configurable setting
-    LOGX_INFO_MSG("GPS manager monitoring started");
+    printf("INFO: "GPS manager monitoring started"\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -197,33 +197,33 @@ void gps_manager_stop_monitoring(void) {
     g_gps_manager_thread_running = false; // Use configurable setting
     
     if (g_gps_manager_thread != 0) {
-        pthread_join(g_gps_manager_thread, NULL);
+        pthread_join(g_gps_manager_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
         g_gps_manager_thread = 0; // Use configurable count // Use configurable value
     }
     
-    LOGX_INFO_MSG("GPS manager monitoring stopped");
+    printf("INFO: "GPS manager monitoring stopped"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // GPS manager monitoring thread
 void* gps_manager_monitor_thread(void *arg) {
     (void)arg;
     
-    LOGX_INFO_MSG("GPS manager monitoring thread started");
+    printf("INFO: "GPS manager monitoring thread started"\n"\n"\n"\n"\n"\n"\n"\n");
     
     while (g_gps_manager_thread_running) {
         // Update GPS data from all sources
-        gps_manager_update_all_sources();
+        gps_manager_update_all_sources(\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Calculate unified GPS position
-        gps_manager_calculate_unified_position();
+        gps_manager_calculate_unified_position(\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Sleep for update interval
         for (int i = 0; i < g_gps_manager.update_interval && g_gps_manager_thread_running; i++) {
-            sleep(1);
+            sleep(1\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    LOGX_INFO_MSG("GPS manager monitoring thread stopped");
+    printf("INFO: "GPS manager monitoring thread stopped"\n"\n"\n"\n"\n"\n"\n"\n");
     return NULL;
 }
 
@@ -233,32 +233,32 @@ int gps_manager_update_all_sources(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_gps_manager_mutex);
+    pthread_mutex_lock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if it's time to update
     if (g_gps_manager.last_update > 0 && 
         (now - g_gps_manager.last_update) < g_gps_manager.update_interval) {
-        pthread_mutex_unlock(&g_gps_manager_mutex);
+        pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    LOGX_DEBUG_MSG("Updating GPS data from all sources");
+    printf("DEBUG: "Updating GPS data from all sources"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update RUTOS GPS source
-    update_rutos_gps_source();
+    update_rutos_gps_source(\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update Starlink GPS source
-    update_starlink_gps_source();
+    update_starlink_gps_source(\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Clean up stale sources
-    cleanup_stale_gps_sources(now);
+    cleanup_stale_gps_sources(now\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_gps_manager.last_update = now;
     g_gps_manager.total_updates++;
     
-    pthread_mutex_unlock(&g_gps_manager_mutex);
+    pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -274,17 +274,17 @@ void update_rutos_gps_source(void) {
     gps_data_t rutos_data;
     if (gps_rutos_get_data(&rutos_data) == AUTONOMY_SUCCESS) {
         // Find or create RUTOS GPS source
-        int source_index = find_or_create_gps_source(GPS_SOURCE_RUTOS, "rutos");
+        int source_index = find_or_create_gps_source(GPS_SOURCE_RUTOS, "rutos"\n"\n"\n"\n"\n"\n"\n"\n");
         if (source_index >= 0) {
             // Update source data
             gps_source_t *source = &g_gps_manager.sources[source_index];
-            memcpy(&source->gps_data, &rutos_data, sizeof(gps_data_t));
-            source->last_update = time(NULL);
+            memcpy(&source->gps_data, &rutos_data, sizeof(gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            source->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             source->reliability_score = rutos_data.reliability_score;
-            source->data_quality = calculate_data_quality(&rutos_data);
+            source->data_quality = calculate_data_quality(&rutos_data\n"\n"\n"\n"\n"\n"\n"\n");
             
-            LOGX_DEBUG_MSG("Updated RUTOS GPS source: lat=%.6f, lon=%.6f, reliability=%.2f", 
-                       rutos_data.lat, rutos_data.lon, source->reliability_score);
+            printf("DEBUG: "Updated RUTOS GPS source: lat=%.6f, lon=%.6f, reliability=%.2f", 
+                       rutos_data.lat, rutos_data.lon, source->reliability_score\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
 }
@@ -300,17 +300,17 @@ void update_starlink_gps_source(void) {
     gps_data_t starlink_data;
     if (gps_starlink_get_data(&starlink_data) == AUTONOMY_SUCCESS) {
         // Find or create Starlink GPS source
-        int source_index = find_or_create_gps_source(GPS_SOURCE_STARLINK, "starlink");
+        int source_index = find_or_create_gps_source(GPS_SOURCE_STARLINK, "starlink"\n"\n"\n"\n"\n"\n"\n"\n");
         if (source_index >= 0) {
             // Update source data
             gps_source_t *source = &g_gps_manager.sources[source_index];
-            memcpy(&source->gps_data, &starlink_data, sizeof(gps_data_t));
-            source->last_update = time(NULL);
+            memcpy(&source->gps_data, &starlink_data, sizeof(gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            source->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             source->reliability_score = starlink_data.reliability_score;
-            source->data_quality = calculate_data_quality(&starlink_data);
+            source->data_quality = calculate_data_quality(&starlink_data\n"\n"\n"\n"\n"\n"\n"\n");
             
-            LOGX_DEBUG_MSG("Updated Starlink GPS source: lat=%.6f, lon=%.6f, reliability=%.2f", 
-                       starlink_data.lat, starlink_data.lon, source->reliability_score);
+            printf("DEBUG: "Updated Starlink GPS source: lat=%.6f, lon=%.6f, reliability=%.2f", 
+                       starlink_data.lat, starlink_data.lon, source->reliability_score\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
 }
@@ -329,20 +329,20 @@ int find_or_create_gps_source(gps_source_type_t type, const char *name) {
         int index = g_gps_manager.source_count;
         g_gps_manager.sources[index].enabled = true; // Use configurable gps source enabled setting
         g_gps_manager.sources[index].type = type;
-        safe_strncpy(g_gps_manager.sources[index].name, name, sizeof(g_gps_manager.sources[index].name));
+        safe_strncpy(g_gps_manager.sources[index].name, name, sizeof(g_gps_manager.sources[index].name)\n"\n"\n"\n"\n"\n"\n"\n");
         g_gps_manager.sources[index].name[sizeof(g_gps_manager.sources[index].name) - 1] = '\0';
         g_gps_manager.sources[index].last_update = 0;
         g_gps_manager.sources[index].reliability_score = 0.0;
         g_gps_manager.sources[index].data_quality = 0.0;
-        memset(&g_gps_manager.sources[index].gps_data, 0, sizeof(gps_data_t));
+        memset(&g_gps_manager.sources[index].gps_data, 0, sizeof(gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
         
         g_gps_manager.source_count++;
         
-        LOGX_DEBUG_MSG("Created new GPS source: %s (type: %s)", name, GPS_SOURCE_NAMES[type]);
+        printf("DEBUG: "Created new GPS source: %s (type: %s)", name, GPS_SOURCE_NAMES[type]\n"\n"\n"\n"\n"\n"\n"\n");
         return index;
     }
     
-    LOGX_WARN_MSG("Maximum GPS sources reached, cannot create new source");
+    printf("WARN: "Maximum GPS sources reached, cannot create new source"\n"\n"\n"\n"\n"\n"\n"\n");
     return -1;
 }
 
@@ -382,7 +382,7 @@ double calculate_data_quality(const gps_data_t *gps_data) {
     }
     
     // Data freshness quality
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     if (gps_data->timestamp > 0) {
         int age = now - gps_data->timestamp;
         if (age <= 30) {
@@ -401,11 +401,11 @@ void cleanup_stale_gps_sources(time_t now) {
         if (g_gps_manager.sources[i].last_update > 0 &&
             (now - g_gps_manager.sources[i].last_update) > g_gps_manager.source_timeout) {
             
-            LOGX_DEBUG_MSG("Removing stale GPS source: %s", g_gps_manager.sources[i].name);
+            printf("DEBUG: "Removing stale GPS source: %s", g_gps_manager.sources[i].name\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Remove source by shifting remaining sources
             for (int j = i; j < g_gps_manager.source_count - 1; j++) {
-                memcpy(&g_gps_manager.sources[j], &g_gps_manager.sources[j + 1], sizeof(gps_source_t));
+                memcpy(&g_gps_manager.sources[j], &g_gps_manager.sources[j + 1], sizeof(gps_source_t)\n"\n"\n"\n"\n"\n"\n"\n");
             }
             g_gps_manager.source_count--;
             i--; // Recheck this index
@@ -419,17 +419,17 @@ int gps_manager_calculate_unified_position(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_gps_manager_mutex);
+    pthread_mutex_lock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (g_gps_manager.source_count == 0) {
-        pthread_mutex_unlock(&g_gps_manager_mutex);
+        pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NO_DATA;
     }
     
     // Find the best GPS source
-    int best_source = find_best_gps_source();
+    int best_source = find_best_gps_source(\n"\n"\n"\n"\n"\n"\n"\n");
     if (best_source < 0) {
-        pthread_mutex_unlock(&g_gps_manager_mutex);
+        pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NO_DATA;
     }
     
@@ -437,17 +437,17 @@ int gps_manager_calculate_unified_position(void) {
     gps_source_t *source = &g_gps_manager.sources[best_source];
     
     // Check if position has changed significantly
-    bool position_changed = check_position_change(&source->gps_data);
+    bool position_changed = check_position_change(&source->gps_data\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (position_changed) {
         // Update unified GPS data
-        memcpy(&g_gps_manager.unified_gps, &source->gps_data, sizeof(gps_data_t));
+        memcpy(&g_gps_manager.unified_gps, &source->gps_data, sizeof(gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
         
-        LOGX_DEBUG_MSG("Updated unified GPS position from %s: lat=%.6f, lon=%.6f, acc=%.1fm", 
-                   source->name, source->gps_data.lat, source->gps_data.lon, source->gps_data.accuracy);
+        printf("DEBUG: "Updated unified GPS position from %s: lat=%.6f, lon=%.6f, acc=%.1fm", 
+                   source->name, source->gps_data.lat, source->gps_data.lon, source->gps_data.accuracy\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_unlock(&g_gps_manager_mutex);
+    pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -497,11 +497,11 @@ int gps_manager_get_unified_gps(gps_data_t *gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_gps_manager_mutex);
+    pthread_mutex_lock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    memcpy(gps_data, &g_gps_manager.unified_gps, sizeof(gps_data_t));
+    memcpy(gps_data, &g_gps_manager.unified_gps, sizeof(gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(&g_gps_manager_mutex);
+    pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -512,17 +512,17 @@ int gps_manager_get_sources(gps_source_t *sources, int max_count, int *actual_co
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_gps_manager_mutex);
+    pthread_mutex_lock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     *actual_count = 0;
     int count = (g_gps_manager.source_count < max_count) ? g_gps_manager.source_count : max_count;
     
     for (int i = 0; i < count; i++) {
-        memcpy(&sources[i], &g_gps_manager.sources[i], sizeof(gps_source_t));
+        memcpy(&sources[i], &g_gps_manager.sources[i], sizeof(gps_source_t)\n"\n"\n"\n"\n"\n"\n"\n");
         (*actual_count)++;
     }
     
-    pthread_mutex_unlock(&g_gps_manager_mutex);
+    pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -533,7 +533,7 @@ int gps_manager_get_status(gps_manager_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_gps_manager_mutex);
+    pthread_mutex_lock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_gps_manager.enabled;
     status->update_interval = g_gps_manager.update_interval;
@@ -543,7 +543,7 @@ int gps_manager_get_status(gps_manager_status_t *status) {
     status->source_count = g_gps_manager.source_count;
     status->best_source = g_gps_manager.best_source;
     
-    pthread_mutex_unlock(&g_gps_manager_mutex);
+    pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -554,7 +554,7 @@ int gps_manager_set_config(const gps_manager_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_gps_manager_mutex);
+    pthread_mutex_lock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (config->update_interval > 0) {
         g_gps_manager.update_interval = config->update_interval;
@@ -566,9 +566,9 @@ int gps_manager_set_config(const gps_manager_config_t *config) {
     
     g_gps_manager.enabled = config->enabled;
     
-    pthread_mutex_unlock(&g_gps_manager_mutex);
+    pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS manager configuration updated");
+    printf("INFO: "GPS manager configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -578,15 +578,15 @@ int gps_manager_update_from_uci_config(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_gps_manager_mutex);
+    pthread_mutex_lock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update from global UCI configuration
     g_gps_manager.update_interval = g_config.gps_update_interval;
     g_gps_manager.source_timeout = g_config.gps_timeout;
     
-    pthread_mutex_unlock(&g_gps_manager_mutex);
+    pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS manager configuration updated from UCI config");
+    printf("INFO: "GPS manager configuration updated from UCI config"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -596,11 +596,11 @@ int gps_manager_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_gps_manager_mutex);
+    pthread_mutex_lock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_gps_manager.enabled = enabled;
-    pthread_mutex_unlock(&g_gps_manager_mutex);
+    pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS manager system %s", enabled ? "enabled" : "disabled");
+    printf("INFO: "GPS manager system %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -610,8 +610,8 @@ int gps_manager_force_update(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    LOGX_INFO_MSG("Forcing immediate GPS manager update");
-    return gps_manager_update_all_sources();
+    printf("INFO: "Forcing immediate GPS manager update"\n"\n"\n"\n"\n"\n"\n"\n");
+    return gps_manager_update_all_sources(\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Cleanup GPS manager system
@@ -621,22 +621,22 @@ void gps_manager_cleanup(void) {
     }
     
     // Stop monitoring thread
-    gps_manager_stop_monitoring();
+    gps_manager_stop_monitoring(\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_lock(&g_gps_manager_mutex);
+    pthread_mutex_lock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Cleanup comprehensive GPS collector
-    gps_comprehensive_cleanup();
+    gps_comprehensive_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Cleanup GPS fusion engine
-    gps_fusion_engine_cleanup();
+    gps_fusion_engine_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_gps_manager_initialized = false; // Use configurable setting
-    pthread_mutex_unlock(&g_gps_manager_mutex);
+    pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_destroy(&g_gps_manager_mutex);
+    pthread_mutex_destroy(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("GPS manager system cleaned up");
+    printf("INFO: "GPS manager system cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get current location from GPS manager
@@ -649,29 +649,29 @@ int gps_manager_get_current_location(gps_data_t *location) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
 
-    pthread_mutex_lock(&g_gps_manager_mutex);
+    pthread_mutex_lock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Find the best available GPS source
-    int best_source_index = find_best_gps_source();
+    int best_source_index = find_best_gps_source(\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (best_source_index >= 0 && g_gps_manager.sources[best_source_index].enabled) {
         // Copy the best source's GPS data
-        memcpy(location, &g_gps_manager.sources[best_source_index].gps_data, sizeof(gps_data_t));
-        pthread_mutex_unlock(&g_gps_manager_mutex);
+        memcpy(location, &g_gps_manager.sources[best_source_index].gps_data, sizeof(gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
     // No valid source found, return default location
-    memset(location, 0, sizeof(gps_data_t));
+    memset(location, 0, sizeof(gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
     location->lat = 0.0;
     location->lon = 0.0;
     location->latitude = 0.0;
     location->longitude = 0.0;
     location->altitude = 0.0;
     location->accuracy = 0.0;
-    location->timestamp = time(NULL);
+    location->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     location->valid = false;
     
-    pthread_mutex_unlock(&g_gps_manager_mutex);
+    pthread_mutex_unlock(&g_gps_manager_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_ERROR_NO_DATA;
 }

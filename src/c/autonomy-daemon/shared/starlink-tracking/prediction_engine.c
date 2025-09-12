@@ -14,7 +14,7 @@ struct prediction_engine {
 prediction_engine_t* prediction_engine_init(const prediction_engine_config_t* config) {
     if (!config) return NULL;
     
-    prediction_engine_t* engine = malloc(sizeof(prediction_engine_t));
+    prediction_engine_t* engine = malloc(sizeof(prediction_engine_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!engine) return NULL;
     
     engine->config = *config;
@@ -26,7 +26,7 @@ prediction_engine_t* prediction_engine_init(const prediction_engine_config_t* co
 
 void prediction_engine_cleanup(prediction_engine_t* engine) {
     if (engine) {
-        free(engine);
+        free(engine\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -36,7 +36,7 @@ void prediction_engine_config_init_defaults(prediction_engine_config_t* config) 
     config->enable_predictions = true;
     config->prediction_horizon_hours = 24;
     config->min_elevation_degrees = 10.0;
-    strcpy(config->tle_data_path, "/tmp/starlink_tle.txt");
+    strcpy(config->tle_data_path, "/tmp/starlink_tle.txt"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 int prediction_engine_set_dish_location(prediction_engine_t* engine, const dish_location_t* location) {

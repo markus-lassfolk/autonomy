@@ -23,19 +23,19 @@ enum {
 
 // Forward declarations
 static int autonomy_disk_monitor_status(struct ubus_context *ctx, struct ubus_object *obj,
-                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
 static int autonomy_disk_monitor_config(struct ubus_context *ctx, struct ubus_object *obj,
-                                       struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+                                       struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
 int autonomy_disk_monitor_set_config(struct ubus_context *ctx, struct ubus_object *obj,
-                                           struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+                                           struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
 static int autonomy_disk_monitor_set_enabled(struct ubus_context *ctx, struct ubus_object *obj,
-                                            struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+                                            struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
 static int autonomy_disk_monitor_reset(struct ubus_context *ctx, struct ubus_object *obj,
-                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
 int autonomy_disk_monitor_check(struct ubus_context *ctx, struct ubus_object *obj,
-                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
 int autonomy_disk_monitor_cleanup(struct ubus_context *ctx, struct ubus_object *obj,
-                                        struct ubus_request_data *req, const char *method, struct blob_attr *msg);
+                                        struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
 
 // UBUS method definitions
 static const struct ubus_method autonomy_disk_monitor_methods[] = {
@@ -70,41 +70,41 @@ static int autonomy_disk_monitor_status(struct ubus_context *ctx, struct ubus_ob
                                       struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
     (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     disk_monitor_status_t status;
-    int result = disk_monitor_get_status(&status);
+    int result = disk_monitor_get_status(&status\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to get disk monitor status");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "error", "Failed to get disk monitor status"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
     // Add configuration
-    blobmsg_add_u8(&bb, "enabled", status.enabled);
-    blobmsg_add_u32(&bb, "check_interval", status.check_interval);
-    blobmsg_add_u32(&bb, "warning_threshold", status.warning_threshold);
-    blobmsg_add_u32(&bb, "critical_threshold", status.critical_threshold);
-    blobmsg_add_u8(&bb, "auto_cleanup", status.auto_cleanup);
-    blobmsg_add_u32(&bb, "cleanup_threshold", status.cleanup_threshold);
+    blobmsg_add_u8(&bb, "enabled", status.enabled\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "check_interval", status.check_interval\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "warning_threshold", status.warning_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "critical_threshold", status.critical_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u8(&bb, "auto_cleanup", status.auto_cleanup\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "cleanup_threshold", status.cleanup_threshold\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Add statistics
-    blobmsg_add_u32(&bb, "last_check_time", status.last_check_time);
-    blobmsg_add_u32(&bb, "last_cleanup_time", status.last_cleanup_time);
-    blobmsg_add_u32(&bb, "total_cleanups", status.total_cleanups);
-    blobmsg_add_u32(&bb, "total_emergency_cleanups", status.total_emergency_cleanups);
-    blobmsg_add_u32(&bb, "total_space_freed", status.total_space_freed);
+    blobmsg_add_u32(&bb, "last_check_time", status.last_check_time\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "last_cleanup_time", status.last_cleanup_time\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "total_cleanups", status.total_cleanups\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "total_emergency_cleanups", status.total_emergency_cleanups\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "total_space_freed", status.total_space_freed\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Add current disk info
-    blobmsg_add_u32(&bb, "current_usage_percent", status.current_usage_percent);
-    blobmsg_add_u32(&bb, "current_usage_bytes", status.current_usage_bytes);
-    blobmsg_add_u32(&bb, "total_space_bytes", status.total_space_bytes);
-    blobmsg_add_u32(&bb, "available_space_bytes", status.available_space_bytes);
+    blobmsg_add_u32(&bb, "current_usage_percent", status.current_usage_percent\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "current_usage_bytes", status.current_usage_bytes\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "total_space_bytes", status.total_space_bytes\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "available_space_bytes", status.available_space_bytes\n"\n"\n"\n"\n"\n"\n"\n");
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -115,27 +115,27 @@ static int autonomy_disk_monitor_config(struct ubus_context *ctx, struct ubus_ob
                                        struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
     (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     disk_monitor_config_t config;
-    int result = disk_monitor_get_config(&config);
+    int result = disk_monitor_get_config(&config\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to get disk monitor configuration");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "error", "Failed to get disk monitor configuration"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
-    blobmsg_add_u8(&bb, "enabled", config.enabled);
-    blobmsg_add_u32(&bb, "check_interval", config.check_interval);
-    blobmsg_add_u32(&bb, "warning_threshold", config.warning_threshold);
-    blobmsg_add_u32(&bb, "critical_threshold", config.critical_threshold);
-    blobmsg_add_u8(&bb, "auto_cleanup", config.auto_cleanup);
-    blobmsg_add_u32(&bb, "cleanup_threshold", config.cleanup_threshold);
+    blobmsg_add_u8(&bb, "enabled", config.enabled\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "check_interval", config.check_interval\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "warning_threshold", config.warning_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "critical_threshold", config.critical_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u8(&bb, "auto_cleanup", config.auto_cleanup\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "cleanup_threshold", config.cleanup_threshold\n"\n"\n"\n"\n"\n"\n"\n");
     
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -146,15 +146,15 @@ int autonomy_disk_monitor_set_config(struct ubus_context *ctx, struct ubus_objec
                                            struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
     (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     disk_monitor_config_t config;
     int result = disk_monitor_get_config(&config); // Get current config first
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to get current configuration");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "error", "Failed to get current configuration"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
@@ -179,46 +179,46 @@ int autonomy_disk_monitor_set_config(struct ubus_context *ctx, struct ubus_objec
         [DISK_MONITOR_CONFIG_CLEANUP_THRESHOLD] = { .name = "cleanup_threshold", .type = BLOBMSG_TYPE_INT32 },
     };
     
-    blobmsg_parse(policy, __DISK_MONITOR_CONFIG_MAX, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(policy, __DISK_MONITOR_CONFIG_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update configuration with new values
     if (tb[DISK_MONITOR_CONFIG_ENABLED]) {
-        config.enabled = blobmsg_get_bool(tb[DISK_MONITOR_CONFIG_ENABLED]);
+        config.enabled = blobmsg_get_bool(tb[DISK_MONITOR_CONFIG_ENABLED]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (tb[DISK_MONITOR_CONFIG_CHECK_INTERVAL]) {
-        config.check_interval = blobmsg_get_u32(tb[DISK_MONITOR_CONFIG_CHECK_INTERVAL]);
+        config.check_interval = blobmsg_get_u32(tb[DISK_MONITOR_CONFIG_CHECK_INTERVAL]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (tb[DISK_MONITOR_CONFIG_WARNING_THRESHOLD]) {
-        config.warning_threshold = blobmsg_get_u32(tb[DISK_MONITOR_CONFIG_WARNING_THRESHOLD]);
+        config.warning_threshold = blobmsg_get_u32(tb[DISK_MONITOR_CONFIG_WARNING_THRESHOLD]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (tb[DISK_MONITOR_CONFIG_CRITICAL_THRESHOLD]) {
-        config.critical_threshold = blobmsg_get_u32(tb[DISK_MONITOR_CONFIG_CRITICAL_THRESHOLD]);
+        config.critical_threshold = blobmsg_get_u32(tb[DISK_MONITOR_CONFIG_CRITICAL_THRESHOLD]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (tb[DISK_MONITOR_CONFIG_AUTO_CLEANUP]) {
-        config.auto_cleanup = blobmsg_get_bool(tb[DISK_MONITOR_CONFIG_AUTO_CLEANUP]);
+        config.auto_cleanup = blobmsg_get_bool(tb[DISK_MONITOR_CONFIG_AUTO_CLEANUP]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (tb[DISK_MONITOR_CONFIG_CLEANUP_THRESHOLD]) {
-        config.cleanup_threshold = blobmsg_get_u32(tb[DISK_MONITOR_CONFIG_CLEANUP_THRESHOLD]);
+        config.cleanup_threshold = blobmsg_get_u32(tb[DISK_MONITOR_CONFIG_CLEANUP_THRESHOLD]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Apply the new configuration
-    result = disk_monitor_set_config(&config);
+    result = disk_monitor_set_config(&config\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to set disk monitor configuration");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "error", "Failed to set disk monitor configuration"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", "Configuration updated successfully");
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_string(&bb, "status", "Configuration updated successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -229,7 +229,7 @@ static int autonomy_disk_monitor_set_enabled(struct ubus_context *ctx, struct ub
                                             struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
     (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     struct blob_attr *tb[1];
     enum {
@@ -241,28 +241,28 @@ static int autonomy_disk_monitor_set_enabled(struct ubus_context *ctx, struct ub
         [DISK_MONITOR_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
     };
     
-    blobmsg_parse(policy, __DISK_MONITOR_ENABLED_MAX, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(policy, __DISK_MONITOR_ENABLED_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!tb[DISK_MONITOR_ENABLED]) {
-        blobmsg_add_string(&bb, "error", "Missing 'enabled' parameter");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "error", "Missing 'enabled' parameter"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
-    bool enabled = blobmsg_get_bool(tb[DISK_MONITOR_ENABLED]);
-    int result = disk_monitor_set_enabled(enabled);
+    bool enabled = blobmsg_get_bool(tb[DISK_MONITOR_ENABLED]\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = disk_monitor_set_enabled(enabled\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to set disk monitor enabled state");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "error", "Failed to set disk monitor enabled state"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", enabled ? "Disk monitor enabled" : "Disk monitor disabled");
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_string(&bb, "status", enabled ? "Disk monitor enabled" : "Disk monitor disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -273,20 +273,20 @@ static int autonomy_disk_monitor_reset(struct ubus_context *ctx, struct ubus_obj
                                       struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
     (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int result = disk_monitor_reset();
+    int result = disk_monitor_reset(\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to reset disk monitor statistics");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "error", "Failed to reset disk monitor statistics"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", "Disk monitor statistics reset successfully");
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_string(&bb, "status", "Disk monitor statistics reset successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -297,20 +297,20 @@ int autonomy_disk_monitor_check(struct ubus_context *ctx, struct ubus_object *ob
                                       struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
     (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int result = disk_monitor_check_disk_space();
+    int result = disk_monitor_check_disk_space(\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Disk monitor check failed");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "error", "Disk monitor check failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", "Disk monitor check completed successfully");
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_string(&bb, "status", "Disk monitor check completed successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -321,7 +321,7 @@ int autonomy_disk_monitor_cleanup(struct ubus_context *ctx, struct ubus_object *
                                         struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
     (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Parse message to determine cleanup type
     struct blob_attr *tb[1];
@@ -334,31 +334,31 @@ int autonomy_disk_monitor_cleanup(struct ubus_context *ctx, struct ubus_object *
         [DISK_MONITOR_CLEANUP_TYPE] = { .name = "type", .type = BLOBMSG_TYPE_STRING },
     };
     
-    blobmsg_parse(policy, __DISK_MONITOR_CLEANUP_MAX, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(policy, __DISK_MONITOR_CLEANUP_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     const char *cleanup_type = "routine";
     if (tb[DISK_MONITOR_CLEANUP_TYPE]) {
-        cleanup_type = blobmsg_get_string(tb[DISK_MONITOR_CLEANUP_TYPE]);
+        cleanup_type = blobmsg_get_string(tb[DISK_MONITOR_CLEANUP_TYPE]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     int result;
     if (strcmp(cleanup_type, "emergency") == 0) {
-        result = disk_monitor_perform_emergency_cleanup();
+        result = disk_monitor_perform_emergency_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        result = disk_monitor_perform_cleanup();
+        result = disk_monitor_perform_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Disk monitor cleanup failed");
-        ubus_send_reply(ctx, req, bb.head);
-        blob_buf_free(&bb);
+        blobmsg_add_string(&bb, "error", "Disk monitor cleanup failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", "Disk monitor cleanup completed successfully");
-    blobmsg_add_string(&bb, "type", cleanup_type);
-    ubus_send_reply(ctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_string(&bb, "status", "Disk monitor cleanup completed successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "type", cleanup_type\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -366,13 +366,13 @@ int autonomy_disk_monitor_cleanup(struct ubus_context *ctx, struct ubus_object *
  * Register disk monitor UBUS object
  */
 int disk_monitor_ubus_register(struct ubus_context *ctx) {
-    int ret = ubus_add_object(ctx, &autonomy_disk_monitor_obj);
+    int ret = ubus_add_object(ctx, &autonomy_disk_monitor_obj\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret) {
-        fprintf(stderr, "Failed to add disk monitor object: %s\n", ubus_strerror(ret));
+        fprintf(stderr, "Failed to add disk monitor object: %s\n", ubus_strerror(ret)\n"\n"\n"\n"\n"\n"\n"\n");
         return ret;
     }
     
-    fprintf(stderr, "Disk monitor UBUS object registered successfully\n");
+    fprintf(stderr, "Disk monitor UBUS object registered successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -380,6 +380,6 @@ int disk_monitor_ubus_register(struct ubus_context *ctx) {
  * Unregister disk monitor UBUS object
  */
 void disk_monitor_ubus_unregister(struct ubus_context *ctx) {
-    ubus_remove_object(ctx, &autonomy_disk_monitor_obj);
-    fprintf(stderr, "Disk monitor UBUS object unregistered\n");
+    ubus_remove_object(ctx, &autonomy_disk_monitor_obj\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "Disk monitor UBUS object unregistered\n"\n"\n"\n"\n"\n"\n"\n"\n");
 }

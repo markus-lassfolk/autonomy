@@ -25,19 +25,19 @@ extern autonomy_config_t g_config;
 static disk_monitor_t g_disk_monitor;
 
 // Forward declarations
-static int get_disk_space_info(const char *path, disk_space_info_t *info);
-int64_t cleanup_old_logs(void);
-int64_t cleanup_temp_files(void);
-int64_t cleanup_cache_files(void);
-int64_t remove_file_recursive(const char *path);
-static int is_file_older_than(const char *path, int hours);
-static void send_notification(const char *type, const char *message);
+static int get_disk_space_info(const char *path, disk_space_info_t *info\n"\n"\n"\n"\n"\n"\n"\n");
+int64_t cleanup_old_logs(void\n"\n"\n"\n"\n"\n"\n"\n");
+int64_t cleanup_temp_files(void\n"\n"\n"\n"\n"\n"\n"\n");
+int64_t cleanup_cache_files(void\n"\n"\n"\n"\n"\n"\n"\n");
+int64_t remove_file_recursive(const char *path\n"\n"\n"\n"\n"\n"\n"\n");
+static int is_file_older_than(const char *path, int hours\n"\n"\n"\n"\n"\n"\n"\n");
+static void send_notification(const char *type, const char *message\n"\n"\n"\n"\n"\n"\n"\n");
 
 /**
  * Initialize disk monitor
  */
 int disk_monitor_init(void) {
-    memset(&g_disk_monitor, 0, sizeof(disk_monitor_t));
+    memset(&g_disk_monitor, 0, sizeof(disk_monitor_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set default configuration using UCI config
     g_disk_monitor.config.critical_threshold_gb = 1.0; // Use configurable threshold
@@ -65,7 +65,7 @@ int disk_monitor_init(void) {
  * Check disk space for monitored paths
  */
 int disk_monitor_check_disk_space(void) {
-    g_disk_monitor.stats.last_check_time = time(NULL);
+    g_disk_monitor.stats.last_check_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < g_disk_monitor.config.monitor_paths_count; i++) {
         const char *path = g_disk_monitor.config.monitor_paths[i];
@@ -74,15 +74,15 @@ int disk_monitor_check_disk_space(void) {
         if (get_disk_space_info(path, &info) == 0) {
             // Check if cleanup is needed
             if (info.available_gb <= g_disk_monitor.config.cleanup_threshold_gb) {
-                disk_monitor_perform_cleanup();
+                disk_monitor_perform_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
             // Check for critical threshold
             if (info.available_gb <= g_disk_monitor.config.critical_threshold_gb) {
-                send_notification("critical", "Critical disk space");
-                disk_monitor_perform_emergency_cleanup();
+                send_notification("critical", "Critical disk space"\n"\n"\n"\n"\n"\n"\n"\n");
+                disk_monitor_perform_emergency_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
             } else if (info.available_gb <= g_disk_monitor.config.warning_threshold_gb) {
-                send_notification("warning", "Low disk space");
+                send_notification("warning", "Low disk space"\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
@@ -109,7 +109,7 @@ static int get_disk_space_info(const char *path, disk_space_info_t *info) {
     unsigned long used_blocks = total_blocks - free_blocks;
     
     // Convert blocks to GB (assuming 512-byte blocks)
-    double block_size_gb = (fs_info.f_frsize ? fs_info.f_frsize : 512) / (1024.0 * 1024.0 * 1024.0);
+    double block_size_gb = (fs_info.f_frsize ? fs_info.f_frsize : 512) / (1024.0 * 1024.0 * 1024.0\n"\n"\n"\n"\n"\n"\n"\n");
     
     info->path = path;
     info->total_gb = total_blocks * block_size_gb;
@@ -137,23 +137,23 @@ int disk_monitor_perform_cleanup(void) {
     int64_t total_freed = 0;
     
     // Cleanup old log files
-    int64_t freed = cleanup_old_logs();
+    int64_t freed = cleanup_old_logs(\n"\n"\n"\n"\n"\n"\n"\n");
     if (freed > 0) total_freed += freed;
     
     // Cleanup temporary files
-    freed = cleanup_temp_files();
+    freed = cleanup_temp_files(\n"\n"\n"\n"\n"\n"\n"\n");
     if (freed > 0) total_freed += freed;
     
     // Cleanup cache files
-    freed = cleanup_cache_files();
+    freed = cleanup_cache_files(\n"\n"\n"\n"\n"\n"\n"\n");
     if (freed > 0) total_freed += freed;
     
     if (total_freed > 0) {
         g_disk_monitor.stats.total_bytes_freed += total_freed;
-        g_disk_monitor.stats.last_cleanup_time = time(NULL);
+        g_disk_monitor.stats.last_cleanup_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         g_disk_monitor.stats.cleanup_count++;
         
-        send_notification("fix", "Disk cleanup completed");
+        send_notification("fix", "Disk cleanup completed"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return AUTONOMY_SUCCESS;
@@ -168,7 +168,7 @@ int disk_monitor_perform_emergency_cleanup(void) {
     // More aggressive cleanup for emergency situations
     for (int i = 0; i < g_disk_monitor.config.monitor_paths_count; i++) {
         const char *path = g_disk_monitor.config.monitor_paths[i];
-        DIR *dir = opendir(path);
+        DIR *dir = opendir(path\n"\n"\n"\n"\n"\n"\n"\n");
         if (!dir) continue;
         
         struct dirent *entry;
@@ -178,21 +178,21 @@ int disk_monitor_perform_emergency_cleanup(void) {
             }
             
             char full_path[512];
-            snprintf(full_path, sizeof(full_path), "%s/%s", path, entry->d_name);
+            snprintf(full_path, sizeof(full_path), "%s/%s", path, entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Remove all files in emergency mode
-            int64_t freed = remove_file_recursive(full_path);
+            int64_t freed = remove_file_recursive(full_path\n"\n"\n"\n"\n"\n"\n"\n");
             if (freed > 0) total_freed += freed;
         }
-        closedir(dir);
+        closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (total_freed > 0) {
         g_disk_monitor.stats.total_bytes_freed += total_freed;
-        g_disk_monitor.stats.last_cleanup_time = time(NULL);
+        g_disk_monitor.stats.last_cleanup_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         g_disk_monitor.stats.cleanup_count++;
         
-        send_notification("critical", "Emergency disk cleanup completed");
+        send_notification("critical", "Emergency disk cleanup completed"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return AUTONOMY_SUCCESS;
@@ -206,7 +206,7 @@ int64_t cleanup_old_logs(void) {
     const char *log_dirs[] = {"/var/log", "/tmp", "/root"};
     
     for (int i = 0; i < sizeof(log_dirs) / sizeof(log_dirs[0]); i++) {
-        DIR *dir = opendir(log_dirs[i]);
+        DIR *dir = opendir(log_dirs[i]\n"\n"\n"\n"\n"\n"\n"\n");
         if (!dir) continue;
         
         struct dirent *entry;
@@ -216,20 +216,20 @@ int64_t cleanup_old_logs(void) {
                 strstr(entry->d_name, "autonomy")) {
                 
                 char full_path[512];
-                snprintf(full_path, sizeof(full_path), "%s/%s", log_dirs[i], entry->d_name);
+                snprintf(full_path, sizeof(full_path), "%s/%s", log_dirs[i], entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 // Check file size
                 struct stat st;
                 if (stat(full_path, &st) == 0) {
-                    double size_mb = st.st_size / (1024.0 * 1024.0);
+                    double size_mb = st.st_size / (1024.0 * 1024.0\n"\n"\n"\n"\n"\n"\n"\n");
                     if (size_mb > g_disk_monitor.config.max_log_size_mb) {
-                        int64_t freed = remove_file_recursive(full_path);
+                        int64_t freed = remove_file_recursive(full_path\n"\n"\n"\n"\n"\n"\n"\n");
                         if (freed > 0) total_freed += freed;
                     }
                 }
             }
         }
-        closedir(dir);
+        closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return total_freed;
@@ -243,7 +243,7 @@ int64_t cleanup_temp_files(void) {
     const char *temp_dirs[] = {"/tmp", "/var/tmp", "/root/tmp"};
     
     for (int i = 0; i < sizeof(temp_dirs) / sizeof(temp_dirs[0]); i++) {
-        DIR *dir = opendir(temp_dirs[i]);
+        DIR *dir = opendir(temp_dirs[i]\n"\n"\n"\n"\n"\n"\n"\n");
         if (!dir) continue;
         
         struct dirent *entry;
@@ -253,15 +253,15 @@ int64_t cleanup_temp_files(void) {
                 strstr(entry->d_name, "~")) {
                 
                 char full_path[512];
-                snprintf(full_path, sizeof(full_path), "%s/%s", temp_dirs[i], entry->d_name);
+                snprintf(full_path, sizeof(full_path), "%s/%s", temp_dirs[i], entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 if (is_file_older_than(full_path, g_disk_monitor.config.max_temp_age_hours)) {
-                    int64_t freed = remove_file_recursive(full_path);
+                    int64_t freed = remove_file_recursive(full_path\n"\n"\n"\n"\n"\n"\n"\n");
                     if (freed > 0) total_freed += freed;
                 }
             }
         }
-        closedir(dir);
+        closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return total_freed;
@@ -275,7 +275,7 @@ int64_t cleanup_cache_files(void) {
     const char *cache_dirs[] = {"/tmp", "/var/cache", "/root/.cache"};
     
     for (int i = 0; i < sizeof(cache_dirs) / sizeof(cache_dirs[0]); i++) {
-        DIR *dir = opendir(cache_dirs[i]);
+        DIR *dir = opendir(cache_dirs[i]\n"\n"\n"\n"\n"\n"\n"\n");
         if (!dir) continue;
         
         struct dirent *entry;
@@ -284,16 +284,16 @@ int64_t cleanup_cache_files(void) {
                 strstr(entry->d_name, ".cache")) {
                 
                 char full_path[512];
-                snprintf(full_path, sizeof(full_path), "%s/%s", cache_dirs[i], entry->d_name);
+                snprintf(full_path, sizeof(full_path), "%s/%s", cache_dirs[i], entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 // Remove cache files older than 1 hour
                 if (is_file_older_than(full_path, 1)) {
-                    int64_t freed = remove_file_recursive(full_path);
+                    int64_t freed = remove_file_recursive(full_path\n"\n"\n"\n"\n"\n"\n"\n");
                     if (freed > 0) total_freed += freed;
                 }
             }
         }
-        closedir(dir);
+        closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return total_freed;
@@ -312,7 +312,7 @@ int64_t remove_file_recursive(const char *path) {
     
     if (S_ISDIR(st.st_mode)) {
         // Directory - remove contents recursively
-        DIR *dir = opendir(path);
+        DIR *dir = opendir(path\n"\n"\n"\n"\n"\n"\n"\n");
         if (dir) {
             struct dirent *entry;
             while ((entry = readdir(dir)) != NULL) {
@@ -321,10 +321,10 @@ int64_t remove_file_recursive(const char *path) {
                 }
                 
                 char sub_path[512];
-                snprintf(sub_path, sizeof(sub_path), "%s/%s", path, entry->d_name);
-                size += remove_file_recursive(sub_path);
+                snprintf(sub_path, sizeof(sub_path), "%s/%s", path, entry->d_name\n"\n"\n"\n"\n"\n"\n"\n");
+                size += remove_file_recursive(sub_path\n"\n"\n"\n"\n"\n"\n"\n");
             }
-            closedir(dir);
+            closedir(dir\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         if (rmdir(path) == 0) {
@@ -350,7 +350,7 @@ static int is_file_older_than(const char *path, int hours) {
         return 0;
     }
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     time_t file_time = st.st_mtime;
     time_t threshold = hours * 60 * 60; // hours to seconds
     
@@ -363,11 +363,11 @@ static int is_file_older_than(const char *path, int hours) {
 static void send_notification(const char *type, const char *message) {
     // Create notification event
     notification_event_t event = {0};
-    strcpy(event.title, "Disk Monitor Alert");
-    safe_strncpy(event.message, message, sizeof(event.message));
+    strcpy(event.title, "Disk Monitor Alert"\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(event.message, message, sizeof(event.message)\n"\n"\n"\n"\n"\n"\n"\n");
     event.message[sizeof(event.message) - 1] = '\0';
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
-    event.timestamp = time(NULL);
+    event.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Determine priority based on type
     if (strcmp(type, "critical") == 0) {
@@ -380,10 +380,10 @@ static void send_notification(const char *type, const char *message) {
     
     // Send via notification manager if available
     if (notification_manager_is_initialized()) {
-        notification_manager_send_default(event.type, event.title, event.message);
+        notification_manager_send_default(event.type, event.title, event.message\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         // Fallback to stderr logging
-        fprintf(stderr, "DISK MONITOR NOTIFICATION [%s]: %s\n", type, message);
+        fprintf(stderr, "DISK MONITOR NOTIFICATION [%s]: %s\n", type, message\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -446,7 +446,7 @@ int disk_monitor_set_enabled(bool enabled) {
  * Reset disk monitor
  */
 int disk_monitor_reset(void) {
-    memset(&g_disk_monitor.stats, 0, sizeof(disk_monitor_stats_t));
+    memset(&g_disk_monitor.stats, 0, sizeof(disk_monitor_stats_t)\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 

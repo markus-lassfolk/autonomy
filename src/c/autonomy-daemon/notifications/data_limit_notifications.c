@@ -21,24 +21,24 @@ int data_limit_notification_manager_init(const data_limit_notification_config_t*
         return -1;
     }
     
-    memset(&g_data_limit_manager, 0, sizeof(data_limit_notification_manager_t));
+    memset(&g_data_limit_manager, 0, sizeof(data_limit_notification_manager_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Copy configuration
     g_data_limit_manager.config = *config;
     
     // Initialize mutex
-    g_data_limit_manager.mutex = malloc(sizeof(pthread_mutex_t));
+    g_data_limit_manager.mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_data_limit_manager.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_data_limit_manager.mutex, NULL);
+    pthread_mutex_init(g_data_limit_manager.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize daily usage trackers
-    g_data_limit_manager.daily_usage_trackers = malloc(config->max_interfaces * sizeof(daily_usage_tracker_t));
+    g_data_limit_manager.daily_usage_trackers = malloc(config->max_interfaces * sizeof(daily_usage_tracker_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_data_limit_manager.daily_usage_trackers) {
-        pthread_mutex_destroy(g_data_limit_manager.mutex);
-        free(g_data_limit_manager.mutex);
+        pthread_mutex_destroy(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -46,11 +46,11 @@ int data_limit_notification_manager_init(const data_limit_notification_config_t*
     g_data_limit_manager.tracked_interfaces_count = 0;
     
     // Initialize last notifications tracking
-    g_data_limit_manager.last_notifications = malloc(config->max_last_notifications * sizeof(last_notification_record_t));
+    g_data_limit_manager.last_notifications = malloc(config->max_last_notifications * sizeof(last_notification_record_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_data_limit_manager.last_notifications) {
-        free(g_data_limit_manager.daily_usage_trackers);
-        pthread_mutex_destroy(g_data_limit_manager.mutex);
-        free(g_data_limit_manager.mutex);
+        free(g_data_limit_manager.daily_usage_trackers\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -66,16 +66,16 @@ void data_limit_notification_manager_cleanup(void) {
     if (!g_data_limit_manager_initialized) return;
     
     if (g_data_limit_manager.mutex) {
-        pthread_mutex_destroy(g_data_limit_manager.mutex);
-        free(g_data_limit_manager.mutex);
+        pthread_mutex_destroy(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_data_limit_manager.daily_usage_trackers) {
-        free(g_data_limit_manager.daily_usage_trackers);
+        free(g_data_limit_manager.daily_usage_trackers\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_data_limit_manager.last_notifications) {
-        free(g_data_limit_manager.last_notifications);
+        free(g_data_limit_manager.last_notifications\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     g_data_limit_manager.daily_usage_trackers = NULL;
@@ -95,9 +95,9 @@ static bool should_send_notification(const char* notification_key, time_t cooldo
         return false;
     }
     
-    pthread_mutex_lock(g_data_limit_manager.mutex);
+    pthread_mutex_lock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     bool should_send = true;
     
     // Check existing notifications
@@ -109,7 +109,7 @@ static bool should_send_notification(const char* notification_key, time_t cooldo
             } else {
                 record->last_sent_time = now;
             }
-            pthread_mutex_unlock(g_data_limit_manager.mutex);
+            pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return should_send;
         }
     }
@@ -118,7 +118,7 @@ static bool should_send_notification(const char* notification_key, time_t cooldo
     if (g_data_limit_manager.last_notifications_count < g_data_limit_manager.max_last_notifications) {
         int index = g_data_limit_manager.last_notifications_count;
         strncpy(g_data_limit_manager.last_notifications[index].notification_key, 
-                notification_key, sizeof(g_data_limit_manager.last_notifications[index].notification_key) - 1);
+                notification_key, sizeof(g_data_limit_manager.last_notifications[index].notification_key) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         g_data_limit_manager.last_notifications[index].last_sent_time = now;
         g_data_limit_manager.last_notifications_count++;
     } else {
@@ -133,11 +133,11 @@ static bool should_send_notification(const char* notification_key, time_t cooldo
         }
         
         strncpy(g_data_limit_manager.last_notifications[oldest_index].notification_key,
-                notification_key, sizeof(g_data_limit_manager.last_notifications[oldest_index].notification_key) - 1);
+                notification_key, sizeof(g_data_limit_manager.last_notifications[oldest_index].notification_key) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         g_data_limit_manager.last_notifications[oldest_index].last_sent_time = now;
     }
     
-    pthread_mutex_unlock(g_data_limit_manager.mutex);
+    pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return true;
 }
 
@@ -164,7 +164,7 @@ static daily_usage_tracker_t* get_daily_usage_tracker(const char* interface_name
     int index = g_data_limit_manager.tracked_interfaces_count;
     daily_usage_tracker_t* tracker = &g_data_limit_manager.daily_usage_trackers[index];
     
-    safe_strncpy(tracker->interface_name, interface_name, sizeof(tracker->interface_name));
+    safe_strncpy(tracker->interface_name, interface_name, sizeof(tracker->interface_name)\n"\n"\n"\n"\n"\n"\n"\n");
     tracker->last_reset_date = time(NULL) - (30 * 24 * 60 * 60); // 30 days ago
     
     // Calculate daily allowance
@@ -177,7 +177,7 @@ static daily_usage_tracker_t* get_daily_usage_tracker(const char* interface_name
     tracker->today_usage_mb = 0;
     tracker->yesterday_usage_mb = 0;
     tracker->last_usage_check_mb = data_limit->current_usage_mb;
-    tracker->last_usage_check_time = time(NULL);
+    tracker->last_usage_check_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     tracker->daily_warning_80_sent = false;
     tracker->daily_warning_100_sent = false;
     
@@ -201,19 +201,19 @@ int data_limit_notification_manager_notify_failover_to_limited(const char* from_
     double remaining_gb = remaining_mb / 1024.0;
     
     notification_event_t event;
-    memset(&event, 0, sizeof(event));
+    memset(&event, 0, sizeof(event)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Generate ID
-    time_t now = time(NULL);
-    snprintf(event.id, sizeof(event.id), "failover_%lld", (long long)now);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(event.id, sizeof(event.id), "failover_%lld", (long long)now\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set priority based on usage
     if (data_limit->usage_percentage > 80) {
         event.priority = NOTIFICATION_PRIORITY_HIGH;
-        snprintf(event.title, sizeof(event.title), "  Failover to Data-Limited Connection");
+        snprintf(event.title, sizeof(event.title), "  Failover to Data-Limited Connection"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         event.priority = NOTIFICATION_PRIORITY_NORMAL;
-        snprintf(event.title, sizeof(event.title), " Failover to Data-Limited Connection");
+        snprintf(event.title, sizeof(event.title), " Failover to Data-Limited Connection"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     snprintf(event.message, sizeof(event.message),
@@ -226,14 +226,14 @@ int data_limit_notification_manager_notify_failover_to_limited(const char* from_
              from_interface, to_interface,
              remaining_gb, 100.0 - data_limit->usage_percentage,
              data_limit->current_usage_mb / 1024.0, data_limit->data_limit_mb / 1024,
-             data_limit->days_until_reset);
+             data_limit->days_until_reset\n"\n"\n"\n"\n"\n"\n"\n");
     
     event.type = NOTIFICATION_TYPE_DATA_LIMIT;
     event.timestamp = now;
     
     // Send through smart manager if available
     if (smart_notification_manager_is_initialized()) {
-        return smart_notification_manager_send(&event);
+        return smart_notification_manager_send(&event\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         return smart_notification_manager_send(&event); 
     }
@@ -255,13 +255,13 @@ int data_limit_notification_manager_notify_failback_from_limited(const char* fro
     double remaining_gb = remaining_mb / 1024.0;
     
     notification_event_t event;
-    memset(&event, 0, sizeof(event));
+    memset(&event, 0, sizeof(event)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Generate ID
-    time_t now = time(NULL);
-    snprintf(event.id, sizeof(event.id), "failback_%lld", (long long)now);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(event.id, sizeof(event.id), "failback_%lld", (long long)now\n"\n"\n"\n"\n"\n"\n"\n");
     
-    snprintf(event.title, sizeof(event.title), " Failback to Unlimited Connection");
+    snprintf(event.title, sizeof(event.title), " Failback to Unlimited Connection"\n"\n"\n"\n"\n"\n"\n"\n");
     snprintf(event.message, sizeof(event.message),
              "Switched back from %s to %s\n\n"
              " Final Data Usage:\n"
@@ -272,7 +272,7 @@ int data_limit_notification_manager_notify_failback_from_limited(const char* fro
              from_interface, to_interface,
              remaining_gb, 100.0 - data_limit->usage_percentage,
              data_limit->current_usage_mb / 1024.0, data_limit->data_limit_mb / 1024,
-             data_limit->days_until_reset);
+             data_limit->days_until_reset\n"\n"\n"\n"\n"\n"\n"\n");
     
     event.type = NOTIFICATION_TYPE_DATA_LIMIT;
     event.priority = NOTIFICATION_PRIORITY_NORMAL;
@@ -280,7 +280,7 @@ int data_limit_notification_manager_notify_failback_from_limited(const char* fro
     
     // Send through smart manager if available
     if (smart_notification_manager_is_initialized()) {
-        return smart_notification_manager_send(&event);
+        return smart_notification_manager_send(&event\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         return smart_notification_manager_send(&event); 
     }
@@ -294,19 +294,19 @@ int data_limit_notification_manager_notify_daily_usage_threshold(const char* int
         return -1;
     }
     
-    pthread_mutex_lock(g_data_limit_manager.mutex);
-    daily_usage_tracker_t* tracker = get_daily_usage_tracker(interface_name, data_limit);
+    pthread_mutex_lock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    daily_usage_tracker_t* tracker = get_daily_usage_tracker(interface_name, data_limit\n"\n"\n"\n"\n"\n"\n"\n");
     if (!tracker) {
-        pthread_mutex_unlock(g_data_limit_manager.mutex);
+        pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
     // Check if already sent
     if (percentage >= 100 && tracker->daily_warning_100_sent) {
-        pthread_mutex_unlock(g_data_limit_manager.mutex);
+        pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return 0; // Already sent
     } else if (percentage >= 80 && tracker->daily_warning_80_sent) {
-        pthread_mutex_unlock(g_data_limit_manager.mutex);
+        pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return 0; // Already sent
     }
     
@@ -317,20 +317,20 @@ int data_limit_notification_manager_notify_daily_usage_threshold(const char* int
         tracker->daily_warning_80_sent = true;
     }
     
-    pthread_mutex_unlock(g_data_limit_manager.mutex);
+    pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     notification_event_t event;
-    memset(&event, 0, sizeof(event));
+    memset(&event, 0, sizeof(event)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Generate ID
-    time_t now = time(NULL);
-    snprintf(event.id, sizeof(event.id), "daily_%s_%d_%lld", interface_name, percentage, (long long)now);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(event.id, sizeof(event.id), "daily_%s_%d_%lld", interface_name, percentage, (long long)now\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (percentage >= 100) {
-        snprintf(event.title, sizeof(event.title), " Daily Data Limit Exceeded!");
+        snprintf(event.title, sizeof(event.title), " Daily Data Limit Exceeded!"\n"\n"\n"\n"\n"\n"\n"\n");
         event.priority = NOTIFICATION_PRIORITY_HIGH;
     } else {
-        snprintf(event.title, sizeof(event.title), " Daily Data Usage: %d%%", percentage);
+        snprintf(event.title, sizeof(event.title), " Daily Data Usage: %d%%", percentage\n"\n"\n"\n"\n"\n"\n"\n");
         event.priority = NOTIFICATION_PRIORITY_NORMAL;
     }
     
@@ -352,14 +352,14 @@ int data_limit_notification_manager_notify_daily_usage_threshold(const char* int
              tracker->daily_allowance_mb, remaining_daily,
              data_limit->current_usage_mb / 1024.0, data_limit->data_limit_mb / 1024,
              ((double)data_limit->data_limit_mb - data_limit->current_usage_mb) / 1024.0,
-             data_limit->days_until_reset);
+             data_limit->days_until_reset\n"\n"\n"\n"\n"\n"\n"\n");
     
     event.type = NOTIFICATION_TYPE_DATA_LIMIT;
     event.timestamp = now;
     
     // Send through smart manager if available
     if (smart_notification_manager_is_initialized()) {
-        return smart_notification_manager_send(&event);
+        return smart_notification_manager_send(&event\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         return smart_notification_manager_send(&event); 
     }
@@ -383,18 +383,18 @@ int data_limit_notification_manager_notify_monthly_usage_threshold(const char* i
         title = " Monthly Data Limit EXCEEDED!";
         emoji = "";
         priority = NOTIFICATION_PRIORITY_HIGH;
-        snprintf(notification_key, sizeof(notification_key), "monthly_exceeded_%s", interface_name);
+        snprintf(notification_key, sizeof(notification_key), "monthly_exceeded_%s", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
     } else if (data_limit->usage_percentage >= 95.0) {
         notify_type = NOTIFICATION_TYPE_DATA_LIMIT;
         title = " Monthly Data Limit: 95% Used";
         emoji = "";
         priority = NOTIFICATION_PRIORITY_HIGH;
-        snprintf(notification_key, sizeof(notification_key), "monthly_95_%s", interface_name);
+        snprintf(notification_key, sizeof(notification_key), "monthly_95_%s", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
     } else if (data_limit->usage_percentage >= 80.0) {
         notify_type = NOTIFICATION_TYPE_DATA_LIMIT;
         title = " Monthly Data Limit: 80% Used";
         emoji = "";
-        snprintf(notification_key, sizeof(notification_key), "monthly_80_%s", interface_name);
+        snprintf(notification_key, sizeof(notification_key), "monthly_80_%s", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         return 0; // No notification needed
     }
@@ -406,18 +406,18 @@ int data_limit_notification_manager_notify_monthly_usage_threshold(const char* i
     double remaining_mb = (double)data_limit->data_limit_mb - data_limit->current_usage_mb;
     double remaining_gb = remaining_mb / 1024.0;
     
-    pthread_mutex_lock(g_data_limit_manager.mutex);
-    daily_usage_tracker_t* tracker = get_daily_usage_tracker(interface_name, data_limit);
-    pthread_mutex_unlock(g_data_limit_manager.mutex);
+    pthread_mutex_lock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    daily_usage_tracker_t* tracker = get_daily_usage_tracker(interface_name, data_limit\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     notification_event_t event;
-    memset(&event, 0, sizeof(event));
+    memset(&event, 0, sizeof(event)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Generate ID
-    time_t now = time(NULL);
-    snprintf(event.id, sizeof(event.id), "monthly_%s_%.0f_%lld", interface_name, data_limit->usage_percentage, (long long)now);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(event.id, sizeof(event.id), "monthly_%s_%.0f_%lld", interface_name, data_limit->usage_percentage, (long long)now\n"\n"\n"\n"\n"\n"\n"\n");
     
-    safe_strncpy(event.title, title, sizeof(event.title));
+    safe_strncpy(event.title, title, sizeof(event.title)\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (tracker) {
         snprintf(event.message, sizeof(event.message),
@@ -433,7 +433,7 @@ int data_limit_notification_manager_notify_monthly_usage_threshold(const char* i
                  interface_name, emoji,
                  data_limit->current_usage_mb / 1024.0, data_limit->data_limit_mb / 1024, data_limit->usage_percentage,
                  remaining_gb, data_limit->days_until_reset,
-                 tracker->daily_allowance_mb, tracker->today_usage_mb);
+                 tracker->daily_allowance_mb, tracker->today_usage_mb\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         snprintf(event.message, sizeof(event.message),
                  "Interface: %s\n\n"
@@ -444,7 +444,7 @@ int data_limit_notification_manager_notify_monthly_usage_threshold(const char* i
                  " Consider switching to unlimited connection!",
                  interface_name, emoji,
                  data_limit->current_usage_mb / 1024.0, data_limit->data_limit_mb / 1024, data_limit->usage_percentage,
-                 remaining_gb, data_limit->days_until_reset);
+                 remaining_gb, data_limit->days_until_reset\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     event.type = notify_type;
@@ -453,7 +453,7 @@ int data_limit_notification_manager_notify_monthly_usage_threshold(const char* i
     
     // Send through smart manager if available
     if (smart_notification_manager_is_initialized()) {
-        return smart_notification_manager_send(&event);
+        return smart_notification_manager_send(&event\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         return smart_notification_manager_send(&event); 
     }
@@ -466,20 +466,20 @@ int data_limit_notification_manager_notify_unexpected_usage_spike(const char* in
         return -1;
     }
     
-    pthread_mutex_lock(g_data_limit_manager.mutex);
-    daily_usage_tracker_t* tracker = get_daily_usage_tracker(interface_name, data_limit);
+    pthread_mutex_lock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    daily_usage_tracker_t* tracker = get_daily_usage_tracker(interface_name, data_limit\n"\n"\n"\n"\n"\n"\n"\n");
     if (!tracker) {
-        pthread_mutex_unlock(g_data_limit_manager.mutex);
+        pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
     // Calculate usage since last check
     double usage_since_last_check = data_limit->current_usage_mb - tracker->last_usage_check_mb;
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     double time_since_last_check_hours = (double)(now - tracker->last_usage_check_time) / 3600.0;
     
     if (time_since_last_check_hours < 1.0) {
-        pthread_mutex_unlock(g_data_limit_manager.mutex);
+        pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return 0; // Too soon to check
     }
     
@@ -488,32 +488,32 @@ int data_limit_notification_manager_notify_unexpected_usage_spike(const char* in
     double normal_hourly_usage = tracker->daily_allowance_mb / 24.0;
     
     // If hourly usage is more than 3x the normal daily allowance per hour, it's a spike
-    bool is_spike = (hourly_usage_mb > normal_hourly_usage * 3.0) && (usage_since_last_check > 50.0);
+    bool is_spike = (hourly_usage_mb > normal_hourly_usage * 3.0) && (usage_since_last_check > 50.0\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update tracking
     tracker->last_usage_check_mb = data_limit->current_usage_mb;
     tracker->last_usage_check_time = now;
     
-    pthread_mutex_unlock(g_data_limit_manager.mutex);
+    pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!is_spike) {
         return 0; // No spike detected
     }
     
     char notification_key[256];
-    snprintf(notification_key, sizeof(notification_key), "usage_spike_%s", interface_name);
+    snprintf(notification_key, sizeof(notification_key), "usage_spike_%s", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!should_send_notification(notification_key, g_data_limit_manager.config.usage_spike_cooldown_seconds)) {
         return 0; // Avoid spam
     }
     
     notification_event_t event;
-    memset(&event, 0, sizeof(event));
+    memset(&event, 0, sizeof(event)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Generate ID
-    snprintf(event.id, sizeof(event.id), "spike_%s_%lld", interface_name, (long long)now);
+    snprintf(event.id, sizeof(event.id), "spike_%s_%lld", interface_name, (long long)now\n"\n"\n"\n"\n"\n"\n"\n");
     
-    snprintf(event.title, sizeof(event.title), " Unusual Data Usage Detected");
+    snprintf(event.title, sizeof(event.title), " Unusual Data Usage Detected"\n"\n"\n"\n"\n"\n"\n"\n");
     snprintf(event.message, sizeof(event.message),
              "Interface: %s\n\n"
              " High usage detected:\n"
@@ -529,7 +529,7 @@ int data_limit_notification_manager_notify_unexpected_usage_spike(const char* in
              hourly_usage_mb, normal_hourly_usage,
              data_limit->usage_percentage,
              ((double)data_limit->data_limit_mb - data_limit->current_usage_mb) / 1024.0,
-             data_limit->days_until_reset);
+             data_limit->days_until_reset\n"\n"\n"\n"\n"\n"\n"\n");
     
     event.type = NOTIFICATION_TYPE_DATA_LIMIT;
     event.priority = NOTIFICATION_PRIORITY_HIGH;
@@ -537,7 +537,7 @@ int data_limit_notification_manager_notify_unexpected_usage_spike(const char* in
     
     // Send through smart manager if available
     if (smart_notification_manager_is_initialized()) {
-        return smart_notification_manager_send(&event);
+        return smart_notification_manager_send(&event\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         return smart_notification_manager_send(&event); 
     }
@@ -551,13 +551,13 @@ int data_limit_notification_manager_notify_data_limit_reset(const char* interfac
     }
     
     notification_event_t event;
-    memset(&event, 0, sizeof(event));
+    memset(&event, 0, sizeof(event)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Generate ID
-    time_t now = time(NULL);
-    snprintf(event.id, sizeof(event.id), "reset_%s_%lld", interface_name, (long long)now);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(event.id, sizeof(event.id), "reset_%s_%lld", interface_name, (long long)now\n"\n"\n"\n"\n"\n"\n"\n");
     
-    snprintf(event.title, sizeof(event.title), " Data Limit Reset");
+    snprintf(event.title, sizeof(event.title), " Data Limit Reset"\n"\n"\n"\n"\n"\n"\n"\n");
     snprintf(event.message, sizeof(event.message),
              "Interface: %s\n\n"
              " Monthly data limit has reset!\n\n"
@@ -572,14 +572,14 @@ int data_limit_notification_manager_notify_data_limit_reset(const char* interfac
              data_limit->data_limit_mb / 1024,
              data_limit->current_usage_mb,
              (double)data_limit->data_limit_mb / 1024.0,
-             (double)data_limit->data_limit_mb / (double)data_limit->days_until_reset);
+             (double)data_limit->data_limit_mb / (double)data_limit->days_until_reset\n"\n"\n"\n"\n"\n"\n"\n");
     
     event.type = NOTIFICATION_TYPE_DATA_LIMIT;
     event.priority = NOTIFICATION_PRIORITY_NORMAL;
     event.timestamp = now;
     
     // Reset daily tracking
-    pthread_mutex_lock(g_data_limit_manager.mutex);
+    pthread_mutex_lock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     for (int i = 0; i < g_data_limit_manager.tracked_interfaces_count; i++) {
         daily_usage_tracker_t* tracker = &g_data_limit_manager.daily_usage_trackers[i];
         if (strcmp(tracker->interface_name, interface_name) == 0) {
@@ -591,11 +591,11 @@ int data_limit_notification_manager_notify_data_limit_reset(const char* interfac
             break;
         }
     }
-    pthread_mutex_unlock(g_data_limit_manager.mutex);
+    pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Send through smart manager if available
     if (smart_notification_manager_is_initialized()) {
-        return smart_notification_manager_send(&event);
+        return smart_notification_manager_send(&event\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         return smart_notification_manager_send(&event); 
     }
@@ -608,22 +608,22 @@ int data_limit_notification_manager_update_usage_tracking(const char* interface_
         return -1;
     }
     
-    pthread_mutex_lock(g_data_limit_manager.mutex);
+    pthread_mutex_lock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    daily_usage_tracker_t* tracker = get_daily_usage_tracker(interface_name, data_limit);
+    daily_usage_tracker_t* tracker = get_daily_usage_tracker(interface_name, data_limit\n"\n"\n"\n"\n"\n"\n"\n");
     if (!tracker) {
-        pthread_mutex_unlock(g_data_limit_manager.mutex);
+        pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
-    time_t now = time(NULL);
-    struct tm* now_tm = localtime(&now);
-    struct tm* last_check_tm = localtime(&tracker->last_usage_check_time);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm* now_tm = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm* last_check_tm = localtime(&tracker->last_usage_check_time\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if it's a new day
     bool is_new_day = (now_tm->tm_year != last_check_tm->tm_year ||
                        now_tm->tm_mon != last_check_tm->tm_mon ||
-                       now_tm->tm_mday != last_check_tm->tm_mday);
+                       now_tm->tm_mday != last_check_tm->tm_mday\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (is_new_day) {
         tracker->yesterday_usage_mb = tracker->today_usage_mb;
@@ -643,7 +643,7 @@ int data_limit_notification_manager_update_usage_tracking(const char* interface_
     tracker->last_usage_check_mb = data_limit->current_usage_mb;
     tracker->last_usage_check_time = now;
     
-    pthread_mutex_unlock(g_data_limit_manager.mutex);
+    pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -662,31 +662,31 @@ int data_limit_notification_manager_check_all_notifications(data_limit_config_t*
         }
         
         // Update usage tracking
-        data_limit_notification_manager_update_usage_tracking(data_limit->interface_name, data_limit);
+        data_limit_notification_manager_update_usage_tracking(data_limit->interface_name, data_limit\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Check monthly thresholds
-        data_limit_notification_manager_notify_monthly_usage_threshold(data_limit->interface_name, data_limit);
+        data_limit_notification_manager_notify_monthly_usage_threshold(data_limit->interface_name, data_limit\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Check for usage spikes
-        data_limit_notification_manager_notify_unexpected_usage_spike(data_limit->interface_name, data_limit);
+        data_limit_notification_manager_notify_unexpected_usage_spike(data_limit->interface_name, data_limit\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Check daily thresholds
-        pthread_mutex_lock(g_data_limit_manager.mutex);
-        daily_usage_tracker_t* tracker = get_daily_usage_tracker(data_limit->interface_name, data_limit);
+        pthread_mutex_lock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        daily_usage_tracker_t* tracker = get_daily_usage_tracker(data_limit->interface_name, data_limit\n"\n"\n"\n"\n"\n"\n"\n");
         if (tracker) {
             double daily_usage_percent = (tracker->today_usage_mb / tracker->daily_allowance_mb) * 100.0;
             
             if (daily_usage_percent >= 100.0 && !tracker->daily_warning_100_sent) {
-                pthread_mutex_unlock(g_data_limit_manager.mutex);
-                data_limit_notification_manager_notify_daily_usage_threshold(data_limit->interface_name, data_limit, 100);
-                pthread_mutex_lock(g_data_limit_manager.mutex);
+                pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+                data_limit_notification_manager_notify_daily_usage_threshold(data_limit->interface_name, data_limit, 100\n"\n"\n"\n"\n"\n"\n"\n");
+                pthread_mutex_lock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             } else if (daily_usage_percent >= 80.0 && !tracker->daily_warning_80_sent) {
-                pthread_mutex_unlock(g_data_limit_manager.mutex);
-                data_limit_notification_manager_notify_daily_usage_threshold(data_limit->interface_name, data_limit, 80);
-                pthread_mutex_lock(g_data_limit_manager.mutex);
+                pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+                data_limit_notification_manager_notify_daily_usage_threshold(data_limit->interface_name, data_limit, 80\n"\n"\n"\n"\n"\n"\n"\n");
+                pthread_mutex_lock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
-        pthread_mutex_unlock(g_data_limit_manager.mutex);
+        pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return 0;
@@ -696,7 +696,7 @@ int data_limit_notification_manager_check_all_notifications(data_limit_config_t*
 void data_limit_notification_manager_get_status(data_limit_notification_status_t* status) {
     if (!status || !g_data_limit_manager_initialized) return;
     
-    pthread_mutex_lock(g_data_limit_manager.mutex);
+    pthread_mutex_lock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = g_data_limit_manager.config.enabled;
     status->tracked_interfaces_count = g_data_limit_manager.tracked_interfaces_count;
@@ -704,7 +704,7 @@ void data_limit_notification_manager_get_status(data_limit_notification_status_t
     status->last_notifications_count = g_data_limit_manager.last_notifications_count;
     status->max_last_notifications = g_data_limit_manager.max_last_notifications;
     
-    pthread_mutex_unlock(g_data_limit_manager.mutex);
+    pthread_mutex_unlock(g_data_limit_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if data limit notification manager is initialized

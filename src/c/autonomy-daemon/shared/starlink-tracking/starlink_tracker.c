@@ -11,10 +11,10 @@
 #include <signal.h>
 
 // Internal function prototypes
-static void* starlink_tracker_update_thread(void *arg);
-static void* starlink_tracker_monitoring_thread(void *arg);
-static int starlink_tracker_fetch_dish_data(starlink_tracker_t *tracker);
-static int starlink_tracker_update_predictions_internal(starlink_tracker_t *tracker);
+static void* starlink_tracker_update_thread(void *arg\n"\n"\n"\n"\n"\n"\n"\n");
+static void* starlink_tracker_monitoring_thread(void *arg\n"\n"\n"\n"\n"\n"\n"\n");
+static int starlink_tracker_fetch_dish_data(starlink_tracker_t *tracker\n"\n"\n"\n"\n"\n"\n"\n");
+static int starlink_tracker_update_predictions_internal(starlink_tracker_t *tracker\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize Starlink tracker
 starlink_tracker_t* starlink_tracker_init(const starlink_tracker_config_t *config) {
@@ -22,34 +22,34 @@ starlink_tracker_t* starlink_tracker_init(const starlink_tracker_config_t *confi
         return NULL;
     }
     
-    starlink_tracker_t *tracker = calloc(1, sizeof(starlink_tracker_t));
+    starlink_tracker_t *tracker = calloc(1, sizeof(starlink_tracker_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!tracker) {
         return NULL;
     }
     
     // Copy configuration
-    memcpy(&tracker->config, config, sizeof(starlink_tracker_config_t));
+    memcpy(&tracker->config, config, sizeof(starlink_tracker_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize mutex
     if (pthread_mutex_init(&tracker->data_mutex, NULL) != 0) {
-        free(tracker);
+        free(tracker\n"\n"\n"\n"\n"\n"\n"\n");
         return NULL;
     }
     
     // Initialize Space-Track connector
     space_track_config_t space_config;
-    space_track_config_init_defaults(&space_config);
-    strncpy(space_config.username, config->space_track_username, sizeof(space_config.username) - 1);
+    space_track_config_init_defaults(&space_config\n"\n"\n"\n"\n"\n"\n"\n");
+    strncpy(space_config.username, config->space_track_username, sizeof(space_config.username) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     space_config.username[sizeof(space_config.username) - 1] = '\0';
-    strncpy(space_config.password, config->space_track_password, sizeof(space_config.password) - 1);
+    strncpy(space_config.password, config->space_track_password, sizeof(space_config.password) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     space_config.password[sizeof(space_config.password) - 1] = '\0';
     space_config.rate_limit_requests_per_minute = config->rate_limit_requests_per_minute;
     space_config.cache_duration_hours = config->cache_duration_hours;
     
-    tracker->space_track = space_track_connector_init(&space_config);
+    tracker->space_track = space_track_connector_init(&space_config\n"\n"\n"\n"\n"\n"\n"\n");
     if (!tracker->space_track) {
-        pthread_mutex_destroy(&tracker->data_mutex);
-        free(tracker);
+        pthread_mutex_destroy(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(tracker\n"\n"\n"\n"\n"\n"\n"\n");
         return NULL;
     }
     
@@ -62,32 +62,32 @@ starlink_tracker_t* starlink_tracker_init(const starlink_tracker_config_t *confi
     obs_config.adaptive_threshold_factor = 0.8;
     obs_config.smoothing_window_size = 3;
     
-    tracker->analyzer = obstruction_analyzer_init(&obs_config);
+    tracker->analyzer = obstruction_analyzer_init(&obs_config\n"\n"\n"\n"\n"\n"\n"\n");
     if (!tracker->analyzer) {
-        space_track_connector_cleanup(tracker->space_track);
-        pthread_mutex_destroy(&tracker->data_mutex);
-        free(tracker);
+        space_track_connector_cleanup(tracker->space_track\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(tracker\n"\n"\n"\n"\n"\n"\n"\n");
         return NULL;
     }
     
     // Initialize prediction engine
     prediction_engine_config_t pred_config;
-    prediction_engine_config_init_defaults(&pred_config);
+    prediction_engine_config_init_defaults(&pred_config\n"\n"\n"\n"\n"\n"\n"\n");
     pred_config.prediction_horizon_hours = config->prediction_horizon_hours;
     pred_config.min_elevation_degrees = config->min_elevation_degrees;
     
-    tracker->engine = prediction_engine_init(&pred_config);
+    tracker->engine = prediction_engine_init(&pred_config\n"\n"\n"\n"\n"\n"\n"\n");
     if (!tracker->engine) {
-        obstruction_analyzer_cleanup(tracker->analyzer);
-        space_track_connector_cleanup(tracker->space_track);
-        pthread_mutex_destroy(&tracker->data_mutex);
-        free(tracker);
+        obstruction_analyzer_cleanup(tracker->analyzer\n"\n"\n"\n"\n"\n"\n"\n");
+        space_track_connector_cleanup(tracker->space_track\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(tracker\n"\n"\n"\n"\n"\n"\n"\n");
         return NULL;
     }
     
     // Set up engine dependencies
-    prediction_engine_set_dish_location(tracker->engine, &tracker->dish_location);
-    prediction_engine_set_obstruction_analyzer(tracker->engine, tracker->analyzer);
+    prediction_engine_set_dish_location(tracker->engine, &tracker->dish_location\n"\n"\n"\n"\n"\n"\n"\n");
+    prediction_engine_set_obstruction_analyzer(tracker->engine, tracker->analyzer\n"\n"\n"\n"\n"\n"\n"\n");
     
     tracker->initialized = true;
     
@@ -102,41 +102,41 @@ void starlink_tracker_cleanup(starlink_tracker_t *tracker) {
     
     // Stop monitoring if active
     if (tracker->monitoring_active) {
-        starlink_tracker_stop_monitoring(tracker);
+        starlink_tracker_stop_monitoring(tracker\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Cleanup components
     if (tracker->engine) {
-        prediction_engine_cleanup(tracker->engine);
+        prediction_engine_cleanup(tracker->engine\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (tracker->analyzer) {
-        obstruction_analyzer_cleanup(tracker->analyzer);
+        obstruction_analyzer_cleanup(tracker->analyzer\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (tracker->space_track) {
-        space_track_connector_cleanup(tracker->space_track);
+        space_track_connector_cleanup(tracker->space_track\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Free allocated memory
     if (tracker->current_positions) {
-        free(tracker->current_positions);
+        free(tracker->current_positions\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (tracker->predictions) {
-        free(tracker->predictions);
+        free(tracker->predictions\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (tracker->constellation.satellites) {
-        free(tracker->constellation.satellites);
+        free(tracker->constellation.satellites\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (tracker->obstruction_map.cells) {
-        free(tracker->obstruction_map.cells);
+        free(tracker->obstruction_map.cells\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_destroy(&tracker->data_mutex);
-    free(tracker);
+    pthread_mutex_destroy(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    free(tracker\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Update dish location from Starlink API
@@ -147,14 +147,14 @@ int starlink_tracker_update_dish_location(starlink_tracker_t *tracker) {
     
     // Use starlink_client to get enhanced location
     dish_location_t location;
-    int rc = starlink_get_enhanced_location(&location);
+    int rc = starlink_get_enhanced_location(&location\n"\n"\n"\n"\n"\n"\n"\n");
     if (rc != 0) {
         return TRACKER_ERROR_API_FAILURE;
     }
     
-    pthread_mutex_lock(&tracker->data_mutex);
+    pthread_mutex_lock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     tracker->dish_location = location;
-    pthread_mutex_unlock(&tracker->data_mutex);
+    pthread_mutex_unlock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return TRACKER_SUCCESS;
 }
@@ -167,18 +167,18 @@ int starlink_tracker_update_obstruction_map(starlink_tracker_t *tracker) {
     
     // Obtain obstruction map via starlink_client
     char response[8192];
-    int rc = starlink_get_obstruction_map(response, sizeof(response));
+    int rc = starlink_get_obstruction_map(response, sizeof(response)\n"\n"\n"\n"\n"\n"\n"\n");
     if (rc != 0) {
         return TRACKER_ERROR_API_FAILURE;
     }
     
-    pthread_mutex_lock(&tracker->data_mutex);
-    int update_result = obstruction_analyzer_update_map(tracker->analyzer, response);
+    pthread_mutex_lock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    int update_result = obstruction_analyzer_update_map(tracker->analyzer, response\n"\n"\n"\n"\n"\n"\n"\n");
     if (update_result == OBSTRUCTION_SUCCESS) {
         // Copy map to tracker structure
-        memcpy(&tracker->obstruction_map, &tracker->analyzer->current_map, sizeof(obstruction_map_t));
+        memcpy(&tracker->obstruction_map, &tracker->analyzer->current_map, sizeof(obstruction_map_t)\n"\n"\n"\n"\n"\n"\n"\n");
     }
-    pthread_mutex_unlock(&tracker->data_mutex);
+    pthread_mutex_unlock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return (update_result == OBSTRUCTION_SUCCESS) ? TRACKER_SUCCESS : TRACKER_ERROR_PARSE_FAILURE;
 }
@@ -189,18 +189,18 @@ int starlink_tracker_update_constellation_data(starlink_tracker_t *tracker) {
         return TRACKER_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&tracker->data_mutex);
+    pthread_mutex_lock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Fetch TLE data from Space-Track
-    int result = space_track_get_starlink_tles(tracker->space_track, &tracker->constellation);
+    int result = space_track_get_starlink_tles(tracker->space_track, &tracker->constellation\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == SPACE_TRACK_SUCCESS) {
         // Load constellation into prediction engine
-        prediction_engine_load_constellation(tracker->engine, &tracker->constellation);
-        tracker->last_update = time(NULL);
+        prediction_engine_load_constellation(tracker->engine, &tracker->constellation\n"\n"\n"\n"\n"\n"\n"\n");
+        tracker->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_unlock(&tracker->data_mutex);
+    pthread_mutex_unlock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return (result == SPACE_TRACK_SUCCESS) ? TRACKER_SUCCESS : TRACKER_ERROR_API_FAILURE;
 }
@@ -211,22 +211,22 @@ int starlink_tracker_calculate_predictions(starlink_tracker_t *tracker, int hori
         return TRACKER_ERROR_NOT_INITIALIZED;
     }
     
-    return starlink_tracker_update_predictions_internal(tracker);
+    return starlink_tracker_update_predictions_internal(tracker\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Internal prediction update
 static int starlink_tracker_update_predictions_internal(starlink_tracker_t *tracker) {
-    pthread_mutex_lock(&tracker->data_mutex);
+    pthread_mutex_lock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Free existing predictions
     if (tracker->predictions) {
-        free(tracker->predictions);
+        free(tracker->predictions\n"\n"\n"\n"\n"\n"\n"\n");
         tracker->predictions = NULL;
         tracker->num_predictions = 0;
     }
     
     // Calculate new predictions
-    time_t start_time = time(NULL);
+    time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     // Get satellite positions for prediction
     satellite_position_t *positions = NULL;
     int num_positions = 0;
@@ -236,18 +236,18 @@ static int starlink_tracker_update_predictions_internal(starlink_tracker_t *trac
         start_time + (tracker->config.prediction_horizon_hours * 3600),
         positions,
         &num_positions
-    );
+    \n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == PREDICTION_SUCCESS) {
         // Trigger outage callback for new predictions
         if (tracker->outage_callback && tracker->predictions) {
             for (int i = 0; i < tracker->num_predictions; i++) {
-                tracker->outage_callback(&tracker->predictions[i], tracker->callback_user_data);
+                tracker->outage_callback(&tracker->predictions[i], tracker->callback_user_data\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
     
-    pthread_mutex_unlock(&tracker->data_mutex);
+    pthread_mutex_unlock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return (result == PREDICTION_SUCCESS) ? TRACKER_SUCCESS : TRACKER_ERROR_API_FAILURE;
 }
@@ -258,26 +258,26 @@ int starlink_tracker_get_predictions(const starlink_tracker_t *tracker, outage_p
         return -1;
     }
     
-    pthread_mutex_lock((pthread_mutex_t*)&tracker->data_mutex);
+    pthread_mutex_lock((pthread_mutex_t*)&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!tracker->predictions || tracker->num_predictions == 0) {
         *predictions = NULL;
-        pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex);
+        pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
     // Allocate memory for predictions copy
-    *predictions = calloc(tracker->num_predictions, sizeof(outage_prediction_t));
+    *predictions = calloc(tracker->num_predictions, sizeof(outage_prediction_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!*predictions) {
-        pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex);
+        pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
     // Copy predictions
-    memcpy(*predictions, tracker->predictions, tracker->num_predictions * sizeof(outage_prediction_t));
+    memcpy(*predictions, tracker->predictions, tracker->num_predictions * sizeof(outage_prediction_t)\n"\n"\n"\n"\n"\n"\n"\n");
     int count = tracker->num_predictions;
     
-    pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex);
+    pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return count;
 }
@@ -285,7 +285,7 @@ int starlink_tracker_get_predictions(const starlink_tracker_t *tracker, outage_p
 // Free predictions array
 void starlink_tracker_free_predictions(outage_prediction_t *predictions, int count) {
     if (predictions) {
-        free(predictions);
+        free(predictions\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -310,8 +310,8 @@ int starlink_tracker_start_monitoring(starlink_tracker_t *tracker) {
     // Create monitoring thread
     if (pthread_create(&tracker->monitoring_thread, NULL, starlink_tracker_monitoring_thread, tracker) != 0) {
         tracker->monitoring_active = false;
-        pthread_cancel(tracker->update_thread);
-        pthread_join(tracker->update_thread, NULL);
+        pthread_cancel(tracker->update_thread\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_join(tracker->update_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
         return TRACKER_ERROR_THREAD_FAILURE;
     }
     
@@ -331,11 +331,11 @@ int starlink_tracker_stop_monitoring(starlink_tracker_t *tracker) {
     tracker->monitoring_active = false;
     
     // Cancel and join threads
-    pthread_cancel(tracker->update_thread);
-    pthread_cancel(tracker->monitoring_thread);
+    pthread_cancel(tracker->update_thread\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_cancel(tracker->monitoring_thread\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_join(tracker->update_thread, NULL);
-    pthread_join(tracker->monitoring_thread, NULL);
+    pthread_join(tracker->update_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_join(tracker->monitoring_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     return TRACKER_SUCCESS;
 }
@@ -354,10 +354,10 @@ int starlink_tracker_set_outage_callback(starlink_tracker_t *tracker,
         return TRACKER_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&tracker->data_mutex);
+    pthread_mutex_lock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     tracker->outage_callback = callback;
     tracker->callback_user_data = user_data;
-    pthread_mutex_unlock(&tracker->data_mutex);
+    pthread_mutex_unlock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return TRACKER_SUCCESS;
 }
@@ -368,26 +368,26 @@ int starlink_tracker_get_current_satellite_positions(const starlink_tracker_t *t
         return -1;
     }
     
-    pthread_mutex_lock((pthread_mutex_t*)&tracker->data_mutex);
+    pthread_mutex_lock((pthread_mutex_t*)&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!tracker->current_positions || tracker->num_current_positions == 0) {
         *positions = NULL;
-        pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex);
+        pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
     // Allocate memory for positions copy
-    *positions = calloc(tracker->num_current_positions, sizeof(satellite_position_t));
+    *positions = calloc(tracker->num_current_positions, sizeof(satellite_position_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!*positions) {
-        pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex);
+        pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
     // Copy positions
-    memcpy(*positions, tracker->current_positions, tracker->num_current_positions * sizeof(satellite_position_t));
+    memcpy(*positions, tracker->current_positions, tracker->num_current_positions * sizeof(satellite_position_t)\n"\n"\n"\n"\n"\n"\n"\n");
     int count = tracker->num_current_positions;
     
-    pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex);
+    pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return count;
 }
@@ -398,7 +398,7 @@ int starlink_tracker_get_visible_satellite_count(const starlink_tracker_t *track
         return 0;
     }
     
-    pthread_mutex_lock((pthread_mutex_t*)&tracker->data_mutex);
+    pthread_mutex_lock((pthread_mutex_t*)&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     int visible_count = 0;
     for (int i = 0; i < tracker->num_current_positions; i++) {
@@ -407,7 +407,7 @@ int starlink_tracker_get_visible_satellite_count(const starlink_tracker_t *track
         }
     }
     
-    pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex);
+    pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return visible_count;
 }
@@ -418,7 +418,7 @@ int starlink_tracker_get_unobstructed_satellite_count(const starlink_tracker_t *
         return 0;
     }
     
-    pthread_mutex_lock((pthread_mutex_t*)&tracker->data_mutex);
+    pthread_mutex_lock((pthread_mutex_t*)&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     int unobstructed_count = 0;
     for (int i = 0; i < tracker->num_current_positions; i++) {
@@ -427,7 +427,7 @@ int starlink_tracker_get_unobstructed_satellite_count(const starlink_tracker_t *
         }
     }
     
-    pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex);
+    pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return unobstructed_count;
 }
@@ -438,19 +438,19 @@ static void* starlink_tracker_update_thread(void *arg) {
     
     while (tracker->monitoring_active) {
         // Update dish data
-        starlink_tracker_fetch_dish_data(tracker);
+        starlink_tracker_fetch_dish_data(tracker\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Update constellation data (less frequently)
-        time_t now = time(NULL);
+        time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         if ((now - tracker->constellation.last_update) > (tracker->config.update_interval_minutes * 60)) {
-            starlink_tracker_update_constellation_data(tracker);
+            starlink_tracker_update_constellation_data(tracker\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Update predictions
-        starlink_tracker_update_predictions_internal(tracker);
+        starlink_tracker_update_predictions_internal(tracker\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Sleep for update interval
-        sleep(tracker->config.update_interval_minutes * 60);
+        sleep(tracker->config.update_interval_minutes * 60\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return NULL;
@@ -462,26 +462,26 @@ static void* starlink_tracker_monitoring_thread(void *arg) {
     
     while (tracker->monitoring_active) {
         // Get current satellite positions
-        time_t now = time(NULL);
+        time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         satellite_position_t *positions = NULL;
         int num_positions = 0;
-        int result = prediction_engine_get_visible_satellites(tracker->engine, now, positions, &num_positions);
+        int result = prediction_engine_get_visible_satellites(tracker->engine, now, positions, &num_positions\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (result >= 0 && num_positions >= 0) {
-            pthread_mutex_lock(&tracker->data_mutex);
+            pthread_mutex_lock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Update current positions
             if (tracker->current_positions) {
-                free(tracker->current_positions);
+                free(tracker->current_positions\n"\n"\n"\n"\n"\n"\n"\n");
             }
             tracker->current_positions = positions;
             tracker->num_current_positions = num_positions;
             
-            pthread_mutex_unlock(&tracker->data_mutex);
+            pthread_mutex_unlock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Check for immediate outage conditions
-        int unobstructed_count = starlink_tracker_get_unobstructed_satellite_count(tracker);
+        int unobstructed_count = starlink_tracker_get_unobstructed_satellite_count(tracker\n"\n"\n"\n"\n"\n"\n"\n");
         if (unobstructed_count == 0 && tracker->outage_callback) {
             // Create immediate outage prediction
             outage_prediction_t immediate_outage;
@@ -492,9 +492,9 @@ static void* starlink_tracker_monitoring_thread(void *arg) {
             immediate_outage.predicted_available_sats = 0;
             immediate_outage.confidence_score = 1.0;
             strncpy(immediate_outage.description, "Immediate outage detected - no unobstructed satellites", 
-                   sizeof(immediate_outage.description) - 1);
+                   sizeof(immediate_outage.description) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             
-            tracker->outage_callback(&immediate_outage, tracker->callback_user_data);
+            tracker->outage_callback(&immediate_outage, tracker->callback_user_data\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         // Sleep for monitoring interval (shorter than update interval)
@@ -511,10 +511,10 @@ static int starlink_tracker_fetch_dish_data(starlink_tracker_t *tracker) {
     }
     
     // Update location
-    int location_result = starlink_tracker_update_dish_location(tracker);
+    int location_result = starlink_tracker_update_dish_location(tracker\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update obstruction map
-    int obstruction_result = starlink_tracker_update_obstruction_map(tracker);
+    int obstruction_result = starlink_tracker_update_obstruction_map(tracker\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Return success if at least one update succeeded
     return (location_result == TRACKER_SUCCESS || obstruction_result == TRACKER_SUCCESS) ? 
@@ -531,13 +531,13 @@ int starlink_tracker_validate_prediction(starlink_tracker_t *tracker, const outa
         return TRACKER_SUCCESS; // Validation disabled
     }
     
-    pthread_mutex_lock(&tracker->data_mutex);
+    pthread_mutex_lock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Create validation record
     prediction_validation_t validation;
     validation.prediction_time = prediction->start_time;
-    validation.actual_time = time(NULL);
-    validation.prediction_correct = (actual_outage == (prediction->risk_level >= RISK_LEVEL_HIGH));
+    validation.actual_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    validation.prediction_correct = (actual_outage == (prediction->risk_level >= RISK_LEVEL_HIGH)\n"\n"\n"\n"\n"\n"\n"\n");
     validation.actual_outage_occurred = actual_outage;
     validation.predicted_duration = prediction->duration_seconds;
     // Track actual duration based on real outage data
@@ -585,9 +585,9 @@ int starlink_tracker_validate_prediction(starlink_tracker_t *tracker, const outa
     tracker->stats.total_predictions++;
     tracker->stats.accuracy_percentage = 
         (double)tracker->stats.correct_predictions / tracker->stats.total_predictions * 100.0;
-    tracker->stats.last_validation = time(NULL);
+    tracker->stats.last_validation = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(&tracker->data_mutex);
+    pthread_mutex_unlock(&tracker->data_mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return TRACKER_SUCCESS;
 }
@@ -628,7 +628,7 @@ int starlink_tracker_set_log_level(starlink_tracker_t *tracker, tracker_log_leve
     
     tracker->log_level = level;
     
-    LOGX_INFO_MSG("Starlink tracker log level set", "level", level);
+    printf("INFO: "Starlink tracker log level set", "level", level\n"\n"\n"\n"\n"\n"\n"\n");
     
     return TRACKER_SUCCESS;
 }
@@ -649,9 +649,9 @@ int starlink_tracker_set_log_callback(starlink_tracker_t *tracker,
     // If a callback is provided, we can use it for custom logging
     // Otherwise, we'll use the standard LOGX system
     if (log_callback) {
-        LOGX_INFO_MSG("Starlink tracker log callback set");
+        printf("INFO: "Starlink tracker log callback set"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        LOGX_INFO_MSG("Starlink tracker log callback cleared, using standard logging");
+        printf("INFO: "Starlink tracker log callback cleared, using standard logging"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return TRACKER_SUCCESS;
@@ -666,7 +666,7 @@ int starlink_get_enhanced_location(dish_location_t *location) {
     }
     
     // Initialize with default values
-    memset(location, 0, sizeof(dish_location_t));
+    memset(location, 0, sizeof(dish_location_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // In a real implementation, this would query the Starlink dish API
     // For now, we'll return placeholder values
@@ -675,7 +675,7 @@ int starlink_get_enhanced_location(dish_location_t *location) {
     location->altitude = 0.0;
     location->boresight_azimuth = 0.0;
     location->boresight_elevation = 0.0;
-    location->last_update = time(NULL);
+    location->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -690,12 +690,12 @@ int starlink_get_obstruction_map(char *response, size_t response_size) {
     // For now, we'll return a placeholder JSON response
     const char *placeholder_response = "{\"obstruction_map\":{\"last_update\":0,\"map_diameter\":123,\"center_pixel\":61}}";
     
-    size_t response_len = strlen(placeholder_response);
+    size_t response_len = strlen(placeholder_response\n"\n"\n"\n"\n"\n"\n"\n");
     if (response_len >= response_size) {
         response_len = response_size - 1;
     }
     
-    strncpy(response, placeholder_response, response_len);
+    strncpy(response, placeholder_response, response_len\n"\n"\n"\n"\n"\n"\n"\n");
     response[response_len] = '\0';
     
     return 0;
@@ -709,9 +709,9 @@ starlink_tracker_t* starlink_tracker_init_from_uci(struct uci_context *uci_ctx) 
     
     // Create a default configuration
     starlink_tracker_config_t config = {0};
-    strncpy(config.space_track_username, "default_user", sizeof(config.space_track_username) - 1);
-    strncpy(config.space_track_password, "default_pass", sizeof(config.space_track_password) - 1);
-    strncpy(config.starlink_dish_ip, "192.168.1.1", sizeof(config.starlink_dish_ip) - 1);
+    strncpy(config.space_track_username, "default_user", sizeof(config.space_track_username) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+    strncpy(config.space_track_password, "default_pass", sizeof(config.space_track_password) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+    strncpy(config.starlink_dish_ip, "192.168.1.1", sizeof(config.starlink_dish_ip) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     config.starlink_dish_port = 9200;
     config.update_interval_minutes = 5;
     config.prediction_horizon_hours = 24;
@@ -722,7 +722,7 @@ starlink_tracker_t* starlink_tracker_init_from_uci(struct uci_context *uci_ctx) 
     config.rate_limit_requests_per_minute = 60;
     
     // Initialize with the default config
-    return starlink_tracker_init(&config);
+    return starlink_tracker_init(&config\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // UBUS initialization function for compatibility with main daemon

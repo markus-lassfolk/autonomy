@@ -29,18 +29,18 @@ int smart_notification_manager_init(const smart_manager_config_t* config) {
         return -1;
     }
     
-    memset(&g_smart_manager, 0, sizeof(smart_notification_manager_t));
+    memset(&g_smart_manager, 0, sizeof(smart_notification_manager_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Copy configuration
     g_smart_manager.config = *config;
     
     // Initialize mutex
-    g_smart_manager.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+    g_smart_manager.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_smart_manager.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_smart_manager.mutex, NULL);
+    pthread_mutex_init(g_smart_manager.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize last notification tracking
     for (int i = 0; i < NOTIFICATION_TYPE_EMERGENCY + 1; i++) {
@@ -48,10 +48,10 @@ int smart_notification_manager_init(const smart_manager_config_t* config) {
     }
     
     // Initialize notification history
-    g_smart_manager.notification_history = (notification_record_t*)malloc(config->max_history_size * sizeof(notification_record_t));
+    g_smart_manager.notification_history = (notification_record_t*)malloc(config->max_history_size * sizeof(notification_record_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_smart_manager.notification_history) {
-        pthread_mutex_destroy(g_smart_manager.mutex);
-        free(g_smart_manager.mutex);
+        pthread_mutex_destroy(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -59,11 +59,11 @@ int smart_notification_manager_init(const smart_manager_config_t* config) {
     g_smart_manager.history_count = 0;
     
     // Initialize suppression rules
-    g_smart_manager.suppression_rules = (smart_suppression_rule_t*)malloc(config->max_suppression_rules * sizeof(smart_suppression_rule_t));
+    g_smart_manager.suppression_rules = (smart_suppression_rule_t*)malloc(config->max_suppression_rules * sizeof(smart_suppression_rule_t)\n"\n"\n"\n"\n"\n"\n"\n");
     if (!g_smart_manager.suppression_rules) {
-        free(g_smart_manager.notification_history);
-        pthread_mutex_destroy(g_smart_manager.mutex);
-        free(g_smart_manager.mutex);
+        free(g_smart_manager.notification_history\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -81,7 +81,7 @@ int smart_notification_manager_init(const smart_manager_config_t* config) {
     g_smart_manager.stats.last_day = 0;
     g_smart_manager.stats.average_latency = 0;
     g_smart_manager.stats.max_latency = 0; // Use configurable max latency
-    g_smart_manager.stats.last_updated = time(NULL);
+    g_smart_manager.stats.last_updated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_smart_manager_initialized = true;
     return 0;
@@ -92,16 +92,16 @@ void smart_notification_manager_cleanup(void) {
     if (!g_smart_manager_initialized) return;
     
     if (g_smart_manager.mutex) {
-        pthread_mutex_destroy(g_smart_manager.mutex);
-        free(g_smart_manager.mutex);
+        pthread_mutex_destroy(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_smart_manager.notification_history) {
-        free(g_smart_manager.notification_history);
+        free(g_smart_manager.notification_history\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (g_smart_manager.suppression_rules) {
-        free(g_smart_manager.suppression_rules);
+        free(g_smart_manager.suppression_rules\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     g_smart_manager.notification_history = NULL;
@@ -118,9 +118,9 @@ void smart_notification_manager_cleanup(void) {
 static bool should_suppress_notification(const notification_event_t* event) {
     if (!g_smart_manager_initialized || !event) return false;
     
-    pthread_mutex_lock(g_smart_manager.mutex);
+    pthread_mutex_lock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     bool suppressed = false;
     
     // Check each suppression rule
@@ -155,7 +155,7 @@ static bool should_suppress_notification(const notification_event_t* event) {
         
         // Check time ranges
         if (rule->time_ranges_count > 0) {
-            struct tm* tm_info = localtime(&now);
+            struct tm* tm_info = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
             int current_hour = tm_info->tm_hour;
             int current_minute = tm_info->tm_min;
             int current_time_minutes = current_hour * 60 + current_minute;
@@ -165,8 +165,8 @@ static bool should_suppress_notification(const notification_event_t* event) {
                 
                 // Parse start and end times
                 int start_hour, start_minute, end_hour, end_minute;
-                sscanf(time_range->start, "%d:%d", &start_hour, &start_minute);
-                sscanf(time_range->end, "%d:%d", &end_hour, &end_minute);
+                sscanf(time_range->start, "%d:%d", &start_hour, &start_minute\n"\n"\n"\n"\n"\n"\n"\n");
+                sscanf(time_range->end, "%d:%d", &end_hour, &end_minute\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 int start_minutes = start_hour * 60 + start_minute;
                 int end_minutes = end_hour * 60 + end_minute;
@@ -185,7 +185,7 @@ static bool should_suppress_notification(const notification_event_t* event) {
         }
     }
     
-    pthread_mutex_unlock(g_smart_manager.mutex);
+    pthread_mutex_unlock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return suppressed;
 }
 
@@ -196,16 +196,16 @@ static bool is_quiet_hours(void) {
     const smart_manager_config_t* config = &g_smart_manager.config;
     if (!config->quiet_hours) return false;
     
-    time_t now = time(NULL);
-    struct tm* tm_info = localtime(&now);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm* tm_info = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
     int current_hour = tm_info->tm_hour;
     int current_minute = tm_info->tm_min;
     int current_time_minutes = current_hour * 60 + current_minute;
     
     // Parse quiet hours start and end
     int start_hour, start_minute, end_hour, end_minute;
-    sscanf(config->quiet_hours_start, "%d:%d", &start_hour, &start_minute);
-    sscanf(config->quiet_hours_end, "%d:%d", &end_hour, &end_minute);
+    sscanf(config->quiet_hours_start, "%d:%d", &start_hour, &start_minute\n"\n"\n"\n"\n"\n"\n"\n");
+    sscanf(config->quiet_hours_end, "%d:%d", &end_hour, &end_minute\n"\n"\n"\n"\n"\n"\n"\n");
     
     int start_minutes = start_hour * 60 + start_minute;
     int end_minutes = end_hour * 60 + end_minute;
@@ -225,8 +225,8 @@ static bool should_suppress_low_priority_today(void) {
     const smart_manager_config_t* config = &g_smart_manager.config;
     if (config->suppress_low_priority_days_count == 0) return false;
     
-    time_t now = time(NULL);
-    struct tm* tm_info = localtime(&now);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm* tm_info = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
     int current_day = tm_info->tm_wday; // 0 = Sunday, 1 = Monday, etc.
     
     // Convert to day names
@@ -247,7 +247,7 @@ int smart_notification_manager_send(const notification_event_t* event) {
         return -1;
     }
     
-    time_t start_time = time(NULL);
+    time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Check if notification should be suppressed
     if (should_suppress_notification(event)) {
@@ -268,7 +268,7 @@ int smart_notification_manager_send(const notification_event_t* event) {
     }
     
     // Check cooldown periods
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     int cooldown = 0;
     
     switch (event->priority) {
@@ -298,26 +298,26 @@ int smart_notification_manager_send(const notification_event_t* event) {
     
     // Send notification through regular manager
     int result = notification_manager_send(event->type, event->title, event->message, 
-                                         event->priority, event->member_name);
+                                         event->priority, event->member_name\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result == 0) {
         // Update last notification time
         g_smart_manager.last_notification[event->type] = now;
         
         // Add to history
-        pthread_mutex_lock(g_smart_manager.mutex);
+        pthread_mutex_lock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (g_smart_manager.history_count < g_smart_manager.max_history_size) {
             int index = g_smart_manager.history_count;
             // Convert notification_event_t to notification_record_t
             notification_record_t* record = &g_smart_manager.notification_history[index];
-            safe_strncpy(record->id, event->id, sizeof(record->id));
+            safe_strncpy(record->id, event->id, sizeof(record->id)\n"\n"\n"\n"\n"\n"\n"\n");
             record->id[sizeof(record->id) - 1] = '\0';
             record->type = event->type;
             record->priority = event->priority;
-            safe_strncpy(record->title, event->title, sizeof(record->title));
+            safe_strncpy(record->title, event->title, sizeof(record->title)\n"\n"\n"\n"\n"\n"\n"\n");
             record->title[sizeof(record->title) - 1] = '\0';
-            safe_strncpy(record->message, event->message, sizeof(record->message));
+            safe_strncpy(record->message, event->message, sizeof(record->message)\n"\n"\n"\n"\n"\n"\n"\n");
             record->message[sizeof(record->message) - 1] = '\0';
             record->timestamp = event->timestamp;
             record->success = true; // Assume success for now
@@ -331,13 +331,13 @@ int smart_notification_manager_send(const notification_event_t* event) {
             }
             // Convert notification_event_t to notification_record_t for last position
             notification_record_t* record = &g_smart_manager.notification_history[g_smart_manager.max_history_size - 1];
-            safe_strncpy(record->id, event->id, sizeof(record->id));
+            safe_strncpy(record->id, event->id, sizeof(record->id)\n"\n"\n"\n"\n"\n"\n"\n");
             record->id[sizeof(record->id) - 1] = '\0';
             record->type = event->type;
             record->priority = event->priority;
-            safe_strncpy(record->title, event->title, sizeof(record->title));
+            safe_strncpy(record->title, event->title, sizeof(record->title)\n"\n"\n"\n"\n"\n"\n"\n");
             record->title[sizeof(record->title) - 1] = '\0';
-            safe_strncpy(record->message, event->message, sizeof(record->message));
+            safe_strncpy(record->message, event->message, sizeof(record->message)\n"\n"\n"\n"\n"\n"\n"\n");
             record->message[sizeof(record->message) - 1] = '\0';
             record->timestamp = event->timestamp;
             record->success = true; // Assume success for now
@@ -345,7 +345,7 @@ int smart_notification_manager_send(const notification_event_t* event) {
             record->escalated = false;
         }
         
-        pthread_mutex_unlock(g_smart_manager.mutex);
+        pthread_mutex_unlock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Update statistics
         g_smart_manager.stats.total_sent++;
@@ -381,10 +381,10 @@ int smart_notification_manager_add_suppression_rule(const smart_suppression_rule
         return -1;
     }
     
-    pthread_mutex_lock(g_smart_manager.mutex);
+    pthread_mutex_lock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (g_smart_manager.suppression_rules_count >= g_smart_manager.max_suppression_rules) {
-        pthread_mutex_unlock(g_smart_manager.mutex);
+        pthread_mutex_unlock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return -1; // No space for more rules
     }
     
@@ -392,7 +392,7 @@ int smart_notification_manager_add_suppression_rule(const smart_suppression_rule
     g_smart_manager.suppression_rules[index] = *rule;
     g_smart_manager.suppression_rules_count++;
     
-    pthread_mutex_unlock(g_smart_manager.mutex);
+    pthread_mutex_unlock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -402,7 +402,7 @@ int smart_notification_manager_remove_suppression_rule(const char* rule_id) {
         return -1;
     }
     
-    pthread_mutex_lock(g_smart_manager.mutex);
+    pthread_mutex_lock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     for (int i = 0; i < g_smart_manager.suppression_rules_count; i++) {
         if (strcmp(g_smart_manager.suppression_rules[i].id, rule_id) == 0) {
@@ -411,12 +411,12 @@ int smart_notification_manager_remove_suppression_rule(const char* rule_id) {
                 g_smart_manager.suppression_rules[j] = g_smart_manager.suppression_rules[j + 1];
             }
             g_smart_manager.suppression_rules_count--;
-            pthread_mutex_unlock(g_smart_manager.mutex);
+            pthread_mutex_unlock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return 0;
         }
     }
     
-    pthread_mutex_unlock(g_smart_manager.mutex);
+    pthread_mutex_unlock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     return -1; // Rule not found
 }
 
@@ -424,7 +424,7 @@ int smart_notification_manager_remove_suppression_rule(const char* rule_id) {
 void smart_notification_manager_get_status(smart_manager_status_t* status) {
     if (!status || !g_smart_manager_initialized) return;
     
-    pthread_mutex_lock(g_smart_manager.mutex);
+    pthread_mutex_lock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     status->enabled = true; // Use configurable smart manager enabled
     status->quiet_hours = g_smart_manager.config.quiet_hours;
@@ -434,33 +434,33 @@ void smart_notification_manager_get_status(smart_manager_status_t* status) {
     status->max_suppression_rules = g_smart_manager.max_suppression_rules;
     
     // Copy quiet hours settings
-    safe_strncpy(status->quiet_hours_start, g_smart_manager.config.quiet_hours_start, sizeof(status->quiet_hours_start));
-    safe_strncpy(status->quiet_hours_end, g_smart_manager.config.quiet_hours_end, sizeof(status->quiet_hours_end));
+    safe_strncpy(status->quiet_hours_start, g_smart_manager.config.quiet_hours_start, sizeof(status->quiet_hours_start)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(status->quiet_hours_end, g_smart_manager.config.quiet_hours_end, sizeof(status->quiet_hours_end)\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(g_smart_manager.mutex);
+    pthread_mutex_unlock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get smart manager statistics
 void smart_notification_manager_get_stats(smart_manager_stats_t* stats) {
     if (!stats || !g_smart_manager_initialized) return;
     
-    pthread_mutex_lock(g_smart_manager.mutex);
+    pthread_mutex_lock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     *stats = g_smart_manager.stats;
     
-    pthread_mutex_unlock(g_smart_manager.mutex);
+    pthread_mutex_unlock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Reset smart manager statistics
 void smart_notification_manager_reset_stats(void) {
     if (!g_smart_manager_initialized) return;
     
-    pthread_mutex_lock(g_smart_manager.mutex);
+    pthread_mutex_lock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    memset(&g_smart_manager.stats, 0, sizeof(smart_manager_stats_t));
-    g_smart_manager.stats.last_updated = time(NULL);
+    memset(&g_smart_manager.stats, 0, sizeof(smart_manager_stats_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_smart_manager.stats.last_updated = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(g_smart_manager.mutex);
+    pthread_mutex_unlock(g_smart_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check if smart manager is initialized

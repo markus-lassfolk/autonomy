@@ -8,7 +8,7 @@ debug_trace_level_t g_debug_trace_level = DEBUG_TRACE_INFO;
 // Initialize debug trace system
 void debug_trace_init(debug_trace_level_t level) {
     g_debug_trace_level = level;
-    DEBUG_TRACE_INFO("Debug trace system initialized with level: %d", level);
+    DEBUG_TRACE_INFO("Debug trace system initialized with level: %d", level\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get current debug trace level
@@ -19,7 +19,7 @@ debug_trace_level_t debug_trace_get_level(void) {
 // Set debug trace level
 void debug_trace_set_level(debug_trace_level_t level) {
     g_debug_trace_level = level;
-    DEBUG_TRACE_INFO("Debug trace level changed to: %d", level);
+    DEBUG_TRACE_INFO("Debug trace level changed to: %d", level\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get current timestamp string
@@ -28,31 +28,31 @@ const char* debug_trace_get_timestamp(void) {
     struct timeval tv;
     struct tm *tm_info;
     
-    gettimeofday(&tv, NULL);
-    tm_info = localtime(&tv.tv_sec);
+    gettimeofday(&tv, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    tm_info = localtime(&tv.tv_sec\n"\n"\n"\n"\n"\n"\n"\n");
     
-    strftime(timestamp_buffer, sizeof(timestamp_buffer), "%Y-%m-%d %H:%M:%S", tm_info);
-    snprintf(timestamp_buffer + 19, sizeof(timestamp_buffer) - 19, ".%06lld", (long long)tv.tv_usec);
+    strftime(timestamp_buffer, sizeof(timestamp_buffer), "%Y-%m-%d %H:%M:%S", tm_info\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(timestamp_buffer + 19, sizeof(timestamp_buffer) - 19, ".%06lld", (long long)tv.tv_usec\n"\n"\n"\n"\n"\n"\n"\n");
     
     return timestamp_buffer;
 }
 
 // Get process ID for tracing
 pid_t debug_trace_get_pid(void) {
-    return getpid();
+    return getpid(\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Internal function for printing debug traces
 void debug_trace_print(const char *level, const char *file, int line, const char *func, const char *fmt, ...) {
     va_list args;
     char message_buffer[1024];
-    const char *filename = strrchr(file, '/');
+    const char *filename = strrchr(file, '/'\n"\n"\n"\n"\n"\n"\n"\n");
     filename = filename ? filename + 1 : file;
     
     // Format the message
-    va_start(args, fmt);
-    vsnprintf(message_buffer, sizeof(message_buffer), fmt, args);
-    va_end(args);
+    va_start(args, fmt\n"\n"\n"\n"\n"\n"\n"\n");
+    vsnprintf(message_buffer, sizeof(message_buffer), fmt, args\n"\n"\n"\n"\n"\n"\n"\n");
+    va_end(args\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Print with timestamp, PID, level, file:line, function, and message
     fprintf(stderr, "[%s] [PID:%d] [%s] [%s:%d] [%s] %s\n", 
@@ -62,8 +62,8 @@ void debug_trace_print(const char *level, const char *file, int line, const char
             filename,
             line,
             func,
-            message_buffer);
+            message_buffer\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Flush to ensure immediate output
-    fflush(stderr);
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
 }

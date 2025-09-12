@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 // Forward declarations
-static bool is_valid_ip_address(const char *ip);
+static bool is_valid_ip_address(const char *ip\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Secure MWAN3 interface status update
 int secure_mwan3_set_status(const char *interface_name, const char *status) {
@@ -18,7 +18,7 @@ int secure_mwan3_set_status(const char *interface_name, const char *status) {
     if (strcmp(status, "online") != 0 && 
         strcmp(status, "offline") != 0 && 
         strcmp(status, "standby") != 0) {
-        LOGX_ERROR_MSG("Invalid MWAN3 status: %s", status);
+        printf("ERROR: "Invalid MWAN3 status: %s", status\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
@@ -26,23 +26,23 @@ int secure_mwan3_set_status(const char *interface_name, const char *status) {
     char ubus_args[512];
     snprintf(ubus_args, sizeof(ubus_args), 
              "call mwan3 set_status '{\"interface\":\"%s\",\"status\":\"%s\"}'", 
-             interface_name, status);
+             interface_name, status\n"\n"\n"\n"\n"\n"\n"\n");
     
     exec_result_t result;
-    int ret = secure_exec_command("ubus", &result);
+    int ret = secure_exec_command("ubus", &result\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to execute UBUS command: %s", result.error);
+        printf("ERROR: "Failed to execute UBUS command: %s", result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return ret;
     }
     
     if (!result.success) {
-        LOGX_WARN_MSG("MWAN3 status update failed for interface %s: %s", 
-                     interface_name, result.error);
+        printf("WARN: "MWAN3 status update failed for interface %s: %s", 
+                     interface_name, result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NETWORK;
     }
     
-    LOGX_DEBUG_MSG("MWAN3 status updated successfully for interface %s to %s", 
-                  interface_name, status);
+    printf("DEBUG: "MWAN3 status updated successfully for interface %s to %s", 
+                  interface_name, status\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -55,26 +55,26 @@ int secure_interface_up(const char *interface_name) {
     // Validate interface name (basic security check)
     if (strlen(interface_name) > 32 || strstr(interface_name, "..") || 
         strstr(interface_name, "/") || strstr(interface_name, ";")) {
-        LOGX_ERROR_MSG("Invalid interface name: %s", interface_name);
+        printf("ERROR: "Invalid interface name: %s", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     char command[256];
-    snprintf(command, sizeof(command), "ifup %s", interface_name);
+    snprintf(command, sizeof(command), "ifup %s", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
     
     exec_result_t result;
-    int ret = secure_exec_command(command, &result);
+    int ret = secure_exec_command(command, &result\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to bring up interface %s: %s", interface_name, result.error);
+        printf("ERROR: "Failed to bring up interface %s: %s", interface_name, result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return ret;
     }
     
     if (!result.success) {
-        LOGX_WARN_MSG("Interface %s bring up failed: %s", interface_name, result.error);
+        printf("WARN: "Interface %s bring up failed: %s", interface_name, result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NETWORK;
     }
     
-    LOGX_DEBUG_MSG("Interface %s brought up successfully", interface_name);
+    printf("DEBUG: "Interface %s brought up successfully", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -87,26 +87,26 @@ int secure_interface_down(const char *interface_name) {
     // Validate interface name (basic security check)
     if (strlen(interface_name) > 32 || strstr(interface_name, "..") || 
         strstr(interface_name, "/") || strstr(interface_name, ";")) {
-        LOGX_ERROR_MSG("Invalid interface name: %s", interface_name);
+        printf("ERROR: "Invalid interface name: %s", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     char command[256];
-    snprintf(command, sizeof(command), "ifdown %s", interface_name);
+    snprintf(command, sizeof(command), "ifdown %s", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
     
     exec_result_t result;
-    int ret = secure_exec_command(command, &result);
+    int ret = secure_exec_command(command, &result\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to bring down interface %s: %s", interface_name, result.error);
+        printf("ERROR: "Failed to bring down interface %s: %s", interface_name, result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return ret;
     }
     
     if (!result.success) {
-        LOGX_WARN_MSG("Interface %s bring down failed: %s", interface_name, result.error);
+        printf("WARN: "Interface %s bring down failed: %s", interface_name, result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NETWORK;
     }
     
-    LOGX_DEBUG_MSG("Interface %s brought down successfully", interface_name);
+    printf("DEBUG: "Interface %s brought down successfully", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -118,33 +118,33 @@ int secure_route_add(const char *target, const char *gateway, const char *interf
     
     // Validate IP addresses and interface name
     if (!is_valid_ip_address(target) || !is_valid_ip_address(gateway)) {
-        LOGX_ERROR_MSG("Invalid IP address: target=%s, gateway=%s", target, gateway);
+        printf("ERROR: "Invalid IP address: target=%s, gateway=%s", target, gateway\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     if (strlen(interface) > 32 || strstr(interface, "..") || 
         strstr(interface, "/") || strstr(interface, ";")) {
-        LOGX_ERROR_MSG("Invalid interface name: %s", interface);
+        printf("ERROR: "Invalid interface name: %s", interface\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     char command[512];
     snprintf(command, sizeof(command), "ip route add %s via %s dev %s", 
-             target, gateway, interface);
+             target, gateway, interface\n"\n"\n"\n"\n"\n"\n"\n");
     
     exec_result_t result;
-    int ret = secure_exec_command(command, &result);
+    int ret = secure_exec_command(command, &result\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to add route: %s", result.error);
+        printf("ERROR: "Failed to add route: %s", result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return ret;
     }
     
     if (!result.success) {
-        LOGX_WARN_MSG("Route addition failed: %s", result.error);
+        printf("WARN: "Route addition failed: %s", result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NETWORK;
     }
     
-    LOGX_DEBUG_MSG("Route added successfully: %s via %s dev %s", target, gateway, interface);
+    printf("DEBUG: "Route added successfully: %s via %s dev %s", target, gateway, interface\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -156,49 +156,49 @@ int secure_route_del(const char *target, const char *gateway, const char *interf
     
     // Validate IP address
     if (!is_valid_ip_address(target)) {
-        LOGX_ERROR_MSG("Invalid IP address: %s", target);
+        printf("ERROR: "Invalid IP address: %s", target\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     char command[512];
     if (gateway && interface) {
         snprintf(command, sizeof(command), "ip route del %s via %s dev %s", 
-                 target, gateway, interface);
+                 target, gateway, interface\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        snprintf(command, sizeof(command), "ip route del %s", target);
+        snprintf(command, sizeof(command), "ip route del %s", target\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     exec_result_t result;
-    int ret = secure_exec_command(command, &result);
+    int ret = secure_exec_command(command, &result\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to delete route: %s", result.error);
+        printf("ERROR: "Failed to delete route: %s", result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return ret;
     }
     
     if (!result.success) {
-        LOGX_WARN_MSG("Route deletion failed: %s", result.error);
+        printf("WARN: "Route deletion failed: %s", result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NETWORK;
     }
     
-    LOGX_DEBUG_MSG("Route deleted successfully: %s", target);
+    printf("DEBUG: "Route deleted successfully: %s", target\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Secure network reload
 int secure_network_reload(void) {
     exec_result_t result;
-    int ret = secure_exec_command("/etc/init.d/network reload", &result);
+    int ret = secure_exec_command("/etc/init.d/network reload", &result\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to reload network: %s", result.error);
+        printf("ERROR: "Failed to reload network: %s", result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return ret;
     }
     
     if (!result.success) {
-        LOGX_WARN_MSG("Network reload failed: %s", result.error);
+        printf("WARN: "Network reload failed: %s", result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NETWORK;
     }
     
-    LOGX_DEBUG_MSG("Network reloaded successfully");
+    printf("DEBUG: "Network reloaded successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -210,51 +210,51 @@ int secure_uci_network_set(const char *section, const char *option, const char *
     
     // Validate section and option names
     if (strlen(section) > 64 || strlen(option) > 64 || strlen(value) > 256) {
-        LOGX_ERROR_MSG("Section, option, or value too long");
+        printf("ERROR: "Section, option, or value too long"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Check for dangerous characters
     if (strstr(section, "..") || strstr(option, "..") || strstr(value, "..") ||
         strstr(section, ";") || strstr(option, ";") || strstr(value, ";")) {
-        LOGX_ERROR_MSG("Invalid characters in UCI parameters");
+        printf("ERROR: "Invalid characters in UCI parameters"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     char uci_args[512];
-    snprintf(uci_args, sizeof(uci_args), "set %s.%s=%s", section, option, value);
+    snprintf(uci_args, sizeof(uci_args), "set %s.%s=%s", section, option, value\n"\n"\n"\n"\n"\n"\n"\n");
     
     exec_result_t result;
-    int ret = secure_uci_command(uci_args, &result);
+    int ret = secure_uci_command(uci_args, &result\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to set UCI network config: %s", result.error);
+        printf("ERROR: "Failed to set UCI network config: %s", result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return ret;
     }
     
     if (!result.success) {
-        LOGX_WARN_MSG("UCI network config set failed: %s", result.error);
+        printf("WARN: "UCI network config set failed: %s", result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NETWORK;
     }
     
-    LOGX_DEBUG_MSG("UCI network config set successfully: %s.%s=%s", section, option, value);
+    printf("DEBUG: "UCI network config set successfully: %s.%s=%s", section, option, value\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Secure UCI network commit
 int secure_uci_network_commit(void) {
     exec_result_t result;
-    int ret = secure_uci_command("commit network", &result);
+    int ret = secure_uci_command("commit network", &result\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to commit UCI network config: %s", result.error);
+        printf("ERROR: "Failed to commit UCI network config: %s", result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return ret;
     }
     
     if (!result.success) {
-        LOGX_WARN_MSG("UCI network config commit failed: %s", result.error);
+        printf("WARN: "UCI network config commit failed: %s", result.error\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NETWORK;
     }
     
-    LOGX_DEBUG_MSG("UCI network config committed successfully");
+    printf("DEBUG: "UCI network config committed successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -266,7 +266,7 @@ static bool is_valid_ip_address(const char *ip) {
     int a, b, c, d;
     if (sscanf(ip, "%d.%d.%d.%d", &a, &b, &c, &d) == 4) {
         return (a >= 0 && a <= 255 && b >= 0 && b <= 255 && 
-                c >= 0 && c <= 255 && d >= 0 && d <= 255);
+                c >= 0 && c <= 255 && d >= 0 && d <= 255\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Basic IPv6 validation (simplified)

@@ -12,13 +12,13 @@ static bool mock_weather_available = true;
 
 // Test program for ML monitoring Phase 2 integration
 int main() {
-    printf("Testing ML Monitor Phase 2 Integration\n");
-    printf("======================================\n");
+    printf("Testing ML Monitor Phase 2 Integration\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("======================================\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test 1: Configuration and initialization
-    printf("Test 1: ML monitor initialization with integration...\n");
+    printf("Test 1: ML monitor initialization with integration...\n"\n"\n"\n"\n"\n"\n"\n"\n");
     ml_monitor_config_t config;
-    ml_monitor_config_init_defaults(&config);
+    ml_monitor_config_init_defaults(&config\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Enable integration features
     config.enabled = true;
@@ -27,23 +27,23 @@ int main() {
     config.mobile_mode_enabled = true;
     config.debug_logging_enabled = true;
     
-    ml_monitor_t *monitor = ml_monitor_init(&config);
-    assert(monitor != NULL);
-    assert(monitor->initialized == true);
-    printf(" ML monitor initialized with integration config\n");
+    ml_monitor_t *monitor = ml_monitor_init(&config\n"\n"\n"\n"\n"\n"\n"\n");
+    assert(monitor != NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    assert(monitor->initialized == true\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" ML monitor initialized with integration config\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test 2: Data structure validation
-    printf("Test 2: Observation structure validation...\n");
+    printf("Test 2: Observation structure validation...\n"\n"\n"\n"\n"\n"\n"\n"\n");
     ml_observation_t obs;
-    memset(&obs, 0, sizeof(obs));
+    memset(&obs, 0, sizeof(obs)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Verify structure size is still correct
-    assert(sizeof(ml_observation_t) == 56);
-    printf(" Observation structure maintains 56-byte size\n");
+    assert(sizeof(ml_observation_t) == 56\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Observation structure maintains 56-byte size\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test 3: Mock data collection
-    printf("Test 3: Mock data collection simulation...\n");
-    obs.timestamp = time(NULL);
+    printf("Test 3: Mock data collection simulation...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    obs.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     obs.snr_x100 = 950;  // 9.5 dB
     obs.latency_ms = 45;
     obs.packet_loss_pct = 1;
@@ -66,53 +66,53 @@ int main() {
     obs.precipitation_mm = 0;
     obs.cloud_cover_pct = 30;
     
-    int add_result = ml_monitor_add_observation(monitor, &obs);
-    printf(" Mock observation added (result: %d)\n", add_result);
+    int add_result = ml_monitor_add_observation(monitor, &obs\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Mock observation added (result: %d)\n", add_result\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test 4: Sky grid integration
-    printf("Test 4: Sky grid learning with real coordinates...\n");
-    int sky_result = ml_monitor_update_sky_grid(monitor, &obs);
-    assert(sky_result == ML_MONITOR_SUCCESS);
+    printf("Test 4: Sky grid learning with real coordinates...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    int sky_result = ml_monitor_update_sky_grid(monitor, &obs\n"\n"\n"\n"\n"\n"\n"\n");
+    assert(sky_result == ML_MONITOR_SUCCESS\n"\n"\n"\n"\n"\n"\n"\n");
     
     compact_sky_grid_t *grid = &monitor->state->models.sky_grid;
-    assert(grid->learned_lat_e7 == obs.latitude_e7);
-    assert(grid->learned_lon_e7 == obs.longitude_e7);
-    printf(" Sky grid updated with real coordinates\n");
+    assert(grid->learned_lat_e7 == obs.latitude_e7\n"\n"\n"\n"\n"\n"\n"\n");
+    assert(grid->learned_lon_e7 == obs.longitude_e7\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Sky grid updated with real coordinates\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test 5: Location learning
-    printf("Test 5: Location learning with mobility detection...\n");
-    int location_result = ml_monitor_update_location_learning(monitor, &obs);
-    assert(location_result == ML_MONITOR_SUCCESS);
+    printf("Test 5: Location learning with mobility detection...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    int location_result = ml_monitor_update_location_learning(monitor, &obs\n"\n"\n"\n"\n"\n"\n"\n");
+    assert(location_result == ML_MONITOR_SUCCESS\n"\n"\n"\n"\n"\n"\n"\n");
     
     location_learner_t *learner = &monitor->state->models.location_learner;
-    assert(learner->current_lat_e7 == obs.latitude_e7);
-    assert(learner->current_lon_e7 == obs.longitude_e7);
-    assert(learner->observations_here >= 1);
-    printf(" Location learning updated with current position\n");
+    assert(learner->current_lat_e7 == obs.latitude_e7\n"\n"\n"\n"\n"\n"\n"\n");
+    assert(learner->current_lon_e7 == obs.longitude_e7\n"\n"\n"\n"\n"\n"\n"\n");
+    assert(learner->observations_here >= 1\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Location learning updated with current position\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test 6: Pattern extraction and prediction
-    printf("Test 6: Pattern extraction and ML predictions...\n");
+    printf("Test 6: Pattern extraction and ML predictions...\n"\n"\n"\n"\n"\n"\n"\n"\n");
     uint16_t pattern[16];
-    ml_monitor_extract_pattern_features(&obs, pattern);
+    ml_monitor_extract_pattern_features(&obs, pattern\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Verify pattern features
     assert(pattern[0] == obs.snr_x100 / 10);  // SNR feature
     assert(pattern[1] == obs.latency_ms);     // Latency feature
     assert(pattern[2] == obs.packet_loss_pct * 256); // Packet loss scaled
-    printf(" Pattern features extracted correctly\n");
+    printf(" Pattern features extracted correctly\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test k-NN prediction
     uint8_t knn_confidence;
-    uint8_t knn_prediction = ml_monitor_predict_outage_knn(monitor, &obs, &knn_confidence);
-    printf(" k-NN prediction: type=%u, confidence=%u%%\n", knn_prediction, knn_confidence);
+    uint8_t knn_prediction = ml_monitor_predict_outage_knn(monitor, &obs, &knn_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" k-NN prediction: type=%u, confidence=%u%%\n", knn_prediction, knn_confidence\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test neural network prediction
     uint8_t nn_output[8];
-    ml_monitor_predict_neural_network(monitor, &obs, nn_output);
-    printf(" Neural network prediction: probability=%u%%\n", nn_output[0]);
+    ml_monitor_predict_neural_network(monitor, &obs, nn_output\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Neural network prediction: probability=%u%%\n", nn_output[0]\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test 7: Location change detection
-    printf("Test 7: Location change detection...\n");
+    printf("Test 7: Location change detection...\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Create observation with different location (moved ~1km)
     ml_observation_t moved_obs = obs;
@@ -124,12 +124,12 @@ int main() {
         obs.latitude_e7, obs.longitude_e7,
         moved_obs.latitude_e7, moved_obs.longitude_e7,
         50  // 50 meter threshold
-    );
-    assert(location_changed == true);
-    printf(" Location change detected correctly\n");
+    \n"\n"\n"\n"\n"\n"\n"\n");
+    assert(location_changed == true\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Location change detected correctly\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test 8: Mobile scenario simulation
-    printf("Test 8: Mobile scenario simulation...\n");
+    printf("Test 8: Mobile scenario simulation...\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Add several observations to build up history
     for (int i = 0; i < 10; i++) {
@@ -139,50 +139,50 @@ int main() {
         mobile_obs.speed_kmh = 50; // 50 km/h
         mobile_obs.flags |= ML_OBS_FLAG_MOVING;
         
-        ml_monitor_add_observation(monitor, &mobile_obs);
-        ml_monitor_update_location_learning(monitor, &mobile_obs);
+        ml_monitor_add_observation(monitor, &mobile_obs\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_update_location_learning(monitor, &mobile_obs\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    assert(monitor->state->total_observations >= 10);
-    printf(" Mobile scenario with %u observations\n", monitor->state->total_observations);
+    assert(monitor->state->total_observations >= 10\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Mobile scenario with %u observations\n", monitor->state->total_observations\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test 9: Prediction with sufficient data
-    printf("Test 9: 15-minute predictions with real data...\n");
+    printf("Test 9: 15-minute predictions with real data...\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     uint8_t probabilities[60];
     uint8_t confidence;
-    int pred_result = ml_monitor_predict_next_15_minutes(monitor, probabilities, &confidence);
+    int pred_result = ml_monitor_predict_next_15_minutes(monitor, probabilities, &confidence\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (pred_result == ML_MONITOR_SUCCESS) {
-        printf(" 15-minute predictions generated with %u%% confidence\n", confidence);
+        printf(" 15-minute predictions generated with %u%% confidence\n", confidence\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Check if any high-probability predictions
         int high_prob_count = 0;
         for (int i = 0; i < 60; i++) {
             if (probabilities[i] > 100) high_prob_count++;
         }
-        printf("  Found %d high-probability intervals\n", high_prob_count);
+        printf("  Found %d high-probability intervals\n", high_prob_count\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        printf(" Predictions not available yet (need more data): %d\n", pred_result);
+        printf(" Predictions not available yet (need more data): %d\n", pred_result\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Test 10: Performance and statistics
-    printf("Test 10: Performance monitoring and statistics...\n");
+    printf("Test 10: Performance monitoring and statistics...\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     performance_monitor_t *perf = &monitor->state->models.performance;
-    printf("  Predictions made: %u\n", perf->predictions_made);
-    printf("  Accuracy: %u%%\n", perf->metrics.accuracy_pct);
-    printf("  Memory usage: %u KB\n", perf->resources.memory_peak_kb);
+    printf("  Predictions made: %u\n", perf->predictions_made\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  Accuracy: %u%%\n", perf->metrics.accuracy_pct\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  Memory usage: %u KB\n", perf->resources.memory_peak_kb\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Update some performance metrics
     perf->predictions_made = 50;
     perf->predictions_correct = 42;
     perf->metrics.accuracy_pct = (perf->predictions_correct * 100) / perf->predictions_made;
     
-    printf(" Performance metrics updated: %u%% accuracy\n", perf->metrics.accuracy_pct);
+    printf(" Performance metrics updated: %u%% accuracy\n", perf->metrics.accuracy_pct\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test 11: Integration callbacks
-    printf("Test 11: Integration callback system...\n");
+    printf("Test 11: Integration callback system...\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set up callbacks (they would normally be called by the collection thread)
     static bool callback_triggered = false;
@@ -190,40 +190,40 @@ int main() {
     // Define callback function
     static void test_callback(uint8_t probability, uint8_t confidence, time_t when, void *user_data) {
         printf("   Prediction callback: %u%% probability, %u%% confidence\n", 
-               probability, confidence);
+               probability, confidence\n"\n"\n"\n"\n"\n"\n"\n");
         *((bool*)user_data) = true;
     }
     
     ml_monitor_set_outage_prediction_callback(monitor, 
-        (void(*)(uint8_t, uint8_t, time_t, void*))test_callback, &callback_triggered);
+        (void(*)(uint8_t, uint8_t, time_t, void*))test_callback, &callback_triggered\n"\n"\n"\n"\n"\n"\n"\n");
     
-    printf(" Callback system configured\n");
+    printf(" Callback system configured\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test 12: Storage and persistence
-    printf("Test 12: Storage synchronization...\n");
+    printf("Test 12: Storage synchronization...\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int sync_result = ml_monitor_sync_storage(monitor);
-    assert(sync_result == ML_MONITOR_SUCCESS);
+    int sync_result = ml_monitor_sync_storage(monitor\n"\n"\n"\n"\n"\n"\n"\n");
+    assert(sync_result == ML_MONITOR_SUCCESS\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Verify magic number and version
     assert(monitor->state->magic == 0x4D4C5354); // "MLST"
-    assert(monitor->state->version == 1);
-    printf(" Storage synchronized and validated\n");
+    assert(monitor->state->version == 1\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Storage synchronized and validated\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Test 13: Cleanup
-    printf("Test 13: System cleanup...\n");
-    ml_monitor_cleanup(monitor);
-    printf(" ML monitor cleanup completed\n");
+    printf("Test 13: System cleanup...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_cleanup(monitor\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" ML monitor cleanup completed\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
-    printf("\n======================================\n");
-    printf("Phase 2 Integration Tests Completed!\n");
-    printf(" Real data integration ready\n");
-    printf(" Location learning functional\n");
-    printf(" Mobile scenarios supported\n");
-    printf(" Prediction system operational\n");
-    printf(" Performance monitoring active\n");
-    printf(" Callback system working\n");
-    printf("\nPhase 2 implementation is ready for deployment!\n");
+    printf("\n======================================\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Phase 2 Integration Tests Completed!\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Real data integration ready\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Location learning functional\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Mobile scenarios supported\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Prediction system operational\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Performance monitoring active\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Callback system working\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("\nPhase 2 implementation is ready for deployment!\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }

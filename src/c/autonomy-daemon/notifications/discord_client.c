@@ -18,14 +18,14 @@ int discord_client_init(discord_client_t* client, const discord_config_t* config
         return -1;
     }
     
-    memset(client, 0, sizeof(discord_client_t));
+    memset(client, 0, sizeof(discord_client_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Copy configuration
     client->config = *config;
     
     // Initialize status
     client->status.enabled = config->enabled;
-    safe_strncpy(client->status.webhook_url, config->webhook_url, sizeof(client->status.webhook_url));
+    safe_strncpy(client->status.webhook_url, config->webhook_url, sizeof(client->status.webhook_url)\n"\n"\n"\n"\n"\n"\n"\n");
     client->status.total_sent = 0;
     client->status.total_failed = 0;
     client->status.last_response_code = 0;
@@ -41,7 +41,7 @@ void discord_client_cleanup(discord_client_t* client) {
     if (!client) return;
     
     // Clear sensitive data
-    memset(client, 0, sizeof(discord_client_t));
+    memset(client, 0, sizeof(discord_client_t)\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get embed color for notification priority
@@ -85,17 +85,17 @@ void discord_client_create_message(discord_client_t* client, const notification_
                                   discord_message_t* message) {
     if (!client || !event || !message) return;
     
-    memset(message, 0, sizeof(discord_message_t));
+    memset(message, 0, sizeof(discord_message_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set username and avatar
     if (strlen(client->config.username) > 0) {
-        safe_strncpy(message->username, client->config.username, sizeof(message->username));
+        safe_strncpy(message->username, client->config.username, sizeof(message->username)\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        safe_strncpy(message->username, "autonomy", sizeof(message->username));
+        safe_strncpy(message->username, "autonomy", sizeof(message->username)\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (strlen(client->config.avatar_url) > 0) {
-        safe_strncpy(message->avatar_url, client->config.avatar_url, sizeof(message->avatar_url));
+        safe_strncpy(message->avatar_url, client->config.avatar_url, sizeof(message->avatar_url)\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     if (client->config.use_embeds) {
@@ -103,27 +103,27 @@ void discord_client_create_message(discord_client_t* client, const notification_
         discord_embed_t* embed = &message->embeds[0];
         message->embed_count = 1;
         
-        safe_strncpy(embed->title, event->title, sizeof(embed->title));
-        safe_strncpy(embed->description, event->message, sizeof(embed->description));
-        embed->color = discord_client_get_embed_color(event->priority);
+        safe_strncpy(embed->title, event->title, sizeof(embed->title)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(embed->description, event->message, sizeof(embed->description)\n"\n"\n"\n"\n"\n"\n"\n");
+        embed->color = discord_client_get_embed_color(event->priority\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Format timestamp
-        struct tm* tm_info = gmtime(&event->timestamp);
-        strftime(embed->timestamp, sizeof(embed->timestamp), "%Y-%m-%dT%H:%M:%SZ", tm_info);
+        struct tm* tm_info = gmtime(&event->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+        strftime(embed->timestamp, sizeof(embed->timestamp), "%Y-%m-%dT%H:%M:%SZ", tm_info\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Add footer
-        safe_strncpy(embed->footer_text, "autonomy Daemon", sizeof(embed->footer_text));
+        safe_strncpy(embed->footer_text, "autonomy Daemon", sizeof(embed->footer_text)\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Add priority field
         discord_embed_field_t* priority_field = &embed->fields[embed->field_count++];
-        safe_strncpy(priority_field->name, "Priority", sizeof(priority_field->name));
-        safe_strncpy(priority_field->value, discord_client_get_priority_text(event->priority), sizeof(priority_field->value));
+        safe_strncpy(priority_field->name, "Priority", sizeof(priority_field->name)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(priority_field->value, discord_client_get_priority_text(event->priority), sizeof(priority_field->value)\n"\n"\n"\n"\n"\n"\n"\n");
         priority_field->inline_field = true;
         
         // Add type field
         discord_embed_field_t* type_field = &embed->fields[embed->field_count++];
-        safe_strncpy(type_field->name, "Type", sizeof(type_field->name));
-        safe_strncpy(type_field->value, notification_type_to_string(event->type), sizeof(type_field->value));
+        safe_strncpy(type_field->name, "Type", sizeof(type_field->name)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(type_field->value, notification_type_to_string(event->type), sizeof(type_field->value)\n"\n"\n"\n"\n"\n"\n"\n");
         type_field->inline_field = true;
         
         // Add context fields if enabled and available
@@ -131,8 +131,8 @@ void discord_client_create_message(discord_client_t* client, const notification_
             // Parse simple JSON context (simplified parsing)
             if (strstr(event->details_json, "latency")) {
                 discord_embed_field_t* latency_field = &embed->fields[embed->field_count++];
-                safe_strncpy(latency_field->name, "Latency", sizeof(latency_field->name));
-                safe_strncpy(latency_field->value, "See details", sizeof(latency_field->value));
+                safe_strncpy(latency_field->name, "Latency", sizeof(latency_field->name)\n"\n"\n"\n"\n"\n"\n"\n");
+                safe_strncpy(latency_field->value, "See details", sizeof(latency_field->value)\n"\n"\n"\n"\n"\n"\n"\n");
                 latency_field->inline_field = true;
             }
         }
@@ -142,7 +142,7 @@ void discord_client_create_message(discord_client_t* client, const notification_
                  "**%.100s**\n%.200s\n\n**Priority:** %s\n**Type:** %s",
                  event->title, event->message,
                  discord_client_get_priority_text(event->priority),
-                 notification_type_to_string(event->type));
+                 notification_type_to_string(event->type)\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -152,7 +152,7 @@ static char* create_discord_json(discord_message_t* message) {
     
     // Allocate buffer for JSON
     size_t buffer_size = 4096; // Use configurable value
-    char* json = malloc(buffer_size);
+    char* json = malloc(buffer_size\n"\n"\n"\n"\n"\n"\n"\n");
     if (!json) return NULL;
     
     if (message->embed_count > 0) {
@@ -176,7 +176,7 @@ static char* create_discord_json(discord_message_t* message) {
                  embed->description,
                  embed->color,
                  embed->timestamp,
-                 embed->footer_text);
+                 embed->footer_text\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Add fields
         for (int i = 0; i < embed->field_count; i++) {
@@ -187,11 +187,11 @@ static char* create_discord_json(discord_message_t* message) {
                      i > 0 ? "," : "",
                      field->name,
                      field->value,
-                     field->inline_field ? "true" : "false");
-            strncat(json, field_json, buffer_size - strlen(json) - 1);
+                     field->inline_field ? "true" : "false"\n"\n"\n"\n"\n"\n"\n"\n");
+            strncat(json, field_json, buffer_size - strlen(json) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
-        strncat(json, "]}]}", buffer_size - strlen(json) - 1);
+        strncat(json, "]}]}", buffer_size - strlen(json) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         // Simple content message
         snprintf(json, buffer_size,
@@ -202,7 +202,7 @@ static char* create_discord_json(discord_message_t* message) {
                  "}",
                  message->username,
                  message->avatar_url,
-                 message->content);
+                 message->content\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return json;
@@ -215,30 +215,30 @@ static int send_discord_request(discord_client_t* client, discord_message_t* mes
     }
     
     // Create JSON payload
-    char* json_payload = create_discord_json(message);
+    char* json_payload = create_discord_json(message\n"\n"\n"\n"\n"\n"\n"\n");
     if (!json_payload) {
-        safe_strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error));
+        safe_strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
     // Create HTTP request
-    http_request_t* request = http_request_create(client->config.webhook_url, HTTP_METHOD_POST);
+    http_request_t* request = http_request_create(client->config.webhook_url, HTTP_METHOD_POST\n"\n"\n"\n"\n"\n"\n"\n");
     if (!request) {
-        free(json_payload);
-        safe_strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error));
+        free(json_payload\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
     // Set JSON body
     if (http_request_set_json_body(request, json_payload) != 0) {
-        http_request_free(request);
-        free(json_payload);
-        safe_strncpy(client->status.last_error, "Failed to set JSON body", sizeof(client->status.last_error));
+        http_request_free(request\n"\n"\n"\n"\n"\n"\n"\n");
+        free(json_payload\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(client->status.last_error, "Failed to set JSON body", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
     // Add headers
-    http_request_add_header(request, "User-Agent: autonomy/1.0.0");
+    http_request_add_header(request, "User-Agent: autonomy/1.0.0"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set timeout
     if (client->config.timeout_seconds > 0) {
@@ -248,15 +248,15 @@ static int send_discord_request(discord_client_t* client, discord_message_t* mes
     }
     
     // Perform request
-    http_response_t* response = http_request(request);
+    http_response_t* response = http_request(request\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Clean up request
-    http_request_free(request);
-    free(json_payload);
+    http_request_free(request\n"\n"\n"\n"\n"\n"\n"\n");
+    free(json_payload\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!response) {
-        safe_strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error));
-        client->status.last_error_time = time(NULL);
+        safe_strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
+        client->status.last_error_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
@@ -266,14 +266,14 @@ static int send_discord_request(discord_client_t* client, discord_message_t* mes
     // Check result
     if (!http_response_is_success(response)) {
         snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "HTTP error: %ld - %.100s", response->status_code, response->error_message);
-        client->status.last_error_time = time(NULL);
-        http_response_free(response);
+                "HTTP error: %ld - %.100s", response->status_code, response->error_message\n"\n"\n"\n"\n"\n"\n"\n");
+        client->status.last_error_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        http_response_free(response\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
     // Clean up response
-    http_response_free(response);
+    http_response_free(response\n"\n"\n"\n"\n"\n"\n"\n");
     
     return 0;
 }
@@ -285,15 +285,15 @@ int discord_client_send(discord_client_t* client, const notification_event_t* ev
     }
     
     if (strlen(client->config.webhook_url) == 0) {
-        safe_strncpy(client->status.last_error, "Discord webhook URL is required", sizeof(client->status.last_error));
-        client->status.last_error_time = time(NULL);
+        safe_strncpy(client->status.last_error, "Discord webhook URL is required", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
+        client->status.last_error_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         client->status.total_failed++;
         return -1;
     }
     
     // Create message
     discord_message_t message;
-    discord_client_create_message(client, event, &message);
+    discord_client_create_message(client, event, &message\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Retry logic
     int max_attempts = client->config.retry_attempts > 0 ? client->config.retry_attempts : 3;
@@ -301,19 +301,19 @@ int discord_client_send(discord_client_t* client, const notification_event_t* ev
     
     int result = -1;
     for (int attempt = 1; attempt <= max_attempts; attempt++) {
-        result = send_discord_request(client, &message);
+        result = send_discord_request(client, &message\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (result == 0) {
             // Success
             client->status.total_sent++;
-            client->status.last_sent_time = time(NULL);
+            client->status.last_sent_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             client->status.last_error[0] = '\0';
             break;
         }
         
         // Failed - wait before retry (except on last attempt)
         if (attempt < max_attempts) {
-            sleep(retry_delay);
+            sleep(retry_delay\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     

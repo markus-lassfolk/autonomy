@@ -29,15 +29,15 @@ static size_t external_api_curl_write_callback(void* contents, size_t size, size
     curl_response_t* response = (curl_response_t*)userp;
     
     char* old_data = response->data;
-    char* ptr = realloc(response->data, response->size + realsize + 1);
+    char* ptr = realloc(response->data, response->size + realsize + 1\n"\n"\n"\n"\n"\n"\n"\n");
     if (!ptr) {
-        free(old_data);
+        free(old_data\n"\n"\n"\n"\n"\n"\n"\n");
         response->data = NULL;
         return 0; // Out of memory
     }
     
     response->data = ptr;
-    memcpy(&(response->data[response->size]), contents, realsize);
+    memcpy(&(response->data[response->size]), contents, realsize\n"\n"\n"\n"\n"\n"\n"\n");
     response->size += realsize;
     response->data[response->size] = 0; // Null terminate
     
@@ -67,27 +67,27 @@ typedef struct {
 } http_response_t;
 
 // Forward declarations
-size_t external_apis_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response);
+size_t external_apis_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response\n"\n"\n"\n"\n"\n"\n"\n");
 static int make_http_request(const char* url, const char* headers, const char* post_data, 
-                           int timeout, http_response_t* response);
-void update_api_statistics(external_api_type_t api_type, bool success, double duration_ms);
-bool check_rate_limits(external_api_type_t api_type);
-static void reset_hourly_counters(void);
-static void* health_monitor_worker(void* arg);
-int perform_api_health_check(external_api_type_t api_type);
+                           int timeout, http_response_t* response\n"\n"\n"\n"\n"\n"\n"\n");
+void update_api_statistics(external_api_type_t api_type, bool success, double duration_ms\n"\n"\n"\n"\n"\n"\n"\n");
+bool check_rate_limits(external_api_type_t api_type\n"\n"\n"\n"\n"\n"\n"\n");
+static void reset_hourly_counters(void\n"\n"\n"\n"\n"\n"\n"\n");
+static void* health_monitor_worker(void* arg\n"\n"\n"\n"\n"\n"\n"\n");
+int perform_api_health_check(external_api_type_t api_type\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize external APIs manager
 int external_apis_init(void) {
     if (g_external_apis_initialized) {
-        LOGX_WARN_MSG("External APIs manager already initialized");
+        printf("WARN: "External APIs manager already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    memset(&g_external_apis, 0, sizeof(external_apis_manager_t));
+    memset(&g_external_apis, 0, sizeof(external_apis_manager_t)\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize mutex
     if (pthread_mutex_init(&g_external_apis.mutex, NULL) != 0) {
-        LOGX_ERROR_MSG("Failed to initialize external APIs mutex");
+        printf("ERROR: "Failed to initialize external APIs mutex"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -98,14 +98,14 @@ int external_apis_init(void) {
         
         config->api_type = (external_api_type_t)i;
         config->enabled = false; // Disabled by default (requires configuration)
-        strcpy(config->name, external_api_type_to_string((external_api_type_t)i));
+        strcpy(config->name, external_api_type_to_string((external_api_type_t)i)\n"\n"\n"\n"\n"\n"\n"\n");
         config->timeout_seconds = 30; // Use configurable timeout
         config->max_requests_per_hour = 100; // Use configurable rate limit
         config->max_requests_per_day = 1000; // Use configurable daily limit
         config->retry_attempts = 3; // Use configurable retry attempts
         config->retry_delay_seconds = 5; // Use configurable retry delay
         config->use_ssl = true;
-        strcpy(config->user_agent, "Autonomy-Daemon/6.1.0");
+        strcpy(config->user_agent, "Autonomy-Daemon/6.1.0"\n"\n"\n"\n"\n"\n"\n"\n");
         config->enable_health_monitoring = true; // Use configurable health monitoring
         config->health_check_interval_minutes = 60; // Use configurable health check interval
         config->min_success_rate = 0.8; // Use configurable success rate threshold
@@ -114,75 +114,75 @@ int external_apis_init(void) {
         // API-specific defaults
         switch (i) {
             case EXTERNAL_API_GOOGLE_LOCATION:
-                strcpy(config->base_url, "https://www.googleapis.com/geolocation/v1");
+                strcpy(config->base_url, "https://www.googleapis.com/geolocation/v1"\n"\n"\n"\n"\n"\n"\n"\n");
                 config->cost_per_request = 0.005; // $5 per 1000 requests
                 config->quota_limit_daily = 100000; // Use configurable daily quota limit // Use configurable daily quota limit
                 config->max_requests_per_hour = 2500; // Use configurable hourly request limit
                 break;
                 
             case EXTERNAL_API_GOOGLE_ELEVATION:
-                strcpy(config->base_url, "https://maps.googleapis.com/maps/api/elevation");
+                strcpy(config->base_url, "https://maps.googleapis.com/maps/api/elevation"\n"\n"\n"\n"\n"\n"\n"\n");
                 config->cost_per_request = 0.005;
                 config->quota_limit_daily = 100000; // Use configurable daily quota limit
                 break;
                 
             case EXTERNAL_API_GOOGLE_GEOCODING:
-                strcpy(config->base_url, "https://maps.googleapis.com/maps/api/geocode");
+                strcpy(config->base_url, "https://maps.googleapis.com/maps/api/geocode"\n"\n"\n"\n"\n"\n"\n"\n");
                 config->cost_per_request = 0.005;
                 config->quota_limit_daily = 100000; // Use configurable daily quota limit
                 break;
                 
             case EXTERNAL_API_OPEN_ELEVATION:
-                strcpy(config->base_url, "https://api.open-elevation.com/api/v1");
+                strcpy(config->base_url, "https://api.open-elevation.com/api/v1"\n"\n"\n"\n"\n"\n"\n"\n");
                 config->cost_per_request = 0.0; // Free
                 config->max_requests_per_hour = 1000; // Use configurable max requests per hour
                 config->max_requests_per_day = 10000; // Use configurable max requests per day
                 break;
                 
             case EXTERNAL_API_OPENSTREETMAP_NOMINATIM:
-                strcpy(config->base_url, "https://nominatim.openstreetmap.org");
+                strcpy(config->base_url, "https://nominatim.openstreetmap.org"\n"\n"\n"\n"\n"\n"\n"\n");
                 config->cost_per_request = 0.0; // Free
                 config->max_requests_per_hour = 100; // Use configurable max requests per hour
                 config->max_requests_per_day = 1000; // Use configurable max requests per day
                 break;
                 
             case EXTERNAL_API_WEATHER_OPENWEATHER:
-                strcpy(config->base_url, "https://api.openweathermap.org/data/2.5");
+                strcpy(config->base_url, "https://api.openweathermap.org/data/2.5"\n"\n"\n"\n"\n"\n"\n"\n");
                 config->cost_per_request = 0.0; // Free tier available
                 config->max_requests_per_hour = 1000; // Use configurable max requests per hour
                 config->quota_limit_daily = 60000; // Use configurable quota limit daily
                 break;
                 
             default:
-                strcpy(config->base_url, "https://api.example.com");
+                strcpy(config->base_url, "https://api.example.com"\n"\n"\n"\n"\n"\n"\n"\n");
                 break;
         }
         
         // Initialize statistics
-        stats->stats_reset_time = time(NULL);
+        stats->stats_reset_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         stats->status = API_STATUS_UNKNOWN;
         stats->success_rate = 0.0;
     }
     
     // Initialize CURL
-    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl_global_init(CURL_GLOBAL_DEFAULT\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Start health monitoring thread
     g_external_apis.health_monitoring_enabled = true; // Use configurable health monitoring enabled
     g_external_apis.threads_running = true;
     
     if (pthread_create(&g_external_apis.health_monitor_thread, NULL, health_monitor_worker, NULL) != 0) {
-        LOGX_ERROR_MSG("Failed to create external APIs health monitor thread");
-        curl_global_cleanup();
-        pthread_mutex_destroy(&g_external_apis.mutex);
+        printf("ERROR: "Failed to create external APIs health monitor thread"\n"\n"\n"\n"\n"\n"\n"\n");
+        curl_global_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(&g_external_apis.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     g_external_apis_initialized = true;
     
-    LOGX_INFO_MSG("External APIs manager initialized",
+    printf("INFO: "External APIs manager initialized",
               "apis_available", EXTERNAL_API_MAX,
-              "health_monitoring", g_external_apis.health_monitoring_enabled);
+              "health_monitoring", g_external_apis.health_monitoring_enabled\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -191,25 +191,25 @@ int external_apis_init(void) {
 void external_apis_cleanup(void) {
     if (!g_external_apis_initialized) return;
     
-    pthread_mutex_lock(&g_external_apis.mutex);
+    pthread_mutex_lock(&g_external_apis.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Stop health monitoring thread
     g_external_apis.threads_running = false;
     
     if (g_external_apis.health_monitoring_enabled) {
-        pthread_cancel(g_external_apis.health_monitor_thread);
-        pthread_join(g_external_apis.health_monitor_thread, NULL);
+        pthread_cancel(g_external_apis.health_monitor_thread\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_join(g_external_apis.health_monitor_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Cleanup CURL
-    curl_global_cleanup();
+    curl_global_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_unlock(&g_external_apis.mutex);
-    pthread_mutex_destroy(&g_external_apis.mutex);
+    pthread_mutex_unlock(&g_external_apis.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_external_apis.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_external_apis_initialized = false;
     
-    LOGX_INFO_MSG("External APIs manager cleaned up");
+    printf("INFO: "External APIs manager cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Get elevation data from Google or Open Elevation API
@@ -218,15 +218,15 @@ int external_apis_get_elevation(double latitude, double longitude, external_elev
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    memset(elevation_data, 0, sizeof(external_elevation_data_t));
-    elevation_data->timestamp = time(NULL);
+    memset(elevation_data, 0, sizeof(external_elevation_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    elevation_data->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Try Google Elevation API first if enabled and configured
     if (g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].enabled &&
         strlen(g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].api_key) > 0) {
         
         if (!check_rate_limits(EXTERNAL_API_GOOGLE_ELEVATION)) {
-            LOGX_WARN_MSG("Google Elevation API rate limited");
+            printf("WARN: "Google Elevation API rate limited"\n"\n"\n"\n"\n"\n"\n"\n");
             g_external_apis.stats[EXTERNAL_API_GOOGLE_ELEVATION].rate_limited_requests++;
         } else {
             char url[1024];  // Increased buffer size to handle long URLs
@@ -234,47 +234,47 @@ int external_apis_get_elevation(double latitude, double longitude, external_elev
                     "%s/json?locations=%.6f,%.6f&key=%s",
                     g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].base_url,
                     latitude, longitude,
-                    g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].api_key);
+                    g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].api_key\n"\n"\n"\n"\n"\n"\n"\n");
             
             http_response_t response = {0};
-            time_t start_time = time(NULL);
+            time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             
             if (make_http_request(url, NULL, NULL, 
                                 g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].timeout_seconds,
                                 &response) == AUTONOMY_SUCCESS && response.data) {
                 
                 // Parse Google Elevation API response
-                json_object* root = json_tokener_parse(response.data);
+                json_object* root = json_tokener_parse(response.data\n"\n"\n"\n"\n"\n"\n"\n");
                 if (root) {
                     json_object* status_obj;
                     if (json_object_object_get_ex(root, "status", &status_obj)) {
-                        const char* status = json_object_get_string(status_obj);
+                        const char* status = json_object_get_string(status_obj\n"\n"\n"\n"\n"\n"\n"\n");
                         if (strcmp(status, "OK") == 0) {
                             json_object* results_obj;
                             if (json_object_object_get_ex(root, "results", &results_obj)) {
-                                int results_len = json_object_array_length(results_obj);
+                                int results_len = json_object_array_length(results_obj\n"\n"\n"\n"\n"\n"\n"\n");
                                 if (results_len > 0) {
-                                    json_object* first_result = json_object_array_get_idx(results_obj, 0);
+                                    json_object* first_result = json_object_array_get_idx(results_obj, 0\n"\n"\n"\n"\n"\n"\n"\n");
                                     if (first_result) {
                                         json_object* elevation_obj, *resolution_obj;
                                         if (json_object_object_get_ex(first_result, "elevation", &elevation_obj)) {
-                                            elevation_data->elevation = json_object_get_double(elevation_obj);
-                                            strcpy(elevation_data->source, "google_elevation");
+                                            elevation_data->elevation = json_object_get_double(elevation_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                                            strcpy(elevation_data->source, "google_elevation"\n"\n"\n"\n"\n"\n"\n"\n");
                                             
                                             if (json_object_object_get_ex(first_result, "resolution", &resolution_obj)) {
-                                                elevation_data->resolution = json_object_get_double(resolution_obj);
+                                                elevation_data->resolution = json_object_get_double(resolution_obj\n"\n"\n"\n"\n"\n"\n"\n");
                                             }
                                             
                                             double duration = difftime(time(NULL), start_time) * 1000.0;
-                                            update_api_statistics(EXTERNAL_API_GOOGLE_ELEVATION, true, duration);
+                                            update_api_statistics(EXTERNAL_API_GOOGLE_ELEVATION, true, duration\n"\n"\n"\n"\n"\n"\n"\n");
                                             
-                                            LOGX_INFO_MSG("Google Elevation API success",
+                                            printf("INFO: "Google Elevation API success",
                                                      "lat", latitude, "lon", longitude,
                                                      "elevation", elevation_data->elevation,
-                                                     "resolution", elevation_data->resolution);
+                                                     "resolution", elevation_data->resolution\n"\n"\n"\n"\n"\n"\n"\n");
                                             
-                                            json_object_put(root);
-                                            if (response.data) free(response.data);
+                                            json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
+                                            if (response.data) free(response.data\n"\n"\n"\n"\n"\n"\n"\n");
                                             return AUTONOMY_SUCCESS;
                                         }
                                     }
@@ -282,14 +282,14 @@ int external_apis_get_elevation(double latitude, double longitude, external_elev
                             }
                         }
                     }
-                    json_object_put(root);
+                    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
                 }
                 
                 double duration = difftime(time(NULL), start_time) * 1000.0;
-                update_api_statistics(EXTERNAL_API_GOOGLE_ELEVATION, false, duration);
+                update_api_statistics(EXTERNAL_API_GOOGLE_ELEVATION, false, duration\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
-            if (response.data) free(response.data);
+            if (response.data) free(response.data\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
@@ -298,63 +298,63 @@ int external_apis_get_elevation(double latitude, double longitude, external_elev
         !g_external_apis.configs[EXTERNAL_API_GOOGLE_ELEVATION].enabled) {
         
         if (!check_rate_limits(EXTERNAL_API_OPEN_ELEVATION)) {
-            LOGX_WARN_MSG("Open Elevation API rate limited");
+            printf("WARN: "Open Elevation API rate limited"\n"\n"\n"\n"\n"\n"\n"\n");
             g_external_apis.stats[EXTERNAL_API_OPEN_ELEVATION].rate_limited_requests++;
         } else {
             char url[512];
             snprintf(url, sizeof(url), 
                     "%s/lookup?locations=%.6f,%.6f",
                     g_external_apis.configs[EXTERNAL_API_OPEN_ELEVATION].base_url,
-                    latitude, longitude);
+                    latitude, longitude\n"\n"\n"\n"\n"\n"\n"\n");
             
             http_response_t response = {0};
-            time_t start_time = time(NULL);
+            time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             
             if (make_http_request(url, NULL, NULL, 
                                 g_external_apis.configs[EXTERNAL_API_OPEN_ELEVATION].timeout_seconds,
                                 &response) == AUTONOMY_SUCCESS && response.data) {
                 
                 // Parse Open Elevation API response
-                json_object* root = json_tokener_parse(response.data);
+                json_object* root = json_tokener_parse(response.data\n"\n"\n"\n"\n"\n"\n"\n");
                 if (root) {
                     json_object* results_obj;
                     if (json_object_object_get_ex(root, "results", &results_obj)) {
-                        int results_len = json_object_array_length(results_obj);
+                        int results_len = json_object_array_length(results_obj\n"\n"\n"\n"\n"\n"\n"\n");
                         if (results_len > 0) {
-                            json_object* first_result = json_object_array_get_idx(results_obj, 0);
+                            json_object* first_result = json_object_array_get_idx(results_obj, 0\n"\n"\n"\n"\n"\n"\n"\n");
                             if (first_result) {
                                 json_object* elevation_obj;
                                 if (json_object_object_get_ex(first_result, "elevation", &elevation_obj)) {
-                                    elevation_data->elevation = json_object_get_double(elevation_obj);
+                                    elevation_data->elevation = json_object_get_double(elevation_obj\n"\n"\n"\n"\n"\n"\n"\n");
                                     elevation_data->resolution = 30.0; // SRTM resolution
-                                    strcpy(elevation_data->source, "open_elevation");
+                                    strcpy(elevation_data->source, "open_elevation"\n"\n"\n"\n"\n"\n"\n"\n");
                                     
                                     double duration = difftime(time(NULL), start_time) * 1000.0;
-                                    update_api_statistics(EXTERNAL_API_OPEN_ELEVATION, true, duration);
+                                    update_api_statistics(EXTERNAL_API_OPEN_ELEVATION, true, duration\n"\n"\n"\n"\n"\n"\n"\n");
                                     
-                                    LOGX_INFO_MSG("Open Elevation API success",
+                                    printf("INFO: "Open Elevation API success",
                                              "lat", latitude, "lon", longitude,
-                                             "elevation", elevation_data->elevation);
+                                             "elevation", elevation_data->elevation\n"\n"\n"\n"\n"\n"\n"\n");
                                     
-                                    json_object_put(root);
-                                    if (response.data) free(response.data);
+                                    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
+                                    if (response.data) free(response.data\n"\n"\n"\n"\n"\n"\n"\n");
                                     return AUTONOMY_SUCCESS;
                                 }
                             }
                         }
                     }
-                    json_object_put(root);
+                    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
                 }
                 
                 double duration = difftime(time(NULL), start_time) * 1000.0;
-                update_api_statistics(EXTERNAL_API_OPEN_ELEVATION, false, duration);
+                update_api_statistics(EXTERNAL_API_OPEN_ELEVATION, false, duration\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
-            if (response.data) free(response.data);
+            if (response.data) free(response.data\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    LOGX_ERROR_MSG("All elevation APIs failed or disabled");
+    printf("ERROR: "All elevation APIs failed or disabled"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -364,15 +364,15 @@ int external_apis_get_weather(double latitude, double longitude, external_weathe
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    memset(weather_data, 0, sizeof(external_weather_data_t));
-    weather_data->timestamp = time(NULL);
+    memset(weather_data, 0, sizeof(external_weather_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    weather_data->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Try OpenWeatherMap API
     if (g_external_apis.configs[EXTERNAL_API_WEATHER_OPENWEATHER].enabled &&
         strlen(g_external_apis.configs[EXTERNAL_API_WEATHER_OPENWEATHER].api_key) > 0) {
         
         if (!check_rate_limits(EXTERNAL_API_WEATHER_OPENWEATHER)) {
-            LOGX_WARN_MSG("OpenWeatherMap API rate limited");
+            printf("WARN: "OpenWeatherMap API rate limited"\n"\n"\n"\n"\n"\n"\n"\n");
             g_external_apis.stats[EXTERNAL_API_WEATHER_OPENWEATHER].rate_limited_requests++;
         } else {
             char url[1024];  // Increased buffer size to handle long URLs
@@ -380,30 +380,30 @@ int external_apis_get_weather(double latitude, double longitude, external_weathe
                     "%s/weather?lat=%.6f&lon=%.6f&appid=%s&units=metric",
                     g_external_apis.configs[EXTERNAL_API_WEATHER_OPENWEATHER].base_url,
                     latitude, longitude,
-                    g_external_apis.configs[EXTERNAL_API_WEATHER_OPENWEATHER].api_key);
+                    g_external_apis.configs[EXTERNAL_API_WEATHER_OPENWEATHER].api_key\n"\n"\n"\n"\n"\n"\n"\n");
             
             http_response_t response = {0};
-            time_t start_time = time(NULL);
+            time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             
             if (make_http_request(url, NULL, NULL,
                                 g_external_apis.configs[EXTERNAL_API_WEATHER_OPENWEATHER].timeout_seconds,
                                 &response) == AUTONOMY_SUCCESS && response.data) {
                 
                 // Parse OpenWeatherMap response
-                json_object* root = json_tokener_parse(response.data);
+                json_object* root = json_tokener_parse(response.data\n"\n"\n"\n"\n"\n"\n"\n");
                 if (root) {
                     // Get main weather data
                     json_object* main_obj;
                     if (json_object_object_get_ex(root, "main", &main_obj)) {
                         json_object* temp_obj, *humidity_obj, *pressure_obj;
                         if (json_object_object_get_ex(main_obj, "temp", &temp_obj)) {
-                            weather_data->temperature_celsius = json_object_get_double(temp_obj);
+                            weather_data->temperature_celsius = json_object_get_double(temp_obj\n"\n"\n"\n"\n"\n"\n"\n");
                         }
                         if (json_object_object_get_ex(main_obj, "humidity", &humidity_obj)) {
-                            weather_data->humidity_percent = json_object_get_double(humidity_obj);
+                            weather_data->humidity_percent = json_object_get_double(humidity_obj\n"\n"\n"\n"\n"\n"\n"\n");
                         }
                         if (json_object_object_get_ex(main_obj, "pressure", &pressure_obj)) {
-                            weather_data->pressure_hpa = json_object_get_double(pressure_obj);
+                            weather_data->pressure_hpa = json_object_get_double(pressure_obj\n"\n"\n"\n"\n"\n"\n"\n");
                         }
                     }
                     
@@ -412,10 +412,10 @@ int external_apis_get_weather(double latitude, double longitude, external_weathe
                     if (json_object_object_get_ex(root, "wind", &wind_obj)) {
                         json_object* speed_obj, *deg_obj;
                         if (json_object_object_get_ex(wind_obj, "speed", &speed_obj)) {
-                            weather_data->wind_speed_ms = json_object_get_double(speed_obj);
+                            weather_data->wind_speed_ms = json_object_get_double(speed_obj\n"\n"\n"\n"\n"\n"\n"\n");
                         }
                         if (json_object_object_get_ex(wind_obj, "deg", &deg_obj)) {
-                            weather_data->wind_direction_deg = json_object_get_double(deg_obj);
+                            weather_data->wind_direction_deg = json_object_get_double(deg_obj\n"\n"\n"\n"\n"\n"\n"\n");
                         }
                     }
                     
@@ -428,50 +428,50 @@ int external_apis_get_weather(double latitude, double longitude, external_weathe
                     // Get weather description
                     json_object* weather_obj;
                     if (json_object_object_get_ex(root, "weather", &weather_obj)) {
-                        int weather_len = json_object_array_length(weather_obj);
+                        int weather_len = json_object_array_length(weather_obj\n"\n"\n"\n"\n"\n"\n"\n");
                         if (weather_len > 0) {
-                            json_object* weather_item = json_object_array_get_idx(weather_obj, 0);
+                            json_object* weather_item = json_object_array_get_idx(weather_obj, 0\n"\n"\n"\n"\n"\n"\n"\n");
                             if (weather_item) {
                                 json_object* desc_obj, *icon_obj;
                                 if (json_object_object_get_ex(weather_item, "description", &desc_obj)) {
-                                    const char* description = json_object_get_string(desc_obj);
-                                    strncpy(weather_data->description, description, sizeof(weather_data->description) - 1);
+                                    const char* description = json_object_get_string(desc_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                                    strncpy(weather_data->description, description, sizeof(weather_data->description) - 1\n"\n"\n"\n"\n"\n"\n"\n");
                                     weather_data->description[sizeof(weather_data->description) - 1] = '\0';
                                 }
                                 if (json_object_object_get_ex(weather_item, "icon", &icon_obj)) {
-                                    const char* icon = json_object_get_string(icon_obj);
-                                    strncpy(weather_data->icon, icon, sizeof(weather_data->icon) - 1);
+                                    const char* icon = json_object_get_string(icon_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                                    strncpy(weather_data->icon, icon, sizeof(weather_data->icon) - 1\n"\n"\n"\n"\n"\n"\n"\n");
                                     weather_data->icon[sizeof(weather_data->icon) - 1] = '\0';
                                 }
                             }
                         }
                     }
                     
-                    strcpy(weather_data->source, "openweathermap");
+                    strcpy(weather_data->source, "openweathermap"\n"\n"\n"\n"\n"\n"\n"\n");
                     
                     double duration = difftime(time(NULL), start_time) * 1000.0;
-                    update_api_statistics(EXTERNAL_API_WEATHER_OPENWEATHER, true, duration);
+                    update_api_statistics(EXTERNAL_API_WEATHER_OPENWEATHER, true, duration\n"\n"\n"\n"\n"\n"\n"\n");
                     
-                    LOGX_INFO_MSG("OpenWeatherMap API success",
+                    printf("INFO: "OpenWeatherMap API success",
                              "lat", latitude, "lon", longitude,
                              "temperature", weather_data->temperature_celsius,
                              "humidity", weather_data->humidity_percent,
-                             "description", weather_data->description);
+                             "description", weather_data->description\n"\n"\n"\n"\n"\n"\n"\n");
                     
-                    json_object_put(root);
-                    if (response.data) free(response.data);
+                    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
+                    if (response.data) free(response.data\n"\n"\n"\n"\n"\n"\n"\n");
                     return AUTONOMY_SUCCESS;
                 }
                 
                 double duration = difftime(time(NULL), start_time) * 1000.0;
-                update_api_statistics(EXTERNAL_API_WEATHER_OPENWEATHER, false, duration);
+                update_api_statistics(EXTERNAL_API_WEATHER_OPENWEATHER, false, duration\n"\n"\n"\n"\n"\n"\n"\n");
             }
             
-            if (response.data) free(response.data);
+            if (response.data) free(response.data\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
-    LOGX_ERROR_MSG("Weather API failed or disabled");
+    printf("ERROR: "Weather API failed or disabled"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -479,14 +479,14 @@ int external_apis_get_weather(double latitude, double longitude, external_weathe
 size_t external_apis_write_callback(void* contents, size_t size, size_t nmemb, http_response_t* response) {
     size_t total_size = size * nmemb;
     
-    char* new_data = realloc(response->data, response->size + total_size + 1);
+    char* new_data = realloc(response->data, response->size + total_size + 1\n"\n"\n"\n"\n"\n"\n"\n");
     if (!new_data) {
-        LOGX_ERROR_MSG("Failed to allocate memory for HTTP response");
+        printf("ERROR: "Failed to allocate memory for HTTP response"\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
     response->data = new_data;
-    memcpy(&(response->data[response->size]), contents, total_size);
+    memcpy(&(response->data[response->size]), contents, total_size\n"\n"\n"\n"\n"\n"\n"\n");
     response->size += total_size;
     response->data[response->size] = '\0';
     
@@ -500,53 +500,53 @@ static int make_http_request(const char* url, const char* headers, const char* p
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    CURL* curl = curl_easy_init();
+    CURL* curl = curl_easy_init(\n"\n"\n"\n"\n"\n"\n"\n");
     if (!curl) {
-        LOGX_ERROR_MSG("Failed to initialize CURL");
+        printf("ERROR: "Failed to initialize CURL"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Set CURL options
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, external_apis_write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-Daemon/6.1.0");
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+    curl_easy_setopt(curl, CURLOPT_URL, url\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, external_apis_write_callback\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-Daemon/6.1.0"\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Set custom headers if provided
     struct curl_slist* header_list = NULL;
     if (headers) {
-        header_list = curl_slist_append(header_list, headers);
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header_list);
+        header_list = curl_slist_append(header_list, headers\n"\n"\n"\n"\n"\n"\n"\n");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header_list\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Set POST data if provided
     if (post_data) {
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(post_data));
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data\n"\n"\n"\n"\n"\n"\n"\n");
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(post_data)\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Perform request
-    CURLcode curl_result = curl_easy_perform(curl);
+    CURLcode curl_result = curl_easy_perform(curl\n"\n"\n"\n"\n"\n"\n"\n");
     
     long response_code;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (header_list) {
-        curl_slist_free_all(header_list);
+        curl_slist_free_all(header_list\n"\n"\n"\n"\n"\n"\n"\n");
     }
-    curl_easy_cleanup(curl);
+    curl_easy_cleanup(curl\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (curl_result != CURLE_OK) {
-        LOGX_ERROR_MSG("CURL request failed", "error", curl_easy_strerror(curl_result));
+        printf("ERROR: "CURL request failed", "error", curl_easy_strerror(curl_result)\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NETWORK;
     }
     
     if (response_code != 200) {
-        LOGX_ERROR_MSG("HTTP request failed", "response_code", response_code);
+        printf("ERROR: "HTTP request failed", "response_code", response_code\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NETWORK;
     }
     
@@ -560,13 +560,13 @@ void update_api_statistics(external_api_type_t api_type, bool success, double du
     external_api_statistics_t* stats = &g_external_apis.stats[api_type];
     
     stats->total_requests++;
-    stats->last_request = time(NULL);
+    stats->last_request = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (success) {
         stats->successful_requests++;
         stats->consecutive_successes++;
         stats->consecutive_failures = 0;
-        stats->last_success = time(NULL);
+        stats->last_success = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         stats->status = API_STATUS_HEALTHY;
         
         // Update average response time
@@ -577,7 +577,7 @@ void update_api_statistics(external_api_type_t api_type, bool success, double du
         stats->failed_requests++;
         stats->consecutive_failures++;
         stats->consecutive_successes = 0;
-        stats->last_failure = time(NULL);
+        stats->last_failure = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Update status based on consecutive failures
         if (stats->consecutive_failures >= g_external_apis.configs[api_type].max_consecutive_failures) {
@@ -596,12 +596,12 @@ void update_api_statistics(external_api_type_t api_type, bool success, double du
     stats->total_cost += g_external_apis.configs[api_type].cost_per_request;
     stats->cost_this_month += g_external_apis.configs[api_type].cost_per_request;
     
-    LOGX_DEBUG_MSG("API statistics updated",
+    printf("DEBUG: "API statistics updated",
               "api", external_api_type_to_string(api_type),
               "success", success,
               "duration_ms", duration_ms,
               "success_rate", stats->success_rate,
-              "status", external_api_status_to_string(stats->status));
+              "status", external_api_status_to_string(stats->status)\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Check rate limits
@@ -611,7 +611,7 @@ bool check_rate_limits(external_api_type_t api_type) {
     external_api_config_t* config = &g_external_apis.configs[api_type];
     external_api_statistics_t* stats = &g_external_apis.stats[api_type];
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Reset counters if needed
     if (difftime(now, stats->hour_reset_time) >= 3600) {
@@ -643,7 +643,7 @@ bool check_rate_limits(external_api_type_t api_type) {
 
 // Health monitor thread worker
 static void* health_monitor_worker(void* arg) {
-    LOGX_INFO_MSG("External APIs health monitor started");
+    printf("INFO: "External APIs health monitor started"\n"\n"\n"\n"\n"\n"\n"\n");
     
     while (g_external_apis_initialized && g_external_apis.threads_running) {
         sleep(300); // Check every 5 minutes
@@ -653,14 +653,14 @@ static void* health_monitor_worker(void* arg) {
         // Perform health check for all enabled APIs
         for (int i = 0; i < EXTERNAL_API_MAX; i++) {
             if (g_external_apis.configs[i].enabled) {
-                perform_api_health_check((external_api_type_t)i);
+                perform_api_health_check((external_api_type_t)i\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
         
-        g_external_apis.last_health_check = time(NULL);
+        g_external_apis.last_health_check = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    LOGX_INFO_MSG("External APIs health monitor stopped");
+    printf("INFO: "External APIs health monitor stopped"\n"\n"\n"\n"\n"\n"\n"\n");
     return NULL;
 }
 
@@ -733,10 +733,10 @@ int external_apis_reset_statistics(external_api_type_t api_type) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    memset(&g_external_apis.stats[api_type], 0, sizeof(external_api_statistics_t));
+    memset(&g_external_apis.stats[api_type], 0, sizeof(external_api_statistics_t)\n"\n"\n"\n"\n"\n"\n"\n");
     // Reset time tracked in day_reset_time
     
-    LOGX_INFO_MSG("Reset statistics for external API", "api_type", external_api_type_to_string(api_type));
+    printf("INFO: "Reset statistics for external API", "api_type", external_api_type_to_string(api_type)\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -751,7 +751,7 @@ int external_apis_health_check(void) {
         if (g_external_apis.configs[i].enabled) {
             if (!external_apis_is_healthy((external_api_type_t)i)) {
                 all_healthy = false;
-                LOGX_WARN_MSG("External API unhealthy", "api_type", external_api_type_to_string((external_api_type_t)i));
+                printf("WARN: "External API unhealthy", "api_type", external_api_type_to_string((external_api_type_t)i)\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
@@ -792,8 +792,8 @@ api_status_t external_apis_get_status(external_api_type_t api_type) {
 
 // Check if API is healthy
 bool external_apis_is_healthy(external_api_type_t api_type) {
-    api_status_t status = external_apis_get_status(api_type);
-    return (status == API_STATUS_HEALTHY || status == API_STATUS_DEGRADED);
+    api_status_t status = external_apis_get_status(api_type\n"\n"\n"\n"\n"\n"\n"\n");
+    return (status == API_STATUS_HEALTHY || status == API_STATUS_DEGRADED\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Set API enabled state
@@ -808,9 +808,9 @@ int external_apis_set_enabled(external_api_type_t api_type, bool enabled) {
     
     g_external_apis.configs[api_type].enabled = enabled;
     
-    LOGX_INFO_MSG("Set external API enabled state", 
+    printf("INFO: "Set external API enabled state", 
                   "api_type", external_api_type_to_string(api_type),
-                  "enabled", enabled ? "true" : "false");
+                  "enabled", enabled ? "true" : "false"\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -828,7 +828,7 @@ bool external_apis_check_rate_limit(external_api_type_t api_type) {
     external_api_statistics_t* stats = &g_external_apis.stats[api_type];
     external_api_config_t* config = &g_external_apis.configs[api_type];
     
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Simple rate limiting: check requests in last minute
     if (now - stats->last_success < 60) {
@@ -855,9 +855,9 @@ int external_apis_configure(external_api_type_t api_type, const external_api_con
     
     g_external_apis.configs[api_type] = *config;
     
-    LOGX_INFO_MSG("Configured external API", 
+    printf("INFO: "Configured external API", 
                   "api_type", external_api_type_to_string(api_type),
-                  "enabled", config->enabled ? "true" : "false");
+                  "enabled", config->enabled ? "true" : "false"\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -876,17 +876,17 @@ int external_apis_make_request(const external_api_request_t* request, external_a
     // Update statistics
     external_api_statistics_t* stats = &g_external_apis.stats[request->api_type];
     stats->total_requests++;
-    stats->last_success = time(NULL);
+    stats->last_success = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     stats->requests_this_hour++;
     
     // Real HTTP request using cURL
-    CURL* curl = curl_easy_init();
+    CURL* curl = curl_easy_init(\n"\n"\n"\n"\n"\n"\n"\n");
     if (!curl) {
-        LOGX_ERROR_MSG("Failed to initialize cURL for external API request");
+        printf("ERROR: "Failed to initialize cURL for external API request"\n"\n"\n"\n"\n"\n"\n"\n");
         response->success = false;
         response->status_code = 0;
         response->duration_ms = 0;
-        strncpy(response->body, "{\"error\":\"curl_init_failed\"}", sizeof(response->body) - 1);
+        strncpy(response->body, "{\"error\":\"curl_init_failed\"}", sizeof(response->body) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         stats->failed_requests++;
         return AUTONOMY_ERROR_SYSTEM;
     }
@@ -898,86 +898,86 @@ int external_apis_make_request(const external_api_request_t* request, external_a
     } curl_response_t;
     
     curl_response_t curl_response = {0};
-    curl_response.data = malloc(1);
+    curl_response.data = malloc(1\n"\n"\n"\n"\n"\n"\n"\n");
     curl_response.size = 0; // Use configurable curl response size
 
     // Configure cURL for the request
-    curl_easy_setopt(curl, CURLOPT_URL, request->endpoint);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, external_api_curl_write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &curl_response);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-RUTOS/1.0");
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+    curl_easy_setopt(curl, CURLOPT_URL, request->endpoint\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, external_api_curl_write_callback\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &curl_response\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-RUTOS/1.0"\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L\n"\n"\n"\n"\n"\n"\n"\n");
 
     // Add headers if needed
     struct curl_slist* headers = NULL;
     if (strlen(request->headers) > 0) {
-        headers = curl_slist_append(headers, request->headers);
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        headers = curl_slist_append(headers, request->headers\n"\n"\n"\n"\n"\n"\n"\n");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers\n"\n"\n"\n"\n"\n"\n"\n");
     }
 
     // Add POST data if provided
     if (strlen(request->body) > 0) {
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request->body);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(request->body));
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request->body\n"\n"\n"\n"\n"\n"\n"\n");
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(request->body)\n"\n"\n"\n"\n"\n"\n"\n");
     }
 
     // Record start time for duration measurement
     struct timespec start_time, end_time;
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
+    clock_gettime(CLOCK_MONOTONIC, &start_time\n"\n"\n"\n"\n"\n"\n"\n");
 
     // Perform the request
-    CURLcode curl_result = curl_easy_perform(curl);
+    CURLcode curl_result = curl_easy_perform(curl\n"\n"\n"\n"\n"\n"\n"\n");
     long http_code = 0;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Calculate duration
-    clock_gettime(CLOCK_MONOTONIC, &end_time);
+    clock_gettime(CLOCK_MONOTONIC, &end_time\n"\n"\n"\n"\n"\n"\n"\n");
     long duration_ms = (end_time.tv_sec - start_time.tv_sec) * 1000 + 
                       (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
 
     // Clean up cURL
-    if (headers) curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
+    if (headers) curl_slist_free_all(headers\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_cleanup(curl\n"\n"\n"\n"\n"\n"\n"\n");
 
     // Process results
     response->duration_ms = duration_ms;
     response->status_code = (int)http_code;
     
     if (curl_result != CURLE_OK) {
-        LOGX_ERROR_MSG("External API cURL request failed", "error", curl_easy_strerror(curl_result), "url", request->endpoint);
+        printf("ERROR: "External API cURL request failed", "error", curl_easy_strerror(curl_result), "url", request->endpoint\n"\n"\n"\n"\n"\n"\n"\n");
         response->success = false;
-        snprintf(response->body, sizeof(response->body), "{\"error\":\"%s\"}", curl_easy_strerror(curl_result));
+        snprintf(response->body, sizeof(response->body), "{\"error\":\"%s\"}", curl_easy_strerror(curl_result)\n"\n"\n"\n"\n"\n"\n"\n");
         stats->failed_requests++;
-        free(curl_response.data);
+        free(curl_response.data\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NETWORK;
     }
     
     if (http_code < 200 || http_code >= 300) {
-        LOGX_ERROR_MSG("External API HTTP error", "http_code", http_code, "url", request->endpoint);
+        printf("ERROR: "External API HTTP error", "http_code", http_code, "url", request->endpoint\n"\n"\n"\n"\n"\n"\n"\n");
         response->success = false;
-        snprintf(response->body, sizeof(response->body), "{\"error\":\"HTTP %ld\"}", http_code);
+        snprintf(response->body, sizeof(response->body), "{\"error\":\"HTTP %ld\"}", http_code\n"\n"\n"\n"\n"\n"\n"\n");
         stats->failed_requests++;
-        free(curl_response.data);
+        free(curl_response.data\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_EXTERNAL_API;
     }
     
     // Copy response data
     response->success = true;
     if (curl_response.size < sizeof(response->body)) {
-        memcpy(response->body, curl_response.data, curl_response.size);
+        memcpy(response->body, curl_response.data, curl_response.size\n"\n"\n"\n"\n"\n"\n"\n");
         response->body[curl_response.size] = '\0';
     } else {
-        memcpy(response->body, curl_response.data, sizeof(response->body) - 1);
+        memcpy(response->body, curl_response.data, sizeof(response->body) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         response->body[sizeof(response->body) - 1] = '\0';
-        LOGX_WARN_MSG("External API response truncated", "original_size", curl_response.size, "truncated_to", sizeof(response->body) - 1);
+        printf("WARN: "External API response truncated", "original_size", curl_response.size, "truncated_to", sizeof(response->body) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    free(curl_response.data);
+    free(curl_response.data\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("External API request successful", "url", request->endpoint, "http_code", http_code, "duration_ms", duration_ms, "response_size", curl_response.size);
+    printf("DEBUG: "External API request successful", "url", request->endpoint, "http_code", http_code, "duration_ms", duration_ms, "response_size", curl_response.size\n"\n"\n"\n"\n"\n"\n"\n");
     
     stats->successful_requests++;
     stats->average_response_time_ms += response->duration_ms;
@@ -995,76 +995,76 @@ int external_apis_get_google_location(const void* cell_towers, const void* wifi_
     // Check if Google API is enabled and configured
     if (!g_external_apis.configs[EXTERNAL_API_GOOGLE_LOCATION].enabled || 
         strlen(g_external_apis.configs[EXTERNAL_API_GOOGLE_LOCATION].api_key) == 0) {
-        LOGX_WARN_MSG("Google Location API not configured");
+        printf("WARN: "Google Location API not configured"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_CONFIGURED;
     }
     
     // Build Google Geolocation API request
-    json_object* request_json = json_object_new_object();
-    json_object* consider_ip = json_object_new_boolean(true);
-    json_object_object_add(request_json, "considerIp", consider_ip);
+    json_object* request_json = json_object_new_object(\n"\n"\n"\n"\n"\n"\n"\n");
+    json_object* consider_ip = json_object_new_boolean(true\n"\n"\n"\n"\n"\n"\n"\n");
+    json_object_object_add(request_json, "considerIp", consider_ip\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Add WiFi access points if available
     if (wifi_aps) {
-        json_object* wifi_array = json_object_new_array();
+        json_object* wifi_array = json_object_new_array(\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Get real WiFi scan results from enhanced WiFi system
         wifi_access_point_t access_points[32];
-        int ap_count = wifi_enhanced_ubus_scan("radio0", access_points, 32);
+        int ap_count = wifi_enhanced_ubus_scan("radio0", access_points, 32\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (ap_count > 0) {
-            LOGX_DEBUG_MSG("Found %d WiFi access points for location request", ap_count);
+            printf("DEBUG: "Found %d WiFi access points for location request", ap_count\n"\n"\n"\n"\n"\n"\n"\n");
             
             for (int i = 0; i < ap_count && i < 32; i++) {
                 // Build WiFi AP object using json-c
-                json_object* ap_obj = json_object_new_object();
+                json_object* ap_obj = json_object_new_object(\n"\n"\n"\n"\n"\n"\n"\n");
                 if (ap_obj) {
-                    json_object_object_add(ap_obj, "macAddress", json_object_new_string(access_points[i].bssid));
-                    json_object_object_add(ap_obj, "signalStrength", json_object_new_int(access_points[i].signal));
-                    json_object_object_add(ap_obj, "channel", json_object_new_int(access_points[i].channel));
+                    json_object_object_add(ap_obj, "macAddress", json_object_new_string(access_points[i].bssid)\n"\n"\n"\n"\n"\n"\n"\n");
+                    json_object_object_add(ap_obj, "signalStrength", json_object_new_int(access_points[i].signal)\n"\n"\n"\n"\n"\n"\n"\n");
+                    json_object_object_add(ap_obj, "channel", json_object_new_int(access_points[i].channel)\n"\n"\n"\n"\n"\n"\n"\n");
                     json_object_object_add(ap_obj, "age", json_object_new_int(0)); // Real-time data
-                    json_object_array_add(wifi_array, ap_obj);
+                    json_object_array_add(wifi_array, ap_obj\n"\n"\n"\n"\n"\n"\n"\n");
                 }
             }
         } else {
-            LOGX_DEBUG_MSG("No WiFi access points found for location request");
+            printf("DEBUG: "No WiFi access points found for location request"\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
-        json_object_object_add(request_json, "wifiAccessPoints", wifi_array);
+        json_object_object_add(request_json, "wifiAccessPoints", wifi_array\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Add cell towers if available  
     if (cell_towers) {
-        json_object* cell_array = json_object_new_array();
+        json_object* cell_array = json_object_new_array(\n"\n"\n"\n"\n"\n"\n"\n");
         // This would integrate with actual cellular data
-        json_object_object_add(request_json, "cellTowers", cell_array);
+        json_object_object_add(request_json, "cellTowers", cell_array\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    const char* json_string = json_object_to_json_string(request_json);
+    const char* json_string = json_object_to_json_string(request_json\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Prepare API request
     external_api_request_t api_request = {0};
     api_request.api_type = EXTERNAL_API_GOOGLE_LOCATION;
     snprintf(api_request.endpoint, sizeof(api_request.endpoint), 
              "https://www.googleapis.com/geolocation/v1/geolocate?key=%s", 
-             g_external_apis.configs[EXTERNAL_API_GOOGLE_LOCATION].api_key);
-    strcpy(api_request.headers, "Content-Type: application/json");
-    strncpy(api_request.body, json_string, sizeof(api_request.body) - 1);
+             g_external_apis.configs[EXTERNAL_API_GOOGLE_LOCATION].api_key\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(api_request.headers, "Content-Type: application/json"\n"\n"\n"\n"\n"\n"\n"\n");
+    strncpy(api_request.body, json_string, sizeof(api_request.body) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Make the API request
     external_api_response_t api_response = {0};
-    int result = external_apis_make_request(&api_request, &api_response);
+    int result = external_apis_make_request(&api_request, &api_response\n"\n"\n"\n"\n"\n"\n"\n");
     
-    json_object_put(request_json);
+    json_object_put(request_json\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result != AUTONOMY_SUCCESS) {
         return result;
     }
     
     // Parse Google API response
-    json_object* response_json = json_tokener_parse(api_response.body);
+    json_object* response_json = json_tokener_parse(api_response.body\n"\n"\n"\n"\n"\n"\n"\n");
     if (!response_json) {
-        LOGX_ERROR_MSG("Failed to parse Google Location API response");
+        printf("ERROR: "Failed to parse Google Location API response"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_PARSE;
     }
     
@@ -1074,25 +1074,25 @@ int external_apis_get_google_location(const void* cell_towers, const void* wifi_
         json_object* lat_obj, *lng_obj;
         if (json_object_object_get_ex(location_obj, "lat", &lat_obj) &&
             json_object_object_get_ex(location_obj, "lng", &lng_obj)) {
-            location_data->latitude = json_object_get_double(lat_obj);
-            location_data->longitude = json_object_get_double(lng_obj);
+            location_data->latitude = json_object_get_double(lat_obj\n"\n"\n"\n"\n"\n"\n"\n");
+            location_data->longitude = json_object_get_double(lng_obj\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // Extract accuracy
     json_object* accuracy_obj;
     if (json_object_object_get_ex(response_json, "accuracy", &accuracy_obj)) {
-        location_data->accuracy = json_object_get_double(accuracy_obj);
+        location_data->accuracy = json_object_get_double(accuracy_obj\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         location_data->accuracy = 1000.0; // Default accuracy
     }
     
-    strcpy(location_data->source, "google_geolocation");
-    location_data->timestamp = time(NULL);
+    strcpy(location_data->source, "google_geolocation"\n"\n"\n"\n"\n"\n"\n"\n");
+    location_data->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
-    json_object_put(response_json);
+    json_object_put(response_json\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("Google Location API success", "lat", location_data->latitude, "lon", location_data->longitude, "accuracy", location_data->accuracy);
+    printf("DEBUG: "Google Location API success", "lat", location_data->latitude, "lon", location_data->longitude, "accuracy", location_data->accuracy\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -1105,7 +1105,7 @@ int external_apis_get_reverse_geocoding(double latitude, double longitude, exter
     // Check if Google API is enabled and configured
     if (!g_external_apis.configs[EXTERNAL_API_GOOGLE_GEOCODING].enabled || 
         strlen(g_external_apis.configs[EXTERNAL_API_GOOGLE_GEOCODING].api_key) == 0) {
-        LOGX_WARN_MSG("Google Geocoding API not configured");
+        printf("WARN: "Google Geocoding API not configured"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_CONFIGURED;
     }
     
@@ -1114,31 +1114,31 @@ int external_apis_get_reverse_geocoding(double latitude, double longitude, exter
     api_request.api_type = EXTERNAL_API_GOOGLE_GEOCODING;
     snprintf(api_request.endpoint, sizeof(api_request.endpoint), 
              "https://maps.googleapis.com/maps/api/geocode/json?latlng=%.6f,%.6f&key=%s",
-             latitude, longitude, g_external_apis.configs[EXTERNAL_API_GOOGLE_GEOCODING].api_key);
-    strcpy(api_request.headers, "User-Agent: Autonomy-RUTOS/1.0");
+             latitude, longitude, g_external_apis.configs[EXTERNAL_API_GOOGLE_GEOCODING].api_key\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(api_request.headers, "User-Agent: Autonomy-RUTOS/1.0"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Make the API request
     external_api_response_t api_response = {0};
-    int result = external_apis_make_request(&api_request, &api_response);
+    int result = external_apis_make_request(&api_request, &api_response\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (result != AUTONOMY_SUCCESS) {
         return result;
     }
     
     // Parse Google Geocoding API response
-    json_object* response_json = json_tokener_parse(api_response.body);
+    json_object* response_json = json_tokener_parse(api_response.body\n"\n"\n"\n"\n"\n"\n"\n");
     if (!response_json) {
-        LOGX_ERROR_MSG("Failed to parse Google Geocoding API response");
+        printf("ERROR: "Failed to parse Google Geocoding API response"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_PARSE;
     }
     
     // Check status
     json_object* status_obj;
     if (json_object_object_get_ex(response_json, "status", &status_obj)) {
-        const char* status = json_object_get_string(status_obj);
+        const char* status = json_object_get_string(status_obj\n"\n"\n"\n"\n"\n"\n"\n");
         if (strcmp(status, "OK") != 0) {
-            LOGX_ERROR_MSG("Google Geocoding API error", "status", status);
-            json_object_put(response_json);
+            printf("ERROR: "Google Geocoding API error", "status", status\n"\n"\n"\n"\n"\n"\n"\n");
+            json_object_put(response_json\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_ERROR_EXTERNAL_API;
         }
     }
@@ -1146,35 +1146,35 @@ int external_apis_get_reverse_geocoding(double latitude, double longitude, exter
     // Extract results
     json_object* results_obj;
     if (json_object_object_get_ex(response_json, "results", &results_obj)) {
-        int results_count = json_object_array_length(results_obj);
+        int results_count = json_object_array_length(results_obj\n"\n"\n"\n"\n"\n"\n"\n");
         if (results_count > 0) {
-            json_object* first_result = json_object_array_get_idx(results_obj, 0);
+            json_object* first_result = json_object_array_get_idx(results_obj, 0\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Get formatted address
             json_object* address_obj;
             if (json_object_object_get_ex(first_result, "formatted_address", &address_obj)) {
-                const char* address = json_object_get_string(address_obj);
-                strncpy(location_data->formatted_address, address, sizeof(location_data->formatted_address) - 1);
+                const char* address = json_object_get_string(address_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                strncpy(location_data->formatted_address, address, sizeof(location_data->formatted_address) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             } else {
-                strcpy(location_data->formatted_address, "Address not available");
+                strcpy(location_data->formatted_address, "Address not available"\n"\n"\n"\n"\n"\n"\n"\n");
             }
         } else {
-            strcpy(location_data->formatted_address, "No results found");
+            strcpy(location_data->formatted_address, "No results found"\n"\n"\n"\n"\n"\n"\n"\n");
         }
     } else {
-        strcpy(location_data->formatted_address, "No results in response");
+        strcpy(location_data->formatted_address, "No results in response"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Fill location data
     location_data->latitude = latitude;
     location_data->longitude = longitude;
     location_data->accuracy = 10.0; // High accuracy for reverse geocoding
-    strcpy(location_data->source, "google_geocoding");
-    location_data->timestamp = time(NULL);
+    strcpy(location_data->source, "google_geocoding"\n"\n"\n"\n"\n"\n"\n"\n");
+    location_data->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
-    json_object_put(response_json);
+    json_object_put(response_json\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("Google Geocoding API success", "lat", latitude, "lon", longitude, "address", location_data->formatted_address);
+    printf("DEBUG: "Google Geocoding API success", "lat", latitude, "lon", longitude, "address", location_data->formatted_address\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -1186,11 +1186,11 @@ int perform_api_health_check(external_api_type_t api_type) {
     }
 
     // Check if we have recent successful requests
-    time_t now = time(NULL);
+    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     if (now - g_external_apis.stats[api_type].last_success < 3600) {
         return AUTONOMY_SUCCESS; // Recent success
     }
 
-    LOGX_DEBUG_MSG("API health check", "api_type", api_type, "last_success", g_external_apis.stats[api_type].last_success);
+    printf("DEBUG: "API health check", "api_type", api_type, "last_success", g_external_apis.stats[api_type].last_success\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }

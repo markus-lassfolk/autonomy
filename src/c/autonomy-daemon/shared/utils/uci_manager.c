@@ -19,11 +19,11 @@ static struct uci_context *g_uci_ctx = NULL;
 static bool g_uci_initialized = false; // Use configurable setting // Use configurable setting
 
 // Forward declarations for UCI wrapper functions
-const char* ucix_get_option(struct uci_context *ctx, const char *package, const char *section, const char *option);
-int ucix_get_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int default_value);
-int ucix_add_option(struct uci_context *ctx, const char *package, const char *section, const char *option, const char *value);
-int ucix_add_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int value);
-int ucix_logged_commit(struct uci_context *ctx, const char *package);
+const char* ucix_get_option(struct uci_context *ctx, const char *package, const char *section, const char *option\n"\n"\n"\n"\n"\n"\n"\n");
+int ucix_get_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int default_value\n"\n"\n"\n"\n"\n"\n"\n");
+int ucix_add_option(struct uci_context *ctx, const char *package, const char *section, const char *option, const char *value\n"\n"\n"\n"\n"\n"\n"\n");
+int ucix_add_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int value\n"\n"\n"\n"\n"\n"\n"\n");
+int ucix_logged_commit(struct uci_context *ctx, const char *package\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Configuration package name
 #define UCI_PACKAGE "autonomy"
@@ -84,35 +84,35 @@ static const autonomy_config_t DEFAULT_CONFIG = {
 
 // Initialize UCI manager using Teltonika's library
 int uci_manager_init(void) {
-    fprintf(stderr, "DEBUG: uci_manager_init called\n");
-    fflush(stderr);
+    fprintf(stderr, "DEBUG: uci_manager_init called\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (g_uci_initialized) {
-        fprintf(stderr, "DEBUG: UCI manager already initialized\n");
-        LOGX_WARN_MSG("UCI manager already initialized");
+        fprintf(stderr, "DEBUG: UCI manager already initialized\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("WARN: "UCI manager already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
-    fprintf(stderr, "DEBUG: About to call uci_alloc_context()\n");
-    fflush(stderr);
+    fprintf(stderr, "DEBUG: About to call uci_alloc_context()\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Use standard OpenWrt UCI initialization
-    g_uci_ctx = uci_alloc_context();
-    fprintf(stderr, "DEBUG: uci_alloc_context() returned: %p\n", (void*)g_uci_ctx);
-    fflush(stderr);
+    g_uci_ctx = uci_alloc_context(\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: uci_alloc_context() returned: %p\n", (void*)g_uci_ctx\n"\n"\n"\n"\n"\n"\n"\n");
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!g_uci_ctx) {
-        fprintf(stderr, "ERROR: Failed to initialize UCI context using standard OpenWrt library\n");
-        LOGX_ERROR_MSG("Failed to initialize UCI context using standard OpenWrt library");
+        fprintf(stderr, "ERROR: Failed to initialize UCI context using standard OpenWrt library\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: "Failed to initialize UCI context using standard OpenWrt library"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    fprintf(stderr, "DEBUG: UCI context allocated successfully\n");
-    fflush(stderr);
+    fprintf(stderr, "DEBUG: UCI context allocated successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_uci_initialized = true; // Use configurable setting // Use configurable setting
-    fprintf(stderr, "DEBUG: UCI manager initialization completed\n");
-    LOGX_INFO_MSG("UCI manager initialized successfully using standard OpenWrt UCI");
+    fprintf(stderr, "DEBUG: UCI manager initialization completed\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: "UCI manager initialized successfully using standard OpenWrt UCI"\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -120,7 +120,7 @@ int uci_manager_init(void) {
 // UCI cleanup wrapper function
 void uci_cleanup(struct uci_context *ctx) {
     if (ctx) {
-        uci_free_context(ctx);
+        uci_free_context(ctx\n"\n"\n"\n"\n"\n"\n"\n");
     }
 }
 
@@ -129,466 +129,466 @@ void uci_manager_cleanup(void) {
     if (!g_uci_initialized) return;
     
     if (g_uci_ctx) {
-        uci_cleanup(g_uci_ctx);
+        uci_cleanup(g_uci_ctx\n"\n"\n"\n"\n"\n"\n"\n");
         g_uci_ctx = NULL;
     }
     
     g_uci_initialized = false; // Use configurable setting // Use configurable setting
-    LOGX_INFO_MSG("UCI manager cleaned up");
+    printf("INFO: "UCI manager cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Load configuration from UCI using Teltonika library
 int uci_manager_load_config(autonomy_config_t *config) {
-    fprintf(stderr, "DEBUG: uci_manager_load_config called\n");
-    fflush(stderr);
+    fprintf(stderr, "DEBUG: uci_manager_load_config called\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!g_uci_initialized || !config) {
-        fprintf(stderr, "ERROR: UCI manager not initialized or invalid config pointer\n");
-        LOGX_ERROR_MSG("UCI manager not initialized or invalid config pointer");
+        fprintf(stderr, "ERROR: UCI manager not initialized or invalid config pointer\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: "UCI manager not initialized or invalid config pointer"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    fprintf(stderr, "DEBUG: UCI manager is initialized, loading config\n");
-    LOGX_INFO_MSG("Loading configuration from UCI using Teltonika library");
+    fprintf(stderr, "DEBUG: UCI manager is initialized, loading config\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: "Loading configuration from UCI using Teltonika library"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Start with defaults
-    fprintf(stderr, "DEBUG: Setting default configuration\n");
+    fprintf(stderr, "DEBUG: Setting default configuration\n"\n"\n"\n"\n"\n"\n"\n"\n");
     *config = DEFAULT_CONFIG;
-    fprintf(stderr, "DEBUG: Default configuration set\n");
+    fprintf(stderr, "DEBUG: Default configuration set\n"\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Load daemon settings using ucix_get_option functions
     char *value;
     
-    fprintf(stderr, "DEBUG: About to load daemon settings\n");
-    fflush(stderr);
+    fprintf(stderr, "DEBUG: About to load daemon settings\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Daemon mode
-    fprintf(stderr, "DEBUG: Loading daemon_mode setting\n");
-    fflush(stderr);
+    fprintf(stderr, "DEBUG: Loading daemon_mode setting\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
     config->daemon_mode = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "general", "daemon_mode", 1) != 0;
-    fprintf(stderr, "DEBUG: daemon_mode loaded: %d\n", config->daemon_mode);
-    fflush(stderr);
+    fprintf(stderr, "DEBUG: daemon_mode loaded: %d\n", config->daemon_mode\n"\n"\n"\n"\n"\n"\n"\n");
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Debug mode
     config->debug_mode = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "general", "debug_mode", 0) != 0;
     
     // Log level
-    config->log_level = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "general", "log_level", 2);
+    config->log_level = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "general", "log_level", 2\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Log file
-    const char *log_file_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "general", "log_file");
+    const char *log_file_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "general", "log_file"\n"\n"\n"\n"\n"\n"\n"\n");
     if (log_file_value) {
-        strncpy(config->log_file, log_file_value, sizeof(config->log_file) - 1);
+        strncpy(config->log_file, log_file_value, sizeof(config->log_file) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         config->log_file[sizeof(config->log_file) - 1] = '\0';
     }
     
     // PID file timeout
-    config->pid_file_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "general", "pid_file_timeout", 30);
+    config->pid_file_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "general", "pid_file_timeout", 30\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Network settings
-    config->network_check_interval = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "network", "check_interval", 30);
-    config->failover_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "network", "failover_timeout", 60);
+    config->network_check_interval = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "network", "check_interval", 30\n"\n"\n"\n"\n"\n"\n"\n");
+    config->failover_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "network", "failover_timeout", 60\n"\n"\n"\n"\n"\n"\n"\n");
     config->auto_failover = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "network", "auto_failover", 1) != 0;
-    config->min_interface_health = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "network", "min_interface_health", 50);
+    config->min_interface_health = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "network", "min_interface_health", 50\n"\n"\n"\n"\n"\n"\n"\n");
     config->mwan3_integration = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "network", "mwan3_integration", 1) != 0;
     
     // GPS settings
-    config->gps_update_interval = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "update_interval", 10);
-    config->gps_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "timeout", 30);
+    config->gps_update_interval = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "update_interval", 10\n"\n"\n"\n"\n"\n"\n"\n");
+    config->gps_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "timeout", 30\n"\n"\n"\n"\n"\n"\n"\n");
     config->gps_fusion = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "fusion", 1) != 0;
-    config->gps_cache_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "cache_timeout", 300);
+    config->gps_cache_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "cache_timeout", 300\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Min GPS accuracy (double value)
-    const char *gps_accuracy_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "gps", "min_accuracy");
+    const char *gps_accuracy_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "gps", "min_accuracy"\n"\n"\n"\n"\n"\n"\n"\n");
     if (gps_accuracy_value) {
-        config->min_gps_accuracy = atof(gps_accuracy_value);
+        config->min_gps_accuracy = atof(gps_accuracy_value\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Starlink settings
-    config->starlink_check_interval = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "check_interval", 30);
+    config->starlink_check_interval = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "check_interval", 30\n"\n"\n"\n"\n"\n"\n"\n");
     config->starlink_health_monitoring = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "health_monitoring", 1) != 0;
-    config->starlink_port = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "port", 9200);
-    config->starlink_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "timeout", 10);
+    config->starlink_port = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "port", 9200\n"\n"\n"\n"\n"\n"\n"\n");
+    config->starlink_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "timeout", 10\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Starlink host
-    const char *starlink_host_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "starlink", "host");
+    const char *starlink_host_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "starlink", "host"\n"\n"\n"\n"\n"\n"\n"\n");
     if (starlink_host_value) {
-        strncpy(config->starlink_host, starlink_host_value, sizeof(config->starlink_host) - 1);
+        strncpy(config->starlink_host, starlink_host_value, sizeof(config->starlink_host) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         config->starlink_host[sizeof(config->starlink_host) - 1] = '\0';
     }
     
     // System monitoring
-    config->system_check_interval = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "system", "check_interval", 60);
+    config->system_check_interval = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "system", "check_interval", 60\n"\n"\n"\n"\n"\n"\n"\n");
     config->resource_monitoring = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "system", "resource_monitoring", 1) != 0;
     config->service_monitoring = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "system", "service_monitoring", 1) != 0;
-    config->alert_threshold = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "system", "alert_threshold", 80);
+    config->alert_threshold = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "system", "alert_threshold", 80\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Notifications
     config->notifications_enabled = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "notifications", "enabled", 1) != 0;
     
     // Email settings
-    const char *email_from_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_from");
+    const char *email_from_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_from"\n"\n"\n"\n"\n"\n"\n"\n");
     if (email_from_value) {
-        strncpy(config->email_from, email_from_value, sizeof(config->email_from) - 1);
+        strncpy(config->email_from, email_from_value, sizeof(config->email_from) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         config->email_from[sizeof(config->email_from) - 1] = '\0';
     }
     
-    const char *email_to_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_to");
+    const char *email_to_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_to"\n"\n"\n"\n"\n"\n"\n"\n");
     if (email_to_value) {
-        strncpy(config->email_to, email_to_value, sizeof(config->email_to) - 1);
+        strncpy(config->email_to, email_to_value, sizeof(config->email_to) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         config->email_to[sizeof(config->email_to) - 1] = '\0';
     }
     
-    const char *email_smtp_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_smtp");
+    const char *email_smtp_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_smtp"\n"\n"\n"\n"\n"\n"\n"\n");
     if (email_smtp_value) {
-        strncpy(config->email_smtp, email_smtp_value, sizeof(config->email_smtp) - 1);
+        strncpy(config->email_smtp, email_smtp_value, sizeof(config->email_smtp) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         config->email_smtp[sizeof(config->email_smtp) - 1] = '\0';
     }
     
-    const char *webhook_url_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "webhook_url");
+    const char *webhook_url_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "notifications", "webhook_url"\n"\n"\n"\n"\n"\n"\n"\n");
     if (webhook_url_value) {
-        strncpy(config->webhook_url, webhook_url_value, sizeof(config->webhook_url) - 1);
+        strncpy(config->webhook_url, webhook_url_value, sizeof(config->webhook_url) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         config->webhook_url[sizeof(config->webhook_url) - 1] = '\0';
     }
     
     // Snow detection settings
     config->snow_detection_enabled = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "enabled", 1) != 0;
-    config->snow_detection_samples = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "detection_samples", 5);
-    config->snow_verification_time = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "verification_time", 300);
-    config->snow_melt_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "melt_timeout", 1800);
+    config->snow_detection_samples = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "detection_samples", 5\n"\n"\n"\n"\n"\n"\n"\n");
+    config->snow_verification_time = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "verification_time", 300\n"\n"\n"\n"\n"\n"\n"\n");
+    config->snow_melt_timeout = ucix_get_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "melt_timeout", 1800\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Snow detection thresholds (double values)
-    const char *obstruction_threshold_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "obstruction_threshold");
+    const char *obstruction_threshold_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "obstruction_threshold"\n"\n"\n"\n"\n"\n"\n"\n");
     if (obstruction_threshold_value) {
-        config->snow_obstruction_threshold = atof(obstruction_threshold_value);
+        config->snow_obstruction_threshold = atof(obstruction_threshold_value\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    const char *snr_degradation_threshold_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "snr_degradation_threshold");
+    const char *snr_degradation_threshold_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "snr_degradation_threshold"\n"\n"\n"\n"\n"\n"\n"\n");
     if (snr_degradation_threshold_value) {
-        config->snow_snr_degradation_threshold = atof(snr_degradation_threshold_value);
+        config->snow_snr_degradation_threshold = atof(snr_degradation_threshold_value\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    const char *temperature_threshold_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "temperature_threshold");
+    const char *temperature_threshold_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "temperature_threshold"\n"\n"\n"\n"\n"\n"\n"\n");
     if (temperature_threshold_value) {
-        config->snow_temperature_threshold = atof(temperature_threshold_value);
+        config->snow_temperature_threshold = atof(temperature_threshold_value\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Weather API key
-    const char *weather_api_key_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "weather_api_key");
+    const char *weather_api_key_value = ucix_get_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "weather_api_key"\n"\n"\n"\n"\n"\n"\n"\n");
     if (weather_api_key_value) {
-        strncpy(config->snow_weather_api_key, weather_api_key_value, sizeof(config->snow_weather_api_key) - 1);
+        strncpy(config->snow_weather_api_key, weather_api_key_value, sizeof(config->snow_weather_api_key) - 1\n"\n"\n"\n"\n"\n"\n"\n");
         config->snow_weather_api_key[sizeof(config->snow_weather_api_key) - 1] = '\0';
     }
     
-    LOGX_INFO_MSG("Configuration loaded successfully from UCI using Teltonika library");
+    printf("INFO: "Configuration loaded successfully from UCI using Teltonika library"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Save configuration to UCI using Teltonika library
 int uci_manager_save_config(const autonomy_config_t *config) {
     if (!g_uci_initialized || !config) {
-        LOGX_ERROR_MSG("UCI manager not initialized or invalid config pointer");
+        printf("ERROR: "UCI manager not initialized or invalid config pointer"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    LOGX_INFO_MSG("Saving configuration to UCI using Teltonika library");
+    printf("INFO: "Saving configuration to UCI using Teltonika library"\n"\n"\n"\n"\n"\n"\n"\n");
     
     int ret;
     
     // Save daemon settings using ucix_add_option functions
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "general", "daemon_mode", config->daemon_mode ? 1 : 0);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "general", "daemon_mode", config->daemon_mode ? 1 : 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save daemon_mode to UCI");
+        printf("ERROR: "Failed to save daemon_mode to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "general", "debug_mode", config->debug_mode ? 1 : 0);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "general", "debug_mode", config->debug_mode ? 1 : 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save debug_mode to UCI");
+        printf("ERROR: "Failed to save debug_mode to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "general", "log_level", config->log_level);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "general", "log_level", config->log_level\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save log_level to UCI");
+        printf("ERROR: "Failed to save log_level to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "general", "log_file", config->log_file);
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "general", "log_file", config->log_file\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save log_file to UCI");
+        printf("ERROR: "Failed to save log_file to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "general", "pid_file_timeout", config->pid_file_timeout);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "general", "pid_file_timeout", config->pid_file_timeout\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save pid_file_timeout to UCI");
+        printf("ERROR: "Failed to save pid_file_timeout to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Save network settings
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "check_interval", config->network_check_interval);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "check_interval", config->network_check_interval\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save network check_interval to UCI");
+        printf("ERROR: "Failed to save network check_interval to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "failover_timeout", config->failover_timeout);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "failover_timeout", config->failover_timeout\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save failover_timeout to UCI");
+        printf("ERROR: "Failed to save failover_timeout to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "auto_failover", config->auto_failover ? 1 : 0);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "auto_failover", config->auto_failover ? 1 : 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save auto_failover to UCI");
+        printf("ERROR: "Failed to save auto_failover to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "min_interface_health", config->min_interface_health);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "min_interface_health", config->min_interface_health\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save min_interface_health to UCI");
+        printf("ERROR: "Failed to save min_interface_health to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "mwan3_integration", config->mwan3_integration ? 1 : 0);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "network", "mwan3_integration", config->mwan3_integration ? 1 : 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save mwan3_integration to UCI");
+        printf("ERROR: "Failed to save mwan3_integration to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Save GPS settings
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "update_interval", config->gps_update_interval);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "update_interval", config->gps_update_interval\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save GPS update_interval to UCI");
+        printf("ERROR: "Failed to save GPS update_interval to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "timeout", config->gps_timeout);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "timeout", config->gps_timeout\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save GPS timeout to UCI");
+        printf("ERROR: "Failed to save GPS timeout to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "fusion", config->gps_fusion ? 1 : 0);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "fusion", config->gps_fusion ? 1 : 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save GPS fusion to UCI");
+        printf("ERROR: "Failed to save GPS fusion to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "cache_timeout", config->gps_cache_timeout);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "gps", "cache_timeout", config->gps_cache_timeout\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save GPS cache_timeout to UCI");
+        printf("ERROR: "Failed to save GPS cache_timeout to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Save GPS accuracy as string
     char accuracy_str[32];
-    snprintf(accuracy_str, sizeof(accuracy_str), "%.2f", config->min_gps_accuracy);
-    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "gps", "min_accuracy", accuracy_str);
+    snprintf(accuracy_str, sizeof(accuracy_str), "%.2f", config->min_gps_accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "gps", "min_accuracy", accuracy_str\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save GPS min_accuracy to UCI");
+        printf("ERROR: "Failed to save GPS min_accuracy to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Save Starlink settings
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "check_interval", config->starlink_check_interval);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "check_interval", config->starlink_check_interval\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save Starlink check_interval to UCI");
+        printf("ERROR: "Failed to save Starlink check_interval to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "health_monitoring", config->starlink_health_monitoring ? 1 : 0);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "health_monitoring", config->starlink_health_monitoring ? 1 : 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save Starlink health_monitoring to UCI");
+        printf("ERROR: "Failed to save Starlink health_monitoring to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "starlink", "host", config->starlink_host);
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "starlink", "host", config->starlink_host\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save Starlink host to UCI");
+        printf("ERROR: "Failed to save Starlink host to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "port", config->starlink_port);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "port", config->starlink_port\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save Starlink port to UCI");
+        printf("ERROR: "Failed to save Starlink port to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "timeout", config->starlink_timeout);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "starlink", "timeout", config->starlink_timeout\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save Starlink timeout to UCI");
+        printf("ERROR: "Failed to save Starlink timeout to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Save system monitoring settings
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "system", "check_interval", config->system_check_interval);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "system", "check_interval", config->system_check_interval\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save system check_interval to UCI");
+        printf("ERROR: "Failed to save system check_interval to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "system", "resource_monitoring", config->resource_monitoring ? 1 : 0);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "system", "resource_monitoring", config->resource_monitoring ? 1 : 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save resource_monitoring to UCI");
+        printf("ERROR: "Failed to save resource_monitoring to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "system", "service_monitoring", config->service_monitoring ? 1 : 0);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "system", "service_monitoring", config->service_monitoring ? 1 : 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save service_monitoring to UCI");
+        printf("ERROR: "Failed to save service_monitoring to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "system", "alert_threshold", config->alert_threshold);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "system", "alert_threshold", config->alert_threshold\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save alert_threshold to UCI");
+        printf("ERROR: "Failed to save alert_threshold to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Save notification settings
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "notifications", "enabled", config->notifications_enabled ? 1 : 0);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "notifications", "enabled", config->notifications_enabled ? 1 : 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save notifications enabled to UCI");
+        printf("ERROR: "Failed to save notifications enabled to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_from", config->email_from);
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_from", config->email_from\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save email_from to UCI");
+        printf("ERROR: "Failed to save email_from to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_to", config->email_to);
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_to", config->email_to\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save email_to to UCI");
+        printf("ERROR: "Failed to save email_to to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_smtp", config->email_smtp);
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "notifications", "email_smtp", config->email_smtp\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save email_smtp to UCI");
+        printf("ERROR: "Failed to save email_smtp to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "notifications", "webhook_url", config->webhook_url);
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "notifications", "webhook_url", config->webhook_url\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save webhook_url to UCI");
+        printf("ERROR: "Failed to save webhook_url to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Save snow detection settings
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "enabled", config->snow_detection_enabled ? 1 : 0);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "enabled", config->snow_detection_enabled ? 1 : 0\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save snow_detection enabled to UCI");
+        printf("ERROR: "Failed to save snow_detection enabled to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "detection_samples", config->snow_detection_samples);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "detection_samples", config->snow_detection_samples\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save snow_detection_samples to UCI");
+        printf("ERROR: "Failed to save snow_detection_samples to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "verification_time", config->snow_verification_time);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "verification_time", config->snow_verification_time\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save snow_verification_time to UCI");
+        printf("ERROR: "Failed to save snow_verification_time to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "melt_timeout", config->snow_melt_timeout);
+    ret = ucix_add_option_int(g_uci_ctx, UCI_PACKAGE, "snow_detection", "melt_timeout", config->snow_melt_timeout\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save snow_melt_timeout to UCI");
+        printf("ERROR: "Failed to save snow_melt_timeout to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Save snow detection thresholds as strings
     char obstruction_str[32];
-    snprintf(obstruction_str, sizeof(obstruction_str), "%.3f", config->snow_obstruction_threshold);
-    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "obstruction_threshold", obstruction_str);
+    snprintf(obstruction_str, sizeof(obstruction_str), "%.3f", config->snow_obstruction_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "obstruction_threshold", obstruction_str\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save snow_obstruction_threshold to UCI");
+        printf("ERROR: "Failed to save snow_obstruction_threshold to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     char snr_str[32];
-    snprintf(snr_str, sizeof(snr_str), "%.3f", config->snow_snr_degradation_threshold);
-    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "snr_degradation_threshold", snr_str);
+    snprintf(snr_str, sizeof(snr_str), "%.3f", config->snow_snr_degradation_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "snr_degradation_threshold", snr_str\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save snow_snr_degradation_threshold to UCI");
+        printf("ERROR: "Failed to save snow_snr_degradation_threshold to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     char temp_str[32];
-    snprintf(temp_str, sizeof(temp_str), "%.1f", config->snow_temperature_threshold);
-    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "temperature_threshold", temp_str);
+    snprintf(temp_str, sizeof(temp_str), "%.1f", config->snow_temperature_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "temperature_threshold", temp_str\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save snow_temperature_threshold to UCI");
+        printf("ERROR: "Failed to save snow_temperature_threshold to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "weather_api_key", config->snow_weather_api_key);
+    ret = ucix_add_option(g_uci_ctx, UCI_PACKAGE, "snow_detection", "weather_api_key", config->snow_weather_api_key\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to save snow_weather_api_key to UCI");
+        printf("ERROR: "Failed to save snow_weather_api_key to UCI"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Commit all changes using Teltonika's logged commit (includes logging)
-    ret = ucix_logged_commit(g_uci_ctx, UCI_PACKAGE);
+    ret = ucix_logged_commit(g_uci_ctx, UCI_PACKAGE\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret != 0) {
-        LOGX_ERROR_MSG("Failed to commit UCI changes");
+        printf("ERROR: "Failed to commit UCI changes"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    LOGX_INFO_MSG("Configuration saved successfully to UCI using Teltonika library");
+    printf("INFO: "Configuration saved successfully to UCI using Teltonika library"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
 // Validate configuration
 int uci_manager_validate_config(const autonomy_config_t *config) {
     if (!config) {
-        LOGX_ERROR_MSG("Invalid config pointer");
+        printf("ERROR: "Invalid config pointer"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Validate intervals are positive
     if (config->network_check_interval <= 0 || config->gps_update_interval <= 0 || 
         config->starlink_check_interval <= 0 || config->system_check_interval <= 0) {
-        LOGX_ERROR_MSG("Check intervals must be positive");
+        printf("ERROR: "Check intervals must be positive"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Validate timeouts are positive
     if (config->failover_timeout <= 0 || config->gps_timeout <= 0 || config->starlink_timeout <= 0) {
-        LOGX_ERROR_MSG("Timeouts must be positive");
+        printf("ERROR: "Timeouts must be positive"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Validate thresholds are in valid ranges
     if (config->min_interface_health < 0 || config->min_interface_health > 100) {
-        LOGX_ERROR_MSG("Interface health threshold must be 0-100");
+        printf("ERROR: "Interface health threshold must be 0-100"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     if (config->alert_threshold < 0 || config->alert_threshold > 100) {
-        LOGX_ERROR_MSG("Alert threshold must be 0-100");
+        printf("ERROR: "Alert threshold must be 0-100"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Validate GPS accuracy is positive
     if (config->min_gps_accuracy <= 0.0) {
-        LOGX_ERROR_MSG("GPS accuracy must be positive");
+        printf("ERROR: "GPS accuracy must be positive"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Validate Starlink port is in valid range
     if (config->starlink_port < 1 || config->starlink_port > 65535) {
-        LOGX_ERROR_MSG("Starlink port must be 1-65535");
+        printf("ERROR: "Starlink port must be 1-65535"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    LOGX_DEBUG_MSG("Configuration validation passed");
+    printf("DEBUG: "Configuration validation passed"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -617,7 +617,7 @@ void uci_manager_convert_to_snow_config(const autonomy_config_t *autonomy_config
     snow_config->verification_time = autonomy_config->snow_verification_time;
     snow_config->melt_timeout = autonomy_config->snow_melt_timeout;
     strncpy(snow_config->weather_api_key, autonomy_config->snow_weather_api_key, 
-            sizeof(snow_config->weather_api_key) - 1);
+            sizeof(snow_config->weather_api_key) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     snow_config->weather_api_key[sizeof(snow_config->weather_api_key) - 1] = '\0';
 }
 
@@ -636,7 +636,7 @@ void uci_manager_convert_from_snow_config(const starlink_snow_detection_config_t
     autonomy_config->snow_verification_time = snow_config->verification_time;
     autonomy_config->snow_melt_timeout = snow_config->melt_timeout;
     strncpy(autonomy_config->snow_weather_api_key, snow_config->weather_api_key,
-            sizeof(autonomy_config->snow_weather_api_key) - 1);
+            sizeof(autonomy_config->snow_weather_api_key) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     autonomy_config->snow_weather_api_key[sizeof(autonomy_config->snow_weather_api_key) - 1] = '\0';
 }
 
@@ -647,51 +647,51 @@ const char* ucix_get_option(struct uci_context *ctx, const char *package, const 
     struct uci_ptr ptr;
     char path[256];
     
-    fprintf(stderr, "DEBUG: ucix_get_option called: %s.%s.%s\n", package, section, option);
-    fflush(stderr);
+    fprintf(stderr, "DEBUG: ucix_get_option called: %s.%s.%s\n", package, section, option\n"\n"\n"\n"\n"\n"\n"\n");
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (!ctx || !package || !section || !option) {
-        fprintf(stderr, "ERROR: ucix_get_option - invalid parameters\n");
+        fprintf(stderr, "ERROR: ucix_get_option - invalid parameters\n"\n"\n"\n"\n"\n"\n"\n"\n");
         return NULL;
     }
     
-    snprintf(path, sizeof(path), "%s.%s.%s", package, section, option);
-    fprintf(stderr, "DEBUG: ucix_get_option - looking up path: %s\n", path);
-    fflush(stderr);
+    snprintf(path, sizeof(path), "%s.%s.%s", package, section, option\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ucix_get_option - looking up path: %s\n", path\n"\n"\n"\n"\n"\n"\n"\n");
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (uci_lookup_ptr(ctx, &ptr, path, true) != UCI_OK) {
-        fprintf(stderr, "DEBUG: ucix_get_option - uci_lookup_ptr failed for %s\n", path);
-        fflush(stderr);
+        fprintf(stderr, "DEBUG: ucix_get_option - uci_lookup_ptr failed for %s\n", path\n"\n"\n"\n"\n"\n"\n"\n");
+        fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
         return NULL;
     }
     
     if (ptr.o && ptr.o->v.string) {
-        fprintf(stderr, "DEBUG: ucix_get_option - found value: %s\n", ptr.o->v.string);
-        fflush(stderr);
+        fprintf(stderr, "DEBUG: ucix_get_option - found value: %s\n", ptr.o->v.string\n"\n"\n"\n"\n"\n"\n"\n");
+        fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
         return ptr.o->v.string;
     }
     
-    fprintf(stderr, "DEBUG: ucix_get_option - no value found for %s\n", path);
-    fflush(stderr);
+    fprintf(stderr, "DEBUG: ucix_get_option - no value found for %s\n", path\n"\n"\n"\n"\n"\n"\n"\n");
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
     return NULL;
 }
 
 // Get integer option with default value
 int ucix_get_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int default_value) {
-    fprintf(stderr, "DEBUG: ucix_get_option_int called: %s.%s.%s (default: %d)\n", package, section, option, default_value);
-    fflush(stderr);
+    fprintf(stderr, "DEBUG: ucix_get_option_int called: %s.%s.%s (default: %d)\n", package, section, option, default_value\n"\n"\n"\n"\n"\n"\n"\n");
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
     
-    const char *value = ucix_get_option(ctx, package, section, option);
+    const char *value = ucix_get_option(ctx, package, section, option\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (value) {
-        int result = atoi(value);
-        fprintf(stderr, "DEBUG: ucix_get_option_int - parsed value: %d\n", result);
-        fflush(stderr);
+        int result = atoi(value\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "DEBUG: ucix_get_option_int - parsed value: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+        fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
         return result;
     }
     
-    fprintf(stderr, "DEBUG: ucix_get_option_int - using default value: %d\n", default_value);
-    fflush(stderr);
+    fprintf(stderr, "DEBUG: ucix_get_option_int - using default value: %d\n", default_value\n"\n"\n"\n"\n"\n"\n"\n");
+    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
     return default_value;
 }
 
@@ -704,7 +704,7 @@ int ucix_add_option(struct uci_context *ctx, const char *package, const char *se
         return -1;
     }
     
-    snprintf(path, sizeof(path), "%s.%s.%s", package, section, option);
+    snprintf(path, sizeof(path), "%s.%s.%s", package, section, option\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (uci_lookup_ptr(ctx, &ptr, path, true) != UCI_OK) {
         return -1;
@@ -723,8 +723,8 @@ int ucix_add_option(struct uci_context *ctx, const char *package, const char *se
 // Add integer option
 int ucix_add_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int value) {
     char value_str[32];
-    snprintf(value_str, sizeof(value_str), "%d", value);
-    return ucix_add_option(ctx, package, section, option, value_str);
+    snprintf(value_str, sizeof(value_str), "%d", value\n"\n"\n"\n"\n"\n"\n"\n");
+    return ucix_add_option(ctx, package, section, option, value_str\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Commit changes with logging
@@ -736,18 +736,18 @@ int ucix_logged_commit(struct uci_context *ctx, const char *package) {
     // Get the package structure if package name is provided
     struct uci_package *pkg = NULL;
     if (package) {
-        pkg = uci_lookup_package(ctx, package);
+        pkg = uci_lookup_package(ctx, package\n"\n"\n"\n"\n"\n"\n"\n");
         if (!pkg) {
-            LOGX_ERROR_MSG("Package not found: %s", package);
+            printf("ERROR: "Package not found: %s", package\n"\n"\n"\n"\n"\n"\n"\n");
             return -1;
         }
     }
     
     if (uci_commit(ctx, &pkg, false) != UCI_OK) {
-        LOGX_ERROR_MSG("Failed to commit UCI changes for package: %s", package ? package : "all");
+        printf("ERROR: "Failed to commit UCI changes for package: %s", package ? package : "all"\n"\n"\n"\n"\n"\n"\n"\n");
         return -1;
     }
     
-    LOGX_INFO_MSG("Successfully committed UCI changes for package: %s", package ? package : "all");
+    printf("INFO: "Successfully committed UCI changes for package: %s", package ? package : "all"\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }

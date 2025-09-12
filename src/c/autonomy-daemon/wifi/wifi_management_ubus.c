@@ -23,27 +23,27 @@ int autonomy_wifi_management_status(struct ubus_context *uctx, struct ubus_objec
                                    struct blob_attr *msg)
 {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     wifi_management_status_t status;
     if (wifi_management_get_status(&status) == 0) {
-        blobmsg_add_string(&bb, "result", "status_retrieved");
-        blobmsg_add_u8(&bb, "enabled", status.enabled);
-        blobmsg_add_u32(&bb, "interfaces_count", status.interfaces_count);
-        blobmsg_add_u32(&bb, "last_optimized", (uint32_t)status.last_optimized);
-        blobmsg_add_u32(&bb, "optimization_count", status.optimization_count);
-        blobmsg_add_u32(&bb, "successful_optimizations", status.successful_optimizations);
-        blobmsg_add_u32(&bb, "failed_optimizations", status.failed_optimizations);
-        blobmsg_add_u8(&bb, "scheduler_enabled", status.scheduler_enabled);
-        blobmsg_add_u8(&bb, "gps_integration_enabled", status.gps_integration_enabled);
+        blobmsg_add_string(&bb, "result", "status_retrieved"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "enabled", status.enabled\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "interfaces_count", status.interfaces_count\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "last_optimized", (uint32_t)status.last_optimized\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "optimization_count", status.optimization_count\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "successful_optimizations", status.successful_optimizations\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "failed_optimizations", status.failed_optimizations\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "scheduler_enabled", status.scheduler_enabled\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "gps_integration_enabled", status.gps_integration_enabled\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "result", "status_failed");
-        blobmsg_add_string(&bb, "error", "Unable to retrieve WiFi management status");
+        blobmsg_add_string(&bb, "result", "status_failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Unable to retrieve WiFi management status"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -55,33 +55,33 @@ int autonomy_wifi_management_interfaces(struct ubus_context *uctx, struct ubus_o
                                        struct blob_attr *msg)
 {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     wifi_interface_t interfaces[10];
-    int count = wifi_management_get_interfaces(interfaces, 10);
+    int count = wifi_management_get_interfaces(interfaces, 10\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (count >= 0) {
-        blobmsg_add_string(&bb, "result", "interfaces_retrieved");
-        blobmsg_add_u32(&bb, "count", count);
+        blobmsg_add_string(&bb, "result", "interfaces_retrieved"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "count", count\n"\n"\n"\n"\n"\n"\n"\n");
         
-        struct blob_attr *interfaces_array = blobmsg_open_array(&bb, "interfaces");
+        struct blob_attr *interfaces_array = blobmsg_open_array(&bb, "interfaces"\n"\n"\n"\n"\n"\n"\n"\n");
         for (int i = 0; i < count; i++) { // Use configurable interface count
-            struct blob_attr *interface = blobmsg_open_table(&bb, NULL);
-            blobmsg_add_string(&bb, "name", interfaces[i].name);
-            blobmsg_add_string(&bb, "band", interfaces[i].band);
-            blobmsg_add_string(&bb, "frequency", interfaces[i].frequency);
-            blobmsg_add_u8(&bb, "active", interfaces[i].active);
-            blobmsg_close_table(&bb, interface);
+            struct blob_attr *interface = blobmsg_open_table(&bb, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_string(&bb, "name", interfaces[i].name\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_string(&bb, "band", interfaces[i].band\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_string(&bb, "frequency", interfaces[i].frequency\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u8(&bb, "active", interfaces[i].active\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_close_table(&bb, interface\n"\n"\n"\n"\n"\n"\n"\n");
         }
-        blobmsg_close_array(&bb, interfaces_array);
+        blobmsg_close_array(&bb, interfaces_array\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "result", "interfaces_failed");
-        blobmsg_add_string(&bb, "error", "Unable to retrieve WiFi interfaces");
+        blobmsg_add_string(&bb, "result", "interfaces_failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Unable to retrieve WiFi interfaces"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -93,34 +93,34 @@ int autonomy_wifi_management_channel_scores(struct ubus_context *uctx, struct ub
                                            struct blob_attr *msg)
 {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     wifi_channel_score_t scores[100];
-    int count = wifi_management_get_channel_scores(scores, 100);
+    int count = wifi_management_get_channel_scores(scores, 100\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (count >= 0) {
-        blobmsg_add_string(&bb, "result", "scores_retrieved");
-        blobmsg_add_u32(&bb, "count", count);
+        blobmsg_add_string(&bb, "result", "scores_retrieved"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "count", count\n"\n"\n"\n"\n"\n"\n"\n");
         
-        struct blob_attr *scores_array = blobmsg_open_array(&bb, "channel_scores");
+        struct blob_attr *scores_array = blobmsg_open_array(&bb, "channel_scores"\n"\n"\n"\n"\n"\n"\n"\n");
         for (int i = 0; i < count; i++) { // Use configurable interface count
-            struct blob_attr *score = blobmsg_open_table(&bb, NULL);
-            blobmsg_add_u32(&bb, "channel", scores[i].channel);
-            blobmsg_add_u32(&bb, "score", scores[i].score);
-            blobmsg_add_u32(&bb, "bss_count", scores[i].bss_count);
-            blobmsg_add_u32(&bb, "noise", scores[i].noise);
-            blobmsg_add_u32(&bb, "avg_rssi", scores[i].avg_rssi);
-            blobmsg_close_table(&bb, score);
+            struct blob_attr *score = blobmsg_open_table(&bb, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "channel", scores[i].channel\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "score", scores[i].score\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "bss_count", scores[i].bss_count\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "noise", scores[i].noise\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "avg_rssi", scores[i].avg_rssi\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_close_table(&bb, score\n"\n"\n"\n"\n"\n"\n"\n");
         }
-        blobmsg_close_array(&bb, scores_array);
+        blobmsg_close_array(&bb, scores_array\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "result", "scores_failed");
-        blobmsg_add_string(&bb, "error", "Unable to retrieve channel scores");
+        blobmsg_add_string(&bb, "result", "scores_failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Unable to retrieve channel scores"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -132,34 +132,34 @@ int autonomy_wifi_management_scheduled_tasks(struct ubus_context *uctx, struct u
                                             struct blob_attr *msg)
 {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     wifi_scheduled_task_t tasks[50];
-    int count = wifi_management_get_scheduled_tasks(tasks, 50);
+    int count = wifi_management_get_scheduled_tasks(tasks, 50\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (count >= 0) {
-        blobmsg_add_string(&bb, "result", "tasks_retrieved");
-        blobmsg_add_u32(&bb, "count", count);
+        blobmsg_add_string(&bb, "result", "tasks_retrieved"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "count", count\n"\n"\n"\n"\n"\n"\n"\n");
         
-        struct blob_attr *tasks_array = blobmsg_open_array(&bb, "scheduled_tasks");
+        struct blob_attr *tasks_array = blobmsg_open_array(&bb, "scheduled_tasks"\n"\n"\n"\n"\n"\n"\n"\n");
         for (int i = 0; i < count; i++) { // Use configurable interface count
-            struct blob_attr *task = blobmsg_open_table(&bb, NULL);
-            blobmsg_add_u32(&bb, "type", tasks[i].type);
-            blobmsg_add_u32(&bb, "scheduled_at", (uint32_t)tasks[i].scheduled_at);
-            blobmsg_add_u32(&bb, "executed_at", (uint32_t)tasks[i].executed_at);
-            blobmsg_add_u8(&bb, "success", tasks[i].success);
-            blobmsg_add_string(&bb, "trigger", tasks[i].trigger);
-            blobmsg_close_table(&bb, task);
+            struct blob_attr *task = blobmsg_open_table(&bb, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "type", tasks[i].type\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "scheduled_at", (uint32_t)tasks[i].scheduled_at\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u32(&bb, "executed_at", (uint32_t)tasks[i].executed_at\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u8(&bb, "success", tasks[i].success\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_string(&bb, "trigger", tasks[i].trigger\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_close_table(&bb, task\n"\n"\n"\n"\n"\n"\n"\n");
         }
-        blobmsg_close_array(&bb, tasks_array);
+        blobmsg_close_array(&bb, tasks_array\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "result", "tasks_failed");
-        blobmsg_add_string(&bb, "error", "Unable to retrieve scheduled tasks");
+        blobmsg_add_string(&bb, "result", "tasks_failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Unable to retrieve scheduled tasks"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -171,40 +171,40 @@ int autonomy_wifi_management_config(struct ubus_context *uctx, struct ubus_objec
                                    struct blob_attr *msg)
 {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     wifi_management_config_t config;
     if (wifi_management_get_config(&config) == 0) {
-        blobmsg_add_string(&bb, "result", "config_retrieved");
-        blobmsg_add_u8(&bb, "enabled", config.enabled);
-        blobmsg_add_double(&bb, "movement_threshold", config.movement_threshold);
-        blobmsg_add_u32(&bb, "stationary_time", config.stationary_time);
-        blobmsg_add_u8(&bb, "nightly_optimization", config.nightly_optimization);
-        blobmsg_add_u32(&bb, "nightly_time", config.nightly_time);
-        blobmsg_add_u32(&bb, "min_improvement", config.min_improvement);
-        blobmsg_add_u32(&bb, "dwell_time", config.dwell_time);
-        blobmsg_add_u32(&bb, "noise_default", config.noise_default);
-        blobmsg_add_u32(&bb, "vht80_threshold", config.vht80_threshold);
-        blobmsg_add_u32(&bb, "vht40_threshold", config.vht40_threshold);
-        blobmsg_add_u8(&bb, "use_dfs", config.use_dfs);
-        blobmsg_add_u8(&bb, "dry_run", config.dry_run);
-        blobmsg_add_u8(&bb, "use_enhanced_scanner", config.use_enhanced_scanner);
-        blobmsg_add_u32(&bb, "strong_rssi_threshold", config.strong_rssi_threshold);
-        blobmsg_add_u32(&bb, "weak_rssi_threshold", config.weak_rssi_threshold);
-        blobmsg_add_u32(&bb, "utilization_weight", config.utilization_weight);
-        blobmsg_add_u32(&bb, "excellent_threshold", config.excellent_threshold);
-        blobmsg_add_u32(&bb, "good_threshold", config.good_threshold);
-        blobmsg_add_u32(&bb, "fair_threshold", config.fair_threshold);
-        blobmsg_add_u32(&bb, "poor_threshold", config.poor_threshold);
-        blobmsg_add_double(&bb, "overlap_penalty_ratio", config.overlap_penalty_ratio);
+        blobmsg_add_string(&bb, "result", "config_retrieved"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "enabled", config.enabled\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "movement_threshold", config.movement_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "stationary_time", config.stationary_time\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "nightly_optimization", config.nightly_optimization\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "nightly_time", config.nightly_time\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "min_improvement", config.min_improvement\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "dwell_time", config.dwell_time\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "noise_default", config.noise_default\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "vht80_threshold", config.vht80_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "vht40_threshold", config.vht40_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "use_dfs", config.use_dfs\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "dry_run", config.dry_run\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "use_enhanced_scanner", config.use_enhanced_scanner\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "strong_rssi_threshold", config.strong_rssi_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "weak_rssi_threshold", config.weak_rssi_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "utilization_weight", config.utilization_weight\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "excellent_threshold", config.excellent_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "good_threshold", config.good_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "fair_threshold", config.fair_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "poor_threshold", config.poor_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "overlap_penalty_ratio", config.overlap_penalty_ratio\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "result", "config_failed");
-        blobmsg_add_string(&bb, "error", "Unable to retrieve WiFi management configuration");
+        blobmsg_add_string(&bb, "result", "config_failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Unable to retrieve WiFi management configuration"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -216,91 +216,91 @@ int autonomy_wifi_management_set_config(struct ubus_context *uctx, struct ubus_o
                                        struct blob_attr *msg)
 {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Parse configuration from message
     wifi_management_config_t config = {0};
     struct blob_attr *tb[__BLOBMSG_TYPE_LAST];
     unsigned int rem;
     
-    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (tb[BLOBMSG_TYPE_BOOL]) {
-        config.enabled = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]);
+        config.enabled = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_DOUBLE]) {
-        config.movement_threshold = blobmsg_get_double(tb[BLOBMSG_TYPE_DOUBLE]);
+        config.movement_threshold = blobmsg_get_double(tb[BLOBMSG_TYPE_DOUBLE]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.stationary_time = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.stationary_time = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_BOOL]) {
-        config.nightly_optimization = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]);
+        config.nightly_optimization = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.nightly_time = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.nightly_time = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.min_improvement = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.min_improvement = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.dwell_time = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.dwell_time = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.noise_default = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.noise_default = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.vht80_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.vht80_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.vht40_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.vht40_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_BOOL]) {
-        config.use_dfs = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]);
+        config.use_dfs = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_BOOL]) {
-        config.dry_run = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]);
+        config.dry_run = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_BOOL]) {
-        config.use_enhanced_scanner = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]);
+        config.use_enhanced_scanner = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.strong_rssi_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.strong_rssi_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.weak_rssi_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.weak_rssi_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.utilization_weight = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.utilization_weight = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.excellent_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.excellent_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.good_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.good_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.fair_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.fair_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        config.poor_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        config.poor_threshold = blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_DOUBLE]) {
-        config.overlap_penalty_ratio = blobmsg_get_double(tb[BLOBMSG_TYPE_DOUBLE]);
+        config.overlap_penalty_ratio = blobmsg_get_double(tb[BLOBMSG_TYPE_DOUBLE]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    int result = wifi_management_set_config(&config);
+    int result = wifi_management_set_config(&config\n"\n"\n"\n"\n"\n"\n"\n");
     if (result == 0) {
-        blobmsg_add_string(&bb, "result", "config_updated");
-        blobmsg_add_string(&bb, "message", "WiFi management configuration updated successfully");
+        blobmsg_add_string(&bb, "result", "config_updated"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "WiFi management configuration updated successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "result", "config_update_failed");
-        blobmsg_add_string(&bb, "error", "Failed to update WiFi management configuration");
+        blobmsg_add_string(&bb, "result", "config_update_failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to update WiFi management configuration"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -312,31 +312,31 @@ int autonomy_wifi_management_set_enabled(struct ubus_context *uctx, struct ubus_
                                         struct blob_attr *msg)
 {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     struct blob_attr *tb[__BLOBMSG_TYPE_LAST];
     unsigned int rem;
     
-    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     bool enabled = false; // Use configurable wifi management enabled
     if (tb[BLOBMSG_TYPE_BOOL]) {
-        enabled = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]);
+        enabled = blobmsg_get_bool(tb[BLOBMSG_TYPE_BOOL]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    int result = wifi_management_set_enabled(enabled);
+    int result = wifi_management_set_enabled(enabled\n"\n"\n"\n"\n"\n"\n"\n");
     if (result == 0) {
-        blobmsg_add_string(&bb, "result", "enabled_updated");
-        blobmsg_add_u8(&bb, "enabled", enabled);
-        blobmsg_add_string(&bb, "message", "WiFi management enabled state updated successfully");
+        blobmsg_add_string(&bb, "result", "enabled_updated"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "enabled", enabled\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "WiFi management enabled state updated successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "result", "enabled_update_failed");
-        blobmsg_add_string(&bb, "error", "Failed to update WiFi management enabled state");
+        blobmsg_add_string(&bb, "result", "enabled_update_failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to update WiFi management enabled state"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -348,20 +348,20 @@ int autonomy_wifi_management_reset(struct ubus_context *uctx, struct ubus_object
                                   struct blob_attr *msg)
 {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int result = wifi_management_reset();
+    int result = wifi_management_reset(\n"\n"\n"\n"\n"\n"\n"\n");
     if (result == 0) {
-        blobmsg_add_string(&bb, "result", "reset_successful");
-        blobmsg_add_string(&bb, "message", "WiFi management reset successfully");
+        blobmsg_add_string(&bb, "result", "reset_successful"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "WiFi management reset successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "result", "reset_failed");
-        blobmsg_add_string(&bb, "error", "Failed to reset WiFi management");
+        blobmsg_add_string(&bb, "result", "reset_failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to reset WiFi management"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -373,33 +373,33 @@ int autonomy_wifi_management_scan_channels(struct ubus_context *uctx, struct ubu
                                           struct blob_attr *msg)
 {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     struct blob_attr *tb[__BLOBMSG_TYPE_LAST];
     unsigned int rem;
     
-    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     const char *interface_name = "wlan0"; // Default interface
     if (tb[BLOBMSG_TYPE_STRING]) {
-        interface_name = blobmsg_get_string(tb[BLOBMSG_TYPE_STRING]);
+        interface_name = blobmsg_get_string(tb[BLOBMSG_TYPE_STRING]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    int count = wifi_management_scan_channels(interface_name);
+    int count = wifi_management_scan_channels(interface_name\n"\n"\n"\n"\n"\n"\n"\n");
     if (count >= 0) {
-        blobmsg_add_string(&bb, "result", "scan_successful");
-        blobmsg_add_string(&bb, "interface", interface_name);
-        blobmsg_add_u32(&bb, "channels_scanned", count);
-        blobmsg_add_string(&bb, "message", "WiFi channel scan completed successfully");
+        blobmsg_add_string(&bb, "result", "scan_successful"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "interface", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "channels_scanned", count\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "WiFi channel scan completed successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "result", "scan_failed");
-        blobmsg_add_string(&bb, "interface", interface_name);
-        blobmsg_add_string(&bb, "error", "Failed to scan WiFi channels");
+        blobmsg_add_string(&bb, "result", "scan_failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "interface", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to scan WiFi channels"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -411,32 +411,32 @@ int autonomy_wifi_management_optimize_channels(struct ubus_context *uctx, struct
                                               struct blob_attr *msg)
 {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     struct blob_attr *tb[__BLOBMSG_TYPE_LAST];
     unsigned int rem;
     
-    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     const char *interface_name = "wlan0"; // Default interface
     if (tb[BLOBMSG_TYPE_STRING]) {
-        interface_name = blobmsg_get_string(tb[BLOBMSG_TYPE_STRING]);
+        interface_name = blobmsg_get_string(tb[BLOBMSG_TYPE_STRING]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    int result = wifi_management_optimize_channels(interface_name);
+    int result = wifi_management_optimize_channels(interface_name\n"\n"\n"\n"\n"\n"\n"\n");
     if (result == 0) {
-        blobmsg_add_string(&bb, "result", "optimization_successful");
-        blobmsg_add_string(&bb, "interface", interface_name);
-        blobmsg_add_string(&bb, "message", "WiFi channel optimization completed successfully");
+        blobmsg_add_string(&bb, "result", "optimization_successful"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "interface", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "WiFi channel optimization completed successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "result", "optimization_failed");
-        blobmsg_add_string(&bb, "interface", interface_name);
-        blobmsg_add_string(&bb, "error", "Failed to optimize WiFi channels");
+        blobmsg_add_string(&bb, "result", "optimization_failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "interface", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to optimize WiFi channels"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }
 
@@ -448,44 +448,44 @@ int autonomy_wifi_management_update_gps_location(struct ubus_context *uctx, stru
                                                 struct blob_attr *msg)
 {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0);
+    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     struct blob_attr *tb[__BLOBMSG_TYPE_LAST];
     unsigned int rem;
     
-    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg));
+    blobmsg_parse(NULL, 0, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
     
     double lat = 0.0, lon = 0.0, accuracy = 0.0;
-    time_t timestamp = time(NULL);
+    time_t timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (tb[BLOBMSG_TYPE_DOUBLE]) {
-        lat = blobmsg_get_double(tb[BLOBMSG_TYPE_DOUBLE]);
+        lat = blobmsg_get_double(tb[BLOBMSG_TYPE_DOUBLE]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_DOUBLE]) {
-        lon = blobmsg_get_double(tb[BLOBMSG_TYPE_DOUBLE]);
+        lon = blobmsg_get_double(tb[BLOBMSG_TYPE_DOUBLE]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_DOUBLE]) {
-        accuracy = blobmsg_get_double(tb[BLOBMSG_TYPE_DOUBLE]);
+        accuracy = blobmsg_get_double(tb[BLOBMSG_TYPE_DOUBLE]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     if (tb[BLOBMSG_TYPE_INT32]) {
-        timestamp = (time_t)blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]);
+        timestamp = (time_t)blobmsg_get_u32(tb[BLOBMSG_TYPE_INT32]\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    int result = wifi_management_update_gps_location(lat, lon, accuracy, timestamp);
+    int result = wifi_management_update_gps_location(lat, lon, accuracy, timestamp\n"\n"\n"\n"\n"\n"\n"\n");
     if (result == 0) {
-        blobmsg_add_string(&bb, "result", "gps_location_updated");
-        blobmsg_add_double(&bb, "latitude", lat);
-        blobmsg_add_double(&bb, "longitude", lon);
-        blobmsg_add_double(&bb, "accuracy", accuracy);
-        blobmsg_add_u32(&bb, "timestamp", (uint32_t)timestamp);
-        blobmsg_add_string(&bb, "message", "GPS location updated for WiFi optimization");
+        blobmsg_add_string(&bb, "result", "gps_location_updated"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "latitude", lat\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "longitude", lon\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_double(&bb, "accuracy", accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u32(&bb, "timestamp", (uint32_t)timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "message", "GPS location updated for WiFi optimization"\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
-        blobmsg_add_string(&bb, "result", "gps_location_update_failed");
-        blobmsg_add_string(&bb, "error", "Failed to update GPS location for WiFi optimization");
+        blobmsg_add_string(&bb, "result", "gps_location_update_failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to update GPS location for WiFi optimization"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
-    ubus_send_reply(uctx, req, bb.head);
-    blob_buf_free(&bb);
+    blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(uctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
     return 0;
 }

@@ -82,54 +82,54 @@ static const int CHANNELS_6GHZ_EU[] = {5, 21, 37, 53, 69, 85, 101, 117, 133, 149
 static const int CHANNELS_6GHZ_WORLD[] = {5, 21, 37, 53, 69, 85, 101, 117, 133, 149, 165, 181, 197, 213, 229};
 
 // Forward declarations
-static int perform_ubus_iwinfo_scan(const char* device, wifi_access_point_t* access_points, int max_aps);
-static int perform_ubus_iwinfo_survey(const char* device, wifi_channel_utilization_t* utilization, int max_channels);
+static int perform_ubus_iwinfo_scan(const char* device, wifi_access_point_t* access_points, int max_aps\n"\n"\n"\n"\n"\n"\n"\n");
+static int perform_ubus_iwinfo_survey(const char* device, wifi_channel_utilization_t* utilization, int max_channels\n"\n"\n"\n"\n"\n"\n"\n");
 int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_count,
                                    const wifi_channel_utilization_t* utilization, int util_count,
-                                   wifi_enhanced_channel_score_t* scores, int max_scores);
+                                   wifi_enhanced_channel_score_t* scores, int max_scores\n"\n"\n"\n"\n"\n"\n"\n");
 double calculate_enhanced_channel_score(int channel, wifi_band_t band,
                                              const wifi_access_point_t* access_points, int ap_count,
-                                             const wifi_channel_utilization_t* utilization, int util_count);
-static int get_rssi_weight(int rssi);
-double calculate_channel_overlap_penalty(int channel1, int channel2, wifi_band_t band);
-static int convert_score_to_stars(double score);
-static const char* convert_score_to_rating(double score);
-static int execute_uci_command(const char* command);
-static void* optimization_thread_worker(void* arg);
-static void* scheduler_thread_worker(void* arg);
-static double wifi_calculate_distance(double lat1, double lon1, double lat2, double lon2);
+                                             const wifi_channel_utilization_t* utilization, int util_count\n"\n"\n"\n"\n"\n"\n"\n");
+static int get_rssi_weight(int rssi\n"\n"\n"\n"\n"\n"\n"\n");
+double calculate_channel_overlap_penalty(int channel1, int channel2, wifi_band_t band\n"\n"\n"\n"\n"\n"\n"\n");
+static int convert_score_to_stars(double score\n"\n"\n"\n"\n"\n"\n"\n");
+static const char* convert_score_to_rating(double score\n"\n"\n"\n"\n"\n"\n"\n");
+static int execute_uci_command(const char* command\n"\n"\n"\n"\n"\n"\n"\n");
+static void* optimization_thread_worker(void* arg\n"\n"\n"\n"\n"\n"\n"\n");
+static void* scheduler_thread_worker(void* arg\n"\n"\n"\n"\n"\n"\n"\n");
+static double wifi_calculate_distance(double lat1, double lon1, double lat2, double lon2\n"\n"\n"\n"\n"\n"\n"\n");
 
 // Initialize enhanced WiFi management system
 int wifi_enhanced_init(const wifi_optimization_config_t* config) {
     if (g_wifi_enhanced_initialized) {
-        LOGX_WARN_MSG("Enhanced WiFi management already initialized");
+        printf("WARN: "Enhanced WiFi management already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_SUCCESS;
     }
     
     if (!config) {
-        LOGX_ERROR_MSG("WiFi optimization config is NULL");
+        printf("ERROR: "WiFi optimization config is NULL"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    memset(&g_wifi_enhanced, 0, sizeof(wifi_enhanced_management_t));
+    memset(&g_wifi_enhanced, 0, sizeof(wifi_enhanced_management_t)\n"\n"\n"\n"\n"\n"\n"\n");
     g_wifi_enhanced.config = *config;
     
     // Initialize mutex
     if (pthread_mutex_init(&g_wifi_enhanced.mutex, NULL) != 0) {
-        LOGX_ERROR_MSG("Failed to initialize WiFi enhanced mutex");
+        printf("ERROR: "Failed to initialize WiFi enhanced mutex"\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Initialize statistics
-    g_wifi_enhanced.stats.stats_reset_time = time(NULL);
+    g_wifi_enhanced.stats.stats_reset_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Initialize movement state
     g_wifi_enhanced.movement_state.gps_integration_enabled = config->gps_integration_enabled;
-    g_wifi_enhanced.movement_state.stationary_start = time(NULL);
+    g_wifi_enhanced.movement_state.stationary_start = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Discover WiFi interfaces
     if (wifi_enhanced_discover_interfaces() != AUTONOMY_SUCCESS) {
-        LOGX_WARN_MSG("Failed to discover WiFi interfaces during initialization");
+        printf("WARN: "Failed to discover WiFi interfaces during initialization"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Start background threads if enabled
@@ -137,19 +137,19 @@ int wifi_enhanced_init(const wifi_optimization_config_t* config) {
         g_wifi_enhanced.threads_running = true;
         
         if (pthread_create(&g_wifi_enhanced.scheduler_thread, NULL, scheduler_thread_worker, NULL) != 0) {
-            LOGX_ERROR_MSG("Failed to create WiFi scheduler thread");
-            pthread_mutex_destroy(&g_wifi_enhanced.mutex);
+            printf("ERROR: "Failed to create WiFi scheduler thread"\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_destroy(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_ERROR_SYSTEM;
         }
     }
     
     g_wifi_enhanced_initialized = true;
     
-    LOGX_INFO_MSG("Enhanced WiFi management initialized",
+    printf("INFO: "Enhanced WiFi management initialized",
               "enabled", config->enabled,
               "enhanced_scanner", config->use_enhanced_scanner,
               "gps_integration", config->gps_integration_enabled,
-              "interfaces_found", g_wifi_enhanced.interface_count);
+              "interfaces_found", g_wifi_enhanced.interface_count\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -158,22 +158,22 @@ int wifi_enhanced_init(const wifi_optimization_config_t* config) {
 void wifi_enhanced_cleanup(void) {
     if (!g_wifi_enhanced_initialized) return;
     
-    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    pthread_mutex_lock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Stop background threads
     g_wifi_enhanced.threads_running = false;
     
     if (g_wifi_enhanced.config.enabled) {
-        pthread_cancel(g_wifi_enhanced.scheduler_thread);
-        pthread_join(g_wifi_enhanced.scheduler_thread, NULL);
+        pthread_cancel(g_wifi_enhanced.scheduler_thread\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_join(g_wifi_enhanced.scheduler_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
-    pthread_mutex_destroy(&g_wifi_enhanced.mutex);
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_wifi_enhanced_initialized = false;
     
-    LOGX_INFO_MSG("Enhanced WiFi management cleaned up");
+    printf("INFO: "Enhanced WiFi management cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Discover WiFi interfaces using RUTOS iwinfo
@@ -182,15 +182,15 @@ int wifi_enhanced_discover_interfaces(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    pthread_mutex_lock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     g_wifi_enhanced.interface_count = 0;
     
     // Use UBUS to get wireless devices
-    struct ubus_context* ctx = ubus_connect(NULL);
+    struct ubus_context* ctx = ubus_connect(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     if (!ctx) {
-        LOGX_ERROR_MSG("Failed to connect to UBUS for WiFi discovery");
-        pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+        printf("ERROR: "Failed to connect to UBUS for WiFi discovery"\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -199,10 +199,10 @@ int wifi_enhanced_discover_interfaces(void) {
     if (ubus_lookup_id(ctx, "iwinfo", &id) == 0) {
         // Get device list via UBUS
         struct blob_buf bb = {0};
-        blob_buf_init(&bb, 0);
+        blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Call UBUS iwinfo.devices method
-        int ret = ubus_invoke(ctx, id, "devices", bb.head, NULL, NULL, 1000);
+        int ret = ubus_invoke(ctx, id, "devices", bb.head, NULL, NULL, 1000\n"\n"\n"\n"\n"\n"\n"\n");
         if (ret == 0) {
             // Parse UBUS response to get device list
             struct blob_attr *tb[__DEVICES_MAX];
@@ -210,7 +210,7 @@ int wifi_enhanced_discover_interfaces(void) {
                 [DEVICES_DEVICES] = { .name = "devices", .type = BLOBMSG_TYPE_ARRAY },
             };
             
-            blobmsg_parse(policy, __DEVICES_MAX, tb, blob_data(bb.head), blob_len(bb.head));
+            blobmsg_parse(policy, __DEVICES_MAX, tb, blob_data(bb.head), blob_len(bb.head)\n"\n"\n"\n"\n"\n"\n"\n");
             
             if (tb[DEVICES_DEVICES]) {
                 struct blob_attr *cur;
@@ -219,33 +219,33 @@ int wifi_enhanced_discover_interfaces(void) {
                 blobmsg_for_each_attr(cur, tb[DEVICES_DEVICES], rem) {
                     if (g_wifi_enhanced.interface_count >= 16) break;
                     
-                    const char* device_name = blobmsg_get_string(cur);
+                    const char* device_name = blobmsg_get_string(cur\n"\n"\n"\n"\n"\n"\n"\n");
                     if (device_name && strlen(device_name) > 0) {
                         wifi_interface_t* interface = &g_wifi_enhanced.interfaces[g_wifi_enhanced.interface_count];
                         
-                        strncpy(interface->name, device_name, sizeof(interface->name) - 1);
+                        strncpy(interface->name, device_name, sizeof(interface->name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
                         interface->name[sizeof(interface->name) - 1] = '\0';
                         
                         // Get detailed interface information via UBUS
                         if (wifi_enhanced_get_interface_info(device_name, interface) == AUTONOMY_SUCCESS) {
                             interface->active = true;
-                            interface->last_update = time(NULL);
+                            interface->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
                             g_wifi_enhanced.interface_count++;
                             
-                            LOGX_INFO_MSG("Discovered WiFi interface via UBUS",
+                            printf("INFO: "Discovered WiFi interface via UBUS",
                                      "name", interface->name,
                                      "band", wifi_band_to_string(interface->band),
                                      "channel", interface->current_channel,
-                                     "enabled", interface->enabled);
+                                     "enabled", interface->enabled\n"\n"\n"\n"\n"\n"\n"\n");
                         }
                     }
                 }
             }
         } else {
-            LOGX_WARN_MSG("UBUS iwinfo.devices call failed, falling back to command line");
+            printf("WARN: "UBUS iwinfo.devices call failed, falling back to command line"\n"\n"\n"\n"\n"\n"\n"\n");
             
             // Fallback to command line if UBUS fails
-            FILE* fp = popen("iwinfo | grep -E '^[a-zA-Z0-9]+' | awk '{print $1}'", "r");
+            FILE* fp = popen("iwinfo | grep -E '^[a-zA-Z0-9]+' | awk '{print $1}'", "r"\n"\n"\n"\n"\n"\n"\n"\n");
             if (fp) {
                 char line[256];
                 while (fgets(line, sizeof(line), fp) && g_wifi_enhanced.interface_count < 16) {
@@ -255,33 +255,33 @@ int wifi_enhanced_discover_interfaces(void) {
                     if (strlen(line) > 0) {
                         wifi_interface_t* interface = &g_wifi_enhanced.interfaces[g_wifi_enhanced.interface_count];
                         
-                        strncpy(interface->name, line, sizeof(interface->name) - 1);
+                        strncpy(interface->name, line, sizeof(interface->name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
                         interface->name[sizeof(interface->name) - 1] = '\0';
                         
                         // Get detailed interface information via UBUS
                         if (wifi_enhanced_get_interface_info(line, interface) == AUTONOMY_SUCCESS) {
                             interface->active = true;
-                            interface->last_update = time(NULL);
+                            interface->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
                             g_wifi_enhanced.interface_count++;
                             
-                            LOGX_INFO_MSG("Discovered WiFi interface via fallback",
+                            printf("INFO: "Discovered WiFi interface via fallback",
                                      "name", interface->name,
                                      "band", wifi_band_to_string(interface->band),
                                      "channel", interface->current_channel,
-                                     "enabled", interface->enabled);
+                                     "enabled", interface->enabled\n"\n"\n"\n"\n"\n"\n"\n");
                         }
                     }
                 }
-                pclose(fp);
+                pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     } else {
-        ubus_free(ctx);
+        ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("WiFi interface discovery completed", "interfaces_found", g_wifi_enhanced.interface_count);
+    printf("INFO: "WiFi interface discovery completed", "interfaces_found", g_wifi_enhanced.interface_count\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -291,47 +291,47 @@ int wifi_enhanced_scan_channels(const char* device, wifi_enhanced_channel_score_
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    LOGX_INFO_MSG("Starting enhanced WiFi channel scan", "device", device);
+    printf("INFO: "Starting enhanced WiFi channel scan", "device", device\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Step 1: Perform UBUS iwinfo scan
     wifi_access_point_t access_points[100];
-    int ap_count = perform_ubus_iwinfo_scan(device, access_points, 100);
+    int ap_count = perform_ubus_iwinfo_scan(device, access_points, 100\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (ap_count < 0) {
-        LOGX_ERROR_MSG("Failed to perform UBUS iwinfo scan", "device", device);
+        printf("ERROR: "Failed to perform UBUS iwinfo scan", "device", device\n"\n"\n"\n"\n"\n"\n"\n");
         return ap_count;
     }
     
-    LOGX_DEBUG_MSG("UBUS scan completed", "device", device, "aps_found", ap_count);
+    printf("DEBUG: "UBUS scan completed", "device", device, "aps_found", ap_count\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Step 2: Get channel utilization survey
     wifi_channel_utilization_t utilization[64];
-    int util_count = perform_ubus_iwinfo_survey(device, utilization, 64);
+    int util_count = perform_ubus_iwinfo_survey(device, utilization, 64\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (util_count < 0) {
-        LOGX_WARN_MSG("Channel utilization survey failed, using AP-based scoring only", "device", device);
+        printf("WARN: "Channel utilization survey failed, using AP-based scoring only", "device", device\n"\n"\n"\n"\n"\n"\n"\n");
         util_count = 0;
     } else {
-        LOGX_DEBUG_MSG("Channel utilization survey completed", "device", device, "channels", util_count);
+        printf("DEBUG: "Channel utilization survey completed", "device", device, "channels", util_count\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Step 3: Analyze and score channels
-    int score_count = analyze_channels_enhanced(access_points, ap_count, utilization, util_count, scores, max_scores);
+    int score_count = analyze_channels_enhanced(access_points, ap_count, utilization, util_count, scores, max_scores\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (score_count > 0) {
         g_wifi_enhanced.stats.scans_performed++;
         g_wifi_enhanced.stats.successful_scans++;
-        g_wifi_enhanced.last_scan_time = time(NULL);
+        g_wifi_enhanced.last_scan_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         
-        LOGX_INFO_MSG("Enhanced channel scan completed",
+        printf("INFO: "Enhanced channel scan completed",
                  "device", device,
                  "channels_analyzed", score_count,
                  "best_channel", scores[0].channel,
                  "best_score", scores[0].raw_score,
-                 "best_stars", scores[0].stars);
+                 "best_stars", scores[0].stars\n"\n"\n"\n"\n"\n"\n"\n");
     } else {
         g_wifi_enhanced.stats.failed_scans++;
-        LOGX_ERROR_MSG("Channel analysis failed", "device", device);
+        printf("ERROR: "Channel analysis failed", "device", device\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return score_count;
@@ -345,98 +345,98 @@ static int perform_ubus_iwinfo_scan(const char* device, wifi_access_point_t* acc
     
     // Execute ubus iwinfo scan command
     char command[256];
-    snprintf(command, sizeof(command), "ubus -S -t 30 call iwinfo scan '{\"device\":\"%s\"}'", device);
+    snprintf(command, sizeof(command), "ubus -S -t 30 call iwinfo scan '{\"device\":\"%s\"}'", device\n"\n"\n"\n"\n"\n"\n"\n");
     
-    FILE* fp = popen(command, "r");
+    FILE* fp = popen(command, "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (!fp) {
-        LOGX_ERROR_MSG("Failed to execute ubus iwinfo scan", "device", device);
+        printf("ERROR: "Failed to execute ubus iwinfo scan", "device", device\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Read JSON response
     char json_buffer[32768]; // 32KB buffer for scan results
-    size_t bytes_read = fread(json_buffer, 1, sizeof(json_buffer) - 1, fp);
+    size_t bytes_read = fread(json_buffer, 1, sizeof(json_buffer) - 1, fp\n"\n"\n"\n"\n"\n"\n"\n");
     json_buffer[bytes_read] = '\0';
     
-    int exit_code = pclose(fp);
+    int exit_code = pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
     if (exit_code != 0) {
-        LOGX_ERROR_MSG("ubus iwinfo scan command failed", "device", device, "exit_code", exit_code);
+        printf("ERROR: "ubus iwinfo scan command failed", "device", device, "exit_code", exit_code\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Parse JSON response
-    json_object* root = json_tokener_parse(json_buffer);
+    json_object* root = json_tokener_parse(json_buffer\n"\n"\n"\n"\n"\n"\n"\n");
     if (!root) {
-        LOGX_ERROR_MSG("Failed to parse iwinfo scan JSON response", "device", device);
+        printf("ERROR: "Failed to parse iwinfo scan JSON response", "device", device\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     json_object* results_obj;
     if (!json_object_object_get_ex(root, "results", &results_obj)) {
-        LOGX_ERROR_MSG("No results in iwinfo scan response", "device", device);
-        json_object_put(root);
+        printf("ERROR: "No results in iwinfo scan response", "device", device\n"\n"\n"\n"\n"\n"\n"\n");
+        json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    int results_len = json_object_array_length(results_obj);
+    int results_len = json_object_array_length(results_obj\n"\n"\n"\n"\n"\n"\n"\n");
     int ap_count = 0;
     
     for (int i = 0; i < results_len && ap_count < max_aps; i++) {
-        json_object* ap_obj = json_object_array_get_idx(results_obj, i);
+        json_object* ap_obj = json_object_array_get_idx(results_obj, i\n"\n"\n"\n"\n"\n"\n"\n");
         if (!ap_obj) continue;
         
         wifi_access_point_t* ap = &access_points[ap_count];
-        memset(ap, 0, sizeof(wifi_access_point_t));
+        memset(ap, 0, sizeof(wifi_access_point_t)\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Extract AP information
         json_object* ssid_obj, *bssid_obj, *channel_obj, *signal_obj, *htmode_obj;
         json_object* frequency_obj, *bandwidth_obj;
         
         if (json_object_object_get_ex(ap_obj, "ssid", &ssid_obj)) {
-            const char* ssid = json_object_get_string(ssid_obj);
-            strncpy(ap->ssid, ssid, sizeof(ap->ssid) - 1);
+            const char* ssid = json_object_get_string(ssid_obj\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(ap->ssid, ssid, sizeof(ap->ssid) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             ap->ssid[sizeof(ap->ssid) - 1] = '\0';
         }
         
         if (json_object_object_get_ex(ap_obj, "bssid", &bssid_obj)) {
-            const char* bssid = json_object_get_string(bssid_obj);
-            strncpy(ap->bssid, bssid, sizeof(ap->bssid) - 1);
+            const char* bssid = json_object_get_string(bssid_obj\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(ap->bssid, bssid, sizeof(ap->bssid) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             ap->bssid[sizeof(ap->bssid) - 1] = '\0';
         }
         
         if (json_object_object_get_ex(ap_obj, "channel", &channel_obj)) {
-            ap->channel = json_object_get_int(channel_obj);
+            ap->channel = json_object_get_int(channel_obj\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         if (json_object_object_get_ex(ap_obj, "signal", &signal_obj)) {
-            ap->signal = json_object_get_int(signal_obj);
+            ap->signal = json_object_get_int(signal_obj\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         if (json_object_object_get_ex(ap_obj, "htmode", &htmode_obj)) {
-            const char* htmode = json_object_get_string(htmode_obj);
-            strncpy(ap->htmode, htmode, sizeof(ap->htmode) - 1);
+            const char* htmode = json_object_get_string(htmode_obj\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(ap->htmode, htmode, sizeof(ap->htmode) - 1\n"\n"\n"\n"\n"\n"\n"\n");
             ap->htmode[sizeof(ap->htmode) - 1] = '\0';
         }
         
         if (json_object_object_get_ex(ap_obj, "frequency", &frequency_obj)) {
-            ap->frequency = json_object_get_int64(frequency_obj);
+            ap->frequency = json_object_get_int64(frequency_obj\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
         if (json_object_object_get_ex(ap_obj, "bandwidth", &bandwidth_obj)) {
-            ap->bandwidth = json_object_get_int(bandwidth_obj);
+            ap->bandwidth = json_object_get_int(bandwidth_obj\n"\n"\n"\n"\n"\n"\n"\n");
         }
         
-        ap->last_seen = time(NULL);
+        ap->last_seen = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
         ap->quality = wifi_calculate_signal_quality(ap->signal, -90); // Assume -90dBm noise floor
         
         ap_count++;
     }
     
-    json_object_put(root);
+    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_DEBUG_MSG("UBUS iwinfo scan completed",
+    printf("DEBUG: "UBUS iwinfo scan completed",
               "device", device,
-              "aps_found", ap_count);
+              "aps_found", ap_count\n"\n"\n"\n"\n"\n"\n"\n");
     
     return ap_count;
 }
@@ -449,9 +449,9 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
     // Determine band from first AP or utilization data
     wifi_band_t band = WIFI_BAND_24GHZ;
     if (ap_count > 0) {
-        band = wifi_get_band_from_channel(access_points[0].channel);
+        band = wifi_get_band_from_channel(access_points[0].channel\n"\n"\n"\n"\n"\n"\n"\n");
     } else if (util_count > 0) {
-        band = wifi_get_band_from_channel(utilization[0].channel);
+        band = wifi_get_band_from_channel(utilization[0].channel\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Get regulatory domain channels - detect real country code
@@ -459,60 +459,60 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
     int channels[64];
     
     // Try to get real country code from regulatory database
-    FILE *reg_file = fopen("/lib/wifi/regulatory.db", "r");
+    FILE *reg_file = fopen("/lib/wifi/regulatory.db", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (reg_file) {
         char buffer[256];
         while (fgets(buffer, sizeof(buffer), reg_file)) {
             if (strstr(buffer, "country")) {
-                char *country_start = strstr(buffer, "country");
+                char *country_start = strstr(buffer, "country"\n"\n"\n"\n"\n"\n"\n"\n");
                 if (country_start) {
-                    sscanf(country_start, "country %3s", country_code);
+                    sscanf(country_start, "country %3s", country_code\n"\n"\n"\n"\n"\n"\n"\n");
                     break;
                 }
             }
         }
-        fclose(reg_file);
+        fclose(reg_file\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Fallback: try to get from UCI configuration
     if (country_code[0] == '\0') {
-        FILE *uci_fp = popen("uci get wireless.radio0.country 2>/dev/null", "r");
+        FILE *uci_fp = popen("uci get wireless.radio0.country 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
         if (uci_fp) {
             if (fgets(country_code, sizeof(country_code), uci_fp)) {
                 // Remove newline
                 country_code[strcspn(country_code, "\n")] = '\0';
             }
-            pclose(uci_fp);
+            pclose(uci_fp\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // Final fallback: try to detect from system
     if (country_code[0] == '\0') {
-        FILE *sys_fp = popen("iw reg get 2>/dev/null | grep country | head -1", "r");
+        FILE *sys_fp = popen("iw reg get 2>/dev/null | grep country | head -1", "r"\n"\n"\n"\n"\n"\n"\n"\n");
         if (sys_fp) {
             char buffer[256];
             if (fgets(buffer, sizeof(buffer), sys_fp)) {
-                char *country_start = strstr(buffer, "country");
+                char *country_start = strstr(buffer, "country"\n"\n"\n"\n"\n"\n"\n"\n");
                 if (country_start) {
-                    sscanf(country_start, "country %3s", country_code);
+                    sscanf(country_start, "country %3s", country_code\n"\n"\n"\n"\n"\n"\n"\n");
                 }
             }
-            pclose(sys_fp);
+            pclose(sys_fp\n"\n"\n"\n"\n"\n"\n"\n");
         }
     }
     
     // Ultimate fallback to US if nothing else works
     if (country_code[0] == '\0') {
-        strcpy(country_code, "US");
-        LOGX_WARN_MSG("Could not detect country code, defaulting to US");
+        strcpy(country_code, "US"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("WARN: "Could not detect country code, defaulting to US"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
-    LOGX_DEBUG_MSG("Using country code for regulatory channels", "country", country_code);
+    printf("DEBUG: "Using country code for regulatory channels", "country", country_code\n"\n"\n"\n"\n"\n"\n"\n");
     
-    int channel_count = wifi_get_regulatory_channels(country_code, band, channels, 64);
+    int channel_count = wifi_get_regulatory_channels(country_code, band, channels, 64\n"\n"\n"\n"\n"\n"\n"\n");
     
     if (channel_count <= 0) {
-        LOGX_ERROR_MSG("No regulatory channels available", "band", wifi_band_to_string(band));
+        printf("ERROR: "No regulatory channels available", "band", wifi_band_to_string(band)\n"\n"\n"\n"\n"\n"\n"\n");
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -523,19 +523,19 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
         int channel = channels[i];
         wifi_enhanced_channel_score_t* score = &scores[score_count];
         
-        memset(score, 0, sizeof(wifi_enhanced_channel_score_t));
+        memset(score, 0, sizeof(wifi_enhanced_channel_score_t)\n"\n"\n"\n"\n"\n"\n"\n");
         score->channel = channel;
         score->band = band;
-        score->analysis_time = time(NULL);
-        strcpy(score->analysis_method, "enhanced_rutos");
+        score->analysis_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(score->analysis_method, "enhanced_rutos"\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Calculate enhanced score using sophisticated algorithm
         score->raw_score = calculate_enhanced_channel_score(channel, band, access_points, ap_count, 
-                                                          utilization, util_count);
+                                                          utilization, util_count\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Convert score to stars and rating
-        score->stars = convert_score_to_stars(score->raw_score);
-        strcpy(score->rating, convert_score_to_rating(score->raw_score));
+        score->stars = convert_score_to_stars(score->raw_score\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(score->rating, convert_score_to_rating(score->raw_score)\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Count interferers
         score->strong_interferer_count = 0;
@@ -545,7 +545,7 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
             const wifi_access_point_t* ap = &access_points[j];
             
             // Check if AP interferes with this channel
-            double overlap = wifi_calculate_channel_overlap(channel, ap->channel, band);
+            double overlap = wifi_calculate_channel_overlap(channel, ap->channel, band\n"\n"\n"\n"\n"\n"\n"\n");
             if (overlap > 0.1) { // 10% overlap threshold
                 if (ap->signal >= g_wifi_enhanced.config.strong_rssi_threshold) {
                     if (score->strong_interferer_count < 10) {
@@ -561,13 +561,13 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
         
         score->co_channel_aps = score->strong_interferer_count + score->weak_interferer_count;
         
-        LOGX_DEBUG_MSG("Channel analyzed",
+        printf("DEBUG: "Channel analyzed",
                   "channel", channel,
                   "score", score->raw_score,
                   "stars", score->stars,
                   "co_channel_aps", score->co_channel_aps,
                   "strong_interferers", score->strong_interferer_count,
-                  "weak_interferers", score->weak_interferer_count);
+                  "weak_interferers", score->weak_interferer_count\n"\n"\n"\n"\n"\n"\n"\n");
         
         score_count++;
     }
@@ -583,11 +583,11 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
         }
     }
     
-    LOGX_INFO_MSG("Enhanced channel analysis completed",
+    printf("INFO: "Enhanced channel analysis completed",
              "band", wifi_band_to_string(band),
              "channels_analyzed", score_count,
              "best_channel", score_count > 0 ? scores[0].channel : 0,
-             "best_score", score_count > 0 ? scores[0].raw_score : 0);
+             "best_score", score_count > 0 ? scores[0].raw_score : 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     return score_count;
 }
@@ -609,13 +609,13 @@ double calculate_enhanced_channel_score(int channel, wifi_band_t band,
         
         if (ap->channel == channel) {
             // Co-channel interference
-            int weight = get_rssi_weight(ap->signal);
+            int weight = get_rssi_weight(ap->signal\n"\n"\n"\n"\n"\n"\n"\n");
             co_channel_penalty += weight;
         } else {
             // Check for channel overlap
-            double overlap = wifi_calculate_channel_overlap(channel, ap->channel, band);
+            double overlap = wifi_calculate_channel_overlap(channel, ap->channel, band\n"\n"\n"\n"\n"\n"\n"\n");
             if (overlap > 0) {
-                int weight = get_rssi_weight(ap->signal);
+                int weight = get_rssi_weight(ap->signal\n"\n"\n"\n"\n"\n"\n"\n");
                 overlap_penalty += weight * overlap * g_wifi_enhanced.config.overlap_penalty_ratio;
             }
         }
@@ -639,12 +639,12 @@ double calculate_enhanced_channel_score(int channel, wifi_band_t band,
     // Ensure score doesn't go below 0
     if (score < 0.0) score = 0.0;
     
-    LOGX_DEBUG_MSG("Channel score calculated",
+    printf("DEBUG: "Channel score calculated",
               "channel", channel,
               "co_channel_penalty", co_channel_penalty,
               "overlap_penalty", overlap_penalty,
               "utilization_penalty", utilization_penalty,
-              "final_score", score);
+              "final_score", score\n"\n"\n"\n"\n"\n"\n"\n");
     
     return score;
 }
@@ -671,7 +671,7 @@ double wifi_calculate_channel_overlap(int channel1, int channel2, wifi_band_t ba
     
     if (band == WIFI_BAND_24GHZ) {
         // 2.4GHz channels overlap significantly
-        int distance = abs(channel1 - channel2);
+        int distance = abs(channel1 - channel2\n"\n"\n"\n"\n"\n"\n"\n");
         if (distance == 1) return 0.8;      // Adjacent channels: 80% overlap
         if (distance == 2) return 0.6;      // 2 channels apart: 60% overlap
         if (distance == 3) return 0.4;      // 3 channels apart: 40% overlap
@@ -740,35 +740,35 @@ int wifi_get_regulatory_channels(const char* country_code, wifi_band_t band, int
     
     if (band == WIFI_BAND_24GHZ) {
         source_channels = CHANNELS_24GHZ;
-        source_count = sizeof(CHANNELS_24GHZ) / sizeof(CHANNELS_24GHZ[0]);
+        source_count = sizeof(CHANNELS_24GHZ) / sizeof(CHANNELS_24GHZ[0]\n"\n"\n"\n"\n"\n"\n"\n");
     } else if (band == WIFI_BAND_5GHZ) {
         if (strcasecmp(country_code, "US") == 0 || strcasecmp(country_code, "CA") == 0) {
             source_channels = CHANNELS_5GHZ_US;
-            source_count = sizeof(CHANNELS_5GHZ_US) / sizeof(CHANNELS_5GHZ_US[0]);
+            source_count = sizeof(CHANNELS_5GHZ_US) / sizeof(CHANNELS_5GHZ_US[0]\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
             source_channels = CHANNELS_5GHZ_EU; // Default to EU
-            source_count = sizeof(CHANNELS_5GHZ_EU) / sizeof(CHANNELS_5GHZ_EU[0]);
+            source_count = sizeof(CHANNELS_5GHZ_EU) / sizeof(CHANNELS_5GHZ_EU[0]\n"\n"\n"\n"\n"\n"\n"\n");
         }
     } else if (band == WIFI_BAND_6GHZ) {
         if (strcasecmp(country_code, "US") == 0 || strcasecmp(country_code, "CA") == 0) {
             source_channels = CHANNELS_6GHZ_US;
-            source_count = sizeof(CHANNELS_6GHZ_US) / sizeof(CHANNELS_6GHZ_US[0]);
+            source_count = sizeof(CHANNELS_6GHZ_US) / sizeof(CHANNELS_6GHZ_US[0]\n"\n"\n"\n"\n"\n"\n"\n");
         } else if (strcasecmp(country_code, "EU") == 0 ||
                    strcasecmp(country_code, "GB") == 0 ||
                    strcasecmp(country_code, "DE") == 0 ||
                    strcasecmp(country_code, "FR") == 0) {
             source_channels = CHANNELS_6GHZ_EU;
-            source_count = sizeof(CHANNELS_6GHZ_EU) / sizeof(CHANNELS_6GHZ_EU[0]);
+            source_count = sizeof(CHANNELS_6GHZ_EU) / sizeof(CHANNELS_6GHZ_EU[0]\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
             source_channels = CHANNELS_6GHZ_WORLD; // Default for other regions
-            source_count = sizeof(CHANNELS_6GHZ_WORLD) / sizeof(CHANNELS_6GHZ_WORLD[0]);
+            source_count = sizeof(CHANNELS_6GHZ_WORLD) / sizeof(CHANNELS_6GHZ_WORLD[0]\n"\n"\n"\n"\n"\n"\n"\n");
         }
     } else {
         return 0; // Unknown band
     }
     
     int copy_count = (source_count < max_channels) ? source_count : max_channels;
-    memcpy(channels, source_channels, copy_count * sizeof(int));
+    memcpy(channels, source_channels, copy_count * sizeof(int)\n"\n"\n"\n"\n"\n"\n"\n");
     
     return copy_count;
 }
@@ -798,30 +798,30 @@ static int perform_ubus_iwinfo_survey(const char* device, wifi_channel_utilizati
     }
     
     // Perform actual UBUS iwinfo survey
-    struct ubus_context *ctx = ubus_connect(NULL);
+    struct ubus_context *ctx = ubus_connect(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     if (!ctx) {
-        LOGX_ERROR_MSG("Failed to connect to UBUS for iwinfo survey");
+        printf("ERROR: "Failed to connect to UBUS for iwinfo survey"\n"\n"\n"\n"\n"\n"\n"\n");
         return 0;
     }
     
     struct blob_buf b;
-    blob_buf_init(&b, 0);
+    blob_buf_init(&b, 0\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Call iwinfo survey method
     uint32_t id;
-    int ret = ubus_lookup_id(ctx, "iwinfo", &id);
+    int ret = ubus_lookup_id(ctx, "iwinfo", &id\n"\n"\n"\n"\n"\n"\n"\n");
     if (ret == 0) {
         char method_name[64];
-        snprintf(method_name, sizeof(method_name), "survey");
+        snprintf(method_name, sizeof(method_name), "survey"\n"\n"\n"\n"\n"\n"\n"\n");
         
-        ret = ubus_invoke(ctx, id, method_name, b.head, NULL, NULL, 5000);
+        ret = ubus_invoke(ctx, id, method_name, b.head, NULL, NULL, 5000\n"\n"\n"\n"\n"\n"\n"\n");
         if (ret == 0) {
             // Parse survey results
             struct blob_attr *tb[__SURVEY_MAX];
             struct blob_attr *cur;
             int rem;
             
-            blobmsg_parse(survey_policy, __SURVEY_MAX, tb, blob_data(b.head), blob_len(b.head));
+            blobmsg_parse(survey_policy, __SURVEY_MAX, tb, blob_data(b.head), blob_len(b.head)\n"\n"\n"\n"\n"\n"\n"\n");
             
             int channel_count = 0;
             if (tb[SURVEY_CHANNELS]) {
@@ -830,33 +830,33 @@ static int perform_ubus_iwinfo_survey(const char* device, wifi_channel_utilizati
                     
                     struct blob_attr *channel_data[__CHANNEL_MAX];
                     blobmsg_parse(channel_policy, __CHANNEL_MAX, channel_data, 
-                                blobmsg_data(cur), blobmsg_data_len(cur));
+                                blobmsg_data(cur), blobmsg_data_len(cur)\n"\n"\n"\n"\n"\n"\n"\n");
                     
                     if (channel_data[CHANNEL_NUMBER]) {
-                        utilization[channel_count].channel = blobmsg_get_u32(channel_data[CHANNEL_NUMBER]);
+                        utilization[channel_count].channel = blobmsg_get_u32(channel_data[CHANNEL_NUMBER]\n"\n"\n"\n"\n"\n"\n"\n");
                     }
                     if (channel_data[CHANNEL_UTILIZATION]) {
-                        utilization[channel_count].utilization_percent = blobmsg_get_u32(channel_data[CHANNEL_UTILIZATION]);
+                        utilization[channel_count].utilization_percent = blobmsg_get_u32(channel_data[CHANNEL_UTILIZATION]\n"\n"\n"\n"\n"\n"\n"\n");
                     }
                     if (channel_data[CHANNEL_NOISE]) {
-                        utilization[channel_count].noise = blobmsg_get_u32(channel_data[CHANNEL_NOISE]);
+                        utilization[channel_count].noise = blobmsg_get_u32(channel_data[CHANNEL_NOISE]\n"\n"\n"\n"\n"\n"\n"\n");
                     }
                     channel_count++;
                 }
             }
             
-            ubus_free(ctx);
-            LOGX_INFO_MSG("UBUS iwinfo survey completed", "device", device, "channels_found", channel_count);
+            ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("INFO: "UBUS iwinfo survey completed", "device", device, "channels_found", channel_count\n"\n"\n"\n"\n"\n"\n"\n");
             return channel_count;
         }
     }
     
-    ubus_free(ctx);
+    ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Fallback to default values if UBUS fails
-    LOGX_WARN_MSG("UBUS iwinfo survey failed, using default values", "device", device);
+    printf("WARN: "UBUS iwinfo survey failed, using default values", "device", device\n"\n"\n"\n"\n"\n"\n"\n");
     // Get real channel utilization data from iwinfo
-    FILE *iwinfo_fp = popen("iwinfo wlan0 survey 2>/dev/null", "r");
+    FILE *iwinfo_fp = popen("iwinfo wlan0 survey 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (iwinfo_fp) {
         char line[256];
         int channel_count = 0;
@@ -874,7 +874,7 @@ static int perform_ubus_iwinfo_survey(const char* device, wifi_channel_utilizati
                 channel_count++;
             }
         }
-        pclose(iwinfo_fp);
+        pclose(iwinfo_fp\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Fill remaining channels with default values if not enough data
         for (int i = channel_count; i < max_channels && i < 13; i++) {
@@ -893,7 +893,7 @@ static int perform_ubus_iwinfo_survey(const char* device, wifi_channel_utilizati
             utilization[i].active_time = 0;
             utilization[i].busy_time = 0;
         }
-        LOGX_WARN_MSG("Failed to get WiFi channel utilization data, using defaults");
+        printf("WARN: "Failed to get WiFi channel utilization data, using defaults"\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     return AUTONOMY_SUCCESS;
@@ -903,19 +903,19 @@ static int perform_ubus_iwinfo_survey(const char* device, wifi_channel_utilizati
 static void* scheduler_thread_worker(void* arg) {
     (void)arg; // Suppress unused parameter warning
     
-    LOGX_INFO_MSG("WiFi scheduler thread started");
+    printf("INFO: "WiFi scheduler thread started"\n"\n"\n"\n"\n"\n"\n"\n");
     
     while (g_wifi_enhanced_initialized && g_wifi_enhanced.threads_running) {
-        sleep(g_wifi_enhanced.config.optimization_cooldown_s);
+        sleep(g_wifi_enhanced.config.optimization_cooldown_s\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (!g_wifi_enhanced.threads_running) break;
         
         // Perform scheduled optimization
-        LOGX_DEBUG_MSG("Performing scheduled WiFi optimization");
+        printf("DEBUG: "Performing scheduled WiFi optimization"\n"\n"\n"\n"\n"\n"\n"\n");
         
         // Perform actual WiFi optimization logic
         wifi_channel_utilization_t utilization[13];
-        int channel_count = perform_ubus_iwinfo_survey("wlan0", utilization, 13);
+        int channel_count = perform_ubus_iwinfo_survey("wlan0", utilization, 13\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (channel_count > 0) {
             // Find the best channel (lowest utilization and noise)
@@ -935,27 +935,27 @@ static void* scheduler_thread_worker(void* arg) {
             
             // Check if we need to change channel
             if (best_channel != g_wifi_enhanced.current_plan.channel_24) {
-                LOGX_INFO_MSG("WiFi channel optimization recommended", 
+                printf("INFO: "WiFi channel optimization recommended", 
                               "current_channel", g_wifi_enhanced.current_plan.channel_24,
                               "recommended_channel", best_channel,
-                              "score", best_score);
+                              "score", best_score\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 // Apply channel change via UCI
                 char uci_cmd[256];
                 snprintf(uci_cmd, sizeof(uci_cmd), 
                         "uci set wireless.radio0.channel=%d && uci commit wireless && wifi reload", 
-                        best_channel);
+                        best_channel\n"\n"\n"\n"\n"\n"\n"\n");
                 
-                int result = system(uci_cmd);
+                int result = system(uci_cmd\n"\n"\n"\n"\n"\n"\n"\n");
                 if (result == 0) {
                     g_wifi_enhanced.current_plan.channel_24 = best_channel;
                     g_wifi_enhanced.stats.total_optimizations++;
                     g_wifi_enhanced.stats.successful_optimizations++;
-                    LOGX_INFO_MSG("WiFi channel changed successfully", "new_channel", best_channel);
+                    printf("INFO: "WiFi channel changed successfully", "new_channel", best_channel\n"\n"\n"\n"\n"\n"\n"\n");
                 } else {
                     g_wifi_enhanced.stats.total_optimizations++;
                     g_wifi_enhanced.stats.failed_optimizations++;
-                    LOGX_ERROR_MSG("Failed to change WiFi channel", "channel", best_channel);
+                    printf("ERROR: "Failed to change WiFi channel", "channel", best_channel\n"\n"\n"\n"\n"\n"\n"\n");
                 }
             }
         }
@@ -963,7 +963,7 @@ static void* scheduler_thread_worker(void* arg) {
         g_wifi_enhanced.stats.scans_performed++;
     }
     
-    LOGX_INFO_MSG("WiFi scheduler thread stopped");
+    printf("INFO: "WiFi scheduler thread stopped"\n"\n"\n"\n"\n"\n"\n"\n");
     return NULL;
 }
 
@@ -973,9 +973,9 @@ int wifi_enhanced_get_current_plan(wifi_channel_plan_t* plan) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    pthread_mutex_lock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *plan = g_wifi_enhanced.current_plan;
-    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -986,9 +986,9 @@ int wifi_enhanced_optimize_channels(const char* trigger) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    LOGX_INFO_MSG("Starting WiFi channel optimization", "trigger", trigger ? trigger : "manual");
+    printf("INFO: "Starting WiFi channel optimization", "trigger", trigger ? trigger : "manual"\n"\n"\n"\n"\n"\n"\n"\n");
     
-    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    pthread_mutex_lock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Perform optimization for each interface
     for (int i = 0; i < g_wifi_enhanced.interface_count; i++) {
@@ -998,7 +998,7 @@ int wifi_enhanced_optimize_channels(const char* trigger) {
         
         // Scan channels for this interface
         wifi_enhanced_channel_score_t scores[64];
-        int score_count = wifi_enhanced_scan_channels(interface->name, scores, 64);
+        int score_count = wifi_enhanced_scan_channels(interface->name, scores, 64\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (score_count > 0) {
             // Find best channel
@@ -1010,34 +1010,34 @@ int wifi_enhanced_optimize_channels(const char* trigger) {
                 new_plan.channel_24 = best_score->channel;
                 new_plan.score_24 = (int)best_score->raw_score;
                 new_plan.total_score = new_plan.score_24;
-                new_plan.applied_at = time(NULL);
-                strcpy(new_plan.trigger, trigger ? trigger : "manual");
+                new_plan.applied_at = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+                strcpy(new_plan.trigger, trigger ? trigger : "manual"\n"\n"\n"\n"\n"\n"\n"\n");
                 
                 if (wifi_enhanced_apply_channel_plan(&new_plan) == AUTONOMY_SUCCESS) {
                     g_wifi_enhanced.current_plan = new_plan;
                     g_wifi_enhanced.stats.total_optimizations++;
                     g_wifi_enhanced.stats.successful_optimizations++;
-                    g_wifi_enhanced.last_optimization_time = time(NULL);
+                    g_wifi_enhanced.last_optimization_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
                     
-                    LOGX_INFO_MSG("WiFi optimization successful",
+                    printf("INFO: "WiFi optimization successful",
                              "interface", interface->name,
                              "new_channel", new_plan.channel_24,
-                             "score", new_plan.score_24);
+                             "score", new_plan.score_24\n"\n"\n"\n"\n"\n"\n"\n");
                 } else {
                     g_wifi_enhanced.stats.failed_optimizations++;
-                    LOGX_ERROR_MSG("Failed to apply WiFi optimization", "interface", interface->name);
+                    printf("ERROR: "Failed to apply WiFi optimization", "interface", interface->name\n"\n"\n"\n"\n"\n"\n"\n");
                 }
             } else {
                 g_wifi_enhanced.stats.skipped_optimizations++;
-                LOGX_DEBUG_MSG("WiFi optimization skipped - insufficient improvement",
+                printf("DEBUG: "WiFi optimization skipped - insufficient improvement",
                           "interface", interface->name,
                           "best_score", best_score->raw_score,
-                          "min_required", g_wifi_enhanced.config.min_improvement);
+                          "min_required", g_wifi_enhanced.config.min_improvement\n"\n"\n"\n"\n"\n"\n"\n");
             }
         }
     }
     
-    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1048,21 +1048,21 @@ int wifi_enhanced_apply_channel_plan(const wifi_channel_plan_t* plan) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    LOGX_INFO_MSG("Applying WiFi channel plan",
+    printf("INFO: "Applying WiFi channel plan",
              "channel_24", plan->channel_24,
              "channel_5", plan->channel_5,
-             "trigger", plan->trigger);
+             "trigger", plan->trigger\n"\n"\n"\n"\n"\n"\n"\n");
     
     // Apply 2.4GHz channel if specified
     if (plan->channel_24 > 0) {
         char uci_cmd[256];
         snprintf(uci_cmd, sizeof(uci_cmd), 
                 "uci set wireless.radio0.channel=%d && uci commit wireless && wifi reload", 
-                plan->channel_24);
+                plan->channel_24\n"\n"\n"\n"\n"\n"\n"\n");
         
-        int result = system(uci_cmd);
+        int result = system(uci_cmd\n"\n"\n"\n"\n"\n"\n"\n");
         if (result != 0) {
-            LOGX_ERROR_MSG("Failed to apply 2.4GHz channel", "channel", plan->channel_24);
+            printf("ERROR: "Failed to apply 2.4GHz channel", "channel", plan->channel_24\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_ERROR_SYSTEM;
         }
     }
@@ -1072,16 +1072,16 @@ int wifi_enhanced_apply_channel_plan(const wifi_channel_plan_t* plan) {
         char uci_cmd[256];
         snprintf(uci_cmd, sizeof(uci_cmd), 
                 "uci set wireless.radio1.channel=%d && uci commit wireless && wifi reload", 
-                plan->channel_5);
+                plan->channel_5\n"\n"\n"\n"\n"\n"\n"\n");
         
-        int result = system(uci_cmd);
+        int result = system(uci_cmd\n"\n"\n"\n"\n"\n"\n"\n");
         if (result != 0) {
-            LOGX_ERROR_MSG("Failed to apply 5GHz channel", "channel", plan->channel_5);
+            printf("ERROR: "Failed to apply 5GHz channel", "channel", plan->channel_5\n"\n"\n"\n"\n"\n"\n"\n");
             return AUTONOMY_ERROR_SYSTEM;
         }
     }
     
-    LOGX_INFO_MSG("WiFi channel plan applied successfully");
+    printf("INFO: "WiFi channel plan applied successfully"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -1091,7 +1091,7 @@ int wifi_enhanced_get_interfaces(wifi_interface_t* interfaces, int max_interface
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    pthread_mutex_lock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     int count = (g_wifi_enhanced.interface_count < max_interfaces) ? 
                 g_wifi_enhanced.interface_count : max_interfaces;
@@ -1100,7 +1100,7 @@ int wifi_enhanced_get_interfaces(wifi_interface_t* interfaces, int max_interface
         interfaces[i] = g_wifi_enhanced.interfaces[i];
     }
     
-    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return count;
 }
@@ -1111,9 +1111,9 @@ int wifi_enhanced_get_statistics(wifi_optimization_statistics_t* stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    pthread_mutex_lock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *stats = g_wifi_enhanced.stats;
-    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1124,12 +1124,12 @@ int wifi_enhanced_reset_statistics(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_wifi_enhanced.mutex);
-    memset(&g_wifi_enhanced.stats, 0, sizeof(wifi_optimization_statistics_t));
-    g_wifi_enhanced.stats.stats_reset_time = time(NULL);
-    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    pthread_mutex_lock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_wifi_enhanced.stats, 0, sizeof(wifi_optimization_statistics_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_wifi_enhanced.stats.stats_reset_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("WiFi optimization statistics reset");
+    printf("INFO: "WiFi optimization statistics reset"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -1139,7 +1139,7 @@ int wifi_enhanced_update_gps_location(const standardized_gps_data_t* gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    pthread_mutex_lock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     wifi_movement_state_t* movement = &g_wifi_enhanced.movement_state;
     
@@ -1147,33 +1147,33 @@ int wifi_enhanced_update_gps_location(const standardized_gps_data_t* gps_data) {
     if (movement->last_location.latitude != 0.0 && movement->last_location.longitude != 0.0) {
         double distance = wifi_calculate_distance(
             movement->last_location.latitude, movement->last_location.longitude,
-            gps_data->latitude, gps_data->longitude);
+            gps_data->latitude, gps_data->longitude\n"\n"\n"\n"\n"\n"\n"\n");
         
         if (distance > g_wifi_enhanced.config.gps_movement_threshold_m) {
             movement->is_stationary = false;
-            movement->last_movement = time(NULL);
+            movement->last_movement = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             movement->total_distance_moved_m += distance;
             movement->movement_events++;
             
-            LOGX_DEBUG_MSG("GPS movement detected",
+            printf("DEBUG: "GPS movement detected",
                       "distance_m", distance,
-                      "total_distance_m", movement->total_distance_moved_m);
+                      "total_distance_m", movement->total_distance_moved_m\n"\n"\n"\n"\n"\n"\n"\n");
         } else {
             // Check if we've been stationary long enough
             if (!movement->is_stationary) {
                 movement->is_stationary = true;
-                movement->stationary_start = time(NULL);
+                movement->stationary_start = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
             } else {
                 time_t stationary_duration = time(NULL) - movement->stationary_start;
                 if (stationary_duration >= g_wifi_enhanced.config.gps_stationary_time_s) {
                     // Trigger optimization if enough time has passed since last optimization
                     time_t time_since_last = time(NULL) - movement->last_optimization;
                     if (time_since_last >= g_wifi_enhanced.config.optimization_cooldown_s) {
-                        movement->last_optimization = time(NULL);
+                        movement->last_optimization = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
                         movement->location_trigger_active = true;
                         
-                        LOGX_INFO_MSG("GPS stationary trigger activated",
-                                 "stationary_duration_s", stationary_duration);
+                        printf("INFO: "GPS stationary trigger activated",
+                                 "stationary_duration_s", stationary_duration\n"\n"\n"\n"\n"\n"\n"\n");
                     }
                 }
             }
@@ -1182,7 +1182,7 @@ int wifi_enhanced_update_gps_location(const standardized_gps_data_t* gps_data) {
     
     movement->last_location = *gps_data;
     
-    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1193,16 +1193,16 @@ int wifi_enhanced_get_movement_state(wifi_movement_state_t* movement_state) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    pthread_mutex_lock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *movement_state = g_wifi_enhanced.movement_state;
-    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
 
 // Perform manual WiFi optimization
 int wifi_enhanced_optimize_now(void) {
-    return wifi_enhanced_optimize_channels("manual");
+    return wifi_enhanced_optimize_channels("manual"\n"\n"\n"\n"\n"\n"\n"\n");
 }
 
 // Enable/disable WiFi optimization
@@ -1211,11 +1211,11 @@ int wifi_enhanced_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    pthread_mutex_lock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_wifi_enhanced.config.enabled = enabled;
-    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("WiFi optimization enabled/disabled", "enabled", enabled);
+    printf("INFO: "WiFi optimization enabled/disabled", "enabled", enabled\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -1225,9 +1225,9 @@ int wifi_enhanced_get_config(wifi_optimization_config_t* config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    pthread_mutex_lock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     *config = g_wifi_enhanced.config;
-    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1238,11 +1238,11 @@ int wifi_enhanced_set_config(const wifi_optimization_config_t* config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_wifi_enhanced.mutex);
+    pthread_mutex_lock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     g_wifi_enhanced.config = *config;
-    pthread_mutex_unlock(&g_wifi_enhanced.mutex);
+    pthread_mutex_unlock(&g_wifi_enhanced.mutex\n"\n"\n"\n"\n"\n"\n"\n");
     
-    LOGX_INFO_MSG("WiFi optimization configuration updated");
+    printf("INFO: "WiFi optimization configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
     return AUTONOMY_SUCCESS;
 }
 
@@ -1252,8 +1252,8 @@ int wifi_enhanced_get_interface_info(const char* device, wifi_interface_t* inter
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    memset(interface, 0, sizeof(wifi_interface_t));
-    strncpy(interface->name, device, sizeof(interface->name) - 1);
+    memset(interface, 0, sizeof(wifi_interface_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    strncpy(interface->name, device, sizeof(interface->name) - 1\n"\n"\n"\n"\n"\n"\n"\n");
     interface->name[sizeof(interface->name) - 1] = '\0';
     
     // Get interface information via UCI
@@ -1261,32 +1261,32 @@ int wifi_enhanced_get_interface_info(const char* device, wifi_interface_t* inter
     FILE* fp;
     
     // Get current channel
-    snprintf(uci_cmd, sizeof(uci_cmd), "uci get wireless.%s.channel 2>/dev/null", device);
-    fp = popen(uci_cmd, "r");
+    snprintf(uci_cmd, sizeof(uci_cmd), "uci get wireless.%s.channel 2>/dev/null", device\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen(uci_cmd, "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (fp) {
         char line[32];
         if (fgets(line, sizeof(line), fp)) {
-            interface->current_channel = atoi(line);
+            interface->current_channel = atoi(line\n"\n"\n"\n"\n"\n"\n"\n");
         }
-        pclose(fp);
+        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Get enabled status
-    snprintf(uci_cmd, sizeof(uci_cmd), "uci get wireless.%s.disabled 2>/dev/null", device);
-    fp = popen(uci_cmd, "r");
+    snprintf(uci_cmd, sizeof(uci_cmd), "uci get wireless.%s.disabled 2>/dev/null", device\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen(uci_cmd, "r"\n"\n"\n"\n"\n"\n"\n"\n");
     if (fp) {
         char line[32];
         if (fgets(line, sizeof(line), fp)) {
-            interface->enabled = (strcmp(line, "0\n") == 0);
+            interface->enabled = (strcmp(line, "0\n") == 0\n"\n"\n"\n"\n"\n"\n"\n");
         }
-        pclose(fp);
+        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
     }
     
     // Determine band from channel
-    interface->band = wifi_get_band_from_channel(interface->current_channel);
+    interface->band = wifi_get_band_from_channel(interface->current_channel\n"\n"\n"\n"\n"\n"\n"\n");
     
     interface->active = true;
-    interface->last_update = time(NULL);
+    interface->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -1301,9 +1301,9 @@ static double wifi_calculate_distance(double lat1, double lon1, double lat2, dou
     
     double a = sin(dlat/2) * sin(dlat/2) + 
                cos(lat1 * PI / 180.0) * cos(lat2 * PI / 180.0) * 
-               sin(dlon/2) * sin(dlon/2);
+               sin(dlon/2) * sin(dlon/2\n"\n"\n"\n"\n"\n"\n"\n");
     
-    double c = 2 * atan2(sqrt(a), sqrt(1-a));
+    double c = 2 * atan2(sqrt(a), sqrt(1-a)\n"\n"\n"\n"\n"\n"\n"\n");
     
     return R * c;
 }
