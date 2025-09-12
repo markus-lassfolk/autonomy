@@ -15,19 +15,19 @@ int notification_deduplicator_init(notification_deduplicator_t* dedup, const ded
     
     // Initialize fingerprint storage
     dedup->max_fingerprints = config->max_fingerprints;
-    dedup->fingerprints = malloc(config->max_fingerprints * sizeof(fingerprint_entry_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    dedup->fingerprints = malloc(config->max_fingerprints * sizeof(fingerprint_entry_t));
     if (!dedup->fingerprints) {
         return -1;
     }
     
     // Initialize mutex
-    dedup->mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    dedup->mutex = malloc(sizeof(pthread_mutex_t));
     if (!dedup->mutex) {
-        free(dedup->fingerprints\n"\n"\n"\n"\n"\n"\n"\n");
+        free(dedup->fingerprints);
         return -1;
     }
     
-    pthread_mutex_init(dedup->mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_init(dedup->mutex, NULL);
     
     // Initialize statistics
     dedup->total_notifications = 0;
@@ -42,12 +42,12 @@ void notification_deduplicator_cleanup(notification_deduplicator_t* dedup) {
     if (!dedup) return;
     
     if (dedup->mutex) {
-        pthread_mutex_destroy(dedup->mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        free(dedup->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(dedup->mutex);
+        free(dedup->mutex);
     }
     
     if (dedup->fingerprints) {
-        free(dedup->fingerprints\n"\n"\n"\n"\n"\n"\n"\n");
+        free(dedup->fingerprints);
     }
     
     dedup->fingerprints = NULL;
@@ -95,7 +95,7 @@ static char* generate_fingerprint(const notification_event_t* event) {
     }
     
     // Convert hash to hex string
-    snprintf(fingerprint, 65, "%016lx", hash\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(fingerprint, 65, "%016lx", hash);
     
     return fingerprint;
 }
@@ -165,15 +165,15 @@ bool notification_deduplicator_is_duplicate(notification_deduplicator_t* dedup,
         return false;
     }
     
-    pthread_mutex_lock(dedup->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(dedup->mutex);
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     bool is_duplicate = false;
     
     // Generate fingerprint for this notification
-    char* fingerprint = generate_fingerprint(event\n"\n"\n"\n"\n"\n"\n"\n");
+    char* fingerprint = generate_fingerprint(event);
     if (!fingerprint) {
-        pthread_mutex_unlock(dedup->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(dedup->mutex);
         return false;
     }
     
@@ -194,7 +194,7 @@ bool notification_deduplicator_is_duplicate(notification_deduplicator_t* dedup,
         for (int i = 0; i < dedup->fingerprint_count; i++) {
             // Only check recent notifications
             if (now - dedup->fingerprints[i].timestamp < dedup->config.deduplication_window_seconds) {
-                double similarity = calculate_similarity(event, &dedup->fingerprints[i].event\n"\n"\n"\n"\n"\n"\n"\n");
+                double similarity = calculate_similarity(event, &dedup->fingerprints[i].event);
                 if (similarity >= dedup->config.similarity_threshold) {
                     is_duplicate = true;
                     dedup->duplicate_count++;
@@ -221,7 +221,7 @@ bool notification_deduplicator_is_duplicate(notification_deduplicator_t* dedup,
             
             // Remove oldest fingerprint
             if (dedup->fingerprints[oldest_index].fingerprint) {
-                free(dedup->fingerprints[oldest_index].fingerprint\n"\n"\n"\n"\n"\n"\n"\n");
+                free(dedup->fingerprints[oldest_index].fingerprint);
             }
             
             // Shift remaining fingerprints
@@ -237,25 +237,25 @@ bool notification_deduplicator_is_duplicate(notification_deduplicator_t* dedup,
         dedup->fingerprints[index].timestamp = now;
         
         // Copy event data
-        memcpy(&dedup->fingerprints[index].event, event, sizeof(notification_event_t)\n"\n"\n"\n"\n"\n"\n"\n");
+        memcpy(&dedup->fingerprints[index].event, event, sizeof(notification_event_t));
         
         // Handle location pointer
         if (event->location) {
-            dedup->fingerprints[index].event.location = malloc(sizeof(notification_location_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            dedup->fingerprints[index].event.location = malloc(sizeof(notification_location_t));
             if (dedup->fingerprints[index].event.location) {
-                memcpy(dedup->fingerprints[index].event.location, event->location, sizeof(notification_location_t)\n"\n"\n"\n"\n"\n"\n"\n");
+                memcpy(dedup->fingerprints[index].event.location, event->location, sizeof(notification_location_t));
             }
         }
         
         dedup->fingerprint_count++;
     } else {
         // Free fingerprint since we didn't store it
-        free(fingerprint\n"\n"\n"\n"\n"\n"\n"\n");
+        free(fingerprint);
     }
     
     dedup->total_notifications++;
     
-    pthread_mutex_unlock(dedup->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(dedup->mutex);
     return is_duplicate;
 }
 
@@ -265,9 +265,9 @@ int notification_deduplicator_cleanup_old(notification_deduplicator_t* dedup) {
         return -1;
     }
     
-    pthread_mutex_lock(dedup->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(dedup->mutex);
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     int removed_count = 0;
     int write_index = 0;
     
@@ -281,10 +281,10 @@ int notification_deduplicator_cleanup_old(notification_deduplicator_t* dedup) {
         } else {
             // Remove this fingerprint
             if (dedup->fingerprints[i].fingerprint) {
-                free(dedup->fingerprints[i].fingerprint\n"\n"\n"\n"\n"\n"\n"\n");
+                free(dedup->fingerprints[i].fingerprint);
             }
             if (dedup->fingerprints[i].event.location) {
-                free(dedup->fingerprints[i].event.location\n"\n"\n"\n"\n"\n"\n"\n");
+                free(dedup->fingerprints[i].event.location);
             }
             removed_count++;
         }
@@ -292,7 +292,7 @@ int notification_deduplicator_cleanup_old(notification_deduplicator_t* dedup) {
     
     dedup->fingerprint_count = write_index;
     
-    pthread_mutex_unlock(dedup->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(dedup->mutex);
     return removed_count;
 }
 
@@ -301,7 +301,7 @@ void notification_deduplicator_get_stats(const notification_deduplicator_t* dedu
                                        deduplicator_stats_t* stats) {
     if (!dedup || !stats || !dedup->mutex) return;
     
-    pthread_mutex_lock(dedup->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(dedup->mutex);
     
     stats->total_notifications = dedup->total_notifications;
     stats->duplicate_count = dedup->duplicate_count;
@@ -316,22 +316,22 @@ void notification_deduplicator_get_stats(const notification_deduplicator_t* dedu
         stats->duplicate_rate = 0.0;
     }
     
-    pthread_mutex_unlock(dedup->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(dedup->mutex);
 }
 
 // Reset deduplicator
 void notification_deduplicator_reset(notification_deduplicator_t* dedup) {
     if (!dedup || !dedup->mutex) return;
     
-    pthread_mutex_lock(dedup->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(dedup->mutex);
     
     // Free all fingerprints
     for (int i = 0; i < dedup->fingerprint_count; i++) {
         if (dedup->fingerprints[i].fingerprint) {
-            free(dedup->fingerprints[i].fingerprint\n"\n"\n"\n"\n"\n"\n"\n");
+            free(dedup->fingerprints[i].fingerprint);
         }
         if (dedup->fingerprints[i].event.location) {
-            free(dedup->fingerprints[i].event.location\n"\n"\n"\n"\n"\n"\n"\n");
+            free(dedup->fingerprints[i].event.location);
         }
     }
     
@@ -339,7 +339,7 @@ void notification_deduplicator_reset(notification_deduplicator_t* dedup) {
     dedup->total_notifications = 0;
     dedup->duplicate_count = 0;
     
-    pthread_mutex_unlock(dedup->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(dedup->mutex);
 }
 
 // Check if deduplicator is enabled

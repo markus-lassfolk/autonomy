@@ -24,18 +24,18 @@
 extern autonomy_config_t g_config;
 
 // Forward declarations
-static void init_database_schema(sqlite3* db\n"\n"\n"\n"\n"\n"\n"\n");
+static void init_database_schema(sqlite3* db);
 
 // Global metered manager instance
 static metered_manager_t g_metered_manager;
 static bool g_metered_manager_initialized = false; // Use configurable setting
 
 // Forward declarations
-static int detect_metered_connection(void\n"\n"\n"\n"\n"\n"\n"\n");
-static int collect_data_usage(void\n"\n"\n"\n"\n"\n"\n"\n");
-int check_roaming_status(void\n"\n"\n"\n"\n"\n"\n"\n");
-void update_usage_statistics(void\n"\n"\n"\n"\n"\n"\n"\n");
-bool check_usage_thresholds(void\n"\n"\n"\n"\n"\n"\n"\n");
+static int detect_metered_connection(void);
+static int collect_data_usage(void);
+int check_roaming_status(void);
+void update_usage_statistics(void);
+bool check_usage_thresholds(void);
 
 // Initialize metered manager
 int metered_manager_init(const metered_manager_config_t* config) {
@@ -43,7 +43,7 @@ int metered_manager_init(const metered_manager_config_t* config) {
         return 0; // Already initialized
     }
     
-    memset(&g_metered_manager, 0, sizeof(metered_manager_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_metered_manager, 0, sizeof(metered_manager_t));
     
     // Set configuration
     if (config) {
@@ -63,29 +63,29 @@ int metered_manager_init(const metered_manager_config_t* config) {
         g_metered_manager.config.thresholds.critical_percentage = 95.0;
         
         // Default interfaces
-        strcpy(g_metered_manager.config.interfaces[0], "eth0"\n"\n"\n"\n"\n"\n"\n"\n");
-        strcpy(g_metered_manager.config.interfaces[1], "wlan0"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(g_metered_manager.config.interfaces[0], "eth0");
+        strcpy(g_metered_manager.config.interfaces[1], "wlan0");
         g_metered_manager.config.interface_count = 2;
     }
     
     // Initialize mutex
-    g_metered_manager.mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_metered_manager.mutex = malloc(sizeof(pthread_mutex_t));
     if (!g_metered_manager.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_metered_manager.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_init(g_metered_manager.mutex, NULL);
     
     // Initialize monitored interfaces
     g_metered_manager.monitored_interface_count = 0;
     for (int i = 0; i < g_metered_manager.config.interface_count; i++) {
-        strcpy(g_metered_manager.monitored_interfaces[i], g_metered_manager.config.interfaces[i]\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(g_metered_manager.monitored_interfaces[i], g_metered_manager.config.interfaces[i]);
         g_metered_manager.monitored_interface_count++;
     }
     
     // Initialize usage statistics
-    g_metered_manager.usage_stats.last_reset = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    g_metered_manager.usage_stats.billing_cycle_start = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_metered_manager.usage_stats.last_reset = time(NULL);
+    g_metered_manager.usage_stats.billing_cycle_start = time(NULL);
     
     g_metered_manager_initialized = true; // Use configurable setting
     return 0;
@@ -96,8 +96,8 @@ void metered_manager_cleanup(void) {
     if (!g_metered_manager_initialized) return;
     
     if (g_metered_manager.mutex) {
-        pthread_mutex_destroy(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        free(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(g_metered_manager.mutex);
+        free(g_metered_manager.mutex);
     }
     
     g_metered_manager.mutex = NULL;
@@ -110,28 +110,28 @@ int metered_manager_check_status(void) {
         return -1;
     }
     
-    pthread_mutex_lock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_metered_manager.mutex);
     
     // Detect metered connection
     if (detect_metered_connection() != 0) {
-        pthread_mutex_unlock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(g_metered_manager.mutex);
         return -1;
     }
     
     // Check roaming status
     if (check_roaming_status() != 0) {
-        pthread_mutex_unlock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(g_metered_manager.mutex);
         return -1;
     }
     
     // Collect data usage
     if (collect_data_usage() != 0) {
-        pthread_mutex_unlock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(g_metered_manager.mutex);
         return -1;
     }
     
     // Update usage statistics
-    update_usage_statistics(\n"\n"\n"\n"\n"\n"\n"\n");
+    update_usage_statistics();
     
     // Check thresholds and generate alerts
     if (check_usage_thresholds()) {
@@ -140,10 +140,10 @@ int metered_manager_check_status(void) {
     }
     
     // Update statistics
-    g_metered_manager.last_check = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_metered_manager.last_check = time(NULL);
     g_metered_manager.check_count++;
     
-    pthread_mutex_unlock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_metered_manager.mutex);
     
     return 0;
 }
@@ -154,9 +154,9 @@ int metered_manager_get_usage_stats(data_usage_stats_t* stats) {
         return -1;
     }
     
-    pthread_mutex_lock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_metered_manager.mutex);
     *stats = g_metered_manager.usage_stats;
-    pthread_mutex_unlock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_metered_manager.mutex);
     
     return 0;
 }
@@ -167,9 +167,9 @@ int metered_manager_get_connection_status(metered_connection_status_t* status) {
         return -1;
     }
     
-    pthread_mutex_lock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_metered_manager.mutex);
     *status = g_metered_manager.connection_status;
-    pthread_mutex_unlock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_metered_manager.mutex);
     
     return 0;
 }
@@ -178,9 +178,9 @@ int metered_manager_get_connection_status(metered_connection_status_t* status) {
 bool metered_manager_is_metered(void) {
     if (!g_metered_manager_initialized) return false;
     
-    pthread_mutex_lock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_metered_manager.mutex);
     bool result = g_metered_manager.connection_status.is_metered;
-    pthread_mutex_unlock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_metered_manager.mutex);
     
     return result;
 }
@@ -189,9 +189,9 @@ bool metered_manager_is_metered(void) {
 bool metered_manager_is_roaming(void) {
     if (!g_metered_manager_initialized) return false;
     
-    pthread_mutex_lock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_metered_manager.mutex);
     bool result = g_metered_manager.connection_status.is_roaming;
-    pthread_mutex_unlock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_metered_manager.mutex);
     
     return result;
 }
@@ -200,9 +200,9 @@ bool metered_manager_is_roaming(void) {
 uint64_t metered_manager_get_remaining_data(void) {
     if (!g_metered_manager_initialized) return 0;
     
-    pthread_mutex_lock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_metered_manager.mutex);
     uint64_t result = g_metered_manager.connection_status.remaining_bytes;
-    pthread_mutex_unlock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_metered_manager.mutex);
     
     return result;
 }
@@ -211,7 +211,7 @@ uint64_t metered_manager_get_remaining_data(void) {
 int metered_manager_reset_usage(void) {
     if (!g_metered_manager_initialized) return -1;
     
-    pthread_mutex_lock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_metered_manager.mutex);
     
     g_metered_manager.usage_stats.current_usage_bytes = 0;
     g_metered_manager.usage_stats.daily_usage_bytes = 0;
@@ -219,9 +219,9 @@ int metered_manager_reset_usage(void) {
     g_metered_manager.usage_stats.current_percentage = 0.0;
     g_metered_manager.usage_stats.daily_percentage = 0.0;
     g_metered_manager.usage_stats.monthly_percentage = 0.0;
-    g_metered_manager.usage_stats.last_reset = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_metered_manager.usage_stats.last_reset = time(NULL);
     
-    pthread_mutex_unlock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_metered_manager.mutex);
     
     return 0;
 }
@@ -230,9 +230,9 @@ int metered_manager_reset_usage(void) {
 int metered_manager_set_thresholds(const data_thresholds_t* thresholds) {
     if (!g_metered_manager_initialized || !thresholds) return -1;
     
-    pthread_mutex_lock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_metered_manager.mutex);
     g_metered_manager.config.thresholds = *thresholds;
-    pthread_mutex_unlock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_metered_manager.mutex);
     
     return 0;
 }
@@ -250,9 +250,9 @@ static int detect_metered_connection(void) {
         if (strstr(g_metered_manager.monitored_interfaces[i], "wwan") || 
             strstr(g_metered_manager.monitored_interfaces[i], "cellular")) {
             is_metered = true; // Use configurable setting
-            strcpy(connection_type, "cellular"\n"\n"\n"\n"\n"\n"\n"\n");
-            strcpy(carrier, "mobile_carrier"\n"\n"\n"\n"\n"\n"\n"\n");
-            strcpy(plan_name, "mobile_data_plan"\n"\n"\n"\n"\n"\n"\n"\n");
+            strcpy(connection_type, "cellular");
+            strcpy(carrier, "mobile_carrier");
+            strcpy(plan_name, "mobile_data_plan");
             break;
         }
     }
@@ -264,9 +264,9 @@ static int detect_metered_connection(void) {
             if (strstr(g_metered_manager.monitored_interfaces[i], "starlink") ||
                 strstr(g_metered_manager.monitored_interfaces[i], "satellite")) {
                 is_metered = true; // Use configurable setting
-                strcpy(connection_type, "satellite"\n"\n"\n"\n"\n"\n"\n"\n");
-                strcpy(carrier, "starlink"\n"\n"\n"\n"\n"\n"\n"\n");
-                strcpy(plan_name, "satellite_data_plan"\n"\n"\n"\n"\n"\n"\n"\n");
+                strcpy(connection_type, "satellite");
+                strcpy(carrier, "starlink");
+                strcpy(plan_name, "satellite_data_plan");
                 break;
             }
         }
@@ -274,9 +274,9 @@ static int detect_metered_connection(void) {
     
     // Update connection status
     g_metered_manager.connection_status.is_metered = is_metered;
-    strcpy(g_metered_manager.connection_status.connection_type, connection_type\n"\n"\n"\n"\n"\n"\n"\n");
-    strcpy(g_metered_manager.connection_status.carrier, carrier\n"\n"\n"\n"\n"\n"\n"\n");
-    strcpy(g_metered_manager.connection_status.plan_name, plan_name\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(g_metered_manager.connection_status.connection_type, connection_type);
+    strcpy(g_metered_manager.connection_status.carrier, carrier);
+    strcpy(g_metered_manager.connection_status.plan_name, plan_name);
     
     // Set plan limits based on connection type
     if (strcmp(connection_type, "cellular") == 0) {
@@ -287,7 +287,7 @@ static int detect_metered_connection(void) {
         g_metered_manager.connection_status.plan_limit_bytes = 0; // Unlimited
     }
     
-    g_metered_manager.connection_status.last_check = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_metered_manager.connection_status.last_check = time(NULL);
     
     return 0;
 }
@@ -302,12 +302,12 @@ static int collect_data_usage(void) {
     uint64_t total_tx_bytes = 0; // Use configurable value
     
     // Read interface statistics from /proc/net/dev
-    FILE* dev_file = fopen("/proc/net/dev", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE* dev_file = fopen("/proc/net/dev", "r");
     if (dev_file) {
         char line[256];
         // Skip header lines
-        fgets(line, sizeof(line), dev_file\n"\n"\n"\n"\n"\n"\n"\n");
-        fgets(line, sizeof(line), dev_file\n"\n"\n"\n"\n"\n"\n"\n");
+        fgets(line, sizeof(line), dev_file);
+        fgets(line, sizeof(line), dev_file);
         
         while (fgets(line, sizeof(line), dev_file)) {
             char interface[32];
@@ -336,7 +336,7 @@ static int collect_data_usage(void) {
                 }
             }
         }
-        fclose(dev_file\n"\n"\n"\n"\n"\n"\n"\n");
+        fclose(dev_file);
     }
     
     // Update usage statistics with real data
@@ -345,58 +345,58 @@ static int collect_data_usage(void) {
     
     // Use SQLite3 database for persistent storage
     // Create directory if it doesn't exist
-    system("mkdir -p /var/lib/autonomy"\n"\n"\n"\n"\n"\n"\n"\n");
+    system("mkdir -p /var/lib/autonomy");
     
     sqlite3* db = NULL;
-    int ret = sqlite3_open("/var/lib/autonomy/autonomy.db", &db\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = sqlite3_open("/var/lib/autonomy/autonomy.db", &db);
     if (ret == SQLITE_OK) {
         // Initialize database schema if needed
-        init_database_schema(db\n"\n"\n"\n"\n"\n"\n"\n");
+        init_database_schema(db);
         
         // Get daily usage
         char daily_query[256];
         snprintf(daily_query, sizeof(daily_query),
-                "SELECT SUM(rx_bytes + tx_bytes) FROM network_usage WHERE date = date('now')"\n"\n"\n"\n"\n"\n"\n"\n");
+                "SELECT SUM(rx_bytes + tx_bytes) FROM network_usage WHERE date = date('now')");
         
         sqlite3_stmt* stmt;
-        ret = sqlite3_prepare_v2(db, daily_query, -1, &stmt, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        ret = sqlite3_prepare_v2(db, daily_query, -1, &stmt, NULL);
         if (ret == SQLITE_OK) {
             if (sqlite3_step(stmt) == SQLITE_ROW) {
-                g_metered_manager.usage_stats.daily_usage_bytes = sqlite3_column_int64(stmt, 0\n"\n"\n"\n"\n"\n"\n"\n");
+                g_metered_manager.usage_stats.daily_usage_bytes = sqlite3_column_int64(stmt, 0);
             } else {
                 g_metered_manager.usage_stats.daily_usage_bytes = total_usage;
             }
-            sqlite3_finalize(stmt\n"\n"\n"\n"\n"\n"\n"\n");
+            sqlite3_finalize(stmt);
         }
         
         // Get monthly usage
         char monthly_query[256];
         snprintf(monthly_query, sizeof(monthly_query),
-                "SELECT SUM(rx_bytes + tx_bytes) FROM network_usage WHERE strftime('%%Y-%%m', date) = strftime('%%Y-%%m', 'now')"\n"\n"\n"\n"\n"\n"\n"\n");
+                "SELECT SUM(rx_bytes + tx_bytes) FROM network_usage WHERE strftime('%%Y-%%m', date) = strftime('%%Y-%%m', 'now')");
         
-        ret = sqlite3_prepare_v2(db, monthly_query, -1, &stmt, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        ret = sqlite3_prepare_v2(db, monthly_query, -1, &stmt, NULL);
         if (ret == SQLITE_OK) {
             if (sqlite3_step(stmt) == SQLITE_ROW) {
-                g_metered_manager.usage_stats.monthly_usage_bytes = sqlite3_column_int64(stmt, 0\n"\n"\n"\n"\n"\n"\n"\n");
+                g_metered_manager.usage_stats.monthly_usage_bytes = sqlite3_column_int64(stmt, 0);
             } else {
                 g_metered_manager.usage_stats.monthly_usage_bytes = total_usage;
             }
-            sqlite3_finalize(stmt\n"\n"\n"\n"\n"\n"\n"\n");
+            sqlite3_finalize(stmt);
         }
         
         // Get total usage
         char total_query[256];
         snprintf(total_query, sizeof(total_query),
-                "SELECT SUM(rx_bytes + tx_bytes) FROM network_usage"\n"\n"\n"\n"\n"\n"\n"\n");
+                "SELECT SUM(rx_bytes + tx_bytes) FROM network_usage");
         
-        ret = sqlite3_prepare_v2(db, total_query, -1, &stmt, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        ret = sqlite3_prepare_v2(db, total_query, -1, &stmt, NULL);
         if (ret == SQLITE_OK) {
             if (sqlite3_step(stmt) == SQLITE_ROW) {
-                g_metered_manager.usage_stats.total_usage_bytes = sqlite3_column_int64(stmt, 0\n"\n"\n"\n"\n"\n"\n"\n");
+                g_metered_manager.usage_stats.total_usage_bytes = sqlite3_column_int64(stmt, 0);
             } else {
                 g_metered_manager.usage_stats.total_usage_bytes = total_usage;
             }
-            sqlite3_finalize(stmt\n"\n"\n"\n"\n"\n"\n"\n");
+            sqlite3_finalize(stmt);
         }
         
         // Store current usage
@@ -404,22 +404,22 @@ static int collect_data_usage(void) {
         snprintf(insert_query, sizeof(insert_query),
                 "INSERT OR REPLACE INTO network_usage (date, rx_bytes, tx_bytes, interface) "
                 "VALUES (date('now'), %llu, %llu, '%s')",
-                total_rx_bytes, total_tx_bytes, "metered_interface"\n"\n"\n"\n"\n"\n"\n"\n");
+                total_rx_bytes, total_tx_bytes, "metered_interface");
         
         char *err_msg = NULL;
-        ret = sqlite3_exec(db, insert_query, NULL, NULL, &err_msg\n"\n"\n"\n"\n"\n"\n"\n");
+        ret = sqlite3_exec(db, insert_query, NULL, NULL, &err_msg);
         if (ret != SQLITE_OK) {
-            printf("ERROR: "Failed to store network usage: %s", err_msg\n"\n"\n"\n"\n"\n"\n"\n");
-            sqlite3_free(err_msg\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_ERROR_MSG("Failed to store network usage: %s", err_msg);
+            sqlite3_free(err_msg);
         }
         
-        sqlite3_close(db\n"\n"\n"\n"\n"\n"\n"\n");
+        sqlite3_close(db);
     } else {
         // Fallback: use current usage as baseline
         g_metered_manager.usage_stats.daily_usage_bytes = total_usage;
         g_metered_manager.usage_stats.monthly_usage_bytes = total_usage;
         g_metered_manager.usage_stats.total_usage_bytes = total_usage;
-        printf("WARN: "Could not access database for usage statistics, using current usage as baseline"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Could not access database for usage statistics, using current usage as baseline");
     }
     
     // Calculate percentages
@@ -459,12 +459,12 @@ int check_roaming_status(void) {
     bool is_roaming = false; // Use configurable setting
     
     // Use UBUS to get real roaming status from GSM service
-    struct ubus_context* ctx = ubus_connect(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    struct ubus_context* ctx = ubus_connect(NULL);
     if (ctx) {
         uint32_t id;
         if (ubus_lookup_id(ctx, "gsm", &id) == 0) {
             struct blob_buf bb = {0};
-            blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+            blob_buf_init(&bb, 0);
             
             // Query GSM status for roaming information
             // This would need proper UBUS response parsing
@@ -473,12 +473,12 @@ int check_roaming_status(void) {
             if (cellular_collector_is_initialized() &&
                 cellular_collector_collect(&cellular_info) == AUTONOMY_SUCCESS) {
                 is_roaming = cellular_info.roaming;
-                printf("DEBUG: "Roaming status from cellular collector", "roaming", is_roaming\n"\n"\n"\n"\n"\n"\n"\n");
+                LOGX_DEBUG_MSG("Roaming status from cellular collector", "roaming", is_roaming);
             }
             
-            blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+            blob_buf_free(&bb);
         }
-        ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_free(ctx);
     }
     
     g_metered_manager.connection_status.is_roaming = is_roaming;
@@ -489,11 +489,11 @@ int check_roaming_status(void) {
 // Update usage statistics
 void update_usage_statistics(void) {
     // Check if we need to reset daily/monthly counters
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     // Reset daily usage at midnight
-    struct tm* tm_info = localtime(&g_metered_manager.usage_stats.last_reset\n"\n"\n"\n"\n"\n"\n"\n");
-    struct tm* tm_now = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm* tm_info = localtime(&g_metered_manager.usage_stats.last_reset);
+    struct tm* tm_now = localtime(&now);
     
     if (tm_info->tm_yday != tm_now->tm_yday) {
         g_metered_manager.usage_stats.daily_usage_bytes = 0;
@@ -529,9 +529,9 @@ bool check_usage_thresholds(void) {
 void metered_manager_get_status(metered_manager_t* status) {
     if (!status || !g_metered_manager_initialized) return;
     
-    pthread_mutex_lock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_metered_manager.mutex);
     *status = g_metered_manager;
-    pthread_mutex_unlock(g_metered_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_metered_manager.mutex);
 }
 
 // Check if metered manager is initialized
@@ -558,12 +558,12 @@ static void init_database_schema(sqlite3* db) {
         ");";
     
     char* err_msg = NULL;
-    int ret = sqlite3_exec(db, create_table_sql, NULL, NULL, &err_msg\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = sqlite3_exec(db, create_table_sql, NULL, NULL, &err_msg);
     if (ret != SQLITE_OK) {
-        printf("ERROR: "Failed to create network_usage table: %s", err_msg\n"\n"\n"\n"\n"\n"\n"\n");
-        sqlite3_free(err_msg\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to create network_usage table: %s", err_msg);
+        sqlite3_free(err_msg);
     } else {
-        printf("DEBUG: "Database schema initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Database schema initialized successfully");
     }
     
     // Create metrics history table
@@ -580,9 +580,9 @@ static void init_database_schema(sqlite3* db) {
         "tx_bytes INTEGER"
         ");";
     
-    ret = sqlite3_exec(db, create_metrics_table_sql, NULL, NULL, &err_msg\n"\n"\n"\n"\n"\n"\n"\n");
+    ret = sqlite3_exec(db, create_metrics_table_sql, NULL, NULL, &err_msg);
     if (ret != SQLITE_OK) {
-        printf("ERROR: "Failed to create metrics_history table: %s", err_msg\n"\n"\n"\n"\n"\n"\n"\n");
-        sqlite3_free(err_msg\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to create metrics_history table: %s", err_msg);
+        sqlite3_free(err_msg);
     }
 }

@@ -22,14 +22,14 @@ static const double FUSION_WEIGHT_THRESHOLD = 0.3; // Use configurable value    
 static const int FUSION_HISTORY_SIZE = 20; // Use configurable value             // Number of fused positions to track
 
 // Forward declarations
-void update_source_metrics(gps_fusion_source_t *source, const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-void update_source_reliability(gps_fusion_source_t *source\n"\n"\n"\n"\n"\n"\n"\n");
-static int perform_weighted_average_fusion(gps_data_t *fused_data\n"\n"\n"\n"\n"\n"\n"\n");
-static int perform_kalman_filter_fusion(gps_data_t *fused_data\n"\n"\n"\n"\n"\n"\n"\n");
-static int perform_least_squares_fusion(gps_data_t *fused_data\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_fusion_quality(void\n"\n"\n"\n"\n"\n"\n"\n");
-void add_fusion_history(const gps_data_t *fused_data\n"\n"\n"\n"\n"\n"\n"\n");
-int find_fusion_source_by_name(const char *source_name\n"\n"\n"\n"\n"\n"\n"\n");
+void update_source_metrics(gps_fusion_source_t *source, const gps_data_t *gps_data);
+void update_source_reliability(gps_fusion_source_t *source);
+static int perform_weighted_average_fusion(gps_data_t *fused_data);
+static int perform_kalman_filter_fusion(gps_data_t *fused_data);
+static int perform_least_squares_fusion(gps_data_t *fused_data);
+double calculate_fusion_quality(void);
+void add_fusion_history(const gps_data_t *fused_data);
+int find_fusion_source_by_name(const char *source_name);
 
 // Fusion algorithms
 static const char* FUSION_ALGORITHM_NAMES[] = {
@@ -44,14 +44,14 @@ static pthread_mutex_t g_geofence_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Initialize GPS fusion system
 int gps_fusion_init(void) {
     if (g_fusion_initialized) {
-        printf("WARN: "GPS fusion system already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("GPS fusion system already initialized");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_geofence_mutex);
     
     // Initialize fusion state
-    memset(&g_fusion, 0, sizeof(gps_fusion_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_fusion, 0, sizeof(gps_fusion_t));
     g_fusion.enabled = true; // Use configurable gps fusion enabled
     g_fusion.max_sources = MAX_FUSION_SOURCES;
     g_fusion.min_sources = MIN_FUSION_SOURCES;
@@ -78,9 +78,9 @@ int gps_fusion_init(void) {
     }
     
     g_fusion_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_geofence_mutex);
     
-    printf("INFO: "GPS fusion system initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS fusion system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -90,13 +90,13 @@ int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_geofence_mutex);
     
     // Check if source already exists
-    int existing_index = find_fusion_source_by_name(source_name\n"\n"\n"\n"\n"\n"\n"\n");
+    int existing_index = find_fusion_source_by_name(source_name);
     if (existing_index >= 0) {
-        pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("WARN: "GPS fusion source '%s' already registered", source_name\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_geofence_mutex);
+        LOGX_WARN_MSG("GPS fusion source '%s' already registered", source_name);
         return AUTONOMY_ERROR_ALREADY_EXISTS;
     }
     
@@ -110,18 +110,18 @@ int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type
     }
     
     if (source_index < 0) {
-        pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("ERROR: "No free slots for GPS fusion source"\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_geofence_mutex);
+        LOGX_ERROR_MSG("No free slots for GPS fusion source");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
     // Initialize fusion source
     gps_fusion_source_t *source = &g_fusion.sources[source_index];
     source->active = true;
-    safe_strncpy(source->name, source_name, sizeof(source->name)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(source->name, source_name, sizeof(source->name));
     source->name[sizeof(source->name) - 1] = '\0';
     source->source_type = source_type;
-    source->registration_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    source->registration_time = time(NULL);
     source->last_update = 0;
     source->last_gps_data.timestamp = 0;
     source->last_gps_data.lat = 0.0;
@@ -135,9 +135,9 @@ int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type
     
     g_fusion.source_count++;
     
-    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_geofence_mutex);
     
-    printf("INFO: "Added GPS fusion source '%s' (type: %d)", source_name, source_type\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Added GPS fusion source '%s' (type: %d)", source_name, source_type);
     return AUTONOMY_SUCCESS;
 }
 
@@ -147,26 +147,26 @@ int gps_fusion_update_source(const char *source_name, const gps_data_t *gps_data
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_geofence_mutex);
     
     // Find source
-    int source_index = find_fusion_source_by_name(source_name\n"\n"\n"\n"\n"\n"\n"\n");
+    int source_index = find_fusion_source_by_name(source_name);
     if (source_index < 0) {
-        pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("WARN: "GPS fusion source '%s' not found", source_name\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_geofence_mutex);
+        LOGX_WARN_MSG("GPS fusion source '%s' not found", source_name);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     gps_fusion_source_t *source = &g_fusion.sources[source_index];
     
     // Update source data
-    memcpy(&source->last_gps_data, gps_data, sizeof(gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    source->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(&source->last_gps_data, gps_data, sizeof(gps_data_t));
+    source->last_update = time(NULL);
     
     // Update source weight and reliability
-    update_source_metrics(source, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+    update_source_metrics(source, gps_data);
     
-    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_geofence_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -176,13 +176,13 @@ void update_source_metrics(gps_fusion_source_t *source, const gps_data_t *gps_da
     // Calculate accuracy-based weight
     double accuracy_weight = 1.0; // Use configurable value
     if (gps_data->accuracy > 0) {
-        accuracy_weight = 1.0 / (1.0 + gps_data->accuracy / 10.0\n"\n"\n"\n"\n"\n"\n"\n");
+        accuracy_weight = 1.0 / (1.0 + gps_data->accuracy / 10.0);
     }
     
     // Calculate satellite-based weight
     double satellite_weight = 1.0; // Use configurable value
     if (gps_data->satellites > 0) {
-        satellite_weight = fmin(gps_data->satellites / 10.0, 1.0\n"\n"\n"\n"\n"\n"\n"\n");
+        satellite_weight = fmin(gps_data->satellites / 10.0, 1.0);
     }
     
     // Calculate fix quality weight
@@ -198,7 +198,7 @@ void update_source_metrics(gps_fusion_source_t *source, const gps_data_t *gps_da
     }
     
     // Calculate age-based weight
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     double age_weight = 1.0; // Use configurable value
     if (gps_data->timestamp > 0) {
         int age = now - gps_data->timestamp;
@@ -212,7 +212,7 @@ void update_source_metrics(gps_fusion_source_t *source, const gps_data_t *gps_da
                      fix_quality_weight * 0.3 + age_weight * 0.1;
     
     // Update reliability based on consistency
-    update_source_reliability(source\n"\n"\n"\n"\n"\n"\n"\n");
+    update_source_reliability(source);
 }
 
 // Update source reliability
@@ -236,7 +236,7 @@ void update_source_reliability(gps_fusion_source_t *source) {
     }
     
     // Reduce reliability for old data
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     if (source->last_gps_data.timestamp > 0) {
         int age = now - source->last_gps_data.timestamp;
         if (age > 60) {
@@ -253,18 +253,18 @@ int gps_fusion_perform_fusion(gps_data_t *fused_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_geofence_mutex);
     
     // Check if we have enough sources
     if (g_fusion.source_count < g_fusion.min_sources) {
-        pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_geofence_mutex);
         return AUTONOMY_ERROR_NO_DATA;
     }
     
     // Check if enough time has passed since last fusion
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     if ((now - g_fusion.last_fusion) < g_fusion.update_interval) {
-        pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_geofence_mutex);
         return AUTONOMY_ERROR_NO_DATA;
     }
     
@@ -273,41 +273,41 @@ int gps_fusion_perform_fusion(gps_data_t *fused_data) {
     
     switch (g_fusion.fusion_algorithm) {
         case FUSION_ALGORITHM_WEIGHTED_AVERAGE:
-            fusion_result = perform_weighted_average_fusion(fused_data\n"\n"\n"\n"\n"\n"\n"\n");
+            fusion_result = perform_weighted_average_fusion(fused_data);
             break;
         case FUSION_ALGORITHM_KALMAN_FILTER:
-            fusion_result = perform_kalman_filter_fusion(fused_data\n"\n"\n"\n"\n"\n"\n"\n");
+            fusion_result = perform_kalman_filter_fusion(fused_data);
             break;
         case FUSION_ALGORITHM_LEAST_SQUARES:
-            fusion_result = perform_least_squares_fusion(fused_data\n"\n"\n"\n"\n"\n"\n"\n");
+            fusion_result = perform_least_squares_fusion(fused_data);
             break;
         default:
-            fusion_result = perform_weighted_average_fusion(fused_data\n"\n"\n"\n"\n"\n"\n"\n");
+            fusion_result = perform_weighted_average_fusion(fused_data);
             break;
     }
     
     if (fusion_result == AUTONOMY_SUCCESS) {
         // Add to fusion history
-        add_fusion_history(fused_data\n"\n"\n"\n"\n"\n"\n"\n");
+        add_fusion_history(fused_data);
         
         g_fusion.fusion_count++;
         g_fusion.last_fusion = now;
         
         // Calculate fusion quality
-        g_fusion.fusion_quality = calculate_fusion_quality(\n"\n"\n"\n"\n"\n"\n"\n");
+        g_fusion.fusion_quality = calculate_fusion_quality();
         
-        printf("DEBUG: "GPS fusion completed: lat=%.6f, lon=%.6f, accuracy=%.1fm, quality=%.3f", 
-                   fused_data->lat, fused_data->lon, fused_data->accuracy, g_fusion.fusion_quality\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("GPS fusion completed: lat=%.6f, lon=%.6f, accuracy=%.1fm, quality=%.3f", 
+                   fused_data->lat, fused_data->lon, fused_data->accuracy, g_fusion.fusion_quality);
     }
     
-    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_geofence_mutex);
     
     return fusion_result;
 }
 
 // Perform weighted average fusion
 static int perform_weighted_average_fusion(gps_data_t *fused_data) {
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     double total_weight = 0.0; // Use configurable value
     double weighted_lat = 0.0; // Use configurable value
     double weighted_lon = 0.0; // Use configurable value
@@ -402,13 +402,13 @@ static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
     double measurements[MAX_FUSION_SOURCES][3]; // lat, lon, alt
     double measurement_noise[MAX_FUSION_SOURCES];
     int measurement_count = 0; // Use configurable value
-    time_t current_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t current_time = time(NULL);
     
     for (int i = 0; i < MAX_FUSION_SOURCES && measurement_count < g_fusion.max_sources; i++) {
         if (!g_fusion.sources[i].active) continue;
         
         const gps_fusion_source_t *source = &g_fusion.sources[i];
-        double age = difftime(current_time, source->last_update\n"\n"\n"\n"\n"\n"\n"\n");
+        double age = difftime(current_time, source->last_update);
         
         if (age > g_fusion.max_source_age || source->weight < g_fusion.weight_threshold) {
             continue;
@@ -453,7 +453,7 @@ static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
     }
     
     // Time step
-    double dt = difftime(current_time, g_kalman_state.last_update\n"\n"\n"\n"\n"\n"\n"\n");
+    double dt = difftime(current_time, g_kalman_state.last_update);
     if (dt <= 0) dt = 1.0; // Use configurable value
     
     // State transition matrix F
@@ -488,10 +488,10 @@ static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
     
     // P_pred = F * P * F' + Q
     double temp[36], P_pred[36];
-    matrix_multiply_6x6(F, g_kalman_state.covariance, temp\n"\n"\n"\n"\n"\n"\n"\n");
+    matrix_multiply_6x6(F, g_kalman_state.covariance, temp);
     // Note: F' = F for our transition matrix
-    matrix_multiply_6x6(temp, F, P_pred\n"\n"\n"\n"\n"\n"\n"\n");
-    matrix_add_6x6(P_pred, Q, P_pred\n"\n"\n"\n"\n"\n"\n"\n");
+    matrix_multiply_6x6(temp, F, P_pred);
+    matrix_add_6x6(P_pred, Q, P_pred);
     
     // Update step - fuse all measurements
     for (int m = 0; m < measurement_count; m++) {
@@ -561,12 +561,12 @@ static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
                 }
             }
         }
-        matrix_multiply_6x6(I_KH, P_pred, P_pred\n"\n"\n"\n"\n"\n"\n"\n");
+        matrix_multiply_6x6(I_KH, P_pred, P_pred);
     }
     
     // Store updated state
-    memcpy(g_kalman_state.state, x_pred, sizeof(x_pred)\n"\n"\n"\n"\n"\n"\n"\n");
-    memcpy(g_kalman_state.covariance, P_pred, sizeof(P_pred)\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(g_kalman_state.state, x_pred, sizeof(x_pred));
+    memcpy(g_kalman_state.covariance, P_pred, sizeof(P_pred));
     g_kalman_state.last_update = current_time;
     
     // Output fused data
@@ -574,12 +574,12 @@ static int perform_kalman_filter_fusion(gps_data_t *fused_data) {
     fused_data->lon = g_kalman_state.state[1];
     fused_data->altitude = g_kalman_state.state[2];
     fused_data->speed = sqrt(g_kalman_state.state[3]*g_kalman_state.state[3] + 
-                            g_kalman_state.state[4]*g_kalman_state.state[4]\n"\n"\n"\n"\n"\n"\n"\n");
+                            g_kalman_state.state[4]*g_kalman_state.state[4]);
     
     // Calculate accuracy from covariance
     fused_data->accuracy = sqrt(g_kalman_state.covariance[0] + 
                                g_kalman_state.covariance[7] + 
-                               g_kalman_state.covariance[14]\n"\n"\n"\n"\n"\n"\n"\n");
+                               g_kalman_state.covariance[14]);
     
     fused_data->timestamp = current_time;
     fused_data->source_type = GPS_SOURCE_COMBINED;
@@ -599,13 +599,13 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
     double measurements[MAX_FUSION_SOURCES][3]; // lat, lon, alt
     double weights[MAX_FUSION_SOURCES];
     int measurement_count = 0; // Use configurable value
-    time_t current_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t current_time = time(NULL);
     
     for (int i = 0; i < MAX_FUSION_SOURCES && measurement_count < g_fusion.max_sources; i++) {
         if (!g_fusion.sources[i].active) continue;
         
         const gps_fusion_source_t *source = &g_fusion.sources[i];
-        double age = difftime(current_time, source->last_update\n"\n"\n"\n"\n"\n"\n"\n");
+        double age = difftime(current_time, source->last_update);
         
         if (age > g_fusion.max_source_age || source->weight < g_fusion.weight_threshold) {
             continue;
@@ -616,7 +616,7 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
         measurements[measurement_count][2] = source->last_gps_data.altitude;
         
         // Weight based on accuracy and reliability
-        weights[measurement_count] = source->reliability / (source->last_gps_data.accuracy + 1.0\n"\n"\n"\n"\n"\n"\n"\n");
+        weights[measurement_count] = source->reliability / (source->last_gps_data.accuracy + 1.0);
         measurement_count++;
     }
     
@@ -670,7 +670,7 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
             // Accumulate normal equations
             for (int j = 0; j < 3; j++) {
                 for (int k = 0; k < 3; k++) {
-                    AtWA[j*3 + k] += w * (j == k ? 1.0 : 0.0\n"\n"\n"\n"\n"\n"\n"\n");
+                    AtWA[j*3 + k] += w * (j == k ? 1.0 : 0.0);
                 }
                 AtWb[j] += w * measurements[i][j];
             }
@@ -680,7 +680,7 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
         // For 3x3 system, we can use direct solution
         double det = AtWA[0] * (AtWA[4]*AtWA[8] - AtWA[5]*AtWA[7]) -
                     AtWA[1] * (AtWA[3]*AtWA[8] - AtWA[5]*AtWA[6]) +
-                    AtWA[2] * (AtWA[3]*AtWA[7] - AtWA[4]*AtWA[6]\n"\n"\n"\n"\n"\n"\n"\n");
+                    AtWA[2] * (AtWA[3]*AtWA[7] - AtWA[4]*AtWA[6]);
         
         if (fabs(det) < 1e-10) {
             // Singular matrix, use current estimate
@@ -712,7 +712,7 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
         // Check convergence
         double update_norm = sqrt(delta_x[0]*delta_x[0] + 
                                  delta_x[1]*delta_x[1] + 
-                                 delta_x[2]*delta_x[2]\n"\n"\n"\n"\n"\n"\n"\n");
+                                 delta_x[2]*delta_x[2]);
         
         // Update estimate
         x_est[0] += delta_x[0];
@@ -732,10 +732,10 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
         r[1] = measurements[i][1] - x_est[1];
         r[2] = measurements[i][2] - x_est[2];
         
-        residual_sum += weights[i] * (r[0]*r[0] + r[1]*r[1] + r[2]*r[2]\n"\n"\n"\n"\n"\n"\n"\n");
+        residual_sum += weights[i] * (r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
     }
     
-    double rmse = sqrt(residual_sum / (measurement_count * 3.0)\n"\n"\n"\n"\n"\n"\n"\n");
+    double rmse = sqrt(residual_sum / (measurement_count * 3.0));
     
     // Output fused data
     fused_data->lat = x_est[0];
@@ -749,13 +749,13 @@ static int perform_least_squares_fusion(gps_data_t *fused_data) {
     
     // Estimate speed from recent history if available
     if (g_fusion.history_size > 0 && g_fusion.fusion_history[0].timestamp > 0) {
-        double dt = difftime(current_time, g_fusion.fusion_history[0].timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+        double dt = difftime(current_time, g_fusion.fusion_history[0].timestamp);
         if (dt > 0 && dt < 10) { // Only if recent
             double dlat = x_est[0] - g_fusion.fusion_history[0].lat;
             double dlon = x_est[1] - g_fusion.fusion_history[0].lon;
             // Convert to meters (approximate)
             double dx = dlat * 111000;
-            double dy = dlon * 111000 * cos(x_est[0] * M_PI / 180\n"\n"\n"\n"\n"\n"\n"\n");
+            double dy = dlon * 111000 * cos(x_est[0] * M_PI / 180);
             fused_data->speed = sqrt(dx*dx + dy*dy) / dt;
         } else {
             fused_data->speed = 0;
@@ -801,7 +801,7 @@ void add_fusion_history(const gps_data_t *fused_data) {
     // Shift history array
     for (int i = g_fusion.history_size - 1; i > 0; i--) {
         memcpy(&g_fusion.fusion_history[i], &g_fusion.fusion_history[i-1], 
-               sizeof(gps_fusion_record_t)\n"\n"\n"\n"\n"\n"\n"\n");
+               sizeof(gps_fusion_record_t));
     }
     
     // Add new record
@@ -831,7 +831,7 @@ int gps_fusion_get_status(gps_fusion_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_geofence_mutex);
     
     status->enabled = g_fusion.enabled;
     status->fusion_algorithm = g_fusion.fusion_algorithm;
@@ -845,13 +845,13 @@ int gps_fusion_get_status(gps_fusion_status_t *status) {
     for (int i = 0; i < MAX_FUSION_SOURCES && active_sources < MAX_FUSION_SOURCES; i++) {
         if (g_fusion.sources[i].active) {
             memcpy(&status->sources[active_sources], &g_fusion.sources[i], 
-                   sizeof(gps_fusion_source_t)\n"\n"\n"\n"\n"\n"\n"\n");
+                   sizeof(gps_fusion_source_t));
             active_sources++;
         }
     }
     status->active_source_count = active_sources;
     
-    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_geofence_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -862,7 +862,7 @@ int gps_fusion_get_config(gps_fusion_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_geofence_mutex);
     
     config->enabled = g_fusion.enabled;
     config->max_sources = g_fusion.max_sources;
@@ -873,7 +873,7 @@ int gps_fusion_get_config(gps_fusion_config_t *config) {
     config->history_size = g_fusion.history_size;
     config->fusion_algorithm = g_fusion.fusion_algorithm;
     
-    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_geofence_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -884,7 +884,7 @@ int gps_fusion_set_config(const gps_fusion_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_geofence_mutex);
     
     g_fusion.enabled = config->enabled;
     g_fusion.max_sources = config->max_sources;
@@ -895,9 +895,9 @@ int gps_fusion_set_config(const gps_fusion_config_t *config) {
     g_fusion.history_size = config->history_size;
     g_fusion.fusion_algorithm = config->fusion_algorithm;
     
-    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_geofence_mutex);
     
-    printf("INFO: "GPS fusion configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS fusion configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -907,11 +907,11 @@ int gps_fusion_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_geofence_mutex);
     g_fusion.enabled = enabled;
-    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_geofence_mutex);
     
-    printf("INFO: "GPS fusion %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS fusion %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -922,10 +922,10 @@ int gps_fusion_force_update(void) {
     }
     
     gps_data_t fused_data;
-    int result = gps_fusion_perform_fusion(&fused_data\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = gps_fusion_perform_fusion(&fused_data);
     
     if (result == AUTONOMY_SUCCESS) {
-        printf("INFO: "Forced GPS fusion update completed"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("Forced GPS fusion update completed");
     }
     
     return result;
@@ -937,7 +937,7 @@ int gps_fusion_reset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_geofence_mutex);
     
     g_fusion.source_count = 0;
     g_fusion.fusion_count = 0;
@@ -960,9 +960,9 @@ int gps_fusion_reset(void) {
         g_fusion.fusion_history[i].source_count = 0;
     }
     
-    pthread_mutex_unlock(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_geofence_mutex);
     
-    printf("INFO: "GPS fusion system reset"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS fusion system reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -972,8 +972,8 @@ void gps_fusion_cleanup(void) {
         return;
     }
     
-    pthread_mutex_destroy(&g_geofence_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_geofence_mutex);
     g_fusion_initialized = false; // Use configurable setting
     
-    printf("INFO: "GPS fusion system cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS fusion system cleaned up");
 }

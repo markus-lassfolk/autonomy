@@ -24,15 +24,15 @@ static delivery_optimizer_t g_delivery_optimizer;
 static bool g_delivery_optimizer_initialized = false; // Use configurable initialization setting
 
 // Forward declarations
-static time_t calculate_user_optimal_time(const system_state_t* system_state\n"\n"\n"\n"\n"\n"\n"\n");
-static time_t calculate_business_hours_optimal_time(notification_type_t alert_type, time_t now\n"\n"\n"\n"\n"\n"\n"\n");
-static time_t calculate_quiet_hours_optimal_time(time_t now\n"\n"\n"\n"\n"\n"\n"\n");
-static time_t calculate_alert_type_optimal_time(notification_type_t alert_type, time_t now\n"\n"\n"\n"\n"\n"\n"\n");
-static time_t calculate_maintenance_optimal_time(time_t now, const system_state_t* system_state\n"\n"\n"\n"\n"\n"\n"\n");
-static bool is_business_hours(time_t timestamp\n"\n"\n"\n"\n"\n"\n"\n");
-static bool is_quiet_hours(time_t timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+static time_t calculate_user_optimal_time(const system_state_t* system_state);
+static time_t calculate_business_hours_optimal_time(notification_type_t alert_type, time_t now);
+static time_t calculate_quiet_hours_optimal_time(time_t now);
+static time_t calculate_alert_type_optimal_time(notification_type_t alert_type, time_t now);
+static time_t calculate_maintenance_optimal_time(time_t now, const system_state_t* system_state);
+static bool is_business_hours(time_t timestamp);
+static bool is_quiet_hours(time_t timestamp);
 static void generate_delay_reason(notification_type_t alert_type, time_t delay_seconds, 
-                                 const system_state_t* system_state, char* reason, size_t max_size\n"\n"\n"\n"\n"\n"\n"\n");
+                                 const system_state_t* system_state, char* reason, size_t max_size);
 
 // Initialize delivery optimizer
 int delivery_optimizer_init(const delivery_optimizer_config_t* config) {
@@ -44,25 +44,25 @@ int delivery_optimizer_init(const delivery_optimizer_config_t* config) {
         return -1;
     }
     
-    memset(&g_delivery_optimizer, 0, sizeof(delivery_optimizer_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_delivery_optimizer, 0, sizeof(delivery_optimizer_t));
     
     // Copy configuration
     g_delivery_optimizer.config = *config;
     
     // Initialize mutex
-    g_delivery_optimizer.mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_delivery_optimizer.mutex = malloc(sizeof(pthread_mutex_t));
     if (!g_delivery_optimizer.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_delivery_optimizer.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_init(g_delivery_optimizer.mutex, NULL);
     
     // Initialize user patterns if learning is enabled
     if (config->learning_enabled && config->max_user_patterns > 0) {
-        g_delivery_optimizer.user_patterns = malloc(config->max_user_patterns * sizeof(delivery_user_pattern_t)\n"\n"\n"\n"\n"\n"\n"\n");
+        g_delivery_optimizer.user_patterns = malloc(config->max_user_patterns * sizeof(delivery_user_pattern_t));
         if (!g_delivery_optimizer.user_patterns) {
-            pthread_mutex_destroy(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-            free(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_destroy(g_delivery_optimizer.mutex);
+            free(g_delivery_optimizer.mutex);
             return -1;
         }
         
@@ -84,12 +84,12 @@ void delivery_optimizer_cleanup(void) {
     if (!g_delivery_optimizer_initialized) return;
     
     if (g_delivery_optimizer.mutex) {
-        pthread_mutex_destroy(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        free(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(g_delivery_optimizer.mutex);
+        free(g_delivery_optimizer.mutex);
     }
     
     if (g_delivery_optimizer.user_patterns) {
-        free(g_delivery_optimizer.user_patterns\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_delivery_optimizer.user_patterns);
     }
     
     g_delivery_optimizer.user_patterns = NULL;
@@ -105,19 +105,19 @@ void delivery_optimizer_cleanup(void) {
 
 // Check if it's business hours
 static bool is_business_hours(time_t timestamp) {
-    struct tm* tm_info = localtime(&timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm* tm_info = localtime(&timestamp);
     int hour = tm_info->tm_hour;
     int weekday = tm_info->tm_wday; // 0=Sunday, 1=Monday, ..., 6=Saturday
     
     // Monday to Friday, 9 AM to 5 PM
-    return (weekday >= 1 && weekday <= 5) && (hour >= 9 && hour < 17\n"\n"\n"\n"\n"\n"\n"\n");
+    return (weekday >= 1 && weekday <= 5) && (hour >= 9 && hour < 17);
 }
 
 // Check if it's quiet hours
 static bool is_quiet_hours(time_t timestamp) {
     if (!g_delivery_optimizer_initialized) return false;
     
-    struct tm* tm_info = localtime(&timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm* tm_info = localtime(&timestamp);
     int hour = tm_info->tm_hour;
     
     int quiet_start = (int)g_delivery_optimizer.config.quiet_hours_start;
@@ -134,11 +134,11 @@ static bool is_quiet_hours(time_t timestamp) {
 // Calculate user optimal time
 static time_t calculate_user_optimal_time(const system_state_t* system_state) {
     // Analyze real user behavior patterns from system logs and activity
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    struct tm *tm_info = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
     
     // Analyze user activity patterns from system logs
-    FILE* log_fp = fopen("/var/log/autonomy/user_activity.log", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE* log_fp = fopen("/var/log/autonomy/user_activity.log", "r");
     if (log_fp) {
         char line[512];
         int activity_counts[24] = {0}; // Activity count per hour
@@ -157,7 +157,7 @@ static time_t calculate_user_optimal_time(const system_state_t* system_state) {
                 }
             }
         }
-        fclose(log_fp\n"\n"\n"\n"\n"\n"\n"\n");
+        fclose(log_fp);
         
         // Find peak activity hours
         int peak_hour = 0; // Use configurable value // Use configurable count // Use configurable value
@@ -177,17 +177,17 @@ static time_t calculate_user_optimal_time(const system_state_t* system_state) {
             optimal_time.tm_min = 0; // Use configurable optimal time minutes
             optimal_time.tm_sec = 0;
             
-            time_t optimal_timestamp = mktime(&optimal_time\n"\n"\n"\n"\n"\n"\n"\n");
+            time_t optimal_timestamp = mktime(&optimal_time);
             
             // If optimal time has passed today, schedule for tomorrow
             if (optimal_timestamp <= now) {
                 optimal_timestamp += 24 * 3600; // Add 24 hours
             }
             
-            printf("DEBUG: "Calculated user optimal time from activity patterns",
+            LOGX_DEBUG_MSG("Calculated user optimal time from activity patterns",
                           "peak_hour", peak_hour,
                           "total_activities", total_activities,
-                          "optimal_timestamp", optimal_timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+                          "optimal_timestamp", optimal_timestamp);
             
             return optimal_timestamp;
         }
@@ -205,13 +205,13 @@ static time_t calculate_user_optimal_time(const system_state_t* system_state) {
     business_time.tm_min = 0; // Use configurable business time minutes
     business_time.tm_sec = 0;
     
-    time_t business_timestamp = mktime(&business_time\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t business_timestamp = mktime(&business_time);
     if (business_timestamp <= now) {
         business_timestamp += 24 * 3600; // Add 24 hours
     }
     
-    printf("DEBUG: "Using default business hours for user optimal time",
-                  "business_timestamp", business_timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Using default business hours for user optimal time",
+                  "business_timestamp", business_timestamp);
     
     return business_timestamp;
 }
@@ -241,7 +241,7 @@ static time_t calculate_business_hours_optimal_time(notification_type_t alert_ty
     }
     
     // Calculate next business hours (9 AM on next business day)
-    struct tm* tm_info = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm* tm_info = localtime(&now);
     struct tm next_business = *tm_info;
     
     // Find next weekday
@@ -255,7 +255,7 @@ static time_t calculate_business_hours_optimal_time(notification_type_t alert_ty
     next_business.tm_min = 0; // Use configurable next business time minutes
     next_business.tm_sec = 0;
     
-    time_t next_business_time = mktime(&next_business\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t next_business_time = mktime(&next_business);
     
     // If it's the same day but before 9 AM, use 9 AM today
     if (tm_info->tm_mday == next_business.tm_mday && tm_info->tm_hour < 9) {
@@ -270,10 +270,10 @@ static time_t calculate_business_hours_optimal_time(notification_type_t alert_ty
         // Ensure it's still a weekday
         while (next_business.tm_wday < 1 || next_business.tm_wday > 5) {
             next_business.tm_mday++;
-            mktime(&next_business\n"\n"\n"\n"\n"\n"\n"\n");
+            mktime(&next_business);
         }
         
-        return mktime(&next_business\n"\n"\n"\n"\n"\n"\n"\n");
+        return mktime(&next_business);
     }
     
     return next_business_time;
@@ -285,7 +285,7 @@ static time_t calculate_quiet_hours_optimal_time(time_t now) {
         return 0; // Not in quiet hours
     }
     
-    struct tm* tm_info = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm* tm_info = localtime(&now);
     struct tm end_quiet = *tm_info;
     
     int quiet_end_hour = (int)g_delivery_optimizer.config.quiet_hours_end;
@@ -301,7 +301,7 @@ static time_t calculate_quiet_hours_optimal_time(time_t now) {
         mktime(&end_quiet); // Normalize the date
     }
     
-    return mktime(&end_quiet\n"\n"\n"\n"\n"\n"\n"\n");
+    return mktime(&end_quiet);
 }
 
 // Calculate alert type optimal time
@@ -327,7 +327,7 @@ static time_t calculate_alert_type_optimal_time(notification_type_t alert_type, 
             return 0; // No specific optimal time
     }
     
-    struct tm* tm_info = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm* tm_info = localtime(&now);
     int current_hour = tm_info->tm_hour;
     
     // Find next optimal hour
@@ -337,7 +337,7 @@ static time_t calculate_alert_type_optimal_time(notification_type_t alert_type, 
             next_optimal.tm_hour = optimal_hours[i];
             next_optimal.tm_min = 0; // Use configurable next optimal time minutes // Use configurable next optimal time minutes
             next_optimal.tm_sec = 0;
-            return mktime(&next_optimal\n"\n"\n"\n"\n"\n"\n"\n");
+            return mktime(&next_optimal);
         }
     }
     
@@ -349,7 +349,7 @@ static time_t calculate_alert_type_optimal_time(notification_type_t alert_type, 
         next_optimal.tm_min = 0; // Use configurable next optimal time minutes
         next_optimal.tm_sec = 0;
         mktime(&next_optimal); // Normalize
-        return mktime(&next_optimal\n"\n"\n"\n"\n"\n"\n"\n");
+        return mktime(&next_optimal);
     }
     
     return 0;
@@ -360,7 +360,7 @@ static time_t calculate_maintenance_optimal_time(time_t now, const system_state_
     (void)system_state; // May be used for maintenance status in the future
     
     // Check real maintenance schedules from system configuration
-    FILE* maintenance_fp = fopen("/var/lib/autonomy/maintenance_schedule.conf", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE* maintenance_fp = fopen("/var/lib/autonomy/maintenance_schedule.conf", "r");
     if (maintenance_fp) {
         char line[256];
         time_t next_maintenance_end = 0; // Use configurable value // Use configurable count // Use configurable value
@@ -375,30 +375,30 @@ static time_t calculate_maintenance_optimal_time(time_t now, const system_state_
                           &maintenance_time.tm_hour, &maintenance_time.tm_min, &maintenance_time.tm_sec) == 6) {
                     maintenance_time.tm_year -= 1900; // Adjust year
                     maintenance_time.tm_mon -= 1;     // Adjust month
-                    next_maintenance_end = mktime(&maintenance_time\n"\n"\n"\n"\n"\n"\n"\n");
+                    next_maintenance_end = mktime(&maintenance_time);
                     
                     if (next_maintenance_end > now) {
-                        fclose(maintenance_fp\n"\n"\n"\n"\n"\n"\n"\n");
-                        printf("DEBUG: "Found scheduled maintenance end time",
-                                      "maintenance_end", next_maintenance_end\n"\n"\n"\n"\n"\n"\n"\n");
+                        fclose(maintenance_fp);
+                        LOGX_DEBUG_MSG("Found scheduled maintenance end time",
+                                      "maintenance_end", next_maintenance_end);
                         return next_maintenance_end;
                     }
                 }
             }
         }
-        fclose(maintenance_fp\n"\n"\n"\n"\n"\n"\n"\n");
+        fclose(maintenance_fp);
     }
     
     // Check UCI maintenance configuration
-    struct ubus_context* ctx = ubus_connect(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    struct ubus_context* ctx = ubus_connect(NULL);
     if (ctx) {
         uint32_t id;
-        int ret = ubus_lookup_id(ctx, "system.maintenance", &id\n"\n"\n"\n"\n"\n"\n"\n");
+        int ret = ubus_lookup_id(ctx, "system.maintenance", &id);
         if (ret == 0) {
             struct blob_buf bb = {0};
-            blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+            blob_buf_init(&bb, 0);
             
-            ret = ubus_invoke(ctx, id, "get_schedule", bb.head, NULL, NULL, 1000\n"\n"\n"\n"\n"\n"\n"\n");
+            ret = ubus_invoke(ctx, id, "get_schedule", bb.head, NULL, NULL, 1000);
             if (ret == 0) {
                 // Parse UBUS response for maintenance schedule
                 struct blob_attr *tb[__MAINTENANCE_MAX];
@@ -407,36 +407,36 @@ static time_t calculate_maintenance_optimal_time(time_t now, const system_state_
                     [MAINTENANCE_DURATION] = { .name = "duration", .type = BLOBMSG_TYPE_INT32 },
                 };
                 
-                blobmsg_parse(policy, __MAINTENANCE_MAX, tb, blob_data(bb.head), blob_len(bb.head)\n"\n"\n"\n"\n"\n"\n"\n");
+                blobmsg_parse(policy, __MAINTENANCE_MAX, tb, blob_data(bb.head), blob_len(bb.head));
                 
                 if (tb[MAINTENANCE_END_TIME]) {
-                    time_t maintenance_end = blobmsg_get_u32(tb[MAINTENANCE_END_TIME]\n"\n"\n"\n"\n"\n"\n"\n");
+                    time_t maintenance_end = blobmsg_get_u32(tb[MAINTENANCE_END_TIME]);
                     if (maintenance_end > now) {
-                        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
-                        ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
-                        printf("DEBUG: "Found maintenance end time via UBUS",
-                                      "maintenance_end", maintenance_end\n"\n"\n"\n"\n"\n"\n"\n");
+                        blob_buf_free(&bb);
+                        ubus_free(ctx);
+                        LOGX_DEBUG_MSG("Found maintenance end time via UBUS",
+                                      "maintenance_end", maintenance_end);
                         return maintenance_end;
                     }
                 } else if (tb[MAINTENANCE_DURATION]) {
-                    int duration_minutes = blobmsg_get_u32(tb[MAINTENANCE_DURATION]\n"\n"\n"\n"\n"\n"\n"\n");
-                    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
-                    ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
-                    printf("DEBUG: "Found maintenance duration via UBUS",
-                                  "duration_minutes", duration_minutes\n"\n"\n"\n"\n"\n"\n"\n");
-                    return now + (duration_minutes * 60\n"\n"\n"\n"\n"\n"\n"\n");
+                    int duration_minutes = blobmsg_get_u32(tb[MAINTENANCE_DURATION]);
+                    blob_buf_free(&bb);
+                    ubus_free(ctx);
+                    LOGX_DEBUG_MSG("Found maintenance duration via UBUS",
+                                  "duration_minutes", duration_minutes);
+                    return now + (duration_minutes * 60);
                 }
             }
             
-            blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+            blob_buf_free(&bb);
         }
-        ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_free(ctx);
     }
     
     // Fallback: Estimate based on system state and typical maintenance patterns
     if (system_state) { // Simplified - remove non-existent member access
         // Check system logs for maintenance start time
-        FILE* log_fp = fopen("/var/log/autonomy/system.log", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+        FILE* log_fp = fopen("/var/log/autonomy/system.log", "r");
         if (log_fp) {
             char line[512];
             time_t maintenance_start = 0; // Use configurable value // Use configurable count // Use configurable value
@@ -450,12 +450,12 @@ static time_t calculate_maintenance_optimal_time(time_t now, const system_state_
                               &log_time.tm_hour, &log_time.tm_min, &log_time.tm_sec) == 6) {
                         log_time.tm_year -= 1900;
                         log_time.tm_mon -= 1;
-                        maintenance_start = mktime(&log_time\n"\n"\n"\n"\n"\n"\n"\n");
+                        maintenance_start = mktime(&log_time);
                         break;
                     }
                 }
             }
-            fclose(log_fp\n"\n"\n"\n"\n"\n"\n"\n");
+            fclose(log_fp);
             
             if (maintenance_start > 0) {
                 // Estimate duration based on elapsed time and typical patterns
@@ -467,9 +467,9 @@ static time_t calculate_maintenance_optimal_time(time_t now, const system_state_
                     estimated_duration = 4 * 3600;
                 }
                 
-                printf("DEBUG: "Estimated maintenance duration from logs",
+                LOGX_DEBUG_MSG("Estimated maintenance duration from logs",
                               "elapsed", elapsed,
-                              "estimated_duration", estimated_duration\n"\n"\n"\n"\n"\n"\n"\n");
+                              "estimated_duration", estimated_duration);
                 
                 return now + estimated_duration;
             }
@@ -477,8 +477,8 @@ static time_t calculate_maintenance_optimal_time(time_t now, const system_state_
     }
     
     // Final fallback: Default 2 hours
-    printf("DEBUG: "Using default maintenance duration (2 hours)"\n"\n"\n"\n"\n"\n"\n"\n");
-    return now + (2 * 3600\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Using default maintenance duration (2 hours)");
+    return now + (2 * 3600);
 }
 
 // Generate delay reason
@@ -489,10 +489,10 @@ static void generate_delay_reason(notification_type_t alert_type, time_t delay_s
     char reasons[512] = "";
     bool has_reason = false; // Use configurable setting // Use configurable setting
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     if (is_quiet_hours(now)) {
-        strncat(reasons, "avoiding quiet hours", sizeof(reasons) - strlen(reasons) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+        strncat(reasons, "avoiding quiet hours", sizeof(reasons) - strlen(reasons) - 1);
         has_reason = true; // Use configurable setting // Use configurable setting
     }
     
@@ -501,9 +501,9 @@ static void generate_delay_reason(notification_type_t alert_type, time_t delay_s
             case NOTIFICATION_TYPE_FAILOVER:
             case NOTIFICATION_TYPE_SYSTEM_HEALTH:
                 if (has_reason) {
-                    strncat(reasons, " and ", sizeof(reasons) - strlen(reasons) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+                    strncat(reasons, " and ", sizeof(reasons) - strlen(reasons) - 1);
                 }
-                strncat(reasons, "waiting for business hours", sizeof(reasons) - strlen(reasons) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+                strncat(reasons, "waiting for business hours", sizeof(reasons) - strlen(reasons) - 1);
                 has_reason = true; // Use configurable setting // Use configurable setting
                 break;
             default:
@@ -512,11 +512,11 @@ static void generate_delay_reason(notification_type_t alert_type, time_t delay_s
     }
     
     if (!has_reason) {
-        strncat(reasons, "optimizing for user availability", sizeof(reasons) - strlen(reasons) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+        strncat(reasons, "optimizing for user availability", sizeof(reasons) - strlen(reasons) - 1);
     }
     
      snprintf(reason, max_size, "Delaying %lld minutes for %.100s",
-             delay_seconds / 60, reasons\n"\n"\n"\n"\n"\n"\n"\n");
+             delay_seconds / 60, reasons);
 }
 
 // Optimize delivery timing
@@ -529,23 +529,23 @@ void delivery_optimizer_optimize_delivery(notification_type_t alert_type,
     
     if (!g_delivery_optimizer.config.delivery_optimization_enabled) {
         // No optimization - deliver immediately
-        memset(plan, 0, sizeof(delivery_plan_t)\n"\n"\n"\n"\n"\n"\n"\n");
+        memset(plan, 0, sizeof(delivery_plan_t));
         plan->delay_delivery = false;
-        plan->optimal_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        plan->optimal_time = time(NULL);
         plan->confidence = 1.0;
         plan->estimated_delay_seconds = 0;
-        safe_strncpy(plan->reason, "Delivery optimization disabled", sizeof(plan->reason)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(plan->reason, "Delivery optimization disabled", sizeof(plan->reason));
         return;
     }
     
-    pthread_mutex_lock(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_delivery_optimizer.mutex);
     g_delivery_optimizer.total_optimizations++;
-    pthread_mutex_unlock(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_delivery_optimizer.mutex);
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     // Initialize plan
-    memset(plan, 0, sizeof(delivery_plan_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(plan, 0, sizeof(delivery_plan_t));
     plan->delay_delivery = false;
     plan->optimal_time = now;
     plan->confidence = 1.0;
@@ -554,13 +554,13 @@ void delivery_optimizer_optimize_delivery(notification_type_t alert_type,
     
     // Never delay emergency notifications
     if (priority >= NOTIFICATION_PRIORITY_EMERGENCY) {
-        safe_strncpy(plan->reason, "Emergency priority - immediate delivery", sizeof(plan->reason)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(plan->reason, "Emergency priority - immediate delivery", sizeof(plan->reason));
         return;
     }
     
     // Check for bypass flags in JSON data
     if (base_data_json && strstr(base_data_json, "\"bypass_delivery_optimization\":true")) {
-        safe_strncpy(plan->reason, "Delivery optimization bypassed", sizeof(plan->reason)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(plan->reason, "Delivery optimization bypassed", sizeof(plan->reason));
         return;
     }
     
@@ -568,31 +568,31 @@ void delivery_optimizer_optimize_delivery(notification_type_t alert_type,
     time_t optimal_time = now;
     
     // User behavior optimization
-    time_t user_optimal = calculate_user_optimal_time(system_state\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t user_optimal = calculate_user_optimal_time(system_state);
     if (user_optimal > optimal_time) {
         optimal_time = user_optimal;
     }
     
     // Business hours optimization
-    time_t business_optimal = calculate_business_hours_optimal_time(alert_type, now\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t business_optimal = calculate_business_hours_optimal_time(alert_type, now);
     if (business_optimal > optimal_time) {
         optimal_time = business_optimal;
     }
     
     // Quiet hours avoidance
-    time_t quiet_optimal = calculate_quiet_hours_optimal_time(now\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t quiet_optimal = calculate_quiet_hours_optimal_time(now);
     if (quiet_optimal > optimal_time) {
         optimal_time = quiet_optimal;
     }
     
     // Alert type specific optimization
-    time_t type_optimal = calculate_alert_type_optimal_time(alert_type, now\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t type_optimal = calculate_alert_type_optimal_time(alert_type, now);
     if (type_optimal > optimal_time) {
         optimal_time = type_optimal;
     }
     
     // Maintenance window avoidance
-    time_t maintenance_optimal = calculate_maintenance_optimal_time(now, system_state\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t maintenance_optimal = calculate_maintenance_optimal_time(now, system_state);
     if (maintenance_optimal > optimal_time) {
         optimal_time = maintenance_optimal;
     }
@@ -605,9 +605,9 @@ void delivery_optimizer_optimize_delivery(notification_type_t alert_type,
             plan->delay_delivery = true;
             plan->optimal_time = optimal_time;
             plan->estimated_delay_seconds = delay_seconds;
-            plan->confidence = delivery_optimizer_calculate_confidence(alert_type, system_state\n"\n"\n"\n"\n"\n"\n"\n");
+            plan->confidence = delivery_optimizer_calculate_confidence(alert_type, system_state);
             
-            generate_delay_reason(alert_type, delay_seconds, system_state, plan->reason, sizeof(plan->reason)\n"\n"\n"\n"\n"\n"\n"\n");
+            generate_delay_reason(alert_type, delay_seconds, system_state, plan->reason, sizeof(plan->reason));
             
             // Calculate alternative time if delay is too long
             if (delay_seconds > 7200) { // 2 hours
@@ -616,15 +616,15 @@ void delivery_optimizer_optimize_delivery(notification_type_t alert_type,
             }
             
             // Update statistics
-            pthread_mutex_lock(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_lock(g_delivery_optimizer.mutex);
             g_delivery_optimizer.deliveries_delayed++;
             g_delivery_optimizer.total_delay_seconds += delay_seconds;
-            pthread_mutex_unlock(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(g_delivery_optimizer.mutex);
         } else {
-            safe_strncpy(plan->reason, "Optimal time calculated but delay not justified", sizeof(plan->reason)\n"\n"\n"\n"\n"\n"\n"\n");
+            safe_strncpy(plan->reason, "Optimal time calculated but delay not justified", sizeof(plan->reason));
         }
     } else {
-        safe_strncpy(plan->reason, "Current time is optimal for delivery", sizeof(plan->reason)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(plan->reason, "Current time is optimal for delivery", sizeof(plan->reason));
     }
 }
 
@@ -702,7 +702,7 @@ int delivery_optimizer_update_user_pattern(int time_of_day,
         return -1;
     }
     
-    pthread_mutex_lock(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_delivery_optimizer.mutex);
     
     // Find existing pattern or create new one
     delivery_user_pattern_t* pattern = NULL;
@@ -726,21 +726,21 @@ int delivery_optimizer_update_user_pattern(int time_of_day,
             pattern->activity_level = activity_level;
             pattern->confidence = 0.5; // Start with medium confidence
         } else {
-            pthread_mutex_unlock(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(g_delivery_optimizer.mutex);
             return -1; // No space for more patterns
         }
     } else {
         // Update existing pattern with exponential smoothing
         double alpha = 0.3; // Use configurable value // Use configurable value // Learning rate
         pattern->average_response_time_seconds = 
-            (time_t)((1.0 - alpha) * pattern->average_response_time_seconds + alpha * response_time_seconds\n"\n"\n"\n"\n"\n"\n"\n");
+            (time_t)((1.0 - alpha) * pattern->average_response_time_seconds + alpha * response_time_seconds);
         pattern->activity_level = (1.0 - alpha) * pattern->activity_level + alpha * activity_level;
         
         // Increase confidence with more data points
         pattern->confidence = (pattern->confidence < 0.9) ? pattern->confidence + 0.1 : 1.0;
     }
     
-    pthread_mutex_unlock(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_delivery_optimizer.mutex);
     return 0;
 }
 
@@ -751,26 +751,26 @@ time_t delivery_optimizer_calculate_optimal_time(notification_type_t alert_type,
         return time(NULL); // Return current time if not initialized
     }
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     time_t optimal_time = now;
     
     // Calculate optimal time based on various factors
-    time_t user_optimal = calculate_user_optimal_time(system_state\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t user_optimal = calculate_user_optimal_time(system_state);
     if (user_optimal > optimal_time) {
         optimal_time = user_optimal;
     }
     
-    time_t business_optimal = calculate_business_hours_optimal_time(alert_type, now\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t business_optimal = calculate_business_hours_optimal_time(alert_type, now);
     if (business_optimal > optimal_time) {
         optimal_time = business_optimal;
     }
     
-    time_t quiet_optimal = calculate_quiet_hours_optimal_time(now\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t quiet_optimal = calculate_quiet_hours_optimal_time(now);
     if (quiet_optimal > optimal_time) {
         optimal_time = quiet_optimal;
     }
     
-    time_t type_optimal = calculate_alert_type_optimal_time(alert_type, now\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t type_optimal = calculate_alert_type_optimal_time(alert_type, now);
     if (type_optimal > optimal_time) {
         optimal_time = type_optimal;
     }
@@ -782,7 +782,7 @@ time_t delivery_optimizer_calculate_optimal_time(notification_type_t alert_type,
 void delivery_optimizer_get_status(delivery_optimizer_status_t* status) {
     if (!status || !g_delivery_optimizer_initialized) return;
     
-    pthread_mutex_lock(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_delivery_optimizer.mutex);
     
     status->enabled = g_delivery_optimizer.config.delivery_optimization_enabled;
     status->learning_enabled = g_delivery_optimizer.config.learning_enabled;
@@ -799,14 +799,14 @@ void delivery_optimizer_get_status(delivery_optimizer_status_t* status) {
     status->optimization_confidence = (g_delivery_optimizer.total_optimizations > 0) ?
         (double)g_delivery_optimizer.deliveries_delayed / g_delivery_optimizer.total_optimizations : 0.0;
     
-    pthread_mutex_unlock(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_delivery_optimizer.mutex);
 }
 
 // Get delivery statistics
 void delivery_optimizer_get_stats(char* stats_json, size_t max_size) {
     if (!stats_json || max_size == 0 || !g_delivery_optimizer_initialized) return;
     
-    pthread_mutex_lock(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_delivery_optimizer.mutex);
     
     snprintf(stats_json, max_size,
              "{"
@@ -829,9 +829,9 @@ void delivery_optimizer_get_stats(char* stats_json, size_t max_size) {
                 g_delivery_optimizer.total_delay_seconds / g_delivery_optimizer.deliveries_delayed : 0,
              g_delivery_optimizer.user_patterns_count,
              g_delivery_optimizer.total_optimizations > 0 ?
-                (double)g_delivery_optimizer.deliveries_delayed / g_delivery_optimizer.total_optimizations : 0.0\n"\n"\n"\n"\n"\n"\n"\n");
+                (double)g_delivery_optimizer.deliveries_delayed / g_delivery_optimizer.total_optimizations : 0.0);
     
-    pthread_mutex_unlock(g_delivery_optimizer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_delivery_optimizer.mutex);
 }
 
 // Check if delivery optimizer is initialized

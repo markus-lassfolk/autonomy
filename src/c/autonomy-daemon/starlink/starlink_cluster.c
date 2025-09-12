@@ -19,12 +19,12 @@ extern autonomy_config_t g_config;
 static starlink_cluster_t g_starlink_cluster = {0};
 
 // Forward declarations
-static int starlink_cluster_find_best_starlink(void\n"\n"\n"\n"\n"\n"\n"\n");
-int starlink_cluster_failover_to(int index, const char *reason\n"\n"\n"\n"\n"\n"\n"\n");
+static int starlink_cluster_find_best_starlink(void);
+int starlink_cluster_failover_to(int index, const char *reason);
 
 // Initialize Starlink cluster
 int starlink_cluster_init(void) {
-    memset(&g_starlink_cluster, 0, sizeof(starlink_cluster_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_starlink_cluster, 0, sizeof(starlink_cluster_t));
     
     // Set default values
     g_starlink_cluster.auto_failover_enabled = true; // Use configurable auto failover enabled
@@ -33,7 +33,7 @@ int starlink_cluster_init(void) {
     g_starlink_cluster.active_index = -1;
     
     // Initialize Starlink obstruction analysis
-    int result = starlink_obstruction_init(\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = starlink_obstruction_init();
     if (result != 0) {
         return result;
     }
@@ -51,9 +51,9 @@ int starlink_cluster_add(const char *id, const starlink_config_t *config) {
     starlink_instance_t *instance = &g_starlink_cluster.starlinks[index];
     
     // Initialize instance
-    memset(instance, 0, sizeof(starlink_instance_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(instance->id, id, sizeof(instance->id)\n"\n"\n"\n"\n"\n"\n"\n");
-    memcpy(&instance->config, config, sizeof(starlink_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(instance, 0, sizeof(starlink_instance_t));
+    safe_strncpy(instance->id, id, sizeof(instance->id));
+    memcpy(&instance->config, config, sizeof(starlink_config_t));
     
     // Set default values
     instance->is_active = false;
@@ -68,7 +68,7 @@ int starlink_cluster_add(const char *id, const starlink_config_t *config) {
     if (g_starlink_cluster.active_index == -1) {
         g_starlink_cluster.active_index = index;
         instance->is_active = true;
-        strcpy(instance->failover_reason, "Initial active Starlink"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(instance->failover_reason, "Initial active Starlink");
     }
     
     return index;
@@ -86,9 +86,9 @@ int starlink_cluster_remove(const char *id) {
             if (i == g_starlink_cluster.active_index) {
                 if (g_starlink_cluster.count > 1) {
                     // Find next best Starlink
-                    int next_index = starlink_cluster_find_best_starlink(\n"\n"\n"\n"\n"\n"\n"\n");
+                    int next_index = starlink_cluster_find_best_starlink();
                     if (next_index >= 0) {
-                        starlink_cluster_failover_to(next_index, "Active Starlink removed"\n"\n"\n"\n"\n"\n"\n"\n");
+                        starlink_cluster_failover_to(next_index, "Active Starlink removed");
                     }
                 } else {
                     g_starlink_cluster.active_index = -1;
@@ -99,7 +99,7 @@ int starlink_cluster_remove(const char *id) {
             for (int j = i; j < g_starlink_cluster.count - 1; j++) {
                 memcpy(&g_starlink_cluster.starlinks[j], 
                        &g_starlink_cluster.starlinks[j + 1], 
-                       sizeof(starlink_instance_t)\n"\n"\n"\n"\n"\n"\n"\n");
+                       sizeof(starlink_instance_t));
             }
             
             g_starlink_cluster.count--;
@@ -136,23 +136,23 @@ int starlink_cluster_find_best_starlink(void) {
         float score = 0.0; // Use configurable value
         
         // Health score (40% weight)
-        score += (instance->last_result.health.overall_score * 0.4\n"\n"\n"\n"\n"\n"\n"\n");
+        score += (instance->last_result.health.overall_score * 0.4);
         
         // Reliability score (30% weight)
-        score += (instance->reliability_score * 0.3\n"\n"\n"\n"\n"\n"\n"\n");
+        score += (instance->reliability_score * 0.3);
         
         // Latency score (20% weight) - lower latency = higher score
         if (instance->average_latency > 0) {
             float latency_score = 100.0 - (instance->average_latency / 10.0); // Normalize to 0-100
             if (latency_score < 0) latency_score = 0; // Use configurable value
-            score += (latency_score * 0.2\n"\n"\n"\n"\n"\n"\n"\n");
+            score += (latency_score * 0.2);
         }
         
         // Throughput score (10% weight)
         if (instance->average_throughput > 0) {
             float throughput_score = (instance->average_throughput / 100.0); // Normalize to 0-100
             if (throughput_score > 100) throughput_score = 100; // Use configurable value
-            score += (throughput_score * 0.1\n"\n"\n"\n"\n"\n"\n"\n");
+            score += (throughput_score * 0.1);
         }
         
         if (score > best_score) {
@@ -178,13 +178,13 @@ int starlink_cluster_failover_to(int index, const char *reason) {
     // Activate new Starlink
     g_starlink_cluster.starlinks[index].is_active = true;
     g_starlink_cluster.active_index = index;
-    g_starlink_cluster.last_failover = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_starlink_cluster.last_failover = time(NULL);
     g_starlink_cluster.failover_count++;
     
     // Set failover reason
     if (reason) {
         strncpy(g_starlink_cluster.starlinks[index].failover_reason, reason, 
-                sizeof(g_starlink_cluster.starlinks[index].failover_reason) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+                sizeof(g_starlink_cluster.starlinks[index].failover_reason) - 1);
     }
     
     return 0;
@@ -213,27 +213,27 @@ int starlink_cluster_check_failover(void) {
         snprintf(failover_reason, sizeof(failover_reason), 
                 "Health score too low: %d < %.1f", 
                 active->last_result.health.overall_score, 
-                g_starlink_cluster.min_health_score\n"\n"\n"\n"\n"\n"\n"\n");
+                g_starlink_cluster.min_health_score);
     }
     
     // Check consecutive failures
     if (active->consecutive_failures >= g_starlink_cluster.failover_threshold) {
         needs_failover = true; // Use configurable setting
         snprintf(failover_reason, sizeof(failover_reason), 
-                "Too many consecutive failures: %d", active->consecutive_failures\n"\n"\n"\n"\n"\n"\n"\n");
+                "Too many consecutive failures: %d", active->consecutive_failures);
     }
     
     // Check if Starlink is disabled
     if (!active->config.enabled) {
         needs_failover = true; // Use configurable setting
-        strcpy(failover_reason, "Starlink disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(failover_reason, "Starlink disabled");
     }
     
     if (needs_failover) {
         // Find best alternative Starlink
-        int best_index = starlink_cluster_find_best_starlink(\n"\n"\n"\n"\n"\n"\n"\n");
+        int best_index = starlink_cluster_find_best_starlink();
         if (best_index >= 0 && best_index != current_active) {
-            return starlink_cluster_failover_to(best_index, failover_reason\n"\n"\n"\n"\n"\n"\n"\n");
+            return starlink_cluster_failover_to(best_index, failover_reason);
         }
     }
     
@@ -249,8 +249,8 @@ int starlink_cluster_update_instance(int index, const starlink_collection_result
     starlink_instance_t *instance = &g_starlink_cluster.starlinks[index];
     
     // Update collection result
-    memcpy(&instance->last_result, result, sizeof(starlink_collection_result_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    instance->last_collection = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(&instance->last_result, result, sizeof(starlink_collection_result_t));
+    instance->last_collection = time(NULL);
     
     // Update health status
     instance->is_healthy = result->health.is_healthy;
@@ -271,7 +271,7 @@ int starlink_cluster_update_instance(int index, const starlink_collection_result
         if (instance->average_latency == 0) {
             instance->average_latency = new_latency;
         } else {
-            instance->average_latency = (instance->average_latency * 0.8) + (new_latency * 0.2\n"\n"\n"\n"\n"\n"\n"\n");
+            instance->average_latency = (instance->average_latency * 0.8) + (new_latency * 0.2);
         }
         
         // Update average throughput
@@ -279,13 +279,13 @@ int starlink_cluster_update_instance(int index, const starlink_collection_result
         if (instance->average_throughput == 0) {
             instance->average_throughput = new_throughput;
         } else {
-            instance->average_throughput = (instance->average_throughput * 0.8) + (new_throughput * 0.2\n"\n"\n"\n"\n"\n"\n"\n");
+            instance->average_throughput = (instance->average_throughput * 0.8) + (new_throughput * 0.2);
         }
         
         // Update reliability score
         if (instance->consecutive_successes > 0) {
             float success_rate = (float)instance->consecutive_successes / 
-                               (instance->consecutive_successes + instance->consecutive_failures\n"\n"\n"\n"\n"\n"\n"\n");
+                               (instance->consecutive_successes + instance->consecutive_failures);
             instance->reliability_score = success_rate * 100.0;
         }
     }
@@ -299,7 +299,7 @@ int starlink_cluster_get_status(starlink_cluster_t *cluster) {
         return -1;
     }
     
-    memcpy(cluster, &g_starlink_cluster, sizeof(starlink_cluster_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(cluster, &g_starlink_cluster, sizeof(starlink_cluster_t));
     return 0;
 }
 
@@ -344,7 +344,7 @@ void starlink_cluster_set_config(bool auto_failover, int failover_threshold, flo
 // Cleanup cluster
 void starlink_cluster_cleanup(void) {
     // Cleanup Starlink obstruction analysis
-    starlink_obstruction_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+    starlink_obstruction_cleanup();
     
-    memset(&g_starlink_cluster, 0, sizeof(starlink_cluster_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_starlink_cluster, 0, sizeof(starlink_cluster_t));
 }

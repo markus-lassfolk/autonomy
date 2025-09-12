@@ -19,30 +19,30 @@ static volatile bool g_running = true;
 
 // Signal handler for graceful shutdown
 static void signal_handler(int sig) {
-    printf("INFO: Received signal %d, shutting down gracefully...\n", sig\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Received signal %d, shutting down gracefully...\n", sig);
     g_running = false;
 }
 
 // Example: Initialize snow melt control system
 int example_init_snow_melt_control(void) {
-    printf("=== Starlink Weather-Based Snow Melt Control Example ===\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("=== Starlink Weather-Based Snow Melt Control Example ===\n");
     
     // Initialize the snow melt control system
-    int result = starlink_weather_snow_melt_control_init(\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = starlink_weather_snow_melt_control_init();
     if (result != AUTONOMY_SUCCESS) {
-        printf("ERROR: Failed to initialize snow melt control system: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: Failed to initialize snow melt control system: %d\n", result);
         return result;
     }
     
-    printf("INFO: Snow melt control system initialized successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Snow melt control system initialized successfully\n");
     
     // Initialize UBUS interface (pass NULL context for example)
-    result = starlink_weather_snow_melt_ubus_init(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    result = starlink_weather_snow_melt_ubus_init(NULL);
     if (result != AUTONOMY_SUCCESS) {
-        printf("WARN: Failed to initialize UBUS interface: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("WARN: Failed to initialize UBUS interface: %d\n", result);
         // Continue without UBUS - system will still work
     } else {
-        printf("INFO: UBUS interface initialized successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("INFO: UBUS interface initialized successfully\n");
     }
     
     return AUTONOMY_SUCCESS;
@@ -50,13 +50,13 @@ int example_init_snow_melt_control(void) {
 
 // Example: Configure snow melt control system
 int example_configure_snow_melt_control(void) {
-    printf("INFO: Configuring snow melt control system...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Configuring snow melt control system...\n");
     
     // Get current configuration
     starlink_weather_snow_melt_config_t config;
-    int result = starlink_weather_snow_melt_control_get_config(&config\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = starlink_weather_snow_melt_control_get_config(&config);
     if (result != AUTONOMY_SUCCESS) {
-        printf("ERROR: Failed to get current configuration: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: Failed to get current configuration: %d\n", result);
         return result;
     }
     
@@ -71,34 +71,34 @@ int example_configure_snow_melt_control(void) {
     
     // Set your OpenWeatherMap API key here
     strncpy(config.weather_api_key, "your_openweathermap_api_key_here", 
-            sizeof(config.weather_api_key) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+            sizeof(config.weather_api_key) - 1);
     config.weather_api_key[sizeof(config.weather_api_key) - 1] = '\0';
     
     // Set Starlink dish IP (default is usually 192.168.100.1)
-    safe_strncpy(config.starlink_host, "192.168.100.1", sizeof(config.starlink_host)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(config.starlink_host, "192.168.100.1", sizeof(config.starlink_host));
     config.starlink_host[sizeof(config.starlink_host) - 1] = '\0';
     config.starlink_port = 9200;
     
     // Apply configuration
-    result = starlink_weather_snow_melt_control_set_config(&config\n"\n"\n"\n"\n"\n"\n"\n");
+    result = starlink_weather_snow_melt_control_set_config(&config);
     if (result != AUTONOMY_SUCCESS) {
-        printf("ERROR: Failed to set configuration: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: Failed to set configuration: %d\n", result);
         return result;
     }
     
-    printf("INFO: Snow melt control system configured successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("INFO: Temperature threshold: %.1fC\n", config.temperature_threshold_celsius\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("INFO: Weather check interval: %d minutes\n", config.weather_check_interval_minutes\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("INFO: Preheat duration: %d minutes\n", config.preheat_duration_minutes\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("INFO: Using forecast: %s\n", config.use_forecast ? "Yes" : "No"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("INFO: Starlink host: %s:%d\n", config.starlink_host, config.starlink_port\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Snow melt control system configured successfully\n");
+    printf("INFO: Temperature threshold: %.1fC\n", config.temperature_threshold_celsius);
+    printf("INFO: Weather check interval: %d minutes\n", config.weather_check_interval_minutes);
+    printf("INFO: Preheat duration: %d minutes\n", config.preheat_duration_minutes);
+    printf("INFO: Using forecast: %s\n", config.use_forecast ? "Yes" : "No");
+    printf("INFO: Starlink host: %s:%d\n", config.starlink_host, config.starlink_port);
     
     return AUTONOMY_SUCCESS;
 }
 
 // Example: Monitor snow melt control system
 int example_monitor_snow_melt_control(void) {
-    printf("INFO: Starting snow melt control monitoring...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Starting snow melt control monitoring...\n");
     
     int check_count = 0;
     const int max_checks = 20; // Run for 20 checks (5 hours with 15-minute intervals)
@@ -106,78 +106,78 @@ int example_monitor_snow_melt_control(void) {
     while (g_running && check_count < max_checks) {
         // Get current status
         starlink_weather_snow_melt_status_t status;
-        int result = starlink_weather_snow_melt_control_get_status(&status\n"\n"\n"\n"\n"\n"\n"\n");
+        int result = starlink_weather_snow_melt_control_get_status(&status);
         if (result != AUTONOMY_SUCCESS) {
-            printf("ERROR: Failed to get status: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("ERROR: Failed to get status: %d\n", result);
             sleep(60); // Wait 1 minute before retry
             continue;
         }
         
-        printf("\n=== Snow Melt Control Status (Check #%d) ===\n", check_count + 1\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("System enabled: %s\n", status.enabled ? "Yes" : "No"\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("Current mode: %s\n", starlink_weather_snow_melt_mode_to_string(status.current_mode)\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("Previous mode: %s\n", starlink_weather_snow_melt_mode_to_string(status.previous_mode)\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("Current temperature: %.1fC\n", status.current_temperature\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("Current weather: %s\n", starlink_weather_snow_melt_weather_condition_to_string(status.current_weather)\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("Forecast weather: %s\n", starlink_weather_snow_melt_weather_condition_to_string(status.forecast_weather)\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("Precipitation expected: %s\n", status.precipitation_expected ? "Yes" : "No"\n"\n"\n"\n"\n"\n"\n"\n");
-         printf("Last weather check: %lld\n", (long long)status.last_weather_check\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("Last weather description: %s\n", status.last_weather_description\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("\n=== Snow Melt Control Status (Check #%d) ===\n", check_count + 1);
+        printf("System enabled: %s\n", status.enabled ? "Yes" : "No");
+        printf("Current mode: %s\n", starlink_weather_snow_melt_mode_to_string(status.current_mode));
+        printf("Previous mode: %s\n", starlink_weather_snow_melt_mode_to_string(status.previous_mode));
+        printf("Current temperature: %.1fC\n", status.current_temperature);
+        printf("Current weather: %s\n", starlink_weather_snow_melt_weather_condition_to_string(status.current_weather));
+        printf("Forecast weather: %s\n", starlink_weather_snow_melt_weather_condition_to_string(status.forecast_weather));
+        printf("Precipitation expected: %s\n", status.precipitation_expected ? "Yes" : "No");
+         printf("Last weather check: %lld\n", (long long)status.last_weather_check);
+        printf("Last weather description: %s\n", status.last_weather_description);
         
         if (status.current_mode == SNOW_MELT_PREHEAT) {
-            printf("Preheat remaining: %d minutes\n", status.preheat_remaining_minutes\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("Preheat remaining: %d minutes\n", status.preheat_remaining_minutes);
         }
         
         // Force a weather check and mode update
-        printf("INFO: Forcing weather check and mode update...\n"\n"\n"\n"\n"\n"\n"\n"\n");
-        result = starlink_weather_snow_melt_control_force_update(\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("INFO: Forcing weather check and mode update...\n");
+        result = starlink_weather_snow_melt_control_force_update();
         if (result != AUTONOMY_SUCCESS) {
-            printf("WARN: Weather check failed: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("WARN: Weather check failed: %d\n", result);
         } else {
-            printf("INFO: Weather check completed successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("INFO: Weather check completed successfully\n");
         }
         
         check_count++;
         
         if (g_running && check_count < max_checks) {
-            printf("INFO: Waiting 15 minutes until next check...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("INFO: Waiting 15 minutes until next check...\n");
             sleep(900); // Wait 15 minutes
         }
     }
     
-    printf("INFO: Monitoring completed after %d checks\n", check_count\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Monitoring completed after %d checks\n", check_count);
     return AUTONOMY_SUCCESS;
 }
 
 // Example: Get and display statistics
 int example_show_statistics(void) {
-    printf("INFO: Getting snow melt control statistics...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Getting snow melt control statistics...\n");
     
     starlink_weather_snow_melt_stats_t stats;
-    int result = starlink_weather_snow_melt_control_get_statistics(&stats\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = starlink_weather_snow_melt_control_get_statistics(&stats);
     if (result != AUTONOMY_SUCCESS) {
-        printf("ERROR: Failed to get statistics: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: Failed to get statistics: %d\n", result);
         return result;
     }
     
-    printf("\n=== Snow Melt Control Statistics ===\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Total mode changes: %d\n", stats.total_mode_changes\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Automatic activations: %d\n", stats.automatic_activations\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Preheat activations: %d\n", stats.preheat_activations\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Manual activations: %d\n", stats.manual_activations\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Weather checks performed: %d\n", stats.weather_checks_performed\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Successful weather checks: %d\n", stats.successful_weather_checks\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Failed weather checks: %d\n", stats.failed_weather_checks\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Average weather check time: %.2f ms\n", stats.average_weather_check_time_ms\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("\n=== Snow Melt Control Statistics ===\n");
+    printf("Total mode changes: %d\n", stats.total_mode_changes);
+    printf("Automatic activations: %d\n", stats.automatic_activations);
+    printf("Preheat activations: %d\n", stats.preheat_activations);
+    printf("Manual activations: %d\n", stats.manual_activations);
+    printf("Weather checks performed: %d\n", stats.weather_checks_performed);
+    printf("Successful weather checks: %d\n", stats.successful_weather_checks);
+    printf("Failed weather checks: %d\n", stats.failed_weather_checks);
+    printf("Average weather check time: %.2f ms\n", stats.average_weather_check_time_ms);
     
     if (stats.last_automatic_activation > 0) {
-         printf("Last automatic activation: %lld\n", (long long)stats.last_automatic_activation\n"\n"\n"\n"\n"\n"\n"\n");
+         printf("Last automatic activation: %lld\n", (long long)stats.last_automatic_activation);
     }
     if (stats.last_preheat_activation > 0) {
-        printf("Last preheat activation: %lld\n", (long long)stats.last_preheat_activation\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("Last preheat activation: %lld\n", (long long)stats.last_preheat_activation);
     }
     if (stats.last_manual_activation > 0) {
-        printf("Last manual activation: %lld\n", (long long)stats.last_manual_activation\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("Last manual activation: %lld\n", (long long)stats.last_manual_activation);
     }
     
     return AUTONOMY_SUCCESS;
@@ -185,7 +185,7 @@ int example_show_statistics(void) {
 
 // Example: Manual mode control
 int example_manual_mode_control(void) {
-    printf("INFO: Testing manual mode control...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Testing manual mode control...\n");
     
     // Test setting different modes
     snow_melt_mode_t test_modes[] = {
@@ -203,25 +203,25 @@ int example_manual_mode_control(void) {
     };
     
     for (int i = 0; i < 4; i++) {
-        printf("INFO: Setting mode to %s...\n", mode_names[i]\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("INFO: Setting mode to %s...\n", mode_names[i]);
         
-        int result = starlink_weather_snow_melt_control_set_mode(test_modes[i]\n"\n"\n"\n"\n"\n"\n"\n");
+        int result = starlink_weather_snow_melt_control_set_mode(test_modes[i]);
         if (result != AUTONOMY_SUCCESS) {
-            printf("ERROR: Failed to set mode %s: %d\n", mode_names[i], result\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("ERROR: Failed to set mode %s: %d\n", mode_names[i], result);
         } else {
-            printf("INFO: Successfully set mode to %s\n", mode_names[i]\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("INFO: Successfully set mode to %s\n", mode_names[i]);
         }
         
         sleep(5); // Wait 5 seconds between mode changes
     }
     
     // Set back to automatic mode
-    printf("INFO: Setting mode back to AUTOMATIC...\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    int result = starlink_weather_snow_melt_control_set_mode(SNOW_MELT_AUTOMATIC\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Setting mode back to AUTOMATIC...\n");
+    int result = starlink_weather_snow_melt_control_set_mode(SNOW_MELT_AUTOMATIC);
     if (result != AUTONOMY_SUCCESS) {
-        printf("ERROR: Failed to set mode back to AUTOMATIC: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: Failed to set mode back to AUTOMATIC: %d\n", result);
     } else {
-        printf("INFO: Successfully set mode back to AUTOMATIC\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("INFO: Successfully set mode back to AUTOMATIC\n");
     }
     
     return AUTONOMY_SUCCESS;
@@ -229,60 +229,60 @@ int example_manual_mode_control(void) {
 
 // Example: Cleanup
 void example_cleanup(void) {
-    printf("INFO: Cleaning up snow melt control system...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Cleaning up snow melt control system...\n");
     
     // Cleanup UBUS interface
-    starlink_weather_snow_melt_ubus_cleanup(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    starlink_weather_snow_melt_ubus_cleanup(NULL);
     
     // Cleanup snow melt control system
-    starlink_weather_snow_melt_control_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+    starlink_weather_snow_melt_control_cleanup();
     
-    printf("INFO: Cleanup completed\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Cleanup completed\n");
 }
 
 // Main example function
 int starlink_weather_snow_melt_example_main(int argc, char *argv[]) {
-    printf("Starlink Weather-Based Snow Melt Control Integration Example\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("============================================================\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Starlink Weather-Based Snow Melt Control Integration Example\n");
+    printf("============================================================\n");
     
     // Set up signal handlers for graceful shutdown
-    signal(SIGINT, signal_handler\n"\n"\n"\n"\n"\n"\n"\n");
-    signal(SIGTERM, signal_handler\n"\n"\n"\n"\n"\n"\n"\n");
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
     
     // Initialize the system
-    int result = example_init_snow_melt_control(\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = example_init_snow_melt_control();
     if (result != AUTONOMY_SUCCESS) {
-        printf("ERROR: Initialization failed: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: Initialization failed: %d\n", result);
         return 1;
     }
     
     // Configure the system
-    result = example_configure_snow_melt_control(\n"\n"\n"\n"\n"\n"\n"\n");
+    result = example_configure_snow_melt_control();
     if (result != AUTONOMY_SUCCESS) {
-        printf("ERROR: Configuration failed: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
-        example_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: Configuration failed: %d\n", result);
+        example_cleanup();
         return 1;
     }
     
     // Test manual mode control
-    result = example_manual_mode_control(\n"\n"\n"\n"\n"\n"\n"\n");
+    result = example_manual_mode_control();
     if (result != AUTONOMY_SUCCESS) {
-        printf("WARN: Manual mode control test failed: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("WARN: Manual mode control test failed: %d\n", result);
     }
     
     // Monitor the system
-    result = example_monitor_snow_melt_control(\n"\n"\n"\n"\n"\n"\n"\n");
+    result = example_monitor_snow_melt_control();
     if (result != AUTONOMY_SUCCESS) {
-        printf("WARN: Monitoring failed: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("WARN: Monitoring failed: %d\n", result);
     }
     
     // Show final statistics
-    example_show_statistics(\n"\n"\n"\n"\n"\n"\n"\n");
+    example_show_statistics();
     
     // Cleanup
-    example_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+    example_cleanup();
     
-    printf("INFO: Example completed successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Example completed successfully\n");
     return 0;
 }
 
@@ -295,32 +295,32 @@ int starlink_weather_snow_melt_example_main(int argc, char *argv[]) {
  * 1. Add initialization in main daemon startup:
  *    ```c
  *    // In autonomy-daemon.c main() function
- *    int result = starlink_weather_snow_melt_control_init(\n"\n"\n"\n"\n"\n"\n"\n");
+ *    int result = starlink_weather_snow_melt_control_init();
  *    if (result != AUTONOMY_SUCCESS) {
- *        printf("ERROR: "Failed to initialize snow melt control: %d", result\n"\n"\n"\n"\n"\n"\n"\n");
+ *        LOGX_ERROR_MSG("Failed to initialize snow melt control: %d", result);
  *    }
  *    
- *    result = starlink_weather_snow_melt_ubus_init(\n"\n"\n"\n"\n"\n"\n"\n");
+ *    result = starlink_weather_snow_melt_ubus_init();
  *    if (result != AUTONOMY_SUCCESS) {
- *        printf("WARN: "Failed to initialize snow melt UBUS: %d", result\n"\n"\n"\n"\n"\n"\n"\n");
+ *        LOGX_WARN_MSG("Failed to initialize snow melt UBUS: %d", result);
  *    }
  *    ```
  * 
  * 2. Add cleanup in main daemon shutdown:
  *    ```c
  *    // In cleanup function
- *    starlink_weather_snow_melt_ubus_cleanup(NULL\n"\n"\n"\n"\n"\n"\n"\n");
- *    starlink_weather_snow_melt_control_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+ *    starlink_weather_snow_melt_ubus_cleanup(NULL);
+ *    starlink_weather_snow_melt_control_cleanup();
  *    ```
  * 
  * 3. Add periodic weather checks in main loop:
  *    ```c
  *    // In main daemon loop
  *    static time_t last_snow_melt_check = 0;
- *    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+ *    time_t now = time(NULL);
  *    
  *    if (now - last_snow_melt_check >= 900) { // Every 15 minutes
- *        starlink_weather_snow_melt_control_force_update(\n"\n"\n"\n"\n"\n"\n"\n");
+ *        starlink_weather_snow_melt_control_force_update();
  *        last_snow_melt_check = now;
  *    }
  *    ```

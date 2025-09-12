@@ -25,21 +25,21 @@ extern autonomy_config_t g_config;
 static service_watchdog_t g_service_watchdog;
 
 // Forward declarations
-int check_service(const char *service\n"\n"\n"\n"\n"\n"\n"\n");
-int check_service_status(const char *service\n"\n"\n"\n"\n"\n"\n"\n");
-int check_service_status_method(const char *service\n"\n"\n"\n"\n"\n"\n"\n");
-int check_process_running(const char *service\n"\n"\n"\n"\n"\n"\n"\n");
-int check_init_script(const char *service\n"\n"\n"\n"\n"\n"\n"\n");
-static int has_recent_activity(const char *service\n"\n"\n"\n"\n"\n"\n"\n");
-int restart_service(const char *service, const char *reason\n"\n"\n"\n"\n"\n"\n"\n");
-static int kill_service(const char *service\n"\n"\n"\n"\n"\n"\n"\n");
-static void send_notification(const char *type, const char *message\n"\n"\n"\n"\n"\n"\n"\n");
+int check_service(const char *service);
+int check_service_status(const char *service);
+int check_service_status_method(const char *service);
+int check_process_running(const char *service);
+int check_init_script(const char *service);
+static int has_recent_activity(const char *service);
+int restart_service(const char *service, const char *reason);
+static int kill_service(const char *service);
+static void send_notification(const char *type, const char *message);
 
 /**
  * Initialize service watchdog
  */
 int service_watchdog_init(void) {
-    memset(&g_service_watchdog, 0, sizeof(service_watchdog_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_service_watchdog, 0, sizeof(service_watchdog_t));
     
     // Set default configuration using UCI config
     g_service_watchdog.config.enabled = true; // Use configurable watchdog setting
@@ -49,10 +49,10 @@ int service_watchdog_init(void) {
     g_service_watchdog.config.restart_cooldown = 300; // Use configurable restart cooldown
     
     // Set default services to monitor
-    strcpy(g_service_watchdog.config.services_to_monitor[0], "nlbwmon"\n"\n"\n"\n"\n"\n"\n"\n");
-    strcpy(g_service_watchdog.config.services_to_monitor[1], "mdcollectd"\n"\n"\n"\n"\n"\n"\n"\n");
-    strcpy(g_service_watchdog.config.services_to_monitor[2], "connchecker"\n"\n"\n"\n"\n"\n"\n"\n");
-    strcpy(g_service_watchdog.config.services_to_monitor[3], "network"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(g_service_watchdog.config.services_to_monitor[0], "nlbwmon");
+    strcpy(g_service_watchdog.config.services_to_monitor[1], "mdcollectd");
+    strcpy(g_service_watchdog.config.services_to_monitor[2], "connchecker");
+    strcpy(g_service_watchdog.config.services_to_monitor[3], "network");
     g_service_watchdog.config.services_count = 4; // Use configurable services count
     
     // Initialize statistics
@@ -73,13 +73,13 @@ int service_watchdog_check(void) {
         return AUTONOMY_SUCCESS;
     }
     
-    g_service_watchdog.stats.last_check_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_service_watchdog.stats.last_check_time = time(NULL);
     
     for (int i = 0; i < g_service_watchdog.config.services_count; i++) {
         const char *service = g_service_watchdog.config.services_to_monitor[i];
         
         if (check_service(service) != 0) {
-            fprintf(stderr, "Service check failed for %s\n", service\n"\n"\n"\n"\n"\n"\n"\n");
+            fprintf(stderr, "Service check failed for %s\n", service);
         }
         
         g_service_watchdog.stats.services_checked++;
@@ -93,20 +93,20 @@ int service_watchdog_check(void) {
  */
 int check_service(const char *service) {
     // Check if service is running
-    int running = check_service_status(service\n"\n"\n"\n"\n"\n"\n"\n");
+    int running = check_service_status(service);
     if (!running) {
-        fprintf(stderr, "Service %s not running\n", service\n"\n"\n"\n"\n"\n"\n"\n");
-        return restart_service(service, "not running"\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "Service %s not running\n", service);
+        return restart_service(service, "not running");
     }
     
     // Check if service has recent log activity
-    int active = has_recent_activity(service\n"\n"\n"\n"\n"\n"\n"\n");
+    int active = has_recent_activity(service);
     if (!active) {
-        fprintf(stderr, "Service %s appears hung (no recent activity)\n", service\n"\n"\n"\n"\n"\n"\n"\n");
-        return restart_service(service, "no recent activity"\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "Service %s appears hung (no recent activity)\n", service);
+        return restart_service(service, "no recent activity");
     }
     
-    fprintf(stderr, "Service %s healthy\n", service\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "Service %s healthy\n", service);
     return AUTONOMY_SUCCESS;
 }
 
@@ -115,13 +115,13 @@ int check_service(const char *service) {
  */
 int check_service_status(const char *service) {
     // Try different methods to check service status
-    int running = check_service_status_method(service\n"\n"\n"\n"\n"\n"\n"\n");
+    int running = check_service_status_method(service);
     if (running) return true;
     
-    running = check_process_running(service\n"\n"\n"\n"\n"\n"\n"\n");
+    running = check_process_running(service);
     if (running) return true;
     
-    running = check_init_script(service\n"\n"\n"\n"\n"\n"\n"\n");
+    running = check_init_script(service);
     return running;
 }
 
@@ -132,15 +132,15 @@ int check_service_status_method(const char *service) {
     char command[256];
     
     // Try systemctl first
-    snprintf(command, sizeof(command), "systemctl is-active %s > /dev/null 2>&1", service\n"\n"\n"\n"\n"\n"\n"\n");
-    int exit_code = system(command\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(command, sizeof(command), "systemctl is-active %s > /dev/null 2>&1", service);
+    int exit_code = system(command);
     if (exit_code == 0) {
         return true;
     }
     
     // Try init.d script
-    snprintf(command, sizeof(command), "/etc/init.d/%s status > /dev/null 2>&1", service\n"\n"\n"\n"\n"\n"\n"\n");
-    exit_code = system(command\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(command, sizeof(command), "/etc/init.d/%s status > /dev/null 2>&1", service);
+    exit_code = system(command);
     if (exit_code == 0) {
         return true;
     }
@@ -153,10 +153,10 @@ int check_service_status_method(const char *service) {
  */
 int check_process_running(const char *service) {
     char command[256];
-    snprintf(command, sizeof(command), "pgrep -f %s > /dev/null 2>&1", service\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(command, sizeof(command), "pgrep -f %s > /dev/null 2>&1", service);
     
-    int exit_code = system(command\n"\n"\n"\n"\n"\n"\n"\n");
-    return (exit_code == 0\n"\n"\n"\n"\n"\n"\n"\n");
+    int exit_code = system(command);
+    return (exit_code == 0);
 }
 
 /**
@@ -164,7 +164,7 @@ int check_process_running(const char *service) {
  */
 int check_init_script(const char *service) {
     char script_path[256];
-    snprintf(script_path, sizeof(script_path), "/etc/init.d/%s", service\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(script_path, sizeof(script_path), "/etc/init.d/%s", service);
     
     struct stat st;
     if (stat(script_path, &st) != 0) {
@@ -178,10 +178,10 @@ int check_init_script(const char *service) {
     
     // Try to run status command
     char command[512];  // Increased buffer size to handle long script paths
-    snprintf(command, sizeof(command), "%s status > /dev/null 2>&1", script_path\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(command, sizeof(command), "%s status > /dev/null 2>&1", script_path);
     
-    int exit_code = system(command\n"\n"\n"\n"\n"\n"\n"\n");
-    return (exit_code == 0\n"\n"\n"\n"\n"\n"\n"\n");
+    int exit_code = system(command);
+    return (exit_code == 0);
 }
 
 /**
@@ -192,9 +192,9 @@ static int has_recent_activity(const char *service) {
     char command[256];
     snprintf(command, sizeof(command), 
             "logread | grep -i %s | tail -1 | awk '{print $1, $2, $3}' | xargs -I {} date -d '{}' +%%s", 
-            service\n"\n"\n"\n"\n"\n"\n"\n");
+            service);
     
-    FILE *pipe = popen(command, "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE *pipe = popen(command, "r");
     if (!pipe) {
         return false;
     }
@@ -202,19 +202,19 @@ static int has_recent_activity(const char *service) {
     char buffer[64];
     time_t last_log_time = 0;
     if (fgets(buffer, sizeof(buffer), pipe) != NULL) {
-        last_log_time = atol(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+        last_log_time = atol(buffer);
     }
-    pclose(pipe\n"\n"\n"\n"\n"\n"\n"\n");
+    pclose(pipe);
     
     if (last_log_time == 0) {
         return false;
     }
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     time_t time_diff = now - last_log_time;
     
     // Consider service active if it had activity within the timeout period
-    return (time_diff < g_service_watchdog.config.service_timeout\n"\n"\n"\n"\n"\n"\n"\n");
+    return (time_diff < g_service_watchdog.config.service_timeout);
 }
 
 /**
@@ -222,51 +222,51 @@ static int has_recent_activity(const char *service) {
  */
 int restart_service(const char *service, const char *reason) {
     if (!g_service_watchdog.config.auto_restart) {
-        fprintf(stderr, "Auto-restart disabled for %s\n", service\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "Auto-restart disabled for %s\n", service);
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Check restart cooldown
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     if (g_service_watchdog.stats.last_restart_time > 0) {
         time_t time_since_restart = now - g_service_watchdog.stats.last_restart_time;
         if (time_since_restart < g_service_watchdog.config.restart_cooldown) {
-            fprintf(stderr, "Service restart cooldown active for %s\n", service\n"\n"\n"\n"\n"\n"\n"\n");
+            fprintf(stderr, "Service restart cooldown active for %s\n", service);
             return AUTONOMY_ERROR_SYSTEM;
         }
     }
     
     // Check restart attempts
     if (g_service_watchdog.stats.services_restarted >= g_service_watchdog.config.max_restart_attempts) {
-        fprintf(stderr, "Maximum restart attempts reached for %s\n", service\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "Maximum restart attempts reached for %s\n", service);
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    fprintf(stderr, "Restarting service %s (reason: %s)\n", service, reason\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "Restarting service %s (reason: %s)\n", service, reason);
     
     char command[256];
     
     // Try systemctl restart first
-    snprintf(command, sizeof(command), "systemctl restart %s > /dev/null 2>&1", service\n"\n"\n"\n"\n"\n"\n"\n");
-    int exit_code = system(command\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(command, sizeof(command), "systemctl restart %s > /dev/null 2>&1", service);
+    int exit_code = system(command);
     
     if (exit_code != 0) {
         // Try init.d script
-        snprintf(command, sizeof(command), "/etc/init.d/%s restart > /dev/null 2>&1", service\n"\n"\n"\n"\n"\n"\n"\n");
-        exit_code = system(command\n"\n"\n"\n"\n"\n"\n"\n");
+        snprintf(command, sizeof(command), "/etc/init.d/%s restart > /dev/null 2>&1", service);
+        exit_code = system(command);
     }
     
     if (exit_code == 0) {
         g_service_watchdog.stats.services_restarted++;
         g_service_watchdog.stats.last_restart_time = now;
         
-        send_notification("fix", "Service restarted successfully"\n"\n"\n"\n"\n"\n"\n"\n");
-        fprintf(stderr, "Service %s restarted successfully\n", service\n"\n"\n"\n"\n"\n"\n"\n");
+        send_notification("fix", "Service restarted successfully");
+        fprintf(stderr, "Service %s restarted successfully\n", service);
         return AUTONOMY_SUCCESS;
     } else {
         // If restart fails, try to kill and restart
-        fprintf(stderr, "Service restart failed for %s, attempting kill and restart\n", service\n"\n"\n"\n"\n"\n"\n"\n");
-        return kill_service(service\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "Service restart failed for %s, attempting kill and restart\n", service);
+        return kill_service(service);
     }
 }
 
@@ -274,24 +274,24 @@ int restart_service(const char *service, const char *reason) {
  * Kill a service and restart it
  */
 static int kill_service(const char *service) {
-    fprintf(stderr, "Killing service %s\n", service\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "Killing service %s\n", service);
     
     char command[256];
     
     // Try to kill the service process
-    snprintf(command, sizeof(command), "pkill -f %s", service\n"\n"\n"\n"\n"\n"\n"\n");
-    int exit_code = system(command\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(command, sizeof(command), "pkill -f %s", service);
+    int exit_code = system(command);
     
     if (exit_code == 0) {
         g_service_watchdog.stats.services_killed++;
         
         // Wait a moment for process to terminate
-        sleep(2\n"\n"\n"\n"\n"\n"\n"\n");
+        sleep(2);
         
         // Try to restart
-        return restart_service(service, "killed and restarting"\n"\n"\n"\n"\n"\n"\n"\n");
+        return restart_service(service, "killed and restarting");
     } else {
-        fprintf(stderr, "Failed to kill service %s\n", service\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "Failed to kill service %s\n", service);
         return AUTONOMY_ERROR_SYSTEM;
     }
 }
@@ -302,11 +302,11 @@ static int kill_service(const char *service) {
 static void send_notification(const char *type, const char *message) {
     // Create notification event
     notification_event_t event = {0};
-    strcpy(event.title, "Service Watchdog Alert"\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(event.message, message, sizeof(event.message)\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(event.title, "Service Watchdog Alert");
+    safe_strncpy(event.message, message, sizeof(event.message));
     event.message[sizeof(event.message) - 1] = '\0';
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
-    event.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    event.timestamp = time(NULL);
     
     // Determine priority based on type
     if (strcmp(type, "critical") == 0) {
@@ -319,10 +319,10 @@ static void send_notification(const char *type, const char *message) {
     
     // Send via notification manager if available
     if (notification_manager_is_initialized()) {
-        notification_manager_send_default(event.type, event.title, event.message\n"\n"\n"\n"\n"\n"\n"\n");
+        notification_manager_send_default(event.type, event.title, event.message);
     } else {
         // Fallback to stderr logging
-        fprintf(stderr, "SERVICE WATCHDOG NOTIFICATION [%s]: %s\n", type, message\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "SERVICE WATCHDOG NOTIFICATION [%s]: %s\n", type, message);
     }
 }
 
@@ -343,7 +343,7 @@ int service_watchdog_get_status(service_watchdog_status_t *status) {
     
     // Copy services to monitor
     for (int i = 0; i < g_service_watchdog.config.services_count; i++) {
-        strcpy(status->services_to_monitor[i], g_service_watchdog.config.services_to_monitor[i]\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(status->services_to_monitor[i], g_service_watchdog.config.services_to_monitor[i]);
     }
     
     status->last_check_time = g_service_watchdog.stats.last_check_time;
@@ -391,7 +391,7 @@ int service_watchdog_set_enabled(bool enabled) {
  * Reset service watchdog
  */
 int service_watchdog_reset(void) {
-    memset(&g_service_watchdog.stats, 0, sizeof(service_watchdog_stats_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_service_watchdog.stats, 0, sizeof(service_watchdog_stats_t));
     return AUTONOMY_SUCCESS;
 }
 

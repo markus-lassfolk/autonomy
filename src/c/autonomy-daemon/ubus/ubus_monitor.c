@@ -23,19 +23,19 @@ extern autonomy_config_t g_config;
 static ubus_monitor_t g_ubus_monitor;
 
 // Forward declarations
-static int test_ubus_response(void\n"\n"\n"\n"\n"\n"\n"\n");
-int check_rpcd_status(void\n"\n"\n"\n"\n"\n"\n"\n");
-int check_ubus_socket(void\n"\n"\n"\n"\n"\n"\n"\n");
-static int count_ubus_services(void\n"\n"\n"\n"\n"\n"\n"\n");
-int restart_rpcd_service(void\n"\n"\n"\n"\n"\n"\n"\n");
-int check_critical_services(void\n"\n"\n"\n"\n"\n"\n"\n");
-static void send_notification(const char *type, const char *message\n"\n"\n"\n"\n"\n"\n"\n");
+static int test_ubus_response(void);
+int check_rpcd_status(void);
+int check_ubus_socket(void);
+static int count_ubus_services(void);
+int restart_rpcd_service(void);
+int check_critical_services(void);
+static void send_notification(const char *type, const char *message);
 
 /**
  * Initialize UBUS monitor
  */
 int ubus_monitor_init(void) {
-    memset(&g_ubus_monitor, 0, sizeof(ubus_monitor_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_ubus_monitor, 0, sizeof(ubus_monitor_t));
     
     // Set default configuration
     g_ubus_monitor.config.enabled = true; // Use configurable ubus monitoring enabled
@@ -46,10 +46,10 @@ int ubus_monitor_init(void) {
     g_ubus_monitor.config.min_services_expected = 20; // Use configurable min services expected
     
     // Set default critical services
-    strcpy(g_ubus_monitor.config.critical_services[0], "system"\n"\n"\n"\n"\n"\n"\n"\n");
-    strcpy(g_ubus_monitor.config.critical_services[1], "uci"\n"\n"\n"\n"\n"\n"\n"\n");
-    strcpy(g_ubus_monitor.config.critical_services[2], "network"\n"\n"\n"\n"\n"\n"\n"\n");
-    strcpy(g_ubus_monitor.config.critical_services[3], "service"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(g_ubus_monitor.config.critical_services[0], "system");
+    strcpy(g_ubus_monitor.config.critical_services[1], "uci");
+    strcpy(g_ubus_monitor.config.critical_services[2], "network");
+    strcpy(g_ubus_monitor.config.critical_services[3], "service");
     g_ubus_monitor.config.critical_services_count = 4;
     
     // Initialize state
@@ -68,49 +68,49 @@ int ubus_monitor_check_ubus_health(ubus_health_info_t *info) {
     }
     
     // Initialize info structure
-    memset(info, 0, sizeof(ubus_health_info_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    strftime(info->last_check_time, sizeof(info->last_check_time), "%Y-%m-%d %H:%M:%S", localtime(&now)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(info, 0, sizeof(ubus_health_info_t));
+    time_t now = time(NULL);
+    strftime(info->last_check_time, sizeof(info->last_check_time), "%Y-%m-%d %H:%M:%S", localtime(&now));
     info->fix_attempts = g_ubus_monitor.fix_attempts;
     
     if (g_ubus_monitor.last_fix_time > 0) {
-        strftime(info->last_fix_time, sizeof(info->last_fix_time), "%Y-%m-%d %H:%M:%S", localtime(&g_ubus_monitor.last_fix_time)\n"\n"\n"\n"\n"\n"\n"\n");
+        strftime(info->last_fix_time, sizeof(info->last_fix_time), "%Y-%m-%d %H:%M:%S", localtime(&g_ubus_monitor.last_fix_time));
     }
     
     // Check if UBUS is responding
-    int ubus_responding = test_ubus_response(\n"\n"\n"\n"\n"\n"\n"\n");
+    int ubus_responding = test_ubus_response();
     info->ubus_responding = ubus_responding;
     
     // Check if rpcd is running
-    int rpcd_running = check_rpcd_status(\n"\n"\n"\n"\n"\n"\n"\n");
+    int rpcd_running = check_rpcd_status();
     info->rpcd_running = rpcd_running;
     
     // Check if UBUS socket exists
-    int socket_exists = check_ubus_socket(\n"\n"\n"\n"\n"\n"\n"\n");
+    int socket_exists = check_ubus_socket();
     info->ubus_socket_exists = socket_exists;
     
     // Count available services
-    int services_count = count_ubus_services(\n"\n"\n"\n"\n"\n"\n"\n");
+    int services_count = count_ubus_services();
     info->services_count = services_count;
     
     // Check if health is good
     bool health_good = ubus_responding && rpcd_running && socket_exists && 
-                      (services_count >= g_ubus_monitor.config.min_services_expected\n"\n"\n"\n"\n"\n"\n"\n");
+                      (services_count >= g_ubus_monitor.config.min_services_expected);
     
     // If health is poor and auto-fix is enabled, attempt to fix
     if (!health_good && g_ubus_monitor.config.auto_fix) {
         if (g_ubus_monitor.fix_attempts < g_ubus_monitor.config.max_fix_attempts) {
             if (restart_rpcd_service() == AUTONOMY_SUCCESS) {
                 g_ubus_monitor.fix_attempts++;
-                g_ubus_monitor.last_fix_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-                strftime(info->last_fix_time, sizeof(info->last_fix_time), "%Y-%m-%d %H:%M:%S", localtime(&g_ubus_monitor.last_fix_time)\n"\n"\n"\n"\n"\n"\n"\n");
+                g_ubus_monitor.last_fix_time = time(NULL);
+                strftime(info->last_fix_time, sizeof(info->last_fix_time), "%Y-%m-%d %H:%M:%S", localtime(&g_ubus_monitor.last_fix_time));
                 
-                send_notification("fix", "UBUS health restored by restarting rpcd"\n"\n"\n"\n"\n"\n"\n"\n");
+                send_notification("fix", "UBUS health restored by restarting rpcd");
             } else {
-                strcpy(info->last_error, "Failed to restart rpcd service"\n"\n"\n"\n"\n"\n"\n"\n");
+                strcpy(info->last_error, "Failed to restart rpcd service");
             }
         } else {
-            strcpy(info->last_error, "Maximum fix attempts reached"\n"\n"\n"\n"\n"\n"\n"\n");
+            strcpy(info->last_error, "Maximum fix attempts reached");
         }
     }
     
@@ -122,27 +122,27 @@ int ubus_monitor_check_ubus_health(ubus_health_info_t *info) {
  */
 static int test_ubus_response(void) {
     // Try to connect to UBUS socket
-    int sock = socket(AF_UNIX, SOCK_STREAM, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    int sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sock < 0) {
         return false;
     }
     
     struct sockaddr_un addr;
-    memset(&addr, 0, sizeof(addr)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
-    strcpy(addr.sun_path, "/var/run/ubus.sock"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(addr.sun_path, "/var/run/ubus.sock");
     
     // Set timeout
     struct timeval timeout;
     timeout.tv_sec = 5;
     timeout.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)\n"\n"\n"\n"\n"\n"\n"\n");
-    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)\n"\n"\n"\n"\n"\n"\n"\n");
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
     
-    int result = connect(sock, (struct sockaddr*)&addr, sizeof(addr)\n"\n"\n"\n"\n"\n"\n"\n");
-    close(sock\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = connect(sock, (struct sockaddr*)&addr, sizeof(addr));
+    close(sock);
     
-    return (result == 0\n"\n"\n"\n"\n"\n"\n"\n");
+    return (result == 0);
 }
 
 /**
@@ -151,10 +151,10 @@ static int test_ubus_response(void) {
 int check_rpcd_status(void) {
     // Check if rpcd process is running
     char command[256];
-    snprintf(command, sizeof(command), "pgrep rpcd > /dev/null 2>&1"\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(command, sizeof(command), "pgrep rpcd > /dev/null 2>&1");
     
-    int exit_code = system(command\n"\n"\n"\n"\n"\n"\n"\n");
-    return (exit_code == 0\n"\n"\n"\n"\n"\n"\n"\n");
+    int exit_code = system(command);
+    return (exit_code == 0);
 }
 
 /**
@@ -162,7 +162,7 @@ int check_rpcd_status(void) {
  */
 int check_ubus_socket(void) {
     struct stat st;
-    return (stat("/var/run/ubus.sock", &st) == 0\n"\n"\n"\n"\n"\n"\n"\n");
+    return (stat("/var/run/ubus.sock", &st) == 0);
 }
 
 /**
@@ -171,9 +171,9 @@ int check_ubus_socket(void) {
 static int count_ubus_services(void) {
     // Use ubus list command to count services
     char command[256];
-    snprintf(command, sizeof(command), "ubus list | wc -l"\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(command, sizeof(command), "ubus list | wc -l");
     
-    FILE *pipe = popen(command, "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE *pipe = popen(command, "r");
     if (!pipe) {
         return 0;
     }
@@ -181,10 +181,10 @@ static int count_ubus_services(void) {
     char buffer[32];
     int count = 0; // Use configurable value
     if (fgets(buffer, sizeof(buffer), pipe) != NULL) {
-        count = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+        count = atoi(buffer);
     }
     
-    pclose(pipe\n"\n"\n"\n"\n"\n"\n"\n");
+    pclose(pipe);
     return count;
 }
 
@@ -194,12 +194,12 @@ static int count_ubus_services(void) {
 int restart_rpcd_service(void) {
     // Restart rpcd service
     char command[256];
-    snprintf(command, sizeof(command), "service rpcd restart > /dev/null 2>&1"\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(command, sizeof(command), "service rpcd restart > /dev/null 2>&1");
     
-    int exit_code = system(command\n"\n"\n"\n"\n"\n"\n"\n");
+    int exit_code = system(command);
     if (exit_code == 0) {
         // Wait for service to start
-        sleep(g_ubus_monitor.config.restart_timeout\n"\n"\n"\n"\n"\n"\n"\n");
+        sleep(g_ubus_monitor.config.restart_timeout);
         
         // Verify service is running
         if (check_rpcd_status()) {
@@ -219,9 +219,9 @@ int check_critical_services(void) {
     for (int i = 0; i < g_ubus_monitor.config.critical_services_count; i++) {
         char command[256];
         snprintf(command, sizeof(command), "ubus list | grep -q %s", 
-                g_ubus_monitor.config.critical_services[i]\n"\n"\n"\n"\n"\n"\n"\n");
+                g_ubus_monitor.config.critical_services[i]);
         
-        int exit_code = system(command\n"\n"\n"\n"\n"\n"\n"\n");
+        int exit_code = system(command);
         if (exit_code == 0) {
             available_count++;
         }
@@ -235,7 +235,7 @@ int check_critical_services(void) {
  */
 static void send_notification(const char *type, const char *message) {
     // Notification system disabled - simple logging instead
-    fprintf(stderr, "UBUS MONITOR NOTIFICATION [%s]: %s\n", type, message\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "UBUS MONITOR NOTIFICATION [%s]: %s\n", type, message);
 }
 
 /**
@@ -256,7 +256,7 @@ int ubus_monitor_get_status(ubus_monitor_status_t *status) {
     
     // Copy critical services
     for (int i = 0; i < g_ubus_monitor.config.critical_services_count; i++) {
-        strcpy(status->critical_services[i], g_ubus_monitor.config.critical_services[i]\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(status->critical_services[i], g_ubus_monitor.config.critical_services[i]);
     }
     
     status->fix_attempts = g_ubus_monitor.fix_attempts;

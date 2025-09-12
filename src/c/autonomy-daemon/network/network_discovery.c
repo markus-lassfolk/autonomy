@@ -21,14 +21,14 @@
 extern autonomy_config_t g_config;
 
 // Forward declarations
-void* discovery_monitor_thread_func(void *arg\n"\n"\n"\n"\n"\n"\n"\n");
-static void discover_system_interfaces(void\n"\n"\n"\n"\n"\n"\n"\n");
-static void discover_uci_interfaces(void\n"\n"\n"\n"\n"\n"\n"\n");
-static void get_interface_details(network_interface_t *iface\n"\n"\n"\n"\n"\n"\n"\n");
-static void determine_interface_type(network_interface_t *interface\n"\n"\n"\n"\n"\n"\n"\n");
-static void get_interface_statistics(network_interface_t *interface\n"\n"\n"\n"\n"\n"\n"\n");
-static void cleanup_stale_interfaces(time_t now\n"\n"\n"\n"\n"\n"\n"\n");
-static bool interface_exists_in_system(const char *interface_name\n"\n"\n"\n"\n"\n"\n"\n");
+void* discovery_monitor_thread_func(void *arg);
+static void discover_system_interfaces(void);
+static void discover_uci_interfaces(void);
+static void get_interface_details(network_interface_t *iface);
+static void determine_interface_type(network_interface_t *interface);
+static void get_interface_statistics(network_interface_t *interface);
+static void cleanup_stale_interfaces(time_t now);
+static bool interface_exists_in_system(const char *interface_name);
 
 // Network discovery configuration - now uses UCI config values
 // Configuration values are loaded from g_config (UCI system)
@@ -47,14 +47,14 @@ static bool g_discovery_thread_running = false;
 // Initialize network discovery system
 int network_discovery_init(void) {
     if (g_discovery_initialized) {
-        printf("WARN: "Network discovery already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Network discovery already initialized");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_discovery_mutex);
     
     // Initialize discovery state
-    memset(&g_discovery, 0, sizeof(network_discovery_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_discovery, 0, sizeof(network_discovery_t));
     g_discovery.enabled = true; // Use configurable network discovery enabled
     g_discovery.discovery_interval = g_config.network_check_interval;
     g_discovery.interface_timeout = 300; // Use configurable timeout
@@ -64,33 +64,33 @@ int network_discovery_init(void) {
     g_discovery.interface_count = 0;
     
     g_discovery_initialized = true;
-    pthread_mutex_unlock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_discovery_mutex);
     
-    printf("INFO: "Network discovery system initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network discovery system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Start network discovery monitoring thread
 int network_discovery_start_monitoring(void) {
     if (!g_discovery_initialized) {
-        printf("ERROR: "Network discovery not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Network discovery not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     if (g_discovery_thread_running) {
-        printf("WARN: "Network discovery monitoring already running"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Network discovery monitoring already running");
         return AUTONOMY_SUCCESS;
     }
     
     // Create monitoring thread
-    int ret = pthread_create(&g_discovery_thread, NULL, discovery_monitor_thread_func, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = pthread_create(&g_discovery_thread, NULL, discovery_monitor_thread_func, NULL);
     if (ret != 0) {
-        printf("ERROR: "Failed to create network discovery monitoring thread"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to create network discovery monitoring thread");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     g_discovery_thread_running = true;
-    printf("INFO: "Network discovery monitoring started"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network discovery monitoring started");
     
     return AUTONOMY_SUCCESS;
 }
@@ -104,30 +104,30 @@ void network_discovery_stop_monitoring(void) {
     g_discovery_thread_running = false;
     
     if (g_discovery_thread != 0) {
-        pthread_join(g_discovery_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_join(g_discovery_thread, NULL);
         g_discovery_thread = 0;
     }
     
-    printf("INFO: "Network discovery monitoring stopped"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network discovery monitoring stopped");
 }
 
 // Network discovery monitoring thread
 void* discovery_monitor_thread_func(void *arg) {
     (void)arg;
     
-    printf("INFO: "Network discovery monitoring thread started"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network discovery monitoring thread started");
     
     while (g_discovery_thread_running) {
         // Perform network discovery
-        network_discovery_scan_interfaces(\n"\n"\n"\n"\n"\n"\n"\n");
+        network_discovery_scan_interfaces();
         
         // Sleep for discovery interval
         for (int i = 0; i < g_discovery.discovery_interval && g_discovery_thread_running; i++) {
-            sleep(1\n"\n"\n"\n"\n"\n"\n"\n");
+            sleep(1);
         }
     }
     
-    printf("INFO: "Network discovery monitoring thread stopped"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network discovery monitoring thread stopped");
     return NULL;
 }
 
@@ -137,34 +137,34 @@ int network_discovery_scan_interfaces(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_discovery_mutex);
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     // Check if it's time to discover
     if (g_discovery.last_discovery > 0 && 
         (now - g_discovery.last_discovery) < g_discovery.discovery_interval) {
-        pthread_mutex_unlock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_discovery_mutex);
         return AUTONOMY_SUCCESS;
     }
     
-    printf("DEBUG: "Starting network interface discovery"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Starting network interface discovery");
     
     // Discover system interfaces
-    discover_system_interfaces(\n"\n"\n"\n"\n"\n"\n"\n");
+    discover_system_interfaces();
     
     // Discover UCI network interfaces
-    discover_uci_interfaces(\n"\n"\n"\n"\n"\n"\n"\n");
+    discover_uci_interfaces();
     
     // Clean up stale interfaces
-    cleanup_stale_interfaces(now\n"\n"\n"\n"\n"\n"\n"\n");
+    cleanup_stale_interfaces(now);
     
     g_discovery.last_discovery = now;
     g_discovery.total_discoveries++;
     
-    pthread_mutex_unlock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_discovery_mutex);
     
-    printf("DEBUG: "Network interface discovery completed, found %d interfaces", g_discovery.interface_count\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Network interface discovery completed, found %d interfaces", g_discovery.interface_count);
     return AUTONOMY_SUCCESS;
 }
 
@@ -172,15 +172,15 @@ int network_discovery_scan_interfaces(void) {
 static void discover_system_interfaces(void) {
     struct if_nameindex *if_ni, *i;
     
-    if_ni = if_nameindex(\n"\n"\n"\n"\n"\n"\n"\n");
+    if_ni = if_nameindex();
     if (if_ni == NULL) {
-        printf("ERROR: "Failed to get interface names"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to get interface names");
         return;
     }
     
     for (i = if_ni; i->if_index != 0 || i->if_name != NULL; i++) {
         if (g_discovery.interface_count >= g_discovery.max_interfaces) {
-            printf("WARN: "Maximum interface count reached, skipping %s", i->if_name\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_WARN_MSG("Maximum interface count reached, skipping %s", i->if_name);
             break;
         }
         
@@ -190,7 +190,7 @@ static void discover_system_interfaces(void) {
             if (strcmp(g_discovery.interfaces[j].name, i->if_name) == 0) {
                 exists = true;
                 // Update last seen time
-                g_discovery.interfaces[j].last_seen = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+                g_discovery.interfaces[j].last_seen = time(NULL);
                 break;
             }
         }
@@ -198,39 +198,39 @@ static void discover_system_interfaces(void) {
         if (!exists) {
             // Add new interface
             network_interface_t *iface = &g_discovery.interfaces[g_discovery.interface_count];
-            memset(iface, 0, sizeof(network_interface_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memset(iface, 0, sizeof(network_interface_t));
             
-            safe_strncpy(iface->name, i->if_name, sizeof(iface->name)\n"\n"\n"\n"\n"\n"\n"\n");
+            safe_strncpy(iface->name, i->if_name, sizeof(iface->name));
             iface->index = i->if_index;
-            iface->last_seen = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            iface->last_seen = time(NULL);
             iface->discovered = true;
             
             // Get interface details
-            get_interface_details(iface\n"\n"\n"\n"\n"\n"\n"\n");
+            get_interface_details(iface);
             
             g_discovery.interface_count++;
             
-            printf("DEBUG: "Discovered interface: %s (index: %d)", iface->name, iface->index\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Discovered interface: %s (index: %d)", iface->name, iface->index);
         }
     }
     
-    if_freenameindex(if_ni\n"\n"\n"\n"\n"\n"\n"\n");
+    if_freenameindex(if_ni);
 }
 
 // Discover UCI network interfaces using real UCI integration
 static void discover_uci_interfaces(void) {
     // Use UCI to discover configured network interfaces
-    struct uci_context *ctx = uci_alloc_context(\n"\n"\n"\n"\n"\n"\n"\n");
+    struct uci_context *ctx = uci_alloc_context();
     if (!ctx) {
-        printf("ERROR: "Failed to allocate UCI context for network discovery"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to allocate UCI context for network discovery");
         return;
     }
     
     struct uci_package *pkg = NULL;
-    int ret = uci_load(ctx, "network", &pkg\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = uci_load(ctx, "network", &pkg);
     if (ret != UCI_OK || !pkg) {
-        printf("ERROR: "Failed to load UCI network package"\n"\n"\n"\n"\n"\n"\n"\n");
-        uci_free_context(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to load UCI network package");
+        uci_free_context(ctx);
         return;
     }
     
@@ -241,10 +241,10 @@ static void discover_uci_interfaces(void) {
             break;
         }
         
-        struct uci_section *s = uci_to_section(e\n"\n"\n"\n"\n"\n"\n"\n");
-        const char *type = uci_lookup_option_string(ctx, s, "type"\n"\n"\n"\n"\n"\n"\n"\n");
-        const char *ifname = uci_lookup_option_string(ctx, s, "ifname"\n"\n"\n"\n"\n"\n"\n"\n");
-        const char *device = uci_lookup_option_string(ctx, s, "device"\n"\n"\n"\n"\n"\n"\n"\n");
+        struct uci_section *s = uci_to_section(e);
+        const char *type = uci_lookup_option_string(ctx, s, "type");
+        const char *ifname = uci_lookup_option_string(ctx, s, "ifname");
+        const char *device = uci_lookup_option_string(ctx, s, "device");
         
         // Only process interface sections
         if (type && strcmp(type, "interface") == 0 && ifname) {
@@ -261,55 +261,55 @@ static void discover_uci_interfaces(void) {
                 // Check if interface actually exists in system
                 if (interface_exists_in_system(ifname)) {
                     network_interface_t *iface = &g_discovery.interfaces[g_discovery.interface_count];
-                    memset(iface, 0, sizeof(network_interface_t)\n"\n"\n"\n"\n"\n"\n"\n");
+                    memset(iface, 0, sizeof(network_interface_t));
                     
-                    safe_strncpy(iface->name, ifname, sizeof(iface->name)\n"\n"\n"\n"\n"\n"\n"\n");
-                    iface->last_seen = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+                    safe_strncpy(iface->name, ifname, sizeof(iface->name));
+                    iface->last_seen = time(NULL);
                     iface->discovered = true;
                     
                     // Get UCI configuration details
-                    const char *proto = uci_lookup_option_string(ctx, s, "proto"\n"\n"\n"\n"\n"\n"\n"\n");
-                    const char *ipaddr = uci_lookup_option_string(ctx, s, "ipaddr"\n"\n"\n"\n"\n"\n"\n"\n");
-                    const char *netmask = uci_lookup_option_string(ctx, s, "netmask"\n"\n"\n"\n"\n"\n"\n"\n");
-                    const char *gateway = uci_lookup_option_string(ctx, s, "gateway"\n"\n"\n"\n"\n"\n"\n"\n");
+                    const char *proto = uci_lookup_option_string(ctx, s, "proto");
+                    const char *ipaddr = uci_lookup_option_string(ctx, s, "ipaddr");
+                    const char *netmask = uci_lookup_option_string(ctx, s, "netmask");
+                    const char *gateway = uci_lookup_option_string(ctx, s, "gateway");
                     
                     if (proto) {
-                        safe_strncpy(iface->protocol, proto, sizeof(iface->protocol)\n"\n"\n"\n"\n"\n"\n"\n");
+                        safe_strncpy(iface->protocol, proto, sizeof(iface->protocol));
                     }
                     if (ipaddr) {
-                        safe_strncpy(iface->ip_address, ipaddr, sizeof(iface->ip_address)\n"\n"\n"\n"\n"\n"\n"\n");
+                        safe_strncpy(iface->ip_address, ipaddr, sizeof(iface->ip_address));
                     }
                     if (netmask) {
-                        safe_strncpy(iface->netmask, netmask, sizeof(iface->netmask)\n"\n"\n"\n"\n"\n"\n"\n");
+                        safe_strncpy(iface->netmask, netmask, sizeof(iface->netmask));
                     }
                     if (gateway) {
-                        safe_strncpy(iface->gateway, gateway, sizeof(iface->gateway)\n"\n"\n"\n"\n"\n"\n"\n");
+                        safe_strncpy(iface->gateway, gateway, sizeof(iface->gateway));
                     }
                     if (device) {
-                        safe_strncpy(iface->device, device, sizeof(iface->device)\n"\n"\n"\n"\n"\n"\n"\n");
+                        safe_strncpy(iface->device, device, sizeof(iface->device));
                     }
                     
                     // Get additional interface details
-                    get_interface_details(iface\n"\n"\n"\n"\n"\n"\n"\n");
+                    get_interface_details(iface);
                     
                     g_discovery.interface_count++;
                     
-                    printf("DEBUG: "Discovered UCI interface",
+                    LOGX_DEBUG_MSG("Discovered UCI interface",
                                   "name", iface->name,
                                   "protocol", iface->protocol,
                                   "ip", iface->ip_address,
-                                  "device", iface->device\n"\n"\n"\n"\n"\n"\n"\n");
+                                  "device", iface->device);
                 }
             }
         }
     }
     
-    uci_unload(ctx, pkg\n"\n"\n"\n"\n"\n"\n"\n");
-    uci_free_context(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+    uci_unload(ctx, pkg);
+    uci_free_context(ctx);
     
     // Fallback: Check for common interfaces if UCI discovery found none
     if (g_discovery.interface_count == 0) {
-        printf("WARN: "No interfaces found via UCI, using fallback discovery"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("No interfaces found via UCI, using fallback discovery");
         
         const char* common_interfaces[] = {
             "eth0", "eth1", "wlan0", "wlan1", "wwan0", "wwan1", "tun0", "vpn0"
@@ -333,18 +333,18 @@ static void discover_uci_interfaces(void) {
                 // Check if interface actually exists in system
                 if (interface_exists_in_system(common_interfaces[i])) {
                     network_interface_t *iface = &g_discovery.interfaces[g_discovery.interface_count];
-                    memset(iface, 0, sizeof(network_interface_t)\n"\n"\n"\n"\n"\n"\n"\n");
+                    memset(iface, 0, sizeof(network_interface_t));
                     
-                    safe_strncpy(iface->name, common_interfaces[i], sizeof(iface->name)\n"\n"\n"\n"\n"\n"\n"\n");
-                    iface->last_seen = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+                    safe_strncpy(iface->name, common_interfaces[i], sizeof(iface->name));
+                    iface->last_seen = time(NULL);
                     iface->discovered = true;
                     
                     // Get interface details
-                    get_interface_details(iface\n"\n"\n"\n"\n"\n"\n"\n");
+                    get_interface_details(iface);
                     
                     g_discovery.interface_count++;
                     
-                    printf("DEBUG: "Discovered fallback interface: %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+                    LOGX_DEBUG_MSG("Discovered fallback interface: %s", iface->name);
                 }
             }
         }
@@ -359,20 +359,20 @@ static bool interface_exists_in_system(const char *interface_name) {
     
     // Try to get interface flags
     struct ifreq ifr;
-    int sock = socket(AF_INET, SOCK_DGRAM, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
         return false;
     }
     
-    memset(&ifr, 0, sizeof(ifr)\n"\n"\n"\n"\n"\n"\n"\n");
-    strncpy(ifr.ifr_name, interface_name, IFNAMSIZ - 1\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, interface_name, IFNAMSIZ - 1);
     
     if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) {
-        close(sock\n"\n"\n"\n"\n"\n"\n"\n");
+        close(sock);
         return true;
     }
     
-    close(sock\n"\n"\n"\n"\n"\n"\n"\n");
+    close(sock);
     return false;
 }
 
@@ -384,13 +384,13 @@ static void get_interface_details(network_interface_t *iface) {
     
     // Get interface flags and status
     struct ifreq ifr;
-    int sock = socket(AF_INET, SOCK_DGRAM, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
         return;
     }
     
-    memset(&ifr, 0, sizeof(ifr)\n"\n"\n"\n"\n"\n"\n"\n");
-    strncpy(ifr.ifr_name, iface->name, IFNAMSIZ - 1\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, iface->name, IFNAMSIZ - 1);
     
     // Get interface flags
     if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) {
@@ -401,13 +401,13 @@ static void get_interface_details(network_interface_t *iface) {
     // Get interface address
     if (ioctl(sock, SIOCGIFADDR, &ifr) == 0) {
         struct sockaddr_in *addr = (struct sockaddr_in*)&ifr.ifr_addr;
-        inet_ntop(AF_INET, &addr->sin_addr, iface->ip_address, sizeof(iface->ip_address)\n"\n"\n"\n"\n"\n"\n"\n");
+        inet_ntop(AF_INET, &addr->sin_addr, iface->ip_address, sizeof(iface->ip_address));
     }
     
     // Get interface netmask
     if (ioctl(sock, SIOCGIFNETMASK, &ifr) == 0) {
         struct sockaddr_in *addr = (struct sockaddr_in*)&ifr.ifr_netmask;
-        inet_ntop(AF_INET, &addr->sin_addr, iface->netmask, sizeof(iface->netmask)\n"\n"\n"\n"\n"\n"\n"\n");
+        inet_ntop(AF_INET, &addr->sin_addr, iface->netmask, sizeof(iface->netmask));
     }
     
     // Get interface MAC address
@@ -415,7 +415,7 @@ static void get_interface_details(network_interface_t *iface) {
         unsigned char *mac = (unsigned char*)ifr.ifr_hwaddr.sa_data;
         snprintf(iface->mac_address, sizeof(iface->mac_address),
                 "%02x:%02x:%02x:%02x:%02x:%02x",
-                mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]\n"\n"\n"\n"\n"\n"\n"\n");
+                mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     }
     
     // Get interface MTU
@@ -423,13 +423,13 @@ static void get_interface_details(network_interface_t *iface) {
         iface->mtu = ifr.ifr_mtu;
     }
     
-    close(sock\n"\n"\n"\n"\n"\n"\n"\n");
+    close(sock);
     
     // Determine interface type
-    determine_interface_type(iface\n"\n"\n"\n"\n"\n"\n"\n");
+    determine_interface_type(iface);
     
     // Get interface statistics
-    get_interface_statistics(iface\n"\n"\n"\n"\n"\n"\n"\n");
+    get_interface_statistics(iface);
 }
 
 // Determine interface type based on name and characteristics
@@ -440,19 +440,19 @@ static void determine_interface_type(network_interface_t *iface) {
     
     // Check interface name patterns
     if (strncmp(iface->name, "eth", 3) == 0) {
-        safe_strncpy(iface->type, "ethernet", sizeof(iface->type)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(iface->type, "ethernet", sizeof(iface->type));
     } else if (strncmp(iface->name, "wlan", 4) == 0) {
-        safe_strncpy(iface->type, "wifi", sizeof(iface->type)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(iface->type, "wifi", sizeof(iface->type));
     } else if (strncmp(iface->name, "wwan", 4) == 0) {
-        safe_strncpy(iface->type, "cellular", sizeof(iface->type)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(iface->type, "cellular", sizeof(iface->type));
     } else if (strncmp(iface->name, "tun", 3) == 0 || strncmp(iface->name, "tap", 3) == 0) {
-        safe_strncpy(iface->type, "vpn", sizeof(iface->type)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(iface->type, "vpn", sizeof(iface->type));
     } else if (strncmp(iface->name, "br", 2) == 0) {
-        safe_strncpy(iface->type, "bridge", sizeof(iface->type)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(iface->type, "bridge", sizeof(iface->type));
     } else if (strncmp(iface->name, "vlan", 4) == 0) {
-        safe_strncpy(iface->type, "vlan", sizeof(iface->type)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(iface->type, "vlan", sizeof(iface->type));
     } else {
-        safe_strncpy(iface->type, "unknown", sizeof(iface->type)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(iface->type, "unknown", sizeof(iface->type));
     }
 }
 
@@ -464,17 +464,17 @@ static void get_interface_statistics(network_interface_t *iface) {
     
     // Read interface statistics from /proc/net/dev
     char path[256];
-    snprintf(path, sizeof(path), "/proc/net/dev"\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(path, sizeof(path), "/proc/net/dev");
     
-    FILE *fp = fopen(path, "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE *fp = fopen(path, "r");
     if (!fp) {
         return;
     }
     
     char line[512];
     // Skip header lines
-    fgets(line, sizeof(line), fp\n"\n"\n"\n"\n"\n"\n"\n");
-    fgets(line, sizeof(line), fp\n"\n"\n"\n"\n"\n"\n"\n");
+    fgets(line, sizeof(line), fp);
+    fgets(line, sizeof(line), fp);
     
     while (fgets(line, sizeof(line), fp)) {
         char ifname[32];
@@ -487,7 +487,7 @@ static void get_interface_statistics(network_interface_t *iface) {
                    &tx_bytes, &tx_packets, &tx_errors, &tx_dropped) >= 8) {
             
             // Remove colon from interface name
-            char *colon = strchr(ifname, ':'\n"\n"\n"\n"\n"\n"\n"\n");
+            char *colon = strchr(ifname, ':');
             if (colon) *colon = '\0';
             
             if (strcmp(ifname, iface->name) == 0) {
@@ -504,7 +504,7 @@ static void get_interface_statistics(network_interface_t *iface) {
         }
     }
     
-    fclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+    fclose(fp);
 }
 
 // Clean up stale interfaces
@@ -513,11 +513,11 @@ static void cleanup_stale_interfaces(time_t now) {
         if (g_discovery.interfaces[i].last_seen > 0 &&
             (now - g_discovery.interfaces[i].last_seen) > g_discovery.interface_timeout) {
             
-            printf("DEBUG: "Removing stale interface: %s", g_discovery.interfaces[i].name\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Removing stale interface: %s", g_discovery.interfaces[i].name);
             
             // Remove interface by shifting remaining interfaces
             for (int j = i; j < g_discovery.interface_count - 1; j++) {
-                memcpy(&g_discovery.interfaces[j], &g_discovery.interfaces[j + 1], sizeof(network_interface_t)\n"\n"\n"\n"\n"\n"\n"\n");
+                memcpy(&g_discovery.interfaces[j], &g_discovery.interfaces[j + 1], sizeof(network_interface_t));
             }
             g_discovery.interface_count--;
             i--; // Recheck this index
@@ -531,17 +531,17 @@ int network_discovery_get_interfaces(network_interface_t *interfaces, int max_co
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_discovery_mutex);
     
     *actual_count = 0;
     int count = (g_discovery.interface_count < max_count) ? g_discovery.interface_count : max_count;
     
     for (int i = 0; i < count; i++) {
-        memcpy(&interfaces[i], &g_discovery.interfaces[i], sizeof(network_interface_t)\n"\n"\n"\n"\n"\n"\n"\n");
+        memcpy(&interfaces[i], &g_discovery.interfaces[i], sizeof(network_interface_t));
         (*actual_count)++;
     }
     
-    pthread_mutex_unlock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_discovery_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -552,17 +552,17 @@ int network_discovery_get_interface(const char *interface_name, network_interfac
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_discovery_mutex);
     
     for (int i = 0; i < g_discovery.interface_count; i++) {
         if (strcmp(g_discovery.interfaces[i].name, interface_name) == 0) {
-            memcpy(interface, &g_discovery.interfaces[i], sizeof(network_interface_t)\n"\n"\n"\n"\n"\n"\n"\n");
-            pthread_mutex_unlock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            memcpy(interface, &g_discovery.interfaces[i], sizeof(network_interface_t));
+            pthread_mutex_unlock(&g_discovery_mutex);
             return AUTONOMY_SUCCESS;
         }
     }
     
-    pthread_mutex_unlock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_discovery_mutex);
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -572,7 +572,7 @@ int network_discovery_get_status(network_discovery_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_discovery_mutex);
     
     status->enabled = g_discovery.enabled;
     status->discovery_interval = g_discovery.discovery_interval;
@@ -582,7 +582,7 @@ int network_discovery_get_status(network_discovery_status_t *status) {
     status->total_discoveries = g_discovery.total_discoveries;
     status->interface_count = g_discovery.interface_count;
     
-    pthread_mutex_unlock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_discovery_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -593,7 +593,7 @@ int network_discovery_set_config(const network_discovery_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_discovery_mutex);
     
     if (config->discovery_interval > 0) {
         g_discovery.discovery_interval = config->discovery_interval;
@@ -609,9 +609,9 @@ int network_discovery_set_config(const network_discovery_config_t *config) {
     
     g_discovery.enabled = config->enabled;
     
-    pthread_mutex_unlock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_discovery_mutex);
     
-    printf("INFO: "Network discovery configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network discovery configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -621,11 +621,11 @@ int network_discovery_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_discovery_mutex);
     g_discovery.enabled = enabled;
-    pthread_mutex_unlock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_discovery_mutex);
     
-    printf("INFO: "Network discovery system %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network discovery system %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -635,8 +635,8 @@ int network_discovery_force_scan(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    printf("INFO: "Forcing immediate network discovery"\n"\n"\n"\n"\n"\n"\n"\n");
-    return network_discovery_scan_interfaces(\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Forcing immediate network discovery");
+    return network_discovery_scan_interfaces();
 }
 
 // Cleanup discovery system
@@ -646,13 +646,13 @@ void network_discovery_cleanup(void) {
     }
     
     // Stop monitoring thread
-    network_discovery_stop_monitoring(\n"\n"\n"\n"\n"\n"\n"\n");
+    network_discovery_stop_monitoring();
     
-    pthread_mutex_lock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_discovery_mutex);
     g_discovery_initialized = false;
-    pthread_mutex_unlock(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_discovery_mutex);
     
-    pthread_mutex_destroy(&g_discovery_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_discovery_mutex);
     
-    printf("INFO: "Network discovery system cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network discovery system cleaned up");
 }

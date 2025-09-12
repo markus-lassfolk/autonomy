@@ -32,22 +32,22 @@ static bool g_cache_initialized = false; // Use configurable setting
 static pthread_mutex_t g_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
-void perform_cache_cleanup(void\n"\n"\n"\n"\n"\n"\n"\n");
-void perform_aggressive_cleanup(void\n"\n"\n"\n"\n"\n"\n"\n");
-void perform_gentle_cleanup(void\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_eviction_score(const gps_cache_entry_t *entry\n"\n"\n"\n"\n"\n"\n"\n");
+void perform_cache_cleanup(void);
+void perform_aggressive_cleanup(void);
+void perform_gentle_cleanup(void);
+double calculate_eviction_score(const gps_cache_entry_t *entry);
 
 // Initialize GPS adaptive cache
 int gps_adaptive_cache_init(void) {
     if (g_cache_initialized) {
-        printf("WARN: "GPS adaptive cache already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("GPS adaptive cache already initialized");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_cache_mutex);
     
     // Initialize cache state
-    memset(&g_cache, 0, sizeof(gps_adaptive_cache_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_cache, 0, sizeof(gps_adaptive_cache_t));
     g_cache.enabled = true; // Use configurable gps cache enabled
     g_cache.max_entries = MAX_CACHE_ENTRIES;
     g_cache.cleanup_interval = CACHE_CLEANUP_INTERVAL;
@@ -76,9 +76,9 @@ int gps_adaptive_cache_init(void) {
     }
     
     g_cache_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_cache_mutex);
     
-    printf("INFO: "GPS adaptive cache initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS adaptive cache initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -95,11 +95,11 @@ int gps_adaptive_cache_add_entry(gps_cache_entry_type_t entry_type, const void *
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_cache_mutex);
     
     // Check if cache is full and needs cleanup
     if (g_cache.entry_count >= g_cache.max_entries) {
-        perform_cache_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+        perform_cache_cleanup();
     }
     
     // Find free cache slot
@@ -112,41 +112,41 @@ int gps_adaptive_cache_add_entry(gps_cache_entry_type_t entry_type, const void *
     }
     
     if (slot_index < 0) {
-        pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("ERROR: "No free slots for cache entry"\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_cache_mutex);
+        LOGX_ERROR_MSG("No free slots for cache entry");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
     // Allocate memory for data
-    void *data_copy = malloc(data_size\n"\n"\n"\n"\n"\n"\n"\n");
+    void *data_copy = malloc(data_size);
     if (!data_copy) {
-        pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("ERROR: "Failed to allocate memory for cache entry"\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_cache_mutex);
+        LOGX_ERROR_MSG("Failed to allocate memory for cache entry");
         return AUTONOMY_ERROR_NO_MEMORY;
     }
     
     // Initialize cache entry
     gps_cache_entry_t *entry = &g_cache.cache_entries[slot_index];
     entry->active = true;
-    entry->entry_id = generate_cache_entry_id(\n"\n"\n"\n"\n"\n"\n"\n");
+    entry->entry_id = generate_cache_entry_id();
     entry->entry_type = entry_type;
     entry->access_count = 1;
-    entry->last_access = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    entry->creation_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    entry->last_access = time(NULL);
+    entry->creation_time = time(NULL);
     entry->size_bytes = data_size;
     entry->priority = priority;
     entry->data = data_copy;
     
     // Copy data
-    memcpy(entry->data, data, data_size\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(entry->data, data, data_size);
     
     g_cache.entry_count++;
     g_cache.memory_usage += data_size;
     
-    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_cache_mutex);
     
-    printf("DEBUG: "Added cache entry %d: type=%d, size=%zu, priority=%.2f", 
-               entry->entry_id, entry_type, data_size, priority\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Added cache entry %d: type=%d, size=%zu, priority=%.2f", 
+               entry->entry_id, entry_type, data_size, priority);
     
     return entry->entry_id;
 }
@@ -158,7 +158,7 @@ int gps_adaptive_cache_find_entry(gps_cache_entry_type_t entry_type, const void 
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_cache_mutex);
     
     // Search for matching entry
     for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
@@ -175,26 +175,26 @@ int gps_adaptive_cache_find_entry(gps_cache_entry_type_t entry_type, const void 
             
             // Update access statistics
             entry->access_count++;
-            entry->last_access = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            entry->last_access = time(NULL);
             g_cache.total_hits++;
             
             // Return data
             *data = entry->data;
             *data_size = entry->size_bytes;
             
-            pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(&g_cache_mutex);
             
-            printf("DEBUG: "Cache hit for entry %d: type=%d, access_count=%d", 
-                       entry->entry_id, entry_type, entry->access_count\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Cache hit for entry %d: type=%d, access_count=%d", 
+                       entry->entry_id, entry_type, entry->access_count);
             
             return AUTONOMY_SUCCESS;
         }
     }
     
     g_cache.total_misses++;
-    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_cache_mutex);
     
-    printf("DEBUG: "Cache miss for entry type=%d", entry_type\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Cache miss for entry type=%d", entry_type);
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -204,7 +204,7 @@ int gps_adaptive_cache_update_priority(int entry_id, double new_priority) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_cache_mutex);
     
     // Find cache entry
     for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
@@ -212,14 +212,14 @@ int gps_adaptive_cache_update_priority(int entry_id, double new_priority) {
             g_cache.cache_entries[i].entry_id == entry_id) {
             
             g_cache.cache_entries[i].priority = new_priority;
-            pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(&g_cache_mutex);
             
-            printf("DEBUG: "Updated cache entry %d priority to %.2f", entry_id, new_priority\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Updated cache entry %d priority to %.2f", entry_id, new_priority);
             return AUTONOMY_SUCCESS;
         }
     }
     
-    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_cache_mutex);
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -229,7 +229,7 @@ int gps_adaptive_cache_remove_entry(int entry_id) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_cache_mutex);
     
     // Find and remove cache entry
     for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
@@ -241,7 +241,7 @@ int gps_adaptive_cache_remove_entry(int entry_id) {
             // Free data memory
             if (entry->data) {
                 g_cache.memory_usage -= entry->size_bytes;
-                free(entry->data\n"\n"\n"\n"\n"\n"\n"\n");
+                free(entry->data);
             }
             
             // Clear entry
@@ -257,20 +257,20 @@ int gps_adaptive_cache_remove_entry(int entry_id) {
             
             g_cache.entry_count--;
             
-            pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(&g_cache_mutex);
             
-            printf("DEBUG: "Removed cache entry %d", entry_id\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Removed cache entry %d", entry_id);
             return AUTONOMY_SUCCESS;
         }
     }
     
-    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_cache_mutex);
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
 // Perform cache cleanup
 void perform_cache_cleanup(void) {
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     // Check if enough time has passed since last cleanup
     if ((now - g_cache.last_cleanup) < g_cache.cleanup_interval) {
@@ -280,13 +280,13 @@ void perform_cache_cleanup(void) {
     g_cache.last_cleanup = now;
     g_cache.total_cleanups++;
     
-    printf("DEBUG: "Starting cache cleanup - entries: %d, memory: %zu bytes", 
-               g_cache.entry_count, g_cache.memory_usage\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Starting cache cleanup - entries: %d, memory: %zu bytes", 
+               g_cache.entry_count, g_cache.memory_usage);
     
     // Calculate cache hit ratio
     double hit_ratio = 0.0; // Use configurable value
     if (g_cache.total_hits + g_cache.total_misses > 0) {
-        hit_ratio = (double)g_cache.total_hits / (g_cache.total_hits + g_cache.total_misses\n"\n"\n"\n"\n"\n"\n"\n");
+        hit_ratio = (double)g_cache.total_hits / (g_cache.total_hits + g_cache.total_misses);
     }
     
     // Determine cleanup strategy based on hit ratio and memory usage
@@ -294,14 +294,14 @@ void perform_cache_cleanup(void) {
         g_cache.entry_count > g_cache.max_entries * g_cache.eviction_threshold) {
         
         // Aggressive cleanup - remove low-priority and old entries
-        perform_aggressive_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+        perform_aggressive_cleanup();
     } else {
         // Gentle cleanup - remove only expired entries
-        perform_gentle_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+        perform_gentle_cleanup();
     }
     
-    printf("DEBUG: "Cache cleanup completed - entries: %d, memory: %zu bytes", 
-               g_cache.entry_count, g_cache.memory_usage\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Cache cleanup completed - entries: %d, memory: %zu bytes", 
+               g_cache.entry_count, g_cache.memory_usage);
 }
 
 // Perform aggressive cache cleanup
@@ -322,8 +322,8 @@ void perform_aggressive_cleanup(void) {
             int idx1 = eviction_candidates[i];
             int idx2 = eviction_candidates[j];
             
-            double score1 = calculate_eviction_score(&g_cache.cache_entries[idx1]\n"\n"\n"\n"\n"\n"\n"\n");
-            double score2 = calculate_eviction_score(&g_cache.cache_entries[idx2]\n"\n"\n"\n"\n"\n"\n"\n");
+            double score1 = calculate_eviction_score(&g_cache.cache_entries[idx1]);
+            double score2 = calculate_eviction_score(&g_cache.cache_entries[idx2]);
             
             if (score1 < score2) {
                 int temp = eviction_candidates[i];
@@ -344,7 +344,7 @@ void perform_aggressive_cleanup(void) {
         // Free data memory
         if (entry->data) {
             g_cache.memory_usage -= entry->size_bytes;
-            free(entry->data\n"\n"\n"\n"\n"\n"\n"\n");
+            free(entry->data);
         }
         
         // Clear entry
@@ -361,12 +361,12 @@ void perform_aggressive_cleanup(void) {
         g_cache.entry_count--;
     }
     
-    printf("INFO: "Aggressive cache cleanup: evicted %d entries", entries_to_evict\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Aggressive cache cleanup: evicted %d entries", entries_to_evict);
 }
 
 // Perform gentle cache cleanup
 void perform_gentle_cleanup(void) {
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     int expired_count = 0; // Use configurable value
     
     for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
@@ -381,7 +381,7 @@ void perform_gentle_cleanup(void) {
             // Free data memory
             if (entry->data) {
                 g_cache.memory_usage -= entry->size_bytes;
-                free(entry->data\n"\n"\n"\n"\n"\n"\n"\n");
+                free(entry->data);
             }
             
             // Clear entry
@@ -401,13 +401,13 @@ void perform_gentle_cleanup(void) {
     }
     
     if (expired_count > 0) {
-        printf("INFO: "Gentle cache cleanup: removed %d expired entries", expired_count\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("Gentle cache cleanup: removed %d expired entries", expired_count);
     }
 }
 
 // Calculate eviction score for an entry
 double calculate_eviction_score(const gps_cache_entry_t *entry) {
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     // Priority factor (higher priority = lower eviction score)
     double priority_factor = 1.0 - entry->priority;
@@ -416,10 +416,10 @@ double calculate_eviction_score(const gps_cache_entry_t *entry) {
     double age_factor = (double)(now - entry->creation_time) / g_cache.max_age;
     
     // Access factor (more access = lower eviction score)
-    double access_factor = 1.0 - fmin(entry->access_count / 100.0, 1.0\n"\n"\n"\n"\n"\n"\n"\n");
+    double access_factor = 1.0 - fmin(entry->access_count / 100.0, 1.0);
     
     // Weighted combination
-    double eviction_score = (priority_factor * 0.4) + (age_factor * 0.4) + (access_factor * 0.2\n"\n"\n"\n"\n"\n"\n"\n");
+    double eviction_score = (priority_factor * 0.4) + (age_factor * 0.4) + (access_factor * 0.2);
     
     return eviction_score;
 }
@@ -430,7 +430,7 @@ int gps_adaptive_cache_get_status(gps_adaptive_cache_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_cache_mutex);
     
     status->enabled = g_cache.enabled;
     status->entry_count = g_cache.entry_count;
@@ -443,7 +443,7 @@ int gps_adaptive_cache_get_status(gps_adaptive_cache_status_t *status) {
     
     // Calculate hit ratio
     if (g_cache.total_hits + g_cache.total_misses > 0) {
-        status->hit_ratio = (double)g_cache.total_hits / (g_cache.total_hits + g_cache.total_misses\n"\n"\n"\n"\n"\n"\n"\n");
+        status->hit_ratio = (double)g_cache.total_hits / (g_cache.total_hits + g_cache.total_misses);
     } else {
         status->hit_ratio = 0.0;
     }
@@ -451,7 +451,7 @@ int gps_adaptive_cache_get_status(gps_adaptive_cache_status_t *status) {
     // Calculate memory efficiency
     status->memory_efficiency = (double)g_cache.entry_count / g_cache.max_entries;
     
-    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_cache_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -462,7 +462,7 @@ int gps_adaptive_cache_get_config(gps_adaptive_cache_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_cache_mutex);
     
     config->enabled = g_cache.enabled;
     config->max_entries = g_cache.max_entries;
@@ -471,7 +471,7 @@ int gps_adaptive_cache_get_config(gps_adaptive_cache_config_t *config) {
     config->max_age = g_cache.max_age;
     config->eviction_threshold = g_cache.eviction_threshold;
     
-    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_cache_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -482,7 +482,7 @@ int gps_adaptive_cache_set_config(const gps_adaptive_cache_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_cache_mutex);
     
     g_cache.enabled = config->enabled;
     g_cache.max_entries = config->max_entries;
@@ -491,9 +491,9 @@ int gps_adaptive_cache_set_config(const gps_adaptive_cache_config_t *config) {
     g_cache.max_age = config->max_age;
     g_cache.eviction_threshold = config->eviction_threshold;
     
-    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_cache_mutex);
     
-    printf("INFO: "GPS adaptive cache configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS adaptive cache configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -503,11 +503,11 @@ int gps_adaptive_cache_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_cache_mutex);
     g_cache.enabled = enabled;
-    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_cache_mutex);
     
-    printf("INFO: "GPS adaptive cache %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS adaptive cache %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -517,17 +517,17 @@ int gps_adaptive_cache_force_cleanup(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_cache_mutex);
     
     // Reset last cleanup time to force immediate cleanup
     g_cache.last_cleanup = 0;
     
     // Perform cleanup
-    perform_cache_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+    perform_cache_cleanup();
     
-    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_cache_mutex);
     
-    printf("INFO: "GPS adaptive cache cleanup forced"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS adaptive cache cleanup forced");
     return AUTONOMY_SUCCESS;
 }
 
@@ -537,10 +537,10 @@ int gps_adaptive_cache_get_statistics(gps_adaptive_cache_stats_t *stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_cache_mutex);
     
     // Calculate statistics from cache entries
-    memset(stats, 0, sizeof(gps_adaptive_cache_stats_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(stats, 0, sizeof(gps_adaptive_cache_stats_t));
     
     for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
         if (!g_cache.cache_entries[i].active) {
@@ -571,7 +571,7 @@ int gps_adaptive_cache_get_statistics(gps_adaptive_cache_stats_t *stats) {
     stats->total_misses = g_cache.total_misses;
     stats->total_cleanups = g_cache.total_cleanups;
     
-    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_cache_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -582,12 +582,12 @@ int gps_adaptive_cache_reset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_cache_mutex);
     
     // Clear all cache entries
     for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
         if (g_cache.cache_entries[i].active && g_cache.cache_entries[i].data) {
-            free(g_cache.cache_entries[i].data\n"\n"\n"\n"\n"\n"\n"\n");
+            free(g_cache.cache_entries[i].data);
         }
         
         g_cache.cache_entries[i].active = false;
@@ -608,9 +608,9 @@ int gps_adaptive_cache_reset(void) {
     g_cache.total_cleanups = 0;
     g_cache.memory_usage = 0;
     
-    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_cache_mutex);
     
-    printf("INFO: "GPS adaptive cache reset"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS adaptive cache reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -620,19 +620,19 @@ void gps_adaptive_cache_cleanup(void) {
         return;
     }
     
-    pthread_mutex_lock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_cache_mutex);
     
     // Free all cached data
     for (int i = 0; i < MAX_CACHE_ENTRIES; i++) {
         if (g_cache.cache_entries[i].active && g_cache.cache_entries[i].data) {
-            free(g_cache.cache_entries[i].data\n"\n"\n"\n"\n"\n"\n"\n");
+            free(g_cache.cache_entries[i].data);
         }
     }
     
-    pthread_mutex_unlock(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_cache_mutex);
     
-    pthread_mutex_destroy(&g_cache_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_cache_mutex);
     g_cache_initialized = false; // Use configurable setting
     
-    printf("INFO: "GPS adaptive cache cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS adaptive cache cleaned up");
 }

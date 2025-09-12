@@ -46,47 +46,47 @@ int external_apis_ubus_get_elevation(struct ubus_context *ctx, struct ubus_objec
                                     struct ubus_request_data *req, const char *method,
                                     struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     if (!external_apis_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "External APIs not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "External APIs not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
     struct blob_attr *tb[__EXTERNAL_API_COORDS_MAX];
-    blobmsg_parse(external_api_coords_policy, __EXTERNAL_API_COORDS_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_parse(external_api_coords_policy, __EXTERNAL_API_COORDS_MAX, tb, blob_data(msg), blob_len(msg));
     
     if (!tb[EXTERNAL_API_LAT] || !tb[EXTERNAL_API_LON]) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "Missing latitude or longitude parameters"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Missing latitude or longitude parameters");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
-    double latitude = blobmsg_get_double(tb[EXTERNAL_API_LAT]\n"\n"\n"\n"\n"\n"\n"\n");
-    double longitude = blobmsg_get_double(tb[EXTERNAL_API_LON]\n"\n"\n"\n"\n"\n"\n"\n");
+    double latitude = blobmsg_get_double(tb[EXTERNAL_API_LAT]);
+    double longitude = blobmsg_get_double(tb[EXTERNAL_API_LON]);
     
     external_elevation_data_t elevation_data;
     if (external_apis_get_elevation(latitude, longitude, &elevation_data) == AUTONOMY_SUCCESS) {
-        blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 1);
         
-        void *elevation_table = blobmsg_open_table(&bb, "elevation"\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_double(&bb, "elevation", elevation_data.elevation\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_double(&bb, "resolution", elevation_data.resolution\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "source", elevation_data.source\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_u32(&bb, "timestamp", (uint32_t)elevation_data.timestamp\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_close_table(&bb, elevation_table\n"\n"\n"\n"\n"\n"\n"\n");
+        void *elevation_table = blobmsg_open_table(&bb, "elevation");
+        blobmsg_add_double(&bb, "elevation", elevation_data.elevation);
+        blobmsg_add_double(&bb, "resolution", elevation_data.resolution);
+        blobmsg_add_string(&bb, "source", elevation_data.source);
+        blobmsg_add_u32(&bb, "timestamp", (uint32_t)elevation_data.timestamp);
+        blobmsg_close_table(&bb, elevation_table);
     } else {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "Failed to get elevation data"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Failed to get elevation data");
     }
     
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return UBUS_STATUS_OK;
 }
 
@@ -95,53 +95,53 @@ int external_apis_ubus_get_weather(struct ubus_context *ctx, struct ubus_object 
                                   struct ubus_request_data *req, const char *method,
                                   struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     if (!external_apis_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "External APIs not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "External APIs not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
     struct blob_attr *tb[__EXTERNAL_API_COORDS_MAX];
-    blobmsg_parse(external_api_coords_policy, __EXTERNAL_API_COORDS_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_parse(external_api_coords_policy, __EXTERNAL_API_COORDS_MAX, tb, blob_data(msg), blob_len(msg));
     
     if (!tb[EXTERNAL_API_LAT] || !tb[EXTERNAL_API_LON]) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "Missing latitude or longitude parameters"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Missing latitude or longitude parameters");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
-    double latitude = blobmsg_get_double(tb[EXTERNAL_API_LAT]\n"\n"\n"\n"\n"\n"\n"\n");
-    double longitude = blobmsg_get_double(tb[EXTERNAL_API_LON]\n"\n"\n"\n"\n"\n"\n"\n");
+    double latitude = blobmsg_get_double(tb[EXTERNAL_API_LAT]);
+    double longitude = blobmsg_get_double(tb[EXTERNAL_API_LON]);
     
     external_weather_data_t weather_data;
     if (external_apis_get_weather(latitude, longitude, &weather_data) == AUTONOMY_SUCCESS) {
-        blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 1);
         
-        void *weather_table = blobmsg_open_table(&bb, "weather"\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_double(&bb, "temperature_celsius", weather_data.temperature_celsius\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_double(&bb, "humidity_percent", weather_data.humidity_percent\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_double(&bb, "pressure_hpa", weather_data.pressure_hpa\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_double(&bb, "wind_speed_ms", weather_data.wind_speed_ms\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_double(&bb, "wind_direction_deg", weather_data.wind_direction_deg\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_double(&bb, "visibility_km", weather_data.visibility_km\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "description", weather_data.description\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "icon", weather_data.icon\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "source", weather_data.source\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_u32(&bb, "timestamp", (uint32_t)weather_data.timestamp\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_close_table(&bb, weather_table\n"\n"\n"\n"\n"\n"\n"\n");
+        void *weather_table = blobmsg_open_table(&bb, "weather");
+        blobmsg_add_double(&bb, "temperature_celsius", weather_data.temperature_celsius);
+        blobmsg_add_double(&bb, "humidity_percent", weather_data.humidity_percent);
+        blobmsg_add_double(&bb, "pressure_hpa", weather_data.pressure_hpa);
+        blobmsg_add_double(&bb, "wind_speed_ms", weather_data.wind_speed_ms);
+        blobmsg_add_double(&bb, "wind_direction_deg", weather_data.wind_direction_deg);
+        blobmsg_add_double(&bb, "visibility_km", weather_data.visibility_km);
+        blobmsg_add_string(&bb, "description", weather_data.description);
+        blobmsg_add_string(&bb, "icon", weather_data.icon);
+        blobmsg_add_string(&bb, "source", weather_data.source);
+        blobmsg_add_u32(&bb, "timestamp", (uint32_t)weather_data.timestamp);
+        blobmsg_close_table(&bb, weather_table);
     } else {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "Failed to get weather data"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Failed to get weather data");
     }
     
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return UBUS_STATUS_OK;
 }
 
@@ -150,54 +150,54 @@ int external_apis_ubus_get_reverse_geocoding(struct ubus_context *ctx, struct ub
                                            struct ubus_request_data *req, const char *method,
                                            struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     if (!external_apis_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "External APIs not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "External APIs not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
     struct blob_attr *tb[__EXTERNAL_API_COORDS_MAX];
-    blobmsg_parse(external_api_coords_policy, __EXTERNAL_API_COORDS_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_parse(external_api_coords_policy, __EXTERNAL_API_COORDS_MAX, tb, blob_data(msg), blob_len(msg));
     
     if (!tb[EXTERNAL_API_LAT] || !tb[EXTERNAL_API_LON]) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "Missing latitude or longitude parameters"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Missing latitude or longitude parameters");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
-    double latitude = blobmsg_get_double(tb[EXTERNAL_API_LAT]\n"\n"\n"\n"\n"\n"\n"\n");
-    double longitude = blobmsg_get_double(tb[EXTERNAL_API_LON]\n"\n"\n"\n"\n"\n"\n"\n");
+    double latitude = blobmsg_get_double(tb[EXTERNAL_API_LAT]);
+    double longitude = blobmsg_get_double(tb[EXTERNAL_API_LON]);
     
     external_location_data_t location_data;
     if (external_apis_get_reverse_geocoding(latitude, longitude, &location_data) == AUTONOMY_SUCCESS) {
-        blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 1);
         
-        void *location_table = blobmsg_open_table(&bb, "location"\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_double(&bb, "latitude", location_data.latitude\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_double(&bb, "longitude", location_data.longitude\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_double(&bb, "accuracy", location_data.accuracy\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_double(&bb, "confidence", location_data.confidence\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "formatted_address", location_data.formatted_address\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "country", location_data.country\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "region", location_data.region\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "city", location_data.city\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "postal_code", location_data.postal_code\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "source", location_data.source\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_u32(&bb, "timestamp", (uint32_t)location_data.timestamp\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_close_table(&bb, location_table\n"\n"\n"\n"\n"\n"\n"\n");
+        void *location_table = blobmsg_open_table(&bb, "location");
+        blobmsg_add_double(&bb, "latitude", location_data.latitude);
+        blobmsg_add_double(&bb, "longitude", location_data.longitude);
+        blobmsg_add_double(&bb, "accuracy", location_data.accuracy);
+        blobmsg_add_double(&bb, "confidence", location_data.confidence);
+        blobmsg_add_string(&bb, "formatted_address", location_data.formatted_address);
+        blobmsg_add_string(&bb, "country", location_data.country);
+        blobmsg_add_string(&bb, "region", location_data.region);
+        blobmsg_add_string(&bb, "city", location_data.city);
+        blobmsg_add_string(&bb, "postal_code", location_data.postal_code);
+        blobmsg_add_string(&bb, "source", location_data.source);
+        blobmsg_add_u32(&bb, "timestamp", (uint32_t)location_data.timestamp);
+        blobmsg_close_table(&bb, location_table);
     } else {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "Failed to get reverse geocoding data"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Failed to get reverse geocoding data");
     }
     
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return UBUS_STATUS_OK;
 }
 
@@ -206,48 +206,48 @@ int external_apis_ubus_get_statistics(struct ubus_context *ctx, struct ubus_obje
                                      struct ubus_request_data *req, const char *method,
                                      struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     if (!external_apis_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "External APIs not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "External APIs not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
-    blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u8(&bb, "success", 1);
     
     external_api_statistics_t stats_array[EXTERNAL_API_MAX];
-    int api_count = external_apis_get_all_statistics(stats_array, EXTERNAL_API_MAX\n"\n"\n"\n"\n"\n"\n"\n");
+    int api_count = external_apis_get_all_statistics(stats_array, EXTERNAL_API_MAX);
     
     if (api_count > 0) {
-        void *apis_array = blobmsg_open_array(&bb, "apis"\n"\n"\n"\n"\n"\n"\n"\n");
+        void *apis_array = blobmsg_open_array(&bb, "apis");
         
         for (int i = 0; i < api_count; i++) {
-            void *api_table = blobmsg_open_table(&bb, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            void *api_table = blobmsg_open_table(&bb, NULL);
             
-            blobmsg_add_string(&bb, "api", external_api_type_to_string((external_api_type_t)i)\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_string(&bb, "status", external_api_status_to_string(stats_array[i].status)\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u64(&bb, "total_requests", stats_array[i].total_requests\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u64(&bb, "successful_requests", stats_array[i].successful_requests\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u64(&bb, "failed_requests", stats_array[i].failed_requests\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_double(&bb, "success_rate", stats_array[i].success_rate\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_double(&bb, "avg_response_time_ms", stats_array[i].average_response_time_ms\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u32(&bb, "requests_this_hour", stats_array[i].requests_this_hour\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u32(&bb, "requests_this_day", stats_array[i].requests_this_day\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_double(&bb, "cost_this_month", stats_array[i].cost_this_month\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u32(&bb, "consecutive_failures", stats_array[i].consecutive_failures\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u32(&bb, "last_success", (uint32_t)stats_array[i].last_success\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_string(&bb, "api", external_api_type_to_string((external_api_type_t)i));
+            blobmsg_add_string(&bb, "status", external_api_status_to_string(stats_array[i].status));
+            blobmsg_add_u64(&bb, "total_requests", stats_array[i].total_requests);
+            blobmsg_add_u64(&bb, "successful_requests", stats_array[i].successful_requests);
+            blobmsg_add_u64(&bb, "failed_requests", stats_array[i].failed_requests);
+            blobmsg_add_double(&bb, "success_rate", stats_array[i].success_rate);
+            blobmsg_add_double(&bb, "avg_response_time_ms", stats_array[i].average_response_time_ms);
+            blobmsg_add_u32(&bb, "requests_this_hour", stats_array[i].requests_this_hour);
+            blobmsg_add_u32(&bb, "requests_this_day", stats_array[i].requests_this_day);
+            blobmsg_add_double(&bb, "cost_this_month", stats_array[i].cost_this_month);
+            blobmsg_add_u32(&bb, "consecutive_failures", stats_array[i].consecutive_failures);
+            blobmsg_add_u32(&bb, "last_success", (uint32_t)stats_array[i].last_success);
             
-            blobmsg_close_table(&bb, api_table\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_close_table(&bb, api_table);
         }
         
-        blobmsg_close_array(&bb, apis_array\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_close_array(&bb, apis_array);
     }
     
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return UBUS_STATUS_OK;
 }
 
@@ -256,28 +256,28 @@ int external_apis_ubus_health_check(struct ubus_context *ctx, struct ubus_object
                                    struct ubus_request_data *req, const char *method,
                                    struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     if (!external_apis_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "External APIs not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "External APIs not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
     // Perform health check
     if (external_apis_health_check() == AUTONOMY_SUCCESS) {
-        blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 1);
         
         // Count API statuses
         int healthy = 0, degraded = 0, failed = 0, disabled = 0; // Use configurable value
         
-        void *health_table = blobmsg_open_table(&bb, "health_check"\n"\n"\n"\n"\n"\n"\n"\n");
-        void *api_health_array = blobmsg_open_array(&bb, "api_health"\n"\n"\n"\n"\n"\n"\n"\n");
+        void *health_table = blobmsg_open_table(&bb, "health_check");
+        void *api_health_array = blobmsg_open_array(&bb, "api_health");
         
         for (int i = 0; i < EXTERNAL_API_MAX; i++) {
-            api_status_t status = external_apis_get_status((external_api_type_t)i\n"\n"\n"\n"\n"\n"\n"\n");
+            api_status_t status = external_apis_get_status((external_api_type_t)i);
             
             switch (status) {
                 case API_STATUS_HEALTHY: healthy++; break;
@@ -287,21 +287,21 @@ int external_apis_ubus_health_check(struct ubus_context *ctx, struct ubus_object
                 default: break;
             }
             
-            void *api_table = blobmsg_open_table(&bb, NULL\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_string(&bb, "api", external_api_type_to_string((external_api_type_t)i)\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_string(&bb, "status", external_api_status_to_string(status)\n"\n"\n"\n"\n"\n"\n"\n");
+            void *api_table = blobmsg_open_table(&bb, NULL);
+            blobmsg_add_string(&bb, "api", external_api_type_to_string((external_api_type_t)i));
+            blobmsg_add_string(&bb, "status", external_api_status_to_string(status));
             
             external_api_statistics_t stats;
             if (external_apis_get_statistics((external_api_type_t)i, &stats) == AUTONOMY_SUCCESS) {
-                blobmsg_add_double(&bb, "success_rate", stats.success_rate\n"\n"\n"\n"\n"\n"\n"\n");
-                blobmsg_add_double(&bb, "avg_response_time_ms", stats.average_response_time_ms\n"\n"\n"\n"\n"\n"\n"\n");
-                blobmsg_add_u32(&bb, "consecutive_failures", stats.consecutive_failures\n"\n"\n"\n"\n"\n"\n"\n");
+                blobmsg_add_double(&bb, "success_rate", stats.success_rate);
+                blobmsg_add_double(&bb, "avg_response_time_ms", stats.average_response_time_ms);
+                blobmsg_add_u32(&bb, "consecutive_failures", stats.consecutive_failures);
             }
             
-            blobmsg_close_table(&bb, api_table\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_close_table(&bb, api_table);
         }
         
-        blobmsg_close_array(&bb, api_health_array\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_close_array(&bb, api_health_array);
         
         // Overall health assessment
         const char* overall_health = "excellent";
@@ -309,20 +309,20 @@ int external_apis_ubus_health_check(struct ubus_context *ctx, struct ubus_object
         else if (degraded > 1) overall_health = "fair";
         else if (degraded > 0) overall_health = "good";
         
-        blobmsg_add_string(&bb, "overall_health", overall_health\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_u32(&bb, "apis_healthy", healthy\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_u32(&bb, "apis_degraded", degraded\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_u32(&bb, "apis_failed", failed\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_u32(&bb, "apis_disabled", disabled\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "overall_health", overall_health);
+        blobmsg_add_u32(&bb, "apis_healthy", healthy);
+        blobmsg_add_u32(&bb, "apis_degraded", degraded);
+        blobmsg_add_u32(&bb, "apis_failed", failed);
+        blobmsg_add_u32(&bb, "apis_disabled", disabled);
         
-        blobmsg_close_table(&bb, health_table\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_close_table(&bb, health_table);
     } else {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "Health check failed"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Health check failed");
     }
     
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return UBUS_STATUS_OK;
 }
 
@@ -331,47 +331,47 @@ int external_apis_ubus_get_config(struct ubus_context *ctx, struct ubus_object *
                                  struct ubus_request_data *req, const char *method,
                                  struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     if (!external_apis_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "External APIs not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "External APIs not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
-    blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u8(&bb, "success", 1);
     
     // Get configuration for each API type
-    void *config_array = blobmsg_open_array(&bb, "configs"\n"\n"\n"\n"\n"\n"\n"\n");
+    void *config_array = blobmsg_open_array(&bb, "configs");
     
     for (int i = 0; i < EXTERNAL_API_MAX; i++) {
         external_api_statistics_t stats;
         if (external_apis_get_statistics((external_api_type_t)i, &stats) == AUTONOMY_SUCCESS) {
-            void *api_table = blobmsg_open_table(&bb, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            void *api_table = blobmsg_open_table(&bb, NULL);
             
-            blobmsg_add_string(&bb, "api", external_api_type_to_string((external_api_type_t)i)\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_string(&bb, "status", external_api_status_to_string(stats.status)\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u64(&bb, "total_requests", stats.total_requests\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u64(&bb, "successful_requests", stats.successful_requests\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u64(&bb, "failed_requests", stats.failed_requests\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_double(&bb, "success_rate", stats.success_rate\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_double(&bb, "avg_response_time_ms", stats.average_response_time_ms\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u32(&bb, "requests_this_hour", stats.requests_this_hour\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u32(&bb, "requests_this_day", stats.requests_this_day\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_double(&bb, "cost_this_month", stats.cost_this_month\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u32(&bb, "consecutive_failures", stats.consecutive_failures\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_u32(&bb, "last_success", (uint32_t)stats.last_success\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_string(&bb, "api", external_api_type_to_string((external_api_type_t)i));
+            blobmsg_add_string(&bb, "status", external_api_status_to_string(stats.status));
+            blobmsg_add_u64(&bb, "total_requests", stats.total_requests);
+            blobmsg_add_u64(&bb, "successful_requests", stats.successful_requests);
+            blobmsg_add_u64(&bb, "failed_requests", stats.failed_requests);
+            blobmsg_add_double(&bb, "success_rate", stats.success_rate);
+            blobmsg_add_double(&bb, "avg_response_time_ms", stats.average_response_time_ms);
+            blobmsg_add_u32(&bb, "requests_this_hour", stats.requests_this_hour);
+            blobmsg_add_u32(&bb, "requests_this_day", stats.requests_this_day);
+            blobmsg_add_double(&bb, "cost_this_month", stats.cost_this_month);
+            blobmsg_add_u32(&bb, "consecutive_failures", stats.consecutive_failures);
+            blobmsg_add_u32(&bb, "last_success", (uint32_t)stats.last_success);
             
-            blobmsg_close_table(&bb, api_table\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_close_table(&bb, api_table);
         }
     }
     
-    blobmsg_close_array(&bb, config_array\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_close_array(&bb, config_array);
     
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return UBUS_STATUS_OK;
 }
 
@@ -380,55 +380,55 @@ int external_apis_ubus_configure(struct ubus_context *ctx, struct ubus_object *o
                                 struct ubus_request_data *req, const char *method,
                                 struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     if (!external_apis_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "External APIs not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "External APIs not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
     struct blob_attr *tb[__EXTERNAL_API_CONFIG_MAX];
-    blobmsg_parse(external_api_config_policy, __EXTERNAL_API_CONFIG_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_parse(external_api_config_policy, __EXTERNAL_API_CONFIG_MAX, tb, blob_data(msg), blob_len(msg));
     
     if (!tb[EXTERNAL_API_CONFIG_API]) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "Missing API parameter"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Missing API parameter");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
-    const char* api_name = blobmsg_get_string(tb[EXTERNAL_API_CONFIG_API]\n"\n"\n"\n"\n"\n"\n"\n");
-    external_api_type_t api_type = external_api_parse_type(api_name\n"\n"\n"\n"\n"\n"\n"\n");
+    const char* api_name = blobmsg_get_string(tb[EXTERNAL_API_CONFIG_API]);
+    external_api_type_t api_type = external_api_parse_type(api_name);
     
     if (api_type == EXTERNAL_API_MAX) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "Invalid API type"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Invalid API type");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
     // For now, just enable/disable the API based on the enabled parameter
     if (tb[EXTERNAL_API_CONFIG_ENABLED]) {
-        bool enabled = blobmsg_get_bool(tb[EXTERNAL_API_CONFIG_ENABLED]\n"\n"\n"\n"\n"\n"\n"\n");
+        bool enabled = blobmsg_get_bool(tb[EXTERNAL_API_CONFIG_ENABLED]);
         if (external_apis_set_enabled(api_type, enabled) == AUTONOMY_SUCCESS) {
-            blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_string(&bb, "message", "API configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u8(&bb, "success", 1);
+            blobmsg_add_string(&bb, "message", "API configuration updated");
         } else {
-            blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_string(&bb, "error", "Failed to update API configuration"\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u8(&bb, "success", 0);
+            blobmsg_add_string(&bb, "error", "Failed to update API configuration");
         }
     } else {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "No configuration parameters provided"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "No configuration parameters provided");
     }
     
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return UBUS_STATUS_OK;
 }
 
@@ -437,34 +437,34 @@ int external_apis_ubus_reset_statistics(struct ubus_context *ctx, struct ubus_ob
                                        struct ubus_request_data *req, const char *method,
                                        struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     if (!external_apis_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "External APIs not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "External APIs not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
     struct blob_attr *tb[__EXTERNAL_API_CONFIG_MAX];
-    blobmsg_parse(external_api_config_policy, __EXTERNAL_API_CONFIG_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_parse(external_api_config_policy, __EXTERNAL_API_CONFIG_MAX, tb, blob_data(msg), blob_len(msg));
     
     if (tb[EXTERNAL_API_CONFIG_API]) {
-        const char* api_name = blobmsg_get_string(tb[EXTERNAL_API_CONFIG_API]\n"\n"\n"\n"\n"\n"\n"\n");
-        external_api_type_t api_type = external_api_parse_type(api_name\n"\n"\n"\n"\n"\n"\n"\n");
+        const char* api_name = blobmsg_get_string(tb[EXTERNAL_API_CONFIG_API]);
+        external_api_type_t api_type = external_api_parse_type(api_name);
         
         if (api_type != EXTERNAL_API_MAX) {
             if (external_apis_reset_statistics(api_type) == AUTONOMY_SUCCESS) {
-                blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
-                blobmsg_add_string(&bb, "message", "API statistics reset"\n"\n"\n"\n"\n"\n"\n"\n");
+                blobmsg_add_u8(&bb, "success", 1);
+                blobmsg_add_string(&bb, "message", "API statistics reset");
             } else {
-                blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-                blobmsg_add_string(&bb, "error", "Failed to reset API statistics"\n"\n"\n"\n"\n"\n"\n"\n");
+                blobmsg_add_u8(&bb, "success", 0);
+                blobmsg_add_string(&bb, "error", "Failed to reset API statistics");
             }
         } else {
-            blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_string(&bb, "error", "Invalid API type"\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u8(&bb, "success", 0);
+            blobmsg_add_string(&bb, "error", "Invalid API type");
         }
     } else {
         // Reset all API statistics
@@ -476,16 +476,16 @@ int external_apis_ubus_reset_statistics(struct ubus_context *ctx, struct ubus_ob
         }
         
         if (all_success) {
-            blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_string(&bb, "message", "All API statistics reset"\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u8(&bb, "success", 1);
+            blobmsg_add_string(&bb, "message", "All API statistics reset");
         } else {
-            blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-            blobmsg_add_string(&bb, "error", "Some API statistics failed to reset"\n"\n"\n"\n"\n"\n"\n"\n");
+            blobmsg_add_u8(&bb, "success", 0);
+            blobmsg_add_string(&bb, "error", "Some API statistics failed to reset");
         }
     }
     
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return UBUS_STATUS_OK;
 }
 
@@ -494,55 +494,55 @@ int external_apis_ubus_test_connection(struct ubus_context *ctx, struct ubus_obj
                                       struct ubus_request_data *req, const char *method,
                                       struct blob_attr *msg) {
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     if (!external_apis_is_initialized()) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "External APIs not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "External APIs not initialized");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
     struct blob_attr *tb[__EXTERNAL_API_CONFIG_MAX];
-    blobmsg_parse(external_api_config_policy, __EXTERNAL_API_CONFIG_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_parse(external_api_config_policy, __EXTERNAL_API_CONFIG_MAX, tb, blob_data(msg), blob_len(msg));
     
     if (!tb[EXTERNAL_API_CONFIG_API]) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "Missing API parameter"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Missing API parameter");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
-    const char* api_name = blobmsg_get_string(tb[EXTERNAL_API_CONFIG_API]\n"\n"\n"\n"\n"\n"\n"\n");
-    external_api_type_t api_type = external_api_parse_type(api_name\n"\n"\n"\n"\n"\n"\n"\n");
+    const char* api_name = blobmsg_get_string(tb[EXTERNAL_API_CONFIG_API]);
+    external_api_type_t api_type = external_api_parse_type(api_name);
     
     if (api_type == EXTERNAL_API_MAX) {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "Invalid API type"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "Invalid API type");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return UBUS_STATUS_OK;
     }
     
     // Perform health check for the API
     if (external_apis_is_healthy(api_type)) {
-        blobmsg_add_u8(&bb, "success", 1\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 1);
         
-        void *test_table = blobmsg_open_table(&bb, "test_result"\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "api", api_name\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_u8(&bb, "connected", true\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "status", "healthy"\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_close_table(&bb, test_table\n"\n"\n"\n"\n"\n"\n"\n");
+        void *test_table = blobmsg_open_table(&bb, "test_result");
+        blobmsg_add_string(&bb, "api", api_name);
+        blobmsg_add_u8(&bb, "connected", true);
+        blobmsg_add_string(&bb, "status", "healthy");
+        blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
+        blobmsg_close_table(&bb, test_table);
     } else {
-        blobmsg_add_u8(&bb, "success", 0\n"\n"\n"\n"\n"\n"\n"\n");
-        blobmsg_add_string(&bb, "error", "API is not healthy or available"\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_u8(&bb, "success", 0);
+        blobmsg_add_string(&bb, "error", "API is not healthy or available");
     }
     
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return UBUS_STATUS_OK;
 }
 
@@ -559,4 +559,4 @@ const struct ubus_method external_apis_ubus_methods[] = {
     UBUS_METHOD("test_connection", external_apis_ubus_test_connection, external_api_config_policy),
 };
 
-const int external_apis_ubus_methods_count = ARRAY_SIZE(external_apis_ubus_methods\n"\n"\n"\n"\n"\n"\n"\n");
+const int external_apis_ubus_methods_count = ARRAY_SIZE(external_apis_ubus_methods);

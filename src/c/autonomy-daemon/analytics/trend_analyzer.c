@@ -17,16 +17,16 @@ static bool g_trend_analyzer_initialized = false;
 
 // Forward declarations
 void analyze_latency_trend(const telemetry_sample_t* samples, int sample_count,
-                                 trend_result_t* result\n"\n"\n"\n"\n"\n"\n"\n");
+                                 trend_result_t* result);
 void analyze_signal_trend(const telemetry_sample_t* samples, int sample_count,
-                                trend_result_t* result\n"\n"\n"\n"\n"\n"\n"\n");
+                                trend_result_t* result);
 void analyze_loss_trend(const telemetry_sample_t* samples, int sample_count,
-                              trend_result_t* result\n"\n"\n"\n"\n"\n"\n"\n");
+                              trend_result_t* result);
 void analyze_throughput_trend(const telemetry_sample_t* samples, int sample_count,
-                                    trend_result_t* result\n"\n"\n"\n"\n"\n"\n"\n");
-void calculate_overall_trend(member_trends_t* trends\n"\n"\n"\n"\n"\n"\n"\n");
-static void classify_trend(trend_result_t* result\n"\n"\n"\n"\n"\n"\n"\n");
-static double linear_regression_slope(const double* x_values, const double* y_values, int count\n"\n"\n"\n"\n"\n"\n"\n");
+                                    trend_result_t* result);
+void calculate_overall_trend(member_trends_t* trends);
+static void classify_trend(trend_result_t* result);
+static double linear_regression_slope(const double* x_values, const double* y_values, int count);
 
 // Initialize trend analyzer
 int trend_analyzer_init(const trend_analyzer_config_t* config) {
@@ -34,7 +34,7 @@ int trend_analyzer_init(const trend_analyzer_config_t* config) {
         return 0; // Already initialized
     }
     
-    memset(&g_trend_analyzer, 0, sizeof(trend_analyzer_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_trend_analyzer, 0, sizeof(trend_analyzer_t));
     
     // Set default configuration if none provided
     if (config) {
@@ -48,12 +48,12 @@ int trend_analyzer_init(const trend_analyzer_config_t* config) {
     }
     
     // Initialize mutex
-    g_trend_analyzer.mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_trend_analyzer.mutex = malloc(sizeof(pthread_mutex_t));
     if (!g_trend_analyzer.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_trend_analyzer.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_init(g_trend_analyzer.mutex, NULL);
     
     // Initialize status
     g_trend_analyzer.last_analysis = 0;
@@ -70,8 +70,8 @@ void trend_analyzer_cleanup(void) {
     if (!g_trend_analyzer_initialized) return;
     
     if (g_trend_analyzer.mutex) {
-        pthread_mutex_destroy(g_trend_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        free(g_trend_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(g_trend_analyzer.mutex);
+        free(g_trend_analyzer.mutex);
     }
     
     g_trend_analyzer.mutex = NULL;
@@ -88,11 +88,11 @@ int trend_analyzer_analyze_all(void) {
         return -1;
     }
     
-    pthread_mutex_lock(g_trend_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_trend_analyzer.mutex);
     
     // Get all member names
     char member_names[64][128];
-    int member_count = telemetry_store_get_members(member_names, 64\n"\n"\n"\n"\n"\n"\n"\n");
+    int member_count = telemetry_store_get_members(member_names, 64);
     
     if (member_count > 16) {
         member_count = 16; // Limit to 16 members
@@ -110,11 +110,11 @@ int trend_analyzer_analyze_all(void) {
     }
     
     // Update statistics
-    g_trend_analyzer.last_analysis = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_trend_analyzer.last_analysis = time(NULL);
     g_trend_analyzer.analysis_count++;
     g_trend_analyzer.successful_analyses = successful;
     
-    pthread_mutex_unlock(g_trend_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_trend_analyzer.mutex);
     
     return 0;
 }
@@ -130,28 +130,28 @@ int trend_analyzer_analyze_member(const char* member_name, member_trends_t* tren
     }
     
     // Initialize trends structure
-    memset(trends, 0, sizeof(member_trends_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(trends->member_name, member_name, sizeof(trends->member_name)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(trends, 0, sizeof(member_trends_t));
+    safe_strncpy(trends->member_name, member_name, sizeof(trends->member_name));
     trends->member_name[sizeof(trends->member_name) - 1] = '\0';
-    trends->last_analysis = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    trends->last_analysis = time(NULL);
     
     // Get samples from trend window
     time_t since = time(NULL) - g_trend_analyzer.config.trend_window_seconds;
     telemetry_sample_t samples[1000];
-    int sample_count = telemetry_store_get_samples(member_name, since, samples, 1000\n"\n"\n"\n"\n"\n"\n"\n");
+    int sample_count = telemetry_store_get_samples(member_name, since, samples, 1000);
     
     if (sample_count < g_trend_analyzer.config.min_data_points) {
         return -1; // Not enough data points
     }
     
     // Analyze trends for each metric
-    analyze_latency_trend(samples, sample_count, &trends->latency_trend\n"\n"\n"\n"\n"\n"\n"\n");
-    analyze_signal_trend(samples, sample_count, &trends->signal_trend\n"\n"\n"\n"\n"\n"\n"\n");
-    analyze_loss_trend(samples, sample_count, &trends->loss_trend\n"\n"\n"\n"\n"\n"\n"\n");
-    analyze_throughput_trend(samples, sample_count, &trends->throughput_trend\n"\n"\n"\n"\n"\n"\n"\n");
+    analyze_latency_trend(samples, sample_count, &trends->latency_trend);
+    analyze_signal_trend(samples, sample_count, &trends->signal_trend);
+    analyze_loss_trend(samples, sample_count, &trends->loss_trend);
+    analyze_throughput_trend(samples, sample_count, &trends->throughput_trend);
     
     // Calculate overall trend
-    calculate_overall_trend(trends\n"\n"\n"\n"\n"\n"\n"\n");
+    calculate_overall_trend(trends);
     
     return 0;
 }
@@ -179,17 +179,17 @@ void analyze_latency_trend(const telemetry_sample_t* samples, int sample_count,
     }
     
     // Calculate trend
-    result->slope = trend_analyzer_calculate_slope(latencies, timestamps, valid_count\n"\n"\n"\n"\n"\n"\n"\n");
+    result->slope = trend_analyzer_calculate_slope(latencies, timestamps, valid_count);
     result->data_points_used = valid_count;
-    result->analysis_timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    result->analysis_timestamp = time(NULL);
     
     // Classify trend
-    classify_trend(result\n"\n"\n"\n"\n"\n"\n"\n");
+    classify_trend(result);
     
     // Make prediction if enabled
     if (g_trend_analyzer.config.enable_prediction) {
-        time_t future_time = time(NULL) + (g_trend_analyzer.config.prediction_horizon_hours * 3600\n"\n"\n"\n"\n"\n"\n"\n");
-        result->prediction = trend_analyzer_predict_value(result, future_time\n"\n"\n"\n"\n"\n"\n"\n");
+        time_t future_time = time(NULL) + (g_trend_analyzer.config.prediction_horizon_hours * 3600);
+        result->prediction = trend_analyzer_predict_value(result, future_time);
         result->has_prediction = true;
     }
 }
@@ -217,17 +217,17 @@ void analyze_signal_trend(const telemetry_sample_t* samples, int sample_count,
     }
     
     // Calculate trend
-    result->slope = trend_analyzer_calculate_slope(signals, timestamps, valid_count\n"\n"\n"\n"\n"\n"\n"\n");
+    result->slope = trend_analyzer_calculate_slope(signals, timestamps, valid_count);
     result->data_points_used = valid_count;
-    result->analysis_timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    result->analysis_timestamp = time(NULL);
     
     // Classify trend
-    classify_trend(result\n"\n"\n"\n"\n"\n"\n"\n");
+    classify_trend(result);
     
     // Make prediction if enabled
     if (g_trend_analyzer.config.enable_prediction) {
-        time_t future_time = time(NULL) + (g_trend_analyzer.config.prediction_horizon_hours * 3600\n"\n"\n"\n"\n"\n"\n"\n");
-        result->prediction = trend_analyzer_predict_value(result, future_time\n"\n"\n"\n"\n"\n"\n"\n");
+        time_t future_time = time(NULL) + (g_trend_analyzer.config.prediction_horizon_hours * 3600);
+        result->prediction = trend_analyzer_predict_value(result, future_time);
         result->has_prediction = true;
     }
 }
@@ -255,17 +255,17 @@ void analyze_loss_trend(const telemetry_sample_t* samples, int sample_count,
     }
     
     // Calculate trend
-    result->slope = trend_analyzer_calculate_slope(losses, timestamps, valid_count\n"\n"\n"\n"\n"\n"\n"\n");
+    result->slope = trend_analyzer_calculate_slope(losses, timestamps, valid_count);
     result->data_points_used = valid_count;
-    result->analysis_timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    result->analysis_timestamp = time(NULL);
     
     // Classify trend
-    classify_trend(result\n"\n"\n"\n"\n"\n"\n"\n");
+    classify_trend(result);
     
     // Make prediction if enabled
     if (g_trend_analyzer.config.enable_prediction) {
-        time_t future_time = time(NULL) + (g_trend_analyzer.config.prediction_horizon_hours * 3600\n"\n"\n"\n"\n"\n"\n"\n");
-        result->prediction = trend_analyzer_predict_value(result, future_time\n"\n"\n"\n"\n"\n"\n"\n");
+        time_t future_time = time(NULL) + (g_trend_analyzer.config.prediction_horizon_hours * 3600);
+        result->prediction = trend_analyzer_predict_value(result, future_time);
         result->has_prediction = true;
     }
 }
@@ -293,17 +293,17 @@ void analyze_throughput_trend(const telemetry_sample_t* samples, int sample_coun
     }
     
     // Calculate trend
-    result->slope = trend_analyzer_calculate_slope(throughputs, timestamps, valid_count\n"\n"\n"\n"\n"\n"\n"\n");
+    result->slope = trend_analyzer_calculate_slope(throughputs, timestamps, valid_count);
     result->data_points_used = valid_count;
-    result->analysis_timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    result->analysis_timestamp = time(NULL);
     
     // Classify trend
-    classify_trend(result\n"\n"\n"\n"\n"\n"\n"\n");
+    classify_trend(result);
     
     // Make prediction if enabled
     if (g_trend_analyzer.config.enable_prediction) {
-        time_t future_time = time(NULL) + (g_trend_analyzer.config.prediction_horizon_hours * 3600\n"\n"\n"\n"\n"\n"\n"\n");
-        result->prediction = trend_analyzer_predict_value(result, future_time\n"\n"\n"\n"\n"\n"\n"\n");
+        time_t future_time = time(NULL) + (g_trend_analyzer.config.prediction_horizon_hours * 3600);
+        result->prediction = trend_analyzer_predict_value(result, future_time);
         result->has_prediction = true;
     }
 }
@@ -339,8 +339,8 @@ void calculate_overall_trend(member_trends_t* trends) {
     if (total_weight > 0) {
         trends->overall_trend.slope = total_slope / total_weight;
         trends->overall_trend.data_points_used = 1; // Indicates valid calculation
-        trends->overall_trend.analysis_timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-        classify_trend(&trends->overall_trend\n"\n"\n"\n"\n"\n"\n"\n");
+        trends->overall_trend.analysis_timestamp = time(NULL);
+        classify_trend(&trends->overall_trend);
     }
 }
 
@@ -350,34 +350,34 @@ static void classify_trend(trend_result_t* result) {
     
     // Determine direction
     if (fabs(result->slope) < 0.01) {
-        strcpy(result->direction, "stable"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(result->direction, "stable");
     } else if (result->slope > 0) {
-        strcpy(result->direction, "improving"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(result->direction, "improving");
     } else {
-        strcpy(result->direction, "degrading"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(result->direction, "degrading");
     }
     
     // Determine magnitude
-    double abs_slope = fabs(result->slope\n"\n"\n"\n"\n"\n"\n"\n");
+    double abs_slope = fabs(result->slope);
     if (abs_slope < 0.1) {
-        strcpy(result->magnitude, "small"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(result->magnitude, "small");
     } else if (abs_slope < 0.5) {
-        strcpy(result->magnitude, "medium"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(result->magnitude, "medium");
     } else {
-        strcpy(result->magnitude, "large"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(result->magnitude, "large");
     }
     
     // Determine duration based on data points
     if (result->data_points_used < 20) {
-        strcpy(result->duration, "short"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(result->duration, "short");
     } else if (result->data_points_used < 50) {
-        strcpy(result->duration, "medium"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(result->duration, "medium");
     } else {
-        strcpy(result->duration, "long"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(result->duration, "long");
     }
     
     // Calculate confidence (simplified)
-    result->confidence = fmin(1.0, (double)result->data_points_used / 100.0\n"\n"\n"\n"\n"\n"\n"\n");
+    result->confidence = fmin(1.0, (double)result->data_points_used / 100.0);
 }
 
 // Calculate trend slope using linear regression
@@ -391,11 +391,11 @@ double trend_analyzer_calculate_slope(const double* values, const time_t* timest
     double y_values[1000];
     
     for (int i = 0; i < count && i < 1000; i++) {
-        x_values[i] = (double)(timestamps[i] - base_time\n"\n"\n"\n"\n"\n"\n"\n");
+        x_values[i] = (double)(timestamps[i] - base_time);
         y_values[i] = values[i];
     }
     
-    return linear_regression_slope(x_values, y_values, count\n"\n"\n"\n"\n"\n"\n"\n");
+    return linear_regression_slope(x_values, y_values, count);
 }
 
 // Linear regression slope calculation
@@ -439,12 +439,12 @@ double trend_analyzer_calculate_confidence(const double* values, const double* r
     variance /= count;
     
     // Higher variance = lower confidence
-    double std_dev = sqrt(variance\n"\n"\n"\n"\n"\n"\n"\n");
+    double std_dev = sqrt(variance);
     double coefficient_of_variation = (mean != 0.0) ? std_dev / fabs(mean) : 1.0;
     
     // Convert to confidence (0-1)
-    double confidence = 1.0 / (1.0 + coefficient_of_variation\n"\n"\n"\n"\n"\n"\n"\n");
-    return fmax(0.0, fmin(1.0, confidence)\n"\n"\n"\n"\n"\n"\n"\n");
+    double confidence = 1.0 / (1.0 + coefficient_of_variation);
+    return fmax(0.0, fmin(1.0, confidence));
 }
 
 // Predict future value
@@ -453,7 +453,7 @@ double trend_analyzer_predict_value(const trend_result_t* trend, time_t future_t
     
     // Simple linear prediction
     time_t time_diff = future_time - trend->analysis_timestamp;
-    return trend->prediction + (trend->slope * time_diff\n"\n"\n"\n"\n"\n"\n"\n");
+    return trend->prediction + (trend->slope * time_diff);
 }
 
 // Get trend results for all members
@@ -462,7 +462,7 @@ int trend_analyzer_get_all_trends(member_trends_t* trends, int max_trends) {
         return -1;
     }
     
-    pthread_mutex_lock(g_trend_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_trend_analyzer.mutex);
     
     int count = (max_trends < g_trend_analyzer.member_count) ? 
                 max_trends : g_trend_analyzer.member_count;
@@ -471,7 +471,7 @@ int trend_analyzer_get_all_trends(member_trends_t* trends, int max_trends) {
         trends[i] = g_trend_analyzer.member_trends[i];
     }
     
-    pthread_mutex_unlock(g_trend_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_trend_analyzer.mutex);
     
     return count;
 }
@@ -482,17 +482,17 @@ int trend_analyzer_get_member_trends(const char* member_name, member_trends_t* t
         return -1;
     }
     
-    pthread_mutex_lock(g_trend_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_trend_analyzer.mutex);
     
     for (int i = 0; i < g_trend_analyzer.member_count; i++) {
         if (strcmp(g_trend_analyzer.member_trends[i].member_name, member_name) == 0) {
             *trends = g_trend_analyzer.member_trends[i];
-            pthread_mutex_unlock(g_trend_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(g_trend_analyzer.mutex);
             return 0;
         }
     }
     
-    pthread_mutex_unlock(g_trend_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_trend_analyzer.mutex);
     return -1; // Member not found
 }
 
@@ -500,9 +500,9 @@ int trend_analyzer_get_member_trends(const char* member_name, member_trends_t* t
 void trend_analyzer_get_status(trend_analyzer_t* status) {
     if (!status || !g_trend_analyzer_initialized) return;
     
-    pthread_mutex_lock(g_trend_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_trend_analyzer.mutex);
     *status = g_trend_analyzer;
-    pthread_mutex_unlock(g_trend_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_trend_analyzer.mutex);
 }
 
 // Check if trend analyzer is initialized

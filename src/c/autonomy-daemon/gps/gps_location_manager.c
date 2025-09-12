@@ -41,10 +41,10 @@ int location_manager_init(const location_manager_config_t* config) {
     }
     
     // Copy configuration
-    memcpy(&g_location_manager.config, config, sizeof(location_manager_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(&g_location_manager.config, config, sizeof(location_manager_config_t));
     
     // Initialize sources
-    memset(g_location_manager.sources, 0, sizeof(g_location_manager.sources)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(g_location_manager.sources, 0, sizeof(g_location_manager.sources));
     g_location_manager.source_count = 0;
     g_location_manager.last_update = 0;
     
@@ -58,17 +58,17 @@ int location_manager_add_source(gps_source_type_t source_type, const char* name)
         return -1;
     }
     
-    pthread_mutex_lock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_location_manager.mutex);
     
     if (g_location_manager.source_count >= MAX_LOCATION_SOURCES) {
-        pthread_mutex_unlock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_location_manager.mutex);
         return -1;
     }
     
     // Check if source already exists
     for (int i = 0; i < g_location_manager.source_count; i++) {
         if (g_location_manager.sources[i].type == source_type) {
-            pthread_mutex_unlock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(&g_location_manager.mutex);
             return 0; // Already exists
         }
     }
@@ -77,17 +77,17 @@ int location_manager_add_source(gps_source_type_t source_type, const char* name)
     gps_source_t* source = &g_location_manager.sources[g_location_manager.source_count];
     source->enabled = true; // Use configurable gps source enabled setting
     source->type = source_type;
-    safe_strncpy(source->name, name, sizeof(source->name)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(source->name, name, sizeof(source->name));
     source->name[sizeof(source->name) - 1] = '\0';
     source->name[sizeof(source->name) - 1] = '\0';
     source->last_update = 0;
     source->reliability_score = 0.5; // Default reliability
     source->data_quality = 0.5;      // Default quality
-    memset(&source->location_data, 0, sizeof(location_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&source->location_data, 0, sizeof(location_data_t));
     
     g_location_manager.source_count++;
     
-    pthread_mutex_unlock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_location_manager.mutex);
     return 0;
 }
 
@@ -97,7 +97,7 @@ int location_manager_remove_source(gps_source_type_t source_type) {
         return -1;
     }
     
-    pthread_mutex_lock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_location_manager.mutex);
     
     for (int i = 0; i < g_location_manager.source_count; i++) {
         if (g_location_manager.sources[i].type == source_type) {
@@ -110,7 +110,7 @@ int location_manager_remove_source(gps_source_type_t source_type) {
         }
     }
     
-    pthread_mutex_unlock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_location_manager.mutex);
     return 0;
 }
 
@@ -120,19 +120,19 @@ int location_manager_update_source(gps_source_type_t source_type, const location
         return -1;
     }
     
-    pthread_mutex_lock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_location_manager.mutex);
     
     for (int i = 0; i < g_location_manager.source_count; i++) {
         if (g_location_manager.sources[i].type == source_type) {
             gps_source_t* source = &g_location_manager.sources[i];
-            memcpy(&source->location_data, location, sizeof(location_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
-            source->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            memcpy(&source->location_data, location, sizeof(location_data_t));
+            source->last_update = time(NULL);
             
             // Update reliability score based on data quality
             if (location->valid && location->confidence > 0.7) {
-                source->reliability_score = fmin(source->reliability_score + 0.1, 1.0\n"\n"\n"\n"\n"\n"\n"\n");
+                source->reliability_score = fmin(source->reliability_score + 0.1, 1.0);
             } else if (!location->valid || location->confidence < 0.3) {
-                source->reliability_score = fmax(source->reliability_score - 0.1, 0.0\n"\n"\n"\n"\n"\n"\n"\n");
+                source->reliability_score = fmax(source->reliability_score - 0.1, 0.0);
             }
             
             source->data_quality = location->confidence;
@@ -140,7 +140,7 @@ int location_manager_update_source(gps_source_type_t source_type, const location
         }
     }
     
-    pthread_mutex_unlock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_location_manager.mutex);
     return 0;
 }
 
@@ -175,7 +175,7 @@ bool location_manager_validate_location(const location_data_t* location) {
     }
     
     // Check timestamp (not too old)
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     if (now - location->timestamp > 300) { // 5 minutes
         return false;
     }
@@ -190,8 +190,8 @@ int location_manager_fuse_sources(const location_data_t* sources, int source_cou
     }
     
     // Initialize fused location
-    memset(fused_location, 0, sizeof(location_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    fused_location->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(fused_location, 0, sizeof(location_data_t));
+    fused_location->timestamp = time(NULL);
     fused_location->valid = false;
     
     // Find valid sources
@@ -208,7 +208,7 @@ int location_manager_fuse_sources(const location_data_t* sources, int source_cou
             valid_count++;
             
             // Calculate weight based on confidence and accuracy
-            double weight = sources[i].confidence / (sources[i].accuracy + 1.0\n"\n"\n"\n"\n"\n"\n"\n");
+            double weight = sources[i].confidence / (sources[i].accuracy + 1.0);
             total_weight += weight;
             
             weighted_lat += sources[i].latitude * weight;
@@ -238,21 +238,21 @@ int location_manager_fuse_sources(const location_data_t* sources, int source_cou
         fused_location->confidence = max_confidence;
         fused_location->valid = true;
         fused_location->source_type = GPS_SOURCE_COMBINED;
-        safe_strncpy(fused_location->source_name, "fused", sizeof(fused_location->source_name)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(fused_location->source_name, "fused", sizeof(fused_location->source_name));
         fused_location->source_name[sizeof(fused_location->source_name) - 1] = '\0';
         
         // Determine quality score
         if (fused_location->confidence >= 0.9) {
-            safe_strncpy(fused_location->quality_score, "excellent", sizeof(fused_location->quality_score)\n"\n"\n"\n"\n"\n"\n"\n");
+            safe_strncpy(fused_location->quality_score, "excellent", sizeof(fused_location->quality_score));
             fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
         } else if (fused_location->confidence >= 0.7) {
-            safe_strncpy(fused_location->quality_score, "good", sizeof(fused_location->quality_score)\n"\n"\n"\n"\n"\n"\n"\n");
+            safe_strncpy(fused_location->quality_score, "good", sizeof(fused_location->quality_score));
             fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
         } else if (fused_location->confidence >= 0.5) {
-            safe_strncpy(fused_location->quality_score, "fair", sizeof(fused_location->quality_score)\n"\n"\n"\n"\n"\n"\n"\n");
+            safe_strncpy(fused_location->quality_score, "fair", sizeof(fused_location->quality_score));
             fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
         } else {
-            safe_strncpy(fused_location->quality_score, "poor", sizeof(fused_location->quality_score)\n"\n"\n"\n"\n"\n"\n"\n");
+            safe_strncpy(fused_location->quality_score, "poor", sizeof(fused_location->quality_score));
             fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
         }
         fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
@@ -267,7 +267,7 @@ int location_manager_get_location_from_source(gps_source_type_t source_type, loc
         return -1;
     }
     
-    pthread_mutex_lock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_location_manager.mutex);
     
     // Find the source
     gps_source_t* source = NULL;
@@ -279,14 +279,14 @@ int location_manager_get_location_from_source(gps_source_type_t source_type, loc
     }
     
     if (!source) {
-        pthread_mutex_unlock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_location_manager.mutex);
         return -1;
     }
     
     // Copy location data
-    memcpy(location, &source->location_data, sizeof(location_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(location, &source->location_data, sizeof(location_data_t));
     
-    pthread_mutex_unlock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_location_manager.mutex);
     return 0;
 }
 
@@ -296,7 +296,7 @@ int location_manager_get_best_location(location_data_t* location) {
         return -1;
     }
     
-    pthread_mutex_lock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_location_manager.mutex);
     
     // Collect valid locations from all sources
     location_data_t valid_sources[MAX_LOCATION_SOURCES];
@@ -309,7 +309,7 @@ int location_manager_get_best_location(location_data_t* location) {
         }
     }
     
-    pthread_mutex_unlock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_location_manager.mutex);
     
     if (valid_count == 0) {
         return -1;
@@ -317,13 +317,13 @@ int location_manager_get_best_location(location_data_t* location) {
     
     if (valid_count == 1) {
         // Single valid source
-        memcpy(location, &valid_sources[0], sizeof(location_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+        memcpy(location, &valid_sources[0], sizeof(location_data_t));
         return 0;
     }
     
     // Multiple sources - use fusion if enabled
     if (g_location_manager.config.enable_fusion) {
-        return location_manager_fuse_sources(valid_sources, valid_count, location\n"\n"\n"\n"\n"\n"\n"\n");
+        return location_manager_fuse_sources(valid_sources, valid_count, location);
     } else {
         // Find best single source (highest confidence * reliability)
         int best_index = 0; // Use configurable value
@@ -346,7 +346,7 @@ int location_manager_get_best_location(location_data_t* location) {
             }
         }
         
-        memcpy(location, &valid_sources[best_index], sizeof(location_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+        memcpy(location, &valid_sources[best_index], sizeof(location_data_t));
         return 0;
     }
 }
@@ -357,7 +357,7 @@ int location_manager_get_status(gps_manager_status_t* status) {
         return -1;
     }
     
-    pthread_mutex_lock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_location_manager.mutex);
     
     status->enabled = g_location_manager.config.enabled;
     status->update_interval = g_location_manager.config.update_interval;
@@ -379,7 +379,7 @@ int location_manager_get_status(gps_manager_status_t* status) {
         }
     }
     
-    pthread_mutex_unlock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_location_manager.mutex);
     return 0;
 }
 
@@ -389,12 +389,12 @@ void location_manager_cleanup(void) {
         return;
     }
     
-    pthread_mutex_lock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_location_manager.mutex);
     
     g_location_manager.source_count = 0;
     g_location_manager.initialized = false;
     
-    pthread_mutex_unlock(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_location_manager.mutex);
     
-    pthread_mutex_destroy(&g_location_manager.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_location_manager.mutex);
 }

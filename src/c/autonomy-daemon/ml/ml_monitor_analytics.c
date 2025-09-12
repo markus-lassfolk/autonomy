@@ -15,80 +15,80 @@ static bool g_analytics_initialized = false;
 
 // Initialize ML analytics system
 int ml_monitor_analytics_init(void) {
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init called\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - checking if already initialized\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    fprintf(stderr, "DEBUG: g_analytics_initialized = %d\n", g_analytics_initialized\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init called\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - checking if already initialized\n");
+    fprintf(stderr, "DEBUG: g_analytics_initialized = %d\n", g_analytics_initialized);
     
     if (g_analytics_initialized && g_analytics_data) {
-        fprintf(stderr, "DEBUG: ml_monitor_analytics_init - already initialized\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "DEBUG: ml_monitor_analytics_init - already initialized\n");
         return ML_MONITOR_SUCCESS;
     }
     
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to lock mutex\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    fprintf(stderr, "DEBUG: g_analytics_mutex address: %p\n", (void*)&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    pthread_mutex_lock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - mutex locked\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to lock mutex\n");
+    fprintf(stderr, "DEBUG: g_analytics_mutex address: %p\n", (void*)&g_analytics_mutex);
+    pthread_mutex_lock(&g_analytics_mutex);
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - mutex locked\n");
     
     // Allocate analytics data dynamically - optimized for memory efficiency
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to allocate analytics data\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to allocate analytics data\n");
     fprintf(stderr, "DEBUG: sizeof(ml_analytics_data_t): %zu bytes (%.2f MB)\n", 
-            sizeof(ml_analytics_data_t), sizeof(ml_analytics_data_t) / (1024.0 * 1024.0)\n"\n"\n"\n"\n"\n"\n"\n");
-    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
+            sizeof(ml_analytics_data_t), sizeof(ml_analytics_data_t) / (1024.0 * 1024.0));
+    fflush(stderr);
     
-    g_analytics_data = calloc(1, sizeof(ml_analytics_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_analytics_data = calloc(1, sizeof(ml_analytics_data_t));
     if (!g_analytics_data) {
-        fprintf(stderr, "ERROR: Failed to allocate %zu bytes for analytics data\n", sizeof(ml_analytics_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
-        pthread_mutex_unlock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "ERROR: Failed to allocate %zu bytes for analytics data\n", sizeof(ml_analytics_data_t));
+        pthread_mutex_unlock(&g_analytics_mutex);
         return ML_MONITOR_ERROR_MEMORY_FAILED;
     }
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - allocated analytics data at %p\n", (void*)g_analytics_data\n"\n"\n"\n"\n"\n"\n"\n");
-    fflush(stderr\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - allocated analytics data at %p\n", (void*)g_analytics_data);
+    fflush(stderr);
     
     // Initialize fields individually
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing prediction results (max 100)\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing prediction results (max 100)\n");
     g_analytics_data->prediction_results_count = 0;
     g_analytics_data->prediction_results_index = 0;
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - prediction results initialized\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - prediction results initialized\n");
     
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing interface scores (max 360 per interface)\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing interface scores (max 360 per interface)\n");
     for (int i = 0; i < MAX_INTERFACES; i++) {
         g_analytics_data->interface_scores_count[i] = 0;
         g_analytics_data->interface_scores_index[i] = 0;
     }
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - interface scores initialized\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - interface scores initialized\n");
     
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing impact events (max 100)\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing impact events (max 100)\n");
     g_analytics_data->impact_events_count = 0;
     g_analytics_data->impact_events_index = 0;
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - impact events initialized\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to set start time\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    g_analytics_data->summary_stats.stats_start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - start time set\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - impact events initialized\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to set start time\n");
+    g_analytics_data->summary_stats.stats_start_time = time(NULL);
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - start time set\n");
     
     // Initialize interface summaries
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to initialize interface summaries\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to initialize interface summaries\n");
     for (int i = 0; i < MAX_INTERFACES; i++) {
         g_analytics_data->interface_summary[i].is_active = false;
         g_analytics_data->interface_summary[i].current_score = 50.0; // Start neutral
         g_analytics_data->interface_summary[i].best_score = 0.0;
         g_analytics_data->interface_summary[i].worst_score = 100.0;
     }
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - interface summaries initialized\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - interface summaries initialized\n");
     
     g_analytics_initialized = true;
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to unlock mutex\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    pthread_mutex_unlock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - mutex unlocked\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to unlock mutex\n");
+    pthread_mutex_unlock(&g_analytics_mutex);
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - mutex unlocked\n");
     
-    printf("INFO: " ML Analytics system initialized"\n"\n"\n"\n"\n"\n"\n"\n");
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init completed successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG(" ML Analytics system initialized");
+    fprintf(stderr, "DEBUG: ml_monitor_analytics_init completed successfully\n");
     return ML_MONITOR_SUCCESS;
 }
 
 // Cleanup ML analytics system
 void ml_monitor_analytics_cleanup(void) {
     if (g_analytics_data) {
-        free(g_analytics_data\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_analytics_data);
         g_analytics_data = NULL;
     }
     g_analytics_initialized = false;
@@ -100,7 +100,7 @@ int ml_monitor_analytics_record_prediction(const ml_prediction_result_t *result)
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_analytics_mutex);
     
     // Add to circular buffer
     uint32_t idx = g_analytics_data->prediction_results_index;
@@ -129,7 +129,7 @@ int ml_monitor_analytics_record_prediction(const ml_prediction_result_t *result)
             !g_analytics_data->interface_summary[i].is_active) {
             
             if (!g_analytics_data->interface_summary[i].is_active) {
-                strncpy(g_analytics_data->interface_summary[i].interface_id, result->interface_id, 31\n"\n"\n"\n"\n"\n"\n"\n");
+                strncpy(g_analytics_data->interface_summary[i].interface_id, result->interface_id, 31);
                 g_analytics_data->interface_summary[i].is_active = true;
                 g_analytics_data->interface_summary[i].predictions_made = 0;
                 g_analytics_data->interface_summary[i].predictions_correct = 0;
@@ -146,17 +146,17 @@ int ml_monitor_analytics_record_prediction(const ml_prediction_result_t *result)
                     g_analytics_data->interface_summary[i].predictions_made;
             }
             
-            g_analytics_data->interface_summary[i].last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            g_analytics_data->interface_summary[i].last_update = time(NULL);
             break;
         }
     }
     
-    pthread_mutex_unlock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_analytics_mutex);
     
-    printf("DEBUG: " Recorded prediction result for %s: %s (confidence: %u%%)",
+    LOGX_DEBUG_MSG(" Recorded prediction result for %s: %s (confidence: %u%%)",
               result->interface_id, 
               result->prediction_correct ? "CORRECT" : "INCORRECT",
-              result->confidence_level\n"\n"\n"\n"\n"\n"\n"\n");
+              result->confidence_level);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -167,7 +167,7 @@ int ml_monitor_analytics_update_interface_score(const ml_interface_score_t *scor
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_analytics_mutex);
     
     // Find interface slot
     int interface_slot = -1;
@@ -177,14 +177,14 @@ int ml_monitor_analytics_update_interface_score(const ml_interface_score_t *scor
             break;
         } else if (!g_analytics_data->interface_summary[i].is_active) {
             interface_slot = i;
-            strncpy(g_analytics_data->interface_summary[i].interface_id, score->interface_id, 31\n"\n"\n"\n"\n"\n"\n"\n");
+            strncpy(g_analytics_data->interface_summary[i].interface_id, score->interface_id, 31);
             g_analytics_data->interface_summary[i].is_active = true;
             break;
         }
     }
     
     if (interface_slot == -1) {
-        pthread_mutex_unlock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_analytics_mutex);
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
@@ -199,7 +199,7 @@ int ml_monitor_analytics_update_interface_score(const ml_interface_score_t *scor
     
     // Update interface summary
     g_analytics_data->interface_summary[interface_slot].current_score = score->overall_score;
-    g_analytics_data->interface_summary[interface_slot].last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_analytics_data->interface_summary[interface_slot].last_update = time(NULL);
     
     if (score->overall_score > g_analytics_data->interface_summary[interface_slot].best_score) {
         g_analytics_data->interface_summary[interface_slot].best_score = score->overall_score;
@@ -208,12 +208,12 @@ int ml_monitor_analytics_update_interface_score(const ml_interface_score_t *scor
         g_analytics_data->interface_summary[interface_slot].worst_score = score->overall_score;
     }
     
-    pthread_mutex_unlock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_analytics_mutex);
     
-    printf("DEBUG: " Updated interface score for %s: %.1f (latency impact: %+.1f, loss impact: %+.1f)",
+    LOGX_DEBUG_MSG(" Updated interface score for %s: %.1f (latency impact: %+.1f, loss impact: %+.1f)",
               score->interface_id, score->overall_score,
               score->score_contributors.latency_impact,
-              score->score_contributors.loss_impact\n"\n"\n"\n"\n"\n"\n"\n");
+              score->score_contributors.loss_impact);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -224,7 +224,7 @@ int ml_monitor_analytics_record_impact_event(const ml_impact_event_t *event) {
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_analytics_mutex);
     
     // Add to circular buffer
     uint32_t idx = g_analytics_data->impact_events_index;
@@ -255,10 +255,10 @@ int ml_monitor_analytics_record_impact_event(const ml_impact_event_t *event) {
         g_analytics_data->summary_stats.average_user_experience = total_ux / count;
     }
     
-    pthread_mutex_unlock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_analytics_mutex);
     
-    printf("INFO: " Recorded ML impact event for %s: improvement %+dms, UX score %.1f",
-             event->interface_id, event->ml_improvement_ms, event->user_experience_score\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG(" Recorded ML impact event for %s: improvement %+dms, UX score %.1f",
+             event->interface_id, event->ml_improvement_ms, event->user_experience_score);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -273,8 +273,8 @@ int ml_monitor_analytics_calculate_interface_score(const char *interface_id, ml_
     network_interface_t interfaces[MAX_INTERFACES];
     int interface_count = 0;
     
-    extern int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count\n"\n"\n"\n"\n"\n"\n"\n");
-    int result = get_enhanced_comprehensive_interface_info(interfaces, &interface_count\n"\n"\n"\n"\n"\n"\n"\n");
+    extern int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count);
+    int result = get_enhanced_comprehensive_interface_info(interfaces, &interface_count);
     if (result != AUTONOMY_SUCCESS) {
         return result;
     }
@@ -293,10 +293,10 @@ int ml_monitor_analytics_calculate_interface_score(const char *interface_id, ml_
     }
     
     // Initialize score structure
-    memset(score, 0, sizeof(ml_interface_score_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    score->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(score->interface_id, interface_id, sizeof(score->interface_id)\n"\n"\n"\n"\n"\n"\n"\n");
-    score->interface_type = ml_monitor_map_interface_type(interface\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(score, 0, sizeof(ml_interface_score_t));
+    score->timestamp = time(NULL);
+    safe_strncpy(score->interface_id, interface_id, sizeof(score->interface_id));
+    score->interface_type = ml_monitor_map_interface_type(interface);
     
     // Get raw metrics
     score->current_latency_ms = interface->real_time_metrics.ping_latency_ms;
@@ -309,12 +309,12 @@ int ml_monitor_analytics_calculate_interface_score(const char *interface_id, ml_
     }
     
     // Calculate component scores
-    double latency_score = ml_monitor_calculate_latency_score(score->current_latency_ms\n"\n"\n"\n"\n"\n"\n"\n");
-    double loss_score = ml_monitor_calculate_loss_score(score->current_loss_pct\n"\n"\n"\n"\n"\n"\n"\n");
-    double signal_score = ml_monitor_calculate_signal_score(score->current_signal_dbm, score->interface_type\n"\n"\n"\n"\n"\n"\n"\n");
+    double latency_score = ml_monitor_calculate_latency_score(score->current_latency_ms);
+    double loss_score = ml_monitor_calculate_loss_score(score->current_loss_pct);
+    double signal_score = ml_monitor_calculate_signal_score(score->current_signal_dbm, score->interface_type);
     
     // Get prediction accuracy
-    pthread_mutex_lock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_analytics_mutex);
     for (int i = 0; i < MAX_INTERFACES; i++) {
         if (strcmp(g_analytics_data->interface_summary[i].interface_id, interface_id) == 0) {
             score->recent_predictions_correct = 
@@ -322,7 +322,7 @@ int ml_monitor_analytics_calculate_interface_score(const char *interface_id, ml_
             break;
         }
     }
-    pthread_mutex_unlock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_analytics_mutex);
     
     double prediction_score = ml_monitor_calculate_prediction_score(
         score->recent_predictions_correct, 10); // Last 10 predictions
@@ -341,7 +341,7 @@ int ml_monitor_analytics_calculate_interface_score(const char *interface_id, ml_
     }
     
     double stability_score = ml_monitor_calculate_stability_score(
-        score->consecutive_stable_minutes, interface->performance_history.history_count\n"\n"\n"\n"\n"\n"\n"\n");
+        score->consecutive_stable_minutes, interface->performance_history.history_count);
     
     // Calculate component scores and impacts
     score->accuracy_score = prediction_score;
@@ -351,7 +351,7 @@ int ml_monitor_analytics_calculate_interface_score(const char *interface_id, ml_
     // Calculate trend score from performance history
     if (interface->performance_history.history_count >= 10) {
         double trend_factor = 1.0 + interface->performance_history.health_trend * 0.5;
-        score->trend_score = fmax(0.0, fmin(100.0, 50.0 * trend_factor)\n"\n"\n"\n"\n"\n"\n"\n");
+        score->trend_score = fmax(0.0, fmin(100.0, 50.0 * trend_factor));
     } else {
         score->trend_score = 50.0; // Neutral when no trend data
     }
@@ -362,7 +362,7 @@ int ml_monitor_analytics_calculate_interface_score(const char *interface_id, ml_
         score->accuracy_score * 0.25 +     // 25% prediction accuracy
         score->stability_score * 0.25 +    // 25% stability
         score->trend_score * 0.1            // 10% trend
-    \n"\n"\n"\n"\n"\n"\n"\n");
+    );
     
     // Calculate score contributors (impact of each factor)
     double baseline = 50.0;
@@ -451,9 +451,9 @@ int ml_monitor_analytics_get_data(ml_analytics_data_t *data) {
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_analytics_mutex);
     *data = *g_analytics_data;
-    pthread_mutex_unlock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_analytics_mutex);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -467,7 +467,7 @@ int ml_monitor_analytics_get_interface_score_history(const char *interface_id,
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_analytics_mutex);
     
     // Find interface slot
     int interface_slot = -1;
@@ -480,13 +480,13 @@ int ml_monitor_analytics_get_interface_score_history(const char *interface_id,
     
     if (interface_slot == -1) {
         *actual_count = 0;
-        pthread_mutex_unlock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_analytics_mutex);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     // Copy score history
     uint32_t available_scores = g_analytics_data->interface_scores_count[interface_slot];
-    uint32_t scores_to_copy = fmin(available_scores, max_scores\n"\n"\n"\n"\n"\n"\n"\n");
+    uint32_t scores_to_copy = fmin(available_scores, max_scores);
     
     for (uint32_t i = 0; i < scores_to_copy; i++) {
         uint32_t src_idx = (g_analytics_data->interface_scores_index[interface_slot] - scores_to_copy + i + 360) % 360;  // Updated from 720 to 360 for memory efficiency
@@ -494,7 +494,7 @@ int ml_monitor_analytics_get_interface_score_history(const char *interface_id,
     }
     
     *actual_count = scores_to_copy;
-    pthread_mutex_unlock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_analytics_mutex);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -508,9 +508,9 @@ int ml_monitor_analytics_get_accuracy_trend(const char *interface_id,
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_analytics_mutex);
     
-    time_t cutoff_time = time(NULL) - (hours * 3600\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t cutoff_time = time(NULL) - (hours * 3600);
     uint32_t total_predictions = 0;
     uint32_t correct_predictions = 0;
     
@@ -576,7 +576,7 @@ int ml_monitor_analytics_get_accuracy_trend(const char *interface_id,
         *trend_direction = 0;
     }
     
-    pthread_mutex_unlock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_analytics_mutex);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -590,9 +590,9 @@ int ml_monitor_analytics_get_impact_summary(uint32_t hours,
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_analytics_mutex);
     
-    time_t cutoff_time = time(NULL) - (hours * 3600\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t cutoff_time = time(NULL) - (hours * 3600);
     *total_improvement_ms = 0;
     *actions_taken = 0;
     double total_stability_improvement = 0.0;
@@ -623,7 +623,7 @@ int ml_monitor_analytics_get_impact_summary(uint32_t hours,
         *stability_improvement_pct = 0.0;
     }
     
-    pthread_mutex_unlock(&g_analytics_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_analytics_mutex);
     
     return ML_MONITOR_SUCCESS;
 }

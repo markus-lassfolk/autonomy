@@ -37,15 +37,15 @@ static gps_confidence_t g_confidence_calc = {0};
 static bool g_confidence_initialized = false; // Use configurable initialization setting
 
 // Forward declarations
-double calculate_accuracy_confidence(double accuracy\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_satellite_confidence(int satellite_count\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_fix_quality_confidence(int fix_quality\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_freshness_confidence(time_t timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+double calculate_accuracy_confidence(double accuracy);
+double calculate_satellite_confidence(int satellite_count);
+double calculate_fix_quality_confidence(int fix_quality);
+double calculate_freshness_confidence(time_t timestamp);
 double calculate_consistency_confidence(const gps_data_t *current_gps, 
-                                            const gps_confidence_context_t *context\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_expected_movement(int time_diff_seconds, const gps_confidence_context_t *context\n"\n"\n"\n"\n"\n"\n"\n");
+                                            const gps_confidence_context_t *context);
+double calculate_expected_movement(int time_diff_seconds, const gps_confidence_context_t *context);
 double calculate_position_consistency(double actual_distance, double expected_movement, 
-                                     double current_accuracy, double previous_accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+                                     double current_accuracy, double previous_accuracy);
 
 // Calculate GPS confidence score
 double gps_confidence_calculate(const gps_data_t *gps_data, const gps_confidence_context_t *context) {
@@ -56,33 +56,33 @@ double gps_confidence_calculate(const gps_data_t *gps_data, const gps_confidence
     double confidence = 0.0; // Use configurable value // Use configurable value
     
     // Calculate accuracy-based confidence
-    double accuracy_confidence = calculate_accuracy_confidence(gps_data->accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+    double accuracy_confidence = calculate_accuracy_confidence(gps_data->accuracy);
     confidence += accuracy_confidence * g_confidence_calc.accuracy_weight;
     
     // Calculate satellite-based confidence
-    double satellite_confidence = calculate_satellite_confidence(gps_data->satellites\n"\n"\n"\n"\n"\n"\n"\n");
+    double satellite_confidence = calculate_satellite_confidence(gps_data->satellites);
     confidence += satellite_confidence * g_confidence_calc.satellite_weight;
     
     // Calculate fix quality confidence
-    double fix_quality_confidence = calculate_fix_quality_confidence(gps_data->fix_quality\n"\n"\n"\n"\n"\n"\n"\n");
+    double fix_quality_confidence = calculate_fix_quality_confidence(gps_data->fix_quality);
     confidence += fix_quality_confidence * g_confidence_calc.fix_quality_weight;
     
     // Calculate data freshness confidence
-    double freshness_confidence = calculate_freshness_confidence(gps_data->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+    double freshness_confidence = calculate_freshness_confidence(gps_data->timestamp);
     confidence += freshness_confidence * g_confidence_calc.freshness_weight;
     
     // Calculate position consistency confidence (if context provided)
     if (context && context->previous_positions && context->position_count > 0) {
-        double consistency_confidence = calculate_consistency_confidence(gps_data, context\n"\n"\n"\n"\n"\n"\n"\n");
+        double consistency_confidence = calculate_consistency_confidence(gps_data, context);
         confidence += consistency_confidence * g_confidence_calc.consistency_weight;
     }
     
     // Apply confidence bounds
-    confidence = fmax(confidence, g_confidence_calc.min_confidence\n"\n"\n"\n"\n"\n"\n"\n");
-    confidence = fmin(confidence, g_confidence_calc.max_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+    confidence = fmax(confidence, g_confidence_calc.min_confidence);
+    confidence = fmin(confidence, g_confidence_calc.max_confidence);
     
-    printf("DEBUG: "GPS confidence calculated: %.3f (acc:%.3f, sat:%.3f, fix:%.3f, fresh:%.3f)", 
-               confidence, accuracy_confidence, satellite_confidence, fix_quality_confidence, freshness_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("GPS confidence calculated: %.3f (acc:%.3f, sat:%.3f, fix:%.3f, fresh:%.3f)", 
+               confidence, accuracy_confidence, satellite_confidence, fix_quality_confidence, freshness_confidence);
     
     return confidence;
 }
@@ -105,7 +105,7 @@ double calculate_accuracy_confidence(double accuracy) {
                       (LOW_ACCURACY_THRESHOLD - MEDIUM_ACCURACY_THRESHOLD)) * 0.4;
     } else {
         // Very low accuracy - exponential decay
-        return 0.3 * exp(-(accuracy - LOW_ACCURACY_THRESHOLD) / 100.0\n"\n"\n"\n"\n"\n"\n"\n");
+        return 0.3 * exp(-(accuracy - LOW_ACCURACY_THRESHOLD) / 100.0);
     }
 }
 
@@ -127,7 +127,7 @@ double calculate_satellite_confidence(int satellite_count) {
                       (GOOD_SATELLITES - ADEQUATE_SATELLITES)) * 0.3;
     } else {
         // Poor satellite coverage
-        return 0.5 * (satellite_count / (double)ADEQUATE_SATELLITES\n"\n"\n"\n"\n"\n"\n"\n");
+        return 0.5 * (satellite_count / (double)ADEQUATE_SATELLITES);
     }
 }
 
@@ -150,7 +150,7 @@ double calculate_freshness_confidence(time_t timestamp) {
         return 0.0;
     }
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     int age = now - timestamp;
     
     if (age <= FRESH_DATA_THRESHOLD) {
@@ -165,7 +165,7 @@ double calculate_freshness_confidence(time_t timestamp) {
                       (OLD_DATA_THRESHOLD - RECENT_DATA_THRESHOLD)) * 0.4;
     } else {
         // Very old data - exponential decay
-        return 0.4 * exp(-(age - OLD_DATA_THRESHOLD) / 300.0\n"\n"\n"\n"\n"\n"\n"\n");
+        return 0.4 * exp(-(age - OLD_DATA_THRESHOLD) / 300.0);
     }
 }
 
@@ -189,17 +189,17 @@ double calculate_consistency_confidence(const gps_data_t *current_gps,
         
         // Calculate distance between current and previous position
         double distance = gps_coordinate_distance(current_gps->lat, current_gps->lon,
-                                          prev_gps->lat, prev_gps->lon\n"\n"\n"\n"\n"\n"\n"\n");
+                                          prev_gps->lat, prev_gps->lon);
         
         // Calculate time difference
-        int time_diff = abs((int)(current_gps->timestamp - prev_gps->timestamp)\n"\n"\n"\n"\n"\n"\n"\n");
+        int time_diff = abs((int)(current_gps->timestamp - prev_gps->timestamp));
         
         // Calculate expected movement based on time difference
-        double expected_movement = calculate_expected_movement(time_diff, context\n"\n"\n"\n"\n"\n"\n"\n");
+        double expected_movement = calculate_expected_movement(time_diff, context);
         
         // Calculate consistency score for this comparison
         double consistency = calculate_position_consistency(distance, expected_movement, 
-                                                         current_gps->accuracy, prev_gps->accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+                                                         current_gps->accuracy, prev_gps->accuracy);
         
         total_consistency += consistency;
         valid_positions++;
@@ -229,10 +229,10 @@ double calculate_position_consistency(double actual_distance, double expected_mo
                                           double current_accuracy, double previous_accuracy) {
     // Calculate combined accuracy
     double combined_accuracy = sqrt(current_accuracy * current_accuracy + 
-                                   previous_accuracy * previous_accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+                                   previous_accuracy * previous_accuracy);
     
     // Calculate movement difference
-    double movement_diff = fabs(actual_distance - expected_movement\n"\n"\n"\n"\n"\n"\n"\n");
+    double movement_diff = fabs(actual_distance - expected_movement);
     
     // Calculate consistency score
     if (movement_diff <= combined_accuracy) {
@@ -245,7 +245,7 @@ double calculate_position_consistency(double actual_distance, double expected_mo
         return 0.5 - (movement_diff - combined_accuracy * 2.0) / (combined_accuracy * 3.0) * 0.3;
     } else {
         // Movement is significantly different from expected
-        return 0.2 * exp(-(movement_diff - combined_accuracy * 5.0) / combined_accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+        return 0.2 * exp(-(movement_diff - combined_accuracy * 5.0) / combined_accuracy);
     }
 }
 
@@ -279,7 +279,7 @@ int gps_confidence_set_config(const gps_confidence_config_t *config) {
                          config->consistency_weight;
     
     if (fabs(total_weight - 1.0) > 0.1) {
-        printf("WARN: "GPS confidence weights should sum to 1.0, current sum: %.3f", total_weight\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("GPS confidence weights should sum to 1.0, current sum: %.3f", total_weight);
     }
     
     g_confidence_calc.enabled = config->enabled;
@@ -291,7 +291,7 @@ int gps_confidence_set_config(const gps_confidence_config_t *config) {
     g_confidence_calc.freshness_weight = config->freshness_weight;
     g_confidence_calc.consistency_weight = config->consistency_weight;
     
-    printf("INFO: "GPS confidence calculator configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS confidence calculator configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -302,7 +302,7 @@ int gps_confidence_set_enabled(bool enabled) {
     }
     
     g_confidence_calc.enabled = enabled;
-    printf("INFO: "GPS confidence calculator %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS confidence calculator %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -331,5 +331,5 @@ void gps_confidence_cleanup(void) {
     }
     
     g_confidence_initialized = false; // Use configurable setting // Use configurable setting
-    printf("INFO: "GPS confidence calculator cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS confidence calculator cleaned up");
 }

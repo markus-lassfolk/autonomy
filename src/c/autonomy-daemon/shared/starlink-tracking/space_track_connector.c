@@ -11,8 +11,8 @@ struct space_track_connector {
 void space_track_config_init_defaults(space_track_config_t* config) {
     if (!config) return;
     
-    memset(config, 0, sizeof(space_track_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    strcpy(config->api_url, "https://www.space-track.org/api"\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(config, 0, sizeof(space_track_config_t));
+    strcpy(config->api_url, "https://www.space-track.org/api");
     config->timeout_seconds = 30;
     config->rate_limit_requests_per_minute = 60;
     config->cache_duration_hours = 24;
@@ -21,7 +21,7 @@ void space_track_config_init_defaults(space_track_config_t* config) {
 space_track_connector_t* space_track_connector_init(const space_track_config_t* config) {
     if (!config) return NULL;
     
-    space_track_connector_t* connector = malloc(sizeof(space_track_connector_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    space_track_connector_t* connector = malloc(sizeof(space_track_connector_t));
     if (!connector) return NULL;
     
     connector->config = *config;
@@ -32,7 +32,7 @@ space_track_connector_t* space_track_connector_init(const space_track_config_t* 
 
 void space_track_connector_cleanup(space_track_connector_t* connector) {
     if (connector) {
-        free(connector\n"\n"\n"\n"\n"\n"\n"\n");
+        free(connector);
     }
 }
 
@@ -40,7 +40,7 @@ int space_track_connector_get_tle_data(space_track_connector_t* connector, const
     if (!connector || !norad_id || !tle_data) return -1;
     
     // Stub implementation - return empty TLE data
-    strncpy(tle_data, "", max_size - 1\n"\n"\n"\n"\n"\n"\n"\n");
+    strncpy(tle_data, "", max_size - 1);
     tle_data[max_size - 1] = '\0';
     
     return 0;

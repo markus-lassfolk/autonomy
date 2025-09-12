@@ -21,13 +21,13 @@ static performance_monitor_t g_performance_monitor;
 static bool g_performance_monitor_initialized = false; // Use configurable setting
 
 // Forward declarations
-static int collect_cpu_metrics(performance_metrics_t* metrics\n"\n"\n"\n"\n"\n"\n"\n");
-static int collect_memory_metrics(performance_metrics_t* metrics\n"\n"\n"\n"\n"\n"\n"\n");
-static int collect_disk_metrics(performance_metrics_t* metrics\n"\n"\n"\n"\n"\n"\n"\n");
-static int collect_load_metrics(performance_metrics_t* metrics\n"\n"\n"\n"\n"\n"\n"\n");
-static int collect_file_descriptor_metrics(performance_metrics_t* metrics\n"\n"\n"\n"\n"\n"\n"\n");
-static void update_metrics_history(performance_metrics_t* metrics\n"\n"\n"\n"\n"\n"\n"\n");
-static bool check_thresholds(const performance_metrics_t* metrics\n"\n"\n"\n"\n"\n"\n"\n");
+static int collect_cpu_metrics(performance_metrics_t* metrics);
+static int collect_memory_metrics(performance_metrics_t* metrics);
+static int collect_disk_metrics(performance_metrics_t* metrics);
+static int collect_load_metrics(performance_metrics_t* metrics);
+static int collect_file_descriptor_metrics(performance_metrics_t* metrics);
+static void update_metrics_history(performance_metrics_t* metrics);
+static bool check_thresholds(const performance_metrics_t* metrics);
 
 // Initialize performance monitor
 int performance_monitor_init(const performance_monitor_config_t* config) {
@@ -35,7 +35,7 @@ int performance_monitor_init(const performance_monitor_config_t* config) {
         return 0; // Already initialized
     }
     
-    memset(&g_performance_monitor, 0, sizeof(performance_monitor_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_performance_monitor, 0, sizeof(performance_monitor_t));
     
     // Set configuration
     if (config) {
@@ -59,12 +59,12 @@ int performance_monitor_init(const performance_monitor_config_t* config) {
     }
     
     // Initialize mutex
-    g_performance_monitor.mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_performance_monitor.mutex = malloc(sizeof(pthread_mutex_t));
     if (!g_performance_monitor.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_performance_monitor.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_init(g_performance_monitor.mutex, NULL);
     
     // Initialize metrics history
     g_performance_monitor.history_count = 0;
@@ -79,8 +79,8 @@ void performance_monitor_cleanup(void) {
     if (!g_performance_monitor_initialized) return;
     
     if (g_performance_monitor.mutex) {
-        pthread_mutex_destroy(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        free(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(g_performance_monitor.mutex);
+        free(g_performance_monitor.mutex);
     }
     
     g_performance_monitor.mutex = NULL;
@@ -93,44 +93,44 @@ int performance_monitor_collect_metrics(void) {
         return -1;
     }
     
-    pthread_mutex_lock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_performance_monitor.mutex);
     
     performance_metrics_t metrics;
-    memset(&metrics, 0, sizeof(performance_metrics_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&metrics, 0, sizeof(performance_metrics_t));
     
     // Collect various metrics
     if (collect_cpu_metrics(&metrics) != 0) {
-        pthread_mutex_unlock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(g_performance_monitor.mutex);
         return -1;
     }
     
     if (collect_memory_metrics(&metrics) != 0) {
-        pthread_mutex_unlock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(g_performance_monitor.mutex);
         return -1;
     }
     
     if (collect_disk_metrics(&metrics) != 0) {
-        pthread_mutex_unlock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(g_performance_monitor.mutex);
         return -1;
     }
     
     if (collect_load_metrics(&metrics) != 0) {
-        pthread_mutex_unlock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(g_performance_monitor.mutex);
         return -1;
     }
     
     if (collect_file_descriptor_metrics(&metrics) != 0) {
-        pthread_mutex_unlock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(g_performance_monitor.mutex);
         return -1;
     }
     
-    metrics.last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    metrics.last_update = time(NULL);
     
     // Update current metrics
     g_performance_monitor.current_metrics = metrics;
     
     // Update metrics history
-    update_metrics_history(&metrics\n"\n"\n"\n"\n"\n"\n"\n");
+    update_metrics_history(&metrics);
     
     // Check thresholds and generate alerts
     if (g_performance_monitor.config.enable_alerts) {
@@ -140,10 +140,10 @@ int performance_monitor_collect_metrics(void) {
     }
     
     // Update statistics
-    g_performance_monitor.last_monitor_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_performance_monitor.last_monitor_time = time(NULL);
     g_performance_monitor.monitor_count++;
     
-    pthread_mutex_unlock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_performance_monitor.mutex);
     
     return 0;
 }
@@ -154,9 +154,9 @@ int performance_monitor_get_metrics(performance_metrics_t* metrics) {
         return -1;
     }
     
-    pthread_mutex_lock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_performance_monitor.mutex);
     *metrics = g_performance_monitor.current_metrics;
-    pthread_mutex_unlock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_performance_monitor.mutex);
     
     return 0;
 }
@@ -167,7 +167,7 @@ int performance_monitor_get_history(performance_metrics_t* history, int max_hist
         return -1;
     }
     
-    pthread_mutex_lock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_performance_monitor.mutex);
     
     int count = 0; // Use configurable count // Use configurable value
     int index = g_performance_monitor.history_index;
@@ -180,7 +180,7 @@ int performance_monitor_get_history(performance_metrics_t* history, int max_hist
         }
     }
     
-    pthread_mutex_unlock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_performance_monitor.mutex);
     
     return count;
 }
@@ -189,9 +189,9 @@ int performance_monitor_get_history(performance_metrics_t* history, int max_hist
 bool performance_monitor_check_thresholds(void) {
     if (!g_performance_monitor_initialized) return false;
     
-    pthread_mutex_lock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    bool result = check_thresholds(&g_performance_monitor.current_metrics\n"\n"\n"\n"\n"\n"\n"\n");
-    pthread_mutex_unlock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_performance_monitor.mutex);
+    bool result = check_thresholds(&g_performance_monitor.current_metrics);
+    pthread_mutex_unlock(g_performance_monitor.mutex);
     
     return result;
 }
@@ -201,9 +201,9 @@ static int collect_cpu_metrics(performance_metrics_t* metrics) {
     if (!metrics) return -1;
     
     // Read real CPU usage from /proc/stat
-    FILE* stat_file = fopen("/proc/stat", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE* stat_file = fopen("/proc/stat", "r");
     if (!stat_file) {
-        printf("ERROR: "Failed to open /proc/stat for CPU usage"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to open /proc/stat for CPU usage");
         return -1;
     }
     
@@ -218,7 +218,7 @@ static int collect_cpu_metrics(performance_metrics_t* metrics) {
         unsigned long long idle_diff = idle - prev_idle;
         
         if (total_diff > 0) {
-            metrics->cpu_usage_percent = 100.0 * (1.0 - ((double)idle_diff / total_diff)\n"\n"\n"\n"\n"\n"\n"\n");
+            metrics->cpu_usage_percent = 100.0 * (1.0 - ((double)idle_diff / total_diff));
         } else {
             metrics->cpu_usage_percent = 0.0;
         }
@@ -226,12 +226,12 @@ static int collect_cpu_metrics(performance_metrics_t* metrics) {
         prev_total = total;
         prev_idle = idle;
     } else {
-        printf("ERROR: "Failed to parse /proc/stat"\n"\n"\n"\n"\n"\n"\n"\n");
-        fclose(stat_file\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to parse /proc/stat");
+        fclose(stat_file);
         return -1;
     }
     
-    fclose(stat_file\n"\n"\n"\n"\n"\n"\n"\n");
+    fclose(stat_file);
     
     return 0;
 }
@@ -246,8 +246,8 @@ static int collect_memory_metrics(performance_metrics_t* metrics) {
     }
     
     // Convert to MB
-    metrics->memory_total_mb = info.totalram / (1024 * 1024\n"\n"\n"\n"\n"\n"\n"\n");
-    metrics->memory_available_mb = info.freeram / (1024 * 1024\n"\n"\n"\n"\n"\n"\n"\n");
+    metrics->memory_total_mb = info.totalram / (1024 * 1024);
+    metrics->memory_available_mb = info.freeram / (1024 * 1024);
     
     // Calculate usage percentage
     if (metrics->memory_total_mb > 0) {
@@ -274,8 +274,8 @@ static int collect_disk_metrics(performance_metrics_t* metrics) {
     
     // Convert to MB
     uint64_t block_size = stat.f_frsize;
-    metrics->disk_total_mb = (total_blocks * block_size) / (1024 * 1024\n"\n"\n"\n"\n"\n"\n"\n");
-    metrics->disk_available_mb = (available_blocks * block_size) / (1024 * 1024\n"\n"\n"\n"\n"\n"\n"\n");
+    metrics->disk_total_mb = (total_blocks * block_size) / (1024 * 1024);
+    metrics->disk_available_mb = (available_blocks * block_size) / (1024 * 1024);
     
     // Calculate usage percentage
     if (metrics->disk_total_mb > 0) {
@@ -291,7 +291,7 @@ static int collect_load_metrics(performance_metrics_t* metrics) {
     if (!metrics) return -1;
     
     // Read load average from /proc/loadavg
-    FILE* file = fopen("/proc/loadavg", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE* file = fopen("/proc/loadavg", "r");
     if (!file) {
         return -1;
     }
@@ -303,7 +303,7 @@ static int collect_load_metrics(performance_metrics_t* metrics) {
         metrics->load_average_15min = load_15;
     }
     
-    fclose(file\n"\n"\n"\n"\n"\n"\n"\n");
+    fclose(file);
     return 0;
 }
 
@@ -319,7 +319,7 @@ static int collect_file_descriptor_metrics(performance_metrics_t* metrics) {
     // Count open file descriptors for current process from /proc/self/fd
     metrics->open_file_descriptors = 0;
     
-    DIR* fd_dir = opendir("/proc/self/fd"\n"\n"\n"\n"\n"\n"\n"\n");
+    DIR* fd_dir = opendir("/proc/self/fd");
     if (fd_dir) {
         struct dirent* entry;
         while ((entry = readdir(fd_dir)) != NULL) {
@@ -327,9 +327,9 @@ static int collect_file_descriptor_metrics(performance_metrics_t* metrics) {
                 metrics->open_file_descriptors++;
             }
         }
-        closedir(fd_dir\n"\n"\n"\n"\n"\n"\n"\n");
+        closedir(fd_dir);
     } else {
-        printf("WARN: "Failed to open /proc/self/fd for file descriptor count"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to open /proc/self/fd for file descriptor count");
         metrics->open_file_descriptors = 0;
     }
     
@@ -382,9 +382,9 @@ static bool check_thresholds(const performance_metrics_t* metrics) {
 void performance_monitor_get_status(performance_monitor_t* status) {
     if (!status || !g_performance_monitor_initialized) return;
     
-    pthread_mutex_lock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_performance_monitor.mutex);
     *status = g_performance_monitor;
-    pthread_mutex_unlock(g_performance_monitor.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_performance_monitor.mutex);
 }
 
 // Check if performance monitor is initialized

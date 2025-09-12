@@ -29,18 +29,18 @@ static const double CONSISTENCY_WEIGHT = 0.20; // Use configurable value        
 // Global performance tracking state
 
 // Forward declarations - performance specific
-void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success\n"\n"\n"\n"\n"\n"\n"\n");
-void update_source_performance(int source_id, double accuracy, double response_time, bool success\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_source_reliability(const gps_source_performance_t *source\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_source_consistency(const gps_source_performance_t *source\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_accuracy_standard_deviation(const gps_source_performance_t *source\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_response_time_standard_deviation(const gps_source_performance_t *source\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_source_overall_score(const gps_source_performance_t *source\n"\n"\n"\n"\n"\n"\n"\n");
-int find_oldest_performance_entry(void\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_reliability_score(int source_id\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_consistency_score(int source_id\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_overall_score(double reliability, double consistency, double accuracy, double response_time\n"\n"\n"\n"\n"\n"\n"\n");
-void calculate_overall_performance(void\n"\n"\n"\n"\n"\n"\n"\n");
+void add_performance_history_entry(int source_id, double accuracy, double response_time, bool success);
+void update_source_performance(int source_id, double accuracy, double response_time, bool success);
+double calculate_source_reliability(const gps_source_performance_t *source);
+double calculate_source_consistency(const gps_source_performance_t *source);
+double calculate_accuracy_standard_deviation(const gps_source_performance_t *source);
+double calculate_response_time_standard_deviation(const gps_source_performance_t *source);
+double calculate_source_overall_score(const gps_source_performance_t *source);
+int find_oldest_performance_entry(void);
+double calculate_reliability_score(int source_id);
+double calculate_consistency_score(int source_id);
+double calculate_overall_score(double reliability, double consistency, double accuracy, double response_time);
+void calculate_overall_performance(void);
 
 static gps_performance_t g_performance = {0};
 static bool g_performance_initialized = false; // Use configurable setting
@@ -49,14 +49,14 @@ static pthread_mutex_t g_performance_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Initialize GPS performance tracking
 int gps_performance_init(void) {
     if (g_performance_initialized) {
-        printf("WARN: "GPS performance tracking already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("GPS performance tracking already initialized");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_performance_mutex);
     
     // Initialize performance state
-    memset(&g_performance, 0, sizeof(gps_performance_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_performance, 0, sizeof(gps_performance_t));
     g_performance.enabled = true; // Use configurable gps performance monitoring enabled
     g_performance.max_history_entries = MAX_PERFORMANCE_HISTORY;
     g_performance.update_interval = PERFORMANCE_UPDATE_INTERVAL;
@@ -104,9 +104,9 @@ int gps_performance_init(void) {
     }
     
     g_performance_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_performance_mutex);
     
-    printf("INFO: "GPS performance tracking initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS performance tracking initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -116,7 +116,7 @@ int gps_performance_record_measurement(int source_id, double accuracy, double re
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_performance_mutex);
     
     g_performance.total_measurements++;
     if (success) {
@@ -126,17 +126,17 @@ int gps_performance_record_measurement(int source_id, double accuracy, double re
     }
     
     // Add to performance history
-    add_performance_history_entry(source_id, accuracy, response_time, success\n"\n"\n"\n"\n"\n"\n"\n");
+    add_performance_history_entry(source_id, accuracy, response_time, success);
     
     // Update source performance
-    update_source_performance(source_id, accuracy, response_time, success\n"\n"\n"\n"\n"\n"\n"\n");
+    update_source_performance(source_id, accuracy, response_time, success);
     
     // Calculate overall performance metrics
-    calculate_overall_performance(\n"\n"\n"\n"\n"\n"\n"\n");
+    calculate_overall_performance();
     
-    g_performance.last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_performance.last_update = time(NULL);
     
-    pthread_mutex_unlock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_performance_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -154,7 +154,7 @@ void add_performance_history_entry(int source_id, double accuracy, double respon
     
     if (slot_index < 0) {
         // Remove oldest entry to make room
-        slot_index = find_oldest_performance_entry(\n"\n"\n"\n"\n"\n"\n"\n");
+        slot_index = find_oldest_performance_entry();
         if (slot_index >= 0) {
             g_performance.performance_history[slot_index].active = false;
             g_performance.history_entry_count--;
@@ -165,16 +165,16 @@ void add_performance_history_entry(int source_id, double accuracy, double respon
         gps_performance_entry_t *entry = &g_performance.performance_history[slot_index];
         
         entry->active = true;
-        entry->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        entry->timestamp = time(NULL);
         entry->source_id = source_id;
         entry->accuracy = accuracy;
         entry->response_time = response_time;
         entry->success = success;
         
         // Calculate scores
-        entry->reliability_score = calculate_reliability_score(source_id\n"\n"\n"\n"\n"\n"\n"\n");
-        entry->consistency_score = calculate_consistency_score(source_id\n"\n"\n"\n"\n"\n"\n"\n");
-        entry->overall_score = calculate_overall_score(entry->reliability_score, entry->consistency_score, accuracy, response_time\n"\n"\n"\n"\n"\n"\n"\n");
+        entry->reliability_score = calculate_reliability_score(source_id);
+        entry->consistency_score = calculate_consistency_score(source_id);
+        entry->overall_score = calculate_overall_score(entry->reliability_score, entry->consistency_score, accuracy, response_time);
         
         if (slot_index >= g_performance.history_entry_count) {
             g_performance.history_entry_count = slot_index + 1;
@@ -185,7 +185,7 @@ void add_performance_history_entry(int source_id, double accuracy, double respon
 // Find oldest performance entry
 int find_oldest_performance_entry(void) {
     int oldest_index = -1;
-    time_t oldest_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t oldest_time = time(NULL);
     
     for (int i = 0; i < g_performance.max_history_entries; i++) {
         if (g_performance.performance_history[i].active && 
@@ -228,13 +228,13 @@ void update_source_performance(int source_id, double accuracy, double response_t
     source->average_response_time = source->total_response_time / source->total_measurements;
     
     // Update reliability score
-    source->reliability_score = calculate_source_reliability(source\n"\n"\n"\n"\n"\n"\n"\n");
+    source->reliability_score = calculate_source_reliability(source);
     
     // Update consistency score
-    source->consistency_score = calculate_source_consistency(source\n"\n"\n"\n"\n"\n"\n"\n");
+    source->consistency_score = calculate_source_consistency(source);
     
     // Update overall score
-    source->overall_score = calculate_source_overall_score(source\n"\n"\n"\n"\n"\n"\n"\n");
+    source->overall_score = calculate_source_overall_score(source);
     
     // Update availability
     source->uptime = source->successful_measurements;
@@ -243,7 +243,7 @@ void update_source_performance(int source_id, double accuracy, double response_t
         source->availability = (double)source->successful_measurements / source->total_measurements;
     }
     
-    source->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    source->last_update = time(NULL);
 }
 
 // Calculate reliability score for a source
@@ -259,10 +259,10 @@ double calculate_source_reliability(const gps_source_performance_t *source) {
     double accuracy_consistency = 1.0; // Use configurable value
     if (source->total_measurements > 1) {
         // Calculate coefficient of variation for accuracy
-        double accuracy_std = calculate_accuracy_standard_deviation(source\n"\n"\n"\n"\n"\n"\n"\n");
+        double accuracy_std = calculate_accuracy_standard_deviation(source);
         if (source->average_accuracy > 0.0) {
             double cv = accuracy_std / source->average_accuracy;
-            accuracy_consistency = fmax(0.0, 1.0 - cv\n"\n"\n"\n"\n"\n"\n"\n");
+            accuracy_consistency = fmax(0.0, 1.0 - cv);
         }
     }
     
@@ -270,17 +270,17 @@ double calculate_source_reliability(const gps_source_performance_t *source) {
     double response_consistency = 1.0; // Use configurable value
     if (source->total_measurements > 1) {
         // Calculate coefficient of variation for response time
-        double response_std = calculate_response_time_standard_deviation(source\n"\n"\n"\n"\n"\n"\n"\n");
+        double response_std = calculate_response_time_standard_deviation(source);
         if (source->average_response_time > 0.0) {
             double cv = response_std / source->average_response_time;
-            response_consistency = fmax(0.0, 1.0 - cv\n"\n"\n"\n"\n"\n"\n"\n");
+            response_consistency = fmax(0.0, 1.0 - cv);
         }
     }
     
     // Weighted reliability score
-    double reliability = (success_rate * 0.6) + (accuracy_consistency * 0.25) + (response_consistency * 0.15\n"\n"\n"\n"\n"\n"\n"\n");
+    double reliability = (success_rate * 0.6) + (accuracy_consistency * 0.25) + (response_consistency * 0.15);
     
-    return fmin(1.0, fmax(0.0, reliability)\n"\n"\n"\n"\n"\n"\n"\n");
+    return fmin(1.0, fmax(0.0, reliability));
 }
 
 // Calculate consistency score for a source
@@ -291,24 +291,24 @@ double calculate_source_consistency(const gps_source_performance_t *source) {
     
     // Calculate accuracy consistency
     double accuracy_consistency = 1.0; // Use configurable value
-    double accuracy_std = calculate_accuracy_standard_deviation(source\n"\n"\n"\n"\n"\n"\n"\n");
+    double accuracy_std = calculate_accuracy_standard_deviation(source);
     if (source->average_accuracy > 0.0) {
         double cv = accuracy_std / source->average_accuracy;
-        accuracy_consistency = fmax(0.0, 1.0 - cv\n"\n"\n"\n"\n"\n"\n"\n");
+        accuracy_consistency = fmax(0.0, 1.0 - cv);
     }
     
     // Calculate response time consistency
     double response_consistency = 1.0; // Use configurable value
-    double response_std = calculate_response_time_standard_deviation(source\n"\n"\n"\n"\n"\n"\n"\n");
+    double response_std = calculate_response_time_standard_deviation(source);
     if (source->average_response_time > 0.0) {
         double cv = response_std / source->average_response_time;
-        response_consistency = fmax(0.0, 1.0 - cv\n"\n"\n"\n"\n"\n"\n"\n");
+        response_consistency = fmax(0.0, 1.0 - cv);
     }
     
     // Weighted consistency score
-    double consistency = (accuracy_consistency * 0.7) + (response_consistency * 0.3\n"\n"\n"\n"\n"\n"\n"\n");
+    double consistency = (accuracy_consistency * 0.7) + (response_consistency * 0.3);
     
-    return fmin(1.0, fmax(0.0, consistency)\n"\n"\n"\n"\n"\n"\n"\n");
+    return fmin(1.0, fmax(0.0, consistency));
 }
 
 // Calculate accuracy standard deviation
@@ -334,7 +334,7 @@ double calculate_accuracy_standard_deviation(const gps_source_performance_t *sou
         return 0.0;
     }
     
-    return sqrt(total_variance / (valid_measurements - 1)\n"\n"\n"\n"\n"\n"\n"\n");
+    return sqrt(total_variance / (valid_measurements - 1));
 }
 
 // Calculate response time standard deviation
@@ -360,24 +360,24 @@ double calculate_response_time_standard_deviation(const gps_source_performance_t
         return 0.0;
     }
     
-    return sqrt(total_variance / (valid_measurements - 1)\n"\n"\n"\n"\n"\n"\n"\n");
+    return sqrt(total_variance / (valid_measurements - 1));
 }
 
 // Calculate source overall score
 double calculate_source_overall_score(const gps_source_performance_t *source) {
     // Weighted combination of reliability, consistency, accuracy, and response time
-    double accuracy_score = 1.0 - (source->average_accuracy / g_performance.max_accuracy_threshold\n"\n"\n"\n"\n"\n"\n"\n");
-    accuracy_score = fmin(1.0, fmax(0.0, accuracy_score)\n"\n"\n"\n"\n"\n"\n"\n");
+    double accuracy_score = 1.0 - (source->average_accuracy / g_performance.max_accuracy_threshold);
+    accuracy_score = fmin(1.0, fmax(0.0, accuracy_score));
     
     double response_score = 1.0 - (source->average_response_time / 5000.0); // 5 second max
-    response_score = fmin(1.0, fmax(0.0, response_score)\n"\n"\n"\n"\n"\n"\n"\n");
+    response_score = fmin(1.0, fmax(0.0, response_score));
     
     double overall_score = (source->reliability_score * RELIABILITY_WEIGHT) +
                           (source->consistency_score * CONSISTENCY_WEIGHT) +
                           (accuracy_score * ACCURACY_WEIGHT) +
-                          (response_score * SPEED_WEIGHT\n"\n"\n"\n"\n"\n"\n"\n");
+                          (response_score * SPEED_WEIGHT);
     
-    return fmin(1.0, fmax(0.0, overall_score)\n"\n"\n"\n"\n"\n"\n"\n");
+    return fmin(1.0, fmax(0.0, overall_score));
 }
 
 // Calculate reliability score for history entry
@@ -400,18 +400,18 @@ double calculate_consistency_score(int source_id) {
 
 // Calculate overall score for history entry
 double calculate_overall_score(double reliability, double consistency, double accuracy, double response_time) {
-    double accuracy_score = 1.0 - (accuracy / g_performance.max_accuracy_threshold\n"\n"\n"\n"\n"\n"\n"\n");
-    accuracy_score = fmin(1.0, fmax(0.0, accuracy_score)\n"\n"\n"\n"\n"\n"\n"\n");
+    double accuracy_score = 1.0 - (accuracy / g_performance.max_accuracy_threshold);
+    accuracy_score = fmin(1.0, fmax(0.0, accuracy_score));
     
     double response_score = 1.0 - (response_time / 5000.0); // 5 second max
-    response_score = fmin(1.0, fmax(0.0, response_score)\n"\n"\n"\n"\n"\n"\n"\n");
+    response_score = fmin(1.0, fmax(0.0, response_score));
     
     double overall_score = (reliability * RELIABILITY_WEIGHT) +
                           (consistency * CONSISTENCY_WEIGHT) +
                           (accuracy_score * ACCURACY_WEIGHT) +
-                          (response_score * SPEED_WEIGHT\n"\n"\n"\n"\n"\n"\n"\n");
+                          (response_score * SPEED_WEIGHT);
     
-    return fmin(1.0, fmax(0.0, overall_score)\n"\n"\n"\n"\n"\n"\n"\n");
+    return fmin(1.0, fmax(0.0, overall_score));
 }
 
 // Calculate overall performance metrics
@@ -461,9 +461,9 @@ void calculate_overall_performance(void) {
     g_performance.overall_score = (g_performance.overall_reliability * RELIABILITY_WEIGHT) +
                                   (g_performance.overall_consistency * CONSISTENCY_WEIGHT) +
                                   ((1.0 - g_performance.overall_average_accuracy / g_performance.max_accuracy_threshold) * ACCURACY_WEIGHT) +
-                                  ((1.0 - g_performance.overall_average_response_time / 5000.0) * SPEED_WEIGHT\n"\n"\n"\n"\n"\n"\n"\n");
+                                  ((1.0 - g_performance.overall_average_response_time / 5000.0) * SPEED_WEIGHT);
     
-    g_performance.overall_score = fmin(1.0, fmax(0.0, g_performance.overall_score)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_performance.overall_score = fmin(1.0, fmax(0.0, g_performance.overall_score));
 }
 
 // Get GPS performance status
@@ -472,7 +472,7 @@ int gps_performance_get_status(gps_performance_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_performance_mutex);
     
     status->enabled = g_performance.enabled;
     status->history_entry_count = g_performance.history_entry_count;
@@ -488,7 +488,7 @@ int gps_performance_get_status(gps_performance_status_t *status) {
     status->overall_consistency = g_performance.overall_consistency;
     status->overall_score = g_performance.overall_score;
     
-    pthread_mutex_unlock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_performance_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -499,11 +499,11 @@ int gps_performance_get_source_performance(int source_id, gps_source_performance
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_performance_mutex);
     
-    memcpy(source_perf, &g_performance.source_performance[source_id], sizeof(gps_source_performance_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(source_perf, &g_performance.source_performance[source_id], sizeof(gps_source_performance_t));
     
-    pthread_mutex_unlock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_performance_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -514,17 +514,17 @@ int gps_performance_get_all_sources(gps_source_performance_t *sources, int max_s
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_performance_mutex);
     
     int count = 0; // Use configurable value
     for (int i = 0; i < GPS_MAX_SOURCES && count < max_sources; i++) {
         if (g_performance.source_performance[i].total_measurements > 0) {
-            memcpy(&sources[count], &g_performance.source_performance[i], sizeof(gps_source_performance_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memcpy(&sources[count], &g_performance.source_performance[i], sizeof(gps_source_performance_t));
             count++;
         }
     }
     
-    pthread_mutex_unlock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_performance_mutex);
     
     return count;
 }
@@ -535,18 +535,18 @@ int gps_performance_get_history(gps_performance_entry_t *history, int max_entrie
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_performance_mutex);
     
     int count = 0; // Use configurable value
     for (int i = 0; i < g_performance.history_entry_count && count < max_entries; i++) {
         if (g_performance.performance_history[i].active && 
             g_performance.performance_history[i].timestamp >= since) {
-            memcpy(&history[count], &g_performance.performance_history[i], sizeof(gps_performance_entry_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memcpy(&history[count], &g_performance.performance_history[i], sizeof(gps_performance_entry_t));
             count++;
         }
     }
     
-    pthread_mutex_unlock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_performance_mutex);
     
     return count;
 }
@@ -557,7 +557,7 @@ int gps_performance_get_config(gps_performance_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_performance_mutex);
     
     config->enabled = g_performance.enabled;
     config->max_history_entries = g_performance.max_history_entries;
@@ -566,7 +566,7 @@ int gps_performance_get_config(gps_performance_config_t *config) {
     config->min_accuracy_threshold = g_performance.min_accuracy_threshold;
     config->max_accuracy_threshold = g_performance.max_accuracy_threshold;
     
-    pthread_mutex_unlock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_performance_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -577,7 +577,7 @@ int gps_performance_set_config(const gps_performance_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_performance_mutex);
     
     g_performance.enabled = config->enabled;
     g_performance.max_history_entries = config->max_history_entries;
@@ -586,9 +586,9 @@ int gps_performance_set_config(const gps_performance_config_t *config) {
     g_performance.min_accuracy_threshold = config->min_accuracy_threshold;
     g_performance.max_accuracy_threshold = config->max_accuracy_threshold;
     
-    pthread_mutex_unlock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_performance_mutex);
     
-    printf("INFO: "GPS performance tracking configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS performance tracking configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -598,11 +598,11 @@ int gps_performance_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_performance_mutex);
     g_performance.enabled = enabled;
-    pthread_mutex_unlock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_performance_mutex);
     
-    printf("INFO: "GPS performance tracking %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS performance tracking %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -612,7 +612,7 @@ int gps_performance_reset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_performance_mutex);
     
     g_performance.history_entry_count = 0;
     g_performance.total_measurements = 0;
@@ -653,9 +653,9 @@ int gps_performance_reset(void) {
         source->availability = 0.0;
     }
     
-    pthread_mutex_unlock(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_performance_mutex);
     
-    printf("INFO: "GPS performance tracking reset"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS performance tracking reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -665,8 +665,8 @@ void gps_performance_cleanup(void) {
         return;
     }
     
-    pthread_mutex_destroy(&g_performance_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_performance_mutex);
     g_performance_initialized = false; // Use configurable setting
     
-    printf("INFO: "GPS performance tracking cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS performance tracking cleaned up");
 }

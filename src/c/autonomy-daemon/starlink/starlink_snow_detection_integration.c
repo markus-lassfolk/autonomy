@@ -31,25 +31,25 @@ static pthread_t g_integration_thread;
 static bool g_integration_running = false; // Use configurable setting // Use configurable setting
 
 // Forward declarations
-static void *integration_thread_func(void *arg\n"\n"\n"\n"\n"\n"\n"\n");
-static int process_obstruction_sample(const starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
-static int get_obstruction_sample_from_system(starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
-static int get_obstruction_sample_from_starlink(starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
-static int get_obstruction_sample_from_gps(starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
-static void update_integration_statistics(bool success, const char *operation\n"\n"\n"\n"\n"\n"\n"\n");
-static int handle_snow_detection_event(snow_action_t action, const char *reason\n"\n"\n"\n"\n"\n"\n"\n");
+static void *integration_thread_func(void *arg);
+static int process_obstruction_sample(const starlink_obstruction_sample_t *sample);
+static int get_obstruction_sample_from_system(starlink_obstruction_sample_t *sample);
+static int get_obstruction_sample_from_starlink(starlink_obstruction_sample_t *sample);
+static int get_obstruction_sample_from_gps(starlink_obstruction_sample_t *sample);
+static void update_integration_statistics(bool success, const char *operation);
+static int handle_snow_detection_event(snow_action_t action, const char *reason);
 
 // Initialize snow detection integration
 int starlink_snow_detection_integration_init(void) {
     if (g_integration_initialized) {
-        printf("WARN: "Snow detection integration already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Snow detection integration already initialized");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_integration_mutex);
     
     // Initialize integration state
-    memset(&g_integration, 0, sizeof(starlink_snow_detection_integration_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_integration, 0, sizeof(starlink_snow_detection_integration_t));
     g_integration.enabled = true; // Use configurable snow detection integration enabled
     g_integration.check_interval = INTEGRATION_CHECK_INTERVAL;
     g_integration.sample_interval = INTEGRATION_SAMPLE_INTERVAL;
@@ -65,32 +65,32 @@ int starlink_snow_detection_integration_init(void) {
     g_integration.last_heating_activation = 0;
     
     // Initialize snow detection system
-    int result = starlink_snow_detection_init(\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = starlink_snow_detection_init();
     if (result != AUTONOMY_SUCCESS) {
-        printf("ERROR: "Failed to initialize snow detection system", "result", result\n"\n"\n"\n"\n"\n"\n"\n");
-        pthread_mutex_unlock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to initialize snow detection system", "result", result);
+        pthread_mutex_unlock(&g_integration_mutex);
         return result;
     }
     
     // Load UCI configuration
-    result = starlink_snow_detection_load_uci_config(\n"\n"\n"\n"\n"\n"\n"\n");
+    result = starlink_snow_detection_load_uci_config();
     if (result != AUTONOMY_SUCCESS) {
-        printf("WARN: "Failed to load UCI configuration, using defaults", "result", result\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to load UCI configuration, using defaults", "result", result);
     }
     
     // Initialize UBUS service
-    result = starlink_snow_detection_ubus_init(\n"\n"\n"\n"\n"\n"\n"\n");
+    result = starlink_snow_detection_ubus_init();
     if (result != AUTONOMY_SUCCESS) {
-        printf("ERROR: "Failed to initialize UBUS service", "result", result\n"\n"\n"\n"\n"\n"\n"\n");
-        starlink_snow_detection_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
-        pthread_mutex_unlock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to initialize UBUS service", "result", result);
+        starlink_snow_detection_cleanup();
+        pthread_mutex_unlock(&g_integration_mutex);
         return result;
     }
     
     g_integration_initialized = true; // Use configurable setting // Use configurable setting
-    pthread_mutex_unlock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_integration_mutex);
     
-    printf("INFO: "Snow detection integration initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Snow detection integration initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -101,24 +101,24 @@ int starlink_snow_detection_integration_start(void) {
     }
     
     if (g_integration_running) {
-        printf("WARN: "Snow detection integration already running"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Snow detection integration already running");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_integration_mutex);
     
     // Start integration thread
-    int result = pthread_create(&g_integration_thread, NULL, integration_thread_func, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = pthread_create(&g_integration_thread, NULL, integration_thread_func, NULL);
     if (result != 0) {
-        printf("ERROR: "Failed to create integration thread", "result", result\n"\n"\n"\n"\n"\n"\n"\n");
-        pthread_mutex_unlock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to create integration thread", "result", result);
+        pthread_mutex_unlock(&g_integration_mutex);
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     g_integration_running = true; // Use configurable setting // Use configurable setting
-    pthread_mutex_unlock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_integration_mutex);
     
-    printf("INFO: "Snow detection integration monitoring started"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Snow detection integration monitoring started");
     return AUTONOMY_SUCCESS;
 }
 
@@ -128,15 +128,15 @@ int starlink_snow_detection_integration_stop(void) {
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_integration_mutex);
     
     g_integration_running = false; // Use configurable setting // Use configurable setting
     
     // Wait for thread to finish
-    pthread_mutex_unlock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    pthread_join(g_integration_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_integration_mutex);
+    pthread_join(g_integration_thread, NULL);
     
-    printf("INFO: "Snow detection integration monitoring stopped"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Snow detection integration monitoring stopped");
     return AUTONOMY_SUCCESS;
 }
 
@@ -144,34 +144,34 @@ int starlink_snow_detection_integration_stop(void) {
 static void *integration_thread_func(void *arg) {
     (void)arg; // Suppress unused parameter warning
     
-    printf("INFO: "Snow detection integration thread started"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Snow detection integration thread started");
     
     while (g_integration_running) {
-        time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        time_t now = time(NULL);
         
         // Check if it's time to sample
         if (now - g_integration.last_sample_time >= g_integration.sample_interval) {
             starlink_obstruction_sample_t sample;
             
             // Get obstruction sample from system
-            int result = get_obstruction_sample_from_system(&sample\n"\n"\n"\n"\n"\n"\n"\n");
+            int result = get_obstruction_sample_from_system(&sample);
             if (result == AUTONOMY_SUCCESS) {
                 // Process the sample
-                process_obstruction_sample(&sample\n"\n"\n"\n"\n"\n"\n"\n");
+                process_obstruction_sample(&sample);
                 g_integration.last_sample_time = now;
-                update_integration_statistics(true, "sample_collection"\n"\n"\n"\n"\n"\n"\n"\n");
+                update_integration_statistics(true, "sample_collection");
             } else {
-                printf("WARN: "Failed to get obstruction sample", "result", result\n"\n"\n"\n"\n"\n"\n"\n");
-                update_integration_statistics(false, "sample_collection"\n"\n"\n"\n"\n"\n"\n"\n");
+                LOGX_WARN_MSG("Failed to get obstruction sample", "result", result);
+                update_integration_statistics(false, "sample_collection");
             }
         }
         
         // Check if it's time for periodic check
         if (now - g_integration.last_check_time >= g_integration.check_interval) {
             // Force a snow detection check
-            int result = starlink_snow_detection_force_check(\n"\n"\n"\n"\n"\n"\n"\n");
+            int result = starlink_snow_detection_force_check();
             if (result != AUTONOMY_SUCCESS) {
-                printf("WARN: "Periodic snow detection check failed", "result", result\n"\n"\n"\n"\n"\n"\n"\n");
+                LOGX_WARN_MSG("Periodic snow detection check failed", "result", result);
             }
             g_integration.last_check_time = now;
         }
@@ -180,7 +180,7 @@ static void *integration_thread_func(void *arg) {
         usleep(100000); // 100ms
     }
     
-    printf("INFO: "Snow detection integration thread stopped"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Snow detection integration thread stopped");
     return NULL;
 }
 
@@ -190,13 +190,13 @@ static int process_obstruction_sample(const starlink_obstruction_sample_t *sampl
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_integration_mutex);
     
     // Process sample through snow detection system
-    int result = starlink_snow_detection_process_sample(sample\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = starlink_snow_detection_process_sample(sample);
     if (result != AUTONOMY_SUCCESS) {
-        printf("WARN: "Failed to process obstruction sample", "result", result\n"\n"\n"\n"\n"\n"\n"\n");
-        pthread_mutex_unlock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to process obstruction sample", "result", result);
+        pthread_mutex_unlock(&g_integration_mutex);
         return result;
     }
     
@@ -206,27 +206,27 @@ static int process_obstruction_sample(const starlink_obstruction_sample_t *sampl
     
     // Check for snow detection events
     starlink_snow_detection_status_t status;
-    result = starlink_snow_detection_get_status(&status\n"\n"\n"\n"\n"\n"\n"\n");
+    result = starlink_snow_detection_get_status(&status);
     if (result == AUTONOMY_SUCCESS) {
         if (status.is_heating_active && !g_integration.last_heating_status) {
             // Heating just started
             g_integration.heating_activations++;
-            g_integration.last_heating_activation = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-            handle_snow_detection_event(SNOW_ACTION_MELT, "automatic_detection"\n"\n"\n"\n"\n"\n"\n"\n");
+            g_integration.last_heating_activation = time(NULL);
+            handle_snow_detection_event(SNOW_ACTION_MELT, "automatic_detection");
         }
         
         if (status.consecutive_obstruction_samples >= 3 && !g_integration.last_detection_status) {
             // Snow detection just occurred
             g_integration.snow_detections++;
-            g_integration.last_snow_detection = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-            handle_snow_detection_event(SNOW_ACTION_VERIFY, "obstruction_detected"\n"\n"\n"\n"\n"\n"\n"\n");
+            g_integration.last_snow_detection = time(NULL);
+            handle_snow_detection_event(SNOW_ACTION_VERIFY, "obstruction_detected");
         }
         
         g_integration.last_heating_status = status.is_heating_active;
-        g_integration.last_detection_status = (status.consecutive_obstruction_samples >= 3\n"\n"\n"\n"\n"\n"\n"\n");
+        g_integration.last_detection_status = (status.consecutive_obstruction_samples >= 3);
     }
     
-    pthread_mutex_unlock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_integration_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -238,23 +238,23 @@ static int get_obstruction_sample_from_system(starlink_obstruction_sample_t *sam
     }
     
     // Try to get sample from Starlink first
-    int result = get_obstruction_sample_from_starlink(sample\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = get_obstruction_sample_from_starlink(sample);
     if (result == AUTONOMY_SUCCESS) {
         return AUTONOMY_SUCCESS;
     }
     
     // Fallback to GPS-based obstruction detection
-    result = get_obstruction_sample_from_gps(sample\n"\n"\n"\n"\n"\n"\n"\n");
+    result = get_obstruction_sample_from_gps(sample);
     if (result == AUTONOMY_SUCCESS) {
         return AUTONOMY_SUCCESS;
     }
     
     // If both fail, create a synthetic sample based on system state
-    sample->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    sample->timestamp = time(NULL);
     sample->fraction_obstructed = 0.0; // Assume no obstruction
     sample->snr = 0.0; // Unknown SNR
     
-    printf("WARN: "Using synthetic obstruction sample"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_WARN_MSG("Using synthetic obstruction sample");
     return AUTONOMY_SUCCESS;
 }
 
@@ -266,13 +266,13 @@ static int get_obstruction_sample_from_starlink(starlink_obstruction_sample_t *s
 
     // Query Starlink status via client API and map to obstruction sample
     starlink_status_response_t status = {0};
-    int rc = starlink_get_status(&status\n"\n"\n"\n"\n"\n"\n"\n");
+    int rc = starlink_get_status(&status);
     if (rc != 0) {
-        printf("WARN: "Failed to get Starlink status for obstruction sample", "result", rc\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to get Starlink status for obstruction sample", "result", rc);
         return AUTONOMY_ERROR_API_FAILED;
     }
 
-    sample->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    sample->timestamp = time(NULL);
     sample->currently_obstructed = status.obstruction_stats.currently_obstructed;
     sample->fraction_obstructed = status.obstruction_stats.fraction_obstructed;
     sample->time_obstructed = status.obstruction_stats.time_obstructed;
@@ -304,13 +304,13 @@ static int get_obstruction_sample_from_gps(starlink_obstruction_sample_t *sample
 
     // Use comprehensive Starlink GPS to infer obstruction context indirectly
     starlink_comprehensive_gps_t gps = {0};
-    int rc = starlink_comprehensive_collect_gps(&gps\n"\n"\n"\n"\n"\n"\n"\n");
+    int rc = starlink_comprehensive_collect_gps(&gps);
     if (rc != AUTONOMY_SUCCESS || !gps.valid) {
         return AUTONOMY_ERROR_NOT_FOUND;
     }
 
     // Populate sample with timestamp; GPS cannot directly provide obstruction
-    sample->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    sample->timestamp = time(NULL);
     sample->snr = 0.0; // Not derivable from GPS alone
 
     // Heuristic: if GPS is valid with good accuracy and movement is low, defer to Starlink; else unknown
@@ -333,7 +333,7 @@ static int get_obstruction_sample_from_gps(starlink_obstruction_sample_t *sample
 static void update_integration_statistics(bool success, const char *operation) {
     if (!operation) return;
     
-    pthread_mutex_lock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_integration_mutex);
     
     if (success) {
         g_integration.successful_samples++;
@@ -342,11 +342,11 @@ static void update_integration_statistics(bool success, const char *operation) {
     }
     
     // Log the operation
-    printf("DEBUG: "Integration operation completed", 
+    LOGX_DEBUG_MSG("Integration operation completed", 
                    "operation", operation, 
-                   "success", success ? "true" : "false"\n"\n"\n"\n"\n"\n"\n"\n");
+                   "success", success ? "true" : "false");
     
-    pthread_mutex_unlock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_integration_mutex);
 }
 
 // Handle snow detection event
@@ -355,9 +355,9 @@ static int handle_snow_detection_event(snow_action_t action, const char *reason)
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    printf("INFO: "Snow detection event triggered", 
+    LOGX_INFO_MSG("Snow detection event triggered", 
                    "action", action, 
-                   "reason", reason\n"\n"\n"\n"\n"\n"\n"\n");
+                   "reason", reason);
     
     // This could trigger additional actions like:
     // - Send notifications
@@ -374,7 +374,7 @@ int starlink_snow_detection_integration_get_status(starlink_snow_detection_integ
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_integration_mutex);
     
     status->enabled = g_integration.enabled;
     status->running = g_integration_running;
@@ -393,7 +393,7 @@ int starlink_snow_detection_integration_get_status(starlink_snow_detection_integ
     status->last_heating_status = g_integration.last_heating_status;
     status->last_detection_status = g_integration.last_detection_status;
     
-    pthread_mutex_unlock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_integration_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -404,16 +404,16 @@ int starlink_snow_detection_integration_set_config(const starlink_snow_detection
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_integration_mutex);
     
     g_integration.enabled = config->enabled;
     g_integration.check_interval = config->check_interval;
     g_integration.sample_interval = config->sample_interval;
     g_integration.max_retries = config->max_retries;
     
-    pthread_mutex_unlock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_integration_mutex);
     
-    printf("INFO: "Integration configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Integration configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -423,11 +423,11 @@ int starlink_snow_detection_integration_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_integration_mutex);
     g_integration.enabled = enabled;
-    pthread_mutex_unlock(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_integration_mutex);
     
-    printf("INFO: "Snow detection integration %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Snow detection integration %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -438,12 +438,12 @@ int starlink_snow_detection_integration_force_check(void) {
     }
     
     starlink_obstruction_sample_t sample;
-    int result = get_obstruction_sample_from_system(&sample\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = get_obstruction_sample_from_system(&sample);
     if (result == AUTONOMY_SUCCESS) {
-        result = process_obstruction_sample(&sample\n"\n"\n"\n"\n"\n"\n"\n");
+        result = process_obstruction_sample(&sample);
     }
     
-    printf("INFO: "Integration force check completed", "result", result\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Integration force check completed", "result", result);
     return result;
 }
 
@@ -454,16 +454,16 @@ void starlink_snow_detection_integration_cleanup(void) {
     }
     
     // Stop monitoring
-    starlink_snow_detection_integration_stop(\n"\n"\n"\n"\n"\n"\n"\n");
+    starlink_snow_detection_integration_stop();
     
     // Cleanup UBUS service
-    starlink_snow_detection_ubus_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+    starlink_snow_detection_ubus_cleanup();
     
     // Cleanup snow detection system
-    starlink_snow_detection_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+    starlink_snow_detection_cleanup();
     
-    pthread_mutex_destroy(&g_integration_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_integration_mutex);
     g_integration_initialized = false; // Use configurable setting // Use configurable setting
     
-    printf("INFO: "Snow detection integration cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Snow detection integration cleaned up");
 }

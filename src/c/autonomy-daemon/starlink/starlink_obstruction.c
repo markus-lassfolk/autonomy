@@ -37,32 +37,32 @@ static const int MAX_ACTIVE_MATCHES = 5; // Use configurable count // Use config
 static const int HISTORY_SIZE = 100; // Use configurable count // Use configurable value                        // Number of match results to keep
 
 // Forward declarations for static functions
-void add_trend_point(trend_point_array_t *history, time_t timestamp, double value, double quality\n"\n"\n"\n"\n"\n"\n"\n");
-int find_oldest_trend_point(const trend_point_array_t *history\n"\n"\n"\n"\n"\n"\n"\n");
-void update_movement_detection(const starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
-static void learn_patterns_from_observation(const starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
-static void detect_time_patterns(const starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
-static void detect_weather_patterns(const starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
-static void detect_location_patterns(const starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
+void add_trend_point(trend_point_array_t *history, time_t timestamp, double value, double quality);
+int find_oldest_trend_point(const trend_point_array_t *history);
+void update_movement_detection(const starlink_obstruction_sample_t *sample);
+static void learn_patterns_from_observation(const starlink_obstruction_sample_t *sample);
+static void detect_time_patterns(const starlink_obstruction_sample_t *sample);
+static void detect_weather_patterns(const starlink_obstruction_sample_t *sample);
+static void detect_location_patterns(const starlink_obstruction_sample_t *sample);
 void update_or_create_pattern(const char *name, const char *description, 
-                                   const starlink_obstruction_sample_t *sample, double confidence\n"\n"\n"\n"\n"\n"\n"\n");
-int find_oldest_pattern(void\n"\n"\n"\n"\n"\n"\n"\n");
-static void match_patterns(const starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
+                                   const starlink_obstruction_sample_t *sample, double confidence);
+int find_oldest_pattern(void);
+static void match_patterns(const starlink_obstruction_sample_t *sample);
 double calculate_pattern_similarity(const starlink_environmental_pattern_t *pattern, 
-                                        const starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
+                                        const starlink_obstruction_sample_t *sample);
 double calculate_time_similarity(const starlink_environmental_pattern_t *pattern, 
-                                     const starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
+                                     const starlink_obstruction_sample_t *sample);
 double calculate_location_similarity(const starlink_environmental_pattern_t *pattern, 
-                                         const starlink_obstruction_sample_t *sample\n"\n"\n"\n"\n"\n"\n"\n");
+                                         const starlink_obstruction_sample_t *sample);
 void create_or_update_active_match(const starlink_environmental_pattern_t *pattern, 
                                         const starlink_obstruction_sample_t *sample, 
-                                        double similarity\n"\n"\n"\n"\n"\n"\n"\n");
-int find_oldest_active_match(void\n"\n"\n"\n"\n"\n"\n"\n");
-void cleanup_expired_matches(void\n"\n"\n"\n"\n"\n"\n"\n");
-void add_match_to_history(const starlink_active_match_t *match, const char *reason\n"\n"\n"\n"\n"\n"\n"\n");
-int find_oldest_match_history(void\n"\n"\n"\n"\n"\n"\n"\n");
-static void perform_trend_analysis(void\n"\n"\n"\n"\n"\n"\n"\n");
-void analyze_trend(const trend_point_array_t *history, const char *metric_name\n"\n"\n"\n"\n"\n"\n"\n");
+                                        double similarity);
+int find_oldest_active_match(void);
+void cleanup_expired_matches(void);
+void add_match_to_history(const starlink_active_match_t *match, const char *reason);
+int find_oldest_match_history(void);
+static void perform_trend_analysis(void);
+void analyze_trend(const trend_point_array_t *history, const char *metric_name);
 
 // Global obstruction analysis state
 static starlink_obstruction_t g_obstruction = {0};
@@ -73,14 +73,14 @@ static knn_model_t g_knn_model = { .n_samples = 0, .k = 5 };
 // Initialize Starlink obstruction analysis
 int starlink_obstruction_init(void) {
     if (g_obstruction_initialized) {
-        printf("WARN: "Starlink obstruction analysis already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Starlink obstruction analysis already initialized");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_obstruction_mutex);
     
     // Initialize obstruction state
-    memset(&g_obstruction, 0, sizeof(starlink_obstruction_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_obstruction, 0, sizeof(starlink_obstruction_t));
     g_obstruction.enabled = true; // Use configurable obstruction enabled
     g_obstruction.max_patterns = MAX_PATTERNS;
     g_obstruction.min_observations_to_learn = MIN_OBSERVATIONS_TO_LEARN;
@@ -155,9 +155,9 @@ int starlink_obstruction_init(void) {
     g_obstruction.movement_detector.significant_distance = 50.0; // 50 meters
     
     g_obstruction_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_obstruction_mutex);
     
-    printf("INFO: "Starlink obstruction analysis initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starlink obstruction analysis initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -167,31 +167,31 @@ int starlink_obstruction_record_observation(const starlink_obstruction_sample_t 
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_obstruction_mutex);
     
     g_obstruction.total_observations++;
     
     // Add to trend analysis history
     add_trend_point(&g_obstruction.obstruction_history, 
-                   sample->timestamp, sample->fraction_obstructed, 1.0\n"\n"\n"\n"\n"\n"\n"\n");
+                   sample->timestamp, sample->fraction_obstructed, 1.0);
     add_trend_point(&g_obstruction.snr_history, 
-                   sample->timestamp, sample->snr, 1.0\n"\n"\n"\n"\n"\n"\n"\n");
+                   sample->timestamp, sample->snr, 1.0);
     
     // Update movement detection
-    update_movement_detection(sample\n"\n"\n"\n"\n"\n"\n"\n");
+    update_movement_detection(sample);
     
     // Learn patterns from observation
-    learn_patterns_from_observation(sample\n"\n"\n"\n"\n"\n"\n"\n");
+    learn_patterns_from_observation(sample);
     
     // Match against existing patterns
-    match_patterns(sample\n"\n"\n"\n"\n"\n"\n"\n");
+    match_patterns(sample);
     
     // Perform trend analysis
-    perform_trend_analysis(\n"\n"\n"\n"\n"\n"\n"\n");
+    perform_trend_analysis();
     
-    g_obstruction.last_analysis = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_obstruction.last_analysis = time(NULL);
     
-    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_obstruction_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -209,7 +209,7 @@ void add_trend_point(trend_point_array_t *history, time_t timestamp, double valu
     
     if (slot_index < 0) {
         // Remove oldest point to make room
-        slot_index = find_oldest_trend_point(history\n"\n"\n"\n"\n"\n"\n"\n");
+        slot_index = find_oldest_trend_point(history);
         if (slot_index >= 0) {
             history->points[slot_index].active = false;
             history->point_count--;
@@ -233,7 +233,7 @@ void add_trend_point(trend_point_array_t *history, time_t timestamp, double valu
 // Find oldest trend point
 int find_oldest_trend_point(const trend_point_array_t *history) {
     int oldest_index = -1;
-    time_t oldest_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t oldest_time = time(NULL);
     
     for (int i = 0; i < history->max_points; i++) {
         if (history->points[i].active && 
@@ -252,17 +252,17 @@ void update_movement_detection(const starlink_obstruction_sample_t *sample) {
     static double last_longitude = 0.0; // Use configurable value
     static time_t last_movement_check = 0; // Use configurable count // Use configurable value
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     // Get current GPS location from GPS system
     location_data_t current_location = {0};
-    int gps_ret = location_manager_get_best_location(&current_location\n"\n"\n"\n"\n"\n"\n"\n");
+    int gps_ret = location_manager_get_best_location(&current_location);
     
     if (gps_ret == AUTONOMY_SUCCESS && current_location.valid) {
         // Check for actual GPS movement
         if (last_latitude != 0.0 && last_longitude != 0.0) {
             double distance = gps_coordinate_distance(last_latitude, last_longitude,
-                                                   current_location.latitude, current_location.longitude\n"\n"\n"\n"\n"\n"\n"\n");
+                                                   current_location.latitude, current_location.longitude);
             
             // Movement threshold: 10 meters
             if (distance > 10.0) {
@@ -271,18 +271,18 @@ void update_movement_detection(const starlink_obstruction_sample_t *sample) {
                     g_obstruction.last_movement_time = now;
                     g_obstruction.movement_distance += distance;
                     
-                    printf("DEBUG: "Movement detected via GPS integration",
+                    LOGX_DEBUG_MSG("Movement detected via GPS integration",
                                   "distance_moved", distance,
                                   "total_distance", g_obstruction.movement_distance,
                                   "lat", current_location.latitude,
-                                  "lon", current_location.longitude\n"\n"\n"\n"\n"\n"\n"\n");
+                                  "lon", current_location.longitude);
                 }
             } else {
                 // Check if we've been stationary for a while
                 if (g_obstruction.is_moving && (now - g_obstruction.last_movement_time) > 300) { // 5 minutes
                     g_obstruction.is_moving = false;
-                    printf("DEBUG: "Movement stopped - now stationary",
-                                  "stationary_time", now - g_obstruction.last_movement_time\n"\n"\n"\n"\n"\n"\n"\n");
+                    LOGX_DEBUG_MSG("Movement stopped - now stationary",
+                                  "stationary_time", now - g_obstruction.last_movement_time);
                 }
             }
         }
@@ -298,9 +298,9 @@ void update_movement_detection(const starlink_obstruction_sample_t *sample) {
                 g_obstruction.is_moving = true;
                 g_obstruction.last_movement_time = now;
                 
-                printf("DEBUG: "Movement detected via obstruction change (GPS unavailable)",
+                LOGX_DEBUG_MSG("Movement detected via obstruction change (GPS unavailable)",
                               "obstruction_change", fabs(sample->fraction_obstructed - last_obstruction) * 100,
-                              "current_obstruction", sample->fraction_obstructed * 100\n"\n"\n"\n"\n"\n"\n"\n");
+                              "current_obstruction", sample->fraction_obstructed * 100);
             }
         }
         
@@ -322,7 +322,7 @@ static void learn_patterns_from_observation(const starlink_obstruction_sample_t 
     
     // 1. Extract features from the sample
     double features[4];
-    struct tm *tm_info = localtime(&sample->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm *tm_info = localtime(&sample->timestamp);
     features[0] = (double)tm_info->tm_hour + (double)tm_info->tm_min / 60.0; // time_of_day
     features[1] = (tm_info->tm_wday == 0 || tm_info->tm_wday == 6) ? 1.0 : 0.0; // is_weekend
     features[2] = sample->weather_condition; // weather_condition (e.g., clear=0, rain=1, snow=2)
@@ -337,35 +337,35 @@ static void learn_patterns_from_observation(const starlink_obstruction_sample_t 
         // For simplicity, we'll create a new pattern for each new observation initially.
         // A more advanced system would cluster observations to define patterns.
         g_knn_model.labels[index] = g_obstruction.pattern_count;
-        update_or_create_pattern("auto_learned_pattern", "Auto-learned from observation", sample, 0.75\n"\n"\n"\n"\n"\n"\n"\n");
+        update_or_create_pattern("auto_learned_pattern", "Auto-learned from observation", sample, 0.75);
         g_knn_model.n_samples++;
     }
 }
 
 // Detect time-based patterns
 static void detect_time_patterns(const starlink_obstruction_sample_t *sample) {
-    struct tm *tm_info = localtime(&sample->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm *tm_info = localtime(&sample->timestamp);
     
     // Check for daily patterns
     if (tm_info->tm_hour >= 6 && tm_info->tm_hour <= 18) {
         // Daytime pattern
         update_or_create_pattern("daytime", "Daytime obstruction pattern", 
-                               sample, 0.8\n"\n"\n"\n"\n"\n"\n"\n");
+                               sample, 0.8);
     } else {
         // Nighttime pattern
         update_or_create_pattern("nighttime", "Nighttime obstruction pattern", 
-                               sample, 0.8\n"\n"\n"\n"\n"\n"\n"\n");
+                               sample, 0.8);
     }
     
     // Check for weekly patterns
     if (tm_info->tm_wday == 0 || tm_info->tm_wday == 6) {
         // Weekend pattern
         update_or_create_pattern("weekend", "Weekend obstruction pattern", 
-                               sample, 0.7\n"\n"\n"\n"\n"\n"\n"\n");
+                               sample, 0.7);
     } else {
         // Weekday pattern
         update_or_create_pattern("weekday", "Weekday obstruction pattern", 
-                               sample, 0.7\n"\n"\n"\n"\n"\n"\n"\n");
+                               sample, 0.7);
     }
 }
 
@@ -373,7 +373,7 @@ static void detect_time_patterns(const starlink_obstruction_sample_t *sample) {
 static void detect_weather_patterns(const starlink_obstruction_sample_t *sample) {
     // Get current GPS location for weather data
     location_data_t current_location = {0};
-    int gps_ret = location_manager_get_best_location(&current_location\n"\n"\n"\n"\n"\n"\n"\n");
+    int gps_ret = location_manager_get_best_location(&current_location);
     
     if (gps_ret == AUTONOMY_SUCCESS && current_location.valid) {
         // Request real weather data from external APIs
@@ -381,99 +381,99 @@ static void detect_weather_patterns(const starlink_obstruction_sample_t *sample)
         weather_request.api_type = EXTERNAL_API_WEATHER_OPENWEATHER;
         snprintf(weather_request.endpoint, sizeof(weather_request.endpoint), 
                  "https://api.openweathermap.org/data/2.5/weather?lat=%.6f&lon=%.6f&appid=%s",
-                 current_location.latitude, current_location.longitude, "your_api_key"\n"\n"\n"\n"\n"\n"\n"\n");
-        strcpy(weather_request.method, "GET"\n"\n"\n"\n"\n"\n"\n"\n");
+                 current_location.latitude, current_location.longitude, "your_api_key");
+        strcpy(weather_request.method, "GET");
         
         external_api_response_t weather_response = {0};
-        int ret = external_apis_make_request(&weather_request, &weather_response\n"\n"\n"\n"\n"\n"\n"\n");
+        int ret = external_apis_make_request(&weather_request, &weather_response);
         
         if (ret == AUTONOMY_SUCCESS && weather_response.status_code == 200 && weather_response.body) {
             // Parse weather data from API response
-            cJSON* root = cJSON_Parse(weather_response.body\n"\n"\n"\n"\n"\n"\n"\n");
+            cJSON* root = cJSON_Parse(weather_response.body);
             if (root) {
                 cJSON* weather_obj;
                 cJSON* main_obj;
                 cJSON* clouds_obj;
                 
                 // Extract weather conditions
-                weather_obj = cJSON_GetObjectItem(root, "weather"\n"\n"\n"\n"\n"\n"\n"\n");
+                weather_obj = cJSON_GetObjectItem(root, "weather");
                 if (weather_obj && cJSON_IsArray(weather_obj)) {
                     
-                    cJSON* weather_item = cJSON_GetArrayItem(weather_obj, 0\n"\n"\n"\n"\n"\n"\n"\n");
+                    cJSON* weather_item = cJSON_GetArrayItem(weather_obj, 0);
                     if (weather_item) {
                         cJSON* main_weather;
                         cJSON* description;
                         
-                        main_weather = cJSON_GetObjectItem(weather_item, "main"\n"\n"\n"\n"\n"\n"\n"\n");
+                        main_weather = cJSON_GetObjectItem(weather_item, "main");
                         if (main_weather) {
-                            const char* weather_main = cJSON_GetStringValue(main_weather\n"\n"\n"\n"\n"\n"\n"\n");
+                            const char* weather_main = cJSON_GetStringValue(main_weather);
                             
                             // Detect weather patterns based on real weather data
                             if (strstr(weather_main, "Rain") || strstr(weather_main, "Drizzle")) {
                                 update_or_create_pattern("rain", "Rain weather obstruction pattern", 
-                                                       sample, 0.8\n"\n"\n"\n"\n"\n"\n"\n");
+                                                       sample, 0.8);
                             } else if (strstr(weather_main, "Snow")) {
                                 update_or_create_pattern("snow", "Snow weather obstruction pattern", 
-                                                       sample, 0.9\n"\n"\n"\n"\n"\n"\n"\n");
+                                                       sample, 0.9);
                             } else if (strstr(weather_main, "Clouds")) {
                                 update_or_create_pattern("clouds", "Cloudy weather obstruction pattern", 
-                                                       sample, 0.4\n"\n"\n"\n"\n"\n"\n"\n");
+                                                       sample, 0.4);
                             } else if (strstr(weather_main, "Clear")) {
                                 update_or_create_pattern("clear", "Clear weather obstruction pattern", 
-                                                       sample, 0.1\n"\n"\n"\n"\n"\n"\n"\n");
+                                                       sample, 0.1);
                             }
                             
-                            printf("DEBUG: "Weather pattern detected from real weather data",
+                            LOGX_DEBUG_MSG("Weather pattern detected from real weather data",
                                           "weather_condition", weather_main,
-                                          "obstruction", sample->fraction_obstructed * 100\n"\n"\n"\n"\n"\n"\n"\n");
+                                          "obstruction", sample->fraction_obstructed * 100);
                         }
                     }
                 }
                 
                 // Extract cloud coverage
-                clouds_obj = cJSON_GetObjectItem(root, "clouds"\n"\n"\n"\n"\n"\n"\n"\n");
+                clouds_obj = cJSON_GetObjectItem(root, "clouds");
                 if (clouds_obj) {
-                    cJSON* cloud_coverage = cJSON_GetObjectItem(clouds_obj, "all"\n"\n"\n"\n"\n"\n"\n"\n");
+                    cJSON* cloud_coverage = cJSON_GetObjectItem(clouds_obj, "all");
                     if (cloud_coverage) {
-                        int coverage = cJSON_GetNumberValue(cloud_coverage\n"\n"\n"\n"\n"\n"\n"\n");
+                        int coverage = cJSON_GetNumberValue(cloud_coverage);
                         if (coverage > 80) {
                             update_or_create_pattern("heavy_clouds", "Heavy cloud coverage pattern", 
-                                                   sample, 0.6\n"\n"\n"\n"\n"\n"\n"\n");
+                                                   sample, 0.6);
                         } else if (coverage > 50) {
                             update_or_create_pattern("moderate_clouds", "Moderate cloud coverage pattern", 
-                                                   sample, 0.3\n"\n"\n"\n"\n"\n"\n"\n");
+                                                   sample, 0.3);
                         }
                     }
                 }
                 
-                cJSON_Delete(root\n"\n"\n"\n"\n"\n"\n"\n");
+                cJSON_Delete(root);
             }
         } else {
-            printf("WARN: "Failed to get real weather data, using seasonal fallback"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_WARN_MSG("Failed to get real weather data, using seasonal fallback");
             // Fallback to seasonal patterns
-            struct tm *tm_info = localtime(&sample->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+            struct tm *tm_info = localtime(&sample->timestamp);
             
             // Winter months (Dec-Feb in northern hemisphere)
             if (tm_info->tm_mon == 11 || tm_info->tm_mon == 0 || tm_info->tm_mon == 1) {
                 update_or_create_pattern("winter", "Winter weather obstruction pattern", 
-                                       sample, 0.6\n"\n"\n"\n"\n"\n"\n"\n");
+                                       sample, 0.6);
             }
         }
     } else {
-        printf("WARN: "GPS unavailable for weather data, using seasonal fallback"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("GPS unavailable for weather data, using seasonal fallback");
         // Fallback to seasonal patterns
-        struct tm *tm_info = localtime(&sample->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+        struct tm *tm_info = localtime(&sample->timestamp);
         
         // Winter months (Dec-Feb in northern hemisphere)
         if (tm_info->tm_mon == 11 || tm_info->tm_mon == 0 || tm_info->tm_mon == 1) {
             update_or_create_pattern("winter", "Winter weather obstruction pattern", 
-                                   sample, 0.6\n"\n"\n"\n"\n"\n"\n"\n");
+                                   sample, 0.6);
         }
         
         // Summer months (Jun-Aug in northern hemisphere)
         if (tm_info->tm_mon == 5 || tm_info->tm_mon == 6 || tm_info->tm_mon == 7) {
             update_or_create_pattern("summer", "Summer weather obstruction pattern", 
-                                   sample, 0.6\n"\n"\n"\n"\n"\n"\n"\n");
+                                   sample, 0.6);
         }
     }
 }
@@ -482,7 +482,7 @@ static void detect_weather_patterns(const starlink_obstruction_sample_t *sample)
 static void detect_location_patterns(const starlink_obstruction_sample_t *sample) {
     // Get current GPS location for location analysis
     location_data_t current_location = {0};
-    int gps_ret = location_manager_get_best_location(&current_location\n"\n"\n"\n"\n"\n"\n"\n");
+    int gps_ret = location_manager_get_best_location(&current_location);
     
     if (gps_ret == AUTONOMY_SUCCESS && current_location.valid) {
         // Request location data from external APIs for environment analysis
@@ -490,34 +490,34 @@ static void detect_location_patterns(const starlink_obstruction_sample_t *sample
         location_request.api_type = EXTERNAL_API_GOOGLE_PLACES;
         snprintf(location_request.endpoint, sizeof(location_request.endpoint), 
                  "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=%.6f,%.6f&radius=1000&key=%s",
-                 current_location.latitude, current_location.longitude, "your_api_key"\n"\n"\n"\n"\n"\n"\n"\n");
-        strcpy(location_request.method, "GET"\n"\n"\n"\n"\n"\n"\n"\n");
+                 current_location.latitude, current_location.longitude, "your_api_key");
+        strcpy(location_request.method, "GET");
         
         external_api_response_t location_response = {0};
-        int ret = external_apis_make_request(&location_request, &location_response\n"\n"\n"\n"\n"\n"\n"\n");
+        int ret = external_apis_make_request(&location_request, &location_response);
         
         if (ret == AUTONOMY_SUCCESS && location_response.status_code == 200 && location_response.body) {
             // Parse location data to determine environment type
-            cJSON* root = cJSON_Parse(location_response.body\n"\n"\n"\n"\n"\n"\n"\n");
+            cJSON* root = cJSON_Parse(location_response.body);
             if (root) {
-                cJSON* results_obj = cJSON_GetObjectItem(root, "results"\n"\n"\n"\n"\n"\n"\n"\n");
+                cJSON* results_obj = cJSON_GetObjectItem(root, "results");
                 if (results_obj && cJSON_IsArray(results_obj)) {
                     
                     int urban_indicators = 0;
                     int rural_indicators = 0;
-                    int total_places = cJSON_GetArraySize(results_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                    int total_places = cJSON_GetArraySize(results_obj);
                     
                     // Analyze nearby places to determine environment type
                     for (int i = 0; i < total_places && i < 20; i++) {
-                        cJSON* place = cJSON_GetArrayItem(results_obj, i\n"\n"\n"\n"\n"\n"\n"\n");
+                        cJSON* place = cJSON_GetArrayItem(results_obj, i);
                         if (place) {
-                            cJSON* types_obj = cJSON_GetObjectItem(place, "types"\n"\n"\n"\n"\n"\n"\n"\n");
+                            cJSON* types_obj = cJSON_GetObjectItem(place, "types");
                             if (types_obj && cJSON_IsArray(types_obj)) {
                                 
-                                int types_count = cJSON_GetArraySize(types_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                                int types_count = cJSON_GetArraySize(types_obj);
                                 for (int j = 0; j < types_count; j++) {
-                                    cJSON* type_obj = cJSON_GetArrayItem(types_obj, j\n"\n"\n"\n"\n"\n"\n"\n");
-                                    const char* place_type = cJSON_GetStringValue(type_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                                    cJSON* type_obj = cJSON_GetArrayItem(types_obj, j);
+                                    const char* place_type = cJSON_GetStringValue(type_obj);
                                     
                                     // Urban indicators
                                     if (strstr(place_type, "restaurant") || strstr(place_type, "store") ||
@@ -539,50 +539,50 @@ static void detect_location_patterns(const starlink_obstruction_sample_t *sample
                     // Determine environment type based on place analysis
                     if (urban_indicators > rural_indicators && urban_indicators > 3) {
                         update_or_create_pattern("urban", "Urban environment obstruction pattern", 
-                                               sample, 0.7\n"\n"\n"\n"\n"\n"\n"\n");
-                        printf("DEBUG: "Urban environment detected from location analysis",
+                                               sample, 0.7);
+                        LOGX_DEBUG_MSG("Urban environment detected from location analysis",
                                       "urban_indicators", urban_indicators,
                                       "rural_indicators", rural_indicators,
-                                      "obstruction", sample->fraction_obstructed * 100\n"\n"\n"\n"\n"\n"\n"\n");
+                                      "obstruction", sample->fraction_obstructed * 100);
                     } else if (rural_indicators > urban_indicators && rural_indicators > 2) {
                         update_or_create_pattern("rural", "Rural environment obstruction pattern", 
-                                               sample, 0.7\n"\n"\n"\n"\n"\n"\n"\n");
-                        printf("DEBUG: "Rural environment detected from location analysis",
+                                               sample, 0.7);
+                        LOGX_DEBUG_MSG("Rural environment detected from location analysis",
                                       "urban_indicators", urban_indicators,
                                       "rural_indicators", rural_indicators,
-                                      "obstruction", sample->fraction_obstructed * 100\n"\n"\n"\n"\n"\n"\n"\n");
+                                      "obstruction", sample->fraction_obstructed * 100);
                     } else {
                         update_or_create_pattern("mixed", "Mixed environment obstruction pattern", 
-                                               sample, 0.5\n"\n"\n"\n"\n"\n"\n"\n");
-                        printf("DEBUG: "Mixed environment detected from location analysis",
+                                               sample, 0.5);
+                        LOGX_DEBUG_MSG("Mixed environment detected from location analysis",
                                       "urban_indicators", urban_indicators,
                                       "rural_indicators", rural_indicators,
-                                      "obstruction", sample->fraction_obstructed * 100\n"\n"\n"\n"\n"\n"\n"\n");
+                                      "obstruction", sample->fraction_obstructed * 100);
                     }
                 }
                 
-                cJSON_Delete(root\n"\n"\n"\n"\n"\n"\n"\n");
+                cJSON_Delete(root);
             }
         } else {
-            printf("WARN: "Failed to get real location data, using obstruction-based fallback"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_WARN_MSG("Failed to get real location data, using obstruction-based fallback");
             // Fallback: Use obstruction characteristics
             if (sample->fraction_obstructed > 0.1) { // High obstruction
                 update_or_create_pattern("urban", "Urban environment obstruction pattern (fallback)", 
-                                       sample, 0.7\n"\n"\n"\n"\n"\n"\n"\n");
+                                       sample, 0.7);
             } else if (sample->fraction_obstructed < 0.05) { // Low obstruction
                 update_or_create_pattern("rural", "Rural environment obstruction pattern (fallback)", 
-                                       sample, 0.7\n"\n"\n"\n"\n"\n"\n"\n");
+                                       sample, 0.7);
             }
         }
     } else {
-        printf("WARN: "GPS unavailable for location analysis, using obstruction-based fallback"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("GPS unavailable for location analysis, using obstruction-based fallback");
         // Fallback: Use obstruction characteristics
         if (sample->fraction_obstructed > 0.1) { // High obstruction
             update_or_create_pattern("urban", "Urban environment obstruction pattern (fallback)", 
-                                   sample, 0.7\n"\n"\n"\n"\n"\n"\n"\n");
+                                   sample, 0.7);
         } else if (sample->fraction_obstructed < 0.05) { // Low obstruction
             update_or_create_pattern("rural", "Rural environment obstruction pattern (fallback)", 
-                                   sample, 0.7\n"\n"\n"\n"\n"\n"\n"\n");
+                                   sample, 0.7);
         }
     }
 }
@@ -607,7 +607,7 @@ void update_or_create_pattern(const char *name, const char *description,
             g_obstruction.pattern_count++;
         } else {
             // Replace oldest pattern
-            pattern_index = find_oldest_pattern(\n"\n"\n"\n"\n"\n"\n"\n");
+            pattern_index = find_oldest_pattern();
         }
     }
     
@@ -615,10 +615,10 @@ void update_or_create_pattern(const char *name, const char *description,
         starlink_environmental_pattern_t *pattern = &g_obstruction.patterns[pattern_index];
         
         pattern->active = true;
-        safe_strncpy(pattern->name, name, sizeof(pattern->name)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(pattern->name, name, sizeof(pattern->name));
         pattern->name[sizeof(pattern->name) - 1] = '\0';
         pattern->name[sizeof(pattern->name) - 1] = '\0';
-        safe_strncpy(pattern->description, description, sizeof(pattern->description)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(pattern->description, description, sizeof(pattern->description));
         pattern->description[sizeof(pattern->description) - 1] = '\0';
         pattern->description[sizeof(pattern->description) - 1] = '\0';
         
@@ -636,15 +636,15 @@ void update_or_create_pattern(const char *name, const char *description,
             pattern->first_seen = sample->timestamp;
         }
         
-        printf("DEBUG: "Pattern updated/created: %s (confidence: %.2f, samples: %d)", 
-                  name, confidence, pattern->sample_count\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Pattern updated/created: %s (confidence: %.2f, samples: %d)", 
+                  name, confidence, pattern->sample_count);
     }
 }
 
 // Find oldest pattern
 int find_oldest_pattern(void) {
     int oldest_index = -1;
-    time_t oldest_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t oldest_time = time(NULL);
     
     for (int i = 0; i < g_obstruction.pattern_count; i++) {
         if (g_obstruction.patterns[i].active && 
@@ -665,7 +665,7 @@ static void match_patterns(const starlink_obstruction_sample_t *sample) {
 
     // 1. Extract features from the current sample
     double features[4];
-    struct tm *tm_info = localtime(&sample->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm *tm_info = localtime(&sample->timestamp);
     features[0] = (double)tm_info->tm_hour + (double)tm_info->tm_min / 60.0;
     features[1] = (tm_info->tm_wday == 0 || tm_info->tm_wday == 6) ? 1.0 : 0.0;
     features[2] = sample->weather_condition;
@@ -675,14 +675,14 @@ static void match_patterns(const starlink_obstruction_sample_t *sample) {
     // Compute similarity to each pattern's signature; pick top-k and update matches above threshold
     for (int i = 0; i < g_obstruction.pattern_count; i++) {
         if (!g_obstruction.patterns[i].active) continue;
-        double similarity = calculate_pattern_similarity(&g_obstruction.patterns[i], sample\n"\n"\n"\n"\n"\n"\n"\n");
+        double similarity = calculate_pattern_similarity(&g_obstruction.patterns[i], sample);
         if (similarity >= g_obstruction.pattern_similarity_threshold) {
-            create_or_update_active_match(&g_obstruction.patterns[i], sample, similarity\n"\n"\n"\n"\n"\n"\n"\n");
+            create_or_update_active_match(&g_obstruction.patterns[i], sample, similarity);
         }
     }
 
     // Clean up expired matches
-    cleanup_expired_matches(\n"\n"\n"\n"\n"\n"\n"\n");
+    cleanup_expired_matches();
 }
 
 // Calculate pattern similarity
@@ -691,31 +691,31 @@ double calculate_pattern_similarity(const starlink_environmental_pattern_t *patt
     double similarity = 0.0; // Use configurable value
     
     // Obstruction similarity (40% weight)
-    double obstruction_diff = fabs(pattern->obstruction_data.typical_obstruction - sample->fraction_obstructed\n"\n"\n"\n"\n"\n"\n"\n");
-    double obstruction_similarity = fmax(0.0, 1.0 - obstruction_diff\n"\n"\n"\n"\n"\n"\n"\n");
+    double obstruction_diff = fabs(pattern->obstruction_data.typical_obstruction - sample->fraction_obstructed);
+    double obstruction_similarity = fmax(0.0, 1.0 - obstruction_diff);
     similarity += obstruction_similarity * 0.4;
     
     // SNR similarity (30% weight)
-    double snr_diff = fabs(pattern->obstruction_data.typical_snr - sample->snr\n"\n"\n"\n"\n"\n"\n"\n");
+    double snr_diff = fabs(pattern->obstruction_data.typical_snr - sample->snr);
     double snr_similarity = fmax(0.0, 1.0 - (snr_diff / 20.0)); // Normalize to 20dB range
     similarity += snr_similarity * 0.3;
     
     // Time pattern similarity (20% weight)
-    double time_similarity = calculate_time_similarity(pattern, sample\n"\n"\n"\n"\n"\n"\n"\n");
+    double time_similarity = calculate_time_similarity(pattern, sample);
     similarity += time_similarity * 0.2;
     
     // Location similarity (10% weight)
-    double location_similarity = calculate_location_similarity(pattern, sample\n"\n"\n"\n"\n"\n"\n"\n");
+    double location_similarity = calculate_location_similarity(pattern, sample);
     similarity += location_similarity * 0.1;
     
-    return fmin(1.0, fmax(0.0, similarity)\n"\n"\n"\n"\n"\n"\n"\n");
+    return fmin(1.0, fmax(0.0, similarity));
 }
 
 // Calculate time similarity
 double calculate_time_similarity(const starlink_environmental_pattern_t *pattern, 
                                      const starlink_obstruction_sample_t *sample) {
     // Compare local time-of-day proximity (peak around typical hours)
-    struct tm *tm_info = localtime(&sample->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm *tm_info = localtime(&sample->timestamp);
     double hour = (double)tm_info->tm_hour + (double)tm_info->tm_min / 60.0;
     // Derive a crude expected hour from wedge pattern peak
     int max_idx = 0; // Use configurable count // Use configurable value
@@ -727,9 +727,9 @@ double calculate_time_similarity(const starlink_environmental_pattern_t *pattern
         }
     }
     double expected_hour = max_idx * 2.0 + 1.0; // center of 2-hour wedge
-    double diff = fabs(hour - expected_hour\n"\n"\n"\n"\n"\n"\n"\n");
+    double diff = fabs(hour - expected_hour);
     if (diff > 12.0) diff = 24.0 - diff; // wrap around day
-    double similarity = fmax(0.0, 1.0 - (diff / 12.0)\n"\n"\n"\n"\n"\n"\n"\n");
+    double similarity = fmax(0.0, 1.0 - (diff / 12.0));
     return similarity;
 }
 
@@ -748,12 +748,12 @@ double calculate_location_similarity(const starlink_environmental_pattern_t *pat
     }
     double dlat = (current_location.latitude - plat) * M_PI / 180.0;
     double dlon = (current_location.longitude - plon) * M_PI / 180.0;
-    double a = sin(dlat/2)*sin(dlat/2) + cos(plat*M_PI/180.0)*cos(current_location.latitude*M_PI/180.0)*sin(dlon/2)*sin(dlon/2\n"\n"\n"\n"\n"\n"\n"\n");
-    double c = 2 * atan2(sqrt(a), sqrt(1-a)\n"\n"\n"\n"\n"\n"\n"\n");
+    double a = sin(dlat/2)*sin(dlat/2) + cos(plat*M_PI/180.0)*cos(current_location.latitude*M_PI/180.0)*sin(dlon/2)*sin(dlon/2);
+    double c = 2 * atan2(sqrt(a), sqrt(1-a));
     double distance_km = 6371.0 * c;
     // Map distance to similarity: within 1km ~ 1.0, beyond 20km ~ 0
-    double similarity = 1.0 - fmin(1.0, distance_km / 20.0\n"\n"\n"\n"\n"\n"\n"\n");
-    return fmax(0.0, similarity\n"\n"\n"\n"\n"\n"\n"\n");
+    double similarity = 1.0 - fmin(1.0, distance_km / 20.0);
+    return fmax(0.0, similarity);
 }
 
 // Create or update active match
@@ -777,7 +777,7 @@ void create_or_update_active_match(const starlink_environmental_pattern_t *patte
             g_obstruction.active_match_count++;
         } else {
             // Replace oldest match
-            match_index = find_oldest_active_match(\n"\n"\n"\n"\n"\n"\n"\n");
+            match_index = find_oldest_active_match();
         }
     }
     
@@ -785,10 +785,10 @@ void create_or_update_active_match(const starlink_environmental_pattern_t *patte
         starlink_active_match_t *match = &g_obstruction.active_matches[match_index];
         
         match->active = true;
-        safe_strncpy(match->pattern_id, pattern->id, sizeof(match->pattern_id)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(match->pattern_id, pattern->id, sizeof(match->pattern_id));
         match->pattern_id[sizeof(match->pattern_id) - 1] = '\0';
         match->pattern_id[sizeof(match->pattern_id) - 1] = '\0';
-        safe_strncpy(match->pattern_name, pattern->name, sizeof(match->pattern_name)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(match->pattern_name, pattern->name, sizeof(match->pattern_name));
         match->pattern_name[sizeof(match->pattern_name) - 1] = '\0';
         match->pattern_name[sizeof(match->pattern_name) - 1] = '\0';
         
@@ -802,15 +802,15 @@ void create_or_update_active_match(const starlink_environmental_pattern_t *patte
         match->status = MATCH_STATUS_MATCHING;
         match->sample_count++;
         
-        printf("DEBUG: "Active match updated: %s (similarity: %.2f, confidence: %.2f)", 
-                  pattern->name, similarity, pattern->confidence\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Active match updated: %s (similarity: %.2f, confidence: %.2f)", 
+                  pattern->name, similarity, pattern->confidence);
     }
 }
 
 // Find oldest active match
 int find_oldest_active_match(void) {
     int oldest_index = -1;
-    time_t oldest_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t oldest_time = time(NULL);
     
     for (int i = 0; i < g_obstruction.active_match_count; i++) {
         if (g_obstruction.active_matches[i].active && 
@@ -825,7 +825,7 @@ int find_oldest_active_match(void) {
 
 // Clean up expired matches
 void cleanup_expired_matches(void) {
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     int timeout_seconds = g_obstruction.match_timeout_minutes * 60;
     
     for (int i = 0; i < g_obstruction.active_match_count; i++) {
@@ -833,13 +833,13 @@ void cleanup_expired_matches(void) {
             (now - g_obstruction.active_matches[i].last_update) > timeout_seconds) {
             
             // Move to match history
-            add_match_to_history(&g_obstruction.active_matches[i], "timeout"\n"\n"\n"\n"\n"\n"\n"\n");
+            add_match_to_history(&g_obstruction.active_matches[i], "timeout");
             
             // Deactivate match
             g_obstruction.active_matches[i].active = false;
             g_obstruction.active_match_count--;
             
-            printf("DEBUG: "Active match expired: %s", g_obstruction.active_matches[i].pattern_name\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Active match expired: %s", g_obstruction.active_matches[i].pattern_name);
         }
     }
 }
@@ -857,7 +857,7 @@ void add_match_to_history(const starlink_active_match_t *match, const char *reas
     
     if (slot_index < 0) {
         // Remove oldest entry to make room
-        slot_index = find_oldest_match_history(\n"\n"\n"\n"\n"\n"\n"\n");
+        slot_index = find_oldest_match_history();
         if (slot_index >= 0) {
             g_obstruction.match_history[slot_index].active = false;
         }
@@ -868,16 +868,16 @@ void add_match_to_history(const starlink_active_match_t *match, const char *reas
         
         result->active = true;
         result->timestamp = match->last_update;
-        safe_strncpy(result->pattern_id, match->pattern_id, sizeof(result->pattern_id)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(result->pattern_id, match->pattern_id, sizeof(result->pattern_id));
         result->pattern_id[sizeof(result->pattern_id) - 1] = '\0';
         result->pattern_id[sizeof(result->pattern_id) - 1] = '\0';
-        safe_strncpy(result->pattern_name, match->pattern_name, sizeof(result->pattern_name)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(result->pattern_name, match->pattern_name, sizeof(result->pattern_name));
         result->pattern_name[sizeof(result->pattern_name) - 1] = '\0';
         result->pattern_name[sizeof(result->pattern_name) - 1] = '\0';
         result->similarity = match->similarity;
         result->confidence = match->confidence;
-        result->success = (match->status == MATCH_STATUS_CONFIRMED\n"\n"\n"\n"\n"\n"\n"\n");
-        safe_strncpy(result->reason, reason, sizeof(result->reason)\n"\n"\n"\n"\n"\n"\n"\n");
+        result->success = (match->status == MATCH_STATUS_CONFIRMED);
+        safe_strncpy(result->reason, reason, sizeof(result->reason));
         result->reason[sizeof(result->reason) - 1] = '\0';
         result->reason[sizeof(result->reason) - 1] = '\0';
         result->duration = match->last_update - match->start_time;
@@ -888,7 +888,7 @@ void add_match_to_history(const starlink_active_match_t *match, const char *reas
 // Find oldest match history entry
 int find_oldest_match_history(void) {
     int oldest_index = -1;
-    time_t oldest_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t oldest_time = time(NULL);
     
     for (int i = 0; i < g_obstruction.history_size; i++) {
         if (g_obstruction.match_history[i].active && 
@@ -904,10 +904,10 @@ int find_oldest_match_history(void) {
 // Perform trend analysis
 static void perform_trend_analysis(void) {
     // Analyze obstruction trends
-    analyze_trend(&g_obstruction.obstruction_history, "obstruction"\n"\n"\n"\n"\n"\n"\n"\n");
+    analyze_trend(&g_obstruction.obstruction_history, "obstruction");
     
     // Analyze SNR trends
-    analyze_trend(&g_obstruction.snr_history, "snr"\n"\n"\n"\n"\n"\n"\n"\n");
+    analyze_trend(&g_obstruction.snr_history, "snr");
 }
 
 // Analyze trend for a specific metric
@@ -934,22 +934,22 @@ void analyze_trend(const trend_point_array_t *history, const char *metric_name) 
     }
     
     double mean = sum / valid_points;
-    double variance = (sum_squared / valid_points) - (mean * mean\n"\n"\n"\n"\n"\n"\n"\n");
-    double std_dev = sqrt(variance\n"\n"\n"\n"\n"\n"\n"\n");
+    double variance = (sum_squared / valid_points) - (mean * mean);
+    double std_dev = sqrt(variance);
     
     // Detect anomalies
     for (int i = 0; i < history->point_count; i++) {
         if (history->points[i].active) {
-            double deviation = fabs(history->points[i].value - mean\n"\n"\n"\n"\n"\n"\n"\n");
+            double deviation = fabs(history->points[i].value - mean);
             if (deviation > (g_obstruction.trend_analyzer.anomaly_threshold * std_dev)) {
-                printf("DEBUG: "Anomaly detected in %s: value=%.2f, mean=%.2f, deviation=%.2f", 
-                          metric_name, history->points[i].value, mean, deviation\n"\n"\n"\n"\n"\n"\n"\n");
+                LOGX_DEBUG_MSG("Anomaly detected in %s: value=%.2f, mean=%.2f, deviation=%.2f", 
+                          metric_name, history->points[i].value, mean, deviation);
             }
         }
     }
     
-    printf("DEBUG: "Trend analysis for %s: mean=%.2f, std_dev=%.2f, points=%d", 
-              metric_name, mean, std_dev, valid_points\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Trend analysis for %s: mean=%.2f, std_dev=%.2f, points=%d", 
+              metric_name, mean, std_dev, valid_points);
 }
 
 // Get obstruction analysis status
@@ -958,7 +958,7 @@ int starlink_obstruction_get_status(starlink_obstruction_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_obstruction_mutex);
     
     status->enabled = g_obstruction.enabled;
     status->pattern_count = g_obstruction.pattern_count;
@@ -968,7 +968,7 @@ int starlink_obstruction_get_status(starlink_obstruction_status_t *status) {
     status->total_observations = g_obstruction.total_observations;
     status->last_analysis = g_obstruction.last_analysis;
     
-    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_obstruction_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -979,17 +979,17 @@ int starlink_obstruction_get_patterns(starlink_environmental_pattern_t *patterns
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_obstruction_mutex);
     
     int count = 0; // Use configurable count // Use configurable value
     for (int i = 0; i < g_obstruction.pattern_count && count < max_patterns; i++) {
         if (g_obstruction.patterns[i].active) {
-            memcpy(&patterns[count], &g_obstruction.patterns[i], sizeof(starlink_environmental_pattern_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memcpy(&patterns[count], &g_obstruction.patterns[i], sizeof(starlink_environmental_pattern_t));
             count++;
         }
     }
     
-    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_obstruction_mutex);
     
     return count;
 }
@@ -1000,17 +1000,17 @@ int starlink_obstruction_get_active_matches(starlink_active_match_t *matches, in
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_obstruction_mutex);
     
     int count = 0; // Use configurable count // Use configurable value
     for (int i = 0; i < g_obstruction.active_match_count && count < max_matches; i++) {
         if (g_obstruction.active_matches[i].active) {
-            memcpy(&matches[count], &g_obstruction.active_matches[i], sizeof(starlink_active_match_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memcpy(&matches[count], &g_obstruction.active_matches[i], sizeof(starlink_active_match_t));
             count++;
         }
     }
     
-    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_obstruction_mutex);
     
     return count;
 }
@@ -1021,17 +1021,17 @@ int starlink_obstruction_get_match_history(starlink_match_result_t *results, int
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_obstruction_mutex);
     
     int count = 0; // Use configurable count // Use configurable value
     for (int i = 0; i < g_obstruction.history_size && count < max_results; i++) {
         if (g_obstruction.match_history[i].active) {
-            memcpy(&results[count], &g_obstruction.match_history[i], sizeof(starlink_match_result_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memcpy(&results[count], &g_obstruction.match_history[i], sizeof(starlink_match_result_t));
             count++;
         }
     }
     
-    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_obstruction_mutex);
     
     return count;
 }
@@ -1042,7 +1042,7 @@ int starlink_obstruction_get_config(starlink_obstruction_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_obstruction_mutex);
     
     config->enabled = g_obstruction.enabled;
     config->max_patterns = g_obstruction.max_patterns;
@@ -1053,7 +1053,7 @@ int starlink_obstruction_get_config(starlink_obstruction_config_t *config) {
     config->match_timeout_minutes = g_obstruction.match_timeout_minutes;
     config->history_size = g_obstruction.history_size;
     
-    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_obstruction_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -1064,7 +1064,7 @@ int starlink_obstruction_set_config(const starlink_obstruction_config_t *config)
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_obstruction_mutex);
     
     g_obstruction.enabled = config->enabled;
     g_obstruction.max_patterns = config->max_patterns;
@@ -1075,9 +1075,9 @@ int starlink_obstruction_set_config(const starlink_obstruction_config_t *config)
     g_obstruction.match_timeout_minutes = config->match_timeout_minutes;
     g_obstruction.history_size = config->history_size;
     
-    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_obstruction_mutex);
     
-    printf("INFO: "Starlink obstruction analysis configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starlink obstruction analysis configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -1087,11 +1087,11 @@ int starlink_obstruction_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_obstruction_mutex);
     g_obstruction.enabled = enabled;
-    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_obstruction_mutex);
     
-    printf("INFO: "Starlink obstruction analysis %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starlink obstruction analysis %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -1101,7 +1101,7 @@ int starlink_obstruction_reset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_obstruction_mutex);
     
     g_obstruction.pattern_count = 0;
     g_obstruction.active_match_count = 0;
@@ -1123,9 +1123,9 @@ int starlink_obstruction_reset(void) {
         g_obstruction.match_history[i].active = false;
     }
     
-    pthread_mutex_unlock(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_obstruction_mutex);
     
-    printf("INFO: "Starlink obstruction analysis reset"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starlink obstruction analysis reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -1135,8 +1135,8 @@ void starlink_obstruction_cleanup(void) {
         return;
     }
     
-    pthread_mutex_destroy(&g_obstruction_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_obstruction_mutex);
     g_obstruction_initialized = false; // Use configurable setting
     
-    printf("INFO: "Starlink obstruction analysis cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starlink obstruction analysis cleaned up");
 }

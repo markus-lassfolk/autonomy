@@ -29,19 +29,19 @@ enum {
 
 // Forward declarations
 static int autonomy_overlay_management_status(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
-                                           const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
+                                           const char *method, struct blob_attr *msg);
 static int autonomy_overlay_management_config(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
-                                            const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
+                                            const char *method, struct blob_attr *msg);
 int autonomy_overlay_management_set_config(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
-                                                const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
+                                                const char *method, struct blob_attr *msg);
 static int autonomy_overlay_management_set_enabled(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
-                                                 const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
+                                                 const char *method, struct blob_attr *msg);
 static int autonomy_overlay_management_reset(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
-                                           const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
+                                           const char *method, struct blob_attr *msg);
 int autonomy_overlay_management_check(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
-                                           const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
+                                           const char *method, struct blob_attr *msg);
 int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
-                                             const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
+                                             const char *method, struct blob_attr *msg);
 
 // UBUS method definitions
 static const struct ubus_method autonomy_overlay_management_methods[] = {
@@ -75,40 +75,40 @@ static struct ubus_object autonomy_overlay_management_obj = {
 static int autonomy_overlay_management_status(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     overlay_management_status_t status;
-    int result = overlay_management_get_status(&status\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = overlay_management_get_status(&status);
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to get overlay management status"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to get overlay management status");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
     // Add configuration
-    blobmsg_add_u8(&bb, "enabled", status.enabled\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "check_interval", status.check_interval\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "cleanup_threshold", status.cleanup_threshold\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "emergency_threshold", status.emergency_threshold\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u8(&bb, "auto_cleanup", status.auto_cleanup\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u8(&bb, "backup_before_cleanup", status.backup_before_cleanup\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u8(&bb, "enabled", status.enabled);
+    blobmsg_add_u32(&bb, "check_interval", status.check_interval);
+    blobmsg_add_u32(&bb, "cleanup_threshold", status.cleanup_threshold);
+    blobmsg_add_u32(&bb, "emergency_threshold", status.emergency_threshold);
+    blobmsg_add_u8(&bb, "auto_cleanup", status.auto_cleanup);
+    blobmsg_add_u8(&bb, "backup_before_cleanup", status.backup_before_cleanup);
     
     // Add statistics
-    blobmsg_add_u32(&bb, "last_check_time", status.last_check_time\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "last_cleanup_time", status.last_cleanup_time\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "total_cleanups", status.total_cleanups\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "total_emergency_cleanups", status.total_emergency_cleanups\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "total_space_freed", status.total_space_freed\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "last_check_time", status.last_check_time);
+    blobmsg_add_u32(&bb, "last_cleanup_time", status.last_cleanup_time);
+    blobmsg_add_u32(&bb, "total_cleanups", status.total_cleanups);
+    blobmsg_add_u32(&bb, "total_emergency_cleanups", status.total_emergency_cleanups);
+    blobmsg_add_u32(&bb, "total_space_freed", status.total_space_freed);
     
     // Add current usage
-    blobmsg_add_u32(&bb, "current_usage_percent", status.current_usage_percent\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "current_usage_bytes", status.current_usage_bytes\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "total_space_bytes", status.total_space_bytes\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "current_usage_percent", status.current_usage_percent);
+    blobmsg_add_u32(&bb, "current_usage_bytes", status.current_usage_bytes);
+    blobmsg_add_u32(&bb, "total_space_bytes", status.total_space_bytes);
     
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return 0;
 }
 
@@ -118,27 +118,27 @@ static int autonomy_overlay_management_status(struct ubus_context *ctx, struct u
 static int autonomy_overlay_management_config(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                             const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     overlay_management_config_t config;
-    int result = overlay_management_get_config(&config\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = overlay_management_get_config(&config);
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to get overlay management configuration"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to get overlay management configuration");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
-    blobmsg_add_u8(&bb, "enabled", config.enabled\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "check_interval", config.check_interval\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "cleanup_threshold", config.cleanup_threshold\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "emergency_threshold", config.emergency_threshold\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u8(&bb, "auto_cleanup", config.auto_cleanup\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u8(&bb, "backup_before_cleanup", config.backup_before_cleanup\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u8(&bb, "enabled", config.enabled);
+    blobmsg_add_u32(&bb, "check_interval", config.check_interval);
+    blobmsg_add_u32(&bb, "cleanup_threshold", config.cleanup_threshold);
+    blobmsg_add_u32(&bb, "emergency_threshold", config.emergency_threshold);
+    blobmsg_add_u8(&bb, "auto_cleanup", config.auto_cleanup);
+    blobmsg_add_u8(&bb, "backup_before_cleanup", config.backup_before_cleanup);
     
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return 0;
 }
 
@@ -148,15 +148,15 @@ static int autonomy_overlay_management_config(struct ubus_context *ctx, struct u
 int autonomy_overlay_management_set_config(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                                 const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     overlay_management_config_t config;
     int result = overlay_management_get_config(&config); // Get current config first
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to get current configuration"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to get current configuration");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
@@ -181,46 +181,46 @@ int autonomy_overlay_management_set_config(struct ubus_context *ctx, struct ubus
         [OVERLAY_MANAGEMENT_CONFIG_BACKUP_BEFORE_CLEANUP] = { .name = "backup_before_cleanup", .type = BLOBMSG_TYPE_BOOL },
     };
     
-    blobmsg_parse(policy, __OVERLAY_MANAGEMENT_CONFIG_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_parse(policy, __OVERLAY_MANAGEMENT_CONFIG_MAX, tb, blob_data(msg), blob_len(msg));
     
     // Update configuration with new values
     if (tb[OVERLAY_MANAGEMENT_CONFIG_ENABLED]) {
-        config.enabled = blobmsg_get_bool(tb[OVERLAY_MANAGEMENT_CONFIG_ENABLED]\n"\n"\n"\n"\n"\n"\n"\n");
+        config.enabled = blobmsg_get_bool(tb[OVERLAY_MANAGEMENT_CONFIG_ENABLED]);
     }
     
     if (tb[OVERLAY_MANAGEMENT_CONFIG_CHECK_INTERVAL]) {
-        config.check_interval = blobmsg_get_u32(tb[OVERLAY_MANAGEMENT_CONFIG_CHECK_INTERVAL]\n"\n"\n"\n"\n"\n"\n"\n");
+        config.check_interval = blobmsg_get_u32(tb[OVERLAY_MANAGEMENT_CONFIG_CHECK_INTERVAL]);
     }
     
     if (tb[OVERLAY_MANAGEMENT_CONFIG_CLEANUP_THRESHOLD]) {
-        config.cleanup_threshold = blobmsg_get_u32(tb[OVERLAY_MANAGEMENT_CONFIG_CLEANUP_THRESHOLD]\n"\n"\n"\n"\n"\n"\n"\n");
+        config.cleanup_threshold = blobmsg_get_u32(tb[OVERLAY_MANAGEMENT_CONFIG_CLEANUP_THRESHOLD]);
     }
     
     if (tb[OVERLAY_MANAGEMENT_CONFIG_EMERGENCY_THRESHOLD]) {
-        config.emergency_threshold = blobmsg_get_u32(tb[OVERLAY_MANAGEMENT_CONFIG_EMERGENCY_THRESHOLD]\n"\n"\n"\n"\n"\n"\n"\n");
+        config.emergency_threshold = blobmsg_get_u32(tb[OVERLAY_MANAGEMENT_CONFIG_EMERGENCY_THRESHOLD]);
     }
     
     if (tb[OVERLAY_MANAGEMENT_CONFIG_AUTO_CLEANUP]) {
-        config.auto_cleanup = blobmsg_get_bool(tb[OVERLAY_MANAGEMENT_CONFIG_AUTO_CLEANUP]\n"\n"\n"\n"\n"\n"\n"\n");
+        config.auto_cleanup = blobmsg_get_bool(tb[OVERLAY_MANAGEMENT_CONFIG_AUTO_CLEANUP]);
     }
     
     if (tb[OVERLAY_MANAGEMENT_CONFIG_BACKUP_BEFORE_CLEANUP]) {
-        config.backup_before_cleanup = blobmsg_get_bool(tb[OVERLAY_MANAGEMENT_CONFIG_BACKUP_BEFORE_CLEANUP]\n"\n"\n"\n"\n"\n"\n"\n");
+        config.backup_before_cleanup = blobmsg_get_bool(tb[OVERLAY_MANAGEMENT_CONFIG_BACKUP_BEFORE_CLEANUP]);
     }
     
     // Apply the new configuration
-    result = overlay_management_set_config(&config\n"\n"\n"\n"\n"\n"\n"\n");
+    result = overlay_management_set_config(&config);
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to set overlay management configuration"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to set overlay management configuration");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", "Configuration updated successfully"\n"\n"\n"\n"\n"\n"\n"\n");
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "status", "Configuration updated successfully");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return 0;
 }
 
@@ -230,7 +230,7 @@ int autonomy_overlay_management_set_config(struct ubus_context *ctx, struct ubus
 static int autonomy_overlay_management_set_enabled(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                                  const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     struct blob_attr *tb[1];
     enum {
@@ -242,28 +242,28 @@ static int autonomy_overlay_management_set_enabled(struct ubus_context *ctx, str
         [OVERLAY_MANAGEMENT_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
     };
     
-    blobmsg_parse(policy, __OVERLAY_MANAGEMENT_ENABLED_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_parse(policy, __OVERLAY_MANAGEMENT_ENABLED_MAX, tb, blob_data(msg), blob_len(msg));
     
     if (!tb[OVERLAY_MANAGEMENT_ENABLED]) {
-        blobmsg_add_string(&bb, "error", "Missing 'enabled' parameter"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Missing 'enabled' parameter");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
-    bool enabled = blobmsg_get_bool(tb[OVERLAY_MANAGEMENT_ENABLED]\n"\n"\n"\n"\n"\n"\n"\n");
-    int result = overlay_management_set_enabled(enabled\n"\n"\n"\n"\n"\n"\n"\n");
+    bool enabled = blobmsg_get_bool(tb[OVERLAY_MANAGEMENT_ENABLED]);
+    int result = overlay_management_set_enabled(enabled);
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to set overlay management enabled state"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to set overlay management enabled state");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", enabled ? "Overlay management enabled" : "Overlay management disabled"\n"\n"\n"\n"\n"\n"\n"\n");
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "status", enabled ? "Overlay management enabled" : "Overlay management disabled");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return 0;
 }
 
@@ -273,20 +273,20 @@ static int autonomy_overlay_management_set_enabled(struct ubus_context *ctx, str
 static int autonomy_overlay_management_reset(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
-    int result = overlay_management_reset(\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = overlay_management_reset();
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to reset overlay management statistics"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to reset overlay management statistics");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", "Overlay management statistics reset successfully"\n"\n"\n"\n"\n"\n"\n"\n");
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "status", "Overlay management statistics reset successfully");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return 0;
 }
 
@@ -296,20 +296,20 @@ static int autonomy_overlay_management_reset(struct ubus_context *ctx, struct ub
 int autonomy_overlay_management_check(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                            const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
-    int result = overlay_management_check(\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = overlay_management_check();
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Overlay management check failed"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Overlay management check failed");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", "Overlay management check completed successfully"\n"\n"\n"\n"\n"\n"\n"\n");
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "status", "Overlay management check completed successfully");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return 0;
 }
 
@@ -319,7 +319,7 @@ int autonomy_overlay_management_check(struct ubus_context *ctx, struct ubus_obje
 int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                                              const char *method, struct blob_attr *msg) {
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     // Parse message to determine cleanup type
     struct blob_attr *tb[1];
@@ -332,31 +332,31 @@ int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct ubus_ob
         [OVERLAY_MANAGEMENT_CLEANUP_TYPE] = { .name = "type", .type = BLOBMSG_TYPE_STRING },
     };
     
-    blobmsg_parse(policy, __OVERLAY_MANAGEMENT_CLEANUP_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_parse(policy, __OVERLAY_MANAGEMENT_CLEANUP_MAX, tb, blob_data(msg), blob_len(msg));
     
     const char *cleanup_type = "routine";
     if (tb[OVERLAY_MANAGEMENT_CLEANUP_TYPE]) {
-        cleanup_type = blobmsg_get_string(tb[OVERLAY_MANAGEMENT_CLEANUP_TYPE]\n"\n"\n"\n"\n"\n"\n"\n");
+        cleanup_type = blobmsg_get_string(tb[OVERLAY_MANAGEMENT_CLEANUP_TYPE]);
     }
     
     int result;
     if (strcmp(cleanup_type, "emergency") == 0) {
-        result = overlay_management_perform_emergency_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+        result = overlay_management_perform_emergency_cleanup();
     } else {
-        result = overlay_management_perform_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+        result = overlay_management_perform_cleanup();
     }
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Overlay management cleanup failed"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Overlay management cleanup failed");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", "Overlay management cleanup completed successfully"\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_string(&bb, "type", cleanup_type\n"\n"\n"\n"\n"\n"\n"\n");
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "status", "Overlay management cleanup completed successfully");
+    blobmsg_add_string(&bb, "type", cleanup_type);
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return 0;
 }
 
@@ -364,13 +364,13 @@ int autonomy_overlay_management_cleanup(struct ubus_context *ctx, struct ubus_ob
  * Register overlay management UBUS object
  */
 int overlay_management_ubus_register(struct ubus_context *ctx) {
-    int ret = ubus_add_object(ctx, &autonomy_overlay_management_obj\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = ubus_add_object(ctx, &autonomy_overlay_management_obj);
     if (ret) {
-        fprintf(stderr, "Failed to add overlay management object: %s\n", ubus_strerror(ret)\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "Failed to add overlay management object: %s\n", ubus_strerror(ret));
         return ret;
     }
     
-    fprintf(stderr, "Overlay management UBUS object registered successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "Overlay management UBUS object registered successfully\n");
     return 0;
 }
 
@@ -378,6 +378,6 @@ int overlay_management_ubus_register(struct ubus_context *ctx) {
  * Unregister overlay management UBUS object
  */
 void overlay_management_ubus_unregister(struct ubus_context *ctx) {
-    ubus_remove_object(ctx, &autonomy_overlay_management_obj\n"\n"\n"\n"\n"\n"\n"\n");
-    fprintf(stderr, "Overlay management UBUS object unregistered\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_remove_object(ctx, &autonomy_overlay_management_obj);
+    fprintf(stderr, "Overlay management UBUS object unregistered\n");
 }

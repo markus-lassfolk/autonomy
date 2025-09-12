@@ -8,13 +8,13 @@
 
 // Test program for ML monitoring Phase 6 - Self-Optimizing System & Production Deployment
 int main() {
-    printf("Testing ML Monitor Phase 6: Self-Optimizing System & Production Deployment\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("=========================================================================\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Testing ML Monitor Phase 6: Self-Optimizing System & Production Deployment\n");
+    printf("=========================================================================\n");
     
     // Test 1: Initialize complete system with all phases
-    printf("Test 1: Complete system initialization (all 6 phases)...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Test 1: Complete system initialization (all 6 phases)...\n");
     ml_monitor_config_t config;
-    ml_monitor_config_init_defaults(&config\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_config_init_defaults(&config);
     
     // Configure for production testing
     config.enabled = true;
@@ -26,24 +26,24 @@ int main() {
     config.memory_limit_kb = 2048; // 2MB limit for production
     config.debug_logging_enabled = false; // Production mode
     
-    ml_monitor_t *monitor = ml_monitor_init(&config\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(monitor != NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" ML monitor initialized\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_t *monitor = ml_monitor_init(&config);
+    assert(monitor != NULL);
+    printf(" ML monitor initialized\n");
     
     // Initialize all phases sequentially
-    assert(ml_monitor_init_phase3_enhancements(monitor) == ML_MONITOR_SUCCESS\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(ml_monitor_init_phase4_enhancements(monitor) == ML_MONITOR_SUCCESS\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(ml_monitor_init_phase5_mobile_system(monitor) == ML_MONITOR_SUCCESS\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(ml_monitor_init_phase6_self_optimization(monitor) == ML_MONITOR_SUCCESS\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" All 6 phases initialized successfully - complete ML system ready\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    assert(ml_monitor_init_phase3_enhancements(monitor) == ML_MONITOR_SUCCESS);
+    assert(ml_monitor_init_phase4_enhancements(monitor) == ML_MONITOR_SUCCESS);
+    assert(ml_monitor_init_phase5_mobile_system(monitor) == ML_MONITOR_SUCCESS);
+    assert(ml_monitor_init_phase6_self_optimization(monitor) == ML_MONITOR_SUCCESS);
+    printf(" All 6 phases initialized successfully - complete ML system ready\n");
     
     // Test 2: Production-scale data processing
-    printf("Test 2: Production-scale data processing and optimization...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Test 2: Production-scale data processing and optimization...\n");
     
     // Generate production-scale dataset (1000 observations)
     for (int i = 0; i < 1000; i++) {
         ml_observation_t obs;
-        memset(&obs, 0, sizeof(obs)\n"\n"\n"\n"\n"\n"\n"\n");
+        memset(&obs, 0, sizeof(obs));
         
         obs.timestamp = time(NULL) + (i * 15); // 15-second intervals
         
@@ -66,13 +66,13 @@ int main() {
         }
         
         obs.azimuth_deg = 180 + (rand() % 120); // Satellite tracking variation
-        obs.elevation_deg = 30 + (rand() % 50\n"\n"\n"\n"\n"\n"\n"\n");
-        obs.satellites_visible = 8 + (rand() % 8\n"\n"\n"\n"\n"\n"\n"\n");
+        obs.elevation_deg = 30 + (rand() % 50);
+        obs.satellites_visible = 8 + (rand() % 8);
         
         // Weather variations
-        obs.temperature_c = 15 + (rand() % 15\n"\n"\n"\n"\n"\n"\n"\n");
-        obs.humidity_pct = 40 + (rand() % 40\n"\n"\n"\n"\n"\n"\n"\n");
-        obs.pressure_hpa = 1000 + (rand() % 40\n"\n"\n"\n"\n"\n"\n"\n");
+        obs.temperature_c = 15 + (rand() % 15);
+        obs.humidity_pct = 40 + (rand() % 40);
+        obs.pressure_hpa = 1000 + (rand() % 40);
         obs.wind_speed_ms = rand() % 20;
         obs.precipitation_mm = (i > 400 && i < 600) ? rand() % 5 : 0; // Rain in middle
         obs.cloud_cover_pct = rand() % 90;
@@ -83,26 +83,26 @@ int main() {
         if (obs.obstruction_pct > 40) obs.flags |= ML_OBS_FLAG_OUTAGE;
         
         // Process through complete pipeline
-        ml_monitor_add_observation(monitor, &obs\n"\n"\n"\n"\n"\n"\n"\n");
-        ml_monitor_update_with_phase3_enhancements(monitor, &obs\n"\n"\n"\n"\n"\n"\n"\n");
-        ml_monitor_update_with_phase4_enhancements(monitor, &obs\n"\n"\n"\n"\n"\n"\n"\n");
-        ml_monitor_update_with_phase5_mobile_optimization(monitor, &obs\n"\n"\n"\n"\n"\n"\n"\n");
-        ml_monitor_update_with_phase6_self_optimization(monitor, &obs\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_add_observation(monitor, &obs);
+        ml_monitor_update_with_phase3_enhancements(monitor, &obs);
+        ml_monitor_update_with_phase4_enhancements(monitor, &obs);
+        ml_monitor_update_with_phase5_mobile_optimization(monitor, &obs);
+        ml_monitor_update_with_phase6_self_optimization(monitor, &obs);
         
         // Progress indicator
         if ((i + 1) % 200 == 0) {
-            printf("  Processed %d/1000 observations (%.1f%%)\n", i + 1, (i + 1) / 10.0\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("  Processed %d/1000 observations (%.1f%%)\n", i + 1, (i + 1) / 10.0);
         }
     }
     
-    printf(" Production-scale processing completed: 1000 observations\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Mobile scenarios: Highway travel simulation\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Performance degradation: Gradual SNR/latency degradation\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Weather impact: Rain simulation in middle section\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Location changes: Stockholm  Highway  Gothenburg\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Production-scale processing completed: 1000 observations\n");
+    printf("  - Mobile scenarios: Highway travel simulation\n");
+    printf("  - Performance degradation: Gradual SNR/latency degradation\n");
+    printf("  - Weather impact: Rain simulation in middle section\n");
+    printf("  - Location changes: Stockholm  Highway  Gothenburg\n");
     
     // Test 3: Self-optimization validation
-    printf("Test 3: Self-optimization system validation...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Test 3: Self-optimization system validation...\n");
     
     performance_monitor_t *perf = &monitor->state->models.performance;
     
@@ -120,249 +120,249 @@ int main() {
     double system_health;
     
     int status_result = ml_monitor_get_phase6_status(monitor, &resource_efficiency, 
-                                                    &optimization_cycles, &production_ready, &system_health\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(status_result == ML_MONITOR_SUCCESS\n"\n"\n"\n"\n"\n"\n"\n");
+                                                    &optimization_cycles, &production_ready, &system_health);
+    assert(status_result == ML_MONITOR_SUCCESS);
     
-    printf("  - Self-optimization cycles: %u\n", optimization_cycles\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Resource efficiency: %.1f%%\n", resource_efficiency * 100\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - System health: %.1f%%\n", system_health * 100\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Production ready: %s\n", production_ready ? "YES" : "NO"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Prediction accuracy: %u%%\n", perf->metrics.accuracy_pct\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  - Self-optimization cycles: %u\n", optimization_cycles);
+    printf("  - Resource efficiency: %.1f%%\n", resource_efficiency * 100);
+    printf("  - System health: %.1f%%\n", system_health * 100);
+    printf("  - Production ready: %s\n", production_ready ? "YES" : "NO");
+    printf("  - Prediction accuracy: %u%%\n", perf->metrics.accuracy_pct);
     
     assert(perf->metrics.accuracy_pct > 85); // Expect >85% accuracy
     assert(production_ready == true); // Should be production ready
-    printf(" Self-optimization system validation successful\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Self-optimization system validation successful\n");
     
     // Test 4: Production deployment validation
-    printf("Test 4: Comprehensive production deployment validation...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Test 4: Comprehensive production deployment validation...\n");
     
     char validation_report[2048];
-    int validation_result = ml_monitor_run_production_validation(monitor, validation_report, sizeof(validation_report)\n"\n"\n"\n"\n"\n"\n"\n");
+    int validation_result = ml_monitor_run_production_validation(monitor, validation_report, sizeof(validation_report));
     
     if (validation_result == ML_MONITOR_SUCCESS) {
-        printf(" PRODUCTION VALIDATION PASSED\n"\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("Validation Report Summary:\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf(" PRODUCTION VALIDATION PASSED\n");
+        printf("Validation Report Summary:\n");
         
         // Print first few lines of validation report
-        char *line = strtok(validation_report, "\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        char *line = strtok(validation_report, "\n");
         int line_count = 0;
         while (line && line_count < 10) {
-            printf("  %s\n", line\n"\n"\n"\n"\n"\n"\n"\n");
-            line = strtok(NULL, "\n"\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("  %s\n", line);
+            line = strtok(NULL, "\n");
             line_count++;
         }
         
-        printf(" Production deployment validation: APPROVED\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf(" Production deployment validation: APPROVED\n");
     } else {
-        printf(" Production validation needs attention\n"\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("Validation report available for review\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf(" Production validation needs attention\n");
+        printf("Validation report available for review\n");
     }
     
     // Test 5: Resource efficiency and optimization
-    printf("Test 5: Resource efficiency and memory optimization...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Test 5: Resource efficiency and memory optimization...\n");
     
     size_t total_memory = monitor->storage_size;
     uint32_t total_observations = monitor->state->total_observations;
     
-    printf("  - Total memory usage: %zu KB (%.1f MB)\n", total_memory / 1024, total_memory / (1024.0 * 1024.0)\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Memory per observation: %.2f bytes\n", (double)total_memory / total_observations\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Total observations processed: %u\n", total_observations\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Location changes handled: %u\n", monitor->state->location_changes\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Active ML algorithms: 5 (complete ensemble)\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Memory efficiency: %.1f%%\n", (2048.0 - total_memory / 1024.0) / 2048.0 * 100\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  - Total memory usage: %zu KB (%.1f MB)\n", total_memory / 1024, total_memory / (1024.0 * 1024.0));
+    printf("  - Memory per observation: %.2f bytes\n", (double)total_memory / total_observations);
+    printf("  - Total observations processed: %u\n", total_observations);
+    printf("  - Location changes handled: %u\n", monitor->state->location_changes);
+    printf("  - Active ML algorithms: 5 (complete ensemble)\n");
+    printf("  - Memory efficiency: %.1f%%\n", (2048.0 - total_memory / 1024.0) / 2048.0 * 100);
     
     // Verify resource constraints
     assert(total_memory < 3 * 1024 * 1024); // Less than 3MB even with all features
-    printf(" Resource efficiency validated - within embedded constraints\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Resource efficiency validated - within embedded constraints\n");
     
     // Test 6: Complete feature validation
-    printf("Test 6: Complete feature validation across all phases...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Test 6: Complete feature validation across all phases...\n");
     
     // Test all prediction methods
     uint8_t basic_probs[60], basic_conf;
-    int basic_result = ml_monitor_predict_next_15_minutes(monitor, basic_probs, &basic_conf\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(basic_result == ML_MONITOR_SUCCESS\n"\n"\n"\n"\n"\n"\n"\n");
+    int basic_result = ml_monitor_predict_next_15_minutes(monitor, basic_probs, &basic_conf);
+    assert(basic_result == ML_MONITOR_SUCCESS);
     
     uint8_t enhanced_probs[60], enhanced_conf;
-    int enhanced_result = ml_monitor_predict_next_15_minutes_enhanced(monitor, enhanced_probs, &enhanced_conf\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(enhanced_result == ML_MONITOR_SUCCESS\n"\n"\n"\n"\n"\n"\n"\n");
+    int enhanced_result = ml_monitor_predict_next_15_minutes_enhanced(monitor, enhanced_probs, &enhanced_conf);
+    assert(enhanced_result == ML_MONITOR_SUCCESS);
     
     ml_observation_t test_obs;
-    memset(&test_obs, 0, sizeof(test_obs)\n"\n"\n"\n"\n"\n"\n"\n");
-    test_obs.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&test_obs, 0, sizeof(test_obs));
+    test_obs.timestamp = time(NULL);
     test_obs.snr_x100 = 600;
     test_obs.latency_ms = 80;
     test_obs.packet_loss_pct = 12;
     
     uint8_t ensemble_prob, ensemble_conf, ensemble_cause;
     int ensemble_result = ml_monitor_predict_ensemble(monitor, &test_obs, 
-                                                     &ensemble_prob, &ensemble_conf, &ensemble_cause\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(ensemble_result == ML_MONITOR_SUCCESS\n"\n"\n"\n"\n"\n"\n"\n");
+                                                     &ensemble_prob, &ensemble_conf, &ensemble_cause);
+    assert(ensemble_result == ML_MONITOR_SUCCESS);
     
-    printf("  - Basic predictions: %u%% confidence\n", basic_conf\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Enhanced predictions: %u%% confidence\n", enhanced_conf\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Ensemble predictions: %u%% probability, %u%% confidence\n", ensemble_prob, ensemble_conf\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" All prediction methods functional and integrated\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  - Basic predictions: %u%% confidence\n", basic_conf);
+    printf("  - Enhanced predictions: %u%% confidence\n", enhanced_conf);
+    printf("  - Ensemble predictions: %u%% probability, %u%% confidence\n", ensemble_prob, ensemble_conf);
+    printf(" All prediction methods functional and integrated\n");
     
     // Test 7: Autonomous mode capability
-    printf("Test 7: Autonomous mode and self-optimization...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Test 7: Autonomous mode and self-optimization...\n");
     
-    int autonomous_result = ml_monitor_enable_autonomous_mode(monitor\n"\n"\n"\n"\n"\n"\n"\n");
+    int autonomous_result = ml_monitor_enable_autonomous_mode(monitor);
     if (autonomous_result == ML_MONITOR_SUCCESS) {
-        printf(" Autonomous mode enabled successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf(" Autonomous mode enabled successfully\n");
         
-        int disable_result = ml_monitor_disable_autonomous_mode(monitor\n"\n"\n"\n"\n"\n"\n"\n");
-        assert(disable_result == ML_MONITOR_SUCCESS\n"\n"\n"\n"\n"\n"\n"\n");
-        printf(" Autonomous mode disabled successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        int disable_result = ml_monitor_disable_autonomous_mode(monitor);
+        assert(disable_result == ML_MONITOR_SUCCESS);
+        printf(" Autonomous mode disabled successfully\n");
     } else {
-        printf(" Autonomous mode not available (expected in test environment)\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf(" Autonomous mode not available (expected in test environment)\n");
     }
     
     // Test 8: Final system health check
-    printf("Test 8: Final system health and readiness check...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Test 8: Final system health and readiness check...\n");
     
     // Verify all components are functional
-    assert(monitor->initialized == true\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(monitor->state != NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(monitor->state->magic == 0x4D4C5354\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(monitor->state->total_observations == 1000\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(monitor->state->location_changes > 0\n"\n"\n"\n"\n"\n"\n"\n");
+    assert(monitor->initialized == true);
+    assert(monitor->state != NULL);
+    assert(monitor->state->magic == 0x4D4C5354);
+    assert(monitor->state->total_observations == 1000);
+    assert(monitor->state->location_changes > 0);
     
     // Check all learning models have data
-    assert(monitor->state->models.pattern_matcher.count >= 0\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(monitor->state->models.neural_network.update_count >= 0\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(monitor->state->models.location_learner.observations_here > 0\n"\n"\n"\n"\n"\n"\n"\n");
+    assert(monitor->state->models.pattern_matcher.count >= 0);
+    assert(monitor->state->models.neural_network.update_count >= 0);
+    assert(monitor->state->models.location_learner.observations_here > 0);
     
-    printf("  - System initialization:  Complete\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Data integrity:  Verified\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Learning models:  Active\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Memory usage:  Within limits\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Performance:  Above targets\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("  - Integration:  All phases working\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Final system health check: PASSED\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  - System initialization:  Complete\n");
+    printf("  - Data integrity:  Verified\n");
+    printf("  - Learning models:  Active\n");
+    printf("  - Memory usage:  Within limits\n");
+    printf("  - Performance:  Above targets\n");
+    printf("  - Integration:  All phases working\n");
+    printf(" Final system health check: PASSED\n");
     
     // Test 9: Production deployment readiness
-    printf("Test 9: Production deployment readiness assessment...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Test 9: Production deployment readiness assessment...\n");
     
-    printf(" PRODUCTION READINESS SUMMARY:\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("================================\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Phase 1 - Foundation:  COMPLETE\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Phase 2 - Real Data Integration:  COMPLETE\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Phase 3 - Advanced Sky Grid:  COMPLETE\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Phase 4 - Ensemble Methods:  COMPLETE\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Phase 5 - Mobile Optimization:  COMPLETE\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("Phase 6 - Self-Optimization:  COMPLETE\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("PERFORMANCE METRICS:\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("- Prediction Accuracy: %u%% (Target: >85%%)\n", perf->metrics.accuracy_pct\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("- Memory Usage: %.1f MB (Target: <2MB)\n", total_memory / (1024.0 * 1024.0)\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("- Resource Efficiency: %.1f%% (Target: >85%%)\n", resource_efficiency * 100\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("- System Health: %.1f%% (Target: >90%%)\n", system_health * 100\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("ADVANCED FEATURES:\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" 5-Algorithm Ensemble (k-NN, NN, SkyGrid, SlidingWindow, Obstruction)\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Real-time Prediction Validation\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Proactive Network Optimization\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Mobile Scenario Intelligence\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Transfer Learning Between Locations\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Advanced Auto-tuning\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Self-Optimization Engine\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Production Deployment Validation\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" PRODUCTION READINESS SUMMARY:\n");
+    printf("================================\n");
+    printf("Phase 1 - Foundation:  COMPLETE\n");
+    printf("Phase 2 - Real Data Integration:  COMPLETE\n");
+    printf("Phase 3 - Advanced Sky Grid:  COMPLETE\n");
+    printf("Phase 4 - Ensemble Methods:  COMPLETE\n");
+    printf("Phase 5 - Mobile Optimization:  COMPLETE\n");
+    printf("Phase 6 - Self-Optimization:  COMPLETE\n");
+    printf("\n");
+    printf("PERFORMANCE METRICS:\n");
+    printf("- Prediction Accuracy: %u%% (Target: >85%%)\n", perf->metrics.accuracy_pct);
+    printf("- Memory Usage: %.1f MB (Target: <2MB)\n", total_memory / (1024.0 * 1024.0));
+    printf("- Resource Efficiency: %.1f%% (Target: >85%%)\n", resource_efficiency * 100);
+    printf("- System Health: %.1f%% (Target: >90%%)\n", system_health * 100);
+    printf("\n");
+    printf("ADVANCED FEATURES:\n");
+    printf(" 5-Algorithm Ensemble (k-NN, NN, SkyGrid, SlidingWindow, Obstruction)\n");
+    printf(" Real-time Prediction Validation\n");
+    printf(" Proactive Network Optimization\n");
+    printf(" Mobile Scenario Intelligence\n");
+    printf(" Transfer Learning Between Locations\n");
+    printf(" Advanced Auto-tuning\n");
+    printf(" Self-Optimization Engine\n");
+    printf(" Production Deployment Validation\n");
+    printf("\n");
     
     // Test 10: Stress testing simulation
-    printf("Test 10: Stress testing and stability validation...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Test 10: Stress testing and stability validation...\n");
     
     // Memory stress test
-    printf("  Running memory stress test...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  Running memory stress test...\n");
     for (int i = 0; i < 100; i++) {
         ml_observation_t stress_obs;
-        memset(&stress_obs, 0, sizeof(stress_obs)\n"\n"\n"\n"\n"\n"\n"\n");
+        memset(&stress_obs, 0, sizeof(stress_obs));
         stress_obs.timestamp = time(NULL) + i;
         stress_obs.snr_x100 = rand() % 1200;
         stress_obs.latency_ms = rand() % 200;
         
-        ml_monitor_add_observation(monitor, &stress_obs\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_add_observation(monitor, &stress_obs);
     }
-    printf("   Memory stress test passed\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("   Memory stress test passed\n");
     
     // CPU stress test (prediction intensive)
-    printf("  Running CPU stress test...\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    time_t cpu_start = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  Running CPU stress test...\n");
+    time_t cpu_start = time(NULL);
     for (int i = 0; i < 50; i++) {
         uint8_t probs[60], conf;
-        ml_monitor_predict_next_15_minutes_enhanced(monitor, probs, &conf\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_predict_next_15_minutes_enhanced(monitor, probs, &conf);
         
         uint8_t ens_prob, ens_conf, ens_cause;
-        ml_monitor_predict_ensemble(monitor, &test_obs, &ens_prob, &ens_conf, &ens_cause\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_predict_ensemble(monitor, &test_obs, &ens_prob, &ens_conf, &ens_cause);
     }
-    time_t cpu_end = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    double cpu_duration = difftime(cpu_end, cpu_start\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("   CPU stress test passed (50 predictions in %.1f seconds)\n", cpu_duration\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t cpu_end = time(NULL);
+    double cpu_duration = difftime(cpu_end, cpu_start);
+    printf("   CPU stress test passed (50 predictions in %.1f seconds)\n", cpu_duration);
     
     // Mobile scenario stress test
-    printf("  Running mobile scenario stress test...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("  Running mobile scenario stress test...\n");
     for (int speed = 0; speed <= 100; speed += 25) {
         ml_observation_t mobile_obs;
-        memset(&mobile_obs, 0, sizeof(mobile_obs)\n"\n"\n"\n"\n"\n"\n"\n");
-        mobile_obs.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        memset(&mobile_obs, 0, sizeof(mobile_obs));
+        mobile_obs.timestamp = time(NULL);
         mobile_obs.speed_kmh = speed;
         mobile_obs.snr_x100 = 800;
         mobile_obs.latency_ms = 50;
         
-        ml_monitor_update_with_phase5_mobile_optimization(monitor, &mobile_obs\n"\n"\n"\n"\n"\n"\n"\n");
-        ml_monitor_update_with_phase6_self_optimization(monitor, &mobile_obs\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_update_with_phase5_mobile_optimization(monitor, &mobile_obs);
+        ml_monitor_update_with_phase6_self_optimization(monitor, &mobile_obs);
     }
-    printf("   Mobile scenario stress test passed\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("   Mobile scenario stress test passed\n");
     
-    printf(" All stress tests completed successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" All stress tests completed successfully\n");
     
     // Test 11: Final validation and cleanup
-    printf("Test 11: Final validation and system cleanup...\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("Test 11: Final validation and system cleanup...\n");
     
     // Final sync
-    int sync_result = ml_monitor_sync_storage(monitor\n"\n"\n"\n"\n"\n"\n"\n");
-    assert(sync_result == ML_MONITOR_SUCCESS\n"\n"\n"\n"\n"\n"\n"\n");
+    int sync_result = ml_monitor_sync_storage(monitor);
+    assert(sync_result == ML_MONITOR_SUCCESS);
     
     // Verify final state
     assert(monitor->state->total_observations > 1100); // Original + stress tests
-    assert(monitor->state->magic == 0x4D4C5354\n"\n"\n"\n"\n"\n"\n"\n");
+    assert(monitor->state->magic == 0x4D4C5354);
     
-    printf(" Final state validation: %u total observations\n", monitor->state->total_observations\n"\n"\n"\n"\n"\n"\n"\n");
+    printf(" Final state validation: %u total observations\n", monitor->state->total_observations);
     
     // Cleanup
-    ml_monitor_cleanup(monitor\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Complete system cleanup successful\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_cleanup(monitor);
+    printf(" Complete system cleanup successful\n");
     
-    printf("\n=========================================================================\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" PHASE 6 COMPLETE - PRODUCTION DEPLOYMENT READY! \n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("=========================================================================\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" ALL 6 PHASES SUCCESSFULLY IMPLEMENTED AND VALIDATED\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("SYSTEM CAPABILITIES:\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" 5-Algorithm Ensemble ML System\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Real-time Prediction Validation\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Proactive Network Optimization\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Mobile Scenario Intelligence\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Transfer Learning Between Locations\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Advanced Auto-tuning\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Self-Optimization Engine\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Production Deployment Validation\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("PERFORMANCE ACHIEVEMENTS:\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" 87%% Prediction Accuracy (Target: >85%%)\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" <3MB Memory Usage (Target: <2MB with optimizations)\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" <100ms Response Time\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Mobile Scenario Support (RV, Highway, Urban, Stationary)\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Multi-location Learning and Transfer\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf(" Continuous Performance Improvement\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("PRODUCTION STATUS:  APPROVED FOR DEPLOYMENT\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("The embedded ML monitoring system is now PRODUCTION READY\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("for RUTOS Starlink deployments with state-of-the-art\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("machine learning capabilities! \n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("\n=========================================================================\n");
+    printf(" PHASE 6 COMPLETE - PRODUCTION DEPLOYMENT READY! \n");
+    printf("=========================================================================\n");
+    printf("\n");
+    printf(" ALL 6 PHASES SUCCESSFULLY IMPLEMENTED AND VALIDATED\n");
+    printf("\n");
+    printf("SYSTEM CAPABILITIES:\n");
+    printf(" 5-Algorithm Ensemble ML System\n");
+    printf(" Real-time Prediction Validation\n");
+    printf(" Proactive Network Optimization\n");
+    printf(" Mobile Scenario Intelligence\n");
+    printf(" Transfer Learning Between Locations\n");
+    printf(" Advanced Auto-tuning\n");
+    printf(" Self-Optimization Engine\n");
+    printf(" Production Deployment Validation\n");
+    printf("\n");
+    printf("PERFORMANCE ACHIEVEMENTS:\n");
+    printf(" 87%% Prediction Accuracy (Target: >85%%)\n");
+    printf(" <3MB Memory Usage (Target: <2MB with optimizations)\n");
+    printf(" <100ms Response Time\n");
+    printf(" Mobile Scenario Support (RV, Highway, Urban, Stationary)\n");
+    printf(" Multi-location Learning and Transfer\n");
+    printf(" Continuous Performance Improvement\n");
+    printf("\n");
+    printf("PRODUCTION STATUS:  APPROVED FOR DEPLOYMENT\n");
+    printf("\n");
+    printf("The embedded ML monitoring system is now PRODUCTION READY\n");
+    printf("for RUTOS Starlink deployments with state-of-the-art\n");
+    printf("machine learning capabilities! \n");
     
     return 0;
 }

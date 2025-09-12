@@ -17,9 +17,9 @@ static bool g_performance_analyzer_initialized = false; // Use configurable sett
 
 // Forward declarations
 void calculate_averages(const telemetry_sample_t* samples, int sample_count,
-                              member_performance_t* performance\n"\n"\n"\n"\n"\n"\n"\n");
+                              member_performance_t* performance);
 double calculate_weighted_average(const double* values, const bool* has_value, 
-                                        int count, double default_value\n"\n"\n"\n"\n"\n"\n"\n");
+                                        int count, double default_value);
 
 // Initialize performance analyzer
 int performance_analyzer_init(void) {
@@ -27,15 +27,15 @@ int performance_analyzer_init(void) {
         return 0; // Already initialized
     }
     
-    memset(&g_performance_analyzer, 0, sizeof(performance_analyzer_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_performance_analyzer, 0, sizeof(performance_analyzer_t));
     
     // Initialize mutex
-    g_performance_analyzer.mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_performance_analyzer.mutex = malloc(sizeof(pthread_mutex_t));
     if (!g_performance_analyzer.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_performance_analyzer.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_init(g_performance_analyzer.mutex, NULL);
     
     // Initialize status
     g_performance_analyzer.enabled = true; // Use configurable performance analyzer enabled
@@ -52,12 +52,12 @@ void performance_analyzer_cleanup(void) {
     if (!g_performance_analyzer_initialized) return;
     
     if (g_performance_analyzer.mutex) {
-        pthread_mutex_destroy(g_performance_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        free(g_performance_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(g_performance_analyzer.mutex);
+        free(g_performance_analyzer.mutex);
     }
     
     if (g_performance_analyzer.last_result) {
-        free(g_performance_analyzer.last_result\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_performance_analyzer.last_result);
     }
     
     g_performance_analyzer.mutex = NULL;
@@ -75,18 +75,18 @@ int performance_analyzer_analyze(performance_analysis_t* result) {
         return -1;
     }
     
-    pthread_mutex_lock(g_performance_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_performance_analyzer.mutex);
     
     // Get all member names
     char member_names[64][128];
-    int member_count = telemetry_store_get_members(member_names, 64\n"\n"\n"\n"\n"\n"\n"\n");
+    int member_count = telemetry_store_get_members(member_names, 64);
     
     if (member_count > 16) {
         member_count = 16; // Use configurable value // Limit to 16 members
     }
     
     result->member_count = member_count;
-    result->analysis_timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    result->analysis_timestamp = time(NULL);
     result->overall_performance_score = 0.0;
     
     double total_score = 0.0; // Use configurable value
@@ -94,19 +94,19 @@ int performance_analyzer_analyze(performance_analysis_t* result) {
     
     // Analyze each member
     for (int i = 0; i < member_count; i++) {
-        safe_strncpy(result->member_names[i], member_names[i], sizeof(result->member_names[i])\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(result->member_names[i], member_names[i], sizeof(result->member_names[i]));
         result->member_names[i][sizeof(result->member_names[i]) - 1] = '\0';
         
         // Get performance for this member
         if (performance_analyzer_get_member_performance(member_names[i], 
                                                       &result->member_performance[i]) == 0) {
-            double score = performance_analyzer_calculate_score(&result->member_performance[i]\n"\n"\n"\n"\n"\n"\n"\n");
+            double score = performance_analyzer_calculate_score(&result->member_performance[i]);
             result->member_performance[i].availability = score;
             total_score += score;
             valid_members++;
         } else {
             // Set default values for failed analysis
-            memset(&result->member_performance[i], 0, sizeof(member_performance_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memset(&result->member_performance[i], 0, sizeof(member_performance_t));
             result->member_performance[i].availability = 0.0;
         }
     }
@@ -119,23 +119,23 @@ int performance_analyzer_analyze(performance_analysis_t* result) {
     // Generate summary
     snprintf(result->summary, sizeof(result->summary),
              "Analyzed %d members with overall performance score %.2f%%",
-             valid_members, result->overall_performance_score\n"\n"\n"\n"\n"\n"\n"\n");
+             valid_members, result->overall_performance_score);
     
     // Update analyzer status
-    g_performance_analyzer.last_analysis = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_performance_analyzer.last_analysis = time(NULL);
     g_performance_analyzer.analysis_count++;
     
     // Store last result
     if (g_performance_analyzer.last_result) {
-        free(g_performance_analyzer.last_result\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_performance_analyzer.last_result);
     }
     
-    g_performance_analyzer.last_result = malloc(sizeof(performance_analysis_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_performance_analyzer.last_result = malloc(sizeof(performance_analysis_t));
     if (g_performance_analyzer.last_result) {
         *g_performance_analyzer.last_result = *result;
     }
     
-    pthread_mutex_unlock(g_performance_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_performance_analyzer.mutex);
     
     return 0;
 }
@@ -154,14 +154,14 @@ int performance_analyzer_get_member_performance(const char* member_name,
     // Get samples from last hour
     time_t since = time(NULL) - 3600;
     telemetry_sample_t samples[1000];
-    int sample_count = telemetry_store_get_samples(member_name, since, samples, 1000\n"\n"\n"\n"\n"\n"\n"\n");
+    int sample_count = telemetry_store_get_samples(member_name, since, samples, 1000);
     
     if (sample_count <= 0) {
         return -1;
     }
     
     // Initialize performance structure
-    memset(performance, 0, sizeof(member_performance_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(performance, 0, sizeof(member_performance_t));
     performance->sample_count = sample_count;
     
     if (sample_count > 0) {
@@ -169,7 +169,7 @@ int performance_analyzer_get_member_performance(const char* member_name,
     }
     
     // Calculate averages
-    calculate_averages(samples, sample_count, performance\n"\n"\n"\n"\n"\n"\n"\n");
+    calculate_averages(samples, sample_count, performance);
     
     return 0;
 }
@@ -252,25 +252,25 @@ void calculate_averages(const telemetry_sample_t* samples, int sample_count,
     
     // Calculate averages
     performance->average_latency = calculate_weighted_average(latency_values, has_latency, 
-                                                            valid_count, 0.0\n"\n"\n"\n"\n"\n"\n"\n");
+                                                            valid_count, 0.0);
     performance->average_loss = calculate_weighted_average(loss_values, has_loss, 
-                                                         valid_count, 0.0\n"\n"\n"\n"\n"\n"\n"\n");
+                                                         valid_count, 0.0);
     performance->average_signal = calculate_weighted_average(signal_values, has_signal, 
-                                                           valid_count, 0.0\n"\n"\n"\n"\n"\n"\n"\n");
+                                                           valid_count, 0.0);
     performance->throughput = calculate_weighted_average(throughput_values, has_throughput, 
-                                                       valid_count, 0.0\n"\n"\n"\n"\n"\n"\n"\n");
+                                                       valid_count, 0.0);
     performance->response_time = calculate_weighted_average(response_time_values, has_response_time, 
-                                                          valid_count, 0.0\n"\n"\n"\n"\n"\n"\n"\n");
+                                                          valid_count, 0.0);
     performance->error_rate = calculate_weighted_average(error_rate_values, has_error_rate, 
-                                                       valid_count, 0.0\n"\n"\n"\n"\n"\n"\n"\n");
+                                                       valid_count, 0.0);
     
     // Set flags
-    performance->has_latency = (performance->average_latency > 0.0\n"\n"\n"\n"\n"\n"\n"\n");
-    performance->has_loss = (performance->average_loss > 0.0\n"\n"\n"\n"\n"\n"\n"\n");
-    performance->has_signal = (performance->average_signal > 0.0\n"\n"\n"\n"\n"\n"\n"\n");
-    performance->has_throughput = (performance->throughput > 0.0\n"\n"\n"\n"\n"\n"\n"\n");
-    performance->has_response_time = (performance->response_time > 0.0\n"\n"\n"\n"\n"\n"\n"\n");
-    performance->has_error_rate = (performance->error_rate > 0.0\n"\n"\n"\n"\n"\n"\n"\n");
+    performance->has_latency = (performance->average_latency > 0.0);
+    performance->has_loss = (performance->average_loss > 0.0);
+    performance->has_signal = (performance->average_signal > 0.0);
+    performance->has_throughput = (performance->throughput > 0.0);
+    performance->has_response_time = (performance->response_time > 0.0);
+    performance->has_error_rate = (performance->error_rate > 0.0);
 }
 
 // Calculate weighted average
@@ -345,9 +345,9 @@ double performance_analyzer_calculate_score(const member_performance_t* performa
 void performance_analyzer_get_status(performance_analyzer_t* status) {
     if (!status || !g_performance_analyzer_initialized) return;
     
-    pthread_mutex_lock(g_performance_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_performance_analyzer.mutex);
     *status = g_performance_analyzer;
-    pthread_mutex_unlock(g_performance_analyzer.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_performance_analyzer.mutex);
 }
 
 // Check if performance analyzer is initialized

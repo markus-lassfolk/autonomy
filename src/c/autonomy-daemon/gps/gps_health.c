@@ -29,14 +29,14 @@ static const double POOR_HEALTH = 0.4; // Use configurable value               /
 static const double CRITICAL_HEALTH = 0.2; // Use configurable value           // Critical health threshold
 
 // Forward declarations
-static void update_source_health_scores(gps_source_health_t *source, const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-static double calculate_accuracy_score(double accuracy\n"\n"\n"\n"\n"\n"\n"\n");
-static double calculate_freshness_score(time_t timestamp\n"\n"\n"\n"\n"\n"\n"\n");
-static double calculate_reliability_score(const gps_source_health_t *source\n"\n"\n"\n"\n"\n"\n"\n");
-static double calculate_consistency_score(const gps_source_health_t *source, const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-static void update_source_status(gps_source_health_t *source\n"\n"\n"\n"\n"\n"\n"\n");
-static void add_health_history(time_t timestamp, double overall_score, int source_count, int healthy_sources\n"\n"\n"\n"\n"\n"\n"\n");
-static int find_source_by_name(const char *source_name\n"\n"\n"\n"\n"\n"\n"\n");
+static void update_source_health_scores(gps_source_health_t *source, const gps_data_t *gps_data);
+static double calculate_accuracy_score(double accuracy);
+static double calculate_freshness_score(time_t timestamp);
+static double calculate_reliability_score(const gps_source_health_t *source);
+static double calculate_consistency_score(const gps_source_health_t *source, const gps_data_t *gps_data);
+static void update_source_status(gps_source_health_t *source);
+static void add_health_history(time_t timestamp, double overall_score, int source_count, int healthy_sources);
+static int find_source_by_name(const char *source_name);
 
 // Global GPS health monitor state
 static gps_health_t g_health_monitor = {0};
@@ -46,14 +46,14 @@ static pthread_mutex_t g_health_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Initialize GPS health monitor
 int gps_health_init(void) {
     if (g_health_initialized) {
-        printf("WARN: "GPS health monitor already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("GPS health monitor already initialized");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_mutex);
     
     // Initialize health monitor state
-    memset(&g_health_monitor, 0, sizeof(gps_health_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_health_monitor, 0, sizeof(gps_health_t));
     g_health_monitor.enabled = true; // Use configurable gps health monitoring enabled
     g_health_monitor.health_check_interval = g_config.gps_update_interval;
     g_health_monitor.health_history_size = HEALTH_HISTORY_SIZE;
@@ -79,9 +79,9 @@ int gps_health_init(void) {
     }
     
     g_health_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_mutex);
     
-    printf("INFO: "GPS health monitor initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS health monitor initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -91,13 +91,13 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_mutex);
     
     // Check if source already exists
-    int existing_index = find_source_by_name(source_name\n"\n"\n"\n"\n"\n"\n"\n");
+    int existing_index = find_source_by_name(source_name);
     if (existing_index >= 0) {
-        pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("WARN: "GPS source already registered", "source", source_name\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_health_mutex);
+        LOGX_WARN_MSG("GPS source already registered", "source", source_name);
         return AUTONOMY_ERROR_ALREADY_EXISTS;
     }
     
@@ -111,17 +111,17 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
     }
     
     if (source_index < 0) {
-        pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("ERROR: "No free slots for GPS source registration"\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_health_mutex);
+        LOGX_ERROR_MSG("No free slots for GPS source registration");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
     // Initialize source
     gps_source_health_t *source = &g_health_monitor.sources[source_index];
     source->active = true;
-    safe_strncpy(source->name, source_name, sizeof(source->name)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(source->name, source_name, sizeof(source->name));
     source->source_type = source_type;
-    source->registration_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    source->registration_time = time(NULL);
     source->last_update = 0;
     source->last_health_check = 0;
     source->total_updates = 0;
@@ -136,9 +136,9 @@ int gps_health_register_source(const char *source_name, gps_source_type_t source
     
     g_health_monitor.source_count++;
     
-    pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_mutex);
     
-    printf("INFO: "Registered GPS source", "source", source_name, "type", source_type\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Registered GPS source", "source", source_name, "type", source_type);
     return AUTONOMY_SUCCESS;
 }
 
@@ -148,13 +148,13 @@ int gps_health_update_source(const char *source_name, const gps_data_t *gps_data
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_mutex);
     
     // Find source
-    int source_index = find_source_by_name(source_name\n"\n"\n"\n"\n"\n"\n"\n");
+    int source_index = find_source_by_name(source_name);
     if (source_index < 0) {
-        pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("WARN: "GPS source not registered", "source", source_name\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_health_mutex);
+        LOGX_WARN_MSG("GPS source not registered", "source", source_name);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -168,15 +168,15 @@ int gps_health_update_source(const char *source_name, const gps_data_t *gps_data
         source->failed_updates++;
     }
     
-    source->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    source->last_update = time(NULL);
     
     // Update health scores
-    update_source_health_scores(source, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+    update_source_health_scores(source, gps_data);
     
     // Update source status
-    update_source_status(source\n"\n"\n"\n"\n"\n"\n"\n");
+    update_source_status(source);
     
-    pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -184,16 +184,16 @@ int gps_health_update_source(const char *source_name, const gps_data_t *gps_data
 // Update source health scores
 static void update_source_health_scores(gps_source_health_t *source, const gps_data_t *gps_data) {
     // Calculate accuracy score
-    source->accuracy_score = calculate_accuracy_score(gps_data->accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+    source->accuracy_score = calculate_accuracy_score(gps_data->accuracy);
     
     // Calculate freshness score
-    source->freshness_score = calculate_freshness_score(gps_data->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+    source->freshness_score = calculate_freshness_score(gps_data->timestamp);
     
     // Calculate reliability score
-    source->reliability_score = calculate_reliability_score(source\n"\n"\n"\n"\n"\n"\n"\n");
+    source->reliability_score = calculate_reliability_score(source);
     
     // Calculate consistency score
-    source->consistency_score = calculate_consistency_score(source, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+    source->consistency_score = calculate_consistency_score(source, gps_data);
     
     // Calculate overall health score
     source->health_score = 
@@ -203,8 +203,8 @@ static void update_source_health_scores(gps_source_health_t *source, const gps_d
         source->consistency_score * g_health_monitor.consistency_weight;
     
     // Ensure health score is within bounds
-    source->health_score = fmax(source->health_score, g_health_monitor.min_health_score\n"\n"\n"\n"\n"\n"\n"\n");
-    source->health_score = fmin(source->health_score, g_health_monitor.max_health_score\n"\n"\n"\n"\n"\n"\n"\n");
+    source->health_score = fmax(source->health_score, g_health_monitor.min_health_score);
+    source->health_score = fmin(source->health_score, g_health_monitor.max_health_score);
 }
 
 // Calculate accuracy score
@@ -232,7 +232,7 @@ static double calculate_freshness_score(time_t timestamp) {
         return 0.0;
     }
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     int age = now - timestamp;
     
     if (age <= 30) {
@@ -257,7 +257,7 @@ static double calculate_reliability_score(const gps_source_health_t *source) {
     double success_rate = (double)source->successful_updates / source->total_updates;
     
     // Consider both success rate and update frequency
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     int time_since_update = now - source->last_update;
     
     if (time_since_update > g_health_monitor.source_timeout) {
@@ -306,13 +306,13 @@ int gps_health_perform_check(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_mutex);
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     // Check if enough time has passed since last health check
     if ((now - g_health_monitor.last_health_check) < g_health_monitor.health_check_interval) {
-        pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_health_mutex);
         return AUTONOMY_SUCCESS;
     }
     
@@ -351,17 +351,17 @@ int gps_health_perform_check(void) {
     
     // Add to health history
     add_health_history(now, g_health_monitor.overall_health_score, 
-                      g_health_monitor.source_count, healthy_sources\n"\n"\n"\n"\n"\n"\n"\n");
+                      g_health_monitor.source_count, healthy_sources);
     
     g_health_monitor.total_health_checks++;
     g_health_monitor.last_health_check = now;
     
-    pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_mutex);
     
-    printf("DEBUG: "GPS health check completed", 
+    LOGX_DEBUG_MSG("GPS health check completed", 
                    "overall_score", g_health_monitor.overall_health_score,
                    "healthy_sources", healthy_sources,
-                   "total_sources", g_health_monitor.source_count\n"\n"\n"\n"\n"\n"\n"\n");
+                   "total_sources", g_health_monitor.source_count);
     
     return AUTONOMY_SUCCESS;
 }
@@ -371,7 +371,7 @@ static void add_health_history(time_t timestamp, double overall_score, int sourc
     // Shift history array
     for (int i = g_health_monitor.health_history_size - 1; i > 0; i--) {
         memcpy(&g_health_monitor.health_history[i], &g_health_monitor.health_history[i-1], 
-               sizeof(gps_health_record_t)\n"\n"\n"\n"\n"\n"\n"\n");
+               sizeof(gps_health_record_t));
     }
     
     // Add new record
@@ -398,7 +398,7 @@ int gps_health_get_status(gps_health_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_mutex);
     
     status->enabled = g_health_monitor.enabled;
     status->overall_health_score = g_health_monitor.overall_health_score;
@@ -411,13 +411,13 @@ int gps_health_get_status(gps_health_status_t *status) {
     for (int i = 0; i < MAX_GPS_SOURCES && active_sources < MAX_GPS_SOURCES; i++) {
         if (g_health_monitor.sources[i].active) {
             memcpy(&status->sources[active_sources], &g_health_monitor.sources[i], 
-                   sizeof(gps_source_health_t)\n"\n"\n"\n"\n"\n"\n"\n");
+                   sizeof(gps_source_health_t));
             active_sources++;
         }
     }
     status->active_source_count = active_sources;
     
-    pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -428,7 +428,7 @@ int gps_health_get_config(gps_health_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_mutex);
     
     config->enabled = g_health_monitor.enabled;
     config->health_check_interval = g_health_monitor.health_check_interval;
@@ -441,7 +441,7 @@ int gps_health_get_config(gps_health_config_t *config) {
     config->reliability_weight = g_health_monitor.reliability_weight;
     config->consistency_weight = g_health_monitor.consistency_weight;
     
-    pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -452,7 +452,7 @@ int gps_health_set_config(const gps_health_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_mutex);
     
     g_health_monitor.enabled = config->enabled;
     g_health_monitor.health_check_interval = config->health_check_interval;
@@ -465,9 +465,9 @@ int gps_health_set_config(const gps_health_config_t *config) {
     g_health_monitor.reliability_weight = config->reliability_weight;
     g_health_monitor.consistency_weight = config->consistency_weight;
     
-    pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_mutex);
     
-    printf("INFO: "GPS health monitor configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS health monitor configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -477,11 +477,11 @@ int gps_health_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_mutex);
     g_health_monitor.enabled = enabled;
-    pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_mutex);
     
-    printf("INFO: "GPS health monitor state changed", "enabled", enabled ? "true" : "false"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS health monitor state changed", "enabled", enabled ? "true" : "false");
     return AUTONOMY_SUCCESS;
 }
 
@@ -491,17 +491,17 @@ int gps_health_get_source_health(const char *source_name, gps_source_health_t *s
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_mutex);
     
-    int source_index = find_source_by_name(source_name\n"\n"\n"\n"\n"\n"\n"\n");
+    int source_index = find_source_by_name(source_name);
     if (source_index < 0) {
-        pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_health_mutex);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
-    memcpy(source_health, &g_health_monitor.sources[source_index], sizeof(gps_source_health_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(source_health, &g_health_monitor.sources[source_index], sizeof(gps_source_health_t));
     
-    pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -512,11 +512,11 @@ int gps_health_unregister_source(const char *source_name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_mutex);
     
-    int source_index = find_source_by_name(source_name\n"\n"\n"\n"\n"\n"\n"\n");
+    int source_index = find_source_by_name(source_name);
     if (source_index < 0) {
-        pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_health_mutex);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -524,9 +524,9 @@ int gps_health_unregister_source(const char *source_name) {
     g_health_monitor.sources[source_index].active = false;
     g_health_monitor.source_count--;
     
-    pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_mutex);
     
-    printf("INFO: "Unregistered GPS source", "source", source_name\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Unregistered GPS source", "source", source_name);
     return AUTONOMY_SUCCESS;
 }
 
@@ -536,7 +536,7 @@ int gps_health_reset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_mutex);
     
     g_health_monitor.source_count = 0;
     g_health_monitor.total_health_checks = 0;
@@ -556,9 +556,9 @@ int gps_health_reset(void) {
         g_health_monitor.health_history[i].healthy_sources = 0;
     }
     
-    pthread_mutex_unlock(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_mutex);
     
-    printf("INFO: "GPS health monitor reset"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS health monitor reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -568,8 +568,8 @@ void gps_health_cleanup(void) {
         return;
     }
     
-    pthread_mutex_destroy(&g_health_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_health_mutex);
     g_health_initialized = false; // Use configurable setting
     
-    printf("INFO: "GPS health monitor cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS health monitor cleaned up");
 }

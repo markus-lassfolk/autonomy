@@ -24,7 +24,7 @@ static size_t email_read_callback(void* ptr, size_t size, size_t nmemb, email_up
     size_t remaining = ctx->size - ctx->pos;
     size_t copy_size = (total_size < remaining) ? total_size : remaining;
     
-    memcpy(ptr, ctx->data + ctx->pos, copy_size\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(ptr, ctx->data + ctx->pos, copy_size);
     ctx->pos += copy_size;
     
     return copy_size;
@@ -36,10 +36,10 @@ static void parse_recipients(email_client_t* client, const char* recipients_str)
     
     client->recipient_count = 0;
     char temp[1024];
-    safe_strncpy(temp, recipients_str, sizeof(temp)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(temp, recipients_str, sizeof(temp));
     temp[sizeof(temp) - 1] = '\0';
     
-    char* token = strtok(temp, ","\n"\n"\n"\n"\n"\n"\n"\n");
+    char* token = strtok(temp, ",");
     while (token && client->recipient_count < 16) {
         // Trim whitespace
         while (*token == ' ' || *token == '\t') token++;
@@ -52,11 +52,11 @@ static void parse_recipients(email_client_t* client, const char* recipients_str)
         
         if (strlen(token) > 0) {
             strncpy(client->recipients_array[client->recipient_count], token, 
-                   sizeof(client->recipients_array[client->recipient_count]) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+                   sizeof(client->recipients_array[client->recipient_count]) - 1);
             client->recipient_count++;
         }
         
-        token = strtok(NULL, ","\n"\n"\n"\n"\n"\n"\n"\n");
+        token = strtok(NULL, ",");
     }
 }
 
@@ -66,17 +66,17 @@ int email_client_init(email_client_t* client, const email_config_t* config) {
         return -1;
     }
     
-    memset(client, 0, sizeof(email_client_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(client, 0, sizeof(email_client_t));
     
     // Copy configuration
     client->config = *config;
     
     // Parse recipients
-    parse_recipients(client, config->recipients\n"\n"\n"\n"\n"\n"\n"\n");
+    parse_recipients(client, config->recipients);
     
     // Initialize status
     client->status.enabled = config->enabled;
-    safe_strncpy(client->status.smtp_host, config->smtp_host, sizeof(client->status.smtp_host)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(client->status.smtp_host, config->smtp_host, sizeof(client->status.smtp_host));
     client->status.smtp_port = config->smtp_port;
     client->status.total_sent = 0;
     client->status.total_failed = 0;
@@ -93,8 +93,8 @@ void email_client_cleanup(email_client_t* client) {
     if (!client) return;
     
     // Clear sensitive data
-    memset(client->config.password, 0, sizeof(client->config.password)\n"\n"\n"\n"\n"\n"\n"\n");
-    memset(client, 0, sizeof(email_client_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(client->config.password, 0, sizeof(client->config.password));
+    memset(client, 0, sizeof(email_client_t));
 }
 
 // Get priority color for HTML formatting
@@ -139,9 +139,9 @@ void email_client_format_subject(email_client_t* client, const notification_even
     if (!client || !event || !subject) return;
     
     if (strlen(client->config.custom_subject_prefix) > 0) {
-        snprintf(subject, max_size, "%.50s %.100s", client->config.custom_subject_prefix, event->title\n"\n"\n"\n"\n"\n"\n"\n");
+        snprintf(subject, max_size, "%.50s %.100s", client->config.custom_subject_prefix, event->title);
     } else {
-        snprintf(subject, max_size, "[autonomy] %.100s", event->title\n"\n"\n"\n"\n"\n"\n"\n");
+        snprintf(subject, max_size, "[autonomy] %.100s", event->title);
     }
 }
 
@@ -150,14 +150,14 @@ void email_client_format_body(email_client_t* client, const notification_event_t
                              char* body, size_t max_size) {
     if (!client || !event || !body) return;
     
-    const char* priority_color = email_client_get_priority_color(event->priority\n"\n"\n"\n"\n"\n"\n"\n");
-    const char* priority_text = email_client_get_priority_text(event->priority\n"\n"\n"\n"\n"\n"\n"\n");
+    const char* priority_color = email_client_get_priority_color(event->priority);
+    const char* priority_text = email_client_get_priority_text(event->priority);
     
     if (client->config.html_format) {
         // Create HTML email body
         char timestamp_str[64];
-        struct tm* tm_info = localtime(&event->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
-        strftime(timestamp_str, sizeof(timestamp_str), "%Y-%m-%d %H:%M:%S UTC", tm_info\n"\n"\n"\n"\n"\n"\n"\n");
+        struct tm* tm_info = localtime(&event->timestamp);
+        strftime(timestamp_str, sizeof(timestamp_str), "%Y-%m-%d %H:%M:%S UTC", tm_info);
         
         // Replace newlines with <br> for HTML
         char html_message[2048];
@@ -167,7 +167,7 @@ void email_client_format_body(email_client_t* client, const notification_event_t
         
         while (*src && remaining > 4) {
             if (*src == '\n') {
-                strncpy(dst, "<br>", remaining\n"\n"\n"\n"\n"\n"\n"\n");
+                strncpy(dst, "<br>", remaining);
                 dst += 4;
                 remaining -= 4;
             } else {
@@ -215,12 +215,12 @@ void email_client_format_body(email_client_t* client, const notification_event_t
                 "</body>\n"
                 "</html>",
                 event->title, priority_color, priority_text, event->title, 
-                html_message, timestamp_str, notification_type_to_string(event->type)\n"\n"\n"\n"\n"\n"\n"\n");
+                html_message, timestamp_str, notification_type_to_string(event->type));
     } else {
         // Create plain text email body
         char timestamp_str[64];
-        struct tm* tm_info = localtime(&event->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
-        strftime(timestamp_str, sizeof(timestamp_str), "%Y-%m-%d %H:%M:%S UTC", tm_info\n"\n"\n"\n"\n"\n"\n"\n");
+        struct tm* tm_info = localtime(&event->timestamp);
+        strftime(timestamp_str, sizeof(timestamp_str), "%Y-%m-%d %H:%M:%S UTC", tm_info);
         
         snprintf(body, max_size,
                 "autonomy Alert - %s\n"
@@ -234,7 +234,7 @@ void email_client_format_body(email_client_t* client, const notification_event_t
                 "---\n"
                 "This notification was sent by autonomy Daemon\n",
                 priority_text, event->title, priority_text,
-                notification_type_to_string(event->type), timestamp_str, event->message\n"\n"\n"\n"\n"\n"\n"\n");
+                notification_type_to_string(event->type), timestamp_str, event->message);
     }
 }
 
@@ -247,14 +247,14 @@ static char* create_email_message(email_client_t* client, const char* recipient,
     size_t message_size = strlen(subject) + strlen(body) + strlen(client->config.from_address) + 
                          strlen(recipient) + 512; // Extra space for headers
     
-    char* message = (char*)malloc(message_size\n"\n"\n"\n"\n"\n"\n"\n");
+    char* message = (char*)malloc(message_size);
     if (!message) return NULL;
     
     // Get current timestamp
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    struct tm* tm_info = gmtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
+    struct tm* tm_info = gmtime(&now);
     char date_str[128];
-    strftime(date_str, sizeof(date_str), "%a, %d %b %Y %H:%M:%S +0000", tm_info\n"\n"\n"\n"\n"\n"\n"\n");
+    strftime(date_str, sizeof(date_str), "%a, %d %b %Y %H:%M:%S +0000", tm_info);
     
     // Create email headers and body
     snprintf(message, message_size,
@@ -272,57 +272,57 @@ static char* create_email_message(email_client_t* client, const char* recipient,
              subject,
              date_str,
              client->config.html_format ? "text/html" : "text/plain",
-             body\n"\n"\n"\n"\n"\n"\n"\n");
+             body);
     
     return message;
 }
 
 // Send email using curl (SMTP)
 static int send_email_smtp(email_client_t* client, const char* recipient, const char* message) {
-    CURL* curl = curl_easy_init(\n"\n"\n"\n"\n"\n"\n"\n");
+    CURL* curl = curl_easy_init();
     if (!curl) {
-        safe_strncpy(client->status.last_error, "Failed to initialize curl", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(client->status.last_error, "Failed to initialize curl", sizeof(client->status.last_error));
         return -1;
     }
     
     // Create SMTP URL
     char smtp_url[512];
     if (client->config.use_tls) {
-        snprintf(smtp_url, sizeof(smtp_url), "smtps://%s:%d", client->config.smtp_host, client->config.smtp_port\n"\n"\n"\n"\n"\n"\n"\n");
+        snprintf(smtp_url, sizeof(smtp_url), "smtps://%s:%d", client->config.smtp_host, client->config.smtp_port);
     } else {
-        snprintf(smtp_url, sizeof(smtp_url), "smtp://%s:%d", client->config.smtp_host, client->config.smtp_port\n"\n"\n"\n"\n"\n"\n"\n");
+        snprintf(smtp_url, sizeof(smtp_url), "smtp://%s:%d", client->config.smtp_host, client->config.smtp_port);
     }
     
     // Setup curl options
-    curl_easy_setopt(curl, CURLOPT_URL, smtp_url\n"\n"\n"\n"\n"\n"\n"\n");
-    curl_easy_setopt(curl, CURLOPT_MAIL_FROM, client->config.from_address\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_URL, smtp_url);
+    curl_easy_setopt(curl, CURLOPT_MAIL_FROM, client->config.from_address);
     
     // Set recipient
     struct curl_slist* recipients = NULL;
-    recipients = curl_slist_append(recipients, recipient\n"\n"\n"\n"\n"\n"\n"\n");
-    curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients\n"\n"\n"\n"\n"\n"\n"\n");
+    recipients = curl_slist_append(recipients, recipient);
+    curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
     
     // Set authentication if configured
     if (strlen(client->config.username) > 0 && strlen(client->config.password) > 0) {
-        curl_easy_setopt(curl, CURLOPT_USERNAME, client->config.username\n"\n"\n"\n"\n"\n"\n"\n");
-        curl_easy_setopt(curl, CURLOPT_PASSWORD, client->config.password\n"\n"\n"\n"\n"\n"\n"\n");
+        curl_easy_setopt(curl, CURLOPT_USERNAME, client->config.username);
+        curl_easy_setopt(curl, CURLOPT_PASSWORD, client->config.password);
     }
     
     // Set TLS options
     if (client->config.use_starttls) {
-        curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_TRY\n"\n"\n"\n"\n"\n"\n"\n");
+        curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_TRY);
     } else if (client->config.use_tls) {
-        curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL\n"\n"\n"\n"\n"\n"\n"\n");
+        curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
     }
     
     if (!client->config.verify_ssl) {
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L\n"\n"\n"\n"\n"\n"\n"\n");
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L\n"\n"\n"\n"\n"\n"\n"\n");
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     }
     
     // Set timeout
     if (client->config.timeout_seconds > 0) {
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, client->config.timeout_seconds\n"\n"\n"\n"\n"\n"\n"\n");
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, client->config.timeout_seconds);
     } else {
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L); // Default 30 seconds
     }
@@ -330,24 +330,24 @@ static int send_email_smtp(email_client_t* client, const char* recipient, const 
     // Setup message upload
     email_upload_ctx_t upload_ctx;
     upload_ctx.data = (char*)message;
-    upload_ctx.size = strlen(message\n"\n"\n"\n"\n"\n"\n"\n");
+    upload_ctx.size = strlen(message);
     upload_ctx.pos = 0;
     
-    curl_easy_setopt(curl, CURLOPT_READFUNCTION, email_read_callback\n"\n"\n"\n"\n"\n"\n"\n");
-    curl_easy_setopt(curl, CURLOPT_READDATA, &upload_ctx\n"\n"\n"\n"\n"\n"\n"\n");
-    curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_easy_setopt(curl, CURLOPT_READFUNCTION, email_read_callback);
+    curl_easy_setopt(curl, CURLOPT_READDATA, &upload_ctx);
+    curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
     
     // Perform the email send
-    CURLcode res = curl_easy_perform(curl\n"\n"\n"\n"\n"\n"\n"\n");
+    CURLcode res = curl_easy_perform(curl);
     
     // Clean up
-    curl_slist_free_all(recipients\n"\n"\n"\n"\n"\n"\n"\n");
-    curl_easy_cleanup(curl\n"\n"\n"\n"\n"\n"\n"\n");
+    curl_slist_free_all(recipients);
+    curl_easy_cleanup(curl);
     
     if (res != CURLE_OK) {
         snprintf(client->status.last_error, sizeof(client->status.last_error), 
-                "SMTP error: %s", curl_easy_strerror(res)\n"\n"\n"\n"\n"\n"\n"\n");
-        client->status.last_error_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+                "SMTP error: %s", curl_easy_strerror(res));
+        client->status.last_error_time = time(NULL);
         return -1;
     }
     
@@ -361,8 +361,8 @@ int email_client_send(email_client_t* client, const notification_event_t* event)
     }
     
     if (client->recipient_count == 0) {
-        safe_strncpy(client->status.last_error, "No recipients configured", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
-        client->status.last_error_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(client->status.last_error, "No recipients configured", sizeof(client->status.last_error));
+        client->status.last_error_time = time(NULL);
         client->status.total_failed++;
         return -1;
     }
@@ -371,8 +371,8 @@ int email_client_send(email_client_t* client, const notification_event_t* event)
     char subject[512];
     char body[4096];
     
-    email_client_format_subject(client, event, subject, sizeof(subject)\n"\n"\n"\n"\n"\n"\n"\n");
-    email_client_format_body(client, event, body, sizeof(body)\n"\n"\n"\n"\n"\n"\n"\n");
+    email_client_format_subject(client, event, subject, sizeof(subject));
+    email_client_format_body(client, event, body, sizeof(body));
     
     // Send to all recipients
     int success_count = 0;
@@ -383,7 +383,7 @@ int email_client_send(email_client_t* client, const notification_event_t* event)
         const char* recipient = client->recipients_array[i];
         
         // Create email message
-        char* message = create_email_message(client, recipient, subject, body\n"\n"\n"\n"\n"\n"\n"\n");
+        char* message = create_email_message(client, recipient, subject, body);
         if (!message) {
             continue;
         }
@@ -395,26 +395,26 @@ int email_client_send(email_client_t* client, const notification_event_t* event)
                 sent = true;
                 success_count++;
             } else if (attempt < max_attempts) {
-                sleep(retry_delay\n"\n"\n"\n"\n"\n"\n"\n");
+                sleep(retry_delay);
             }
         }
         
-        free(message\n"\n"\n"\n"\n"\n"\n"\n");
+        free(message);
         
         if (!sent) {
-            printf("EMAIL: Failed to send to %s after %d attempts\n", recipient, max_attempts\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("EMAIL: Failed to send to %s after %d attempts\n", recipient, max_attempts);
         }
     }
     
     // Update statistics
     if (success_count > 0) {
         client->status.total_sent += success_count;
-        client->status.last_sent_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        client->status.last_sent_time = time(NULL);
         client->status.last_error[0] = '\0'; // Clear last error on success
     }
     
     if (success_count < client->recipient_count) {
-        client->status.total_failed += (client->recipient_count - success_count\n"\n"\n"\n"\n"\n"\n"\n");
+        client->status.total_failed += (client->recipient_count - success_count);
     }
     
     return (success_count > 0) ? 0 : -1;

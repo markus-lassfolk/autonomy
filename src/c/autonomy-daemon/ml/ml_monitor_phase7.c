@@ -15,8 +15,8 @@
 #include <ctype.h>
 
 // Forward declarations for functions from other modules
-extern int ml_monitor_perform_ping_test(const char *interface_id, const char *target, uint32_t *latency_ms, bool *success\n"\n"\n"\n"\n"\n"\n"\n");
-extern int ml_monitor_collect_cellular_modem_metrics(const char *interface_id, multi_interface_observation_t *observation\n"\n"\n"\n"\n"\n"\n"\n");
+extern int ml_monitor_perform_ping_test(const char *interface_id, const char *target, uint32_t *latency_ms, bool *success);
+extern int ml_monitor_collect_cellular_modem_metrics(const char *interface_id, multi_interface_observation_t *observation);
 
 // Phase 7: Multi-Interface ML Intelligence Integration
 
@@ -26,82 +26,82 @@ static bool g_phase7_initialized = false;
 
 // Continuous monitoring callback for network events
 static void ml_monitor_network_event_callback(const char *event_type, const char *from_interface, 
-                                             const char *to_interface, bool success, void *user_data\n"\n"\n"\n"\n"\n"\n"\n");
+                                             const char *to_interface, bool success, void *user_data);
 
 // Enhanced observation collection for multi-interface
-static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor\n"\n"\n"\n"\n"\n"\n"\n");
+static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor);
 
 // Integration with existing network controller
-static int ml_monitor_integrate_with_network_controller(ml_monitor_t *monitor\n"\n"\n"\n"\n"\n"\n"\n");
+static int ml_monitor_integrate_with_network_controller(ml_monitor_t *monitor);
 
 // Initialize Phase 7 multi-interface integration
 int ml_monitor_init_phase7_multi_interface(ml_monitor_t *monitor) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
     // Use simple fprintf to avoid LOGX crashes
-    fprintf(stderr, "Initializing Phase 7: Multi-Interface ML Intelligence\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "Initializing Phase 7: Multi-Interface ML Intelligence\n");
     
     // Initialize multi-interface system
-    g_phase7_system = ml_monitor_init_multi_interface_system(&monitor->config\n"\n"\n"\n"\n"\n"\n"\n");
+    g_phase7_system = ml_monitor_init_multi_interface_system(&monitor->config);
     if (!g_phase7_system) {
-        printf("ERROR: "Failed to initialize multi-interface ML system"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to initialize multi-interface ML system");
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
     // Use comprehensive network discovery to automatically find interfaces
     // Use simple fprintf to avoid LOGX crashes
-    fprintf(stderr, "Using comprehensive network discovery for automatic interface detection\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "Using comprehensive network discovery for automatic interface detection\n");
     
     // Initialize ML monitoring from discovered interfaces
-    extern int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor\n"\n"\n"\n"\n"\n"\n"\n");
+    extern int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor);
     
     // Add safety check for monitor pointer
     if (!monitor) {
-        fprintf(stderr, "ERROR: Monitor pointer is null in Phase 7 initialization\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "ERROR: Monitor pointer is null in Phase 7 initialization\n");
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
     // Add safety check for g_phase7_system
     if (!g_phase7_system) {
-        fprintf(stderr, "ERROR: Phase 7 system not initialized\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "ERROR: Phase 7 system not initialized\n");
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
-    int discovery_result = ml_monitor_init_from_network_discovery(monitor\n"\n"\n"\n"\n"\n"\n"\n");
+    int discovery_result = ml_monitor_init_from_network_discovery(monitor);
     if (discovery_result != ML_MONITOR_SUCCESS) {
         // Use simple fprintf to avoid LOGX crashes
-        fprintf(stderr, "Failed to initialize from network discovery: %d\n", discovery_result\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "Failed to initialize from network discovery: %d\n", discovery_result);
         
         // Fallback: Add common interfaces manually
-        fprintf(stderr, "Using fallback interface detection\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "Using fallback interface detection\n");
         if (g_phase7_system) {
-            ml_monitor_add_interface(g_phase7_system, "eth1", INTERFACE_TYPE_STARLINK\n"\n"\n"\n"\n"\n"\n"\n");
-            ml_monitor_add_interface(g_phase7_system, "qmimux0", INTERFACE_TYPE_CELLULAR\n"\n"\n"\n"\n"\n"\n"\n");
-            ml_monitor_add_interface(g_phase7_system, "wlan0", INTERFACE_TYPE_WIFI\n"\n"\n"\n"\n"\n"\n"\n");
-            ml_monitor_add_interface(g_phase7_system, "eth0", INTERFACE_TYPE_LAN\n"\n"\n"\n"\n"\n"\n"\n");
+            ml_monitor_add_interface(g_phase7_system, "eth1", INTERFACE_TYPE_STARLINK);
+            ml_monitor_add_interface(g_phase7_system, "qmimux0", INTERFACE_TYPE_CELLULAR);
+            ml_monitor_add_interface(g_phase7_system, "wlan0", INTERFACE_TYPE_WIFI);
+            ml_monitor_add_interface(g_phase7_system, "eth0", INTERFACE_TYPE_LAN);
         }
     } else {
         // Use simple fprintf to avoid LOGX crashes
-        fprintf(stderr, "Interfaces automatically discovered and added to ML monitoring\n"\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("DEBUG: ml_monitor_init_from_network_discovery returned successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "Interfaces automatically discovered and added to ML monitoring\n");
+        printf("DEBUG: ml_monitor_init_from_network_discovery returned successfully\n");
     }
     
     // Integrate with network controller for failover events - temporarily disabled to isolate crash
-    printf("DEBUG: Network controller integration temporarily disabled\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("DEBUG: Network controller integration temporarily disabled\n");
     /*
-    printf("DEBUG: About to call ml_monitor_integrate_with_network_controller\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    int integration_result = ml_monitor_integrate_with_network_controller(monitor\n"\n"\n"\n"\n"\n"\n"\n");
-    printf("DEBUG: ml_monitor_integrate_with_network_controller returned: %d\n", integration_result\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("DEBUG: About to call ml_monitor_integrate_with_network_controller\n");
+    int integration_result = ml_monitor_integrate_with_network_controller(monitor);
+    printf("DEBUG: ml_monitor_integrate_with_network_controller returned: %d\n", integration_result);
     if (integration_result != ML_MONITOR_SUCCESS) {
         // Use simple fprintf to avoid LOGX crashes
-        fprintf(stderr, "Network controller integration failed: %d\n", integration_result\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "Network controller integration failed: %d\n", integration_result);
     }
     */
     
     g_phase7_initialized = true;
     
     // Use single consolidated message to avoid multiple LOGX calls
-    fprintf(stderr, "Phase 7 multi-interface ML system initialized successfully - Interfaces: %u, duration windows, continuous monitoring, MWAN3 updates, failover timing\n", g_phase7_system->interface_count\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "Phase 7 multi-interface ML system initialized successfully - Interfaces: %u, duration windows, continuous monitoring, MWAN3 updates, failover timing\n", g_phase7_system->interface_count);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -111,17 +111,17 @@ static void ml_monitor_network_event_callback(const char *event_type, const char
                                              const char *to_interface, bool success, void *user_data) {
     if (!g_phase7_system || !event_type) return;
     
-    printf("INFO: " Network event: %s %s  %s (%s)", event_type, from_interface ? from_interface : "none", 
-             to_interface ? to_interface : "none", success ? "success" : "failed"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG(" Network event: %s %s  %s (%s)", event_type, from_interface ? from_interface : "none", 
+             to_interface ? to_interface : "none", success ? "success" : "failed");
     
     if (strcmp(event_type, "failover_start") == 0) {
-        ml_monitor_start_failover_timing(g_phase7_system, from_interface, to_interface\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_start_failover_timing(g_phase7_system, from_interface, to_interface);
     } else if (strcmp(event_type, "failover_complete") == 0) {
-        ml_monitor_complete_failover_timing(g_phase7_system, from_interface, to_interface, success\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_complete_failover_timing(g_phase7_system, from_interface, to_interface, success);
     } else if (strcmp(event_type, "failback_start") == 0) {
-        ml_monitor_start_failback_timing(g_phase7_system, from_interface, to_interface\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_start_failback_timing(g_phase7_system, from_interface, to_interface);
     } else if (strcmp(event_type, "failback_complete") == 0) {
-        ml_monitor_complete_failback_timing(g_phase7_system, from_interface, to_interface, success\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_complete_failback_timing(g_phase7_system, from_interface, to_interface, success);
     }
 }
 
@@ -129,37 +129,37 @@ static void ml_monitor_network_event_callback(const char *event_type, const char
 static int ml_monitor_integrate_with_network_controller(ml_monitor_t *monitor) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    printf("INFO: " Integrating with network controller for failover event monitoring"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG(" Integrating with network controller for failover event monitoring");
     
     // Real network controller integration
     // 1. Register callbacks with network controller
-    extern int network_controller_add_callback(int (*callback)(const network_member_t* from, const network_member_t* to)\n"\n"\n"\n"\n"\n"\n"\n");
+    extern int network_controller_add_callback(int (*callback)(const network_member_t* from, const network_member_t* to));
     
     // Register ML monitor callback for failover events
-    int callback_result = network_controller_add_callback((int (*)(const network_member_t*, const network_member_t*))ml_monitor_network_event_callback\n"\n"\n"\n"\n"\n"\n"\n");
+    int callback_result = network_controller_add_callback((int (*)(const network_member_t*, const network_member_t*))ml_monitor_network_event_callback);
     if (callback_result != 0) {
-        printf("WARN: "Failed to register network controller callback: %d", callback_result\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to register network controller callback: %d", callback_result);
     } else {
-        printf("INFO: "Registered ML monitor callback with network controller"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("Registered ML monitor callback with network controller");
     }
     
     // 2. Set up event monitoring for failover/failback events
     // This integrates with the existing network failover system
-    extern int network_failover_get_status(network_failover_status_t *status\n"\n"\n"\n"\n"\n"\n"\n");
+    extern int network_failover_get_status(network_failover_status_t *status);
     network_failover_status_t failover_status;
     if (network_failover_get_status(&failover_status) == AUTONOMY_SUCCESS) {
-        printf("INFO: "Network failover integration active: %d interfaces", failover_status.interface_count\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("Network failover integration active: %d interfaces", failover_status.interface_count);
     }
     
     // 3. Integrate with MWAN3 for weight updates
     // Verify MWAN3 is available
-    extern int secure_check_mwan3_available(void\n"\n"\n"\n"\n"\n"\n"\n");
-    int mwan3_check = secure_check_mwan3_available(\n"\n"\n"\n"\n"\n"\n"\n");
+    extern int secure_check_mwan3_available(void);
+    int mwan3_check = secure_check_mwan3_available();
     if (mwan3_check == AUTONOMY_SUCCESS) {
-        printf("INFO: " MWAN3 detected - enabling dynamic weight updates"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG(" MWAN3 detected - enabling dynamic weight updates");
         // MWAN3 integration is enabled by default
     } else {
-        printf("WARN: "MWAN3 not available - weight updates disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("MWAN3 not available - weight updates disabled");
     }
     
     return ML_MONITOR_SUCCESS;
@@ -177,10 +177,10 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
         
         // Create multi-interface observation
         multi_interface_observation_t obs;
-        memset(&obs, 0, sizeof(obs)\n"\n"\n"\n"\n"\n"\n"\n");
+        memset(&obs, 0, sizeof(obs));
         
-        obs.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-        safe_strncpy(obs.interface_id, model->interface_id, sizeof(obs.interface_id)\n"\n"\n"\n"\n"\n"\n"\n");
+        obs.timestamp = time(NULL);
+        safe_strncpy(obs.interface_id, model->interface_id, sizeof(obs.interface_id));
         obs.interface_type = model->type;
         
         // Collect interface-specific data
@@ -195,18 +195,18 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
                 // Integrate with existing Starlink data collection
                 if (starlink_collect_data(&starlink_result) == AUTONOMY_SUCCESS) {
                     obs.latency_ms = (uint16_t)starlink_result.status.network_perf.pop_ping_latency_ms;
-                    obs.packet_loss_pct = (uint8_t)(starlink_result.status.network_perf.pop_ping_drop_rate * 100\n"\n"\n"\n"\n"\n"\n"\n");
+                    obs.packet_loss_pct = (uint8_t)(starlink_result.status.network_perf.pop_ping_drop_rate * 100);
                     obs.connection_stability = starlink_result.status.signal_quality.snr > 5.0 ? 200 : 100;
-                    obs.connection_health = (uint8_t)(starlink_result.status.signal_quality.snr * 20\n"\n"\n"\n"\n"\n"\n"\n");
+                    obs.connection_health = (uint8_t)(starlink_result.status.signal_quality.snr * 20);
                     
                     // Real Starlink-specific metrics
-                    obs.interface_specific.starlink.snr_x100 = (uint16_t)(starlink_result.status.signal_quality.snr * 100\n"\n"\n"\n"\n"\n"\n"\n");
-                    obs.interface_specific.starlink.obstruction_pct = (uint8_t)(starlink_result.status.obstruction_stats.fraction_obstructed * 100\n"\n"\n"\n"\n"\n"\n"\n");
+                    obs.interface_specific.starlink.snr_x100 = (uint16_t)(starlink_result.status.signal_quality.snr * 100);
+                    obs.interface_specific.starlink.obstruction_pct = (uint8_t)(starlink_result.status.obstruction_stats.fraction_obstructed * 100);
                     obs.interface_specific.starlink.azimuth_deg = (int16_t)starlink_result.status.positioning.boresight_azimuth_deg;
                     obs.interface_specific.starlink.elevation_deg = (int16_t)starlink_result.status.positioning.boresight_elevation_deg;
                     obs.interface_specific.starlink.satellites_visible = starlink_result.status.gps_stats.gps_sats;
                 } else {
-                    printf("WARN: "Failed to collect real Starlink data for %s", model->interface_id\n"\n"\n"\n"\n"\n"\n"\n");
+                    LOGX_WARN_MSG("Failed to collect real Starlink data for %s", model->interface_id);
                     continue; // Skip this interface if no real data available
                 }
                 break;
@@ -214,7 +214,7 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
             case INTERFACE_TYPE_CELLULAR:
                 // Use real cellular modem metrics collection
                 if (ml_monitor_collect_cellular_modem_metrics(model->interface_id, &obs) != ML_MONITOR_SUCCESS) {
-                    printf("WARN: "Failed to collect real cellular data for %s", model->interface_id\n"\n"\n"\n"\n"\n"\n"\n");
+                    LOGX_WARN_MSG("Failed to collect real cellular data for %s", model->interface_id);
                     continue; // Skip this interface if no real data available
                 }
                 break;
@@ -230,31 +230,31 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
                     // Collect real WiFi-specific metrics via iwconfig/iw
                     char wifi_cmd[256];
                     char wifi_file[128];
-                    snprintf(wifi_file, sizeof(wifi_file), "/tmp/wifi_info_%s_%lld", model->interface_id, time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
-                    snprintf(wifi_cmd, sizeof(wifi_cmd), "iw dev %s link > %s 2>/dev/null", model->interface_id, wifi_file\n"\n"\n"\n"\n"\n"\n"\n");
+                    snprintf(wifi_file, sizeof(wifi_file), "/tmp/wifi_info_%s_%lld", model->interface_id, time(NULL));
+                    snprintf(wifi_cmd, sizeof(wifi_cmd), "iw dev %s link > %s 2>/dev/null", model->interface_id, wifi_file);
                     
-                    extern int secure_exec_command(const char *command, exec_result_t *result\n"\n"\n"\n"\n"\n"\n"\n");
+                    extern int secure_exec_command(const char *command, exec_result_t *result);
                     exec_result_t wifi_result;
                     if (secure_exec_command(wifi_cmd, &wifi_result) == AUTONOMY_SUCCESS && wifi_result.success) {
-                        FILE *f = fopen(wifi_file, "r"\n"\n"\n"\n"\n"\n"\n"\n");
+                        FILE *f = fopen(wifi_file, "r");
                         if (f) {
                             char line[256];
                             while (fgets(line, sizeof(line), f)) {
                                 if (strstr(line, "signal:")) {
-                                    sscanf(line, "%*s %hhd dBm", &obs.interface_specific.wifi.rssi_dbm\n"\n"\n"\n"\n"\n"\n"\n");
+                                    sscanf(line, "%*s %hhd dBm", &obs.interface_specific.wifi.rssi_dbm);
                                 }
                                 if (strstr(line, "freq:")) {
                                     int freq;
-                                    sscanf(line, "%*s %d", &freq\n"\n"\n"\n"\n"\n"\n"\n");
+                                    sscanf(line, "%*s %d", &freq);
                                     obs.interface_specific.wifi.channel = (freq - 2412) / 5 + 1; // Convert freq to channel
                                 }
                             }
-                            fclose(f\n"\n"\n"\n"\n"\n"\n"\n");
+                            fclose(f);
                         }
-                        unlink(wifi_file\n"\n"\n"\n"\n"\n"\n"\n");
+                        unlink(wifi_file);
                     }
                 } else {
-                    printf("WARN: "Failed to collect real WiFi data for %s", model->interface_id\n"\n"\n"\n"\n"\n"\n"\n");
+                    LOGX_WARN_MSG("Failed to collect real WiFi data for %s", model->interface_id);
                     continue;
                 }
                 break;
@@ -270,33 +270,33 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
                     // Collect real LAN-specific metrics via ethtool
                     char lan_cmd[256];
                     char lan_file[128];
-                    snprintf(lan_file, sizeof(lan_file), "/tmp/lan_info_%s_%lld", model->interface_id, time(NULL)\n"\n"\n"\n"\n"\n"\n"\n");
-                    snprintf(lan_cmd, sizeof(lan_cmd), "ethtool %s | grep 'Speed:\\|Duplex:' > %s 2>/dev/null", model->interface_id, lan_file\n"\n"\n"\n"\n"\n"\n"\n");
+                    snprintf(lan_file, sizeof(lan_file), "/tmp/lan_info_%s_%lld", model->interface_id, time(NULL));
+                    snprintf(lan_cmd, sizeof(lan_cmd), "ethtool %s | grep 'Speed:\\|Duplex:' > %s 2>/dev/null", model->interface_id, lan_file);
                     
                     exec_result_t lan_result;
                     if (secure_exec_command(lan_cmd, &lan_result) == AUTONOMY_SUCCESS && lan_result.success) {
-                        FILE *f = fopen(lan_file, "r"\n"\n"\n"\n"\n"\n"\n"\n");
+                        FILE *f = fopen(lan_file, "r");
                         if (f) {
                             char line[256];
                             while (fgets(line, sizeof(line), f)) {
                                 if (strstr(line, "Speed:")) {
                                     int speed;
-                                    sscanf(line, "%*s %dMb/s", &speed\n"\n"\n"\n"\n"\n"\n"\n");
-                                    obs.interface_specific.lan.link_speed_mbps = (uint8_t)(speed > 255 ? 255 : speed\n"\n"\n"\n"\n"\n"\n"\n");
+                                    sscanf(line, "%*s %dMb/s", &speed);
+                                    obs.interface_specific.lan.link_speed_mbps = (uint8_t)(speed > 255 ? 255 : speed);
                                 }
                                 if (strstr(line, "Full")) {
                                     obs.interface_specific.lan.duplex = 1;
                                 }
                             }
-                            fclose(f\n"\n"\n"\n"\n"\n"\n"\n");
+                            fclose(f);
                         }
-                        unlink(lan_file\n"\n"\n"\n"\n"\n"\n"\n");
+                        unlink(lan_file);
                     }
                     
                     // Calculate cable quality based on latency (LAN should be very low latency)
-                    obs.interface_specific.lan.cable_quality = lan_latency < 5 ? 255 : (255 - (lan_latency * 10)\n"\n"\n"\n"\n"\n"\n"\n");
+                    obs.interface_specific.lan.cable_quality = lan_latency < 5 ? 255 : (255 - (lan_latency * 10));
                 } else {
-                    printf("WARN: "Failed to collect real LAN data for %s", model->interface_id\n"\n"\n"\n"\n"\n"\n"\n");
+                    LOGX_WARN_MSG("Failed to collect real LAN data for %s", model->interface_id);
                     continue;
                 }
                 break;
@@ -322,7 +322,7 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
             // Calculate real latency trend
             if (prev_latency[interface_idx] > 0) {
                 int latency_diff = (int)obs.latency_ms - (int)prev_latency[interface_idx];
-                obs.latency_trend = (int8_t)fmax(-127, fmin(127, latency_diff)\n"\n"\n"\n"\n"\n"\n"\n");
+                obs.latency_trend = (int8_t)fmax(-127, fmin(127, latency_diff));
             } else {
                 obs.latency_trend = 0;
             }
@@ -330,7 +330,7 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
             // Calculate real packet loss trend
             if (prev_loss[interface_idx] >= 0) {
                 int loss_diff = (int)obs.packet_loss_pct - (int)prev_loss[interface_idx];
-                obs.packet_loss_trend = (int8_t)fmax(-127, fmin(127, loss_diff * 10)\n"\n"\n"\n"\n"\n"\n"\n");
+                obs.packet_loss_trend = (int8_t)fmax(-127, fmin(127, loss_diff * 10));
             } else {
                 obs.packet_loss_trend = 0;
             }
@@ -346,13 +346,13 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
         if (obs.packet_loss_pct > 5) obs.performance_degradation += 50;
         if (obs.latency_trend > 10) obs.performance_degradation += 30;
         if (obs.packet_loss_trend > 5) obs.performance_degradation += 30;
-        obs.performance_degradation = fmin(255, obs.performance_degradation\n"\n"\n"\n"\n"\n"\n"\n");
+        obs.performance_degradation = fmin(255, obs.performance_degradation);
         
         // Update interface observation
-        ml_monitor_update_interface_observation(g_phase7_system, model->interface_id, &obs\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_update_interface_observation(g_phase7_system, model->interface_id, &obs);
         
-        printf("DEBUG: "Collected observation for %s: latency=%ums, loss=%u%%, health=%u",
-                  model->interface_id, obs.latency_ms, obs.packet_loss_pct, obs.connection_health\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Collected observation for %s: latency=%ums, loss=%u%%, health=%u",
+                  model->interface_id, obs.latency_ms, obs.packet_loss_pct, obs.connection_health);
     }
     
     return ML_MONITOR_SUCCESS;
@@ -363,7 +363,7 @@ int ml_monitor_update_with_phase7_multi_interface(ml_monitor_t *monitor, const m
     if (!monitor || !observation || !g_phase7_initialized) return ML_MONITOR_ERROR_INVALID_PARAM;
     
     // Collect multi-interface observations
-    ml_monitor_collect_multi_interface_observations(monitor\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_collect_multi_interface_observations(monitor);
     
     // Periodic sync with network discovery and MWAN3 updates
     static time_t last_sync = 0;
@@ -371,13 +371,13 @@ int ml_monitor_update_with_phase7_multi_interface(ml_monitor_t *monitor, const m
     
     if (now - last_sync > 300) { // Update every 5 minutes
         // Sync with network discovery for new/removed interfaces
-        extern int ml_monitor_periodic_network_discovery_sync(ml_monitor_t *monitor\n"\n"\n"\n"\n"\n"\n"\n");
-        ml_monitor_periodic_network_discovery_sync(monitor\n"\n"\n"\n"\n"\n"\n"\n");
+        extern int ml_monitor_periodic_network_discovery_sync(ml_monitor_t *monitor);
+        ml_monitor_periodic_network_discovery_sync(monitor);
         
         // Update MWAN3 weights based on ML predictions
-        int mwan3_result = ml_monitor_update_mwan3_weights(g_phase7_system\n"\n"\n"\n"\n"\n"\n"\n");
+        int mwan3_result = ml_monitor_update_mwan3_weights(g_phase7_system);
         if (mwan3_result == ML_MONITOR_MULTI_SUCCESS) {
-            printf("DEBUG: "MWAN3 weights updated based on ML predictions"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("MWAN3 weights updated based on ML predictions");
         }
         
         last_sync = now;
@@ -394,21 +394,21 @@ int ml_monitor_get_interface_prediction(const char *interface_id,
     if (!interface_id || !g_phase7_system) return ML_MONITOR_ERROR_INVALID_PARAM;
     
     return ml_monitor_predict_interface_performance(g_phase7_system, interface_id,
-                                                  outage_probability, performance_score, confidence\n"\n"\n"\n"\n"\n"\n"\n");
+                                                  outage_probability, performance_score, confidence);
 }
 
 // Get outage duration prediction for interface
 int ml_monitor_get_interface_duration_prediction(const char *interface_id, void *duration_prediction) {
     if (!interface_id || !g_phase7_system || !duration_prediction) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    return ml_monitor_predict_outage_duration(g_phase7_system, interface_id, duration_prediction\n"\n"\n"\n"\n"\n"\n"\n");
+    return ml_monitor_predict_outage_duration(g_phase7_system, interface_id, duration_prediction);
 }
 
 // Get failback readiness for interface
 int ml_monitor_get_interface_failback_readiness(const char *interface_id, void *readiness) {
     if (!interface_id || !g_phase7_system || !readiness) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    return ml_monitor_assess_failback_readiness(g_phase7_system, interface_id, readiness\n"\n"\n"\n"\n"\n"\n"\n");
+    return ml_monitor_assess_failback_readiness(g_phase7_system, interface_id, readiness);
 }
 
 // Validate prediction after failover event
@@ -418,7 +418,7 @@ int ml_monitor_validate_interface_prediction(const char *interface_id,
     if (!interface_id || !g_phase7_system) return ML_MONITOR_ERROR_INVALID_PARAM;
     
     return ml_monitor_validate_failover_prediction(g_phase7_system, interface_id, 
-                                                 actual_outage_occurred, actual_duration_seconds\n"\n"\n"\n"\n"\n"\n"\n");
+                                                 actual_outage_occurred, actual_duration_seconds);
 }
 
 // Get MWAN3 weight recommendation for interface
@@ -427,14 +427,14 @@ int ml_monitor_get_mwan3_weight_recommendation(const char *interface_id,
                                               double *confidence) {
     if (!interface_id || !g_phase7_system) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    return ml_monitor_update_mwan3_weights(g_phase7_system\n"\n"\n"\n"\n"\n"\n"\n");
+    return ml_monitor_update_mwan3_weights(g_phase7_system);
 }
 
 // Auto-tune duration windows based on real performance
 int ml_monitor_auto_tune_duration_windows(ml_monitor_t *monitor) {
     if (!monitor || !g_phase7_system) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    printf("INFO: " Auto-tuning duration prediction windows based on real data"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG(" Auto-tuning duration prediction windows based on real data");
     
     // Analyze actual outage durations across all interfaces
     double duration_samples[1000];
@@ -454,12 +454,12 @@ int ml_monitor_auto_tune_duration_windows(ml_monitor_t *monitor) {
     if (sample_count > 10) {
         // Analyze duration distribution and adjust windows
         // This would implement statistical analysis to optimize window boundaries
-        printf("DEBUG: "Auto-tuning based on %d duration samples", sample_count\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Auto-tuning based on %d duration samples", sample_count);
         
         // For now, log that auto-tuning would occur
-        printf("INFO: "Duration window auto-tuning analysis completed"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("Duration window auto-tuning analysis completed");
     } else {
-        printf("DEBUG: "Insufficient data for duration window auto-tuning (%d samples)", sample_count\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Insufficient data for duration window auto-tuning (%d samples)", sample_count);
     }
     
     return ML_MONITOR_SUCCESS;
@@ -502,10 +502,10 @@ int ml_monitor_get_phase7_status(ml_monitor_t *monitor,
 // Cleanup Phase 7 system
 void ml_monitor_cleanup_phase7_multi_interface(void) {
     if (g_phase7_system) {
-        ml_monitor_cleanup_multi_interface_system(g_phase7_system\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_cleanup_multi_interface_system(g_phase7_system);
         g_phase7_system = NULL;
     }
     g_phase7_initialized = false;
     
-    printf("INFO: "Phase 7 multi-interface system cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Phase 7 multi-interface system cleaned up");
 }

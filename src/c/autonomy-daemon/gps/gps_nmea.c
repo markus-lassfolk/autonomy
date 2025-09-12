@@ -13,22 +13,22 @@
 extern autonomy_config_t g_config;
 
 // Forward declarations
-static bool validate_nmea_sentence(const char *sentence\n"\n"\n"\n"\n"\n"\n"\n");
-bool verify_nmea_checksum(const char *sentence\n"\n"\n"\n"\n"\n"\n"\n");
-static bool extract_sentence_type(const char *sentence, char *type, size_t type_size\n"\n"\n"\n"\n"\n"\n"\n");
-static int parse_gga_sentence(const char *sentence, gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-static int parse_gll_sentence(const char *sentence, gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-static int parse_gsa_sentence(const char *sentence, gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-static int parse_gsv_sentence(const char *sentence, gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-static int parse_rmc_sentence(const char *sentence, gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-static int parse_vtg_sentence(const char *sentence, gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-static int parse_zda_sentence(const char *sentence, gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-static int split_nmea_fields(const char *sentence, char **fields, int max_fields\n"\n"\n"\n"\n"\n"\n"\n");
-static double parse_nmea_coordinate(const char *coord_str, char direction\n"\n"\n"\n"\n"\n"\n"\n");
-static time_t parse_nmea_time(const char *time_str\n"\n"\n"\n"\n"\n"\n"\n");
-static time_t parse_nmea_datetime(const char *time_str, const char *date_str\n"\n"\n"\n"\n"\n"\n"\n");
-static time_t parse_nmea_datetime_zda(const char *time_str, const char *day_str, const char *month_str, const char *year_str\n"\n"\n"\n"\n"\n"\n"\n");
-static double estimate_accuracy_from_hdop(double hdop\n"\n"\n"\n"\n"\n"\n"\n");
+static bool validate_nmea_sentence(const char *sentence);
+bool verify_nmea_checksum(const char *sentence);
+static bool extract_sentence_type(const char *sentence, char *type, size_t type_size);
+static int parse_gga_sentence(const char *sentence, gps_data_t *gps_data);
+static int parse_gll_sentence(const char *sentence, gps_data_t *gps_data);
+static int parse_gsa_sentence(const char *sentence, gps_data_t *gps_data);
+static int parse_gsv_sentence(const char *sentence, gps_data_t *gps_data);
+static int parse_rmc_sentence(const char *sentence, gps_data_t *gps_data);
+static int parse_vtg_sentence(const char *sentence, gps_data_t *gps_data);
+static int parse_zda_sentence(const char *sentence, gps_data_t *gps_data);
+static int split_nmea_fields(const char *sentence, char **fields, int max_fields);
+static double parse_nmea_coordinate(const char *coord_str, char direction);
+static time_t parse_nmea_time(const char *time_str);
+static time_t parse_nmea_datetime(const char *time_str, const char *date_str);
+static time_t parse_nmea_datetime_zda(const char *time_str, const char *day_str, const char *month_str, const char *year_str);
+static double estimate_accuracy_from_hdop(double hdop);
 
 // NMEA sentence types
 static const char* NMEA_SENTENCE_TYPES[] = {
@@ -51,12 +51,12 @@ static bool g_nmea_initialized = false; // Use configurable setting
 // Initialize NMEA parser
 int gps_nmea_init(void) {
     if (g_nmea_initialized) {
-        printf("WARN: "NMEA parser already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("NMEA parser already initialized");
         return AUTONOMY_SUCCESS;
     }
     
     // Initialize NMEA parser state
-    memset(&g_nmea_parser, 0, sizeof(gps_nmea_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_nmea_parser, 0, sizeof(gps_nmea_t));
     g_nmea_parser.enabled = true; // Use configurable nmea parser enabled
     g_nmea_parser.max_sentence_length = MAX_NMEA_LENGTH;
     g_nmea_parser.min_sentence_length = MIN_NMEA_LENGTH;
@@ -77,7 +77,7 @@ int gps_nmea_init(void) {
     
     g_nmea_initialized = true; // Use configurable setting
     
-    printf("INFO: "NMEA parser initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("NMEA parser initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -88,12 +88,12 @@ int gps_nmea_parse_sentence(const char *sentence, gps_data_t *gps_data) {
     }
     
     g_nmea_parser.parse_count++;
-    g_nmea_parser.last_parse = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_nmea_parser.last_parse = time(NULL);
     
     // Validate sentence format
     if (!validate_nmea_sentence(sentence)) {
         g_nmea_parser.failed_parses++;
-        printf("WARN: "Invalid NMEA sentence format: %s", sentence\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Invalid NMEA sentence format: %s", sentence);
         return AUTONOMY_ERROR_INVALID_FORMAT;
     }
     
@@ -108,31 +108,31 @@ int gps_nmea_parse_sentence(const char *sentence, gps_data_t *gps_data) {
     int parse_result = AUTONOMY_ERROR_NOT_SUPPORTED;
     
     if (strcmp(sentence_type, "GPGGA") == 0) {
-        parse_result = parse_gga_sentence(sentence, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+        parse_result = parse_gga_sentence(sentence, gps_data);
     } else if (strcmp(sentence_type, "GPGLL") == 0) {
-        parse_result = parse_gll_sentence(sentence, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+        parse_result = parse_gll_sentence(sentence, gps_data);
     } else if (strcmp(sentence_type, "GPGSA") == 0) {
-        parse_result = parse_gsa_sentence(sentence, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+        parse_result = parse_gsa_sentence(sentence, gps_data);
     } else if (strcmp(sentence_type, "GPGSV") == 0) {
-        parse_result = parse_gsv_sentence(sentence, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+        parse_result = parse_gsv_sentence(sentence, gps_data);
     } else if (strcmp(sentence_type, "GPRMC") == 0) {
-        parse_result = parse_rmc_sentence(sentence, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+        parse_result = parse_rmc_sentence(sentence, gps_data);
     } else if (strcmp(sentence_type, "GPVTG") == 0) {
-        parse_result = parse_vtg_sentence(sentence, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+        parse_result = parse_vtg_sentence(sentence, gps_data);
     } else if (strcmp(sentence_type, "GPZDA") == 0) {
-        parse_result = parse_zda_sentence(sentence, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+        parse_result = parse_zda_sentence(sentence, gps_data);
     } else {
-        printf("DEBUG: "Unsupported NMEA sentence type: %s", sentence_type\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Unsupported NMEA sentence type: %s", sentence_type);
         g_nmea_parser.failed_parses++;
         return AUTONOMY_ERROR_NOT_SUPPORTED;
     }
     
     if (parse_result == AUTONOMY_SUCCESS) {
         g_nmea_parser.successful_parses++;
-        printf("DEBUG: "Successfully parsed %s sentence", sentence_type\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Successfully parsed %s sentence", sentence_type);
     } else {
         g_nmea_parser.failed_parses++;
-        printf("WARN: "Failed to parse %s sentence: %s", sentence_type, sentence\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to parse %s sentence: %s", sentence_type, sentence);
     }
     
     return parse_result;
@@ -144,7 +144,7 @@ static bool validate_nmea_sentence(const char *sentence) {
         return false;
     }
     
-    int length = strlen(sentence\n"\n"\n"\n"\n"\n"\n"\n");
+    int length = strlen(sentence);
     
     // Check length bounds
     if (length < g_nmea_parser.min_sentence_length || 
@@ -158,7 +158,7 @@ static bool validate_nmea_sentence(const char *sentence) {
     }
     
     // Check for checksum separator
-    const char *checksum_pos = strchr(sentence, CHECKSUM_SEPARATOR\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *checksum_pos = strchr(sentence, CHECKSUM_SEPARATOR);
     if (checksum_pos) {
         // Verify checksum
         if (!verify_nmea_checksum(sentence)) {
@@ -175,7 +175,7 @@ bool verify_nmea_checksum(const char *sentence) {
         return false;
     }
     
-    const char *checksum_pos = strchr(sentence, CHECKSUM_SEPARATOR\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *checksum_pos = strchr(sentence, CHECKSUM_SEPARATOR);
     if (!checksum_pos) {
         return true; // No checksum to verify
     }
@@ -202,7 +202,7 @@ static bool extract_sentence_type(const char *sentence, char *type, size_t type_
     }
     
     // Find first comma
-    const char *comma = strchr(sentence, FIELD_SEPARATOR\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *comma = strchr(sentence, FIELD_SEPARATOR);
     if (!comma) {
         return false;
     }
@@ -214,7 +214,7 @@ static bool extract_sentence_type(const char *sentence, char *type, size_t type_
     }
     
     // Copy sentence type
-    strncpy(type, sentence + 1, type_length\n"\n"\n"\n"\n"\n"\n"\n");
+    strncpy(type, sentence + 1, type_length);
     type[type_length] = '\0';
     
     return true;
@@ -228,7 +228,7 @@ static int parse_gga_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // GGA format: $GPGGA,time,lat,lat_dir,lon,lon_dir,quality,num_sats,hdop,alt,alt_unit,geoid,geoid_unit,age,diff_stn*checksum
     char *fields[15];
-    int field_count = split_nmea_fields(sentence, fields, 15\n"\n"\n"\n"\n"\n"\n"\n");
+    int field_count = split_nmea_fields(sentence, fields, 15);
     
     if (field_count < 14) {
         return AUTONOMY_ERROR_INVALID_FORMAT;
@@ -236,38 +236,38 @@ static int parse_gga_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // Parse time
     if (fields[1] && strlen(fields[1]) > 0) {
-        gps_data->timestamp = parse_nmea_time(fields[1]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->timestamp = parse_nmea_time(fields[1]);
     }
     
     // Parse latitude
     if (fields[2] && fields[3] && strlen(fields[2]) > 0) {
-        gps_data->lat = parse_nmea_coordinate(fields[2], fields[3][0]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->lat = parse_nmea_coordinate(fields[2], fields[3][0]);
     }
     
     // Parse longitude
     if (fields[4] && fields[5] && strlen(fields[4]) > 0) {
-        gps_data->lon = parse_nmea_coordinate(fields[4], fields[5][0]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->lon = parse_nmea_coordinate(fields[4], fields[5][0]);
     }
     
     // Parse fix quality
     if (fields[6] && strlen(fields[6]) > 0) {
-        gps_data->fix_quality = atoi(fields[6]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->fix_quality = atoi(fields[6]);
     }
     
     // Parse satellite count
     if (fields[7] && strlen(fields[7]) > 0) {
-        gps_data->satellites = atoi(fields[7]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->satellites = atoi(fields[7]);
     }
     
     // Parse altitude
     if (fields[9] && strlen(fields[9]) > 0) {
-        gps_data->altitude = atof(fields[9]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->altitude = atof(fields[9]);
     }
     
     // Set accuracy based on HDOP
     if (fields[8] && strlen(fields[8]) > 0) {
-        double hdop = atof(fields[8]\n"\n"\n"\n"\n"\n"\n"\n");
-        gps_data->accuracy = estimate_accuracy_from_hdop(hdop\n"\n"\n"\n"\n"\n"\n"\n");
+        double hdop = atof(fields[8]);
+        gps_data->accuracy = estimate_accuracy_from_hdop(hdop);
     }
     
     return AUTONOMY_SUCCESS;
@@ -281,7 +281,7 @@ static int parse_gll_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // GLL format: $GPGLL,lat,lat_dir,lon,lon_dir,time,status,mode*checksum
     char *fields[8];
-    int field_count = split_nmea_fields(sentence, fields, 8\n"\n"\n"\n"\n"\n"\n"\n");
+    int field_count = split_nmea_fields(sentence, fields, 8);
     
     if (field_count < 7) {
         return AUTONOMY_ERROR_INVALID_FORMAT;
@@ -289,17 +289,17 @@ static int parse_gll_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // Parse latitude
     if (fields[1] && fields[2] && strlen(fields[1]) > 0) {
-        gps_data->lat = parse_nmea_coordinate(fields[1], fields[2][0]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->lat = parse_nmea_coordinate(fields[1], fields[2][0]);
     }
     
     // Parse longitude
     if (fields[3] && fields[4] && strlen(fields[3]) > 0) {
-        gps_data->lon = parse_nmea_coordinate(fields[3], fields[4][0]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->lon = parse_nmea_coordinate(fields[3], fields[4][0]);
     }
     
     // Parse time
     if (fields[5] && strlen(fields[5]) > 0) {
-        gps_data->timestamp = parse_nmea_time(fields[5]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->timestamp = parse_nmea_time(fields[5]);
     }
     
     // Parse status
@@ -318,7 +318,7 @@ static int parse_gsa_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // GSA format: $GPGSA,mode1,mode2,sat1,sat2,...,sat12,pdop,hdop,vdop*checksum
     char *fields[20];
-    int field_count = split_nmea_fields(sentence, fields, 20\n"\n"\n"\n"\n"\n"\n"\n");
+    int field_count = split_nmea_fields(sentence, fields, 20);
     
     if (field_count < 17) {
         return AUTONOMY_ERROR_INVALID_FORMAT;
@@ -326,8 +326,8 @@ static int parse_gsa_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // Parse HDOP for accuracy estimation
     if (fields[16] && strlen(fields[16]) > 0) {
-        double hdop = atof(fields[16]\n"\n"\n"\n"\n"\n"\n"\n");
-        gps_data->accuracy = estimate_accuracy_from_hdop(hdop\n"\n"\n"\n"\n"\n"\n"\n");
+        double hdop = atof(fields[16]);
+        gps_data->accuracy = estimate_accuracy_from_hdop(hdop);
     }
     
     // Parse fix mode
@@ -351,7 +351,7 @@ static int parse_gsv_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // GSV format: $GPGSV,num_msg,msg_num,num_sats,sat1_id,sat1_elev,sat1_azim,sat1_snr,sat2_id,...*checksum
     char *fields[40];
-    int field_count = split_nmea_fields(sentence, fields, 40\n"\n"\n"\n"\n"\n"\n"\n");
+    int field_count = split_nmea_fields(sentence, fields, 40);
     
     if (field_count < 4) {
         return AUTONOMY_ERROR_INVALID_FORMAT;
@@ -359,17 +359,17 @@ static int parse_gsv_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // Parse total satellite count
     if (fields[3] && strlen(fields[3]) > 0) {
-        gps_data->satellites = atoi(fields[3]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->satellites = atoi(fields[3]);
     }
     
     // Parse individual satellite information
     int sat_index = 0; // Use configurable value
     for (int i = 4; i < field_count && sat_index < MAX_SATELLITES; i += 4) {
         if (i + 3 < field_count && fields[i] && fields[i+1] && fields[i+2] && fields[i+3]) {
-            int sat_id = atoi(fields[i]\n"\n"\n"\n"\n"\n"\n"\n");
-            int elevation = atoi(fields[i+1]\n"\n"\n"\n"\n"\n"\n"\n");
-            int azimuth = atoi(fields[i+2]\n"\n"\n"\n"\n"\n"\n"\n");
-            int snr = atoi(fields[i+3]\n"\n"\n"\n"\n"\n"\n"\n");
+            int sat_id = atoi(fields[i]);
+            int elevation = atoi(fields[i+1]);
+            int azimuth = atoi(fields[i+2]);
+            int snr = atoi(fields[i+3]);
             
             if (sat_id > 0) {
                 g_nmea_parser.satellites[sat_index].id = sat_id;
@@ -393,7 +393,7 @@ static int parse_rmc_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // RMC format: $GPRMC,time,status,lat,lat_dir,lon,lon_dir,speed,course,date,mag_var,mag_dir*checksum
     char *fields[13];
-    int field_count = split_nmea_fields(sentence, fields, 13\n"\n"\n"\n"\n"\n"\n"\n");
+    int field_count = split_nmea_fields(sentence, fields, 13);
     
     if (field_count < 12) {
         return AUTONOMY_ERROR_INVALID_FORMAT;
@@ -401,17 +401,17 @@ static int parse_rmc_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // Parse time and date
     if (fields[1] && fields[9] && strlen(fields[1]) > 0 && strlen(fields[9]) > 0) {
-        gps_data->timestamp = parse_nmea_datetime(fields[1], fields[9]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->timestamp = parse_nmea_datetime(fields[1], fields[9]);
     }
     
     // Parse latitude
     if (fields[3] && fields[4] && strlen(fields[3]) > 0) {
-        gps_data->lat = parse_nmea_coordinate(fields[3], fields[4][0]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->lat = parse_nmea_coordinate(fields[3], fields[4][0]);
     }
     
     // Parse longitude
     if (fields[5] && fields[6] && strlen(fields[5]) > 0) {
-        gps_data->lon = parse_nmea_coordinate(fields[5], fields[6][0]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->lon = parse_nmea_coordinate(fields[5], fields[6][0]);
     }
     
     // Parse status
@@ -430,7 +430,7 @@ static int parse_vtg_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // VTG format: $GPVTG,course_true,course_mag,speed_knots,speed_kph*checksum
     char *fields[6];
-    int field_count = split_nmea_fields(sentence, fields, 6\n"\n"\n"\n"\n"\n"\n"\n");
+    int field_count = split_nmea_fields(sentence, fields, 6);
     
     if (field_count < 5) {
         return AUTONOMY_ERROR_INVALID_FORMAT;
@@ -438,7 +438,7 @@ static int parse_vtg_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // Parse speed (convert from km/h to m/s)
     if (fields[4] && strlen(fields[4]) > 0) {
-        double speed_kph = atof(fields[4]\n"\n"\n"\n"\n"\n"\n"\n");
+        double speed_kph = atof(fields[4]);
         // Store speed in gps_data if we had a speed field, for now we'll skip it
     }
     
@@ -453,7 +453,7 @@ static int parse_zda_sentence(const char *sentence, gps_data_t *gps_data) {
     
     // ZDA format: $GPZDA,time,day,month,year,local_zone,local_zone_minutes*checksum
     char *fields[8];
-    int field_count = split_nmea_fields(sentence, fields, 8\n"\n"\n"\n"\n"\n"\n"\n");
+    int field_count = split_nmea_fields(sentence, fields, 8);
     
     if (field_count < 5) {
         return AUTONOMY_ERROR_INVALID_FORMAT;
@@ -463,7 +463,7 @@ static int parse_zda_sentence(const char *sentence, gps_data_t *gps_data) {
     if (fields[1] && fields[2] && fields[3] && fields[4] && 
         strlen(fields[1]) > 0 && strlen(fields[2]) > 0 && 
         strlen(fields[3]) > 0 && strlen(fields[4]) > 0) {
-        gps_data->timestamp = parse_nmea_datetime_zda(fields[1], fields[2], fields[3], fields[4]\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->timestamp = parse_nmea_datetime_zda(fields[1], fields[2], fields[3], fields[4]);
     }
     
     return AUTONOMY_SUCCESS;
@@ -508,12 +508,12 @@ static double parse_nmea_coordinate(const char *coord_str, char direction) {
         return 0.0;
     }
     
-    double coordinate = atof(coord_str\n"\n"\n"\n"\n"\n"\n"\n");
+    double coordinate = atof(coord_str);
     
     // Convert from DDMM.MMMM to decimal degrees
-    int degrees = (int)(coordinate / 100\n"\n"\n"\n"\n"\n"\n"\n");
-    double minutes = coordinate - (degrees * 100\n"\n"\n"\n"\n"\n"\n"\n");
-    double decimal_degrees = degrees + (minutes / 60.0\n"\n"\n"\n"\n"\n"\n"\n");
+    int degrees = (int)(coordinate / 100);
+    double minutes = coordinate - (degrees * 100);
+    double decimal_degrees = degrees + (minutes / 60.0);
     
     // Apply direction
     if (direction == 'S' || direction == 'W') {
@@ -535,15 +535,15 @@ static time_t parse_nmea_time(const char *time_str) {
     }
     
     // Get current date
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    struct tm *tm_info = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
     
     // Set time components
     tm_info->tm_hour = hours;
     tm_info->tm_min = minutes;
     tm_info->tm_sec = seconds;
     
-    return mktime(tm_info\n"\n"\n"\n"\n"\n"\n"\n");
+    return mktime(tm_info);
 }
 
 // Parse NMEA date and time
@@ -576,7 +576,7 @@ static time_t parse_nmea_datetime(const char *time_str, const char *date_str) {
     tm_info.tm_min = minutes;
     tm_info.tm_sec = seconds;
     
-    return mktime(&tm_info\n"\n"\n"\n"\n"\n"\n"\n");
+    return mktime(&tm_info);
 }
 
 // Parse NMEA date and time with separate components
@@ -605,7 +605,7 @@ static time_t parse_nmea_datetime_zda(const char *time_str, const char *day_str,
     tm_info.tm_min = minutes;
     tm_info.tm_sec = seconds;
     
-    return mktime(&tm_info\n"\n"\n"\n"\n"\n"\n"\n");
+    return mktime(&tm_info);
 }
 
 // Estimate accuracy from HDOP value
@@ -664,7 +664,7 @@ int gps_nmea_set_config(const gps_nmea_config_t *config) {
     g_nmea_parser.min_sentence_length = config->min_sentence_length;
     g_nmea_parser.max_satellites = config->max_satellites;
     
-    printf("INFO: "NMEA parser configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("NMEA parser configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -675,7 +675,7 @@ int gps_nmea_set_enabled(bool enabled) {
     }
     
     g_nmea_parser.enabled = enabled;
-    printf("INFO: "NMEA parser %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("NMEA parser %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -690,7 +690,7 @@ int gps_nmea_reset_statistics(void) {
     g_nmea_parser.failed_parses = 0;
     g_nmea_parser.last_parse = 0;
     
-    printf("INFO: "NMEA parser statistics reset"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("NMEA parser statistics reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -701,5 +701,5 @@ void gps_nmea_cleanup(void) {
     }
     
     g_nmea_initialized = false; // Use configurable setting
-    printf("INFO: "NMEA parser cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("NMEA parser cleaned up");
 }

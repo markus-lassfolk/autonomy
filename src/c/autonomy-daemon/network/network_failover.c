@@ -20,11 +20,11 @@ static network_failover_t g_failover = {0};
 static pthread_mutex_t g_failover_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations
-static int find_best_interface(void\n"\n"\n"\n"\n"\n"\n"\n");
-static int perform_failover(int target_interface\n"\n"\n"\n"\n"\n"\n"\n");
-static int activate_interface(int interface_index\n"\n"\n"\n"\n"\n"\n"\n");
-static int deactivate_interface_routing(int interface_index\n"\n"\n"\n"\n"\n"\n"\n");
-static int activate_interface_routing(int interface_index\n"\n"\n"\n"\n"\n"\n"\n");
+static int find_best_interface(void);
+static int perform_failover(int target_interface);
+static int activate_interface(int interface_index);
+static int deactivate_interface_routing(int interface_index);
+static int activate_interface_routing(int interface_index);
 static bool g_failover_initialized = false; // Use configurable setting
 static pthread_t g_failover_thread = 0; // Use configurable count // Use configurable value
 static bool g_failover_thread_running = false; // Use configurable setting
@@ -33,19 +33,19 @@ static bool g_failover_thread_running = false; // Use configurable setting
 // Configuration values are loaded from g_config (UCI system)
 
 // Forward declarations
-void* failover_monitor_thread(void *arg\n"\n"\n"\n"\n"\n"\n"\n");
+void* failover_monitor_thread(void *arg);
 
 // Initialize network failover system
 int network_failover_init(void) {
     if (g_failover_initialized) {
-        printf("WARN: "Network failover already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Network failover already initialized");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_failover_mutex);
     
     // Initialize failover state
-    memset(&g_failover, 0, sizeof(network_failover_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_failover, 0, sizeof(network_failover_t));
     g_failover.enabled = true; // Use configurable network failover enabled
     g_failover.auto_failover = g_config.auto_failover;
     g_failover.health_threshold = 70.0f; // Use configurable threshold
@@ -59,33 +59,33 @@ int network_failover_init(void) {
     g_failover.total_failovers = 0;
     
     g_failover_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_failover_mutex);
     
-    printf("INFO: "Network failover system initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network failover system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
 // Start failover monitoring thread
 int network_failover_start_monitoring(void) {
     if (!g_failover_initialized) {
-        printf("ERROR: "Network failover not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Network failover not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     if (g_failover_thread_running) {
-        printf("WARN: "Failover monitoring already running"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failover monitoring already running");
         return AUTONOMY_SUCCESS;
     }
     
     // Create monitoring thread
-    int ret = pthread_create(&g_failover_thread, NULL, failover_monitor_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = pthread_create(&g_failover_thread, NULL, failover_monitor_thread, NULL);
     if (ret != 0) {
-        printf("ERROR: "Failed to create failover monitoring thread"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to create failover monitoring thread");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     g_failover_thread_running = true; // Use configurable setting
-    printf("INFO: "Network failover monitoring started"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network failover monitoring started");
     
     return AUTONOMY_SUCCESS;
 }
@@ -99,30 +99,30 @@ void network_failover_stop_monitoring(void) {
     g_failover_thread_running = false; // Use configurable setting
     
     if (g_failover_thread != 0) {
-        pthread_join(g_failover_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_join(g_failover_thread, NULL);
         g_failover_thread = 0; // Use configurable count // Use configurable value
     }
     
-    printf("INFO: "Network failover monitoring stopped"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network failover monitoring stopped");
 }
 
 // Failover monitoring thread
 void* failover_monitor_thread(void *arg) {
     (void)arg;
     
-    printf("INFO: "Failover monitoring thread started"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Failover monitoring thread started");
     
     while (g_failover_thread_running) {
         // Check interface health
-        network_failover_check_health(\n"\n"\n"\n"\n"\n"\n"\n");
+        network_failover_check_health();
         
         // Sleep for check interval
         for (int i = 0; i < g_failover.check_interval && g_failover_thread_running; i++) {
-            sleep(1\n"\n"\n"\n"\n"\n"\n"\n");
+            sleep(1);
         }
     }
     
-    printf("INFO: "Failover monitoring thread stopped"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Failover monitoring thread stopped");
     return NULL;
 }
 
@@ -132,35 +132,35 @@ int network_failover_check_health(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_failover_mutex);
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     // Check if failover is already in progress
     if (g_failover.failover_in_progress) {
         // Check if failover timeout has expired
         if ((now - g_failover.last_failover) > g_failover.failover_timeout) {
             g_failover.failover_in_progress = false;
-            printf("INFO: "Failover timeout expired, allowing new failover"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_INFO_MSG("Failover timeout expired, allowing new failover");
         } else {
-            pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(&g_failover_mutex);
             return AUTONOMY_SUCCESS;
         }
     }
     
     // Find the best interface
-    int best_interface = find_best_interface(\n"\n"\n"\n"\n"\n"\n"\n");
+    int best_interface = find_best_interface();
     
     if (best_interface >= 0 && best_interface != g_failover.active_interface_index) {
         // Check if current interface is below failover threshold
         if (g_failover.active_interface_index >= 0) {
             network_interface_t *current = &g_failover.interfaces[g_failover.active_interface_index];
             if (current->metrics.overall_health_score < g_failover.failover_threshold) {
-                printf("WARN: "Interface %s health below threshold (%.1f%% < %.1f%%), triggering failover",
-                          current->name, current->metrics.overall_health_score, g_failover.failover_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+                LOGX_WARN_MSG("Interface %s health below threshold (%.1f%% < %.1f%%), triggering failover",
+                          current->name, current->metrics.overall_health_score, g_failover.failover_threshold);
                 
                 // Trigger failover
-                int ret = perform_failover(best_interface\n"\n"\n"\n"\n"\n"\n"\n");
+                int ret = perform_failover(best_interface);
                 if (ret == AUTONOMY_SUCCESS) {
                     g_failover.failover_in_progress = true;
                     g_failover.last_failover = now;
@@ -169,17 +169,17 @@ int network_failover_check_health(void) {
             }
         } else {
             // No active interface, activate the best one
-            printf("INFO: "No active interface, activating best interface: %s",
-                      g_failover.interfaces[best_interface].name\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_INFO_MSG("No active interface, activating best interface: %s",
+                      g_failover.interfaces[best_interface].name);
             
-            int ret = activate_interface(best_interface\n"\n"\n"\n"\n"\n"\n"\n");
+            int ret = activate_interface(best_interface);
             if (ret == AUTONOMY_SUCCESS) {
                 g_failover.active_interface_index = best_interface;
             }
         }
     }
     
-    pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_failover_mutex);
     return AUTONOMY_SUCCESS;
 }
 
@@ -198,7 +198,7 @@ int find_best_interface(void) {
         
         // Apply MWAN3 filtering - only include interfaces tracked by MWAN3
         if (!should_include_in_failover(iface)) {
-            printf("DEBUG: "Skipping interface %s - not suitable for failover (MWAN3 filtering)", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Skipping interface %s - not suitable for failover (MWAN3 filtering)", iface->name);
             continue;
         }
         
@@ -212,10 +212,10 @@ int find_best_interface(void) {
     }
     
     if (best_index >= 0) {
-        printf("DEBUG: "Selected best interface: %s (health: %.1f%%, MWAN3: %s)", 
+        LOGX_DEBUG_MSG("Selected best interface: %s (health: %.1f%%, MWAN3: %s)", 
                       g_failover.interfaces[best_index].name, 
                       best_score,
-                      g_failover.interfaces[best_index].mwan3_tracking_enabled ? "tracked" : "not tracked"\n"\n"\n"\n"\n"\n"\n"\n");
+                      g_failover.interfaces[best_index].mwan3_tracking_enabled ? "tracked" : "not tracked");
     }
     
     return best_index;
@@ -224,34 +224,34 @@ int find_best_interface(void) {
 // Perform failover to specified interface
 int perform_failover(int target_interface) {
     if (target_interface < 0 || target_interface >= g_failover.interface_count) {
-        printf("ERROR: "Invalid target interface index: %d", target_interface\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Invalid target interface index: %d", target_interface);
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     network_interface_t *target = &g_failover.interfaces[target_interface];
     
-    printf("INFO: "Performing failover to interface: %s (health: %.1f%%)",
-              target->name, target->metrics.overall_health_score\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Performing failover to interface: %s (health: %.1f%%)",
+              target->name, target->metrics.overall_health_score);
     
     // Deactivate current interface
     if (g_failover.active_interface_index >= 0) {
         network_interface_t *current = &g_failover.interfaces[g_failover.active_interface_index];
-        printf("INFO: "Deactivating current interface: %s", current->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("Deactivating current interface: %s", current->name);
         
         // Update routing (this would integrate with MWAN3)
         if (deactivate_interface_routing(g_failover.active_interface_index) != AUTONOMY_SUCCESS) {
-            printf("WARN: "Failed to deactivate routing for interface: %s", current->name\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_WARN_MSG("Failed to deactivate routing for interface: %s", current->name);
         }
     }
     
     // Activate target interface
-    int ret = activate_interface(target_interface\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = activate_interface(target_interface);
     if (ret == AUTONOMY_SUCCESS) {
         g_failover.active_interface_index = target_interface;
-        printf("INFO: "Failover completed successfully to interface: %s", target->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("Failover completed successfully to interface: %s", target->name);
         return AUTONOMY_SUCCESS;
     } else {
-        printf("ERROR: "Failed to activate target interface: %s", target->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to activate target interface: %s", target->name);
         return ret;
     }
 }
@@ -264,11 +264,11 @@ int activate_interface(int interface_index) {
     
     network_interface_t *iface = &g_failover.interfaces[interface_index];
     
-    printf("INFO: "Activating interface: %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Activating interface: %s", iface->name);
     
     // Update routing (this would integrate with MWAN3)
     if (activate_interface_routing(interface_index) != AUTONOMY_SUCCESS) {
-        printf("WARN: "Failed to activate routing for interface: %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to activate routing for interface: %s", iface->name);
         return AUTONOMY_ERROR_NETWORK;
     }
     
@@ -276,7 +276,7 @@ int activate_interface(int interface_index) {
     iface->up = true;
     iface->is_default_route = true;
     
-    printf("INFO: "Interface %s activated successfully", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Interface %s activated successfully", iface->name);
     return AUTONOMY_SUCCESS;
 }
 
@@ -295,57 +295,57 @@ int activate_interface_routing(int interface_index) {
     char mwan3_cmd[256];
     snprintf(mwan3_cmd, sizeof(mwan3_cmd), 
              "ubus call mwan3 set_status '{\"interface\":\"%s\",\"status\":\"online\"}'", 
-             iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+             iface->name);
     
-    printf("DEBUG: "Executing MWAN3 command: %s", mwan3_cmd\n"\n"\n"\n"\n"\n"\n"\n");
-    int mwan3_ret = system(mwan3_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Executing MWAN3 command: %s", mwan3_cmd);
+    int mwan3_ret = system(mwan3_cmd);
     if (mwan3_ret != 0) {
-        printf("WARN: "MWAN3 command failed for interface: %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("MWAN3 command failed for interface: %s", iface->name);
         ret = AUTONOMY_ERROR_NETWORK;
     }
     
     // 2. Bring interface up
     char ifup_cmd[256];
-    snprintf(ifup_cmd, sizeof(ifup_cmd), "ifup %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
-    int ifup_ret = system(ifup_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(ifup_cmd, sizeof(ifup_cmd), "ifup %s", iface->name);
+    int ifup_ret = system(ifup_cmd);
     if (ifup_ret != 0) {
-        printf("WARN: "Failed to bring up interface: %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to bring up interface: %s", iface->name);
         ret = AUTONOMY_ERROR_NETWORK;
     }
     
     // 3. Set interface as default route
     char route_cmd[256];
     snprintf(route_cmd, sizeof(route_cmd), 
-             "ip route add default dev %s metric 100", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
-    int route_ret = system(route_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+             "ip route add default dev %s metric 100", iface->name);
+    int route_ret = system(route_cmd);
     if (route_ret != 0) {
-        printf("DEBUG: "Default route already exists for interface: %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Default route already exists for interface: %s", iface->name);
     }
     
     // 4. Update UCI configuration
     char uci_cmd[256];
     snprintf(uci_cmd, sizeof(uci_cmd), 
-             "uci set network.%s.enabled=1 && uci commit network", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
-    int uci_ret = system(uci_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+             "uci set network.%s.enabled=1 && uci commit network", iface->name);
+    int uci_ret = system(uci_cmd);
     if (uci_ret != 0) {
-        printf("WARN: "Failed to update UCI configuration for interface: %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to update UCI configuration for interface: %s", iface->name);
     }
     
     // 5. Reload network configuration
-    int reload_ret = system("/etc/init.d/network reload"\n"\n"\n"\n"\n"\n"\n"\n");
+    int reload_ret = system("/etc/init.d/network reload");
     if (reload_ret != 0) {
-        printf("WARN: "Failed to reload network configuration"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to reload network configuration");
     }
     
     // 6. Verify interface is active
     char verify_cmd[256];
     snprintf(verify_cmd, sizeof(verify_cmd), 
-             "ip link show %s | grep -q 'state UP'", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
-    int verify_ret = system(verify_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+             "ip link show %s | grep -q 'state UP'", iface->name);
+    int verify_ret = system(verify_cmd);
     if (verify_ret == 0) {
-        printf("INFO: "Interface %s activated successfully", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("Interface %s activated successfully", iface->name);
     } else {
-        printf("ERROR: "Interface %s activation verification failed", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Interface %s activation verification failed", iface->name);
         ret = AUTONOMY_ERROR_NETWORK;
     }
     
@@ -367,65 +367,65 @@ int deactivate_interface_routing(int interface_index) {
     char mwan3_cmd[256];
     snprintf(mwan3_cmd, sizeof(mwan3_cmd), 
              "ubus call mwan3 set_status '{\"interface\":\"%s\",\"status\":\"offline\"}'", 
-             iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+             iface->name);
     
-    printf("DEBUG: "Executing MWAN3 command: %s", mwan3_cmd\n"\n"\n"\n"\n"\n"\n"\n");
-    int mwan3_ret = system(mwan3_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Executing MWAN3 command: %s", mwan3_cmd);
+    int mwan3_ret = system(mwan3_cmd);
     if (mwan3_ret != 0) {
-        printf("WARN: "MWAN3 command failed for interface: %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("MWAN3 command failed for interface: %s", iface->name);
         ret = AUTONOMY_ERROR_NETWORK;
     }
     
     // 2. Remove default route for this interface
     char route_cmd[256];
     snprintf(route_cmd, sizeof(route_cmd), 
-             "ip route del default dev %s metric 100", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
-    int route_ret = system(route_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+             "ip route del default dev %s metric 100", iface->name);
+    int route_ret = system(route_cmd);
     if (route_ret != 0) {
-        printf("DEBUG: "No default route to remove for interface: %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("No default route to remove for interface: %s", iface->name);
     }
     
     // 3. Bring interface down
     char ifdown_cmd[256];
-    snprintf(ifdown_cmd, sizeof(ifdown_cmd), "ifdown %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
-    int ifdown_ret = system(ifdown_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(ifdown_cmd, sizeof(ifdown_cmd), "ifdown %s", iface->name);
+    int ifdown_ret = system(ifdown_cmd);
     if (ifdown_ret != 0) {
-        printf("WARN: "Failed to bring down interface: %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to bring down interface: %s", iface->name);
         ret = AUTONOMY_ERROR_NETWORK;
     }
     
     // 4. Update UCI configuration
     char uci_cmd[256];
     snprintf(uci_cmd, sizeof(uci_cmd), 
-             "uci set network.%s.enabled=0 && uci commit network", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
-    int uci_ret = system(uci_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+             "uci set network.%s.enabled=0 && uci commit network", iface->name);
+    int uci_ret = system(uci_cmd);
     if (uci_ret != 0) {
-        printf("WARN: "Failed to update UCI configuration for interface: %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to update UCI configuration for interface: %s", iface->name);
     }
     
     // 5. Flush interface routes
     char flush_cmd[256];
-    snprintf(flush_cmd, sizeof(flush_cmd), "ip route flush dev %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
-    int flush_ret = system(flush_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(flush_cmd, sizeof(flush_cmd), "ip route flush dev %s", iface->name);
+    int flush_ret = system(flush_cmd);
     if (flush_ret != 0) {
-        printf("DEBUG: "No routes to flush for interface: %s", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("No routes to flush for interface: %s", iface->name);
     }
     
     // 6. Reload network configuration
-    int reload_ret = system("/etc/init.d/network reload"\n"\n"\n"\n"\n"\n"\n"\n");
+    int reload_ret = system("/etc/init.d/network reload");
     if (reload_ret != 0) {
-        printf("WARN: "Failed to reload network configuration"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to reload network configuration");
     }
     
     // 7. Verify interface is inactive
     char verify_cmd[256];
     snprintf(verify_cmd, sizeof(verify_cmd), 
-             "ip link show %s | grep -q 'state DOWN'", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
-    int verify_ret = system(verify_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+             "ip link show %s | grep -q 'state DOWN'", iface->name);
+    int verify_ret = system(verify_cmd);
     if (verify_ret == 0) {
-        printf("INFO: "Interface %s deactivated successfully", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("Interface %s deactivated successfully", iface->name);
     } else {
-        printf("ERROR: "Interface %s deactivation verification failed", iface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Interface %s deactivation verification failed", iface->name);
         ret = AUTONOMY_ERROR_NETWORK;
     }
     
@@ -438,37 +438,37 @@ int network_failover_add_interface(const network_interface_t *interface) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_failover_mutex);
     
     if (g_failover.interface_count >= MAX_INTERFACES) {
-        pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("ERROR: "Maximum number of interfaces reached"\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_failover_mutex);
+        LOGX_ERROR_MSG("Maximum number of interfaces reached");
         return AUTONOMY_ERROR_ALREADY_EXISTS;
     }
     
     // Check if interface already exists
     for (int i = 0; i < g_failover.interface_count; i++) {
         if (strcmp(g_failover.interfaces[i].name, interface->name) == 0) {
-            pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-            printf("WARN: "Interface %s already exists in failover system", interface->name\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(&g_failover_mutex);
+            LOGX_WARN_MSG("Interface %s already exists in failover system", interface->name);
             return AUTONOMY_ERROR_ALREADY_EXISTS;
         }
     }
     
     // Add interface
     int index = g_failover.interface_count;
-    memcpy(&g_failover.interfaces[index], interface, sizeof(network_interface_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(&g_failover.interfaces[index], interface, sizeof(network_interface_t));
     g_failover.interface_count++;
     
     // If this is the first interface, make it active
     if (g_failover.active_interface_index == -1 && interface->enabled) {
         g_failover.active_interface_index = index;
-        printf("INFO: "First interface %s set as active", interface->name\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("First interface %s set as active", interface->name);
     }
     
-    pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_failover_mutex);
     
-    printf("INFO: "Interface %s added to failover system", interface->name\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Interface %s added to failover system", interface->name);
     return AUTONOMY_SUCCESS;
 }
 
@@ -478,20 +478,20 @@ int network_failover_remove_interface(const char *interface_name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_failover_mutex);
     
     for (int i = 0; i < g_failover.interface_count; i++) {
         if (strcmp(g_failover.interfaces[i].name, interface_name) == 0) {
             // If this is the active interface, we need to failover first
             if (i == g_failover.active_interface_index) {
-                printf("WARN: "Cannot remove active interface %s, failover required first", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
-                pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+                LOGX_WARN_MSG("Cannot remove active interface %s, failover required first", interface_name);
+                pthread_mutex_unlock(&g_failover_mutex);
                 return AUTONOMY_ERROR_INVALID_PARAM;
             }
             
             // Remove interface by shifting remaining interfaces
             for (int j = i; j < g_failover.interface_count - 1; j++) {
-                memcpy(&g_failover.interfaces[j], &g_failover.interfaces[j + 1], sizeof(network_interface_t)\n"\n"\n"\n"\n"\n"\n"\n");
+                memcpy(&g_failover.interfaces[j], &g_failover.interfaces[j + 1], sizeof(network_interface_t));
             }
             g_failover.interface_count--;
             
@@ -500,13 +500,13 @@ int network_failover_remove_interface(const char *interface_name) {
                 g_failover.active_interface_index--;
             }
             
-            pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-            printf("INFO: "Interface %s removed from failover system", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(&g_failover_mutex);
+            LOGX_INFO_MSG("Interface %s removed from failover system", interface_name);
             return AUTONOMY_SUCCESS;
         }
     }
     
-    pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_failover_mutex);
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -516,7 +516,7 @@ int network_failover_force_failover(const char *interface_name) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_failover_mutex);
     
     // Find interface
     int target_index = -1;
@@ -528,35 +528,35 @@ int network_failover_force_failover(const char *interface_name) {
     }
     
     if (target_index == -1) {
-        pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("ERROR: "Interface %s not found in failover system", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_failover_mutex);
+        LOGX_ERROR_MSG("Interface %s not found in failover system", interface_name);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     // Check if interface is enabled and healthy
     network_interface_t *target = &g_failover.interfaces[target_index];
     if (!target->enabled) {
-        pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("ERROR: "Interface %s is disabled", interface_name\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_failover_mutex);
+        LOGX_ERROR_MSG("Interface %s is disabled", interface_name);
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     if (target->metrics.overall_health_score < g_failover.health_threshold) {
-        pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("WARN: "Interface %s health below threshold (%.1f%% < %.1f%%)", 
-                  interface_name, target->metrics.overall_health_score, g_failover.health_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_failover_mutex);
+        LOGX_WARN_MSG("Interface %s health below threshold (%.1f%% < %.1f%%)", 
+                  interface_name, target->metrics.overall_health_score, g_failover.health_threshold);
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
     // Perform failover
-    int ret = perform_failover(target_index\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = perform_failover(target_index);
     if (ret == AUTONOMY_SUCCESS) {
         g_failover.failover_in_progress = true;
-        g_failover.last_failover = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        g_failover.last_failover = time(NULL);
         g_failover.total_failovers++;
     }
     
-    pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_failover_mutex);
     return ret;
 }
 
@@ -566,7 +566,7 @@ int network_failover_get_status(network_failover_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_failover_mutex);
     
     status->enabled = g_failover.enabled;
     status->auto_failover = g_failover.auto_failover;
@@ -581,7 +581,7 @@ int network_failover_get_status(network_failover_status_t *status) {
     status->total_failovers = g_failover.total_failovers;
     status->interface_count = g_failover.interface_count;
     
-    pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_failover_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -592,7 +592,7 @@ int network_failover_set_config(const network_failover_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_failover_mutex);
     
     if (config->health_threshold > 0) {
         g_failover.health_threshold = config->health_threshold;
@@ -616,9 +616,9 @@ int network_failover_set_config(const network_failover_config_t *config) {
     
     g_failover.auto_failover = config->auto_failover;
     
-    pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_failover_mutex);
     
-    printf("INFO: "Failover configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Failover configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -628,16 +628,16 @@ int network_failover_update_from_uci_config(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_failover_mutex);
     
     // Update from global UCI configuration
     g_failover.auto_failover = g_config.auto_failover;
     g_failover.failover_timeout = g_config.failover_timeout;
     g_failover.check_interval = g_config.network_check_interval;
     
-    pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_failover_mutex);
     
-    printf("INFO: "Network failover configuration updated from UCI config"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network failover configuration updated from UCI config");
     return AUTONOMY_SUCCESS;
 }
 
@@ -647,11 +647,11 @@ int network_failover_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_failover_mutex);
     g_failover.enabled = enabled;
-    pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_failover_mutex);
     
-    printf("INFO: "Network failover system %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network failover system %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -662,13 +662,13 @@ void network_failover_cleanup(void) {
     }
     
     // Stop monitoring thread
-    network_failover_stop_monitoring(\n"\n"\n"\n"\n"\n"\n"\n");
+    network_failover_stop_monitoring();
     
-    pthread_mutex_lock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_failover_mutex);
     g_failover_initialized = false; // Use configurable setting
-    pthread_mutex_unlock(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_failover_mutex);
     
-    pthread_mutex_destroy(&g_failover_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_failover_mutex);
     
-    printf("INFO: "Network failover system cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network failover system cleaned up");
 }

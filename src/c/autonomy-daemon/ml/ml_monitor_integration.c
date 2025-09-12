@@ -19,54 +19,54 @@
 #endif
 
 // Forward declarations for functions we need
-extern int gps_get_current_location(gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-extern int gps_comprehensive_collect_best_gps(gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+extern int gps_get_current_location(gps_data_t *gps_data);
+extern int gps_comprehensive_collect_best_gps(gps_data_t *gps_data);
 
 // Forward declarations
-static int ml_monitor_collect_starlink_data(starlink_status_response_t *starlink_data\n"\n"\n"\n"\n"\n"\n"\n");
-static int ml_monitor_collect_gps_data(gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-static int ml_monitor_collect_weather_data(gps_weather_current_t *weather_data, double lat, double lon\n"\n"\n"\n"\n"\n"\n"\n");
-static void ml_monitor_on_outage_prediction(uint8_t probability, uint8_t confidence, time_t when, void *user_data\n"\n"\n"\n"\n"\n"\n"\n");
-static void ml_monitor_on_anomaly_detected(uint8_t score, const ml_observation_t *observation, void *user_data\n"\n"\n"\n"\n"\n"\n"\n");
+static int ml_monitor_collect_starlink_data(starlink_status_response_t *starlink_data);
+static int ml_monitor_collect_gps_data(gps_data_t *gps_data);
+static int ml_monitor_collect_weather_data(gps_weather_current_t *weather_data, double lat, double lon);
+static void ml_monitor_on_outage_prediction(uint8_t probability, uint8_t confidence, time_t when, void *user_data);
+static void ml_monitor_on_anomaly_detected(uint8_t score, const ml_observation_t *observation, void *user_data);
 
 // Enhanced data collection with real data sources
 int ml_monitor_collect_observation(ml_monitor_t *monitor) {
     if (!monitor || !monitor->initialized) return ML_MONITOR_ERROR_NOT_INITIALIZED;
     
-    printf("DEBUG: "Collecting ML observation from real data sources"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Collecting ML observation from real data sources");
     
     ml_observation_t observation;
-    memset(&observation, 0, sizeof(observation)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&observation, 0, sizeof(observation));
     
     // Set timestamp
-    observation.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    observation.timestamp = time(NULL);
     
     // Collect Starlink data
     starlink_status_response_t starlink_data;
-    int starlink_result = ml_monitor_collect_starlink_data(&starlink_data\n"\n"\n"\n"\n"\n"\n"\n");
+    int starlink_result = ml_monitor_collect_starlink_data(&starlink_data);
     
     // Collect GPS data
     gps_data_t gps_data;
-    int gps_result = ml_monitor_collect_gps_data(&gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+    int gps_result = ml_monitor_collect_gps_data(&gps_data);
     
     // Collect weather data (if GPS is available)
     gps_weather_current_t weather_data;
     int weather_result = AUTONOMY_ERROR;
     if (gps_result == AUTONOMY_SUCCESS && gps_data.valid) {
-        weather_result = ml_monitor_collect_weather_data(&weather_data, gps_data.lat, gps_data.lon\n"\n"\n"\n"\n"\n"\n"\n");
+        weather_result = ml_monitor_collect_weather_data(&weather_data, gps_data.lat, gps_data.lon);
     }
     
     // Convert collected data to ML observation
     if (starlink_result == AUTONOMY_SUCCESS) {
         // Starlink metrics
-        observation.snr_x100 = (uint16_t)(starlink_data.signal_quality.snr * 100\n"\n"\n"\n"\n"\n"\n"\n");
+        observation.snr_x100 = (uint16_t)(starlink_data.signal_quality.snr * 100);
         observation.latency_ms = (uint16_t)starlink_data.network_perf.pop_ping_latency_ms;
-        observation.packet_loss_pct = (uint8_t)(starlink_data.network_perf.pop_ping_drop_rate * 100\n"\n"\n"\n"\n"\n"\n"\n");
-        observation.obstruction_pct = (uint8_t)(starlink_data.obstruction_stats.fraction_obstructed * 100\n"\n"\n"\n"\n"\n"\n"\n");
+        observation.packet_loss_pct = (uint8_t)(starlink_data.network_perf.pop_ping_drop_rate * 100);
+        observation.obstruction_pct = (uint8_t)(starlink_data.obstruction_stats.fraction_obstructed * 100);
         
         // Copy wedge obstructions
         for (int i = 0; i < 12 && i < sizeof(observation.wedge_obstruction); i++) {
-            observation.wedge_obstruction[i] = (uint8_t)(starlink_data.obstruction_stats.wedge_fraction_obstructed[i] * 100\n"\n"\n"\n"\n"\n"\n"\n");
+            observation.wedge_obstruction[i] = (uint8_t)(starlink_data.obstruction_stats.wedge_fraction_obstructed[i] * 100);
         }
         
         // Positioning
@@ -84,10 +84,10 @@ int ml_monitor_collect_observation(ml_monitor_t *monitor) {
             observation.flags |= ML_OBS_FLAG_DEGRADED;
         }
         
-        printf("DEBUG: "Starlink data collected: SNR=%.2f dB, latency=%u ms, obstruction=%u%%",
-                  starlink_data.signal_quality.snr, observation.latency_ms, observation.obstruction_pct\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Starlink data collected: SNR=%.2f dB, latency=%u ms, obstruction=%u%%",
+                  starlink_data.signal_quality.snr, observation.latency_ms, observation.obstruction_pct);
     } else {
-        printf("WARN: "Failed to collect Starlink data, using defaults"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to collect Starlink data, using defaults");
         // Use reasonable defaults for missing Starlink data
         observation.snr_x100 = 800; // 8.0 dB
         observation.latency_ms = 50;
@@ -98,20 +98,20 @@ int ml_monitor_collect_observation(ml_monitor_t *monitor) {
     
     // GPS/Location data
     if (gps_result == AUTONOMY_SUCCESS && gps_data.valid) {
-        observation.latitude_e7 = (int32_t)(gps_data.lat * 10000000\n"\n"\n"\n"\n"\n"\n"\n");
-        observation.longitude_e7 = (int32_t)(gps_data.lon * 10000000\n"\n"\n"\n"\n"\n"\n"\n");
+        observation.latitude_e7 = (int32_t)(gps_data.lat * 10000000);
+        observation.longitude_e7 = (int32_t)(gps_data.lon * 10000000);
         observation.altitude_m = (uint16_t)gps_data.altitude;
         observation.speed_kmh = (uint8_t)(gps_data.speed * 3.6); // Convert m/s to km/h
-        observation.heading_deg_div2 = (uint8_t)(gps_data.heading / 2\n"\n"\n"\n"\n"\n"\n"\n");
+        observation.heading_deg_div2 = (uint8_t)(gps_data.heading / 2);
         
         if (gps_data.speed > 1.0) { // Moving threshold
             observation.flags |= ML_OBS_FLAG_MOVING;
         }
         
-        printf("DEBUG: "GPS data collected: lat=%.6f, lon=%.6f, speed=%.1f km/h",
-                  gps_data.lat, gps_data.lon, gps_data.speed * 3.6\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("GPS data collected: lat=%.6f, lon=%.6f, speed=%.1f km/h",
+                  gps_data.lat, gps_data.lon, gps_data.speed * 3.6);
     } else {
-        printf("DEBUG: "GPS data not available, using default location"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("GPS data not available, using default location");
         // Use default location if GPS unavailable
         observation.latitude_e7 = 0;
         observation.longitude_e7 = 0;
@@ -149,10 +149,10 @@ int ml_monitor_collect_observation(ml_monitor_t *monitor) {
             observation.flags |= ML_OBS_FLAG_WEATHER_IMPACT;
         }
         
-        printf("DEBUG: "Weather data collected: temp=%.1fC, humidity=%u%%, pressure=%u hPa",
-                  weather_data.temperature, observation.humidity_pct, observation.pressure_hpa\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Weather data collected: temp=%.1fC, humidity=%u%%, pressure=%u hPa",
+                  weather_data.temperature, observation.humidity_pct, observation.pressure_hpa);
     } else {
-        printf("DEBUG: "Weather data not available, using defaults"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Weather data not available, using defaults");
         // Use reasonable defaults for missing weather data
         observation.temperature_c = 20; // 20C
         observation.humidity_pct = 50;   // 50%
@@ -163,30 +163,30 @@ int ml_monitor_collect_observation(ml_monitor_t *monitor) {
     }
     
     // Add observation to ML monitor
-    int add_result = ml_monitor_add_observation(monitor, &observation\n"\n"\n"\n"\n"\n"\n"\n");
+    int add_result = ml_monitor_add_observation(monitor, &observation);
     if (add_result != ML_MONITOR_SUCCESS) {
-        printf("ERROR: "Failed to add observation to ML monitor: %d", add_result\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to add observation to ML monitor: %d", add_result);
         return add_result;
     }
     
     // Update learning models
-    ml_monitor_update_sky_grid(monitor, &observation\n"\n"\n"\n"\n"\n"\n"\n");
-    ml_monitor_update_location_learning(monitor, &observation\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_update_sky_grid(monitor, &observation);
+    ml_monitor_update_location_learning(monitor, &observation);
     
     // Phase 3: Update with enhanced learning
-    ml_monitor_update_with_phase3_enhancements(monitor, &observation\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_update_with_phase3_enhancements(monitor, &observation);
     
     // Phase 4: Update with ensemble methods and validation
-    ml_monitor_update_with_phase4_enhancements(monitor, &observation\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_update_with_phase4_enhancements(monitor, &observation);
     
     // Phase 5: Update with mobile optimization
-    ml_monitor_update_with_phase5_mobile_optimization(monitor, &observation\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_update_with_phase5_mobile_optimization(monitor, &observation);
     
     // Phase 6: Update with self-optimization
-    ml_monitor_update_with_phase6_self_optimization(monitor, &observation\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_update_with_phase6_self_optimization(monitor, &observation);
     
     // Phase 7: Update with multi-interface intelligence
-    ml_monitor_update_with_phase7_multi_interface(monitor, &observation\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_update_with_phase7_multi_interface(monitor, &observation);
     
     // Make predictions if we have enough data
     if (monitor->state->total_observations > 10) {
@@ -195,7 +195,7 @@ int ml_monitor_collect_observation(ml_monitor_t *monitor) {
         int ensemble_result = ml_monitor_predict_ensemble(monitor, &observation, 
                                                         &ensemble_probability, 
                                                         &ensemble_confidence, 
-                                                        &ensemble_cause\n"\n"\n"\n"\n"\n"\n"\n");
+                                                        &ensemble_cause);
         
         if (ensemble_result == ML_MONITOR_SUCCESS) {
             // Update ML features with ensemble results
@@ -205,10 +205,10 @@ int ml_monitor_collect_observation(ml_monitor_t *monitor) {
         } else {
             // Fallback to individual models
             uint8_t knn_confidence;
-            uint8_t knn_prediction = ml_monitor_predict_outage_knn(monitor, &observation, &knn_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+            uint8_t knn_prediction = ml_monitor_predict_outage_knn(monitor, &observation, &knn_confidence);
             
             uint8_t nn_output[8];
-            ml_monitor_predict_neural_network(monitor, &observation, nn_output\n"\n"\n"\n"\n"\n"\n"\n");
+            ml_monitor_predict_neural_network(monitor, &observation, nn_output);
             
             observation.outage_probability = nn_output[0];
             observation.outage_type = knn_prediction;
@@ -223,11 +223,11 @@ int ml_monitor_collect_observation(ml_monitor_t *monitor) {
             if (monitor->outage_prediction_callback) {
                 monitor->outage_prediction_callback(ensemble_probability, ensemble_confidence, 
                                                   time(NULL) + 900, // 15 minutes ahead
-                                                  monitor->callback_user_data\n"\n"\n"\n"\n"\n"\n"\n");
+                                                  monitor->callback_user_data);
             }
             
-            printf("INFO: "High-confidence outage prediction: %u%% probability, %u%% confidence",
-                     ensemble_probability, ensemble_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_INFO_MSG("High-confidence outage prediction: %u%% probability, %u%% confidence",
+                     ensemble_probability, ensemble_confidence);
         }
         
         // Check for anomalies (but not in test environment with zero values)
@@ -238,19 +238,19 @@ int ml_monitor_collect_observation(ml_monitor_t *monitor) {
             
             if (monitor->anomaly_detected_callback) {
                 monitor->anomaly_detected_callback(observation.anomaly_score, &observation, 
-                                                 monitor->callback_user_data\n"\n"\n"\n"\n"\n"\n"\n");
+                                                 monitor->callback_user_data);
             }
             
-            printf("WARN: "Anomaly detected: SNR=%.2f, latency=%u ms, loss=%u%%",
-                     observation.snr_x100 / 100.0, observation.latency_ms, observation.packet_loss_pct\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_WARN_MSG("Anomaly detected: SNR=%.2f, latency=%u ms, loss=%u%%",
+                     observation.snr_x100 / 100.0, observation.latency_ms, observation.packet_loss_pct);
         } else if (observation.snr_x100 == 0 && observation.latency_ms == 0 && observation.packet_loss_pct == 0) {
             // Test environment with zero values - log as debug instead of warning
-            printf("DEBUG: "Test environment detected: SNR=%.2f, latency=%u ms, loss=%u%% (expected)",
-                     observation.snr_x100 / 100.0, observation.latency_ms, observation.packet_loss_pct\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Test environment detected: SNR=%.2f, latency=%u ms, loss=%u%% (expected)",
+                     observation.snr_x100 / 100.0, observation.latency_ms, observation.packet_loss_pct);
         }
     }
     
-    printf("DEBUG: "ML observation collected and processed successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("ML observation collected and processed successfully");
     return ML_MONITOR_SUCCESS;
 }
 
@@ -263,7 +263,7 @@ static int ml_monitor_collect_starlink_data(starlink_status_response_t *starlink
         starlink_comprehensive_status_t comprehensive_status;
         if (starlink_comprehensive_collect_all(&comprehensive_status) == AUTONOMY_SUCCESS) {
             // Convert comprehensive status to standard format
-            memset(starlink_data, 0, sizeof(starlink_status_response_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memset(starlink_data, 0, sizeof(starlink_status_response_t));
             
             // Copy relevant data from comprehensive status
             starlink_data->signal_quality.snr = 8.0; // Default SNR value
@@ -282,7 +282,7 @@ static int ml_monitor_collect_starlink_data(starlink_status_response_t *starlink
             
             starlink_data->gps_stats.gps_sats = comprehensive_status.gps_data.gps_satellites;
             
-            printf("DEBUG: "Collected Starlink data from comprehensive collector"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Collected Starlink data from comprehensive collector");
             return AUTONOMY_SUCCESS;
         }
     }
@@ -291,7 +291,7 @@ static int ml_monitor_collect_starlink_data(starlink_status_response_t *starlink
     starlink_collection_result_t collection_result;
     if (starlink_collect_data(&collection_result) == AUTONOMY_SUCCESS) {
         *starlink_data = collection_result.status;
-        printf("DEBUG: "Collected Starlink data from regular collector"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Collected Starlink data from regular collector");
         return AUTONOMY_SUCCESS;
     }
     
@@ -299,33 +299,33 @@ static int ml_monitor_collect_starlink_data(starlink_status_response_t *starlink
     extern starlink_grpc_collector_t g_starlink_grpc_collector;
     if (g_starlink_grpc_collector.enabled && g_starlink_grpc_collector.observation_count > 0) {
         // Get the latest observation from gRPC collector
-        pthread_mutex_lock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_lock(&g_starlink_grpc_collector.mutex);
         
         if (g_starlink_grpc_collector.observation_count > 0) {
             int latest_index = (g_starlink_grpc_collector.current_observation_index - 1 + MAX_OBSERVATIONS) % MAX_OBSERVATIONS;
             starlink_observation_t latest_obs = g_starlink_grpc_collector.observations[latest_index];
             
             // Convert to standard format
-            memset(starlink_data, 0, sizeof(starlink_status_response_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memset(starlink_data, 0, sizeof(starlink_status_response_t));
             starlink_data->signal_quality.snr = latest_obs.snr;
             starlink_data->network_perf.pop_ping_latency_ms = latest_obs.pop_ping_latency_ms;
             starlink_data->network_perf.pop_ping_drop_rate = latest_obs.pop_ping_drop_rate;
             starlink_data->obstruction_stats.fraction_obstructed = latest_obs.fraction_obstructed;
-            starlink_data->obstruction_stats.currently_obstructed = (latest_obs.fraction_obstructed > 0.1\n"\n"\n"\n"\n"\n"\n"\n");
+            starlink_data->obstruction_stats.currently_obstructed = (latest_obs.fraction_obstructed > 0.1);
             starlink_data->positioning.boresight_azimuth_deg = latest_obs.boresight_azimuth_deg;
             starlink_data->positioning.boresight_elevation_deg = latest_obs.boresight_elevation_deg;
             starlink_data->gps_stats.gps_sats = latest_obs.gps_satellites;
             
-            pthread_mutex_unlock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(&g_starlink_grpc_collector.mutex);
             
-            printf("DEBUG: "Collected Starlink data from gRPC collector"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Collected Starlink data from gRPC collector");
             return AUTONOMY_SUCCESS;
         }
         
-        pthread_mutex_unlock(&g_starlink_grpc_collector.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_starlink_grpc_collector.mutex);
     }
     
-    printf("WARN: "No Starlink data available from any collector"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_WARN_MSG("No Starlink data available from any collector");
     return AUTONOMY_ERROR_NO_DATA;
 }
 
@@ -335,17 +335,17 @@ static int ml_monitor_collect_gps_data(gps_data_t *gps_data) {
     
     // Try to get current GPS location from GPS manager
     if (gps_get_current_location(gps_data) == AUTONOMY_SUCCESS && gps_data->valid) {
-        printf("DEBUG: "Collected GPS data from GPS manager"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Collected GPS data from GPS manager");
         return AUTONOMY_SUCCESS;
     }
     
     // Try comprehensive GPS collection as fallback
     if (gps_comprehensive_collect_best_gps(gps_data) == AUTONOMY_SUCCESS && gps_data->valid) {
-        printf("DEBUG: "Collected GPS data from comprehensive GPS"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Collected GPS data from comprehensive GPS");
         return AUTONOMY_SUCCESS;
     }
     
-    printf("DEBUG: "No valid GPS data available"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("No valid GPS data available");
     return AUTONOMY_ERROR_NO_DATA;
 }
 
@@ -355,11 +355,11 @@ static int ml_monitor_collect_weather_data(gps_weather_current_t *weather_data, 
     
     // Try to get current weather data
     if (gps_weather_get_current(lat, lon, weather_data) == AUTONOMY_SUCCESS) {
-        printf("DEBUG: "Collected weather data from weather integration"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Collected weather data from weather integration");
         return AUTONOMY_SUCCESS;
     }
     
-    printf("DEBUG: "No weather data available for coordinates %.6f, %.6f", lat, lon\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("No weather data available for coordinates %.6f, %.6f", lat, lon);
     return AUTONOMY_ERROR_NO_DATA;
 }
 
@@ -368,44 +368,44 @@ static void* ml_monitor_collection_thread_enhanced(void *arg) {
     ml_monitor_t *monitor = (ml_monitor_t*)arg;
     if (!monitor) return NULL;
     
-    printf("INFO: "Enhanced ML monitor collection thread started with real data integration"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Enhanced ML monitor collection thread started with real data integration");
     
     // Set up prediction callbacks
-    ml_monitor_set_outage_prediction_callback(monitor, ml_monitor_on_outage_prediction, monitor\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_set_outage_prediction_callback(monitor, ml_monitor_on_outage_prediction, monitor);
     
     int collection_count = 0;
-    time_t last_sync = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t last_sync = time(NULL);
     
     while (!monitor->should_stop) {
         // Collect observation from real data sources
-        int result = ml_monitor_collect_observation(monitor\n"\n"\n"\n"\n"\n"\n"\n");
+        int result = ml_monitor_collect_observation(monitor);
         
         if (result == ML_MONITOR_SUCCESS) {
             collection_count++;
-            monitor->last_collection = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            monitor->last_collection = time(NULL);
             
             // Sync storage periodically
-            time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            time_t now = time(NULL);
             if (now - last_sync > monitor->config.storage_sync_interval_minutes * 60) {
-                ml_monitor_sync_storage(monitor\n"\n"\n"\n"\n"\n"\n"\n");
+                ml_monitor_sync_storage(monitor);
                 last_sync = now;
-                printf("DEBUG: "Synced ML storage to disk (%d collections)", collection_count\n"\n"\n"\n"\n"\n"\n"\n");
+                LOGX_DEBUG_MSG("Synced ML storage to disk (%d collections)", collection_count);
             }
             
             // Log progress periodically
             if (collection_count % 100 == 0) {
-                printf("INFO: "ML monitor collected %d observations, total: %u",
-                         collection_count, monitor->state->total_observations\n"\n"\n"\n"\n"\n"\n"\n");
+                LOGX_INFO_MSG("ML monitor collected %d observations, total: %u",
+                         collection_count, monitor->state->total_observations);
             }
         } else {
-            printf("WARN: "Failed to collect ML observation: %d", result\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_WARN_MSG("Failed to collect ML observation: %d", result);
         }
         
         // Sleep for collection interval
-        sleep(monitor->config.collection_interval_seconds\n"\n"\n"\n"\n"\n"\n"\n");
+        sleep(monitor->config.collection_interval_seconds);
     }
     
-    printf("INFO: "Enhanced ML monitor collection thread stopped after %d collections", collection_count\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Enhanced ML monitor collection thread stopped after %d collections", collection_count);
     return NULL;
 }
 
@@ -414,11 +414,11 @@ static void ml_monitor_on_outage_prediction(uint8_t probability, uint8_t confide
     ml_monitor_t *monitor = (ml_monitor_t*)user_data;
     if (!monitor) return;
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     int minutes_ahead = (when - now) / 60;
     
-    printf("INFO: " OUTAGE PREDICTION: %u%% probability in %d minutes (confidence: %u%%)",
-             probability, minutes_ahead, confidence\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG(" OUTAGE PREDICTION: %u%% probability in %d minutes (confidence: %u%%)",
+             probability, minutes_ahead, confidence);
     
     // Update performance statistics
     if (monitor->state) {
@@ -433,24 +433,24 @@ static void ml_monitor_on_outage_prediction(uint8_t probability, uint8_t confide
     char notify_cmd[256];
     snprintf(notify_cmd, sizeof(notify_cmd), 
             "ubus call system notify '{\"message\":\"ML predicted outage: %u%% probability in %d minutes\",\"level\":\"warning\"}'",
-            probability, minutes_ahead\n"\n"\n"\n"\n"\n"\n"\n");
-    extern int secure_exec_command(const char *command, exec_result_t *result\n"\n"\n"\n"\n"\n"\n"\n");
+            probability, minutes_ahead);
+    extern int secure_exec_command(const char *command, exec_result_t *result);
     exec_result_t notify_result;
-    secure_exec_command(notify_cmd, &notify_result\n"\n"\n"\n"\n"\n"\n"\n");
+    secure_exec_command(notify_cmd, &notify_result);
     
     // Log for analysis with structured data
-    printf("WARN: "OUTAGE_PREDICTION_EVENT: interface=starlink,probability=%u,confidence=%u,minutes_ahead=%d,timestamp=%ld",
-             probability, confidence, minutes_ahead, when\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_WARN_MSG("OUTAGE_PREDICTION_EVENT: interface=starlink,probability=%u,confidence=%u,minutes_ahead=%d,timestamp=%ld",
+             probability, confidence, minutes_ahead, when);
     
     // Trigger network optimization if high confidence
     if (confidence > 180) {
         char optimize_cmd[256];
         snprintf(optimize_cmd, sizeof(optimize_cmd), 
                 "ubus call network optimize '{\"reason\":\"ml_prediction\",\"probability\":%u,\"confidence\":%u}'",
-                probability, confidence\n"\n"\n"\n"\n"\n"\n"\n");
+                probability, confidence);
         exec_result_t optimize_result;
         if (secure_exec_command(optimize_cmd, &optimize_result) == AUTONOMY_SUCCESS && optimize_result.success) {
-            printf("INFO: "Triggered network optimization based on ML prediction"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_INFO_MSG("Triggered network optimization based on ML prediction");
         }
     }
 }
@@ -459,38 +459,38 @@ static void ml_monitor_on_outage_prediction(uint8_t probability, uint8_t confide
 static void ml_monitor_on_anomaly_detected(uint8_t score, const ml_observation_t *observation, void *user_data) {
     if (!observation) return;
     
-    printf("WARN: " ANOMALY DETECTED: Score=%u, SNR=%.2f dB, Latency=%u ms, Loss=%u%%",
-             score, observation->snr_x100 / 100.0, observation->latency_ms, observation->packet_loss_pct\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_WARN_MSG(" ANOMALY DETECTED: Score=%u, SNR=%.2f dB, Latency=%u ms, Loss=%u%%",
+             score, observation->snr_x100 / 100.0, observation->latency_ms, observation->packet_loss_pct);
     
     // Trigger real anomaly response actions
     // Alert administrators via UBUS
     char alert_cmd[512];
     snprintf(alert_cmd, sizeof(alert_cmd),
             "ubus call system alert '{\"type\":\"ml_anomaly\",\"score\":%u,\"snr\":%.2f,\"latency\":%u,\"loss\":%u,\"severity\":\"high\"}'",
-            score, observation->snr_x100 / 100.0, observation->latency_ms, observation->packet_loss_pct\n"\n"\n"\n"\n"\n"\n"\n");
+            score, observation->snr_x100 / 100.0, observation->latency_ms, observation->packet_loss_pct);
     exec_result_t alert_result;
-    secure_exec_command(alert_cmd, &alert_result\n"\n"\n"\n"\n"\n"\n"\n");
+    secure_exec_command(alert_cmd, &alert_result);
     
     // Log structured anomaly data
-    printf("WARN: "ANOMALY_DETECTION_EVENT: score=%u,snr_x100=%u,latency_ms=%u,packet_loss_pct=%u,timestamp=%u",
-             score, observation->snr_x100, observation->latency_ms, observation->packet_loss_pct, observation->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_WARN_MSG("ANOMALY_DETECTION_EVENT: score=%u,snr_x100=%u,latency_ms=%u,packet_loss_pct=%u,timestamp=%u",
+             score, observation->snr_x100, observation->latency_ms, observation->packet_loss_pct, observation->timestamp);
     
     // Increase monitoring frequency for anomaly investigation
     char monitor_cmd[256];
     snprintf(monitor_cmd, sizeof(monitor_cmd),
-            "ubus call ml_monitor set_config '{\"collection_interval_seconds\":5}'"\n"\n"\n"\n"\n"\n"\n"\n");
+            "ubus call ml_monitor set_config '{\"collection_interval_seconds\":5}'");
     exec_result_t monitor_result_exec;
-    int monitor_result = secure_exec_command(monitor_cmd, &monitor_result_exec\n"\n"\n"\n"\n"\n"\n"\n");
+    int monitor_result = secure_exec_command(monitor_cmd, &monitor_result_exec);
     if (monitor_result == 0) {
-        printf("INFO: "Increased monitoring frequency due to anomaly detection"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("Increased monitoring frequency due to anomaly detection");
     }
     
     // Trigger additional diagnostics collection
     char diag_cmd[256];
     snprintf(diag_cmd, sizeof(diag_cmd),
-            "ubus call starlink force_collect"\n"\n"\n"\n"\n"\n"\n"\n");
+            "ubus call starlink force_collect");
     exec_result_t diag_result;
-    secure_exec_command(diag_cmd, &diag_result\n"\n"\n"\n"\n"\n"\n"\n");
+    secure_exec_command(diag_cmd, &diag_result);
 }
 
 // Update location learning with real GPS data
@@ -504,8 +504,8 @@ int ml_monitor_update_location_learning(ml_monitor_t *monitor, const ml_observat
                                             observation->latitude_e7, observation->longitude_e7,
                                             monitor->config.location_change_threshold_meters)) {
         
-        printf("INFO: " Location changed: lat=%.6f, lon=%.6f", 
-                 observation->latitude_e7 / 10000000.0, observation->longitude_e7 / 10000000.0\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG(" Location changed: lat=%.6f, lon=%.6f", 
+                 observation->latitude_e7 / 10000000.0, observation->longitude_e7 / 10000000.0);
         
         // Save current location profile if we learned something
         if (learner->observations_here > 50) {
@@ -514,7 +514,7 @@ int ml_monitor_update_location_learning(ml_monitor_t *monitor, const ml_observat
             
             learner->history[history_idx].lat_e7 = learner->current_lat_e7;
             learner->history[history_idx].lon_e7 = learner->current_lon_e7;
-            learner->history[history_idx].last_visit = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            learner->history[history_idx].last_visit = time(NULL);
             
             // Create profile hash (simplified)
             for (int i = 0; i < 16; i++) {
@@ -522,7 +522,7 @@ int ml_monitor_update_location_learning(ml_monitor_t *monitor, const ml_observat
                     (learner->profile.typical_snr + learner->profile.typical_latency + i) % 256;
             }
             
-            printf("DEBUG: "Saved location profile to history (slot %d)", history_idx\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Saved location profile to history (slot %d)", history_idx);
         }
         
         // Check if we've been to this location before
@@ -534,7 +534,7 @@ int ml_monitor_update_location_learning(ml_monitor_t *monitor, const ml_observat
             }
             
             // Found previous visit to this location
-            printf("INFO: " Returned to known location, restoring profile"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_INFO_MSG(" Returned to known location, restoring profile");
             
             // Restore some learning from previous visit
             learner->profile.typical_snr = (learner->profile.typical_snr + 
@@ -546,8 +546,8 @@ int ml_monitor_update_location_learning(ml_monitor_t *monitor, const ml_observat
         }
         
         if (!found_previous) {
-            printf("INFO: " New location detected, entering rapid learning mode"\n"\n"\n"\n"\n"\n"\n"\n");
-            memset(&learner->profile, 0, sizeof(learner->profile)\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_INFO_MSG(" New location detected, entering rapid learning mode");
+            memset(&learner->profile, 0, sizeof(learner->profile));
         }
         
         // Update current location
@@ -564,15 +564,15 @@ int ml_monitor_update_location_learning(ml_monitor_t *monitor, const ml_observat
     uint8_t alpha = learner->observations_here < 20 ? 128 : 32;
     
     learner->profile.typical_snr = ml_monitor_weighted_average(
-        learner->profile.typical_snr, observation->snr_x100 / 100, alpha\n"\n"\n"\n"\n"\n"\n"\n");
+        learner->profile.typical_snr, observation->snr_x100 / 100, alpha);
     learner->profile.typical_latency = ml_monitor_weighted_average(
-        learner->profile.typical_latency, observation->latency_ms / 10, alpha\n"\n"\n"\n"\n"\n"\n"\n");
+        learner->profile.typical_latency, observation->latency_ms / 10, alpha);
     learner->profile.obstruction_level = ml_monitor_weighted_average(
-        learner->profile.obstruction_level, observation->obstruction_pct, alpha\n"\n"\n"\n"\n"\n"\n"\n");
+        learner->profile.obstruction_level, observation->obstruction_pct, alpha);
     
     // Update learned confidence
     if (learner->profile.learned < 255) {
-        learner->profile.learned = ml_monitor_weighted_average(learner->profile.learned, 255, 5\n"\n"\n"\n"\n"\n"\n"\n");
+        learner->profile.learned = ml_monitor_weighted_average(learner->profile.learned, 255, 5);
     }
     
     return ML_MONITOR_SUCCESS;
@@ -588,23 +588,23 @@ int ml_monitor_predict_next_15_minutes(ml_monitor_t *monitor, uint8_t probabilit
     
     // Need sufficient data for predictions
     if (monitor->state->total_observations < 50) {
-        printf("DEBUG: "Insufficient data for predictions (%u observations)", monitor->state->total_observations\n"\n"\n"\n"\n"\n"\n"\n");
-        memset(probabilities, 0, 60\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Insufficient data for predictions (%u observations)", monitor->state->total_observations);
+        memset(probabilities, 0, 60);
         return ML_MONITOR_SUCCESS;
     }
     
     // Create a current observation for prediction
     ml_observation_t current_obs;
     if (ml_monitor_collect_observation(monitor) != ML_MONITOR_SUCCESS) {
-        printf("WARN: "Failed to collect current observation for prediction"\n"\n"\n"\n"\n"\n"\n"\n");
-        memset(probabilities, 0, 60\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to collect current observation for prediction");
+        memset(probabilities, 0, 60);
         return ML_MONITOR_ERROR_PREDICTION_FAILED;
     }
     
     // Use the latest observation
     // In a full implementation, we'd get this from the circular buffer
-    memset(&current_obs, 0, sizeof(current_obs)\n"\n"\n"\n"\n"\n"\n"\n");
-    current_obs.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&current_obs, 0, sizeof(current_obs));
+    current_obs.timestamp = time(NULL);
     
     // Make predictions for next 15 minutes (60 intervals of 15 seconds each)
     for (int i = 0; i < 60; i++) {
@@ -613,11 +613,11 @@ int ml_monitor_predict_next_15_minutes(ml_monitor_t *monitor, uint8_t probabilit
         
         // Get k-NN prediction
         uint8_t knn_confidence;
-        uint8_t knn_prediction = ml_monitor_predict_outage_knn(monitor, &current_obs, &knn_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+        uint8_t knn_prediction = ml_monitor_predict_outage_knn(monitor, &current_obs, &knn_confidence);
         
         // Get neural network prediction
         uint8_t nn_output[8];
-        ml_monitor_predict_neural_network(monitor, &current_obs, nn_output\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_predict_neural_network(monitor, &current_obs, nn_output);
         
         // Combine predictions (weighted average)
         uint16_t knn_weight = knn_confidence;
@@ -625,7 +625,7 @@ int ml_monitor_predict_next_15_minutes(ml_monitor_t *monitor, uint8_t probabilit
         
         if (knn_weight + nn_weight > 0) {
             probabilities[i] = (nn_output[0] * nn_weight + knn_prediction * knn_weight) / 
-                              (knn_weight + nn_weight\n"\n"\n"\n"\n"\n"\n"\n");
+                              (knn_weight + nn_weight);
         } else {
             probabilities[i] = 0;
         }
@@ -643,11 +643,11 @@ int ml_monitor_predict_next_15_minutes(ml_monitor_t *monitor, uint8_t probabilit
         *confidence /= 2; // Reduce confidence for new locations
     }
     
-    printf("DEBUG: "Generated 15-minute predictions with %u%% confidence", *confidence\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Generated 15-minute predictions with %u%% confidence", *confidence);
     return ML_MONITOR_SUCCESS;
 }
 
 // Replace the original collection thread with enhanced version
 static void* ml_monitor_collection_thread(void *arg) {
-    return ml_monitor_collection_thread_enhanced(arg\n"\n"\n"\n"\n"\n"\n"\n");
+    return ml_monitor_collection_thread_enhanced(arg);
 }

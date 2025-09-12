@@ -32,29 +32,29 @@ system_health_t g_system_health = {0};
 // System health check functions
 int check_starlink_health(void) {
     // Real Starlink health check via UBUS
-    struct ubus_context* ctx = ubus_connect(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    struct ubus_context* ctx = ubus_connect(NULL);
     if (!ctx) {
         g_system_health.starlink_health = 0;
         return 0;
     }
     
     uint32_t id;
-    int ret = ubus_lookup_id(ctx, "starlink.dish", &id\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = ubus_lookup_id(ctx, "starlink.dish", &id);
     if (ret != 0) {
         g_system_health.starlink_health = 0;
-        ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+        ubus_free(ctx);
         return 0;
     }
     
     // Get Starlink dish status
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
-    ret = ubus_invoke(ctx, id, "status", bb.head, NULL, NULL, 5000\n"\n"\n"\n"\n"\n"\n"\n");
+    ret = ubus_invoke(ctx, id, "status", bb.head, NULL, NULL, 5000);
     if (ret != 0) {
         g_system_health.starlink_health = 0;
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+        blob_buf_free(&bb);
+        ubus_free(ctx);
         return 0;
     }
     
@@ -68,13 +68,13 @@ int check_starlink_health(void) {
         [STARLINK_STATUS_UPLINK] = { .name = "uplink", .type = BLOBMSG_TYPE_DOUBLE },
     };
     
-    blobmsg_parse(policy, __STARLINK_STATUS_MAX, tb, blob_data(bb.head), blob_len(bb.head)\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_parse(policy, __STARLINK_STATUS_MAX, tb, blob_data(bb.head), blob_len(bb.head));
     
     int health = 100;
     
     // Check connection status
     if (tb[STARLINK_STATUS_CONNECTED]) {
-        bool connected = blobmsg_get_bool(tb[STARLINK_STATUS_CONNECTED]\n"\n"\n"\n"\n"\n"\n"\n");
+        bool connected = blobmsg_get_bool(tb[STARLINK_STATUS_CONNECTED]);
         if (!connected) {
             health -= 50; // Major penalty for no connection
         }
@@ -82,7 +82,7 @@ int check_starlink_health(void) {
     
     // Check obstruction status
     if (tb[STARLINK_STATUS_OBSTRUCTED]) {
-        bool obstructed = blobmsg_get_bool(tb[STARLINK_STATUS_OBSTRUCTED]\n"\n"\n"\n"\n"\n"\n"\n");
+        bool obstructed = blobmsg_get_bool(tb[STARLINK_STATUS_OBSTRUCTED]);
         if (obstructed) {
             health -= 20; // Penalty for obstruction
         }
@@ -90,7 +90,7 @@ int check_starlink_health(void) {
     
     // Check signal quality
     if (tb[STARLINK_STATUS_SNR]) {
-        double snr = blobmsg_get_double(tb[STARLINK_STATUS_SNR]\n"\n"\n"\n"\n"\n"\n"\n");
+        double snr = blobmsg_get_double(tb[STARLINK_STATUS_SNR]);
         if (snr < 5.0) {
             health -= 30; // Penalty for low SNR
         } else if (snr < 10.0) {
@@ -100,7 +100,7 @@ int check_starlink_health(void) {
     
     // Check data rates
     if (tb[STARLINK_STATUS_DOWNLINK]) {
-        double downlink = blobmsg_get_double(tb[STARLINK_STATUS_DOWNLINK]\n"\n"\n"\n"\n"\n"\n"\n");
+        double downlink = blobmsg_get_double(tb[STARLINK_STATUS_DOWNLINK]);
         if (downlink < 1.0) {
             health -= 25; // Penalty for very low downlink
         } else if (downlink < 10.0) {
@@ -109,7 +109,7 @@ int check_starlink_health(void) {
     }
     
     if (tb[STARLINK_STATUS_UPLINK]) {
-        double uplink = blobmsg_get_double(tb[STARLINK_STATUS_UPLINK]\n"\n"\n"\n"\n"\n"\n"\n");
+        double uplink = blobmsg_get_double(tb[STARLINK_STATUS_UPLINK]);
         if (uplink < 0.5) {
             health -= 20; // Penalty for very low uplink
         } else if (uplink < 5.0) {
@@ -121,8 +121,8 @@ int check_starlink_health(void) {
     if (health < 0) health = 0;
     if (health > 100) health = 100;
     
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
-    ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb);
+    ubus_free(ctx);
     
     g_system_health.starlink_health = health;
     return health;
@@ -133,7 +133,7 @@ int check_uci_health(void) {
     int health = 100;
     
     // Test UCI accessibility
-    FILE *fp = popen("uci show", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE *fp = popen("uci show", "r");
     if (!fp) {
         health = 0;
     } else {
@@ -141,7 +141,7 @@ int check_uci_health(void) {
         if (fgets(buffer, sizeof(buffer), fp) == NULL) {
             health -= 50; // UCI not responding
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Check UCI configuration files
@@ -162,13 +162,13 @@ int check_uci_health(void) {
     }
     
     // Test UCI read/write operations
-    fp = popen("uci get system.@system[0].hostname 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen("uci get system.@system[0].hostname 2>/dev/null", "r");
     if (fp) {
         char hostname[64];
         if (fgets(hostname, sizeof(hostname), fp) == NULL) {
             health -= 20; // Cannot read UCI values
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     } else {
         health -= 30; // UCI command failed
     }
@@ -186,7 +186,7 @@ int check_overlay_health(void) {
     int health = 100;
     
     // Check overlay mount status
-    FILE *fp = popen("mount | grep overlay", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE *fp = popen("mount | grep overlay", "r");
     if (!fp) {
         health = 0; // No overlay mounted
     } else {
@@ -198,7 +198,7 @@ int check_overlay_health(void) {
                 break;
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
         
         if (!overlay_found) {
             health = 0; // Overlay not mounted
@@ -224,13 +224,13 @@ int check_overlay_health(void) {
     }
     
     // Check overlay filesystem integrity
-    fp = popen("df /overlay 2>/dev/null", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen("df /overlay 2>/dev/null", "r");
     if (fp) {
         char buffer[256];
         if (fgets(buffer, sizeof(buffer), fp) == NULL) {
             health -= 30; // Cannot check overlay status
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     } else {
         health -= 25; // Overlay filesystem check failed
     }
@@ -258,15 +258,15 @@ int check_services_health(void) {
     for (int i = 0; i < 9; i++) {
         total_services++;
         char command[256];
-        snprintf(command, sizeof(command), "pgrep -f %s > /dev/null 2>&1", critical_services[i]\n"\n"\n"\n"\n"\n"\n"\n");
+        snprintf(command, sizeof(command), "pgrep -f %s > /dev/null 2>&1", critical_services[i]);
         
-        int ret = system(command\n"\n"\n"\n"\n"\n"\n"\n");
+        int ret = system(command);
         if (ret != 0) {
             failed_services++;
             // Check if service is supposed to be running
             char systemctl_cmd[256];
-            snprintf(systemctl_cmd, sizeof(systemctl_cmd), "systemctl is-active %s 2>/dev/null", critical_services[i]\n"\n"\n"\n"\n"\n"\n"\n");
-            FILE *fp = popen(systemctl_cmd, "r"\n"\n"\n"\n"\n"\n"\n"\n");
+            snprintf(systemctl_cmd, sizeof(systemctl_cmd), "systemctl is-active %s 2>/dev/null", critical_services[i]);
+            FILE *fp = popen(systemctl_cmd, "r");
             if (fp) {
                 char status[32];
                 if (fgets(status, sizeof(status), fp)) {
@@ -278,22 +278,22 @@ int check_services_health(void) {
                         health -= 5; // Minor penalty for stopped service
                     }
                 }
-                pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+                pclose(fp);
             }
         }
     }
     
     // Check systemd service status
-    FILE *fp = popen("systemctl list-failed --no-legend 2>/dev/null | wc -l", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE *fp = popen("systemctl list-failed --no-legend 2>/dev/null | wc -l", "r");
     if (fp) {
         char buffer[16];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int failed_systemd = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            int failed_systemd = atoi(buffer);
             if (failed_systemd > 0) {
                 health -= (failed_systemd * 10); // Penalty for failed systemd services
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Check process count and system load
@@ -322,16 +322,16 @@ int check_database_health(void) {
     
     // Check SQLite database health
     sqlite3* db = NULL;
-    int ret = sqlite3_open("/var/lib/autonomy/autonomy.db", &db\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = sqlite3_open("/var/lib/autonomy/autonomy.db", &db);
     if (ret != SQLITE_OK) {
         health = 0; // Cannot open database
     } else {
         // Check database integrity
         char* err_msg = NULL;
-        ret = sqlite3_exec(db, "PRAGMA integrity_check;", NULL, NULL, &err_msg\n"\n"\n"\n"\n"\n"\n"\n");
+        ret = sqlite3_exec(db, "PRAGMA integrity_check;", NULL, NULL, &err_msg);
         if (ret != SQLITE_OK) {
             health -= 50; // Database integrity check failed
-            sqlite3_free(err_msg\n"\n"\n"\n"\n"\n"\n"\n");
+            sqlite3_free(err_msg);
         }
         
         // Check if critical tables exist
@@ -343,18 +343,18 @@ int check_database_health(void) {
             char query[256];
             snprintf(query, sizeof(query), 
                     "SELECT name FROM sqlite_master WHERE type='table' AND name='%s';", 
-                    critical_tables[i]\n"\n"\n"\n"\n"\n"\n"\n");
+                    critical_tables[i]);
             
             sqlite3_stmt* stmt;
-            ret = sqlite3_prepare_v2(db, query, -1, &stmt, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            ret = sqlite3_prepare_v2(db, query, -1, &stmt, NULL);
             if (ret != SQLITE_OK) {
                 health -= 10; // Cannot check table
             } else {
-                ret = sqlite3_step(stmt\n"\n"\n"\n"\n"\n"\n"\n");
+                ret = sqlite3_step(stmt);
                 if (ret != SQLITE_ROW) {
                     health -= 10; // Critical table missing
                 }
-                sqlite3_finalize(stmt\n"\n"\n"\n"\n"\n"\n"\n");
+                sqlite3_finalize(stmt);
             }
         }
         
@@ -369,13 +369,13 @@ int check_database_health(void) {
         }
         
         // Test database write capability
-        ret = sqlite3_exec(db, "CREATE TEMP TABLE health_check (id INTEGER);", NULL, NULL, &err_msg\n"\n"\n"\n"\n"\n"\n"\n");
+        ret = sqlite3_exec(db, "CREATE TEMP TABLE health_check (id INTEGER);", NULL, NULL, &err_msg);
         if (ret != SQLITE_OK) {
             health -= 25; // Database write test failed
-            sqlite3_free(err_msg\n"\n"\n"\n"\n"\n"\n"\n");
+            sqlite3_free(err_msg);
         }
         
-        sqlite3_close(db\n"\n"\n"\n"\n"\n"\n"\n");
+        sqlite3_close(db);
     }
     
     // Check disk space for database directory
@@ -400,53 +400,53 @@ int check_time_health(void) {
     int health = 100;
     
     // Check if system time is reasonable (not 1970)
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     if (now < 1600000000) { // Before 2020
         health = 0; // System time is invalid
     } else {
         // Check NTP synchronization status
-        FILE *fp = popen("ntpq -p 2>/dev/null | grep -E '^\\*|^\\+|^o' | wc -l", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+        FILE *fp = popen("ntpq -p 2>/dev/null | grep -E '^\\*|^\\+|^o' | wc -l", "r");
         if (fp) {
             char buffer[16];
             if (fgets(buffer, sizeof(buffer), fp)) {
-                int synced_sources = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+                int synced_sources = atoi(buffer);
                 if (synced_sources == 0) {
                     health -= 40; // No NTP synchronization
                 } else if (synced_sources < 2) {
                     health -= 20; // Limited NTP synchronization
                 }
             }
-            pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+            pclose(fp);
         } else {
             // Try alternative NTP check
-            fp = popen("chrony sources 2>/dev/null | grep -E '^\\^|^\\*|^\\+' | wc -l", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+            fp = popen("chrony sources 2>/dev/null | grep -E '^\\^|^\\*|^\\+' | wc -l", "r");
             if (fp) {
                 char buffer[16];
                 if (fgets(buffer, sizeof(buffer), fp)) {
-                    int synced_sources = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+                    int synced_sources = atoi(buffer);
                     if (synced_sources == 0) {
                         health -= 30; // No chrony synchronization
                     }
                 }
-                pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+                pclose(fp);
             } else {
                 health -= 10; // Cannot check time synchronization
             }
         }
         
         // Check system clock drift
-        fp = popen("ntpq -c 'rv 0 offset' 2>/dev/null | awk '{print $3}'", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+        fp = popen("ntpq -c 'rv 0 offset' 2>/dev/null | awk '{print $3}'", "r");
         if (fp) {
             char buffer[32];
             if (fgets(buffer, sizeof(buffer), fp)) {
-                double offset = atof(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+                double offset = atof(buffer);
                 if (fabs(offset) > 1000.0) { // More than 1 second offset
                     health -= 30; // Large time offset
                 } else if (fabs(offset) > 100.0) { // More than 100ms offset
                     health -= 15; // Moderate time offset
                 }
             }
-            pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+            pclose(fp);
         }
         
         // Check if time is moving forward
@@ -499,7 +499,7 @@ int check_logs_health(void) {
             }
             
             // Check if log file is too old (no updates in 24 hours)
-            time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            time_t now = time(NULL);
             if (now - st.st_mtime > 86400) {
                 health -= 5; // Log file not being updated
             }
@@ -507,29 +507,29 @@ int check_logs_health(void) {
     }
     
     // Check logrotate configuration
-    FILE *fp = popen("logrotate -d /etc/logrotate.conf 2>&1 | grep -c 'error'", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE *fp = popen("logrotate -d /etc/logrotate.conf 2>&1 | grep -c 'error'", "r");
     if (fp) {
         char buffer[16];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int errors = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            int errors = atoi(buffer);
             if (errors > 0) {
                 health -= 15; // Logrotate configuration errors
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Check system log daemon status
-    fp = popen("pgrep -f 'syslogd|rsyslogd|logd' > /dev/null 2>&1; echo $?", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen("pgrep -f 'syslogd|rsyslogd|logd' > /dev/null 2>&1; echo $?", "r");
     if (fp) {
         char buffer[16];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int logd_running = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            int logd_running = atoi(buffer);
             if (logd_running != 0) {
                 health -= 30; // Log daemon not running
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Check disk space for logs
@@ -542,16 +542,16 @@ int check_logs_health(void) {
     }
     
     // Check for log file corruption
-    fp = popen("find /var/log -name '*.log' -size +0c -exec file {} \\; 2>/dev/null | grep -c 'data'", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen("find /var/log -name '*.log' -size +0c -exec file {} \\; 2>/dev/null | grep -c 'data'", "r");
     if (fp) {
         char buffer[16];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int corrupted_logs = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            int corrupted_logs = atoi(buffer);
             if (corrupted_logs > 0) {
                 health -= (corrupted_logs * 5); // Penalty for corrupted logs
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Ensure health is within valid range
@@ -563,16 +563,16 @@ int check_logs_health(void) {
 }
 
 int perform_system_health_check(void) {
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     // Perform all health checks
-    check_starlink_health(\n"\n"\n"\n"\n"\n"\n"\n");
-    check_uci_health(\n"\n"\n"\n"\n"\n"\n"\n");
-    check_overlay_health(\n"\n"\n"\n"\n"\n"\n"\n");
-    check_services_health(\n"\n"\n"\n"\n"\n"\n"\n");
-    check_database_health(\n"\n"\n"\n"\n"\n"\n"\n");
-    check_time_health(\n"\n"\n"\n"\n"\n"\n"\n");
-    check_logs_health(\n"\n"\n"\n"\n"\n"\n"\n");
+    check_starlink_health();
+    check_uci_health();
+    check_overlay_health();
+    check_services_health();
+    check_database_health();
+    check_time_health();
+    check_logs_health();
     
     // Calculate overall system health score
     int total_score = g_system_health.starlink_health +
@@ -588,13 +588,13 @@ int perform_system_health_check(void) {
     
     // Set overall status
     if (g_system_health.overall_score >= 90) {
-        strcpy(g_system_health.status, "excellent"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(g_system_health.status, "excellent");
     } else if (g_system_health.overall_score >= 80) {
-        strcpy(g_system_health.status, "good"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(g_system_health.status, "good");
     } else if (g_system_health.overall_score >= 70) {
-        strcpy(g_system_health.status, "fair"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(g_system_health.status, "fair");
     } else {
-        strcpy(g_system_health.status, "poor"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(g_system_health.status, "poor");
     }
     
     return 0;
@@ -604,7 +604,7 @@ int get_system_memory_usage(void) {
     struct sysinfo si;
     if (sysinfo(&si) == 0) {
         // Convert to MB
-        return (int)(si.totalram * si.mem_unit / (1024 * 1024)\n"\n"\n"\n"\n"\n"\n"\n");
+        return (int)(si.totalram * si.mem_unit / (1024 * 1024));
     }
     return 0;
 }
@@ -621,7 +621,7 @@ int get_system_load_average(void) {
     struct sysinfo si;
     if (sysinfo(&si) == 0) {
         // Return load average as percentage
-        return (int)((si.loads[0] / 65536.0) * 100\n"\n"\n"\n"\n"\n"\n"\n");
+        return (int)((si.loads[0] / 65536.0) * 100);
     }
     return 0;
 }
@@ -631,71 +631,71 @@ int perform_network_health_check(void) {
     double health = 100.0;
     
     // Check network interfaces
-    FILE *fp = popen("ip link show | grep -c 'state UP'", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE *fp = popen("ip link show | grep -c 'state UP'", "r");
     if (fp) {
         char buffer[16];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int up_interfaces = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            int up_interfaces = atoi(buffer);
             if (up_interfaces == 0) {
                 health = 0.0; // No network interfaces up
             } else if (up_interfaces < 2) {
                 health -= 20.0; // Limited network connectivity
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Check default route
-    fp = popen("ip route show default | wc -l", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen("ip route show default | wc -l", "r");
     if (fp) {
         char buffer[16];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int default_routes = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            int default_routes = atoi(buffer);
             if (default_routes == 0) {
                 health -= 30.0; // No default route
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Check DNS resolution
-    fp = popen("nslookup google.com > /dev/null 2>&1; echo $?", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen("nslookup google.com > /dev/null 2>&1; echo $?", "r");
     if (fp) {
         char buffer[16];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int dns_ok = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            int dns_ok = atoi(buffer);
             if (dns_ok != 0) {
                 health -= 25.0; // DNS resolution failed
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Check internet connectivity
-    fp = popen("ping -c 1 -W 5 8.8.8.8 > /dev/null 2>&1; echo $?", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen("ping -c 1 -W 5 8.8.8.8 > /dev/null 2>&1; echo $?", "r");
     if (fp) {
         char buffer[16];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int ping_ok = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            int ping_ok = atoi(buffer);
             if (ping_ok != 0) {
                 health -= 40.0; // No internet connectivity
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Check network load
-    fp = popen("cat /proc/net/dev | grep -v 'lo:' | awk '{sum+=$2+$10} END {print sum}'", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen("cat /proc/net/dev | grep -v 'lo:' | awk '{sum+=$2+$10} END {print sum}'", "r");
     if (fp) {
         char buffer[32];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            unsigned long total_bytes = strtoul(buffer, NULL, 10\n"\n"\n"\n"\n"\n"\n"\n");
+            unsigned long total_bytes = strtoul(buffer, NULL, 10);
             // Check if network is overloaded (simplified check)
             if (total_bytes > 1000000000) { // More than 1GB
                 health -= 10.0; // High network usage
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Ensure health is within valid range
@@ -703,7 +703,7 @@ int perform_network_health_check(void) {
     if (health > 100.0) health = 100.0;
     
     g_state.network_health_score = health;
-    g_state.last_network_check = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_state.last_network_check = time(NULL);
     return 0;
 }
 
@@ -712,16 +712,16 @@ int perform_gps_health_check(void) {
     double health = 100.0;
     
     // Check GPS service status
-    FILE *fp = popen("pgrep -f 'gps-service|gpsd' > /dev/null 2>&1; echo $?", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE *fp = popen("pgrep -f 'gps-service|gpsd' > /dev/null 2>&1; echo $?", "r");
     if (fp) {
         char buffer[16];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int gps_service_running = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            int gps_service_running = atoi(buffer);
             if (gps_service_running != 0) {
                 health -= 50.0; // GPS service not running
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Check GPS data files
@@ -737,7 +737,7 @@ int perform_gps_health_check(void) {
             health -= 10.0; // GPS data file missing
         } else {
             // Check if file is recent (updated within last 5 minutes)
-            time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            time_t now = time(NULL);
             if (now - st.st_mtime > 300) {
                 health -= 15.0; // GPS data is stale
             }
@@ -745,61 +745,61 @@ int perform_gps_health_check(void) {
     }
     
     // Check GPS device accessibility
-    fp = popen("ls /dev/tty* | grep -E 'USB|ACM|AMA' | wc -l", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen("ls /dev/tty* | grep -E 'USB|ACM|AMA' | wc -l", "r");
     if (fp) {
         char buffer[16];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int gps_devices = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            int gps_devices = atoi(buffer);
             if (gps_devices == 0) {
                 health -= 30.0; // No GPS devices found
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Check GPS data quality
-    fp = popen("grep -c 'GPGGA' /var/lib/autonomy/gps_data 2>/dev/null || echo 0", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen("grep -c 'GPGGA' /var/lib/autonomy/gps_data 2>/dev/null || echo 0", "r");
     if (fp) {
         char buffer[16];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int gga_sentences = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            int gga_sentences = atoi(buffer);
             if (gga_sentences == 0) {
                 health -= 25.0; // No GPS position data
             } else if (gga_sentences < 10) {
                 health -= 10.0; // Limited GPS data
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Check GPS accuracy
-    fp = popen("grep 'GPGGA' /var/lib/autonomy/gps_data 2>/dev/null | tail -1 | cut -d',' -f7", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen("grep 'GPGGA' /var/lib/autonomy/gps_data 2>/dev/null | tail -1 | cut -d',' -f7", "r");
     if (fp) {
         char buffer[16];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int hdop = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            int hdop = atoi(buffer);
             if (hdop > 10) {
                 health -= 20.0; // Poor GPS accuracy
             } else if (hdop > 5) {
                 health -= 10.0; // Moderate GPS accuracy
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Check satellite count
-    fp = popen("grep 'GPGGA' /var/lib/autonomy/gps_data 2>/dev/null | tail -1 | cut -d',' -f8", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    fp = popen("grep 'GPGGA' /var/lib/autonomy/gps_data 2>/dev/null | tail -1 | cut -d',' -f8", "r");
     if (fp) {
         char buffer[16];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            int satellites = atoi(buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            int satellites = atoi(buffer);
             if (satellites < 4) {
                 health -= 30.0; // Insufficient satellites
             } else if (satellites < 6) {
                 health -= 15.0; // Limited satellites
             }
         }
-        pclose(fp\n"\n"\n"\n"\n"\n"\n"\n");
+        pclose(fp);
     }
     
     // Ensure health is within valid range

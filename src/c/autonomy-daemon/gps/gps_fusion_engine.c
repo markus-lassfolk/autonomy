@@ -19,48 +19,48 @@ static const char* FUSION_METHOD_STRINGS[] = {
 
 // Forward declarations
 static int perform_weighted_average_fusion(const weighted_gps_data_t* weighted_data, int count,
-                                         standardized_gps_data_t* result\n"\n"\n"\n"\n"\n"\n"\n");
+                                         standardized_gps_data_t* result);
 static int perform_confidence_weighted_fusion(const weighted_gps_data_t* weighted_data, int count,
-                                             standardized_gps_data_t* result\n"\n"\n"\n"\n"\n"\n"\n");
+                                             standardized_gps_data_t* result);
 static int calculate_source_weights(const standardized_gps_data_t* source_data, int source_count,
-                                   weighted_gps_data_t* weighted_data\n"\n"\n"\n"\n"\n"\n"\n");
-static double calculate_weight_factor(const standardized_gps_data_t* data, const char* factor_type\n"\n"\n"\n"\n"\n"\n"\n");
+                                   weighted_gps_data_t* weighted_data);
+static double calculate_weight_factor(const standardized_gps_data_t* data, const char* factor_type);
 static bool is_outlier(const standardized_gps_data_t* data, const standardized_gps_data_t* reference_data, 
-                      int reference_count\n"\n"\n"\n"\n"\n"\n"\n");
-static double calculate_consensus_score(const standardized_gps_data_t* source_data, int source_count\n"\n"\n"\n"\n"\n"\n"\n");
-static void update_kalman_state(const standardized_gps_data_t* measurement\n"\n"\n"\n"\n"\n"\n"\n");
-static void predict_kalman_state(double dt\n"\n"\n"\n"\n"\n"\n"\n");
-static bool validate_gps_coordinates(double latitude, double longitude\n"\n"\n"\n"\n"\n"\n"\n");
-static bool validate_gps_accuracy(double accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+                      int reference_count);
+static double calculate_consensus_score(const standardized_gps_data_t* source_data, int source_count);
+static void update_kalman_state(const standardized_gps_data_t* measurement);
+static void predict_kalman_state(double dt);
+static bool validate_gps_coordinates(double latitude, double longitude);
+static bool validate_gps_accuracy(double accuracy);
 
 // Initialize GPS fusion engine
 int gps_fusion_engine_init(const gps_fusion_config_t* config) {
     if (g_fusion_initialized) {
-        printf("WARN: "GPS fusion engine already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("GPS fusion engine already initialized");
         return AUTONOMY_SUCCESS;
     }
     
     if (!config) {
-        printf("ERROR: "GPS fusion config is NULL"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("GPS fusion config is NULL");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    memset(&g_fusion_engine, 0, sizeof(gps_fusion_engine_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_fusion_engine, 0, sizeof(gps_fusion_engine_t));
     g_fusion_engine.config = *config;
     
     // Initialize mutex
     if (pthread_mutex_init(&g_fusion_engine.mutex, NULL) != 0) {
-        printf("ERROR: "Failed to initialize fusion engine mutex"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to initialize fusion engine mutex");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     // Initialize Kalman filter if enabled
     if (config->enable_kalman_filtering) {
         // Initialize state vector [lat, lon, lat_velocity, lon_velocity]
-        memset(g_fusion_engine.kalman_state, 0, sizeof(g_fusion_engine.kalman_state)\n"\n"\n"\n"\n"\n"\n"\n");
+        memset(g_fusion_engine.kalman_state, 0, sizeof(g_fusion_engine.kalman_state));
         
         // Initialize covariance matrix (4x4 identity * initial_uncertainty)
-        memset(g_fusion_engine.kalman_covariance, 0, sizeof(g_fusion_engine.kalman_covariance)\n"\n"\n"\n"\n"\n"\n"\n");
+        memset(g_fusion_engine.kalman_covariance, 0, sizeof(g_fusion_engine.kalman_covariance));
         for (int i = 0; i < 4; i++) {
             g_fusion_engine.kalman_covariance[i * 4 + i] = config->initial_uncertainty;
         }
@@ -69,16 +69,16 @@ int gps_fusion_engine_init(const gps_fusion_config_t* config) {
     }
     
     // Initialize statistics
-    g_fusion_engine.stats.stats_reset_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_fusion_engine.stats.stats_reset_time = time(NULL);
     
     g_fusion_initialized = true;
     
-    printf("INFO: "GPS fusion engine initialized",
+    LOGX_INFO_MSG("GPS fusion engine initialized",
               "method", gps_fusion_method_to_string(config->default_method),
               "outlier_detection", config->enable_outlier_detection ? "true" : "false",
               "consensus_checking", config->enable_consensus_checking ? "true" : "false",
               "kalman_filtering", config->enable_kalman_filtering ? "true" : "false",
-              "temporal_smoothing", config->enable_temporal_smoothing ? "true" : "false"\n"\n"\n"\n"\n"\n"\n"\n");
+              "temporal_smoothing", config->enable_temporal_smoothing ? "true" : "false");
     
     return AUTONOMY_SUCCESS;
 }
@@ -87,14 +87,14 @@ int gps_fusion_engine_init(const gps_fusion_config_t* config) {
 void gps_fusion_engine_cleanup(void) {
     if (!g_fusion_initialized) return;
     
-    pthread_mutex_lock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_fusion_engine.mutex);
     
-    pthread_mutex_unlock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    pthread_mutex_destroy(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_fusion_engine.mutex);
+    pthread_mutex_destroy(&g_fusion_engine.mutex);
     
     g_fusion_initialized = false;
     
-    printf("INFO: "GPS fusion engine cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS fusion engine cleaned up");
 }
 
 // Fuse GPS data from multiple sources
@@ -105,7 +105,7 @@ int gps_fusion_engine_fuse(const standardized_gps_data_t* source_data, int sourc
     }
     
     return gps_fusion_engine_fuse_with_method(source_data, source_count, 
-                                            g_fusion_engine.config.default_method, result\n"\n"\n"\n"\n"\n"\n"\n");
+                                            g_fusion_engine.config.default_method, result);
 }
 
 // Fuse GPS data using specific method
@@ -115,10 +115,10 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_fusion_engine.mutex);
     
-    time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    memset(result, 0, sizeof(standardized_gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t start_time = time(NULL);
+    memset(result, 0, sizeof(standardized_gps_data_t));
     
     g_fusion_engine.stats.total_fusions++;
     
@@ -135,9 +135,9 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
     }
     
     if (valid_count == 0) {
-        printf("WARN: "No valid GPS data for fusion"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("No valid GPS data for fusion");
         g_fusion_engine.stats.failed_fusions++;
-        pthread_mutex_unlock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_fusion_engine.mutex);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
@@ -147,22 +147,22 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
     
     if (g_fusion_engine.config.enable_outlier_detection && valid_count > 2) {
         filtered_count = gps_fusion_engine_detect_outliers(valid_data, valid_count, 
-                                                          filtered_data, GPS_SOURCE_MAX\n"\n"\n"\n"\n"\n"\n"\n");
+                                                          filtered_data, GPS_SOURCE_MAX);
         if (filtered_count > 0) {
-            memcpy(valid_data, filtered_data, filtered_count * sizeof(standardized_gps_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memcpy(valid_data, filtered_data, filtered_count * sizeof(standardized_gps_data_t));
             valid_count = filtered_count;
             
-            printf("DEBUG: "Outlier detection completed",
+            LOGX_DEBUG_MSG("Outlier detection completed",
                       "original_count", source_count,
                       "filtered_count", filtered_count,
-                      "outliers_removed", source_count - filtered_count\n"\n"\n"\n"\n"\n"\n"\n");
+                      "outliers_removed", source_count - filtered_count);
         }
     }
     
     // Consensus checking if enabled
     if (g_fusion_engine.config.enable_consensus_checking && valid_count > 1) {
         if (!gps_fusion_engine_check_consensus(valid_data, valid_count)) {
-            printf("WARN: "GPS sources lack consensus"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_WARN_MSG("GPS sources lack consensus");
             g_fusion_engine.stats.consensus_failures++;
             // Continue with fusion anyway, but reduce confidence
         }
@@ -171,33 +171,33 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
     // Single source case
     if (valid_count == 1) {
         *result = valid_data[0];
-        strcpy(result->source, "single_source"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(result->source, "single_source");
         result->confidence *= 0.9; // Slight penalty for single source
         
-        printf("DEBUG: "Single source GPS fusion", "source", result->source\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Single source GPS fusion", "source", result->source);
         
         g_fusion_engine.stats.successful_fusions++;
         g_fusion_engine.stats.method_usage[GPS_FUSION_METHOD_SINGLE_SOURCE]++;
     } else {
         // Multi-source fusion
         weighted_gps_data_t weighted_data[GPS_SOURCE_MAX];
-        int weight_count = calculate_source_weights(valid_data, valid_count, weighted_data\n"\n"\n"\n"\n"\n"\n"\n");
+        int weight_count = calculate_source_weights(valid_data, valid_count, weighted_data);
         
         int fusion_ret = AUTONOMY_ERROR_SYSTEM;
         
         switch (method) {
             case GPS_FUSION_METHOD_WEIGHTED_AVERAGE:
-                fusion_ret = perform_weighted_average_fusion(weighted_data, weight_count, result\n"\n"\n"\n"\n"\n"\n"\n");
+                fusion_ret = perform_weighted_average_fusion(weighted_data, weight_count, result);
                 break;
                 
             case GPS_FUSION_METHOD_CONFIDENCE_WEIGHTED:
-                fusion_ret = perform_confidence_weighted_fusion(weighted_data, weight_count, result\n"\n"\n"\n"\n"\n"\n"\n");
+                fusion_ret = perform_confidence_weighted_fusion(weighted_data, weight_count, result);
                 break;
                 
             case GPS_FUSION_METHOD_KALMAN_FILTER:
                 if (g_fusion_engine.config.enable_kalman_filtering) {
                     // For simplicity, use confidence weighted as base and apply Kalman
-                    fusion_ret = perform_confidence_weighted_fusion(weighted_data, weight_count, result\n"\n"\n"\n"\n"\n"\n"\n");
+                    fusion_ret = perform_confidence_weighted_fusion(weighted_data, weight_count, result);
                     if (fusion_ret == AUTONOMY_SUCCESS) {
                         standardized_gps_data_t kalman_result;
                         if (gps_fusion_engine_apply_kalman_filter(result, &kalman_result) == AUTONOMY_SUCCESS) {
@@ -205,17 +205,17 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
                         }
                     }
                 } else {
-                    fusion_ret = perform_confidence_weighted_fusion(weighted_data, weight_count, result\n"\n"\n"\n"\n"\n"\n"\n");
+                    fusion_ret = perform_confidence_weighted_fusion(weighted_data, weight_count, result);
                 }
                 break;
                 
             default:
-                fusion_ret = perform_confidence_weighted_fusion(weighted_data, weight_count, result\n"\n"\n"\n"\n"\n"\n"\n");
+                fusion_ret = perform_confidence_weighted_fusion(weighted_data, weight_count, result);
                 break;
         }
         
         if (fusion_ret == AUTONOMY_SUCCESS) {
-            strcpy(result->source, "fused"\n"\n"\n"\n"\n"\n"\n"\n");
+            strcpy(result->source, "fused");
             result->source_type = GPS_SOURCE_MAX; // Special value for fused data
             
             g_fusion_engine.stats.successful_fusions++;
@@ -234,7 +234,7 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
     }
     
     // Update statistics
-    time_t end_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t end_time = time(NULL);
     double fusion_time_ms = difftime(end_time, start_time) * 1000.0;
     
     g_fusion_engine.stats.average_fusion_time_ms = 
@@ -248,25 +248,25 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
     if (result->valid) {
         g_fusion_engine.stats.average_fusion_accuracy = 
             (g_fusion_engine.stats.average_fusion_accuracy * g_fusion_engine.stats.successful_fusions + 
-             result->accuracy) / (g_fusion_engine.stats.successful_fusions + 1\n"\n"\n"\n"\n"\n"\n"\n");
+             result->accuracy) / (g_fusion_engine.stats.successful_fusions + 1);
         
         g_fusion_engine.stats.average_fusion_confidence = 
             (g_fusion_engine.stats.average_fusion_confidence * g_fusion_engine.stats.successful_fusions + 
-             result->confidence) / (g_fusion_engine.stats.successful_fusions + 1\n"\n"\n"\n"\n"\n"\n"\n");
+             result->confidence) / (g_fusion_engine.stats.successful_fusions + 1);
     }
     
-    g_fusion_engine.stats.last_fusion = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    g_fusion_engine.last_fusion_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_fusion_engine.stats.last_fusion = time(NULL);
+    g_fusion_engine.last_fusion_time = time(NULL);
     g_fusion_engine.last_result = *result;
     
-    pthread_mutex_unlock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_fusion_engine.mutex);
     
-    printf("INFO: "GPS fusion completed",
+    LOGX_INFO_MSG("GPS fusion completed",
              "method", gps_fusion_method_to_string(method),
              "sources_used", valid_count,
              "confidence", result->confidence,
              "accuracy", result->accuracy,
-             "fusion_time_ms", fusion_time_ms\n"\n"\n"\n"\n"\n"\n"\n");
+             "fusion_time_ms", fusion_time_ms);
     
     return AUTONOMY_SUCCESS;
 }
@@ -305,7 +305,7 @@ static int perform_weighted_average_fusion(const weighted_gps_data_t* weighted_d
     result->altitude = weighted_alt / total_weight;
     result->accuracy = weighted_accuracy / total_weight;
     result->confidence = weighted_confidence / total_weight;
-    result->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    result->timestamp = time(NULL);
     result->valid = true;
     
     // Use data from highest weight source for other fields
@@ -325,13 +325,13 @@ static int perform_weighted_average_fusion(const weighted_gps_data_t* weighted_d
     result->fix_type = weighted_data[best_source_idx].data.fix_type;
     result->fix_quality = weighted_data[best_source_idx].data.fix_quality;
     
-    printf("DEBUG: "Weighted average fusion completed",
+    LOGX_DEBUG_MSG("Weighted average fusion completed",
               "total_weight", total_weight,
               "sources", count,
               "lat", result->latitude,
               "lon", result->longitude,
               "accuracy", result->accuracy,
-              "confidence", result->confidence\n"\n"\n"\n"\n"\n"\n"\n");
+              "confidence", result->confidence);
     
     return AUTONOMY_SUCCESS;
 }
@@ -354,12 +354,12 @@ static int perform_confidence_weighted_fusion(const weighted_gps_data_t* weighte
         double lat_rad = weighted_data[i].data.latitude * M_PI / 180.0;
         double lon_rad = weighted_data[i].data.longitude * M_PI / 180.0;
         
-        double cos_lat = cos(lat_rad\n"\n"\n"\n"\n"\n"\n"\n");
+        double cos_lat = cos(lat_rad);
         
         // Weighted Cartesian coordinates
-        x += weight * cos_lat * cos(lon_rad\n"\n"\n"\n"\n"\n"\n"\n");
-        y += weight * cos_lat * sin(lon_rad\n"\n"\n"\n"\n"\n"\n"\n");
-        z += weight * sin(lat_rad\n"\n"\n"\n"\n"\n"\n"\n");
+        x += weight * cos_lat * cos(lon_rad);
+        y += weight * cos_lat * sin(lon_rad);
+        z += weight * sin(lat_rad);
         
         weighted_accuracy += weighted_data[i].data.accuracy * weight;
         weighted_confidence += weighted_data[i].data.confidence * weight;
@@ -382,7 +382,7 @@ static int perform_confidence_weighted_fusion(const weighted_gps_data_t* weighte
     
     result->accuracy = weighted_accuracy / total_weight;
     result->confidence = weighted_confidence / total_weight;
-    result->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    result->timestamp = time(NULL);
     result->valid = true;
     
     // Calculate fusion accuracy estimate based on source spread
@@ -392,7 +392,7 @@ static int perform_confidence_weighted_fusion(const weighted_gps_data_t* weighte
             double distance = gps_calculate_distance(
                 weighted_data[i].data.latitude, weighted_data[i].data.longitude,
                 weighted_data[j].data.latitude, weighted_data[j].data.longitude
-            \n"\n"\n"\n"\n"\n"\n"\n");
+            );
             if (distance > max_distance) {
                 max_distance = distance;
             }
@@ -421,16 +421,16 @@ static int perform_confidence_weighted_fusion(const weighted_gps_data_t* weighte
     result->fix_type = weighted_data[best_idx].data.fix_type;
     result->fix_quality = weighted_data[best_idx].data.fix_quality;
     
-    printf("INFO: "Confidence-weighted fusion completed",
+    LOGX_INFO_MSG("Confidence-weighted fusion completed",
              "sources", count,
              "total_weight", total_weight,
              "spread_m", max_distance,
              "lat", result->latitude,
              "lon", result->longitude,
              "accuracy", result->accuracy,
-             "confidence", result->confidence\n"\n"\n"\n"\n"\n"\n"\n");
+             "confidence", result->confidence);
     
-    pthread_mutex_unlock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_fusion_engine.mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -442,9 +442,9 @@ static int calculate_source_weights(const standardized_gps_data_t* source_data, 
         weighted_data[i].data = source_data[i];
         
         // Calculate individual weight factors
-        weighted_data[i].accuracy_factor = calculate_weight_factor(&source_data[i], "accuracy"\n"\n"\n"\n"\n"\n"\n"\n");
-        weighted_data[i].confidence_factor = calculate_weight_factor(&source_data[i], "confidence"\n"\n"\n"\n"\n"\n"\n"\n");
-        weighted_data[i].freshness_factor = calculate_weight_factor(&source_data[i], "freshness"\n"\n"\n"\n"\n"\n"\n"\n");
+        weighted_data[i].accuracy_factor = calculate_weight_factor(&source_data[i], "accuracy");
+        weighted_data[i].confidence_factor = calculate_weight_factor(&source_data[i], "confidence");
+        weighted_data[i].freshness_factor = calculate_weight_factor(&source_data[i], "freshness");
         weighted_data[i].health_factor = 1.0; // Would use source health if available
         weighted_data[i].priority_factor = 1.0 / source_data[i].source_priority;
         
@@ -465,12 +465,12 @@ static int calculate_source_weights(const standardized_gps_data_t* source_data, 
                 "acc:%.2f conf:%.2f fresh:%.2f prio:%.2f -> %.2f",
                 weighted_data[i].accuracy_factor, weighted_data[i].confidence_factor,
                 weighted_data[i].freshness_factor, weighted_data[i].priority_factor,
-                weighted_data[i].weight\n"\n"\n"\n"\n"\n"\n"\n");
+                weighted_data[i].weight);
         
-        printf("DEBUG: "GPS source weight calculated",
+        LOGX_DEBUG_MSG("GPS source weight calculated",
                   "source", source_data[i].source,
                   "weight", weighted_data[i].weight,
-                  "reasoning", weighted_data[i].weight_reasoning\n"\n"\n"\n"\n"\n"\n"\n");
+                  "reasoning", weighted_data[i].weight_reasoning);
     }
     
     return source_count;
@@ -487,7 +487,7 @@ static double calculate_weight_factor(const standardized_gps_data_t* data, const
     } else if (strcmp(factor_type, "confidence") == 0) {
         return data->confidence;
     } else if (strcmp(factor_type, "freshness") == 0) {
-        double age_seconds = difftime(time(NULL), data->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+        double age_seconds = difftime(time(NULL), data->timestamp);
         return exp(-age_seconds / 300.0); // Exponential decay over 5 minutes
     }
     
@@ -498,7 +498,7 @@ static double calculate_weight_factor(const standardized_gps_data_t* data, const
 static bool validate_gps_coordinates(double latitude, double longitude) {
     return (latitude >= -90.0 && latitude <= 90.0 && 
             longitude >= -180.0 && longitude <= 180.0 &&
-            latitude != 0.0 && longitude != 0.0\n"\n"\n"\n"\n"\n"\n"\n");
+            latitude != 0.0 && longitude != 0.0);
 }
 
 static bool validate_gps_accuracy(double accuracy) {
@@ -524,9 +524,9 @@ int gps_fusion_engine_get_statistics(gps_fusion_statistics_t* stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_fusion_engine.mutex);
     *stats = g_fusion_engine.stats;
-    pthread_mutex_unlock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_fusion_engine.mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -537,14 +537,14 @@ int gps_fusion_engine_reset_statistics(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_fusion_engine.mutex);
     
-    memset(&g_fusion_engine.stats, 0, sizeof(gps_fusion_statistics_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    g_fusion_engine.stats.stats_reset_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_fusion_engine.stats, 0, sizeof(gps_fusion_statistics_t));
+    g_fusion_engine.stats.stats_reset_time = time(NULL);
     
-    pthread_mutex_unlock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_fusion_engine.mutex);
     
-    printf("INFO: "GPS fusion engine statistics reset"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS fusion engine statistics reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -577,7 +577,7 @@ int gps_fusion_engine_detect_outliers(const standardized_gps_data_t* source_data
     centroid_lon /= source_count;
     
     // Calculate distances from centroid and identify outliers
-    double* distances = malloc(source_count * sizeof(double)\n"\n"\n"\n"\n"\n"\n"\n");
+    double* distances = malloc(source_count * sizeof(double));
     if (!distances) {
         return 0;
     }
@@ -586,17 +586,17 @@ int gps_fusion_engine_detect_outliers(const standardized_gps_data_t* source_data
         distances[i] = gps_calculate_distance(
             source_data[i].latitude, source_data[i].longitude,
             centroid_lat, centroid_lon
-        \n"\n"\n"\n"\n"\n"\n"\n");
+        );
     }
     
     // Calculate median distance for outlier detection
-    double* sorted_distances = malloc(source_count * sizeof(double)\n"\n"\n"\n"\n"\n"\n"\n");
+    double* sorted_distances = malloc(source_count * sizeof(double));
     if (!sorted_distances) {
-        free(distances\n"\n"\n"\n"\n"\n"\n"\n");
+        free(distances);
         return 0;
     }
     
-    memcpy(sorted_distances, distances, source_count * sizeof(double)\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(sorted_distances, distances, source_count * sizeof(double));
     
     // Simple bubble sort for small arrays
     for (int i = 0; i < source_count - 1; i++) {
@@ -622,13 +622,13 @@ int gps_fusion_engine_detect_outliers(const standardized_gps_data_t* source_data
         }
     }
     
-    free(distances\n"\n"\n"\n"\n"\n"\n"\n");
-    free(sorted_distances\n"\n"\n"\n"\n"\n"\n"\n");
+    free(distances);
+    free(sorted_distances);
     
-    printf("DEBUG: "Outlier detection completed", 
+    LOGX_DEBUG_MSG("Outlier detection completed", 
                   "original_count", source_count,
                   "filtered_count", filtered_count,
-                  "outliers_removed", source_count - filtered_count\n"\n"\n"\n"\n"\n"\n"\n");
+                  "outliers_removed", source_count - filtered_count);
     
     return filtered_count;
 }
@@ -658,7 +658,7 @@ bool gps_fusion_engine_check_consensus(const standardized_gps_data_t* source_dat
             double distance = gps_calculate_distance(
                 source_data[i].latitude, source_data[i].longitude,
                 source_data[j].latitude, source_data[j].longitude
-            \n"\n"\n"\n"\n"\n"\n"\n");
+            );
             
             total_pairs++;
             
@@ -679,10 +679,10 @@ bool gps_fusion_engine_check_consensus(const standardized_gps_data_t* source_dat
         g_fusion_engine.stats.consensus_failures++;
     }
     
-    printf("DEBUG: "Consensus check completed", 
+    LOGX_DEBUG_MSG("Consensus check completed", 
                   "source_count", source_count,
                   "consensus_ratio", consensus_ratio,
-                  "has_consensus", has_consensus\n"\n"\n"\n"\n"\n"\n"\n");
+                  "has_consensus", has_consensus);
     
     return has_consensus;
 }
@@ -699,7 +699,7 @@ int gps_fusion_engine_apply_smoothing(const standardized_gps_data_t* current_dat
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_fusion_engine.mutex);
     
     // Add current data to history
     if (g_fusion_engine.smoothing_history_count < 10) {
@@ -742,14 +742,14 @@ int gps_fusion_engine_apply_smoothing(const standardized_gps_data_t* current_dat
         smoothed_result->altitude = current_data->altitude;
     }
     
-    pthread_mutex_unlock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_fusion_engine.mutex);
     
-    printf("DEBUG: "GPS smoothing applied", 
+    LOGX_DEBUG_MSG("GPS smoothing applied", 
                   "history_count", g_fusion_engine.smoothing_history_count,
                   "original_lat", current_data->latitude,
                   "smoothed_lat", smoothed_result->latitude,
                   "original_lon", current_data->longitude,
-                  "smoothed_lon", smoothed_result->longitude\n"\n"\n"\n"\n"\n"\n"\n");
+                  "smoothed_lon", smoothed_result->longitude);
     
     return AUTONOMY_SUCCESS;
 }
@@ -766,7 +766,7 @@ int gps_fusion_engine_apply_kalman_filter(const standardized_gps_data_t* measure
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_fusion_engine.mutex);
     
     // Initialize Kalman filter if not already done
     if (!g_fusion_engine.kalman_initialized) {
@@ -924,13 +924,13 @@ int gps_fusion_engine_apply_kalman_filter(const standardized_gps_data_t* measure
     filtered_result->heading = measurement->heading;
     filtered_result->altitude = measurement->altitude;
     
-    pthread_mutex_unlock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_fusion_engine.mutex);
     
-    printf("DEBUG: "Kalman filter applied", 
+    LOGX_DEBUG_MSG("Kalman filter applied", 
                   "original_lat", measurement->latitude,
                   "filtered_lat", filtered_result->latitude,
                   "original_lon", measurement->longitude,
-                  "filtered_lon", filtered_result->longitude\n"\n"\n"\n"\n"\n"\n"\n");
+                  "filtered_lon", filtered_result->longitude);
     
     return AUTONOMY_SUCCESS;
 }
@@ -940,9 +940,9 @@ int gps_fusion_engine_get_config(gps_fusion_config_t* config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_fusion_engine.mutex);
     *config = g_fusion_engine.config;
-    pthread_mutex_unlock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_fusion_engine.mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -952,10 +952,10 @@ int gps_fusion_engine_set_config(const gps_fusion_config_t* config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_fusion_engine.mutex);
     g_fusion_engine.config = *config;
-    pthread_mutex_unlock(&g_fusion_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_fusion_engine.mutex);
     
-    printf("INFO: "GPS fusion engine configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS fusion engine configuration updated");
     return AUTONOMY_SUCCESS;
 }

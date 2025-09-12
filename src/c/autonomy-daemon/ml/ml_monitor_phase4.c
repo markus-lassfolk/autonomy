@@ -109,7 +109,7 @@ typedef struct {
     int interface_count;
     
     // Optimization callbacks
-    int (*network_optimization_callback)(const char *action, double confidence, void *data\n"\n"\n"\n"\n"\n"\n"\n");
+    int (*network_optimization_callback)(const char *action, double confidence, void *data);
     void *callback_data;
     
 } proactive_optimizer_t;
@@ -133,22 +133,22 @@ typedef struct {
 } phase4_ml_state_t;
 
 // Forward declarations
-static int ml_monitor_init_ensemble_model(ml_monitor_t *monitor, ensemble_model_t *ensemble\n"\n"\n"\n"\n"\n"\n"\n");
+static int ml_monitor_init_ensemble_model(ml_monitor_t *monitor, ensemble_model_t *ensemble);
 static int ml_monitor_ensemble_predict(ml_monitor_t *monitor, ensemble_model_t *ensemble, 
                                       const ml_observation_t *observation, 
-                                      uint8_t *probability, uint8_t *confidence\n"\n"\n"\n"\n"\n"\n"\n");
+                                      uint8_t *probability, uint8_t *confidence);
 static int ml_monitor_validate_prediction(validation_system_t *validation, 
-                                         const ml_observation_t *current_obs\n"\n"\n"\n"\n"\n"\n"\n");
+                                         const ml_observation_t *current_obs);
 static int ml_monitor_proactive_optimize(ml_monitor_t *monitor, proactive_optimizer_t *optimizer,
-                                        uint8_t outage_probability, uint8_t confidence\n"\n"\n"\n"\n"\n"\n"\n");
-static void ml_monitor_update_model_weights(ensemble_model_t *ensemble\n"\n"\n"\n"\n"\n"\n"\n");
-static double ml_monitor_calculate_model_agreement(const uint8_t predictions[5]\n"\n"\n"\n"\n"\n"\n"\n");
+                                        uint8_t outage_probability, uint8_t confidence);
+static void ml_monitor_update_model_weights(ensemble_model_t *ensemble);
+static double ml_monitor_calculate_model_agreement(const uint8_t predictions[5]);
 
 // Initialize ensemble model with dynamic weights
 static int ml_monitor_init_ensemble_model(ml_monitor_t *monitor, ensemble_model_t *ensemble) {
     if (!ensemble) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    printf("INFO: "Initializing advanced ensemble model with dynamic weights"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Initializing advanced ensemble model with dynamic weights");
     
     // Initialize model weights (equal weighting to start)
     ensemble->knn_weight = 0.25;
@@ -176,9 +176,9 @@ static int ml_monitor_init_ensemble_model(ml_monitor_t *monitor, ensemble_model_
     ensemble->high_confidence_predictions = 0;
     ensemble->ensemble_accuracy = 0.5;
     
-    printf("INFO: "Ensemble model initialized: kNN=%.2f, NN=%.2f, SkyGrid=%.2f, SlidingWindow=%.2f, Obstruction=%.2f",
+    LOGX_INFO_MSG("Ensemble model initialized: kNN=%.2f, NN=%.2f, SkyGrid=%.2f, SlidingWindow=%.2f, Obstruction=%.2f",
            ensemble->knn_weight, ensemble->neural_net_weight, ensemble->sky_grid_weight,
-           ensemble->sliding_window_weight, ensemble->obstruction_weight\n"\n"\n"\n"\n"\n"\n"\n");
+           ensemble->sliding_window_weight, ensemble->obstruction_weight);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -196,11 +196,11 @@ static int ml_monitor_ensemble_predict(ml_monitor_t *monitor, ensemble_model_t *
     uint8_t confidences[5] = {0};
     
     // 1. k-NN prediction
-    predictions[0] = ml_monitor_predict_outage_knn(monitor, observation, &confidences[0]\n"\n"\n"\n"\n"\n"\n"\n");
+    predictions[0] = ml_monitor_predict_outage_knn(monitor, observation, &confidences[0]);
     
     // 2. Neural network prediction
     uint8_t nn_output[8];
-    ml_monitor_predict_neural_network(monitor, observation, nn_output\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_predict_neural_network(monitor, observation, nn_output);
     predictions[1] = nn_output[0];
     confidences[1] = 200; // NN doesn't return confidence, use fixed high value
     
@@ -248,7 +248,7 @@ static int ml_monitor_ensemble_predict(ml_monitor_t *monitor, ensemble_model_t *
     
     for (int i = 0; i < 5; i++) {
         if (confidences[i] > 50) { // Only use predictions with reasonable confidence
-            double model_weight = weights[i] * (confidences[i] / 255.0\n"\n"\n"\n"\n"\n"\n"\n");
+            double model_weight = weights[i] * (confidences[i] / 255.0);
             weighted_sum += predictions[i] * model_weight;
             weight_sum += model_weight;
             confidence_sum += confidences[i] * weights[i];
@@ -256,18 +256,18 @@ static int ml_monitor_ensemble_predict(ml_monitor_t *monitor, ensemble_model_t *
     }
     
     if (weight_sum > 0) {
-        *probability = (uint8_t)(weighted_sum / weight_sum\n"\n"\n"\n"\n"\n"\n"\n");
-        *confidence = (uint8_t)(confidence_sum / weight_sum\n"\n"\n"\n"\n"\n"\n"\n");
+        *probability = (uint8_t)(weighted_sum / weight_sum);
+        *confidence = (uint8_t)(confidence_sum / weight_sum);
     } else {
         *probability = 0;
         *confidence = 0;
     }
     
     // Calculate model agreement
-    double agreement = ml_monitor_calculate_model_agreement(predictions\n"\n"\n"\n"\n"\n"\n"\n");
+    double agreement = ml_monitor_calculate_model_agreement(predictions);
     
     // Adjust confidence based on agreement
-    *confidence = (uint8_t)(*confidence * agreement\n"\n"\n"\n"\n"\n"\n"\n");
+    *confidence = (uint8_t)(*confidence * agreement);
     
     // Update ensemble statistics
     ensemble->ensemble_predictions++;
@@ -275,9 +275,9 @@ static int ml_monitor_ensemble_predict(ml_monitor_t *monitor, ensemble_model_t *
         ensemble->high_confidence_predictions++;
     }
     
-    printf("DEBUG: "Ensemble prediction: prob=%u%%, conf=%u%%, agreement=%.2f (kNN=%u, NN=%u, Sky=%u, Slide=%u, Obs=%u)",
+    LOGX_DEBUG_MSG("Ensemble prediction: prob=%u%%, conf=%u%%, agreement=%.2f (kNN=%u, NN=%u, Sky=%u, Slide=%u, Obs=%u)",
               *probability, *confidence, agreement, 
-              predictions[0], predictions[1], predictions[2], predictions[3], predictions[4]\n"\n"\n"\n"\n"\n"\n"\n");
+              predictions[0], predictions[1], predictions[2], predictions[3], predictions[4]);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -324,9 +324,9 @@ static void ml_monitor_update_model_weights(ensemble_model_t *ensemble) {
         ensemble->sliding_window_weight = accuracies[3] / total_accuracy;
         ensemble->obstruction_weight = accuracies[4] / total_accuracy;
         
-        printf("DEBUG: "Updated ensemble weights: kNN=%.3f, NN=%.3f, Sky=%.3f, Slide=%.3f, Obs=%.3f",
+        LOGX_DEBUG_MSG("Updated ensemble weights: kNN=%.3f, NN=%.3f, Sky=%.3f, Slide=%.3f, Obs=%.3f",
                   ensemble->knn_weight, ensemble->neural_net_weight, ensemble->sky_grid_weight,
-                  ensemble->sliding_window_weight, ensemble->obstruction_weight\n"\n"\n"\n"\n"\n"\n"\n");
+                  ensemble->sliding_window_weight, ensemble->obstruction_weight);
     }
 }
 
@@ -374,26 +374,26 @@ static int ml_monitor_validate_prediction(validation_system_t *validation,
             uint32_t fn = validation->validation_metrics.false_negatives;
             
             if (tp + fp > 0) {
-                validation->validation_metrics.precision = (double)tp / (tp + fp\n"\n"\n"\n"\n"\n"\n"\n");
+                validation->validation_metrics.precision = (double)tp / (tp + fp);
             }
             if (tp + fn > 0) {
-                validation->validation_metrics.recall = (double)tp / (tp + fn\n"\n"\n"\n"\n"\n"\n"\n");
+                validation->validation_metrics.recall = (double)tp / (tp + fn);
             }
             if (validation->validation_metrics.precision + validation->validation_metrics.recall > 0) {
                 validation->validation_metrics.f1_score = 
                     2.0 * (validation->validation_metrics.precision * validation->validation_metrics.recall) /
-                    (validation->validation_metrics.precision + validation->validation_metrics.recall\n"\n"\n"\n"\n"\n"\n"\n");
+                    (validation->validation_metrics.precision + validation->validation_metrics.recall);
             }
             if (tp + fp + tn + fn > 0) {
-                validation->validation_metrics.accuracy = (double)(tp + tn) / (tp + fp + tn + fn\n"\n"\n"\n"\n"\n"\n"\n");
+                validation->validation_metrics.accuracy = (double)(tp + tn) / (tp + fp + tn + fn);
             }
             
-            printf("DEBUG: "Prediction validated: predicted=%s, actual=%s, precision=%.3f, recall=%.3f, f1=%.3f",
+            LOGX_DEBUG_MSG("Prediction validated: predicted=%s, actual=%s, precision=%.3f, recall=%.3f, f1=%.3f",
                       validation->predictions[i].predicted_probability > 128 ? "outage" : "normal",
                       current_outage ? "outage" : "normal",
                       validation->validation_metrics.precision,
                       validation->validation_metrics.recall,
-                      validation->validation_metrics.f1_score\n"\n"\n"\n"\n"\n"\n"\n");
+                      validation->validation_metrics.f1_score);
         }
     }
     
@@ -407,15 +407,15 @@ static int ml_monitor_proactive_optimize(ml_monitor_t *monitor, proactive_optimi
     
     if (!optimizer->optimization_enabled) return ML_MONITOR_SUCCESS;
     
-    time_t current_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t current_time = time(NULL);
     
     // Check if we should trigger proactive action
     if (outage_probability > (optimizer->failover_trigger_threshold * 255) && 
         confidence > 150 && 
         (current_time - optimizer->action_stats.last_failover_triggered) > 300) { // 5 minute cooldown
         
-        printf("INFO: " Proactive optimization triggered: %u%% outage probability, %u%% confidence",
-                 outage_probability, confidence\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG(" Proactive optimization triggered: %u%% outage probability, %u%% confidence",
+                 outage_probability, confidence);
         
         if (optimizer->failover_integration_enabled) {
             // Trigger proactive failover
@@ -442,17 +442,17 @@ static int ml_monitor_proactive_optimize(ml_monitor_t *monitor, proactive_optimi
                         // Attempt proactive failover
                         const char *target_interface = optimizer->interface_scores[best_interface].interface_name;
                         
-                        printf("INFO: " Initiating proactive failover to %s (score: %.3f)", 
-                                 target_interface, best_score\n"\n"\n"\n"\n"\n"\n"\n");
+                        LOGX_INFO_MSG(" Initiating proactive failover to %s (score: %.3f)", 
+                                 target_interface, best_score);
                         
-                        int failover_result = network_failover_force_failover(target_interface\n"\n"\n"\n"\n"\n"\n"\n");
+                        int failover_result = network_failover_force_failover(target_interface);
                         
                         if (failover_result == AUTONOMY_SUCCESS) {
                             optimizer->action_stats.successful_preventions++;
-                            printf("INFO: " Proactive failover successful to %s", target_interface\n"\n"\n"\n"\n"\n"\n"\n");
+                            LOGX_INFO_MSG(" Proactive failover successful to %s", target_interface);
                         } else {
                             optimizer->action_stats.false_alarms++;
-                            printf("WARN: " Proactive failover failed: %d", failover_result\n"\n"\n"\n"\n"\n"\n"\n");
+                            LOGX_WARN_MSG(" Proactive failover failed: %d", failover_result);
                         }
                         
                         optimizer->action_stats.last_failover_triggered = current_time;
@@ -467,10 +467,10 @@ static int ml_monitor_proactive_optimize(ml_monitor_t *monitor, proactive_optimi
             char action_desc[256];
             snprintf(action_desc, sizeof(action_desc), 
                     "proactive_optimization:probability=%u,confidence=%u", 
-                    outage_probability, confidence\n"\n"\n"\n"\n"\n"\n"\n");
+                    outage_probability, confidence);
             
             optimizer->network_optimization_callback(action_desc, confidence / 255.0, 
-                                                   optimizer->callback_data\n"\n"\n"\n"\n"\n"\n"\n");
+                                                   optimizer->callback_data);
         }
         
         optimizer->action_stats.last_optimization_action = current_time;
@@ -486,7 +486,7 @@ int ml_monitor_init_phase4_enhancements(ml_monitor_t *monitor) {
     }
     
     // Use simple fprintf to avoid LOGX crashes
-    fprintf(stderr, "Initializing Phase 4: Advanced Ensemble Methods & Real-time Validation\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "Initializing Phase 4: Advanced Ensemble Methods & Real-time Validation\n");
     
     // Initialize ensemble model parameters (stored in local variables for now)
     double knn_weight = 0.25;
@@ -519,7 +519,7 @@ int ml_monitor_init_phase4_enhancements(ml_monitor_t *monitor) {
     bool enable_continual_learning = true;
     
     // Use single consolidated message to avoid multiple LOGX calls
-    fprintf(stderr, "Phase 4 enhancements initialized successfully - Ensemble ML, validation, optimization, dynamic weights, meta-learning\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "Phase 4 enhancements initialized successfully - Ensemble ML, validation, optimization, dynamic weights, meta-learning\n");
     
     return ML_MONITOR_SUCCESS;
 }
@@ -536,14 +536,14 @@ int ml_monitor_predict_ensemble(ml_monitor_t *monitor, const ml_observation_t *o
     
     // Get individual predictions
     uint8_t knn_confidence;
-    uint8_t knn_prediction = ml_monitor_predict_outage_knn(monitor, observation, &knn_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+    uint8_t knn_prediction = ml_monitor_predict_outage_knn(monitor, observation, &knn_confidence);
     
     uint8_t nn_output[8];
-    ml_monitor_predict_neural_network(monitor, observation, nn_output\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_predict_neural_network(monitor, observation, nn_output);
     
     uint8_t sliding_probs[60];
     uint8_t sliding_confidence;
-    int sliding_result = ml_monitor_predict_next_15_minutes_enhanced(monitor, sliding_probs, &sliding_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+    int sliding_result = ml_monitor_predict_next_15_minutes_enhanced(monitor, sliding_probs, &sliding_confidence);
     
     // Weighted ensemble (simplified)
     double weighted_prob = 0.0;
@@ -570,8 +570,8 @@ int ml_monitor_predict_ensemble(ml_monitor_t *monitor, const ml_observation_t *o
     }
     
     if (weight_sum > 0) {
-        *probability = (uint8_t)(weighted_prob / weight_sum\n"\n"\n"\n"\n"\n"\n"\n");
-        *confidence = (uint8_t)(conf_sum / weight_sum\n"\n"\n"\n"\n"\n"\n"\n");
+        *probability = (uint8_t)(weighted_prob / weight_sum);
+        *confidence = (uint8_t)(conf_sum / weight_sum);
     } else {
         *probability = 0;
         *confidence = 0;
@@ -581,8 +581,8 @@ int ml_monitor_predict_ensemble(ml_monitor_t *monitor, const ml_observation_t *o
         *cause = knn_prediction; // Use k-NN for cause classification
     }
     
-    printf("DEBUG: "Ensemble prediction: prob=%u%%, conf=%u%%, cause=%u", 
-              *probability, *confidence, cause ? *cause : 0\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Ensemble prediction: prob=%u%%, conf=%u%%, cause=%u", 
+              *probability, *confidence, cause ? *cause : 0);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -596,8 +596,8 @@ int ml_monitor_add_prediction_for_validation(ml_monitor_t *monitor,
     // In a full implementation, this would add to the validation system
     // For now, just log the prediction
     
-    printf("DEBUG: "Prediction logged for validation: prob=%u%%, conf=%u%%, cause=%u, target=%ld",
-              probability, confidence, cause, target_time\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Prediction logged for validation: prob=%u%%, conf=%u%%, cause=%u, target=%ld",
+              probability, confidence, cause, target_time);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -644,17 +644,17 @@ int ml_monitor_update_with_phase4_enhancements(ml_monitor_t *monitor, const ml_o
     
     // Make ensemble prediction
     uint8_t probability, confidence, cause;
-    int pred_result = ml_monitor_predict_ensemble(monitor, observation, &probability, &confidence, &cause\n"\n"\n"\n"\n"\n"\n"\n");
+    int pred_result = ml_monitor_predict_ensemble(monitor, observation, &probability, &confidence, &cause);
     
     if (pred_result == ML_MONITOR_SUCCESS) {
         // Add prediction for validation
         time_t target_time = observation->timestamp + 900; // 15 minutes ahead
-        ml_monitor_add_prediction_for_validation(monitor, probability, confidence, cause, target_time\n"\n"\n"\n"\n"\n"\n"\n");
+        ml_monitor_add_prediction_for_validation(monitor, probability, confidence, cause, target_time);
         
         // Trigger proactive optimization if high probability
         if (probability > 200 && confidence > 150) { // High confidence high probability
-            printf("INFO: " High-confidence outage prediction: %u%% probability, triggering proactive measures",
-                     probability\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_INFO_MSG(" High-confidence outage prediction: %u%% probability, triggering proactive measures",
+                     probability);
             
             // In a full implementation, this would trigger the proactive optimizer
         }

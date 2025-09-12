@@ -33,26 +33,26 @@ int discover_cellular_devices(cellular_device_info_t *devices, int max_devices, 
             cellular_device_info_t *device = &devices[*actual_count];
             
             // Initialize device info
-            memset(device, 0, sizeof(cellular_device_info_t)\n"\n"\n"\n"\n"\n"\n"\n");
-            safe_strncpy(device->device_path, device_path, sizeof(device->device_path)\n"\n"\n"\n"\n"\n"\n"\n");
+            memset(device, 0, sizeof(cellular_device_info_t));
+            safe_strncpy(device->device_path, device_path, sizeof(device->device_path));
             device->is_available = true;
             
             // Try to get signal strength to verify device is working
             int rssi, ber;
             if (get_signal_strength(device_path, &rssi, &ber) == AUTONOMY_SUCCESS) {
-                device->signal_strength_dbm = -113 + (rssi * 2\n"\n"\n"\n"\n"\n"\n"\n");
+                device->signal_strength_dbm = -113 + (rssi * 2);
                 device->signal_quality = (rssi * 100) / 31;
             }
             
             // Try to get operator name
-            get_network_operator(device_path, device->operator_name, sizeof(device->operator_name)\n"\n"\n"\n"\n"\n"\n"\n");
+            get_network_operator(device_path, device->operator_name, sizeof(device->operator_name));
             
             (*actual_count)++;
-            printf("INFO: " Discovered cellular device: %s", device_path\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_INFO_MSG(" Discovered cellular device: %s", device_path);
         }
     }
     
-    printf("INFO: " Cellular device discovery complete: found %d devices", *actual_count\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG(" Cellular device discovery complete: found %d devices", *actual_count);
     return AUTONOMY_SUCCESS;
 }
 
@@ -66,17 +66,17 @@ int get_cellular_device_path(const char *interface_name, char *device_path, size
     cellular_device_info_t devices[8];
     int device_count;
     
-    int result = discover_cellular_devices(devices, 8, &device_count\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = discover_cellular_devices(devices, 8, &device_count);
     if (result != AUTONOMY_SUCCESS || device_count == 0) {
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     // For now, return the first available device
     // In the future, we could match interface names to specific devices
-    strncpy(device_path, devices[0].device_path, path_size - 1\n"\n"\n"\n"\n"\n"\n"\n");
+    strncpy(device_path, devices[0].device_path, path_size - 1);
     device_path[path_size - 1] = '\0';
     
-    printf("DEBUG: " Using cellular device %s for interface %s", device_path, interface_name\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG(" Using cellular device %s for interface %s", device_path, interface_name);
     return AUTONOMY_SUCCESS;
 }
 
@@ -87,17 +87,17 @@ int get_signal_strength(const char *device_path, int *rssi, int *ber) {
     }
     
     exec_result_t result;
-    int ret = secure_cellular_at_command(device_path, "AT+CSQ", &result\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = secure_cellular_at_command(device_path, "AT+CSQ", &result);
     
     if (ret != AUTONOMY_SUCCESS || !result.success) {
-        printf("DEBUG: " Failed to get signal strength from %s: %s", device_path, result.error\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG(" Failed to get signal strength from %s: %s", device_path, result.error);
         return ret;
     }
     
     // Parse result: +CSQ: rssi,ber
-    char *csq_line = strstr(result.output, "+CSQ:"\n"\n"\n"\n"\n"\n"\n"\n");
+    char *csq_line = strstr(result.output, "+CSQ:");
     if (csq_line && sscanf(csq_line, "+CSQ: %d,%d", rssi, ber) == 2) {
-        printf("DEBUG: " Signal strength from %s: RSSI=%d, BER=%d", device_path, *rssi, *ber\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG(" Signal strength from %s: RSSI=%d, BER=%d", device_path, *rssi, *ber);
         return AUTONOMY_SUCCESS;
     }
     
@@ -114,7 +114,7 @@ int get_signal_strength_dynamic(int *rssi, int *ber) {
     cellular_device_info_t devices[8];
     int device_count;
     
-    int result = discover_cellular_devices(devices, 8, &device_count\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = discover_cellular_devices(devices, 8, &device_count);
     if (result != AUTONOMY_SUCCESS || device_count == 0) {
         return AUTONOMY_ERROR_NOT_FOUND;
     }
@@ -136,23 +136,23 @@ int get_network_operator(const char *device_path, char *operator_name, size_t na
     }
     
     exec_result_t result;
-    int ret = secure_cellular_at_command(device_path, "AT+COPS?", &result\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = secure_cellular_at_command(device_path, "AT+COPS?", &result);
     
     if (ret != AUTONOMY_SUCCESS || !result.success) {
         return ret;
     }
     
     // Parse result: +COPS: mode,format,"operator"
-    char *cops_line = strstr(result.output, "+COPS:"\n"\n"\n"\n"\n"\n"\n"\n");
+    char *cops_line = strstr(result.output, "+COPS:");
     if (cops_line) {
-        char *start = strchr(cops_line, '"'\n"\n"\n"\n"\n"\n"\n"\n");
+        char *start = strchr(cops_line, '"');
         if (start) {
             start++;
-            char *end = strchr(start, '"'\n"\n"\n"\n"\n"\n"\n"\n");
+            char *end = strchr(start, '"');
             if (end) {
                 size_t len = end - start;
                 if (len < name_size) {
-                    strncpy(operator_name, start, len\n"\n"\n"\n"\n"\n"\n"\n");
+                    strncpy(operator_name, start, len);
                     operator_name[len] = '\0';
                     return AUTONOMY_SUCCESS;
                 }
@@ -170,27 +170,27 @@ int get_lte_metrics(const char *device_path, int *rsrp, int *rsrq, int *sinr) {
     }
     
     exec_result_t result;
-    int ret = secure_cellular_at_command(device_path, "AT+QENG=\"servingcell\"", &result\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = secure_cellular_at_command(device_path, "AT+QENG=\"servingcell\"", &result);
     
     if (ret != AUTONOMY_SUCCESS || !result.success) {
         return ret;
     }
     
     // Parse LTE serving cell info
-    char *lte_line = strstr(result.output, "LTE"\n"\n"\n"\n"\n"\n"\n"\n");
+    char *lte_line = strstr(result.output, "LTE");
     if (lte_line) {
         // Parse comma-separated values to extract RSRP, RSRQ, SINR
-        char *token = strtok(lte_line, ","\n"\n"\n"\n"\n"\n"\n"\n");
+        char *token = strtok(lte_line, ",");
         int field = 0;
         while (token && field < 20) {
             if (field == 11) { // RSRP field
-                *rsrp = atoi(token\n"\n"\n"\n"\n"\n"\n"\n");
+                *rsrp = atoi(token);
             } else if (field == 12) { // RSRQ field
-                *rsrq = atoi(token\n"\n"\n"\n"\n"\n"\n"\n");
+                *rsrq = atoi(token);
             } else if (field == 13) { // SINR field
-                *sinr = atoi(token\n"\n"\n"\n"\n"\n"\n"\n");
+                *sinr = atoi(token);
             }
-            token = strtok(NULL, ","\n"\n"\n"\n"\n"\n"\n"\n");
+            token = strtok(NULL, ",");
             field++;
         }
         
@@ -213,8 +213,8 @@ bool is_cellular_device(const char *device_path) {
     
     // Try a simple AT command to verify it's a modem
     exec_result_t result;
-    int ret = secure_cellular_at_command(device_path, "AT", &result\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = secure_cellular_at_command(device_path, "AT", &result);
     
     // If we get "OK" response, it's likely a cellular modem
-    return (ret == AUTONOMY_SUCCESS && result.success && strstr(result.output, "OK")\n"\n"\n"\n"\n"\n"\n"\n");
+    return (ret == AUTONOMY_SUCCESS && result.success && strstr(result.output, "OK"));
 }

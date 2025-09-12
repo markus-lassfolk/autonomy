@@ -17,34 +17,34 @@ static bool g_monitoring_active = false;
 static bool g_monitoring_should_stop = false;
 
 // Forward declarations
-static void* monitoring_thread_worker(void* arg\n"\n"\n"\n"\n"\n"\n"\n");
-static int parse_json_to_observation_partial(const char *json_data, const char *api_method, starlink_observation_t *observation\n"\n"\n"\n"\n"\n"\n"\n");
+static void* monitoring_thread_worker(void* arg);
+static int parse_json_to_observation_partial(const char *json_data, const char *api_method, starlink_observation_t *observation);
 
 // Initialize daemon integration
 int starlink_grpc_daemon_integration_init(const starlink_grpc_daemon_config_t *config) {
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init called\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init called\n");
     if (!config) {
-        printf("ERROR: "Invalid configuration provided to daemon integration"\n"\n"\n"\n"\n"\n"\n"\n");
-        fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init failed - NULL config\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Invalid configuration provided to daemon integration");
+        fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init failed - NULL config\n");
         return -1;
     }
     
     // Copy configuration
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - copying config\n"\n"\n"\n"\n"\n"\n"\n"\n");
-    memcpy(&g_starlink_grpc_daemon_config, config, sizeof(starlink_grpc_daemon_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - config copied\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - copying config\n");
+    memcpy(&g_starlink_grpc_daemon_config, config, sizeof(starlink_grpc_daemon_config_t));
+    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - config copied\n");
     
     // Initialize the comprehensive client
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - about to initialize comprehensive client\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - about to initialize comprehensive client\n");
     if (starlink_grpc_comprehensive_client_init(&g_starlink_grpc_daemon_config.client_config) != 0) {
-        printf("ERROR: "Failed to initialize comprehensive gRPC client"\n"\n"\n"\n"\n"\n"\n"\n");
-        fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init failed - comprehensive client init failed\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to initialize comprehensive gRPC client");
+        fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init failed - comprehensive client init failed\n");
         return -1;
     }
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - comprehensive client initialized\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - comprehensive client initialized\n");
     
-    printf("INFO: "Starlink gRPC daemon integration initialized"\n"\n"\n"\n"\n"\n"\n"\n");
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init completed successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starlink gRPC daemon integration initialized");
+    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init completed successfully\n");
     return 0;
 }
 
@@ -55,8 +55,8 @@ int starlink_grpc_daemon_get_observation(starlink_observation_t *observation) {
     }
     
     // Initialize observation structure
-    memset(observation, 0, sizeof(starlink_observation_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    observation->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(observation, 0, sizeof(starlink_observation_t));
+    observation->timestamp = time(NULL);
     
     int success_count = 0;
     int total_calls = 0;
@@ -70,7 +70,7 @@ int starlink_grpc_daemon_get_observation(starlink_observation_t *observation) {
         "dish_get_context"      // Additional dish context
     };
     
-    const int num_calls = sizeof(api_calls) / sizeof(api_calls[0]\n"\n"\n"\n"\n"\n"\n"\n");
+    const int num_calls = sizeof(api_calls) / sizeof(api_calls[0]);
     
     for (int i = 0; i < num_calls; i++) {
         starlink_grpc_response_t response;
@@ -86,7 +86,7 @@ int starlink_grpc_daemon_get_observation(starlink_observation_t *observation) {
                 if (response.success && response.response_data) {
                     // Parse response and merge into observation
                     if (parse_json_to_observation_partial(response.response_data, api_calls[i], observation) == 0) {
-                        starlink_grpc_daemon_log_response(api_calls[i], &response\n"\n"\n"\n"\n"\n"\n"\n");
+                        starlink_grpc_daemon_log_response(api_calls[i], &response);
                         call_success = true;
                         success_count++;
                     }
@@ -96,68 +96,68 @@ int starlink_grpc_daemon_get_observation(starlink_observation_t *observation) {
             if (!call_success) {
                 retries++;
                 if (retries <= max_retries) {
-                    printf("WARN: "gRPC call %s failed, retrying (%d/%d)", api_calls[i], retries, max_retries\n"\n"\n"\n"\n"\n"\n"\n");
-                    usleep(g_starlink_grpc_daemon_config.retry_delay_ms * 1000\n"\n"\n"\n"\n"\n"\n"\n");
+                    LOGX_WARN_MSG("gRPC call %s failed, retrying (%d/%d)", api_calls[i], retries, max_retries);
+                    usleep(g_starlink_grpc_daemon_config.retry_delay_ms * 1000);
                 }
             }
             
             if (response.response_data) {
-                free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
+                free(response.response_data);
             }
         }
         
         if (!call_success) {
-            printf("WARN: "Failed to get data from %s after %d retries", api_calls[i], max_retries\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_WARN_MSG("Failed to get data from %s after %d retries", api_calls[i], max_retries);
         }
     }
     
     // Consider it successful if we got at least the core status data
     if (success_count > 0) {
-        printf("INFO: "Starlink observation collected: %d/%d API calls successful", success_count, total_calls\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("Starlink observation collected: %d/%d API calls successful", success_count, total_calls);
         return 0;
     } else {
-        printf("ERROR: "Failed to collect any Starlink data from %d API calls", total_calls\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to collect any Starlink data from %d API calls", total_calls);
         return -1;
     }
 }
 
 int starlink_grpc_daemon_get_status(starlink_observation_t *observation) {
-    return starlink_grpc_daemon_get_observation(observation\n"\n"\n"\n"\n"\n"\n"\n");
+    return starlink_grpc_daemon_get_observation(observation);
 }
 
 int starlink_grpc_daemon_get_device_info(starlink_observation_t *observation) {
-    return starlink_grpc_daemon_get_observation(observation\n"\n"\n"\n"\n"\n"\n"\n");
+    return starlink_grpc_daemon_get_observation(observation);
 }
 
 int starlink_grpc_daemon_get_location(starlink_observation_t *observation) {
-    return starlink_grpc_daemon_get_observation(observation\n"\n"\n"\n"\n"\n"\n"\n");
+    return starlink_grpc_daemon_get_observation(observation);
 }
 
 int starlink_grpc_daemon_get_diagnostics(starlink_observation_t *observation) {
-    return starlink_grpc_daemon_get_observation(observation\n"\n"\n"\n"\n"\n"\n"\n");
+    return starlink_grpc_daemon_get_observation(observation);
 }
 
 // Monitoring functions
 int starlink_grpc_daemon_start_monitoring(void) {
     if (g_monitoring_active) {
-        printf("WARN: "Monitoring is already active"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Monitoring is already active");
         return 0;
     }
     
     if (!g_starlink_grpc_daemon_config.enable_monitoring) {
-        printf("WARN: "Monitoring is disabled in configuration"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Monitoring is disabled in configuration");
         return -1;
     }
     
     g_monitoring_should_stop = false;
     
     if (pthread_create(&g_monitoring_thread, NULL, monitoring_thread_worker, NULL) != 0) {
-        printf("ERROR: "Failed to create monitoring thread"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to create monitoring thread");
         return -1;
     }
     
     g_monitoring_active = true;
-    printf("INFO: "Started Starlink gRPC monitoring thread"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Started Starlink gRPC monitoring thread");
     return 0;
 }
 
@@ -169,12 +169,12 @@ int starlink_grpc_daemon_stop_monitoring(void) {
     g_monitoring_should_stop = true;
     
     if (pthread_join(g_monitoring_thread, NULL) != 0) {
-        printf("ERROR: "Failed to join monitoring thread"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to join monitoring thread");
         return -1;
     }
     
     g_monitoring_active = false;
-    printf("INFO: "Stopped Starlink gRPC monitoring thread"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Stopped Starlink gRPC monitoring thread");
     return 0;
 }
 
@@ -189,16 +189,16 @@ int starlink_grpc_daemon_update_config(const starlink_grpc_daemon_config_t *conf
     }
     
     // Update configuration
-    memcpy(&g_starlink_grpc_daemon_config, config, sizeof(starlink_grpc_daemon_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(&g_starlink_grpc_daemon_config, config, sizeof(starlink_grpc_daemon_config_t));
     
     // Reinitialize the comprehensive client with new config
-    starlink_grpc_comprehensive_client_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+    starlink_grpc_comprehensive_client_cleanup();
     if (starlink_grpc_comprehensive_client_init(&g_starlink_grpc_daemon_config.client_config) != 0) {
-        printf("ERROR: "Failed to reinitialize comprehensive gRPC client with new config"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to reinitialize comprehensive gRPC client with new config");
         return -1;
     }
     
-    printf("INFO: "Updated Starlink gRPC daemon configuration"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Updated Starlink gRPC daemon configuration");
     return 0;
 }
 
@@ -218,12 +218,12 @@ void starlink_grpc_daemon_log_response(const char *method, const starlink_grpc_r
              g_starlink_grpc_daemon_config.log_prefix,
              method, 
              response->http_status, 
-             response->response_size\n"\n"\n"\n"\n"\n"\n"\n");
+             response->response_size);
     
     if (response->success) {
-        printf("INFO: "%s", log_message\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("%s", log_message);
     } else {
-        printf("ERROR: "%s - %s", log_message, response->error_message\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("%s - %s", log_message, response->error_message);
     }
 }
 
@@ -233,7 +233,7 @@ int starlink_grpc_daemon_parse_response_to_observation(const starlink_grpc_respo
     }
     
     // Use the partial parser with a generic method name
-    return parse_json_to_observation_partial(response->response_data, "generic", observation\n"\n"\n"\n"\n"\n"\n"\n");
+    return parse_json_to_observation_partial(response->response_data, "generic", observation);
 }
 
 // Parse JSON response to starlink_observation_t structure (partial - for specific API methods)
@@ -242,7 +242,7 @@ int parse_json_to_observation_partial(const char *json_data, const char *api_met
         return -1;
     }
     
-    json_object *root = json_tokener_parse(json_data\n"\n"\n"\n"\n"\n"\n"\n");
+    json_object *root = json_tokener_parse(json_data);
     if (!root) {
         return -1;
     }
@@ -251,94 +251,94 @@ int parse_json_to_observation_partial(const char *json_data, const char *api_met
     
     if (strcmp(api_method, "get_status") == 0) {
         // Parse get_status response
-        json_object *dish_get_status = json_object_object_get(root, "dishGetStatus"\n"\n"\n"\n"\n"\n"\n"\n");
+        json_object *dish_get_status = json_object_object_get(root, "dishGetStatus");
         if (dish_get_status) {
             // Device state
-            json_object *device_state = json_object_object_get(dish_get_status, "deviceState"\n"\n"\n"\n"\n"\n"\n"\n");
+            json_object *device_state = json_object_object_get(dish_get_status, "deviceState");
             if (device_state) {
                 json_object *uptime;
                 if (json_object_object_get_ex(device_state, "uptimeS", &uptime)) {
-                    observation->uptime_s = json_object_get_double(uptime\n"\n"\n"\n"\n"\n"\n"\n");
+                    observation->uptime_s = json_object_get_double(uptime);
                 }
             }
             
             // GPS data
-            json_object *gps = json_object_object_get(dish_get_status, "gps"\n"\n"\n"\n"\n"\n"\n"\n");
+            json_object *gps = json_object_object_get(dish_get_status, "gps");
             if (gps) {
                 json_object *gps_valid;
                 if (json_object_object_get_ex(gps, "gpsValid", &gps_valid)) {
-                    observation->gps_valid = json_object_get_boolean(gps_valid\n"\n"\n"\n"\n"\n"\n"\n");
+                    observation->gps_valid = json_object_get_boolean(gps_valid);
                 }
                 
                 json_object *gps_sats;
                 if (json_object_object_get_ex(gps, "gpsSats", &gps_sats)) {
-                    observation->gps_satellites = json_object_get_int(gps_sats\n"\n"\n"\n"\n"\n"\n"\n");
+                    observation->gps_satellites = json_object_get_int(gps_sats);
                 }
                 
                 json_object *gps_accuracy;
                 if (json_object_object_get_ex(gps, "gpsAccuracyM", &gps_accuracy)) {
-                    observation->gps_accuracy_m = json_object_get_double(gps_accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+                    observation->gps_accuracy_m = json_object_get_double(gps_accuracy);
                 }
                 
                 json_object *inhibit_gps;
                 if (json_object_object_get_ex(gps, "inhibitGps", &inhibit_gps)) {
-                    observation->inhibit_gps = json_object_get_boolean(inhibit_gps\n"\n"\n"\n"\n"\n"\n"\n");
+                    observation->inhibit_gps = json_object_get_boolean(inhibit_gps);
                 }
             }
             
             // Signal metrics
-            json_object *snr = json_object_object_get(dish_get_status, "snr"\n"\n"\n"\n"\n"\n"\n"\n");
+            json_object *snr = json_object_object_get(dish_get_status, "snr");
             if (snr) {
-                observation->snr = json_object_get_double(snr\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->snr = json_object_get_double(snr);
             }
             
             json_object *pop_ping_latency;
             if (json_object_object_get_ex(dish_get_status, "popPingLatencyMs", &pop_ping_latency)) {
-                observation->pop_ping_latency_ms = json_object_get_double(pop_ping_latency\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->pop_ping_latency_ms = json_object_get_double(pop_ping_latency);
             }
             
             json_object *pop_ping_drop_rate;
             if (json_object_object_get_ex(dish_get_status, "popPingDropRate", &pop_ping_drop_rate)) {
-                observation->pop_ping_drop_rate = json_object_get_double(pop_ping_drop_rate\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->pop_ping_drop_rate = json_object_get_double(pop_ping_drop_rate);
             }
             
             json_object *downlink_throughput;
             if (json_object_object_get_ex(dish_get_status, "downlinkThroughputBps", &downlink_throughput)) {
-                observation->downlink_throughput_bps = json_object_get_double(downlink_throughput\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->downlink_throughput_bps = json_object_get_double(downlink_throughput);
             }
             
             json_object *uplink_throughput;
             if (json_object_object_get_ex(dish_get_status, "uplinkThroughputBps", &uplink_throughput)) {
-                observation->uplink_throughput_bps = json_object_get_double(uplink_throughput\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->uplink_throughput_bps = json_object_get_double(uplink_throughput);
             }
             
             // Obstruction data
-            json_object *obstruction = json_object_object_get(dish_get_status, "obstruction"\n"\n"\n"\n"\n"\n"\n"\n");
+            json_object *obstruction = json_object_object_get(dish_get_status, "obstruction");
             if (obstruction) {
                 json_object *fraction_obstructed;
                 if (json_object_object_get_ex(obstruction, "fractionObstructed", &fraction_obstructed)) {
-                    observation->fraction_obstructed = json_object_get_double(fraction_obstructed\n"\n"\n"\n"\n"\n"\n"\n");
+                    observation->fraction_obstructed = json_object_get_double(fraction_obstructed);
                 }
                 
                 // Parse wedge obstruction data
-                json_object *wedge_fraction_obstructed = json_object_object_get(obstruction, "wedgeFractionObstructed"\n"\n"\n"\n"\n"\n"\n"\n");
+                json_object *wedge_fraction_obstructed = json_object_object_get(obstruction, "wedgeFractionObstructed");
                 if (wedge_fraction_obstructed && json_object_is_type(wedge_fraction_obstructed, json_type_array)) {
-                    int array_len = json_object_array_length(wedge_fraction_obstructed\n"\n"\n"\n"\n"\n"\n"\n");
+                    int array_len = json_object_array_length(wedge_fraction_obstructed);
                     for (int i = 0; i < array_len && i < 12; i++) {
-                        json_object *wedge = json_object_array_get_idx(wedge_fraction_obstructed, i\n"\n"\n"\n"\n"\n"\n"\n");
+                        json_object *wedge = json_object_array_get_idx(wedge_fraction_obstructed, i);
                         if (wedge) {
-                            observation->wedge_fraction_obstructed[i] = json_object_get_double(wedge\n"\n"\n"\n"\n"\n"\n"\n");
+                            observation->wedge_fraction_obstructed[i] = json_object_get_double(wedge);
                         }
                     }
                 }
                 
-                json_object *wedge_abs_fraction_obstructed = json_object_object_get(obstruction, "wedgeAbsFractionObstructed"\n"\n"\n"\n"\n"\n"\n"\n");
+                json_object *wedge_abs_fraction_obstructed = json_object_object_get(obstruction, "wedgeAbsFractionObstructed");
                 if (wedge_abs_fraction_obstructed && json_object_is_type(wedge_abs_fraction_obstructed, json_type_array)) {
-                    int array_len = json_object_array_length(wedge_abs_fraction_obstructed\n"\n"\n"\n"\n"\n"\n"\n");
+                    int array_len = json_object_array_length(wedge_abs_fraction_obstructed);
                     for (int i = 0; i < array_len && i < 12; i++) {
-                        json_object *wedge = json_object_array_get_idx(wedge_abs_fraction_obstructed, i\n"\n"\n"\n"\n"\n"\n"\n");
+                        json_object *wedge = json_object_array_get_idx(wedge_abs_fraction_obstructed, i);
                         if (wedge) {
-                            observation->wedge_abs_fraction_obstructed[i] = json_object_get_double(wedge\n"\n"\n"\n"\n"\n"\n"\n");
+                            observation->wedge_abs_fraction_obstructed[i] = json_object_get_double(wedge);
                         }
                     }
                 }
@@ -347,140 +347,140 @@ int parse_json_to_observation_partial(const char *json_data, const char *api_met
             // Boresight data
             json_object *boresight_azimuth;
             if (json_object_object_get_ex(dish_get_status, "boresightAzimuthDeg", &boresight_azimuth)) {
-                observation->boresight_azimuth_deg = json_object_get_double(boresight_azimuth\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->boresight_azimuth_deg = json_object_get_double(boresight_azimuth);
             }
             
             json_object *boresight_elevation;
             if (json_object_object_get_ex(dish_get_status, "boresightElevationDeg", &boresight_elevation)) {
-                observation->boresight_elevation_deg = json_object_get_double(boresight_elevation\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->boresight_elevation_deg = json_object_get_double(boresight_elevation);
             }
             
             // Thermal flags
             json_object *thermal_throttle;
             if (json_object_object_get_ex(dish_get_status, "thermalThrottle", &thermal_throttle)) {
-                observation->thermal_throttle = json_object_get_boolean(thermal_throttle\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->thermal_throttle = json_object_get_boolean(thermal_throttle);
             }
             
             json_object *thermal_shutdown;
             if (json_object_object_get_ex(dish_get_status, "thermalShutdown", &thermal_shutdown)) {
-                observation->thermal_shutdown = json_object_get_boolean(thermal_shutdown\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->thermal_shutdown = json_object_get_boolean(thermal_shutdown);
             }
             
             // Additional flags
             json_object *is_snr_above_noise_floor;
             if (json_object_object_get_ex(dish_get_status, "isSnrAboveNoiseFloor", &is_snr_above_noise_floor)) {
-                observation->is_snr_above_noise_floor = json_object_get_boolean(is_snr_above_noise_floor\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->is_snr_above_noise_floor = json_object_get_boolean(is_snr_above_noise_floor);
             }
             
             json_object *is_snr_persistently_low;
             if (json_object_object_get_ex(dish_get_status, "isSnrPersistentlyLow", &is_snr_persistently_low)) {
-                observation->is_snr_persistently_low = json_object_get_boolean(is_snr_persistently_low\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->is_snr_persistently_low = json_object_get_boolean(is_snr_persistently_low);
             }
             
             json_object *roaming;
             if (json_object_object_get_ex(dish_get_status, "roaming", &roaming)) {
-                observation->roaming = json_object_get_boolean(roaming\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->roaming = json_object_get_boolean(roaming);
             }
             
             json_object *mast_not_near_vertical;
             if (json_object_object_get_ex(dish_get_status, "mastNotNearVertical", &mast_not_near_vertical)) {
-                observation->mast_not_near_vertical = json_object_get_boolean(mast_not_near_vertical\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->mast_not_near_vertical = json_object_get_boolean(mast_not_near_vertical);
             }
             
             json_object *unexpected_location;
             if (json_object_object_get_ex(dish_get_status, "unexpectedLocation", &unexpected_location)) {
-                observation->unexpected_location = json_object_get_boolean(unexpected_location\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->unexpected_location = json_object_get_boolean(unexpected_location);
             }
             
             json_object *slow_ethernet_speeds;
             if (json_object_object_get_ex(dish_get_status, "slowEthernetSpeeds", &slow_ethernet_speeds)) {
-                observation->slow_ethernet_speeds = json_object_get_boolean(slow_ethernet_speeds\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->slow_ethernet_speeds = json_object_get_boolean(slow_ethernet_speeds);
             }
             
             json_object *software_update_reboot;
             if (json_object_object_get_ex(dish_get_status, "softwareUpdateReboot", &software_update_reboot)) {
-                observation->software_update_reboot = json_object_get_boolean(software_update_reboot\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->software_update_reboot = json_object_get_boolean(software_update_reboot);
             }
             
             json_object *low_power_mode;
             if (json_object_object_get_ex(dish_get_status, "lowPowerMode", &low_power_mode)) {
-                observation->low_power_mode = json_object_get_boolean(low_power_mode\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->low_power_mode = json_object_get_boolean(low_power_mode);
             }
         }
         
     } else if (strcmp(api_method, "get_device_info") == 0) {
         // Parse get_device_info response
-        json_object *get_device_info = json_object_object_get(root, "getDeviceInfo"\n"\n"\n"\n"\n"\n"\n"\n");
+        json_object *get_device_info = json_object_object_get(root, "getDeviceInfo");
         if (get_device_info) {
-            json_object *device_info = json_object_object_get(get_device_info, "deviceInfo"\n"\n"\n"\n"\n"\n"\n"\n");
+            json_object *device_info = json_object_object_get(get_device_info, "deviceInfo");
             if (device_info) {
                 json_object *id;
                 if (json_object_object_get_ex(device_info, "id", &id)) {
-                    safe_strncpy(observation->software_version, json_object_get_string(id), sizeof(observation->software_version)\n"\n"\n"\n"\n"\n"\n"\n");
+                    safe_strncpy(observation->software_version, json_object_get_string(id), sizeof(observation->software_version));
                 }
                 
                 json_object *hardware_version;
                 if (json_object_object_get_ex(device_info, "hardwareVersion", &hardware_version)) {
-                    safe_strncpy(observation->hardware_version, json_object_get_string(hardware_version), sizeof(observation->hardware_version)\n"\n"\n"\n"\n"\n"\n"\n");
+                    safe_strncpy(observation->hardware_version, json_object_get_string(hardware_version), sizeof(observation->hardware_version));
                 }
                 
                 json_object *software_version;
                 if (json_object_object_get_ex(device_info, "softwareVersion", &software_version)) {
-                    safe_strncpy(observation->software_version, json_object_get_string(software_version), sizeof(observation->software_version)\n"\n"\n"\n"\n"\n"\n"\n");
+                    safe_strncpy(observation->software_version, json_object_get_string(software_version), sizeof(observation->software_version));
                 }
             }
         }
         
     } else if (strcmp(api_method, "get_location") == 0) {
         // Parse get_location response
-        json_object *get_location = json_object_object_get(root, "getLocation"\n"\n"\n"\n"\n"\n"\n"\n");
+        json_object *get_location = json_object_object_get(root, "getLocation");
         if (get_location) {
-            json_object *lla = json_object_object_get(get_location, "lla"\n"\n"\n"\n"\n"\n"\n"\n");
+            json_object *lla = json_object_object_get(get_location, "lla");
             if (lla) {
                 json_object *lat, *lon, *alt;
                 if (json_object_object_get_ex(lla, "lat", &lat)) {
-                    observation->latitude = json_object_get_double(lat\n"\n"\n"\n"\n"\n"\n"\n");
+                    observation->latitude = json_object_get_double(lat);
                 }
                 if (json_object_object_get_ex(lla, "lon", &lon)) {
-                    observation->longitude = json_object_get_double(lon\n"\n"\n"\n"\n"\n"\n"\n");
+                    observation->longitude = json_object_get_double(lon);
                 }
                 if (json_object_object_get_ex(lla, "alt", &alt)) {
-                    observation->altitude = json_object_get_double(alt\n"\n"\n"\n"\n"\n"\n"\n");
+                    observation->altitude = json_object_get_double(alt);
                 }
             }
         }
         
     } else if (strcmp(api_method, "get_diagnostics") == 0) {
         // Parse get_diagnostics response
-        json_object *dish_get_diagnostics = json_object_object_get(root, "dishGetDiagnostics"\n"\n"\n"\n"\n"\n"\n"\n");
+        json_object *dish_get_diagnostics = json_object_object_get(root, "dishGetDiagnostics");
         if (dish_get_diagnostics) {
             // Parse diagnostic information
             json_object *eth_speed;
             if (json_object_object_get_ex(dish_get_diagnostics, "ethSpeedMbps", &eth_speed)) {
-                observation->eth_speed_mbps = json_object_get_double(eth_speed\n"\n"\n"\n"\n"\n"\n"\n");
+                observation->eth_speed_mbps = json_object_get_double(eth_speed);
             }
             
             json_object *mobility_class;
             if (json_object_object_get_ex(dish_get_diagnostics, "mobilityClass", &mobility_class)) {
-                safe_strncpy(observation->mobility_class, json_object_get_string(mobility_class), sizeof(observation->mobility_class)\n"\n"\n"\n"\n"\n"\n"\n");
+                safe_strncpy(observation->mobility_class, json_object_get_string(mobility_class), sizeof(observation->mobility_class));
             }
             
             json_object *class_of_service;
             if (json_object_object_get_ex(dish_get_diagnostics, "classOfService", &class_of_service)) {
-                safe_strncpy(observation->class_of_service, json_object_get_string(class_of_service), sizeof(observation->class_of_service)\n"\n"\n"\n"\n"\n"\n"\n");
+                safe_strncpy(observation->class_of_service, json_object_get_string(class_of_service), sizeof(observation->class_of_service));
             }
         }
         
     } else if (strcmp(api_method, "dish_get_context") == 0) {
         // Parse dish_get_context response
-        json_object *dish_get_context = json_object_object_get(root, "dishGetContext"\n"\n"\n"\n"\n"\n"\n"\n");
+        json_object *dish_get_context = json_object_object_get(root, "dishGetContext");
         if (dish_get_context) {
             // Parse additional context information
             // This API might provide additional fields not available in other APIs
         }
     }
     
-    json_object_put(root\n"\n"\n"\n"\n"\n"\n"\n");
+    json_object_put(root);
     return result;
 }
 
@@ -491,63 +491,63 @@ int parse_json_to_observation(const char *json_data, starlink_observation_t *obs
     }
     
     // Initialize observation structure
-    memset(observation, 0, sizeof(starlink_observation_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    observation->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(observation, 0, sizeof(starlink_observation_t));
+    observation->timestamp = time(NULL);
     
     // For now, we'll implement a basic parser that extracts key fields
     // This is a simplified implementation - in production, you'd want to use a proper JSON library
     
     // Look for device info fields
-    const char *id_start = strstr(json_data, "\"id\":\""\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *id_start = strstr(json_data, "\"id\":\"");
     if (id_start) {
         id_start += 6; // Skip "\"id\":\""
-        const char *id_end = strchr(id_start, '"'\n"\n"\n"\n"\n"\n"\n"\n");
+        const char *id_end = strchr(id_start, '"');
         if (id_end) {
             size_t id_len = id_end - id_start;
             if (id_len < sizeof(observation->software_version)) {
-                strncpy(observation->software_version, id_start, id_len\n"\n"\n"\n"\n"\n"\n"\n");
+                strncpy(observation->software_version, id_start, id_len);
                 observation->software_version[id_len] = '\0';
             }
         }
     }
     
     // Look for hardware version
-    const char *hw_start = strstr(json_data, "\"hardwareVersion\":\""\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *hw_start = strstr(json_data, "\"hardwareVersion\":\"");
     if (hw_start) {
         hw_start += 19; // Skip "\"hardwareVersion\":\""
-        const char *hw_end = strchr(hw_start, '"'\n"\n"\n"\n"\n"\n"\n"\n");
+        const char *hw_end = strchr(hw_start, '"');
         if (hw_end) {
             size_t hw_len = hw_end - hw_start;
             if (hw_len < sizeof(observation->hardware_version)) {
-                strncpy(observation->hardware_version, hw_start, hw_len\n"\n"\n"\n"\n"\n"\n"\n");
+                strncpy(observation->hardware_version, hw_start, hw_len);
                 observation->hardware_version[hw_len] = '\0';
             }
         }
     }
     
     // Look for software version
-    const char *sw_start = strstr(json_data, "\"softwareVersion\":\""\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *sw_start = strstr(json_data, "\"softwareVersion\":\"");
     if (sw_start) {
         sw_start += 19; // Skip "\"softwareVersion\":\""
-        const char *sw_end = strchr(sw_start, '"'\n"\n"\n"\n"\n"\n"\n"\n");
+        const char *sw_end = strchr(sw_start, '"');
         if (sw_end) {
             size_t sw_len = sw_end - sw_start;
             if (sw_len < sizeof(observation->software_version)) {
-                strncpy(observation->software_version, sw_start, sw_len\n"\n"\n"\n"\n"\n"\n"\n");
+                strncpy(observation->software_version, sw_start, sw_len);
                 observation->software_version[sw_len] = '\0';
             }
         }
     }
     
     // Look for uptime
-    const char *uptime_start = strstr(json_data, "\"uptimeS\":"\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *uptime_start = strstr(json_data, "\"uptimeS\":");
     if (uptime_start) {
         uptime_start += 10; // Skip "\"uptimeS\":"
-        observation->uptime_s = atof(uptime_start\n"\n"\n"\n"\n"\n"\n"\n");
+        observation->uptime_s = atof(uptime_start);
     }
     
     // Look for GPS data
-    const char *gps_valid_start = strstr(json_data, "\"gpsValid\":"\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *gps_valid_start = strstr(json_data, "\"gpsValid\":");
     if (gps_valid_start) {
         gps_valid_start += 11; // Skip "\"gpsValid\":"
         if (strncmp(gps_valid_start, "true", 4) == 0) {
@@ -555,61 +555,61 @@ int parse_json_to_observation(const char *json_data, starlink_observation_t *obs
         }
     }
     
-    const char *gps_sats_start = strstr(json_data, "\"gpsSats\":"\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *gps_sats_start = strstr(json_data, "\"gpsSats\":");
     if (gps_sats_start) {
         gps_sats_start += 10; // Skip "\"gpsSats\":"
-        observation->gps_satellites = atoi(gps_sats_start\n"\n"\n"\n"\n"\n"\n"\n");
+        observation->gps_satellites = atoi(gps_sats_start);
     }
     
     // Look for signal metrics
-    const char *snr_start = strstr(json_data, "\"snr\":"\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *snr_start = strstr(json_data, "\"snr\":");
     if (snr_start) {
         snr_start += 6; // Skip "\"snr\":"
-        observation->snr = atof(snr_start\n"\n"\n"\n"\n"\n"\n"\n");
+        observation->snr = atof(snr_start);
     }
     
-    const char *latency_start = strstr(json_data, "\"popPingLatencyMs\":"\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *latency_start = strstr(json_data, "\"popPingLatencyMs\":");
     if (latency_start) {
         latency_start += 19; // Skip "\"popPingLatencyMs\":"
-        observation->pop_ping_latency_ms = atof(latency_start\n"\n"\n"\n"\n"\n"\n"\n");
+        observation->pop_ping_latency_ms = atof(latency_start);
     }
     
-    const char *drop_rate_start = strstr(json_data, "\"popPingDropRate\":"\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *drop_rate_start = strstr(json_data, "\"popPingDropRate\":");
     if (drop_rate_start) {
         drop_rate_start += 17; // Skip "\"popPingDropRate\":"
-        observation->pop_ping_drop_rate = atof(drop_rate_start\n"\n"\n"\n"\n"\n"\n"\n");
+        observation->pop_ping_drop_rate = atof(drop_rate_start);
     }
     
-    const char *dl_start = strstr(json_data, "\"downlinkThroughputBps\":"\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *dl_start = strstr(json_data, "\"downlinkThroughputBps\":");
     if (dl_start) {
         dl_start += 24; // Skip "\"downlinkThroughputBps\":"
-        observation->downlink_throughput_bps = atof(dl_start\n"\n"\n"\n"\n"\n"\n"\n");
+        observation->downlink_throughput_bps = atof(dl_start);
     }
     
-    const char *ul_start = strstr(json_data, "\"uplinkThroughputBps\":"\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *ul_start = strstr(json_data, "\"uplinkThroughputBps\":");
     if (ul_start) {
         ul_start += 22; // Skip "\"uplinkThroughputBps\":"
-        observation->uplink_throughput_bps = atof(ul_start\n"\n"\n"\n"\n"\n"\n"\n");
+        observation->uplink_throughput_bps = atof(ul_start);
     }
     
     // Look for obstruction data
-    const char *obstruct_start = strstr(json_data, "\"fractionObstructed\":"\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *obstruct_start = strstr(json_data, "\"fractionObstructed\":");
     if (obstruct_start) {
         obstruct_start += 21; // Skip "\"fractionObstructed\":"
-        observation->fraction_obstructed = atof(obstruct_start\n"\n"\n"\n"\n"\n"\n"\n");
+        observation->fraction_obstructed = atof(obstruct_start);
     }
     
     // Look for boresight data
-    const char *az_start = strstr(json_data, "\"boresightAzimuthDeg\":"\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *az_start = strstr(json_data, "\"boresightAzimuthDeg\":");
     if (az_start) {
         az_start += 22; // Skip "\"boresightAzimuthDeg\":"
-        observation->boresight_azimuth_deg = atof(az_start\n"\n"\n"\n"\n"\n"\n"\n");
+        observation->boresight_azimuth_deg = atof(az_start);
     }
     
-    const char *el_start = strstr(json_data, "\"boresightElevationDeg\":"\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *el_start = strstr(json_data, "\"boresightElevationDeg\":");
     if (el_start) {
         el_start += 24; // Skip "\"boresightElevationDeg\":"
-        observation->boresight_elevation_deg = atof(el_start\n"\n"\n"\n"\n"\n"\n"\n");
+        observation->boresight_elevation_deg = atof(el_start);
     }
     
     return 0;
@@ -619,25 +619,25 @@ int parse_json_to_observation(const char *json_data, starlink_observation_t *obs
 static void* monitoring_thread_worker(void* arg) {
     (void)arg; // Unused parameter
     
-    printf("INFO: "Starlink gRPC monitoring thread started"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starlink gRPC monitoring thread started");
     
     while (!g_monitoring_should_stop) {
         // Collect comprehensive observation data
         starlink_observation_t observation;
         if (starlink_grpc_daemon_get_observation(&observation) == 0) {
-            printf("DEBUG: "Monitoring: Observation collected successfully (SNR: %.2f, GPS: %s, Uptime: %.0fs)", 
+            LOGX_DEBUG_MSG("Monitoring: Observation collected successfully (SNR: %.2f, GPS: %s, Uptime: %.0fs)", 
                           observation.snr, 
                           observation.gps_valid ? "valid" : "invalid",
-                          observation.uptime_s\n"\n"\n"\n"\n"\n"\n"\n");
+                          observation.uptime_s);
         } else {
-            printf("WARN: "Monitoring: Failed to collect observation"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_WARN_MSG("Monitoring: Failed to collect observation");
         }
         
         // Sleep for monitoring interval
-        sleep(g_starlink_grpc_daemon_config.monitoring_interval_seconds\n"\n"\n"\n"\n"\n"\n"\n");
+        sleep(g_starlink_grpc_daemon_config.monitoring_interval_seconds);
     }
     
-    printf("INFO: "Starlink gRPC monitoring thread stopped"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starlink gRPC monitoring thread stopped");
     return NULL;
 }
 
@@ -646,11 +646,11 @@ static void* monitoring_thread_worker(void* arg) {
 void starlink_grpc_daemon_integration_cleanup(void) {
     // Stop monitoring if active
     if (g_monitoring_active) {
-        starlink_grpc_daemon_stop_monitoring(\n"\n"\n"\n"\n"\n"\n"\n");
+        starlink_grpc_daemon_stop_monitoring();
     }
     
     // Cleanup comprehensive client
-    starlink_grpc_comprehensive_client_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+    starlink_grpc_comprehensive_client_cleanup();
     
-    printf("INFO: "Starlink gRPC daemon integration cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starlink gRPC daemon integration cleaned up");
 }

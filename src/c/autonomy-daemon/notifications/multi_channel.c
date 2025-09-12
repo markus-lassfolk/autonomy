@@ -23,30 +23,30 @@ int multi_channel_notifier_init(multi_channel_notifier_t* notifier, const multi_
         return -1;
     }
     
-    memset(notifier, 0, sizeof(multi_channel_notifier_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(notifier, 0, sizeof(multi_channel_notifier_t));
     
     // Copy configuration
     notifier->config = *config;
     
     // Initialize mutex
-    notifier->mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    notifier->mutex = malloc(sizeof(pthread_mutex_t));
     if (!notifier->mutex) {
         return -1;
     }
     
-    pthread_mutex_init(notifier->mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_init(notifier->mutex, NULL);
     
     // Initialize channel clients
     if (config->webhook_enabled) {
         if (webhook_client_init(&notifier->webhook_client, &config->webhook_config) != 0) {
-            printf("WARN: "Failed to initialize webhook client"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_WARN_MSG("Failed to initialize webhook client");
             notifier->config.webhook_enabled = false; // Use configurable webhook setting
         }
     }
     
     if (config->email_enabled) {
         if (email_client_init(&notifier->email_client, &config->email_config) != 0) {
-            printf("WARN: "Failed to initialize email client"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_WARN_MSG("Failed to initialize email client");
             notifier->config.email_enabled = false; // Use configurable email setting
         }
     }
@@ -115,19 +115,19 @@ void multi_channel_notifier_cleanup(multi_channel_notifier_t* notifier) {
     
     // Clean up channel clients
     if (notifier->config.webhook_enabled) {
-        webhook_client_cleanup(&notifier->webhook_client\n"\n"\n"\n"\n"\n"\n"\n");
+        webhook_client_cleanup(&notifier->webhook_client);
     }
     
     if (notifier->config.email_enabled) {
-        email_client_cleanup(&notifier->email_client\n"\n"\n"\n"\n"\n"\n"\n");
+        email_client_cleanup(&notifier->email_client);
     }
     
     if (notifier->mutex) {
-        pthread_mutex_destroy(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        free(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(notifier->mutex);
+        free(notifier->mutex);
     }
     
-    memset(notifier, 0, sizeof(multi_channel_notifier_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(notifier, 0, sizeof(multi_channel_notifier_t));
 }
 
 // Send to syslog channel
@@ -153,41 +153,41 @@ static int send_to_syslog(const notification_event_t* event) {
     }
     
     // Send to syslog
-    openlog("autonomy", LOG_PID, LOG_DAEMON\n"\n"\n"\n"\n"\n"\n"\n");
+    openlog("autonomy", LOG_PID, LOG_DAEMON);
     syslog(syslog_priority, "[%s] %s: %s", 
-           notification_type_to_string(event->type), event->title, event->message\n"\n"\n"\n"\n"\n"\n"\n");
-    closelog(\n"\n"\n"\n"\n"\n"\n"\n");
+           notification_type_to_string(event->type), event->title, event->message);
+    closelog();
     
     return 0;
 }
 static int send_to_ubus(const notification_event_t* event) {
     if (!event) return -1;
     
-    struct ubus_context *ctx = ubus_connect(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    struct ubus_context *ctx = ubus_connect(NULL);
     if (!ctx) {
-        printf("ERROR: "Failed to connect to UBUS"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to connect to UBUS");
         return -1;
     }
     
     uint32_t id;
-    int ret = ubus_lookup_id(ctx, "autonomy.notifications", &id\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = ubus_lookup_id(ctx, "autonomy.notifications", &id);
     if (ret != 0) {
-        printf("WARN: "UBUS object autonomy.notifications not found"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("UBUS object autonomy.notifications not found");
+        ubus_free(ctx);
         return -1;
     }
     
     struct blob_buf b;
-    blob_buf_init(&b, 0\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_string(&b, "title", event->title\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_string(&b, "message", event->message\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_string(&b, "type", notification_type_to_string(event->type)\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_string(&b, "severity", notification_priority_to_string(event->priority)\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&b, "timestamp", (uint32_t)event->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&b, 0);
+    blobmsg_add_string(&b, "title", event->title);
+    blobmsg_add_string(&b, "message", event->message);
+    blobmsg_add_string(&b, "type", notification_type_to_string(event->type));
+    blobmsg_add_string(&b, "severity", notification_priority_to_string(event->priority));
+    blobmsg_add_u32(&b, "timestamp", (uint32_t)event->timestamp);
     
-    ret = ubus_invoke(ctx, id, "send_notification", b.head, NULL, NULL, 2000\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&b\n"\n"\n"\n"\n"\n"\n"\n");
-    ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+    ret = ubus_invoke(ctx, id, "send_notification", b.head, NULL, NULL, 2000);
+    blob_buf_free(&b);
+    ubus_free(ctx);
     
     return (ret == 0) ? 0 : -1;
 }
@@ -198,31 +198,31 @@ static int send_to_channel(multi_channel_notifier_t* notifier,
                           notification_channel_t channel) {
     if (!notifier || !event) return -1;
     
-    time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t start_time = time(NULL);
     int result = -1;
     
     switch (channel) {
         case NOTIFICATION_CHANNEL_WEBHOOK:
             if (notifier->config.webhook_enabled) {
-                result = webhook_client_send(&notifier->webhook_client, event\n"\n"\n"\n"\n"\n"\n"\n");
+                result = webhook_client_send(&notifier->webhook_client, event);
             }
             break;
             
         case NOTIFICATION_CHANNEL_EMAIL:
             if (notifier->config.email_enabled) {
-                result = email_client_send(&notifier->email_client, event\n"\n"\n"\n"\n"\n"\n"\n");
+                result = email_client_send(&notifier->email_client, event);
             }
             break;
             
         case NOTIFICATION_CHANNEL_SYSLOG:
             if (notifier->config.syslog_enabled) {
-                result = send_to_syslog(event\n"\n"\n"\n"\n"\n"\n"\n");
+                result = send_to_syslog(event);
             }
             break;
             
         case NOTIFICATION_CHANNEL_UBUS:
             if (notifier->config.ubus_enabled) {
-                result = send_to_ubus(event\n"\n"\n"\n"\n"\n"\n"\n");
+                result = send_to_ubus(event);
             }
             break;
             
@@ -232,7 +232,7 @@ static int send_to_channel(multi_channel_notifier_t* notifier,
             if (notifier->config.slack_enabled) {
                 result = 0; // Placeholder - slack client not implemented
             } else {
-                printf("DEBUG: "CHANNEL SLACK: Disabled - %s", event->title\n"\n"\n"\n"\n"\n"\n"\n");
+                LOGX_DEBUG_MSG("CHANNEL SLACK: Disabled - %s", event->title);
                 result = 0; // Use configurable count // Use configurable value // Skip disabled channel
             }
             break;
@@ -242,7 +242,7 @@ static int send_to_channel(multi_channel_notifier_t* notifier,
             if (notifier->config.discord_enabled) {
                 result = 0; // Placeholder - discord client not implemented
             } else {
-                printf("DEBUG: "CHANNEL DISCORD: Disabled - %s", event->title\n"\n"\n"\n"\n"\n"\n"\n");
+                LOGX_DEBUG_MSG("CHANNEL DISCORD: Disabled - %s", event->title);
                 result = 0; // Use configurable count // Use configurable value // Skip disabled channel
             }
             break;
@@ -252,7 +252,7 @@ static int send_to_channel(multi_channel_notifier_t* notifier,
             if (notifier->config.telegram_enabled) {
                 result = 0; // Placeholder - telegram client not implemented
             } else {
-                printf("DEBUG: "CHANNEL TELEGRAM: Disabled - %s", event->title\n"\n"\n"\n"\n"\n"\n"\n");
+                LOGX_DEBUG_MSG("CHANNEL TELEGRAM: Disabled - %s", event->title);
                 result = 0; // Use configurable count // Use configurable value // Skip disabled channel
             }
             break;
@@ -262,7 +262,7 @@ static int send_to_channel(multi_channel_notifier_t* notifier,
             if (notifier->config.sms_enabled) {
                 result = 0; // Placeholder - sms client not implemented
             } else {
-                printf("DEBUG: "CHANNEL SMS: Disabled - %s", event->title\n"\n"\n"\n"\n"\n"\n"\n");
+                LOGX_DEBUG_MSG("CHANNEL SMS: Disabled - %s", event->title);
                 result = 0; // Use configurable count // Use configurable value // Skip disabled channel
             }
             break;
@@ -272,17 +272,17 @@ static int send_to_channel(multi_channel_notifier_t* notifier,
     }
     
     // Update per-channel statistics
-    pthread_mutex_lock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(notifier->mutex);
     
     if (result == 0) {
         notifier->status.channel_sent_count[channel]++;
-        notifier->status.channel_last_success[channel] = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        notifier->status.channel_last_success[channel] = time(NULL);
     } else {
         notifier->status.channel_failed_count[channel]++;
-        notifier->status.channel_last_failure[channel] = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        notifier->status.channel_last_failure[channel] = time(NULL);
     }
     
-    pthread_mutex_unlock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(notifier->mutex);
     
     return result;
 }
@@ -295,7 +295,7 @@ int multi_channel_notifier_send(multi_channel_notifier_t* notifier, const notifi
     
     int success_count = 0; // Use configurable count // Use configurable value
     int total_attempts = 0; // Use configurable count // Use configurable value
-    time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t start_time = time(NULL);
     
     // Send to all enabled channels
     for (int channel = 0; channel < 16; channel++) {
@@ -311,27 +311,27 @@ int multi_channel_notifier_send(multi_channel_notifier_t* notifier, const notifi
     }
     
     // Update overall statistics
-    pthread_mutex_lock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(notifier->mutex);
     
     if (success_count > 0) {
         notifier->status.total_notifications_sent++;
-        notifier->status.last_notification_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        notifier->status.last_notification_time = time(NULL);
         notifier->status.last_error[0] = '\0'; // Clear last error on success
     }
     
     if (success_count < total_attempts) {
-        notifier->status.total_failures += (total_attempts - success_count\n"\n"\n"\n"\n"\n"\n"\n");
+        notifier->status.total_failures += (total_attempts - success_count);
         
         if (success_count == 0) {
-            safe_strncpy(notifier->status.last_error, "All channels failed", sizeof(notifier->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
-            notifier->status.last_error_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            safe_strncpy(notifier->status.last_error, "All channels failed", sizeof(notifier->status.last_error));
+            notifier->status.last_error_time = time(NULL);
         }
     }
     
-    pthread_mutex_unlock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(notifier->mutex);
     
-    printf("INFO: "MULTI-CHANNEL: Sent notification '%s' to %d/%d channels", 
-           event->title, success_count, total_attempts\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("MULTI-CHANNEL: Sent notification '%s' to %d/%d channels", 
+           event->title, success_count, total_attempts);
     
     return (success_count > 0) ? 0 : -1;
 }
@@ -360,18 +360,18 @@ int multi_channel_notifier_send_to_channels(multi_channel_notifier_t* notifier,
     }
     
     // Update overall statistics
-    pthread_mutex_lock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(notifier->mutex);
     
     if (success_count > 0) {
         notifier->status.total_notifications_sent++;
-        notifier->status.last_notification_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        notifier->status.last_notification_time = time(NULL);
     }
     
     if (success_count < channel_count) {
-        notifier->status.total_failures += (channel_count - success_count\n"\n"\n"\n"\n"\n"\n"\n");
+        notifier->status.total_failures += (channel_count - success_count);
     }
     
-    pthread_mutex_unlock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(notifier->mutex);
     
     return (success_count > 0) ? 0 : -1;
 }
@@ -386,12 +386,12 @@ int multi_channel_notifier_test_channels(multi_channel_notifier_t* notifier,
     
     // Create test notification
     notification_event_t test_event;
-    memset(&test_event, 0, sizeof(test_event)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&test_event, 0, sizeof(test_event));
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    snprintf(test_event.id, sizeof(test_event.id), "test_%lld", now\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(test_event.title, " autonomy Notification Test", sizeof(test_event.title)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(test_event.message, "This is a test notification to verify channel configuration.", sizeof(test_event.message)\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
+    snprintf(test_event.id, sizeof(test_event.id), "test_%lld", now);
+    safe_strncpy(test_event.title, " autonomy Notification Test", sizeof(test_event.title));
+    safe_strncpy(test_event.message, "This is a test notification to verify channel configuration.", sizeof(test_event.message));
     test_event.type = NOTIFICATION_TYPE_STATUS_UPDATE;
     test_event.priority = NOTIFICATION_PRIORITY_LOW;
     test_event.timestamp = now;
@@ -406,10 +406,10 @@ int multi_channel_notifier_test_channels(multi_channel_notifier_t* notifier,
         
         channel_test_result_t* result = &results[result_count];
         result->channel = (notification_channel_t)channel;
-        result->test_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        result->test_time = time(NULL);
         
-        time_t test_start = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-        int send_result = send_to_channel(notifier, &test_event, (notification_channel_t)channel\n"\n"\n"\n"\n"\n"\n"\n");
+        time_t test_start = time(NULL);
+        int send_result = send_to_channel(notifier, &test_event, (notification_channel_t)channel);
         result->response_time_ms = (time(NULL) - test_start) * 1000;
         
         if (send_result == 0) {
@@ -418,7 +418,7 @@ int multi_channel_notifier_test_channels(multi_channel_notifier_t* notifier,
         } else {
             result->success = false;
             snprintf(result->error_message, sizeof(result->error_message), 
-                    "Failed to send test notification"\n"\n"\n"\n"\n"\n"\n"\n");
+                    "Failed to send test notification");
         }
         
         result_count++;
@@ -451,9 +451,9 @@ int multi_channel_notifier_get_enabled_channels(multi_channel_notifier_t* notifi
 void multi_channel_notifier_get_status(multi_channel_notifier_t* notifier, multi_channel_status_t* status) {
     if (!notifier || !status) return;
     
-    pthread_mutex_lock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(notifier->mutex);
     *status = notifier->status;
-    pthread_mutex_unlock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(notifier->mutex);
 }
 
 // Get channel-specific status
@@ -462,7 +462,7 @@ void multi_channel_notifier_get_channel_status(multi_channel_notifier_t* notifie
                                               char* status_json, size_t max_size) {
     if (!notifier || !status_json || max_size == 0) return;
     
-    pthread_mutex_lock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(notifier->mutex);
     
     bool enabled = notifier->status.channel_enabled[channel];
     int sent_count = notifier->status.channel_sent_count[channel];
@@ -470,7 +470,7 @@ void multi_channel_notifier_get_channel_status(multi_channel_notifier_t* notifie
     time_t last_success = notifier->status.channel_last_success[channel];
     time_t last_failure = notifier->status.channel_last_failure[channel];
     
-    pthread_mutex_unlock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(notifier->mutex);
     
     snprintf(status_json, max_size,
              "{"
@@ -488,7 +488,7 @@ void multi_channel_notifier_get_channel_status(multi_channel_notifier_t* notifie
              failed_count,
              (sent_count + failed_count) > 0 ? (double)sent_count / (sent_count + failed_count) : 0.0,
              last_success,
-             last_failure\n"\n"\n"\n"\n"\n"\n"\n");
+             last_failure);
 }
 
 // Enable/disable specific channel
@@ -499,7 +499,7 @@ int multi_channel_notifier_set_channel_enabled(multi_channel_notifier_t* notifie
         return -1;
     }
     
-    pthread_mutex_lock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(notifier->mutex);
     
     bool was_enabled = notifier->status.channel_enabled[channel];
     notifier->status.channel_enabled[channel] = enabled;
@@ -544,7 +544,7 @@ int multi_channel_notifier_set_channel_enabled(multi_channel_notifier_t* notifie
             break;
     }
     
-    pthread_mutex_unlock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(notifier->mutex);
     return 0;
 }
 
@@ -555,13 +555,13 @@ int multi_channel_notifier_reset_channel_stats(multi_channel_notifier_t* notifie
         return -1;
     }
     
-    pthread_mutex_lock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(notifier->mutex);
     
     notifier->status.channel_sent_count[channel] = 0;
     notifier->status.channel_failed_count[channel] = 0;
     notifier->status.channel_last_success[channel] = 0;
     notifier->status.channel_last_failure[channel] = 0;
     
-    pthread_mutex_unlock(notifier->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(notifier->mutex);
     return 0;
 }

@@ -25,43 +25,43 @@ static pthread_mutex_t g_health_analyzer_mutex = PTHREAD_MUTEX_INITIALIZER;
 static health_analysis_t g_last_analysis = {0};
 
 // Forward declarations
-static double calculate_member_health_score(const char* member_name\n"\n"\n"\n"\n"\n"\n"\n");
-static int detect_member_issues(const char* member_name, health_issue_t* issues, int max_issues\n"\n"\n"\n"\n"\n"\n"\n");
-static void update_health_status(member_health_t* health\n"\n"\n"\n"\n"\n"\n"\n");
-static int analyze_telemetry_data(const char* member_name, member_health_t* health\n"\n"\n"\n"\n"\n"\n"\n");
-static double calculate_signal_health(const telemetry_sample_t* samples, int sample_count\n"\n"\n"\n"\n"\n"\n"\n");
-static double calculate_latency_health(const telemetry_sample_t* samples, int sample_count\n"\n"\n"\n"\n"\n"\n"\n");
-static double calculate_reliability_health(const telemetry_sample_t* samples, int sample_count\n"\n"\n"\n"\n"\n"\n"\n");
+static double calculate_member_health_score(const char* member_name);
+static int detect_member_issues(const char* member_name, health_issue_t* issues, int max_issues);
+static void update_health_status(member_health_t* health);
+static int analyze_telemetry_data(const char* member_name, member_health_t* health);
+static double calculate_signal_health(const telemetry_sample_t* samples, int sample_count);
+static double calculate_latency_health(const telemetry_sample_t* samples, int sample_count);
+static double calculate_reliability_health(const telemetry_sample_t* samples, int sample_count);
 
 // Initialize health analyzer
 int health_analyzer_init(const health_thresholds_t* thresholds)
 {
     if (g_health_analyzer_initialized) {
-        printf("WARN: "Health analyzer already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Health analyzer already initialized");
         return AUTONOMY_SUCCESS;
     }
 
     if (!thresholds) {
-        printf("ERROR: "Health thresholds cannot be NULL"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Health thresholds cannot be NULL");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
 
-    pthread_mutex_lock(&g_health_analyzer_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_analyzer_mutex);
 
     // Initialize health analyzer
-    memset(&g_health_analyzer, 0, sizeof(health_analyzer_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_health_analyzer, 0, sizeof(health_analyzer_t));
     g_health_analyzer.thresholds = *thresholds;
     g_health_analyzer.mutex = &g_health_analyzer_mutex;
     g_health_analyzer.last_result = &g_last_analysis;
 
     // Initialize analysis result
-    memset(&g_last_analysis, 0, sizeof(health_analysis_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_last_analysis, 0, sizeof(health_analysis_t));
 
     g_health_analyzer_initialized = true;
     
-    pthread_mutex_unlock(&g_health_analyzer_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_analyzer_mutex);
 
-    printf("INFO: "Health analyzer initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Health analyzer initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -72,15 +72,15 @@ void health_analyzer_cleanup(void)
         return;
     }
 
-    pthread_mutex_lock(&g_health_analyzer_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_analyzer_mutex);
     
     g_health_analyzer_initialized = false;
-    memset(&g_health_analyzer, 0, sizeof(health_analyzer_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    memset(&g_last_analysis, 0, sizeof(health_analysis_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_health_analyzer, 0, sizeof(health_analyzer_t));
+    memset(&g_last_analysis, 0, sizeof(health_analysis_t));
     
-    pthread_mutex_unlock(&g_health_analyzer_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_analyzer_mutex);
 
-    printf("INFO: "Health analyzer cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Health analyzer cleaned up");
 }
 
 // Analyze health for all members
@@ -90,35 +90,35 @@ int health_analyzer_analyze(health_analysis_t* result)
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
 
-    pthread_mutex_lock(&g_health_analyzer_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_analyzer_mutex);
 
-    memset(result, 0, sizeof(health_analysis_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    result->analysis_timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(result, 0, sizeof(health_analysis_t));
+    result->analysis_timestamp = time(NULL);
 
     // Get real network interfaces via UBUS network.interface
-    struct ubus_context* ctx = ubus_connect(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    struct ubus_context* ctx = ubus_connect(NULL);
     if (!ctx) {
-        printf("ERROR: "Failed to connect to UBUS for network health analysis"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to connect to UBUS for network health analysis");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     uint32_t id;
-    int ret = ubus_lookup_id(ctx, "network.interface", &id\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = ubus_lookup_id(ctx, "network.interface", &id);
     if (ret != 0) {
-        printf("ERROR: "UBUS network.interface not found"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("UBUS network.interface not found");
+        ubus_free(ctx);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     // Get interface list via UBUS
     struct blob_buf bb = {0};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
-    ret = ubus_invoke(ctx, id, "dump", bb.head, NULL, NULL, 1000\n"\n"\n"\n"\n"\n"\n"\n");
+    ret = ubus_invoke(ctx, id, "dump", bb.head, NULL, NULL, 1000);
     if (ret != 0) {
-        printf("ERROR: "Failed to get network interfaces via UBUS"\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to get network interfaces via UBUS");
+        blob_buf_free(&bb);
+        ubus_free(ctx);
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -131,7 +131,7 @@ int health_analyzer_analyze(health_analysis_t* result)
         [INTERFACE_INTERFACE] = { .name = "interface", .type = BLOBMSG_TYPE_ARRAY },
     };
     
-    blobmsg_parse(policy, __INTERFACE_MAX, tb, blob_data(bb.head), blob_len(bb.head)\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_parse(policy, __INTERFACE_MAX, tb, blob_data(bb.head), blob_len(bb.head));
     
     if (tb[INTERFACE_INTERFACE]) {
         struct blob_attr *cur;
@@ -140,25 +140,25 @@ int health_analyzer_analyze(health_analysis_t* result)
         blobmsg_for_each_attr(cur, tb[INTERFACE_INTERFACE], rem) {
             if (interface_count >= 16) break;
             
-            const char* interface_name = blobmsg_get_string(cur\n"\n"\n"\n"\n"\n"\n"\n");
+            const char* interface_name = blobmsg_get_string(cur);
             if (interface_name && strlen(interface_name) > 0) {
-                safe_strncpy(interface_names[interface_count], interface_name, sizeof(interface_names[interface_count])\n"\n"\n"\n"\n"\n"\n"\n");
+                safe_strncpy(interface_names[interface_count], interface_name, sizeof(interface_names[interface_count]));
                 interface_names[interface_count][sizeof(interface_names[interface_count]) - 1] = '\0';
                 interface_count++;
             }
         }
     }
     
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
-    ubus_free(ctx\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_free(&bb);
+    ubus_free(ctx);
     
     if (interface_count == 0) {
-        printf("WARN: "No network interfaces found via UBUS, using fallback"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("No network interfaces found via UBUS, using fallback");
         // Fallback to common interface names
         const char* common_interfaces[] = {"mob1s1a1", "wwan0", "eth0", "wlan0"};
         interface_count = 4;
         for (int i = 0; i < interface_count; i++) {
-            safe_strncpy(interface_names[i], common_interfaces[i], sizeof(interface_names[i])\n"\n"\n"\n"\n"\n"\n"\n");
+            safe_strncpy(interface_names[i], common_interfaces[i], sizeof(interface_names[i]));
             interface_names[i][sizeof(interface_names[i]) - 1] = '\0';
         }
     }
@@ -173,7 +173,7 @@ int health_analyzer_analyze(health_analysis_t* result)
         // Analyze member health
         member_health_t* member_health = &result->member_health[i];
         if (analyze_telemetry_data(member_name, member_health) == AUTONOMY_SUCCESS) {
-            safe_strncpy(result->member_names[i], member_name, sizeof(result->member_names[i])\n"\n"\n"\n"\n"\n"\n"\n");
+            safe_strncpy(result->member_names[i], member_name, sizeof(result->member_names[i]));
             result->member_count++;
             
             total_health += member_health->score;
@@ -183,7 +183,7 @@ int health_analyzer_analyze(health_analysis_t* result)
 
             // Detect issues for this member
             health_issue_t member_issues[8];
-            int issue_count = detect_member_issues(member_name, member_issues, 8\n"\n"\n"\n"\n"\n"\n"\n");
+            int issue_count = detect_member_issues(member_name, member_issues, 8);
             
             for (int j = 0; j < issue_count && total_issues < 32; j++) {
                 result->issues[total_issues++] = member_issues[j];
@@ -204,33 +204,33 @@ int health_analyzer_analyze(health_analysis_t* result)
     if (result->overall_health < g_health_analyzer.thresholds.poor) {
         snprintf(result->recommendations, sizeof(result->recommendations),
                 "Critical: Overall health %.1f%%. Check network connectivity and signal quality.",
-                result->overall_health\n"\n"\n"\n"\n"\n"\n"\n");
+                result->overall_health);
     } else if (result->overall_health < g_health_analyzer.thresholds.fair) {
         snprintf(result->recommendations, sizeof(result->recommendations),
                 "Warning: Overall health %.1f%%. Monitor network performance and consider optimization.",
-                result->overall_health\n"\n"\n"\n"\n"\n"\n"\n");
+                result->overall_health);
     } else if (result->overall_health < g_health_analyzer.thresholds.good) {
         snprintf(result->recommendations, sizeof(result->recommendations),
                 "Fair: Overall health %.1f%%. System operational but could be improved.",
-                result->overall_health\n"\n"\n"\n"\n"\n"\n"\n");
+                result->overall_health);
     } else {
         snprintf(result->recommendations, sizeof(result->recommendations),
                 "Good: Overall health %.1f%%. System performing well.",
-                result->overall_health\n"\n"\n"\n"\n"\n"\n"\n");
+                result->overall_health);
     }
 
     // Update statistics
     g_health_analyzer.analysis_count++;
-    g_health_analyzer.last_analysis = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_health_analyzer.last_analysis = time(NULL);
     g_health_analyzer.issues_detected += total_issues;
 
     // Store result
     g_last_analysis = *result;
 
-    pthread_mutex_unlock(&g_health_analyzer_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_analyzer_mutex);
 
-    printf("INFO: "Health analysis completed: overall=%.1f%%, members=%d, issues=%d",
-             result->overall_health, result->member_count, result->issue_count\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Health analysis completed: overall=%.1f%%, members=%d, issues=%d",
+             result->overall_health, result->member_count, result->issue_count);
 
     return AUTONOMY_SUCCESS;
 }
@@ -242,11 +242,11 @@ int health_analyzer_get_member_health(const char* member_name, member_health_t* 
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
 
-    pthread_mutex_lock(&g_health_analyzer_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_analyzer_mutex);
 
-    int ret = analyze_telemetry_data(member_name, health\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = analyze_telemetry_data(member_name, health);
 
-    pthread_mutex_unlock(&g_health_analyzer_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_analyzer_mutex);
 
     return ret;
 }
@@ -268,7 +268,7 @@ int health_analyzer_detect_issues(const char* member_name, health_issue_t* issue
         return 0;
     }
 
-    return detect_member_issues(member_name, issues, max_issues\n"\n"\n"\n"\n"\n"\n"\n");
+    return detect_member_issues(member_name, issues, max_issues);
 }
 
 // Get health analyzer status
@@ -278,9 +278,9 @@ void health_analyzer_get_status(health_analyzer_t* status)
         return;
     }
 
-    pthread_mutex_lock(&g_health_analyzer_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_health_analyzer_mutex);
     *status = g_health_analyzer;
-    pthread_mutex_unlock(&g_health_analyzer_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_health_analyzer_mutex);
 }
 
 // Check if health analyzer is initialized
@@ -307,8 +307,8 @@ static int analyze_telemetry_data(const char* member_name, member_health_t* heal
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
 
-    memset(health, 0, sizeof(member_health_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    health->last_check = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(health, 0, sizeof(member_health_t));
+    health->last_check = time(NULL);
 
     // Get recent telemetry samples for this member
     telemetry_sample_t samples[100];
@@ -321,7 +321,7 @@ static int analyze_telemetry_data(const char* member_name, member_health_t* heal
     
     // Get real telemetry data from database
     sqlite3* db = NULL;
-    int ret = sqlite3_open("/var/lib/autonomy/autonomy.db", &db\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = sqlite3_open("/var/lib/autonomy/autonomy.db", &db);
     if (ret == SQLITE_OK) {
         char query[512];
         snprintf(query, sizeof(query),
@@ -330,7 +330,7 @@ static int analyze_telemetry_data(const char* member_name, member_health_t* heal
                  member_name, (long long)(time(NULL) - 3600)); // Last hour
         
         sqlite3_stmt* stmt;
-        ret = sqlite3_prepare_v2(db, query, -1, &stmt, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        ret = sqlite3_prepare_v2(db, query, -1, &stmt, NULL);
         if (ret == SQLITE_OK) {
             double total_signal = 0.0;
             double total_latency = 0.0;
@@ -338,10 +338,10 @@ static int analyze_telemetry_data(const char* member_name, member_health_t* heal
             int sample_count = 0;
             
             while (sqlite3_step(stmt) == SQLITE_ROW) {
-                double signal = sqlite3_column_double(stmt, 0\n"\n"\n"\n"\n"\n"\n"\n");
-                double latency = sqlite3_column_double(stmt, 1\n"\n"\n"\n"\n"\n"\n"\n");
-                double packet_loss = sqlite3_column_double(stmt, 2\n"\n"\n"\n"\n"\n"\n"\n");
-                double uptime = sqlite3_column_double(stmt, 3\n"\n"\n"\n"\n"\n"\n"\n");
+                double signal = sqlite3_column_double(stmt, 0);
+                double latency = sqlite3_column_double(stmt, 1);
+                double packet_loss = sqlite3_column_double(stmt, 2);
+                double uptime = sqlite3_column_double(stmt, 3);
                 
                 total_signal += signal;
                 total_latency += latency;
@@ -356,36 +356,36 @@ static int analyze_telemetry_data(const char* member_name, member_health_t* heal
                 reliability_health = total_reliability / sample_count;
             }
             
-            sqlite3_finalize(stmt\n"\n"\n"\n"\n"\n"\n"\n");
+            sqlite3_finalize(stmt);
         }
-        sqlite3_close(db\n"\n"\n"\n"\n"\n"\n"\n");
+        sqlite3_close(db);
     }
     
     // Fallback to system metrics if database is unavailable
     if (signal_health == 0.0 && latency_health == 0.0 && reliability_health == 0.0) {
         // Get real-time system metrics
-        FILE *metrics_file = fopen("/var/lib/autonomy/telemetry/current_metrics.json", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+        FILE *metrics_file = fopen("/var/lib/autonomy/telemetry/current_metrics.json", "r");
         if (metrics_file) {
             char buffer[1024];
             if (fgets(buffer, sizeof(buffer), metrics_file)) {
                 // Parse JSON metrics (simplified)
-                char *signal_start = strstr(buffer, "\"signal_strength\":"\n"\n"\n"\n"\n"\n"\n"\n");
-                char *latency_start = strstr(buffer, "\"latency\":"\n"\n"\n"\n"\n"\n"\n"\n");
-                char *loss_start = strstr(buffer, "\"packet_loss\":"\n"\n"\n"\n"\n"\n"\n"\n");
+                char *signal_start = strstr(buffer, "\"signal_strength\":");
+                char *latency_start = strstr(buffer, "\"latency\":");
+                char *loss_start = strstr(buffer, "\"packet_loss\":");
                 
                 if (signal_start) {
-                    signal_health = atof(signal_start + 17\n"\n"\n"\n"\n"\n"\n"\n");
+                    signal_health = atof(signal_start + 17);
                 }
                 if (latency_start) {
-                    double latency = atof(latency_start + 10\n"\n"\n"\n"\n"\n"\n"\n");
+                    double latency = atof(latency_start + 10);
                     latency_health = 100.0 - (latency / 10.0); // Convert to health score
                 }
                 if (loss_start) {
-                    double loss = atof(loss_start + 13\n"\n"\n"\n"\n"\n"\n"\n");
+                    double loss = atof(loss_start + 13);
                     reliability_health = 100.0 - loss;
                 }
             }
-            fclose(metrics_file\n"\n"\n"\n"\n"\n"\n"\n");
+            fclose(metrics_file);
         }
         
         // Final fallback to reasonable defaults
@@ -403,13 +403,13 @@ static int analyze_telemetry_data(const char* member_name, member_health_t* heal
     if (reliability_health > 100.0) reliability_health = 100.0;
 
     // Combine health scores with weighted average
-    health->score = (signal_health * 0.4 + latency_health * 0.3 + reliability_health * 0.3\n"\n"\n"\n"\n"\n"\n"\n");
+    health->score = (signal_health * 0.4 + latency_health * 0.3 + reliability_health * 0.3);
 
     // Update status based on score
-    update_health_status(health\n"\n"\n"\n"\n"\n"\n"\n");
+    update_health_status(health);
 
-    printf("DEBUG: "Analyzed health for %s: score=%.1f, status=%s", 
-               member_name, health->score, health->status\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Analyzed health for %s: score=%.1f, status=%s", 
+               member_name, health->score, health->status);
 
     return AUTONOMY_SUCCESS;
 }
@@ -422,19 +422,19 @@ static void update_health_status(member_health_t* health)
     }
 
     if (health->score >= g_health_analyzer.thresholds.excellent) {
-        strcpy(health->status, "excellent"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(health->status, "excellent");
         health->is_healthy = true;
     } else if (health->score >= g_health_analyzer.thresholds.good) {
-        strcpy(health->status, "good"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(health->status, "good");
         health->is_healthy = true;
     } else if (health->score >= g_health_analyzer.thresholds.fair) {
-        strcpy(health->status, "fair"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(health->status, "fair");
         health->is_healthy = false;
     } else if (health->score >= g_health_analyzer.thresholds.poor) {
-        strcpy(health->status, "poor"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(health->status, "poor");
         health->is_healthy = false;
     } else {
-        strcpy(health->status, "critical"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(health->status, "critical");
         health->is_healthy = false;
     }
 }
@@ -457,7 +457,7 @@ static int detect_member_issues(const char* member_name, health_issue_t* issues,
     }
 
     int issue_count = 0;
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
 
     // Analyze member health
     member_health_t health;
@@ -468,11 +468,11 @@ static int detect_member_issues(const char* member_name, health_issue_t* issues,
     // Check for low health score
     if (health.score < g_health_analyzer.thresholds.fair && issue_count < max_issues) {
         health_issue_t* issue = &issues[issue_count++];
-        safe_strncpy(issue->member_name, member_name, sizeof(issue->member_name)\n"\n"\n"\n"\n"\n"\n"\n");
-        strcpy(issue->type, "performance"\n"\n"\n"\n"\n"\n"\n"\n");
-        strcpy(issue->severity, health.score < g_health_analyzer.thresholds.poor ? "critical" : "warning"\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(issue->member_name, member_name, sizeof(issue->member_name));
+        strcpy(issue->type, "performance");
+        strcpy(issue->severity, health.score < g_health_analyzer.thresholds.poor ? "critical" : "warning");
         snprintf(issue->description, sizeof(issue->description),
-                "Low health score: %.1f%% for member %s", health.score, member_name\n"\n"\n"\n"\n"\n"\n"\n");
+                "Low health score: %.1f%% for member %s", health.score, member_name);
         issue->detected_at = now;
         issue->resolved_at = 0;
         issue->is_resolved = false;
@@ -481,11 +481,11 @@ static int detect_member_issues(const char* member_name, health_issue_t* issues,
     // Check for connectivity issues (heuristic)
     if (health.score < g_health_analyzer.thresholds.poor && issue_count < max_issues) {
         health_issue_t* issue = &issues[issue_count++];
-        safe_strncpy(issue->member_name, member_name, sizeof(issue->member_name)\n"\n"\n"\n"\n"\n"\n"\n");
-        strcpy(issue->type, "connectivity"\n"\n"\n"\n"\n"\n"\n"\n");
-        strcpy(issue->severity, "critical"\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(issue->member_name, member_name, sizeof(issue->member_name));
+        strcpy(issue->type, "connectivity");
+        strcpy(issue->severity, "critical");
         snprintf(issue->description, sizeof(issue->description),
-                "Possible connectivity issues detected for member %s", member_name\n"\n"\n"\n"\n"\n"\n"\n");
+                "Possible connectivity issues detected for member %s", member_name);
         issue->detected_at = now;
         issue->resolved_at = 0;
         issue->is_resolved = false;

@@ -15,10 +15,10 @@
 
 // External UCI functions and context
 extern struct uci_context *uci_ctx;
-extern const char* ucix_get_option(struct uci_context *ctx, const char *package, const char *section, const char *option\n"\n"\n"\n"\n"\n"\n"\n");
-extern int ucix_add_option(struct uci_context *ctx, const char *package, const char *section, const char *option, const char *value\n"\n"\n"\n"\n"\n"\n"\n");
-extern int ucix_add_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int value\n"\n"\n"\n"\n"\n"\n"\n");
-extern int ucix_logged_commit(struct uci_context *ctx, const char *package\n"\n"\n"\n"\n"\n"\n"\n");
+extern const char* ucix_get_option(struct uci_context *ctx, const char *package, const char *section, const char *option);
+extern int ucix_add_option(struct uci_context *ctx, const char *package, const char *section, const char *option, const char *value);
+extern int ucix_add_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int value);
+extern int ucix_logged_commit(struct uci_context *ctx, const char *package);
 
 // Wrapper function to match the signature used in this file
 static int ucix_get_option_wrapper(const char *package, const char *section, const char *option, char *value, size_t size) {
@@ -26,9 +26,9 @@ static int ucix_get_option_wrapper(const char *package, const char *section, con
         return -1;
     }
     
-    const char *result = ucix_get_option(uci_ctx, package, section, option\n"\n"\n"\n"\n"\n"\n"\n");
+    const char *result = ucix_get_option(uci_ctx, package, section, option);
     if (result) {
-        strncpy(value, result, size - 1\n"\n"\n"\n"\n"\n"\n"\n");
+        strncpy(value, result, size - 1);
         value[size - 1] = '\0';
         return 0;  // Success
     }
@@ -59,62 +59,62 @@ int starlink_weather_snow_melt_control_init(void) {
         return AUTONOMY_SUCCESS;
     }
     
-    printf("INFO: Initializing weather-based snow melt control system\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Initializing weather-based snow melt control system\n");
     
     // Initialize mutex
     if (pthread_mutex_init(&g_snow_melt_control.mutex, NULL) != 0) {
-        printf("ERROR: Failed to initialize snow melt control mutex\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: Failed to initialize snow melt control mutex\n");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     // Set default configuration
-    memcpy(&g_snow_melt_control.config, &DEFAULT_CONFIG, sizeof(starlink_weather_snow_melt_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(&g_snow_melt_control.config, &DEFAULT_CONFIG, sizeof(starlink_weather_snow_melt_config_t));
     
     // Initialize status
-    memset(&g_snow_melt_control.status, 0, sizeof(starlink_weather_snow_melt_status_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_snow_melt_control.status, 0, sizeof(starlink_weather_snow_melt_status_t));
     g_snow_melt_control.status.current_mode = SNOW_MELT_OFF;
     g_snow_melt_control.status.previous_mode = SNOW_MELT_OFF;
     g_snow_melt_control.status.current_weather = WEATHER_UNKNOWN;
     g_snow_melt_control.status.forecast_weather = WEATHER_UNKNOWN;
     
     // Initialize statistics
-    memset(&g_snow_melt_control.stats, 0, sizeof(starlink_weather_snow_melt_stats_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_snow_melt_control.stats, 0, sizeof(starlink_weather_snow_melt_stats_t));
     
     // Load configuration from UCI
-    int config_result = starlink_weather_snow_melt_control_load_uci_config(\n"\n"\n"\n"\n"\n"\n"\n");
+    int config_result = starlink_weather_snow_melt_control_load_uci_config();
     if (config_result != AUTONOMY_SUCCESS) {
-        printf("WARN: Failed to load UCI configuration, using defaults\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("WARN: Failed to load UCI configuration, using defaults\n");
     }
     
     // Initialize external APIs if not already done
-    extern int external_apis_init(void\n"\n"\n"\n"\n"\n"\n"\n");
-    int api_result = external_apis_init(\n"\n"\n"\n"\n"\n"\n"\n");
+    extern int external_apis_init(void);
+    int api_result = external_apis_init();
     if (api_result != AUTONOMY_SUCCESS) {
-        printf("WARN: Failed to initialize external APIs: %d\n", api_result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("WARN: Failed to initialize external APIs: %d\n", api_result);
     }
     
     // Initialize gRPC client
-    extern int starlink_grpc_comprehensive_client_init(starlink_grpc_client_config_t *config\n"\n"\n"\n"\n"\n"\n"\n");
+    extern int starlink_grpc_comprehensive_client_init(starlink_grpc_client_config_t *config);
     starlink_grpc_client_config_t grpc_config = {0};
-    safe_strncpy(grpc_config.host, g_snow_melt_control.config.starlink_host, sizeof(grpc_config.host)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(grpc_config.host, g_snow_melt_control.config.starlink_host, sizeof(grpc_config.host));
     grpc_config.host[sizeof(grpc_config.host) - 1] = '\0';
     grpc_config.port = g_snow_melt_control.config.starlink_port;
     grpc_config.timeout = 10;
     grpc_config.retries = 3;
     grpc_config.debug_mode = g_snow_melt_control.config.debug_mode;
     
-    int grpc_result = starlink_grpc_comprehensive_client_init(&grpc_config\n"\n"\n"\n"\n"\n"\n"\n");
+    int grpc_result = starlink_grpc_comprehensive_client_init(&grpc_config);
     if (grpc_result != AUTONOMY_SUCCESS) {
-        printf("WARN: Failed to initialize gRPC client: %d\n", grpc_result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("WARN: Failed to initialize gRPC client: %d\n", grpc_result);
     }
     
     g_snow_melt_control.initialized = true;
     g_snow_melt_control.weather_cache_valid_minutes = 10; // Cache weather data for 10 minutes
     
-    printf("INFO: Weather-based snow melt control system initialized successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Weather-based snow melt control system initialized successfully\n");
     printf("INFO: Temperature threshold: %.1fC, Check interval: %d minutes\n",
            g_snow_melt_control.config.temperature_threshold_celsius,
-           g_snow_melt_control.config.weather_check_interval_minutes\n"\n"\n"\n"\n"\n"\n"\n");
+           g_snow_melt_control.config.weather_check_interval_minutes);
     
     return AUTONOMY_SUCCESS;
 }
@@ -125,22 +125,22 @@ void starlink_weather_snow_melt_control_cleanup(void) {
         return;
     }
     
-    printf("INFO: Cleaning up weather-based snow melt control system\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Cleaning up weather-based snow melt control system\n");
     
     // Stop control thread if running
     if (g_snow_melt_control.thread_running) {
         g_snow_melt_control.thread_running = false;
         if (g_snow_melt_control.control_thread) {
-            pthread_join(g_snow_melt_control.control_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_join(g_snow_melt_control.control_thread, NULL);
         }
     }
     
     // Cleanup mutex
-    pthread_mutex_destroy(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_snow_melt_control.mutex);
     
     g_snow_melt_control.initialized = false;
     
-    printf("INFO: Weather-based snow melt control system cleaned up\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Weather-based snow melt control system cleaned up\n");
 }
 
 // Get current snow melt control status
@@ -149,9 +149,9 @@ int starlink_weather_snow_melt_control_get_status(starlink_weather_snow_melt_sta
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    memcpy(status, &g_snow_melt_control.status, sizeof(starlink_weather_snow_melt_status_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    pthread_mutex_unlock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_snow_melt_control.mutex);
+    memcpy(status, &g_snow_melt_control.status, sizeof(starlink_weather_snow_melt_status_t));
+    pthread_mutex_unlock(&g_snow_melt_control.mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -162,9 +162,9 @@ int starlink_weather_snow_melt_control_get_config(starlink_weather_snow_melt_con
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    memcpy(config, &g_snow_melt_control.config, sizeof(starlink_weather_snow_melt_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    pthread_mutex_unlock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_snow_melt_control.mutex);
+    memcpy(config, &g_snow_melt_control.config, sizeof(starlink_weather_snow_melt_config_t));
+    pthread_mutex_unlock(&g_snow_melt_control.mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -175,14 +175,14 @@ int starlink_weather_snow_melt_control_set_config(const starlink_weather_snow_me
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    memcpy(&g_snow_melt_control.config, config, sizeof(starlink_weather_snow_melt_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    pthread_mutex_unlock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_snow_melt_control.mutex);
+    memcpy(&g_snow_melt_control.config, config, sizeof(starlink_weather_snow_melt_config_t));
+    pthread_mutex_unlock(&g_snow_melt_control.mutex);
     
     // Save to UCI
-    starlink_weather_snow_melt_control_save_uci_config(\n"\n"\n"\n"\n"\n"\n"\n");
+    starlink_weather_snow_melt_control_save_uci_config();
     
-    printf("INFO: Snow melt control configuration updated\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Snow melt control configuration updated\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -193,14 +193,14 @@ int starlink_weather_snow_melt_control_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_snow_melt_control.mutex);
     g_snow_melt_control.config.enabled = enabled;
-    pthread_mutex_unlock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_snow_melt_control.mutex);
     
     // Save to UCI
-    starlink_weather_snow_melt_control_save_uci_config(\n"\n"\n"\n"\n"\n"\n"\n");
+    starlink_weather_snow_melt_control_save_uci_config();
     
-    printf("INFO: Snow melt control %s\n", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Snow melt control %s\n", enabled ? "enabled" : "disabled");
     
     return AUTONOMY_SUCCESS;
 }
@@ -211,48 +211,48 @@ int starlink_weather_snow_melt_control_set_mode(snow_melt_mode_t mode) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_snow_melt_control.mutex);
     
     if (g_snow_melt_control.status.current_mode != mode) {
         g_snow_melt_control.status.previous_mode = g_snow_melt_control.status.current_mode;
         g_snow_melt_control.status.current_mode = mode;
-        g_snow_melt_control.status.last_mode_change = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        g_snow_melt_control.status.last_mode_change = time(NULL);
         g_snow_melt_control.stats.total_mode_changes++;
         
         // Update statistics based on mode
         switch (mode) {
             case SNOW_MELT_AUTOMATIC:
                 g_snow_melt_control.stats.automatic_activations++;
-                g_snow_melt_control.stats.last_automatic_activation = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+                g_snow_melt_control.stats.last_automatic_activation = time(NULL);
                 break;
             case SNOW_MELT_PREHEAT:
                 g_snow_melt_control.stats.preheat_activations++;
-                g_snow_melt_control.stats.last_preheat_activation = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-                g_snow_melt_control.status.preheat_start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+                g_snow_melt_control.stats.last_preheat_activation = time(NULL);
+                g_snow_melt_control.status.preheat_start_time = time(NULL);
                 g_snow_melt_control.status.preheat_remaining_minutes = g_snow_melt_control.config.preheat_duration_minutes;
                 break;
             case SNOW_MELT_MANUAL:
                 g_snow_melt_control.stats.manual_activations++;
-                g_snow_melt_control.stats.last_manual_activation = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+                g_snow_melt_control.stats.last_manual_activation = time(NULL);
                 break;
             default:
                 break;
         }
         
-        pthread_mutex_unlock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_snow_melt_control.mutex);
         
         // Send command to Starlink dish
-        int result = starlink_weather_snow_melt_send_grpc_command(mode\n"\n"\n"\n"\n"\n"\n"\n");
+        int result = starlink_weather_snow_melt_send_grpc_command(mode);
         if (result == AUTONOMY_SUCCESS) {
-            printf("INFO: Snow melt mode changed to %s\n", starlink_weather_snow_melt_mode_to_string(mode)\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("INFO: Snow melt mode changed to %s\n", starlink_weather_snow_melt_mode_to_string(mode));
         } else {
-            printf("ERROR: Failed to send snow melt command to Starlink dish: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("ERROR: Failed to send snow melt command to Starlink dish: %d\n", result);
         }
         
         return result;
     }
     
-    pthread_mutex_unlock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_snow_melt_control.mutex);
     return AUTONOMY_SUCCESS;
 }
 
@@ -266,23 +266,23 @@ int starlink_weather_snow_melt_control_force_update(void) {
         return AUTONOMY_SUCCESS; // System disabled, nothing to do
     }
     
-    printf("INFO: Forcing weather check and snow melt mode update\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Forcing weather check and snow melt mode update\n");
     
     // Get current GPS location
     gps_data_t gps_data;
-    extern int gps_manager_get_current_location(gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-    int gps_result = gps_manager_get_current_location(&gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+    extern int gps_manager_get_current_location(gps_data_t *gps_data);
+    int gps_result = gps_manager_get_current_location(&gps_data);
     if (gps_result != AUTONOMY_SUCCESS) {
-        printf("WARN: Failed to get GPS location for weather check: %d\n", gps_result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("WARN: Failed to get GPS location for weather check: %d\n", gps_result);
         return gps_result;
     }
     
     // Get current weather data
     external_weather_data_t current_weather;
     int weather_result = starlink_weather_snow_melt_get_weather_data(
-        gps_data.latitude, gps_data.longitude, &current_weather\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data.latitude, gps_data.longitude, &current_weather);
     if (weather_result != AUTONOMY_SUCCESS) {
-        printf("WARN: Failed to get current weather data: %d\n", weather_result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("WARN: Failed to get current weather data: %d\n", weather_result);
         return weather_result;
     }
     
@@ -291,32 +291,32 @@ int starlink_weather_snow_melt_control_force_update(void) {
     if (g_snow_melt_control.config.use_forecast) {
         int forecast_result = starlink_weather_snow_melt_get_weather_forecast(
             gps_data.latitude, gps_data.longitude, 
-            g_snow_melt_control.config.forecast_hours_ahead, &forecast_weather\n"\n"\n"\n"\n"\n"\n"\n");
+            g_snow_melt_control.config.forecast_hours_ahead, &forecast_weather);
         if (forecast_result != AUTONOMY_SUCCESS) {
-            printf("WARN: Failed to get weather forecast: %d\n", forecast_result\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("WARN: Failed to get weather forecast: %d\n", forecast_result);
         }
     }
     
     // Determine recommended mode
     snow_melt_mode_t recommended_mode = starlink_weather_snow_melt_determine_mode(
-        &current_weather, &forecast_weather\n"\n"\n"\n"\n"\n"\n"\n");
+        &current_weather, &forecast_weather);
     
     // Update status
-    pthread_mutex_lock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    g_snow_melt_control.status.last_weather_check = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_snow_melt_control.mutex);
+    g_snow_melt_control.status.last_weather_check = time(NULL);
     g_snow_melt_control.status.current_temperature = current_weather.temperature_celsius;
     g_snow_melt_control.status.current_weather = starlink_weather_snow_melt_parse_weather_condition(
-        current_weather.description\n"\n"\n"\n"\n"\n"\n"\n");
+        current_weather.description);
     g_snow_melt_control.status.forecast_temperature = forecast_weather.temperature_celsius;
     g_snow_melt_control.status.forecast_weather = starlink_weather_snow_melt_parse_weather_condition(
-        forecast_weather.description\n"\n"\n"\n"\n"\n"\n"\n");
+        forecast_weather.description);
     g_snow_melt_control.status.precipitation_expected = starlink_weather_snow_melt_is_precipitation_expected(
-        &forecast_weather, g_snow_melt_control.config.forecast_hours_ahead\n"\n"\n"\n"\n"\n"\n"\n");
+        &forecast_weather, g_snow_melt_control.config.forecast_hours_ahead);
     strncpy(g_snow_melt_control.status.last_weather_description, current_weather.description,
-            sizeof(g_snow_melt_control.status.last_weather_description) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+            sizeof(g_snow_melt_control.status.last_weather_description) - 1);
     g_snow_melt_control.status.last_weather_description[sizeof(g_snow_melt_control.status.last_weather_description) - 1] = '\0';
-    g_snow_melt_control.status.last_weather_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    pthread_mutex_unlock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    g_snow_melt_control.status.last_weather_update = time(NULL);
+    pthread_mutex_unlock(&g_snow_melt_control.mutex);
     
     // Update statistics
     g_snow_melt_control.stats.weather_checks_performed++;
@@ -326,13 +326,13 @@ int starlink_weather_snow_melt_control_force_update(void) {
     if (recommended_mode != g_snow_melt_control.status.current_mode) {
         printf("INFO: Weather conditions changed, updating snow melt mode from %s to %s\n",
                starlink_weather_snow_melt_mode_to_string(g_snow_melt_control.status.current_mode),
-               starlink_weather_snow_melt_mode_to_string(recommended_mode)\n"\n"\n"\n"\n"\n"\n"\n");
+               starlink_weather_snow_melt_mode_to_string(recommended_mode));
         
-        return starlink_weather_snow_melt_control_set_mode(recommended_mode\n"\n"\n"\n"\n"\n"\n"\n");
+        return starlink_weather_snow_melt_control_set_mode(recommended_mode);
     }
     
     printf("INFO: Weather check completed, no mode change needed (current: %s)\n",
-           starlink_weather_snow_melt_mode_to_string(g_snow_melt_control.status.current_mode)\n"\n"\n"\n"\n"\n"\n"\n");
+           starlink_weather_snow_melt_mode_to_string(g_snow_melt_control.status.current_mode));
     
     return AUTONOMY_SUCCESS;
 }
@@ -343,9 +343,9 @@ int starlink_weather_snow_melt_control_get_statistics(starlink_weather_snow_melt
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    memcpy(stats, &g_snow_melt_control.stats, sizeof(starlink_weather_snow_melt_stats_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    pthread_mutex_unlock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_snow_melt_control.mutex);
+    memcpy(stats, &g_snow_melt_control.stats, sizeof(starlink_weather_snow_melt_stats_t));
+    pthread_mutex_unlock(&g_snow_melt_control.mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -356,11 +356,11 @@ int starlink_weather_snow_melt_control_reset_statistics(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    memset(&g_snow_melt_control.stats, 0, sizeof(starlink_weather_snow_melt_stats_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    pthread_mutex_unlock(&g_snow_melt_control.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_snow_melt_control.mutex);
+    memset(&g_snow_melt_control.stats, 0, sizeof(starlink_weather_snow_melt_stats_t));
+    pthread_mutex_unlock(&g_snow_melt_control.mutex);
     
-    printf("INFO: Snow melt control statistics reset\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Snow melt control statistics reset\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -385,7 +385,7 @@ snow_melt_mode_t starlink_weather_snow_melt_determine_mode(
     // Rule 2: Check for expected precipitation (snow or heavy rain) within forecast period
     if (forecast_data && g_snow_melt_control.config.use_forecast) {
         weather_condition_t forecast_condition = starlink_weather_snow_melt_parse_weather_condition(
-            forecast_data->description\n"\n"\n"\n"\n"\n"\n"\n");
+            forecast_data->description);
         
         // Check if precipitation is expected
         if (forecast_condition == WEATHER_SNOW || 
@@ -394,14 +394,14 @@ snow_melt_mode_t starlink_weather_snow_melt_determine_mode(
             forecast_condition == WEATHER_SLEET) {
             
             printf("INFO: Precipitation expected in forecast: %s, setting PREHEAT mode\n",
-                   forecast_data->description\n"\n"\n"\n"\n"\n"\n"\n");
+                   forecast_data->description);
             return SNOW_MELT_PREHEAT;
         }
     }
     
     // Rule 3: Check current weather for snow/rain
     weather_condition_t current_condition = starlink_weather_snow_melt_parse_weather_condition(
-        weather_data->description\n"\n"\n"\n"\n"\n"\n"\n");
+        weather_data->description);
     
     if (current_condition == WEATHER_SNOW || 
         current_condition == WEATHER_HEAVY_SNOW ||
@@ -409,7 +409,7 @@ snow_melt_mode_t starlink_weather_snow_melt_determine_mode(
         current_condition == WEATHER_SLEET) {
         
         printf("INFO: Current precipitation detected: %s, setting PREHEAT mode\n",
-               weather_data->description\n"\n"\n"\n"\n"\n"\n"\n");
+               weather_data->description);
         return SNOW_MELT_PREHEAT;
     }
     
@@ -430,11 +430,11 @@ weather_condition_t starlink_weather_snow_melt_parse_weather_condition(const cha
     
     // Convert to lowercase for comparison
     char desc_lower[128];
-    safe_strncpy(desc_lower, description, sizeof(desc_lower)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(desc_lower, description, sizeof(desc_lower));
     desc_lower[sizeof(desc_lower) - 1] = '\0';
     
     for (int i = 0; desc_lower[i]; i++) {
-        desc_lower[i] = tolower(desc_lower[i]\n"\n"\n"\n"\n"\n"\n"\n");
+        desc_lower[i] = tolower(desc_lower[i]);
     }
     
     // Check for snow conditions
@@ -489,12 +489,12 @@ bool starlink_weather_snow_melt_is_precipitation_expected(
     }
     
     weather_condition_t condition = starlink_weather_snow_melt_parse_weather_condition(
-        forecast_data->description\n"\n"\n"\n"\n"\n"\n"\n");
+        forecast_data->description);
     
     return (condition == WEATHER_SNOW || 
             condition == WEATHER_HEAVY_SNOW ||
             condition == WEATHER_HEAVY_RAIN ||
-            condition == WEATHER_SLEET\n"\n"\n"\n"\n"\n"\n"\n");
+            condition == WEATHER_SLEET);
 }
 
 // Send snow melt command to Starlink dish via gRPC
@@ -510,26 +510,26 @@ int starlink_weather_snow_melt_send_grpc_command(snow_melt_mode_t mode) {
     switch (mode) {
         case SNOW_MELT_OFF:
             snprintf(request_json, sizeof(request_json),
-                "{\"set_thermal_state\":{\"target_thermal_state\":{\"heater\":false}}}"\n"\n"\n"\n"\n"\n"\n"\n");
+                "{\"set_thermal_state\":{\"target_thermal_state\":{\"heater\":false}}}");
             break;
             
         case SNOW_MELT_AUTOMATIC:
             snprintf(request_json, sizeof(request_json),
-                "{\"set_thermal_state\":{\"target_thermal_state\":{\"heater\":true,\"heater_mode\":\"AUTO\"}}}"\n"\n"\n"\n"\n"\n"\n"\n");
+                "{\"set_thermal_state\":{\"target_thermal_state\":{\"heater\":true,\"heater_mode\":\"AUTO\"}}}");
             break;
             
         case SNOW_MELT_PREHEAT:
             snprintf(request_json, sizeof(request_json),
-                "{\"set_thermal_state\":{\"target_thermal_state\":{\"heater\":true,\"heater_mode\":\"PREHEAT\"}}}"\n"\n"\n"\n"\n"\n"\n"\n");
+                "{\"set_thermal_state\":{\"target_thermal_state\":{\"heater\":true,\"heater_mode\":\"PREHEAT\"}}}");
             break;
             
         case SNOW_MELT_MANUAL:
             snprintf(request_json, sizeof(request_json),
-                "{\"set_thermal_state\":{\"target_thermal_state\":{\"heater\":true,\"heater_mode\":\"MANUAL\"}}}"\n"\n"\n"\n"\n"\n"\n"\n");
+                "{\"set_thermal_state\":{\"target_thermal_state\":{\"heater\":true,\"heater_mode\":\"MANUAL\"}}}");
             break;
             
         default:
-            printf("ERROR: Unknown snow melt mode: %d\n", mode\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("ERROR: Unknown snow melt mode: %d\n", mode);
             return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
@@ -538,29 +538,29 @@ int starlink_weather_snow_melt_send_grpc_command(snow_melt_mode_t mode) {
         const char *method,
         const char *request_data,
         size_t request_size,
-        starlink_grpc_response_t *response\n"\n"\n"\n"\n"\n"\n"\n");
+        starlink_grpc_response_t *response);
     
     starlink_grpc_response_t response = {0};
     int result = starlink_grpc_comprehensive_call(
-        method, request_json, strlen(request_json), &response\n"\n"\n"\n"\n"\n"\n"\n");
+        method, request_json, strlen(request_json), &response);
     
     if (result == AUTONOMY_SUCCESS && response.success) {
         printf("INFO: Successfully sent snow melt command: %s\n", 
-               starlink_weather_snow_melt_mode_to_string(mode)\n"\n"\n"\n"\n"\n"\n"\n");
+               starlink_weather_snow_melt_mode_to_string(mode));
         
         if (g_snow_melt_control.config.debug_mode && response.response_data) {
-            printf("DEBUG: Starlink response: %s\n", response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("DEBUG: Starlink response: %s\n", response.response_data);
         }
     } else {
-        printf("ERROR: Failed to send snow melt command: %d\n", result\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: Failed to send snow melt command: %d\n", result);
         if (response.error_message[0]) {
-            printf("ERROR: gRPC error: %s\n", response.error_message\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("ERROR: gRPC error: %s\n", response.error_message);
         }
     }
     
     // Cleanup response
     if (response.response_data) {
-        free(response.response_data\n"\n"\n"\n"\n"\n"\n"\n");
+        free(response.response_data);
     }
     
     return result;
@@ -577,35 +577,35 @@ int starlink_weather_snow_melt_get_weather_data(
     }
     
     // Check cache first
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     if (g_snow_melt_control.weather_cache_timestamp > 0 &&
         (now - g_snow_melt_control.weather_cache_timestamp) < 
         (g_snow_melt_control.weather_cache_valid_minutes * 60)) {
         
         memcpy(weather_data, &g_snow_melt_control.current_weather_data, 
-               sizeof(external_weather_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+               sizeof(external_weather_data_t));
         
         if (g_snow_melt_control.config.debug_mode) {
             printf("DEBUG: Using cached weather data (age: %lld seconds)\n",
-                    (long long)(now - g_snow_melt_control.weather_cache_timestamp)\n"\n"\n"\n"\n"\n"\n"\n");
+                    (long long)(now - g_snow_melt_control.weather_cache_timestamp));
         }
         
         return AUTONOMY_SUCCESS;
     }
     
     // Get fresh weather data
-    extern int external_apis_get_weather(double latitude, double longitude, external_weather_data_t* weather_data\n"\n"\n"\n"\n"\n"\n"\n");
-    int result = external_apis_get_weather(latitude, longitude, weather_data\n"\n"\n"\n"\n"\n"\n"\n");
+    extern int external_apis_get_weather(double latitude, double longitude, external_weather_data_t* weather_data);
+    int result = external_apis_get_weather(latitude, longitude, weather_data);
     
     if (result == AUTONOMY_SUCCESS) {
         // Update cache
         memcpy(&g_snow_melt_control.current_weather_data, weather_data, 
-               sizeof(external_weather_data_t)\n"\n"\n"\n"\n"\n"\n"\n");
+               sizeof(external_weather_data_t));
         g_snow_melt_control.weather_cache_timestamp = now;
         
         if (g_snow_melt_control.config.debug_mode) {
             printf("DEBUG: Fresh weather data: %.1fC, %s\n",
-                   weather_data->temperature_celsius, weather_data->description\n"\n"\n"\n"\n"\n"\n"\n");
+                   weather_data->temperature_celsius, weather_data->description);
         }
     }
     
@@ -625,15 +625,15 @@ int starlink_weather_snow_melt_get_weather_forecast(
     
     // For now, we'll use the same API as current weather
     // In a full implementation, this would call a forecast API
-    int result = starlink_weather_snow_melt_get_weather_data(latitude, longitude, forecast_data\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = starlink_weather_snow_melt_get_weather_data(latitude, longitude, forecast_data);
     
     if (result == AUTONOMY_SUCCESS) {
         // Adjust timestamp to reflect forecast time
-        forecast_data->timestamp += (hours_ahead * 3600\n"\n"\n"\n"\n"\n"\n"\n");
+        forecast_data->timestamp += (hours_ahead * 3600);
         
         if (g_snow_melt_control.config.debug_mode) {
             printf("DEBUG: Weather forecast for +%d hours: %.1fC, %s\n",
-                   hours_ahead, forecast_data->temperature_celsius, forecast_data->description\n"\n"\n"\n"\n"\n"\n"\n");
+                   hours_ahead, forecast_data->temperature_celsius, forecast_data->description);
         }
     }
     
@@ -646,66 +646,66 @@ int starlink_weather_snow_melt_control_load_uci_config(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    printf("INFO: Loading snow melt control configuration from UCI\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Loading snow melt control configuration from UCI\n");
     
     // Load configuration values
     char value[256];
     
     // Enabled
     if (ucix_get_option_wrapper("autonomy", "snow_melt_control", "enabled", value, sizeof(value)) == 0) {
-        g_snow_melt_control.config.enabled = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0\n"\n"\n"\n"\n"\n"\n"\n");
+        g_snow_melt_control.config.enabled = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
     }
     
     // Temperature threshold
     if (ucix_get_option_wrapper("autonomy", "snow_melt_control", "temperature_threshold", value, sizeof(value)) == 0) {
-        g_snow_melt_control.config.temperature_threshold_celsius = atof(value\n"\n"\n"\n"\n"\n"\n"\n");
+        g_snow_melt_control.config.temperature_threshold_celsius = atof(value);
     }
     
     // Weather check interval
     if (ucix_get_option_wrapper("autonomy", "snow_melt_control", "weather_check_interval", value, sizeof(value)) == 0) {
-        g_snow_melt_control.config.weather_check_interval_minutes = atoi(value\n"\n"\n"\n"\n"\n"\n"\n");
+        g_snow_melt_control.config.weather_check_interval_minutes = atoi(value);
     }
     
     // Preheat duration
     if (ucix_get_option_wrapper("autonomy", "snow_melt_control", "preheat_duration", value, sizeof(value)) == 0) {
-        g_snow_melt_control.config.preheat_duration_minutes = atoi(value\n"\n"\n"\n"\n"\n"\n"\n");
+        g_snow_melt_control.config.preheat_duration_minutes = atoi(value);
     }
     
     // Use forecast
     if (ucix_get_option_wrapper("autonomy", "snow_melt_control", "use_forecast", value, sizeof(value)) == 0) {
-        g_snow_melt_control.config.use_forecast = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0\n"\n"\n"\n"\n"\n"\n"\n");
+        g_snow_melt_control.config.use_forecast = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
     }
     
     // Forecast hours ahead
     if (ucix_get_option_wrapper("autonomy", "snow_melt_control", "forecast_hours_ahead", value, sizeof(value)) == 0) {
-        g_snow_melt_control.config.forecast_hours_ahead = atoi(value\n"\n"\n"\n"\n"\n"\n"\n");
+        g_snow_melt_control.config.forecast_hours_ahead = atoi(value);
     }
     
     // Weather API key
     if (ucix_get_option_wrapper("autonomy", "snow_melt_control", "weather_api_key", value, sizeof(value)) == 0) {
         strncpy(g_snow_melt_control.config.weather_api_key, value, 
-                sizeof(g_snow_melt_control.config.weather_api_key) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+                sizeof(g_snow_melt_control.config.weather_api_key) - 1);
         g_snow_melt_control.config.weather_api_key[sizeof(g_snow_melt_control.config.weather_api_key) - 1] = '\0';
     }
     
     // Starlink host
     if (ucix_get_option_wrapper("autonomy", "snow_melt_control", "starlink_host", value, sizeof(value)) == 0) {
         strncpy(g_snow_melt_control.config.starlink_host, value, 
-                sizeof(g_snow_melt_control.config.starlink_host) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+                sizeof(g_snow_melt_control.config.starlink_host) - 1);
         g_snow_melt_control.config.starlink_host[sizeof(g_snow_melt_control.config.starlink_host) - 1] = '\0';
     }
     
     // Starlink port
     if (ucix_get_option_wrapper("autonomy", "snow_melt_control", "starlink_port", value, sizeof(value)) == 0) {
-        g_snow_melt_control.config.starlink_port = atoi(value\n"\n"\n"\n"\n"\n"\n"\n");
+        g_snow_melt_control.config.starlink_port = atoi(value);
     }
     
     // Debug mode
     if (ucix_get_option_wrapper("autonomy", "snow_melt_control", "debug_mode", value, sizeof(value)) == 0) {
-        g_snow_melt_control.config.debug_mode = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0\n"\n"\n"\n"\n"\n"\n"\n");
+        g_snow_melt_control.config.debug_mode = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
     }
     
-    printf("INFO: Snow melt control configuration loaded from UCI\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Snow melt control configuration loaded from UCI\n");
     
     return AUTONOMY_SUCCESS;
 }
@@ -717,11 +717,11 @@ int starlink_weather_snow_melt_control_save_uci_config(void) {
     }
     
     if (!uci_ctx) {
-        printf("ERROR: UCI context not available\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: UCI context not available\n");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    printf("INFO: Saving snow melt control configuration to UCI\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    printf("INFO: Saving snow melt control configuration to UCI\n");
     
     int ret = AUTONOMY_SUCCESS;
     char value_buf[64];
@@ -732,7 +732,7 @@ int starlink_weather_snow_melt_control_save_uci_config(void) {
         ret = AUTONOMY_ERROR_SYSTEM;
     }
     
-    snprintf(value_buf, sizeof(value_buf), "%.1f", g_snow_melt_control.config.temperature_threshold_celsius\n"\n"\n"\n"\n"\n"\n"\n");
+    snprintf(value_buf, sizeof(value_buf), "%.1f", g_snow_melt_control.config.temperature_threshold_celsius);
     if (ucix_add_option(uci_ctx, "autonomy", "snow_melt_control", "temperature_threshold", value_buf) != 0) {
         ret = AUTONOMY_ERROR_SYSTEM;
     }
@@ -780,14 +780,14 @@ int starlink_weather_snow_melt_control_save_uci_config(void) {
     // Commit changes if all sets succeeded
     if (ret == AUTONOMY_SUCCESS) {
         if (ucix_logged_commit(uci_ctx, "autonomy") == 0) {
-            printf("INFO: Snow melt control configuration saved to UCI\n"\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("INFO: Snow melt control configuration saved to UCI\n");
             return AUTONOMY_SUCCESS;
         } else {
-            printf("ERROR: Failed to commit snow melt control configuration to UCI\n"\n"\n"\n"\n"\n"\n"\n"\n");
+            printf("ERROR: Failed to commit snow melt control configuration to UCI\n");
             return AUTONOMY_ERROR_SYSTEM;
         }
     } else {
-        printf("ERROR: Failed to set one or more snow melt control configuration values in UCI\n"\n"\n"\n"\n"\n"\n"\n"\n");
+        printf("ERROR: Failed to set one or more snow melt control configuration values in UCI\n");
         return ret;
     }
 }

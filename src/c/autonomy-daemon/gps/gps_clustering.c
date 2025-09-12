@@ -28,28 +28,28 @@ static bool g_clustering_initialized = false; // Use configurable setting
 static pthread_mutex_t g_clustering_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Forward declarations - clustering specific
-int find_best_cluster(const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-static int create_new_cluster(const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-void add_position_to_cluster(int cluster_index, const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_position_weight(time_t timestamp, double accuracy\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_cluster_confidence(const gps_cluster_t *cluster\n"\n"\n"\n"\n"\n"\n"\n");
-void update_cluster_variances(int cluster_index, const gps_data_t *gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-int find_oldest_cluster(void\n"\n"\n"\n"\n"\n"\n"\n");
-void cleanup_expired_clusters(void\n"\n"\n"\n"\n"\n"\n"\n");
-void perform_clustering_analysis(void\n"\n"\n"\n"\n"\n"\n"\n");
-double gps_clustering_coordinate_distance(double lat1, double lon1, double lat2, double lon2\n"\n"\n"\n"\n"\n"\n"\n");
+int find_best_cluster(const gps_data_t *gps_data);
+static int create_new_cluster(const gps_data_t *gps_data);
+void add_position_to_cluster(int cluster_index, const gps_data_t *gps_data);
+double calculate_position_weight(time_t timestamp, double accuracy);
+double calculate_cluster_confidence(const gps_cluster_t *cluster);
+void update_cluster_variances(int cluster_index, const gps_data_t *gps_data);
+int find_oldest_cluster(void);
+void cleanup_expired_clusters(void);
+void perform_clustering_analysis(void);
+double gps_clustering_coordinate_distance(double lat1, double lon1, double lat2, double lon2);
 
 // Initialize GPS clustering system
 int gps_clustering_init(void) {
     if (g_clustering_initialized) {
-        printf("WARN: "GPS clustering system already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("GPS clustering system already initialized");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_clustering_mutex);
     
     // Initialize clustering state
-    memset(&g_clustering, 0, sizeof(gps_clustering_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_clustering, 0, sizeof(gps_clustering_t));
     g_clustering.enabled = true; // Use configurable gps clustering enabled
     g_clustering.max_cluster_size = MAX_CLUSTER_SIZE;
     g_clustering.min_cluster_size = MIN_CLUSTER_SIZE;
@@ -85,9 +85,9 @@ int gps_clustering_init(void) {
     }
     
     g_clustering_initialized = true; // Use configurable setting
-    pthread_mutex_unlock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_clustering_mutex);
     
-    printf("INFO: "GPS clustering system initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS clustering system initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -97,35 +97,35 @@ int gps_clustering_add_position(const gps_data_t *gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_clustering_mutex);
     
     g_clustering.total_positions++;
     
     // Check if position should be added to existing cluster
-    int cluster_index = find_best_cluster(gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+    int cluster_index = find_best_cluster(gps_data);
     
     if (cluster_index >= 0) {
         // Add to existing cluster
-        add_position_to_cluster(cluster_index, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+        add_position_to_cluster(cluster_index, gps_data);
         g_clustering.clustered_positions++;
     } else {
         // Create new cluster
-        cluster_index = create_new_cluster(gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+        cluster_index = create_new_cluster(gps_data);
         if (cluster_index >= 0) {
             g_clustering.clustered_positions++;
         }
     }
     
     // Clean up old clusters
-    cleanup_expired_clusters(\n"\n"\n"\n"\n"\n"\n"\n");
+    cleanup_expired_clusters();
     
     // Perform clustering analysis if enough data
     if (g_clustering.total_positions % 10 == 0) { // Every 10 positions
-        perform_clustering_analysis(\n"\n"\n"\n"\n"\n"\n"\n");
-        g_clustering.last_clustering = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        perform_clustering_analysis();
+        g_clustering.last_clustering = time(NULL);
     }
     
-    pthread_mutex_unlock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_clustering_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -142,7 +142,7 @@ int find_best_cluster(const gps_data_t *gps_data) {
         
         double distance = gps_clustering_coordinate_distance(gps_data->lat, gps_data->lon,
                                           g_clustering.clusters[i].center_lat,
-                                          g_clustering.clusters[i].center_lon\n"\n"\n"\n"\n"\n"\n"\n");
+                                          g_clustering.clusters[i].center_lon);
         
         if (distance <= best_distance) {
             best_distance = distance;
@@ -166,7 +166,7 @@ static int create_new_cluster(const gps_data_t *gps_data) {
     
     if (cluster_index < 0) {
         // No free slots, remove oldest cluster
-        cluster_index = find_oldest_cluster(\n"\n"\n"\n"\n"\n"\n"\n");
+        cluster_index = find_oldest_cluster();
         if (cluster_index < 0) {
             return -1;
         }
@@ -176,7 +176,7 @@ static int create_new_cluster(const gps_data_t *gps_data) {
     gps_cluster_t *cluster = &g_clustering.clusters[cluster_index];
     cluster->active = true;
     cluster->position_count = 1;
-    cluster->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    cluster->last_update = time(NULL);
     cluster->center_lat = gps_data->lat;
     cluster->center_lon = gps_data->lon;
     cluster->center_altitude = gps_data->altitude;
@@ -184,7 +184,7 @@ static int create_new_cluster(const gps_data_t *gps_data) {
     cluster->confidence = 1.0;
     
     // Initialize weighted sums
-    double weight = calculate_position_weight(gps_data->timestamp, gps_data->accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+    double weight = calculate_position_weight(gps_data->timestamp, gps_data->accuracy);
     cluster->weighted_sum_lat = gps_data->lat * weight;
     cluster->weighted_sum_lon = gps_data->lon * weight;
     cluster->weighted_sum_alt = gps_data->altitude * weight;
@@ -198,8 +198,8 @@ static int create_new_cluster(const gps_data_t *gps_data) {
     
     g_clustering.cluster_count++;
     
-    printf("DEBUG: "Created new GPS cluster %d at (%.6f, %.6f)", 
-               cluster_index, gps_data->lat, gps_data->lon\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Created new GPS cluster %d at (%.6f, %.6f)", 
+               cluster_index, gps_data->lat, gps_data->lon);
     
     return cluster_index;
 }
@@ -209,7 +209,7 @@ void add_position_to_cluster(int cluster_index, const gps_data_t *gps_data) {
     gps_cluster_t *cluster = &g_clustering.clusters[cluster_index];
     
     // Calculate position weight
-    double weight = calculate_position_weight(gps_data->timestamp, gps_data->accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+    double weight = calculate_position_weight(gps_data->timestamp, gps_data->accuracy);
     
     // Update weighted sums
     cluster->weighted_sum_lat += gps_data->lat * weight;
@@ -226,20 +226,20 @@ void add_position_to_cluster(int cluster_index, const gps_data_t *gps_data) {
     
     // Update position count and timestamp
     cluster->position_count++;
-    cluster->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    cluster->last_update = time(NULL);
     
     // Update confidence based on cluster size
-    cluster->confidence = calculate_cluster_confidence(cluster\n"\n"\n"\n"\n"\n"\n"\n");
+    cluster->confidence = calculate_cluster_confidence(cluster);
     
     // Update variances
-    update_cluster_variances(cluster_index, gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+    update_cluster_variances(cluster_index, gps_data);
     
-    printf("DEBUG: "Added position to cluster %d, count: %d", cluster_index, cluster->position_count\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Added position to cluster %d, count: %d", cluster_index, cluster->position_count);
 }
 
 // Calculate position weight based on age and accuracy
 double calculate_position_weight(time_t timestamp, double accuracy) {
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     int age = now - timestamp;
     
     // Time-based weight decay
@@ -259,16 +259,16 @@ double calculate_cluster_confidence(const gps_cluster_t *cluster) {
     }
     
     // Base confidence from position count
-    double count_confidence = fmin(cluster->position_count / 20.0, 1.0\n"\n"\n"\n"\n"\n"\n"\n");
+    double count_confidence = fmin(cluster->position_count / 20.0, 1.0);
     
     // Accuracy confidence (better accuracy = higher confidence)
-    double accuracy_confidence = 1.0 / (1.0 + cluster->accuracy / 50.0\n"\n"\n"\n"\n"\n"\n"\n");
+    double accuracy_confidence = 1.0 / (1.0 + cluster->accuracy / 50.0);
     
     // Variance confidence (lower variance = higher confidence)
-    double variance_confidence = 1.0 / (1.0 + (cluster->variance_lat + cluster->variance_lon) / 1000.0\n"\n"\n"\n"\n"\n"\n"\n");
+    double variance_confidence = 1.0 / (1.0 + (cluster->variance_lat + cluster->variance_lon) / 1000.0);
     
     // Combine confidences
-    return (count_confidence * 0.4 + accuracy_confidence * 0.4 + variance_confidence * 0.2\n"\n"\n"\n"\n"\n"\n"\n");
+    return (count_confidence * 0.4 + accuracy_confidence * 0.4 + variance_confidence * 0.2);
 }
 
 // Update cluster variances
@@ -284,7 +284,7 @@ void update_cluster_variances(int cluster_index, const gps_data_t *gps_data) {
     double delta_lon = gps_data->lon - cluster->center_lon;
     double delta_alt = gps_data->altitude - cluster->center_altitude;
     
-    double weight = calculate_position_weight(gps_data->timestamp, gps_data->accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+    double weight = calculate_position_weight(gps_data->timestamp, gps_data->accuracy);
     double weight_ratio = weight / cluster->total_weight;
     
     // Update variances
@@ -296,7 +296,7 @@ void update_cluster_variances(int cluster_index, const gps_data_t *gps_data) {
 // Find oldest cluster
 int find_oldest_cluster(void) {
     int oldest_cluster = -1;
-    time_t oldest_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t oldest_time = time(NULL);
     
     for (int i = 0; i < g_clustering.max_clusters; i++) {
         if (g_clustering.clusters[i].active && 
@@ -311,7 +311,7 @@ int find_oldest_cluster(void) {
 
 // Clean up expired clusters
 void cleanup_expired_clusters(void) {
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     for (int i = 0; i < g_clustering.max_clusters; i++) {
         if (g_clustering.clusters[i].active && 
@@ -321,7 +321,7 @@ void cleanup_expired_clusters(void) {
             g_clustering.clusters[i].active = false;
             g_clustering.cluster_count--;
             
-            printf("DEBUG: "Removed expired cluster %d", i\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Removed expired cluster %d", i);
         }
     }
 }
@@ -345,8 +345,8 @@ void perform_clustering_analysis(void) {
         g_clustering.average_confidence = total_confidence / valid_clusters;
     }
     
-    printf("DEBUG: "Clustering analysis: %d valid clusters, avg confidence: %.3f", 
-               valid_clusters, g_clustering.average_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Clustering analysis: %d valid clusters, avg confidence: %.3f", 
+               valid_clusters, g_clustering.average_confidence);
 }
 
 // Get clustered GPS position
@@ -355,7 +355,7 @@ int gps_clustering_get_position(gps_data_t *gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_clustering_mutex);
     
     // Find best cluster (highest confidence)
     int best_cluster = -1;
@@ -372,7 +372,7 @@ int gps_clustering_get_position(gps_data_t *gps_data) {
     }
     
     if (best_cluster < 0) {
-        pthread_mutex_unlock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_clustering_mutex);
         return AUTONOMY_ERROR_NO_DATA;
     }
     
@@ -387,7 +387,7 @@ int gps_clustering_get_position(gps_data_t *gps_data) {
     gps_data->satellites = cluster->position_count; // Use position count as satellite count
     gps_data->fix_quality = 1; // Assume good fix for clustered data
     
-    pthread_mutex_unlock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_clustering_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -398,7 +398,7 @@ int gps_clustering_get_statistics(gps_clustering_stats_t *stats) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_clustering_mutex);
     
     stats->total_positions = g_clustering.total_positions;
     stats->clustered_positions = g_clustering.clustered_positions;
@@ -413,7 +413,7 @@ int gps_clustering_get_statistics(gps_clustering_stats_t *stats) {
         stats->clustering_efficiency = 0.0;
     }
     
-    pthread_mutex_unlock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_clustering_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -424,7 +424,7 @@ int gps_clustering_get_config(gps_clustering_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_clustering_mutex);
     
     config->enabled = g_clustering.enabled;
     config->max_cluster_size = g_clustering.max_cluster_size;
@@ -435,7 +435,7 @@ int gps_clustering_get_config(gps_clustering_config_t *config) {
     config->max_clusters = g_clustering.max_clusters;
     config->outlier_threshold = g_clustering.outlier_threshold;
     
-    pthread_mutex_unlock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_clustering_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -446,7 +446,7 @@ int gps_clustering_set_config(const gps_clustering_config_t *config) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_clustering_mutex);
     
     g_clustering.enabled = config->enabled;
     g_clustering.max_cluster_size = config->max_cluster_size;
@@ -457,9 +457,9 @@ int gps_clustering_set_config(const gps_clustering_config_t *config) {
     g_clustering.max_clusters = config->max_clusters;
     g_clustering.outlier_threshold = config->outlier_threshold;
     
-    pthread_mutex_unlock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_clustering_mutex);
     
-    printf("INFO: "GPS clustering configuration updated"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS clustering configuration updated");
     return AUTONOMY_SUCCESS;
 }
 
@@ -469,11 +469,11 @@ int gps_clustering_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_clustering_mutex);
     g_clustering.enabled = enabled;
-    pthread_mutex_unlock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_clustering_mutex);
     
-    printf("INFO: "GPS clustering %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS clustering %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -483,14 +483,14 @@ int gps_clustering_force_analysis(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_clustering_mutex);
     
-    perform_clustering_analysis(\n"\n"\n"\n"\n"\n"\n"\n");
-    g_clustering.last_clustering = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    perform_clustering_analysis();
+    g_clustering.last_clustering = time(NULL);
     
-    pthread_mutex_unlock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_clustering_mutex);
     
-    printf("INFO: "Forced clustering analysis completed"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Forced clustering analysis completed");
     return AUTONOMY_SUCCESS;
 }
 
@@ -500,7 +500,7 @@ int gps_clustering_reset(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_clustering_mutex);
     
     g_clustering.total_positions = 0;
     g_clustering.clustered_positions = 0;
@@ -528,9 +528,9 @@ int gps_clustering_reset(void) {
         g_clustering.clusters[i].variance_alt = 0.0;
     }
     
-    pthread_mutex_unlock(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_clustering_mutex);
     
-    printf("INFO: "GPS clustering system reset"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS clustering system reset");
     return AUTONOMY_SUCCESS;
 }
 
@@ -545,9 +545,9 @@ double gps_clustering_coordinate_distance(double lat1, double lon1, double lat2,
     
     double a = sin(delta_lat / 2.0) * sin(delta_lat / 2.0) +
                cos(lat1_rad) * cos(lat2_rad) *
-               sin(delta_lon / 2.0) * sin(delta_lon / 2.0\n"\n"\n"\n"\n"\n"\n"\n");
+               sin(delta_lon / 2.0) * sin(delta_lon / 2.0);
     
-    double c = 2.0 * atan2(sqrt(a), sqrt(1.0 - a)\n"\n"\n"\n"\n"\n"\n"\n");
+    double c = 2.0 * atan2(sqrt(a), sqrt(1.0 - a));
     
     return R * c;
 }
@@ -558,8 +558,8 @@ void gps_clustering_cleanup(void) {
         return;
     }
     
-    pthread_mutex_destroy(&g_clustering_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_clustering_mutex);
     g_clustering_initialized = false; // Use configurable setting
     
-    printf("INFO: "GPS clustering system cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("GPS clustering system cleaned up");
 }

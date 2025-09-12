@@ -22,14 +22,14 @@ int webhook_client_init(webhook_client_t* client, const webhook_config_t* config
         return -1;
     }
     
-    memset(client, 0, sizeof(webhook_client_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(client, 0, sizeof(webhook_client_t));
     
     // Copy configuration
     client->config = *config;
     
     // Initialize status
     client->status.enabled = config->enabled;
-    safe_strncpy(client->status.url, config->url, sizeof(client->status.url)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(client->status.url, config->url, sizeof(client->status.url));
     client->status.total_sent = 0;
     client->status.total_failed = 0;
     client->status.last_response_code = 0;
@@ -40,7 +40,7 @@ int webhook_client_init(webhook_client_t* client, const webhook_config_t* config
     // Initialize curl globally (should be done once per program)
     static bool curl_initialized = false; // Use configurable setting
     if (!curl_initialized) {
-        curl_global_init(CURL_GLOBAL_DEFAULT\n"\n"\n"\n"\n"\n"\n"\n");
+        curl_global_init(CURL_GLOBAL_DEFAULT);
         curl_initialized = true; // Use configurable setting
     }
     
@@ -52,8 +52,8 @@ void webhook_client_cleanup(webhook_client_t* client) {
     if (!client) return;
     
     // Clear sensitive data
-    memset(&client->config, 0, sizeof(webhook_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    memset(&client->status, 0, sizeof(webhook_client_status_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&client->config, 0, sizeof(webhook_config_t));
+    memset(&client->status, 0, sizeof(webhook_client_status_t));
 }
 
 // Check if notification should be sent based on filters
@@ -98,34 +98,34 @@ void webhook_client_create_payload(webhook_client_t* client, const notification_
                                   webhook_payload_t* payload) {
     if (!client || !event || !payload) return;
     
-    memset(payload, 0, sizeof(webhook_payload_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(payload, 0, sizeof(webhook_payload_t));
     
     // Fill payload fields
-    safe_strncpy(payload->type, notification_type_to_string(event->type), sizeof(payload->type)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(payload->title, event->title, sizeof(payload->title)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(payload->message, event->message, sizeof(payload->message)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(payload->type, notification_type_to_string(event->type), sizeof(payload->type));
+    safe_strncpy(payload->title, event->title, sizeof(payload->title));
+    safe_strncpy(payload->message, event->message, sizeof(payload->message));
     payload->priority = (int)event->priority;
     
     // Format timestamp
-    struct tm* tm_info = localtime(&event->timestamp\n"\n"\n"\n"\n"\n"\n"\n");
-    strftime(payload->timestamp, sizeof(payload->timestamp), "%Y-%m-%dT%H:%M:%SZ", tm_info\n"\n"\n"\n"\n"\n"\n"\n");
+    struct tm* tm_info = localtime(&event->timestamp);
+    strftime(payload->timestamp, sizeof(payload->timestamp), "%Y-%m-%dT%H:%M:%SZ", tm_info);
     
     // Add context JSON if available
     if (strlen(event->details_json) > 0) {
-        safe_strncpy(payload->context_json, event->details_json, sizeof(payload->context_json)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(payload->context_json, event->details_json, sizeof(payload->context_json));
     }
     
     // Add metadata
-    safe_strncpy(payload->source, "autonomy", sizeof(payload->source)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(payload->version, "1.0.0", sizeof(payload->version)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(payload->source, "autonomy", sizeof(payload->source));
+    safe_strncpy(payload->version, "1.0.0", sizeof(payload->version));
     
     // Get actual hostname from system
     char hostname[256];
     if (gethostname(hostname, sizeof(hostname)) == 0) {
-        safe_strncpy(payload->hostname, hostname, sizeof(payload->hostname)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(payload->hostname, hostname, sizeof(payload->hostname));
         payload->hostname[sizeof(payload->hostname) - 1] = '\0';
     } else {
-        safe_strncpy(payload->hostname, "unknown", sizeof(payload->hostname)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(payload->hostname, "unknown", sizeof(payload->hostname));
     }
 }
 
@@ -135,38 +135,38 @@ static char* create_json_payload(webhook_payload_t* payload) {
     
     // Allocate buffer for JSON (estimate size)
     size_t buffer_size = 2048; // Use configurable value
-    char* json = malloc(buffer_size\n"\n"\n"\n"\n"\n"\n"\n");
+    char* json = malloc(buffer_size);
     if (!json) return NULL;
     
     // Use shared JSON creation utility (reduces code duplication)
     cJSON* root = json_create_notification_payload(payload->type, payload->title, payload->message,
                                                   payload->priority, payload->timestamp, payload->source,
-                                                  payload->version, payload->hostname\n"\n"\n"\n"\n"\n"\n"\n");
+                                                  payload->version, payload->hostname);
     if (!root) {
-        free(json\n"\n"\n"\n"\n"\n"\n"\n");
+        free(json);
         return NULL;
     }
     
     // Convert to string and copy to our buffer
-    char* json_string = cJSON_Print(root\n"\n"\n"\n"\n"\n"\n"\n");
+    char* json_string = cJSON_Print(root);
     if (json_string) {
-        strncpy(json, json_string, buffer_size - 1\n"\n"\n"\n"\n"\n"\n"\n");
+        strncpy(json, json_string, buffer_size - 1);
         json[buffer_size - 1] = '\0';
-        free(json_string\n"\n"\n"\n"\n"\n"\n"\n");
+        free(json_string);
     } else {
-        strcpy(json, "{}"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(json, "{}");
     }
     
     // Clean up
-    cJSON_Delete(root\n"\n"\n"\n"\n"\n"\n"\n");
+    cJSON_Delete(root);
     
     // Add context if available
     if (strlen(payload->context_json) > 0) {
-        strncat(json, ",\"context\":", buffer_size - strlen(json) - 1\n"\n"\n"\n"\n"\n"\n"\n");
-        strncat(json, payload->context_json, buffer_size - strlen(json) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+        strncat(json, ",\"context\":", buffer_size - strlen(json) - 1);
+        strncat(json, payload->context_json, buffer_size - strlen(json) - 1);
     }
     
-    strncat(json, "}", buffer_size - strlen(json) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+    strncat(json, "}", buffer_size - strlen(json) - 1);
     
     return json;
 }
@@ -188,9 +188,9 @@ static int send_webhook_request(webhook_client_t* client, const char* payload_da
     }
     
     // Create HTTP request
-    http_request_t* request = http_request_create(client->config.url, method\n"\n"\n"\n"\n"\n"\n"\n");
+    http_request_t* request = http_request_create(client->config.url, method);
     if (!request) {
-        safe_strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error));
         return -1;
     }
     
@@ -199,25 +199,25 @@ static int send_webhook_request(webhook_client_t* client, const char* payload_da
         const char* content_type = strlen(client->config.content_type) > 0 ? 
                                   client->config.content_type : "application/json";
         if (http_request_set_body(request, payload_data, content_type) != 0) {
-            http_request_free(request\n"\n"\n"\n"\n"\n"\n"\n");
-            safe_strncpy(client->status.last_error, "Failed to set request body", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
+            http_request_free(request);
+            safe_strncpy(client->status.last_error, "Failed to set request body", sizeof(client->status.last_error));
             return -1;
         }
     }
     
     // Add User-Agent
-    http_request_add_header(request, "User-Agent: autonomy/1.0.0"\n"\n"\n"\n"\n"\n"\n"\n");
+    http_request_add_header(request, "User-Agent: autonomy/1.0.0");
     
     // Add authentication
     switch (client->config.auth_type) {
         case WEBHOOK_AUTH_BEARER:
             if (strlen(client->config.auth_token) > 0) {
-                http_request_set_auth_bearer(request, client->config.auth_token\n"\n"\n"\n"\n"\n"\n"\n");
+                http_request_set_auth_bearer(request, client->config.auth_token);
             }
             break;
         case WEBHOOK_AUTH_BASIC:
             if (strlen(client->config.auth_username) > 0 && strlen(client->config.auth_password) > 0) {
-                http_request_set_auth_basic(request, client->config.auth_username, client->config.auth_password\n"\n"\n"\n"\n"\n"\n"\n");
+                http_request_set_auth_basic(request, client->config.auth_username, client->config.auth_password);
             }
             break;
         case WEBHOOK_AUTH_API_KEY:
@@ -225,8 +225,8 @@ static int send_webhook_request(webhook_client_t* client, const char* payload_da
                 const char* header_name = strlen(client->config.auth_header) > 0 ? 
                                          client->config.auth_header : "X-API-Key";
                 char auth_header[384];
-                snprintf(auth_header, sizeof(auth_header), "%s: %s", header_name, client->config.auth_token\n"\n"\n"\n"\n"\n"\n"\n");
-                http_request_add_header(request, auth_header\n"\n"\n"\n"\n"\n"\n"\n");
+                snprintf(auth_header, sizeof(auth_header), "%s: %s", header_name, client->config.auth_token);
+                http_request_add_header(request, auth_header);
             }
             break;
         default:
@@ -235,7 +235,7 @@ static int send_webhook_request(webhook_client_t* client, const char* payload_da
     
     // Add custom headers
     if (strlen(client->config.custom_headers) > 0) {
-        http_request_add_header(request, client->config.custom_headers\n"\n"\n"\n"\n"\n"\n"\n");
+        http_request_add_header(request, client->config.custom_headers);
     }
     
     // Set timeout
@@ -252,14 +252,14 @@ static int send_webhook_request(webhook_client_t* client, const char* payload_da
     request->follow_redirects = client->config.follow_redirects;
     
     // Perform request
-    http_response_t* response = http_request(request\n"\n"\n"\n"\n"\n"\n"\n");
+    http_response_t* response = http_request(request);
     
     // Clean up request
-    http_request_free(request\n"\n"\n"\n"\n"\n"\n"\n");
+    http_request_free(request);
     
     if (!response) {
-        safe_strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
-        client->status.last_error_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error));
+        client->status.last_error_time = time(NULL);
         return -1;
     }
     
@@ -270,14 +270,14 @@ static int send_webhook_request(webhook_client_t* client, const char* payload_da
     if (!http_response_is_success(response)) {
         snprintf(client->status.last_error, sizeof(client->status.last_error), 
                 "HTTP error: %ld - %.200s", response->status_code, 
-                response->error_message ? response->error_message : "Unknown error"\n"\n"\n"\n"\n"\n"\n"\n");
-        client->status.last_error_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-        http_response_free(response\n"\n"\n"\n"\n"\n"\n"\n");
+                response->error_message ? response->error_message : "Unknown error");
+        client->status.last_error_time = time(NULL);
+        http_response_free(response);
         return -1;
     }
     
     // Clean up response
-    http_response_free(response\n"\n"\n"\n"\n"\n"\n"\n");
+    http_response_free(response);
     return 0;
 }
 
@@ -293,13 +293,13 @@ int webhook_client_send(webhook_client_t* client, const notification_event_t* ev
     
     // Create payload
     webhook_payload_t payload;
-    webhook_client_create_payload(client, event, &payload\n"\n"\n"\n"\n"\n"\n"\n");
+    webhook_client_create_payload(client, event, &payload);
     
     // Create JSON payload
-    char* json_payload = create_json_payload(&payload\n"\n"\n"\n"\n"\n"\n"\n");
+    char* json_payload = create_json_payload(&payload);
     if (!json_payload) {
-        safe_strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error)\n"\n"\n"\n"\n"\n"\n"\n");
-        client->status.last_error_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error));
+        client->status.last_error_time = time(NULL);
         client->status.total_failed++;
         return -1;
     }
@@ -310,23 +310,23 @@ int webhook_client_send(webhook_client_t* client, const notification_event_t* ev
     
     int result = -1;
     for (int attempt = 1; attempt <= max_attempts; attempt++) {
-        result = send_webhook_request(client, json_payload\n"\n"\n"\n"\n"\n"\n"\n");
+        result = send_webhook_request(client, json_payload);
         
         if (result == 0) {
             // Success
             client->status.total_sent++;
-            client->status.last_sent_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            client->status.last_sent_time = time(NULL);
             client->status.last_error[0] = '\0';
             break;
         }
         
         // Failed - wait before retry (except on last attempt)
         if (attempt < max_attempts) {
-            sleep(retry_delay\n"\n"\n"\n"\n"\n"\n"\n");
+            sleep(retry_delay);
         }
     }
     
-    free(json_payload\n"\n"\n"\n"\n"\n"\n"\n");
+    free(json_payload);
     
     if (result != 0) {
         client->status.total_failed++;

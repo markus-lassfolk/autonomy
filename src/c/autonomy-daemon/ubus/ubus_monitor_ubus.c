@@ -12,17 +12,17 @@
 
 // Forward declarations
 static int autonomy_ubus_monitor_status(struct ubus_context *ctx, struct ubus_object *obj,
-                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
+                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg);
 static int autonomy_ubus_monitor_config(struct ubus_context *ctx, struct ubus_object *obj,
-                                       struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
+                                       struct ubus_request_data *req, const char *method, struct blob_attr *msg);
 int autonomy_ubus_monitor_set_config(struct ubus_context *ctx, struct ubus_object *obj,
-                                           struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
+                                           struct ubus_request_data *req, const char *method, struct blob_attr *msg);
 static int autonomy_ubus_monitor_set_enabled(struct ubus_context *ctx, struct ubus_object *obj,
-                                            struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
+                                            struct ubus_request_data *req, const char *method, struct blob_attr *msg);
 static int autonomy_ubus_monitor_reset(struct ubus_context *ctx, struct ubus_object *obj,
-                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
+                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg);
 int autonomy_ubus_monitor_check(struct ubus_context *ctx, struct ubus_object *obj,
-                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg\n"\n"\n"\n"\n"\n"\n"\n");
+                                      struct ubus_request_data *req, const char *method, struct blob_attr *msg);
 
 // UBUS method definitions
 // UBUS policy for set_config method
@@ -84,43 +84,43 @@ static int autonomy_ubus_monitor_status(struct ubus_context *ctx, struct ubus_ob
                                       struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
     (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     ubus_monitor_status_t status;
-    int result = ubus_monitor_get_status(&status\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = ubus_monitor_get_status(&status);
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to get UBUS monitor status"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to get UBUS monitor status");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
     // Add configuration
-    blobmsg_add_u8(&bb, "enabled", status.enabled\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "check_interval", status.check_interval\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u8(&bb, "auto_restart", status.auto_restart\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u8(&bb, "monitor_critical_services", status.monitor_critical_services\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u8(&bb, "enabled", status.enabled);
+    blobmsg_add_u32(&bb, "check_interval", status.check_interval);
+    blobmsg_add_u8(&bb, "auto_restart", status.auto_restart);
+    blobmsg_add_u8(&bb, "monitor_critical_services", status.monitor_critical_services);
     
     // Add statistics
-    blobmsg_add_u32(&bb, "last_check_time", status.last_check_time\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "total_checks", status.total_checks\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "total_restarts", status.total_restarts\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "total_errors", status.total_errors\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u32(&bb, "last_check_time", status.last_check_time);
+    blobmsg_add_u32(&bb, "total_checks", status.total_checks);
+    blobmsg_add_u32(&bb, "total_restarts", status.total_restarts);
+    blobmsg_add_u32(&bb, "total_errors", status.total_errors);
     
     // Add current health info
-    blobmsg_add_u8(&bb, "ubus_healthy", status.ubus_healthy\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u8(&bb, "rpcd_running", status.rpcd_running\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "ubus_socket_accessible", status.ubus_socket_accessible\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "available_services", status.available_services\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u8(&bb, "ubus_healthy", status.ubus_healthy);
+    blobmsg_add_u8(&bb, "rpcd_running", status.rpcd_running);
+    blobmsg_add_u32(&bb, "ubus_socket_accessible", status.ubus_socket_accessible);
+    blobmsg_add_u32(&bb, "available_services", status.available_services);
     
     // Add last error if any
     if (status.last_error) {
-        blobmsg_add_string(&bb, "last_error", status.last_error\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "last_error", status.last_error);
     }
     
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return 0;
 }
 
@@ -131,25 +131,25 @@ static int autonomy_ubus_monitor_config(struct ubus_context *ctx, struct ubus_ob
                                        struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
     (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     ubus_monitor_config_t config;
-    int result = ubus_monitor_get_config(&config\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = ubus_monitor_get_config(&config);
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to get UBUS monitor configuration"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to get UBUS monitor configuration");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
-    blobmsg_add_u8(&bb, "enabled", config.enabled\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u32(&bb, "check_interval", config.check_interval\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u8(&bb, "auto_restart", config.auto_restart\n"\n"\n"\n"\n"\n"\n"\n");
-    blobmsg_add_u8(&bb, "monitor_critical_services", config.monitor_critical_services\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_u8(&bb, "enabled", config.enabled);
+    blobmsg_add_u32(&bb, "check_interval", config.check_interval);
+    blobmsg_add_u8(&bb, "auto_restart", config.auto_restart);
+    blobmsg_add_u8(&bb, "monitor_critical_services", config.monitor_critical_services);
     
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return 0;
 }
 
@@ -160,15 +160,15 @@ int autonomy_ubus_monitor_set_config(struct ubus_context *ctx, struct ubus_objec
                                            struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
     (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     ubus_monitor_config_t config;
     int result = ubus_monitor_get_config(&config); // Get current config first
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to get current configuration"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to get current configuration");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
@@ -189,38 +189,38 @@ int autonomy_ubus_monitor_set_config(struct ubus_context *ctx, struct ubus_objec
         [UBUS_MONITOR_CONFIG_MONITOR_CRITICAL_SERVICES] = { .name = "monitor_critical_services", .type = BLOBMSG_TYPE_BOOL },
     };
     
-    blobmsg_parse(policy, __UBUS_MONITOR_CONFIG_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_parse(policy, __UBUS_MONITOR_CONFIG_MAX, tb, blob_data(msg), blob_len(msg));
     
     // Update configuration with new values
     if (tb[UBUS_MONITOR_CONFIG_ENABLED]) {
-        config.enabled = blobmsg_get_bool(tb[UBUS_MONITOR_CONFIG_ENABLED]\n"\n"\n"\n"\n"\n"\n"\n");
+        config.enabled = blobmsg_get_bool(tb[UBUS_MONITOR_CONFIG_ENABLED]);
     }
     
     if (tb[UBUS_MONITOR_CONFIG_CHECK_INTERVAL]) {
-        config.check_interval = blobmsg_get_u32(tb[UBUS_MONITOR_CONFIG_CHECK_INTERVAL]\n"\n"\n"\n"\n"\n"\n"\n");
+        config.check_interval = blobmsg_get_u32(tb[UBUS_MONITOR_CONFIG_CHECK_INTERVAL]);
     }
     
     if (tb[UBUS_MONITOR_CONFIG_AUTO_RESTART]) {
-        config.auto_restart = blobmsg_get_bool(tb[UBUS_MONITOR_CONFIG_AUTO_RESTART]\n"\n"\n"\n"\n"\n"\n"\n");
+        config.auto_restart = blobmsg_get_bool(tb[UBUS_MONITOR_CONFIG_AUTO_RESTART]);
     }
     
     if (tb[UBUS_MONITOR_CONFIG_MONITOR_CRITICAL_SERVICES]) {
-        config.monitor_critical_services = blobmsg_get_bool(tb[UBUS_MONITOR_CONFIG_MONITOR_CRITICAL_SERVICES]\n"\n"\n"\n"\n"\n"\n"\n");
+        config.monitor_critical_services = blobmsg_get_bool(tb[UBUS_MONITOR_CONFIG_MONITOR_CRITICAL_SERVICES]);
     }
     
     // Apply the new configuration
-    result = ubus_monitor_set_config(&config\n"\n"\n"\n"\n"\n"\n"\n");
+    result = ubus_monitor_set_config(&config);
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to set UBUS monitor configuration"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to set UBUS monitor configuration");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", "Configuration updated successfully"\n"\n"\n"\n"\n"\n"\n"\n");
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "status", "Configuration updated successfully");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return 0;
 }
 
@@ -231,7 +231,7 @@ static int autonomy_ubus_monitor_set_enabled(struct ubus_context *ctx, struct ub
                                             struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
     (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     struct blob_attr *tb[1];
     enum {
@@ -243,28 +243,28 @@ static int autonomy_ubus_monitor_set_enabled(struct ubus_context *ctx, struct ub
         [UBUS_MONITOR_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
     };
     
-    blobmsg_parse(policy, __UBUS_MONITOR_ENABLED_MAX, tb, blob_data(msg), blob_len(msg)\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_parse(policy, __UBUS_MONITOR_ENABLED_MAX, tb, blob_data(msg), blob_len(msg));
     
     if (!tb[UBUS_MONITOR_ENABLED]) {
-        blobmsg_add_string(&bb, "error", "Missing 'enabled' parameter"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Missing 'enabled' parameter");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
-    bool enabled = blobmsg_get_bool(tb[UBUS_MONITOR_ENABLED]\n"\n"\n"\n"\n"\n"\n"\n");
-    int result = ubus_monitor_set_enabled(enabled\n"\n"\n"\n"\n"\n"\n"\n");
+    bool enabled = blobmsg_get_bool(tb[UBUS_MONITOR_ENABLED]);
+    int result = ubus_monitor_set_enabled(enabled);
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to set UBUS monitor enabled state"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to set UBUS monitor enabled state");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", enabled ? "UBUS monitor enabled" : "UBUS monitor disabled"\n"\n"\n"\n"\n"\n"\n"\n");
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "status", enabled ? "UBUS monitor enabled" : "UBUS monitor disabled");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return 0;
 }
 
@@ -275,20 +275,20 @@ static int autonomy_ubus_monitor_reset(struct ubus_context *ctx, struct ubus_obj
                                       struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
     (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
-    int result = ubus_monitor_reset(\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = ubus_monitor_reset();
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "Failed to reset UBUS monitor statistics"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "Failed to reset UBUS monitor statistics");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", "UBUS monitor statistics reset successfully"\n"\n"\n"\n"\n"\n"\n"\n");
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "status", "UBUS monitor statistics reset successfully");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return 0;
 }
 
@@ -299,21 +299,21 @@ int autonomy_ubus_monitor_check(struct ubus_context *ctx, struct ubus_object *ob
                                       struct ubus_request_data *req, const char *method, struct blob_attr *msg) {
     (void)obj; // Suppress unused parameter warning
     struct blob_buf bb = {};
-    blob_buf_init(&bb, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    blob_buf_init(&bb, 0);
     
     ubus_health_info_t health_info;
-    int result = ubus_monitor_check_ubus_health(&health_info\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = ubus_monitor_check_ubus_health(&health_info);
     
     if (result != AUTONOMY_SUCCESS) {
-        blobmsg_add_string(&bb, "error", "UBUS monitor check failed"\n"\n"\n"\n"\n"\n"\n"\n");
-        ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-        blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+        blobmsg_add_string(&bb, "error", "UBUS monitor check failed");
+        ubus_send_reply(ctx, req, bb.head);
+        blob_buf_free(&bb);
         return 0;
     }
     
-    blobmsg_add_string(&bb, "status", "UBUS monitor check completed successfully"\n"\n"\n"\n"\n"\n"\n"\n");
-    ubus_send_reply(ctx, req, bb.head\n"\n"\n"\n"\n"\n"\n"\n");
-    blob_buf_free(&bb\n"\n"\n"\n"\n"\n"\n"\n");
+    blobmsg_add_string(&bb, "status", "UBUS monitor check completed successfully");
+    ubus_send_reply(ctx, req, bb.head);
+    blob_buf_free(&bb);
     return 0;
 }
 
@@ -321,13 +321,13 @@ int autonomy_ubus_monitor_check(struct ubus_context *ctx, struct ubus_object *ob
  * Register UBUS monitor UBUS object
  */
 int ubus_monitor_ubus_register(struct ubus_context *ctx) {
-    int ret = ubus_add_object(ctx, &autonomy_ubus_monitor_obj\n"\n"\n"\n"\n"\n"\n"\n");
+    int ret = ubus_add_object(ctx, &autonomy_ubus_monitor_obj);
     if (ret) {
-        fprintf(stderr, "Failed to add UBUS monitor object: %s\n", ubus_strerror(ret)\n"\n"\n"\n"\n"\n"\n"\n");
+        fprintf(stderr, "Failed to add UBUS monitor object: %s\n", ubus_strerror(ret));
         return ret;
     }
     
-    fprintf(stderr, "UBUS monitor UBUS object registered successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "UBUS monitor UBUS object registered successfully\n");
     return 0;
 }
 
@@ -335,6 +335,6 @@ int ubus_monitor_ubus_register(struct ubus_context *ctx) {
  * Unregister UBUS monitor UBUS object
  */
 void ubus_monitor_ubus_unregister(struct ubus_context *ctx) {
-    ubus_remove_object(ctx, &autonomy_ubus_monitor_obj\n"\n"\n"\n"\n"\n"\n"\n");
-    fprintf(stderr, "UBUS monitor UBUS object unregistered\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    ubus_remove_object(ctx, &autonomy_ubus_monitor_obj);
+    fprintf(stderr, "UBUS monitor UBUS object unregistered\n");
 }

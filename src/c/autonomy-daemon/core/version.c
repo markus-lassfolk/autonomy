@@ -11,16 +11,16 @@ const char* autonomy_daemon_get_version_string(void) {
     snprintf(version_string, sizeof(version_string), 
              "%s (build %d)", 
              AUTONOMY_DAEMON_VERSION_FULL, 
-             AUTONOMY_DAEMON_VERSION_BUILD\n"\n"\n"\n"\n"\n"\n"\n");
+             AUTONOMY_DAEMON_VERSION_BUILD);
     return version_string;
 }
 
 const char* autonomy_daemon_get_build_info_string(void) {
     // Get current UTC time
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    struct tm *utc_time = gmtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
+    struct tm *utc_time = gmtime(&now);
     char utc_timestamp[64];
-    strftime(utc_timestamp, sizeof(utc_timestamp), "%Y-%m-%d %H:%M:%S UTC", utc_time\n"\n"\n"\n"\n"\n"\n"\n");
+    strftime(utc_timestamp, sizeof(utc_timestamp), "%Y-%m-%d %H:%M:%S UTC", utc_time);
     
     snprintf(build_info_string, sizeof(build_info_string),
              "Version: %s | Build: %s %s | Git: %s@%s | Runtime: %s",
@@ -29,7 +29,7 @@ const char* autonomy_daemon_get_build_info_string(void) {
              AUTONOMY_DAEMON_BUILD_TIME,
              AUTONOMY_DAEMON_GIT_BRANCH,
              AUTONOMY_DAEMON_GIT_COMMIT,
-             utc_timestamp\n"\n"\n"\n"\n"\n"\n"\n");
+             utc_timestamp);
     
     return build_info_string;
 }

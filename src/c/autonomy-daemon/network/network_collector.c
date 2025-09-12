@@ -38,14 +38,14 @@ static const int DEFAULT_TEST_TARGET_COUNT = 4;
 // Initialize network collector
 int network_collector_init(void) {
     if (g_collector_initialized) {
-        printf("WARN: "Network collector already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Network collector already initialized");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_collector_mutex);
     
     // Initialize collector state
-    memset(&g_collector, 0, sizeof(network_collector_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_collector, 0, sizeof(network_collector_t));
     g_collector.enabled = true; // Use configurable network collection enabled
     g_collector.collection_interval = g_config.network_check_interval;
     g_collector.test_timeout = 5;         // Use configurable test timeout
@@ -54,25 +54,25 @@ int network_collector_init(void) {
     // Initialize test targets
     g_collector.test_target_count = DEFAULT_TEST_TARGET_COUNT;
     for (int i = 0; i < DEFAULT_TEST_TARGET_COUNT && i < g_collector.max_test_targets; i++) {
-        safe_strncpy(g_collector.test_targets[i], DEFAULT_TEST_TARGETS[i], sizeof(g_collector.test_targets[i])\n"\n"\n"\n"\n"\n"\n"\n");
+        safe_strncpy(g_collector.test_targets[i], DEFAULT_TEST_TARGETS[i], sizeof(g_collector.test_targets[i]));
         g_collector.test_targets[i][sizeof(g_collector.test_targets[i]) - 1] = '\0';
     }
     
     // Initialize metrics history
     g_collector.metrics_history_size = 100; // Use configurable metrics history size
-    g_collector.metrics_history = malloc(sizeof(network_metrics_t) * g_collector.metrics_history_size\n"\n"\n"\n"\n"\n"\n"\n");
+    g_collector.metrics_history = malloc(sizeof(network_metrics_t) * g_collector.metrics_history_size);
     if (!g_collector.metrics_history) {
-        pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        printf("ERROR: "Failed to allocate metrics history"\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_collector_mutex);
+        LOGX_ERROR_MSG("Failed to allocate metrics history");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    memset(g_collector.metrics_history, 0, sizeof(network_metrics_t) * g_collector.metrics_history_size\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(g_collector.metrics_history, 0, sizeof(network_metrics_t) * g_collector.metrics_history_size);
     
     g_collector_initialized = true;
-    pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_collector_mutex);
     
-    printf("INFO: "Network collector initialized successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network collector initialized successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -83,9 +83,9 @@ static int perform_ping_test(const char *target, int timeout_ms, ping_result_t *
     }
     
     // Create raw socket for ICMP
-    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP\n"\n"\n"\n"\n"\n"\n"\n");
+    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sock < 0) {
-        printf("DEBUG: "Failed to create ICMP socket: %s", strerror(errno)\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Failed to create ICMP socket: %s", strerror(errno));
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -93,23 +93,23 @@ static int perform_ping_test(const char *target, int timeout_ms, ping_result_t *
     struct timeval timeout;
     timeout.tv_sec = timeout_ms / 1000;
     timeout.tv_usec = (timeout_ms % 1000) * 1000;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)\n"\n"\n"\n"\n"\n"\n"\n");
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
     
     // Resolve target address
-    struct hostent *host = gethostbyname(target\n"\n"\n"\n"\n"\n"\n"\n");
+    struct hostent *host = gethostbyname(target);
     if (!host) {
-        close(sock\n"\n"\n"\n"\n"\n"\n"\n");
+        close(sock);
         return AUTONOMY_ERROR_NETWORK;
     }
     
     struct sockaddr_in target_addr;
-    memset(&target_addr, 0, sizeof(target_addr)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&target_addr, 0, sizeof(target_addr));
     target_addr.sin_family = AF_INET;
     target_addr.sin_addr = *(struct in_addr*)host->h_addr;
     
     // Create ICMP echo request
     char icmp_packet[64];
-    memset(icmp_packet, 0, sizeof(icmp_packet)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(icmp_packet, 0, sizeof(icmp_packet));
     
     // ICMP header
     struct {
@@ -129,35 +129,35 @@ static int perform_ping_test(const char *target, int timeout_ms, ping_result_t *
     uint32_t sum = 0;
     uint16_t *ptr = (uint16_t*)icmp_packet;
     for (int i = 0; i < 32; i++) {
-        sum += ntohs(ptr[i]\n"\n"\n"\n"\n"\n"\n"\n");
+        sum += ntohs(ptr[i]);
     }
     while (sum >> 16) {
-        sum = (sum & 0xFFFF) + (sum >> 16\n"\n"\n"\n"\n"\n"\n"\n");
+        sum = (sum & 0xFFFF) + (sum >> 16);
     }
-    icmp_header->checksum = htons(~sum\n"\n"\n"\n"\n"\n"\n"\n");
+    icmp_header->checksum = htons(~sum);
     
     // Send packet
     struct timeval start_time, end_time;
-    gettimeofday(&start_time, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    gettimeofday(&start_time, NULL);
     
     ssize_t sent = sendto(sock, icmp_packet, sizeof(icmp_packet), 0,
-                          (struct sockaddr*)&target_addr, sizeof(target_addr)\n"\n"\n"\n"\n"\n"\n"\n");
+                          (struct sockaddr*)&target_addr, sizeof(target_addr));
     
     if (sent < 0) {
-        close(sock\n"\n"\n"\n"\n"\n"\n"\n");
+        close(sock);
         return AUTONOMY_ERROR_NETWORK;
     }
     
     // Wait for response
     char response[64];
     struct sockaddr_in from_addr;
-    socklen_t from_len = sizeof(from_addr\n"\n"\n"\n"\n"\n"\n"\n");
+    socklen_t from_len = sizeof(from_addr);
     
     ssize_t received = recvfrom(sock, response, sizeof(response), 0,
-                                (struct sockaddr*)&from_addr, &from_len\n"\n"\n"\n"\n"\n"\n"\n");
+                                (struct sockaddr*)&from_addr, &from_len);
     
-    gettimeofday(&end_time, NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    close(sock\n"\n"\n"\n"\n"\n"\n"\n");
+    gettimeofday(&end_time, NULL);
+    close(sock);
     
     if (received < 0) {
         return AUTONOMY_ERROR_TIMEOUT;
@@ -168,11 +168,11 @@ static int perform_ping_test(const char *target, int timeout_ms, ping_result_t *
                      (end_time.tv_usec - start_time.tv_usec) / 1000.0;
     
     result->target[0] = '\0';
-    safe_strncpy(result->target, target, sizeof(result->target)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(result->target, target, sizeof(result->target));
     result->target[sizeof(result->target) - 1] = '\0';
     result->latency_ms = latency;
     result->success = true;
-    result->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    result->timestamp = time(NULL);
     
     return AUTONOMY_SUCCESS;
 }
@@ -184,7 +184,7 @@ static int perform_tcp_test(const char *target, int port, int timeout_ms, tcp_re
     }
     
     // Create TCP socket
-    int sock = socket(AF_INET, SOCK_STREAM, 0\n"\n"\n"\n"\n"\n"\n"\n");
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
         return AUTONOMY_ERROR_SYSTEM;
     }
@@ -193,30 +193,30 @@ static int perform_tcp_test(const char *target, int port, int timeout_ms, tcp_re
     struct timeval timeout;
     timeout.tv_sec = timeout_ms / 1000;
     timeout.tv_usec = (timeout_ms % 1000) * 1000;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)\n"\n"\n"\n"\n"\n"\n"\n");
-    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)\n"\n"\n"\n"\n"\n"\n"\n");
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
     
     // Resolve target address
-    struct hostent *host = gethostbyname(target\n"\n"\n"\n"\n"\n"\n"\n");
+    struct hostent *host = gethostbyname(target);
     if (!host) {
-        close(sock\n"\n"\n"\n"\n"\n"\n"\n");
+        close(sock);
         return AUTONOMY_ERROR_NETWORK;
     }
     
     struct sockaddr_in target_addr;
-    memset(&target_addr, 0, sizeof(target_addr)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&target_addr, 0, sizeof(target_addr));
     target_addr.sin_family = AF_INET;
-    target_addr.sin_port = htons(port\n"\n"\n"\n"\n"\n"\n"\n");
+    target_addr.sin_port = htons(port);
     target_addr.sin_addr = *(struct in_addr*)host->h_addr;
     
     // Measure connection time
     struct timeval start_time, end_time;
-    gettimeofday(&start_time, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    gettimeofday(&start_time, NULL);
     
-    int connect_result = connect(sock, (struct sockaddr*)&target_addr, sizeof(target_addr)\n"\n"\n"\n"\n"\n"\n"\n");
+    int connect_result = connect(sock, (struct sockaddr*)&target_addr, sizeof(target_addr));
     
-    gettimeofday(&end_time, NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    close(sock\n"\n"\n"\n"\n"\n"\n"\n");
+    gettimeofday(&end_time, NULL);
+    close(sock);
     
     if (connect_result < 0) {
         return AUTONOMY_ERROR_NETWORK;
@@ -227,12 +227,12 @@ static int perform_tcp_test(const char *target, int port, int timeout_ms, tcp_re
                           (end_time.tv_usec - start_time.tv_usec) / 1000.0;
     
     result->target[0] = '\0';
-    safe_strncpy(result->target, target, sizeof(result->target)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(result->target, target, sizeof(result->target));
     result->target[sizeof(result->target) - 1] = '\0';
     result->port = port;
     result->connect_time_ms = connect_time;
     result->success = true;
-    result->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    result->timestamp = time(NULL);
     
     return AUTONOMY_SUCCESS;
 }
@@ -245,11 +245,11 @@ static int perform_dns_test(const char *domain, int timeout_ms, dns_result_t *re
     
     // Set DNS timeout (this is a simplified approach)
     struct timeval start_time, end_time;
-    gettimeofday(&start_time, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    gettimeofday(&start_time, NULL);
     
-    struct hostent *host = gethostbyname(domain\n"\n"\n"\n"\n"\n"\n"\n");
+    struct hostent *host = gethostbyname(domain);
     
-    gettimeofday(&end_time, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    gettimeofday(&end_time, NULL);
     
     if (!host) {
         return AUTONOMY_ERROR_NETWORK;
@@ -260,15 +260,15 @@ static int perform_dns_test(const char *domain, int timeout_ms, dns_result_t *re
                           (end_time.tv_usec - start_time.tv_usec) / 1000.0;
     
     result->domain[0] = '\0';
-    safe_strncpy(result->domain, domain, sizeof(result->domain)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(result->domain, domain, sizeof(result->domain));
     result->domain[sizeof(result->domain) - 1] = '\0';
     result->resolve_time_ms = resolve_time;
     result->success = true;
-    result->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    result->timestamp = time(NULL);
     
     // Store resolved IP
     if (host->h_addr_list[0]) {
-        inet_ntop(AF_INET, host->h_addr_list[0], result->resolved_ip, sizeof(result->resolved_ip)\n"\n"\n"\n"\n"\n"\n"\n");
+        inet_ntop(AF_INET, host->h_addr_list[0], result->resolved_ip, sizeof(result->resolved_ip));
     }
     
     return AUTONOMY_SUCCESS;
@@ -280,10 +280,10 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    memset(metrics, 0, sizeof(network_metrics_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(metrics->interface_name, interface_name, sizeof(metrics->interface_name)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(metrics, 0, sizeof(network_metrics_t));
+    safe_strncpy(metrics->interface_name, interface_name, sizeof(metrics->interface_name));
     metrics->interface_name[sizeof(metrics->interface_name) - 1] = '\0';
-    metrics->timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    metrics->timestamp = time(NULL);
     
     // Test ping to all targets
     int successful_pings = 0;
@@ -294,7 +294,7 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
     for (int i = 0; i < g_collector.test_target_count; i++) {
         ping_result_t ping_result;
         int ret = perform_ping_test(g_collector.test_targets[i], 
-                                   g_collector.test_timeout * 1000, &ping_result\n"\n"\n"\n"\n"\n"\n"\n");
+                                   g_collector.test_timeout * 1000, &ping_result);
         
         if (ret == AUTONOMY_SUCCESS && ping_result.success) {
             successful_pings++;
@@ -331,7 +331,7 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
     for (int i = 0; i < test_port_count; i++) {
         tcp_result_t tcp_result;
         int ret = perform_tcp_test("8.8.8.8", test_ports[i], 
-                                  g_collector.test_timeout * 1000, &tcp_result\n"\n"\n"\n"\n"\n"\n"\n");
+                                  g_collector.test_timeout * 1000, &tcp_result);
         
         if (ret == AUTONOMY_SUCCESS && tcp_result.success) {
             successful_tcp++;
@@ -350,7 +350,7 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
     // Test DNS resolution
     dns_result_t dns_result;
     int dns_ret = perform_dns_test("google.com", 
-                                   g_collector.test_timeout * 1000, &dns_result\n"\n"\n"\n"\n"\n"\n"\n");
+                                   g_collector.test_timeout * 1000, &dns_result);
     
     if (dns_ret == AUTONOMY_SUCCESS && dns_result.success) {
         metrics->dns_success = true;
@@ -390,57 +390,57 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
 // Collect network metrics for all interfaces
 int network_collector_collect_metrics(void) {
     if (!g_collector_initialized) {
-        printf("ERROR: "Network collector not initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Network collector not initialized");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     if (!g_collector.enabled) {
-        printf("DEBUG: "Network collector disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Network collector disabled");
         return AUTONOMY_SUCCESS;
     }
     
-    pthread_mutex_lock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_collector_mutex);
     
     // Get current time
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     // Check if it's time to collect
     if (g_collector.last_collection > 0 && 
         (now - g_collector.last_collection) < g_collector.collection_interval) {
-        pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_collector_mutex);
         return AUTONOMY_SUCCESS;
     }
     
-    printf("DEBUG: "Starting network metrics collection"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Starting network metrics collection");
     
     // Collect metrics for each interface
     for (int i = 0; i < g_collector.interface_count && i < MAX_INTERFACES; i++) {
         network_metrics_t metrics;
-        int ret = collect_interface_metrics(g_collector.interfaces[i].name, &metrics\n"\n"\n"\n"\n"\n"\n"\n");
+        int ret = collect_interface_metrics(g_collector.interfaces[i].name, &metrics);
         
         if (ret == AUTONOMY_SUCCESS) {
             // Store in history
             int history_index = g_collector.metrics_history_index;
-            memcpy(&g_collector.metrics_history[history_index], &metrics, sizeof(network_metrics_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memcpy(&g_collector.metrics_history[history_index], &metrics, sizeof(network_metrics_t));
             
             g_collector.metrics_history_index = (g_collector.metrics_history_index + 1) % g_collector.metrics_history_size;
             
             // Update interface with latest metrics
-            memcpy(&g_collector.interfaces[i].metrics, &metrics, sizeof(network_metrics_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memcpy(&g_collector.interfaces[i].metrics, &metrics, sizeof(network_metrics_t));
             
-            printf("DEBUG: "Collected metrics for interface %s: health=%.1f%%, ping_loss=%.1f%%", 
-                      metrics.interface_name, metrics.overall_health_score, metrics.ping_packet_loss\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Collected metrics for interface %s: health=%.1f%%, ping_loss=%.1f%%", 
+                      metrics.interface_name, metrics.overall_health_score, metrics.ping_packet_loss);
         } else {
-            printf("WARN: "Failed to collect metrics for interface %s", g_collector.interfaces[i].name\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_WARN_MSG("Failed to collect metrics for interface %s", g_collector.interfaces[i].name);
         }
     }
     
     g_collector.last_collection = now;
     g_collector.total_collections++;
     
-    pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_collector_mutex);
     
-    printf("DEBUG: "Network metrics collection completed"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Network metrics collection completed");
     return AUTONOMY_SUCCESS;
 }
 
@@ -450,18 +450,18 @@ int network_collector_get_interface_metrics(const char *interface_name, network_
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_collector_mutex);
     
     // Find interface
     for (int i = 0; i < g_collector.interface_count; i++) {
         if (strcmp(g_collector.interfaces[i].name, interface_name) == 0) {
-            memcpy(metrics, &g_collector.interfaces[i].metrics, sizeof(network_metrics_t)\n"\n"\n"\n"\n"\n"\n"\n");
-            pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            memcpy(metrics, &g_collector.interfaces[i].metrics, sizeof(network_metrics_t));
+            pthread_mutex_unlock(&g_collector_mutex);
             return AUTONOMY_SUCCESS;
         }
     }
     
-    pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_collector_mutex);
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -472,7 +472,7 @@ int network_collector_get_metrics_history(const char *interface_name, network_me
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_collector_mutex);
     
     *actual_count = 0;
     
@@ -482,12 +482,12 @@ int network_collector_get_metrics_history(const char *interface_name, network_me
         
         if (g_collector.metrics_history[index].timestamp > 0 &&
             strcmp(g_collector.metrics_history[index].interface_name, interface_name) == 0) {
-            memcpy(&history[*actual_count], &g_collector.metrics_history[index], sizeof(network_metrics_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memcpy(&history[*actual_count], &g_collector.metrics_history[index], sizeof(network_metrics_t));
             (*actual_count)++;
         }
     }
     
-    pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_collector_mutex);
     return AUTONOMY_SUCCESS;
 }
 
@@ -497,29 +497,29 @@ int network_collector_add_test_target(const char *target) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_collector_mutex);
     
     if (g_collector.test_target_count >= g_collector.max_test_targets) {
-        pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_collector_mutex);
         return AUTONOMY_ERROR_ALREADY_EXISTS;
     }
     
     // Check if target already exists
     for (int i = 0; i < g_collector.test_target_count; i++) {
         if (strcmp(g_collector.test_targets[i], target) == 0) {
-            pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(&g_collector_mutex);
             return AUTONOMY_ERROR_ALREADY_EXISTS;
         }
     }
     
     // Add new target
     strncpy(g_collector.test_targets[g_collector.test_target_count], target, 
-             sizeof(g_collector.test_targets[0]) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+             sizeof(g_collector.test_targets[0]) - 1);
     g_collector.test_target_count++;
     
-    pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_collector_mutex);
     
-    printf("INFO: "Added test target: %s", target\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Added test target: %s", target);
     return AUTONOMY_SUCCESS;
 }
 
@@ -529,23 +529,23 @@ int network_collector_remove_test_target(const char *target) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_collector_mutex);
     
     for (int i = 0; i < g_collector.test_target_count; i++) {
         if (strcmp(g_collector.test_targets[i], target) == 0) {
             // Remove target by shifting remaining targets
             for (int j = i; j < g_collector.test_target_count - 1; j++) {
-                strcpy(g_collector.test_targets[j], g_collector.test_targets[j + 1]\n"\n"\n"\n"\n"\n"\n"\n");
+                strcpy(g_collector.test_targets[j], g_collector.test_targets[j + 1]);
             }
             g_collector.test_target_count--;
             
-            pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-            printf("INFO: "Removed test target: %s", target\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_mutex_unlock(&g_collector_mutex);
+            LOGX_INFO_MSG("Removed test target: %s", target);
             return AUTONOMY_SUCCESS;
         }
     }
     
-    pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_collector_mutex);
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -555,11 +555,11 @@ int network_collector_set_interval(int interval_seconds) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_collector_mutex);
     g_collector.collection_interval = interval_seconds;
-    pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_collector_mutex);
     
-    printf("INFO: "Network collection interval set to %d seconds", interval_seconds\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network collection interval set to %d seconds", interval_seconds);
     return AUTONOMY_SUCCESS;
 }
 
@@ -569,11 +569,11 @@ int network_collector_set_timeout(int timeout_seconds) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_collector_mutex);
     g_collector.test_timeout = timeout_seconds;
-    pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_collector_mutex);
     
-    printf("INFO: "Network test timeout set to %d seconds", timeout_seconds\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network test timeout set to %d seconds", timeout_seconds);
     return AUTONOMY_SUCCESS;
 }
 
@@ -583,11 +583,11 @@ int network_collector_set_enabled(bool enabled) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    pthread_mutex_lock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_collector_mutex);
     g_collector.enabled = enabled;
-    pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_collector_mutex);
     
-    printf("INFO: "Network collector %s", enabled ? "enabled" : "disabled"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network collector %s", enabled ? "enabled" : "disabled");
     return AUTONOMY_SUCCESS;
 }
 
@@ -597,7 +597,7 @@ int network_collector_get_status(network_collector_status_t *status) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_collector_mutex);
     
     status->enabled = g_collector.enabled;
     status->collection_interval = g_collector.collection_interval;
@@ -607,7 +607,7 @@ int network_collector_get_status(network_collector_status_t *status) {
     status->total_collections = g_collector.total_collections;
     status->last_collection = g_collector.last_collection;
     
-    pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_collector_mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -618,17 +618,17 @@ void network_collector_cleanup(void) {
         return;
     }
     
-    pthread_mutex_lock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_collector_mutex);
     
     if (g_collector.metrics_history) {
-        free(g_collector.metrics_history\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_collector.metrics_history);
         g_collector.metrics_history = NULL;
     }
     
     g_collector_initialized = false;
     
-    pthread_mutex_unlock(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    pthread_mutex_destroy(&g_collector_mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_collector_mutex);
+    pthread_mutex_destroy(&g_collector_mutex);
     
-    printf("INFO: "Network collector cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Network collector cleaned up");
 }

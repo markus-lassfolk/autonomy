@@ -56,7 +56,7 @@ int get_duration_window_index(int seconds) {
 
 // Get duration window label from seconds
 const char* get_duration_window_label(int seconds) {
-    int index = get_duration_window_index(seconds\n"\n"\n"\n"\n"\n"\n"\n");
+    int index = get_duration_window_index(seconds);
     return DURATION_WINDOWS[index];
 }
 

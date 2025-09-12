@@ -16,13 +16,13 @@
 // Initialize satellite redundancy predictor
 satellite_redundancy_predictor_t* satellite_redundancy_init(const satellite_redundancy_config_t *config) {
     if (!config) {
-        printf("ERROR: "Invalid configuration parameter"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Invalid configuration parameter");
         return NULL;
     }
     
-    satellite_redundancy_predictor_t *predictor = calloc(1, sizeof(satellite_redundancy_predictor_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    satellite_redundancy_predictor_t *predictor = calloc(1, sizeof(satellite_redundancy_predictor_t));
     if (!predictor) {
-        printf("ERROR: "Failed to allocate memory for satellite redundancy predictor"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to allocate memory for satellite redundancy predictor");
         return NULL;
     }
     
@@ -37,21 +37,21 @@ satellite_redundancy_predictor_t* satellite_redundancy_init(const satellite_redu
     predictor->last_warning_time = 0;
     
     // Initialize history buffers
-    memset(predictor->history.satellite_counts, 0, sizeof(predictor->history.satellite_counts)\n"\n"\n"\n"\n"\n"\n"\n");
-    memset(predictor->history.obstruction_counts, 0, sizeof(predictor->history.obstruction_counts)\n"\n"\n"\n"\n"\n"\n"\n");
-    memset(predictor->history.redundancy_scores, 0, sizeof(predictor->history.redundancy_scores)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(predictor->history.satellite_counts, 0, sizeof(predictor->history.satellite_counts));
+    memset(predictor->history.obstruction_counts, 0, sizeof(predictor->history.obstruction_counts));
+    memset(predictor->history.redundancy_scores, 0, sizeof(predictor->history.redundancy_scores));
     predictor->history.write_index = 0;
     predictor->history.count = 0;
     
     // Initialize assessment
-    memset(&predictor->current_assessment, 0, sizeof(satellite_redundancy_assessment_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    memset(&predictor->last_assessment, 0, sizeof(satellite_redundancy_assessment_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&predictor->current_assessment, 0, sizeof(satellite_redundancy_assessment_t));
+    memset(&predictor->last_assessment, 0, sizeof(satellite_redundancy_assessment_t));
     
-    printf("INFO: "Satellite redundancy predictor initialized with thresholds: critical=%d, warning=%d, safe=%d, optimal=%d",
+    LOGX_INFO_MSG("Satellite redundancy predictor initialized with thresholds: critical=%d, warning=%d, safe=%d, optimal=%d",
               predictor->config.critical_threshold,
               predictor->config.warning_threshold,
               predictor->config.safe_threshold,
-              predictor->config.optimal_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+              predictor->config.optimal_threshold);
     
     return predictor;
 }
@@ -60,15 +60,15 @@ satellite_redundancy_predictor_t* satellite_redundancy_init(const satellite_redu
 void satellite_redundancy_cleanup(satellite_redundancy_predictor_t *predictor) {
     if (!predictor) return;
     
-    printf("DEBUG: "Cleaning up satellite redundancy predictor"\n"\n"\n"\n"\n"\n"\n"\n");
-    free(predictor\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Cleaning up satellite redundancy predictor");
+    free(predictor);
 }
 
 // Initialize default configuration
 void satellite_redundancy_config_init_defaults(satellite_redundancy_config_t *config) {
     if (!config) return;
     
-    memset(config, 0, sizeof(satellite_redundancy_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(config, 0, sizeof(satellite_redundancy_config_t));
     
     config->critical_threshold = DEFAULT_CRITICAL_THRESHOLD;
     config->warning_threshold = DEFAULT_WARNING_THRESHOLD;
@@ -99,7 +99,7 @@ int satellite_redundancy_assess_current(satellite_redundancy_predictor_t *predic
     predictor->last_assessment = predictor->current_assessment;
     
     // Clear current assessment
-    memset(&predictor->current_assessment, 0, sizeof(satellite_redundancy_assessment_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&predictor->current_assessment, 0, sizeof(satellite_redundancy_assessment_t));
     
     // Extract satellite data from Starlink status
     predictor->current_assessment.total_visible = starlink_data->gps_stats.gps_sats;
@@ -107,14 +107,14 @@ int satellite_redundancy_assess_current(satellite_redundancy_predictor_t *predic
     
     // Calculate unobstructed count (estimate based on obstruction percentage)
     double obstruction_ratio = starlink_data->obstruction_stats.fraction_obstructed;
-    predictor->current_assessment.unobstructed_count = (uint8_t)(predictor->current_assessment.total_visible * (1.0 - obstruction_ratio)\n"\n"\n"\n"\n"\n"\n"\n");
+    predictor->current_assessment.unobstructed_count = (uint8_t)(predictor->current_assessment.total_visible * (1.0 - obstruction_ratio));
     predictor->current_assessment.obstructed_count = predictor->current_assessment.total_visible - predictor->current_assessment.unobstructed_count;
     
     // Estimate elevation distribution (simplified - would need actual satellite positions)
     // For now, assume reasonable distribution
     if (predictor->current_assessment.total_visible > 0) {
-        predictor->current_assessment.high_elevation_count = (uint8_t)(predictor->current_assessment.total_visible * 0.3\n"\n"\n"\n"\n"\n"\n"\n");
-        predictor->current_assessment.medium_elevation_count = (uint8_t)(predictor->current_assessment.total_visible * 0.5\n"\n"\n"\n"\n"\n"\n"\n");
+        predictor->current_assessment.high_elevation_count = (uint8_t)(predictor->current_assessment.total_visible * 0.3);
+        predictor->current_assessment.medium_elevation_count = (uint8_t)(predictor->current_assessment.total_visible * 0.5);
         predictor->current_assessment.low_elevation_count = predictor->current_assessment.total_visible - 
                                                            predictor->current_assessment.high_elevation_count - 
                                                            predictor->current_assessment.medium_elevation_count;
@@ -126,12 +126,12 @@ int satellite_redundancy_assess_current(satellite_redundancy_predictor_t *predic
         predictor->current_assessment.unobstructed_count,
         predictor->current_assessment.high_elevation_count,
         obstruction_ratio
-    \n"\n"\n"\n"\n"\n"\n"\n");
+    );
     
     // Calculate diversity score (simplified)
     if (predictor->current_assessment.total_visible > 0) {
-        double elevation_diversity = 1.0 - fabs(0.33 - (double)predictor->current_assessment.high_elevation_count / predictor->current_assessment.total_visible\n"\n"\n"\n"\n"\n"\n"\n");
-        predictor->current_assessment.diversity_score = fmax(0.0, fmin(1.0, elevation_diversity)\n"\n"\n"\n"\n"\n"\n"\n");
+        double elevation_diversity = 1.0 - fabs(0.33 - (double)predictor->current_assessment.high_elevation_count / predictor->current_assessment.total_visible);
+        predictor->current_assessment.diversity_score = fmax(0.0, fmin(1.0, elevation_diversity));
     } else {
         predictor->current_assessment.diversity_score = 0.0;
     }
@@ -139,7 +139,7 @@ int satellite_redundancy_assess_current(satellite_redundancy_predictor_t *predic
     // Calculate elevation score
     if (predictor->current_assessment.total_visible > 0) {
         double high_elevation_ratio = (double)predictor->current_assessment.high_elevation_count / predictor->current_assessment.total_visible;
-        predictor->current_assessment.elevation_score = fmax(0.0, fmin(1.0, high_elevation_ratio * 2.0)\n"\n"\n"\n"\n"\n"\n"\n");
+        predictor->current_assessment.elevation_score = fmax(0.0, fmin(1.0, high_elevation_ratio * 2.0));
     } else {
         predictor->current_assessment.elevation_score = 0.0;
     }
@@ -152,20 +152,20 @@ int satellite_redundancy_assess_current(satellite_redundancy_predictor_t *predic
         predictor->current_assessment.total_visible,
         predictor->current_assessment.unobstructed_count,
         obstruction_ratio
-    \n"\n"\n"\n"\n"\n"\n"\n");
+    );
     
     // Generate ML features
-    predictor->current_assessment.ml_redundancy_feature = (uint8_t)(predictor->current_assessment.redundancy_score * 255\n"\n"\n"\n"\n"\n"\n"\n");
-    predictor->current_assessment.ml_risk_feature = (uint8_t)(predictor->current_assessment.obstruction_risk * 255\n"\n"\n"\n"\n"\n"\n"\n");
-    predictor->current_assessment.ml_diversity_feature = (uint8_t)(predictor->current_assessment.diversity_score * 255\n"\n"\n"\n"\n"\n"\n"\n");
+    predictor->current_assessment.ml_redundancy_feature = (uint8_t)(predictor->current_assessment.redundancy_score * 255);
+    predictor->current_assessment.ml_risk_feature = (uint8_t)(predictor->current_assessment.obstruction_risk * 255);
+    predictor->current_assessment.ml_diversity_feature = (uint8_t)(predictor->current_assessment.diversity_score * 255);
     
     // Set assessment time
-    predictor->current_assessment.assessment_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    predictor->current_assessment.assessment_time = time(NULL);
     
     // Update history
     uint8_t idx = predictor->history.write_index;
     predictor->history.satellite_counts[idx] = predictor->current_assessment.total_visible;
-    predictor->history.obstruction_counts[idx] = (uint8_t)(predictor->current_assessment.obstruction_risk * 100\n"\n"\n"\n"\n"\n"\n"\n");
+    predictor->history.obstruction_counts[idx] = (uint8_t)(predictor->current_assessment.obstruction_risk * 100);
     predictor->history.redundancy_scores[idx] = predictor->current_assessment.redundancy_score;
     
     predictor->history.write_index = (predictor->history.write_index + 1) % 60;
@@ -179,21 +179,21 @@ int satellite_redundancy_assess_current(satellite_redundancy_predictor_t *predic
             &predictor->current_assessment,
             &predictor->last_assessment,
             &predictor->config
-        \n"\n"\n"\n"\n"\n"\n"\n");
+        );
         
         if (should_warn && !predictor->early_warning_active) {
-            time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            time_t now = time(NULL);
             if (now - predictor->last_warning_time >= predictor->config.warning_cooldown_seconds) {
-                satellite_redundancy_trigger_early_warning(predictor\n"\n"\n"\n"\n"\n"\n"\n");
+                satellite_redundancy_trigger_early_warning(predictor);
             }
         }
     }
     
-    printf("DEBUG: "Satellite redundancy assessment: visible=%d, unobstructed=%d, redundancy=%.2f, risk_level=%d",
+    LOGX_DEBUG_MSG("Satellite redundancy assessment: visible=%d, unobstructed=%d, redundancy=%.2f, risk_level=%d",
                predictor->current_assessment.total_visible,
                predictor->current_assessment.unobstructed_count,
                predictor->current_assessment.redundancy_score,
-               predictor->current_assessment.risk_level\n"\n"\n"\n"\n"\n"\n"\n");
+               predictor->current_assessment.risk_level);
     
     return SATELLITE_REDUNDANCY_SUCCESS;
 }
@@ -204,7 +204,7 @@ double satellite_redundancy_calculate_score(uint8_t total_visible, uint8_t unobs
     if (total_visible == 0) return 0.0;
     
     // Base score from satellite count (normalized to 0-1)
-    double count_score = fmin(1.0, (double)total_visible / 12.0\n"\n"\n"\n"\n"\n"\n"\n");
+    double count_score = fmin(1.0, (double)total_visible / 12.0);
     
     // Unobstructed ratio bonus
     double unobstructed_ratio = (double)unobstructed / total_visible;
@@ -220,7 +220,7 @@ double satellite_redundancy_calculate_score(uint8_t total_visible, uint8_t unobs
     // Calculate final score
     double score = count_score + unobstructed_bonus + elevation_bonus - obstruction_penalty;
     
-    return fmax(0.0, fmin(1.0, score)\n"\n"\n"\n"\n"\n"\n"\n");
+    return fmax(0.0, fmin(1.0, score));
 }
 
 // Get risk level based on satellite count and obstruction
@@ -274,17 +274,17 @@ int satellite_redundancy_trigger_early_warning(satellite_redundancy_predictor_t 
     }
     
     predictor->early_warning_active = true;
-    predictor->last_warning_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    predictor->last_warning_time = time(NULL);
     predictor->warning_count++;
     
-    printf("WARN: "Satellite redundancy early warning triggered: visible=%d, unobstructed=%d, risk_level=%d",
+    LOGX_WARN_MSG("Satellite redundancy early warning triggered: visible=%d, unobstructed=%d, risk_level=%d",
               predictor->current_assessment.total_visible,
               predictor->current_assessment.unobstructed_count,
-              predictor->current_assessment.risk_level\n"\n"\n"\n"\n"\n"\n"\n");
+              predictor->current_assessment.risk_level);
     
     // Call early warning callback
     if (predictor->early_warning_callback) {
-        predictor->early_warning_callback(&predictor->current_assessment, predictor->callback_user_data\n"\n"\n"\n"\n"\n"\n"\n");
+        predictor->early_warning_callback(&predictor->current_assessment, predictor->callback_user_data);
     }
     
     return SATELLITE_REDUNDANCY_SUCCESS;
@@ -299,7 +299,7 @@ int satellite_redundancy_clear_early_warning(satellite_redundancy_predictor_t *p
     if (predictor->early_warning_active) {
         predictor->early_warning_active = false;
         
-        printf("INFO: "Satellite redundancy early warning cleared"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("Satellite redundancy early warning cleared");
     }
     
     return SATELLITE_REDUNDANCY_SUCCESS;
@@ -333,13 +333,13 @@ int satellite_redundancy_update_ml_observation(ml_observation_t *observation,
     
     // Use reserved fields for additional redundancy data
     // Store redundancy score in reserved[0] (0-255)
-    observation->reserved = (uint16_t)(assessment->redundancy_score * 255\n"\n"\n"\n"\n"\n"\n"\n");
+    observation->reserved = (uint16_t)(assessment->redundancy_score * 255);
     
     // Store risk level in flags (bits 4-7)
-    observation->flags = (observation->flags & 0x0F) | ((assessment->risk_level & 0x0F) << 4\n"\n"\n"\n"\n"\n"\n"\n");
+    observation->flags = (observation->flags & 0x0F) | ((assessment->risk_level & 0x0F) << 4);
     
     // Store diversity score in pattern_hash (lower 8 bits)
-    observation->pattern_hash = (observation->pattern_hash & 0xFF00) | (uint8_t)(assessment->diversity_score * 255\n"\n"\n"\n"\n"\n"\n"\n");
+    observation->pattern_hash = (observation->pattern_hash & 0xFF00) | (uint8_t)(assessment->diversity_score * 255);
     
     return SATELLITE_REDUNDANCY_SUCCESS;
 }

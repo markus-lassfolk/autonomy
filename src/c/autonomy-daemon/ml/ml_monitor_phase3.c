@@ -76,13 +76,13 @@ static sliding_predictor_t g_phase3_sliding_predictor = {0};
 static bool g_phase3_initialized = false;
 
 // Forward declarations
-static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor\n"\n"\n"\n"\n"\n"\n"\n");
-static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor, const ml_observation_t *observation\n"\n"\n"\n"\n"\n"\n"\n");
-static int ml_monitor_fuse_obstruction_data(enhanced_sky_grid_t *enhanced_grid, const obstruction_map_t *obstruction_map\n"\n"\n"\n"\n"\n"\n"\n");
-static void ml_monitor_extract_window_features(sliding_predictor_t *predictor\n"\n"\n"\n"\n"\n"\n"\n");
-static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_predictor_t *predictor, const ml_observation_t *observation\n"\n"\n"\n"\n"\n"\n"\n");
-static double ml_monitor_calculate_trend(const uint16_t *values, int count\n"\n"\n"\n"\n"\n"\n"\n");
-static uint8_t ml_monitor_calculate_volatility(const uint16_t *values, int count\n"\n"\n"\n"\n"\n"\n"\n");
+static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor);
+static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor, const ml_observation_t *observation);
+static int ml_monitor_fuse_obstruction_data(enhanced_sky_grid_t *enhanced_grid, const obstruction_map_t *obstruction_map);
+static void ml_monitor_extract_window_features(sliding_predictor_t *predictor);
+static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_predictor_t *predictor, const ml_observation_t *observation);
+static double ml_monitor_calculate_trend(const uint16_t *values, int count);
+static uint8_t ml_monitor_calculate_volatility(const uint16_t *values, int count);
 
 // Initialize enhanced sky grid with obstruction analyzer integration
 static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
@@ -92,10 +92,10 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
     }
     
     // Use simple fprintf to avoid LOGX crashes
-    fprintf(stderr, "Initializing enhanced sky grid with obstruction analyzer integration\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "Initializing enhanced sky grid with obstruction analyzer integration\n");
     
     // Initialize the global Phase 3 enhanced sky grid structure
-    memset(&g_phase3_enhanced_sky_grid, 0, sizeof(enhanced_sky_grid_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_phase3_enhanced_sky_grid, 0, sizeof(enhanced_sky_grid_t));
     
     // Initialize the ML grid (copy from monitor's existing grid)
     g_phase3_enhanced_sky_grid.ml_grid = monitor->state->models.sky_grid;
@@ -124,7 +124,7 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
     g_phase3_enhanced_sky_grid.stats.fusion_accuracy_rate = 0.0;
     
     // Initialize sliding window predictor
-    memset(&g_phase3_sliding_predictor, 0, sizeof(sliding_predictor_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_phase3_sliding_predictor, 0, sizeof(sliding_predictor_t));
     g_phase3_sliding_predictor.window_size = 0;
     g_phase3_sliding_predictor.write_idx = 0;
     
@@ -151,7 +151,7 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
     fprintf(stderr, "Enhanced sky grid initialized (ML: 90x45, Obstruction: 123x123, weights: %.1f/%.1f, threshold: %.1f)\n", 
             g_phase3_enhanced_sky_grid.fusion.ml_weight, 
             g_phase3_enhanced_sky_grid.fusion.obstruction_weight, 
-            g_phase3_enhanced_sky_grid.fusion.fusion_confidence_threshold\n"\n"\n"\n"\n"\n"\n"\n");
+            g_phase3_enhanced_sky_grid.fusion.fusion_confidence_threshold);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -167,7 +167,7 @@ static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor,
     
     // Get current obstruction map from existing analyzer
     obstruction_map_t current_obstruction_map;
-    memset(&current_obstruction_map, 0, sizeof(current_obstruction_map)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&current_obstruction_map, 0, sizeof(current_obstruction_map));
     
     // Try to get obstruction map from Starlink tracking system
     // This would integrate with the existing obstruction analyzer
@@ -177,10 +177,10 @@ static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor,
     
     // Update ML grid with current observation
     int ml_result = ml_monitor_sky_grid_update(ml_grid, observation->azimuth_deg, observation->elevation_deg, 
-                                              (observation->flags & ML_OBS_FLAG_OUTAGE) ? 1 : 0\n"\n"\n"\n"\n"\n"\n"\n");
+                                              (observation->flags & ML_OBS_FLAG_OUTAGE) ? 1 : 0);
     
     if (ml_result != ML_MONITOR_SUCCESS) {
-        printf("WARN: "Failed to update ML sky grid: %d", ml_result\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to update ML sky grid: %d", ml_result);
         return ml_result;
     }
     
@@ -194,9 +194,9 @@ static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor,
         // Cross-validate with obstruction analyzer if available
         // This would check against the 123x123 polar projection
         
-        printf("DEBUG: "ML sky grid updated: az=%d, el=%d, prob=%u%% (bin [%d,%d])",
+        LOGX_DEBUG_MSG("ML sky grid updated: az=%d, el=%d, prob=%u%% (bin [%d,%d])",
                   observation->azimuth_deg, observation->elevation_deg, 
-                  ml_obstruction_prob, ml_az_bin, ml_el_bin\n"\n"\n"\n"\n"\n"\n"\n");
+                  ml_obstruction_prob, ml_az_bin, ml_el_bin);
     }
     
     return ML_MONITOR_SUCCESS;
@@ -217,7 +217,7 @@ static int ml_monitor_fuse_obstruction_data(enhanced_sky_grid_t *enhanced_grid, 
             
             // Get obstruction data for this position
             obstruction_cell_t obstruction_cell;
-            int obstruction_result = obstruction_analyzer_get_grid_cell(obstruction_map, azimuth, elevation, &obstruction_cell\n"\n"\n"\n"\n"\n"\n"\n");
+            int obstruction_result = obstruction_analyzer_get_grid_cell(obstruction_map, azimuth, elevation, &obstruction_cell);
             
             if (obstruction_result == OBSTRUCTION_SUCCESS) {
                 // Fuse ML prediction with obstruction data
@@ -229,7 +229,7 @@ static int ml_monitor_fuse_obstruction_data(enhanced_sky_grid_t *enhanced_grid, 
                 double obstruction_weight = enhanced_grid->fusion.obstruction_weight;
                 
                 uint8_t fused_prob = (uint8_t)((ml_prob * ml_weight + obstruction_prob * obstruction_weight) / 
-                                              (ml_weight + obstruction_weight)\n"\n"\n"\n"\n"\n"\n"\n");
+                                              (ml_weight + obstruction_weight));
                 
                 // Update ML grid with fused result
                 ml_grid->obstruction_prob[az_bin][el_bin] = fused_prob;
@@ -242,8 +242,8 @@ static int ml_monitor_fuse_obstruction_data(enhanced_sky_grid_t *enhanced_grid, 
         }
     }
     
-    printf("DEBUG: "Sky grid fusion completed: %u fused, %u ML-only predictions",
-              enhanced_grid->stats.fused_predictions, enhanced_grid->stats.ml_only_predictions\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Sky grid fusion completed: %u fused, %u ML-only predictions",
+              enhanced_grid->stats.fused_predictions, enhanced_grid->stats.ml_only_predictions);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -258,11 +258,11 @@ static void ml_monitor_extract_window_features(sliding_predictor_t *predictor) {
         snr_values[i] = predictor->window[i].snr_x100;
     }
     
-    double snr_trend = ml_monitor_calculate_trend(snr_values, predictor->window_size\n"\n"\n"\n"\n"\n"\n"\n");
+    double snr_trend = ml_monitor_calculate_trend(snr_values, predictor->window_size);
     predictor->features.snr_trend = (uint8_t)((snr_trend + 1.0) * 127.5); // Map -1..1 to 0..255
     
     // Calculate SNR volatility
-    predictor->features.snr_volatility = ml_monitor_calculate_volatility(snr_values, predictor->window_size\n"\n"\n"\n"\n"\n"\n"\n");
+    predictor->features.snr_volatility = ml_monitor_calculate_volatility(snr_values, predictor->window_size);
     
     // Extract latency trend
     uint16_t latency_values[60];
@@ -270,8 +270,8 @@ static void ml_monitor_extract_window_features(sliding_predictor_t *predictor) {
         latency_values[i] = predictor->window[i].latency_ms;
     }
     
-    double latency_trend = ml_monitor_calculate_trend(latency_values, predictor->window_size\n"\n"\n"\n"\n"\n"\n"\n");
-    predictor->features.latency_trend = (uint8_t)((latency_trend + 1.0) * 127.5\n"\n"\n"\n"\n"\n"\n"\n");
+    double latency_trend = ml_monitor_calculate_trend(latency_values, predictor->window_size);
+    predictor->features.latency_trend = (uint8_t)((latency_trend + 1.0) * 127.5);
     
     // Extract packet loss trend
     uint16_t loss_values[60];
@@ -279,8 +279,8 @@ static void ml_monitor_extract_window_features(sliding_predictor_t *predictor) {
         loss_values[i] = predictor->window[i].packet_loss_pct;
     }
     
-    double loss_trend = ml_monitor_calculate_trend(loss_values, predictor->window_size\n"\n"\n"\n"\n"\n"\n"\n");
-    predictor->features.packet_loss_trend = (uint8_t)((loss_trend + 1.0) * 127.5\n"\n"\n"\n"\n"\n"\n"\n");
+    double loss_trend = ml_monitor_calculate_trend(loss_values, predictor->window_size);
+    predictor->features.packet_loss_trend = (uint8_t)((loss_trend + 1.0) * 127.5);
     
     // Extract obstruction trend
     uint16_t obstruction_values[60];
@@ -288,8 +288,8 @@ static void ml_monitor_extract_window_features(sliding_predictor_t *predictor) {
         obstruction_values[i] = predictor->window[i].obstruction_pct;
     }
     
-    double obstruction_trend = ml_monitor_calculate_trend(obstruction_values, predictor->window_size\n"\n"\n"\n"\n"\n"\n"\n");
-    predictor->features.obstruction_trend = (uint8_t)((obstruction_trend + 1.0) * 127.5\n"\n"\n"\n"\n"\n"\n"\n");
+    double obstruction_trend = ml_monitor_calculate_trend(obstruction_values, predictor->window_size);
+    predictor->features.obstruction_trend = (uint8_t)((obstruction_trend + 1.0) * 127.5);
     
     // Calculate weather severity
     ml_observation_t *latest = &predictor->window[(predictor->write_idx - 1 + 60) % 60];
@@ -300,16 +300,16 @@ static void ml_monitor_extract_window_features(sliding_predictor_t *predictor) {
     if (predictor->features.weather_severity > 255) predictor->features.weather_severity = 255;
     
     // Time of day feature
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    struct tm *tm_info = localtime(&now\n"\n"\n"\n"\n"\n"\n"\n");
-    predictor->features.time_of_day = (uint8_t)((tm_info->tm_hour * 60 + tm_info->tm_min) * 255 / (24 * 60)\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
+    predictor->features.time_of_day = (uint8_t)((tm_info->tm_hour * 60 + tm_info->tm_min) * 255 / (24 * 60));
     
     // Pattern signature (simplified hash of recent patterns)
     uint32_t pattern_hash = 0;
     for (int i = 0; i < predictor->window_size; i++) {
-        pattern_hash ^= predictor->window[i].snr_x100 + (predictor->window[i].latency_ms << 8\n"\n"\n"\n"\n"\n"\n"\n");
+        pattern_hash ^= predictor->window[i].snr_x100 + (predictor->window[i].latency_ms << 8);
     }
-    predictor->features.pattern_signature = (uint8_t)(pattern_hash % 256\n"\n"\n"\n"\n"\n"\n"\n");
+    predictor->features.pattern_signature = (uint8_t)(pattern_hash % 256);
 }
 
 // Calculate trend from values (-1 = falling, 0 = stable, 1 = rising)
@@ -326,7 +326,7 @@ static double ml_monitor_calculate_trend(const uint16_t *values, int count) {
         sum_x2 += i * i;
     }
     
-    double slope = (count * sum_xy - sum_x * sum_y) / (count * sum_x2 - sum_x * sum_x\n"\n"\n"\n"\n"\n"\n"\n");
+    double slope = (count * sum_xy - sum_x * sum_y) / (count * sum_x2 - sum_x * sum_x);
     
     // Normalize slope to -1..1 range
     return fmax(-1.0, fmin(1.0, slope / 100.0)); // Assuming values are in reasonable range
@@ -351,10 +351,10 @@ static uint8_t ml_monitor_calculate_volatility(const uint16_t *values, int count
     }
     variance /= count;
     
-    double std_dev = sqrt(variance\n"\n"\n"\n"\n"\n"\n"\n");
+    double std_dev = sqrt(variance);
     
     // Normalize to 0-255 range (assuming reasonable value ranges)
-    return (uint8_t)fmin(255, std_dev\n"\n"\n"\n"\n"\n"\n"\n");
+    return (uint8_t)fmin(255, std_dev);
 }
 
 // Sliding window prediction with enhanced features
@@ -373,39 +373,39 @@ static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_pred
     }
     
     // Extract features from window
-    ml_monitor_extract_window_features(predictor\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_extract_window_features(predictor);
     
     // Prepare neural network input with window features
     int8_t nn_input[32];
-    memset(nn_input, 0, sizeof(nn_input)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(nn_input, 0, sizeof(nn_input));
     
     // Map features to neural network input
-    nn_input[0] = (int8_t)(predictor->features.snr_trend - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[1] = (int8_t)(predictor->features.snr_volatility - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[2] = (int8_t)(predictor->features.latency_trend - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[3] = (int8_t)(predictor->features.packet_loss_trend - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[4] = (int8_t)(predictor->features.obstruction_trend - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[5] = (int8_t)(predictor->features.weather_severity - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[6] = (int8_t)(predictor->features.time_of_day - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[7] = (int8_t)(predictor->features.pattern_signature - 128\n"\n"\n"\n"\n"\n"\n"\n");
+    nn_input[0] = (int8_t)(predictor->features.snr_trend - 128);
+    nn_input[1] = (int8_t)(predictor->features.snr_volatility - 128);
+    nn_input[2] = (int8_t)(predictor->features.latency_trend - 128);
+    nn_input[3] = (int8_t)(predictor->features.packet_loss_trend - 128);
+    nn_input[4] = (int8_t)(predictor->features.obstruction_trend - 128);
+    nn_input[5] = (int8_t)(predictor->features.weather_severity - 128);
+    nn_input[6] = (int8_t)(predictor->features.time_of_day - 128);
+    nn_input[7] = (int8_t)(predictor->features.pattern_signature - 128);
     
     // Add current observation features
-    nn_input[8] = (int8_t)((observation->snr_x100 / 10) - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[9] = (int8_t)((observation->latency_ms / 2) - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[10] = (int8_t)(observation->packet_loss_pct - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[11] = (int8_t)(observation->obstruction_pct - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[12] = (int8_t)((observation->azimuth_deg / 2) - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[13] = (int8_t)((observation->elevation_deg / 2) - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[14] = (int8_t)(observation->satellites_visible - 128\n"\n"\n"\n"\n"\n"\n"\n");
-    nn_input[15] = (int8_t)(observation->temperature_c\n"\n"\n"\n"\n"\n"\n"\n");
+    nn_input[8] = (int8_t)((observation->snr_x100 / 10) - 128);
+    nn_input[9] = (int8_t)((observation->latency_ms / 2) - 128);
+    nn_input[10] = (int8_t)(observation->packet_loss_pct - 128);
+    nn_input[11] = (int8_t)(observation->obstruction_pct - 128);
+    nn_input[12] = (int8_t)((observation->azimuth_deg / 2) - 128);
+    nn_input[13] = (int8_t)((observation->elevation_deg / 2) - 128);
+    nn_input[14] = (int8_t)(observation->satellites_visible - 128);
+    nn_input[15] = (int8_t)(observation->temperature_c);
     
     // Get neural network prediction
     uint8_t nn_output[8];
-    ml_monitor_predict_neural_network(monitor, observation, nn_output\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_predict_neural_network(monitor, observation, nn_output);
     
     // Get k-NN prediction for comparison
     uint8_t knn_confidence;
-    uint8_t knn_prediction = ml_monitor_predict_outage_knn(monitor, observation, &knn_confidence\n"\n"\n"\n"\n"\n"\n"\n");
+    uint8_t knn_prediction = ml_monitor_predict_outage_knn(monitor, observation, &knn_confidence);
     
     // Combine predictions with sliding window weighting
     uint16_t nn_weight = predictor->window_size > 30 ? 150 : 100;
@@ -413,7 +413,7 @@ static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_pred
     
     if (nn_weight + knn_weight > 0) {
         predictor->outage_probability_5min = (nn_output[0] * nn_weight + knn_prediction * knn_weight) / 
-                                           (nn_weight + knn_weight\n"\n"\n"\n"\n"\n"\n"\n");
+                                           (nn_weight + knn_weight);
     } else {
         predictor->outage_probability_5min = 0;
     }
@@ -427,13 +427,13 @@ static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_pred
                              OUTAGE_UNKNOWN;
     
     // Calculate confidence based on agreement and data quality
-    uint8_t agreement = 255 - abs(nn_output[0] - knn_prediction\n"\n"\n"\n"\n"\n"\n"\n");
+    uint8_t agreement = 255 - abs(nn_output[0] - knn_prediction);
     uint8_t data_quality = (predictor->window_size * 255) / 60;
     predictor->confidence = (agreement * data_quality) / 255;
     
-    printf("DEBUG: "Sliding window prediction: 5min=%u%%, 15min=%u%%, confidence=%u%%, cause=%u",
+    LOGX_DEBUG_MSG("Sliding window prediction: 5min=%u%%, 15min=%u%%, confidence=%u%%, cause=%u",
               predictor->outage_probability_5min, predictor->outage_probability_15min, 
-              predictor->confidence, predictor->likely_cause\n"\n"\n"\n"\n"\n"\n"\n");
+              predictor->confidence, predictor->likely_cause);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -448,8 +448,8 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
     
     // Need sufficient data for enhanced predictions
     if (monitor->state->total_observations < 100) {
-        printf("DEBUG: "Insufficient data for enhanced predictions (%u observations)", monitor->state->total_observations\n"\n"\n"\n"\n"\n"\n"\n");
-        memset(probabilities, 0, 60\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Insufficient data for enhanced predictions (%u observations)", monitor->state->total_observations);
+        memset(probabilities, 0, 60);
         return ML_MONITOR_SUCCESS;
     }
     
@@ -459,20 +459,20 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
     // Get current observation
     ml_observation_t current_obs;
     if (ml_monitor_collect_observation(monitor) != ML_MONITOR_SUCCESS) {
-        printf("WARN: "Failed to collect current observation for enhanced prediction"\n"\n"\n"\n"\n"\n"\n"\n");
-        memset(probabilities, 0, 60\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to collect current observation for enhanced prediction");
+        memset(probabilities, 0, 60);
         return ML_MONITOR_ERROR_PREDICTION_FAILED;
     }
     
     // Use latest observation from monitor state
-    memset(&current_obs, 0, sizeof(current_obs)\n"\n"\n"\n"\n"\n"\n"\n");
-    current_obs.timestamp = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&current_obs, 0, sizeof(current_obs));
+    current_obs.timestamp = time(NULL);
     
     // Make sliding window prediction
-    int result = ml_monitor_sliding_window_predict(monitor, &predictor, &current_obs\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = ml_monitor_sliding_window_predict(monitor, &predictor, &current_obs);
     if (result != ML_MONITOR_SUCCESS) {
-        printf("ERROR: "Sliding window prediction failed: %d", result\n"\n"\n"\n"\n"\n"\n"\n");
-        memset(probabilities, 0, 60\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Sliding window prediction failed: %d", result);
+        memset(probabilities, 0, 60);
         return result;
     }
     
@@ -482,18 +482,18 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
         
         // Interpolate between 5-minute and 15-minute predictions
         uint8_t base_prob = (uint8_t)((predictor.outage_probability_5min * (1.0 - time_factor)) + 
-                                     (predictor.outage_probability_15min * time_factor)\n"\n"\n"\n"\n"\n"\n"\n");
+                                     (predictor.outage_probability_15min * time_factor));
         
         // Add some randomness based on volatility
         double volatility_factor = predictor.features.snr_volatility / 255.0;
         double random_factor = (sin(i * 0.1) * volatility_factor * 20); // 20 based on volatility
         
-        probabilities[i] = (uint8_t)fmax(0, fmin(255, base_prob + random_factor)\n"\n"\n"\n"\n"\n"\n"\n");
+        probabilities[i] = (uint8_t)fmax(0, fmin(255, base_prob + random_factor));
     }
     
     *confidence = predictor.confidence;
     
-    printf("DEBUG: "Generated enhanced 15-minute predictions with %u%% confidence", *confidence\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_DEBUG_MSG("Generated enhanced 15-minute predictions with %u%% confidence", *confidence);
     return ML_MONITOR_SUCCESS;
 }
 
@@ -504,18 +504,18 @@ int ml_monitor_init_phase3_enhancements(ml_monitor_t *monitor) {
     }
     
     // Use simple fprintf to avoid LOGX crashes
-    fprintf(stderr, "Initializing Phase 3: Advanced Sky Grid & Sliding Window Predictions\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "Initializing Phase 3: Advanced Sky Grid & Sliding Window Predictions\n");
     
     // Initialize enhanced sky grid with obstruction analyzer integration
-    int result = ml_monitor_init_enhanced_sky_grid(monitor\n"\n"\n"\n"\n"\n"\n"\n");
+    int result = ml_monitor_init_enhanced_sky_grid(monitor);
     
     if (result != ML_MONITOR_SUCCESS) {
-        printf("ERROR: "Failed to initialize enhanced sky grid: %d", result\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to initialize enhanced sky grid: %d", result);
         return result;
     }
     
     // Use simple fprintf to avoid LOGX crashes
-    fprintf(stderr, "Phase 3 enhancements initialized successfully\n"\n"\n"\n"\n"\n"\n"\n"\n");
+    fprintf(stderr, "Phase 3 enhancements initialized successfully\n");
     
     return ML_MONITOR_SUCCESS;
 }
@@ -530,9 +530,9 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
     }
     
     // Integrate with obstruction analyzer using global system
-    int integration_result = ml_monitor_integrate_with_obstruction_analyzer(monitor, observation\n"\n"\n"\n"\n"\n"\n"\n");
+    int integration_result = ml_monitor_integrate_with_obstruction_analyzer(monitor, observation);
     if (integration_result != ML_MONITOR_SUCCESS) {
-        printf("DEBUG: "Obstruction analyzer integration warning: %d", integration_result\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Obstruction analyzer integration warning: %d", integration_result);
         // Continue with ML-only updates
     }
     
@@ -547,12 +547,12 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
     }
     
     // Extract features from sliding window
-    ml_monitor_extract_window_features(&g_phase3_sliding_predictor\n"\n"\n"\n"\n"\n"\n"\n");
+    ml_monitor_extract_window_features(&g_phase3_sliding_predictor);
     
     // Perform sliding window prediction
-    int prediction_result = ml_monitor_sliding_window_predict(monitor, &g_phase3_sliding_predictor, observation\n"\n"\n"\n"\n"\n"\n"\n");
+    int prediction_result = ml_monitor_sliding_window_predict(monitor, &g_phase3_sliding_predictor, observation);
     if (prediction_result != ML_MONITOR_SUCCESS) {
-        printf("DEBUG: "Sliding window prediction warning: %d", prediction_result\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Sliding window prediction warning: %d", prediction_result);
     }
     
     return ML_MONITOR_SUCCESS;

@@ -25,7 +25,7 @@ int intelligent_cache_init(const intelligent_cache_config_t* config) {
     }
     
     // Copy configuration
-    memcpy(&g_intelligent_cache.config, config, sizeof(intelligent_cache_config_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(&g_intelligent_cache.config, config, sizeof(intelligent_cache_config_t));
     
     // Initialize state
     g_intelligent_cache.last_environment = NULL;
@@ -43,22 +43,22 @@ void intelligent_cache_cleanup(void) {
         return;
     }
     
-    pthread_mutex_lock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_intelligent_cache.mutex);
     
     // Free allocated memory
     if (g_intelligent_cache.last_environment) {
-        free(g_intelligent_cache.last_environment\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_intelligent_cache.last_environment);
         g_intelligent_cache.last_environment = NULL;
     }
     
     if (g_intelligent_cache.last_location_result) {
-        free(g_intelligent_cache.last_location_result\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_intelligent_cache.last_location_result);
         g_intelligent_cache.last_location_result = NULL;
     }
     
-    pthread_mutex_unlock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_intelligent_cache.mutex);
     
-    pthread_mutex_destroy(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_destroy(&g_intelligent_cache.mutex);
     g_cache_initialized = false;
 }
 
@@ -77,7 +77,7 @@ void intelligent_cache_generate_location_hash(const cell_environment_t* env, cha
              env->serving_cell.rsrq,
              env->serving_cell.earfcn,
              env->serving_cell.pci,
-             env->serving_cell.type\n"\n"\n"\n"\n"\n"\n"\n");
+             env->serving_cell.type);
     
     // Add neighbor cells
     for (int i = 0; i < env->neighbor_count && i < 16; i++) {
@@ -89,18 +89,18 @@ void intelligent_cache_generate_location_hash(const cell_environment_t* env, cha
                  env->neighbor_cells[i].rsrq,
                  env->neighbor_cells[i].earfcn,
                  env->neighbor_cells[i].pci,
-                 env->neighbor_cells[i].type\n"\n"\n"\n"\n"\n"\n"\n");
+                 env->neighbor_cells[i].type);
         
-        strncat(env_string, neighbor_str, sizeof(env_string) - strlen(env_string) - 1\n"\n"\n"\n"\n"\n"\n"\n");
+        strncat(env_string, neighbor_str, sizeof(env_string) - strlen(env_string) - 1);
     }
     
     // Generate SHA256 hash
     unsigned char sha_hash[SHA256_DIGEST_LENGTH];
-    SHA256((unsigned char*)env_string, strlen(env_string), sha_hash\n"\n"\n"\n"\n"\n"\n"\n");
+    SHA256((unsigned char*)env_string, strlen(env_string), sha_hash);
     
     // Convert to hex string
     for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-        sprintf(&hash[i * 2], "%02x", sha_hash[i]\n"\n"\n"\n"\n"\n"\n"\n");
+        sprintf(&hash[i * 2], "%02x", sha_hash[i]);
     }
     hash[SHA256_DIGEST_LENGTH * 2] = '\0';
 }
@@ -128,8 +128,8 @@ double intelligent_cache_calculate_tower_change_percentage(const cell_environmen
     for (int i = 0; i < max_neighbors; i++) {
         total_towers++;
         
-        bool current_exists = (i < current->neighbor_count\n"\n"\n"\n"\n"\n"\n"\n");
-        bool previous_exists = (i < previous->neighbor_count\n"\n"\n"\n"\n"\n"\n"\n");
+        bool current_exists = (i < current->neighbor_count);
+        bool previous_exists = (i < previous->neighbor_count);
         
         if (current_exists && previous_exists) {
             if (strcmp(current->neighbor_cells[i].cell_id, previous->neighbor_cells[i].cell_id) != 0) {
@@ -213,48 +213,48 @@ bool intelligent_cache_should_query_new_location(const cell_environment_t* env) 
         return true; // Query if not initialized or no environment
     }
     
-    pthread_mutex_lock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_intelligent_cache.mutex);
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     // Check debounce timer
     if (now - g_intelligent_cache.debounce_timer < g_intelligent_cache.config.debounce_delay) {
-        pthread_mutex_unlock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_intelligent_cache.mutex);
         return false; // Still in debounce period
     }
     
     // First query
     if (g_intelligent_cache.last_environment == NULL) {
-        pthread_mutex_unlock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_intelligent_cache.mutex);
         return true;
     }
     
     // Check serving cell change
     if (strcmp(env->serving_cell.cell_id, g_intelligent_cache.last_environment->serving_cell.cell_id) != 0) {
-        pthread_mutex_unlock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_intelligent_cache.mutex);
         return true;
     }
     
     // Check neighbor change threshold
-    double change_percent = intelligent_cache_calculate_tower_change_percentage(env, g_intelligent_cache.last_environment\n"\n"\n"\n"\n"\n"\n"\n");
+    double change_percent = intelligent_cache_calculate_tower_change_percentage(env, g_intelligent_cache.last_environment);
     if (change_percent >= g_intelligent_cache.config.tower_change_threshold) {
-        pthread_mutex_unlock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_intelligent_cache.mutex);
         return true;
     }
     
     // Check top tower changes
     if (intelligent_cache_top_towers_changed(env, g_intelligent_cache.last_environment)) {
-        pthread_mutex_unlock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_intelligent_cache.mutex);
         return true;
     }
     
     // Check cache expiration
     if (now - g_intelligent_cache.last_location_query > g_intelligent_cache.config.max_cache_age) {
-        pthread_mutex_unlock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_intelligent_cache.mutex);
         return true;
     }
     
-    pthread_mutex_unlock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_intelligent_cache.mutex);
     return false;
 }
 
@@ -264,36 +264,36 @@ void intelligent_cache_update_location(const cell_environment_t* env, const open
         return;
     }
     
-    pthread_mutex_lock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_intelligent_cache.mutex);
     
     // Free previous environment
     if (g_intelligent_cache.last_environment) {
-        free(g_intelligent_cache.last_environment\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_intelligent_cache.last_environment);
     }
     
     // Allocate and copy new environment
-    g_intelligent_cache.last_environment = malloc(sizeof(cell_environment_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_intelligent_cache.last_environment = malloc(sizeof(cell_environment_t));
     if (g_intelligent_cache.last_environment) {
-        memcpy(g_intelligent_cache.last_environment, env, sizeof(cell_environment_t)\n"\n"\n"\n"\n"\n"\n"\n");
-        intelligent_cache_generate_location_hash(env, g_intelligent_cache.last_environment->location_hash\n"\n"\n"\n"\n"\n"\n"\n");
+        memcpy(g_intelligent_cache.last_environment, env, sizeof(cell_environment_t));
+        intelligent_cache_generate_location_hash(env, g_intelligent_cache.last_environment->location_hash);
     }
     
     // Free previous result
     if (g_intelligent_cache.last_location_result) {
-        free(g_intelligent_cache.last_location_result\n"\n"\n"\n"\n"\n"\n"\n");
+        free(g_intelligent_cache.last_location_result);
     }
     
     // Allocate and copy new result
-    g_intelligent_cache.last_location_result = malloc(sizeof(opencellid_response_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_intelligent_cache.last_location_result = malloc(sizeof(opencellid_response_t));
     if (g_intelligent_cache.last_location_result) {
-        memcpy(g_intelligent_cache.last_location_result, result, sizeof(opencellid_response_t)\n"\n"\n"\n"\n"\n"\n"\n");
+        memcpy(g_intelligent_cache.last_location_result, result, sizeof(opencellid_response_t));
     }
     
     // Update timestamps
-    g_intelligent_cache.last_location_query = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_intelligent_cache.last_location_query = time(NULL);
     g_intelligent_cache.debounce_timer = g_intelligent_cache.last_location_query;
     
-    pthread_mutex_unlock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_intelligent_cache.mutex);
 }
 
 // Get cached location if available and valid
@@ -302,25 +302,25 @@ bool intelligent_cache_get_cached_location(opencellid_response_t* result) {
         return false;
     }
     
-    pthread_mutex_lock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_intelligent_cache.mutex);
     
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
     
     // Check if cache is valid
     if (g_intelligent_cache.last_location_result == NULL) {
-        pthread_mutex_unlock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_intelligent_cache.mutex);
         return false;
     }
     
     // Check cache age
     if (now - g_intelligent_cache.last_location_query > g_intelligent_cache.config.max_cache_age) {
-        pthread_mutex_unlock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(&g_intelligent_cache.mutex);
         return false;
     }
     
     // Copy cached result
-    memcpy(result, g_intelligent_cache.last_location_result, sizeof(opencellid_response_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memcpy(result, g_intelligent_cache.last_location_result, sizeof(opencellid_response_t));
     
-    pthread_mutex_unlock(&g_intelligent_cache.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_intelligent_cache.mutex);
     return true;
 }

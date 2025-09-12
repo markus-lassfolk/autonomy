@@ -15,20 +15,20 @@ int priority_queue_init(priority_queue_t* queue, int max_size) {
         return -1;
     }
     
-    queue->items = malloc(max_size * sizeof(priority_queue_item_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    queue->items = malloc(max_size * sizeof(priority_queue_item_t));
     if (!queue->items) {
         return -1;
     }
     
     queue->max_size = max_size;
     queue->size = 0; // Use configurable queue size
-    queue->mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    queue->mutex = malloc(sizeof(pthread_mutex_t));
     if (!queue->mutex) {
-        free(queue->items\n"\n"\n"\n"\n"\n"\n"\n");
+        free(queue->items);
         return -1;
     }
     
-    pthread_mutex_init(queue->mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_init(queue->mutex, NULL);
     return 0;
 }
 
@@ -37,12 +37,12 @@ void priority_queue_cleanup(priority_queue_t* queue) {
     if (!queue) return;
     
     if (queue->mutex) {
-        pthread_mutex_destroy(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        free(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(queue->mutex);
+        free(queue->mutex);
     }
     
     if (queue->items) {
-        free(queue->items\n"\n"\n"\n"\n"\n"\n"\n");
+        free(queue->items);
     }
     
     queue->items = NULL;
@@ -68,7 +68,7 @@ static void heapify_up(priority_queue_t* queue, int index) {
             break;
         }
         
-        swap_items(&queue->items[parent], &queue->items[index]\n"\n"\n"\n"\n"\n"\n"\n");
+        swap_items(&queue->items[parent], &queue->items[index]);
         index = parent;
     }
 }
@@ -94,7 +94,7 @@ static void heapify_down(priority_queue_t* queue, int index) {
             break;
         }
         
-        swap_items(&queue->items[index], &queue->items[smallest]\n"\n"\n"\n"\n"\n"\n"\n");
+        swap_items(&queue->items[index], &queue->items[smallest]);
         index = smallest;
     }
 }
@@ -106,10 +106,10 @@ int priority_queue_push(priority_queue_t* queue, const notification_event_t* eve
         return -1;
     }
     
-    pthread_mutex_lock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(queue->mutex);
     
     if (queue->size >= queue->max_size) {
-        pthread_mutex_unlock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(queue->mutex);
         return -1; // Queue full
     }
     
@@ -119,28 +119,28 @@ int priority_queue_push(priority_queue_t* queue, const notification_event_t* eve
     queue->items[index].timestamp = timestamp;
     
     // Copy event data
-    safe_strncpy(queue->items[index].event.id, event->id, sizeof(queue->items[index].event.id)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(queue->items[index].event.title, event->title, sizeof(queue->items[index].event.title)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(queue->items[index].event.message, event->message, sizeof(queue->items[index].event.message)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(queue->items[index].event.id, event->id, sizeof(queue->items[index].event.id));
+    safe_strncpy(queue->items[index].event.title, event->title, sizeof(queue->items[index].event.title));
+    safe_strncpy(queue->items[index].event.message, event->message, sizeof(queue->items[index].event.message));
     queue->items[index].event.type = event->type;
     queue->items[index].event.priority = event->priority;
-    safe_strncpy(queue->items[index].event.sound, event->sound, sizeof(queue->items[index].event.sound)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(queue->items[index].event.url, event->url, sizeof(queue->items[index].event.url)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(queue->items[index].event.url_title, event->url_title, sizeof(queue->items[index].event.url_title)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(queue->items[index].event.sound, event->sound, sizeof(queue->items[index].event.sound));
+    safe_strncpy(queue->items[index].event.url, event->url, sizeof(queue->items[index].event.url));
+    safe_strncpy(queue->items[index].event.url_title, event->url_title, sizeof(queue->items[index].event.url_title));
     queue->items[index].event.timestamp = event->timestamp;
     
     // Copy enhanced context data
-    safe_strncpy(queue->items[index].event.member_name, event->member_name, sizeof(queue->items[index].event.member_name)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(queue->items[index].event.from_member, event->from_member, sizeof(queue->items[index].event.from_member)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(queue->items[index].event.to_member, event->to_member, sizeof(queue->items[index].event.to_member)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(queue->items[index].event.error_details, event->error_details, sizeof(queue->items[index].event.error_details)\n"\n"\n"\n"\n"\n"\n"\n");
-    safe_strncpy(queue->items[index].event.details_json, event->details_json, sizeof(queue->items[index].event.details_json)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(queue->items[index].event.member_name, event->member_name, sizeof(queue->items[index].event.member_name));
+    safe_strncpy(queue->items[index].event.from_member, event->from_member, sizeof(queue->items[index].event.from_member));
+    safe_strncpy(queue->items[index].event.to_member, event->to_member, sizeof(queue->items[index].event.to_member));
+    safe_strncpy(queue->items[index].event.error_details, event->error_details, sizeof(queue->items[index].event.error_details));
+    safe_strncpy(queue->items[index].event.details_json, event->details_json, sizeof(queue->items[index].event.details_json));
     
     // Copy rich context features
     if (event->location) {
-        queue->items[index].event.location = malloc(sizeof(notification_location_t)\n"\n"\n"\n"\n"\n"\n"\n");
+        queue->items[index].event.location = malloc(sizeof(notification_location_t));
         if (queue->items[index].event.location) {
-            memcpy(queue->items[index].event.location, event->location, sizeof(notification_location_t)\n"\n"\n"\n"\n"\n"\n"\n");
+            memcpy(queue->items[index].event.location, event->location, sizeof(notification_location_t));
         }
     } else {
         queue->items[index].event.location = NULL;
@@ -148,14 +148,14 @@ int priority_queue_push(priority_queue_t* queue, const notification_event_t* eve
     
     queue->items[index].event.duration = event->duration;
     queue->items[index].event.acknowledged = event->acknowledged;
-    safe_strncpy(queue->items[index].event.message_id, event->message_id, sizeof(queue->items[index].event.message_id)\n"\n"\n"\n"\n"\n"\n"\n");
+    safe_strncpy(queue->items[index].event.message_id, event->message_id, sizeof(queue->items[index].event.message_id));
     
     queue->size++;
     
     // Restore heap property
-    heapify_up(queue, index\n"\n"\n"\n"\n"\n"\n"\n");
+    heapify_up(queue, index);
     
-    pthread_mutex_unlock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(queue->mutex);
     return 0;
 }
 
@@ -165,10 +165,10 @@ int priority_queue_pop(priority_queue_t* queue, priority_queue_item_t* item) {
         return -1;
     }
     
-    pthread_mutex_lock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(queue->mutex);
     
     if (queue->size == 0) {
-        pthread_mutex_unlock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(queue->mutex);
         return -1; // Queue empty
     }
     
@@ -179,10 +179,10 @@ int priority_queue_pop(priority_queue_t* queue, priority_queue_item_t* item) {
     queue->size--;
     if (queue->size > 0) {
         queue->items[0] = queue->items[queue->size];
-        heapify_down(queue, 0\n"\n"\n"\n"\n"\n"\n"\n");
+        heapify_down(queue, 0);
     }
     
-    pthread_mutex_unlock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(queue->mutex);
     return 0;
 }
 
@@ -192,16 +192,16 @@ int priority_queue_peek(const priority_queue_t* queue, priority_queue_item_t* it
         return -1;
     }
     
-    pthread_mutex_lock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(queue->mutex);
     
     if (queue->size == 0) {
-        pthread_mutex_unlock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_unlock(queue->mutex);
         return -1; // Queue empty
     }
     
     *item = queue->items[0];
     
-    pthread_mutex_unlock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(queue->mutex);
     return 0;
 }
 
@@ -211,9 +211,9 @@ int priority_queue_size(const priority_queue_t* queue) {
         return -1;
     }
     
-    pthread_mutex_lock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(queue->mutex);
     int size = queue->size;
-    pthread_mutex_unlock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(queue->mutex);
     
     return size;
 }
@@ -233,19 +233,19 @@ bool priority_queue_is_full(const priority_queue_t* queue) {
 void priority_queue_clear(priority_queue_t* queue) {
     if (!queue || !queue->mutex) return;
     
-    pthread_mutex_lock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(queue->mutex);
     
     // Free location data for all items
     for (int i = 0; i < queue->size; i++) {
         if (queue->items[i].event.location) {
-            free(queue->items[i].event.location\n"\n"\n"\n"\n"\n"\n"\n");
+            free(queue->items[i].event.location);
             queue->items[i].event.location = NULL;
         }
     }
     
     queue->size = 0; // Use configurable queue size
     
-    pthread_mutex_unlock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(queue->mutex);
 }
 
 // Remove items older than specified timestamp
@@ -254,7 +254,7 @@ int priority_queue_remove_old(priority_queue_t* queue, time_t cutoff_time) {
         return -1;
     }
     
-    pthread_mutex_lock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(queue->mutex);
     
     int removed_count = 0;
     int write_index = 0;
@@ -269,7 +269,7 @@ int priority_queue_remove_old(priority_queue_t* queue, time_t cutoff_time) {
         } else {
             // Remove this item
             if (queue->items[i].event.location) {
-                free(queue->items[i].event.location\n"\n"\n"\n"\n"\n"\n"\n");
+                free(queue->items[i].event.location);
             }
             removed_count++;
         }
@@ -279,10 +279,10 @@ int priority_queue_remove_old(priority_queue_t* queue, time_t cutoff_time) {
     
     // Restore heap property
     for (int i = queue->size / 2 - 1; i >= 0; i--) {
-        heapify_down(queue, i\n"\n"\n"\n"\n"\n"\n"\n");
+        heapify_down(queue, i);
     }
     
-    pthread_mutex_unlock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(queue->mutex);
     return removed_count;
 }
 
@@ -290,12 +290,12 @@ int priority_queue_remove_old(priority_queue_t* queue, time_t cutoff_time) {
 void priority_queue_get_stats(const priority_queue_t* queue, priority_queue_stats_t* stats) {
     if (!queue || !stats || !queue->mutex) return;
     
-    pthread_mutex_lock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(queue->mutex);
     
     stats->current_size = queue->size;
     stats->max_size = queue->max_size;
-    stats->is_empty = (queue->size == 0\n"\n"\n"\n"\n"\n"\n"\n");
-    stats->is_full = (queue->size >= queue->max_size\n"\n"\n"\n"\n"\n"\n"\n");
+    stats->is_empty = (queue->size == 0);
+    stats->is_full = (queue->size >= queue->max_size);
     
     if (queue->size > 0) {
         stats->highest_priority = queue->items[0].priority;
@@ -324,5 +324,5 @@ void priority_queue_get_stats(const priority_queue_t* queue, priority_queue_stat
         stats->newest_timestamp = 0;
     }
     
-    pthread_mutex_unlock(queue->mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(queue->mutex);
 }

@@ -17,12 +17,12 @@ static predictive_engine_t g_predictive_engine;
 static bool g_predictive_engine_initialized = false;
 
 // Forward declarations
-static void generate_failover_predictions(void\n"\n"\n"\n"\n"\n"\n"\n");
-static void generate_performance_predictions(void\n"\n"\n"\n"\n"\n"\n"\n");
-static void generate_maintenance_predictions(void\n"\n"\n"\n"\n"\n"\n"\n");
-static void generate_capacity_predictions(void\n"\n"\n"\n"\n"\n"\n"\n");
-static void perform_statistical_training(void\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_prediction_confidence(const prediction_result_t* prediction\n"\n"\n"\n"\n"\n"\n"\n");
+static void generate_failover_predictions(void);
+static void generate_performance_predictions(void);
+static void generate_maintenance_predictions(void);
+static void generate_capacity_predictions(void);
+static void perform_statistical_training(void);
+double calculate_prediction_confidence(const prediction_result_t* prediction);
 
 // Initialize predictive engine
 int predictive_engine_init(const predictive_model_config_t* config) {
@@ -30,7 +30,7 @@ int predictive_engine_init(const predictive_model_config_t* config) {
         return 0; // Already initialized
     }
     
-    memset(&g_predictive_engine, 0, sizeof(predictive_engine_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_predictive_engine, 0, sizeof(predictive_engine_t));
     
     // Set configuration
     if (config) {
@@ -46,12 +46,12 @@ int predictive_engine_init(const predictive_model_config_t* config) {
     }
     
     // Initialize mutex
-    g_predictive_engine.mutex = malloc(sizeof(pthread_mutex_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    g_predictive_engine.mutex = malloc(sizeof(pthread_mutex_t));
     if (!g_predictive_engine.mutex) {
         return -1;
     }
     
-    pthread_mutex_init(g_predictive_engine.mutex, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_init(g_predictive_engine.mutex, NULL);
     
     // Initialize predictions array
     g_predictive_engine.prediction_count = 0;
@@ -65,8 +65,8 @@ void predictive_engine_cleanup(void) {
     if (!g_predictive_engine_initialized) return;
     
     if (g_predictive_engine.mutex) {
-        pthread_mutex_destroy(g_predictive_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-        free(g_predictive_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_mutex_destroy(g_predictive_engine.mutex);
+        free(g_predictive_engine.mutex);
     }
     
     g_predictive_engine.mutex = NULL;
@@ -79,22 +79,22 @@ int predictive_engine_generate_predictions(void) {
         return -1;
     }
     
-    pthread_mutex_lock(g_predictive_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_predictive_engine.mutex);
     
     // Clear previous predictions
     g_predictive_engine.prediction_count = 0;
     
     // Generate different types of predictions
-    generate_failover_predictions(\n"\n"\n"\n"\n"\n"\n"\n");
-    generate_performance_predictions(\n"\n"\n"\n"\n"\n"\n"\n");
-    generate_maintenance_predictions(\n"\n"\n"\n"\n"\n"\n"\n");
-    generate_capacity_predictions(\n"\n"\n"\n"\n"\n"\n"\n");
+    generate_failover_predictions();
+    generate_performance_predictions();
+    generate_maintenance_predictions();
+    generate_capacity_predictions();
     
     // Update statistics
-    g_predictive_engine.last_training = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_predictive_engine.last_training = time(NULL);
     g_predictive_engine.training_count++;
     
-    pthread_mutex_unlock(g_predictive_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_predictive_engine.mutex);
     
     return g_predictive_engine.prediction_count;
 }
@@ -105,7 +105,7 @@ int predictive_engine_get_predictions(prediction_result_t* predictions, int max_
         return -1;
     }
     
-    pthread_mutex_lock(g_predictive_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_predictive_engine.mutex);
     
     int count = 0;
     for (int i = 0; i < g_predictive_engine.prediction_count && count < max_predictions; i++) {
@@ -115,7 +115,7 @@ int predictive_engine_get_predictions(prediction_result_t* predictions, int max_
         }
     }
     
-    pthread_mutex_unlock(g_predictive_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_predictive_engine.mutex);
     
     return count;
 }
@@ -126,50 +126,50 @@ int predictive_engine_train_models(void) {
         return -1;
     }
     
-    pthread_mutex_lock(g_predictive_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_predictive_engine.mutex);
     
     // Real ML training implementation
-    printf("INFO: "Starting predictive model training"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starting predictive model training");
     
     // 1. Collect training data from telemetry
     char training_data_cmd[512];
     snprintf(training_data_cmd, sizeof(training_data_cmd),
-            "python3 /usr/lib/autonomy/ml/train_models.py --data-dir /var/lib/autonomy/telemetry --output-dir /var/lib/autonomy/ml/models --algorithm random_forest 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
+            "python3 /usr/lib/autonomy/ml/train_models.py --data-dir /var/lib/autonomy/telemetry --output-dir /var/lib/autonomy/ml/models --algorithm random_forest 2>/dev/null");
     
-    int training_result = system(training_data_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+    int training_result = system(training_data_cmd);
     if (training_result != 0) {
-        printf("WARN: "ML training script failed, using fallback training"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("ML training script failed, using fallback training");
         
         // Fallback: Use statistical analysis for training
-        perform_statistical_training(\n"\n"\n"\n"\n"\n"\n"\n");
+        perform_statistical_training();
     } else {
-        printf("INFO: "ML training script completed successfully"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_INFO_MSG("ML training script completed successfully");
     }
     
     // 2. Validate trained models
     char validation_cmd[512];
     snprintf(validation_cmd, sizeof(validation_cmd),
-            "python3 /usr/lib/autonomy/ml/validate_models.py --model-dir /var/lib/autonomy/ml/models --data-dir /var/lib/autonomy/telemetry --use-real-data 2>/dev/null"\n"\n"\n"\n"\n"\n"\n"\n");
+            "python3 /usr/lib/autonomy/ml/validate_models.py --model-dir /var/lib/autonomy/ml/models --data-dir /var/lib/autonomy/telemetry --use-real-data 2>/dev/null");
     
-    int validation_result = system(validation_cmd\n"\n"\n"\n"\n"\n"\n"\n");
+    int validation_result = system(validation_cmd);
     if (validation_result == 0) {
         // Parse validation results
-        FILE *validation_file = fopen("/var/lib/autonomy/ml/models/validation_results.json", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+        FILE *validation_file = fopen("/var/lib/autonomy/ml/models/validation_results.json", "r");
         if (validation_file) {
             char buffer[1024];
             if (fgets(buffer, sizeof(buffer), validation_file)) {
                 // Parse accuracy from JSON (simplified)
-                char *accuracy_start = strstr(buffer, "\"accuracy\":"\n"\n"\n"\n"\n"\n"\n"\n");
+                char *accuracy_start = strstr(buffer, "\"accuracy\":");
                 if (accuracy_start) {
-                    g_predictive_engine.accuracy_rate = atof(accuracy_start + 11\n"\n"\n"\n"\n"\n"\n"\n");
+                    g_predictive_engine.accuracy_rate = atof(accuracy_start + 11);
                 }
             }
-            fclose(validation_file\n"\n"\n"\n"\n"\n"\n"\n");
+            fclose(validation_file);
         }
     }
     
     // 3. Update training statistics
-    g_predictive_engine.last_training = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    g_predictive_engine.last_training = time(NULL);
     g_predictive_engine.training_count++;
     
     // 4. Calculate accuracy from historical predictions
@@ -179,17 +179,17 @@ int predictive_engine_train_models(void) {
         
         // Use weighted average of ML accuracy and historical accuracy
         if (g_predictive_engine.accuracy_rate > 0) {
-            g_predictive_engine.accuracy_rate = (g_predictive_engine.accuracy_rate * 0.7) + (historical_accuracy * 0.3\n"\n"\n"\n"\n"\n"\n"\n");
+            g_predictive_engine.accuracy_rate = (g_predictive_engine.accuracy_rate * 0.7) + (historical_accuracy * 0.3);
         } else {
             g_predictive_engine.accuracy_rate = historical_accuracy;
         }
     }
     
-    printf("INFO: "Predictive model training completed", 
+    LOGX_INFO_MSG("Predictive model training completed", 
                   "accuracy", g_predictive_engine.accuracy_rate,
-                  "training_count", g_predictive_engine.training_count\n"\n"\n"\n"\n"\n"\n"\n");
+                  "training_count", g_predictive_engine.training_count);
     
-    pthread_mutex_unlock(g_predictive_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_predictive_engine.mutex);
     
     return 0;
 }
@@ -198,7 +198,7 @@ int predictive_engine_train_models(void) {
 int predictive_engine_update_accuracy(bool prediction_correct) {
     if (!g_predictive_engine_initialized) return -1;
     
-    pthread_mutex_lock(g_predictive_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_predictive_engine.mutex);
     
     g_predictive_engine.total_predictions++;
     if (prediction_correct) {
@@ -209,7 +209,7 @@ int predictive_engine_update_accuracy(bool prediction_correct) {
     g_predictive_engine.accuracy_rate = (double)g_predictive_engine.successful_predictions / 
                                        g_predictive_engine.total_predictions;
     
-    pthread_mutex_unlock(g_predictive_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_predictive_engine.mutex);
     
     return 0;
 }
@@ -221,12 +221,12 @@ static void generate_failover_predictions(void) {
     prediction_result_t* pred = &g_predictive_engine.predictions[g_predictive_engine.prediction_count];
     
     pred->type = PREDICTION_TYPE_FAILOVER;
-    strcpy(pred->target, "eth0"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(pred->target, "eth0");
     pred->probability = 0.75;
     pred->predicted_time = time(NULL) + 3600; // 1 hour from now
-    strcpy(pred->description, "High probability of network interface failure"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(pred->description, "High probability of network interface failure");
     pred->confidence = 0.8;
-    strcpy(pred->mitigation, "Prepare failover to backup interface"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(pred->mitigation, "Prepare failover to backup interface");
     
     g_predictive_engine.prediction_count++;
 }
@@ -238,12 +238,12 @@ static void generate_performance_predictions(void) {
     prediction_result_t* pred = &g_predictive_engine.predictions[g_predictive_engine.prediction_count];
     
     pred->type = PREDICTION_TYPE_PERFORMANCE;
-    strcpy(pred->target, "system_performance"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(pred->target, "system_performance");
     pred->probability = 0.6;
     pred->predicted_time = time(NULL) + 7200; // 2 hours from now
-    strcpy(pred->description, "Expected performance degradation during peak hours"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(pred->description, "Expected performance degradation during peak hours");
     pred->confidence = 0.7;
-    strcpy(pred->mitigation, "Optimize resource allocation and caching"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(pred->mitigation, "Optimize resource allocation and caching");
     
     g_predictive_engine.prediction_count++;
 }
@@ -255,12 +255,12 @@ static void generate_maintenance_predictions(void) {
     prediction_result_t* pred = &g_predictive_engine.predictions[g_predictive_engine.prediction_count];
     
     pred->type = PREDICTION_TYPE_MAINTENANCE;
-    strcpy(pred->target, "disk_cleanup"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(pred->target, "disk_cleanup");
     pred->probability = 0.9;
     pred->predicted_time = time(NULL) + 86400; // 24 hours from now
-    strcpy(pred->description, "Disk space will reach critical threshold"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(pred->description, "Disk space will reach critical threshold");
     pred->confidence = 0.95;
-    strcpy(pred->mitigation, "Schedule automated cleanup and log rotation"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(pred->mitigation, "Schedule automated cleanup and log rotation");
     
     g_predictive_engine.prediction_count++;
 }
@@ -272,12 +272,12 @@ static void generate_capacity_predictions(void) {
     prediction_result_t* pred = &g_predictive_engine.predictions[g_predictive_engine.prediction_count];
     
     pred->type = PREDICTION_TYPE_CAPACITY;
-    strcpy(pred->target, "memory_usage"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(pred->target, "memory_usage");
     pred->probability = 0.7;
     pred->predicted_time = time(NULL) + 43200; // 12 hours from now
-    strcpy(pred->description, "Memory usage approaching capacity limits"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(pred->description, "Memory usage approaching capacity limits");
     pred->confidence = 0.75;
-    strcpy(pred->mitigation, "Optimize memory allocation and consider scaling"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(pred->mitigation, "Optimize memory allocation and consider scaling");
     
     g_predictive_engine.prediction_count++;
 }
@@ -292,16 +292,16 @@ double calculate_prediction_confidence(const prediction_result_t* prediction) {
     double base_confidence = prediction->probability;
     double time_factor = 1.0 - (time(NULL) - prediction->predicted_time) / 86400.0; // Decay over 24 hours
     
-    return fmax(0.0, fmin(1.0, base_confidence * time_factor)\n"\n"\n"\n"\n"\n"\n"\n");
+    return fmax(0.0, fmin(1.0, base_confidence * time_factor));
 }
 
 // Get predictive engine status
 void predictive_engine_get_status(predictive_engine_t* status) {
     if (!status || !g_predictive_engine_initialized) return;
     
-    pthread_mutex_lock(g_predictive_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(g_predictive_engine.mutex);
     *status = g_predictive_engine;
-    pthread_mutex_unlock(g_predictive_engine.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(g_predictive_engine.mutex);
 }
 
 // Check if predictive engine is initialized
@@ -316,10 +316,10 @@ predictive_engine_t* predictive_engine_get_instance(void) {
 
 // Statistical training fallback function
 static void perform_statistical_training(void) {
-    printf("INFO: "Performing statistical training fallback"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Performing statistical training fallback");
     
     // Analyze historical telemetry data for patterns
-    FILE *telemetry_file = fopen("/var/lib/autonomy/telemetry/network_data.json", "r"\n"\n"\n"\n"\n"\n"\n"\n");
+    FILE *telemetry_file = fopen("/var/lib/autonomy/telemetry/network_data.json", "r");
     if (telemetry_file) {
         char buffer[1024];
         int sample_count = 0;
@@ -329,13 +329,13 @@ static void perform_statistical_training(void) {
         
         while (fgets(buffer, sizeof(buffer), telemetry_file) && sample_count < 1000) {
             // Parse telemetry data (simplified JSON parsing)
-            char *latency_start = strstr(buffer, "\"latency\":"\n"\n"\n"\n"\n"\n"\n"\n");
-            char *loss_start = strstr(buffer, "\"packet_loss\":"\n"\n"\n"\n"\n"\n"\n"\n");
-            char *status_start = strstr(buffer, "\"status\":"\n"\n"\n"\n"\n"\n"\n"\n");
+            char *latency_start = strstr(buffer, "\"latency\":");
+            char *loss_start = strstr(buffer, "\"packet_loss\":");
+            char *status_start = strstr(buffer, "\"status\":");
             
             if (latency_start && loss_start) {
-                double latency = atof(latency_start + 10\n"\n"\n"\n"\n"\n"\n"\n");
-                double loss = atof(loss_start + 13\n"\n"\n"\n"\n"\n"\n"\n");
+                double latency = atof(latency_start + 10);
+                double loss = atof(loss_start + 13);
                 
                 total_latency += latency;
                 total_packet_loss += loss;
@@ -347,7 +347,7 @@ static void perform_statistical_training(void) {
                 }
             }
         }
-        fclose(telemetry_file\n"\n"\n"\n"\n"\n"\n"\n");
+        fclose(telemetry_file);
         
         if (sample_count > 0) {
             double avg_latency = total_latency / sample_count;
@@ -357,15 +357,15 @@ static void perform_statistical_training(void) {
             // Update predictive engine with statistical insights
             g_predictive_engine.accuracy_rate = 1.0 - failure_rate; // Simple accuracy based on failure rate
             
-            printf("INFO: "Statistical training completed", 
+            LOGX_INFO_MSG("Statistical training completed", 
                           "samples", sample_count,
                           "avg_latency", avg_latency,
                           "avg_loss", avg_loss,
                           "failure_rate", failure_rate,
-                          "accuracy", g_predictive_engine.accuracy_rate\n"\n"\n"\n"\n"\n"\n"\n");
+                          "accuracy", g_predictive_engine.accuracy_rate);
         }
     } else {
-        printf("WARN: "No telemetry data available for statistical training"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("No telemetry data available for statistical training");
         g_predictive_engine.accuracy_rate = 0.5; // Default accuracy
     }
 }

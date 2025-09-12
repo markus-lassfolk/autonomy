@@ -39,35 +39,35 @@ static const char* OUTAGE_CAUSE_STRINGS[] = {
 };
 
 // Forward declarations
-static int collect_from_location_api(starlink_comprehensive_gps_t* gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-static int collect_from_status_api(starlink_comprehensive_gps_t* gps_data, starlink_comprehensive_status_t* status\n"\n"\n"\n"\n"\n"\n"\n");
-static int collect_from_diagnostics_api(starlink_comprehensive_gps_t* gps_data\n"\n"\n"\n"\n"\n"\n"\n");
-int collect_from_history_api(starlink_events_outages_analysis_t* analysis\n"\n"\n"\n"\n"\n"\n"\n");
-static int parse_events_from_response(const char* json_response, starlink_event_t* events, int max_events\n"\n"\n"\n"\n"\n"\n"\n");
-static int parse_outages_from_response(const char* json_response, starlink_outage_t* outages, int max_outages\n"\n"\n"\n"\n"\n"\n"\n");
-void analyze_events_and_outages(starlink_events_outages_analysis_t* analysis\n"\n"\n"\n"\n"\n"\n"\n");
-double calculate_overall_health_score(const starlink_comprehensive_status_t* status\n"\n"\n"\n"\n"\n"\n"\n");
-static void* collection_thread_worker(void* arg\n"\n"\n"\n"\n"\n"\n"\n");
-static void* analysis_thread_worker(void* arg\n"\n"\n"\n"\n"\n"\n"\n");
+static int collect_from_location_api(starlink_comprehensive_gps_t* gps_data);
+static int collect_from_status_api(starlink_comprehensive_gps_t* gps_data, starlink_comprehensive_status_t* status);
+static int collect_from_diagnostics_api(starlink_comprehensive_gps_t* gps_data);
+int collect_from_history_api(starlink_events_outages_analysis_t* analysis);
+static int parse_events_from_response(const char* json_response, starlink_event_t* events, int max_events);
+static int parse_outages_from_response(const char* json_response, starlink_outage_t* outages, int max_outages);
+void analyze_events_and_outages(starlink_events_outages_analysis_t* analysis);
+double calculate_overall_health_score(const starlink_comprehensive_status_t* status);
+static void* collection_thread_worker(void* arg);
+static void* analysis_thread_worker(void* arg);
 
 // Initialize comprehensive Starlink collector
 int starlink_comprehensive_init(const starlink_comprehensive_config_t* config) {
     if (g_starlink_comprehensive_initialized) {
-        printf("WARN: "Comprehensive Starlink collector already initialized"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Comprehensive Starlink collector already initialized");
         return AUTONOMY_SUCCESS;
     }
     
     if (!config) {
-        printf("ERROR: "Starlink comprehensive config is NULL"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Starlink comprehensive config is NULL");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    memset(&g_starlink_comprehensive, 0, sizeof(starlink_comprehensive_collector_t)\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(&g_starlink_comprehensive, 0, sizeof(starlink_comprehensive_collector_t));
     g_starlink_comprehensive.config = *config;
     
     // Initialize mutex
     if (pthread_mutex_init(&g_starlink_comprehensive.mutex, NULL) != 0) {
-        printf("ERROR: "Failed to initialize Starlink comprehensive mutex"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to initialize Starlink comprehensive mutex");
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -79,11 +79,11 @@ int starlink_comprehensive_init(const starlink_comprehensive_config_t* config) {
         .http_first = false,
         .predictive_enabled = true
     };
-    strcpy(starlink_config.host, config->host\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(starlink_config.host, config->host);
     
     if (starlink_client_init(&starlink_config) != 0) {
-        printf("ERROR: "Failed to initialize basic Starlink client"\n"\n"\n"\n"\n"\n"\n"\n");
-        pthread_mutex_destroy(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_ERROR_MSG("Failed to initialize basic Starlink client");
+        pthread_mutex_destroy(&g_starlink_comprehensive.mutex);
         return AUTONOMY_ERROR_SYSTEM;
     }
     
@@ -93,21 +93,21 @@ int starlink_comprehensive_init(const starlink_comprehensive_config_t* config) {
         
         if (pthread_create(&g_starlink_comprehensive.collection_thread, NULL, 
                           collection_thread_worker, NULL) != 0) {
-            printf("ERROR: "Failed to create Starlink collection thread"\n"\n"\n"\n"\n"\n"\n"\n");
-            starlink_client_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
-            pthread_mutex_destroy(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_ERROR_MSG("Failed to create Starlink collection thread");
+            starlink_client_cleanup();
+            pthread_mutex_destroy(&g_starlink_comprehensive.mutex);
             return AUTONOMY_ERROR_SYSTEM;
         }
         
         if (config->enable_events_analysis || config->enable_outages_analysis) {
             if (pthread_create(&g_starlink_comprehensive.analysis_thread, NULL, 
                               analysis_thread_worker, NULL) != 0) {
-                printf("ERROR: "Failed to create Starlink analysis thread"\n"\n"\n"\n"\n"\n"\n"\n");
+                LOGX_ERROR_MSG("Failed to create Starlink analysis thread");
                 g_starlink_comprehensive.threads_running = false;
-                pthread_cancel(g_starlink_comprehensive.collection_thread\n"\n"\n"\n"\n"\n"\n"\n");
-                pthread_join(g_starlink_comprehensive.collection_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
-                starlink_client_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
-                pthread_mutex_destroy(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+                pthread_cancel(g_starlink_comprehensive.collection_thread);
+                pthread_join(g_starlink_comprehensive.collection_thread, NULL);
+                starlink_client_cleanup();
+                pthread_mutex_destroy(&g_starlink_comprehensive.mutex);
                 return AUTONOMY_ERROR_SYSTEM;
             }
         }
@@ -115,14 +115,14 @@ int starlink_comprehensive_init(const starlink_comprehensive_config_t* config) {
     
     g_starlink_comprehensive_initialized = true;
     
-    printf("INFO: "Comprehensive Starlink collector initialized",
+    LOGX_INFO_MSG("Comprehensive Starlink collector initialized",
               "host", config->host,
               "port", config->port,
               "collect_location", config->collect_location,
               "collect_status", config->collect_status,
               "collect_diagnostics", config->collect_diagnostics,
               "events_analysis", config->enable_events_analysis,
-              "outages_analysis", config->enable_outages_analysis\n"\n"\n"\n"\n"\n"\n"\n");
+              "outages_analysis", config->enable_outages_analysis);
     
     return AUTONOMY_SUCCESS;
 }
@@ -131,31 +131,31 @@ int starlink_comprehensive_init(const starlink_comprehensive_config_t* config) {
 void starlink_comprehensive_cleanup(void) {
     if (!g_starlink_comprehensive_initialized) return;
     
-    pthread_mutex_lock(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_starlink_comprehensive.mutex);
     
     // Stop background threads
     g_starlink_comprehensive.threads_running = false;
     
     if (g_starlink_comprehensive.config.enabled) {
-        pthread_cancel(g_starlink_comprehensive.collection_thread\n"\n"\n"\n"\n"\n"\n"\n");
-        pthread_join(g_starlink_comprehensive.collection_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        pthread_cancel(g_starlink_comprehensive.collection_thread);
+        pthread_join(g_starlink_comprehensive.collection_thread, NULL);
         
         if (g_starlink_comprehensive.config.enable_events_analysis || 
             g_starlink_comprehensive.config.enable_outages_analysis) {
-            pthread_cancel(g_starlink_comprehensive.analysis_thread\n"\n"\n"\n"\n"\n"\n"\n");
-            pthread_join(g_starlink_comprehensive.analysis_thread, NULL\n"\n"\n"\n"\n"\n"\n"\n");
+            pthread_cancel(g_starlink_comprehensive.analysis_thread);
+            pthread_join(g_starlink_comprehensive.analysis_thread, NULL);
         }
     }
     
     // Cleanup basic Starlink client
-    starlink_client_cleanup(\n"\n"\n"\n"\n"\n"\n"\n");
+    starlink_client_cleanup();
     
-    pthread_mutex_unlock(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
-    pthread_mutex_destroy(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_starlink_comprehensive.mutex);
+    pthread_mutex_destroy(&g_starlink_comprehensive.mutex);
     
     g_starlink_comprehensive_initialized = false;
     
-    printf("INFO: "Comprehensive Starlink collector cleaned up"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Comprehensive Starlink collector cleaned up");
 }
 
 // Collect comprehensive Starlink data from all APIs
@@ -164,16 +164,16 @@ int starlink_comprehensive_collect_all(starlink_comprehensive_status_t* status) 
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    pthread_mutex_lock(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_starlink_comprehensive.mutex);
     
-    memset(status, 0, sizeof(starlink_comprehensive_status_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(status, 0, sizeof(starlink_comprehensive_status_t));
+    time_t start_time = time(NULL);
     
     // Collect comprehensive GPS data
     if (starlink_comprehensive_collect_gps(&status->gps_data) == AUTONOMY_SUCCESS) {
-        printf("DEBUG: "Comprehensive Starlink GPS data collected",
+        LOGX_DEBUG_MSG("Comprehensive Starlink GPS data collected",
                   "sources", status->gps_data.data_sources,
-                  "confidence", status->gps_data.confidence\n"\n"\n"\n"\n"\n"\n"\n");
+                  "confidence", status->gps_data.confidence);
     }
     
     // Collect basic status data (device info, obstruction, network performance)
@@ -184,9 +184,9 @@ int starlink_comprehensive_collect_all(starlink_comprehensive_status_t* status) 
         status->obstruction_stats = basic_status.obstruction_stats;
         status->pop_ping_latency_ms = basic_status.network_perf.pop_ping_latency_ms;
         
-        printf("DEBUG: "Basic Starlink status collected",
+        LOGX_DEBUG_MSG("Basic Starlink status collected",
                   "uptime", status->device_state.uptime_s,
-                  "obstruction_pct", status->obstruction_stats.fraction_obstructed\n"\n"\n"\n"\n"\n"\n"\n");
+                  "obstruction_pct", status->obstruction_stats.fraction_obstructed);
     }
     
     // Analyze events and outages if enabled
@@ -194,23 +194,23 @@ int starlink_comprehensive_collect_all(starlink_comprehensive_status_t* status) 
         g_starlink_comprehensive.config.enable_outages_analysis) {
         
         if (starlink_comprehensive_analyze_events(&status->events_analysis) == AUTONOMY_SUCCESS) {
-            printf("DEBUG: "Starlink events and outages analyzed",
+            LOGX_DEBUG_MSG("Starlink events and outages analyzed",
                       "events", status->events_analysis.event_count,
                       "outages", status->events_analysis.outage_count,
-                      "stability_score", status->events_analysis.stability_score\n"\n"\n"\n"\n"\n"\n"\n");
+                      "stability_score", status->events_analysis.stability_score);
         }
     }
     
     // Calculate overall scores
-    status->overall_health_score = calculate_overall_health_score(status\n"\n"\n"\n"\n"\n"\n"\n");
+    status->overall_health_score = calculate_overall_health_score(status);
     status->gps_quality_score = status->gps_data.confidence;
     status->stability_score = status->events_analysis.stability_score;
-    status->network_quality_score = fmax(0.0, (100.0 - status->pop_ping_latency_ms) / 100.0\n"\n"\n"\n"\n"\n"\n"\n");
+    status->network_quality_score = fmax(0.0, (100.0 - status->pop_ping_latency_ms) / 100.0);
     
-    status->last_update = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    status->last_update = time(NULL);
     status->collection_duration_ms = difftime(status->last_update, start_time) * 1000.0;
     status->collection_successful = true;
-    strcpy(status->collection_status, "success"\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(status->collection_status, "success");
     
     // Update statistics
     g_starlink_comprehensive.total_collections++;
@@ -242,13 +242,13 @@ int starlink_comprehensive_collect_all(starlink_comprehensive_status_t* status) 
     // Store current status
     g_starlink_comprehensive.status = *status;
     
-    pthread_mutex_unlock(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_starlink_comprehensive.mutex);
     
-    printf("INFO: "Comprehensive Starlink collection completed",
+    LOGX_INFO_MSG("Comprehensive Starlink collection completed",
              "collection_time_ms", status->collection_duration_ms,
              "gps_confidence", status->gps_quality_score,
              "stability_score", status->stability_score,
-             "overall_health", status->overall_health_score\n"\n"\n"\n"\n"\n"\n"\n");
+             "overall_health", status->overall_health_score);
     
     return AUTONOMY_SUCCESS;
 }
@@ -259,21 +259,21 @@ int starlink_comprehensive_collect_gps(starlink_comprehensive_gps_t* gps_data) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    memset(gps_data, 0, sizeof(starlink_comprehensive_gps_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    gps_data->collected_at = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(gps_data, 0, sizeof(starlink_comprehensive_gps_t));
+    gps_data->collected_at = time(NULL);
     
-    time_t start_time = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t start_time = time(NULL);
     char data_sources[256] = "";
     
     // Collect from get_location API (primary coordinates + speed)
     if (g_starlink_comprehensive.config.collect_location) {
         if (collect_from_location_api(gps_data) == AUTONOMY_SUCCESS) {
-            strcat(data_sources, "get_location,"\n"\n"\n"\n"\n"\n"\n"\n");
+            strcat(data_sources, "get_location,");
             g_starlink_comprehensive.api_calls_location++;
-            printf("DEBUG: "Starlink location data collected",
+            LOGX_DEBUG_MSG("Starlink location data collected",
                       "lat", gps_data->latitude,
                       "lon", gps_data->longitude,
-                      "accuracy", gps_data->accuracy\n"\n"\n"\n"\n"\n"\n"\n");
+                      "accuracy", gps_data->accuracy);
         }
     }
     
@@ -281,60 +281,60 @@ int starlink_comprehensive_collect_gps(starlink_comprehensive_gps_t* gps_data) {
     if (g_starlink_comprehensive.config.collect_status) {
         starlink_comprehensive_status_t temp_status;
         if (collect_from_status_api(gps_data, &temp_status) == AUTONOMY_SUCCESS) {
-            strcat(data_sources, "get_status,"\n"\n"\n"\n"\n"\n"\n"\n");
+            strcat(data_sources, "get_status,");
             g_starlink_comprehensive.api_calls_status++;
-            printf("DEBUG: "Starlink status data collected",
+            LOGX_DEBUG_MSG("Starlink status data collected",
                       "gps_valid", gps_data->gps_valid,
-                      "satellites", gps_data->gps_satellites\n"\n"\n"\n"\n"\n"\n"\n");
+                      "satellites", gps_data->gps_satellites);
         }
     }
     
     // Collect from get_diagnostics API (enhanced location data)
     if (g_starlink_comprehensive.config.collect_diagnostics) {
         if (collect_from_diagnostics_api(gps_data) == AUTONOMY_SUCCESS) {
-            strcat(data_sources, "get_diagnostics,"\n"\n"\n"\n"\n"\n"\n"\n");
+            strcat(data_sources, "get_diagnostics,");
             g_starlink_comprehensive.api_calls_diagnostics++;
-            printf("DEBUG: "Starlink diagnostics data collected",
+            LOGX_DEBUG_MSG("Starlink diagnostics data collected",
                       "location_enabled", gps_data->location_enabled,
-                      "uncertainty", gps_data->uncertainty_meters\n"\n"\n"\n"\n"\n"\n"\n");
+                      "uncertainty", gps_data->uncertainty_meters);
         }
     }
     
     // Remove trailing comma
-    size_t len = strlen(data_sources\n"\n"\n"\n"\n"\n"\n"\n");
+    size_t len = strlen(data_sources);
     if (len > 0 && data_sources[len-1] == ',') {
         data_sources[len-1] = '\0';
     }
     
-    strcpy(gps_data->data_sources, data_sources\n"\n"\n"\n"\n"\n"\n"\n");
+    strcpy(gps_data->data_sources, data_sources);
     gps_data->collection_ms = difftime(time(NULL), start_time) * 1000.0;
     
     // Calculate confidence and quality score
-    gps_data->confidence = starlink_calculate_gps_confidence(gps_data\n"\n"\n"\n"\n"\n"\n"\n");
+    gps_data->confidence = starlink_calculate_gps_confidence(gps_data);
     
     if (gps_data->confidence >= 0.8) {
-        strcpy(gps_data->quality_score, "excellent"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(gps_data->quality_score, "excellent");
     } else if (gps_data->confidence >= 0.6) {
-        strcpy(gps_data->quality_score, "good"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(gps_data->quality_score, "good");
     } else if (gps_data->confidence >= 0.4) {
-        strcpy(gps_data->quality_score, "fair"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(gps_data->quality_score, "fair");
     } else {
-        strcpy(gps_data->quality_score, "poor"\n"\n"\n"\n"\n"\n"\n"\n");
+        strcpy(gps_data->quality_score, "poor");
     }
     
     // Validate overall data
     gps_data->valid = (gps_data->latitude != 0.0 && gps_data->longitude != 0.0 && 
-                      strlen(gps_data->data_sources) > 0\n"\n"\n"\n"\n"\n"\n"\n");
+                      strlen(gps_data->data_sources) > 0);
     
     if (gps_data->valid) {
-        printf("INFO: "Comprehensive Starlink GPS collection successful",
+        LOGX_INFO_MSG("Comprehensive Starlink GPS collection successful",
                  "sources", gps_data->data_sources,
                  "confidence", gps_data->confidence,
                  "quality", gps_data->quality_score,
-                 "collection_ms", gps_data->collection_ms\n"\n"\n"\n"\n"\n"\n"\n");
+                 "collection_ms", gps_data->collection_ms);
     } else {
-        printf("WARN: "Comprehensive Starlink GPS collection failed",
-                 "sources", gps_data->data_sources\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Comprehensive Starlink GPS collection failed",
+                 "sources", gps_data->data_sources);
     }
     
     return gps_data->valid ? AUTONOMY_SUCCESS : AUTONOMY_ERROR_NOT_FOUND;
@@ -355,16 +355,16 @@ static int collect_from_location_api(starlink_comprehensive_gps_t* gps_data) {
             // Parse JSON response to extract GPS accuracy
             // Add safety check for empty buffer
             if (strlen(response_buffer) > 0) {
-                json_object *json_response = json_tokener_parse(response_buffer\n"\n"\n"\n"\n"\n"\n"\n");
+                json_object *json_response = json_tokener_parse(response_buffer);
                 if (json_response) {
                     json_object *gps_stats, *accuracy_obj;
                     if (json_object_object_get_ex(json_response, "gps_stats", &gps_stats) &&
                         json_object_object_get_ex(gps_stats, "accuracy_meters", &accuracy_obj)) {
-                        gps_data->accuracy = json_object_get_double(accuracy_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                        gps_data->accuracy = json_object_get_double(accuracy_obj);
                     } else {
                         gps_data->accuracy = 10.0; // Fallback
                     }
-                    json_object_put(json_response\n"\n"\n"\n"\n"\n"\n"\n");
+                    json_object_put(json_response);
                 }
             } else {
                 gps_data->accuracy = 10.0; // Fallback
@@ -378,19 +378,19 @@ static int collect_from_location_api(starlink_comprehensive_gps_t* gps_data) {
             // Parse JSON response to extract GPS velocity
             // Add safety check for empty buffer
             if (strlen(response_buffer) > 0) {
-                json_object *json_response = json_tokener_parse(response_buffer\n"\n"\n"\n"\n"\n"\n"\n");
+                json_object *json_response = json_tokener_parse(response_buffer);
                 if (json_response) {
                     json_object *gps_stats, *velocity_obj;
                     if (json_object_object_get_ex(json_response, "gps_stats", &gps_stats) &&
                         json_object_object_get_ex(gps_stats, "velocity_mps", &velocity_obj)) {
-                        double velocity = json_object_get_double(velocity_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                        double velocity = json_object_get_double(velocity_obj);
                         gps_data->horizontal_speed_mps = velocity;
                         gps_data->vertical_speed_mps = 0.0; // Starlink doesn't provide vertical velocity
                     } else {
                         gps_data->horizontal_speed_mps = 0.0;
                         gps_data->vertical_speed_mps = 0.0;
                     }
-                    json_object_put(json_response\n"\n"\n"\n"\n"\n"\n"\n");
+                    json_object_put(json_response);
                 }
             } else {
                 gps_data->horizontal_speed_mps = 0.0;
@@ -404,38 +404,38 @@ static int collect_from_location_api(starlink_comprehensive_gps_t* gps_data) {
         // Get real GPS source information
         if (starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer)) == AUTONOMY_SUCCESS) {
             // Parse JSON response to extract GPS source
-            json_object *json_response = json_tokener_parse(response_buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            json_object *json_response = json_tokener_parse(response_buffer);
             if (json_response) {
                 json_object *gps_stats, *source_obj;
                 if (json_object_object_get_ex(json_response, "gps_stats", &gps_stats) &&
                     json_object_object_get_ex(gps_stats, "source", &source_obj)) {
-                    const char *source = json_object_get_string(source_obj\n"\n"\n"\n"\n"\n"\n"\n");
-                    safe_strncpy(gps_data->gps_source, source, sizeof(gps_data->gps_source)\n"\n"\n"\n"\n"\n"\n"\n");
+                    const char *source = json_object_get_string(source_obj);
+                    safe_strncpy(gps_data->gps_source, source, sizeof(gps_data->gps_source));
                     gps_data->gps_source[sizeof(gps_data->gps_source) - 1] = '\0';
                 } else {
-                    strcpy(gps_data->gps_source, "STARLINK_GPS"\n"\n"\n"\n"\n"\n"\n"\n");
+                    strcpy(gps_data->gps_source, "STARLINK_GPS");
                 }
-                json_object_put(json_response\n"\n"\n"\n"\n"\n"\n"\n");
+                json_object_put(json_response);
             } else {
-                strcpy(gps_data->gps_source, "STARLINK_GPS"\n"\n"\n"\n"\n"\n"\n"\n");
+                strcpy(gps_data->gps_source, "STARLINK_GPS");
             }
         } else {
-            strcpy(gps_data->gps_source, "STARLINK_GPS"\n"\n"\n"\n"\n"\n"\n"\n");
+            strcpy(gps_data->gps_source, "STARLINK_GPS");
         }
         
         // Get additional GPS metadata
         if (starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer)) == AUTONOMY_SUCCESS) {
             // Parse JSON response to extract GPS satellites
-            json_object *json_response = json_tokener_parse(response_buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            json_object *json_response = json_tokener_parse(response_buffer);
             if (json_response) {
                 json_object *gps_stats, *satellites_obj;
                 if (json_object_object_get_ex(json_response, "gps_stats", &gps_stats) &&
                     json_object_object_get_ex(gps_stats, "satellites", &satellites_obj)) {
-                    gps_data->gps_satellites = json_object_get_int(satellites_obj\n"\n"\n"\n"\n"\n"\n"\n");
+                    gps_data->gps_satellites = json_object_get_int(satellites_obj);
                 } else {
                     gps_data->gps_satellites = 0;
                 }
-                json_object_put(json_response\n"\n"\n"\n"\n"\n"\n"\n");
+                json_object_put(json_response);
             } else {
                 gps_data->gps_satellites = 0;
             }
@@ -446,28 +446,28 @@ static int collect_from_location_api(starlink_comprehensive_gps_t* gps_data) {
         // Get HDOP (Horizontal Dilution of Precision)
         if (starlink_grpc_call_get_status(response_buffer, sizeof(response_buffer)) == AUTONOMY_SUCCESS) {
             // Parse JSON response to extract GPS HDOP
-            json_object *json_response = json_tokener_parse(response_buffer\n"\n"\n"\n"\n"\n"\n"\n");
+            json_object *json_response = json_tokener_parse(response_buffer);
             if (json_response) {
                 json_object *gps_stats, *hdop_obj;
                 if (json_object_object_get_ex(json_response, "gps_stats", &gps_stats) &&
                     json_object_object_get_ex(gps_stats, "hdop", &hdop_obj)) {
                     // Note: HDOP is not available in the current struct definition
                     // This data would need to be added to the struct if needed
-                    double hdop = json_object_get_double(hdop_obj\n"\n"\n"\n"\n"\n"\n"\n");
-                    printf("DEBUG: "Retrieved HDOP from gRPC", "hdop", hdop\n"\n"\n"\n"\n"\n"\n"\n");
+                    double hdop = json_object_get_double(hdop_obj);
+                    LOGX_DEBUG_MSG("Retrieved HDOP from gRPC", "hdop", hdop);
                 }
-                json_object_put(json_response\n"\n"\n"\n"\n"\n"\n"\n");
+                json_object_put(json_response);
             }
         }
         
         // Note: HDOP is not available in the current struct definition
         // This data would need to be added to the struct if needed
         
-        printf("DEBUG: "Retrieved real Starlink GPS data via gRPC", 
+        LOGX_DEBUG_MSG("Retrieved real Starlink GPS data via gRPC", 
                        "accuracy", gps_data->accuracy,
                        "velocity", gps_data->horizontal_speed_mps,
                        "satellites", gps_data->gps_satellites,
-                       "source", gps_data->gps_source\n"\n"\n"\n"\n"\n"\n"\n");
+                       "source", gps_data->gps_source);
         
         return AUTONOMY_SUCCESS;
     }
@@ -507,23 +507,23 @@ static int collect_from_diagnostics_api(starlink_comprehensive_gps_t* gps_data) 
         // Extract diagnostics data from gRPC observation
         gps_data->location_enabled = observation.gps_valid;
         gps_data->uncertainty_meters = observation.gps_accuracy_m;
-        gps_data->uncertainty_meters_valid = (observation.gps_accuracy_m > 0.0\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->uncertainty_meters_valid = (observation.gps_accuracy_m > 0.0);
         gps_data->gps_time_s = (double)observation.timestamp;
         
-        printf("DEBUG: "Starlink diagnostics data collected successfully from gRPC", 
+        LOGX_DEBUG_MSG("Starlink diagnostics data collected successfully from gRPC", 
                       "location_enabled", gps_data->location_enabled,
                       "uncertainty_meters", gps_data->uncertainty_meters,
-                      "gps_time_s", gps_data->gps_time_s\n"\n"\n"\n"\n"\n"\n"\n");
+                      "gps_time_s", gps_data->gps_time_s);
         
         return AUTONOMY_SUCCESS;
     } else {
-        printf("DEBUG: "Failed to collect Starlink diagnostics data from gRPC, using defaults"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_DEBUG_MSG("Failed to collect Starlink diagnostics data from gRPC, using defaults");
         
         // Use default values if gRPC call fails
         gps_data->location_enabled = true; // Use configurable default
         gps_data->uncertainty_meters = 15.0;
         gps_data->uncertainty_meters_valid = true;
-        gps_data->gps_time_s = (double)time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+        gps_data->gps_time_s = (double)time(NULL);
         
         return AUTONOMY_SUCCESS;
     }
@@ -535,8 +535,8 @@ int starlink_comprehensive_analyze_events(starlink_events_outages_analysis_t* an
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    memset(analysis, 0, sizeof(starlink_events_outages_analysis_t)\n"\n"\n"\n"\n"\n"\n"\n");
-    analysis->last_analysis = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
+    memset(analysis, 0, sizeof(starlink_events_outages_analysis_t));
+    analysis->last_analysis = time(NULL);
     
     // Collect events and outages from history API if enabled
     if (g_starlink_comprehensive.config.collect_history) {
@@ -546,22 +546,22 @@ int starlink_comprehensive_analyze_events(starlink_events_outages_analysis_t* an
     }
     
     // Perform analysis on collected events and outages
-    analyze_events_and_outages(analysis\n"\n"\n"\n"\n"\n"\n"\n");
+    analyze_events_and_outages(analysis);
     
-    printf("INFO: "Starlink events and outages analysis completed",
+    LOGX_INFO_MSG("Starlink events and outages analysis completed",
              "events", analysis->event_count,
              "outages", analysis->outage_count,
              "critical_events_24h", analysis->critical_events_24h,
              "outages_24h", analysis->total_outages_24h,
-             "stability_score", analysis->stability_score\n"\n"\n"\n"\n"\n"\n"\n");
+             "stability_score", analysis->stability_score);
     
     return AUTONOMY_SUCCESS;
 }
 
 // Analyze events and outages data
 void analyze_events_and_outages(starlink_events_outages_analysis_t* analysis) {
-    time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-    time_t window_start = now - (g_starlink_comprehensive.config.analysis_window_hours * 3600\n"\n"\n"\n"\n"\n"\n"\n");
+    time_t now = time(NULL);
+    time_t window_start = now - (g_starlink_comprehensive.config.analysis_window_hours * 3600);
     
     // Analyze events in time window
     for (int i = 0; i < analysis->event_count; i++) {
@@ -616,22 +616,22 @@ void analyze_events_and_outages(starlink_events_outages_analysis_t* analysis) {
     
     // Detect patterns
     analysis->outage_pattern_detected = (analysis->total_outages_24h >= 3 && 
-                                        analysis->outage_frequency_per_hour > 0.5\n"\n"\n"\n"\n"\n"\n"\n");
+                                        analysis->outage_frequency_per_hour > 0.5);
     
     analysis->event_escalation_detected = (analysis->critical_events_24h > 0 && 
-                                          analysis->warning_events_24h > analysis->critical_events_24h\n"\n"\n"\n"\n"\n"\n"\n");
+                                          analysis->warning_events_24h > analysis->critical_events_24h);
     
     // Calculate stability score
-    analysis->stability_score = starlink_calculate_stability_score(analysis\n"\n"\n"\n"\n"\n"\n"\n");
+    analysis->stability_score = starlink_calculate_stability_score(analysis);
     
-    printf("DEBUG: "Events and outages analysis completed",
+    LOGX_DEBUG_MSG("Events and outages analysis completed",
               "critical_events", analysis->critical_events_24h,
               "warning_events", analysis->warning_events_24h,
               "total_outages", analysis->total_outages_24h,
               "avg_outage_duration", analysis->avg_outage_duration_s,
               "outage_frequency", analysis->outage_frequency_per_hour,
               "pattern_detected", analysis->outage_pattern_detected,
-              "stability_score", analysis->stability_score\n"\n"\n"\n"\n"\n"\n"\n");
+              "stability_score", analysis->stability_score);
 }
 
 // Calculate GPS confidence from comprehensive data
@@ -715,7 +715,7 @@ double starlink_calculate_stability_score(const starlink_events_outages_analysis
     
     // Penalty for high outage frequency
     if (analysis->outage_frequency_per_hour > 1.0) {
-        double frequency_penalty = fmin((analysis->outage_frequency_per_hour - 1.0) * 0.1, 0.2\n"\n"\n"\n"\n"\n"\n"\n");
+        double frequency_penalty = fmin((analysis->outage_frequency_per_hour - 1.0) * 0.1, 0.2);
         score -= frequency_penalty;
     }
     
@@ -750,7 +750,7 @@ double calculate_overall_health_score(const starlink_comprehensive_status_t* sta
     
     // Network quality factor (weight: 40%)
     if (status->pop_ping_latency_ms > 0) {
-        double network_score = fmax(0.0, (1000.0 - status->pop_ping_latency_ms) / 1000.0\n"\n"\n"\n"\n"\n"\n"\n");
+        double network_score = fmax(0.0, (1000.0 - status->pop_ping_latency_ms) / 1000.0);
         health += network_score * 0.4;
         factors++;
     }
@@ -809,30 +809,30 @@ bool starlink_comprehensive_is_initialized(void) {
 
 // Collection thread worker
 static void* collection_thread_worker(void* arg) {
-    printf("INFO: "Starlink comprehensive collection thread started"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starlink comprehensive collection thread started");
     
     while (g_starlink_comprehensive_initialized && g_starlink_comprehensive.threads_running) {
-        sleep(g_starlink_comprehensive.config.collection_interval_s\n"\n"\n"\n"\n"\n"\n"\n");
+        sleep(g_starlink_comprehensive.config.collection_interval_s);
         
         if (!g_starlink_comprehensive.threads_running) break;
         
         // Perform comprehensive collection
         starlink_comprehensive_status_t status;
         if (starlink_comprehensive_collect_all(&status) == AUTONOMY_SUCCESS) {
-            printf("DEBUG: "Background Starlink collection successful"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Background Starlink collection successful");
         } else {
             g_starlink_comprehensive.failed_collections++;
-            printf("WARN: "Background Starlink collection failed"\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_WARN_MSG("Background Starlink collection failed");
         }
     }
     
-    printf("INFO: "Starlink comprehensive collection thread stopped"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starlink comprehensive collection thread stopped");
     return NULL;
 }
 
 // Analysis thread worker
 static void* analysis_thread_worker(void* arg) {
-    printf("INFO: "Starlink events/outages analysis thread started"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starlink events/outages analysis thread started");
     
     while (g_starlink_comprehensive_initialized && g_starlink_comprehensive.threads_running) {
         sleep(300); // Analyze every 5 minutes
@@ -842,12 +842,12 @@ static void* analysis_thread_worker(void* arg) {
         // Perform events and outages analysis
         starlink_events_outages_analysis_t analysis;
         if (starlink_comprehensive_analyze_events(&analysis) == AUTONOMY_SUCCESS) {
-            printf("DEBUG: "Background Starlink analysis successful",
-                      "stability_score", analysis.stability_score\n"\n"\n"\n"\n"\n"\n"\n");
+            LOGX_DEBUG_MSG("Background Starlink analysis successful",
+                      "stability_score", analysis.stability_score);
         }
     }
     
-    printf("INFO: "Starlink events/outages analysis thread stopped"\n"\n"\n"\n"\n"\n"\n"\n");
+    LOGX_INFO_MSG("Starlink events/outages analysis thread stopped");
     return NULL;
 }
 
@@ -864,8 +864,8 @@ int collect_from_history_api(starlink_events_outages_analysis_t* analysis) {
     // Get outage events from gRPC collector
     if (starlink_grpc_get_outage_events(outage_events, 100, &actual_outage_count) == AUTONOMY_SUCCESS) {
         // Analyze outage events for the last 24 hours
-        time_t now = time(NULL\n"\n"\n"\n"\n"\n"\n"\n");
-        time_t day_ago = now - (24 * 3600\n"\n"\n"\n"\n"\n"\n"\n");
+        time_t now = time(NULL);
+        time_t day_ago = now - (24 * 3600);
         
         int critical_events_24h = 0;
         int warning_events_24h = 0;
@@ -904,17 +904,17 @@ int collect_from_history_api(starlink_events_outages_analysis_t* analysis) {
         analysis->event_escalation_detected = (critical_events_24h > 2); // More than 2 critical events
         
         // Calculate stability score (0.0 = unstable, 1.0 = stable)
-        double uptime_ratio = 1.0 - (total_outage_time_24h / (24.0 * 3600.0)\n"\n"\n"\n"\n"\n"\n"\n");
+        double uptime_ratio = 1.0 - (total_outage_time_24h / (24.0 * 3600.0));
         analysis->stability_score = (uptime_ratio > 0.0) ? uptime_ratio : 0.0;
         
-        printf("INFO: "Historical data collected successfully from gRPC collector", 
+        LOGX_INFO_MSG("Historical data collected successfully from gRPC collector", 
                       "event_count", analysis->event_count,
                       "critical_events_24h", analysis->critical_events_24h,
                       "warning_events_24h", analysis->warning_events_24h,
                       "total_outages_24h", analysis->total_outages_24h,
-                      "stability_score", analysis->stability_score\n"\n"\n"\n"\n"\n"\n"\n");
+                      "stability_score", analysis->stability_score);
     } else {
-        printf("WARN: "Failed to collect historical data from gRPC collector, using defaults"\n"\n"\n"\n"\n"\n"\n"\n");
+        LOGX_WARN_MSG("Failed to collect historical data from gRPC collector, using defaults");
         
         // Initialize analysis with default values
         analysis->event_count = 0;
@@ -936,9 +936,9 @@ int starlink_comprehensive_get_status(starlink_comprehensive_status_t* status) {
     if (!status) return AUTONOMY_ERROR_INVALID_PARAM;
     if (!g_starlink_comprehensive_initialized) return AUTONOMY_ERROR_NOT_INITIALIZED;
     
-    pthread_mutex_lock(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_starlink_comprehensive.mutex);
     *status = g_starlink_comprehensive.status;
-    pthread_mutex_unlock(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_starlink_comprehensive.mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -953,14 +953,14 @@ int starlink_comprehensive_get_statistics(uint64_t* total_collections, uint64_t*
     }
     if (!g_starlink_comprehensive_initialized) return AUTONOMY_ERROR_NOT_INITIALIZED;
     
-    pthread_mutex_lock(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_starlink_comprehensive.mutex);
     *total_collections = g_starlink_comprehensive.total_collections;
     *successful_collections = g_starlink_comprehensive.successful_collections;
     *failed_collections = g_starlink_comprehensive.failed_collections;
     *avg_collection_time_ms = g_starlink_comprehensive.average_collection_time_ms;
     *avg_gps_confidence = g_starlink_comprehensive.average_gps_confidence;
     *avg_stability_score = g_starlink_comprehensive.average_stability_score;
-    pthread_mutex_unlock(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_starlink_comprehensive.mutex);
     
     return AUTONOMY_SUCCESS;
 }
@@ -969,9 +969,9 @@ int starlink_comprehensive_get_statistics(uint64_t* total_collections, uint64_t*
 double starlink_comprehensive_get_stability_score(void) {
     if (!g_starlink_comprehensive_initialized) return 0.0;
     
-    pthread_mutex_lock(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_lock(&g_starlink_comprehensive.mutex);
     double score = g_starlink_comprehensive.status.stability_score;
-    pthread_mutex_unlock(&g_starlink_comprehensive.mutex\n"\n"\n"\n"\n"\n"\n"\n");
+    pthread_mutex_unlock(&g_starlink_comprehensive.mutex);
     
     return score;
 }
