@@ -1,5 +1,6 @@
 #include "data_limit_notifications.h"
 #include "smart_manager.h"
+#include "../shared/utils/string_utils.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

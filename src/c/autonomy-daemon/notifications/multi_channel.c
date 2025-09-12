@@ -1,5 +1,6 @@
 #include "multi_channel.h"
 #include "slack_client.h"
+#include "../shared/utils/string_utils.h"
 #include "discord_client.h"
 #include "telegram_client.h"
 #include "sms_client.h"

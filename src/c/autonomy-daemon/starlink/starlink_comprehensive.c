@@ -1,5 +1,6 @@
 #include "../starlink/starlink_comprehensive.h"
 #include "starlink_modules.h"
+#include "../shared/utils/string_utils.h"
 #include "starlink_grpc_collector.h"
 #include "../shared/logging/logx.h"
 #include <stdio.h>

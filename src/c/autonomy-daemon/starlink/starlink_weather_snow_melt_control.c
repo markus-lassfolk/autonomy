@@ -1,5 +1,6 @@
 #include "starlink_weather_snow_melt_control.h"
 #include "../shared/logging/logx.h"
+#include "../shared/utils/string_utils.h"
 #include "../shared/utils/uci_manager.h"
 #include "../gps/gps_manager.h"
 #include <stdio.h>

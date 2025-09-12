@@ -1,5 +1,6 @@
 #include "acknowledgment_tracker.h"
 #include <stdlib.h>
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>

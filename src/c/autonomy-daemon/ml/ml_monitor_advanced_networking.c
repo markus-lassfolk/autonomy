@@ -1,5 +1,6 @@
 #include "ml_monitor_advanced_networking.h"
 #include "../shared/logging/logx.h"
+#include "../shared/utils/string_utils.h"
 #include "../utils/secure_exec.h"
 #include <stdlib.h>
 #include <string.h>

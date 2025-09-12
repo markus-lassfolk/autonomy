@@ -1,5 +1,6 @@
 #include "decision_engine.h"
 #include "../network/network_controller.h"
+#include "../shared/utils/string_utils.h"
 #include "../network/network_collector.h"
 #include "../network/cellular_collector.h"
 #include "../telemetry/telemetry_comprehensive.h"

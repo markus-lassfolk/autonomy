@@ -1,5 +1,6 @@
 #include "ml_monitor.h"
 #include "../shared/logging/logx.h"
+#include "../shared/utils/string_utils.h"
 #include "../core/system_management.h"
 #include <time.h>
 #include <string.h>

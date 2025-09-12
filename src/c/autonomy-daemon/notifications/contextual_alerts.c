@@ -1,6 +1,7 @@
 #include "contextual_alerts.h"
 #include "smart_manager.h"
 #include "notification_manager.h"
+#include "../shared/utils/string_utils.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

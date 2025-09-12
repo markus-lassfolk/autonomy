@@ -1,5 +1,6 @@
 #include "discord_client.h"
 #include "../shared/utils/http_client_libcurl.h"
+#include "../shared/utils/string_utils.h"
 #include "../core/types.h"
 #include <stdlib.h>
 #include <string.h>

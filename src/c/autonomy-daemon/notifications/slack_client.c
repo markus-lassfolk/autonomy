@@ -1,5 +1,6 @@
 #include "slack_client.h"
 #include "../shared/logging/logx.h"
+#include "../shared/utils/string_utils.h"
 #include "../shared/utils/http_client_libcurl.h"
 #include "../core/types.h"
 #include <curl/curl.h>

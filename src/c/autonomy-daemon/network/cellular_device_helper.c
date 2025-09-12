@@ -1,5 +1,6 @@
 #include "cellular_device_helper.h"
 #include "../utils/secure_exec.h"
+#include "../shared/utils/string_utils.h"
 #include "../shared/logging/logx.h"
 #include <string.h>
 #include <stdlib.h>

@@ -1,5 +1,6 @@
 #include "gps_manager.h"
 #include "gps_opencellid_enhanced.h"
+#include "../shared/utils/string_utils.h"
 #include "../starlink/starlink_tracker.h"
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,5 +1,6 @@
 #include "trend_analyzer.h"
 #include <stdlib.h>
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>

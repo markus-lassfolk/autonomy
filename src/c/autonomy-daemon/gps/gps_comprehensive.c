@@ -1,5 +1,6 @@
 #include "gps_comprehensive.h"
 #include "gps_rutos.h"
+#include "../shared/utils/string_utils.h"
 #include "gps_starlink.h"
 #include "gps_opencellid.h"
 #include "opencellid_complete.h"

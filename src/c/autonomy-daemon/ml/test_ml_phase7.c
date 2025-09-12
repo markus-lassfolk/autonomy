@@ -1,5 +1,6 @@
 #include "ml_monitor.h"
 #include "ml_monitor_multi_interface.h"
+#include "../shared/utils/string_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

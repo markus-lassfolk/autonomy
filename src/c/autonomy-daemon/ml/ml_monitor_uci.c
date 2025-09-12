@@ -1,5 +1,6 @@
 #include "ml_monitor.h"
 #include "../shared/logging/logx.h"
+#include "../shared/utils/string_utils.h"
 #include "../shared/utils/uci_manager.h"
 #include <uci.h>
 #include <string.h>

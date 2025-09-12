@@ -1,5 +1,6 @@
 #include "analytics_engine.h"
 #include "performance_analyzer.h"
+#include "../shared/utils/string_utils.h"
 #include "trend_analyzer.h"
 #include "health_analyzer.h"
 #include "../shared/logging/logx.h"

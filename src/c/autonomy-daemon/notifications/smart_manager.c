@@ -1,5 +1,6 @@
 #include "smart_manager.h"
 #include "notification_manager.h"
+#include "../shared/utils/string_utils.h"
 #include "priority_queue.h"
 #include "adaptive_rate_limiter.h"
 #include "notification_deduplicator.h"

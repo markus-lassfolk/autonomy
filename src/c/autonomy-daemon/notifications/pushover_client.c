@@ -1,5 +1,6 @@
 #include "pushover_client.h"
 #include "../shared/utils/http_client_libcurl.h"
+#include "../shared/utils/string_utils.h"
 #include "../core/types.h"
 #include <curl/curl.h>
 #include <stdlib.h>
