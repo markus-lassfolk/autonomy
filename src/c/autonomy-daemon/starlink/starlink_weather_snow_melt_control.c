@@ -20,7 +20,7 @@ extern int ucix_add_option_int(struct uci_context *ctx, const char *package, con
 extern int ucix_logged_commit(struct uci_context *ctx, const char *package);
 
 // Wrapper function to match the signature used in this file
-static int ucix_get_option(const char *package, const char *section, const char *option, char *value, size_t size) {
+static int ucix_get_option_buf(const char *package, const char *section, const char *option, char *value, size_t size) {
     if (!uci_ctx || !package || !section || !option || !value || size == 0) {
         return -1;
     }
@@ -651,56 +651,56 @@ int starlink_weather_snow_melt_control_load_uci_config(void) {
     char value[256];
     
     // Enabled
-    if (ucix_get_option("autonomy", "snow_melt_control", "enabled", value, sizeof(value)) == 0) {
+    if (ucix_get_option_buf("autonomy", "snow_melt_control", "enabled", value, sizeof(value)) == 0) {
         g_snow_melt_control.config.enabled = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
     }
     
     // Temperature threshold
-    if (ucix_get_option("autonomy", "snow_melt_control", "temperature_threshold", value, sizeof(value)) == 0) {
+    if (ucix_get_option_buf("autonomy", "snow_melt_control", "temperature_threshold", value, sizeof(value)) == 0) {
         g_snow_melt_control.config.temperature_threshold_celsius = atof(value);
     }
     
     // Weather check interval
-    if (ucix_get_option("autonomy", "snow_melt_control", "weather_check_interval", value, sizeof(value)) == 0) {
+    if (ucix_get_option_buf("autonomy", "snow_melt_control", "weather_check_interval", value, sizeof(value)) == 0) {
         g_snow_melt_control.config.weather_check_interval_minutes = atoi(value);
     }
     
     // Preheat duration
-    if (ucix_get_option("autonomy", "snow_melt_control", "preheat_duration", value, sizeof(value)) == 0) {
+    if (ucix_get_option_buf("autonomy", "snow_melt_control", "preheat_duration", value, sizeof(value)) == 0) {
         g_snow_melt_control.config.preheat_duration_minutes = atoi(value);
     }
     
     // Use forecast
-    if (ucix_get_option("autonomy", "snow_melt_control", "use_forecast", value, sizeof(value)) == 0) {
+    if (ucix_get_option_buf("autonomy", "snow_melt_control", "use_forecast", value, sizeof(value)) == 0) {
         g_snow_melt_control.config.use_forecast = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
     }
     
     // Forecast hours ahead
-    if (ucix_get_option("autonomy", "snow_melt_control", "forecast_hours_ahead", value, sizeof(value)) == 0) {
+    if (ucix_get_option_buf("autonomy", "snow_melt_control", "forecast_hours_ahead", value, sizeof(value)) == 0) {
         g_snow_melt_control.config.forecast_hours_ahead = atoi(value);
     }
     
     // Weather API key
-    if (ucix_get_option("autonomy", "snow_melt_control", "weather_api_key", value, sizeof(value)) == 0) {
+    if (ucix_get_option_buf("autonomy", "snow_melt_control", "weather_api_key", value, sizeof(value)) == 0) {
         strncpy(g_snow_melt_control.config.weather_api_key, value, 
                 sizeof(g_snow_melt_control.config.weather_api_key) - 1);
         g_snow_melt_control.config.weather_api_key[sizeof(g_snow_melt_control.config.weather_api_key) - 1] = '\0';
     }
     
     // Starlink host
-    if (ucix_get_option("autonomy", "snow_melt_control", "starlink_host", value, sizeof(value)) == 0) {
+    if (ucix_get_option_buf("autonomy", "snow_melt_control", "starlink_host", value, sizeof(value)) == 0) {
         strncpy(g_snow_melt_control.config.starlink_host, value, 
                 sizeof(g_snow_melt_control.config.starlink_host) - 1);
         g_snow_melt_control.config.starlink_host[sizeof(g_snow_melt_control.config.starlink_host) - 1] = '\0';
     }
     
     // Starlink port
-    if (ucix_get_option("autonomy", "snow_melt_control", "starlink_port", value, sizeof(value)) == 0) {
+    if (ucix_get_option_buf("autonomy", "snow_melt_control", "starlink_port", value, sizeof(value)) == 0) {
         g_snow_melt_control.config.starlink_port = atoi(value);
     }
     
     // Debug mode
-    if (ucix_get_option("autonomy", "snow_melt_control", "debug_mode", value, sizeof(value)) == 0) {
+    if (ucix_get_option_buf("autonomy", "snow_melt_control", "debug_mode", value, sizeof(value)) == 0) {
         g_snow_melt_control.config.debug_mode = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
     }
     
