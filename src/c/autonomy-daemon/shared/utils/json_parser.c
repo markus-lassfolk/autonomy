@@ -568,3 +568,25 @@ cJSON* json_create_status_object(const char* status, const char* message,
     
     return root;
 }
+
+// WiFi access point JSON creation (consolidates duplicate patterns)
+cJSON* json_create_wifi_ap_object(const char* bssid, int signal_strength, int channel, int age) {
+    if (!bssid) {
+        set_json_error("Invalid BSSID for WiFi AP object");
+        return NULL;
+    }
+    
+    cJSON* ap_obj = cJSON_CreateObject();
+    if (!ap_obj) {
+        set_json_error("Failed to create WiFi AP JSON object");
+        return NULL;
+    }
+    
+    cJSON_AddStringToObject(ap_obj, "macAddress", bssid);
+    cJSON_AddNumberToObject(ap_obj, "signalStrength", signal_strength);
+    cJSON_AddNumberToObject(ap_obj, "age", age);
+    cJSON_AddNumberToObject(ap_obj, "channel", channel);
+    cJSON_AddNumberToObject(ap_obj, "signalToNoiseRatio", signal_strength); // Using signal as SNR approximation
+    
+    return ap_obj;
+}

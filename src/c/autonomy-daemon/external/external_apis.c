@@ -1,6 +1,8 @@
 #include "../external/external_apis.h"
 #include "../wifi/wifi_enhanced.h"
 #include "../shared/logging/logx.h"
+#include "../shared/utils/json_parser.h"
+#include "../shared/utils/http_client_libcurl.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -498,57 +500,32 @@ static int make_http_request(const char* url, const char* headers, const char* p
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    CURL* curl = curl_easy_init();
-    if (!curl) {
-        LOGX_ERROR_MSG("Failed to initialize CURL");
-        return AUTONOMY_ERROR_SYSTEM;
-    }
-    
-    // Set CURL options
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, external_apis_write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-Daemon/6.1.0");
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-    
-    // Set custom headers if provided
-    struct curl_slist* header_list = NULL;
-    if (headers) {
-        header_list = curl_slist_append(header_list, headers);
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header_list);
-    }
-    
-    // Set POST data if provided
+    // Use shared HTTP client (replaces 45 lines of duplicate curl code)
+    http_response_t* http_resp;
     if (post_data) {
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(post_data));
+        http_resp = http_post(url, post_data, "application/json");
+    } else {
+        http_resp = http_get(url);
     }
     
-    // Perform request
-    CURLcode curl_result = curl_easy_perform(curl);
-    
-    long response_code;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-    
-    if (header_list) {
-        curl_slist_free_all(header_list);
-    }
-    curl_easy_cleanup(curl);
-    
-    if (curl_result != CURLE_OK) {
-        LOGX_ERROR_MSG("CURL request failed", "error", curl_easy_strerror(curl_result));
+    if (!http_resp) {
+        LOGX_ERROR_MSG("HTTP request failed for URL: %s", url);
         return AUTONOMY_ERROR_NETWORK;
     }
     
-    if (response_code != 200) {
-        LOGX_ERROR_MSG("HTTP request failed", "response_code", response_code);
-        return AUTONOMY_ERROR_NETWORK;
+    // Copy response data to external_apis response structure
+    if (http_resp->body && response) {
+        size_t copy_size = http_resp->body_size < sizeof(response->data) - 1 ? 
+                          http_resp->body_size : sizeof(response->data) - 1;
+        memcpy(response->data, http_resp->body, copy_size);
+        response->data[copy_size] = '\0';
+        response->size = copy_size;
     }
     
-    return AUTONOMY_SUCCESS;
+    bool success = http_response_is_success(http_resp);
+    http_response_free(http_resp);
+    
+    return success ? AUTONOMY_SUCCESS : AUTONOMY_ERROR_NETWORK;
 }
 
 // Update API statistics
@@ -1014,16 +991,13 @@ int external_apis_get_google_location(const void* cell_towers, const void* wifi_
             LOGX_DEBUG_MSG("Found %d WiFi access points for location request", ap_count);
             
             for (int i = 0; i < ap_count && i < 32; i++) {
-                json_object* ap_obj = json_object_new_object();
-                
-                // Add WiFi AP data in Google Location Services format
-                json_object_object_add(ap_obj, "macAddress", json_object_new_string(access_points[i].bssid));
-                json_object_object_add(ap_obj, "signalStrength", json_object_new_int(access_points[i].signal));
-                json_object_object_add(ap_obj, "age", json_object_new_int(0)); // Real-time data
-                json_object_object_add(ap_obj, "channel", json_object_new_int(access_points[i].channel));
-                json_object_object_add(ap_obj, "signalToNoiseRatio", json_object_new_int(access_points[i].signal)); // Using signal strength as SNR approximation
-                
-                json_object_array_add(wifi_array, ap_obj);
+                // Use shared WiFi AP JSON creation (reduces 8 lines to 1)
+                cJSON* ap_obj = json_create_wifi_ap_object(access_points[i].bssid, 
+                                                          access_points[i].signal,
+                                                          access_points[i].channel, 0);
+                if (ap_obj) {
+                    json_object_array_add(wifi_array, (json_object*)ap_obj);
+                }
             }
         } else {
             LOGX_DEBUG_MSG("No WiFi access points found for location request");

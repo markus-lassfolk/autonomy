@@ -61,6 +61,10 @@ cJSON* json_create_simple_object(const char* key1, const char* value1,
 cJSON* json_create_status_object(const char* status, const char* message, 
                                 double timestamp, const char* module);
 
+// WiFi access point JSON creation (consolidates duplicate patterns)
+cJSON* json_create_wifi_ap_object(const char* bssid, int signal_strength, int channel, int age);
+cJSON* json_create_wifi_ap_array(void* access_points, int ap_count); // void* to avoid circular includes
+
 bool json_add_array_string(json_document_t* doc, const char* path, const char* value);
 bool json_add_array_double(json_document_t* doc, const char* path, double value);
 bool json_add_array_int(json_document_t* doc, const char* path, int value);
