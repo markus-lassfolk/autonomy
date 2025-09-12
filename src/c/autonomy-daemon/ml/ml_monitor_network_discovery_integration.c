@@ -31,7 +31,8 @@ interface_type_t ml_monitor_map_interface_type(const network_interface_t *interf
 int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    LOGX_INFO_MSG(" Integrating ML monitoring with comprehensive network discovery");
+    // Use printf as fallback to avoid LOGX crashes
+    printf("INFO: Integrating ML monitoring with comprehensive network discovery\n");
     
     // Get discovered interfaces from network discovery system
     network_interface_t discovered_interfaces[MAX_INTERFACES];
@@ -41,18 +42,18 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     extern int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count);
     int discovery_result = get_enhanced_comprehensive_interface_info(discovered_interfaces, &interface_count);
     if (discovery_result != AUTONOMY_SUCCESS) {
-        LOGX_ERROR_MSG("Failed to get enhanced comprehensive interface info: %d", discovery_result);
+        printf("ERROR: Failed to get enhanced comprehensive interface info: %d\n", discovery_result);
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
-    LOGX_INFO_MSG(" Discovered %d network interfaces for ML monitoring", interface_count);
+    printf("INFO: Discovered %d network interfaces for ML monitoring\n", interface_count);
     
     // Initialize multi-interface system if not already done
     multi_interface_ml_system_t *multi_system = ml_monitor_get_multi_interface_system();
     if (!multi_system) {
         multi_system = ml_monitor_init_multi_interface_system(&monitor->config);
         if (!multi_system) {
-            LOGX_ERROR_MSG("Failed to initialize multi-interface ML system");
+            printf("ERROR: Failed to initialize multi-interface ML system\n");
             return ML_MONITOR_ERROR_NOT_INITIALIZED;
         }
     }
@@ -65,26 +66,26 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
         
         // Only monitor interfaces that are suitable for ML
         if (!interface->up || !interface->enabled) {
-            LOGX_DEBUG_MSG("Skipping interface %s: not up or enabled", interface->name);
+            printf("DEBUG: Skipping interface %s: not up or enabled\n", interface->name);
             continue;
         }
         
         // Skip VPN interfaces unless specifically configured
         if (strcmp(interface->type, "vpn") == 0) {
-            LOGX_DEBUG_MSG("Skipping VPN interface %s", interface->name);
+            printf("DEBUG: Skipping VPN interface %s\n", interface->name);
             continue;
         }
         
         // Only monitor interfaces that are tracked by MWAN3 (for failover relevance)
         if (!interface->mwan3_tracking_enabled) {
-            LOGX_DEBUG_MSG("Skipping interface %s: not tracked by MWAN3", interface->name);
+            printf("DEBUG: Skipping interface %s: not tracked by MWAN3\n", interface->name);
             continue;
         }
         
         // Map to ML interface type
         interface_type_t ml_type = ml_monitor_map_interface_type(interface);
         if (ml_type == INTERFACE_TYPE_UNKNOWN) {
-            LOGX_DEBUG_MSG("Skipping interface %s: unknown type for ML", interface->name);
+            printf("DEBUG: Skipping interface %s: unknown type for ML\n", interface->name);
             continue;
         }
         
@@ -93,7 +94,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
         if (add_result == ML_MONITOR_MULTI_SUCCESS) {
             ml_interfaces_added++;
             
-            LOGX_INFO_MSG(" Added %s (%s) to ML monitoring: %s, MWAN3=%s, health=%.1f",
+            printf("INFO: Added %s (%s) to ML monitoring: %s, MWAN3=%s, health=%.1f\n",
                      interface->name, interface->type, 
                      interface->friendly_name, interface->mwan3_name, interface->health_score);
             
@@ -113,15 +114,15 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
                 }
             }
         } else {
-            LOGX_WARN_MSG("Failed to add interface %s to ML monitoring: %d", interface->name, add_result);
+            printf("WARN: Failed to add interface %s to ML monitoring: %d\n", interface->name, add_result);
         }
     }
     
-    LOGX_INFO_MSG(" ML monitoring initialized for %d interfaces (from %d discovered)", 
+    printf("INFO: ML monitoring initialized for %d interfaces (from %d discovered)\n", 
              ml_interfaces_added, interface_count);
     
     // Log interface summary
-    LOGX_INFO_MSG("ML Interface Summary:");
+    printf("INFO: ML Interface Summary:\n");
     for (int i = 0; i < interface_count; i++) {
         network_interface_t *interface = &discovered_interfaces[i];
         const char* ml_status = "not monitored";
@@ -133,7 +134,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
             }
         }
         
-        LOGX_INFO_MSG("  - %s (%s): %s, MWAN3=%s, status=%s",
+        printf("  - %s (%s): %s, MWAN3=%s, status=%s\n",
                  interface->name, interface->type, interface->friendly_name,
                  interface->mwan3_name, ml_status);
     }
@@ -151,13 +152,13 @@ int ml_monitor_sync_with_network_discovery(ml_monitor_t *monitor) {
     
     int discovery_result = get_comprehensive_interface_info(current_interfaces, &current_count);
     if (discovery_result != AUTONOMY_SUCCESS) {
-        LOGX_WARN_MSG("Failed to sync with network discovery: %d", discovery_result);
+        printf("WARN: Failed to sync with network discovery: %d\n", discovery_result);
         return discovery_result;
     }
     
     multi_interface_ml_system_t *multi_system = ml_monitor_get_multi_interface_system();
     if (!multi_system) {
-        LOGX_WARN_MSG("Multi-interface system not initialized");
+        printf("WARN: Multi-interface system not initialized\n");
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
@@ -188,7 +189,7 @@ int ml_monitor_sync_with_network_discovery(ml_monitor_t *monitor) {
         if (!already_monitored) {
             int add_result = ml_monitor_add_interface(multi_system, interface->name, ml_type);
             if (add_result == ML_MONITOR_MULTI_SUCCESS) {
-                LOGX_INFO_MSG(" Added new interface to ML monitoring: %s (%s)", 
+                printf("INFO: Added new interface to ML monitoring: %s (%s)\n", 
                          interface->name, interface->type);
             }
         }
@@ -361,13 +362,13 @@ int ml_monitor_periodic_network_discovery_sync(ml_monitor_t *monitor) {
         return ML_MONITOR_SUCCESS;
     }
     
-    LOGX_DEBUG_MSG(" Performing periodic sync with network discovery");
+    printf("DEBUG: Performing periodic sync with network discovery\n");
     
     int sync_result = ml_monitor_sync_with_network_discovery(monitor);
     if (sync_result == ML_MONITOR_SUCCESS) {
-        LOGX_DEBUG_MSG("Network discovery sync completed successfully");
+        printf("DEBUG: Network discovery sync completed successfully\n");
     } else {
-        LOGX_WARN_MSG("Network discovery sync failed: %d", sync_result);
+        printf("WARN: Network discovery sync failed: %d\n", sync_result);
     }
     
     last_sync = now;
