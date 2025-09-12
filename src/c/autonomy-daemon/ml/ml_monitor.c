@@ -666,7 +666,7 @@ static void* ml_monitor_collection_thread(void *arg) {
     ml_monitor_t *monitor = (ml_monitor_t*)arg;
     if (!monitor) return NULL;
     
-    LOGX_INFO_MSG("ML monitor collection thread started with real data integration");
+    printf("INFO: ML monitor collection thread started with real data integration\n");
     
     int collection_count = 0;
     time_t last_sync = time(NULL);
@@ -684,23 +684,23 @@ static void* ml_monitor_collection_thread(void *arg) {
             if (now - last_sync > monitor->config.storage_sync_interval_minutes * 60) {
                 ml_monitor_sync_storage(monitor);
                 last_sync = now;
-                LOGX_DEBUG_MSG("Synced ML storage to disk (%d collections)", collection_count);
+                printf("DEBUG: Synced ML storage to disk (%d collections)\n", collection_count);
             }
             
             // Log progress periodically
             if (collection_count % 100 == 0) {
-                LOGX_INFO_MSG("ML monitor collected %d observations, total: %u",
+                printf("INFO: ML monitor collected %d observations, total: %u\n",
                          collection_count, monitor->state->total_observations);
             }
         } else {
-            LOGX_WARN_MSG("Failed to collect ML observation: %d", result);
+            printf("WARN: Failed to collect ML observation: %d\n", result);
         }
         
         // Sleep for collection interval
         sleep(monitor->config.collection_interval_seconds);
     }
     
-    LOGX_INFO_MSG("ML monitor collection thread stopped after %d collections", collection_count);
+    printf("INFO: ML monitor collection thread stopped after %d collections\n", collection_count);
     return NULL;
 }
 
