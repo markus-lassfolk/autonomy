@@ -1,6 +1,5 @@
 #include "ml_monitor_multi_interface.h"
-#include "../shared/logging/logx.h"
-#include "../shared/utils/string_utils.h"
+#include "../utils/logx.h"
 #include "../utils/secure_exec.h"
 #include "../network/network_controller.h"
 #include "../network/network_failover.h"
@@ -81,7 +80,7 @@ int ml_monitor_add_interface(multi_interface_ml_system_t *system, const char *in
     interface_ml_model_t *model = &system->interface_models[system->interface_count];
     memset(model, 0, sizeof(interface_ml_model_t));
     
-    safe_strncpy(model->interface_id, interface_id, sizeof(model->interface_id));
+    strncpy(model->interface_id, interface_id, sizeof(model->interface_id) - 1);
     model->type = type;
     model->active = true;
     
@@ -104,7 +103,7 @@ int ml_monitor_add_interface(multi_interface_ml_system_t *system, const char *in
     system->interface_count++;
     
     const char* type_names[] = {"Starlink", "Cellular", "WiFi", "LAN", "Unknown"};
-    LOGX_INFO_MSG(" Added interface for ML monitoring: %s (%s)", 
+    printf("INFO: Added interface for ML monitoring: %s (%s)\n", 
              interface_id, type_names[type]);
     
     return ML_MONITOR_MULTI_SUCCESS;
