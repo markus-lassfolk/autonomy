@@ -215,9 +215,9 @@ int acknowledgment_tracker_create_acknowledgment(const notification_event_t* eve
     acknowledgment_t* ack = &g_acknowledgment_tracker.acknowledgments[index];
     
     generate_acknowledgment_id(event, ack->id, sizeof(ack->id));
-    strncpy(ack->notification_id, event->id, sizeof(ack->notification_id) - 1);
+    safe_strncpy(ack->notification_id, event->id, sizeof(ack->notification_id));
     ack->type = event->type;
-    strncpy(ack->message, event->message, sizeof(ack->message) - 1);
+    safe_strncpy(ack->message, event->message, sizeof(ack->message));
     ack->priority = event->priority;
     ack->status = ACKNOWLEDGMENT_STATUS_PENDING;
     ack->created_at = time(NULL);
@@ -227,7 +227,7 @@ int acknowledgment_tracker_create_acknowledgment(const notification_event_t* eve
     ack->resolved_at = 0;
     
     if (strlen(event->details_json) > 0) {
-        strncpy(ack->context_json, event->details_json, sizeof(ack->context_json) - 1);
+        safe_strncpy(ack->context_json, event->details_json, sizeof(ack->context_json));
     } else {
         ack->context_json[0] = '\0';
     }
@@ -289,7 +289,7 @@ int acknowledgment_tracker_acknowledge(const char* acknowledgment_id, const char
     time_t now = time(NULL);
     ack->status = ACKNOWLEDGMENT_STATUS_ACKNOWLEDGED;
     ack->acknowledged_at = now;
-    strncpy(ack->acknowledged_by, acknowledged_by, sizeof(ack->acknowledged_by) - 1);
+    safe_strncpy(ack->acknowledged_by, acknowledged_by, sizeof(ack->acknowledged_by));
     
     // Update statistics
     g_acknowledgment_tracker.stats.pending_count--;

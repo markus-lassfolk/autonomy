@@ -1,6 +1,7 @@
 #include "gps_connector.h"
 #include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include "gps_integration.h"
 #include "gps_location_reference.h"
 #include "gps_health.h"
@@ -136,7 +137,7 @@ int gps_connector_register_module(const char *name, gps_module_type_t module_typ
     module->error_count = 0;
     module->last_error = 0;
     
-    strncpy(module->name, name, sizeof(module->name) - 1);
+    safe_strncpy(module->name, name, sizeof(module->name));
     module->name[sizeof(module->name) - 1] = '\0';
     
     g_connector.module_count++;

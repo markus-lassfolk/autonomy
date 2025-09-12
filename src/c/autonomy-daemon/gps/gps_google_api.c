@@ -1,6 +1,8 @@
 #include "gps_google_api.h"
 #include "../shared/logging/logx.h"
 #include "../shared/utils/json_parser.h"
+#include "../shared/utils/http_client_libcurl.h"
+#include "../shared/utils/string_utils.h"
 #include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
@@ -77,7 +79,7 @@ int gps_google_api_init(const char *api_key) {
     g_google_api.request_timeout = REQUEST_TIMEOUT;
     g_google_api.rate_limit_delay = RATE_LIMIT_DELAY;
     
-    strncpy(g_google_api.api_key, api_key, sizeof(g_google_api.api_key) - 1);
+    safe_strncpy(g_google_api.api_key, api_key, sizeof(g_google_api.api_key));
     
     g_google_api.request_count = 0;
     g_google_api.last_request = 0;
@@ -133,52 +135,41 @@ static int perform_google_api_request(const char *endpoint, const char *params,
     snprintf(url, sizeof(url), "%s%s?%s&key=%s", 
              GOOGLE_API_BASE_URL, endpoint, params, g_google_api.api_key);
     
-    // Initialize CURL
-    CURL *curl = curl_easy_init();
-    if (!curl) {
-        pthread_mutex_unlock(&g_google_api_mutex);
-        LOGX_ERROR_MSG("Failed to initialize CURL");
-        return AUTONOMY_ERROR_SYSTEM;
-    }
-    
-    // Set CURL options
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, google_write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, g_google_api.request_timeout);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-Daemon/1.0");
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 3L);
-    
-    // Perform request
-    CURLcode res = curl_easy_perform(curl);
-    long http_code = 0; // Use configurable value
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+    // Use shared HTTP client (replaces 20 lines of duplicate curl code)
+    http_response_t* http_resp = http_get(url);
+    long http_code = http_resp ? http_resp->status_code : 0;
+    bool curl_success = http_resp && http_response_is_success(http_resp);
     
     // Update statistics
     g_google_api.request_count++;
     g_google_api.total_requests++;
     g_google_api.last_request = now;
     
-    if (res == CURLE_OK && http_code == 200) {
+    if (curl_success) {
         g_google_api.successful_requests++;
         response->success = true;
         response->http_code = http_code;
+        
+        // Copy response data
+        if (http_resp->body) {
+            size_t copy_size = http_resp->body_size < sizeof(response->data) - 1 ? 
+                              http_resp->body_size : sizeof(response->data) - 1;
+            memcpy(response->data, http_resp->body, copy_size);
+            response->data[copy_size] = '\0';
+            response->data_size = copy_size;
+        }
         
         LOGX_DEBUG_MSG("Google API request successful", "endpoint", endpoint);
     } else {
         g_google_api.failed_requests++;
         response->success = false;
         response->http_code = http_code;
-        response->error_code = res;
+        response->error_code = 0;
         
-        LOGX_ERROR_MSG("Google API request failed", 
-                   "endpoint", endpoint,
-                   "http_code", http_code,
-                   "curl_code", res);
+        LOGX_ERROR_MSG("Google API request failed", "endpoint", endpoint, "http_code", http_code);
     }
     
-    curl_easy_cleanup(curl);
+    if (http_resp) http_response_free(http_resp);
     pthread_mutex_unlock(&g_google_api_mutex);
     
     return AUTONOMY_SUCCESS;
@@ -258,15 +249,15 @@ static void parse_reverse_geocode_response(const gps_google_api_response_t *resp
                 if (json_get_string(doc, path, value, sizeof(value))) {
                     // Map component types to location info fields
                     if (strcmp(type, "country") == 0) {
-                        strncpy(location_info->country, value, sizeof(location_info->country) - 1);
+                        safe_strncpy(location_info->country, value, sizeof(location_info->country));
                     } else if (strcmp(type, "administrative_area_level_1") == 0) {
-                        strncpy(location_info->state, value, sizeof(location_info->state) - 1);
+                        safe_strncpy(location_info->state, value, sizeof(location_info->state));
                     } else if (strcmp(type, "locality") == 0) {
-                        strncpy(location_info->city, value, sizeof(location_info->city) - 1);
+                        safe_strncpy(location_info->city, value, sizeof(location_info->city));
                     } else if (strcmp(type, "postal_code") == 0) {
-                        strncpy(location_info->postal_code, value, sizeof(location_info->postal_code) - 1);
+                        safe_strncpy(location_info->postal_code, value, sizeof(location_info->postal_code));
                     } else if (strcmp(type, "route") == 0) {
-                        strncpy(location_info->street, value, sizeof(location_info->street) - 1);
+                        safe_strncpy(location_info->street, value, sizeof(location_info->street));
                     }
                 }
             }
@@ -279,12 +270,12 @@ static void parse_reverse_geocode_response(const gps_google_api_response_t *resp
         json_document_free(doc);
     } else {
         // Successfully parsed using the helper function
-        strncpy(location_info->formatted_address, result.formatted_address, 
-                sizeof(location_info->formatted_address) - 1);
-        strncpy(location_info->country, result.country, sizeof(location_info->country) - 1);
-        strncpy(location_info->state, result.state, sizeof(location_info->state) - 1);
-        strncpy(location_info->city, result.city, sizeof(location_info->city) - 1);
-        strncpy(location_info->postal_code, result.postal_code, sizeof(location_info->postal_code) - 1);
+        safe_strncpy(location_info->formatted_address, result.formatted_address, 
+                     sizeof(location_info->formatted_address));
+        safe_strncpy(location_info->country, result.country, sizeof(location_info->country));
+        safe_strncpy(location_info->state, result.state, sizeof(location_info->state));
+        safe_strncpy(location_info->city, result.city, sizeof(location_info->city));
+        safe_strncpy(location_info->postal_code, result.postal_code, sizeof(location_info->postal_code));
         location_info->latitude = result.latitude;
         location_info->longitude = result.longitude;
     }
@@ -529,7 +520,7 @@ int gps_google_api_get_config(gps_google_api_config_t *config) {
     config->max_requests = g_google_api.max_requests;
     config->request_timeout = g_google_api.request_timeout;
     config->rate_limit_delay = g_google_api.rate_limit_delay;
-    strncpy(config->api_key, g_google_api.api_key, sizeof(config->api_key) - 1);
+    safe_strncpy(config->api_key, g_google_api.api_key, sizeof(config->api_key));
     
     pthread_mutex_unlock(&g_google_api_mutex);
     
@@ -550,7 +541,7 @@ int gps_google_api_set_config(const gps_google_api_config_t *config) {
     g_google_api.rate_limit_delay = config->rate_limit_delay;
     
     if (strlen(config->api_key) > 0) {
-        strncpy(g_google_api.api_key, config->api_key, sizeof(g_google_api.api_key) - 1);
+        safe_strncpy(g_google_api.api_key, config->api_key, sizeof(g_google_api.api_key));
     }
     
     pthread_mutex_unlock(&g_google_api_mutex);

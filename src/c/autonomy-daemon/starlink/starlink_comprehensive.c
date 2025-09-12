@@ -409,7 +409,7 @@ static int collect_from_location_api(starlink_comprehensive_gps_t* gps_data) {
                 if (json_object_object_get_ex(json_response, "gps_stats", &gps_stats) &&
                     json_object_object_get_ex(gps_stats, "source", &source_obj)) {
                     const char *source = json_object_get_string(source_obj);
-                    strncpy(gps_data->gps_source, source, sizeof(gps_data->gps_source) - 1);
+                    safe_strncpy(gps_data->gps_source, source, sizeof(gps_data->gps_source));
                     gps_data->gps_source[sizeof(gps_data->gps_source) - 1] = '\0';
                 } else {
                     strcpy(gps_data->gps_source, "STARLINK_GPS");

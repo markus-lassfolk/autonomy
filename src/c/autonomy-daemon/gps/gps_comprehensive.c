@@ -524,8 +524,8 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                 data->timestamp = location_data.timestamp;
                 data->valid = true;
                 data->source_priority = 4; // Lower priority than Starlink/OpenCell
-                strncpy(data->source, "google_geolocation", sizeof(data->source) - 1);
-                strncpy(data->raw_json, location_data.source, sizeof(data->raw_json) - 1);
+                safe_strncpy(data->source, "google_geolocation", sizeof(data->source));
+                safe_strncpy(data->raw_json, location_data.source, sizeof(data->raw_json));
                 ret = AUTONOMY_SUCCESS;
             } else {
                 ret = AUTONOMY_ERROR_NOT_FOUND;

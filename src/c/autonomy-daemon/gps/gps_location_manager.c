@@ -76,7 +76,7 @@ int location_manager_add_source(gps_source_type_t source_type, const char* name)
     gps_source_t* source = &g_location_manager.sources[g_location_manager.source_count];
     source->enabled = true; // Use configurable gps source enabled setting
     source->type = source_type;
-    strncpy(source->name, name, sizeof(source->name) - 1);
+    safe_strncpy(source->name, name, sizeof(source->name));
     source->name[sizeof(source->name) - 1] = '\0';
     source->name[sizeof(source->name) - 1] = '\0';
     source->last_update = 0;
@@ -237,21 +237,21 @@ int location_manager_fuse_sources(const location_data_t* sources, int source_cou
         fused_location->confidence = max_confidence;
         fused_location->valid = true;
         fused_location->source_type = GPS_SOURCE_COMBINED;
-        strncpy(fused_location->source_name, "fused", sizeof(fused_location->source_name) - 1);
+        safe_strncpy(fused_location->source_name, "fused", sizeof(fused_location->source_name));
         fused_location->source_name[sizeof(fused_location->source_name) - 1] = '\0';
         
         // Determine quality score
         if (fused_location->confidence >= 0.9) {
-            strncpy(fused_location->quality_score, "excellent", sizeof(fused_location->quality_score) - 1);
+            safe_strncpy(fused_location->quality_score, "excellent", sizeof(fused_location->quality_score));
             fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
         } else if (fused_location->confidence >= 0.7) {
-            strncpy(fused_location->quality_score, "good", sizeof(fused_location->quality_score) - 1);
+            safe_strncpy(fused_location->quality_score, "good", sizeof(fused_location->quality_score));
             fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
         } else if (fused_location->confidence >= 0.5) {
-            strncpy(fused_location->quality_score, "fair", sizeof(fused_location->quality_score) - 1);
+            safe_strncpy(fused_location->quality_score, "fair", sizeof(fused_location->quality_score));
             fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
         } else {
-            strncpy(fused_location->quality_score, "poor", sizeof(fused_location->quality_score) - 1);
+            safe_strncpy(fused_location->quality_score, "poor", sizeof(fused_location->quality_score));
             fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';
         }
         fused_location->quality_score[sizeof(fused_location->quality_score) - 1] = '\0';

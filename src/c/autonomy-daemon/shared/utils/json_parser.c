@@ -8,6 +8,14 @@
 
 // Global error state
 static char g_json_error[256] = {0};
+
+// Set error message
+static void set_json_error(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    vsnprintf(g_json_error, sizeof(g_json_error), format, args);
+    va_end(args);
+}
 static bool g_json_parser_initialized = false;
 
 // Clear error state

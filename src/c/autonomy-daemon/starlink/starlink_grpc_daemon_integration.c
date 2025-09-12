@@ -415,17 +415,17 @@ int parse_json_to_observation_partial(const char *json_data, const char *api_met
             if (device_info) {
                 json_object *id;
                 if (json_object_object_get_ex(device_info, "id", &id)) {
-                    strncpy(observation->software_version, json_object_get_string(id), sizeof(observation->software_version) - 1);
+                    safe_strncpy(observation->software_version, json_object_get_string(id), sizeof(observation->software_version));
                 }
                 
                 json_object *hardware_version;
                 if (json_object_object_get_ex(device_info, "hardwareVersion", &hardware_version)) {
-                    strncpy(observation->hardware_version, json_object_get_string(hardware_version), sizeof(observation->hardware_version) - 1);
+                    safe_strncpy(observation->hardware_version, json_object_get_string(hardware_version), sizeof(observation->hardware_version));
                 }
                 
                 json_object *software_version;
                 if (json_object_object_get_ex(device_info, "softwareVersion", &software_version)) {
-                    strncpy(observation->software_version, json_object_get_string(software_version), sizeof(observation->software_version) - 1);
+                    safe_strncpy(observation->software_version, json_object_get_string(software_version), sizeof(observation->software_version));
                 }
             }
         }
@@ -461,12 +461,12 @@ int parse_json_to_observation_partial(const char *json_data, const char *api_met
             
             json_object *mobility_class;
             if (json_object_object_get_ex(dish_get_diagnostics, "mobilityClass", &mobility_class)) {
-                strncpy(observation->mobility_class, json_object_get_string(mobility_class), sizeof(observation->mobility_class) - 1);
+                safe_strncpy(observation->mobility_class, json_object_get_string(mobility_class), sizeof(observation->mobility_class));
             }
             
             json_object *class_of_service;
             if (json_object_object_get_ex(dish_get_diagnostics, "classOfService", &class_of_service)) {
-                strncpy(observation->class_of_service, json_object_get_string(class_of_service), sizeof(observation->class_of_service) - 1);
+                safe_strncpy(observation->class_of_service, json_object_get_string(class_of_service), sizeof(observation->class_of_service));
             }
         }
         

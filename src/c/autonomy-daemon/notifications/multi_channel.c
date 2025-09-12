@@ -322,7 +322,7 @@ int multi_channel_notifier_send(multi_channel_notifier_t* notifier, const notifi
         notifier->status.total_failures += (total_attempts - success_count);
         
         if (success_count == 0) {
-            strncpy(notifier->status.last_error, "All channels failed", sizeof(notifier->status.last_error) - 1);
+            safe_strncpy(notifier->status.last_error, "All channels failed", sizeof(notifier->status.last_error));
             notifier->status.last_error_time = time(NULL);
         }
     }
@@ -389,8 +389,8 @@ int multi_channel_notifier_test_channels(multi_channel_notifier_t* notifier,
     
     time_t now = time(NULL);
     snprintf(test_event.id, sizeof(test_event.id), "test_%lld", now);
-    strncpy(test_event.title, " autonomy Notification Test", sizeof(test_event.title) - 1);
-    strncpy(test_event.message, "This is a test notification to verify channel configuration.", sizeof(test_event.message) - 1);
+    safe_strncpy(test_event.title, " autonomy Notification Test", sizeof(test_event.title));
+    safe_strncpy(test_event.message, "This is a test notification to verify channel configuration.", sizeof(test_event.message));
     test_event.type = NOTIFICATION_TYPE_STATUS_UPDATE;
     test_event.priority = NOTIFICATION_PRIORITY_LOW;
     test_event.timestamp = now;

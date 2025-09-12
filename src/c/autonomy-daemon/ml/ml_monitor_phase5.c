@@ -584,7 +584,7 @@ int ml_monitor_init_phase5_mobile_system(ml_monitor_t *monitor) {
     // Initialize field testing configuration
     g_phase5_system.field_testing.data_collection_mode = false;
     g_phase5_system.field_testing.performance_logging_mode = true;
-    strncpy(g_phase5_system.field_testing.field_test_id, "embedded_ml_v1", sizeof(g_phase5_system.field_testing.field_test_id) - 1);
+    safe_strncpy(g_phase5_system.field_testing.field_test_id, "embedded_ml_v1", sizeof(g_phase5_system.field_testing.field_test_id));
     g_phase5_system.field_testing.field_test_start = time(NULL);
     
     // Mark as initialized

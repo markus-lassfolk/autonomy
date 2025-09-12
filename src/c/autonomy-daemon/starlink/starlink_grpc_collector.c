@@ -2,6 +2,7 @@
 #include "starlink_grpc_comprehensive_client.h"
 #include "starlink_grpc_daemon_integration.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include "../utils/http_client.h"
 #include "../shared/logging/logx.h"
 #include <json-c/json.h>
@@ -73,9 +74,9 @@ int starlink_grpc_collector_init(void) {
     
     // Set configuration from UCI config with fallback defaults
     if (strlen(g_config.starlink_host) > 0) {
-        strncpy(g_starlink_grpc_collector.host, g_config.starlink_host, sizeof(g_starlink_grpc_collector.host) - 1);
+        safe_strncpy(g_starlink_grpc_collector.host, g_config.starlink_host, sizeof(g_starlink_grpc_collector.host));
     } else {
-        strncpy(g_starlink_grpc_collector.host, "192.168.100.1", sizeof(g_starlink_grpc_collector.host) - 1);
+        safe_strncpy(g_starlink_grpc_collector.host, "192.168.100.1", sizeof(g_starlink_grpc_collector.host));
     }
     
     if (g_config.starlink_port > 0) {

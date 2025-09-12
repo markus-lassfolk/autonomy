@@ -1,5 +1,6 @@
 #include "priority_optimizer.h"
 #include "../shared/logging/logx.h"
+#include "../shared/utils/string_utils.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -468,7 +469,7 @@ int priority_optimizer_update_learning(notification_type_t alert_type,
             entry = &g_priority_optimizer.learning_data[oldest_index];
         }
         
-        strncpy(entry->alert_type, alert_type_str, sizeof(entry->alert_type) - 1);
+        safe_strncpy(entry->alert_type, alert_type_str, sizeof(entry->alert_type));
         entry->optimal_priority = (int)used_priority;
         entry->effectiveness_score = effectiveness_score;
         entry->confidence_score = 0.5; // Start with medium confidence

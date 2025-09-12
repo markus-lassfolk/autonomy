@@ -1,6 +1,7 @@
 #include "network_discovery.h"
 #include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -199,7 +200,7 @@ static void discover_system_interfaces(void) {
             network_interface_t *iface = &g_discovery.interfaces[g_discovery.interface_count];
             memset(iface, 0, sizeof(network_interface_t));
             
-            strncpy(iface->name, i->if_name, sizeof(iface->name) - 1);
+            safe_strncpy(iface->name, i->if_name, sizeof(iface->name));
             iface->index = i->if_index;
             iface->last_seen = time(NULL);
             iface->discovered = true;
@@ -262,7 +263,7 @@ static void discover_uci_interfaces(void) {
                     network_interface_t *iface = &g_discovery.interfaces[g_discovery.interface_count];
                     memset(iface, 0, sizeof(network_interface_t));
                     
-                    strncpy(iface->name, ifname, sizeof(iface->name) - 1);
+                    safe_strncpy(iface->name, ifname, sizeof(iface->name));
                     iface->last_seen = time(NULL);
                     iface->discovered = true;
                     
@@ -273,19 +274,19 @@ static void discover_uci_interfaces(void) {
                     const char *gateway = uci_lookup_option_string(ctx, s, "gateway");
                     
                     if (proto) {
-                        strncpy(iface->protocol, proto, sizeof(iface->protocol) - 1);
+                        safe_strncpy(iface->protocol, proto, sizeof(iface->protocol));
                     }
                     if (ipaddr) {
-                        strncpy(iface->ip_address, ipaddr, sizeof(iface->ip_address) - 1);
+                        safe_strncpy(iface->ip_address, ipaddr, sizeof(iface->ip_address));
                     }
                     if (netmask) {
-                        strncpy(iface->netmask, netmask, sizeof(iface->netmask) - 1);
+                        safe_strncpy(iface->netmask, netmask, sizeof(iface->netmask));
                     }
                     if (gateway) {
-                        strncpy(iface->gateway, gateway, sizeof(iface->gateway) - 1);
+                        safe_strncpy(iface->gateway, gateway, sizeof(iface->gateway));
                     }
                     if (device) {
-                        strncpy(iface->device, device, sizeof(iface->device) - 1);
+                        safe_strncpy(iface->device, device, sizeof(iface->device));
                     }
                     
                     // Get additional interface details
@@ -334,7 +335,7 @@ static void discover_uci_interfaces(void) {
                     network_interface_t *iface = &g_discovery.interfaces[g_discovery.interface_count];
                     memset(iface, 0, sizeof(network_interface_t));
                     
-                    strncpy(iface->name, common_interfaces[i], sizeof(iface->name) - 1);
+                    safe_strncpy(iface->name, common_interfaces[i], sizeof(iface->name));
                     iface->last_seen = time(NULL);
                     iface->discovered = true;
                     
@@ -439,19 +440,19 @@ static void determine_interface_type(network_interface_t *iface) {
     
     // Check interface name patterns
     if (strncmp(iface->name, "eth", 3) == 0) {
-        strncpy(iface->type, "ethernet", sizeof(iface->type) - 1);
+        safe_strncpy(iface->type, "ethernet", sizeof(iface->type));
     } else if (strncmp(iface->name, "wlan", 4) == 0) {
-        strncpy(iface->type, "wifi", sizeof(iface->type) - 1);
+        safe_strncpy(iface->type, "wifi", sizeof(iface->type));
     } else if (strncmp(iface->name, "wwan", 4) == 0) {
-        strncpy(iface->type, "cellular", sizeof(iface->type) - 1);
+        safe_strncpy(iface->type, "cellular", sizeof(iface->type));
     } else if (strncmp(iface->name, "tun", 3) == 0 || strncmp(iface->name, "tap", 3) == 0) {
-        strncpy(iface->type, "vpn", sizeof(iface->type) - 1);
+        safe_strncpy(iface->type, "vpn", sizeof(iface->type));
     } else if (strncmp(iface->name, "br", 2) == 0) {
-        strncpy(iface->type, "bridge", sizeof(iface->type) - 1);
+        safe_strncpy(iface->type, "bridge", sizeof(iface->type));
     } else if (strncmp(iface->name, "vlan", 4) == 0) {
-        strncpy(iface->type, "vlan", sizeof(iface->type) - 1);
+        safe_strncpy(iface->type, "vlan", sizeof(iface->type));
     } else {
-        strncpy(iface->type, "unknown", sizeof(iface->type) - 1);
+        safe_strncpy(iface->type, "unknown", sizeof(iface->type));
     }
 }
 

@@ -1,7 +1,9 @@
 #include "../notifications/notification_manager.h"
 #include "uci_maintenance.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include "../notifications/notification_types.h"
+#include "../shared/utils/string_utils.h"
 #include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -127,13 +129,13 @@ int check_parse_errors(uci_maintenance_result_t *result) {
             // Parse error detected
             uci_issue_t *issue = malloc(sizeof(uci_issue_t));
             if (issue) {
-                strncpy(issue->type, "parse_error", sizeof(issue->type) - 1);
+                safe_strncpy(issue->type, "parse_error", sizeof(issue->type));
                 issue->type[sizeof(issue->type) - 1] = '\0';
-                strncpy(issue->section, test_sections[i], sizeof(issue->section) - 1);
+                safe_strncpy(issue->section, test_sections[i], sizeof(issue->section));
                 issue->section[sizeof(issue->section) - 1] = '\0';
                 snprintf(issue->description, sizeof(issue->description) - 1,
                         "UCI parse error in %s section", test_sections[i]);
-                strncpy(issue->severity, "critical", sizeof(issue->severity) - 1);
+                safe_strncpy(issue->severity, "critical", sizeof(issue->severity));
                 issue->severity[sizeof(issue->severity) - 1] = '\0';
                 issue->can_auto_fix = true;
                 issue->timestamp = time(NULL);
@@ -164,13 +166,13 @@ static int validate_critical_sections(uci_maintenance_result_t *result) {
             // Missing critical section
             uci_issue_t *issue = malloc(sizeof(uci_issue_t));
             if (issue) {
-                strncpy(issue->type, "missing_section", sizeof(issue->type) - 1);
+                safe_strncpy(issue->type, "missing_section", sizeof(issue->type));
                 issue->type[sizeof(issue->type) - 1] = '\0';
-                strncpy(issue->section, critical_sections[i], sizeof(issue->section) - 1);
+                safe_strncpy(issue->section, critical_sections[i], sizeof(issue->section));
                 issue->section[sizeof(issue->section) - 1] = '\0';
                 snprintf(issue->description, sizeof(issue->description) - 1,
                         "Critical UCI section %s is missing", critical_sections[i]);
-                strncpy(issue->severity, "critical", sizeof(issue->severity) - 1);
+                safe_strncpy(issue->severity, "critical", sizeof(issue->severity));
                 issue->severity[sizeof(issue->severity) - 1] = '\0';
                 issue->can_auto_fix = false; // Cannot auto-fix missing sections
                 issue->timestamp = time(NULL);
@@ -209,19 +211,19 @@ int check_uci_corruption(uci_maintenance_result_t *result) {
                 if (st.st_size > 1024 * 1024) { // Larger than 1MB
                     uci_issue_t *issue = malloc(sizeof(uci_issue_t));
                     if (issue) {
-                        strncpy(issue->type, "corruption", sizeof(issue->type) - 1);
+                        safe_strncpy(issue->type, "corruption", sizeof(issue->type));
                         issue->type[sizeof(issue->type) - 1] = '\0';
-                        strncpy(issue->section, entry->d_name, sizeof(issue->section) - 1);
+                        safe_strncpy(issue->section, entry->d_name, sizeof(issue->section));
                         issue->section[sizeof(issue->section) - 1] = '\0';
                         // Truncate filename if too long to prevent buffer overflow
                         char truncated_name[64];
-                        strncpy(truncated_name, entry->d_name, sizeof(truncated_name) - 1);
+                        safe_strncpy(truncated_name, entry->d_name, sizeof(truncated_name));
                         truncated_name[sizeof(truncated_name) - 1] = '\0';
                         
                         snprintf(issue->description, sizeof(issue->description) - 1,
                                 "UCI file %s appears corrupted (size: %lld bytes)", 
                                 truncated_name, (long long)st.st_size);
-                        strncpy(issue->severity, "critical", sizeof(issue->severity) - 1);
+                        safe_strncpy(issue->severity, "critical", sizeof(issue->severity));
                         issue->severity[sizeof(issue->severity) - 1] = '\0';
                         issue->can_auto_fix = true;
                         issue->timestamp = time(NULL);
@@ -264,18 +266,18 @@ int check_unwanted_config_files(uci_maintenance_result_t *result) {
                 
                 uci_issue_t *issue = malloc(sizeof(uci_issue_t));
                 if (issue) {
-                    strncpy(issue->type, "unwanted_file", sizeof(issue->type) - 1);
+                    safe_strncpy(issue->type, "unwanted_file", sizeof(issue->type));
                     issue->type[sizeof(issue->type) - 1] = '\0';
-                    strncpy(issue->section, filename, sizeof(issue->section) - 1);
+                    safe_strncpy(issue->section, filename, sizeof(issue->section));
                     issue->section[sizeof(issue->section) - 1] = '\0';
                     // Truncate filename if too long to prevent buffer overflow
                     char truncated_filename[64];
-                    strncpy(truncated_filename, filename, sizeof(truncated_filename) - 1);
+                    safe_strncpy(truncated_filename, filename, sizeof(truncated_filename));
                     truncated_filename[sizeof(truncated_filename) - 1] = '\0';
                     
                     snprintf(issue->description, sizeof(issue->description) - 1,
                             "Unwanted file %s found in /etc/config", truncated_filename);
-                    strncpy(issue->severity, "warning", sizeof(issue->severity) - 1);
+                    safe_strncpy(issue->severity, "warning", sizeof(issue->severity));
                     issue->severity[sizeof(issue->severity) - 1] = '\0';
                     issue->can_auto_fix = true;
                     issue->timestamp = time(NULL);
@@ -403,7 +405,7 @@ static int create_uci_backup(const char *backup_path) {
     
     // Create backup directory if it doesn't exist
     char backup_dir[256];
-    strncpy(backup_dir, backup_path, sizeof(backup_dir) - 1);
+    safe_strncpy(backup_dir, backup_path, sizeof(backup_dir));
     char *last_slash = strrchr(backup_dir, '/');
     if (last_slash) {
         *last_slash = '\0';
@@ -520,7 +522,7 @@ static void send_notification(const char *type, const char *message) {
     // Create notification event
     notification_event_t event = {0};
     strcpy(event.title, "UCI Maintenance Alert");
-    strncpy(event.message, message, sizeof(event.message) - 1);
+    safe_strncpy(event.message, message, sizeof(event.message));
     event.message[sizeof(event.message) - 1] = '\0';
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
     event.timestamp = time(NULL);

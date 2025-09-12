@@ -1,5 +1,6 @@
 #include "health_analyzer.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -141,7 +142,7 @@ int health_analyzer_analyze(health_analysis_t* result)
             
             const char* interface_name = blobmsg_get_string(cur);
             if (interface_name && strlen(interface_name) > 0) {
-                strncpy(interface_names[interface_count], interface_name, sizeof(interface_names[interface_count]) - 1);
+                safe_strncpy(interface_names[interface_count], interface_name, sizeof(interface_names[interface_count]));
                 interface_names[interface_count][sizeof(interface_names[interface_count]) - 1] = '\0';
                 interface_count++;
             }
@@ -157,7 +158,7 @@ int health_analyzer_analyze(health_analysis_t* result)
         const char* common_interfaces[] = {"mob1s1a1", "wwan0", "eth0", "wlan0"};
         interface_count = 4;
         for (int i = 0; i < interface_count; i++) {
-            strncpy(interface_names[i], common_interfaces[i], sizeof(interface_names[i]) - 1);
+            safe_strncpy(interface_names[i], common_interfaces[i], sizeof(interface_names[i]));
             interface_names[i][sizeof(interface_names[i]) - 1] = '\0';
         }
     }
@@ -172,7 +173,7 @@ int health_analyzer_analyze(health_analysis_t* result)
         // Analyze member health
         member_health_t* member_health = &result->member_health[i];
         if (analyze_telemetry_data(member_name, member_health) == AUTONOMY_SUCCESS) {
-            strncpy(result->member_names[i], member_name, sizeof(result->member_names[i]) - 1);
+            safe_strncpy(result->member_names[i], member_name, sizeof(result->member_names[i]));
             result->member_count++;
             
             total_health += member_health->score;
@@ -467,7 +468,7 @@ static int detect_member_issues(const char* member_name, health_issue_t* issues,
     // Check for low health score
     if (health.score < g_health_analyzer.thresholds.fair && issue_count < max_issues) {
         health_issue_t* issue = &issues[issue_count++];
-        strncpy(issue->member_name, member_name, sizeof(issue->member_name) - 1);
+        safe_strncpy(issue->member_name, member_name, sizeof(issue->member_name));
         strcpy(issue->type, "performance");
         strcpy(issue->severity, health.score < g_health_analyzer.thresholds.poor ? "critical" : "warning");
         snprintf(issue->description, sizeof(issue->description),
@@ -480,7 +481,7 @@ static int detect_member_issues(const char* member_name, health_issue_t* issues,
     // Check for connectivity issues (heuristic)
     if (health.score < g_health_analyzer.thresholds.poor && issue_count < max_issues) {
         health_issue_t* issue = &issues[issue_count++];
-        strncpy(issue->member_name, member_name, sizeof(issue->member_name) - 1);
+        safe_strncpy(issue->member_name, member_name, sizeof(issue->member_name));
         strcpy(issue->type, "connectivity");
         strcpy(issue->severity, "critical");
         snprintf(issue->description, sizeof(issue->description),

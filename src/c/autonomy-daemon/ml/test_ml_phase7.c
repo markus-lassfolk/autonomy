@@ -78,7 +78,7 @@ int main() {
             memset(&obs, 0, sizeof(obs));
             
             obs.timestamp = time(NULL) + (i * 15);
-            strncpy(obs.interface_id, test_scenarios[scenario].interface_id, sizeof(obs.interface_id) - 1);
+            safe_strncpy(obs.interface_id, test_scenarios[scenario].interface_id, sizeof(obs.interface_id));
             obs.interface_type = test_scenarios[scenario].type;
             
             // Realistic performance based on scenario
@@ -251,7 +251,7 @@ int main() {
         memset(&starlink_obs, 0, sizeof(starlink_obs));
         
         starlink_obs.timestamp = time(NULL) + (i * 15);
-        strncpy(starlink_obs.interface_id, "starlink1", sizeof(starlink_obs.interface_id) - 1);
+        safe_strncpy(starlink_obs.interface_id, "starlink1", sizeof(starlink_obs.interface_id));
         starlink_obs.interface_type = INTERFACE_TYPE_STARLINK;
         
         // Simulate Starlink recovery during failover

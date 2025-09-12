@@ -1,7 +1,9 @@
 #include "../notifications/notification_manager.h"
 #include "disk_monitor.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include "../notifications/notification_types.h"
+#include "../shared/utils/string_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -362,7 +364,7 @@ static void send_notification(const char *type, const char *message) {
     // Create notification event
     notification_event_t event = {0};
     strcpy(event.title, "Disk Monitor Alert");
-    strncpy(event.message, message, sizeof(event.message) - 1);
+    safe_strncpy(event.message, message, sizeof(event.message));
     event.message[sizeof(event.message) - 1] = '\0';
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
     event.timestamp = time(NULL);

@@ -25,7 +25,7 @@ int telegram_client_init(telegram_client_t* client, const telegram_config_t* con
     
     // Initialize status
     client->status.enabled = config->enabled;
-    strncpy(client->status.chat_id, config->chat_id, sizeof(client->status.chat_id) - 1);
+    safe_strncpy(client->status.chat_id, config->chat_id, sizeof(client->status.chat_id));
     client->status.total_sent = 0;
     client->status.total_failed = 0;
     client->status.last_response_code = 0;
@@ -122,11 +122,11 @@ void telegram_client_create_message(telegram_client_t* client, const notificatio
     memset(message, 0, sizeof(telegram_message_t));
     
     // Set chat ID
-    strncpy(message->chat_id, client->config.chat_id, sizeof(message->chat_id) - 1);
+    safe_strncpy(message->chat_id, client->config.chat_id, sizeof(message->chat_id));
     
     // Set parse mode
     if (client->config.use_markdown) {
-        strncpy(message->parse_mode, "Markdown", sizeof(message->parse_mode) - 1);
+        safe_strncpy(message->parse_mode, "Markdown", sizeof(message->parse_mode));
     }
     
     // Format message
@@ -137,8 +137,8 @@ void telegram_client_create_message(telegram_client_t* client, const notificatio
         telegram_client_escape_markdown(event->title, escaped_title, sizeof(escaped_title));
         telegram_client_escape_markdown(event->message, escaped_message, sizeof(escaped_message));
     } else {
-        strncpy(escaped_title, event->title, sizeof(escaped_title) - 1);
-        strncpy(escaped_message, event->message, sizeof(escaped_message) - 1);
+        safe_strncpy(escaped_title, event->title, sizeof(escaped_title));
+        safe_strncpy(escaped_message, event->message, sizeof(escaped_message));
     }
     
     // Get priority emoji and text
@@ -237,7 +237,7 @@ static int send_telegram_request(telegram_client_t* client, telegram_message_t* 
     // Create JSON payload
     char* json_payload = create_telegram_json(message);
     if (!json_payload) {
-        strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error));
         return -1;
     }
     
@@ -245,7 +245,7 @@ static int send_telegram_request(telegram_client_t* client, telegram_message_t* 
     http_request_t* request = http_request_create(api_url, HTTP_METHOD_POST);
     if (!request) {
         free(json_payload);
-        strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error));
         return -1;
     }
     
@@ -253,7 +253,7 @@ static int send_telegram_request(telegram_client_t* client, telegram_message_t* 
     if (http_request_set_json_body(request, json_payload) != 0) {
         http_request_free(request);
         free(json_payload);
-        strncpy(client->status.last_error, "Failed to set JSON body", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Failed to set JSON body", sizeof(client->status.last_error));
         return -1;
     }
     
@@ -275,7 +275,7 @@ static int send_telegram_request(telegram_client_t* client, telegram_message_t* 
     free(json_payload);
     
     if (!response) {
-        strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error));
         client->status.last_error_time = time(NULL);
         return -1;
     }
@@ -307,16 +307,16 @@ static int send_telegram_request(telegram_client_t* client, telegram_message_t* 
                 if (desc_end) {
                     size_t desc_len = desc_end - desc_start;
                     if (desc_len < sizeof(client->status.last_error) - 20) {
-                        strncpy(client->status.last_error, "Telegram API: ", sizeof(client->status.last_error) - 1);
+                        safe_strncpy(client->status.last_error, "Telegram API: ", sizeof(client->status.last_error));
                         strncat(client->status.last_error, desc_start, desc_len);
                     } else {
-                        strncpy(client->status.last_error, "Telegram API error", sizeof(client->status.last_error) - 1);
+                        safe_strncpy(client->status.last_error, "Telegram API error", sizeof(client->status.last_error));
                     }
                 } else {
-                    strncpy(client->status.last_error, "Telegram API error", sizeof(client->status.last_error) - 1);
+                    safe_strncpy(client->status.last_error, "Telegram API error", sizeof(client->status.last_error));
                 }
             } else {
-                strncpy(client->status.last_error, "Telegram API error", sizeof(client->status.last_error) - 1);
+                safe_strncpy(client->status.last_error, "Telegram API error", sizeof(client->status.last_error));
             }
             client->status.last_error_time = time(NULL);
             http_response_free(response);
@@ -337,7 +337,7 @@ int telegram_client_send(telegram_client_t* client, const notification_event_t* 
     }
     
     if (strlen(client->config.token) == 0 || strlen(client->config.chat_id) == 0) {
-        strncpy(client->status.last_error, "Telegram token and chat ID are required", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Telegram token and chat ID are required", sizeof(client->status.last_error));
         client->status.last_error_time = time(NULL);
         client->status.total_failed++;
         return -1;

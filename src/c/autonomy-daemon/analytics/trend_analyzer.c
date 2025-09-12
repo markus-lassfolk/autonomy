@@ -130,7 +130,7 @@ int trend_analyzer_analyze_member(const char* member_name, member_trends_t* tren
     
     // Initialize trends structure
     memset(trends, 0, sizeof(member_trends_t));
-    strncpy(trends->member_name, member_name, sizeof(trends->member_name) - 1);
+    safe_strncpy(trends->member_name, member_name, sizeof(trends->member_name));
     trends->member_name[sizeof(trends->member_name) - 1] = '\0';
     trends->last_analysis = time(NULL);
     

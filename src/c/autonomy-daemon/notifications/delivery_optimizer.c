@@ -533,7 +533,7 @@ void delivery_optimizer_optimize_delivery(notification_type_t alert_type,
         plan->optimal_time = time(NULL);
         plan->confidence = 1.0;
         plan->estimated_delay_seconds = 0;
-        strncpy(plan->reason, "Delivery optimization disabled", sizeof(plan->reason) - 1);
+        safe_strncpy(plan->reason, "Delivery optimization disabled", sizeof(plan->reason));
         return;
     }
     
@@ -553,13 +553,13 @@ void delivery_optimizer_optimize_delivery(notification_type_t alert_type,
     
     // Never delay emergency notifications
     if (priority >= NOTIFICATION_PRIORITY_EMERGENCY) {
-        strncpy(plan->reason, "Emergency priority - immediate delivery", sizeof(plan->reason) - 1);
+        safe_strncpy(plan->reason, "Emergency priority - immediate delivery", sizeof(plan->reason));
         return;
     }
     
     // Check for bypass flags in JSON data
     if (base_data_json && strstr(base_data_json, "\"bypass_delivery_optimization\":true")) {
-        strncpy(plan->reason, "Delivery optimization bypassed", sizeof(plan->reason) - 1);
+        safe_strncpy(plan->reason, "Delivery optimization bypassed", sizeof(plan->reason));
         return;
     }
     
@@ -620,10 +620,10 @@ void delivery_optimizer_optimize_delivery(notification_type_t alert_type,
             g_delivery_optimizer.total_delay_seconds += delay_seconds;
             pthread_mutex_unlock(g_delivery_optimizer.mutex);
         } else {
-            strncpy(plan->reason, "Optimal time calculated but delay not justified", sizeof(plan->reason) - 1);
+            safe_strncpy(plan->reason, "Optimal time calculated but delay not justified", sizeof(plan->reason));
         }
     } else {
-        strncpy(plan->reason, "Current time is optimal for delivery", sizeof(plan->reason) - 1);
+        safe_strncpy(plan->reason, "Current time is optimal for delivery", sizeof(plan->reason));
     }
 }
 

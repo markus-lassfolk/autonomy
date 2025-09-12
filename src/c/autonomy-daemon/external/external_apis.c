@@ -2,7 +2,7 @@
 #include "../wifi/wifi_enhanced.h"
 #include "../shared/logging/logx.h"
 #include "../shared/utils/json_parser.h"
-#include "../shared/utils/http_client_libcurl.h"
+//#include "../utils/http_client.h" // Reverted due to type conflicts
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -500,32 +500,57 @@ static int make_http_request(const char* url, const char* headers, const char* p
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    // Use shared HTTP client (replaces 45 lines of duplicate curl code)
-    http_response_t* http_resp;
-    if (post_data) {
-        http_resp = http_post(url, post_data, "application/json");
-    } else {
-        http_resp = http_get(url);
+    CURL* curl = curl_easy_init();
+    if (!curl) {
+        LOGX_ERROR_MSG("Failed to initialize CURL");
+        return AUTONOMY_ERROR_SYSTEM;
     }
     
-    if (!http_resp) {
-        LOGX_ERROR_MSG("HTTP request failed for URL: %s", url);
+    // Set CURL options
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, external_apis_write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Autonomy-Daemon/6.1.0");
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+    
+    // Set custom headers if provided
+    struct curl_slist* header_list = NULL;
+    if (headers) {
+        header_list = curl_slist_append(header_list, headers);
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header_list);
+    }
+    
+    // Set POST data if provided
+    if (post_data) {
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(post_data));
+    }
+    
+    // Perform request
+    CURLcode curl_result = curl_easy_perform(curl);
+    
+    long response_code;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+    
+    if (header_list) {
+        curl_slist_free_all(header_list);
+    }
+    curl_easy_cleanup(curl);
+    
+    if (curl_result != CURLE_OK) {
+        LOGX_ERROR_MSG("CURL request failed", "error", curl_easy_strerror(curl_result));
         return AUTONOMY_ERROR_NETWORK;
     }
     
-    // Copy response data to external_apis response structure
-    if (http_resp->body && response) {
-        size_t copy_size = http_resp->body_size < sizeof(response->data) - 1 ? 
-                          http_resp->body_size : sizeof(response->data) - 1;
-        memcpy(response->data, http_resp->body, copy_size);
-        response->data[copy_size] = '\0';
-        response->size = copy_size;
+    if (response_code != 200) {
+        LOGX_ERROR_MSG("HTTP request failed", "response_code", response_code);
+        return AUTONOMY_ERROR_NETWORK;
     }
     
-    bool success = http_response_is_success(http_resp);
-    http_response_free(http_resp);
-    
-    return success ? AUTONOMY_SUCCESS : AUTONOMY_ERROR_NETWORK;
+    return AUTONOMY_SUCCESS;
 }
 
 // Update API statistics

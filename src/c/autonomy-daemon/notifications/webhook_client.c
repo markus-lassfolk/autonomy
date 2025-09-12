@@ -28,7 +28,7 @@ int webhook_client_init(webhook_client_t* client, const webhook_config_t* config
     
     // Initialize status
     client->status.enabled = config->enabled;
-    strncpy(client->status.url, config->url, sizeof(client->status.url) - 1);
+    safe_strncpy(client->status.url, config->url, sizeof(client->status.url));
     client->status.total_sent = 0;
     client->status.total_failed = 0;
     client->status.last_response_code = 0;
@@ -100,9 +100,9 @@ void webhook_client_create_payload(webhook_client_t* client, const notification_
     memset(payload, 0, sizeof(webhook_payload_t));
     
     // Fill payload fields
-    strncpy(payload->type, notification_type_to_string(event->type), sizeof(payload->type) - 1);
-    strncpy(payload->title, event->title, sizeof(payload->title) - 1);
-    strncpy(payload->message, event->message, sizeof(payload->message) - 1);
+    safe_strncpy(payload->type, notification_type_to_string(event->type), sizeof(payload->type));
+    safe_strncpy(payload->title, event->title, sizeof(payload->title));
+    safe_strncpy(payload->message, event->message, sizeof(payload->message));
     payload->priority = (int)event->priority;
     
     // Format timestamp
@@ -111,20 +111,20 @@ void webhook_client_create_payload(webhook_client_t* client, const notification_
     
     // Add context JSON if available
     if (strlen(event->details_json) > 0) {
-        strncpy(payload->context_json, event->details_json, sizeof(payload->context_json) - 1);
+        safe_strncpy(payload->context_json, event->details_json, sizeof(payload->context_json));
     }
     
     // Add metadata
-    strncpy(payload->source, "autonomy", sizeof(payload->source) - 1);
-    strncpy(payload->version, "1.0.0", sizeof(payload->version) - 1);
+    safe_strncpy(payload->source, "autonomy", sizeof(payload->source));
+    safe_strncpy(payload->version, "1.0.0", sizeof(payload->version));
     
     // Get actual hostname from system
     char hostname[256];
     if (gethostname(hostname, sizeof(hostname)) == 0) {
-        strncpy(payload->hostname, hostname, sizeof(payload->hostname) - 1);
+        safe_strncpy(payload->hostname, hostname, sizeof(payload->hostname));
         payload->hostname[sizeof(payload->hostname) - 1] = '\0';
     } else {
-        strncpy(payload->hostname, "unknown", sizeof(payload->hostname) - 1);
+        safe_strncpy(payload->hostname, "unknown", sizeof(payload->hostname));
     }
 }
 
@@ -189,7 +189,7 @@ static int send_webhook_request(webhook_client_t* client, const char* payload_da
     // Create HTTP request
     http_request_t* request = http_request_create(client->config.url, method);
     if (!request) {
-        strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error));
         return -1;
     }
     
@@ -199,7 +199,7 @@ static int send_webhook_request(webhook_client_t* client, const char* payload_da
                                   client->config.content_type : "application/json";
         if (http_request_set_body(request, payload_data, content_type) != 0) {
             http_request_free(request);
-            strncpy(client->status.last_error, "Failed to set request body", sizeof(client->status.last_error) - 1);
+            safe_strncpy(client->status.last_error, "Failed to set request body", sizeof(client->status.last_error));
             return -1;
         }
     }
@@ -257,7 +257,7 @@ static int send_webhook_request(webhook_client_t* client, const char* payload_da
     http_request_free(request);
     
     if (!response) {
-        strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error));
         client->status.last_error_time = time(NULL);
         return -1;
     }
@@ -297,7 +297,7 @@ int webhook_client_send(webhook_client_t* client, const notification_event_t* ev
     // Create JSON payload
     char* json_payload = create_json_payload(&payload);
     if (!json_payload) {
-        strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error));
         client->status.last_error_time = time(NULL);
         client->status.total_failed++;
         return -1;

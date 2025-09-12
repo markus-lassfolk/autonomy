@@ -158,7 +158,7 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
         memset(&obs, 0, sizeof(obs));
         
         obs.timestamp = time(NULL);
-        strncpy(obs.interface_id, model->interface_id, sizeof(obs.interface_id) - 1);
+        safe_strncpy(obs.interface_id, model->interface_id, sizeof(obs.interface_id));
         obs.interface_type = model->type;
         
         // Collect interface-specific data

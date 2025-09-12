@@ -191,7 +191,7 @@ static int init_location_database(void) {
     
     // Ensure database directory exists
     char db_dir[256];
-    strncpy(db_dir, db_path, sizeof(db_dir) - 1);
+    safe_strncpy(db_dir, db_path, sizeof(db_dir));
     
     char* last_slash = strrchr(db_dir, '/');
     if (last_slash) {
@@ -349,7 +349,7 @@ int gps_location_reference_get_by_id(uint32_t location_id, gps_location_referenc
                 
                 const char* gps_source = (const char*)sqlite3_column_text(stmt, 6);
                 if (gps_source) {
-                    strncpy(location->gps_source, gps_source, sizeof(location->gps_source) - 1);
+                    safe_strncpy(location->gps_source, gps_source, sizeof(location->gps_source));
                     location->gps_source[sizeof(location->gps_source) - 1] = '\0';
                 }
                 
@@ -360,7 +360,7 @@ int gps_location_reference_get_by_id(uint32_t location_id, gps_location_referenc
                 
                 const char* location_name = (const char*)sqlite3_column_text(stmt, 11);
                 if (location_name) {
-                    strncpy(location->location_name, location_name, sizeof(location->location_name) - 1);
+                    safe_strncpy(location->location_name, location_name, sizeof(location->location_name));
                     location->location_name[sizeof(location->location_name) - 1] = '\0';
                 }
                 
@@ -592,7 +592,7 @@ static int create_new_location_reference(double latitude, double longitude, doub
                 new_location.latitude_original = latitude;
                 new_location.longitude_original = longitude;
                 new_location.accuracy_meters = accuracy;
-                strncpy(new_location.gps_source, gps_source, sizeof(new_location.gps_source) - 1);
+                safe_strncpy(new_location.gps_source, gps_source, sizeof(new_location.gps_source));
                 new_location.gps_source[sizeof(new_location.gps_source) - 1] = '\0';
                 new_location.first_recorded = now;
                 new_location.last_used = now;

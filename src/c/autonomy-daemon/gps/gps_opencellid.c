@@ -366,7 +366,7 @@ static int parse_lookup_response(const char* json_data, opencellid_response_t* r
     json_object* error_obj;
     if (json_object_object_get_ex(root, "error", &error_obj)) {
         const char* error_msg = json_object_get_string(error_obj);
-        strncpy(response->error, error_msg, sizeof(response->error) - 1);
+        safe_strncpy(response->error, error_msg, sizeof(response->error));
         json_object_put(root);
         return AUTONOMY_ERROR_SYSTEM;
     }
@@ -391,7 +391,7 @@ static int parse_lookup_response(const char* json_data, opencellid_response_t* r
     }
     if (json_object_object_get_ex(root, "radio", &radio_obj)) {
         const char* radio_str = json_object_get_string(radio_obj);
-        strncpy(response->radio, radio_str, sizeof(response->radio) - 1);
+        safe_strncpy(response->radio, radio_str, sizeof(response->radio));
     }
     
     json_object_put(root);
@@ -515,7 +515,7 @@ int gps_opencellid_get_status(opencellid_status_t* status) {
     
     status->enabled = g_opencellid.config.enabled;
     status->api_key_configured = strlen(g_opencellid.config.api_key) > 0;
-    strncpy(status->base_url, g_opencellid.config.base_url, sizeof(status->base_url) - 1);
+    safe_strncpy(status->base_url, g_opencellid.config.base_url, sizeof(status->base_url));
     status->timeout_seconds = g_opencellid.config.timeout_seconds;
     status->contribute_data = g_opencellid.config.contribution.enabled;
     status->cache_entries = g_opencellid.cache_count;

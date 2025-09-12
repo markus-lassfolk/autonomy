@@ -149,7 +149,7 @@ int decision_engine_make_decision(decision_result_t* result) {
         
         strcpy(telemetry_decision.decision_type, needs_failover ? "failover" : "evaluation");
         strcpy(telemetry_decision.trigger, "periodic_evaluation");
-        strncpy(telemetry_decision.reasoning, result->reason, sizeof(telemetry_decision.reasoning) - 1);
+        safe_strncpy(telemetry_decision.reasoning, result->reason, sizeof(telemetry_decision.reasoning));
         telemetry_decision.reasoning[sizeof(telemetry_decision.reasoning) - 1] = '\0';
         telemetry_decision.confidence = result->confidence;
         
@@ -166,7 +166,7 @@ int decision_engine_make_decision(decision_result_t* result) {
             telemetry_decision.gps_latitude = gps_data.latitude;
             telemetry_decision.gps_longitude = gps_data.longitude;
             telemetry_decision.gps_accuracy = gps_data.accuracy;
-            strncpy(telemetry_decision.gps_source, gps_data.source, sizeof(telemetry_decision.gps_source) - 1);
+            safe_strncpy(telemetry_decision.gps_source, gps_data.source, sizeof(telemetry_decision.gps_source));
             telemetry_decision.gps_source[sizeof(telemetry_decision.gps_source) - 1] = '\0';
         }
         

@@ -4,6 +4,7 @@
 #include "../notifications/notifications_comprehensive.h"
 #include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -121,7 +122,7 @@ int gps_events_create_event(const char *name, gps_event_type_t event_type,
     event->cooldown_period = 0;
     
     // Set event name
-    strncpy(event->name, name, sizeof(event->name) - 1);
+    safe_strncpy(event->name, name, sizeof(event->name));
     event->name[sizeof(event->name) - 1] = '\0';
     
     // Copy conditions

@@ -8,6 +8,7 @@
 #include "starlink_weather_snow_melt_control.h"
 #include "starlink_weather_snow_melt_control_ubus.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -74,7 +75,7 @@ int example_configure_snow_melt_control(void) {
     config.weather_api_key[sizeof(config.weather_api_key) - 1] = '\0';
     
     // Set Starlink dish IP (default is usually 192.168.100.1)
-    strncpy(config.starlink_host, "192.168.100.1", sizeof(config.starlink_host) - 1);
+    safe_strncpy(config.starlink_host, "192.168.100.1", sizeof(config.starlink_host));
     config.starlink_host[sizeof(config.starlink_host) - 1] = '\0';
     config.starlink_port = 9200;
     

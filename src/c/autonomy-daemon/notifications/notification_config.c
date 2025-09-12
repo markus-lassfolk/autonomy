@@ -104,8 +104,8 @@ int notification_config_manager_load_defaults(notification_config_manager_t* con
     
     memset(&config->webhook_config, 0, sizeof(webhook_config_t));
     config->webhook_config.enabled = false; // Use configurable webhook enabled
-    strncpy(config->webhook_config.method, "POST", sizeof(config->webhook_config.method) - 1);
-    strncpy(config->webhook_config.content_type, "application/json", sizeof(config->webhook_config.content_type) - 1);
+    safe_strncpy(config->webhook_config.method, "POST", sizeof(config->webhook_config.method));
+    safe_strncpy(config->webhook_config.content_type, "application/json", sizeof(config->webhook_config.content_type));
     config->webhook_config.timeout_seconds = 30; // Use configurable webhook timeout
     config->webhook_config.retry_attempts = 3; // Use configurable webhook retry attempts
     config->webhook_config.retry_delay_seconds = 5; // Use configurable webhook retry delay
@@ -114,8 +114,8 @@ int notification_config_manager_load_defaults(notification_config_manager_t* con
     
     // Quiet hours settings
     config->quiet_hours_enabled = false; // Use configurable quiet hours enabled
-    strncpy(config->quiet_hours_start, "22:00", sizeof(config->quiet_hours_start) - 1);
-    strncpy(config->quiet_hours_end, "08:00", sizeof(config->quiet_hours_end) - 1);
+    safe_strncpy(config->quiet_hours_start, "22:00", sizeof(config->quiet_hours_start));
+    safe_strncpy(config->quiet_hours_end, "08:00", sizeof(config->quiet_hours_end));
     config->suppress_low_priority_weekends = false; // Use configurable weekend suppression
     
     // Intelligence settings

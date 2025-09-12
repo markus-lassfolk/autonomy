@@ -33,7 +33,7 @@ int discover_cellular_devices(cellular_device_info_t *devices, int max_devices, 
             
             // Initialize device info
             memset(device, 0, sizeof(cellular_device_info_t));
-            strncpy(device->device_path, device_path, sizeof(device->device_path) - 1);
+            safe_strncpy(device->device_path, device_path, sizeof(device->device_path));
             device->is_available = true;
             
             // Try to get signal strength to verify device is working

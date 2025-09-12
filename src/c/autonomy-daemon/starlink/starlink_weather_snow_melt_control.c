@@ -95,7 +95,7 @@ int starlink_weather_snow_melt_control_init(void) {
     // Initialize gRPC client
     extern int starlink_grpc_comprehensive_client_init(starlink_grpc_client_config_t *config);
     starlink_grpc_client_config_t grpc_config = {0};
-    strncpy(grpc_config.host, g_snow_melt_control.config.starlink_host, sizeof(grpc_config.host) - 1);
+    safe_strncpy(grpc_config.host, g_snow_melt_control.config.starlink_host, sizeof(grpc_config.host));
     grpc_config.host[sizeof(grpc_config.host) - 1] = '\0';
     grpc_config.port = g_snow_melt_control.config.starlink_port;
     grpc_config.timeout = 10;
@@ -429,7 +429,7 @@ weather_condition_t starlink_weather_snow_melt_parse_weather_condition(const cha
     
     // Convert to lowercase for comparison
     char desc_lower[128];
-    strncpy(desc_lower, description, sizeof(desc_lower) - 1);
+    safe_strncpy(desc_lower, description, sizeof(desc_lower));
     desc_lower[sizeof(desc_lower) - 1] = '\0';
     
     for (int i = 0; desc_lower[i]; i++) {

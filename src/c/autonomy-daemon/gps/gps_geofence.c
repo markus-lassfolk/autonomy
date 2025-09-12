@@ -2,6 +2,7 @@
 #include "gps_geofence.h"
 #include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -127,7 +128,7 @@ int gps_geofence_create_circle(const char *name, double center_lat, double cente
     geofence->current_status = GEOFENCE_STATUS_OUTSIDE;
     
     // Set geofence name
-    strncpy(geofence->name, name, sizeof(geofence->name) - 1);
+    safe_strncpy(geofence->name, name, sizeof(geofence->name));
     geofence->name[sizeof(geofence->name) - 1] = '\0';
     
     // Set center point
@@ -185,7 +186,7 @@ int gps_geofence_create_rectangle(const char *name, double min_lat, double max_l
     geofence->current_status = GEOFENCE_STATUS_OUTSIDE;
     
     // Set geofence name
-    strncpy(geofence->name, name, sizeof(geofence->name) - 1);
+    safe_strncpy(geofence->name, name, sizeof(geofence->name));
     geofence->name[sizeof(geofence->name) - 1] = '\0';
     
     // Set rectangle corners (clockwise from top-left)
@@ -252,7 +253,7 @@ int gps_geofence_create_polygon(const char *name, const gps_coordinate_t *points
     geofence->current_status = GEOFENCE_STATUS_OUTSIDE;
     
     // Set geofence name
-    strncpy(geofence->name, name, sizeof(geofence->name) - 1);
+    safe_strncpy(geofence->name, name, sizeof(geofence->name));
     geofence->name[sizeof(geofence->name) - 1] = '\0';
     
     // Copy points and calculate center

@@ -310,13 +310,13 @@ int smart_notification_manager_send(const notification_event_t* event) {
             int index = g_smart_manager.history_count;
             // Convert notification_event_t to notification_record_t
             notification_record_t* record = &g_smart_manager.notification_history[index];
-            strncpy(record->id, event->id, sizeof(record->id) - 1);
+            safe_strncpy(record->id, event->id, sizeof(record->id));
             record->id[sizeof(record->id) - 1] = '\0';
             record->type = event->type;
             record->priority = event->priority;
-            strncpy(record->title, event->title, sizeof(record->title) - 1);
+            safe_strncpy(record->title, event->title, sizeof(record->title));
             record->title[sizeof(record->title) - 1] = '\0';
-            strncpy(record->message, event->message, sizeof(record->message) - 1);
+            safe_strncpy(record->message, event->message, sizeof(record->message));
             record->message[sizeof(record->message) - 1] = '\0';
             record->timestamp = event->timestamp;
             record->success = true; // Assume success for now
@@ -330,13 +330,13 @@ int smart_notification_manager_send(const notification_event_t* event) {
             }
             // Convert notification_event_t to notification_record_t for last position
             notification_record_t* record = &g_smart_manager.notification_history[g_smart_manager.max_history_size - 1];
-            strncpy(record->id, event->id, sizeof(record->id) - 1);
+            safe_strncpy(record->id, event->id, sizeof(record->id));
             record->id[sizeof(record->id) - 1] = '\0';
             record->type = event->type;
             record->priority = event->priority;
-            strncpy(record->title, event->title, sizeof(record->title) - 1);
+            safe_strncpy(record->title, event->title, sizeof(record->title));
             record->title[sizeof(record->title) - 1] = '\0';
-            strncpy(record->message, event->message, sizeof(record->message) - 1);
+            safe_strncpy(record->message, event->message, sizeof(record->message));
             record->message[sizeof(record->message) - 1] = '\0';
             record->timestamp = event->timestamp;
             record->success = true; // Assume success for now
@@ -433,8 +433,8 @@ void smart_notification_manager_get_status(smart_manager_status_t* status) {
     status->max_suppression_rules = g_smart_manager.max_suppression_rules;
     
     // Copy quiet hours settings
-    strncpy(status->quiet_hours_start, g_smart_manager.config.quiet_hours_start, sizeof(status->quiet_hours_start) - 1);
-    strncpy(status->quiet_hours_end, g_smart_manager.config.quiet_hours_end, sizeof(status->quiet_hours_end) - 1);
+    safe_strncpy(status->quiet_hours_start, g_smart_manager.config.quiet_hours_start, sizeof(status->quiet_hours_start));
+    safe_strncpy(status->quiet_hours_end, g_smart_manager.config.quiet_hours_end, sizeof(status->quiet_hours_end));
     
     pthread_mutex_unlock(g_smart_manager.mutex);
 }

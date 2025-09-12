@@ -294,7 +294,7 @@ int ml_monitor_analytics_calculate_interface_score(const char *interface_id, ml_
     // Initialize score structure
     memset(score, 0, sizeof(ml_interface_score_t));
     score->timestamp = time(NULL);
-    strncpy(score->interface_id, interface_id, sizeof(score->interface_id) - 1);
+    safe_strncpy(score->interface_id, interface_id, sizeof(score->interface_id));
     score->interface_type = ml_monitor_map_interface_type(interface);
     
     // Get raw metrics

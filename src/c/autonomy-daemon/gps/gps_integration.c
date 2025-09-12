@@ -1,6 +1,7 @@
 #include "gps_integration.h"
 #include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -146,7 +147,7 @@ int gps_integration_register_source(const char *name, gps_source_type_t source_t
     source->health_score = 100.0;  // Start with perfect health
     source->reliability = 1.0;     // Start with perfect reliability
     
-    strncpy(source->name, name, sizeof(source->name) - 1);
+    safe_strncpy(source->name, name, sizeof(source->name));
     source->name[sizeof(source->name) - 1] = '\0';
     
     g_integration.source_count++;
