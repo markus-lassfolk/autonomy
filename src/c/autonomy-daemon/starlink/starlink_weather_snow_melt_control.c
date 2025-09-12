@@ -10,6 +10,30 @@
 #include <math.h>
 #include <time.h>
 #include <ctype.h>
+#include <uci.h>
+
+// External UCI functions and context
+extern struct uci_context *uci_ctx;
+extern const char* ucix_get_option(struct uci_context *ctx, const char *package, const char *section, const char *option);
+extern int ucix_add_option(struct uci_context *ctx, const char *package, const char *section, const char *option, const char *value);
+extern int ucix_add_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int value);
+extern int ucix_logged_commit(struct uci_context *ctx, const char *package);
+
+// Wrapper function to match the signature used in this file
+static int ucix_get_option(const char *package, const char *section, const char *option, char *value, size_t size) {
+    if (!uci_ctx || !package || !section || !option || !value || size == 0) {
+        return -1;
+    }
+    
+    const char *result = ucix_get_option(uci_ctx, package, section, option);
+    if (result) {
+        strncpy(value, result, size - 1);
+        value[size - 1] = '\0';
+        return 0;
+    }
+    
+    return -1;
+}
 
 // Global instance
 static starlink_weather_snow_melt_control_t g_snow_melt_control = {0};
@@ -72,6 +96,7 @@ int starlink_weather_snow_melt_control_init(void) {
     extern int starlink_grpc_comprehensive_client_init(starlink_grpc_client_config_t *config);
     starlink_grpc_client_config_t grpc_config = {0};
     strncpy(grpc_config.host, g_snow_melt_control.config.starlink_host, sizeof(grpc_config.host) - 1);
+    grpc_config.host[sizeof(grpc_config.host) - 1] = '\0';
     grpc_config.port = g_snow_melt_control.config.starlink_port;
     grpc_config.timeout = 10;
     grpc_config.retries = 3;
@@ -288,6 +313,7 @@ int starlink_weather_snow_melt_control_force_update(void) {
         &forecast_weather, g_snow_melt_control.config.forecast_hours_ahead);
     strncpy(g_snow_melt_control.status.last_weather_description, current_weather.description,
             sizeof(g_snow_melt_control.status.last_weather_description) - 1);
+    g_snow_melt_control.status.last_weather_description[sizeof(g_snow_melt_control.status.last_weather_description) - 1] = '\0';
     g_snow_melt_control.status.last_weather_update = time(NULL);
     pthread_mutex_unlock(&g_snow_melt_control.mutex);
     
@@ -658,12 +684,14 @@ int starlink_weather_snow_melt_control_load_uci_config(void) {
     if (ucix_get_option("autonomy", "snow_melt_control", "weather_api_key", value, sizeof(value)) == 0) {
         strncpy(g_snow_melt_control.config.weather_api_key, value, 
                 sizeof(g_snow_melt_control.config.weather_api_key) - 1);
+        g_snow_melt_control.config.weather_api_key[sizeof(g_snow_melt_control.config.weather_api_key) - 1] = '\0';
     }
     
     // Starlink host
     if (ucix_get_option("autonomy", "snow_melt_control", "starlink_host", value, sizeof(value)) == 0) {
         strncpy(g_snow_melt_control.config.starlink_host, value, 
                 sizeof(g_snow_melt_control.config.starlink_host) - 1);
+        g_snow_melt_control.config.starlink_host[sizeof(g_snow_melt_control.config.starlink_host) - 1] = '\0';
     }
     
     // Starlink port

@@ -71,9 +71,11 @@ int example_configure_snow_melt_control(void) {
     // Set your OpenWeatherMap API key here
     strncpy(config.weather_api_key, "your_openweathermap_api_key_here", 
             sizeof(config.weather_api_key) - 1);
+    config.weather_api_key[sizeof(config.weather_api_key) - 1] = '\0';
     
     // Set Starlink dish IP (default is usually 192.168.100.1)
     strncpy(config.starlink_host, "192.168.100.1", sizeof(config.starlink_host) - 1);
+    config.starlink_host[sizeof(config.starlink_host) - 1] = '\0';
     config.starlink_port = 9200;
     
     // Apply configuration

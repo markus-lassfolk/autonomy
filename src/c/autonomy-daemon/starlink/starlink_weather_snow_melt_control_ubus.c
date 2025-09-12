@@ -15,9 +15,9 @@ static const struct blobmsg_policy starlink_weather_snow_melt_ubus_policy[__STAR
     [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_SET_CONFIG] = { .name = "set_config", .type = BLOBMSG_TYPE_TABLE },
     [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_SET_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
     [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_SET_MODE] = { .name = "mode", .type = BLOBMSG_TYPE_STRING },
-    [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_FORCE_UPDATE] = { .name = "force_update", .type = BLOBMSG_TYPE_BOOL },
-    [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_GET_STATISTICS] = { .name = "get_statistics", .type = BLOBMSG_TYPE_BOOL },
-    [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_RESET_STATISTICS] = { .name = "reset_statistics", .type = BLOBMSG_TYPE_BOOL },
+    [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_FORCE_UPDATE] = { .name = "force_update", .type = BLOBMSG_TYPE_UNSPEC },
+    [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_GET_STATISTICS] = { .name = "get_statistics", .type = BLOBMSG_TYPE_UNSPEC },
+    [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_RESET_STATISTICS] = { .name = "reset_statistics", .type = BLOBMSG_TYPE_UNSPEC },
 };
 
 // UBUS method arguments
@@ -281,11 +281,13 @@ int starlink_weather_snow_melt_ubus_set_config(struct ubus_context *ctx, struct 
     if (tb[STARLINK_WEATHER_SNOW_MELT_UBUS_ARG_WEATHER_API_KEY]) {
         strncpy(config.weather_api_key, blobmsg_get_string(tb[STARLINK_WEATHER_SNOW_MELT_UBUS_ARG_WEATHER_API_KEY]), 
                 sizeof(config.weather_api_key) - 1);
+        config.weather_api_key[sizeof(config.weather_api_key) - 1] = '\0';
     }
     
     if (tb[STARLINK_WEATHER_SNOW_MELT_UBUS_ARG_STARLINK_HOST]) {
         strncpy(config.starlink_host, blobmsg_get_string(tb[STARLINK_WEATHER_SNOW_MELT_UBUS_ARG_STARLINK_HOST]), 
                 sizeof(config.starlink_host) - 1);
+        config.starlink_host[sizeof(config.starlink_host) - 1] = '\0';
     }
     
     if (tb[STARLINK_WEATHER_SNOW_MELT_UBUS_ARG_STARLINK_PORT]) {
