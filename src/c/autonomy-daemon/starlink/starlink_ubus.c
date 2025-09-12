@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "starlink_types.h"
 #include "starlink_obstruction.h"
+#include "starlink_modules.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <time.h>
