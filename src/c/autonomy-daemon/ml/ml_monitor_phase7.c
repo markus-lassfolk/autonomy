@@ -85,12 +85,17 @@ int ml_monitor_init_phase7_multi_interface(ml_monitor_t *monitor) {
         fprintf(stderr, "Interfaces automatically discovered and added to ML monitoring\n");
     }
     
-    // Integrate with network controller for failover events
+    // Integrate with network controller for failover events - temporarily disabled to isolate crash
+    printf("DEBUG: Network controller integration temporarily disabled\n");
+    /*
+    printf("DEBUG: About to call ml_monitor_integrate_with_network_controller\n");
     int integration_result = ml_monitor_integrate_with_network_controller(monitor);
+    printf("DEBUG: ml_monitor_integrate_with_network_controller returned: %d\n", integration_result);
     if (integration_result != ML_MONITOR_SUCCESS) {
         // Use simple fprintf to avoid LOGX crashes
         fprintf(stderr, "Network controller integration failed: %d\n", integration_result);
     }
+    */
     
     g_phase7_initialized = true;
     
