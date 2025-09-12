@@ -1,6 +1,10 @@
 #ifndef NOTIFICATIONS_COMPREHENSIVE_H
 #define NOTIFICATIONS_COMPREHENSIVE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "notification_types.h"
 #include "smart_manager.h"
 #include "intelligence_engine.h"

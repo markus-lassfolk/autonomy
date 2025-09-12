@@ -465,7 +465,7 @@ int network_controller_set_members(const network_member_t* members, int count) {
         LOGX_DEBUG_MSG("Member added",
                   "name", members[i].name,
                   "interface", members[i].interface,
-                  "class", members[i].class,
+                  "class", members[i].interface_class,
                   "weight", members[i].weight,
                   "eligible", members[i].eligible);
     }

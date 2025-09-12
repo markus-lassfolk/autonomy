@@ -184,7 +184,7 @@ int gps_system_init(void) {
     }
     
     // Initialize GPS Google API with proper API key loading
-    const char* google_api_key = NULL;
+    char* google_api_key = NULL;
     
     // Try to get from environment variable first
     google_api_key = getenv("GOOGLE_API_KEY");
@@ -199,12 +199,16 @@ int gps_system_init(void) {
                 char *newline = strchr(key_buffer, '\n');
                 if (newline) *newline = '\0';
                 
-                // Remove quotes if present
-                if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
-                    key_buffer[strlen(key_buffer)-1] = '\0';
-                    google_api_key = key_buffer + 1;
-                } else {
-                    google_api_key = key_buffer;
+                // Allocate memory for the key
+                google_api_key = (char*)malloc(strlen(key_buffer) + 1);
+                if (google_api_key) {
+                    // Remove quotes if present
+                    if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
+                        key_buffer[strlen(key_buffer)-1] = '\0';
+                        strcpy(google_api_key, key_buffer + 1);
+                    } else {
+                        strcpy(google_api_key, key_buffer);
+                    }
                 }
             }
             pclose(uci_fp);
@@ -232,7 +236,7 @@ int gps_system_init(void) {
     }
     
     // Initialize GPS Weather integration with proper API key loading
-    const char* weather_api_key = NULL;
+    char* weather_api_key = NULL;
     
     // Try to get from environment variable first
     weather_api_key = getenv("WEATHER_API_KEY");
@@ -247,12 +251,16 @@ int gps_system_init(void) {
                 char *newline = strchr(key_buffer, '\n');
                 if (newline) *newline = '\0';
                 
-                // Remove quotes if present
-                if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
-                    key_buffer[strlen(key_buffer)-1] = '\0';
-                    weather_api_key = key_buffer + 1;
-                } else {
-                    weather_api_key = key_buffer;
+                // Allocate memory for the key
+                weather_api_key = (char*)malloc(strlen(key_buffer) + 1);
+                if (weather_api_key) {
+                    // Remove quotes if present
+                    if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
+                        key_buffer[strlen(key_buffer)-1] = '\0';
+                        strcpy(weather_api_key, key_buffer + 1);
+                    } else {
+                        strcpy(weather_api_key, key_buffer);
+                    }
                 }
             }
             pclose(uci_fp);
