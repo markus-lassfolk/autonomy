@@ -1,5 +1,6 @@
 #include "webhook_client.h"
 #include "../shared/utils/http_client_libcurl.h"
+#include "../shared/utils/json_parser.h"
 #include "../core/types.h"
 #include <stdlib.h>
 #include <string.h>
@@ -136,29 +137,27 @@ static char* create_json_payload(webhook_payload_t* payload) {
     char* json = malloc(buffer_size);
     if (!json) return NULL;
     
-    // Create JSON using json-c library for better reliability
-    json_object* root = json_object_new_object();
+    // Use shared JSON creation utility (reduces code duplication)
+    cJSON* root = json_create_notification_payload(payload->type, payload->title, payload->message,
+                                                  payload->priority, payload->timestamp, payload->source,
+                                                  payload->version, payload->hostname);
     if (!root) {
         free(json);
         return NULL;
     }
     
-    json_object_object_add(root, "type", json_object_new_string(payload->type));
-    json_object_object_add(root, "title", json_object_new_string(payload->title));
-    json_object_object_add(root, "message", json_object_new_string(payload->message));
-    json_object_object_add(root, "priority", json_object_new_int(payload->priority));
-    json_object_object_add(root, "timestamp", json_object_new_string(payload->timestamp));
-    json_object_object_add(root, "source", json_object_new_string(payload->source));
-    json_object_object_add(root, "version", json_object_new_string(payload->version));
-    json_object_object_add(root, "hostname", json_object_new_string(payload->hostname));
-    
     // Convert to string and copy to our buffer
-    const char* json_string = json_object_to_json_string(root);
-    strncpy(json, json_string, buffer_size - 1);
-    json[buffer_size - 1] = '\0';
+    char* json_string = cJSON_Print(root);
+    if (json_string) {
+        strncpy(json, json_string, buffer_size - 1);
+        json[buffer_size - 1] = '\0';
+        free(json_string);
+    } else {
+        strcpy(json, "{}");
+    }
     
     // Clean up
-    json_object_put(root);
+    cJSON_Delete(root);
     
     // Add context if available
     if (strlen(payload->context_json) > 0) {

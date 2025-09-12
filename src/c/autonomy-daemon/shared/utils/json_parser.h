@@ -51,6 +51,16 @@ bool json_set_double(json_document_t* doc, const char* path, double value);
 bool json_set_int(json_document_t* doc, const char* path, int value);
 bool json_set_bool(json_document_t* doc, const char* path, bool value);
 
+// Common JSON object creation patterns (reduces duplication)
+cJSON* json_create_notification_payload(const char* type, const char* title, const char* message, 
+                                        int priority, const char* timestamp, const char* source, 
+                                        const char* version, const char* hostname);
+cJSON* json_create_simple_object(const char* key1, const char* value1, 
+                                 const char* key2, const char* value2,
+                                 const char* key3, const char* value3);
+cJSON* json_create_status_object(const char* status, const char* message, 
+                                double timestamp, const char* module);
+
 bool json_add_array_string(json_document_t* doc, const char* path, const char* value);
 bool json_add_array_double(json_document_t* doc, const char* path, double value);
 bool json_add_array_int(json_document_t* doc, const char* path, int value);
