@@ -187,9 +187,6 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
                      interface->friendly_name, interface->mwan3_name, interface->health_score);
             
             // Initialize MWAN3 integration for this interface
-            // Temporarily disabled to prevent crash - TODO: investigate MWAN3 integration issue
-            printf("DEBUG: MWAN3 integration temporarily disabled for interface %s\n", interface->name);
-            /*
             if (interface->mwan3_name && strlen(interface->mwan3_name) > 0) {
                 // Add to MWAN3 integration tracking
                 for (int j = 0; j < MAX_INTERFACES; j++) {
@@ -205,7 +202,6 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
                     }
                 }
             }
-            */
         } else {
             printf("WARN: Failed to add interface %s to ML monitoring: %d\n", interface->name, add_result);
         }
@@ -214,19 +210,14 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     printf("DEBUG: Interface addition loop completed successfully\n");
     printf("DEBUG: ml_interfaces_added = %d, interface_count = %d\n", ml_interfaces_added, interface_count);
     
-    // Interface count summary logging temporarily disabled to isolate crash
-    printf("DEBUG: Interface count summary logging temporarily disabled\n");
-    /*
+    // Log interface count summary
     printf("DEBUG: About to log interface count summary\n");
     printf("DEBUG: ml_interfaces_added = %d, interface_count = %d\n", ml_interfaces_added, interface_count);
     printf("INFO: ML monitoring initialized for %d interfaces (from %d discovered)\n", 
              ml_interfaces_added, interface_count);
     printf("DEBUG: Interface count summary logged successfully\n");
-    */
     
-    // Log interface summary - temporarily disabled to prevent crash
-    printf("DEBUG: Interface summary logging temporarily disabled\n");
-    /*
+    // Log interface summary
     printf("INFO: ML Interface Summary:\n");
     for (int i = 0; i < interface_count && i < MAX_INTERFACES; i++) {
         network_interface_t *interface = &discovered_interfaces[i];
@@ -253,7 +244,6 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
         printf("  - %s (%s): %s, MWAN3=%s, status=%s\n",
                  name, type, friendly_name, mwan3_name, ml_status);
     }
-    */
     
     printf("DEBUG: All logging sections completed successfully\n");
     printf("DEBUG: About to return ML_MONITOR_SUCCESS from ml_monitor_init_from_network_discovery\n");

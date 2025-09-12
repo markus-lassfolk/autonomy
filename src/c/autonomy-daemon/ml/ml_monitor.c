@@ -1,9 +1,8 @@
 #include "ml_monitor.h"
 #include "ml_monitor_analytics.h"
-#include "../shared/logging/logx.h"
-#include "../shared/utils/uci_manager.h"
+#include "../utils/logx.h"
+#include "../utils/uci_manager.h"
 #include "../core/types.h"
-#include "../shared/utils/string_utils.h"
 #include "../starlink/starlink_snow_detection.h"
 #include <stdlib.h>
 #include <string.h>
@@ -72,14 +71,14 @@ void ml_monitor_config_init_defaults(ml_monitor_config_t *config) {
     config->memory_limit_kb = 1024;
     
     // Storage settings
-    safe_strncpy(config->storage_path, "/var/lib/autonomy/ml_monitor.dat", sizeof(config->storage_path));
+    strncpy(config->storage_path, "/var/lib/autonomy/ml_monitor.dat", sizeof(config->storage_path) - 1);
     config->use_memory_mapped_storage = true;
     config->storage_sync_interval_minutes = 5;
     
     // Debug settings
     config->debug_logging_enabled = false;
     config->save_raw_observations = false;
-    safe_strncpy(config->debug_log_path, "/tmp/ml_monitor_debug.log", sizeof(config->debug_log_path));
+    strncpy(config->debug_log_path, "/tmp/ml_monitor_debug.log", sizeof(config->debug_log_path) - 1);
 }
 
 // Note: ml_monitor_load_config_from_uci is implemented in ml_monitor_uci.c (more feature-complete)
@@ -96,7 +95,7 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
     
     // Create directory if it doesn't exist
     char dir_path[512];
-    safe_strncpy(dir_path, filepath, sizeof(dir_path));
+    strncpy(dir_path, filepath, sizeof(dir_path) - 1);
     dir_path[sizeof(dir_path) - 1] = '\0';
     char *last_slash = strrchr(dir_path, '/');
     if (last_slash) {
@@ -714,7 +713,7 @@ static void* ml_monitor_prediction_thread(void *arg) {
     ml_monitor_t *monitor = (ml_monitor_t*)arg;
     if (!monitor) return NULL;
     
-    LOGX_INFO_MSG("ML monitor prediction thread started");
+    printf("INFO: ML monitor prediction thread started\n");
     
     while (!monitor->should_stop) {
         // Make predictions every minute
@@ -745,7 +744,7 @@ static void* ml_monitor_prediction_thread(void *arg) {
         }
     }
     
-    LOGX_INFO_MSG("ML monitor prediction thread stopped");
+    printf("INFO: ML monitor prediction thread stopped\n");
     return NULL;
 }
 
@@ -765,7 +764,7 @@ int ml_monitor_start(ml_monitor_t *monitor) {
         return ML_MONITOR_ERROR_ALREADY_RUNNING;
     }
     
-    LOGX_INFO_MSG("Starting ML monitor");
+    printf("INFO: Starting ML monitor\n");
     fprintf(stderr, "DEBUG: ml_monitor_start - starting initialization\n");
     
     monitor->should_stop = false;
@@ -773,7 +772,7 @@ int ml_monitor_start(ml_monitor_t *monitor) {
     // Start collection thread
     fprintf(stderr, "DEBUG: ml_monitor_start - about to create collection thread\n");
     if (pthread_create(&monitor->collection_thread, NULL, ml_monitor_collection_thread, monitor) != 0) {
-        LOGX_ERROR_MSG("Failed to create ML collection thread");
+        printf("ERROR: Failed to create ML collection thread\n");
         fprintf(stderr, "DEBUG: ml_monitor_start failed - collection thread creation failed\n");
         return ML_MONITOR_ERROR_THREAD_FAILED;
     }
@@ -782,7 +781,7 @@ int ml_monitor_start(ml_monitor_t *monitor) {
     // Start prediction thread
     fprintf(stderr, "DEBUG: ml_monitor_start - about to create prediction thread\n");
     if (pthread_create(&monitor->prediction_thread, NULL, ml_monitor_prediction_thread, monitor) != 0) {
-        LOGX_ERROR_MSG("Failed to create ML prediction thread");
+        printf("ERROR: Failed to create ML prediction thread\n");
         fprintf(stderr, "DEBUG: ml_monitor_start failed - prediction thread creation failed\n");
         monitor->should_stop = true;
         pthread_join(monitor->collection_thread, NULL);
@@ -791,7 +790,7 @@ int ml_monitor_start(ml_monitor_t *monitor) {
     fprintf(stderr, "DEBUG: ml_monitor_start - prediction thread created successfully\n");
     
     monitor->running = true;
-    LOGX_INFO_MSG("ML monitor started successfully");
+    printf("INFO: ML monitor started successfully\n");
     fprintf(stderr, "DEBUG: ml_monitor_start completed successfully\n");
     
     return ML_MONITOR_SUCCESS;
@@ -874,7 +873,7 @@ int ml_monitor_enable_field_testing_mode(ml_monitor_t *monitor, const char *test
     // Enable field testing mode (placeholder implementation)
     monitor->config.debug_logging_enabled = true;
     monitor->config.save_raw_observations = true;
-    safe_strncpy(monitor->config.debug_log_path, "/tmp/ml_field_test.log", sizeof(monitor->config.debug_log_path));
+    strncpy(monitor->config.debug_log_path, "/tmp/ml_field_test.log", sizeof(monitor->config.debug_log_path) - 1);
     monitor->config.debug_log_path[sizeof(monitor->config.debug_log_path) - 1] = '\0';
     
     pthread_mutex_unlock(&monitor->state_mutex);
