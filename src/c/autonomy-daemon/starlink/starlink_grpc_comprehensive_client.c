@@ -48,14 +48,14 @@ int starlink_grpc_parse_endpoint(const char *endpoint, char **host, int *port) {
     char *colon = strchr(endpoint, ':');
     if (!colon) {
         // No colon found, treat as host only
-        *host = strdup(endpoint);
+        *host = (char*)strdup(endpoint);
         *port = 9200; // default port
         return 0;
     }
     
     // Split at colon
     size_t host_len = colon - endpoint;
-    *host = malloc(host_len + 1);
+    *host = (char*)malloc(host_len + 1);
     if (!*host) return -1;
     
     strncpy(*host, endpoint, host_len);
@@ -291,9 +291,9 @@ static size_t write_callback(void *contents, size_t size, size_t nmemb, void *us
     
     // Reallocate buffer if needed
     if (response->response_data == NULL) {
-        response->response_data = malloc(realsize + 1);
+        response->response_data = (char*)malloc(realsize + 1);
     } else {
-        response->response_data = realloc(response->response_data, 
+        response->response_data = (char*)realloc(response->response_data, 
                                         response->response_size + realsize + 1);
     }
     

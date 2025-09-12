@@ -19,10 +19,6 @@ extern "C" {
 #include <stddef.h>
 #include <stdlib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // Comprehensive notification delivery status
 typedef enum {
     NOTIFICATION_DELIVERY_PENDING = 0,

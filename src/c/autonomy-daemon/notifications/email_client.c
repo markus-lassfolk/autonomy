@@ -247,7 +247,7 @@ static char* create_email_message(email_client_t* client, const char* recipient,
     size_t message_size = strlen(subject) + strlen(body) + strlen(client->config.from_address) + 
                          strlen(recipient) + 512; // Extra space for headers
     
-    char* message = malloc(message_size);
+    char* message = (char*)malloc(message_size);
     if (!message) return NULL;
     
     // Get current timestamp

@@ -35,7 +35,7 @@ int usage_analyzer_init(void) {
     memset(&g_usage_analyzer, 0, sizeof(usage_analyzer_t));
     
     // Initialize mutex
-    g_usage_analyzer.mutex = malloc(sizeof(pthread_mutex_t));
+    g_usage_analyzer.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
     if (!g_usage_analyzer.mutex) {
         return -1;
     }
@@ -132,7 +132,7 @@ int usage_analyzer_analyze(usage_metrics_t* result) {
         free(g_usage_analyzer.last_result);
     }
     
-    g_usage_analyzer.last_result = malloc(sizeof(usage_metrics_t));
+    g_usage_analyzer.last_result = (usage_metrics_t*)malloc(sizeof(usage_metrics_t));
     if (g_usage_analyzer.last_result) {
         *g_usage_analyzer.last_result = *result;
     }

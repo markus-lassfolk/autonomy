@@ -109,7 +109,7 @@ void* memory_debug_malloc(size_t size, const char *file, int line, const char *f
     void *user_ptr = (char*)ptr + sizeof(uint32_t);
     
     // Create tracking block
-    memory_block_t *block = malloc(sizeof(memory_block_t));
+    memory_block_t *block = (memory_block_t*)malloc(sizeof(memory_block_t));
     if (!block) {
         free(ptr);
         return NULL;

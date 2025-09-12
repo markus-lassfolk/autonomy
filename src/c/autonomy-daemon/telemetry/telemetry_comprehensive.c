@@ -237,7 +237,7 @@ int telemetry_comprehensive_init(const telemetry_collection_config_t* config) {
     
     // Allocate memory for ring buffers
     g_telemetry_comprehensive.samples_buffer_size = 1000; // Keep 1000 samples in memory
-    g_telemetry_comprehensive.samples_buffer = calloc(g_telemetry_comprehensive.samples_buffer_size,
+    g_telemetry_comprehensive.samples_buffer = (telemetry_sample_t*)calloc(g_telemetry_comprehensive.samples_buffer_size,
                                                      sizeof(telemetry_sample_t));
     if (!g_telemetry_comprehensive.samples_buffer) {
         LOGX_ERROR_MSG("Failed to allocate memory for samples buffer");
@@ -247,7 +247,7 @@ int telemetry_comprehensive_init(const telemetry_collection_config_t* config) {
     }
     
     g_telemetry_comprehensive.decisions_buffer_size = 200; // Keep 200 decisions in memory
-    g_telemetry_comprehensive.decisions_buffer = calloc(g_telemetry_comprehensive.decisions_buffer_size,
+    g_telemetry_comprehensive.decisions_buffer = (decision_record_t*)calloc(g_telemetry_comprehensive.decisions_buffer_size,
                                                        sizeof(decision_record_t));
     if (!g_telemetry_comprehensive.decisions_buffer) {
         LOGX_ERROR_MSG("Failed to allocate memory for decisions buffer");
@@ -1079,8 +1079,8 @@ int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
              "COUNT(CASE WHEN status = 'connected' THEN 1 END) as connected_count, "
              "COUNT(CASE WHEN status = 'disconnected' THEN 1 END) as disconnected_count "
              "FROM telemetry_samples "
-              "WHERE timestamp BETWEEN %lld AND %lld",
-             start_time, end_time);
+              "WHERE timestamp BETWEEN %ld AND %ld",
+             (long)start_time, (long)end_time);
     
     sqlite3_stmt* stmt;
     int ret = sqlite3_prepare_v2(g_telemetry_comprehensive.db, query, -1, &stmt, NULL);
@@ -1121,10 +1121,10 @@ int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
     char test_script[512];
     snprintf(test_script, sizeof(test_script),
              "python3 /usr/lib/autonomy/ml/test_algorithm.py "
-              "--algorithm %s --start-time %lld --end-time %lld "
+                 "--algorithm %s --start-time %ld --end-time %ld "
              "--data-dir /var/lib/autonomy/telemetry "
              "--output /tmp/ml_test_results.json 2>/dev/null",
-             algorithm_name, start_time, end_time);
+             algorithm_name, (long)start_time, (long)end_time);
     
     int test_result = system(test_script);
     
@@ -1137,7 +1137,7 @@ int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
             snprintf(results_json, 2048,
                      "{\"success\": true, "
                      "\"algorithm_name\": \"%s\", "
-                      "\"time_range\": {\"start\": %lld, \"end\": %lld}, "
+                      "\"time_range\": {\"start\": %ld, \"end\": %ld}, "
                      "\"samples_analyzed\": %d, "
                      "\"data_quality\": {"
                      "\"avg_latency\": %.2f, "
@@ -1148,7 +1148,7 @@ int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
                      "\"disconnected_samples\": %d"
                      "}, "
                      "\"test_results\": %s}",
-                     algorithm_name, start_time, end_time, sample_count,
+                     algorithm_name, (long)start_time, (long)end_time, sample_count,
                      avg_latency, avg_packet_loss, avg_signal_strength, avg_throughput,
                      connected_count, disconnected_count, test_results);
         } else {
@@ -1166,7 +1166,7 @@ int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
         snprintf(results_json, 2048,
                  "{\"success\": true, "
                  "\"algorithm_name\": \"%s\", "
-                      "\"time_range\": {\"start\": %lld, \"end\": %lld}, "
+                      "\"time_range\": {\"start\": %ld, \"end\": %ld}, "
                  "\"samples_analyzed\": %d, "
                  "\"statistical_analysis\": {"
                  "\"connection_rate\": %.3f, "
@@ -1177,7 +1177,7 @@ int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
                  "\"avg_throughput\": %.0f"
                  "}, "
                  "\"test_method\": \"statistical_fallback\"}",
-                 algorithm_name, start_time, end_time, sample_count,
+                 algorithm_name, (long)start_time, (long)end_time, sample_count,
                  connection_rate, avg_quality_score,
                  avg_latency, avg_packet_loss, avg_signal_strength, avg_throughput);
     }

@@ -35,7 +35,7 @@ int smart_notification_manager_init(const smart_manager_config_t* config) {
     g_smart_manager.config = *config;
     
     // Initialize mutex
-    g_smart_manager.mutex = malloc(sizeof(pthread_mutex_t));
+    g_smart_manager.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
     if (!g_smart_manager.mutex) {
         return -1;
     }
@@ -48,7 +48,7 @@ int smart_notification_manager_init(const smart_manager_config_t* config) {
     }
     
     // Initialize notification history
-    g_smart_manager.notification_history = malloc(config->max_history_size * sizeof(notification_record_t));
+    g_smart_manager.notification_history = (notification_record_t*)malloc(config->max_history_size * sizeof(notification_record_t));
     if (!g_smart_manager.notification_history) {
         pthread_mutex_destroy(g_smart_manager.mutex);
         free(g_smart_manager.mutex);
@@ -59,7 +59,7 @@ int smart_notification_manager_init(const smart_manager_config_t* config) {
     g_smart_manager.history_count = 0;
     
     // Initialize suppression rules
-    g_smart_manager.suppression_rules = malloc(config->max_suppression_rules * sizeof(smart_suppression_rule_t));
+    g_smart_manager.suppression_rules = (smart_suppression_rule_t*)malloc(config->max_suppression_rules * sizeof(smart_suppression_rule_t));
     if (!g_smart_manager.suppression_rules) {
         free(g_smart_manager.notification_history);
         pthread_mutex_destroy(g_smart_manager.mutex);

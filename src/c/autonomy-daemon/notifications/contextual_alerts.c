@@ -28,7 +28,7 @@ int contextual_alert_manager_init(const contextual_alert_config_t* config) {
     g_contextual_manager.config = *config;
     
     // Initialize mutex
-    g_contextual_manager.mutex = malloc(sizeof(pthread_mutex_t));
+    g_contextual_manager.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
     if (!g_contextual_manager.mutex) {
         return -1;
     }
@@ -36,7 +36,7 @@ int contextual_alert_manager_init(const contextual_alert_config_t* config) {
     pthread_mutex_init(g_contextual_manager.mutex, NULL);
     
     // Initialize alert templates
-    g_contextual_manager.alert_templates = malloc(config->max_templates * sizeof(alert_template_t));
+    g_contextual_manager.alert_templates = (alert_template_t*)malloc(config->max_templates * sizeof(alert_template_t));
     if (!g_contextual_manager.alert_templates) {
         pthread_mutex_destroy(g_contextual_manager.mutex);
         free(g_contextual_manager.mutex);
@@ -47,7 +47,7 @@ int contextual_alert_manager_init(const contextual_alert_config_t* config) {
     g_contextual_manager.template_count = 0;
     
     // Initialize context rules
-    g_contextual_manager.context_rules = malloc(config->max_context_rules * sizeof(context_rule_t));
+    g_contextual_manager.context_rules = (context_rule_t*)malloc(config->max_context_rules * sizeof(context_rule_t));
     if (!g_contextual_manager.context_rules) {
         free(g_contextual_manager.alert_templates);
         pthread_mutex_destroy(g_contextual_manager.mutex);
@@ -59,7 +59,7 @@ int contextual_alert_manager_init(const contextual_alert_config_t* config) {
     g_contextual_manager.context_rules_count = 0;
     
     // Initialize state tracking
-    g_contextual_manager.last_known_state = malloc(config->max_state_keys * sizeof(state_key_value_t));
+    g_contextual_manager.last_known_state = (state_key_value_t*)malloc(config->max_state_keys * sizeof(state_key_value_t));
     if (!g_contextual_manager.last_known_state) {
         free(g_contextual_manager.context_rules);
         free(g_contextual_manager.alert_templates);
@@ -132,8 +132,8 @@ void contextual_alert_manager_cleanup(void) {
 }
 
 // Add alert template
-int contextual_alert_manager_add_template(const alert_template_t* template) {
-    if (!g_contextual_manager_initialized || !template) {
+int contextual_alert_manager_add_template(const alert_template_t* template_data) {
+    if (!g_contextual_manager_initialized || !template_data) {
         return -1;
     }
     
@@ -145,7 +145,7 @@ int contextual_alert_manager_add_template(const alert_template_t* template) {
     }
     
     int index = g_contextual_manager.template_count;
-    g_contextual_manager.alert_templates[index] = *template;
+    g_contextual_manager.alert_templates[index] = *template_data;
     g_contextual_manager.template_count++;
     
     pthread_mutex_unlock(g_contextual_manager.mutex);
