@@ -31,7 +31,7 @@ static int ml_monitor_collect_data_sources(ml_monitor_t *monitor, ml_observation
     
     // TODO: Implement actual data collection from GPS, Starlink, etc.
     // For now, just return success with empty observation
-    LOGX_DEBUG_MSG("Collected data sources for ML observation");
+    printf("DEBUG: Collected data sources for ML observation\n");
     
     return ML_MONITOR_SUCCESS;
 }
@@ -89,7 +89,7 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
     fprintf(stderr, "DEBUG: ml_monitor_init_storage called with filepath: %s\n", filepath ? filepath : "NULL");
     if (!filepath || !storage_size) return NULL;
     
-    LOGX_INFO_MSG("Initializing ML monitor storage: %s", filepath);
+    printf("INFO: Initializing ML monitor storage: %s\n", filepath);
     fprintf(stderr, "DEBUG: About to open file: %s\n", filepath);
     
     // Create directory if it doesn't exist
@@ -101,7 +101,7 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
         *last_slash = '\0';
         fprintf(stderr, "DEBUG: Creating directory: %s\n", dir_path);
         if (mkdir(dir_path, 0755) < 0 && errno != EEXIST) {
-            LOGX_ERROR_MSG("Failed to create storage directory: %s", strerror(errno));
+            printf("ERROR: Failed to create storage directory: %s\n", strerror(errno));
             return NULL;
         }
         fprintf(stderr, "DEBUG: Directory created or already exists\n");
@@ -110,7 +110,7 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
     int fd = open(filepath, O_RDWR | O_CREAT, 0644);
     fprintf(stderr, "DEBUG: File opened, fd=%d\n", fd);
     if (fd < 0) {
-        LOGX_ERROR_MSG("Failed to open storage file: %s", strerror(errno));
+        printf("ERROR: Failed to open storage file: %s\n", strerror(errno));
         return NULL;
     }
     
@@ -121,7 +121,7 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
     // Ensure file size
     fprintf(stderr, "DEBUG: About to ftruncate file\n");
     if (ftruncate(fd, *storage_size) < 0) {
-        LOGX_ERROR_MSG("Failed to resize storage file: %s", strerror(errno));
+        printf("ERROR: Failed to resize storage file: %s\n", strerror(errno));
         close(fd);
         return NULL;
     }
@@ -136,7 +136,7 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
     close(fd);
     
     if (state == MAP_FAILED) {
-        LOGX_ERROR_MSG("Failed to memory map storage file: %s", strerror(errno));
+        printf("ERROR: Failed to memory map storage file: %s\n", strerror(errno));
         return NULL;
     }
     fprintf(stderr, "DEBUG: Memory mapping successful\n");
@@ -144,7 +144,7 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
     // Initialize if new file
     fprintf(stderr, "DEBUG: Checking magic number: 0x%08X\n", state->magic);
     if (state->magic != 0x4D4C5354) { // "MLST"
-        LOGX_INFO_MSG("Initializing new ML storage file");
+        printf("INFO: Initializing new ML storage file\n");
         fprintf(stderr, "DEBUG: Initializing new storage file\n");
         memset(state, 0, *storage_size);
         state->magic = 0x4D4C5354;
@@ -183,9 +183,9 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
             }
         }
         
-        LOGX_INFO_MSG("ML storage initialized successfully");
+        printf("INFO: ML storage initialized successfully\n");
     } else {
-        LOGX_INFO_MSG("Loaded existing ML storage (version %u, %u observations)", 
+        printf("INFO: Loaded existing ML storage (version %u, %u observations)\n", 
                  state->version, state->total_observations);
     }
     
