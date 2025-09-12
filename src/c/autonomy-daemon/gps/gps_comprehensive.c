@@ -6,7 +6,7 @@
 #include "gps_google_api.h"
 #include "../external/external_apis.h"
 #include "../starlink/starlink_grpc_collector.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

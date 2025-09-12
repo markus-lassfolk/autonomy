@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <cjson/cJSON.h>
-#include "../core/types.h"
+#include "../../core/types.h"
 
 // JSON parser utilities for production use
 // Replaces all simplified JSON parsing implementations

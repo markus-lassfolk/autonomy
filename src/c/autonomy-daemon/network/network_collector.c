@@ -1,5 +1,5 @@
 #include "network_collector.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>

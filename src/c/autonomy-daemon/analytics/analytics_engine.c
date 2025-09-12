@@ -2,7 +2,7 @@
 #include "performance_analyzer.h"
 #include "trend_analyzer.h"
 #include "health_analyzer.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/system_management.h"
 #include "../utils/disk_monitor.h"
 #include <stdlib.h>

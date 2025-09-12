@@ -1,6 +1,6 @@
 #include "ml_monitor_analytics.h"
 #include "ml_monitor_network_discovery_integration.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>

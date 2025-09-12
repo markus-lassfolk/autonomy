@@ -1,7 +1,7 @@
 #include "ml_monitor.h"
 #include "ml_monitor_multi_interface.h"
 #include "../network/network_discovery_comprehensive.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <string.h>
 #include <stdlib.h>
 

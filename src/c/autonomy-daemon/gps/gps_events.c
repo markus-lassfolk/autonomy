@@ -2,7 +2,7 @@
 #include "gps_events.h"
 #include "gps_geofence.h"
 #include "../notifications/notifications_comprehensive.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>

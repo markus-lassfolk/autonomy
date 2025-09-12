@@ -1,6 +1,6 @@
 #include "../external/external_apis.h"
 #include "../wifi/wifi_enhanced.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

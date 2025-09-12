@@ -1,5 +1,5 @@
 #include "webhook_client.h"
-#include "../utils/http_client_libcurl.h"
+#include "../shared/utils/http_client_libcurl.h"
 #include "../core/types.h"
 #include <stdlib.h>
 #include <string.h>

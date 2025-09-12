@@ -1,7 +1,7 @@
 #include "ml_monitor.h"
 #include "ml_monitor_analytics.h"
-#include "../utils/logx.h"
-#include "../utils/uci_manager.h"
+#include "../shared/logging/logx.h"
+#include "../shared/utils/uci_manager.h"
 #include "../core/types.h"
 #include "../starlink/starlink_snow_detection.h"
 #include <stdlib.h>

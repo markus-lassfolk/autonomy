@@ -4,7 +4,7 @@
 #include "starlink_grpc_collector.h"
 #include "../notifications/notification_types.h"
 #include "../notifications/notifications_comprehensive.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

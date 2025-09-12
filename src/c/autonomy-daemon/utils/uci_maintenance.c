@@ -2,7 +2,7 @@
 #include "uci_maintenance.h"
 #include "../core/types.h"
 #include "../notifications/notification_types.h"
-#include "logx.h"
+#include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

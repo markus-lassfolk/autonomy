@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "notifications_comprehensive_ubus.h"
 #include "notifications_comprehensive.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <stdio.h>

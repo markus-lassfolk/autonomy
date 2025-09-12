@@ -1,6 +1,6 @@
 #include "uci_manager.h"
-#include "../core/types.h"
-#include "../utils/logx.h"
+#include "../../core/types.h"
+#include "../logging/logx.h"
 #include <uci.h>
 #include <uci.h> 
 #include <string.h>

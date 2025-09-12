@@ -1,5 +1,5 @@
 #include "gps_connector.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
 #include "gps_integration.h"
 #include "gps_location_reference.h"

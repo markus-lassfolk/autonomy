@@ -1,7 +1,7 @@
 #include "starlink_types.h"
 #include "starlink_grpc_collector.h"
 #include "../core/types.h"
-#include "../utils/json_parser.h"
+#include "../shared/utils/json_parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

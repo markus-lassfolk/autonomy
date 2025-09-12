@@ -1,6 +1,6 @@
 #include "ml_monitor.h"
 #include "ml_monitor_multi_interface.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../utils/secure_exec.h"
 #include "../network/network_controller.h"
 #include "../network/network_failover.h"

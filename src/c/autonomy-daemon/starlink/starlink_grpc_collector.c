@@ -3,7 +3,7 @@
 #include "starlink_grpc_daemon_integration.h"
 #include "../core/types.h"
 #include "../utils/http_client.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <json-c/json.h>
 #include <string.h>
 #include <stdlib.h>

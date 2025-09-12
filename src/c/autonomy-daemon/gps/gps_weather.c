@@ -1,8 +1,8 @@
 #include "gps_coordinate_utils.h"
 #include "gps_weather.h"
 #include "../external/external_apis.h"
-#include "../utils/logx.h"
-#include "../utils/json_parser.h"
+#include "../shared/logging/logx.h"
+#include "../shared/utils/json_parser.h"
 #include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>

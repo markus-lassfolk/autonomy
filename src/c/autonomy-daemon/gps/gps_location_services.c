@@ -1,7 +1,7 @@
 #include "gps_coordinate_utils.h"
 #include "gps_location_services.h"
 #include "gps_google_api.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../utils/http_client.h"
 #include "../core/types.h"
 #include <string.h>

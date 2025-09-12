@@ -1,5 +1,5 @@
 #include "ml_monitor.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../utils/secure_exec.h"
 #include "../starlink/starlink_modules.h"
 #include "../starlink/starlink_comprehensive.h"

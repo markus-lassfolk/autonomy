@@ -3,7 +3,7 @@
 #include "../external/external_apis.h"
 #include "../gps/gps_manager.h"
 #include "../gps/gps_coordinate_utils.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
 #include <string.h>
 #include <stdlib.h>
@@ -12,7 +12,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <stdbool.h>
-#include "../utils/json_parser.h"
+#include "../shared/utils/json_parser.h"
 
 // External reference to global configuration
 extern autonomy_config_t g_config;

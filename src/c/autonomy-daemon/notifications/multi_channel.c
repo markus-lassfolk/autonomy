@@ -3,7 +3,7 @@
 #include "discord_client.h"
 #include "telegram_client.h"
 #include "sms_client.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
 #include <libubus.h>
 #include <libubox/blobmsg.h>

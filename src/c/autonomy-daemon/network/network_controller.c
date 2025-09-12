@@ -1,5 +1,5 @@
 #include "network_controller.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
 #include <stdio.h>
 #include <stdlib.h>
