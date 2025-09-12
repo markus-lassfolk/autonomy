@@ -470,8 +470,8 @@ int check_roaming_status(void) {
             // This would need proper UBUS response parsing
             // For now, check cellular collector if available
             cellular_info_t cellular_info;
-            if (cellular_collector_is_initialized() && 
-                cellular_collector_collect(&cellular_info) == AUTONOMY_SUCCESS) {
+            if (cellular_collector_is_available() &&
+                cellular_collector_get_info(&cellular_info) == AUTONOMY_SUCCESS) {
                 is_roaming = cellular_info.roaming;
                 LOGX_DEBUG_MSG("Roaming status from cellular collector", "roaming", is_roaming);
             }
