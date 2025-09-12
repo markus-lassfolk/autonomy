@@ -83,6 +83,7 @@ int ml_monitor_init_phase7_multi_interface(ml_monitor_t *monitor) {
     } else {
         // Use simple fprintf to avoid LOGX crashes
         fprintf(stderr, "Interfaces automatically discovered and added to ML monitoring\n");
+        printf("DEBUG: ml_monitor_init_from_network_discovery returned successfully\n");
     }
     
     // Integrate with network controller for failover events - temporarily disabled to isolate crash

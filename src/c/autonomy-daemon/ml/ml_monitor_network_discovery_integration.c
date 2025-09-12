@@ -249,6 +249,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     }
     */
     
+    printf("DEBUG: About to return ML_MONITOR_SUCCESS from ml_monitor_init_from_network_discovery\n");
     return ML_MONITOR_SUCCESS;
 }
 
