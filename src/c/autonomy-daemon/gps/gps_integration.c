@@ -148,7 +148,6 @@ int gps_integration_register_source(const char *name, gps_source_type_t source_t
     source->reliability = 1.0;     // Start with perfect reliability
     
     safe_strncpy(source->name, name, sizeof(source->name));
-    source->name[sizeof(source->name) - 1] = '\0';
     
     g_integration.source_count++;
     g_integration.active_sources++;

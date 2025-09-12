@@ -137,8 +137,13 @@ static int perform_google_api_request(const char *endpoint, const char *params,
     
     // Use shared HTTP client (replaces 20 lines of duplicate curl code)
     http_response_t* http_resp = http_get(url);
-    long http_code = http_resp ? http_resp->status_code : 0;
-    bool curl_success = http_resp && http_response_is_success(http_resp);
+    long http_code = 0;
+    bool curl_success = false;
+    
+    if (http_resp) {
+        http_code = http_resp->status_code;
+        curl_success = http_response_is_success(http_resp);
+    }
     
     // Update statistics
     g_google_api.request_count++;

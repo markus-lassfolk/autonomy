@@ -1016,12 +1016,14 @@ int external_apis_get_google_location(const void* cell_towers, const void* wifi_
             LOGX_DEBUG_MSG("Found %d WiFi access points for location request", ap_count);
             
             for (int i = 0; i < ap_count && i < 32; i++) {
-                // Use shared WiFi AP JSON creation (reduces 8 lines to 1)
-                cJSON* ap_obj = json_create_wifi_ap_object(access_points[i].bssid, 
-                                                          access_points[i].signal,
-                                                          access_points[i].channel, 0);
+                // Build WiFi AP object using json-c
+                json_object* ap_obj = json_object_new_object();
                 if (ap_obj) {
-                    json_object_array_add(wifi_array, (json_object*)ap_obj);
+                    json_object_object_add(ap_obj, "macAddress", json_object_new_string(access_points[i].bssid));
+                    json_object_object_add(ap_obj, "signalStrength", json_object_new_int(access_points[i].signal));
+                    json_object_object_add(ap_obj, "channel", json_object_new_int(access_points[i].channel));
+                    json_object_object_add(ap_obj, "age", json_object_new_int(0)); // Real-time data
+                    json_object_array_add(wifi_array, ap_obj);
                 }
             }
         } else {
