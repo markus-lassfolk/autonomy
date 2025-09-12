@@ -316,7 +316,7 @@ static int collect_data_usage(void) {
             uint64_t rx_dropped, tx_dropped, rx_fifo, tx_fifo;
             uint64_t rx_frame, tx_colls, tx_carrier, rx_compressed;
             
-            if (sscanf(line, "%31[^:]: %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
+            if (sscanf(line, "%31[^:]: %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
                       interface, &rx_bytes, &rx_packets, &rx_errors, &rx_dropped,
                       &rx_fifo, &rx_frame, &rx_compressed, &rx_packets,
                       &tx_bytes, &tx_packets, &tx_errors, &tx_dropped,
@@ -403,7 +403,7 @@ static int collect_data_usage(void) {
         char insert_query[512];
         snprintf(insert_query, sizeof(insert_query),
                 "INSERT OR REPLACE INTO network_usage (date, rx_bytes, tx_bytes, interface) "
-                "VALUES (date('now'), %lu, %lu, '%s')",
+                "VALUES (date('now'), %llu, %llu, '%s')",
                 total_rx_bytes, total_tx_bytes, "metered_interface");
         
         char *err_msg = NULL;
