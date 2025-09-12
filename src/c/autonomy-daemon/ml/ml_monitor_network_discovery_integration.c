@@ -68,19 +68,20 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
         printf("INFO: Using fallback interface detection\n");
         interface_count = 0;
         
-        // Add common interfaces manually as fallback
-        if (interface_count < MAX_INTERFACES) {
-            network_interface_t *iface = &discovered_interfaces[interface_count++];
-            memset(iface, 0, sizeof(network_interface_t));
-            strncpy(iface->name, "eth1", sizeof(iface->name) - 1);
-            strncpy(iface->type, "starlink", sizeof(iface->type) - 1);
-            strncpy(iface->friendly_name, "Starlink", sizeof(iface->friendly_name) - 1);
-            iface->up = true;
-            iface->enabled = true;
-            iface->mwan3_tracking_enabled = true;
-            iface->health_score = 80.0;
-            iface->is_starlink = true;
-        }
+           // Add common interfaces manually as fallback
+           if (interface_count < MAX_INTERFACES) {
+               network_interface_t *iface = &discovered_interfaces[interface_count++];
+               memset(iface, 0, sizeof(network_interface_t));
+               strncpy(iface->name, "eth1", sizeof(iface->name) - 1);
+               strncpy(iface->type, "starlink", sizeof(iface->type) - 1);
+               strncpy(iface->friendly_name, "Starlink", sizeof(iface->friendly_name) - 1);
+               strncpy(iface->mwan3_name, "eth1", sizeof(iface->mwan3_name) - 1);
+               iface->up = true;
+               iface->enabled = true;
+               iface->mwan3_tracking_enabled = true;
+               iface->health_score = 80.0;
+               iface->is_starlink = true;
+           }
         
         if (interface_count < MAX_INTERFACES) {
             network_interface_t *iface = &discovered_interfaces[interface_count++];
@@ -88,6 +89,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
             strncpy(iface->name, "qmimux0", sizeof(iface->name) - 1);
             strncpy(iface->type, "cellular", sizeof(iface->type) - 1);
             strncpy(iface->friendly_name, "Cellular", sizeof(iface->friendly_name) - 1);
+            strncpy(iface->mwan3_name, "qmimux0", sizeof(iface->mwan3_name) - 1);
             iface->up = true;
             iface->enabled = true;
             iface->mwan3_tracking_enabled = true;
@@ -100,6 +102,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
             strncpy(iface->name, "wlan0", sizeof(iface->name) - 1);
             strncpy(iface->type, "wifi", sizeof(iface->type) - 1);
             strncpy(iface->friendly_name, "WiFi", sizeof(iface->friendly_name) - 1);
+            strncpy(iface->mwan3_name, "wlan0", sizeof(iface->mwan3_name) - 1);
             iface->up = true;
             iface->enabled = true;
             iface->mwan3_tracking_enabled = true;
@@ -112,6 +115,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
             strncpy(iface->name, "eth0", sizeof(iface->name) - 1);
             strncpy(iface->type, "ethernet", sizeof(iface->type) - 1);
             strncpy(iface->friendly_name, "LAN", sizeof(iface->friendly_name) - 1);
+            strncpy(iface->mwan3_name, "eth0", sizeof(iface->mwan3_name) - 1);
             iface->up = true;
             iface->enabled = true;
             iface->mwan3_tracking_enabled = true;
@@ -180,10 +184,11 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
                      interface->friendly_name, interface->mwan3_name, interface->health_score);
             
             // Initialize MWAN3 integration for this interface
-            if (strlen(interface->mwan3_name) > 0) {
+            if (interface->mwan3_name && strlen(interface->mwan3_name) > 0) {
                 // Add to MWAN3 integration tracking
                 for (int j = 0; j < MAX_INTERFACES; j++) {
-                    if (strlen(multi_system->mwan3_integration.mwan3_interfaces[j].interface_name) == 0) {
+                    if (multi_system->mwan3_integration.mwan3_interfaces[j].interface_name && 
+                        strlen(multi_system->mwan3_integration.mwan3_interfaces[j].interface_name) == 0) {
                         strncpy(multi_system->mwan3_integration.mwan3_interfaces[j].interface_name,
                                interface->mwan3_name, 
                                sizeof(multi_system->mwan3_integration.mwan3_interfaces[j].interface_name) - 1);
