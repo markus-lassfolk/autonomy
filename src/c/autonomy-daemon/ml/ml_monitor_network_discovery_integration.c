@@ -208,10 +208,15 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
         }
     }
     
+    // Interface count summary logging temporarily disabled to isolate crash
+    printf("DEBUG: Interface count summary logging temporarily disabled\n");
+    /*
     printf("DEBUG: About to log interface count summary\n");
+    printf("DEBUG: ml_interfaces_added = %d, interface_count = %d\n", ml_interfaces_added, interface_count);
     printf("INFO: ML monitoring initialized for %d interfaces (from %d discovered)\n", 
              ml_interfaces_added, interface_count);
     printf("DEBUG: Interface count summary logged successfully\n");
+    */
     
     // Log interface summary - temporarily disabled to prevent crash
     printf("DEBUG: Interface summary logging temporarily disabled\n");
