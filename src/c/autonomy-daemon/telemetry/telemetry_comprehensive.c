@@ -626,9 +626,9 @@ static int collect_current_telemetry(void) {
     }
     
     // Collect cellular metrics if enabled
-    if (g_telemetry_comprehensive.config.collect_cellular_metrics && cellular_collector_is_available()) {
+    if (g_telemetry_comprehensive.config.collect_cellular_metrics && cellular_collector_is_initialized()) {
         cellular_info_t cellular_info;
-        if (cellular_collector_get_info(&cellular_info) == AUTONOMY_SUCCESS) {
+        if (cellular_collector_collect(&cellular_info) == AUTONOMY_SUCCESS) {
             telemetry_sample_t sample = {0};
             
             // Fill GPS data

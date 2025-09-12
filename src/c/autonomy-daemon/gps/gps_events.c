@@ -644,13 +644,21 @@ void execute_custom_action(const gps_event_definition_t *event, const gps_data_t
     if (strcmp(action_type, "script") == 0) {
         // Execute custom script
         char script_path[512];  // Increased buffer size to handle long script names
-        snprintf(script_path, sizeof(script_path), "/var/lib/autonomy/scripts/%s", action_data);
+        int path_len = snprintf(script_path, sizeof(script_path), "/var/lib/autonomy/scripts/%s", action_data);
+        if (path_len >= sizeof(script_path)) {
+            LOGX_ERROR_MSG("Script path too long", "path", action_data);
+            return;
+        }
         
         if (access(script_path, F_OK | X_OK) == 0) {
-            char script_cmd[512];
-            snprintf(script_cmd, sizeof(script_cmd), "%s %.6f %.6f %.1f %d \"%s\"",
+            char script_cmd[1024];  // Increased buffer size for command
+            int cmd_len = snprintf(script_cmd, sizeof(script_cmd), "%s %.6f %.6f %.1f %d \"%s\"",
                      script_path, gps_data->lat, gps_data->lon, gps_data->accuracy, 
                      gps_data->satellites, event->name);
+            if (cmd_len >= sizeof(script_cmd)) {
+                LOGX_ERROR_MSG("Script command too long", "script", script_path);
+                return;
+            }
             
             int result = system(script_cmd);
             if (result == 0) {
@@ -670,7 +678,11 @@ void execute_custom_action(const gps_event_definition_t *event, const gps_data_t
     } else if (strcmp(action_type, "file") == 0) {
         // Write to custom file
         char file_path[512];  // Increased buffer size to handle long file names
-        snprintf(file_path, sizeof(file_path), "/var/lib/autonomy/actions/%s", action_data);
+        int file_len = snprintf(file_path, sizeof(file_path), "/var/lib/autonomy/actions/%s", action_data);
+        if (file_len >= sizeof(file_path)) {
+            LOGX_ERROR_MSG("File path too long", "path", action_data);
+            return;
+        }
         
         FILE* fp = fopen(file_path, "a");
         if (fp) {

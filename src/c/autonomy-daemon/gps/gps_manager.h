@@ -76,7 +76,7 @@ typedef struct {
     int total_updates;               // Total updates performed
     int source_count;                // Number of active sources
     int best_source;                 // Index of best source
-    gps_source_t sources[8];         // GPS sources array
+    gps_source_t sources[MAX_GPS_SOURCES];         // GPS sources array
     gps_data_t unified_gps;          // Unified GPS position
 } gps_manager_t;
 
