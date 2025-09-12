@@ -175,9 +175,12 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
         }
         
         // Add interface to ML monitoring
+        printf("DEBUG: About to add interface %s to ML monitoring\n", interface->name);
         int add_result = ml_monitor_add_interface(multi_system, interface->name, ml_type);
+        printf("DEBUG: ml_monitor_add_interface returned: %d\n", add_result);
         if (add_result == ML_MONITOR_MULTI_SUCCESS) {
             ml_interfaces_added++;
+            printf("DEBUG: ml_interfaces_added is now %d\n", ml_interfaces_added);
             
             printf("INFO: Added %s (%s) to ML monitoring: %s, MWAN3=%s, health=%.1f\n",
                      interface->name, interface->type, 
@@ -207,6 +210,9 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
             printf("WARN: Failed to add interface %s to ML monitoring: %d\n", interface->name, add_result);
         }
     }
+    
+    printf("DEBUG: Interface addition loop completed successfully\n");
+    printf("DEBUG: ml_interfaces_added = %d, interface_count = %d\n", ml_interfaces_added, interface_count);
     
     // Interface count summary logging temporarily disabled to isolate crash
     printf("DEBUG: Interface count summary logging temporarily disabled\n");
@@ -249,6 +255,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     }
     */
     
+    printf("DEBUG: All logging sections completed successfully\n");
     printf("DEBUG: About to return ML_MONITOR_SUCCESS from ml_monitor_init_from_network_discovery\n");
     return ML_MONITOR_SUCCESS;
 }
