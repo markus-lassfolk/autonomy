@@ -213,8 +213,13 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     
     // Log interface summary
     printf("INFO: ML Interface Summary:\n");
-    for (int i = 0; i < interface_count; i++) {
+    for (int i = 0; i < interface_count && i < MAX_INTERFACES; i++) {
         network_interface_t *interface = &discovered_interfaces[i];
+        if (!interface) {
+            printf("WARN: Null interface at index %d\n", i);
+            continue;
+        }
+        
         const char* ml_status = "not monitored";
         
         if (interface->up && interface->enabled && interface->mwan3_tracking_enabled) {
@@ -224,9 +229,14 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
             }
         }
         
+        // Add null checks for string fields
+        const char* name = interface->name ? interface->name : "unknown";
+        const char* type = interface->type ? interface->type : "unknown";
+        const char* friendly_name = interface->friendly_name ? interface->friendly_name : "unknown";
+        const char* mwan3_name = interface->mwan3_name ? interface->mwan3_name : "none";
+        
         printf("  - %s (%s): %s, MWAN3=%s, status=%s\n",
-                 interface->name, interface->type, interface->friendly_name,
-                 interface->mwan3_name, ml_status);
+                 name, type, friendly_name, mwan3_name, ml_status);
     }
     
     return ML_MONITOR_SUCCESS;
