@@ -1,9 +1,9 @@
 #ifndef UCI_MANAGER_H
 #define UCI_MANAGER_H
 
-#include "../core/types.h"
-#include "../utils/logx.h"
-#include "../starlink/starlink_snow_detection.h"
+#include "../../core/types.h"
+#include "../logging/logx.h"
+#include "../../starlink/starlink_snow_detection.h"
 #include <stdbool.h>
 #include <uci.h>
 

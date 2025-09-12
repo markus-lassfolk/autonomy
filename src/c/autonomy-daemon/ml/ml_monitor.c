@@ -1,8 +1,9 @@
 #include "ml_monitor.h"
 #include "ml_monitor_analytics.h"
-#include "../utils/logx.h"
-#include "../utils/uci_manager.h"
+#include "../shared/logging/logx.h"
+#include "../shared/utils/uci_manager.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include "../starlink/starlink_snow_detection.h"
 #include <stdlib.h>
 #include <string.h>
@@ -71,14 +72,14 @@ void ml_monitor_config_init_defaults(ml_monitor_config_t *config) {
     config->memory_limit_kb = 1024;
     
     // Storage settings
-    strncpy(config->storage_path, "/var/lib/autonomy/ml_monitor.dat", sizeof(config->storage_path) - 1);
+    safe_strncpy(config->storage_path, "/var/lib/autonomy/ml_monitor.dat", sizeof(config->storage_path));
     config->use_memory_mapped_storage = true;
     config->storage_sync_interval_minutes = 5;
     
     // Debug settings
     config->debug_logging_enabled = false;
     config->save_raw_observations = false;
-    strncpy(config->debug_log_path, "/tmp/ml_monitor_debug.log", sizeof(config->debug_log_path) - 1);
+    safe_strncpy(config->debug_log_path, "/tmp/ml_monitor_debug.log", sizeof(config->debug_log_path));
 }
 
 // Note: ml_monitor_load_config_from_uci is implemented in ml_monitor_uci.c (more feature-complete)
@@ -95,7 +96,7 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
     
     // Create directory if it doesn't exist
     char dir_path[512];
-    strncpy(dir_path, filepath, sizeof(dir_path) - 1);
+    safe_strncpy(dir_path, filepath, sizeof(dir_path));
     dir_path[sizeof(dir_path) - 1] = '\0';
     char *last_slash = strrchr(dir_path, '/');
     if (last_slash) {
@@ -873,7 +874,7 @@ int ml_monitor_enable_field_testing_mode(ml_monitor_t *monitor, const char *test
     // Enable field testing mode (placeholder implementation)
     monitor->config.debug_logging_enabled = true;
     monitor->config.save_raw_observations = true;
-    strncpy(monitor->config.debug_log_path, "/tmp/ml_field_test.log", sizeof(monitor->config.debug_log_path) - 1);
+    safe_strncpy(monitor->config.debug_log_path, "/tmp/ml_field_test.log", sizeof(monitor->config.debug_log_path));
     monitor->config.debug_log_path[sizeof(monitor->config.debug_log_path) - 1] = '\0';
     
     pthread_mutex_unlock(&monitor->state_mutex);

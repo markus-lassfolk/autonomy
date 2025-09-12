@@ -1,5 +1,5 @@
 #include "secure_exec.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/stat.h>

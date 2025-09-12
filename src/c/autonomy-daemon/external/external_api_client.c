@@ -1,6 +1,6 @@
 #include "external_api_client.h"
-#include "../utils/http_client_libcurl.h"
-#include "../utils/json_parser.h"
+#include "../shared/utils/http_client_libcurl.h"
+#include "../shared/utils/json_parser.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

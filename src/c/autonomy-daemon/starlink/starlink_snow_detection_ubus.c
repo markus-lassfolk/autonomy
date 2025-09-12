@@ -1,6 +1,6 @@
 #include "starlink_snow_detection_ubus.h"
 #include "starlink_snow_detection.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
 #include <libubox/blobmsg_json.h>
 #include <libubox/uloop.h>

@@ -1,7 +1,9 @@
 #include "starlink_types.h"
+#include "../shared/utils/string_utils.h"
 #include "starlink_grpc_collector.h"
 #include "../core/types.h"
-#include "../utils/json_parser.h"
+#include "../shared/utils/string_utils.h"
+#include "../shared/utils/json_parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -196,10 +198,10 @@ int starlink_parse_response(const char *json_response, starlink_status_response_
     json_object *device_info = json_object_object_get(root, "deviceInfo");
     if (device_info) {
         json_object_object_foreach(device_info, key, val) {
-            if (strcmp(key, "id") == 0) strncpy(status->device_info.id, json_object_get_string(val), sizeof(status->device_info.id) - 1);
-            if (strcmp(key, "hardwareVersion") == 0) strncpy(status->device_info.hardware_version, json_object_get_string(val), sizeof(status->device_info.hardware_version) - 1);
-            if (strcmp(key, "softwareVersion") == 0) strncpy(status->device_info.software_version, json_object_get_string(val), sizeof(status->device_info.software_version) - 1);
-            if (strcmp(key, "countryCode") == 0) strncpy(status->device_info.country_code, json_object_get_string(val), sizeof(status->device_info.country_code) - 1);
+            if (strcmp(key, "id") == 0) safe_strncpy(status->device_info.id, json_object_get_string(val), sizeof(status->device_info.id));
+            if (strcmp(key, "hardwareVersion") == 0) safe_strncpy(status->device_info.hardware_version, json_object_get_string(val), sizeof(status->device_info.hardware_version));
+            if (strcmp(key, "softwareVersion") == 0) safe_strncpy(status->device_info.software_version, json_object_get_string(val), sizeof(status->device_info.software_version));
+            if (strcmp(key, "countryCode") == 0) safe_strncpy(status->device_info.country_code, json_object_get_string(val), sizeof(status->device_info.country_code));
         }
     }
     

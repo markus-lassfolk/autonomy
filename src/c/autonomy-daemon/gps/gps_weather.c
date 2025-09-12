@@ -1,9 +1,10 @@
 #include "gps_coordinate_utils.h"
 #include "gps_weather.h"
 #include "../external/external_apis.h"
-#include "../utils/logx.h"
-#include "../utils/json_parser.h"
+#include "../shared/logging/logx.h"
+#include "../shared/utils/json_parser.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -61,7 +62,7 @@ int gps_weather_init(const char *api_key) {
     g_weather.cache_radius = WEATHER_CACHE_RADIUS;
     
     if (api_key && strlen(api_key) > 0) {
-        strncpy(g_weather.api_key, api_key, sizeof(g_weather.api_key) - 1);
+        safe_strncpy(g_weather.api_key, api_key, sizeof(g_weather.api_key));
         g_weather.api_key[sizeof(g_weather.api_key) - 1] = '\0';
     }
     
@@ -184,9 +185,9 @@ int gps_weather_get_current(double lat, double lon, gps_weather_current_t *weath
             weather->wind_speed = weather_data.wind_speed_ms;
             weather->wind_direction = weather_data.wind_direction_deg;
             weather->visibility = weather_data.visibility_km * 1000.0; // Convert km to m
-            strncpy(weather->description, weather_data.description, sizeof(weather->description) - 1);
+            safe_strncpy(weather->description, weather_data.description, sizeof(weather->description));
             weather->description[sizeof(weather->description) - 1] = '\0';
-            strncpy(weather->icon, weather_data.icon, sizeof(weather->icon) - 1);
+            safe_strncpy(weather->icon, weather_data.icon, sizeof(weather->icon));
             weather->icon[sizeof(weather->icon) - 1] = '\0';
             weather->timestamp = weather_data.timestamp;
             weather->lat = lat;
@@ -483,8 +484,8 @@ void parse_current_weather_response(const gps_weather_api_response_t *response,
         // Make air quality API call using external APIs
         external_api_request_t air_request = {0};
         air_request.api_type = EXTERNAL_API_WEATHER_OPENWEATHER;
-        strncpy(air_request.method, "GET", sizeof(air_request.method) - 1);
-        strncpy(air_request.endpoint, air_quality_url, sizeof(air_request.endpoint) - 1);
+        safe_strncpy(air_request.method, "GET", sizeof(air_request.method));
+        safe_strncpy(air_request.endpoint, air_quality_url, sizeof(air_request.endpoint));
         air_request.timeout_seconds = 10;
         air_request.request_time = time(NULL);
         
@@ -808,7 +809,7 @@ int gps_weather_get_config(gps_weather_config_t *config) {
     config->update_interval = g_weather.update_interval;
     config->max_forecast_days = g_weather.max_forecast_days;
     config->cache_radius = g_weather.cache_radius;
-    strncpy(config->api_key, g_weather.api_key, sizeof(config->api_key) - 1);
+    safe_strncpy(config->api_key, g_weather.api_key, sizeof(config->api_key));
     config->api_key[sizeof(config->api_key) - 1] = '\0';
     
     pthread_mutex_unlock(&g_weather_mutex);
@@ -831,7 +832,7 @@ int gps_weather_set_config(const gps_weather_config_t *config) {
     g_weather.cache_radius = config->cache_radius;
     
     if (strlen(config->api_key) > 0) {
-        strncpy(g_weather.api_key, config->api_key, sizeof(g_weather.api_key) - 1);
+        safe_strncpy(g_weather.api_key, config->api_key, sizeof(g_weather.api_key));
         g_weather.api_key[sizeof(g_weather.api_key) - 1] = '\0';
     }
     

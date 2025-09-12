@@ -3,7 +3,7 @@
 #include "emergency_detector.h"
 #include "priority_optimizer.h"
 #include "../core/types.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

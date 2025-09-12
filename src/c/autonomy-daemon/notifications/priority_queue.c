@@ -1,5 +1,6 @@
 #include "priority_queue.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -118,22 +119,22 @@ int priority_queue_push(priority_queue_t* queue, const notification_event_t* eve
     queue->items[index].timestamp = timestamp;
     
     // Copy event data
-    strncpy(queue->items[index].event.id, event->id, sizeof(queue->items[index].event.id) - 1);
-    strncpy(queue->items[index].event.title, event->title, sizeof(queue->items[index].event.title) - 1);
-    strncpy(queue->items[index].event.message, event->message, sizeof(queue->items[index].event.message) - 1);
+    safe_strncpy(queue->items[index].event.id, event->id, sizeof(queue->items[index].event.id));
+    safe_strncpy(queue->items[index].event.title, event->title, sizeof(queue->items[index].event.title));
+    safe_strncpy(queue->items[index].event.message, event->message, sizeof(queue->items[index].event.message));
     queue->items[index].event.type = event->type;
     queue->items[index].event.priority = event->priority;
-    strncpy(queue->items[index].event.sound, event->sound, sizeof(queue->items[index].event.sound) - 1);
-    strncpy(queue->items[index].event.url, event->url, sizeof(queue->items[index].event.url) - 1);
-    strncpy(queue->items[index].event.url_title, event->url_title, sizeof(queue->items[index].event.url_title) - 1);
+    safe_strncpy(queue->items[index].event.sound, event->sound, sizeof(queue->items[index].event.sound));
+    safe_strncpy(queue->items[index].event.url, event->url, sizeof(queue->items[index].event.url));
+    safe_strncpy(queue->items[index].event.url_title, event->url_title, sizeof(queue->items[index].event.url_title));
     queue->items[index].event.timestamp = event->timestamp;
     
     // Copy enhanced context data
-    strncpy(queue->items[index].event.member_name, event->member_name, sizeof(queue->items[index].event.member_name) - 1);
-    strncpy(queue->items[index].event.from_member, event->from_member, sizeof(queue->items[index].event.from_member) - 1);
-    strncpy(queue->items[index].event.to_member, event->to_member, sizeof(queue->items[index].event.to_member) - 1);
-    strncpy(queue->items[index].event.error_details, event->error_details, sizeof(queue->items[index].event.error_details) - 1);
-    strncpy(queue->items[index].event.details_json, event->details_json, sizeof(queue->items[index].event.details_json) - 1);
+    safe_strncpy(queue->items[index].event.member_name, event->member_name, sizeof(queue->items[index].event.member_name));
+    safe_strncpy(queue->items[index].event.from_member, event->from_member, sizeof(queue->items[index].event.from_member));
+    safe_strncpy(queue->items[index].event.to_member, event->to_member, sizeof(queue->items[index].event.to_member));
+    safe_strncpy(queue->items[index].event.error_details, event->error_details, sizeof(queue->items[index].event.error_details));
+    safe_strncpy(queue->items[index].event.details_json, event->details_json, sizeof(queue->items[index].event.details_json));
     
     // Copy rich context features
     if (event->location) {
@@ -147,7 +148,7 @@ int priority_queue_push(priority_queue_t* queue, const notification_event_t* eve
     
     queue->items[index].event.duration = event->duration;
     queue->items[index].event.acknowledged = event->acknowledged;
-    strncpy(queue->items[index].event.message_id, event->message_id, sizeof(queue->items[index].event.message_id) - 1);
+    safe_strncpy(queue->items[index].event.message_id, event->message_id, sizeof(queue->items[index].event.message_id));
     
     queue->size++;
     

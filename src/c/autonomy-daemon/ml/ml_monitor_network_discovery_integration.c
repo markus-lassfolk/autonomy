@@ -1,7 +1,7 @@
 #include "ml_monitor.h"
 #include "ml_monitor_multi_interface.h"
 #include "../network/network_discovery_comprehensive.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -265,7 +265,7 @@ int ml_monitor_convert_network_interface_to_observation(const network_interface_
     memset(observation, 0, sizeof(multi_interface_observation_t));
     
     observation->timestamp = time(NULL);
-    strncpy(observation->interface_id, interface->name, sizeof(observation->interface_id) - 1);
+    safe_strncpy(observation->interface_id, interface->name, sizeof(observation->interface_id));
     observation->interface_type = ml_monitor_map_interface_type(interface);
     
     // Convert network discovery data to ML observation (prioritize real-time metrics)

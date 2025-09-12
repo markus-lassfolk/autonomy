@@ -1,6 +1,6 @@
 #include "ml_monitor_analytics.h"
 #include "ml_monitor_network_discovery_integration.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -294,7 +294,7 @@ int ml_monitor_analytics_calculate_interface_score(const char *interface_id, ml_
     // Initialize score structure
     memset(score, 0, sizeof(ml_interface_score_t));
     score->timestamp = time(NULL);
-    strncpy(score->interface_id, interface_id, sizeof(score->interface_id) - 1);
+    safe_strncpy(score->interface_id, interface_id, sizeof(score->interface_id));
     score->interface_type = ml_monitor_map_interface_type(interface);
     
     // Get raw metrics

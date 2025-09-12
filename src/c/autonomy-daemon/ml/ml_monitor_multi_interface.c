@@ -1,5 +1,5 @@
 #include "ml_monitor_multi_interface.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../utils/secure_exec.h"
 #include "../network/network_controller.h"
 #include "../network/network_failover.h"
@@ -80,7 +80,7 @@ int ml_monitor_add_interface(multi_interface_ml_system_t *system, const char *in
     interface_ml_model_t *model = &system->interface_models[system->interface_count];
     memset(model, 0, sizeof(interface_ml_model_t));
     
-    strncpy(model->interface_id, interface_id, sizeof(model->interface_id) - 1);
+    safe_strncpy(model->interface_id, interface_id, sizeof(model->interface_id));
     model->type = type;
     model->active = true;
     

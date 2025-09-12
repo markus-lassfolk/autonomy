@@ -3,7 +3,7 @@
 
 #include "../core/types.h"
 #include "../external/external_apis.h"
-#include "../utils/json_parser.h"
+#include "../shared/utils/json_parser.h"
 #include "starlink_grpc_comprehensive_client.h"
 #include <stdbool.h>
 #include <time.h>

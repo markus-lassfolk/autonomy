@@ -1,6 +1,7 @@
 #include "gps_fusion.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -117,7 +118,7 @@ int gps_fusion_add_source(const char *source_name, gps_source_type_t source_type
     // Initialize fusion source
     gps_fusion_source_t *source = &g_fusion.sources[source_index];
     source->active = true;
-    strncpy(source->name, source_name, sizeof(source->name) - 1);
+    safe_strncpy(source->name, source_name, sizeof(source->name));
     source->name[sizeof(source->name) - 1] = '\0';
     source->source_type = source_type;
     source->registration_time = time(NULL);

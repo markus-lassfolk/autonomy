@@ -1,6 +1,7 @@
 #include "network_collector.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -53,7 +54,7 @@ int network_collector_init(void) {
     // Initialize test targets
     g_collector.test_target_count = DEFAULT_TEST_TARGET_COUNT;
     for (int i = 0; i < DEFAULT_TEST_TARGET_COUNT && i < g_collector.max_test_targets; i++) {
-        strncpy(g_collector.test_targets[i], DEFAULT_TEST_TARGETS[i], sizeof(g_collector.test_targets[i]) - 1);
+        safe_strncpy(g_collector.test_targets[i], DEFAULT_TEST_TARGETS[i], sizeof(g_collector.test_targets[i]));
         g_collector.test_targets[i][sizeof(g_collector.test_targets[i]) - 1] = '\0';
     }
     
@@ -167,7 +168,7 @@ static int perform_ping_test(const char *target, int timeout_ms, ping_result_t *
                      (end_time.tv_usec - start_time.tv_usec) / 1000.0;
     
     result->target[0] = '\0';
-    strncpy(result->target, target, sizeof(result->target) - 1);
+    safe_strncpy(result->target, target, sizeof(result->target));
     result->target[sizeof(result->target) - 1] = '\0';
     result->latency_ms = latency;
     result->success = true;
@@ -226,7 +227,7 @@ static int perform_tcp_test(const char *target, int port, int timeout_ms, tcp_re
                           (end_time.tv_usec - start_time.tv_usec) / 1000.0;
     
     result->target[0] = '\0';
-    strncpy(result->target, target, sizeof(result->target) - 1);
+    safe_strncpy(result->target, target, sizeof(result->target));
     result->target[sizeof(result->target) - 1] = '\0';
     result->port = port;
     result->connect_time_ms = connect_time;
@@ -259,7 +260,7 @@ static int perform_dns_test(const char *domain, int timeout_ms, dns_result_t *re
                           (end_time.tv_usec - start_time.tv_usec) / 1000.0;
     
     result->domain[0] = '\0';
-    strncpy(result->domain, domain, sizeof(result->domain) - 1);
+    safe_strncpy(result->domain, domain, sizeof(result->domain));
     result->domain[sizeof(result->domain) - 1] = '\0';
     result->resolve_time_ms = resolve_time;
     result->success = true;
@@ -280,7 +281,7 @@ static int collect_interface_metrics(const char *interface_name, network_metrics
     }
     
     memset(metrics, 0, sizeof(network_metrics_t));
-    strncpy(metrics->interface_name, interface_name, sizeof(metrics->interface_name) - 1);
+    safe_strncpy(metrics->interface_name, interface_name, sizeof(metrics->interface_name));
     metrics->interface_name[sizeof(metrics->interface_name) - 1] = '\0';
     metrics->timestamp = time(NULL);
     

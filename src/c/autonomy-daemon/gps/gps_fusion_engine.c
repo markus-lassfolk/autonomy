@@ -1,5 +1,5 @@
 #include "gps_fusion_engine.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

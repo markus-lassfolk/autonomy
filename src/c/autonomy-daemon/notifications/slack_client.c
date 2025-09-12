@@ -1,6 +1,6 @@
 #include "slack_client.h"
-#include "../utils/logx.h"
-#include "../utils/http_client_libcurl.h"
+#include "../shared/logging/logx.h"
+#include "../shared/utils/http_client_libcurl.h"
 #include "../core/types.h"
 #include <curl/curl.h>
 #include <stdlib.h>
@@ -28,8 +28,8 @@ int slack_client_init(slack_client_t* client, const slack_config_t* config) {
     
     // Initialize status
     client->status.enabled = config->enabled;
-    strncpy(client->status.webhook_url, config->webhook_url, sizeof(client->status.webhook_url) - 1);
-    strncpy(client->status.channel, config->channel, sizeof(client->status.channel) - 1);
+    safe_strncpy(client->status.webhook_url, config->webhook_url, sizeof(client->status.webhook_url));
+    safe_strncpy(client->status.channel, config->channel, sizeof(client->status.channel));
     client->status.total_sent = 0;
     client->status.total_failed = 0;
     client->status.last_response_code = 0;
@@ -93,22 +93,22 @@ void slack_client_create_message(slack_client_t* client, const notification_even
     
     // Set username and icon
     if (strlen(client->config.username) > 0) {
-        strncpy(message->username, client->config.username, sizeof(message->username) - 1);
+        safe_strncpy(message->username, client->config.username, sizeof(message->username));
     } else {
-        strncpy(message->username, "autonomy", sizeof(message->username) - 1);
+        safe_strncpy(message->username, "autonomy", sizeof(message->username));
     }
     
     if (strlen(client->config.icon_emoji) > 0) {
-        strncpy(message->icon_emoji, client->config.icon_emoji, sizeof(message->icon_emoji) - 1);
+        safe_strncpy(message->icon_emoji, client->config.icon_emoji, sizeof(message->icon_emoji));
     } else if (strlen(client->config.icon_url) > 0) {
-        strncpy(message->icon_url, client->config.icon_url, sizeof(message->icon_url) - 1);
+        safe_strncpy(message->icon_url, client->config.icon_url, sizeof(message->icon_url));
     } else {
-        strncpy(message->icon_emoji, ":satellite:", sizeof(message->icon_emoji) - 1);
+        safe_strncpy(message->icon_emoji, ":satellite:", sizeof(message->icon_emoji));
     }
     
     // Set channel
     if (strlen(client->config.channel) > 0) {
-        strncpy(message->channel, client->config.channel, sizeof(message->channel) - 1);
+        safe_strncpy(message->channel, client->config.channel, sizeof(message->channel));
     }
     
     if (client->config.use_attachments) {
@@ -116,22 +116,22 @@ void slack_client_create_message(slack_client_t* client, const notification_even
         slack_attachment_t* attachment = &message->attachments[0];
         message->attachment_count = 1;
         
-        strncpy(attachment->color, slack_client_get_attachment_color(event->priority), sizeof(attachment->color) - 1);
-        strncpy(attachment->title, event->title, sizeof(attachment->title) - 1);
-        strncpy(attachment->text, event->message, sizeof(attachment->text) - 1);
-        strncpy(attachment->footer, "autonomy Daemon", sizeof(attachment->footer) - 1);
+        safe_strncpy(attachment->color, slack_client_get_attachment_color(event->priority), sizeof(attachment->color));
+        safe_strncpy(attachment->title, event->title, sizeof(attachment->title));
+        safe_strncpy(attachment->text, event->message, sizeof(attachment->text));
+        safe_strncpy(attachment->footer, "autonomy Daemon", sizeof(attachment->footer));
         attachment->timestamp = event->timestamp;
         
         // Add priority field
         slack_field_t* priority_field = &attachment->fields[attachment->field_count++];
-        strncpy(priority_field->title, "Priority", sizeof(priority_field->title) - 1);
-        strncpy(priority_field->value, slack_client_get_priority_text(event->priority), sizeof(priority_field->value) - 1);
+        safe_strncpy(priority_field->title, "Priority", sizeof(priority_field->title));
+        safe_strncpy(priority_field->value, slack_client_get_priority_text(event->priority), sizeof(priority_field->value));
         priority_field->short_field = true;
         
         // Add type field
         slack_field_t* type_field = &attachment->fields[attachment->field_count++];
-        strncpy(type_field->title, "Type", sizeof(type_field->title) - 1);
-        strncpy(type_field->value, notification_type_to_string(event->type), sizeof(type_field->value) - 1);
+        safe_strncpy(type_field->title, "Type", sizeof(type_field->title));
+        safe_strncpy(type_field->value, notification_type_to_string(event->type), sizeof(type_field->value));
         type_field->short_field = true;
         
         // Add context fields if enabled and available
@@ -142,7 +142,7 @@ void slack_client_create_message(slack_client_t* client, const notification_even
                 json_object* latency_obj;
                 if (json_object_object_get_ex(context_obj, "latency", &latency_obj)) {
                     slack_field_t* latency_field = &attachment->fields[attachment->field_count++];
-                    strncpy(latency_field->title, "Latency", sizeof(latency_field->title) - 1);
+                    safe_strncpy(latency_field->title, "Latency", sizeof(latency_field->title));
                     snprintf(latency_field->value, sizeof(latency_field->value), "%.2f ms", 
                             json_object_get_double(latency_obj));
                     latency_field->short_field = true;
@@ -151,7 +151,7 @@ void slack_client_create_message(slack_client_t* client, const notification_even
                 json_object* error_obj;
                 if (json_object_object_get_ex(context_obj, "error", &error_obj)) {
                     slack_field_t* error_field = &attachment->fields[attachment->field_count++];
-                    strncpy(error_field->title, "Error", sizeof(error_field->title) - 1);
+                    safe_strncpy(error_field->title, "Error", sizeof(error_field->title));
                     strncpy(error_field->value, json_object_get_string(error_obj), 
                             sizeof(error_field->value) - 1);
                     error_field->short_field = true;
@@ -164,9 +164,9 @@ void slack_client_create_message(slack_client_t* client, const notification_even
         // Simple text message - truncate long strings to prevent buffer overflow
         char truncated_title[128];
         char truncated_message[256];
-        strncpy(truncated_title, event->title, sizeof(truncated_title) - 1);
+        safe_strncpy(truncated_title, event->title, sizeof(truncated_title));
         truncated_title[sizeof(truncated_title) - 1] = '\0';
-        strncpy(truncated_message, event->message, sizeof(truncated_message) - 1);
+        safe_strncpy(truncated_message, event->message, sizeof(truncated_message));
         truncated_message[sizeof(truncated_message) - 1] = '\0';
         
         snprintf(message->text, sizeof(message->text),
@@ -256,7 +256,7 @@ static int send_slack_request(slack_client_t* client, slack_message_t* message) 
     // Create JSON payload
     char* json_payload = create_slack_json(message);
     if (!json_payload) {
-        strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Failed to create JSON payload", sizeof(client->status.last_error));
         return -1;
     }
     
@@ -264,7 +264,7 @@ static int send_slack_request(slack_client_t* client, slack_message_t* message) 
     http_request_t* request = http_request_create(client->config.webhook_url, HTTP_METHOD_POST);
     if (!request) {
         free(json_payload);
-        strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Failed to create HTTP request", sizeof(client->status.last_error));
         return -1;
     }
     
@@ -272,7 +272,7 @@ static int send_slack_request(slack_client_t* client, slack_message_t* message) 
     if (http_request_set_json_body(request, json_payload) != 0) {
         http_request_free(request);
         free(json_payload);
-        strncpy(client->status.last_error, "Failed to set JSON body", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Failed to set JSON body", sizeof(client->status.last_error));
         return -1;
     }
     
@@ -294,7 +294,7 @@ static int send_slack_request(slack_client_t* client, slack_message_t* message) 
     free(json_payload);
     
     if (!response) {
-        strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "HTTP request failed", sizeof(client->status.last_error));
         client->status.last_error_time = time(NULL);
         return -1;
     }
@@ -306,7 +306,7 @@ static int send_slack_request(slack_client_t* client, slack_message_t* message) 
     if (!http_response_is_success(response)) {
         // Truncate error message to fit in buffer
         char truncated_error[128];
-        strncpy(truncated_error, response->error_message, sizeof(truncated_error) - 1);
+        safe_strncpy(truncated_error, response->error_message, sizeof(truncated_error));
         truncated_error[sizeof(truncated_error) - 1] = '\0';
         snprintf(client->status.last_error, sizeof(client->status.last_error), 
                 "HTTP error: %ld - %s", response->status_code, truncated_error);
@@ -327,7 +327,7 @@ int slack_client_send(slack_client_t* client, const notification_event_t* event)
     }
     
     if (strlen(client->config.webhook_url) == 0) {
-        strncpy(client->status.last_error, "Slack webhook URL is required", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Slack webhook URL is required", sizeof(client->status.last_error));
         client->status.last_error_time = time(NULL);
         client->status.total_failed++;
         return -1;

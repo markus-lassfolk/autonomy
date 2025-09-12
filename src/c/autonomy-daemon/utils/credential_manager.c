@@ -1,5 +1,5 @@
 #include "credential_manager.h"
-#include "logx.h"
+#include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -140,20 +140,20 @@ int credential_store(const char* service_name, const char* key, const char* valu
     }
 
     // Populate credential
-    strncpy(cred->service_name, service_name, sizeof(cred->service_name) - 1);
-    strncpy(cred->key, key, sizeof(cred->key) - 1);
+    safe_strncpy(cred->service_name, service_name, sizeof(cred->service_name));
+    safe_strncpy(cred->key, key, sizeof(cred->key));
     
     // Encrypt value if encryption is enabled
     if (g_credential_manager.config.enable_encryption) {
         if (credential_encrypt(value, cred->value, sizeof(cred->value)) != 0) {
             LOGX_WARN_MSG("Failed to encrypt credential, storing in plaintext");
-            strncpy(cred->value, value, sizeof(cred->value) - 1);
+            safe_strncpy(cred->value, value, sizeof(cred->value));
             cred->encrypted = false;
         } else {
             cred->encrypted = true;
         }
     } else {
-        strncpy(cred->value, value, sizeof(cred->value) - 1);
+        safe_strncpy(cred->value, value, sizeof(cred->value));
         cred->encrypted = false;
     }
 
@@ -447,11 +447,11 @@ int credential_save_to_uci(const char* service_name) {
         if (strcmp(cred->service_name, service_name) == 0) {
             // Truncate values if too long to prevent buffer overflow
             char truncated_service[32], truncated_key[32], truncated_value[128];
-            strncpy(truncated_service, service_name, sizeof(truncated_service) - 1);
+            safe_strncpy(truncated_service, service_name, sizeof(truncated_service));
             truncated_service[sizeof(truncated_service) - 1] = '\0';
-            strncpy(truncated_key, cred->key, sizeof(truncated_key) - 1);
+            safe_strncpy(truncated_key, cred->key, sizeof(truncated_key));
             truncated_key[sizeof(truncated_key) - 1] = '\0';
-            strncpy(truncated_value, cred->value, sizeof(truncated_value) - 1);
+            safe_strncpy(truncated_value, cred->value, sizeof(truncated_value));
             truncated_value[sizeof(truncated_value) - 1] = '\0';
             
             snprintf(cmd, sizeof(cmd), 

@@ -2,7 +2,7 @@
 #include "performance_analyzer.h"
 #include "trend_analyzer.h"
 #include "health_analyzer.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/system_management.h"
 #include "../utils/disk_monitor.h"
 #include <stdlib.h>
@@ -735,7 +735,7 @@ int analytics_engine_get_member_analytics(const char* member_name, int hours,
     
     // Convert to performance metrics format
     analytics->member_count = 1;
-    strncpy(analytics->member_names[0], member_name, sizeof(analytics->member_names[0]) - 1);
+    safe_strncpy(analytics->member_names[0], member_name, sizeof(analytics->member_names[0]));
     analytics->member_names[0][sizeof(analytics->member_names[0]) - 1] = '\0';
     analytics->average_latency[0] = performance.average_latency;
     analytics->average_loss[0] = performance.average_loss;

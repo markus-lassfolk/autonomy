@@ -1,9 +1,10 @@
 #include "starlink_snow_detection.h"
 #include "../starlink/starlink_comprehensive.h"
 #include "starlink_modules.h"
-#include "../utils/logx.h"
-#include "../utils/http_client_libcurl.h"
+#include "../shared/logging/logx.h"
+#include "../shared/utils/http_client_libcurl.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -970,7 +971,7 @@ int starlink_snow_detection_load_uci_config(void) {
         } else if (strcmp(option, "melt_timeout") == 0) {
             g_snow_detection.melt_timeout = atoi(value);
         } else if (strcmp(option, "weather_api_key") == 0) {
-            strncpy(g_snow_detection.weather_api_key, value, sizeof(g_snow_detection.weather_api_key) - 1);
+            safe_strncpy(g_snow_detection.weather_api_key, value, sizeof(g_snow_detection.weather_api_key));
         }
     }
     

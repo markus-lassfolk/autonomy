@@ -1,6 +1,6 @@
 #include "ml_monitor.h"
-#include "../utils/logx.h"
-#include "../utils/uci_manager.h"
+#include "../shared/logging/logx.h"
+#include "../shared/utils/uci_manager.h"
 #include <uci.h>
 #include <string.h>
 #include <stdlib.h>
@@ -139,7 +139,7 @@ int ml_monitor_load_config_from_uci(ml_monitor_config_t *config) {
     
     // Storage settings
     const char *storage_path = uci_get_string_option(ctx, s, UCI_OPT_STORAGE_PATH, config->storage_path);
-    strncpy(config->storage_path, storage_path, sizeof(config->storage_path) - 1);
+    safe_strncpy(config->storage_path, storage_path, sizeof(config->storage_path));
     config->use_memory_mapped_storage = uci_get_bool_option(ctx, s, UCI_OPT_USE_MEMORY_MAPPED_STORAGE, config->use_memory_mapped_storage);
     config->storage_sync_interval_minutes = uci_get_int_option(ctx, s, UCI_OPT_STORAGE_SYNC_INTERVAL_MINUTES, config->storage_sync_interval_minutes);
     
@@ -147,7 +147,7 @@ int ml_monitor_load_config_from_uci(ml_monitor_config_t *config) {
     config->debug_logging_enabled = uci_get_bool_option(ctx, s, UCI_OPT_DEBUG_LOGGING_ENABLED, config->debug_logging_enabled);
     config->save_raw_observations = uci_get_bool_option(ctx, s, UCI_OPT_SAVE_RAW_OBSERVATIONS, config->save_raw_observations);
     const char *debug_log_path = uci_get_string_option(ctx, s, UCI_OPT_DEBUG_LOG_PATH, config->debug_log_path);
-    strncpy(config->debug_log_path, debug_log_path, sizeof(config->debug_log_path) - 1);
+    safe_strncpy(config->debug_log_path, debug_log_path, sizeof(config->debug_log_path));
     
     uci_free_context(ctx);
     

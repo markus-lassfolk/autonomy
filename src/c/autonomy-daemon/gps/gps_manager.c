@@ -2,8 +2,9 @@
 #include "gps_comprehensive.h"
 #include "gps_fusion_engine.h"
 #include "opencellid_complete.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include "gps_rutos.h"
 #include "gps_starlink.h"
 #include <string.h>
@@ -328,7 +329,7 @@ int find_or_create_gps_source(gps_source_type_t type, const char *name) {
         int index = g_gps_manager.source_count;
         g_gps_manager.sources[index].enabled = true; // Use configurable gps source enabled setting
         g_gps_manager.sources[index].type = type;
-        strncpy(g_gps_manager.sources[index].name, name, sizeof(g_gps_manager.sources[index].name) - 1);
+        safe_strncpy(g_gps_manager.sources[index].name, name, sizeof(g_gps_manager.sources[index].name));
         g_gps_manager.sources[index].name[sizeof(g_gps_manager.sources[index].name) - 1] = '\0';
         g_gps_manager.sources[index].last_update = 0;
         g_gps_manager.sources[index].reliability_score = 0.0;
