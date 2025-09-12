@@ -10,8 +10,8 @@
 
 // UBUS method policies
 static const struct blobmsg_policy starlink_weather_snow_melt_ubus_policy[__STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_MAX] = {
-    [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_GET_STATUS] = { .name = "get_status", .type = BLOBMSG_TYPE_BOOL },
-    [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_GET_CONFIG] = { .name = "get_config", .type = BLOBMSG_TYPE_BOOL },
+    [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_GET_STATUS] = { .name = "get_status", .type = BLOBMSG_TYPE_UNSPEC },
+    [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_GET_CONFIG] = { .name = "get_config", .type = BLOBMSG_TYPE_UNSPEC },
     [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_SET_CONFIG] = { .name = "set_config", .type = BLOBMSG_TYPE_TABLE },
     [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_SET_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
     [STARLINK_WEATHER_SNOW_MELT_UBUS_POLICY_SET_MODE] = { .name = "mode", .type = BLOBMSG_TYPE_STRING },
