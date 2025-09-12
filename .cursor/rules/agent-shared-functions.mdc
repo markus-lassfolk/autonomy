@@ -1,0 +1,64 @@
+---
+description: Agent rules for managing shared functions and preventing chain effects
+alwaysApply: false
+---
+
+# Agent Rules: Shared Functions Management
+
+## When to Use This Rule
+Use this rule when working with shared functions, moving functions to shared folders, or when asked to refactor common functionality.
+
+## Shared Function Identification
+- **Multiple modules using same function**: If 2+ modules use the same function, move to shared folder
+- **Common utilities**: Functions used across different parts of the system
+- **Reusable components**: Functions that could be useful in multiple contexts
+
+## Shared Function Locations
+- **Core utilities**: [src/c/autonomy-daemon/utils/](mdc:src/c/autonomy-daemon/utils/) - Common utilities
+- **Shared libraries**: [src/c/autonomy-daemon/shared/](mdc:src/c/autonomy-daemon/shared/) - Shared components
+- **Core types**: [src/c/autonomy-daemon/core/](mdc:src/c/autonomy-daemon/core/) - Core functionality
+
+## Moving Functions to Shared
+1. **Identify the function** used by multiple modules
+2. **Create appropriate shared file** if it doesn't exist
+3. **Move function to shared location**
+4. **Update all references** in original files
+5. **Update Makefile** if needed
+6. **Test compilation** to ensure no broken references
+
+## Shared Function Modification Process
+1. **Identify all users** of the shared function
+2. **Analyze potential impact** of changes
+3. **Test changes** in isolation first
+4. **Update all calling code** if function signature changes
+5. **Run comprehensive tests** to check for chain effects
+6. **Document changes** and impact
+
+## Chain Effect Prevention
+- **Always search for all usages** before modifying shared functions
+- **Use grep to find references**: `grep -r "function_name" src/c/autonomy-daemon/`
+- **Check function signatures** match in all calling locations
+- **Verify return value handling** in all callers
+- **Test all modules** that use the shared function
+
+## Shared Function Best Practices
+- **Keep functions pure** when possible (no side effects)
+- **Use consistent naming** across shared functions
+- **Document function behavior** clearly
+- **Handle errors consistently** in shared functions
+- **Use proper header guards** in shared headers
+
+## Testing Shared Functions
+- **Unit tests** for shared functions
+- **Integration tests** with all calling modules
+- **Regression tests** after modifications
+- **Performance tests** if function is performance-critical
+
+## Success Criteria
+- ✅ Function moved to appropriate shared location
+- ✅ All references updated correctly
+- ✅ Compilation successful
+- ✅ No broken references
+- ✅ All calling modules work correctly
+- ✅ No unintended side effects
+- ✅ Documentation updated

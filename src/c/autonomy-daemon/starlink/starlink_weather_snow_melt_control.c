@@ -14,7 +14,7 @@
 
 // External UCI functions and context
 extern struct uci_context *uci_ctx;
-extern const char* ucix_get_option_ext(struct uci_context *ctx, const char *package, const char *section, const char *option);
+extern const char* ucix_get_option(struct uci_context *ctx, const char *package, const char *section, const char *option);
 extern int ucix_add_option(struct uci_context *ctx, const char *package, const char *section, const char *option, const char *value);
 extern int ucix_add_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int value);
 extern int ucix_logged_commit(struct uci_context *ctx, const char *package);
@@ -25,7 +25,7 @@ static int ucix_get_option(const char *package, const char *section, const char 
         return -1;
     }
     
-    const char *result = ucix_get_option_ext(uci_ctx, package, section, option);
+    const char *result = ucix_get_option(uci_ctx, package, section, option);
     if (result) {
         strncpy(value, result, size - 1);
         value[size - 1] = '\0';
@@ -63,7 +63,7 @@ int starlink_weather_snow_melt_control_init(void) {
     // Initialize mutex
     if (pthread_mutex_init(&g_snow_melt_control.mutex, NULL) != 0) {
         printf("ERROR: Failed to initialize snow melt control mutex\n");
-        return AUTONOMY_ERROR_INITIALIZATION;
+        return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
     // Set default configuration
@@ -585,8 +585,8 @@ int starlink_weather_snow_melt_get_weather_data(
                sizeof(external_weather_data_t));
         
         if (g_snow_melt_control.config.debug_mode) {
-            printf("DEBUG: Using cached weather data (age: %ld seconds)\n",
-                   now - g_snow_melt_control.weather_cache_timestamp);
+            printf("DEBUG: Using cached weather data (age: %lld seconds)\n",
+                    (long long)(now - g_snow_melt_control.weather_cache_timestamp));
         }
         
         return AUTONOMY_SUCCESS;
@@ -728,52 +728,52 @@ int starlink_weather_snow_melt_control_save_uci_config(void) {
     // Save all configuration values using UCI API
     if (ucix_add_option_int(uci_ctx, "autonomy", "snow_melt_control", "enabled", 
                            g_snow_melt_control.config.enabled ? 1 : 0) != 0) {
-        ret = AUTONOMY_ERROR_UCI_OPERATION;
+        ret = AUTONOMY_ERROR_SYSTEM;
     }
     
     snprintf(value_buf, sizeof(value_buf), "%.1f", g_snow_melt_control.config.temperature_threshold_celsius);
     if (ucix_add_option(uci_ctx, "autonomy", "snow_melt_control", "temperature_threshold", value_buf) != 0) {
-        ret = AUTONOMY_ERROR_UCI_OPERATION;
+        ret = AUTONOMY_ERROR_SYSTEM;
     }
     
     if (ucix_add_option_int(uci_ctx, "autonomy", "snow_melt_control", "weather_check_interval", 
                            g_snow_melt_control.config.weather_check_interval_minutes) != 0) {
-        ret = AUTONOMY_ERROR_UCI_OPERATION;
+        ret = AUTONOMY_ERROR_SYSTEM;
     }
     
     if (ucix_add_option_int(uci_ctx, "autonomy", "snow_melt_control", "preheat_duration", 
                            g_snow_melt_control.config.preheat_duration_minutes) != 0) {
-        ret = AUTONOMY_ERROR_UCI_OPERATION;
+        ret = AUTONOMY_ERROR_SYSTEM;
     }
     
     if (ucix_add_option_int(uci_ctx, "autonomy", "snow_melt_control", "use_forecast", 
                            g_snow_melt_control.config.use_forecast ? 1 : 0) != 0) {
-        ret = AUTONOMY_ERROR_UCI_OPERATION;
+        ret = AUTONOMY_ERROR_SYSTEM;
     }
     
     if (ucix_add_option_int(uci_ctx, "autonomy", "snow_melt_control", "forecast_hours_ahead", 
                            g_snow_melt_control.config.forecast_hours_ahead) != 0) {
-        ret = AUTONOMY_ERROR_UCI_OPERATION;
+        ret = AUTONOMY_ERROR_SYSTEM;
     }
     
     if (ucix_add_option(uci_ctx, "autonomy", "snow_melt_control", "weather_api_key", 
                        g_snow_melt_control.config.weather_api_key) != 0) {
-        ret = AUTONOMY_ERROR_UCI_OPERATION;
+        ret = AUTONOMY_ERROR_SYSTEM;
     }
     
     if (ucix_add_option(uci_ctx, "autonomy", "snow_melt_control", "starlink_host", 
                        g_snow_melt_control.config.starlink_host) != 0) {
-        ret = AUTONOMY_ERROR_UCI_OPERATION;
+        ret = AUTONOMY_ERROR_SYSTEM;
     }
     
     if (ucix_add_option_int(uci_ctx, "autonomy", "snow_melt_control", "starlink_port", 
                            g_snow_melt_control.config.starlink_port) != 0) {
-        ret = AUTONOMY_ERROR_UCI_OPERATION;
+        ret = AUTONOMY_ERROR_SYSTEM;
     }
     
     if (ucix_add_option_int(uci_ctx, "autonomy", "snow_melt_control", "debug_mode", 
                            g_snow_melt_control.config.debug_mode ? 1 : 0) != 0) {
-        ret = AUTONOMY_ERROR_UCI_OPERATION;
+        ret = AUTONOMY_ERROR_SYSTEM;
     }
     
     // Commit changes if all sets succeeded
@@ -783,7 +783,7 @@ int starlink_weather_snow_melt_control_save_uci_config(void) {
             return AUTONOMY_SUCCESS;
         } else {
             printf("ERROR: Failed to commit snow melt control configuration to UCI\n");
-            return AUTONOMY_ERROR_UCI_OPERATION;
+            return AUTONOMY_ERROR_SYSTEM;
         }
     } else {
         printf("ERROR: Failed to set one or more snow melt control configuration values in UCI\n");

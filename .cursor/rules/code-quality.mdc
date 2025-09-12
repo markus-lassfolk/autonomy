@@ -1,0 +1,66 @@
+---
+description: Code quality standards and best practices for autonomy daemon
+globs: ["src/c/autonomy-daemon/**/*.c", "src/c/autonomy-daemon/**/*.h"]
+alwaysApply: true
+---
+
+# Code Quality and Standards Rules
+
+## C Code Standards
+- **C99 standard**: Use `-std=c99` with proper error handling
+- **Compiler flags**: `-Wall -Wextra -O2 -g -rdynamic`
+- **Header guards**: Always use `#ifndef HEADER_H` / `#define HEADER_H` / `#endif`
+- **Include order**: System headers first, then project headers
+- **Function declarations**: Always declare functions before use
+
+## Naming Conventions
+- **Functions and variables**: Use snake_case (e.g., `ml_monitor_init`, `gps_data`)
+- **Constants and macros**: Use UPPER_CASE (e.g., `MAX_BUFFER_SIZE`, `LOGX_DEBUG_MSG`)
+- **Types and structs**: Use snake_case with _t suffix (e.g., `gps_data_t`, `ml_monitor_t`)
+- **File names**: Use snake_case (e.g., `ml_monitor.c`, `starlink_grpc_client.h`)
+
+## Memory Management
+- **Always check malloc/calloc return values**: Handle NULL returns appropriately
+- **Use malloc/free pairs**: Ensure every malloc has a corresponding free
+- **Initialize variables**: Always initialize variables before use
+- **Use memset for struct initialization**: Clear structs before use
+- **Avoid memory leaks**: Use valgrind or similar tools for detection
+
+## Error Handling
+- **Check return values**: Always check return values from function calls
+- **Handle errors gracefully**: Provide meaningful error messages
+- **Use proper error codes**: Define and use consistent error codes
+- **Log errors appropriately**: Use LOGX_ERROR_MSG for error conditions
+- **Cleanup on error**: Ensure proper cleanup in error paths
+
+## Thread Safety
+- **Use mutexes**: Protect shared data with pthread_mutex_t
+- **Lock ordering**: Always acquire locks in the same order to avoid deadlocks
+- **Minimize critical sections**: Keep locked sections as short as possible
+- **Use thread-safe functions**: Prefer thread-safe versions of functions
+
+## Documentation
+- **Function comments**: Document all public functions with purpose, parameters, and return values
+- **Complex logic**: Add comments for complex algorithms and business logic
+- **TODO comments**: Use TODO comments for incomplete implementations
+- **Header documentation**: Document the purpose of each header file
+
+## Performance Considerations
+- **Avoid unnecessary allocations**: Reuse buffers when possible
+- **Use appropriate data structures**: Choose efficient data structures for the use case
+- **Minimize system calls**: Batch operations when possible
+- **Profile critical paths**: Use profiling tools for performance-critical code
+
+## Testing and Validation
+- **Unit tests**: Write tests for individual functions
+- **Integration tests**: Test module interactions
+- **Memory tests**: Use valgrind or similar tools
+- **Static analysis**: Use cppcheck, clang-tidy, or splint
+- **Runtime testing**: Test on actual RUTOS hardware
+
+## Security Considerations
+- **Input validation**: Validate all input parameters
+- **Buffer bounds**: Always check buffer bounds before access
+- **Avoid buffer overflows**: Use safe string functions
+- **Handle sensitive data**: Properly handle passwords and keys
+- **Use secure functions**: Prefer secure versions of functions (e.g., strncpy vs strcpy)

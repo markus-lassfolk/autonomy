@@ -170,6 +170,10 @@ typedef struct {
     
 } phase6_system_t;
 
+// Global Phase 6 system instance
+static phase6_system_t g_phase6_system = {0};
+static bool g_phase6_initialized = false;
+
 // Forward declarations
 static int ml_monitor_update_resource_tracking(advanced_resource_tracker_t *tracker);
 static int ml_monitor_run_self_optimization_cycle(ml_monitor_t *monitor, self_optimization_engine_t *engine);
@@ -553,58 +557,118 @@ int ml_monitor_init_phase6_self_optimization(ml_monitor_t *monitor) {
     // Use simple fprintf to avoid LOGX crashes
     fprintf(stderr, "Initializing Phase 6: Self-Optimizing System & Production Deployment\n");
     
-    // Initialize resource tracker parameters (stored in local variables for now)
-    uint32_t memory_limit_kb = monitor->config.memory_limit_kb;
-    double peak_cpu_usage = 0.0;
-    uint32_t peak_memory_kb = 0;
-    double network_efficiency_score = 1.0;
+    // Initialize the global Phase 6 system structure
+    memset(&g_phase6_system, 0, sizeof(phase6_system_t));
     
-    // Initialize self-optimization engine parameters
-    bool self_optimization_active = true;
-    bool autonomous_mode = monitor->config.auto_tuning_enabled;
+    // Initialize advanced resource tracker
+    g_phase6_system.resource_tracker.cpu.cpu_usage_percent = 0.0;
+    g_phase6_system.resource_tracker.cpu.cpu_history_index = 0;
+    g_phase6_system.resource_tracker.cpu.average_cpu_usage = 0.0;
+    g_phase6_system.resource_tracker.cpu.peak_cpu_usage = 0.0;
+    g_phase6_system.resource_tracker.cpu.peak_cpu_time = 0;
+    
+    g_phase6_system.resource_tracker.memory.current_memory_kb = 0;
+    g_phase6_system.resource_tracker.memory.peak_memory_kb = 0;
+    g_phase6_system.resource_tracker.memory.memory_history_index = 0;
+    g_phase6_system.resource_tracker.memory.average_memory_kb = 0.0;
+    g_phase6_system.resource_tracker.memory.peak_memory_time = 0;
+    g_phase6_system.resource_tracker.memory.memory_limit_kb = monitor->config.memory_limit_kb;
+    g_phase6_system.resource_tracker.memory.memory_pressure = false;
+    g_phase6_system.resource_tracker.memory.memory_optimizations = 0;
+    
+    g_phase6_system.resource_tracker.storage.storage_used_kb = 0;
+    g_phase6_system.resource_tracker.storage.storage_available_kb = 0;
+    g_phase6_system.resource_tracker.storage.storage_growth_rate_kb_per_hour = 0.0;
+    g_phase6_system.resource_tracker.storage.storage_full_prediction = 0;
+    g_phase6_system.resource_tracker.storage.storage_optimizations = 0;
+    
+    g_phase6_system.resource_tracker.network.bytes_processed = 0;
+    g_phase6_system.resource_tracker.network.api_calls_made = 0;
+    g_phase6_system.resource_tracker.network.network_efficiency_score = 1.0;
+    g_phase6_system.resource_tracker.network.last_network_optimization = 0;
+    
+    g_phase6_system.resource_tracker.efficiency.predictions_per_second = 0.0;
+    g_phase6_system.resource_tracker.efficiency.learning_efficiency = 0.0;
+    g_phase6_system.resource_tracker.efficiency.resource_efficiency_score = 0.0;
+    g_phase6_system.resource_tracker.efficiency.last_efficiency_calculation = 0;
+    
+    // Initialize self-optimization engine
+    g_phase6_system.optimization_engine.self_optimization_active = true;
+    g_phase6_system.optimization_engine.autonomous_mode = monitor->config.auto_tuning_enabled;
+    g_phase6_system.optimization_engine.last_optimization_cycle = time(NULL);
+    g_phase6_system.optimization_engine.optimization_cycles_completed = 0;
     
     // Set optimization targets
-    double target_accuracy = 0.90;           // 90% accuracy target
-    double target_resource_efficiency = 0.85; // 85% resource efficiency
-    double target_response_time_ms = 50.0;    // 50ms response time
-    uint32_t target_memory_usage_kb = 1024;     // 1MB memory target
+    g_phase6_system.optimization_engine.targets.target_accuracy = 0.90;           // 90% accuracy target
+    g_phase6_system.optimization_engine.targets.target_resource_efficiency = 0.85; // 85% resource efficiency
+    g_phase6_system.optimization_engine.targets.target_response_time_ms = 50.0;    // 50ms response time
+    g_phase6_system.optimization_engine.targets.target_memory_usage_kb = 1024;     // 1MB memory target
     
     // Enable optimization strategies
-    bool enable_algorithm_selection = true;
-    bool enable_parameter_optimization = true;
-    bool enable_resource_optimization = true;
-    bool enable_performance_optimization = true;
+    g_phase6_system.optimization_engine.strategies.enable_algorithm_selection = true;
+    g_phase6_system.optimization_engine.strategies.enable_parameter_optimization = true;
+    g_phase6_system.optimization_engine.strategies.enable_resource_optimization = true;
+    g_phase6_system.optimization_engine.strategies.enable_performance_optimization = true;
+    
+    // Initialize optimization results
+    g_phase6_system.optimization_engine.results.accuracy_improvement = 0.0;
+    g_phase6_system.optimization_engine.results.resource_improvement = 0.0;
+    g_phase6_system.optimization_engine.results.response_time_improvement = 0.0;
+    g_phase6_system.optimization_engine.results.successful_optimizations = 0;
+    g_phase6_system.optimization_engine.results.failed_optimizations = 0;
+    g_phase6_system.optimization_engine.results.last_successful_optimization = 0;
     
     // Initialize meta-optimization learning
-    double optimization_learning_rate = 0.1;
-    uint8_t optimization_strategy_weights[8];
+    g_phase6_system.optimization_engine.meta_optimization.optimization_learning_rate = 0.1;
+    g_phase6_system.optimization_engine.meta_optimization.learned_optimization_patterns = false;
     for (int i = 0; i < 8; i++) {
-        optimization_strategy_weights[i] = 32; // Equal weights initially
+        g_phase6_system.optimization_engine.meta_optimization.optimization_strategy_weights[i] = 32; // Equal weights initially
     }
     
-    // Initialize production deployment validator parameters
-    double benchmark_accuracy = 0.87;
-    double benchmark_response_time_ms = 75.0;
-    uint32_t benchmark_memory_usage_kb = 1536; // 1.5MB
-    double benchmark_cpu_usage_percent = 5.0; // 5% CPU
-    uint32_t benchmark_predictions_per_hour = 240; // 4 per minute
+    // Initialize production deployment validator
+    g_phase6_system.deployment_validator.readiness_checks.memory_requirements_met = false;
+    g_phase6_system.deployment_validator.readiness_checks.performance_requirements_met = false;
+    g_phase6_system.deployment_validator.readiness_checks.accuracy_requirements_met = false;
+    g_phase6_system.deployment_validator.readiness_checks.stability_requirements_met = false;
+    g_phase6_system.deployment_validator.readiness_checks.integration_requirements_met = false;
+    
+    g_phase6_system.deployment_validator.benchmarks.benchmark_accuracy = 0.87;
+    g_phase6_system.deployment_validator.benchmarks.benchmark_response_time_ms = 75.0;
+    g_phase6_system.deployment_validator.benchmarks.benchmark_memory_usage_kb = 1536; // 1.5MB
+    g_phase6_system.deployment_validator.benchmarks.benchmark_cpu_usage_percent = 5.0; // 5% CPU
+    g_phase6_system.deployment_validator.benchmarks.benchmark_predictions_per_hour = 240; // 4 per minute
+    
+    g_phase6_system.deployment_validator.stress_tests.passed_memory_stress_test = false;
+    g_phase6_system.deployment_validator.stress_tests.passed_cpu_stress_test = false;
+    g_phase6_system.deployment_validator.stress_tests.passed_accuracy_stress_test = false;
+    g_phase6_system.deployment_validator.stress_tests.passed_mobile_stress_test = false;
+    g_phase6_system.deployment_validator.stress_tests.stress_test_completion = 0;
+    
+    g_phase6_system.deployment_validator.validation.production_ready = false;
+    memset(g_phase6_system.deployment_validator.validation.validation_report, 0, sizeof(g_phase6_system.deployment_validator.validation.validation_report));
+    g_phase6_system.deployment_validator.validation.validation_timestamp = 0;
+    memset(g_phase6_system.deployment_validator.validation.deployment_recommendation, 0, sizeof(g_phase6_system.deployment_validator.validation.deployment_recommendation));
     
     // Configure Phase 6 features
-    bool enable_advanced_resource_tracking = true;
-    bool enable_self_optimization = true;
-    bool enable_production_validation = true;
-    bool enable_autonomous_mode = true;
+    g_phase6_system.enable_advanced_resource_tracking = true;
+    g_phase6_system.enable_self_optimization = true;
+    g_phase6_system.enable_production_validation = true;
+    g_phase6_system.enable_autonomous_mode = true;
     
-    // Initialize system health parameters
-    double overall_system_health = 1.0;
-    bool all_systems_operational = true;
-    char health_status[32] = "optimal";
+    // Initialize system health monitoring
+    g_phase6_system.system_health.overall_system_health = 1.0;
+    g_phase6_system.system_health.all_systems_operational = true;
+    g_phase6_system.system_health.last_health_check = time(NULL);
+    strncpy(g_phase6_system.system_health.health_status, "optimal", sizeof(g_phase6_system.system_health.health_status) - 1);
+    
+    // Mark as initialized
+    g_phase6_initialized = true;
     
     // Use single consolidated message to avoid multiple LOGX calls
     fprintf(stderr, "Phase 6 self-optimizing system initialized successfully - Resource tracking, self-optimization, production validation, stress testing (Target: %.1f%% accuracy, %u KB memory, %.1f ms response)\n",
-             target_accuracy * 100,
-             target_memory_usage_kb,
-             target_response_time_ms);
+             g_phase6_system.optimization_engine.targets.target_accuracy * 100,
+             g_phase6_system.optimization_engine.targets.target_memory_usage_kb,
+             g_phase6_system.optimization_engine.targets.target_response_time_ms);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -613,67 +677,51 @@ int ml_monitor_init_phase6_self_optimization(ml_monitor_t *monitor) {
 int ml_monitor_update_with_phase6_self_optimization(ml_monitor_t *monitor, const ml_observation_t *observation) {
     if (!monitor || !observation) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    // Real Phase 6 self-optimization implementation
-    static time_t last_resource_update = 0;
-    static time_t last_optimization = 0;
-    
-    time_t now = observation->timestamp;
-    
-    // Update resource tracking every 5 minutes
-    if (now - last_resource_update > 300) {
-        // Real resource tracking update
-        struct rusage usage;
-        if (getrusage(RUSAGE_SELF, &usage) == 0) {
-            performance_monitor_t *perf = &monitor->state->models.performance;
-            perf->resources.memory_peak_kb = usage.ru_maxrss;
-            perf->resources.cpu_cycles_used += usage.ru_utime.tv_sec + usage.ru_stime.tv_sec;
-            
-            LOGX_DEBUG_MSG(" Resource tracking updated: memory=%ld KB, CPU=%u cycles",
-                      usage.ru_maxrss, perf->resources.cpu_cycles_used);
-        }
-        last_resource_update = now;
+    // Check if Phase 6 system is initialized
+    if (!g_phase6_initialized) {
+        return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
-    // Run self-optimization every hour
-    if (now - last_optimization > 3600) {
-        // Real self-optimization cycle
-        performance_monitor_t *perf = &monitor->state->models.performance;
-        
-        if (perf->predictions_made > 100) {
-            double accuracy = (double)perf->predictions_correct / perf->predictions_made;
-            
-            // Real optimization based on performance
-            tiny_nn_t *nn = &monitor->state->models.neural_network;
-            
-            if (accuracy < 0.85) {
-                // Poor performance - increase learning rate
-                if (nn->learning_rate < 200) {
-                    nn->learning_rate += 10;
-                    LOGX_INFO_MSG(" Self-optimization: increased learning rate to %u (accuracy: %.1f%%)",
-                             nn->learning_rate, accuracy * 100);
-                }
-            } else if (accuracy > 0.95) {
-                // Excellent performance - reduce learning rate for stability
-                if (nn->learning_rate > 50) {
-                    nn->learning_rate -= 5;
-                    LOGX_INFO_MSG(" Self-optimization: reduced learning rate to %u for stability (accuracy: %.1f%%)",
-                             nn->learning_rate, accuracy * 100);
-                }
-            }
-            
-            // Optimize confidence threshold based on false positive rate
-            double fp_rate = perf->predictions_made > 0 ? (double)perf->false_positives / perf->predictions_made : 0.0;
-            if (fp_rate > 0.1) {
-                // Too many false positives - increase confidence threshold
-                if (monitor->config.confidence_threshold < 200) {
-                    monitor->config.confidence_threshold += 10;
-                    LOGX_INFO_MSG(" Self-optimization: increased confidence threshold to %u (FP rate: %.1f%%)",
-                             monitor->config.confidence_threshold, fp_rate * 100);
-                }
-            }
+    // Real Phase 6 self-optimization implementation using global system
+    time_t now = observation->timestamp;
+    
+    // Update resource tracking using the global tracker
+    if (g_phase6_system.enable_advanced_resource_tracking) {
+        int result = ml_monitor_update_resource_tracking(&g_phase6_system.resource_tracker);
+        if (result != ML_MONITOR_SUCCESS) {
+            return result;
         }
-        
-        last_optimization = now;
+    }
+    
+    // Run self-optimization using the global engine
+    if (g_phase6_system.enable_self_optimization) {
+        int result = ml_monitor_run_self_optimization_cycle(monitor, &g_phase6_system.optimization_engine);
+        if (result != ML_MONITOR_SUCCESS) {
+            return result;
+        }
+    }
+    
+    // Update system health monitoring
+    g_phase6_system.system_health.last_health_check = now;
+    
+    // Calculate overall system health
+    double resource_efficiency = g_phase6_system.resource_tracker.efficiency.resource_efficiency_score;
+    double optimization_health = g_phase6_system.optimization_engine.results.successful_optimizations > 0 ? 
+                                (double)g_phase6_system.optimization_engine.results.successful_optimizations / 
+                                (g_phase6_system.optimization_engine.results.successful_optimizations + g_phase6_system.optimization_engine.results.failed_optimizations) : 0.5;
+    
+    g_phase6_system.system_health.overall_system_health = (resource_efficiency * 0.6) + (optimization_health * 0.4);
+    g_phase6_system.system_health.all_systems_operational = (g_phase6_system.system_health.overall_system_health > 0.7);
+    
+    // Update health status string
+    if (g_phase6_system.system_health.overall_system_health > 0.9) {
+        strncpy(g_phase6_system.system_health.health_status, "optimal", sizeof(g_phase6_system.system_health.health_status) - 1);
+    } else if (g_phase6_system.system_health.overall_system_health > 0.7) {
+        strncpy(g_phase6_system.system_health.health_status, "good", sizeof(g_phase6_system.system_health.health_status) - 1);
+    } else if (g_phase6_system.system_health.overall_system_health > 0.5) {
+        strncpy(g_phase6_system.system_health.health_status, "fair", sizeof(g_phase6_system.system_health.health_status) - 1);
+    } else {
+        strncpy(g_phase6_system.system_health.health_status, "poor", sizeof(g_phase6_system.system_health.health_status) - 1);
     }
     
     return ML_MONITOR_SUCCESS;
@@ -687,37 +735,26 @@ int ml_monitor_get_phase6_status(ml_monitor_t *monitor,
                                 double *system_health) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    // Return real Phase 6 status from actual system state
+    // Check if Phase 6 system is initialized
+    if (!g_phase6_initialized) {
+        return ML_MONITOR_ERROR_NOT_INITIALIZED;
+    }
+    
+    // Return real Phase 6 status from global system state
     if (resource_efficiency) {
-        // Calculate real resource efficiency
-        size_t memory_used = monitor->storage_size;
-        size_t memory_limit = monitor->config.memory_limit_kb * 1024;
-        *resource_efficiency = 1.0 - ((double)memory_used / memory_limit);
-        *resource_efficiency = fmax(0.0, fmin(1.0, *resource_efficiency));
+        *resource_efficiency = g_phase6_system.resource_tracker.efficiency.resource_efficiency_score;
     }
     
     if (optimization_cycles) {
-        // Get real optimization cycles from performance monitor
-        performance_monitor_t *perf = &monitor->state->models.performance;
-        *optimization_cycles = perf->predictions_made / 50; // Estimate cycles
+        *optimization_cycles = g_phase6_system.optimization_engine.optimization_cycles_completed;
     }
     
     if (production_ready) {
-        // Calculate real production readiness
-        performance_monitor_t *perf = &monitor->state->models.performance;
-        double accuracy = perf->predictions_made > 0 ? (double)perf->predictions_correct / perf->predictions_made : 0.0;
-        bool memory_ok = monitor->storage_size < (2 * 1024 * 1024); // <2MB
-        bool accuracy_ok = accuracy > 0.85; // >85%
-        *production_ready = memory_ok && accuracy_ok;
+        *production_ready = g_phase6_system.deployment_validator.validation.production_ready;
     }
     
     if (system_health) {
-        // Calculate real system health
-        performance_monitor_t *perf = &monitor->state->models.performance;
-        double accuracy = perf->predictions_made > 0 ? (double)perf->predictions_correct / perf->predictions_made : 0.5;
-        double memory_health = 1.0 - ((double)monitor->storage_size / (monitor->config.memory_limit_kb * 1024));
-        *system_health = (accuracy * 0.6) + (memory_health * 0.4);
-        *system_health = fmax(0.0, fmin(1.0, *system_health));
+        *system_health = g_phase6_system.system_health.overall_system_health;
     }
     
     return ML_MONITOR_SUCCESS;

@@ -439,7 +439,7 @@ int starlink_grpc_call_get_history_old(char* response_buffer, size_t buffer_size
     // Implement gRPC call using proper gRPC over HTTP/2 protocol
     // Following grpcurl's approach: HTTP/2 + gRPC framing + server reflection
     
-    char url[256];
+    char url[512];
     snprintf(url, sizeof(url), "http://%s:%d/SpaceX.API.Device.Device/Handle", 
              g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
     
@@ -521,7 +521,7 @@ int starlink_grpc_call_get_status(char* response_buffer, size_t buffer_size) {
 
 int starlink_grpc_call_get_status_old(char* response_buffer, size_t buffer_size) {
     // Implement gRPC call using proper gRPC over HTTP/2 protocol
-    char url[256];
+    char url[512];
     snprintf(url, sizeof(url), "http://%s:%d/SpaceX.API.Device.Device/Handle", 
              g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
     
@@ -602,7 +602,7 @@ int starlink_grpc_call_get_diagnostics(char* response_buffer, size_t buffer_size
 
 int starlink_grpc_call_get_diagnostics_old(char* response_buffer, size_t buffer_size) {
     // Implement gRPC call using proper gRPC over HTTP/2 protocol
-    char url[256];
+    char url[512];
     snprintf(url, sizeof(url), "http://%s:%d/SpaceX.API.Device.Device/Handle", 
              g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
     
@@ -683,7 +683,7 @@ int starlink_grpc_call_get_location(char* response_buffer, size_t buffer_size) {
 
 int starlink_grpc_call_get_location_old(char* response_buffer, size_t buffer_size) {
     // Implement gRPC call using proper gRPC over HTTP/2 protocol
-    char url[256];
+    char url[512];
     snprintf(url, sizeof(url), "http://%s:%d/SpaceX.API.Device.Device/Handle", 
              g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
     

@@ -1,0 +1,36 @@
+---
+description: User development preferences and communication style
+alwaysApply: true
+---
+
+# User Development Preferences
+
+## Communication Style
+- **Concise responses**: Avoid unnecessary repetition or filler language
+- **Action-oriented**: Focus on practical solutions and next steps
+- **Technical precision**: Use exact technical terms and specifications
+- **Context-aware**: Reference specific files, functions, and line numbers when relevant
+
+## Development Workflow
+- **Systematic approach**: Always follow the build → deploy → test → fix cycle
+- **Version management**: Always update version numbers when making changes
+- **Error analysis**: Provide detailed error analysis with specific solutions
+- **Documentation**: Update documentation when making significant changes
+
+## Code Quality Preferences
+- **Maintain functionality**: Never simplify or remove functionality - always fix the actual issue
+- **Use project standards**: Follow the project's LOGX logging system and UCI API patterns
+- **Comprehensive testing**: Always test changes thoroughly before considering them complete
+- **Error handling**: Implement proper error handling and logging for all operations
+
+## Build and Deployment
+- **Use build scripts**: Always use the provided build and deployment scripts
+- **Cache management**: Understand and respect the build system's caching requirements
+- **Version verification**: Always verify the correct version is deployed before testing
+- **Runtime testing**: Run comprehensive 5-minute tests to validate stability
+
+## Problem Solving
+- **Root cause analysis**: Identify and fix the root cause, not just symptoms
+- **Systematic fixes**: When fixing compilation errors, search for the same pattern across the entire codebase
+- **Automated solutions**: Use automated error detection and fixing when safe
+- **Manual review**: Always manually review complex changes that could have side effects

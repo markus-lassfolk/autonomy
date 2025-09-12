@@ -1,0 +1,63 @@
+---
+description: Error handling and testing procedures for autonomy daemon
+globs: ["src/c/autonomy-daemon/**/*.c", "src/c/autonomy-daemon/**/*.h"]
+alwaysApply: false
+---
+
+# Error Handling and Testing Rules
+
+## Systematic Error Detection
+- **Systematic error search**: When fixing compilation errors, always search for the same error pattern across the entire codebase and fix everywhere applicable 
+- **Use compilation_error_detector.sh**: `/mnt/wsl/SDK/compilation_error_detector.sh` for automated fixes, update with new patterns and safe automatic fixes 
+- **Pattern-based fixes**: The same problematic code often appears in multiple files
+
+## Automated Fixes (Safe)
+- **LOGX macro corrections**: `LOGX_INFO` → `LOGX_INFO_MSG`
+- **Format specifier fixes**: `%ld` → `%lld` for `time_t`
+- **Missing include additions**: When pattern is clear
+- **Unicode character removal**: Emojis, special characters
+- **Double suffix corrections**: `_MSG_MSG` → `_MSG`
+- **API function name updates**: `blob_put_string` → `blobmsg_add_string`
+
+## Manual Review Required (High Risk)
+- **Type definition conflicts**: Requires understanding of code structure
+- **Function signature changes**: Requires understanding of calling code
+- **UCI API usage**: Requires understanding of context
+- **Variable name changes**: Requires understanding of scope
+- **Complex struct member fixes**: Requires understanding of data flow
+
+## Testing Procedures
+- **5-minute runtime test**: Always run comprehensive 5-minute test after deployment
+- **Version verification**: Check daemon reports correct version before testing
+- **Log analysis**: Download and analyze test logs for errors, warnings, crashes
+- **Systematic iteration**: Build → deploy → test → fix cycle until daemon runs perfectly
+
+## Error Analysis Process
+1. **Identify Root Cause**: From logs, determine the exact cause of each issue. If needed, add extensive Debug Logging temporily 
+2. **Fix the Issue**: Make targeted fixes to source code
+3. **Update Version**: Increment version number in VERSION file and version.h
+4. **Repeat Process**: Go back to build phase and repeat until daemon runs cleanly
+
+## Common Issues and Fixes
+- **Version Mismatch**: Update all version files and rebuild
+- **Segmentation Faults**: Usually missing includes, uninitialized variables, or UBUS issues
+- **gRPC Call Failures**: Check network connectivity, improve error handling, add retry logic
+- **UBUS Registration Failures**: Implement missing functions, fix UBUS object initialization
+- **Missing Dependencies**: Bundle libraries with package or fix library paths
+
+## Testing Commands Reference
+- **Quick Version Check**: `ssh -i ~/.ssh/rutos_key root@192.168.80.1 "LD_LIBRARY_PATH=/usr/local/usr/lib:/usr/lib timeout 5 /usr/local/usr/bin/autonomy-daemon --version"`
+- **Full 5-Minute Test**: `ssh -i ~/.ssh/rutos_key root@192.168.80.1 "LD_LIBRARY_PATH=/usr/local/usr/lib:/usr/lib timeout 300 /usr/local/usr/bin/autonomy-daemon --foreground"`
+- **Log Analysis**: `grep -i "segmentation\|error\|warning\|failed" /tmp/daemon_test_*.log`
+
+## Success Criteria
+The daemon is considered working perfectly when:
+1. ✅ **Version Verification**: Daemon reports correct version number
+2. ✅ **Clean Startup**: No segmentation faults during initialization
+3. ✅ **All Modules Initialize**: UCI, UBUS, ML monitoring, Starlink tracking all start successfully
+4. ✅ **5+ Minute Runtime**: Daemon runs continuously for 5+ minutes without crashes and no freezes 
+5. ✅ **No Error Messages**: No ERROR or WARNING messages in logs
+6. ✅ **All UBUS Methods Registered**: All expected UBUS methods are available
+7. ✅ **Starlink gRPC Communication**: Internal gRPC implementation works without external binaries
+8. ✅ **Starlink Data Collection**: Successfully collects data from Starlink dish via gRPC
+9. ✅ **Network Connectivity**: All network operations succeed (or fail gracefully with proper error handling)

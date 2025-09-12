@@ -203,6 +203,10 @@ typedef struct {
     
 } phase5_mobile_system_t;
 
+// Global Phase 5 system instance
+static phase5_mobile_system_t g_phase5_system = {0};
+static bool g_phase5_initialized = false;
+
 // Forward declarations
 static int ml_monitor_detect_mobile_scenario(mobile_scenario_detector_t *detector, const ml_observation_t *observation);
 static int ml_monitor_advanced_auto_tune(ml_monitor_t *monitor, advanced_auto_tuner_t *tuner);
@@ -515,44 +519,76 @@ int ml_monitor_init_phase5_mobile_system(ml_monitor_t *monitor) {
     // Use simple fprintf to avoid LOGX crashes
     fprintf(stderr, "Initializing Phase 5: Mobile-Optimized Learning & Field Testing\n");
     
-    // Initialize mobile scenario detector parameters (stored in local variables for now)
-    mobile_scenario_t current_scenario = MOBILE_SCENARIO_STATIONARY;
-    double scenario_confidence = 1.0;
-    double learning_rate_multiplier = 1.0;
-    double confidence_adjustment = 1.0;
+    // Initialize the global Phase 5 system structure
+    memset(&g_phase5_system, 0, sizeof(phase5_mobile_system_t));
     
-    // Initialize advanced auto-tuner parameters
-    bool auto_tuning_active = true;
-    bool aggressive_tuning_mode = false;
+    // Initialize mobile scenario detector
+    g_phase5_system.scenario_detector.current_scenario = MOBILE_SCENARIO_STATIONARY;
+    g_phase5_system.scenario_detector.scenario_confidence = 1.0;
+    g_phase5_system.scenario_detector.adaptation.learning_rate_multiplier = 1.0;
+    g_phase5_system.scenario_detector.adaptation.confidence_adjustment = 1.0;
+    g_phase5_system.scenario_detector.adaptation.rapid_learning_mode = false;
+    g_phase5_system.scenario_detector.adaptation.conservation_mode = false;
+    
+    // Initialize advanced auto-tuner
+    g_phase5_system.auto_tuner.auto_tuning_active = true;
+    g_phase5_system.auto_tuner.aggressive_tuning_mode = false;
+    g_phase5_system.auto_tuner.last_tuning_action = time(NULL);
+    g_phase5_system.auto_tuner.tuning_cycles_completed = 0;
     
     // Set parameter exploration space
-    uint8_t learning_rate_min = 32;
-    uint8_t learning_rate_max = 200;
-    uint8_t learning_rate_current = 128;
-    uint8_t confidence_threshold_min = 64;
-    uint8_t confidence_threshold_max = 200;
-    uint8_t confidence_threshold_current = 128;
-    uint8_t exploration_radius = 20;
-    uint8_t exploitation_ratio = 70; // 70% exploitation, 30% exploration
+    g_phase5_system.auto_tuner.parameter_space.learning_rate_min = 32;
+    g_phase5_system.auto_tuner.parameter_space.learning_rate_max = 200;
+    g_phase5_system.auto_tuner.parameter_space.learning_rate_current = 128;
+    g_phase5_system.auto_tuner.parameter_space.learning_rate_optimal = 128;
+    g_phase5_system.auto_tuner.parameter_space.confidence_threshold_min = 64;
+    g_phase5_system.auto_tuner.parameter_space.confidence_threshold_max = 200;
+    g_phase5_system.auto_tuner.parameter_space.confidence_threshold_current = 128;
+    g_phase5_system.auto_tuner.parameter_space.confidence_threshold_optimal = 128;
+    g_phase5_system.auto_tuner.parameter_space.exploration_radius = 20;
+    g_phase5_system.auto_tuner.parameter_space.exploitation_ratio = 70; // 70% exploitation, 30% exploration
     
-    // Initialize transfer learning system parameters
-    bool enable_similarity_transfer = true;
-    bool enable_pattern_transfer = true;
-    bool enable_parameter_transfer = true;
-    double similarity_threshold = 0.6;
-    double transfer_confidence_bonus = 0.1;
+    // Initialize performance tracking
+    g_phase5_system.auto_tuner.performance_tracking.current_performance = 0.5;
+    g_phase5_system.auto_tuner.performance_tracking.best_performance = 0.5;
+    g_phase5_system.auto_tuner.performance_tracking.history_index = 0;
+    g_phase5_system.auto_tuner.performance_tracking.improvement_rate = 0.0;
+    g_phase5_system.auto_tuner.performance_tracking.converged = false;
+    g_phase5_system.auto_tuner.performance_tracking.cycles_since_improvement = 0;
+    
+    // Initialize scenario-specific tuning
+    g_phase5_system.auto_tuner.scenario_tuning.current_scenario = MOBILE_SCENARIO_STATIONARY;
+    g_phase5_system.auto_tuner.scenario_tuning.scenario_start_time = time(NULL);
+    
+    // Initialize transfer learning system
+    g_phase5_system.transfer_system.profile_count = 0;
+    g_phase5_system.transfer_system.current_profile_index = 0;
+    g_phase5_system.transfer_system.transfer_config.enable_similarity_transfer = true;
+    g_phase5_system.transfer_system.transfer_config.enable_pattern_transfer = true;
+    g_phase5_system.transfer_system.transfer_config.enable_parameter_transfer = true;
+    g_phase5_system.transfer_system.transfer_config.similarity_threshold = 0.6;
+    g_phase5_system.transfer_system.transfer_config.transfer_confidence_bonus = 0.1;
+    
+    // Initialize transfer statistics
+    g_phase5_system.transfer_system.transfer_stats.successful_transfers = 0;
+    g_phase5_system.transfer_system.transfer_stats.failed_transfers = 0;
+    g_phase5_system.transfer_system.transfer_stats.partial_transfers = 0;
+    g_phase5_system.transfer_system.transfer_stats.average_transfer_benefit = 0.0;
     
     // Configure Phase 5 features
-    bool enable_mobile_optimization = true;
-    bool enable_advanced_auto_tuning = true;
-    bool enable_transfer_learning = true;
-    bool enable_field_testing_mode = false; // Can be enabled for field tests
+    g_phase5_system.enable_mobile_optimization = true;
+    g_phase5_system.enable_advanced_auto_tuning = true;
+    g_phase5_system.enable_transfer_learning = true;
+    g_phase5_system.enable_field_testing_mode = false; // Can be enabled for field tests
     
-    // Field testing configuration
-    bool data_collection_mode = false;
-    bool performance_logging_mode = true;
-    char field_test_id[32] = "embedded_ml_v1";
-    time_t field_test_start = time(NULL);
+    // Initialize field testing configuration
+    g_phase5_system.field_testing.data_collection_mode = false;
+    g_phase5_system.field_testing.performance_logging_mode = true;
+    strncpy(g_phase5_system.field_testing.field_test_id, "embedded_ml_v1", sizeof(g_phase5_system.field_testing.field_test_id) - 1);
+    g_phase5_system.field_testing.field_test_start = time(NULL);
+    
+    // Mark as initialized
+    g_phase5_initialized = true;
     
     // Use single consolidated message to avoid multiple LOGX calls
     fprintf(stderr, "Phase 5 mobile optimization system initialized successfully - Mobile detection, auto-tuning, transfer learning, field testing\n");
@@ -564,67 +600,49 @@ int ml_monitor_init_phase5_mobile_system(ml_monitor_t *monitor) {
 int ml_monitor_update_with_phase5_mobile_optimization(ml_monitor_t *monitor, const ml_observation_t *observation) {
     if (!monitor || !observation) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    // Real Phase 5 mobile optimization implementation
-    
-    // Detect mobile scenario
-    static mobile_scenario_t current_scenario = MOBILE_SCENARIO_STATIONARY;
-    static time_t last_scenario_check = 0;
-    
-    time_t now = observation->timestamp;
-    if (now - last_scenario_check > 60) { // Check every minute
-        
-        // Simple scenario detection based on speed
-        mobile_scenario_t new_scenario = MOBILE_SCENARIO_STATIONARY;
-        
-        if (observation->speed_kmh > 50) {
-            new_scenario = MOBILE_SCENARIO_HIGHWAY;
-        } else if (observation->speed_kmh > 20) {
-            new_scenario = MOBILE_SCENARIO_URBAN;
-        } else if (observation->speed_kmh > 5) {
-            new_scenario = MOBILE_SCENARIO_SLOW_MOBILE;
-        }
-        
-        if (new_scenario != current_scenario) {
-            LOGX_INFO_MSG(" Mobile scenario detected: %d (speed: %u km/h)", 
-                     new_scenario, observation->speed_kmh);
-            
-            // Adapt ML system to new scenario
-            ml_monitor_adapt_to_mobile_scenario(monitor, new_scenario);
-            current_scenario = new_scenario;
-        }
-        
-        last_scenario_check = now;
+    // Check if Phase 5 system is initialized
+    if (!g_phase5_initialized) {
+        return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
-    // Perform advanced auto-tuning
-    static time_t last_auto_tune = 0;
-    if (now - last_auto_tune > 600) { // Auto-tune every 10 minutes
-        
-        // Simple auto-tuning: adjust learning rate based on recent performance
-        performance_monitor_t *perf = &monitor->state->models.performance;
-        
-        if (perf->predictions_made > 50) {
-            double accuracy = (double)perf->predictions_correct / perf->predictions_made;
-            tiny_nn_t *nn = &monitor->state->models.neural_network;
-            
-            if (accuracy < 0.7) {
-                // Poor performance, increase learning rate
-                if (nn->learning_rate < 200) {
-                    nn->learning_rate += 10;
-                    LOGX_DEBUG_MSG(" Auto-tune: increased learning rate to %u (accuracy: %.1f%%)",
-                              nn->learning_rate, accuracy * 100);
-                }
-            } else if (accuracy > 0.9) {
-                // Excellent performance, can reduce learning rate for stability
-                if (nn->learning_rate > 50) {
-                    nn->learning_rate -= 5;
-                    LOGX_DEBUG_MSG(" Auto-tune: reduced learning rate to %u (accuracy: %.1f%%)",
-                              nn->learning_rate, accuracy * 100);
-                }
-            }
+    // Real Phase 5 mobile optimization implementation using global system
+    
+    // Detect mobile scenario using the global detector
+    int result = ml_monitor_detect_mobile_scenario(&g_phase5_system.scenario_detector, observation);
+    if (result != ML_MONITOR_SUCCESS) {
+        return result;
+    }
+    
+    // Adapt to mobile scenario if it changed
+    if (g_phase5_system.scenario_detector.current_scenario != g_phase5_system.auto_tuner.scenario_tuning.current_scenario) {
+        result = ml_monitor_adapt_to_mobile_scenario(monitor, g_phase5_system.scenario_detector.current_scenario);
+        if (result != ML_MONITOR_SUCCESS) {
+            return result;
         }
         
-        last_auto_tune = now;
+        // Update scenario tracking
+        g_phase5_system.auto_tuner.scenario_tuning.current_scenario = g_phase5_system.scenario_detector.current_scenario;
+        g_phase5_system.auto_tuner.scenario_tuning.scenario_start_time = observation->timestamp;
+    }
+    
+    // Perform advanced auto-tuning using the global tuner
+    if (g_phase5_system.enable_advanced_auto_tuning) {
+        result = ml_monitor_advanced_auto_tune(monitor, &g_phase5_system.auto_tuner);
+        if (result != ML_MONITOR_SUCCESS) {
+            return result;
+        }
+    }
+    
+    // Update transfer learning system if enabled
+    if (g_phase5_system.enable_transfer_learning && g_phase5_system.transfer_system.profile_count > 0) {
+        // Find current location profile
+        location_profile_t *current_profile = &g_phase5_system.transfer_system.location_profiles[g_phase5_system.transfer_system.current_profile_index];
+        
+        // Update transfer learning
+        result = ml_monitor_transfer_learning_update(&g_phase5_system.transfer_system, current_profile);
+        if (result != ML_MONITOR_SUCCESS) {
+            return result;
+        }
     }
     
     return ML_MONITOR_SUCCESS;
@@ -636,41 +654,26 @@ int ml_monitor_get_mobile_status(ml_monitor_t *monitor,
                                 uint32_t *location_profiles, double *auto_tune_performance) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    // Return real mobile status from actual system state
-    location_learner_t *learner = &monitor->state->models.location_learner;
+    // Check if Phase 5 system is initialized
+    if (!g_phase5_initialized) {
+        return ML_MONITOR_ERROR_NOT_INITIALIZED;
+    }
     
+    // Return real mobile status from Phase 5 system state
     if (scenario) {
-        // Determine current scenario based on recent observations
-        // Check if we have recent speed data
-        if (learner->observations_here > 10) {
-            // In a real implementation, we'd analyze recent speed patterns
-            // For now, determine based on location stability
-            time_t time_at_location = time(NULL) - learner->arrival_time;
-            if (time_at_location > 3600) { // >1 hour at location
-                *scenario = MOBILE_SCENARIO_STATIONARY;
-            } else {
-                *scenario = MOBILE_SCENARIO_SLOW_MOBILE; // Recently arrived
-            }
-        } else {
-            *scenario = MOBILE_SCENARIO_UNKNOWN;
-        }
+        *scenario = g_phase5_system.scenario_detector.current_scenario;
     }
     
     if (learning_rate_multiplier) {
-        // Calculate real learning rate multiplier based on location familiarity
-        double familiarity = (double)learner->profile.learned / 255.0;
-        *learning_rate_multiplier = 1.0 + (1.0 - familiarity) * 0.5; // Higher rate for unfamiliar locations
+        *learning_rate_multiplier = g_phase5_system.scenario_detector.adaptation.learning_rate_multiplier;
     }
     
     if (location_profiles) {
-        *location_profiles = learner->history_count; // Real profile count
+        *location_profiles = g_phase5_system.transfer_system.profile_count;
     }
     
     if (auto_tune_performance) {
-        // Calculate real auto-tuning performance
-        performance_monitor_t *perf = &monitor->state->models.performance;
-        *auto_tune_performance = perf->predictions_made > 0 ? 
-                               (double)perf->predictions_correct / perf->predictions_made : 0.0;
+        *auto_tune_performance = g_phase5_system.auto_tuner.performance_tracking.best_performance;
     }
     
     return ML_MONITOR_SUCCESS;

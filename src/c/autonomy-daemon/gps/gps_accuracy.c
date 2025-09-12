@@ -12,6 +12,9 @@
 // External reference to global configuration
 extern autonomy_config_t g_config;
 
+// Forward declaration
+static void update_validation_statistics(const gps_validation_result_t *result);
+
 // GPS accuracy validation configuration
 static const double MIN_ACCURACY = 0.1; // Use configurable value // Use configurable value            // Minimum accuracy in meters
 static const double MAX_ACCURACY = 10000.0; // Use configurable value // Use configurable value        // Maximum accuracy in meters

@@ -1,0 +1,70 @@
+---
+description: Build system and deployment workflow rules for autonomy daemon
+globs: ["**/Makefile", "**/*.mk", "**/build/**/*", "**/scripts/**/*"]
+alwaysApply: false
+---
+
+# Build and Deployment Workflow Rules
+
+## Build System Requirements
+- **ALWAYS use build script**: `/mnt/wsl/SDK/build_autonomy_daemon.sh`
+- **NEVER run make commands manually** - causes caching issues
+- Build script handles proper cache cleaning and SDK toolchain usage
+- Wait for build completion before analyzing results
+
+## Deployment Process
+- **ALWAYS use deploy script**: `/mnt/wsl/SDK/deploy_autonomy_daemon.sh`
+- Deploy to RUTOS router at 192.168.80.1
+- Use SSH key: `~/.ssh/rutos_key`
+- Verify deployment with version check before testing
+
+## SDK Integration
+- **SDK Location**: `/mnt/wsl/SDK/rutos-ipq40xx-rutx-sdk`
+- **Source Code**: `/mnt/s/autonomy/src/c/autonomy-daemon`
+- **Target Device**: RUTOS router at 192.168.80.1
+- **SSH Key**: `~/.ssh/rutos_key`
+
+## Cache Management
+- **CRITICAL**: Always clean caches after source code changes
+- Build script automatically performs thorough cache cleaning
+- Remove build directories, staging stamps, and package info
+- Clean object files (*.o) and dependency files (*.d)
+
+## Package Dependencies
+- **Required libraries**: libubus, libblobmsg_json, libubox, libjson-c, libcjson, libuci, libcurl, libm, libpthread, libsqlite3, libcrypto, libssl, libdl
+- **cJSON bundling**: Bundle cJSON library directly in package (remove from DEPENDS)
+- **Library location**: `/usr/local/usr/lib/` in package
+- **Binary location**: `/usr/local/usr/bin/autonomy-daemon`
+
+## Deployment Workflow
+1. **Build with build script**: `/mnt/wsl/SDK/build_autonomy_daemon.sh`
+2. **Check build status**: `/mnt/wsl/SDK/check_build_status.sh` wait 30sec to run again if build is in progress until build is done. Max runtime allowed for build is 10 minutes, check statusmessage for elapsed time. 
+3. **Deploy with deploy script**: `/mnt/wsl/SDK/deploy_autonomy_daemon.sh`
+4. **Verify version**: Check daemon reports correct version
+5. **5-minute runtime test**: Run comprehensive test for stability
+
+## Error Detection and Fixes
+- **Use compilation error detector**: `/mnt/wsl/SDK/compilation_error_detector.sh`
+- **Systematic error search**: Find same error pattern across entire codebase
+- **Automated fixes**: LOGX macros, format specifiers, missing includes, Unicode removal 
+- **Manual review required**: When feature degredation is required 
+
+## Version Synchronization
+- **Update VERSION file**: Increment build number
+- **Update version.h**: Update build number and version string
+- **Update ubus_methods.c**: Update hardcoded version strings
+- **Verify deployment**: Check daemon reports correct version
+
+## Testing Commands
+- **Quick version check**: `ssh -i ~/.ssh/rutos_key root@192.168.80.1 "LD_LIBRARY_PATH=/usr/local/usr/lib:/usr/lib timeout 10 /usr/local/usr/bin/autonomy-daemon --version"`
+- **Full 5-minute test**: `ssh -i ~/.ssh/rutos_key root@192.168.80.1 "LD_LIBRARY_PATH=/usr/local/usr/lib:/usr/lib timeout 300 /usr/local/usr/bin/autonomy-daemon --foreground"`
+- **Log analysis**: Check for segmentation faults, errors, warnings, failed initializations, conflicts, interoperability, missing functions, missing data, loops 
+
+## Success Criteria
+- ✅ **Version Verification**: Daemon reports correct version number
+- ✅ **Clean Startup**: No segmentation faults during initialization
+- ✅ **All Modules Initialize**: UCI, UBUS, ML monitoring, Starlink tracking all start successfully
+- ✅ **5+ Minute Runtime**: Daemon runs continuously for 5+ minutes without crashes or freezing 
+- ✅ **No Error Messages**: No ERROR or WARNING messages in logs
+- ✅ **All UBUS Methods Registered**: All expected UBUS methods are available and providing expected real data (no mock or hardcoded data)
+- ✅ **Starlink gRPC Communication**: Internal gRPC implementation works without external binaries

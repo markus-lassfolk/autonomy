@@ -1,0 +1,49 @@
+---
+description: User development preferences and communication style
+alwaysApply: true
+---
+
+# User Development Preferences
+
+## Communication Style
+- **Concise responses**: Avoid unnecessary repetition or filler language
+- **Action-oriented**: Focus on practical solutions and next steps
+- **Technical precision**: Use exact technical terms and specifications
+- **Context-aware**: Reference specific files, functions, and line numbers when relevant
+
+## Development Workflow
+- **Systematic approach**: Always follow the build → deploy → test → fix cycle
+- **Version management**: Always update version numbers when making changes
+- **Error analysis**: Provide detailed error analysis with specific solutions
+- **Documentation**: Update documentation when making significant changes
+- **Project Status**: Always update PROJECT_STATUS.md with current TODOs, issues and make it easy to resume the work later
+- **ChangeLog**: Always keep CHANGELOG.md updated with relevant changes to make release-notes easier
+- **Documentation Maintenance**: Update both CHANGELOG.md and PROJECT_STATUS.md after every significant change
+- **Use update script**: Always use `./scripts/update_project_docs.sh changelog` to add entries with proper date/time formatting 
+
+## Code Quality Preferences
+- **Maintain functionality**: Never simplify or remove functionality - always fix the actual issue
+- **Use project standards**: Follow the project's LOGX logging system and UCI API patterns
+- **Comprehensive testing**: Always test changes thoroughly before considering them complete
+- **Error handling**: Implement proper error handling and logging for all operations 
+- **Reuse Functions**: When more than one module relies on a funcion, move that function to a Shared Folder and reference it from there 
+- **Shared Functions**: When doing changes to Shared Functions be extra cautious about chain effects and unintended effects in other places. 
+
+## Build and Deployment
+- **Use build scripts**: Always use the provided build and deployment scripts
+- **Cache management**: Understand and respect the build system's caching requirements
+- **Version verification**: Always verify the correct version is deployed before testing
+- **Runtime testing**: Run comprehensive 5-minute tests to validate stability
+
+## Problem Solving
+- **Root cause analysis**: Identify and fix the root cause, not just symptoms
+- **Systematic fixes**: When fixing compilation errors, search for the same pattern across the entire codebase
+- **Automated solutions**: Use automated error detection and fixing when safe
+- **Manual review**: Always manually review complex changes that could have side effects
+
+## Project-Specific Preferences
+- **LOGX logging**: Always use LOGX macros instead of printf
+- **grpcurl compatibility**: Match grpcurl output and formatting exactly
+- **UCI API usage**: Use existing uci_manager functions with ucix_* wrapper functions
+- **Version synchronization**: Always update all version files when making changes
+- **Production quality**: Maintain production-ready quality for embedded systems

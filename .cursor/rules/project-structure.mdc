@@ -1,0 +1,44 @@
+---
+description: Project structure and file organization guide
+alwaysApply: true
+---
+
+# Autonomy Daemon Project Structure
+
+## Main Entry Points
+- **Main daemon**: [src/c/autonomy-daemon/autonomy-daemon.c](mdc:src/c/autonomy-daemon/autonomy-daemon.c)
+- **Version configuration**: [VERSION](mdc:VERSION)
+- **Build system**: [src/c/autonomy-daemon/Makefile](mdc:src/c/autonomy-daemon/Makefile)
+
+## Core Components
+- **Core types and definitions**: [src/c/autonomy-daemon/core/types.h](mdc:src/c/autonomy-daemon/core/types.h)
+- **Version management**: [src/c/autonomy-daemon/core/version.h](mdc:src/c/autonomy-daemon/core/version.h)
+- **UBUS methods**: [src/c/autonomy-daemon/ubus/ubus_methods.c](mdc:src/c/autonomy-daemon/ubus/ubus_methods.c)
+
+## Key Modules
+- **ML Monitoring**: [src/c/autonomy-daemon/ml/](mdc:src/c/autonomy-daemon/ml/) - Machine learning monitoring system
+- **Starlink Integration**: [src/c/autonomy-daemon/starlink/](mdc:src/c/autonomy-daemon/starlink/) - Starlink gRPC and tracking
+- **Network Management**: [src/c/autonomy-daemon/network/](mdc:src/c/autonomy-daemon/network/) - Network interface management
+- **GPS System**: [src/c/autonomy-daemon/gps/](mdc:src/c/autonomy-daemon/gps/) - GPS tracking and location services
+- **Utilities**: [src/c/autonomy-daemon/utils/](mdc:src/c/autonomy-daemon/utils/) - Common utilities and helpers
+
+## Configuration and Management
+- **UCI Manager**: [src/c/autonomy-daemon/utils/uci_manager.c](mdc:src/c/autonomy-daemon/utils/uci_manager.c) - UCI configuration management
+- **Logging System**: [src/c/autonomy-daemon/utils/logx.h](mdc:src/c/autonomy-daemon/utils/logx.h) - Extended logging system
+- **Analytics**: [src/c/autonomy-daemon/analytics/](mdc:src/c/autonomy-daemon/analytics/) - Analytics and monitoring
+
+## Documentation
+- **Build Error Analysis**: [BUILD_ERRORS_ANALYSIS.md](mdc:BUILD_ERRORS_ANALYSIS.md) - Comprehensive build error documentation
+- **ML System Complete**: [ML_MONITORING_SYSTEM_COMPLETE.md](mdc:ML_MONITORING_SYSTEM_COMPLETE.md) - ML monitoring system documentation
+- **Main README**: [README.md](mdc:README.md) - Project overview and quick start
+
+## Build and Deployment
+- **Build Script**: `/mnt/wsl/SDK/build_autonomy_daemon.sh` - Automated build process
+- **Deploy Script**: `/mnt/wsl/SDK/deploy_autonomy_daemon.sh` - Automated deployment
+- **Error Detector**: `/mnt/wsl/SDK/compilation_error_detector.sh` - Automated error fixing
+- **Status Checker**: `/mnt/wsl/SDK/check_build_status.sh` - Build status monitoring
+
+## Key Configuration Files
+- **Version**: [VERSION](mdc:VERSION) - Project version configuration
+- **Makefile**: [src/c/autonomy-daemon/Makefile](mdc:src/c/autonomy-daemon/Makefile) - Build configuration
+- **Types**: [src/c/autonomy-daemon/core/types.h](mdc:src/c/autonomy-daemon/core/types.h) - Common type definitions

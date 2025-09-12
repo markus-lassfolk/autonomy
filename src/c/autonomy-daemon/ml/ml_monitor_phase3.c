@@ -70,6 +70,11 @@ typedef struct {
     
 } enhanced_sky_grid_t;
 
+// Global Phase 3 system instance
+static enhanced_sky_grid_t g_phase3_enhanced_sky_grid = {0};
+static sliding_predictor_t g_phase3_sliding_predictor = {0};
+static bool g_phase3_initialized = false;
+
 // Forward declarations
 static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor);
 static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor, const ml_observation_t *observation);
@@ -89,27 +94,64 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
     // Use simple fprintf to avoid LOGX crashes
     fprintf(stderr, "Initializing enhanced sky grid with obstruction analyzer integration\n");
     
-    // Initialize coordinate mapping parameters (stored in local variables for now)
-    double ml_to_polar_scale_x = 123.0 / 90.0;  // ML azimuth bins to polar X
-    double ml_to_polar_scale_y = 123.0 / 45.0;  // ML elevation bins to polar Y
-    int polar_center_x = 61;
-    int polar_center_y = 61;
-    double polar_max_radius = 61.5;
-    // Initialize fusion parameters (stored in local variables for now)
-    double ml_weight = 0.7;
-    double obstruction_weight = 0.3;
-    double fusion_confidence_threshold = 0.6;
-    bool enable_cross_validation = true;
-    // Initialize statistics (stored in local variables for now)
-    uint32_t fused_predictions = 0;
-    uint32_t ml_only_predictions = 0;
-    uint32_t obstruction_only_predictions = 0;
-    uint32_t fusion_accuracy_correct = 0;
-    double fusion_accuracy_rate = 0.0;
+    // Initialize the global Phase 3 enhanced sky grid structure
+    memset(&g_phase3_enhanced_sky_grid, 0, sizeof(enhanced_sky_grid_t));
+    
+    // Initialize the ML grid (copy from monitor's existing grid)
+    g_phase3_enhanced_sky_grid.ml_grid = monitor->state->models.sky_grid;
+    
+    // Initialize obstruction analyzer integration
+    g_phase3_enhanced_sky_grid.obstruction_analyzer = NULL; // Will be set when available
+    
+    // Initialize coordinate mapping parameters
+    g_phase3_enhanced_sky_grid.mapping.ml_to_polar_scale_x = 123.0 / 90.0;  // ML azimuth bins to polar X
+    g_phase3_enhanced_sky_grid.mapping.ml_to_polar_scale_y = 123.0 / 45.0;  // ML elevation bins to polar Y
+    g_phase3_enhanced_sky_grid.mapping.polar_center_x = 61;
+    g_phase3_enhanced_sky_grid.mapping.polar_center_y = 61;
+    g_phase3_enhanced_sky_grid.mapping.polar_max_radius = 61.5;
+    
+    // Initialize fusion parameters
+    g_phase3_enhanced_sky_grid.fusion.ml_weight = 0.7;
+    g_phase3_enhanced_sky_grid.fusion.obstruction_weight = 0.3;
+    g_phase3_enhanced_sky_grid.fusion.fusion_confidence_threshold = 0.6;
+    g_phase3_enhanced_sky_grid.fusion.enable_cross_validation = true;
+    
+    // Initialize statistics
+    g_phase3_enhanced_sky_grid.stats.fused_predictions = 0;
+    g_phase3_enhanced_sky_grid.stats.ml_only_predictions = 0;
+    g_phase3_enhanced_sky_grid.stats.obstruction_only_predictions = 0;
+    g_phase3_enhanced_sky_grid.stats.fusion_accuracy_correct = 0;
+    g_phase3_enhanced_sky_grid.stats.fusion_accuracy_rate = 0.0;
+    
+    // Initialize sliding window predictor
+    memset(&g_phase3_sliding_predictor, 0, sizeof(sliding_predictor_t));
+    g_phase3_sliding_predictor.window_size = 0;
+    g_phase3_sliding_predictor.write_idx = 0;
+    
+    // Initialize features
+    g_phase3_sliding_predictor.features.snr_trend = 128; // Stable
+    g_phase3_sliding_predictor.features.snr_volatility = 0;
+    g_phase3_sliding_predictor.features.latency_trend = 0;
+    g_phase3_sliding_predictor.features.packet_loss_trend = 0;
+    g_phase3_sliding_predictor.features.obstruction_trend = 0;
+    g_phase3_sliding_predictor.features.weather_severity = 0;
+    g_phase3_sliding_predictor.features.time_of_day = 0;
+    g_phase3_sliding_predictor.features.pattern_signature = 0;
+    
+    // Initialize predictions
+    g_phase3_sliding_predictor.outage_probability_5min = 0;
+    g_phase3_sliding_predictor.outage_probability_15min = 0;
+    g_phase3_sliding_predictor.likely_cause = 0;
+    g_phase3_sliding_predictor.confidence = 0;
+    
+    // Mark as initialized
+    g_phase3_initialized = true;
     
     // Use simple fprintf for non-critical information to avoid LOGX crashes
     fprintf(stderr, "Enhanced sky grid initialized (ML: 90x45, Obstruction: 123x123, weights: %.1f/%.1f, threshold: %.1f)\n", 
-            ml_weight, obstruction_weight, fusion_confidence_threshold);
+            g_phase3_enhanced_sky_grid.fusion.ml_weight, 
+            g_phase3_enhanced_sky_grid.fusion.obstruction_weight, 
+            g_phase3_enhanced_sky_grid.fusion.fusion_confidence_threshold);
     
     return ML_MONITOR_SUCCESS;
 }
@@ -117,6 +159,11 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
 // Integrate with obstruction analyzer for enhanced predictions
 static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor, const ml_observation_t *observation) {
     if (!monitor || !monitor->state || !observation) return ML_MONITOR_ERROR_INVALID_PARAM;
+    
+    // Check if Phase 3 system is initialized
+    if (!g_phase3_initialized) {
+        return ML_MONITOR_ERROR_NOT_INITIALIZED;
+    }
     
     // Get current obstruction map from existing analyzer
     obstruction_map_t current_obstruction_map;
@@ -126,7 +173,7 @@ static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor,
     // This would integrate with the existing obstruction analyzer
     // Integration with obstruction analyzer
     
-    compact_sky_grid_t *ml_grid = &monitor->state->models.sky_grid;
+    compact_sky_grid_t *ml_grid = &g_phase3_enhanced_sky_grid.ml_grid;
     
     // Update ML grid with current observation
     int ml_result = ml_monitor_sky_grid_update(ml_grid, observation->azimuth_deg, observation->elevation_deg, 
@@ -477,15 +524,36 @@ int ml_monitor_init_phase3_enhancements(ml_monitor_t *monitor) {
 int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_observation_t *observation) {
     if (!monitor || !observation) return ML_MONITOR_ERROR_INVALID_PARAM;
     
-    // Integrate with obstruction analyzer
+    // Check if Phase 3 system is initialized
+    if (!g_phase3_initialized) {
+        return ML_MONITOR_ERROR_NOT_INITIALIZED;
+    }
+    
+    // Integrate with obstruction analyzer using global system
     int integration_result = ml_monitor_integrate_with_obstruction_analyzer(monitor, observation);
     if (integration_result != ML_MONITOR_SUCCESS) {
         LOGX_DEBUG_MSG("Obstruction analyzer integration warning: %d", integration_result);
         // Continue with ML-only updates
     }
     
-    // The sliding window prediction is handled in the enhanced prediction function
-    // This allows for real-time feature extraction and trend analysis
+    // Update sliding window predictor with new observation
+    if (g_phase3_sliding_predictor.window_size < 60) {
+        g_phase3_sliding_predictor.window[g_phase3_sliding_predictor.write_idx] = *observation;
+        g_phase3_sliding_predictor.write_idx = (g_phase3_sliding_predictor.write_idx + 1) % 60;
+        g_phase3_sliding_predictor.window_size++;
+    } else {
+        g_phase3_sliding_predictor.window[g_phase3_sliding_predictor.write_idx] = *observation;
+        g_phase3_sliding_predictor.write_idx = (g_phase3_sliding_predictor.write_idx + 1) % 60;
+    }
+    
+    // Extract features from sliding window
+    ml_monitor_extract_window_features(&g_phase3_sliding_predictor);
+    
+    // Perform sliding window prediction
+    int prediction_result = ml_monitor_sliding_window_predict(monitor, &g_phase3_sliding_predictor, observation);
+    if (prediction_result != ML_MONITOR_SUCCESS) {
+        LOGX_DEBUG_MSG("Sliding window prediction warning: %d", prediction_result);
+    }
     
     return ML_MONITOR_SUCCESS;
 }

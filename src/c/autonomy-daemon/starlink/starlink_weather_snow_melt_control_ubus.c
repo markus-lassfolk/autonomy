@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+// External UBUS context - should be defined in main daemon
+extern struct ubus_context *g_ubus_ctx;
+
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 #endif

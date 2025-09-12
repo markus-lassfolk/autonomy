@@ -240,7 +240,7 @@ void example_cleanup(void) {
 }
 
 // Main example function
-int main(int argc, char *argv[]) {
+int starlink_weather_snow_melt_example_main(int argc, char *argv[]) {
     printf("Starlink Weather-Based Snow Melt Control Integration Example\n");
     printf("============================================================\n");
     

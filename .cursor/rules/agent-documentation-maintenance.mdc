@@ -1,0 +1,125 @@
+---
+description: Agent rules for maintaining project documentation (CHANGELOG.md and PROJECT_STATUS.md)
+alwaysApply: false
+---
+
+# Agent Rules: Documentation Maintenance
+
+## When to Use This Rule
+Use this rule when making any changes to the codebase, fixing issues, adding features, or when asked to update documentation.
+
+## Documentation Update Triggers
+- **After fixing any issue**: Update CHANGELOG.md and PROJECT_STATUS.md
+- **After adding features**: Update both documentation files
+- **After making changes**: Update relevant sections
+- **After version updates**: Update version information
+- **After successful builds**: Update build status
+- **After successful deployments**: Update deployment status
+- **After successful tests**: Update test results
+
+## CHANGELOG.md Updates
+### When to Update
+- After fixing compilation errors
+- After fixing runtime issues
+- After adding new features
+- After making significant changes
+- After resolving issues
+- After version updates
+
+### What to Add
+- **Fixed**: Bug fixes, compilation errors, runtime issues
+- **Added**: New features, modules, functionality
+- **Changed**: Modifications to existing functionality
+- **Security**: Security-related changes
+- **Version entries**: New version with date and changes
+
+### Format
+```markdown
+## [version] - date
+### Fixed
+- [Description of fix]
+
+### Added
+- [Description of new feature]
+
+### Changed
+- [Description of change]
+```
+
+## PROJECT_STATUS.md Updates
+### When to Update
+- After completing TODOs
+- After resolving issues
+- After making progress
+- After changing development phase
+- After identifying new issues
+- After successful builds/tests
+
+### What to Update
+- **Current Phase**: Update when moving to new phase
+- **Active TODOs**: Add/remove completed items
+- **Current Issues**: Update status and priority
+- **Recent Changes**: Add new achievements
+- **Next Steps**: Update immediate and long-term goals
+- **System Status**: Update component status
+- **Date**: Update header date
+
+## Documentation Update Process
+1. **Identify the change**: What was fixed, added, or changed?
+2. **Use update script**: Run `./scripts/update_project_docs.sh changelog` to add entry with proper date/time
+3. **Update PROJECT_STATUS.md**: Update relevant sections manually or use `./scripts/update_project_docs.sh update-date`
+4. **Update version information**: Ensure consistency across files
+5. **Verify updates**: Check that documentation reflects current state
+
+## Automated Updates
+**ALWAYS use the update script** for adding entries with proper date/time formatting:
+```bash
+# Show current status
+./scripts/update_project_docs.sh status
+
+# Add new changelog entry (automatically adds current date/time)
+./scripts/update_project_docs.sh changelog
+
+# Update date in PROJECT_STATUS.md (automatically updates to current date)
+./scripts/update_project_docs.sh update-date
+```
+
+**Benefits of using the script**:
+- ✅ Automatically adds current date in correct format
+- ✅ Ensures consistent date/time formatting
+- ✅ Prevents manual date entry errors
+- ✅ Maintains proper changelog structure
+
+## Update Examples
+
+### After Fixing Compilation Error
+**Use script**: `./scripts/update_project_docs.sh changelog`
+- Entry type: "Fixed"
+- Description: "Resolved LOGX macro compilation errors across all source files"
+- Script automatically adds: `## [version] - [current-date]`
+
+### After Adding New Feature
+**Use script**: `./scripts/update_project_docs.sh changelog`
+- Entry type: "Added"
+- Description: "Weather-based snow melt control system with intelligent temperature monitoring"
+- Script automatically adds: `## [version] - [current-date]`
+
+### After Resolving Issue
+**Use script**: `./scripts/update_project_docs.sh changelog`
+- Entry type: "Fixed"
+- Description: "Segmentation fault in ML monitor network discovery integration"
+- Script automatically adds: `## [version] - [current-date]`
+
+### Update PROJECT_STATUS.md Date
+**Use script**: `./scripts/update_project_docs.sh update-date`
+- Automatically updates header date to current date
+- Ensures PROJECT_STATUS.md always shows current date
+
+## Success Criteria
+- ✅ CHANGELOG.md updated with all recent changes
+- ✅ PROJECT_STATUS.md reflects current project state
+- ✅ Version information is consistent across all files
+- ✅ Documentation is updated after every significant change
+- ✅ Easy to resume work from current documentation state
+- ✅ All TODOs and issues are accurately tracked
+- ✅ Recent changes and achievements are documented
