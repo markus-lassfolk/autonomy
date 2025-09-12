@@ -11,8 +11,10 @@
 // External reference to global configuration
 extern autonomy_config_t g_config;
 
-// Forward declaration for missing blobmsg_add_bool function
-void blobmsg_add_bool(struct blob_buf *buf, const char *name, bool value);
+// Implementation for missing blobmsg_add_bool function
+void blobmsg_add_bool(struct blob_buf *buf, const char *name, bool value) {
+    blobmsg_add_u8(buf, name, value ? 1 : 0);
+}
 
 // UBUS policy definitions
 enum {
@@ -386,7 +388,3 @@ int autonomy_system_restart_services(struct ubus_context *uctx, struct ubus_obje
     return 0;
 }
 
-// Missing blobmsg_add_bool function implementation
-void blobmsg_add_bool(struct blob_buf *buf, const char *name, bool value) {
-    blobmsg_add_u8(buf, name, value ? 1 : 0);
-}

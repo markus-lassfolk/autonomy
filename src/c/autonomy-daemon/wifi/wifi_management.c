@@ -16,8 +16,9 @@
 extern autonomy_config_t g_config;
 
 // Forward declarations
-static double calculate_channel_score(const wifi_channel_score_t* score);
+static int calculate_channel_score(const wifi_channel_score_t* score);
 static void aggregate_channel_scores(void);
+static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
 
 // WiFi management configuration
 static const int MAX_CHANNEL_SCORES = 100; // Use configurable count // Use configurable value           // Maximum channel scores to store
@@ -28,9 +29,6 @@ static const int VHT80_THRESHOLD = -70;              // VHT80 threshold in dBm
 static const int VHT40_THRESHOLD = -75;              // VHT40 threshold in dBm
 static const int STRONG_RSSI_THRESHOLD = -60;        // Strong interferer threshold
 static const int WEAK_RSSI_THRESHOLD = -80;          // Weak interferer threshold
-
-// Forward declarations
-static double calculate_distance(double lat1, double lon1, double lat2, double lon2);
 
 // Global WiFi management state
 static wifi_management_t g_wifi_management = {0};
@@ -223,7 +221,7 @@ int wifi_management_scan_channels(const char *interface_name) {
 }
 
 // Calculate channel interference score
-double calculate_channel_score(const wifi_channel_score_t *score) {
+int calculate_channel_score(const wifi_channel_score_t *score) {
     int base_score = 100; // Use configurable count // Use configurable value
     
     // Penalize based on signal strength (stronger = more interference)
@@ -241,7 +239,7 @@ double calculate_channel_score(const wifi_channel_score_t *score) {
         base_score -= 20; // High noise
     }
     
-    return fmax(0, base_score);
+    return (base_score < 0) ? 0 : base_score;
 }
 
 // Aggregate scores for same channels with sophisticated algorithms
