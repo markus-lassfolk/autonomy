@@ -1,7 +1,7 @@
 #include "telemetry_comprehensive.h"
 #include "../gps/gps_comprehensive.h"
 #include "../gps/gps_location_reference.h"
-#include "cellular_collector.h"
+#include "../shared/network/cellular_collector.h"
 #include "wifi_enhanced.h"
 #include "../starlink/starlink_comprehensive.h"
 #include "../analytics/performance_monitor.h"
@@ -627,9 +627,9 @@ static int collect_current_telemetry(void) {
     }
     
     // Collect cellular metrics if enabled
-    if (g_telemetry_comprehensive.config.collect_cellular_metrics && cellular_collector_is_available()) {
+    if (g_telemetry_comprehensive.config.collect_cellular_metrics && cellular_collector_is_initialized()) {
         cellular_info_t cellular_info;
-        if (cellular_collector_get_info(&cellular_info) == AUTONOMY_SUCCESS) {
+        if (cellular_collector_collect(&cellular_info) == AUTONOMY_SUCCESS) {
             telemetry_sample_t sample = {0};
             
             // Fill GPS data
@@ -650,10 +650,15 @@ static int collect_current_telemetry(void) {
             sample.sinr_db = cellular_info.sinr;
             strncpy(sample.carrier, cellular_info.operator_name, sizeof(sample.carrier) - 1);
             sample.carrier[sizeof(sample.carrier) - 1] = '\0';
-            // Use cell_id directly (it's already uint32_t)
-            sample.cell_id = cellular_info.cell_id;
+            // Convert cell_id string to integer
+            int cell_id_int = 0;
+            if (string_to_int(cellular_info.cell_id, &cell_id_int)) {
+                sample.cell_id = (uint32_t)cell_id_int;
+            } else {
+                sample.cell_id = 0;
+            }
             sample.signal_strength = cellular_info.signal_quality / 100.0;
-            sample.overall_score = cellular_info.reliability_score;
+            sample.overall_score = cellular_info.stability_score;
             sample.predictive_risk = cellular_info.predictive_risk;
             strcpy(sample.collection_method, "cellular_collector");
             
