@@ -184,6 +184,9 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
                      interface->friendly_name, interface->mwan3_name, interface->health_score);
             
             // Initialize MWAN3 integration for this interface
+            // Temporarily disabled to prevent crash - TODO: investigate MWAN3 integration issue
+            printf("DEBUG: MWAN3 integration temporarily disabled for interface %s\n", interface->name);
+            /*
             if (interface->mwan3_name && strlen(interface->mwan3_name) > 0) {
                 // Add to MWAN3 integration tracking
                 for (int j = 0; j < MAX_INTERFACES; j++) {
@@ -199,6 +202,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
                     }
                 }
             }
+            */
         } else {
             printf("WARN: Failed to add interface %s to ML monitoring: %d\n", interface->name, add_result);
         }
