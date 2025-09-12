@@ -1,5 +1,5 @@
 #include "ml_monitor_advanced_networking.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../utils/secure_exec.h"
 #include <stdlib.h>
 #include <string.h>
@@ -164,7 +164,7 @@ static void* ml_monitor_starlink_high_freq_thread(void *arg) {
                 memset(&obs, 0, sizeof(obs));
                 
                 obs.timestamp = time(NULL);
-                strncpy(obs.interface_id, "starlink1", sizeof(obs.interface_id) - 1);
+                safe_strncpy(obs.interface_id, "starlink1", sizeof(obs.interface_id));
                 obs.interface_type = INTERFACE_TYPE_STARLINK;
                 obs.latency_ms = latency_ms;
                 obs.packet_loss_pct = ping_success ? 0 : 100;
@@ -266,7 +266,7 @@ static void* ml_monitor_wifi_high_freq_thread(void *arg) {
             memset(&obs, 0, sizeof(obs));
             
             obs.timestamp = time(NULL);
-            strncpy(obs.interface_id, "wifi1", sizeof(obs.interface_id) - 1);
+            safe_strncpy(obs.interface_id, "wifi1", sizeof(obs.interface_id));
             obs.interface_type = INTERFACE_TYPE_WIFI;
             obs.latency_ms = latency_ms;
             obs.packet_loss_pct = ping_success ? 0 : 100;
@@ -348,7 +348,7 @@ static void* ml_monitor_lan_high_freq_thread(void *arg) {
             memset(&obs, 0, sizeof(obs));
             
             obs.timestamp = time(NULL);
-            strncpy(obs.interface_id, "lan1", sizeof(obs.interface_id) - 1);
+            safe_strncpy(obs.interface_id, "lan1", sizeof(obs.interface_id));
             obs.interface_type = INTERFACE_TYPE_LAN;
             obs.latency_ms = latency_ms;
             obs.packet_loss_pct = ping_success ? 0 : 100;
@@ -423,7 +423,7 @@ int ml_monitor_collect_cellular_modem_metrics(const char *interface_id, multi_in
     memset(observation, 0, sizeof(multi_interface_observation_t));
     
     observation->timestamp = time(NULL);
-    strncpy(observation->interface_id, interface_id, sizeof(observation->interface_id) - 1);
+    safe_strncpy(observation->interface_id, interface_id, sizeof(observation->interface_id));
     observation->interface_type = INTERFACE_TYPE_CELLULAR;
     
     // Collect real modem metrics using AT commands or UBUS
@@ -703,7 +703,7 @@ int ml_monitor_get_preferred_failover_target(advanced_networking_intelligence_t 
         // Check if this is the best target so far
         if (target_score > best_score) {
             best_score = target_score;
-            strncpy(best_target, stability->interface_id, sizeof(best_target) - 1);
+            safe_strncpy(best_target, stability->interface_id, sizeof(best_target));
         }
     }
     

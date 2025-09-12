@@ -1,10 +1,12 @@
 #include "starlink_api_version_monitor.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include "../starlink/starlink_comprehensive.h"
 #include "starlink_grpc_collector.h"
 #include "../notifications/notification_types.h"
+#include "../shared/utils/string_utils.h"
 #include "../notifications/notifications_comprehensive.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -297,7 +299,7 @@ int starlink_parse_software_version(const char* version_str, starlink_api_versio
                 if (build_start) {
                     *build_start = '\0';
                     version->patch_version = atoi(token);
-                    strncpy(version->build_identifier, build_start + 1, sizeof(version->build_identifier) - 1);
+                    safe_strncpy(version->build_identifier, build_start + 1, sizeof(version->build_identifier));
                     version->build_identifier[sizeof(version->build_identifier) - 1] = '\0';
                 } else {
                     version->patch_version = atoi(token);
@@ -305,7 +307,7 @@ int starlink_parse_software_version(const char* version_str, starlink_api_versio
                     // Check for build identifier in next token
                     token = strtok(NULL, ".");
                     if (token) {
-                        strncpy(version->build_identifier, token, sizeof(version->build_identifier) - 1);
+                        safe_strncpy(version->build_identifier, token, sizeof(version->build_identifier));
                         version->build_identifier[sizeof(version->build_identifier) - 1] = '\0';
                     }
                 }
@@ -743,13 +745,13 @@ static int load_version_from_storage(starlink_api_version_t* version) {
         char key[64], value[192];
         if (sscanf(line, "%63[^=]=%191s", key, value) == 2) {
             if (strcmp(key, "software_version") == 0) {
-                strncpy(version->software_version, value, sizeof(version->software_version) - 1);
+                safe_strncpy(version->software_version, value, sizeof(version->software_version));
                 version->software_version[sizeof(version->software_version) - 1] = '\0';
             } else if (strcmp(key, "hardware_version") == 0) {
-                strncpy(version->hardware_version, value, sizeof(version->hardware_version) - 1);
+                safe_strncpy(version->hardware_version, value, sizeof(version->hardware_version));
                 version->hardware_version[sizeof(version->hardware_version) - 1] = '\0';
             } else if (strcmp(key, "software_part_number") == 0) {
-                strncpy(version->software_part_number, value, sizeof(version->software_part_number) - 1);
+                safe_strncpy(version->software_part_number, value, sizeof(version->software_part_number));
                 version->software_part_number[sizeof(version->software_part_number) - 1] = '\0';
             } else if (strcmp(key, "generation_number") == 0) {
                 version->generation_number = atoi(value);
@@ -760,7 +762,7 @@ static int load_version_from_storage(starlink_api_version_t* version) {
             } else if (strcmp(key, "patch_version") == 0) {
                 version->patch_version = atoi(value);
             } else if (strcmp(key, "build_identifier") == 0) {
-                strncpy(version->build_identifier, value, sizeof(version->build_identifier) - 1);
+                safe_strncpy(version->build_identifier, value, sizeof(version->build_identifier));
                 version->build_identifier[sizeof(version->build_identifier) - 1] = '\0';
             } else if (strcmp(key, "first_detected") == 0) {
                 version->first_detected = atol(value);

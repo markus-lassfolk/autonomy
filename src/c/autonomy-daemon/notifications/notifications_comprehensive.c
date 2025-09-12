@@ -1,6 +1,6 @@
 #include "notifications_comprehensive.h"
 #include "notification_manager.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -227,27 +227,27 @@ const char* notifications_comprehensive_send(notification_type_t type,
     
     // Generate unique ID
     char* unique_id = generate_unique_id(type, start_time);
-    strncpy(record->id, unique_id, sizeof(record->id) - 1);
+    safe_strncpy(record->id, unique_id, sizeof(record->id));
     record->id[sizeof(record->id) - 1] = '\0';
     free(unique_id);
     
     // Fill basic information
     record->type = type;
     record->priority = priority;
-    strncpy(record->title, title, sizeof(record->title) - 1);
+    safe_strncpy(record->title, title, sizeof(record->title));
     record->title[sizeof(record->title) - 1] = '\0';
-    strncpy(record->message, message, sizeof(record->message) - 1);
+    safe_strncpy(record->message, message, sizeof(record->message));
     record->message[sizeof(record->message) - 1] = '\0';
     record->created_at = start_time;
     record->status = NOTIFICATION_DELIVERY_PENDING;
     
     if (context_json) {
-        strncpy(record->context_json, context_json, sizeof(record->context_json) - 1);
+        safe_strncpy(record->context_json, context_json, sizeof(record->context_json));
         record->context_json[sizeof(record->context_json) - 1] = '\0';
     }
     
     if (source_module) {
-        strncpy(record->source_module, source_module, sizeof(record->source_module) - 1);
+        safe_strncpy(record->source_module, source_module, sizeof(record->source_module));
         record->source_module[sizeof(record->source_module) - 1] = '\0';
     }
     
@@ -610,11 +610,11 @@ static int send_to_all_selected_channels(const comprehensive_notification_record
         .timestamp = record->created_at
     };
     
-    strncpy(event.title, record->title, sizeof(event.title) - 1);
+    safe_strncpy(event.title, record->title, sizeof(event.title));
     event.title[sizeof(event.title) - 1] = '\0';
-    strncpy(event.message, record->message, sizeof(event.message) - 1);
+    safe_strncpy(event.message, record->message, sizeof(event.message));
     event.message[sizeof(event.message) - 1] = '\0';
-    strncpy(event.details_json, record->context_json, sizeof(event.details_json) - 1);
+    safe_strncpy(event.details_json, record->context_json, sizeof(event.details_json));
     event.details_json[sizeof(event.details_json) - 1] = '\0';
     
     // Use existing notification manager to send

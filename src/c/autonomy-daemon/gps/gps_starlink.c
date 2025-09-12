@@ -1,8 +1,9 @@
 #include "gps_starlink.h"
 #include "../starlink/starlink_comprehensive.h"
 #include "../starlink/starlink_grpc_collector.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -71,19 +72,19 @@ int gps_starlink_init(void) {
             char *newline = strchr(uci_host, '\n');
             if (newline) *newline = '\0';
             if (strlen(uci_host) > 0) {
-                strncpy(g_starlink_gps.starlink_ip, uci_host, sizeof(g_starlink_gps.starlink_ip) - 1);
+                safe_strncpy(g_starlink_gps.starlink_ip, uci_host, sizeof(g_starlink_gps.starlink_ip));
                 LOGX_DEBUG_MSG("Using UCI configured Starlink host", "host", uci_host);
             } else {
-                strncpy(g_starlink_gps.starlink_ip, DEFAULT_STARLINK_IP, sizeof(g_starlink_gps.starlink_ip) - 1);
+                safe_strncpy(g_starlink_gps.starlink_ip, DEFAULT_STARLINK_IP, sizeof(g_starlink_gps.starlink_ip));
                 LOGX_DEBUG_MSG("Using fallback Starlink host", "host", DEFAULT_STARLINK_IP);
             }
         } else {
-            strncpy(g_starlink_gps.starlink_ip, DEFAULT_STARLINK_IP, sizeof(g_starlink_gps.starlink_ip) - 1);
+            safe_strncpy(g_starlink_gps.starlink_ip, DEFAULT_STARLINK_IP, sizeof(g_starlink_gps.starlink_ip));
             LOGX_DEBUG_MSG("Using fallback Starlink host", "host", DEFAULT_STARLINK_IP);
         }
         pclose(uci_fp);
     } else {
-        strncpy(g_starlink_gps.starlink_ip, DEFAULT_STARLINK_IP, sizeof(g_starlink_gps.starlink_ip) - 1);
+        safe_strncpy(g_starlink_gps.starlink_ip, DEFAULT_STARLINK_IP, sizeof(g_starlink_gps.starlink_ip));
         LOGX_DEBUG_MSG("Using fallback Starlink host", "host", DEFAULT_STARLINK_IP);
     }
     
@@ -444,7 +445,7 @@ int gps_starlink_get_status(gps_starlink_status_t *status) {
     status->total_updates = g_starlink_gps.total_updates;
     status->successful_updates = g_starlink_gps.successful_updates;
     status->failed_updates = g_starlink_gps.failed_updates;
-    strncpy(status->starlink_ip, g_starlink_gps.starlink_ip, sizeof(status->starlink_ip) - 1);
+    safe_strncpy(status->starlink_ip, g_starlink_gps.starlink_ip, sizeof(status->starlink_ip));
     status->starlink_port = g_starlink_gps.starlink_port;
     
     pthread_mutex_unlock(&g_starlink_gps_mutex);
@@ -469,7 +470,7 @@ int gps_starlink_set_config(const gps_starlink_config_t *config) {
     }
     
     if (config->starlink_ip[0] != '\0') {
-        strncpy(g_starlink_gps.starlink_ip, config->starlink_ip, sizeof(g_starlink_gps.starlink_ip) - 1);
+        safe_strncpy(g_starlink_gps.starlink_ip, config->starlink_ip, sizeof(g_starlink_gps.starlink_ip));
     }
     
     if (config->starlink_port > 0) {

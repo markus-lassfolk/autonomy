@@ -1,6 +1,7 @@
 #include "network_controller.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -232,7 +233,7 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
                                         output, sizeof(output)) != 0) {
             // Truncate output to fit in error message buffer
             char truncated_output[128];
-            strncpy(truncated_output, output, sizeof(truncated_output) - 1);
+            safe_strncpy(truncated_output, output, sizeof(truncated_output));
             truncated_output[sizeof(truncated_output) - 1] = '\0';
             
             snprintf(result->error_message, sizeof(result->error_message),
@@ -252,7 +253,7 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
                                     output, sizeof(output)) != 0) {
         // Truncate output to fit in error message buffer
         char truncated_output[128];
-        strncpy(truncated_output, output, sizeof(truncated_output) - 1);
+        safe_strncpy(truncated_output, output, sizeof(truncated_output));
         truncated_output[sizeof(truncated_output) - 1] = '\0';
         
         snprintf(result->error_message, sizeof(result->error_message),
@@ -268,7 +269,7 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
                                     output, sizeof(output)) != 0) {
         // Truncate output to fit in error message buffer
         char truncated_output[128];
-        strncpy(truncated_output, output, sizeof(truncated_output) - 1);
+        safe_strncpy(truncated_output, output, sizeof(truncated_output));
         truncated_output[sizeof(truncated_output) - 1] = '\0';
         
         snprintf(result->error_message, sizeof(result->error_message),
@@ -353,7 +354,7 @@ static int switch_via_manual(const network_member_t* from, const network_member_
                                     output, sizeof(output)) != 0) {
         // Truncate output to fit in error message buffer
         char truncated_output[128];
-        strncpy(truncated_output, output, sizeof(truncated_output) - 1);
+        safe_strncpy(truncated_output, output, sizeof(truncated_output));
         truncated_output[sizeof(truncated_output) - 1] = '\0';
         
         snprintf(result->error_message, sizeof(result->error_message),

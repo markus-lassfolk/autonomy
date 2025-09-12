@@ -5,7 +5,8 @@
 #include "wifi_enhanced.h"
 #include "../starlink/starlink_comprehensive.h"
 #include "../analytics/performance_monitor.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
+#include "../shared/utils/string_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -647,11 +648,17 @@ static int collect_current_telemetry(void) {
             sample.rsrp_dbm = cellular_info.rsrp;
             sample.rsrq_db = cellular_info.rsrq;
             sample.sinr_db = cellular_info.sinr;
-            strncpy(sample.carrier, cellular_info.operator, sizeof(sample.carrier) - 1);
+            strncpy(sample.carrier, cellular_info.operator_name, sizeof(sample.carrier) - 1);
             sample.carrier[sizeof(sample.carrier) - 1] = '\0';
-            sample.cell_id = cellular_info.cell_id;
+            // Convert cell_id string to integer
+            int cell_id_int = 0;
+            if (string_to_int(cellular_info.cell_id, &cell_id_int)) {
+                sample.cell_id = (uint32_t)cell_id_int;
+            } else {
+                sample.cell_id = 0;
+            }
             sample.signal_strength = cellular_info.signal_quality / 100.0;
-            sample.overall_score = cellular_info.reliability_score * 100.0;
+            sample.overall_score = cellular_info.stability_score;
             sample.predictive_risk = cellular_info.predictive_risk;
             strcpy(sample.collection_method, "cellular_collector");
             

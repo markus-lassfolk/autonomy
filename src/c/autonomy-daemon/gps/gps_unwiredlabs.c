@@ -1,5 +1,5 @@
 #include "gps_unwiredlabs.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -110,7 +110,7 @@ static int make_unwiredlabs_request(const char* json_data, unwiredlabs_response_
     json_object* json_response = json_tokener_parse(http_response);
     if (!json_response) {
         response->success = false;
-        strncpy(response->error_message, "Failed to parse JSON response", sizeof(response->error_message) - 1);
+        safe_strncpy(response->error_message, "Failed to parse JSON response", sizeof(response->error_message));
         response->error_message[sizeof(response->error_message) - 1] = '\0';
         g_unwiredlabs_stats.failed_requests++;
         return -1;
@@ -120,7 +120,7 @@ static int make_unwiredlabs_request(const char* json_data, unwiredlabs_response_
         // Success response
         json_object* status_obj;
         if (json_object_object_get_ex(json_response, "status", &status_obj)) {
-            strncpy(response->status, json_object_get_string(status_obj), sizeof(response->status) - 1);
+            safe_strncpy(response->status, json_object_get_string(status_obj), sizeof(response->status));
             response->status[sizeof(response->status) - 1] = '\0';
             response->success = (strcmp(response->status, "ok") == 0);
         }
@@ -141,31 +141,31 @@ static int make_unwiredlabs_request(const char* json_data, unwiredlabs_response_
             // Address information
             json_object* address_obj;
             if (json_object_object_get_ex(json_response, "address", &address_obj)) {
-                strncpy(response->address, json_object_get_string(address_obj), sizeof(response->address) - 1);
+                safe_strncpy(response->address, json_object_get_string(address_obj), sizeof(response->address));
                 response->address[sizeof(response->address) - 1] = '\0';
             }
             
             json_object* country_obj;
             if (json_object_object_get_ex(json_response, "country", &country_obj)) {
-                strncpy(response->country, json_object_get_string(country_obj), sizeof(response->country) - 1);
+                safe_strncpy(response->country, json_object_get_string(country_obj), sizeof(response->country));
                 response->country[sizeof(response->country) - 1] = '\0';
             }
             
             json_object* region_obj;
             if (json_object_object_get_ex(json_response, "region", &region_obj)) {
-                strncpy(response->region, json_object_get_string(region_obj), sizeof(response->region) - 1);
+                safe_strncpy(response->region, json_object_get_string(region_obj), sizeof(response->region));
                 response->region[sizeof(response->region) - 1] = '\0';
             }
             
             json_object* city_obj;
             if (json_object_object_get_ex(json_response, "city", &city_obj)) {
-                strncpy(response->city, json_object_get_string(city_obj), sizeof(response->city) - 1);
+                safe_strncpy(response->city, json_object_get_string(city_obj), sizeof(response->city));
                 response->city[sizeof(response->city) - 1] = '\0';
             }
             
             json_object* zip_obj;
             if (json_object_object_get_ex(json_response, "zip", &zip_obj)) {
-                strncpy(response->zip, json_object_get_string(zip_obj), sizeof(response->zip) - 1);
+                safe_strncpy(response->zip, json_object_get_string(zip_obj), sizeof(response->zip));
                 response->zip[sizeof(response->zip) - 1] = '\0';
             }
             
@@ -178,7 +178,7 @@ static int make_unwiredlabs_request(const char* json_data, unwiredlabs_response_
         } else {
             json_object* message_obj;
             if (json_object_object_get_ex(json_response, "message", &message_obj)) {
-                strncpy(response->error_message, json_object_get_string(message_obj), sizeof(response->error_message) - 1);
+                safe_strncpy(response->error_message, json_object_get_string(message_obj), sizeof(response->error_message));
                 response->error_message[sizeof(response->error_message) - 1] = '\0';
             }
             g_unwiredlabs_stats.failed_requests++;
@@ -188,7 +188,7 @@ static int make_unwiredlabs_request(const char* json_data, unwiredlabs_response_
         response->success = false;
         json_object* message_obj;
         if (json_object_object_get_ex(json_response, "message", &message_obj)) {
-            strncpy(response->error_message, json_object_get_string(message_obj), sizeof(response->error_message) - 1);
+            safe_strncpy(response->error_message, json_object_get_string(message_obj), sizeof(response->error_message));
             response->error_message[sizeof(response->error_message) - 1] = '\0';
         }
         g_unwiredlabs_stats.failed_requests++;
@@ -385,7 +385,7 @@ bool unwiredlabs_api_validate_token(void) {
                 snprintf(real_cell.lac, sizeof(real_cell.lac), "%d", lac);
                 snprintf(real_cell.cid, sizeof(real_cell.cid), "%d", cid);
                 real_cell.signal = signal;
-                strncpy(real_cell.radio, "lte", sizeof(real_cell.radio) - 1);
+                safe_strncpy(real_cell.radio, "lte", sizeof(real_cell.radio));
                 real_cell.radio[sizeof(real_cell.radio) - 1] = '\0';
             }
         }
@@ -406,7 +406,7 @@ bool unwiredlabs_api_validate_token(void) {
                     snprintf(real_cell.lac, sizeof(real_cell.lac), "%d", lac);
                     snprintf(real_cell.cid, sizeof(real_cell.cid), "%d", cid);
                     real_cell.signal = signal;
-                    strncpy(real_cell.radio, "lte", sizeof(real_cell.radio) - 1);
+                    safe_strncpy(real_cell.radio, "lte", sizeof(real_cell.radio));
                     real_cell.radio[sizeof(real_cell.radio) - 1] = '\0';
                 }
             }

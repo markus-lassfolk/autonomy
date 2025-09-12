@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ml_monitor_ubus.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../utils/debug_trace.h"
 
 // UBUS method: status

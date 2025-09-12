@@ -58,15 +58,8 @@ typedef struct {
     time_t local_time;
 } system_info_t;
 
-// Network topology
-typedef struct {
-    char interface_name[64];
-    char ip_address[64];
-    char mac_address[64];
-    bool is_up;
-    double bandwidth;
-    double latency;
-} network_interface_t;
+// Use shared network interface type
+#include "../shared/core/common_types.h"
 
 // Network topology
 typedef struct {

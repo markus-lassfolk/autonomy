@@ -1,5 +1,6 @@
 #include "sms_client.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
+#include "../shared/utils/string_utils.h"
 #include "../core/types.h"
 #include <stdlib.h>
 #include <string.h>
@@ -33,8 +34,8 @@ int sms_client_init(sms_client_t* client, const sms_config_t* config) {
     // Initialize status
     client->status.enabled = config->enabled;
     client->status.provider = config->provider;
-    strncpy(client->status.phone_number, config->phone_number, sizeof(client->status.phone_number) - 1);
-    strncpy(client->status.modem_path, config->modem_path, sizeof(client->status.modem_path) - 1);
+    safe_strncpy(client->status.phone_number, config->phone_number, sizeof(client->status.phone_number));
+    safe_strncpy(client->status.modem_path, config->modem_path, sizeof(client->status.modem_path));
     client->status.total_sent = 0;
     client->status.total_failed = 0;
     client->status.last_sent_time = 0;
@@ -45,7 +46,7 @@ int sms_client_init(sms_client_t* client, const sms_config_t* config) {
     
     // Set defaults if not configured
     if (strlen(client->config.modem_path) == 0) {
-        strncpy(client->config.modem_path, "gsm.modem1", sizeof(client->config.modem_path) - 1);
+        safe_strncpy(client->config.modem_path, "gsm.modem1", sizeof(client->config.modem_path));
     }
     
     if (client->config.max_message_length == 0) {
@@ -83,7 +84,7 @@ bool sms_client_check_rate_limit(sms_client_t* client) {
     
     // Check hourly limit
     if (client->status.messages_sent_this_hour >= client->config.max_messages_per_hour) {
-        strncpy(client->status.last_error, "Hourly SMS limit exceeded", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Hourly SMS limit exceeded", sizeof(client->status.last_error));
         client->status.last_error_time = now;
         return false;
     }
@@ -91,7 +92,7 @@ bool sms_client_check_rate_limit(sms_client_t* client) {
     // Check cooldown period
     if (client->config.cooldown_period_seconds > 0) {
         if (now - client->status.last_sent_time < client->config.cooldown_period_seconds) {
-            strncpy(client->status.last_error, "SMS cooldown period active", sizeof(client->status.last_error) - 1);
+            safe_strncpy(client->status.last_error, "SMS cooldown period active", sizeof(client->status.last_error));
             client->status.last_error_time = now;
             return false;
         }
@@ -177,14 +178,14 @@ int sms_client_send_via_rutos_ubus(sms_client_t* client, const char* message) {
     
     struct ubus_context* ctx = ubus_connect(NULL);
     if (!ctx) {
-        strncpy(client->status.last_error, "Failed to connect to UBUS", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Failed to connect to UBUS", sizeof(client->status.last_error));
         client->status.last_error_time = time(NULL);
         return -1;
     }
     
     uint32_t id;
     if (ubus_lookup_id(ctx, client->config.modem_path, &id)) {
-        strncpy(client->status.last_error, "Failed to find modem UBUS object", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Failed to find modem UBUS object", sizeof(client->status.last_error));
         client->status.last_error_time = time(NULL);
         ubus_free(ctx);
         return -1;
@@ -222,7 +223,7 @@ int sms_client_send_via_at_command(sms_client_t* client, const char* message) {
     }
     
     if (strlen(client->config.at_device) == 0) {
-        strncpy(client->status.last_error, "AT command device not configured", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "AT command device not configured", sizeof(client->status.last_error));
         client->status.last_error_time = time(NULL);
         return -1;
     }
@@ -402,7 +403,7 @@ int sms_client_send(sms_client_t* client, const notification_event_t* event) {
     }
     
     if (strlen(client->config.phone_number) == 0) {
-        strncpy(client->status.last_error, "Phone number not configured", sizeof(client->status.last_error) - 1);
+        safe_strncpy(client->status.last_error, "Phone number not configured", sizeof(client->status.last_error));
         client->status.last_error_time = time(NULL);
         client->status.total_failed++;
         return -1;
@@ -432,7 +433,7 @@ int sms_client_send(sms_client_t* client, const notification_event_t* event) {
                 result = sms_client_send_via_at_command(client, sms_text);
                 break;
             default:
-                strncpy(client->status.last_error, "Unsupported SMS provider", sizeof(client->status.last_error) - 1);
+                safe_strncpy(client->status.last_error, "Unsupported SMS provider", sizeof(client->status.last_error));
                 client->status.last_error_time = time(NULL);
                 result = -1;
                 break;

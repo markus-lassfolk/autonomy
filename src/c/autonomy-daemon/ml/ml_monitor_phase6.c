@@ -1,5 +1,5 @@
 #include "ml_monitor.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/system_management.h"
 #include <time.h>
 #include <string.h>
@@ -659,7 +659,7 @@ int ml_monitor_init_phase6_self_optimization(ml_monitor_t *monitor) {
     g_phase6_system.system_health.overall_system_health = 1.0;
     g_phase6_system.system_health.all_systems_operational = true;
     g_phase6_system.system_health.last_health_check = time(NULL);
-    strncpy(g_phase6_system.system_health.health_status, "optimal", sizeof(g_phase6_system.system_health.health_status) - 1);
+    safe_strncpy(g_phase6_system.system_health.health_status, "optimal", sizeof(g_phase6_system.system_health.health_status));
     
     // Mark as initialized
     g_phase6_initialized = true;
@@ -715,13 +715,13 @@ int ml_monitor_update_with_phase6_self_optimization(ml_monitor_t *monitor, const
     
     // Update health status string
     if (g_phase6_system.system_health.overall_system_health > 0.9) {
-        strncpy(g_phase6_system.system_health.health_status, "optimal", sizeof(g_phase6_system.system_health.health_status) - 1);
+        safe_strncpy(g_phase6_system.system_health.health_status, "optimal", sizeof(g_phase6_system.system_health.health_status));
     } else if (g_phase6_system.system_health.overall_system_health > 0.7) {
-        strncpy(g_phase6_system.system_health.health_status, "good", sizeof(g_phase6_system.system_health.health_status) - 1);
+        safe_strncpy(g_phase6_system.system_health.health_status, "good", sizeof(g_phase6_system.system_health.health_status));
     } else if (g_phase6_system.system_health.overall_system_health > 0.5) {
-        strncpy(g_phase6_system.system_health.health_status, "fair", sizeof(g_phase6_system.system_health.health_status) - 1);
+        safe_strncpy(g_phase6_system.system_health.health_status, "fair", sizeof(g_phase6_system.system_health.health_status));
     } else {
-        strncpy(g_phase6_system.system_health.health_status, "poor", sizeof(g_phase6_system.system_health.health_status) - 1);
+        safe_strncpy(g_phase6_system.system_health.health_status, "poor", sizeof(g_phase6_system.system_health.health_status));
     }
     
     return ML_MONITOR_SUCCESS;

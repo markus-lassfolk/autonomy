@@ -1,5 +1,5 @@
 #include "json_parser.h"
-#include "logx.h"
+#include "../logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +8,14 @@
 
 // Global error state
 static char g_json_error[256] = {0};
+
+// Set error message
+static void set_json_error(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    vsnprintf(g_json_error, sizeof(g_json_error), format, args);
+    va_end(args);
+}
 static bool g_json_parser_initialized = false;
 
 // Clear error state
@@ -507,4 +515,86 @@ bool json_has_key(json_document_t* doc, const char* path) {
     }
 
     return json_path_exists(doc->root, path);
+}
+
+// Common JSON object creation patterns (reduces duplication)
+cJSON* json_create_notification_payload(const char* type, const char* title, const char* message, 
+                                        int priority, const char* timestamp, const char* source, 
+                                        const char* version, const char* hostname) {
+    if (!type || !title || !message) {
+        set_json_error("Invalid parameters for notification payload");
+        return NULL;
+    }
+    
+    cJSON* root = cJSON_CreateObject();
+    if (!root) {
+        set_json_error("Failed to create JSON object");
+        return NULL;
+    }
+    
+    cJSON_AddStringToObject(root, "type", type);
+    cJSON_AddStringToObject(root, "title", title);
+    cJSON_AddStringToObject(root, "message", message);
+    cJSON_AddNumberToObject(root, "priority", priority);
+    
+    if (timestamp) cJSON_AddStringToObject(root, "timestamp", timestamp);
+    if (source) cJSON_AddStringToObject(root, "source", source);
+    if (version) cJSON_AddStringToObject(root, "version", version);
+    if (hostname) cJSON_AddStringToObject(root, "hostname", hostname);
+    
+    return root;
+}
+
+cJSON* json_create_simple_object(const char* key1, const char* value1, 
+                                 const char* key2, const char* value2,
+                                 const char* key3, const char* value3) {
+    cJSON* root = cJSON_CreateObject();
+    if (!root) {
+        set_json_error("Failed to create JSON object");
+        return NULL;
+    }
+    
+    if (key1 && value1) cJSON_AddStringToObject(root, key1, value1);
+    if (key2 && value2) cJSON_AddStringToObject(root, key2, value2);
+    if (key3 && value3) cJSON_AddStringToObject(root, key3, value3);
+    
+    return root;
+}
+
+cJSON* json_create_status_object(const char* status, const char* message, 
+                                double timestamp, const char* module) {
+    cJSON* root = cJSON_CreateObject();
+    if (!root) {
+        set_json_error("Failed to create JSON object");
+        return NULL;
+    }
+    
+    if (status) cJSON_AddStringToObject(root, "status", status);
+    if (message) cJSON_AddStringToObject(root, "message", message);
+    if (timestamp > 0) cJSON_AddNumberToObject(root, "timestamp", timestamp);
+    if (module) cJSON_AddStringToObject(root, "module", module);
+    
+    return root;
+}
+
+// WiFi access point JSON creation (consolidates duplicate patterns)
+cJSON* json_create_wifi_ap_object(const char* bssid, int signal_strength, int channel, int age) {
+    if (!bssid) {
+        set_json_error("Invalid BSSID for WiFi AP object");
+        return NULL;
+    }
+    
+    cJSON* ap_obj = cJSON_CreateObject();
+    if (!ap_obj) {
+        set_json_error("Failed to create WiFi AP JSON object");
+        return NULL;
+    }
+    
+    cJSON_AddStringToObject(ap_obj, "macAddress", bssid);
+    cJSON_AddNumberToObject(ap_obj, "signalStrength", signal_strength);
+    cJSON_AddNumberToObject(ap_obj, "age", age);
+    cJSON_AddNumberToObject(ap_obj, "channel", channel);
+    cJSON_AddNumberToObject(ap_obj, "signalToNoiseRatio", signal_strength); // Using signal as SNR approximation
+    
+    return ap_obj;
 }

@@ -1,6 +1,7 @@
 #include "ml_cellular_tower_intelligence.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/string_utils.h"
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
@@ -386,7 +387,7 @@ int cellular_tower_intelligence_analyze_cell_changes(cellular_tower_intelligence
             intelligence->cell_change_analysis.change_count++;
         }
         
-        strncpy(intelligence->last_serving_cell, current_cell_id, sizeof(intelligence->last_serving_cell) - 1);
+        safe_strncpy(intelligence->last_serving_cell, current_cell_id, sizeof(intelligence->last_serving_cell));
         
         LOGX_DEBUG_MSG("Cell change detected: %s -> %s", intelligence->last_serving_cell, current_cell_id);
     }

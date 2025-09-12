@@ -94,7 +94,7 @@ int usage_analyzer_analyze(usage_metrics_t* result) {
     
     // Analyze each member
     for (int i = 0; i < member_count; i++) {
-        strncpy(result->member_names[i], member_names[i], sizeof(result->member_names[i]) - 1);
+        safe_strncpy(result->member_names[i], member_names[i], sizeof(result->member_names[i]));
         result->member_names[i][sizeof(result->member_names[i]) - 1] = '\0';
         
         // Get samples from last 24 hours
@@ -185,7 +185,7 @@ void analyze_data_usage(const telemetry_sample_t* samples, int sample_count,
             strcpy(usage->trend, "stable");
         }
     } else {
-        strncpy(usage->trend, "insufficient_data", sizeof(usage->trend) - 1);
+        safe_strncpy(usage->trend, "insufficient_data", sizeof(usage->trend));
         usage->trend[sizeof(usage->trend) - 1] = '\0';
     }
     
@@ -391,7 +391,7 @@ int usage_analyzer_get_member_usage(const char* member_name, usage_metrics_t* us
     // Initialize usage structure
     memset(usage, 0, sizeof(usage_metrics_t));
     usage->member_count = 1;
-    strncpy(usage->member_names[0], member_name, sizeof(usage->member_names[0]) - 1);
+    safe_strncpy(usage->member_names[0], member_name, sizeof(usage->member_names[0]));
     usage->member_names[0][sizeof(usage->member_names[0]) - 1] = '\0';
     usage->analysis_timestamp = time(NULL);
     

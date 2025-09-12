@@ -1,5 +1,5 @@
 #include "mqtt_client.h"
-#include "logx.h"
+#include "../shared/logging/logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

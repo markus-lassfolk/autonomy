@@ -2,7 +2,7 @@
 #define NETWORK_FAILOVER_H
 
 #include "../core/types.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>

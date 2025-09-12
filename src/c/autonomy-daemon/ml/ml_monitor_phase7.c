@@ -1,6 +1,6 @@
 #include "ml_monitor.h"
 #include "ml_monitor_multi_interface.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include "../utils/secure_exec.h"
 #include "../network/network_controller.h"
 #include "../network/network_failover.h"
@@ -158,7 +158,7 @@ static int ml_monitor_collect_multi_interface_observations(ml_monitor_t *monitor
         memset(&obs, 0, sizeof(obs));
         
         obs.timestamp = time(NULL);
-        strncpy(obs.interface_id, model->interface_id, sizeof(obs.interface_id) - 1);
+        safe_strncpy(obs.interface_id, model->interface_id, sizeof(obs.interface_id));
         obs.interface_type = model->type;
         
         // Collect interface-specific data

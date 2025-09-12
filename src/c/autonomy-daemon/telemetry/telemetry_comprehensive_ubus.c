@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "telemetry_comprehensive_ubus.h"
 #include "telemetry_comprehensive.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <json-c/json.h>
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>

@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "ml_monitor_multi_interface.h"
 #include "ml_monitor_ubus.h"
-#include "../utils/logx.h"
+#include "../shared/logging/logx.h"
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
 #include <string.h>
