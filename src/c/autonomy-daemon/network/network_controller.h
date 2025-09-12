@@ -24,7 +24,7 @@ typedef enum {
 typedef struct {
     char name[64];                      // Member name
     char interface[32];                 // Interface name (e.g., "mob1s1a1")
-    char class[16];                     // Member class (starlink, cellular, wifi, lan)
+    char interface_class[16];           // Member class (starlink, cellular, wifi, lan)
     char policy[32];                    // MWAN3 policy name
     int weight;                         // Member weight
     bool eligible;                      // Whether member is eligible for use

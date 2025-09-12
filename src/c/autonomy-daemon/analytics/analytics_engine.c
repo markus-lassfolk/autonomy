@@ -61,7 +61,7 @@ int analytics_engine_init(const analytics_config_t* config) {
     }
     
     // Initialize mutex
-    g_analytics_engine.mutex = malloc(sizeof(pthread_mutex_t));
+    g_analytics_engine.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
     if (!g_analytics_engine.mutex) {
         return -1;
     }
@@ -78,7 +78,7 @@ int analytics_engine_init(const analytics_config_t* config) {
     g_analytics_engine.status.update_duration_avg_ms = 0.0;
     
     // Initialize dashboard metrics
-    g_analytics_engine.dashboard_metrics = malloc(sizeof(dashboard_metrics_t));
+    g_analytics_engine.dashboard_metrics = (dashboard_metrics_t*)malloc(sizeof(dashboard_metrics_t));
     if (!g_analytics_engine.dashboard_metrics) {
         pthread_mutex_destroy(g_analytics_engine.mutex);
         free(g_analytics_engine.mutex);

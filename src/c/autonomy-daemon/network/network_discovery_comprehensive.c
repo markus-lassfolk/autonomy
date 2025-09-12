@@ -75,6 +75,11 @@ int get_comprehensive_interface_info(network_interface_t *interfaces, int *count
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
+    // Add null pointer checks
+    if (!interfaces || !count) {
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
     *count = 0;
     
     // Get network interfaces from ubus

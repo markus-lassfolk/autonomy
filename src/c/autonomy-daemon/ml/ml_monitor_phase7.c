@@ -53,6 +53,13 @@ int ml_monitor_init_phase7_multi_interface(ml_monitor_t *monitor) {
     
     // Initialize ML monitoring from discovered interfaces
     extern int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor);
+    
+    // Add safety check for monitor pointer
+    if (!monitor) {
+        fprintf(stderr, "ERROR: Monitor pointer is null in Phase 7 initialization\n");
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
+    
     int discovery_result = ml_monitor_init_from_network_discovery(monitor);
     if (discovery_result != ML_MONITOR_SUCCESS) {
         // Use simple fprintf to avoid LOGX crashes
@@ -60,10 +67,12 @@ int ml_monitor_init_phase7_multi_interface(ml_monitor_t *monitor) {
         
         // Fallback: Add common interfaces manually
         fprintf(stderr, "Using fallback interface detection\n");
-        ml_monitor_add_interface(g_phase7_system, "eth1", INTERFACE_TYPE_STARLINK);
-        ml_monitor_add_interface(g_phase7_system, "qmimux0", INTERFACE_TYPE_CELLULAR);
-        ml_monitor_add_interface(g_phase7_system, "wlan0", INTERFACE_TYPE_WIFI);
-        ml_monitor_add_interface(g_phase7_system, "eth0", INTERFACE_TYPE_LAN);
+        if (g_phase7_system) {
+            ml_monitor_add_interface(g_phase7_system, "eth1", INTERFACE_TYPE_STARLINK);
+            ml_monitor_add_interface(g_phase7_system, "qmimux0", INTERFACE_TYPE_CELLULAR);
+            ml_monitor_add_interface(g_phase7_system, "wlan0", INTERFACE_TYPE_WIFI);
+            ml_monitor_add_interface(g_phase7_system, "eth0", INTERFACE_TYPE_LAN);
+        }
     } else {
         // Use simple fprintf to avoid LOGX crashes
         fprintf(stderr, "Interfaces automatically discovered and added to ML monitoring\n");
