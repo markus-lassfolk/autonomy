@@ -7,6 +7,7 @@ The system reads **ALL** data limit and monitoring configuration from UCI - **NO
 ## 📋 **Data Limits Configuration (`quota_limit`)**
 
 ### Reading from UCI
+
 The system reads data limits from the existing `quota_limit` UCI configuration:
 
 ```bash
@@ -14,6 +15,7 @@ uci show quota_limit
 ```
 
 ### Example Configuration
+
 ```bash
 # Enable data limits for mob1s1a1 (cellular interface)
 uci set quota_limit.mob1s1a1=interface
@@ -27,6 +29,7 @@ uci commit quota_limit
 ```
 
 ### Supported UCI Fields
+
 | UCI Field | Type | Description | Example |
 |-----------|------|-------------|---------|
 | `enabled` | boolean | Enable data limit monitoring | `'1'` |
@@ -40,14 +43,16 @@ uci commit quota_limit
 
 ## 📊 **Adaptive Monitoring Configuration (`autonomy.adaptive_monitoring`)**
 
-### Reading from UCI
+### Adaptive Monitoring - Reading from UCI
+
 The system reads adaptive monitoring thresholds from UCI:
 
 ```bash
 uci show autonomy.adaptive_monitoring
 ```
 
-### Example Configuration
+### Adaptive Monitoring - Example Configuration
+
 ```bash
 # Configure adaptive monitoring thresholds
 uci set autonomy.adaptive_monitoring=adaptive_monitoring
@@ -64,7 +69,8 @@ uci set autonomy.adaptive_monitoring.minimal_at_commands='1'    # Minimal AT com
 uci commit autonomy
 ```
 
-### Supported UCI Fields
+### Adaptive Monitoring - Supported UCI Fields
+
 | UCI Field | Type | Description | Default | Example |
 |-----------|------|-------------|---------|---------|
 | `active_interval` | integer | Monitoring interval for primary interface (seconds) | `5` | `'5'` |
@@ -81,16 +87,18 @@ uci commit autonomy
 ## 🔍 **How Data is Read from System**
 
 ### Current Usage Detection
+
 The system reads **real-time usage** from the system:
 
 1. **Data Usage**: Read from `/proc/net/dev` for actual bytes transferred
-2. **Physical Interface Mapping**: 
+2. **Physical Interface Mapping**:
    - `mob1s1a1` → `qmimux0`
    - `mob1s2a1` → `qmimux1`
 3. **Usage Calculation**: RX bytes + TX bytes converted to MB
 4. **Percentage Calculation**: `(current_usage_mb / data_limit_mb) * 100`
 
 ### Days Until Reset Calculation
+
 ```go
 func (dlm *DataLimitManager) getDaysUntilReset(resetHour int) int {
     now := time.Now()
@@ -102,6 +110,7 @@ func (dlm *DataLimitManager) getDaysUntilReset(resetHour int) int {
 ## 📱 **Integration with Member Discovery**
 
 ### Data Limit Assignment
+
 When discovering network members, the system:
 
 1. **Reads UCI `quota_limit`** configuration
@@ -111,6 +120,7 @@ When discovering network members, the system:
 5. **Stores in Config map** for backward compatibility
 
 ### Member Configuration
+
 ```go
 // Set the DataLimitConfig field for adaptive monitoring
 member.DataLimitConfig = dataLimit
@@ -125,6 +135,7 @@ member.Config["data_limit_status"] = nt.dataLimitManager.GetDataLimitStatus(data
 ## ⚙️ **Fallback Behavior**
 
 ### No UCI Configuration
+
 If UCI configuration is not found:
 
 1. **Data Limits**: System operates normally without data limit awareness
@@ -132,6 +143,7 @@ If UCI configuration is not found:
 3. **Logging**: Debug messages indicate when defaults are used
 
 ### Invalid UCI Values
+
 - **Invalid integers**: Ignored, defaults used
 - **Invalid floats**: Ignored, defaults used  
 - **Invalid booleans**: Treated as `false`
@@ -139,6 +151,7 @@ If UCI configuration is not found:
 ## 🔧 **Configuration Examples**
 
 ### Minimal Data Limit Setup
+
 ```bash
 # Just enable basic 1GB limit for cellular
 uci set quota_limit.mob1s1a1=interface
@@ -148,6 +161,7 @@ uci commit quota_limit
 ```
 
 ### Conservative Monitoring Setup
+
 ```bash
 # Very conservative monitoring to save data
 uci set autonomy.adaptive_monitoring=adaptive_monitoring
@@ -159,6 +173,7 @@ uci commit autonomy
 ```
 
 ### Aggressive Monitoring Setup
+
 ```bash
 # More frequent monitoring (uses more data)
 uci set autonomy.adaptive_monitoring=adaptive_monitoring
@@ -172,6 +187,7 @@ uci commit autonomy
 ## ✅ **Verification Commands**
 
 ### Check Current Configuration
+
 ```bash
 # View data limits
 uci show quota_limit
@@ -184,6 +200,7 @@ cat /proc/net/dev | grep qmimux
 ```
 
 ### Test Configuration
+
 ```bash
 # Start daemon with verbose logging to see UCI values being read
 /tmp/autonomyd -config /tmp/autonomy.conf -foreground -v

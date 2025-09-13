@@ -58,6 +58,7 @@ uci commit autonomy
 ```
 
 **Getting Pushover Credentials:**
+
 1. Create account at [pushover.net](https://pushover.net)
 2. Create an application to get your **App Token**
 3. Find your **User Key** in your account dashboard
@@ -109,6 +110,7 @@ uci commit autonomy
 ```
 
 **Setting up Slack Webhook:**
+
 1. Go to [Slack Apps](https://api.slack.com/apps)
 2. Create new app → "From scratch"
 3. Add "Incoming Webhooks" feature
@@ -128,6 +130,7 @@ uci commit autonomy
 ```
 
 **Setting up Discord Webhook:**
+
 1. Go to your Discord server
 2. Right-click channel → "Edit Channel"
 3. Go to "Integrations" → "Webhooks"
@@ -146,6 +149,7 @@ uci commit autonomy
 ```
 
 **Setting up Telegram Bot:**
+
 1. Message [@BotFather](https://t.me/botfather) on Telegram
 2. Send `/newbot` and follow instructions
 3. Get your bot token
@@ -189,6 +193,7 @@ uci commit autonomy
 ## 🎛️ Advanced Configuration Examples
 
 ### Multiple Email Recipients
+
 ```bash
 # Clear existing recipients first
 uci delete autonomy.notifications.email_to
@@ -202,12 +207,14 @@ uci commit autonomy
 ```
 
 ### Custom Webhook Headers
+
 ```bash
 # Note: UCI doesn't directly support maps, so webhook headers 
 # need to be configured via JSON config file or ubus API
 ```
 
 ### Priority-Based Filtering
+
 ```bash
 # Only send high and emergency notifications via webhook
 uci add_list autonomy.notifications.webhook_priority_filter='1'
@@ -224,6 +231,7 @@ uci commit autonomy
 ## 🧪 Testing Configuration
 
 ### Test All Channels
+
 ```bash
 # Send test notification to all enabled channels
 ubus call autonomy send_test_notification '{
@@ -234,6 +242,7 @@ ubus call autonomy send_test_notification '{
 ```
 
 ### Test Specific Channel
+
 ```bash
 # Test only Pushover
 ubus call autonomy send_test_notification '{
@@ -258,6 +267,7 @@ ubus call autonomy send_test_notification '{
 ```
 
 ### Check Channel Status
+
 ```bash
 # Get notification channel status
 ubus call autonomy notification_status '{}'
@@ -271,33 +281,39 @@ ubus call autonomy notification_config '{}'
 ### Common Issues
 
 **Pushover not working:**
+
 - Verify app token and user key are correct
 - Check device name (if specified)
 - Ensure Pushover app is installed on target devices
 
 **Email not working:**
+
 - Verify SMTP credentials and server settings
 - Check if app passwords are required (Gmail, Outlook)
 - Verify firewall allows SMTP traffic (ports 587/465)
 - Test with telnet: `telnet smtp.gmail.com 587`
 
 **Slack not working:**
+
 - Verify webhook URL is correct and active
 - Check channel permissions
 - Ensure webhook has proper scope
 
 **Discord not working:**
+
 - Verify webhook URL is correct
 - Check channel permissions
 - Ensure webhook hasn't been deleted
 
 **Telegram not working:**
+
 - Verify bot token is correct
 - Check chat ID (negative for groups/channels)
 - Ensure bot is added to the chat
 - Bot must have permission to send messages
 
 **Webhook not working:**
+
 - Check URL accessibility from RUTOS device
 - Verify authentication credentials
 - Check SSL certificate if using HTTPS
@@ -334,6 +350,7 @@ logread | grep -i "timeout\|connection\|dns\|ssl"
 ## 📊 Configuration Examples
 
 ### Minimal Setup (Pushover Only)
+
 ```bash
 uci set autonomy.notifications.pushover_enabled='1'
 uci set autonomy.notifications.pushover_token='your_token'
@@ -344,6 +361,7 @@ uci commit autonomy
 ```
 
 ### Enterprise Setup (All Channels)
+
 ```bash
 # Enable all channels
 uci set autonomy.notifications.pushover_enabled='1'
@@ -365,6 +383,7 @@ uci commit autonomy
 ```
 
 ### High-Availability Setup
+
 ```bash
 # Multiple redundant channels
 uci set autonomy.notifications.pushover_enabled='1'

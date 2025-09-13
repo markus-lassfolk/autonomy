@@ -7,17 +7,20 @@ The Autonomy system integrates with several external APIs to provide enhanced fu
 ## 🛰️ Space-Track API (Satellite Data)
 
 ### What it provides
+
 - Real-time Starlink satellite orbital data (TLE format)
 - Satellite positions for obstruction prediction
 - Essential for Starlink tracking features
 
 ### Sign up
+
 1. **Visit**: [https://www.space-track.org](https://www.space-track.org)
 2. **Create Account**: Free registration required
 3. **Verify Email**: Check your email and verify account
 4. **Accept Terms**: Agree to data usage terms
 
 ### Configuration
+
 ```bash
 # Method 1: Environment variables
 export SPACE_TRACK_USERNAME=your_username
@@ -31,6 +34,7 @@ uci commit autonomy
 ```
 
 ### Rate Limits & Usage
+
 - **Free Tier**: 200 requests per hour
 - **Autonomy Usage**: <20 requests/hour (well within limits)
 - **Data Caching**: 24-hour local caching reduces API calls
@@ -40,18 +44,21 @@ uci commit autonomy
 
 ## 📡 OpenCellID API (Cellular Location)
 
-### What it provides
+### OpenCellID - What it provides
+
 - Cell tower location data for GPS fallback
 - Cellular triangulation when satellite GPS unavailable
 - Global database of cell tower locations
 
-### Sign up
+### OpenCellID - Sign up
+
 1. **Visit**: [https://opencellid.org](https://opencellid.org)
 2. **Create Account**: Free registration
 3. **Get API Key**: Generate API key in dashboard
 4. **Optional**: Download Android app to contribute data
 
-### Configuration
+### OpenCellID - Configuration
+
 ```bash
 # UCI configuration
 uci set autonomy.opencellid.enabled='1'
@@ -61,7 +68,8 @@ uci set autonomy.opencellid.cache_ttl='3600'         # 1 hour
 uci commit autonomy
 ```
 
-### Rate Limits & Usage
+### OpenCellID - Rate Limits & Usage
+
 - **Free Tier**: 1,000 requests per day
 - **Autonomy Usage**: Intelligent rate limiting with 8:1 lookup-to-contribution ratio
 - **Contribution**: System automatically contributes data to maintain free access
@@ -71,19 +79,22 @@ uci commit autonomy
 
 ## 🔔 Pushover API (Notifications)
 
-### What it provides
+### Pushover - What it provides
+
 - Real-time push notifications to mobile devices
 - Critical alerts and system status updates
 - Cross-platform mobile notifications
 
-### Sign up
+### Pushover - Sign up
+
 1. **Visit**: [https://pushover.net](https://pushover.net)
 2. **Create Account**: $5 one-time fee per platform
 3. **Get User Key**: Found in your dashboard
 4. **Create Application**: Get application token
 5. **Install App**: Download mobile app
 
-### Configuration
+### Pushover - Configuration
+
 ```bash
 # UCI configuration
 uci set autonomy.notifications.pushover_enabled='1'
@@ -101,7 +112,8 @@ uci set autonomy.notifications.location_alerts='1'
 uci commit autonomy
 ```
 
-### Rate Limits & Usage
+### Pushover - Rate Limits & Usage
+
 - **Free Tier**: 10,000 messages per month
 - **Autonomy Usage**: Intelligent deduplication reduces message count
 - **Priority Levels**: Emergency notifications can bypass quiet hours
@@ -111,19 +123,22 @@ uci commit autonomy
 
 ## 🌐 Google Geolocation API (Optional)
 
-### What it provides
+### Google Geolocation - What it provides
+
 - WiFi and cellular-based location services
 - High-accuracy location in urban areas
 - Fallback location service
 
-### Sign up
+### Google Geolocation - Sign up
+
 1. **Visit**: [Google Cloud Console](https://console.cloud.google.com)
 2. **Create Project**: Set up new Google Cloud project
 3. **Enable API**: Enable Geolocation API
 4. **Get API Key**: Create credentials → API key
 5. **Set Restrictions**: Restrict key to Geolocation API
 
-### Configuration
+### Google Geolocation - Configuration
+
 ```bash
 # UCI configuration (optional)
 uci set autonomy.google.geolocation_enabled='1'
@@ -132,7 +147,8 @@ uci set autonomy.google.fallback_priority='3'  # Lower priority fallback
 uci commit autonomy
 ```
 
-### Rate Limits & Usage
+### Google Geolocation - Rate Limits & Usage
+
 - **Free Tier**: $200 credit monthly (≈40,000 requests)
 - **Autonomy Usage**: Only used as fallback, minimal usage
 - **Cost**: $5 per 1,000 requests after free tier
@@ -141,12 +157,14 @@ uci commit autonomy
 
 ## 🐙 GitHub API (Development/CI)
 
-### What it provides
+### GitHub - What it provides
+
 - Automated issue creation for critical alerts
 - CI/CD integration for deployments
 - Development workflow automation
 
-### Sign up
+### GitHub - Sign up
+
 1. **GitHub Account**: Free account at [github.com](https://github.com)
 2. **Personal Access Token**:
    - Go to Settings → Developer settings → Personal access tokens
@@ -154,7 +172,8 @@ uci commit autonomy
    - Select scopes: `repo`, `workflow`, `write:packages`
 3. **Repository Access**: Fork or access autonomy repository
 
-### Configuration
+### GitHub - Configuration
+
 ```bash
 # Environment variables (for CI/CD)
 export GITHUB_TOKEN=ghp_your_github_token
@@ -168,7 +187,8 @@ uci set autonomy.webhook.create_issues='1'
 uci commit autonomy
 ```
 
-### Rate Limits & Usage
+### GitHub - Rate Limits & Usage
+
 - **Free Tier**: 5,000 API requests per hour
 - **GitHub Actions**: 2,000 minutes per month
 - **Autonomy Usage**: Minimal API usage for critical alerts only
@@ -178,14 +198,16 @@ uci commit autonomy
 
 ## 📧 SMTP Email Integration
 
-### What it provides
+### Email - What it provides
+
 - Email notifications for critical events
 - Detailed logs and reports via email
 - Integration with existing email systems
 
-### Setup Options
+### Email - Setup Options
 
 #### Gmail/Google Workspace
+
 ```bash
 # App password required (not regular password)
 uci set autonomy.notifications.smtp_server='smtp.gmail.com'
@@ -197,6 +219,7 @@ uci commit autonomy
 ```
 
 #### Office 365/Outlook
+
 ```bash
 uci set autonomy.notifications.smtp_server='smtp-mail.outlook.com'
 uci set autonomy.notifications.smtp_port='587'
@@ -207,6 +230,7 @@ uci commit autonomy
 ```
 
 #### Custom SMTP Server
+
 ```bash
 uci set autonomy.notifications.smtp_server='mail.yourcompany.com'
 uci set autonomy.notifications.smtp_port='587'
@@ -220,18 +244,21 @@ uci commit autonomy
 
 ## 💬 Slack Integration (Optional)
 
-### What it provides
+### Slack - What it provides
+
 - Team notifications in Slack channels
 - Integration with incident management workflows
 - Rich message formatting with links and status
 
-### Setup
+### Slack - Setup
+
 1. **Create Slack App**: [https://api.slack.com/apps](https://api.slack.com/apps)
 2. **Add Incoming Webhooks**: Enable incoming webhooks feature
 3. **Create Webhook URL**: Generate webhook URL for your channel
 4. **Configure Permissions**: Add necessary bot permissions
 
-### Configuration
+### Slack - Configuration
+
 ```bash
 uci set autonomy.notifications.slack_enabled='1'
 uci set autonomy.notifications.slack_webhook='https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
@@ -244,18 +271,21 @@ uci commit autonomy
 
 ## 📱 Telegram Integration (Optional)
 
-### What it provides
+### Telegram - What it provides
+
 - Instant messaging notifications
 - Bot commands for remote control
 - Free alternative to Pushover
 
-### Setup
+### Telegram - Setup
+
 1. **Create Bot**: Message @BotFather on Telegram
 2. **Get Token**: Follow BotFather instructions to get bot token
 3. **Get Chat ID**: Message your bot and get chat ID from API
 4. **Test Bot**: Send test message to verify setup
 
-### Configuration
+### Telegram - Configuration
+
 ```bash
 uci set autonomy.notifications.telegram_enabled='1'
 uci set autonomy.notifications.telegram_token='your-bot-token'
@@ -269,17 +299,20 @@ uci commit autonomy
 ## 🔧 API Configuration Summary
 
 ### Required APIs
+
 | API | Purpose | Cost | Setup Difficulty |
 |-----|---------|------|------------------|
 | Space-Track | Satellite tracking | Free | Easy |
 
 ### Recommended APIs
+
 | API | Purpose | Cost | Setup Difficulty |
 |-----|---------|------|------------------|
 | OpenCellID | Cellular location | Free* | Easy |
 | Pushover | Mobile notifications | $5 one-time | Easy |
 
 ### Optional APIs
+
 | API | Purpose | Cost | Setup Difficulty |
 |-----|---------|------|------------------|
 | Google Geolocation | Location fallback | $5/1k requests | Medium |
@@ -293,6 +326,7 @@ uci commit autonomy
 ## 🛠️ Configuration Tools
 
 ### UCI Commands
+
 ```bash
 # View all autonomy configuration
 uci show autonomy
@@ -308,6 +342,7 @@ autonomy-cli config validate
 ```
 
 ### Web Interface
+
 Access configuration via web UI: `https://router-ip/cgi-bin/luci/admin/autonomy/config`
 
 ## 🔍 Troubleshooting
@@ -315,6 +350,7 @@ Access configuration via web UI: `https://router-ip/cgi-bin/luci/admin/autonomy/
 ### Common Issues
 
 #### API Authentication Failures
+
 ```bash
 # Test Space-Track credentials
 curl -c /tmp/cookies.txt \
@@ -330,6 +366,7 @@ curl -X POST https://api.pushover.net/1/messages.json \
 ```
 
 #### Configuration Issues
+
 ```bash
 # Reset to defaults
 autonomy-cli config reset

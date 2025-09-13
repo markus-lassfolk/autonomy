@@ -28,6 +28,7 @@ This guide covers the integration of the autonomy daemon with the Teltonika RUTO
 ### SDK Setup
 
 1. **Clone/Setup RUTOS SDK**:
+
    ```bash
    # Navigate to SDK directory
    cd /path/to/rutos-ipq40xx-rutx-sdk
@@ -37,6 +38,7 @@ This guide covers the integration of the autonomy daemon with the Teltonika RUTO
    ```
 
 2. **Verify SDK Environment**:
+
    ```bash
    # Check SDK version
    cat .config | grep CONFIG_VERSION_NUMBER
@@ -51,7 +53,7 @@ This guide covers the integration of the autonomy daemon with the Teltonika RUTO
 
 The autonomy daemon package follows OpenWrt package conventions:
 
-```
+```text
 package/autonomy/
 ├── Makefile                    # Package build configuration
 ├── files/                      # Package files
@@ -67,7 +69,7 @@ package/autonomy/
 
 The VuCI API package provides backend services:
 
-```
+```text
 vuci-app-autonomy-api/
 ├── Makefile                    # VuCI API build configuration
 └── files/
@@ -81,7 +83,7 @@ vuci-app-autonomy-api/
 
 The VuCI UI package provides the web interface:
 
-```
+```text
 vuci-app-autonomy-ui/
 ├── Makefile                    # VuCI UI build configuration
 ├── files/
@@ -328,6 +330,7 @@ The package creates a dedicated user for security:
 ### Package Testing
 
 1. **Installation Test**:
+
    ```bash
    # Install packages
    opkg install autonomy_1.0.0-1_all.ipk
@@ -342,6 +345,7 @@ The package creates a dedicated user for security:
    ```
 
 2. **Configuration Test**:
+
    ```bash
    # Test configuration
    /etc/init.d/autonomy test
@@ -351,6 +355,7 @@ The package creates a dedicated user for security:
    ```
 
 3. **Service Test**:
+
    ```bash
    # Start service
    /etc/init.d/autonomy start
@@ -376,6 +381,7 @@ The package creates a dedicated user for security:
    - Check log viewing
 
 3. **API Testing**:
+
    ```bash
    # Test API endpoints
    ubus call api get '{"path":"/autonomy/status"}'
@@ -392,6 +398,7 @@ The package creates a dedicated user for security:
 ### Package Distribution
 
 1. **Create Package Repository**:
+
    ```bash
    # Set up package feed
    mkdir -p /var/www/autonomy-feed
@@ -403,12 +410,14 @@ The package creates a dedicated user for security:
    ```
 
 2. **Configure Package Feed**:
+
    ```bash
    # Add to /etc/opkg/customfeeds.conf
    src/gz autonomy-feed http://your-server/autonomy-feed
    ```
 
 3. **Install via Package Manager**:
+
    ```bash
    # Update package lists
    opkg update
@@ -424,6 +433,7 @@ The package creates a dedicated user for security:
 For firmware-level integration:
 
 1. **Add to SDK Configuration**:
+
    ```bash
    # Enable packages in firmware
    echo "CONFIG_PACKAGE_autonomy=y" >> .config
@@ -432,12 +442,14 @@ For firmware-level integration:
    ```
 
 2. **Build Firmware**:
+
    ```bash
    # Build complete firmware
    make V=s
    ```
 
 3. **Flash Firmware**:
+
    ```bash
    # Flash to device
    # Follow RUTOS firmware update procedure
@@ -448,6 +460,7 @@ For firmware-level integration:
 ### Common Issues
 
 1. **Package Build Failures**:
+
    ```bash
    # Check dependencies
    make package/autonomy/compile V=s 2>&1 | grep -i error
@@ -457,6 +470,7 @@ For firmware-level integration:
    ```
 
 2. **Service Start Failures**:
+
    ```bash
    # Check logs
    logread | grep autonomy
@@ -469,6 +483,7 @@ For firmware-level integration:
    ```
 
 3. **VuCI Interface Issues**:
+
    ```bash
    # Check RPC daemon
    rpcd -i
@@ -491,6 +506,7 @@ For firmware-level integration:
    ```
 
 4. **IPK Installation Issues**:
+
    ```bash
    # Check IPK format
    file autonomy.ipk
@@ -506,6 +522,7 @@ For firmware-level integration:
 ### Debug Procedures
 
 1. **Enable Debug Logging**:
+
    ```bash
    uci set autonomy.main.log_level='debug'
    uci commit autonomy
@@ -513,6 +530,7 @@ For firmware-level integration:
    ```
 
 2. **Check System Resources**:
+
    ```bash
    # Monitor resource usage
    top -p $(cat /var/run/autonomyd.pid)
@@ -522,6 +540,7 @@ For firmware-level integration:
    ```
 
 3. **Network Connectivity**:
+
    ```bash
    # Test ubus communication
    ubus list | grep autonomy
@@ -589,4 +608,3 @@ For additional support:
 
 **Last Updated**: 2025-08-20
 **Version**: 1.0.0
-

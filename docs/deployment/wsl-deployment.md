@@ -16,6 +16,7 @@ When working with WSL deployment scripts, you often need to copy packages from W
 The primary solution is a bash script that runs in WSL but can be called from PowerShell:
 
 **`scripts/deploy-wsl-dynamic.sh`** - A working bash script that:
+
 - Automatically detects your current drive (D: at work, J: at home, etc.)
 - Builds dynamic paths for WSL mounting
 - Supports both **OpenWrt** and **RUTOS** packages
@@ -202,6 +203,7 @@ The script ensures services are started during installation:
 ### 1. Automatic Service Start
 
 When you use "Deploy All" (Option 1), the service is automatically:
+
 - ✅ **Enabled** for auto-start on WSL boot
 - ✅ **Started** immediately after installation
 - ✅ **Verified** to be running with process check
@@ -321,7 +323,7 @@ export PLATFORM="both"
 
 This approach ensures your deployment scripts work consistently across different environments without requiring manual path updates. The bash script provides the core functionality, while the PowerShell wrapper gives you the Windows-native interface you prefer.
 
-### Key Benefits:
+### Key Benefits
 
 ✅ **Dynamic Drive Detection**: Works on D:, J:, or any drive  
 ✅ **Multi-Platform Support**: Handles both OpenWrt and RUTOS packages  

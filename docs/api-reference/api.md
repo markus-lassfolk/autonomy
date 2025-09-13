@@ -2,21 +2,25 @@
 
 ## Overview
 
-Autonomy provides a comprehensive API through ubus for monitoring, configuration, and control. The API is designed for integration with OpenWrt/RUTOS systems.
+Autonomy provides a comprehensive API through ubus for monitoring, configuration,
+and control. The API is designed for integration with OpenWrt/RUTOS systems.
 
 ## API Endpoints
 
 ### Core Status Endpoints
 
 #### `autonomy.status`
+
 Get overall system status and health information.
 
 **Request:**
+
 ```json
 {}
 ```
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -45,14 +49,17 @@ Get overall system status and health information.
 ```
 
 #### `autonomy.interfaces`
+
 Get detailed information about all network interfaces.
 
 **Request:**
+
 ```json
 {}
 ```
 
 **Response:**
+
 ```json
 {
   "interfaces": [
@@ -87,9 +94,11 @@ Get detailed information about all network interfaces.
 ### Configuration Endpoints
 
 #### `autonomy.config.get`
+
 Get current configuration values.
 
 **Request:**
+
 ```json
 {
   "section": "starlink"
@@ -97,6 +106,7 @@ Get current configuration values.
 ```
 
 **Response:**
+
 ```json
 {
   "enabled": true,
@@ -107,9 +117,11 @@ Get current configuration values.
 ```
 
 #### `autonomy.config.set`
+
 Set configuration values.
 
 **Request:**
+
 ```json
 {
   "section": "starlink",
@@ -121,6 +133,7 @@ Set configuration values.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -131,9 +144,11 @@ Set configuration values.
 ### Control Endpoints
 
 #### `autonomy.control.switch`
+
 Manually switch to a specific interface.
 
 **Request:**
+
 ```json
 {
   "interface": "cellular",
@@ -142,6 +157,7 @@ Manually switch to a specific interface.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -152,14 +168,17 @@ Manually switch to a specific interface.
 ```
 
 #### `autonomy.control.restart`
+
 Restart the autonomy service.
 
 **Request:**
+
 ```json
 {}
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -170,9 +189,11 @@ Restart the autonomy service.
 ### Monitoring Endpoints
 
 #### `autonomy.metrics`
+
 Get performance metrics and statistics.
 
 **Request:**
+
 ```json
 {
   "duration": "1h"
@@ -180,6 +201,7 @@ Get performance metrics and statistics.
 ```
 
 **Response:**
+
 ```json
 {
   "period": "1h",
@@ -199,9 +221,11 @@ Get performance metrics and statistics.
 ```
 
 #### `autonomy.logs`
+
 Get recent log entries.
 
 **Request:**
+
 ```json
 {
   "level": "info",
@@ -210,6 +234,7 @@ Get recent log entries.
 ```
 
 **Response:**
+
 ```json
 {
   "logs": [
@@ -232,14 +257,17 @@ Get recent log entries.
 ### GPS Endpoints
 
 #### `autonomy.gps.location`
+
 Get current GPS location.
 
 **Request:**
+
 ```json
 {}
 ```
 
 **Response:**
+
 ```json
 {
   "latitude": 40.7128,
@@ -251,9 +279,11 @@ Get current GPS location.
 ```
 
 #### `autonomy.gps.history`
+
 Get GPS location history.
 
 **Request:**
+
 ```json
 {
   "duration": "24h",
@@ -262,6 +292,7 @@ Get GPS location history.
 ```
 
 **Response:**
+
 ```json
 {
   "locations": [
@@ -278,9 +309,11 @@ Get GPS location history.
 ### Notification Endpoints
 
 #### `autonomy.notifications.send`
+
 Send a notification.
 
 **Request:**
+
 ```json
 {
   "type": "failover",
@@ -290,6 +323,7 @@ Send a notification.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -299,14 +333,17 @@ Send a notification.
 ```
 
 #### `autonomy.notifications.status`
+
 Get notification status and history.
 
 **Request:**
+
 ```json
 {}
 ```
 
 **Response:**
+
 ```json
 {
   "enabled": true,

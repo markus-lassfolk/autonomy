@@ -1,5 +1,6 @@
 # autonomy ARCHITECTURE
-**Technical Architecture and System Design**
+
+## Technical Architecture and System Design
 
 > This file contains the technical architecture and system design for autonomy.
 > For current status, see `STATUS.md`.
@@ -12,10 +13,12 @@
 ## 🏗️ SYSTEM ARCHITECTURE
 
 ### **High-Level Overview**
+
 autonomy is a Go-based multi-interface failover daemon that provides reliable, autonomous, and resource-efficient network failover management for RutOS/OpenWrt routers.
 
 **Core Architecture**:
-```
+
+```text
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Discovery     │    │   Collectors    │    │  Decision       │
 │   & Member      │───▶│   (Starlink,    │───▶│  Engine &       │
@@ -34,36 +37,42 @@ autonomy is a Go-based multi-interface failover daemon that provides reliable, a
 ### **Component Responsibilities**
 
 #### **Discovery & Member Management**
+
 - Discovers network interfaces from mwan3 configuration
 - Classifies members by type (Starlink, Cellular, WiFi, LAN)
 - Maps mwan3 members to netifd interfaces
 - Handles configuration changes and member updates
 
 #### **Collectors**
+
 - **Starlink Collector**: Native gRPC client for Starlink API
 - **Cellular Collector**: Multi-SIM support with RSRP/RSRQ/SINR metrics
 - **WiFi Collector**: Advanced WiFi analysis with RSSI-weighted scoring
 - **GPS Collector**: Multi-source GPS collection (RUTOS, Starlink, Cellular, OpenCellID)
 
 #### **Decision Engine**
+
 - Calculates health scores (instant, EWMA, final)
 - Implements predictive failover logic
 - Manages hysteresis and cooldown periods
 - Triggers failover decisions based on thresholds
 
 #### **Controller**
+
 - Manages mwan3 policy updates
 - Provides netifd fallback for systems without mwan3
 - Updates route metrics and interface weights
 - Handles failover execution and verification
 
 #### **Telemetry Store**
+
 - RAM-based ring buffer storage
 - Automatic cleanup and retention management
 - Event logging and historical data
 - Memory usage optimization
 
 #### **ubus API & CLI**
+
 - RPC interface for system control
 - Status monitoring and configuration
 - CLI wrapper for operational control
@@ -73,7 +82,7 @@ autonomy is a Go-based multi-interface failover daemon that provides reliable, a
 
 ## 📦 PACKAGE STRUCTURE
 
-```
+```text
 /cmd/autonomyd/           # Main daemon entry point
 /pkg/                     # Internal packages
   collector/              # Data collection providers
@@ -139,6 +148,7 @@ autonomy is a Go-based multi-interface failover daemon that provides reliable, a
 ## 🔧 CONFIGURATION SYSTEM
 
 ### **UCI Configuration Structure**
+
 File: `/etc/config/autonomy`
 
 ```uci
@@ -222,6 +232,7 @@ config gps 'location'
 ```
 
 ### **Configuration Validation**
+
 - All numeric options validated with sane ranges
 - String normalization and validation
 - Automatic defaults for missing options
@@ -234,6 +245,7 @@ config gps 'location'
 ### **ubus API Methods**
 
 #### **Core Status Methods**
+
 ```json
 // Get system status
 ubus call autonomy status
@@ -273,6 +285,7 @@ ubus call autonomy metrics '{"name": "wan_cell"}'
 ```
 
 #### **Enhanced Feature APIs**
+
 ```json
 // WiFi optimization status
 ubus call autonomy wifi_status
@@ -313,6 +326,7 @@ ubus call autonomy gps
 ```
 
 #### **Action Methods**
+
 ```json
 // Manual failover
 ubus call autonomy action '{"cmd": "failover", "name": "wan_cell"}'
@@ -328,6 +342,7 @@ ubus call autonomy optimize_wifi '{"dry_run": false}'
 ```
 
 ### **CLI Interface**
+
 ```bash
 # Status and monitoring
 autonomyctl status
@@ -353,6 +368,7 @@ autonomyctl gps
 ## 🔄 DATA FLOW
 
 ### **Main Processing Loop**
+
 ```go
 // Core processing loop (tick ~1.0–1.5s)
 tick := time.NewTicker(cfg.PollInterval)
@@ -387,6 +403,7 @@ for {
 ```
 
 ### **Data Collection Flow**
+
 1. **Discovery**: Parse mwan3 config, classify members
 2. **Collection**: Gather metrics from each collector
 3. **Processing**: Calculate scores and trends
@@ -400,6 +417,7 @@ for {
 ## 🎯 DECISION ENGINE
 
 ### **Scoring Algorithm**
+
 ```go
 // Instant score calculation (0..100)
 score = clamp(0, 100,
@@ -417,12 +435,14 @@ final = 0.30*instant + 0.50*ewma + 0.20*window_avg
 ```
 
 ### **Predictive Logic**
+
 - **Trend Analysis**: Linear regression on metrics history
 - **Pattern Detection**: Cyclic and deteriorating patterns
 - **Anomaly Detection**: Statistical baseline analysis
 - **Class-Specific Triggers**: Starlink obstruction, cellular roaming, WiFi degradation
 
 ### **Hysteresis Management**
+
 - **Fail Window**: Sustained "bad" before failover
 - **Restore Window**: Sustained "good" before failback
 - **Cooldown Period**: Minimum time between switches
@@ -433,24 +453,28 @@ final = 0.30*instant + 0.50*ewma + 0.20*window_avg
 ## 🔧 INTEGRATION POINTS
 
 ### **mwan3 Integration**
+
 - **Policy Management**: Update member weights and policies
 - **Status Monitoring**: Check member status and health
 - **Configuration**: Read and write mwan3 configuration
 - **Reload**: Trigger mwan3 configuration reload
 
 ### **netifd Fallback**
+
 - **Route Metrics**: Update route metrics for interface preference
 - **Interface Control**: Manage interface up/down states
 - **Status Queries**: Check interface status via ubus
 - **Configuration**: Read network configuration
 
 ### **UCI Integration**
+
 - **Configuration**: Read/write UCI configuration
 - **Validation**: Validate configuration options
 - **Defaults**: Apply sensible defaults
 - **Reload**: Handle configuration changes
 
 ### **ubus Integration**
+
 - **Service Registration**: Register as ubus service
 - **Method Handlers**: Implement RPC methods
 - **Event Publishing**: Publish status updates
@@ -461,18 +485,21 @@ final = 0.30*instant + 0.50*ewma + 0.20*window_avg
 ## 📊 PERFORMANCE CHARACTERISTICS
 
 ### **Resource Usage Targets**
+
 - **Binary Size**: ≤12 MB stripped
 - **Memory Usage**: ≤25 MB RSS steady state
 - **CPU Usage**: ≤5% on low-end ARM when healthy
 - **Network**: Minimal probing on metered links
 
 ### **Response Times**
+
 - **Failover Time**: <5 seconds
 - **API Response**: <1 second
 - **Decision Time**: <1 second
 - **Collection Time**: <2 seconds
 
 ### **Scalability**
+
 - **Member Count**: Support ≥10 members
 - **Concurrent Operations**: Handle multiple API calls
 - **Data Retention**: Configurable retention periods
@@ -483,12 +510,14 @@ final = 0.30*instant + 0.50*ewma + 0.20*window_avg
 ## 🔒 SECURITY CONSIDERATIONS
 
 ### **Access Control**
+
 - **Local Admin Only**: CLI and ubus methods require local admin
 - **Network Isolation**: Metrics/health endpoints bound to 127.0.0.1
 - **Secret Management**: Store secrets only in UCI configuration
 - **Audit Logging**: Log all administrative actions
 
 ### **Data Protection**
+
 - **No Persistent Storage**: Telemetry stored in RAM by default
 - **Encrypted Communication**: Use HTTPS for external APIs
 - **Secure Configuration**: Validate all configuration inputs
@@ -499,18 +528,21 @@ final = 0.30*instant + 0.50*ewma + 0.20*window_avg
 ## 🚨 FAILURE MODES & RECOVERY
 
 ### **Graceful Degradation**
+
 - **Starlink API Down**: Rely on reachability metrics
 - **ubus/mwan3 Missing**: Fall back to netifd
 - **ICMP Blocked**: Use TCP/UDP connect timing
 - **Config Invalid**: Apply defaults and continue
 
 ### **Recovery Mechanisms**
+
 - **Automatic Restart**: procd respawn configuration
 - **Health Checks**: Continuous health monitoring
 - **Error Recovery**: Exponential backoff for failures
 - **State Persistence**: Maintain state across restarts
 
 ### **Monitoring & Alerting**
+
 - **Health Endpoints**: /healthz endpoint for monitoring
 - **Structured Logging**: JSON logs for analysis
 - **Event Tracking**: Comprehensive event history

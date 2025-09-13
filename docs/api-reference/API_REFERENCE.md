@@ -1,6 +1,7 @@
 # autonomy API Reference
 
-This document provides a comprehensive reference for all APIs and interfaces provided by the autonomy intelligent multi-interface failover system.
+This document provides a comprehensive reference for all APIs and interfaces
+provided by the autonomy intelligent multi-interface failover system.
 
 ## Table of Contents
 
@@ -10,29 +11,32 @@ This document provides a comprehensive reference for all APIs and interfaces pro
 4. [Configuration Management](#configuration-management)
 5. [Data Structures](#data-structures)
 6. [Error Handling](#error-handling)
-7. [Code Examples](#code-examples)
-8. [Integration Examples](#integration-examples)
+7. [Examples](#examples)
 
 ## ubus RPC Interface
 
-The autonomyd daemon exposes a ubus RPC interface for control and monitoring. All ubus calls use the `autonomy` namespace.
+The autonomyd daemon exposes a ubus RPC interface for control and monitoring.
+All ubus calls use the `autonomy` namespace.
 
 ### Authentication
 
-ubus calls require appropriate permissions. The daemon runs with system privileges and can be accessed by:
+ubus calls require appropriate permissions. The daemon runs with system
+privileges and can be accessed by:
+
 - Root user
 - Users in the `ubus` group
 - Users with explicit ubus permissions
 
 ### Available Methods
 
-#### `status`
+#### `status` (ubus)
 
 Returns the current status of the daemon and all members.
 
 **Parameters:** None
 
 **Returns:**
+
 ```json
 {
   "status": "running",
@@ -53,17 +57,19 @@ Returns the current status of the daemon and all members.
 ```
 
 **Example:**
+
 ```bash
 ubus call autonomy status
 ```
 
 ## Command Line Interface
 
-The autonomy command-line interface (`autonomyctl`) provides easy access to all system functions and monitoring capabilities.
+The autonomy command-line interface (`autonomyctl`) provides easy access to all
+system functions and monitoring capabilities.
 
 ### Basic Commands
 
-#### `status`
+#### `status` (CLI)
 
 Display overall system status.
 
@@ -72,7 +78,8 @@ autonomyctl status
 ```
 
 **Output:**
-```
+
+```text
 autonomy Status Report
 =====================
 Status: Running
@@ -83,7 +90,7 @@ Total Members: 3
 Last Failover: 2025-01-20 14:30:00 UTC
 ```
 
-#### `members`
+#### `members` (CLI)
 
 List all network members and their status.
 
@@ -99,7 +106,8 @@ autonomyctl members --type starlink
 ```
 
 **Output:**
-```
+
+```text
 Network Members
 ===============
 starlink (Starlink) - Active - Score: 85.5 - Priority: 100
@@ -123,7 +131,8 @@ autonomyctl health --history --hours 24
 ```
 
 **Output:**
-```
+
+```text
 System Health Report
 ===================
 CPU Usage: 12.5%
@@ -135,7 +144,7 @@ Service Status: Healthy
 
 ### Advanced Commands
 
-#### `failover`
+#### `failover` (CLI)
 
 Manual failover control.
 
@@ -169,7 +178,8 @@ autonomyctl gps --movement
 ```
 
 **Output:**
-```
+
+```text
 GPS Status Report
 ================
 Status: Available
@@ -211,7 +221,7 @@ autonomyctl notifications --history --limit 20
 
 ### Configuration Commands
 
-#### `config`
+#### `config` (CLI)
 
 Configuration management.
 
@@ -246,7 +256,7 @@ autonomyctl optimize --aggressive
 
 ### Monitoring Commands
 
-#### `metrics`
+#### `metrics` (CLI)
 
 Performance metrics.
 
@@ -373,13 +383,14 @@ autonomyctl config validate
 autonomyctl config export --format json
 ```
 
-#### `members`
+#### `members` (ubus)
 
 Returns detailed information about all discovered members.
 
 **Parameters:** None
 
 **Returns:**
+
 ```json
 {
   "members": [
@@ -404,18 +415,21 @@ Returns detailed information about all discovered members.
 ```
 
 **Example:**
+
 ```bash
 ubus call autonomy members
 ```
 
-#### `metrics`
+#### `metrics` (ubus)
 
 Returns metrics for a specific member or all members.
 
 **Parameters:**
+
 - `member` (optional): Member name to get metrics for
 
 **Returns:**
+
 ```json
 {
   "metrics": {
@@ -438,6 +452,7 @@ Returns metrics for a specific member or all members.
 ```
 
 **Example:**
+
 ```bash
 # Get metrics for all members
 ubus call autonomy metrics
@@ -451,11 +466,13 @@ ubus call autonomy metrics '{"member": "starlink"}'
 Returns historical data for a member.
 
 **Parameters:**
+
 - `member`: Member name
 - `limit` (optional): Number of samples to return (default: 100)
 - `hours` (optional): Hours of history to return (default: 24)
 
 **Returns:**
+
 ```json
 {
   "member": "starlink",
@@ -481,6 +498,7 @@ Returns historical data for a member.
 ```
 
 **Example:**
+
 ```bash
 ubus call autonomy history '{"member": "starlink", "limit": 50, "hours": 12}'
 ```
@@ -490,11 +508,13 @@ ubus call autonomy history '{"member": "starlink", "limit": 50, "hours": 12}'
 Returns system events.
 
 **Parameters:**
+
 - `limit` (optional): Number of events to return (default: 100)
 - `hours` (optional): Hours of history to return (default: 24)
 - `type` (optional): Filter by event type
 
 **Returns:**
+
 ```json
 {
   "events": [
@@ -513,6 +533,7 @@ Returns system events.
 ```
 
 **Example:**
+
 ```bash
 # Get all events
 ubus call autonomy events
@@ -521,15 +542,17 @@ ubus call autonomy events
 ubus call autonomy events '{"type": "switch", "limit": 10}'
 ```
 
-#### `failover`
+#### `failover` (ubus)
 
 Manually triggers a failover to a specific member.
 
 **Parameters:**
+
 - `member`: Member name to switch to
 - `reason` (optional): Reason for the switch
 
 **Returns:**
+
 ```json
 {
   "success": true,
@@ -539,6 +562,7 @@ Manually triggers a failover to a specific member.
 ```
 
 **Example:**
+
 ```bash
 ubus call autonomy failover '{"member": "starlink", "reason": "manual"}'
 ```
@@ -550,6 +574,7 @@ Restores automatic failover mode.
 **Parameters:** None
 
 **Returns:**
+
 ```json
 {
   "success": true,
@@ -558,6 +583,7 @@ Restores automatic failover mode.
 ```
 
 **Example:**
+
 ```bash
 ubus call autonomy restore
 ```
@@ -569,6 +595,7 @@ Forces a recheck of all members.
 **Parameters:** None
 
 **Returns:**
+
 ```json
 {
   "success": true,
@@ -578,6 +605,7 @@ Forces a recheck of all members.
 ```
 
 **Example:**
+
 ```bash
 ubus call autonomy recheck
 ```
@@ -587,9 +615,11 @@ ubus call autonomy recheck
 Sets the log level.
 
 **Parameters:**
+
 - `level`: Log level (debug, info, warn, error)
 
 **Returns:**
+
 ```json
 {
   "success": true,
@@ -599,17 +629,19 @@ Sets the log level.
 ```
 
 **Example:**
+
 ```bash
 ubus call autonomy setlog '{"level": "debug"}'
 ```
 
-#### `config`
+#### `config` (ubus)
 
 Returns the current configuration.
 
 **Parameters:** None
 
 **Returns:**
+
 ```json
 {
   "config": {
@@ -633,6 +665,7 @@ Returns the current configuration.
 ```
 
 **Example:**
+
 ```bash
 ubus call autonomy config
 ```
@@ -644,6 +677,7 @@ Returns detailed system information.
 **Parameters:** None
 
 **Returns:**
+
 ```json
 {
   "info": {
@@ -666,6 +700,7 @@ Returns detailed system information.
 ```
 
 **Example:**
+
 ```bash
 ubus call autonomy info
 ```
@@ -681,6 +716,7 @@ ubus call autonomy gps
 ```
 
 **Response:**
+
 ```json
 {
   "latitude": 40.7128,
@@ -694,6 +730,7 @@ ubus call autonomy gps
 ```
 
 **Fields:**
+
 - `latitude`: Latitude in decimal degrees
 - `longitude`: Longitude in decimal degrees  
 - `accuracy`: Accuracy in meters
@@ -711,6 +748,7 @@ ubus call autonomy gps_status
 ```
 
 **Response:**
+
 ```json
 {
   "enabled": true,
@@ -746,6 +784,7 @@ ubus call autonomy gps_stats
 ```
 
 **Response:**
+
 ```json
 {
   "total_requests": 1250,
@@ -781,19 +820,23 @@ The daemon provides HTTP endpoints for metrics and health monitoring.
 **Description:** Returns Prometheus-formatted metrics
 
 **Example:**
+
 ```bash
 curl http://localhost:9090/metrics
 ```
 
 **Sample Output:**
-```
+
+```text
 # HELP autonomy_member_score Current health score for each member
 # TYPE autonomy_member_score gauge
 autonomy_member_score{member="starlink",class="starlink",interface="wan"} 85.5
 
-# HELP autonomy_member_latency_ms Current latency for each member in milliseconds
+# HELP autonomy_member_latency_ms Current latency for each member in
+# milliseconds
 # TYPE autonomy_member_latency_ms gauge
-autonomy_member_latency_ms{member="starlink",class="starlink",interface="wan"} 50.0
+autonomy_member_latency_ms{member="starlink",class="starlink",interface="wan"} \
+  50.0
 ```
 
 ### Health Endpoints
@@ -807,11 +850,13 @@ autonomy_member_latency_ms{member="starlink",class="starlink",interface="wan"} 5
 **Description:** Returns basic health status
 
 **Example:**
+
 ```bash
 curl http://localhost:8080/health
 ```
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -830,11 +875,13 @@ curl http://localhost:8080/health
 **Description:** Returns detailed health information
 
 **Example:**
+
 ```bash
 curl http://localhost:8080/health/detailed
 ```
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -886,11 +933,13 @@ curl http://localhost:8080/health/detailed
 **Description:** Returns readiness status for load balancers
 
 **Example:**
+
 ```bash
 curl http://localhost:8080/health/ready
 ```
 
 **Response:**
+
 ```json
 {"status":"ready"}
 ```
@@ -904,11 +953,13 @@ curl http://localhost:8080/health/ready
 **Description:** Returns liveness status for container orchestration
 
 **Example:**
+
 ```bash
 curl http://localhost:8080/health/live
 ```
 
 **Response:**
+
 ```json
 {"status":"alive"}
 ```
@@ -917,7 +968,8 @@ curl http://localhost:8080/health/live
 
 ### UCI Configuration
 
-The daemon uses UCI for configuration management. The configuration is stored in `/etc/config/autonomy`.
+The daemon uses UCI for configuration management. The configuration is stored
+in `/etc/config/autonomy`.
 
 #### Main Configuration
 
@@ -1082,6 +1134,7 @@ When a ubus call fails, it returns an error response:
 ```
 
 Common error codes:
+
 - `400`: Bad Request - Invalid parameters
 - `404`: Not Found - Member or resource not found
 - `500`: Internal Server Error - Daemon error
@@ -1142,7 +1195,8 @@ echo "Prometheus Metrics: $prometheus_metrics"
 
 # Check if current member is healthy
 current_metrics=$(ubus call autonomy metrics)
-current_score=$(echo "$current_metrics" | jq -r '.metrics.starlink.score.final')
+current_score=$(echo "$current_metrics" | \
+  jq -r '.metrics.starlink.score.final')
 
 if (( $(echo "$current_score < 50" | bc -l) )); then
     echo "Current member score is low ($current_score), checking alternatives..."
@@ -1151,7 +1205,9 @@ if (( $(echo "$current_score < 50" | bc -l) )); then
     members=$(ubus call autonomy members)
     
     # Find best alternative
-    best_member=$(echo "$members" | jq -r '.members[] | select(.enabled and .score > 70) | .name' | head -1)
+    best_member=$(echo "$members" | jq -r \\
+      '.members[] | select(.enabled and .score > 70) | .name' \\
+      | head -1)
     
     if [ -n "$best_member" ]; then
         echo "Switching to $best_member"
@@ -1198,7 +1254,8 @@ groups:
           severity: critical
         annotations:
           summary: "Member {{ $labels.member }} is down"
-          description: "Member {{ $labels.member }} has been down for more than 5 minutes"
+          description: "Member {{ $labels.member }} has been down for more
+            than 5 minutes"
 
       - alert: autonomyLowScore
         expr: autonomy_member_score < 50
@@ -1219,4 +1276,6 @@ groups:
           description: "Member {{ $labels.member }} latency is {{ $value }}ms"
 ```
 
-This API reference provides comprehensive documentation for integrating with the autonomyd daemon. For additional examples and use cases, refer to the deployment guide and troubleshooting documentation.
+This API reference provides comprehensive documentation for integrating with the
+autonomyd daemon. For additional examples and use cases, refer to the deployment
+guide and troubleshooting documentation.

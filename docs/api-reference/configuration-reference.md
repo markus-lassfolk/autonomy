@@ -2,13 +2,14 @@
 
 ## Overview
 
-This document provides a complete reference for all UCI configuration options available in the Autonomy system.
+This document provides a complete reference for all UCI configuration options
+available in the Autonomy system.
 
 ## 📋 Configuration Structure
 
 The Autonomy configuration is organized into logical sections:
 
-```
+```text
 autonomy
 ├── main           # Core system settings
 ├── interfaces     # Network interface configuration  
@@ -66,6 +67,7 @@ uci set autonomy.interfaces.cellular_priority='2'
 ## 🛰️ Starlink Configuration (`autonomy.starlink`)
 
 ### Basic Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `enabled` | boolean | `0` | Enable Starlink integration |
@@ -75,6 +77,7 @@ uci set autonomy.interfaces.cellular_priority='2'
 | `check_interval` | integer | `60` | Status check interval (seconds) |
 
 ### Tracking Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `tracking_enabled` | boolean | `1` | Enable satellite tracking |
@@ -85,6 +88,7 @@ uci set autonomy.interfaces.cellular_priority='2'
 | `min_satellites` | integer | `3` | Minimum visible satellites |
 
 ### OAuth Settings (if required)
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `oauth_enabled` | boolean | `0` | Enable OAuth authentication |
@@ -101,7 +105,8 @@ uci set autonomy.starlink.obstruction_threshold='0.6'
 
 ## 📱 Cellular Configuration (`autonomy.cellular`)
 
-### Basic Settings
+### Cellular Basic Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `enabled` | boolean | `1` | Enable cellular monitoring |
@@ -112,6 +117,7 @@ uci set autonomy.starlink.obstruction_threshold='0.6'
 | `roaming_detection` | boolean | `1` | Detect roaming status |
 
 ### Signal Thresholds
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `rsrp_threshold` | integer | `-110` | RSRP threshold (dBm) |
@@ -120,6 +126,7 @@ uci set autonomy.starlink.obstruction_threshold='0.6'
 | `signal_weight` | float | `0.4` | Signal quality weight in scoring |
 
 ### Data Limits
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `monthly_limit` | integer | `50` | Monthly data limit (GB) |
@@ -128,6 +135,7 @@ uci set autonomy.starlink.obstruction_threshold='0.6'
 | `critical_threshold` | integer | `95` | Critical threshold (percent) |
 
 ### Multi-SIM Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `multi_sim` | boolean | `0` | Enable multi-SIM support |
@@ -146,7 +154,8 @@ uci set autonomy.cellular.monthly_limit='50'
 
 ## 📶 WiFi Configuration (`autonomy.wifi`)
 
-### Basic Settings
+### WiFi Basic Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `optimization` | boolean | `1` | Enable WiFi optimization |
@@ -154,7 +163,8 @@ uci set autonomy.cellular.monthly_limit='50'
 | `interference_detection` | boolean | `1` | Detect interference |
 | `auto_channel_switch` | boolean | `0` | Automatically switch channels |
 
-### Signal Thresholds
+### Configuration - Signal Thresholds
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `rssi_threshold` | integer | `-70` | RSSI threshold (dBm) |
@@ -163,6 +173,7 @@ uci set autonomy.cellular.monthly_limit='50'
 | `interference_threshold` | integer | `60` | Interference threshold (percent) |
 
 ### Scanning Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `scan_interval` | integer | `300` | Channel scan interval (seconds) |
@@ -178,7 +189,8 @@ uci set autonomy.wifi.auto_channel_switch='1'
 
 ## 📍 GPS Configuration (`autonomy.gps`)
 
-### Basic Settings
+### GPS Basic Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `enabled` | boolean | `0` | Enable GPS system |
@@ -188,6 +200,7 @@ uci set autonomy.wifi.auto_channel_switch='1'
 | `update_interval` | integer | `60` | Update interval (seconds) |
 
 ### RUTOS GPS Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `rutos_enabled` | boolean | `1` | Enable RUTOS GPS |
@@ -196,6 +209,7 @@ uci set autonomy.wifi.auto_channel_switch='1'
 | `rutos_timeout` | integer | `10` | GPS timeout (seconds) |
 
 ### Starlink GPS Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `starlink_enabled` | boolean | `1` | Enable Starlink GPS |
@@ -203,6 +217,7 @@ uci set autonomy.wifi.auto_channel_switch='1'
 | `starlink_timeout` | integer | `15` | Starlink GPS timeout (seconds) |
 
 ### Cellular GPS Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `cellular_enabled` | boolean | `1` | Enable cellular location |
@@ -210,6 +225,7 @@ uci set autonomy.wifi.auto_channel_switch='1'
 | `cellular_accuracy` | integer | `1000` | Expected accuracy (meters) |
 
 ### Movement Detection
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `movement_detection` | boolean | `1` | Enable movement detection |
@@ -217,6 +233,7 @@ uci set autonomy.wifi.auto_channel_switch='1'
 | `stationary_timeout` | integer | `300` | Stationary timeout (seconds) |
 
 ### Geofencing
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `geofencing` | boolean | `0` | Enable geofencing |
@@ -234,6 +251,7 @@ uci set autonomy.gps.movement_detection='1'
 ## 🔔 Notification Configuration (`autonomy.notifications`)
 
 ### Pushover Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `pushover_enabled` | boolean | `0` | Enable Pushover notifications |
@@ -243,6 +261,7 @@ uci set autonomy.gps.movement_detection='1'
 | `pushover_sound` | string | `pushover` | Notification sound |
 
 ### Email Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `email_enabled` | boolean | `0` | Enable email notifications |
@@ -255,6 +274,7 @@ uci set autonomy.gps.movement_detection='1'
 | `email_from` | string | `''` | Sender email address |
 
 ### Alert Configuration
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `alert_levels` | list | `['critical','warning']` | Alert levels to send |
@@ -273,6 +293,7 @@ uci set autonomy.notifications.alert_levels='critical,warning,info'
 ## 🔮 Predictive Configuration (`autonomy.predictive`)
 
 ### Machine Learning Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `enabled` | boolean | `1` | Enable predictive features |
@@ -283,6 +304,7 @@ uci set autonomy.notifications.alert_levels='critical,warning,info'
 | `training_window` | integer | `604800` | Training window (seconds) |
 
 ### Prediction Windows
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `short_term` | integer | `300` | Short-term prediction (seconds) |
@@ -291,6 +313,7 @@ uci set autonomy.notifications.alert_levels='critical,warning,info'
 | `confidence_threshold` | float | `0.7` | Minimum confidence for predictions |
 
 ### Obstruction Management
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `obstruction_enabled` | boolean | `1` | Enable obstruction detection |
@@ -308,6 +331,7 @@ uci set autonomy.predictive.warning_window='300'
 ## 🔐 Security Configuration (`autonomy.security`)
 
 ### Security Monitoring
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `enabled` | boolean | `1` | Enable security monitoring |
@@ -317,6 +341,7 @@ uci set autonomy.predictive.warning_window='300'
 | `ddos_protection` | boolean | `1` | DDoS protection |
 
 ### Security Thresholds
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `failed_login_threshold` | integer | `5` | Failed login attempts before alert |
@@ -334,6 +359,7 @@ uci set autonomy.security.failed_login_threshold='5'
 ## ⚡ Performance Configuration (`autonomy.performance`)
 
 ### Resource Limits
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `cpu_limit` | integer | `25` | CPU usage limit (percent) |
@@ -342,6 +368,7 @@ uci set autonomy.security.failed_login_threshold='5'
 | `max_goroutines` | integer | `100` | Maximum goroutines |
 
 ### Processing Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `parallel_processing` | boolean | `1` | Enable parallel processing |
@@ -359,6 +386,7 @@ uci set autonomy.performance.worker_threads='4'
 ## 💾 Cache Configuration (`autonomy.cache`)
 
 ### Cache Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `enabled` | boolean | `1` | Enable caching system |
@@ -368,6 +396,7 @@ uci set autonomy.performance.worker_threads='4'
 | `starlink_ttl` | integer | `300` | Starlink data cache TTL (seconds) |
 
 ### Advanced Caching
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `predictive_loading` | boolean | `1` | Enable predictive cache loading |
@@ -386,6 +415,7 @@ uci set autonomy.cache.max_size='100'
 ## 🔄 Failover Configuration (`autonomy.failover`)
 
 ### Decision Engine
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `performance_weight` | float | `0.3` | Performance score weight |
@@ -394,6 +424,7 @@ uci set autonomy.cache.max_size='100'
 | `reliability_weight` | float | `0.3` | Reliability history weight |
 
 ### Failover Behavior
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `immediate_switch` | boolean | `0` | Enable immediate switching |
@@ -412,6 +443,7 @@ uci set autonomy.failover.ping_validation='1'
 ## 🌍 External API Configuration (`autonomy.external_apis`)
 
 ### Space-Track API
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `space_track_enabled` | boolean | `0` | Enable Space-Track integration |
@@ -420,6 +452,7 @@ uci set autonomy.failover.ping_validation='1'
 | `space_track_cache_ttl` | integer | `86400` | Cache TTL (seconds) |
 
 ### OpenCellID API
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `opencellid_enabled` | boolean | `0` | Enable OpenCellID integration |
@@ -428,6 +461,7 @@ uci set autonomy.failover.ping_validation='1'
 | `opencellid_cache_ttl` | integer | `3600` | Cache TTL (seconds) |
 
 ### Google APIs
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `google_enabled` | boolean | `0` | Enable Google APIs |
@@ -445,6 +479,7 @@ uci set autonomy.external_apis.opencellid_api_key='your_key'
 ## 📝 Logging Configuration (`autonomy.logging`)
 
 ### Log Settings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `level` | string | `info` | Log level: `debug`, `info`, `warn`, `error` |
@@ -455,6 +490,7 @@ uci set autonomy.external_apis.opencellid_api_key='your_key'
 | `syslog` | boolean | `1` | Also log to syslog |
 
 ### Component Logging
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `starlink_debug` | boolean | `0` | Enable Starlink debug logging |
@@ -472,6 +508,7 @@ uci set autonomy.logging.max_size='10'
 ## 🛠️ Configuration Management
 
 ### Backup and Restore
+
 ```bash
 # Backup configuration
 uci export autonomy > /tmp/autonomy-backup.conf
@@ -485,6 +522,7 @@ autonomy-cli config reset
 ```
 
 ### Validation
+
 ```bash
 # Validate current configuration
 autonomy-cli config validate
@@ -497,6 +535,7 @@ autonomy-cli config diff
 ```
 
 ### Apply Changes
+
 ```bash
 # Commit configuration changes
 uci commit autonomy

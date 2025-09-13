@@ -16,25 +16,31 @@
 ### RUTOS-Specific Components We Depend On
 
 #### 1. **Cellular Management (`mobiled` service)**
-**RUTOS Has**: 
+
+**RUTOS Has**:
+
 ```bash
 ubus call mobiled signal      # Real-time signal data
 ubus call mobiled cell_info   # Cell tower information  
 ubus call mobiled operator    # Operator details
 ```
 
-**OpenWrt May Have**: 
+**OpenWrt May Have**:
+
 - Basic `qmi` tools
 - Manual AT command access
 - Limited cellular integration
 
-**Impact**: 
+**Impact**:
+
 - ❌ **Cellular monitoring** may be severely limited
 - ❌ **Signal quality analysis** may not work
 - ❌ **Automatic SIM switching** likely won't work
 
 #### 2. **GPS Services (`gpsctl`, `gsmctl`)**
+
 **RUTOS Has**:
+
 ```bash
 gpsctl -i                     # GPS information
 gsmctl -A AT+CGNSINF          # GPS via cellular modem
@@ -42,43 +48,53 @@ ubus call gps location        # GPS via ubus
 ```
 
 **OpenWrt May Have**:
+
 - `gpsd` daemon (if installed)
 - Manual GPS device access (`/dev/ttyUSB*`)
 - Limited GPS integration
 
 **Impact**:
+
 - ⚠️ **GPS functionality** may be limited to basic coordinates
 - ❌ **RUTOS GPS source** will not work
 - ⚠️ **Multi-source GPS fusion** may fall back to fewer sources
 
 #### 3. **Network Interface Management**
+
 **RUTOS Has**:
+
 - Enhanced `mwan3` integration
 - Teltonika-specific network naming
 - Custom network interface detection
 
 **OpenWrt Has**:
+
 - Standard `mwan3` package
 - Standard OpenWrt network naming
 - Basic network interface management
 
 **Impact**:
+
 - ⚠️ **Interface auto-discovery** may need manual configuration
 - ⚠️ **Network naming** may not match expectations
 - ✅ **Basic failover** should work with manual setup
 
 #### 4. **Web Interface (VuCI vs LuCI)**
+
 **RUTOS Has**:
+
 - VuCI (Vue.js-based interface)
 - Teltonika-specific styling
 - Custom package manager integration
 
 **OpenWrt Has**:
+
 - LuCI (Lua-based interface)  
 - Different styling and layout
 - Standard OpenWrt package management
 
 **Impact**:
+
 - ❌ **VuCI web interface** will not work
 - ❌ **Package manager integration** will not work
 - 🔧 **Alternative web interface** would need development
@@ -86,6 +102,7 @@ ubus call gps location        # GPS via ubus
 ## 🚨 **Features That May Not Work on OpenWrt**
 
 ### ❌ **Definitely Won't Work**
+
 1. **Enhanced Cellular Monitoring**
    - Relies on `ubus mobiled` service
    - RUTOS-specific signal quality APIs
@@ -107,6 +124,7 @@ ubus call gps location        # GPS via ubus
    - Enhanced mwan3 integration
 
 ### ⚠️ **Limited Functionality**
+
 1. **WiFi Optimization**
    - Basic optimization should work
    - RUTOS-specific enhancements may not work
@@ -126,6 +144,7 @@ ubus call gps location        # GPS via ubus
    - Advanced features may not work
 
 ### ✅ **Should Work**
+
 1. **Starlink Integration**
    - Direct gRPC API communication
    - Obstruction analysis
@@ -147,6 +166,7 @@ ubus call gps location        # GPS via ubus
 Before attempting to use Autonomy on OpenWrt, verify these components:
 
 ### Required Packages
+
 ```bash
 # Check if these packages are installed
 opkg list-installed | grep -E "mwan3|ubus|uci|curl|json"
@@ -157,6 +177,7 @@ opkg install mwan3 ubus uci libcurl4 libjson-c
 ```
 
 ### Required Services
+
 ```bash
 # Check if these services exist
 ubus list | grep -E "network|system"
@@ -169,6 +190,7 @@ ls /dev/tty* | grep -E "USB|GPS"
 ```
 
 ### Network Configuration
+
 ```bash
 # Verify mwan3 is configured
 uci show mwan3
@@ -180,6 +202,7 @@ uci show network
 ## 🔧 **Potential Workarounds**
 
 ### 1. **Cellular Monitoring Fallback**
+
 ```bash
 # Manual AT command access
 echo "AT+CSQ" > /dev/ttyUSB2
@@ -190,6 +213,7 @@ qmicli -d /dev/cdc-wdm0 --nas-get-signal-strength
 ```
 
 ### 2. **GPS Fallback**
+
 ```bash
 # Install gpsd
 opkg install gpsd
@@ -199,6 +223,7 @@ uci set autonomy.gps.sources='starlink,opencellid'
 ```
 
 ### 3. **Manual Interface Configuration**
+
 ```bash
 # Manually define interfaces instead of auto-discovery
 uci set autonomy.interfaces.auto_discovery='0'
@@ -209,6 +234,7 @@ uci set autonomy.interfaces.cellular_interface='wwan'
 ## 🧪 **Testing on OpenWrt**
 
 ### Minimal Test Configuration
+
 ```bash
 # Disable RUTOS-specific features
 uci set autonomy.cellular.enabled='0'          # Disable cellular monitoring
@@ -223,6 +249,7 @@ uci commit autonomy
 ```
 
 ### Test Basic Functionality
+
 ```bash
 # Test service startup
 /etc/init.d/autonomy start
@@ -237,18 +264,21 @@ logread | grep autonomy
 ## 📋 **OpenWrt Support Roadmap**
 
 ### Phase 1: Basic Compatibility (Future)
+
 - [ ] Replace `mobiled` calls with QMI/AT commands
 - [ ] Add gpsd integration for GPS
 - [ ] Improve interface auto-discovery for vanilla OpenWrt
 - [ ] Create OpenWrt-specific configuration templates
 
 ### Phase 2: Full OpenWrt Support (Future)
+
 - [ ] LuCI web interface (alternative to VuCI)
 - [ ] OpenWrt package manager integration
 - [ ] OpenWrt-specific documentation
 - [ ] Comprehensive testing on multiple OpenWrt versions
 
 ### Phase 3: Cross-Platform (Future)
+
 - [ ] Automatic platform detection
 - [ ] Runtime feature adaptation
 - [ ] Universal configuration system
@@ -307,17 +337,21 @@ echo "For basic failover on OpenWrt, disable cellular and GPS features."
 ## 📞 **Support and Feedback**
 
 ### Current Support Level
+
 - ✅ **RUTOS**: Full support and testing
 - ⚠️ **OpenWrt**: Community support only
 - 🔧 **Development**: Contributions welcome for OpenWrt compatibility
 
 ### Getting Help
+
 - **RUTOS Issues**: Full support via standard channels
 - **OpenWrt Issues**: Community support, contributions welcome
 - **Compatibility Reports**: Please report what works/doesn't work
 
 ### Contributing OpenWrt Support
+
 If you're interested in improving OpenWrt compatibility:
+
 1. Test current functionality and report results
 2. Identify specific missing components
 3. Contribute code for OpenWrt-specific adaptations

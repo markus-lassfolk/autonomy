@@ -11,6 +11,7 @@ This master plan synthesizes three comprehensive ML monitoring strategies for St
 ## Current System Analysis
 
 ### Existing Capabilities (Strengths)
+
 - **Rich Data Sources**: Weather integration, GPS services, Starlink gRPC API access
 - **Advanced Satellite Tracking**: Dynamic tracking with XOR analysis and trajectory correlation
 - **Comprehensive Weather Integration**: Multiple APIs with intelligent fallbacks
@@ -19,6 +20,7 @@ This master plan synthesizes three comprehensive ML monitoring strategies for St
 - **Obstruction Analysis**: k-NN pattern learning with environmental correlation
 
 ### Critical Gaps Identified
+
 - **Satellite ID Tracking**: No stable Starlink satellite identification
 - **TLE Integration**: Missing Two-Line Element data for satellite position prediction
 - **Sky Grid Mapping**: No azimuth×elevation obstruction heatmap
@@ -31,6 +33,7 @@ This master plan synthesizes three comprehensive ML monitoring strategies for St
 ### Phase 1: Foundation & Data Infrastructure (Weeks 1-6)
 
 #### 1.1 Enhanced Data Collection Pipeline
+
 ```c
 // Unified ML data structure
 typedef struct {
@@ -79,12 +82,14 @@ typedef struct {
 ```
 
 #### 1.2 TLE-Based Satellite Tracking Integration
+
 - **TLE Data Source**: Integrate with CelesTrak for Starlink satellite orbital data
 - **SGP4 Propagation**: Implement satellite position calculation using skyfield library
 - **Visibility Prediction**: Calculate satellite visibility from dish location
 - **Orbital Plane Tracking**: Monitor satellite constellation patterns
 
 #### 1.3 Real-time Data Fusion
+
 - **Collection Frequency**: Every 15 seconds (Starlink scheduling window)
 - **Storage**: SQLite with time-series optimization + InfluxDB for analytics
 - **Data Validation**: Cross-reference multiple sources for accuracy
@@ -93,6 +98,7 @@ typedef struct {
 ### Phase 2: Sky Grid & Obstruction Intelligence (Weeks 7-12)
 
 #### 2.1 Azimuth×Elevation Sky Grid
+
 ```c
 typedef struct {
     double azimuth;
@@ -107,6 +113,7 @@ typedef struct {
 ```
 
 #### 2.2 ML-Enhanced Obstruction Mapping
+
 - **Grid Resolution**: 2°×2° azimuth×elevation bins
 - **Evidence Accumulation**: Map Starlink wedge data to sky bins
 - **Temporal Decay**: Implement time-based evidence degradation
@@ -114,6 +121,7 @@ typedef struct {
 - **Predictive Mapping**: Forecast obstruction probability
 
 #### 2.3 Dynamic Obstruction Analysis
+
 - **Real-time Updates**: Continuous sky map refinement
 - **Pattern Recognition**: Identify recurring obstruction patterns
 - **Adaptive Learning**: Update maps based on new data
@@ -122,6 +130,7 @@ typedef struct {
 ### Phase 3: Satellite Reliability & Performance Tracking (Weeks 13-18)
 
 #### 3.1 Hierarchical Reliability System
+
 ```c
 typedef struct {
     char satellite_id[32];
@@ -140,6 +149,7 @@ typedef struct {
 ```
 
 #### 3.2 Multi-Level Reliability Tracking
+
 - **Satellite Level**: Individual satellite performance metrics
 - **Orbital Plane Level**: Plane-based reliability patterns
 - **Time-of-Day Patterns**: Temporal performance variations
@@ -147,6 +157,7 @@ typedef struct {
 - **Sky Cell Reliability**: Azimuth×elevation bin performance
 
 #### 3.3 Empirical-Bayes Reliability Scoring
+
 - **Shrinkage Estimation**: Prevent overfitting in sparse data
 - **Confidence Intervals**: Quantify reliability uncertainty
 - **Trend Analysis**: Track performance degradation over time
@@ -155,6 +166,7 @@ typedef struct {
 ### Phase 4: Intelligent Outage Classification (Weeks 19-24)
 
 #### 4.1 Multi-Class Outage Classification
+
 ```c
 typedef enum {
     OUTAGE_TYPE_OBSTRUCTION,       // Physical blockages
@@ -168,6 +180,7 @@ typedef enum {
 ```
 
 #### 4.2 Feature Engineering for Classification
+
 - **Weather Correlation**: High wind + outage = weather-related
 - **Obstruction Patterns**: Gradual vs sudden obstruction changes
 - **Satellite Performance**: Multiple satellites affected = network issue
@@ -176,6 +189,7 @@ typedef enum {
 - **Thermal Indicators**: Dish temperature and throttling events
 
 #### 4.3 ML Classification Models
+
 - **Decision Tree**: Interpretable rules for outage classification
 - **Random Forest**: Ensemble method for improved accuracy
 - **Gradient Boosting**: Advanced ensemble with feature importance
@@ -185,18 +199,21 @@ typedef enum {
 ### Phase 5: Predictive Analytics & Optimization (Weeks 25-30)
 
 #### 5.1 Early Warning System
+
 - **Outage Prediction**: 5-15 minute advance warning
 - **Risk Assessment**: Quantify outage probability and severity
 - **Mitigation Suggestions**: Recommend preventive actions
 - **Confidence Scoring**: Reliability of predictions
 
 #### 5.2 Performance Optimization
+
 - **Satellite Selection**: Choose most reliable satellites
 - **Antenna Positioning**: Optimize dish orientation
 - **Network Routing**: Select best ground station connections
 - **Load Balancing**: Distribute traffic across optimal paths
 
 #### 5.3 Continuous Learning Framework
+
 - **Feedback Loop**: Learn from prediction accuracy
 - **Model Updates**: Retrain models with new data
 - **Performance Monitoring**: Track ML system effectiveness
@@ -205,6 +222,7 @@ typedef enum {
 ## Technical Implementation Details
 
 ### Data Storage Architecture
+
 ```sql
 -- ML Data Collection Table
 CREATE TABLE ml_data_points (
@@ -254,6 +272,7 @@ CREATE TABLE sky_grid_obstruction (
 ```
 
 ### ML Model Integration
+
 ```c
 // ML Model Interface
 typedef struct {
@@ -304,6 +323,7 @@ int ml_predict_performance_trend(const ml_data_point_t *data, double *trend);
 ## Expected Outcomes & Benefits
 
 ### Short-term Benefits (Months 1-3)
+
 - **Comprehensive Data Collection**: Unified dataset for analysis
 - **Basic Classification**: Distinguish controllable vs uncontrollable outages
 - **Satellite Tracking**: Identify problematic satellites
@@ -311,6 +331,7 @@ int ml_predict_performance_trend(const ml_data_point_t *data, double *trend);
 - **Sky Grid Mapping**: Visual obstruction analysis
 
 ### Medium-term Benefits (Months 4-6)
+
 - **Predictive Capabilities**: Forecast outages 5-15 minutes ahead
 - **Optimized Performance**: Better satellite selection and positioning
 - **Reduced Outages**: Proactive mitigation of controllable issues
@@ -318,6 +339,7 @@ int ml_predict_performance_trend(const ml_data_point_t *data, double *trend);
 - **Intelligent Classification**: Automated root cause analysis
 
 ### Long-term Benefits (Months 7-12)
+
 - **Autonomous Operation**: Self-optimizing system
 - **Predictive Maintenance**: Anticipate equipment issues
 - **Performance Optimization**: Continuous improvement
@@ -327,6 +349,7 @@ int ml_predict_performance_trend(const ml_data_point_t *data, double *trend);
 ## Technical Requirements
 
 ### Dependencies
+
 - **ML Libraries**: TensorFlow Lite, scikit-learn, or custom C implementations
 - **Database**: SQLite with time-series extensions + InfluxDB
 - **Data Processing**: Real-time streaming analytics
@@ -334,6 +357,7 @@ int ml_predict_performance_trend(const ml_data_point_t *data, double *trend);
 - **TLE Processing**: skyfield Python library or C SGP4 implementation
 
 ### Performance Considerations
+
 - **Real-time Processing**: <100ms latency for predictions
 - **Data Storage**: Efficient time-series storage with compression
 - **Memory Usage**: Optimized for embedded systems
@@ -341,6 +365,7 @@ int ml_predict_performance_trend(const ml_data_point_t *data, double *trend);
 - **Network Bandwidth**: Efficient data transmission
 
 ### Security & Privacy
+
 - **Data Encryption**: Secure data transmission and storage
 - **Access Control**: Role-based permissions
 - **Privacy Protection**: Anonymize sensitive data
@@ -349,12 +374,14 @@ int ml_predict_performance_trend(const ml_data_point_t *data, double *trend);
 ## Risk Mitigation
 
 ### Technical Risks
+
 - **Model Accuracy**: Implement confidence scoring and human oversight
 - **Data Quality**: Robust validation and cleaning pipelines
 - **System Integration**: Gradual rollout with fallback mechanisms
 - **Performance Impact**: Optimize for minimal resource usage
 
 ### Operational Risks
+
 - **False Positives**: Tune models to minimize false alarms
 - **Model Drift**: Continuous monitoring and retraining
 - **Data Dependencies**: Multiple data source fallbacks
@@ -363,12 +390,14 @@ int ml_predict_performance_trend(const ml_data_point_t *data, double *trend);
 ## Success Metrics
 
 ### Technical Metrics
+
 - **Prediction Accuracy**: >85% for outage classification
 - **False Positive Rate**: <5% for outage predictions
 - **Response Time**: <100ms for real-time predictions
 - **System Uptime**: >99.5% availability
 
 ### Business Metrics
+
 - **Outage Reduction**: 30% decrease in controllable outages
 - **Mean Time to Resolution**: 50% improvement
 - **User Satisfaction**: Improved service reliability

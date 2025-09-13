@@ -1,6 +1,6 @@
 # 📊 Enhanced Cellular Monitoring & Scoring Formula
 
-**Comprehensive Analysis: Signal Strength + Connectivity + Stability = Perfect Failover**
+## Comprehensive Analysis: Signal Strength + Connectivity + Stability = Perfect Failover
 
 ## 🎯 **Overview**
 
@@ -15,6 +15,7 @@ Your question about including latency and drop rate monitoring alongside signal 
 ## 🚀 **Monitoring Methods & Data Sources**
 
 ### **1. Signal Strength Monitoring (35% of Score)**
+
 ```bash
 # RUTOS Native (Priority 1) - Same data as GUI signal graphs
 ubus -S call mobiled signal '{}'
@@ -28,12 +29,14 @@ echo -e 'AT+QCSQ\r' > /dev/ttyUSB2
 ```
 
 **Metrics Collected:**
+
 - **RSRP** (Reference Signal Received Power) - dBm
 - **RSRQ** (Reference Signal Received Quality) - dB  
 - **SINR** (Signal-to-Interference-plus-Noise Ratio) - dB
 - **Cell ID, Band, Network Type** - For handoff detection
 
 ### **2. Connectivity Monitoring (40% of Score)**
+
 ```bash
 # Method 1: mwan3 tracking data (when available)
 mwan3 status
@@ -48,6 +51,7 @@ ping -c 1 -W 3 -I mob1s1a1 8.8.8.8
 ```
 
 **Metrics Collected:**
+
 - **Latency** - Network round-trip time (ms)
 - **Packet Loss** - Percentage of failed probes (%)
 - **Jitter** - Latency variation (ms)
@@ -55,6 +59,7 @@ ping -c 1 -W 3 -I mob1s1a1 8.8.8.8
 - **Target Hosts** - Multiple targets for reliability
 
 ### **3. Stability Analysis (15% of Score)**
+
 ```bash
 # Rolling window analysis (10-minute default)
 # Signal variance calculation
@@ -63,11 +68,13 @@ ping -c 1 -W 3 -I mob1s1a1 8.8.8.8
 ```
 
 **Metrics Collected:**
+
 - **Signal Variance** - RSRP stability over time
 - **Cell Changes** - Handoff frequency per window
 - **Throughput** - Data transfer performance (Kbps)
 
 ### **4. Quality Factors (10% of Score)**
+
 - **Network Type** - 5G > LTE > 3G > 2G scoring
 - **Band Quality** - Frequency band performance characteristics
 - **Modem Health** - Hardware status indicators
@@ -75,7 +82,8 @@ ping -c 1 -W 3 -I mob1s1a1 8.8.8.8
 ## 📊 **Enhanced Scoring Formula**
 
 ### **Total Score Calculation**
-```
+
+```text
 Total Score = Signal Strength (35%) + Connectivity (40%) + Stability (15%) + Quality (10%) + Bonuses - Penalties
 
 Where:
@@ -88,6 +96,7 @@ Quality = Network Type(5%) + Band(3%) + Modem Health(2%)
 ### **Detailed Scoring Breakdown**
 
 #### **Signal Strength Component (35%)**
+
 | Metric | Weight | Excellent | Good | Fair | Poor | Unusable |
 |--------|--------|-----------|------|------|------|----------|
 | **RSRP** | 15% | ≥-80 dBm | ≥-90 dBm | ≥-100 dBm | ≥-110 dBm | <-120 dBm |
@@ -95,6 +104,7 @@ Quality = Network Type(5%) + Band(3%) + Modem Health(2%)
 | **SINR** | 10% | ≥20 dB | ≥10 dB | ≥5 dB | ≥0 dB | <-5 dB |
 
 #### **Connectivity Component (40%)**
+
 | Metric | Weight | Excellent | Good | Fair | Poor | Unusable |
 |--------|--------|-----------|------|------|------|----------|
 | **Latency** | 20% | ≤50 ms | ≤100 ms | ≤200 ms | ≤500 ms | >1000 ms |
@@ -102,6 +112,7 @@ Quality = Network Type(5%) + Band(3%) + Modem Health(2%)
 | **Jitter** | 5% | ≤5 ms | ≤15 ms | ≤30 ms | ≤60 ms | >120 ms |
 
 #### **Stability Component (15%)**
+
 | Metric | Weight | Excellent | Good | Fair | Poor | Critical |
 |--------|--------|-----------|------|------|------|----------|
 | **Variance** | 8% | ≤2 dB | ≤4 dB | ≤6 dB | ≤8 dB | >8 dB |
@@ -109,6 +120,7 @@ Quality = Network Type(5%) + Band(3%) + Modem Health(2%)
 | **Throughput** | 3% | ≥5 Mbps | ≥2 Mbps | ≥1 Mbps | ≥500 Kbps | <500 Kbps |
 
 #### **Quality Component (10%)**
+
 | Factor | Weight | Bonus/Score |
 |--------|--------|-------------|
 | **5G Network** | 5% | +15 points |
@@ -121,6 +133,7 @@ Quality = Network Type(5%) + Band(3%) + Modem Health(2%)
 ## 🔧 **Adaptive Monitoring Strategy**
 
 ### **Active vs Standby Interface Monitoring**
+
 ```go
 // Active interface (primary) - Full monitoring
 ProbeInterval: 5 seconds
@@ -134,6 +147,7 @@ ProbesPerCycle: 2
 ```
 
 ### **Health-Based Adaptive Intervals**
+
 ```go
 // Critical (Score < 30): Monitor every 1 second
 // Degraded (Score 30-65): Monitor every 3 seconds  
@@ -141,6 +155,7 @@ ProbesPerCycle: 2
 ```
 
 ### **mwan3 Integration Strategy**
+
 ```bash
 # Priority 1: Use mwan3 tracking data if available
 mwan3 status | grep "interface mob1s1a1"
@@ -155,6 +170,7 @@ mwan3 interfaces | grep -A 5 "mob1s1a1"
 ## 🎯 **Scoring Examples & Interpretations**
 
 ### **Excellent Connection (Score: 90-100)**
+
 ```json
 {
   "total_score": 95,
@@ -170,6 +186,7 @@ mwan3 interfaces | grep -A 5 "mob1s1a1"
 ```
 
 ### **Degraded Connection (Score: 60-75)**
+
 ```json
 {
   "total_score": 68,
@@ -185,6 +202,7 @@ mwan3 interfaces | grep -A 5 "mob1s1a1"
 ```
 
 ### **Critical Connection (Score: 0-30)**
+
 ```json
 {
   "total_score": 25,
@@ -208,26 +226,31 @@ mwan3 interfaces | grep -A 5 "mob1s1a1"
 Based on your question about what else to include in the formula, here are additional factors we could incorporate:
 
 ### **1. Environmental Factors**
+
 - **Time of Day** - Network congestion patterns
 - **Location Stability** - GPS-based location tracking
 - **Weather Conditions** - Impact on signal propagation (if available)
 
 ### **2. Historical Performance**
+
 - **Success Rate Trending** - 24-hour success rate history
 - **Performance Consistency** - Standard deviation of performance over time
 - **Recovery Speed** - How quickly connection recovers after issues
 
 ### **3. Data Usage Considerations**
+
 - **Metered Connection Penalties** - Reduce probing frequency
 - **Data Cap Proximity** - Factor in remaining data allowance
 - **Cost Per MB** - Economic factor in failover decisions
 
 ### **4. Application-Specific Factors**
+
 - **VoIP Quality** - Specific latency/jitter requirements for voice
 - **Video Streaming** - Bandwidth consistency requirements
 - **IoT/Sensor** - Reliability over performance requirements
 
 ### **5. Predictive Factors**
+
 - **Signal Trend Direction** - Improving vs degrading trends
 - **Failure Pattern Recognition** - Known problematic times/locations
 - **Seasonal Adjustments** - Historical performance by time of year
@@ -235,6 +258,7 @@ Based on your question about what else to include in the formula, here are addit
 ## 🔧 **Configuration Examples**
 
 ### **Balanced Configuration (Default)**
+
 ```json
 {
   "signal_weight": 0.35,
@@ -247,6 +271,7 @@ Based on your question about what else to include in the formula, here are addit
 ```
 
 ### **Latency-Sensitive Configuration (VoIP/Gaming)**
+
 ```json
 {
   "signal_weight": 0.25,
@@ -260,6 +285,7 @@ Based on your question about what else to include in the formula, here are addit
 ```
 
 ### **Reliability-Focused Configuration (IoT/Sensors)**
+
 ```json
 {
   "signal_weight": 0.30,
@@ -275,18 +301,21 @@ Based on your question about what else to include in the formula, here are addit
 ## 🎉 **Benefits of Enhanced Formula**
 
 ### **1. Comprehensive Coverage**
+
 - **Signal + Connectivity** - Both RF and network performance
 - **Active + Standby** - Continuous monitoring of all interfaces
 - **Multiple Methods** - mwan3, ICMP, TCP, UDP fallbacks
 - **Real-Time + Predictive** - Current status + failure prediction
 
 ### **2. Intelligent Adaptation**
+
 - **Interface-Aware** - Different strategies for active vs standby
 - **Health-Responsive** - Monitoring frequency adapts to performance
 - **Method-Flexible** - Multiple probe methods ensure data availability
 - **Context-Sensitive** - Considers network type, band, and conditions
 
 ### **3. Production-Ready Reliability**
+
 - **Fallback Strategies** - Multiple data collection methods
 - **Error Handling** - Graceful degradation when methods fail
 - **Resource Efficient** - Adaptive monitoring reduces unnecessary overhead
@@ -295,6 +324,7 @@ Based on your question about what else to include in the formula, here are addit
 ## 🔍 **Monitoring Commands**
 
 ### **Real-Time Enhanced Monitoring**
+
 ```bash
 # Comprehensive cellular status with all factors
 ubus call autonomy cellular_status | jq '
@@ -312,6 +342,7 @@ ubus call autonomy cellular_analysis '{"interface":"mob1s1a1"}' | jq '.assessmen
 ```
 
 ### **Trend Analysis**
+
 ```bash
 # Monitor scoring trends over time
 while true; do

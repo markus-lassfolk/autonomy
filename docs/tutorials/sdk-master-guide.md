@@ -1,3 +1,5 @@
+# MASTER GUIDE — Building RutOS (Teltonika) Packages & VuCI Apps (RUTX 7.17.1)
+
 Awesome — I pulled everything you shared together and produced a single, end-to-end guide. I saved it as:
 
 **[Download the MASTER GUIDE (Markdown)](sandbox:/mnt/data/RUTOS-MASTER-PACKAGING-GUIDE.md)**
@@ -7,20 +9,31 @@ Below is the full content inline as well, with citations to your uploaded notes.
 ---
 
 ````markdown
-# MASTER GUIDE — Building RutOS (Teltonika) Packages & VuCI Apps (RUTX 7.17.1)
 
-This guide consolidates our internal notes, quick sheets, and integration write-ups into a single, end-to-end reference for **building RutOS-compliant packages**, registering **UBUS/RPCD** APIs, and shipping **VuCI** web apps that appear and function correctly in the **Package Manager** and **WebUI**.
+This guide consolidates our internal notes, quick sheets, and integration write-ups into a
+single, end-to-end reference for **building RutOS-compliant packages**, registering
+**UBUS/RPCD** APIs, and shipping **VuCI** web apps that appear and function correctly in the
+**Package Manager** and **WebUI**.
 
-> Scope: RUTX family on RutOS **00.07.17.1**; adapt variables for other device lines (RUT9/TRBx) and versions.  
+> Scope: RUTX family on RutOS **00.07.17.1**; adapt variables for other device lines
+> (RUT9/TRBx) and versions.  
 > Audience: developers building packages and VuCI apps for production.
 
 ---
 
 ## 0) What’s different on RutOS vs “vanilla” OpenWrt
 
-- **IPK format is strict**: A valid IPK is an **ar** archive with `debian-binary`, `control.tar.gz`, `data.tar.gz` — and **must be gzip-compressed** for `opkg` to accept it (when crafting manually). :contentReference[oaicite:0]{index=0}  
-- **Install prefix reality**: Third-party/user packages end up under the **`/usr/local` overlay** at runtime (e.g., menus → `/usr/local/usr/share/vuci/menu.d`, APIs → `/usr/local/usr/lib/lua/api/services`). The SDK/Makefile installs to `/usr/...` paths, which get remapped via overlay. Plan your paths accordingly. :contentReference[oaicite:1]{index=1}  
-- **WebUI technology**: RutOS uses **VuCI** (Vue-based, LuCI-like). UI is shipped as **compiled, gzipped JS bundles** under `/www/assets/` with the naming `app.<name>.app-<version|hash>.js.gz`. Views must match menu `view` paths exactly (case-sensitive). :contentReference[oaicite:2]{index=2}
+- **IPK format is strict**: A valid IPK is an **ar** archive with `debian-binary`,
+  `control.tar.gz`, `data.tar.gz` — and **must be gzip-compressed** for `opkg` to accept it
+  (when crafting manually). :contentReference[oaicite:0]{index=0}  
+- **Install prefix reality**: Third-party/user packages end up under the **`/usr/local` overlay**
+  at runtime (e.g., menus → `/usr/local/usr/share/vuci/menu.d`, APIs →
+  `/usr/local/usr/lib/lua/api/services`). The SDK/Makefile installs to `/usr/...` paths, which
+  get remapped via overlay. Plan your paths accordingly. :contentReference[oaicite:1]{index=1}  
+- **WebUI technology**: RutOS uses **VuCI** (Vue-based, LuCI-like). UI is shipped as
+  **compiled, gzipped JS bundles** under `/www/assets/` with the naming
+  `app.<name>.app-<version|hash>.js.gz`. Views must match menu `view` paths exactly
+  (case-sensitive). :contentReference[oaicite:2]{index=2}
 
 ---
 
@@ -44,7 +57,7 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ````
 
-### 1.2 Obtain and initialize the SDK — **\[Host]**
+## 1.2 Obtain and initialize the SDK — **\[Host]**
 
 ```bash
 SDK_URL="https://firmware.teltonika-networks.com/7.17.1/RUTX/RUTX_R_GPL_00.07.17.1.tar.gz"
@@ -77,8 +90,6 @@ make -j"$(nproc)" tools/install
 make -j"$(nproc)" toolchain/install
 ```
 
-
-
 ---
 
 ## 2) Package Types & Anatomy
@@ -87,7 +98,7 @@ make -j"$(nproc)" toolchain/install
 
 Typical payload:
 
-```
+```text
 package/<section>/<name>/
 ├── Makefile
 └── files/
@@ -110,7 +121,7 @@ Key conventions on RutOS:
 
 **Real-world pattern (NTPD/UPNP):**
 
-```
+```text
 /usr/local/usr/lib/lua/api/services/ntpd.lua
 /usr/local/usr/share/rpcd/acl.d/upnp.json
 /usr/local/usr/share/vuci/menu.d/ntpd.json
@@ -121,7 +132,7 @@ Key conventions on RutOS:
 
 **⚠️ Understanding RutOS filesystem is ESSENTIAL to avoid path confusion!**
 
-```
+```text
 SDK Development Structure                    RutOS Runtime Structure
 =====================================        =====================================
 
@@ -202,6 +213,7 @@ To upload custom packages via WebUI:
   PKG_TLT_NAME:=My App
   PKG_VERSION_PM:=1.0
   ```
+
 * Custom (unsigned) packages will show as **Unauthorized** (expected).&#x20;
 
 > You can still install via CLI with `opkg install /tmp/<pkg>.ipk`. Newer RutOS limits upstream OpenWrt feeds; prefer local IPKs or Package Manager.&#x20;
@@ -236,8 +248,6 @@ ubus -v list <service>
 ubus call <service> status
 ubus call <service> set '{"enabled":true}'
 ```
-
-
 
 ---
 
@@ -276,9 +286,9 @@ Create `/usr/share/vuci/menu.d/<name>.json`:
 
 ### 6.1 API package (`vuci-app-example-api`) — **\[Host]**
 
-**Tree**
+#### Tree
 
-```
+```text
 vuci-app-example-api/
 ├── Makefile
 └── files/
@@ -286,9 +296,9 @@ vuci-app-example-api/
     └── usr/share/rpcd/acl.d/example.json
 ```
 
-**Makefile (core)**
+#### Makefile (core)
 
-```make
+```makefile
 include $(TOPDIR)/rules.mk
 PKG_NAME:=vuci-app-example-api
 PKG_VERSION:=1.0
@@ -301,10 +311,10 @@ define Package/vuci-app-example-api
   DEPENDS:=+lua +api-core
 endef
 define Package/vuci-app-example-api/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua/api/services
-	$(INSTALL_DATA) ./files/usr/lib/lua/api/services/example.lua $(1)/usr/lib/lua/api/services/
-	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
-	$(INSTALL_DATA) ./files/usr/share/rpcd/acl.d/example.json $(1)/usr/share/rpcd/acl.d/
+ $(INSTALL_DIR) $(1)/usr/lib/lua/api/services
+ $(INSTALL_DATA) ./files/usr/lib/lua/api/services/example.lua $(1)/usr/lib/lua/api/services/
+ $(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
+ $(INSTALL_DATA) ./files/usr/share/rpcd/acl.d/example.json $(1)/usr/share/rpcd/acl.d/
 endef
 $(eval $(call BuildPackage,vuci-app-example-api))
 ```
@@ -335,13 +345,11 @@ return M
 }
 ```
 
-
-
 ### 6.2 UI package (`vuci-app-example-ui`) — **\[Host]**
 
-**Tree**
+#### SDK UI - Tree
 
-```
+```text
 vuci-app-example-ui/
 ├── Makefile
 ├── files/
@@ -351,9 +359,9 @@ vuci-app-example-ui/
     └── src/views/services/Example.vue
 ```
 
-**Makefile (core)**
+#### SDK UI - Makefile (core)
 
-```make
+```makefile
 include $(TOPDIR)/rules.mk
 PKG_NAME:=vuci-app-example-ui
 PKG_VERSION:=1.0
@@ -366,10 +374,10 @@ define Package/vuci-app-example-ui
   DEPENDS:=+vuci-app-example-api +vuci-ui-core
 endef
 define Package/vuci-app-example-ui/install
-	$(INSTALL_DIR) $(1)/usr/share/vuci/menu.d
-	$(INSTALL_DATA) ./files/usr/share/vuci/menu.d/example.json $(1)/usr/share/vuci/menu.d/
-	$(INSTALL_DIR) $(1)/www/assets
-	$(INSTALL_DATA) ./files/www/assets/app.example.app-1.0-9.js.gz $(1)/www/assets/
+ $(INSTALL_DIR) $(1)/usr/share/vuci/menu.d
+ $(INSTALL_DATA) ./files/usr/share/vuci/menu.d/example.json $(1)/usr/share/vuci/menu.d/
+ $(INSTALL_DIR) $(1)/www/assets
+ $(INSTALL_DATA) ./files/www/assets/app.example.app-1.0-9.js.gz $(1)/www/assets/
 endef
 $(eval $(call BuildPackage,vuci-app-example-ui))
 ```
@@ -379,8 +387,6 @@ $(eval $(call BuildPackage,vuci-app-example-ui))
 ```json
 { "services/example": { "title":"Example", "index":500, "view":"services/Example", "acls":["services/example"] } }
 ```
-
-
 
 ---
 
@@ -460,7 +466,9 @@ For a multi-package, production-style integration (daemon + API + UI + deploy), 
 
 ## 10) Calling UBUS from LuCI/VuCI
 
-If you need raw LuCI (JS) or examples of browser → rpcd → ubus → service, see our bridge guide; it shows: rpcd plugin in `/usr/libexec/rpcd/`, ACLs in `/usr/share/rpcd/acl.d/`, and a LuCI page that calls into your service. VuCI follows the same RPCD/UBUS authorization model.&#x20;
+If you need raw LuCI (JS) or examples of browser → rpcd → ubus → service, see our bridge
+guide; it shows: rpcd plugin in `/usr/libexec/rpcd/`, ACLs in `/usr/share/rpcd/acl.d/`, and a
+LuCI page that calls into your service. VuCI follows the same RPCD/UBUS authorization model.&#x20;
 
 ---
 
@@ -522,20 +530,18 @@ define Build/Compile
 endef
 
 define Package/mytool/install
-	$(INSTALL_DIR) $(1)/bin
-	$(INSTALL_BIN) ./files/bin/mytool.sh $(1)/bin/
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/etc/init.d/mytool $(1)/etc/init.d/mytool
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/etc/config/mytool $(1)/etc/config/mytool
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_CONF) ./files/etc/uci-defaults/99-mytool $(1)/etc/uci-defaults/99-mytool
+ $(INSTALL_DIR) $(1)/bin
+ $(INSTALL_BIN) ./files/bin/mytool.sh $(1)/bin/
+ $(INSTALL_DIR) $(1)/etc/init.d
+ $(INSTALL_BIN) ./files/etc/init.d/mytool $(1)/etc/init.d/mytool
+ $(INSTALL_DIR) $(1)/etc/config
+ $(INSTALL_CONF) ./files/etc/config/mytool $(1)/etc/config/mytool
+ $(INSTALL_DIR) $(1)/etc/uci-defaults
+ $(INSTALL_CONF) ./files/etc/uci-defaults/99-mytool $(1)/etc/uci-defaults/99-mytool
 endef
 
 $(eval $(call BuildPackage,mytool))
 ```
-
-
 
 ### 14.2 rpcd executable plugin (backend)
 
@@ -554,8 +560,6 @@ case "$1" in
 esac
 ```
 
-
-
 ### 14.3 rpcd ACL (backend authorization)
 
 ```json
@@ -567,8 +571,6 @@ esac
   }
 }
 ```
-
-
 
 ### 14.4 VuCI menu JSON (UI registration)
 
@@ -582,8 +584,6 @@ esac
   }
 }
 ```
-
-
 
 ---
 
@@ -608,10 +608,10 @@ esac
 * LuCI ↔ RPCD bridge guide.&#x20;
 * SDK Integration (Autonomy) blueprint.&#x20;
 
-```
+```text
 
 ---
 
-Want me to drop this straight into your repo as `RUTOS-MASTER-PACKAGING-GUIDE.md` (and optionally break out a “Quick Start” 2-pager for newcomers)?
+Want me to drop this straight into your repo as `RUTOS-MASTER-PACKAGING-GUIDE.md` (and optionally break out a "Quick Start" 2-pager for newcomers)?
 ::contentReference[oaicite:64]{index=64}
-```
+```text

@@ -2,11 +2,15 @@
 
 ## Executive Summary
 
-This document analyzes the RUTX50's SIM switching capabilities, both built-in RUTOS features and potential custom implementations using the autonomy-daemon codebase. The analysis covers automatic SIM switching based on data limits, roaming detection, and geo-positioning.
+This document analyzes the RUTX50's SIM switching capabilities, both built-in RUTOS
+features and potential custom implementations using the autonomy-daemon codebase. The
+analysis covers automatic SIM switching based on data limits, roaming detection, and
+geo-positioning.
 
 ## RUTOS Built-in SIM Switching Capabilities
 
 ### ✅ **Data Limit-Based SIM Switching**
+
 RUTOS **already includes** automatic SIM switching based on data limits:
 
 - **Location**: Network → Mobile → SIM Switch in web interface
@@ -15,6 +19,7 @@ RUTOS **already includes** automatic SIM switching based on data limits:
 - **Status**: ✅ **Available and Ready to Use**
 
 ### ✅ **Roaming-Based SIM Switching**
+
 RUTOS **already includes** automatic SIM switching when roaming is detected:
 
 - **Location**: Network → Mobile → SIM Switch in web interface  
@@ -23,6 +28,7 @@ RUTOS **already includes** automatic SIM switching when roaming is detected:
 - **Status**: ✅ **Available and Ready to Use**
 
 ### ❌ **Geo-Position-Based SIM Switching**
+
 RUTOS **does NOT natively support** SIM switching based on geographic location:
 
 - **Status**: ❌ **Not Available in RUTOS**
@@ -36,6 +42,7 @@ RUTOS **does NOT natively support** SIM switching based on geographic location:
 The codebase already has comprehensive cellular monitoring capabilities:
 
 #### 1. **Cellular Data Collection** (`cellular_collector.c`)
+
 - **Multi-method collection**: UBUS, gsmctl, AT commands
 - **Signal metrics**: RSRP, RSRQ, SINR, RSSI
 - **Network info**: Operator, band, cell ID, roaming status
@@ -43,18 +50,21 @@ The codebase already has comprehensive cellular monitoring capabilities:
 - **Quality scoring**: Signal quality, stability, predictive risk
 
 #### 2. **Data Usage Monitoring** (`metered_manager.c`)
+
 - **Real-time usage tracking**: Interface statistics from `/proc/net/dev`
 - **Database persistence**: SQLite storage for historical data
 - **Threshold monitoring**: Warning, critical, and hard limits
 - **Roaming detection**: Via UBUS GSM service integration
 
 #### 3. **GPS Integration** (`gps_rutos.c`)
+
 - **RUTOS GPS integration**: Direct access to router's GPS data
 - **Location services**: Latitude, longitude, accuracy, satellites
 - **Real-time monitoring**: Continuous GPS data collection
 - **Multiple sources**: RUTOS, Starlink, external GPS support
 
 #### 4. **Network Failover System** (`network_failover.c`)
+
 - **Interface management**: Multi-interface failover capabilities
 - **Health monitoring**: Continuous interface health assessment
 - **Automatic switching**: Configurable failover triggers
@@ -79,6 +89,7 @@ typedef struct {
 ### 1. **Leverage Existing RUTOS Features** (Immediate)
 
 **For Data Limits and Roaming:**
+
 - ✅ **Use RUTOS built-in features** - no custom code needed
 - Configure via web interface: Network → Mobile → SIM Switch
 - Enable "On data limit" and "On roaming" options
@@ -88,7 +99,8 @@ typedef struct {
 
 #### **Implementation Approach:**
 
-**A. Extend Cellular Collector**
+#### A. Extend Cellular Collector
+
 ```c
 // Add to cellular_collector.h
 typedef struct {
@@ -100,7 +112,8 @@ typedef struct {
 } geo_switching_config_t;
 ```
 
-**B. Create SIM Switching Manager**
+#### B. Create SIM Switching Manager
+
 ```c
 // New file: sim_switching_manager.c
 typedef struct {
@@ -114,6 +127,7 @@ typedef struct {
 ```
 
 **C. Integration Points:**
+
 1. **GPS Integration**: Use existing `gps_rutos.c` for location data
 2. **Cellular Monitoring**: Extend `cellular_collector.c` for SIM status
 3. **Network Management**: Integrate with `network_failover.c` for interface switching
@@ -122,6 +136,7 @@ typedef struct {
 #### **Implementation Steps:**
 
 1. **Create SIM Switching Module**
+
    ```c
    // sim_switching_manager.c
    int sim_switching_init(void);
@@ -131,6 +146,7 @@ typedef struct {
    ```
 
 2. **Extend GPS Integration**
+
    ```c
    // Add to gps_rutos.c
    int gps_rutos_get_current_location(gps_location_t* location);
@@ -138,6 +154,7 @@ typedef struct {
    ```
 
 3. **Add UBUS Commands**
+
    ```c
    // Add SIM switching UBUS methods
    int autonomy_sim_switch_geo(struct ubus_context *uctx, struct ubus_object *obj, ...);
@@ -145,6 +162,7 @@ typedef struct {
    ```
 
 4. **Configuration Integration**
+
    ```c
    // Add to autonomy.config
    sim_switching_enabled=true
@@ -157,12 +175,14 @@ typedef struct {
 ### 3. **Enhanced Features** (Future Development)
 
 #### **A. Smart SIM Selection**
+
 - **Cost-based switching**: Switch to cheaper SIM in specific regions
 - **Coverage optimization**: Choose SIM with best signal in area
 - **Time-based rules**: Different SIMs for different times of day
 - **Load balancing**: Distribute usage across multiple SIMs
 
 #### **B. Advanced Monitoring**
+
 - **SIM health tracking**: Monitor individual SIM performance
 - **Usage analytics**: Track usage patterns per SIM
 - **Predictive switching**: Anticipate needs based on location patterns
@@ -240,22 +260,26 @@ roaming_sim=2
 ## Conclusion and Recommendations
 
 ### **Immediate Actions (No Development Required):**
+
 1. ✅ **Enable RUTOS built-in SIM switching** for data limits and roaming
 2. ✅ **Configure thresholds** appropriate for your use case
 3. ✅ **Test existing functionality** before considering custom development
 
 ### **Custom Development (If Geo-Position Switching Needed):**
+
 1. **Assess requirements**: Determine if geo-position switching is truly necessary
 2. **Leverage existing code**: Build upon cellular_collector, gps_rutos, and network_failover
 3. **Implement incrementally**: Start with basic geo-switching, add advanced features later
 4. **Consider alternatives**: Evaluate if time-based or manual switching meets needs
 
 ### **Development Effort Estimate:**
+
 - **Basic geo-position switching**: 2-3 weeks
 - **Advanced features**: 4-6 weeks  
 - **Testing and integration**: 1-2 weeks
 
 ### **Risk Assessment:**
+
 - **Low risk**: Using existing RUTOS features
 - **Medium risk**: Custom geo-position implementation
 - **Mitigation**: Thorough testing, fallback mechanisms, gradual rollout

@@ -14,6 +14,7 @@ snprintf(cmd, sizeof(cmd), "echo 'AT+CSQ' | microcom -t 1000 /dev/ttyUSB2 2>/dev
 ```
 
 This approach has several issues:
+
 - Device paths can change between reboots
 - Different hardware configurations use different device paths
 - No way to handle multiple cellular modems
@@ -56,6 +57,7 @@ The system automatically detects cellular device paths by:
    - `/dev/ttyS0`, `/dev/ttyS1`, `/dev/ttyS2`, `/dev/ttyS3`
 
 2. **AT Command Verification**: Sends AT commands to verify the device is a cellular modem:
+
    ```bash
    echo 'AT' | timeout 2 microcom -t 1000 /dev/ttyUSB2 2>/dev/null | grep -q 'OK'
    ```
@@ -67,27 +69,35 @@ The system automatically detects cellular device paths by:
 ### 3. Helper Functions
 
 #### `get_dynamic_cellular_device_path()`
+
 ```c
 int get_dynamic_cellular_device_path(char *device_path, size_t path_size);
 ```
+
 Gets the device path for the first available cellular interface.
 
 #### `execute_at_command_dynamic()`
+
 ```c
 int execute_at_command_dynamic(const char *at_command, char *response, size_t response_size);
 ```
+
 Executes AT commands using the dynamically detected device path.
 
 #### `get_signal_strength_dynamic()`
+
 ```c
 int get_signal_strength_dynamic(int *rssi, int *ber);
 ```
+
 Gets signal strength using dynamic device detection.
 
 #### `get_operator_info_dynamic()`
+
 ```c
 int get_operator_info_dynamic(char *operator_name, size_t name_size);
 ```
+
 Gets operator information using dynamic device detection.
 
 ## Usage Examples
@@ -179,6 +189,7 @@ ubus call autonomy.network interfaces_detailed
 ```
 
 Example response:
+
 ```json
 {
     "interfaces": [
@@ -215,18 +226,21 @@ The system automatically detects device paths without requiring configuration. H
 ## Troubleshooting
 
 ### Device Not Found
+
 - Check if modem is properly connected and initialized
 - Verify device permissions (`ls -la /dev/ttyUSB*`)
 - Check UCI network configuration
 - Review system logs for detection errors
 
 ### AT Commands Failing
+
 - Verify modem is responding to AT commands
 - Check if `microcom` or `gsmctl` is available
 - Ensure proper device permissions
 - Test with manual AT commands
 
 ### Multiple Modems
+
 - The system will use the first detected cellular interface
 - Use the UBUS API to see all detected interfaces
 - Configure specific interfaces via UCI if needed

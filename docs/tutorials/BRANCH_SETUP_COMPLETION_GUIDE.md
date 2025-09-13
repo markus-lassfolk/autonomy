@@ -3,6 +3,7 @@
 ## 🎯 **Current Status**
 
 ✅ **Completed:**
+
 - Branch organization script has run successfully
 - Files have been organized between `main` and `main-dev` branches
 - All changes have been committed locally
@@ -20,6 +21,7 @@
    - Copy the token (you'll only see it once!)
 
 2. **Push main-dev branch:**
+
    ```bash
    wsl git push origin main-dev
    # When prompted for username: your-github-username
@@ -27,6 +29,7 @@
    ```
 
 3. **Switch to main branch and push:**
+
    ```bash
    wsl git checkout main
    wsl git push origin main
@@ -36,6 +39,7 @@
 ### **Option B: Using GitHub CLI (Alternative)**
 
 1. **Install GitHub CLI if not already installed:**
+
    ```bash
    # On Windows with winget
    winget install GitHub.cli
@@ -44,12 +48,14 @@
    ```
 
 2. **Authenticate with GitHub:**
+
    ```bash
    gh auth login
    # Follow the interactive prompts
    ```
 
 3. **Push both branches:**
+
    ```bash
    wsl git push origin main-dev
    wsl git checkout main
@@ -115,6 +121,7 @@
 ### **Manual Test**
 
 1. **Make a small change to infrastructure files on main-dev:**
+
    ```bash
    wsl git checkout main-dev
    echo "# Test infrastructure change" >> docs/BRANCH_SETUP_COMPLETION_GUIDE.md
@@ -129,6 +136,7 @@
    - The workflow should have created this automatically
 
 3. **Test project file changes:**
+
    ```bash
    wsl git checkout main
    echo "// Test project change" >> pkg/types.go
@@ -145,6 +153,7 @@
 ### **Check Branch Contents**
 
 1. **Verify main branch (infrastructure):**
+
    ```bash
    wsl git checkout main
    wsl ls -la
@@ -153,6 +162,7 @@
    ```
 
 2. **Verify main-dev branch (project code):**
+
    ```bash
    wsl git checkout main-dev
    wsl ls -la
@@ -195,14 +205,17 @@ You'll know everything is working when:
 ## 🚨 **Troubleshooting**
 
 ### **Push Issues**
+
 - **Authentication failed**: Use personal access token instead of password
 - **Permission denied**: Check repository permissions and branch protection rules
 
 ### **Sync Workflow Issues**
+
 - **PR not created**: Check workflow permissions and repository variables
 - **Auto-merge failed**: Verify branch protection rules allow auto-merge
 
 ### **Branch Protection Issues**
+
 - **Can't push**: Ensure you have proper permissions or use PR workflow
 - **Status checks failing**: Check that required workflows are passing
 

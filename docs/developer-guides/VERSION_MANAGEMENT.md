@@ -9,7 +9,9 @@ The Autonomy project uses a centralized version management system that ensures a
 ## Files Involved
 
 ### 1. `VERSION` (Root Configuration)
+
 The main version configuration file that contains all version information:
+
 ```bash
 AUTONOMY_VERSION_MAJOR=1
 AUTONOMY_VERSION_MINOR=0
@@ -21,7 +23,9 @@ AUTONOMY_VERSION_FULL=1.0.0-1
 ```
 
 ### 2. `src/c/shared/autonomy_version.h` (C Header)
+
 C header file that defines version macros for use in C code:
+
 ```c
 #define AUTONOMY_VERSION_MAJOR    1
 #define AUTONOMY_VERSION_MINOR    0
@@ -32,7 +36,9 @@ C header file that defines version macros for use in C code:
 ```
 
 ### 3. Makefiles (Package Configuration)
+
 All package Makefiles include the VERSION file and use the centralized version:
+
 ```makefile
 include $(CURDIR)/../VERSION
 PKG_VERSION:=$(AUTONOMY_VERSION)
@@ -46,11 +52,13 @@ The `tools/update_version.py` script provides an easy way to update versions acr
 ### Usage Examples
 
 #### Show Current Version
+
 ```bash
 python tools/update_version.py --show
 ```
 
 #### Update Version
+
 ```bash
 # Update to a new version
 python tools/update_version.py 1.1.0
@@ -68,6 +76,7 @@ python tools/update_version.py 1.2.0 --commit --tag --message "Release 1.2.0"
 ### Version Format
 
 The script supports these version formats:
+
 - `1.0.0` - Standard semantic version
 - `1.0.0-1` - Version with build number
 - `1.0.0.1` - Alternative format with extra number
@@ -77,7 +86,9 @@ The script supports these version formats:
 If you need to update versions manually:
 
 ### 1. Update VERSION file
+
 Edit the `VERSION` file in the project root:
+
 ```bash
 AUTONOMY_VERSION_MAJOR=1
 AUTONOMY_VERSION_MINOR=1
@@ -88,7 +99,9 @@ AUTONOMY_VERSION_FULL=1.1.0-1
 ```
 
 ### 2. Update C header
+
 Edit `src/c/shared/autonomy_version.h`:
+
 ```c
 #define AUTONOMY_VERSION_MAJOR    1
 #define AUTONOMY_VERSION_MINOR    1
@@ -101,7 +114,9 @@ Edit `src/c/shared/autonomy_version.h`:
 ## Using Versions in Code
 
 ### C Code
+
 Include the version header and use the macros:
+
 ```c
 #include "autonomy_version.h"
 
@@ -123,7 +138,9 @@ printf("Version: %s\n", version->version_string);
 ```
 
 ### Makefiles
+
 Use the version variables from the VERSION file:
+
 ```makefile
 include $(CURDIR)/../VERSION
 
@@ -152,19 +169,25 @@ The system ensures that these components stay synchronized:
 ## Troubleshooting
 
 ### Version Mismatch
+
 If you see different versions in different places:
+
 1. Run `python tools/update_version.py --show` to check current state
 2. Use the script to update to the desired version
 3. Verify all components show the same version
 
 ### Build Issues
+
 If the build system doesn't pick up version changes:
+
 1. Check that Makefiles include the VERSION file correctly
 2. Verify the VERSION file syntax is correct
 3. Clean and rebuild the packages
 
 ### C Code Issues
+
 If C code doesn't see version updates:
+
 1. Check that `autonomy_version.h` is included
 2. Verify the header file was updated correctly
 3. Rebuild the C code
@@ -172,6 +195,7 @@ If C code doesn't see version updates:
 ## Examples
 
 ### Release Workflow
+
 ```bash
 # 1. Update version for release
 python tools/update_version.py 1.2.0 --commit --tag --message "Release 1.2.0"
@@ -184,6 +208,7 @@ opkg info autonomy-daemon
 ```
 
 ### Development Workflow
+
 ```bash
 # 1. Update version for development build
 python tools/update_version.py 1.2.0 --build 2

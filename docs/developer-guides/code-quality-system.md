@@ -518,6 +518,7 @@ golangci-lint run --verbose
 ## 📞 Support
 
 For issues and support:
+
 - Check logs: `golangci-lint run --verbose`
 - Documentation: `/usr/share/doc/autonomy/code-quality.md`
 - Configuration: `.golangci.yml`

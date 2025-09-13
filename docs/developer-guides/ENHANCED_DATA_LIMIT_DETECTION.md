@@ -7,18 +7,21 @@ Our enhanced data limit detection system leverages native RUTOS capabilities for
 ## 🎯 Key Improvements Over Basic Approaches
 
 ### **1. Native RUTOS Integration**
+
 - **Primary Method**: Uses native `ubus data_limit` service when available
 - **Automatic Discovery**: Discovers data limit ubus objects dynamically
 - **Real-time Updates**: Gets live usage data directly from RUTOS
 - **Period-Aware**: Properly handles daily/weekly/monthly reset cycles
 
 ### **2. Intelligent Fallback System**
+
 - **UCI Configuration**: Reads data limit config via `ubus uci get`
 - **Runtime Statistics**: Combines config with live interface statistics
 - **Cross-Platform**: Works on any OpenWrt/RUTOS system
 - **Graceful Degradation**: Falls back seamlessly when native service unavailable
 
 ### **3. Enhanced Data Tracking**
+
 - **Precise Reset Tracking**: Uses `clear_due` timestamps for accurate period resets
 - **SMS Warning Integration**: Detects and reports SMS warning status
 - **Multiple Periods**: Supports daily, weekly, monthly, and custom periods
@@ -29,6 +32,7 @@ Our enhanced data limit detection system leverages native RUTOS capabilities for
 ### **Core Components**
 
 #### **1. EnhancedRutosDataLimitDetector**
+
 ```go
 type EnhancedRutosDataLimitDetector struct {
     logger         *logx.Logger
@@ -39,6 +43,7 @@ type EnhancedRutosDataLimitDetector struct {
 ```
 
 #### **2. RutosDataLimitRule Structure**
+
 ```go
 type RutosDataLimitRule struct {
     Ifname       string    `json:"ifname"`       // e.g., mob1s1a1, mob1s2a1
@@ -55,6 +60,7 @@ type RutosDataLimitRule struct {
 ### **Detection Methods**
 
 #### **Method 1: Native RUTOS ubus Service (Preferred)**
+
 ```bash
 # Auto-discover data limit service
 DL_OBJ="$(ubus list | grep -E '(^|\.)(data_?limit)$' | head -n1)"
@@ -64,6 +70,7 @@ ubus -S call "$DL_OBJ" status '{}'
 ```
 
 **Response Format:**
+
 ```json
 {
   "rules": [
@@ -81,6 +88,7 @@ ubus -S call "$DL_OBJ" status '{}'
 ```
 
 #### **Method 2: UCI + Runtime Statistics Fallback**
+
 ```bash
 # Get data limit configuration
 ubus -S call uci get '{"config":"data_limit"}'
@@ -90,6 +98,7 @@ ubus -S call network.interface.mob1s1a1 status
 ```
 
 **Combined Processing:**
+
 - Extracts configured limits from UCI
 - Gets current usage from interface statistics  
 - Calculates usage percentages
@@ -109,6 +118,7 @@ The system integrates with our existing adaptive monitoring to provide **data-aw
 | >95% | **Disabled** | None | None | None |
 
 ### **Smart Failover Logic**
+
 - **Adaptive Monitoring**: Higher usage = reduced monitoring frequency
 - **Automatic Exclusion**: Interfaces over limit excluded from monitoring (and thus failover)
 - **Hysteresis**: Prevents rapid switching near thresholds via monitoring mode changes
@@ -119,11 +129,13 @@ The system integrates with our existing adaptive monitoring to provide **data-aw
 ### **New API Endpoints**
 
 #### **1. Data Limit Status**
+
 ```bash
 ubus call autonomy data_limit_status
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -156,11 +168,13 @@ ubus call autonomy data_limit_status
 ```
 
 #### **2. Interface-Specific Data Limit**
+
 ```bash
 ubus call autonomy data_limit_interface '{"interface":"mob1s1a1"}'
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -183,6 +197,7 @@ ubus call autonomy data_limit_interface '{"interface":"mob1s1a1"}'
 ## 🔍 Monitoring Commands
 
 ### **Basic Status Check**
+
 ```bash
 # Overall system status (includes data limits in metered section)
 ubus call autonomy status
@@ -192,6 +207,7 @@ ubus call autonomy data_limit_status
 ```
 
 ### **Interface-Specific Monitoring**
+
 ```bash
 # Check specific interface
 ubus call autonomy data_limit_interface '{"interface":"mob1s1a1"}'
@@ -199,6 +215,7 @@ ubus call autonomy data_limit_interface '{"interface":"mob1s2a1"}'
 ```
 
 ### **Log Monitoring**
+
 ```bash
 # Monitor data usage events
 logread | grep "data_usage_percent\|monitoring.*mode\|data_limit"
@@ -210,6 +227,7 @@ logread | grep "adaptive.*monitoring\|metered.*mode"
 ## 📈 Status Indicators
 
 ### **Status Levels**
+
 - **🟢 ok**: Usage < 75%
 - **🟡 warning**: Usage 75-90%  
 - **🔴 critical**: Usage 90-100%
@@ -217,6 +235,7 @@ logread | grep "adaptive.*monitoring\|metered.*mode"
 - **⏸️ disabled**: Data limits disabled
 
 ### **Automatic Actions by Status**
+
 - **ok**: Full monitoring and failover eligibility
 - **warning**: Reduced monitoring frequency, still eligible
 - **critical**: Minimal monitoring, lower failover priority
@@ -226,24 +245,28 @@ logread | grep "adaptive.*monitoring\|metered.*mode"
 ## 🎯 Benefits Over Standard Approaches
 
 ### **1. Reliability**
+
 - ✅ **Native Integration**: Uses RUTOS's own data limit service
 - ✅ **Automatic Discovery**: Finds available services dynamically
 - ✅ **Graceful Fallback**: Works even when native service unavailable
 - ✅ **Error Recovery**: Handles service failures gracefully
 
 ### **2. Accuracy**
+
 - ✅ **Real-time Data**: Live usage from RUTOS statistics
 - ✅ **Period Awareness**: Proper reset cycle handling
 - ✅ **Precise Calculations**: Accurate usage percentages
 - ✅ **Hysteresis**: Prevents threshold oscillation
 
 ### **3. Performance**
+
 - ✅ **Efficient Queries**: Single ubus calls for comprehensive data
 - ✅ **Caching**: Reduces redundant API calls
 - ✅ **Adaptive Monitoring**: Reduces data usage when approaching limits
 - ✅ **Smart Scheduling**: Optimized polling frequencies
 
 ### **4. Integration**
+
 - ✅ **Failover Awareness**: Data usage affects failover decisions
 - ✅ **Client Signaling**: Notifies devices of metered status
 - ✅ **Comprehensive Logging**: Detailed usage tracking
@@ -252,6 +275,7 @@ logread | grep "adaptive.*monitoring\|metered.*mode"
 ## 🚀 Future Enhancements
 
 ### **Potential Additions**
+
 1. **Predictive Usage**: ML-based usage forecasting
 2. **Cost Tracking**: Integration with carrier billing APIs
 3. **Usage Alerts**: Proactive notifications before limits
@@ -261,12 +285,14 @@ logread | grep "adaptive.*monitoring\|metered.*mode"
 ## 🔧 Configuration Examples
 
 ### **Enable Enhanced Data Limit Detection**
+
 ```bash
 # The system automatically uses enhanced detection when available
 # No additional configuration required - it's enabled by default
 ```
 
 ### **Monitor System Behavior**
+
 ```bash
 # Watch data limit status in real-time
 watch -n 5 'ubus call autonomy data_limit_status | jq .summary'
@@ -276,6 +302,7 @@ watch -n 10 'ubus call autonomy data_limit_interface "{\"interface\":\"mob1s1a1\
 ```
 
 ### **Integration Testing**
+
 ```bash
 # Test native RUTOS detection
 ubus list | grep -E '(^|\.)(data_?limit)$'

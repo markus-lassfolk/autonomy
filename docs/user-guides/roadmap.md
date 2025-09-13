@@ -1,5 +1,6 @@
 # autonomy PROJECT ROADMAP
-**Implementation Roadmap and Future Development Plans**
+
+## Implementation Roadmap and Future Development Plans
 
 > This file contains the detailed roadmap for autonomy development.
 > For current status, see `STATUS.md`.
@@ -20,10 +21,12 @@
 ## 🚀 DEVELOPMENT PHASES
 
 ### **Phase 1: Core Infrastructure** ✅ **COMPLETED**
+
 **Status**: 100% Complete
 **Timeline**: Completed August 2025
 
 **Objectives**:
+
 - [x] Establish Go project structure and module setup
 - [x] Implement core types and interfaces
 - [x] Create structured logging framework
@@ -34,6 +37,7 @@
 - [x] Set up ubus service integration
 
 **Key Achievements**:
+
 - Complete Go structure with proper package organization
 - Comprehensive data types for all planned features
 - Advanced structured JSON logging framework
@@ -44,10 +48,12 @@
 ---
 
 ### **Phase 2: Data Collection & Integration** ✅ **COMPLETED**
+
 **Status**: 100% Complete
 **Timeline**: Completed August 2025
 
 **Objectives**:
+
 - [x] Implement Starlink collector with native gRPC
 - [x] Develop cellular collector with multi-SIM support
 - [x] Create WiFi collector with advanced metrics
@@ -57,6 +63,7 @@
 - [x] Add OpenCellID cellular geolocation support
 
 **Key Achievements**:
+
 - Native Go gRPC client for Starlink API with protobuf parsing
 - Enhanced cellular monitoring with RSRP/RSRQ/SINR metrics
 - Advanced WiFi analysis with RSSI-weighted scoring
@@ -67,10 +74,12 @@
 ---
 
 ### **Phase 3: Decision Engine & Control** ✅ **COMPLETED**
+
 **Status**: 100% Complete
 **Timeline**: Completed August 2025
 
 **Objectives**:
+
 - [x] Implement scoring and predictive logic
 - [x] Create decision engine with hysteresis
 - [x] Build controller for mwan3/netifd integration
@@ -80,6 +89,7 @@
 - [x] Create system management integration
 
 **Key Achievements**:
+
 - Advanced scoring system with instant/EWMA/final calculations
 - Predictive failover with trend analysis and pattern detection
 - Complete mwan3 integration with policy management
@@ -91,10 +101,12 @@
 ---
 
 ### **Phase 4: Advanced Features** ✅ **COMPLETED**
+
 **Status**: 100% Complete
 **Timeline**: Completed August 2025
 
 **Objectives**:
+
 - [x] Implement enhanced WiFi optimization
 - [x] Create enhanced data limit detection
 - [x] Build advanced notification systems
@@ -104,6 +116,7 @@
 - [x] Implement performance profiler
 
 **Key Achievements**:
+
 - Enhanced WiFi optimization with 5-star rating system
 - RUTOS-native data limit detection with complete ubus API
 - Multi-channel notification system (Pushover, Email, Slack, Discord, Telegram, Webhook, SMS)
@@ -115,10 +128,12 @@
 ---
 
 ### **Phase 5: Production Deployment** ✅ **COMPLETED**
+
 **Status**: 100% Complete
 **Timeline**: Completed August 2025
 
 **Objectives**:
+
 - [x] Deploy to real hardware (RUTX50)
 - [x] Test with actual Starlink dish
 - [x] Validate mwan3 integration
@@ -128,6 +143,7 @@
 - [x] Complete documentation
 
 **Key Achievements**:
+
 - Successfully deployed on RUTX50 with real Starlink
 - Verified complete failover functionality
 - Confirmed mwan3 policy management working
@@ -140,10 +156,12 @@
 ## 🔮 FUTURE ROADMAP
 
 ### **Phase 6: User Interface & Monitoring** 🎯 **NEXT PRIORITY**
+
 **Status**: 0% Complete
 **Timeline**: Q4 2025
 
 **Objectives**:
+
 - [ ] Implement LuCI interface for OpenWrt
 - [ ] Create Vuci interface for RutOS
 - [ ] Build web-based monitoring dashboard
@@ -153,6 +171,7 @@
 - [ ] Add alert management interface
 
 **Success Criteria**:
+
 - Web UI accessible via router admin interface
 - Real-time status monitoring with visual indicators
 - Configuration management without CLI
@@ -162,10 +181,12 @@
 ---
 
 ### **Phase 7: Advanced Analytics & ML** 🎯 **MEDIUM PRIORITY**
+
 **Status**: 0% Complete
 **Timeline**: Q1 2026
 
 **Objectives**:
+
 - [ ] Implement machine learning for pattern recognition
 - [ ] Create predictive failure analysis
 - [ ] Build capacity planning recommendations
@@ -175,6 +196,7 @@
 - [ ] Implement automated threshold tuning
 
 **Success Criteria**:
+
 - ML-based failure prediction with >90% accuracy
 - Automated threshold optimization
 - Performance trend analysis and recommendations
@@ -184,10 +206,12 @@
 ---
 
 ### **Phase 8: Enterprise Features** 🎯 **LONG-TERM**
+
 **Status**: 0% Complete
 **Timeline**: Q2-Q3 2026
 
 **Objectives**:
+
 - [ ] Multi-site coordination and management
 - [ ] Centralized configuration management
 - [ ] Fleet-wide analytics and reporting
@@ -197,6 +221,7 @@
 - [ ] Container deployment support
 
 **Success Criteria**:
+
 - Centralized management of multiple routers
 - Fleet-wide monitoring and analytics
 - Advanced security with role-based access
@@ -206,10 +231,12 @@
 ---
 
 ### **Phase 9: Cloud Integration** 🎯 **FUTURE VISION**
+
 **Status**: 0% Complete
 **Timeline**: 2027
 
 **Objectives**:
+
 - [ ] AWS IoT Core integration
 - [ ] Azure IoT Hub integration
 - [ ] Google Cloud IoT integration
@@ -219,6 +246,7 @@
 - [ ] Global failover coordination
 
 **Success Criteria**:
+
 - Seamless cloud integration for monitoring
 - Cloud-based ML model training and deployment
 - Global failover coordination across sites
@@ -229,6 +257,7 @@
 ## 📋 DETAILED IMPLEMENTATION ROADMAP
 
 ### **Immediate Priorities (Next 2 weeks)**
+
 1. **Performance Optimization**
    - Fine-tune memory usage and CPU efficiency
    - Optimize telemetry storage and cleanup
@@ -248,6 +277,7 @@
    - Create deployment guides
 
 ### **Short-term Goals (Next 2 months)**
+
 1. **LuCI/Vuci Interface Development**
    - Design and implement web UI
    - Create configuration management interface
@@ -267,6 +297,7 @@
    - Validate edge cases
 
 ### **Medium-term Goals (Next 6 months)**
+
 1. **Machine Learning Integration**
    - Implement pattern recognition algorithms
    - Create predictive failure analysis
@@ -286,6 +317,7 @@
    - Resource optimization
 
 ### **Long-term Vision (Next 12 months)**
+
 1. **Cloud Integration**
    - AWS/Azure/GCP integration
    - Cloud-based ML training
@@ -309,6 +341,7 @@
 ## 🎯 SUCCESS CRITERIA
 
 ### **Phase 6 Success Criteria (UI & Monitoring)**
+
 - [ ] Web UI accessible via router admin interface
 - [ ] Real-time status monitoring with visual indicators
 - [ ] Configuration management without CLI
@@ -318,6 +351,7 @@
 - [ ] Accessibility compliance
 
 ### **Phase 7 Success Criteria (Analytics & ML)**
+
 - [ ] ML-based failure prediction with >90% accuracy
 - [ ] Automated threshold optimization
 - [ ] Performance trend analysis and recommendations
@@ -327,6 +361,7 @@
 - [ ] Automated decision optimization
 
 ### **Phase 8 Success Criteria (Enterprise)**
+
 - [ ] Centralized management of multiple routers
 - [ ] Fleet-wide monitoring and analytics
 - [ ] Advanced security with role-based access
@@ -336,6 +371,7 @@
 - [ ] API rate limiting and quotas
 
 ### **Phase 9 Success Criteria (Cloud)**
+
 - [ ] Seamless cloud integration for monitoring
 - [ ] Cloud-based ML model training and deployment
 - [ ] Global failover coordination across sites
@@ -349,6 +385,7 @@
 ## 📊 PERFORMANCE TARGETS
 
 ### **Current Performance (Achieved)**
+
 - **Binary Size**: ≤12 MB stripped ✅
 - **Memory Usage**: ≤25 MB RSS ✅ (22.3MB achieved)
 - **CPU Usage**: ≤5% on low-end ARM ✅
@@ -357,6 +394,7 @@
 - **Decision Time**: <1 second ✅
 
 ### **Future Performance Targets**
+
 - **UI Response Time**: <2 seconds
 - **ML Prediction Time**: <500ms
 - **Cloud Sync Time**: <30 seconds
@@ -368,6 +406,7 @@
 ## 🔧 TECHNICAL DEBT & IMPROVEMENTS
 
 ### **Immediate Improvements**
+
 1. **UCI Integration**
    - Replace exec calls with native library
    - Improve error handling and validation
@@ -387,6 +426,7 @@
    - Update deployment documentation
 
 ### **Medium-term Improvements**
+
 1. **Architecture Refinements**
    - Implement dependency injection
    - Add plugin architecture
@@ -410,6 +450,7 @@
 ## 🚀 INNOVATION OPPORTUNITIES
 
 ### **Emerging Technologies**
+
 1. **Edge Computing**
    - Local ML inference
    - Edge-to-edge coordination
@@ -429,6 +470,7 @@
    - Smart routing
 
 ### **Research Areas**
+
 1. **Advanced ML Algorithms**
    - Reinforcement learning for failover optimization
    - Deep learning for pattern recognition

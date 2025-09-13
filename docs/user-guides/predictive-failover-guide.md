@@ -11,24 +11,28 @@ The Autonomy predictive failover system extends beyond reactive monitoring to pr
 ## 🚀 Key Features
 
 ### 1. **Predictive Reboot Monitoring**
+
 - **Real-time countdown calculation** from scheduled Starlink reboots
 - **Multiple detection methods**: Software updates, reboot requirements, scheduled maintenance
 - **Configurable warning windows**: 1-10 minutes advance notice
 - **Intelligent timing**: Prevents unnecessary early failovers
 
 ### 2. **Obstruction Prediction**
+
 - **Pattern recognition**: ML-based obstruction pattern learning
 - **Trend analysis**: Predictive obstruction detection
 - **Movement detection**: GPS-based movement correlation
 - **Weather integration**: External weather data correlation
 
 ### 3. **Cellular Signal Prediction**
+
 - **Signal degradation tracking**: Monitor signal quality trends
 - **Handoff prediction**: Anticipate cellular network handoffs
 - **Roaming detection**: Predict roaming status changes
 - **Data usage forecasting**: Predict data limit approaches
 
 ### 4. **Location-Based Intelligence**
+
 - **Geographic failover**: Location-aware decision making
 - **Movement-based optimization**: Adapt to mobile scenarios
 - **Coverage prediction**: Predict coverage gaps
@@ -50,6 +54,7 @@ type StarlinkPredictiveData struct {
 ```
 
 **Immediate Failover Triggers:**
+
 1. **`swupdateRebootReady = true`** - Software update ready for reboot
 2. **`softwareUpdateState = "REBOOT_REQUIRED"`** - System requires reboot
 3. **Scheduled reboot within warning window** - Predictive failover
@@ -241,18 +246,21 @@ type PredictiveMetrics struct {
 ## 📈 Business Value
 
 ### **Service Continuity**
+
 - **Minimizes downtime** during planned maintenance windows
 - **Proactive failover** before service interruption occurs
 - **Intelligent timing** prevents unnecessary early failovers
 - **Location awareness** optimizes for mobile scenarios
 
 ### **Operational Efficiency**
+
 - **Automated decision-making** reduces manual intervention
 - **Configurable thresholds** adapt to operational requirements
 - **Comprehensive monitoring** provides full system visibility
 - **ML-based learning** improves accuracy over time
 
 ### **Cost Optimization**
+
 - **Reduced data usage** through intelligent failover timing
 - **Battery optimization** for mobile deployments
 - **Resource efficiency** through predictive resource allocation
@@ -322,6 +330,7 @@ var (
 ## 📞 Support
 
 For issues and support:
+
 - Check logs: `journalctl -u autonomy | grep predictive`
 - Metrics: `autonomyctl predictive metrics`
 - Configuration: `uci show autonomy.predictive`

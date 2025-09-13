@@ -5,32 +5,39 @@ Complete API documentation for the Autonomy system and its components.
 ## 📋 Configuration & Integration
 
 ### [Configuration Reference](configuration-reference.md)
+
 Complete UCI configuration reference with all available settings and options.
 
 ### [External APIs](external-apis.md)  
+
 Complete guide to all external API integrations, signup processes, and configuration.
 
 ## 📡 Starlink APIs
 
 ### [Starlink API Reference](starlink-api.md)
+
 Complete documentation of the Starlink gRPC API integration, including:
+
 - Dish status and diagnostics
 - Obstruction mapping and analysis
 - GPS location services
 - Real-time connectivity monitoring
 
 ### [Starlink API Analysis](STARLINK_API_ANALYSIS.md)
+
 Detailed analysis of Starlink API capabilities and data structures.
 
 ## 🤖 Autonomy System APIs
 
 ### Core System APIs
+
 - **Status API**: System health and interface status
 - **Control API**: Manual failover and configuration
 - **Monitoring API**: Real-time metrics and telemetry
 - **Configuration API**: UCI integration and settings management
 
 ### Network Interface APIs
+
 - **Cellular API**: RSRP, RSRQ, SINR monitoring
 - **WiFi API**: Channel analysis and optimization
 - **GPS API**: Multi-source location services
@@ -39,6 +46,7 @@ Detailed analysis of Starlink API capabilities and data structures.
 ## 🔗 Integration APIs
 
 ### UBUS Integration
+
 All APIs are accessible via UBUS for system integration:
 
 ```bash
@@ -56,11 +64,13 @@ ubus call gps location
 ```
 
 ### RPCD Integration
+
 Web UI integration via JSON-RPC calls to rpcd daemon.
 
 ## 📊 Data Formats
 
 ### Standard Response Format
+
 ```json
 {
   "success": true,
@@ -71,6 +81,7 @@ Web UI integration via JSON-RPC calls to rpcd daemon.
 ```
 
 ### Error Response Format
+
 ```json
 {
   "success": false,
@@ -84,7 +95,8 @@ Web UI integration via JSON-RPC calls to rpcd daemon.
 
 ## 🔧 API Authentication
 
-Most APIs use UBUS authentication. External APIs (Space-Track, OpenCellID) require separate credentials configured in the system.
+Most APIs use UBUS authentication. External APIs (Space-Track, OpenCellID) require
+separate credentials configured in the system.
 
 ## 📈 Rate Limiting
 

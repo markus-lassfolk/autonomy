@@ -22,6 +22,7 @@ source ~/.bashrc
 **URL:** `http://172.26.83.101`
 
 The LuCI-style web interface provides:
+
 - System overview with real-time status
 - Autonomy system management
 - Network interface monitoring
@@ -160,23 +161,27 @@ go test ./...
 ### Common Issues
 
 1. **WSL not starting**
+
    ```bash
    wsl --shutdown
    wsl -d openwrt-test
    ```
 
 2. **Environment not loaded**
+
    ```bash
    source ~/.bashrc
    ```
 
 3. **Web interface not accessible**
+
    ```bash
    sudo systemctl status nginx
    sudo systemctl restart nginx
    ```
 
 4. **Mock commands not working**
+
    ```bash
    chmod +x ~/autonomy/bin/*
    export PATH=/home/markus/autonomy/bin:$PATH

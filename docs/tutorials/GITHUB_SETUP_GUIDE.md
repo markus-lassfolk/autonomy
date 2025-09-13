@@ -16,7 +16,7 @@ Your verification script found these issues that need immediate attention:
 
 **This is the most important step - without this, no workflows will run!**
 
-1. Go to your repository: https://github.com/markus-lassfolk/autonomy
+1. Go to your repository: <https://github.com/markus-lassfolk/autonomy>
 2. Click **"Settings"** (top menu bar)
 3. Click **"Actions"** in the left sidebar → **"General"**
 4. Under **"Actions permissions"**, select:
@@ -29,7 +29,7 @@ Your verification script found these issues that need immediate attention:
 ### **Step 2: Add Missing AUTONOMY_GH_TOKEN Secret**
 
 1. **Create Personal Access Token:**
-   - Go to: https://github.com/settings/tokens
+   - Go to: <https://github.com/settings/tokens>
    - Click **"Generate new token"** → **"Generate new token (classic)"**
    - Set **Name**: "Autonomy Workflows"
    - Set **Expiration**: 90 days (or "No expiration" for convenience)
@@ -42,10 +42,10 @@ Your verification script found these issues that need immediate attention:
    - Click **"Generate token"** and **copy the token**
 
 2. **Add Token as Secret:**
-   - Go to: https://github.com/markus-lassfolk/autonomy/settings/secrets/actions
+   - Go to: <https://github.com/markus-lassfolk/autonomy/settings/secrets/actions>
    - Click **"New repository secret"**
-       - **Name**: `AUTONOMY_GH_TOKEN`
-    - **Value**: [paste your token]
+   - **Name**: `AUTONOMY_GH_TOKEN`
+   - **Value**: [paste your token]
    - Click **"Add secret"**
 
 ### **Step 3: Verify Configuration**
@@ -124,11 +124,11 @@ gh workflow run "webhook-receiver.yml" --field test_payload='{"device_id":"test"
 
 ### Monitor Workflow Runs
 
-Check all workflow runs at: https://github.com/markus-lassfolk/autonomy/actions
+Check all workflow runs at: <https://github.com/markus-lassfolk/autonomy/actions>
 
 ## 🔍 **Troubleshooting**
 
-### If workflows still fail after setup:
+### If workflows still fail after setup
 
 1. **Check workflow permissions:**
    - Repository Settings → Actions → General
@@ -141,7 +141,7 @@ Check all workflow runs at: https://github.com/markus-lassfolk/autonomy/actions
 3. **Check for specific error messages:**
    - Go to Actions tab → Click on failed workflow → View logs
 
-### Common Issues:
+### Common Issues
 
 - **"Resource not accessible by integration"** → Check workflow permissions
 - **"Bad credentials"** → Regenerate AUTONOMY_GH_TOKEN with correct scopes

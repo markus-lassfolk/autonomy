@@ -1,6 +1,6 @@
 # 📶 Enhanced Cellular Stability Monitoring System
 
-**Complete Technical Guide & Implementation Details**
+## Complete Technical Guide & Implementation Details
 
 ## 🎯 **Overview**
 
@@ -9,24 +9,28 @@ The Enhanced Cellular Stability Monitoring System provides world-class cellular 
 ## 🚀 **Key Features**
 
 ### **🔍 Advanced Signal Analysis**
+
 - **RUTOS-Native Integration** - Uses built-in `ubus mobiled` service when available
 - **Multi-Fallback Collection** - QMI, AT commands, and sysfs fallbacks for maximum compatibility  
 - **Real-Time Monitoring** - Continuous 5-second sampling with 10-minute rolling windows
 - **Comprehensive Metrics** - RSRP, RSRQ, SINR, throughput, cell changes, and variance analysis
 
 ### **📊 Intelligent Stability Scoring**
+
 - **0-100 Stability Score** - Combines signal level (60%) and stability (40%) metrics
 - **Predictive Risk Assessment** - 0-1 risk score for impending failures
 - **Hysteresis Protection** - Prevents flapping with configurable good/bad windows
 - **Multi-Factor Analysis** - Signal degradation, variance alarms, and cell change detection
 
 ### **⚡ Predictive Failover**
+
 - **Proactive Decision Making** - Fails over before users notice degradation
 - **Trend Analysis** - Linear regression on recent signal samples
 - **Combined Risk Scoring** - Weighted combination of stability, predictive risk, and signal degradation
 - **Configurable Thresholds** - Fully customizable for different environments
 
 ### **🔧 Complete ubus API Integration**
+
 - **Real-Time Status** - `ubus call autonomy cellular_status`
 - **Detailed Analysis** - `ubus call autonomy cellular_analysis`
 - **Historical Data** - Configurable time windows from 1-60 minutes
@@ -37,6 +41,7 @@ The Enhanced Cellular Stability Monitoring System provides world-class cellular 
 ### **Core Components**
 
 #### **1. Enhanced Cellular Stability Collector** (`pkg/collector/enhanced_cellular_stability.go`)
+
 ```go
 type CellularStabilityCollector struct {
     logger        *logx.Logger
@@ -47,12 +52,14 @@ type CellularStabilityCollector struct {
 ```
 
 **Key Responsibilities:**
+
 - Collects signal data via multiple methods (ubus mobiled, QMI, AT commands)
 - Maintains rolling ring buffer of cellular samples
 - Calculates real-time stability scores and status
 - Provides predictive risk assessment
 
 #### **2. Predictive Analysis Engine** (`pkg/decision/cellular_predictive.go`)
+
 ```go
 type CellularPredictiveAnalyzer struct {
     logger *logx.Logger
@@ -61,12 +68,14 @@ type CellularPredictiveAnalyzer struct {
 ```
 
 **Key Responsibilities:**
+
 - Analyzes signal trends and degradation patterns
 - Provides failover recommendations based on combined risk factors
 - Detects variance alarms and cell change patterns
 - Calculates confidence scores for predictions
 
 #### **3. ubus Monitoring API** (`pkg/ubus/cellular_monitoring.go`)
+
 ```go
 type CellularMonitoringAPI struct {
     stabilityCollector *collector.CellularStabilityCollector
@@ -76,6 +85,7 @@ type CellularMonitoringAPI struct {
 ```
 
 **Key Responsibilities:**
+
 - Exposes cellular monitoring via ubus commands
 - Provides statistical analysis and trend detection
 - Generates actionable recommendations
@@ -84,6 +94,7 @@ type CellularMonitoringAPI struct {
 ## 🔧 **Configuration**
 
 ### **Stability Monitoring Configuration**
+
 ```go
 type CellularStabilityConfig struct {
     WindowDurationMinutes       int     // 10 - Rolling window size
@@ -103,6 +114,7 @@ type CellularStabilityConfig struct {
 ```
 
 ### **Predictive Analysis Configuration**
+
 ```go
 type CellularPredictiveConfig struct {
     HealthyStabilityScore             int     // 75 - Healthy score threshold
@@ -124,6 +136,7 @@ type CellularPredictiveConfig struct {
 ## 🔌 **Data Collection Methods**
 
 ### **1. RUTOS Native (Priority 1)**
+
 ```bash
 # Signal information
 ubus -S call mobiled signal '{}'
@@ -133,23 +146,27 @@ ubus -S call mobiled cell_info '{}'
 ```
 
 **Advantages:**
+
 - Uses same data as RUTOS GUI
 - Most reliable and consistent
 - Provides comprehensive cell information
 - Native integration with RUTOS ecosystem
 
 ### **2. QMI Fallback (Priority 2)**
+
 ```bash
 # Signal information via QMI
 uqmi -d /dev/cdc-wdm0 --get-signal-info
 ```
 
 **Advantages:**
+
 - Direct modem communication
 - Works when ubus services unavailable
 - Provides detailed signal metrics
 
 ### **3. AT Commands (Priority 3)**
+
 ```bash
 # Quectel modem example
 echo -e 'AT+QCSQ\r' > /dev/ttyUSB2
@@ -158,17 +175,20 @@ timeout 2 cat /dev/ttyUSB2
 ```
 
 **Advantages:**
+
 - Universal modem support
 - Works with any AT-compatible modem
 - Provides basic signal information
 
 ### **4. Throughput Calculation**
+
 ```bash
 # Interface statistics
 ubus -S call network.interface.mob1s1a1 status | jq .statistics
 ```
 
 **Calculation:**
+
 ```go
 timeDiff := currentSample.Timestamp.Sub(previousSample.Timestamp)
 bytesDiff := (currentRX + currentTX) - (previousRX + previousTX)
@@ -178,6 +198,7 @@ throughputKbps := float64(bytesDiff*8) / (timeDiff.Seconds() * 1000)
 ## 📊 **Stability Scoring Algorithm**
 
 ### **Level Score Calculation (60% Weight)**
+
 ```go
 func calculateLevelScore(samples []CellularSample) float64 {
     rsrpScore := mapToScore(avgRSRP, -130, -60)  // dBm range
@@ -189,6 +210,7 @@ func calculateLevelScore(samples []CellularSample) float64 {
 ```
 
 ### **Stability Score Calculation (40% Weight)**
+
 ```go
 func calculateStabilityScore(samples []CellularSample) float64 {
     variancePenalty := stddev(RSRP) / varianceThreshold
@@ -201,11 +223,13 @@ func calculateStabilityScore(samples []CellularSample) float64 {
 ```
 
 ### **Final Score Combination**
+
 ```go
 finalScore := 0.6*levelScore + 0.4*stabilityScore
 ```
 
 ### **Status Determination**
+
 - **🟢 Healthy** (75-100): Stable signal, good performance
 - **🟡 Degraded** (50-74): Monitoring recommended, potential issues
 - **🔴 Unhealthy** (25-49): Action required, prepare failover
@@ -216,6 +240,7 @@ finalScore := 0.6*levelScore + 0.4*stabilityScore
 ### **Risk Assessment Components**
 
 #### **1. Signal Degradation (30% Weight)**
+
 ```go
 func calculateSignalDegradation(metrics *Metrics) float64 {
     rsrpDegradation := max(0, (rsrp + 100.0) / degradationThreshold)
@@ -227,11 +252,13 @@ func calculateSignalDegradation(metrics *Metrics) float64 {
 ```
 
 #### **2. Stability Score (40% Weight)**
+
 ```go
 stabilityRisk := (100 - stabilityScore) / 100.0
 ```
 
 #### **3. Predictive Risk (30% Weight)**
+
 ```go
 func calculatePredictiveRisk(samples []CellularSample) float64 {
     rsrpTrend := calculateTrend(samples, extractRSRP)
@@ -245,6 +272,7 @@ func calculatePredictiveRisk(samples []CellularSample) float64 {
 ```
 
 ### **Combined Risk Score**
+
 ```go
 combinedRisk := 0.4*stabilityRisk + 0.3*predictiveRisk + 0.3*signalDegradation
 
@@ -260,6 +288,7 @@ if combinedRisk > 0.8 {
 ```
 
 ### **Recommendation Actions**
+
 - **none** - Normal operation, no action needed
 - **monitor** - Increased monitoring, potential issues detected
 - **prepare_failover** - High risk detected, prepare for failover
@@ -272,6 +301,7 @@ if combinedRisk > 0.8 {
 **Description:** Returns comprehensive cellular status for all interfaces
 
 **Response Format:**
+
 ```json
 {
   "timestamp": "2025-01-20T14:30:00Z",
@@ -321,10 +351,12 @@ if combinedRisk > 0.8 {
 **Description:** Returns detailed analysis for a specific cellular interface
 
 **Parameters:**
+
 - `interface` (required): Interface name (e.g., "mob1s1a1")
 - `window_minutes` (optional): Analysis window in minutes (1-60, default: 10)
 
 **Response Format:**
+
 ```json
 {
   "interface": "mob1s1a1",
@@ -420,6 +452,7 @@ if combinedRisk > 0.8 {
 ## 📈 **Monitoring Commands**
 
 ### **Real-Time Monitoring**
+
 ```bash
 # Monitor all cellular interfaces
 watch -n 5 "ubus call autonomy cellular_status | jq '.summary'"
@@ -429,6 +462,7 @@ watch -n 2 "ubus call autonomy cellular_analysis '{\"interface\":\"mob1s1a1\",\"
 ```
 
 ### **Signal Strength Tracking**
+
 ```bash
 # Track RSRP over time
 while true; do
@@ -438,6 +472,7 @@ done
 ```
 
 ### **Predictive Risk Monitoring**
+
 ```bash
 # Alert on high predictive risk
 ubus call autonomy cellular_status | jq -r '
@@ -446,6 +481,7 @@ ubus call autonomy cellular_status | jq -r '
 ```
 
 ### **Stability Score History**
+
 ```bash
 # Log stability scores
 echo "$(date),$(ubus call autonomy cellular_status | jq -r '.cellular.mob1s1a1.stability_score')" >> /tmp/cellular_stability.csv
@@ -454,6 +490,7 @@ echo "$(date),$(ubus call autonomy cellular_status | jq -r '.cellular.mob1s1a1.s
 ## 🔄 **Integration with Failover System**
 
 ### **Decision Engine Integration**
+
 The cellular stability monitoring system integrates seamlessly with the main failover decision engine:
 
 ```go
@@ -472,6 +509,7 @@ if stabilityMetrics := cellularCollector.GetStabilityStatus(member.Iface); stabi
 ```
 
 ### **Adaptive Monitoring Integration**
+
 Stability scores affect monitoring frequency:
 
 ```go
@@ -484,6 +522,7 @@ if stabilityScore < 75 {
 ```
 
 ### **Metered Mode Considerations**
+
 The system respects metered mode settings:
 
 ```go
@@ -498,16 +537,19 @@ if member.IsMetered {
 ## 🏆 **Performance & Benefits**
 
 ### **Accuracy Improvements**
+
 - **3x Better Prediction** - Combines multiple signal metrics vs single RSRP monitoring
 - **Reduced False Positives** - Hysteresis and multi-factor analysis prevent unnecessary failovers
 - **Proactive Detection** - Identifies issues 30-60 seconds before traditional methods
 
 ### **System Efficiency**
+
 - **Low Resource Usage** - Ring buffer keeps memory usage under 5MB per interface
 - **Optimized Sampling** - Configurable intervals balance accuracy with resource usage
 - **Smart Fallbacks** - Multiple collection methods ensure data availability
 
 ### **Operational Benefits**
+
 - **Reduced Downtime** - Proactive failover prevents service interruptions
 - **Better User Experience** - Seamless transitions with minimal impact
 - **Comprehensive Visibility** - Detailed analytics for troubleshooting and optimization
@@ -517,6 +559,7 @@ if member.IsMetered {
 ### **Common Issues**
 
 #### **1. No Cellular Data Available**
+
 ```bash
 # Check if mobiled service is running
 ubus list | grep mobiled
@@ -529,6 +572,7 @@ uqmi -d /dev/cdc-wdm0 --get-signal-info
 ```
 
 #### **2. High Predictive Risk False Alarms**
+
 ```bash
 # Check variance threshold configuration
 ubus call autonomy cellular_analysis '{"interface":"mob1s1a1"}' | jq '.statistics.rsrp.std_dev'
@@ -538,6 +582,7 @@ ubus call autonomy cellular_analysis '{"interface":"mob1s1a1"}' | jq '.statistic
 ```
 
 #### **3. Frequent Cell Changes**
+
 ```bash
 # Monitor cell changes over time
 ubus call autonomy cellular_analysis '{"interface":"mob1s1a1","window_minutes":30}' | jq '.statistics.cell_changes'
@@ -547,6 +592,7 @@ ubus call autonomy cellular_analysis '{"interface":"mob1s1a1","window_minutes":3
 ```
 
 ### **Debug Commands**
+
 ```bash
 # Enable debug logging for cellular collector
 ubus call autonomy action '{"cmd":"set_level","level":"debug"}'
@@ -563,6 +609,7 @@ ubus call autonomy cellular_status | jq '.cellular[].assessment.reasoning[]'
 ### **Environment-Specific Tuning**
 
 #### **Dense Urban Environment**
+
 ```go
 // Higher variance tolerance for urban interference
 VarianceAlarmThreshold: 10.0,
@@ -571,6 +618,7 @@ PredictiveRiskThreshold: 0.8,
 ```
 
 #### **Rural/Remote Areas**
+
 ```go
 // Lower thresholds for limited tower availability
 RSRPHealthyThreshold: -100.0,
@@ -579,6 +627,7 @@ CellChangeAlarmThreshold: 1,
 ```
 
 #### **Mobile/Vehicle Installation**
+
 ```go
 // Higher tolerance for movement-related changes
 CellChangeAlarmThreshold: 8,
@@ -587,6 +636,7 @@ HysteresisGoodSeconds: 120,
 ```
 
 ### **Custom Thresholds**
+
 ```go
 // Application-specific requirements
 type CustomConfig struct {
@@ -605,24 +655,28 @@ type CustomConfig struct {
 ## 🎯 **Best Practices**
 
 ### **1. Monitoring Setup**
+
 - Monitor cellular status every 30 seconds during normal operation
 - Increase to 5-second intervals during degraded conditions
 - Set up alerts for predictive risk > 0.7
 - Log stability scores for trend analysis
 
 ### **2. Threshold Tuning**
+
 - Start with default thresholds and monitor for 24-48 hours
 - Adjust based on local RF environment and requirements
 - Consider seasonal variations (weather impacts)
 - Test failover scenarios to validate settings
 
 ### **3. Performance Optimization**
+
 - Use shorter sampling intervals (2-3 seconds) for critical applications
 - Implement gradual degradation responses vs immediate failover
 - Consider load balancing between multiple cellular interfaces
 - Monitor data usage for metered connections
 
 ### **4. Maintenance**
+
 - Review cellular analysis reports weekly
 - Update configuration based on performance trends
 - Monitor for new cell towers or RF environment changes
@@ -637,6 +691,7 @@ The Enhanced Cellular Stability Monitoring System provides world-class cellular 
 The comprehensive ubus API integration ensures seamless monitoring and control, while the intelligent predictive algorithms enable proactive failover decisions that prevent service disruptions before they impact users.
 
 **Key Benefits:**
+
 - 🎯 **3x Better Accuracy** - Multi-factor analysis vs single metric monitoring
 - ⚡ **Proactive Failover** - Prevents issues before users notice
 - 🔧 **Complete Integration** - Seamless ubus API and RUTOS compatibility

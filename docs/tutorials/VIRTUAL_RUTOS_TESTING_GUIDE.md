@@ -7,6 +7,7 @@ This guide provides a comprehensive approach to testing RUTOS packages in a virt
 ## 🎯 **Why Virtual RUTOS Testing is Essential**
 
 ### **Benefits of Virtual Testing:**
+
 - ✅ **Safe Testing** - No risk to physical hardware
 - ✅ **Rapid Iteration** - Quick setup and teardown
 - ✅ **Cost Effective** - No need for multiple physical devices
@@ -15,6 +16,7 @@ This guide provides a comprehensive approach to testing RUTOS packages in a virt
 - ✅ **Pre-Deployment Validation** - Ensure packages work before physical deployment
 
 ### **RUTOS Architecture:**
+
 - **Base System**: OpenWrt (Linux distribution for embedded devices)
 - **Core Utilities**: BusyBox (minimal Unix tools)
 - **Package Manager**: opkg (OpenWrt Package Manager)
@@ -23,6 +25,7 @@ This guide provides a comprehensive approach to testing RUTOS packages in a virt
 - **RUTOS Extensions**: gpsctl, gsmctl (Teltonika-specific commands)
 
 ### **Testing Scenarios:**
+
 - Package installation and dependencies in OpenWrt environment
 - RUTOS-specific commands (`gpsctl`, `gsmctl`)
 - Service management and configuration via UCI
@@ -36,27 +39,32 @@ This guide provides a comprehensive approach to testing RUTOS packages in a virt
 
 When you run the script, you'll see these options:
 
-**1. Create OpenWrt-based RUTOS environment**
+#### 1. Create OpenWrt-based RUTOS environment
+
 - **What it does**: Creates a new WSL instance that simulates OpenWrt/BusyBox
 - **When to use**: FIRST TIME setup only
 - **What you get**: Mock ubus, uci, opkg, gpsctl, gsmctl commands + OpenWrt directory structure
 
-**2. Setup OpenWrt Image Builder**
+#### 2. Setup OpenWrt Image Builder
+
 - **What it does**: Downloads and configures OpenWrt Image Builder for building real firmware
 - **When to use**: ADVANCED testing with actual OpenWrt firmware images
 - **What you get**: Ability to build custom OpenWrt images with your packages included
 
-**3. Test RUTOS packages in OpenWrt environment**
+#### 3. Test RUTOS packages in OpenWrt environment
+
 - **What it does**: Runs automated tests on your RUTOS packages
 - **When to use**: VALIDATION - to check if your packages work correctly
 - **What you get**: Test results for ubus, uci, opkg, gpsctl, gsmctl functionality
 
-**4. Start OpenWrt RUTOS shell**
+#### 4. Start OpenWrt RUTOS shell
+
 - **What it does**: Opens interactive shell in the OpenWrt RUTOS environment
 - **When to use**: DAILY DEVELOPMENT and manual testing
 - **What you get**: Interactive environment where you can test commands manually
 
-**5. List WSL instances**
+#### 5. List WSL instances
+
 - **What it does**: Shows all available WSL instances and their status
 - **When to use**: CHECK what environments are available and running
 - **What you get**: Overview of your WSL setup
@@ -410,11 +418,13 @@ cd /mnt/c/Users/YourUsername/Documents
 ## 🎯 **Best Practices**
 
 ### **1. Use OpenWrt-based Environment**
+
 - Test in the actual OpenWrt/BusyBox environment RUTOS uses
 - Use OpenWrt-specific commands and configurations
 - Follow OpenWrt conventions for services and configuration
 
 ### **2. Regular Testing Cycles**
+
 ```bash
 # Reset environment for clean testing
 /etc/init.d/autonomy stop
@@ -423,6 +433,7 @@ rm -rf /var/log/autonomy/*
 ```
 
 ### **3. Version Control**
+
 ```bash
 # Keep your project in version control
 cd /workspace
@@ -431,6 +442,7 @@ git commit -m "OpenWrt RUTOS testing results and configuration"
 ```
 
 ### **4. Comprehensive Testing**
+
 - Test all OpenWrt-specific commands (`ubus`, `uci`, `opkg`)
 - Validate RUTOS-specific functionality (`gpsctl`, `gsmctl`)
 - Test network failover scenarios with mwan3
@@ -440,14 +452,16 @@ git commit -m "OpenWrt RUTOS testing results and configuration"
 
 ### **Common Issues**
 
-**1. OpenWrt RUTOS Not Starting**
+#### 1. OpenWrt RUTOS Not Starting
+
 ```powershell
 # Restart WSL service
 wsl --shutdown
 wsl --start
 ```
 
-**2. Package Installation Fails**
+#### 2. Package Installation Fails
+
 ```bash
 # Check OpenWrt dependencies
 opkg list-installed | grep -E "(luci|mwan3|ubus|uci)"
@@ -457,7 +471,8 @@ sudo apt-get update
 sudo apt-get install package-name
 ```
 
-**3. RUTOS Commands Not Working**
+#### 3. RUTOS Commands Not Working
+
 ```bash
 # Check if RUTOS commands are installed
 which gpsctl
@@ -469,7 +484,8 @@ sudo bash -c 'echo "echo \"RUTOS gpsctl - \$*\"" >> /usr/bin/gpsctl'
 sudo chmod +x /usr/bin/gpsctl
 ```
 
-**4. OpenWrt Configuration Issues**
+#### 4. OpenWrt Configuration Issues
+
 ```bash
 # Check OpenWrt configuration
 uci show system
@@ -493,6 +509,7 @@ uci commit system
 ## 🎯 **Testing Checklist**
 
 ### **Pre-Deployment Testing**
+
 - [ ] Packages built successfully for ARM architecture
 - [ ] Dependencies resolved for OpenWrt environment
 - [ ] OpenWrt commands working (`ubus`, `uci`, `opkg`)
@@ -502,6 +519,7 @@ uci commit system
 - [ ] ubus interface responds correctly
 
 ### **Functionality Testing**
+
 - [ ] GPS functionality tested (RUTOS-specific)
 - [ ] GSM functionality tested (RUTOS-specific)
 - [ ] Network failover working (mwan3)
@@ -510,6 +528,7 @@ uci commit system
 - [ ] Performance meets requirements
 
 ### **Integration Testing**
+
 - [ ] mwan3 integration functional
 - [ ] UCI configuration changes take effect
 - [ ] Service responds to configuration changes

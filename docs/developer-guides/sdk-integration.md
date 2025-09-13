@@ -28,6 +28,7 @@ This guide covers the integration of the autonomy daemon with the Teltonika RUTO
 ### SDK Setup
 
 1. **Clone/Setup RUTOS SDK**:
+
    ```bash
    # Navigate to SDK directory
    cd /path/to/rutos-ipq40xx-rutx-sdk
@@ -37,6 +38,7 @@ This guide covers the integration of the autonomy daemon with the Teltonika RUTO
    ```
 
 2. **Verify SDK Environment**:
+
    ```bash
    # Check SDK version
    cat .config | grep CONFIG_VERSION_NUMBER
@@ -49,7 +51,7 @@ This guide covers the integration of the autonomy daemon with the Teltonika RUTO
 
 ### Main Package (`package/autonomy/`)
 
-```
+```text
 package/autonomy/
 ├── Makefile                 # Package build configuration
 ├── files/                   # Package files
@@ -207,7 +209,7 @@ make package/feeds/autonomy/autonomy-api/compile V=s
 
 ### 2. View Structure
 
-```
+```text
 src/web/autonomy-ui/
 ├── views/
 │   ├── overview.html
@@ -507,12 +509,14 @@ opkg install autonomy
 ### Common Build Issues
 
 1. **Missing Dependencies**:
+
    ```bash
    # Install required packages
    sudo apt-get install build-essential libssl-dev libncurses-dev
    ```
 
 2. **Cross-compilation Errors**:
+
    ```bash
    # Verify toolchain
    $TARGET_CC --version
@@ -520,6 +524,7 @@ opkg install autonomy
    ```
 
 3. **Package Build Failures**:
+
    ```bash
    # Check build logs
    tail -f logs/package.log
@@ -532,6 +537,7 @@ opkg install autonomy
 ### Runtime Issues
 
 1. **Service Won't Start**:
+
    ```bash
    # Check logs
    logread | grep autonomy
@@ -541,6 +547,7 @@ opkg install autonomy
    ```
 
 2. **UBUS Registration Failed**:
+
    ```bash
    # Check UBUS status
    ubus list | grep autonomy
@@ -550,6 +557,7 @@ opkg install autonomy
    ```
 
 3. **VuCI Integration Issues**:
+
    ```bash
    # Check menu files
    ls -la /usr/share/vuci/menu.d/

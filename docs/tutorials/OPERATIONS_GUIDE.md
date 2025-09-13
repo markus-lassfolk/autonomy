@@ -37,7 +37,7 @@ This guide provides operational procedures and best practices for managing auton
 
 ### Component Overview
 
-```
+```text
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   autonomyd     │    │   Starwatch     │    │   LuCI Web UI   │
 │   (Main Daemon) │    │   (Watchdog)    │    │   (Management)  │
@@ -54,18 +54,21 @@ This guide provides operational procedures and best practices for managing auton
 ### Key Components
 
 #### autonomyd (Main Daemon)
+
 - **Purpose**: Core failover logic and interface management
 - **Process**: Runs as system service via procd
 - **Configuration**: `/etc/config/autonomy`
 - **Logs**: `/var/log/messages` (via syslog)
 
 #### Starwatch (Watchdog)
+
 - **Purpose**: Independent health monitoring and recovery
 - **Process**: Separate daemon process
 - **Configuration**: Built-in with minimal dependencies
 - **Logs**: `/var/log/starwatch.log`
 
 #### LuCI Web Interface
+
 - **Purpose**: Web-based management and monitoring
 - **Access**: HTTP/HTTPS on router IP
 - **Configuration**: `/etc/config/luci-app-autonomy`
@@ -489,7 +492,7 @@ recover_config() {
 
 ## Performance Tuning
 
-### System Optimization
+### Operations - System Optimization
 
 #### Resource Limits
 
@@ -643,7 +646,7 @@ echo "0 4 * * * /usr/local/bin/autonomy-security.sh" >> /etc/crontabs/root
 
 ### Backup Strategy
 
-#### Configuration Backup
+#### Operations - Configuration Backup
 
 ```bash
 # Comprehensive backup script

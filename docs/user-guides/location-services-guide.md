@@ -11,12 +11,14 @@ Autonomy implements an intelligent multi-source location system that automatical
 ## 🚀 Key Features
 
 ### **1. Multi-Source Location Fusion**
+
 - **GPS Sources**: RUTOS GPS, Starlink GPS, External GPS devices
 - **Cellular Location**: OpenCellID, Google Geolocation, Mozilla Location Service
 - **WiFi Positioning**: MAC address-based location estimation
 - **IP Geolocation**: Fallback location from IP address
 
 ### **2. Advanced 5G Support**
+
 - **Comprehensive 5G NR Data Collection**: Multiple AT command parsing (QNWINFO, QCSQ, QENG)
 - **Carrier Aggregation Detection**: Intelligent detection of multi-carrier scenarios
 - **Network Operator Identification**: Automatic operator detection and classification
@@ -24,6 +26,7 @@ Autonomy implements an intelligent multi-source location system that automatical
 - **Confidence Scoring**: 0.0-1.0 confidence calculation based on data quality
 
 ### **3. Intelligent Cell Caching**
+
 - **Predictive Loading**: Preemptive location data loading based on tower changes
 - **Geographic Clustering**: Location-based clustering for efficient caching
 - **Advanced Environment Hashing**: SHA256-based cellular environment fingerprinting
@@ -31,6 +34,7 @@ Autonomy implements an intelligent multi-source location system that automatical
 - **Cache Performance Metrics**: Detailed cache efficiency tracking
 
 ### **4. Comprehensive Starlink GPS**
+
 - **Multi-API Integration**: Combines data from get_location, get_status, and get_diagnostics
 - **Quality Scoring**: Automatic quality assessment (excellent/good/fair/poor)
 - **Confidence Calculation**: Data-driven confidence scoring
@@ -42,6 +46,7 @@ Autonomy implements an intelligent multi-source location system that automatical
 ### **Primary Sources (High Accuracy)**
 
 #### **1. RUTOS GPS**
+
 ```go
 // Direct GPS integration with RUTOS
 type RUTOSGPSCollector struct {
@@ -58,6 +63,7 @@ func (r *RUTOSGPSCollector) GetLocation(ctx context.Context) (*GPSLocation, erro
 ```
 
 #### **2. Starlink GPS (Enhanced)**
+
 ```go
 // Comprehensive Starlink GPS with multi-API integration
 type StarlinkAPICollector struct {
@@ -74,6 +80,7 @@ func (sc *StarlinkAPICollector) CollectComprehensiveGPS(ctx context.Context) (*C
 ```
 
 #### **3. Enhanced 5G Cellular**
+
 ```go
 // Advanced 5G NR data collection with carrier aggregation
 type Enhanced5GCollector struct {
@@ -92,6 +99,7 @@ func (e5g *Enhanced5GCollector) Collect5GNetworkInfo(ctx context.Context) (*Enha
 ### **Secondary Sources (Medium Accuracy)**
 
 #### **4. OpenCellID Integration**
+
 ```go
 // Intelligent cell tower location with caching
 type IntelligentCellCache struct {
@@ -109,6 +117,7 @@ func (cache *IntelligentCellCache) ShouldQueryLocation(currentEnv *CellEnvironme
 ```
 
 #### **5. Google Geolocation**
+
 ```go
 // High-accuracy cellular and WiFi positioning
 type GoogleLocationCollector struct {
@@ -127,6 +136,7 @@ func (g *GoogleLocationCollector) GetLocation(ctx context.Context, cells []CellT
 ### **Fallback Sources (Low Accuracy)**
 
 #### **6. IP Geolocation**
+
 ```go
 // IP-based location estimation
 type IPGeolocationCollector struct {
@@ -144,6 +154,7 @@ func (ip *IPGeolocationCollector) GetLocation(ctx context.Context) (*GPSLocation
 ## 🔄 Source Selection Algorithm
 
 ### **Intelligent Source Selection**
+
 ```go
 func (lm *LocationManager) selectBestSource(ctx context.Context) (LocationSource, error) {
     // Priority-based selection with quality assessment
@@ -167,6 +178,7 @@ func (lm *LocationManager) selectBestSource(ctx context.Context) (LocationSource
 ```
 
 ### **Quality Assessment**
+
 ```go
 type LocationQuality struct {
     Accuracy    float64 // meters
@@ -180,6 +192,7 @@ type LocationQuality struct {
 ## 🧠 Intelligent Caching System
 
 ### **Predictive Loading**
+
 ```go
 // Preemptive location data loading
 func (cache *IntelligentCellCache) ShouldPredictiveLoad(currentEnv *CellEnvironment) bool {
@@ -196,6 +209,7 @@ func (cache *IntelligentCellCache) ShouldPredictiveLoad(currentEnv *CellEnvironm
 ```
 
 ### **Geographic Clustering**
+
 ```go
 // Location-based clustering for efficient caching
 func (cache *IntelligentCellCache) shouldQueryForGeographicReason(currentEnv *CellEnvironment) bool {
@@ -207,6 +221,7 @@ func (cache *IntelligentCellCache) shouldQueryForGeographicReason(currentEnv *Ce
 ```
 
 ### **Cache Performance Metrics**
+
 ```go
 type CacheMetrics struct {
     CacheHits           int64
@@ -221,16 +236,19 @@ type CacheMetrics struct {
 ## 📈 Performance Optimization
 
 ### **Memory Management**
+
 - **Ring Buffer Storage**: Efficient memory usage for location history
 - **Intelligent Cleanup**: Automatic cleanup of old location data
 - **Cache Size Limits**: Configurable cache size to prevent memory bloat
 
 ### **Network Optimization**
+
 - **Rate Limiting**: Intelligent rate limiting for external APIs
 - **Connection Pooling**: Reuse connections for better performance
 - **Timeout Management**: Configurable timeouts for different sources
 
 ### **CPU Optimization**
+
 - **Async Processing**: Non-blocking location collection
 - **Background Updates**: Periodic updates without blocking main operations
 - **Efficient Algorithms**: Optimized algorithms for location calculations
@@ -238,6 +256,7 @@ type CacheMetrics struct {
 ## 🔧 Configuration
 
 ### **UCI Configuration**
+
 ```bash
 # Location strategy configuration
 uci set autonomy.location.strategy='multi_source'
@@ -269,6 +288,7 @@ uci commit autonomy
 ```
 
 ### **Go Configuration**
+
 ```go
 type LocationConfig struct {
     Strategy              string        `json:"strategy"`
@@ -301,6 +321,7 @@ type LocationConfig struct {
 ## 📊 Monitoring and Metrics
 
 ### **Location Quality Metrics**
+
 ```go
 type LocationMetrics struct {
     SourceAccuracy    map[string]float64 // Accuracy by source
@@ -313,6 +334,7 @@ type LocationMetrics struct {
 ```
 
 ### **Performance Monitoring**
+
 ```go
 // Prometheus metrics
 var (
@@ -345,16 +367,19 @@ var (
 ## 🚀 Advanced Features
 
 ### **1. Predictive Failover**
+
 - **Movement Detection**: GPS-based movement correlation
 - **Coverage Prediction**: Predict coverage gaps
 - **Intelligent Timing**: Prevents unnecessary early failovers
 
 ### **2. Machine Learning Integration**
+
 - **Pattern Recognition**: ML-based obstruction pattern learning
 - **Trend Analysis**: Predictive obstruction detection
 - **Quality Prediction**: Predict location quality based on conditions
 
 ### **3. Geographic Intelligence**
+
 - **Location Fingerprinting**: Unique cellular environment signatures
 - **Coverage Mapping**: Dynamic coverage quality assessment
 - **Route Optimization**: Location-aware route planning
@@ -362,11 +387,13 @@ var (
 ## 🔒 Security Considerations
 
 ### **Data Privacy**
+
 - **Local Processing**: Location data processed locally when possible
 - **Encrypted Storage**: Sensitive location data encrypted at rest
 - **Access Control**: Role-based access to location data
 
 ### **API Security**
+
 - **Token Management**: Secure API token storage and rotation
 - **Rate Limiting**: Prevent API abuse and quota exhaustion
 - **Input Validation**: Comprehensive validation of all inputs
@@ -374,12 +401,14 @@ var (
 ## 📞 Support and Troubleshooting
 
 ### **Common Issues**
+
 1. **GPS Signal Loss**: Automatic fallback to cellular location
 2. **API Rate Limits**: Intelligent rate limiting and caching
 3. **Network Connectivity**: Graceful degradation when networks fail
 4. **Cache Corruption**: Automatic cache validation and recovery
 
 ### **Debug Commands**
+
 ```bash
 # Check location status
 autonomyctl location status
@@ -400,6 +429,7 @@ autonomyctl location clear-cache
 ```
 
 ### **Log Analysis**
+
 ```bash
 # Monitor location collection
 journalctl -u autonomy | grep location
@@ -417,6 +447,7 @@ journalctl -u autonomy | grep starlink
 ## 📈 Future Enhancements
 
 ### **Planned Features**
+
 1. **Advanced ML Models**: Deep learning for pattern recognition
 2. **Weather Integration**: Real-time weather data correlation
 3. **Satellite Coverage**: Starlink satellite position prediction
@@ -424,6 +455,7 @@ journalctl -u autonomy | grep starlink
 5. **User Behavior**: Learning from user interaction patterns
 
 ### **Performance Targets**
+
 - **Response Time**: <1 second for cached locations
 - **Accuracy**: <10 meters for GPS sources, <100 meters for cellular
 - **Uptime**: 99.9% availability with intelligent failover

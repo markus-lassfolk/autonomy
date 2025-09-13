@@ -13,7 +13,8 @@ The WiFi Optimization System is a fully integrated component of the autonomy dae
 The WiFi Optimization System features **enhanced scanning capabilities** that leverage RUTOS built-in tools for sophisticated channel analysis:
 
 ### **📊 Advanced Scoring Algorithm**
-```
+
+```text
 Score = 100 - (Co-Channel Penalty + Overlap Penalty + Utilization Penalty)
 
 Co-Channel Penalty = Σ RSSI_Weight(interferer)
@@ -28,6 +29,7 @@ RSSI Weights:
 ```
 
 ### **🎯 Key Enhancements**
+
 - **RSSI-Weighted Scoring**: Strong interferers (-60dBm) get 6x penalty vs weak ones (-80dBm)
 - **Channel Overlap Detection**: Proper adjacent channel interference calculation
 - **Real Channel Utilization**: Actual airtime usage from `ubus iwinfo survey`
@@ -36,6 +38,7 @@ RSSI Weights:
 - **Smart Bandwidth Selection**: Dynamic 20/40/80 MHz based on interference
 
 ### **📈 Performance Benefits**
+
 - **3x more accurate** channel selection in dense WiFi environments
 - **Better campground performance** with proper interference weighting
 - **GUI-consistent results** using same tools as RUTOS interface
@@ -46,6 +49,7 @@ RSSI Weights:
 ## 🎯 **Key Features**
 
 ### **🔄 Automatic Channel Optimization**
+
 - **Enhanced RUTOS-native scanning** using built-in `ubus iwinfo` commands
 - **RSSI-weighted interference scoring** (strong interferers penalized more)  
 - **Channel overlap detection** for both 2.4GHz and 5GHz bands
@@ -56,24 +60,28 @@ RSSI Weights:
 - **DFS channel support** with radar detection and automatic fallback
 
 ### **📍 Location-Aware Triggers**
+
 - **Movement-based optimization** - Triggers when moved >100m and stationary for 30 minutes
 - **GPS integration** - Uses existing GPS system with enhanced sensitivity for WiFi
 - **Location logging** - GPS coordinates logged with each optimization for analysis
 - **Accuracy filtering** - Only optimizes when GPS accuracy is sufficient
 
 ### **⏰ Scheduled Optimization**
+
 - **Nightly optimization** - Configurable time with execution window (default: 3 AM ±30 min)
 - **Weekly optimization** - Specific weekdays with time windows (optional)
 - **Smart skip logic** - Won't run if optimization happened recently
 - **Timezone support** - Proper scheduling across different timezones
 
 ### **🛡️ Anti-Flapping Protection**
+
 - **Minimum improvement thresholds** - Only applies changes if significant improvement
 - **Cooldown periods** - Prevents excessive optimization attempts
 - **Dwell time** - Waits after applying changes to measure effectiveness
 - **Dry-run mode** - Test optimization without applying changes
 
 ### **🔧 ubus API Integration** ⭐ **NEW!**
+
 - **WiFi Status API** - `ubus call autonomy wifi_status`
 - **Channel Analysis API** - `ubus call autonomy wifi_channel_analysis`
 - **Manual Optimization** - `ubus call autonomy optimize_wifi`
@@ -86,6 +94,7 @@ RSSI Weights:
 ### **🚀 Quick Start**
 
 Enable WiFi optimization with default settings:
+
 ```bash
 uci set autonomy.main.wifi_optimization_enabled='1'
 uci commit autonomy
@@ -164,6 +173,7 @@ uci commit autonomy
 ### **🎛️ Environment-Specific Presets**
 
 #### **Campground/Dense Environment**
+
 ```bash
 # Enhanced interference detection
 uci set autonomy.main.wifi_use_enhanced_scanner='1'
@@ -174,6 +184,7 @@ uci set autonomy.main.wifi_movement_threshold='50.0'
 ```
 
 #### **Highway/Travel Mode**
+
 ```bash
 # More sensitive to movement
 uci set autonomy.main.wifi_movement_threshold='200.0'
@@ -182,6 +193,7 @@ uci set autonomy.main.wifi_optimization_cooldown='3600'
 ```
 
 #### **Remote/Rural Areas**
+
 ```bash
 # Less aggressive optimization
 uci set autonomy.main.wifi_min_improvement='20'
@@ -194,11 +206,13 @@ uci set autonomy.main.wifi_vht80_threshold='5'
 ## 📡 **ubus API Reference**
 
 ### **WiFi Status** ⭐ **NEW!**
+
 ```bash
 ubus call autonomy wifi_status
 ```
 
 **Response:**
+
 ```json
 {
   "enabled": true,
@@ -215,11 +229,13 @@ ubus call autonomy wifi_status
 ```
 
 ### **Channel Analysis** ⭐ **NEW!**
+
 ```bash
 ubus call autonomy wifi_channel_analysis
 ```
 
 **Response:**
+
 ```json
 {
   "available": true,
@@ -271,11 +287,13 @@ ubus call autonomy wifi_channel_analysis
 ```
 
 ### **Manual Optimization** ⭐ **NEW!**
+
 ```bash
 ubus call autonomy optimize_wifi '{"dry_run": false}'
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -295,7 +313,9 @@ ubus call autonomy optimize_wifi '{"dry_run": false}'
 ```
 
 ### **Main Status Integration** ⭐ **NEW!**
+
 WiFi status is now included in the main daemon status:
+
 ```bash
 ubus call autonomy status
 ```
@@ -305,6 +325,7 @@ ubus call autonomy status
 ## 📊 **Monitoring Commands**
 
 ### **Check WiFi Status**
+
 ```bash
 # Basic status
 ubus call autonomy wifi_status
@@ -320,6 +341,7 @@ iwinfo wlan0 info
 ```
 
 ### **Performance Monitoring**
+
 ```bash
 # Check optimization history
 logread | grep "WiFi optimization" | tail -20
@@ -373,7 +395,7 @@ The WiFi optimization system consists of several integrated components:
 
 ### **File Structure**
 
-```
+```text
 pkg/wifi/
 ├── optimizer.go                    # Core WiFi optimization engine
 ├── enhanced_scanner.go            # ⭐ Enhanced RUTOS-native scanning
@@ -510,6 +532,6 @@ logread | grep wifi_optimization
 
 ---
 
-**📡 WiFi Optimization System - Complete and Production Ready! ⭐**
+## 📡 WiFi Optimization System - Complete and Production Ready! ⭐
 
 *This system provides intelligent, location-aware WiFi channel optimization with enhanced RUTOS-native scanning, comprehensive ubus API integration, and production-grade reliability.*

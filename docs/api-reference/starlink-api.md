@@ -5,10 +5,11 @@ _API Documentation v2.6.0_
 
 ## Overview
 
-This document provides comprehensive information about the Starlink gRPC API used by the monitoring system.
+This document provides comprehensive information about the Starlink gRPC API used
+by the monitoring system.
 
-> **⚠️ Important**: This is an **unofficial** API that may change without notice. SpaceX does not provide official
-> documentation or support for this API.
+> **⚠️ Important**: This is an **unofficial** API that may change without notice.
+> SpaceX does not provide official documentation or support for this API.
 
 ## API Endpoint
 
@@ -260,7 +261,8 @@ grpcurl -plaintext -d '{"get_diagnostics":{}}' 192.168.100.1:9200 SpaceX.API.Dev
 #### Connection Refused
 
 ```bash
-grpcurl: error: failed to dial target host "192.168.100.1:9200": context deadline exceeded
+grpcurl: error: failed to dial target host "192.168.100.1:9200": context deadline
+exceeded
 ```
 
 **Causes**:
@@ -297,7 +299,8 @@ grpcurl: error: context deadline exceeded
 
 ```bash
 # Example error handling
-if ! timeout 10 grpcurl -plaintext -max-time 10 -d '{"get_status":{}}' "$STARLINK_IP:$STARLINK_PORT" SpaceX.API.Device.Device/Handle 2>/dev/null; then
+if ! timeout 10 grpcurl -plaintext -max-time 10 -d '{"get_status":{}}' \
+  "$STARLINK_IP:$STARLINK_PORT" SpaceX.API.Device.Device/Handle 2>/dev/null; then
     log "error" "Failed to get data from Starlink API"
     # Fallback logic here
 fi
@@ -309,7 +312,8 @@ The API version can be determined from the device info:
 
 ```bash
 # Get software version
-grpcurl -plaintext -d '{"get_device_info":{}}' 192.168.100.1:9200 SpaceX.API.Device.Device/Handle | jq -r '.deviceInfo.softwareVersion'
+grpcurl -plaintext -d '{"get_device_info":{}}' 192.168.100.1:9200 \
+  SpaceX.API.Device.Device/Handle | jq -r '.deviceInfo.softwareVersion'
 ```
 
 ### Version Compatibility

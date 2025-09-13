@@ -16,17 +16,19 @@ The autonomy Watchdog system sends HTTP POST requests to a webhook endpoint when
 
 All webhook requests include an HMAC signature in the `X-Starwatch-Signature` header:
 
-```
+```text
 X-Starwatch-Signature: sha256=<hex_signature>
 ```
 
 **Signature Generation**:
+
 ```bash
 # On the router (starwatch script)
 sig=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "${WATCH_SECRET}" -binary | xxd -p -c 256)
 ```
 
 **Signature Validation** (server-side):
+
 ```python
 import hmac
 import hashlib
@@ -189,7 +191,8 @@ When the webhook server is unavailable, the watchdog:
 ### Queue Format
 
 Each queued file contains the full JSON payload:
-```
+
+```text
 /tmp/starwatch.queue/1737388800.json
 ```
 

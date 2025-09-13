@@ -9,11 +9,13 @@ This document explains the difference between the **simulated RUTOS environment*
 ### 🔄 **Simulated RUTOS Environment** (`test/setup-virtual-rutos-openwrt-final.ps1`)
 
 **What it is:**
+
 - Ubuntu WSL instance with mock commands
 - Simulates RUTOS commands and directory structure
 - Uses Ubuntu as the base operating system
 
 **What it provides:**
+
 - ✅ Mock `ubus`, `uci`, `opkg` commands
 - ✅ Mock `gpsctl`, `gsmctl`, `wifi`, `cellular` commands
 - ✅ OpenWrt-style directory structure (`/etc/config`, `/etc/init.d`)
@@ -22,12 +24,14 @@ This document explains the difference between the **simulated RUTOS environment*
 - ✅ Service management scripts
 
 **What it's good for:**
+
 - 🎯 **Quick testing** of basic functionality
 - 🎯 **Development** when you don't have the RUTOS SDK
 - 🎯 **Learning** RUTOS concepts and commands
 - 🎯 **Prototyping** before moving to real hardware
 
 **Limitations:**
+
 - ❌ **Not the real environment** - Ubuntu vs OpenWrt/BusyBox
 - ❌ **Mock commands only** - No real `ubus`, `uci`, `opkg` functionality
 - ❌ **No real SDK tools** - No `make`, `opkg`, real build environment
@@ -38,11 +42,13 @@ This document explains the difference between the **simulated RUTOS environment*
 ### 🎯 **Real RUTOS SDK Environment** (`test/setup-real-rutos-sdk.ps1`)
 
 **What it is:**
+
 - Ubuntu WSL instance with **mounted RUTOS SDK**
 - Uses the **actual OpenWrt/BusyBox environment** from RUTOS SDK
 - Provides **real RUTOS build tools** and environment
 
 **What it provides:**
+
 - ✅ **Real RUTOS SDK** mounted at `/mnt/rutos-sdk`
 - ✅ **Actual OpenWrt build environment** with `source scripts/env.sh`
 - ✅ **Real `ubus`, `uci`, `opkg`** commands from RUTOS SDK
@@ -52,6 +58,7 @@ This document explains the difference between the **simulated RUTOS environment*
 - ✅ **Real UCI configuration** system
 
 **What it's good for:**
+
 - 🎯 **Production development** - Real RUTOS environment
 - 🎯 **Package building** - Create actual IPK packages
 - 🎯 **Hardware testing** - Test with real RUTOS commands
@@ -59,6 +66,7 @@ This document explains the difference between the **simulated RUTOS environment*
 - 🎯 **Professional development** - Industry-standard approach
 
 **Requirements:**
+
 - 📋 **RUTOS SDK** must be available (e.g., `J:\GithubCursor\rutos-ipq40xx-rutx-sdk`)
 - 📋 **SDK must be properly set up** with `scripts/env.sh`
 - 📋 **More setup time** - Requires SDK mounting and initialization
@@ -68,12 +76,14 @@ This document explains the difference between the **simulated RUTOS environment*
 ### 🚀 **Native OpenWrt Environment** (`test/setup-openwrt-native.ps1`) - **NEW!**
 
 **What it is:**
+
 - **Official OpenWrt rootfs** from [downloads.openwrt.org](https://downloads.openwrt.org/releases/24.10.2/targets/x86/64/)
 - **Direct import** of OpenWrt rootfs.tar.gz into WSL
 - **Pure OpenWrt/BusyBox environment** - exactly what RUTOS uses
 - **Aligned with official OpenWrt development practices** from [OpenWrt Developer Guide](https://openwrt.org/docs/guide-developer/start)
 
 **What it provides:**
+
 - ✅ **Official OpenWrt rootfs** - Latest stable releases
 - ✅ **Real OpenWrt/BusyBox** - No simulation, actual OpenWrt system
 - ✅ **Real `ubus`, `uci`, `opkg`** - Native OpenWrt binaries
@@ -89,6 +99,7 @@ This document explains the difference between the **simulated RUTOS environment*
 - ✅ **Build system setup** - Follows official WSL guide for OpenWrt builds
 
 **What it's good for:**
+
 - 🚀 **Best RUTOS simulation** - Closest to actual RUTOS environment
 - 🚀 **No SDK required** - Works without RUTOS SDK
 - 🚀 **Latest OpenWrt** - Always up-to-date with official releases
@@ -100,11 +111,13 @@ This document explains the difference between the **simulated RUTOS environment*
 - 🚀 **System integration** - Test with real OpenWrt components
 
 **Requirements:**
+
 - 📋 **Internet connection** - To download OpenWrt rootfs
 - 📋 **WSL support** - For importing OpenWrt rootfs
 - 📋 **Disk space** - ~5MB for rootfs download
 
 **Important Notes:**
+
 - ⚠️ **Not officially supported** by OpenWrt (as per [official WSL guide](https://openwrt.org/docs/guide-developer/toolchain/wsl))
 - ⚠️ **Native GNU/Linux recommended** for production use
 - ⚠️ **WSL PATH issues** have been addressed using official recommendations
@@ -113,21 +126,24 @@ This document explains the difference between the **simulated RUTOS environment*
 
 ## When to Use Which Environment
 
-### Use **Simulated Environment** When:
+### Use **Simulated Environment** When
+
 - 🚀 **Quick prototyping** - You want to test ideas fast
 - 🚀 **Learning RUTOS** - Understanding concepts and commands
 - 🚀 **No SDK available** - You don't have the RUTOS SDK
 - 🚀 **Basic testing** - Simple functionality validation
 - 🚀 **Development setup** - Getting started with RUTOS development
 
-### Use **Real SDK Environment** When:
+### Use **Real SDK Environment** When
+
 - 🎯 **Production development** - Building for real deployment
 - 🎯 **Package creation** - Creating IPK packages for distribution
 - 🎯 **Hardware testing** - Testing on actual RUTOS devices
 - 🎯 **SDK integration** - Using RUTOS SDK features
 - 🎯 **Professional work** - Industry-standard development
 
-### Use **Native OpenWrt Environment** When:
+### Use **Native OpenWrt Environment** When
+
 - 🚀 **Best RUTOS simulation** - Closest to actual RUTOS environment
 - 🚀 **No SDK required** - Works without RUTOS SDK
 - 🚀 **Latest OpenWrt** - Always up-to-date with official releases
@@ -140,12 +156,14 @@ This document explains the difference between the **simulated RUTOS environment*
 ## Setup Instructions
 
 ### Simulated Environment (Quick Start)
+
 ```powershell
 # Quick setup for learning and prototyping
 .\test\setup-virtual-rutos-openwrt-final.ps1
 ```
 
 ### Real SDK Environment (Production)
+
 ```powershell
 # Production setup with real RUTOS SDK
 .\test\setup-real-rutos-sdk.ps1
@@ -157,6 +175,7 @@ This document explains the difference between the **simulated RUTOS environment*
 ```
 
 ### Native OpenWrt Environment (Recommended)
+
 ```powershell
 # Best RUTOS simulation using official OpenWrt images
 .\test\setup-openwrt-native.ps1
@@ -171,6 +190,7 @@ This document explains the difference between the **simulated RUTOS environment*
 ```
 
 **Build System Usage (following [official WSL guide](https://openwrt.org/docs/guide-developer/toolchain/wsl)):**
+
 ```bash
 # Use clean PATH for builds (recommended)
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin make
@@ -180,6 +200,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin make
 ```
 
 **Advanced Init System (following [community guide](https://gist.github.com/Balder1840/8d7670337039432829ed7d3d9d19494d)):**
+
 ```bash
 # After advanced setup, restart WSL for proper procd init
 wsl --shutdown
@@ -244,6 +265,7 @@ wsl -d openwrt-native
 Based on the [OpenWrt Developer Guide](https://openwrt.org/docs/guide-developer/start), our Native OpenWrt Environment provides access to:
 
 ### Core Development Components
+
 - **procd** - OpenWrt's init system and process management
 - **ubox** - Basic utility library (libubox)
 - **ubus** - OpenWrt's micro bus architecture for IPC/RPC
@@ -252,6 +274,7 @@ Based on the [OpenWrt Developer Guide](https://openwrt.org/docs/guide-developer/
 - **iwinfo** - Wireless information library
 
 ### Development Tools
+
 - **Package creation** - Create OpenWrt packages following official guidelines
 - **Init scripts** - Write procd init scripts for services
 - **Shell scripting** - Write shell scripts optimized for OpenWrt
@@ -259,6 +282,7 @@ Based on the [OpenWrt Developer Guide](https://openwrt.org/docs/guide-developer/
 - **Network scripting** - Develop network-related functionality
 
 ### Build System Integration
+
 - **SDK compatibility** - Works with OpenWrt SDK for cross-compilation
 - **Package feeds** - Integrate with OpenWrt package feeds
 - **Image building** - Build custom OpenWrt images
@@ -272,7 +296,8 @@ Based on the [OpenWrt Developer Guide](https://openwrt.org/docs/guide-developer/
 - **Native OpenWrt Environment**: **RECOMMENDED** - Best balance of authenticity and ease of use
 - **Real SDK Environment**: Essential for production development and hardware testing
 
-**Recommendation**: 
+**Recommendation**:
+
 1. **Start with Native OpenWrt Environment** for most development work - it provides the real OpenWrt experience without complexity
 2. **Use Simulated Environment** only for quick prototyping when you need Ubuntu tools
 3. **Use Real SDK Environment** for final production builds and hardware-specific testing

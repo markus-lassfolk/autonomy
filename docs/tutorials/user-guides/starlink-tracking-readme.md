@@ -5,7 +5,7 @@
 This is a **standalone version** of the Starlink tracking and obstruction prediction system. It runs independently without requiring the full autonomy daemon infrastructure, making it perfect for:
 
 - 🧪 **Testing and development**
-- 🔬 **Research and experimentation** 
+- 🔬 **Research and experimentation**
 - 🚀 **Quick deployment** on any Linux system
 - 📊 **Demonstration** of tracking capabilities
 
@@ -13,7 +13,7 @@ This is a **standalone version** of the Starlink tracking and obstruction predic
 
 - ✅ **Complete independence** - No UBUS/UCI dependencies
 - ✅ **Simple configuration** - File-based or command-line config
-- ✅ **Web interface** - Beautiful visualization at http://localhost:8080
+- ✅ **Web interface** - Beautiful visualization at <http://localhost:8080>
 - ✅ **HTTP API** - RESTful API for integration
 - ✅ **Real-time tracking** - Live satellite monitoring
 - ✅ **Outage prediction** - 12-24 hour forecasting
@@ -65,7 +65,7 @@ export SPACE_TRACK_PASSWORD=your_password
 
 ### Command Line Options
 
-```
+```text
 Usage: starlink_tracker [OPTIONS]
 
 Options:
@@ -106,9 +106,11 @@ export SPACE_TRACK_PASSWORD=your_password
 ## API Endpoints
 
 ### GET /api/status
+
 Returns current tracker status and statistics.
 
 **Response:**
+
 ```json
 {
     "status": "monitoring",
@@ -121,9 +123,11 @@ Returns current tracker status and statistics.
 ```
 
 ### GET /api/predictions
+
 Returns current outage predictions.
 
 **Response:**
+
 ```json
 {
     "count": 2,
@@ -142,6 +146,7 @@ Returns current outage predictions.
 ```
 
 ### GET /api/satellites
+
 Returns current satellite positions (simplified in standalone version).
 
 ## Web Interface
@@ -156,6 +161,7 @@ Open your browser to `http://localhost:8080` to access the interactive visualiza
 ## Usage Examples
 
 ### Basic Monitoring
+
 ```bash
 # Start with defaults
 ./starlink_tracker
@@ -165,6 +171,7 @@ s
 ```
 
 ### Custom Configuration
+
 ```bash
 # Run with custom settings
 ./starlink_tracker \
@@ -176,6 +183,7 @@ s
 ```
 
 ### Integration Example
+
 ```bash
 # Get status via API
 curl http://localhost:8080/api/status
@@ -205,9 +213,11 @@ fi
 ### Common Issues
 
 #### "Failed to connect to UBUS"
+
 This error doesn't apply to standalone version - it uses HTTP API instead.
 
 #### "Space-Track authentication failed"
+
 ```bash
 # Test credentials manually
 curl -c cookies.txt -b cookies.txt \
@@ -216,12 +226,14 @@ curl -c cookies.txt -b cookies.txt \
 ```
 
 #### "Dish connection failed"
+
 ```bash
 # Test dish connectivity
 grpcurl -plaintext -d '{"getStatus":{}}' 192.168.100.1:9200 SpaceX.API.Device.Device/Handle
 ```
 
 ### Debug Mode
+
 ```bash
 # Run with verbose logging
 ./starlink_tracker --verbose
@@ -249,6 +261,7 @@ make dist
 ## Performance
 
 The standalone version is optimized for:
+
 - **Memory usage**: <30MB typical
 - **CPU usage**: <3% on modern systems  
 - **Network usage**: <1MB/hour (Space-Track API)

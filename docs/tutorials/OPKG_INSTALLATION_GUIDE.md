@@ -48,6 +48,7 @@ The autonomy package includes:
 ## Package Details
 
 ### Package Information
+
 - **Name:** autonomy
 - **Version:** 1.0.0
 - **Architecture:** x86_64
@@ -198,6 +199,7 @@ uci show autonomy
 ### Common Issues
 
 1. **Package Installation Fails**
+
    ```bash
    # Check dependencies
    opkg list-installed | grep luci-base
@@ -208,6 +210,7 @@ uci show autonomy
    ```
 
 2. **Service Won't Start**
+
    ```bash
    # Check logs
    logread | grep autonomy
@@ -217,6 +220,7 @@ uci show autonomy
    ```
 
 3. **Configuration Issues**
+
    ```bash
    # Validate configuration
    uci show autonomy

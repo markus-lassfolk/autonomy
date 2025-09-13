@@ -1,7 +1,8 @@
 # 🗼 Cell Tower Location Databases & Services
 
 ## 🎯 **Your Cell Tower Data:**
-```
+
+```text
 Cell ID: 25939743
 MCC: 240 (Sweden)
 MNC: 01 (Telia)
@@ -14,6 +15,7 @@ Technology: 5G-NSA / LTE B3
 ## 🌍 **Available Location Services:**
 
 ### **1. 🆓 Mozilla Location Service (MLS)**
+
 - **Cost:** FREE, no registration required
 - **Coverage:** Global crowdsourced database
 - **Accuracy:** 100-2000 meters
@@ -21,6 +23,7 @@ Technology: 5G-NSA / LTE B3
 - **Best For:** Production use, reliable fallback
 
 **API Example:**
+
 ```bash
 curl -X POST "https://location.services.mozilla.com/v1/geolocate?key=test" \
   -H "Content-Type: application/json" \
@@ -37,6 +40,7 @@ curl -X POST "https://location.services.mozilla.com/v1/geolocate?key=test" \
 ```
 
 ### **2. 🆓 OpenCellID**
+
 - **Cost:** FREE with registration
 - **Coverage:** 40+ million cell towers globally
 - **Accuracy:** 50-1000 meters
@@ -44,6 +48,7 @@ curl -X POST "https://location.services.mozilla.com/v1/geolocate?key=test" \
 - **Best For:** High accuracy, detailed data
 
 **API Example:**
+
 ```bash
 curl -X POST "https://us1.unwiredlabs.com/v2/process.php" \
   -H "Content-Type: application/json" \
@@ -60,6 +65,7 @@ curl -X POST "https://us1.unwiredlabs.com/v2/process.php" \
 ```
 
 ### **3. 💰 Google Geolocation API**
+
 - **Cost:** $5 per 1000 requests
 - **Coverage:** Excellent global coverage
 - **Accuracy:** 10-500 meters (very accurate)
@@ -67,6 +73,7 @@ curl -X POST "https://us1.unwiredlabs.com/v2/process.php" \
 - **Best For:** Highest accuracy, commercial use
 
 **API Example:**
+
 ```bash
 curl -X POST "https://www.googleapis.com/geolocation/v1/geolocate?key=YOUR_API_KEY" \
   -H "Content-Type: application/json" \
@@ -82,13 +89,15 @@ curl -X POST "https://www.googleapis.com/geolocation/v1/geolocate?key=YOUR_API_K
 ```
 
 ### **4. 🆓 CellMapper (Community)**
-- **Website:** https://www.cellmapper.net/
+
+- **Website:** <https://www.cellmapper.net/>
 - **Cost:** FREE (community database)
 - **Coverage:** Crowdsourced, varies by region
 - **Accuracy:** Varies, often very precise
 - **Best For:** Research, verification
 
 ### **5. 💰 HERE Location Services**
+
 - **Cost:** Paid service
 - **Coverage:** Global commercial database
 - **Accuracy:** High precision
@@ -96,6 +105,7 @@ curl -X POST "https://www.googleapis.com/geolocation/v1/geolocate?key=YOUR_API_K
 - **Best For**: Privacy-focused deployments, open source projects
 
 ### 4. **Carrier APIs** 📱
+
 - **Type**: Carrier-specific, commercial
 - **Coverage**: Carrier network only
 - **Accuracy**: 50-200m
@@ -104,6 +114,7 @@ curl -X POST "https://www.googleapis.com/geolocation/v1/geolocate?key=YOUR_API_K
 - **Best For**: Carrier-specific deployments, high accuracy
 
 ### 5. **Skyhook** 📍
+
 - **Type**: Commercial, paid
 - **Coverage**: Global
 - **Accuracy**: 50-300m
@@ -124,6 +135,7 @@ curl -X POST "https://www.googleapis.com/geolocation/v1/geolocate?key=YOUR_API_K
 ## Integration Architecture
 
 ### Multi-Source Strategy
+
 ```go
 type CellTowerManager struct {
     databases map[string]CellTowerDB
@@ -141,6 +153,7 @@ type CellTowerDB interface {
 ```
 
 ### Intelligent Source Selection
+
 ```go
 func (ctm *CellTowerManager) GetLocation(cell CellInfo) (*Location, error) {
     // Try primary sources first
@@ -159,6 +172,7 @@ func (ctm *CellTowerManager) GetLocation(cell CellInfo) (*Location, error) {
 ## Configuration Examples
 
 ### Basic Configuration
+
 ```yaml
 cell_tower:
   enabled: true
@@ -186,6 +200,7 @@ cell_tower:
 ```
 
 ### Advanced Configuration
+
 ```yaml
 cell_tower:
   intelligent_routing:
@@ -212,6 +227,7 @@ cell_tower:
 ## API Integration
 
 ### OpenCellID Integration
+
 ```go
 type OpenCellIDClient struct {
     apiKey string
@@ -249,6 +265,7 @@ func (o *OpenCellIDClient) GetLocation(mcc, mnc, lac, cellid int) (*Location, er
 ```
 
 ### Google Location Services Integration
+
 ```go
 type GoogleLocationClient struct {
     apiKey string
@@ -304,6 +321,7 @@ func (g *GoogleLocationClient) GetLocation(mcc, mnc, lac, cellid int) (*Location
 ## Caching Strategy
 
 ### Multi-Level Caching
+
 ```go
 type LocationCache struct {
     memory *sync.Map
@@ -335,15 +353,17 @@ func (lc *LocationCache) Get(key string) (*Location, bool) {
 ```
 
 ### Cache Key Generation
+
 ```go
 func generateCacheKey(mcc, mnc, lac, cellid int) string {
     return fmt.Sprintf("cell_%d_%d_%d_%d", mcc, mnc, lac, cellid)
 }
 ```
 
-## Performance Optimization
+## Rate Limiting & Performance Optimization
 
 ### Rate Limiting
+
 ```go
 type RateLimiter struct {
     limits map[string]*rate.Limiter
@@ -367,6 +387,7 @@ func (rl *RateLimiter) Allow(database string) bool {
 ```
 
 ### Connection Pooling
+
 ```go
 type DatabasePool struct {
     clients map[string]*http.Client
@@ -399,6 +420,7 @@ func (dp *DatabasePool) GetClient(database string) *http.Client {
 ## Monitoring and Metrics
 
 ### Performance Tracking
+
 ```go
 type CellTowerMetrics struct {
     Database     string        `json:"database"`
@@ -412,6 +434,7 @@ type CellTowerMetrics struct {
 ```
 
 ### Real-Time Monitoring
+
 ```bash
 # Check database performance
 autonomy-cli cell-tower metrics
@@ -431,18 +454,22 @@ autonomy-cli cell-tower test --database google
 ### Common Issues
 
 #### API Rate Limits
+
 - **Symptoms**: 429 errors, request failures
 - **Solutions**: Implement exponential backoff, use caching, distribute requests
 
 #### Poor Coverage
+
 - **Symptoms**: No location found, low accuracy
 - **Solutions**: Enable multiple databases, contribute to OpenCellID, use carrier APIs
 
 #### High Costs
+
 - **Symptoms**: Excessive API usage, high bills
 - **Solutions**: Optimize caching, use free databases, implement cost limits
 
 ### Debugging Tools
+
 ```bash
 # Check database status
 autonomy-cli cell-tower status
@@ -460,18 +487,21 @@ autonomy-cli cell-tower monitor --real-time
 ## Best Practices
 
 ### Database Selection
+
 1. **Start with OpenCellID**: Free and community-driven
 2. **Add Google for accuracy**: When higher accuracy needed
 3. **Use carrier APIs**: For carrier-specific deployments
 4. **Implement fallbacks**: Always have multiple sources
 
 ### Cost Optimization
+
 1. **Aggressive caching**: Reduce API calls
 2. **Batch requests**: When possible
 3. **Monitor usage**: Track costs and usage patterns
 4. **Set limits**: Prevent unexpected charges
 
-### Performance Optimization
+### General Performance Optimization
+
 1. **Connection pooling**: Reuse HTTP connections
 2. **Rate limiting**: Respect API limits
 3. **Parallel requests**: Use multiple databases simultaneously
@@ -480,12 +510,14 @@ autonomy-cli cell-tower monitor --real-time
 ## Future Enhancements
 
 ### Planned Features
+
 - **AI-Powered Selection**: Machine learning for database selection
 - **Predictive Caching**: Pre-cache likely locations
 - **Edge Computing**: Local database processing
 - **Blockchain Integration**: Decentralized location data
 
 ### Research Areas
+
 - **5G Location**: Enhanced 5G positioning capabilities
 - **Satellite Integration**: Direct satellite location services
 - **Privacy-Preserving**: Zero-knowledge location proofs

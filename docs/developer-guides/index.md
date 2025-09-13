@@ -3,7 +3,7 @@ layout: default
 title: Home
 ---
 
-# Welcome to Autonomy Project Documentation
+## Welcome to Autonomy Project Documentation
 
 This is the documentation for the Autonomy networking system, designed for router management with Starlink integration, cellular failover, GPS tracking, and intelligent monitoring.
 

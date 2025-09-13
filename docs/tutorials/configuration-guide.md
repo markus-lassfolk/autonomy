@@ -7,6 +7,7 @@ This guide covers all configuration settings for the Autonomy system, including 
 ## 🔧 Basic Configuration
 
 ### System Configuration
+
 ```bash
 # Enable autonomy service
 uci set autonomy.main.enabled='1'
@@ -17,6 +18,7 @@ uci commit autonomy
 ```
 
 ### Network Interface Configuration
+
 ```bash
 # Configure interface priorities (1=highest, 10=lowest)
 uci set autonomy.interfaces.starlink_priority='1'
@@ -35,6 +37,7 @@ uci commit autonomy
 ## 🛰️ Starlink Configuration
 
 ### Basic Starlink Setup
+
 ```bash
 # Enable Starlink integration
 uci set autonomy.starlink.enabled='1'
@@ -51,6 +54,7 @@ uci commit autonomy
 ```
 
 ### Advanced Starlink Settings
+
 ```bash
 # Prediction thresholds
 uci set autonomy.starlink.obstruction_threshold='0.6'   # 0.0-1.0
@@ -67,6 +71,7 @@ uci commit autonomy
 ## 📱 Cellular Configuration
 
 ### Basic Cellular Setup
+
 ```bash
 # Enable cellular monitoring
 uci set autonomy.cellular.enabled='1'
@@ -87,6 +92,7 @@ uci commit autonomy
 ```
 
 ### Multi-SIM Configuration
+
 ```bash
 # Configure multiple SIM cards
 uci set autonomy.cellular.multi_sim='1'
@@ -100,6 +106,7 @@ uci commit autonomy
 ## 📍 GPS Configuration
 
 ### Multi-Source GPS Setup
+
 ```bash
 # Enable GPS system
 uci set autonomy.gps.enabled='1'
@@ -124,6 +131,7 @@ uci commit autonomy
 ```
 
 ### Advanced GPS Features
+
 ```bash
 # Movement detection
 uci set autonomy.gps.movement_detection='1'
@@ -141,6 +149,7 @@ uci commit autonomy
 ## 📶 WiFi Configuration
 
 ### WiFi Optimization Setup
+
 ```bash
 # Enable WiFi optimization
 uci set autonomy.wifi.optimization='1'
@@ -162,6 +171,7 @@ uci commit autonomy
 ## 🔔 Notification Configuration
 
 ### Pushover Notifications
+
 ```bash
 # Enable Pushover
 uci set autonomy.notifications.pushover_enabled='1'
@@ -178,6 +188,7 @@ uci commit autonomy
 ```
 
 ### Email Notifications
+
 ```bash
 # SMTP configuration
 uci set autonomy.notifications.email_enabled='1'
@@ -190,6 +201,7 @@ uci commit autonomy
 ```
 
 ### Webhook Notifications
+
 ```bash
 # Webhook configuration
 uci set autonomy.notifications.webhook_enabled='1'
@@ -202,6 +214,7 @@ uci commit autonomy
 ## 🤖 Predictive Features
 
 ### Machine Learning Configuration
+
 ```bash
 # Enable predictive failover
 uci set autonomy.predictive.enabled='1'
@@ -221,6 +234,7 @@ uci commit autonomy
 ```
 
 ### Obstruction Management
+
 ```bash
 # Predictive obstruction detection
 uci set autonomy.obstruction.enabled='1'
@@ -233,6 +247,7 @@ uci commit autonomy
 ## 💾 Caching Configuration
 
 ### Location Caching
+
 ```bash
 # Cache settings
 uci set autonomy.cache.location_ttl='300'          # 5 minutes
@@ -250,6 +265,7 @@ uci commit autonomy
 ## 🔐 Security Configuration
 
 ### Security Monitoring
+
 ```bash
 # Enable security features
 uci set autonomy.security.enabled='1'
@@ -267,6 +283,7 @@ uci commit autonomy
 ## 📊 Performance Configuration
 
 ### Resource Management
+
 ```bash
 # Performance settings
 uci set autonomy.performance.cpu_limit='25'        # percent
@@ -281,6 +298,7 @@ uci commit autonomy
 ```
 
 ### Logging Configuration
+
 ```bash
 # Logging settings
 uci set autonomy.logging.level='info'              # debug, info, warn, error
@@ -295,6 +313,7 @@ uci commit autonomy
 ## 🔄 Failover Configuration
 
 ### Decision Engine
+
 ```bash
 # Hybrid weight system
 uci set autonomy.decision.performance_weight='0.3'
@@ -313,6 +332,7 @@ uci commit autonomy
 ## 📋 Configuration Validation
 
 ### Verify Configuration
+
 ```bash
 # Check all autonomy settings
 uci show autonomy
@@ -328,6 +348,7 @@ autonomy-cli config export > autonomy-backup.conf
 ```
 
 ### Apply Configuration
+
 ```bash
 # Commit all changes
 uci commit autonomy
@@ -342,6 +363,7 @@ uci commit autonomy
 ## 🏭 Production Configuration Templates
 
 ### High Availability Setup
+
 ```bash
 # Production-ready configuration
 uci set autonomy.main.enabled='1'
@@ -355,6 +377,7 @@ uci commit autonomy
 ```
 
 ### Development Setup
+
 ```bash
 # Development configuration
 uci set autonomy.main.log_level='debug'
@@ -365,6 +388,7 @@ uci commit autonomy
 ```
 
 ### Minimal Setup
+
 ```bash
 # Basic failover only
 uci set autonomy.main.enabled='1'

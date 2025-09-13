@@ -1,16 +1,23 @@
 # 📚 Autonomy Documentation
 
-This directory contains comprehensive documentation for the Autonomy intelligent network failover system.
+This directory contains comprehensive documentation for the Autonomy intelligent network
+failover system.
 
 ## 📖 Documentation Structure
 
 ### 👥 User Documentation
+
 **[user-guides/](user-guides/)** - Documentation for end users
-- [OpenWrt Support Status](user-guides/openwrt-support-status.md) - **Important**: Compatibility and limitations
-- [Starlink Tracking Overview](user-guides/starlink-tracking-overview.md) - Overview of Starlink integration
-- [WiFi Optimization Guide](user-guides/wifi-optimization-guide.md) - WiFi channel optimization and configuration
+
+- [OpenWrt Support Status](user-guides/openwrt-support-status.md) - **Important**: Compatibility and
+  limitations
+- [Starlink Tracking Overview](user-guides/starlink-tracking-overview.md) - Overview of Starlink
+  integration
+- [WiFi Optimization Guide](user-guides/wifi-optimization-guide.md) - WiFi channel optimization
+  and configuration
 - [GPS System Guide](user-guides/gps-system-guide.md) - Multi-source GPS and location services
-- [Cellular Monitoring Guide](user-guides/cellular-monitoring-guide.md) - Cellular signal monitoring and optimization
+- [Cellular Monitoring Guide](user-guides/cellular-monitoring-guide.md) - Cellular signal
+  monitoring and optimization
 - [Predictive Failover Guide](user-guides/predictive-failover-guide.md) - Understanding predictive features
 - [Location Services Guide](user-guides/location-services-guide.md) - Location strategy and configuration
 - [Intelligent Caching Guide](user-guides/intelligent-caching-guide.md) - Understanding the caching system
@@ -25,7 +32,9 @@ This directory contains comprehensive documentation for the Autonomy intelligent
 - [Implementation Status](user-guides/IMPLEMENTATION_COMPLETE.md) - Current implementation status
 
 ### 🎓 Tutorials & Guides  
+
 **[tutorials/](tutorials/)** - Step-by-step setup and usage guides
+
 - [Getting Started](tutorials/getting-started.md) - Quick start guide
 - [Quick Setup](tutorials/quick-setup.md) - 5-minute setup reference
 - [Configuration Guide](tutorials/configuration-guide.md) - Complete configuration reference
@@ -38,13 +47,17 @@ This directory contains comprehensive documentation for the Autonomy intelligent
 - [OpenWrt Testing Guide](tutorials/WSL_OPENWRT_TESTING_GUIDE.md) - Development testing
 
 ### 🔧 API Reference
+
 **[api-reference/](api-reference/)** - Complete API documentation
+
 - [Configuration Reference](api-reference/configuration-reference.md) - Complete UCI configuration reference
 - [Starlink API](api-reference/starlink-api.md) - Starlink API reference
 - [API Analysis](api-reference/STARLINK_API_ANALYSIS.md) - API analysis and capabilities
 
 ### 👩‍💻 Developer Documentation
+
 **[developer-guides/](developer-guides/)** - Technical implementation guides
+
 - [VUCI Development](developer-guides/vuci-development.md) - Web UI development
 - [Configuration](developer-guides/configuration.md) - System configuration
 - [Security](developer-guides/security.md) - Security implementation
@@ -56,11 +69,15 @@ This directory contains comprehensive documentation for the Autonomy intelligent
 - [Contributing](developer-guides/CONTRIBUTING.md) - Contribution guidelines
 
 ### 🏗️ System Architecture
+
 **[architecture/](architecture/)** - System design and architecture
+
 - [Architecture Overview](architecture/ARCHITECTURE.md) - System architecture
 
 ### 🚀 Deployment
+
 **[deployment/](deployment/)** - Deployment and operations
+
 - [Production Deployment](deployment/production-deployment.md) - Production setup
 - [WSL Deployment](deployment/wsl-deployment.md) - Windows WSL setup
 - [Webhook Deployment](deployment/webhook-deployment.md) - Webhook integration
@@ -68,12 +85,14 @@ This directory contains comprehensive documentation for the Autonomy intelligent
 ## 🎯 Quick Navigation
 
 ### Getting Started
+
 1. [Getting Started](tutorials/getting-started.md) - Quick start guide
 2. [Quick Setup](tutorials/quick-setup.md) - 5-minute setup reference
 3. [Configuration Guide](tutorials/configuration-guide.md) - Complete configuration
 4. [API Integrations](tutorials/api-integrations-guide.md) - External API setup
 
 ### Understanding Features (Most Important!)
+
 1. [OpenWrt Support Status](user-guides/openwrt-support-status.md) - **Read First**: Compatibility limitations
 2. [WiFi Optimization](user-guides/wifi-optimization-guide.md) - How WiFi optimization works
 3. [GPS System](user-guides/gps-system-guide.md) - Multi-source GPS explained
@@ -82,11 +101,13 @@ This directory contains comprehensive documentation for the Autonomy intelligent
 6. [Troubleshooting](user-guides/troubleshooting-guide.md) - Fix common issues
 
 ### Development
+
 1. [SDK Master Guide](tutorials/sdk-master-guide.md) - Development environment setup
 2. [VUCI Development](developer-guides/vuci-development.md) - Web UI development
 3. [Contributing](developer-guides/CONTRIBUTING.md) - Development guidelines
 
 ### Advanced Features
+
 1. [Starlink Tracking](user-guides/starlink-tracking-overview.md) - Satellite tracking
 2. [GPS System](developer-guides/gps-system.md) - Multi-source GPS
 3. [Predictive Failover](developer-guides/predictive-failover.md) - Intelligent failover

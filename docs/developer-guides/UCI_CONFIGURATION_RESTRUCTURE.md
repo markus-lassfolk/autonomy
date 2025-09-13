@@ -3,6 +3,7 @@
 ## 📊 Current vs Proposed Structure
 
 ### ❌ **Current Issues**
+
 - **118 lines** in single `main` section
 - **Mixed concerns** (core, ML, API, notifications all together)
 - **Hard to navigate** for users
@@ -12,6 +13,7 @@
 ### ✅ **Proposed Benefits**
 
 #### **1. Logical Grouping**
+
 ```uci
 # Before: Everything in 'main'
 config autonomy 'main'
@@ -31,12 +33,14 @@ config metered 'settings'       # Metered mode settings
 ```
 
 #### **2. Easier Configuration**
+
 - **Find settings faster**: `config notifications 'pushover'` vs searching through 118 lines
 - **Logical grouping**: Related settings are together
 - **Better documentation**: Each section can have focused comments
 - **Reduced errors**: Smaller sections are easier to validate
 
 #### **3. Maintainability**
+
 - **Modular**: Add new features without bloating main section
 - **Extensible**: Easy to add new subsections
 - **Readable**: Clear separation of concerns
@@ -45,6 +49,7 @@ config metered 'settings'       # Metered mode settings
 ## 🏗️ Proposed Structure
 
 ### **Core Sections**
+
 1. **`autonomy 'main'`** - Essential daemon settings (15 options)
 2. **`thresholds 'failover'`** - Failover thresholds (3 options)
 3. **`thresholds 'restore'`** - Restore thresholds (3 options)
@@ -60,6 +65,7 @@ config metered 'settings'       # Metered mode settings
 13. **`metered 'thresholds'`** - Metered thresholds (3 options)
 
 ### **Size Comparison**
+
 - **Before**: 1 section with 118 options
 - **After**: 13 sections with 5-15 options each
 - **Largest section**: 15 options (main) vs 118 options
@@ -67,12 +73,14 @@ config metered 'settings'       # Metered mode settings
 ## 🔄 Migration Strategy
 
 ### **Option 1: Gradual Migration (Recommended)**
+
 1. **Keep backward compatibility** - support both formats
 2. **Add new structured parsing** alongside existing
 3. **Deprecation warnings** for old format
 4. **Migration tool** to convert old → new format
 
 ### **Option 2: Breaking Change**
+
 1. **Immediate switch** to new format
 2. **Migration script** provided
 3. **Clear upgrade documentation**
@@ -81,6 +89,7 @@ config metered 'settings'       # Metered mode settings
 ## 💻 Implementation Requirements
 
 ### **UCI Parser Updates**
+
 ```go
 // New parsing functions needed
 func parseThresholds(section string) (*ThresholdConfig, error)
@@ -92,6 +101,7 @@ func parseMetered(section string) (*MeteredConfig, error)
 ```
 
 ### **Config Struct Updates**
+
 ```go
 type Config struct {
     // Core settings (reduced)
@@ -111,6 +121,7 @@ type Config struct {
 ```
 
 ### **Backward Compatibility**
+
 ```go
 func LoadConfig() (*Config, error) {
     // Try new structured format first
@@ -127,6 +138,7 @@ func LoadConfig() (*Config, error) {
 ## 📋 User Experience
 
 ### **Before (Overwhelming)**
+
 ```bash
 # User wants to configure notifications
 uci show autonomy.main | grep -E "pushover|notify|priority"
@@ -134,6 +146,7 @@ uci show autonomy.main | grep -E "pushover|notify|priority"
 ```
 
 ### **After (Intuitive)**
+
 ```bash
 # User wants to configure notifications
 uci show autonomy.@notifications
@@ -143,6 +156,7 @@ uci show autonomy.@notifications
 ### **Configuration Examples**
 
 #### **Enable Pushover Notifications**
+
 ```bash
 # Before: Mixed with 117 other options
 uci set autonomy.main.pushover_enabled='1'
@@ -156,6 +170,7 @@ uci set autonomy.@notifications[0].pushover.user='your_user'
 ```
 
 #### **Adjust Failover Thresholds**
+
 ```bash
 # Before: Search through main section
 uci set autonomy.main.fail_threshold_loss='3'
@@ -176,6 +191,7 @@ uci set autonomy.@thresholds[0].failover.latency='1000'
 4. **Phase 4**: Remove legacy support in next major version
 
 This approach:
+
 - ✅ **Maintains compatibility** for existing users
 - ✅ **Improves experience** for new users
 - ✅ **Allows testing** of new format
