@@ -1,5 +1,5 @@
-#include <stdlib.h>
 #include "memory_protection.h"
+#include "memory_corruption_detector.h"
 #include "../logging/logx.h"
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -475,26 +475,7 @@ bool validate_pointer_alignment(const void *ptr, size_t alignment) {
     return ((uintptr_t)ptr % alignment) == 0;
 }
 
-// Detect heap corruption
-bool detect_heap_corruption(void) {
-    memory_block_t *current = allocated_blocks;
-    
-    while (current) {
-        // Check canaries
-        uint64_t *canary_before = (uint64_t*)((char*)current->ptr - HEAP_CANARY_SIZE);
-        uint64_t *canary_after = (uint64_t*)((char*)current->ptr + current->size);
-        
-        for (int i = 0; i < HEAP_CANARY_SIZE/8; i++) {
-            if (canary_before[i] != heap_canary_value || canary_after[i] != heap_canary_value) {
-                return true;
-            }
-        }
-        
-        current = current->next;
-    }
-    
-    return false;
-}
+// Note: detect_heap_corruption() is now implemented in memory_corruption_detector.c
 
 // Verify heap integrity
 void verify_heap_integrity(void) {
@@ -504,22 +485,7 @@ void verify_heap_integrity(void) {
     }
 }
 
-// Detect stack overflow
-bool detect_stack_overflow(void) {
-    // Simple stack overflow detection
-    // This is a basic implementation
-    char dummy;
-    static char *stack_start = NULL;
-    
-    if (!stack_start) {
-        stack_start = &dummy;
-        return false;
-    }
-    
-    // Check if we're getting close to the stack limit
-    size_t stack_usage = stack_start - &dummy;
-    return stack_usage > (8 * 1024 * 1024); // 8MB stack limit
-}
+// Note: detect_stack_overflow() is now implemented in memory_corruption_detector.c
 
 // Get stack usage
 size_t get_stack_usage(void) {
