@@ -357,7 +357,7 @@ int try_here_service(double lat, double lon, gps_location_info_t *location_info)
     
     // If not found in environment, try to get from UCI configuration
     if (!here_api_key) {
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         FILE *uci_fp = popen("uci get autonomy.gps.here_api_key 2>/dev/null", "r");
         if (uci_fp) {
             char key_buffer[256];
@@ -451,7 +451,7 @@ int try_here_service(double lat, double lon, gps_location_info_t *location_info)
 int try_custom_service(double lat, double lon, gps_location_info_t *location_info) {
     // Check if custom service script is configured
     char custom_script[256];
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     FILE *uci_fp = popen("uci get autonomy.gps.custom_location_script 2>/dev/null", "r");
     if (uci_fp && fgets(custom_script, sizeof(custom_script), uci_fp)) {
         pclose(uci_fp);

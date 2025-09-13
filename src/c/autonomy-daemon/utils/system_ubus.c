@@ -189,7 +189,7 @@ int autonomy_system_maintenance(struct ubus_context *uctx, struct ubus_object *o
     // Perform maintenance based on type
     if (strcmp(maintenance_type, "database") == 0) {
         // Database maintenance
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         FILE* db_maintenance = popen("sqlite3 /var/lib/autonomy/autonomy.db 'VACUUM; ANALYZE;'", "r");
         if (db_maintenance) {
             pclose(db_maintenance);
@@ -200,7 +200,7 @@ int autonomy_system_maintenance(struct ubus_context *uctx, struct ubus_object *o
         }
     } else if (strcmp(maintenance_type, "logs") == 0) {
         // Log maintenance
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         FILE* log_maintenance = popen("find /var/log -name '*.log' -mtime +7 -delete", "r");
         if (log_maintenance) {
             pclose(log_maintenance);
@@ -211,7 +211,7 @@ int autonomy_system_maintenance(struct ubus_context *uctx, struct ubus_object *o
         }
     } else if (strcmp(maintenance_type, "system") == 0) {
         // System maintenance
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         FILE* system_maintenance = popen("apt-get update && apt-get upgrade -y", "r");
         if (system_maintenance) {
             pclose(system_maintenance);
@@ -222,7 +222,7 @@ int autonomy_system_maintenance(struct ubus_context *uctx, struct ubus_object *o
         }
     } else {
         // General maintenance
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         FILE* general_maintenance = popen("sync && echo 3 > /proc/sys/vm/drop_caches", "r");
         if (general_maintenance) {
             pclose(general_maintenance);

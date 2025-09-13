@@ -327,7 +327,7 @@ static double get_ambient_temperature(void) {
     }
     
     // Try to get temperature from system thermal sensors
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     FILE *temp_fp = popen("cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | head -1", "r");
     if (temp_fp) {
         char temp_str[32];
@@ -345,7 +345,7 @@ static double get_ambient_temperature(void) {
     }
     
     // Try to get temperature from UCI configuration
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     FILE *uci_fp = popen("uci get autonomy.snow_detection.temperature_override 2>/dev/null", "r");
     if (uci_fp) {
         char temp_str[32];
@@ -409,7 +409,7 @@ static double get_humidity(void) {
     }
     
     // Try to get humidity from UCI configuration
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     FILE *uci_fp = popen("uci get autonomy.snow_detection.humidity_override 2>/dev/null", "r");
     if (uci_fp) {
         char humidity_str[32];
@@ -559,7 +559,7 @@ static int start_dish_heating(void) {
     // Try to control actual dish heating hardware
     // First, try UCI-configured heating command
     char heating_cmd[256];
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     FILE *uci_fp = popen("uci get autonomy.snow_detection.heating_command 2>/dev/null", "r");
     if (uci_fp && fgets(heating_cmd, sizeof(heating_cmd), uci_fp)) {
         pclose(uci_fp);
@@ -588,8 +588,8 @@ static int start_dish_heating(void) {
         
         // Fallback: try standard heating control methods
         // Method 1: GPIO control (if available)
-        // flawfinder: ignore - constant string, no injection risk
-                // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
+                // Safe system call with constant string
                 FILE *gpio_fp = popen("echo 1 > /sys/class/gpio/gpio18/value 2>/dev/null", "r");
         if (gpio_fp) {
             pclose(gpio_fp);
@@ -623,8 +623,8 @@ static int start_dish_heating(void) {
                 ubus_free(ctx);
             } else {
                 // Fallback: Direct GPIO control
-                // flawfinder: ignore - constant string, no injection risk
-                // flawfinder: ignore - constant string, no injection risk
+                // Safe system call with constant string
+                // Safe system call with constant string
                 FILE *gpio_fp = popen("echo 1 > /sys/class/gpio/gpio18/value 2>/dev/null", "r");
                 if (gpio_fp) {
                     pclose(gpio_fp);
@@ -657,7 +657,7 @@ static int stop_dish_heating(void) {
     // Try to control actual dish heating hardware
     // First, try UCI-configured heating stop command
     char heating_cmd[256];
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     FILE *uci_fp = popen("uci get autonomy.snow_detection.heating_stop_command 2>/dev/null", "r");
     if (uci_fp && fgets(heating_cmd, sizeof(heating_cmd), uci_fp)) {
         pclose(uci_fp);
@@ -685,8 +685,8 @@ static int stop_dish_heating(void) {
         
         // Fallback: try standard heating control methods
         // Method 1: GPIO control (if available)
-        // flawfinder: ignore - constant string, no injection risk
-                // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
+                // Safe system call with constant string
                 FILE *gpio_fp = popen("echo 0 > /sys/class/gpio/gpio18/value 2>/dev/null", "r");
         if (gpio_fp) {
             pclose(gpio_fp);
@@ -720,8 +720,8 @@ static int stop_dish_heating(void) {
                 ubus_free(ctx);
             } else {
                 // Fallback: Direct GPIO control
-                // flawfinder: ignore - constant string, no injection risk
-                // flawfinder: ignore - constant string, no injection risk
+                // Safe system call with constant string
+                // Safe system call with constant string
                 FILE *gpio_fp = popen("echo 0 > /sys/class/gpio/gpio18/value 2>/dev/null", "r");
                 if (gpio_fp) {
                     pclose(gpio_fp);
@@ -955,7 +955,7 @@ int starlink_snow_detection_load_uci_config(void) {
     pthread_mutex_lock(&g_snow_detection_mutex);
     
     // Load UCI configuration
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     FILE *uci_fp = popen("uci show autonomy.snow_detection 2>/dev/null", "r");
     if (!uci_fp) {
         LOGX_WARN_MSG("Failed to load UCI configuration, using defaults");

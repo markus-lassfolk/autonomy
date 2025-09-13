@@ -374,7 +374,7 @@ bool unwiredlabs_api_validate_token(void) {
     unwiredlabs_cell_t real_cell = {0};
     
     // Try to get real cellular information from modem
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     FILE *cell_fp = popen("mmcli -m 0 --command='AT+QCELLINFO' 2>/dev/null", "r");
     if (cell_fp) {
         char cell_info[256];
@@ -396,7 +396,7 @@ bool unwiredlabs_api_validate_token(void) {
     
     // Fallback: try gsmctl for cellular data
     if (real_cell.mcc == 0) {
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         FILE *gsmctl_fp = popen("gsmctl -A 'AT+QCELLINFO' 2>/dev/null", "r");
         if (gsmctl_fp) {
             char gsmctl_info[256];
@@ -432,7 +432,7 @@ bool unwiredlabs_api_validate_token(void) {
             "https://us1.unwiredlabs.com/v2/balance.php?token=%s", 
             g_unwiredlabs_config.token);
     
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     FILE *http_fp = popen("curl -s --connect-timeout 10 --max-time 30", "w");
     if (http_fp) {
         fprintf(http_fp, "GET %s HTTP/1.1\r\nHost: us1.unwiredlabs.com\r\n\r\n", validation_url);
@@ -440,7 +440,7 @@ bool unwiredlabs_api_validate_token(void) {
         
         // Check response
         char http_response[256];
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         FILE *http_resp = popen("curl -s --connect-timeout 10 --max-time 30", "r");
         if (http_resp && fgets(http_response, sizeof(http_response), http_resp)) {
             // Check if response contains valid balance or error message

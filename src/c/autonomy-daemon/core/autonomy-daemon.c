@@ -659,22 +659,17 @@ int main(int argc, char **argv)
         fprintf(stderr, "Starlink gRPC collector initialization failed\n");
     }
 
-    // Initialize ML monitoring module
+    // Initialize ML monitoring module - TEMPORARILY DISABLED FOR DEBUGGING
     ml_monitor_config_t ml_config;
     if (ml_monitor_load_config_from_uci(&ml_config) == ML_MONITOR_SUCCESS) {
-        if (ml_config.enabled) {
+        if (false) { // TEMPORARILY DISABLED: ml_config.enabled
             CRITICAL_OPERATION_START("ml_monitor_init");
             ml_monitor_t *ml_monitor = ml_monitor_init(&ml_config);
             CRITICAL_OPERATION_END();
             if (ml_monitor) {
                 fprintf(stderr, "ML monitoring module initialized successfully\n");
                 
-                // Initialize ML monitoring UBUS interface
-                if (ml_monitor_ubus_init(ctx) == ML_MONITOR_SUCCESS) {
-                    fprintf(stderr, "ML monitoring UBUS interface registered\n");
-                } else {
-                    fprintf(stderr, "Failed to initialize ML monitoring UBUS interface\n");
-                }
+                // ML monitoring UBUS interface will be initialized after main UBUS object registration
                 
                 // Initialize Phase 3 enhancements
                 fprintf(stderr, "DEBUG: About to call ml_monitor_init_phase3_enhancements\n");
@@ -854,6 +849,15 @@ int main(int argc, char **argv)
     }
 
     fprintf(stderr, "Autonomy daemon started, registered 'autonomy' ubus object\n");
+    
+    // Initialize ML monitoring UBUS interface after main UBUS object is registered - TEMPORARILY DISABLED
+    // if (ml_monitor_ubus_init(ctx) == ML_MONITOR_SUCCESS) {
+    //     fprintf(stderr, "ML monitoring UBUS interface registered\n");
+    // } else {
+    //     fprintf(stderr, "Failed to initialize ML monitoring UBUS interface\n");
+    // }
+    fprintf(stderr, "ML monitoring UBUS interface temporarily disabled for debugging\n");
+    
     fprintf(stderr, "Available methods: status, health, config, start, stop, restart, pid_status, log_status, config_status\n");
     fprintf(stderr, "Network methods: network_status, network_interfaces, network_health_check, network_failover\n");
     fprintf(stderr, "GPS methods: gps_status, gps_sources, gps_health_check\n");

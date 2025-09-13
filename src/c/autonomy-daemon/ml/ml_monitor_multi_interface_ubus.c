@@ -1,4 +1,4 @@
-// flawfinder: ignore - all "system" references in this file are variable names, not system() function calls
+// All "system" references in this file are variable names, not system() function calls
 #include <stdlib.h>
 #include "ml_monitor_multi_interface.h"
 #include "ml_monitor_ubus.h"

@@ -192,7 +192,7 @@ int gps_system_init(void) {
     
     // If not found in environment, try to get from UCI configuration
     if (!google_api_key) {
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         FILE *uci_fp = popen("uci get autonomy.gps.google_api_key 2>/dev/null", "r");
         if (uci_fp) {
             char key_buffer[256];
@@ -245,7 +245,7 @@ int gps_system_init(void) {
     
     // If not found in environment, try to get from UCI configuration
     if (!weather_api_key) {
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         FILE *uci_fp = popen("uci get autonomy.gps.weather_api_key 2>/dev/null", "r");
         if (uci_fp) {
             char key_buffer[256];

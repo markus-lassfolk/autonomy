@@ -469,7 +469,7 @@ static int restore_uci_backup(const char *backup_path) {
     int result = -1; // Return error since command was not executed
     if (result == 0) {
         // Commit the changes
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         system("uci commit");
         LOGX_INFO_MSG("UCI backup restored successfully", "path", backup_path);
         return AUTONOMY_SUCCESS;
@@ -483,7 +483,7 @@ static int restore_uci_backup(const char *backup_path) {
             // DISABLED: Command execution disabled for security
             LOGX_WARN_MSG("UCI import command disabled for security - command injection vulnerability",
                          "temp_backup", temp_backup);
-            // flawfinder: ignore - constant string, no injection risk
+            // Safe system call with constant string
             system("uci commit");
         }
         

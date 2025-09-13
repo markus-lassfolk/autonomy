@@ -1,4 +1,4 @@
-// flawfinder: ignore - all popen() calls in this file use constant strings, no injection risk
+// All popen() calls use constant strings, no injection risk
 #include "security_monitor.h"
 #include "../core/types.h"
 #include <stdlib.h>

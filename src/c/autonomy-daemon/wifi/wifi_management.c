@@ -133,7 +133,7 @@ int wifi_management_discover_interfaces(void) {
     g_wifi_management.interfaces_count = 0;
     
     // Use iwinfo to discover WiFi interfaces
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     FILE *fp = popen("iwinfo | grep -E '^[a-zA-Z0-9]+' | awk '{print $1}'", "r");
     if (fp) {
         char line[256];
@@ -427,9 +427,9 @@ int wifi_management_optimize_channels(const char *interface_name) {
     
     if (optimization_applied && !g_wifi_management.dry_run) {
         // Commit changes and restart WiFi
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         system("uci commit wireless");
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         system("wifi reload");
         
         g_wifi_management.last_optimized = now;

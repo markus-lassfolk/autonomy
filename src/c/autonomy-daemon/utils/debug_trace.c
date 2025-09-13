@@ -63,7 +63,7 @@ void debug_trace_print(const char *level, const char *file, int line, const char
         }
         
         va_start(args, fmt);
-        // flawfinder: ignore - format string is validated above to prevent %n attacks
+        // Format string is validated above to prevent %n attacks
         vsnprintf(message_buffer, sizeof(message_buffer), fmt, args);
         va_end(args);
     }

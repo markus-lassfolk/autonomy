@@ -149,7 +149,7 @@ int notification_config_manager_load_from_uci(notification_config_manager_t* con
     }
     
     // Load UCI configuration
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     FILE *uci_fp = popen("uci show autonomy.notifications 2>/dev/null", "r");
     if (!uci_fp) {
         LOGX_WARN_MSG("Failed to read UCI configuration, using defaults");

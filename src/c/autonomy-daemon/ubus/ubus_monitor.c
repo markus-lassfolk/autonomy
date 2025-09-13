@@ -154,7 +154,7 @@ int check_rpcd_status(void) {
     char command[256];
     snprintf(command, sizeof(command), "pgrep rpcd > /dev/null 2>&1");
     
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     int exit_code = system(command);
     return (exit_code == 0);
 }
@@ -175,7 +175,7 @@ static int count_ubus_services(void) {
     char command[256];
     snprintf(command, sizeof(command), "ubus list | wc -l");
     
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     FILE *pipe = popen(command, "r");
     if (!pipe) {
         return 0;
@@ -199,7 +199,7 @@ int restart_rpcd_service(void) {
     char command[256];
     snprintf(command, sizeof(command), "service rpcd restart > /dev/null 2>&1");
     
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     int exit_code = system(command);
     if (exit_code == 0) {
         // Wait for service to start

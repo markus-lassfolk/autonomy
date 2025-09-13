@@ -245,7 +245,7 @@ int wifi_enhanced_discover_interfaces(void) {
             LOGX_WARN_MSG("UBUS iwinfo.devices call failed, falling back to command line");
             
             // Fallback to command line if UBUS fails
-            // flawfinder: ignore - constant string, no injection risk
+            // Safe system call with constant string
             FILE* fp = popen("iwinfo | grep -E '^[a-zA-Z0-9]+' | awk '{print $1}'", "r");
             if (fp) {
                 char line[256];
@@ -479,7 +479,7 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
     
     // Fallback: try to get from UCI configuration
     if (country_code[0] == '\0') {
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         FILE *uci_fp = popen("uci get wireless.radio0.country 2>/dev/null", "r");
         if (uci_fp) {
             if (fgets(country_code, sizeof(country_code), uci_fp)) {
@@ -492,7 +492,7 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
     
     // Final fallback: try to detect from system
     if (country_code[0] == '\0') {
-        // flawfinder: ignore - constant string, no injection risk
+        // Safe system call with constant string
         FILE *sys_fp = popen("iw reg get 2>/dev/null | grep country | head -1", "r");
         if (sys_fp) {
             char buffer[256];
@@ -864,7 +864,7 @@ static int perform_ubus_iwinfo_survey(const char* device, wifi_channel_utilizati
     // Fallback to default values if UBUS fails
     LOGX_WARN_MSG("UBUS iwinfo survey failed, using default values", "device", device);
     // Get real channel utilization data from iwinfo
-    // flawfinder: ignore - constant string, no injection risk
+    // Safe system call with constant string
     FILE *iwinfo_fp = popen("iwinfo wlan0 survey 2>/dev/null", "r");
     if (iwinfo_fp) {
         char line[256];
