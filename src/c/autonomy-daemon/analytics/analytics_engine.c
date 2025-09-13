@@ -730,14 +730,21 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     time_t uptime = get_system_uptime();
     if (uptime > 86400 * 30) { // System running for more than 30 days
         if (recommendation_count < max_recommendations) {
-            strcpy(recommendations[recommendation_count].id, "security_update");
-            strcpy(recommendations[recommendation_count].type, "security");
-            strcpy(recommendations[recommendation_count].priority, "medium");
-            strcpy(recommendations[recommendation_count].title, "Security Updates");
-            strcpy(recommendations[recommendation_count].description, 
-                   "System has been running for a long time. Consider applying security updates.");
-            strcpy(recommendations[recommendation_count].impact, "high");
-            strcpy(recommendations[recommendation_count].effort, "medium");
+            strncpy(recommendations[recommendation_count].id, "security_update", sizeof(recommendations[recommendation_count].id) - 1);
+            recommendations[recommendation_count].id[sizeof(recommendations[recommendation_count].id) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].type, "security", sizeof(recommendations[recommendation_count].type) - 1);
+            recommendations[recommendation_count].type[sizeof(recommendations[recommendation_count].type) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].priority, "medium", sizeof(recommendations[recommendation_count].priority) - 1);
+            recommendations[recommendation_count].priority[sizeof(recommendations[recommendation_count].priority) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].title, "Security Updates", sizeof(recommendations[recommendation_count].title) - 1);
+            recommendations[recommendation_count].title[sizeof(recommendations[recommendation_count].title) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].description, 
+                   "System has been running for a long time. Consider applying security updates.", sizeof(recommendations[recommendation_count].description) - 1);
+            recommendations[recommendation_count].description[sizeof(recommendations[recommendation_count].description) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].impact, "high", sizeof(recommendations[recommendation_count].impact) - 1);
+            recommendations[recommendation_count].impact[sizeof(recommendations[recommendation_count].impact) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].effort, "medium", sizeof(recommendations[recommendation_count].effort) - 1);
+            recommendations[recommendation_count].effort[sizeof(recommendations[recommendation_count].effort) - 1] = '\0';
             recommendations[recommendation_count].timestamp = time(NULL);
             recommendation_count++;
         }
@@ -746,14 +753,21 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     // Performance monitoring recommendations
     if (g_analytics_engine.dashboard_metrics->performance.member_count > 0) {
         if (recommendation_count < max_recommendations) {
-            strcpy(recommendations[recommendation_count].id, "performance_monitoring");
-            strcpy(recommendations[recommendation_count].type, "monitoring");
-            strcpy(recommendations[recommendation_count].priority, "low");
-            strcpy(recommendations[recommendation_count].title, "Enhanced Monitoring");
-            strcpy(recommendations[recommendation_count].description, 
-                   "Consider implementing additional performance monitoring for better insights.");
-            strcpy(recommendations[recommendation_count].impact, "medium");
-            strcpy(recommendations[recommendation_count].effort, "low");
+            strncpy(recommendations[recommendation_count].id, "performance_monitoring", sizeof(recommendations[recommendation_count].id) - 1);
+            recommendations[recommendation_count].id[sizeof(recommendations[recommendation_count].id) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].type, "monitoring", sizeof(recommendations[recommendation_count].type) - 1);
+            recommendations[recommendation_count].type[sizeof(recommendations[recommendation_count].type) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].priority, "low", sizeof(recommendations[recommendation_count].priority) - 1);
+            recommendations[recommendation_count].priority[sizeof(recommendations[recommendation_count].priority) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].title, "Enhanced Monitoring", sizeof(recommendations[recommendation_count].title) - 1);
+            recommendations[recommendation_count].title[sizeof(recommendations[recommendation_count].title) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].description, 
+                   "Consider implementing additional performance monitoring for better insights.", sizeof(recommendations[recommendation_count].description) - 1);
+            recommendations[recommendation_count].description[sizeof(recommendations[recommendation_count].description) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].impact, "medium", sizeof(recommendations[recommendation_count].impact) - 1);
+            recommendations[recommendation_count].impact[sizeof(recommendations[recommendation_count].impact) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].effort, "low", sizeof(recommendations[recommendation_count].effort) - 1);
+            recommendations[recommendation_count].effort[sizeof(recommendations[recommendation_count].effort) - 1] = '\0';
             recommendations[recommendation_count].timestamp = time(NULL);
             recommendation_count++;
         }

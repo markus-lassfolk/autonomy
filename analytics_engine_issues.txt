@@ -1,0 +1,521 @@
+Examining src/c/autonomy-daemon/analytics/analytics_engine.c
+
+src/c/autonomy-daemon/analytics/analytics_engine.c:36:12:  [4] (shell) system:
+  This causes a new program to execute and is difficult to use safely
+  (CWE-78). try using a library call that implements the same functionality
+  if available.
+    return system("ping -c 1 -W 1 8.8.8.8 > /dev/null 2>&1") == 0 ? 1 : 0;
+src/c/autonomy-daemon/analytics/analytics_engine.c:276:16:  [4] (shell) popen:
+  This causes a new program to execute and is difficult to use safely
+  (CWE-78). try using a library call that implements the same functionality
+  if available.
+    FILE *fp = popen("ip link show | grep -c 'state UP'", "r");
+src/c/autonomy-daemon/analytics/analytics_engine.c:286:10:  [4] (shell) popen:
+  This causes a new program to execute and is difficult to use safely
+  (CWE-78). try using a library call that implements the same functionality
+  if available.
+    fp = popen("ip link show | grep -c '^[0-9]'", "r");
+src/c/autonomy-daemon/analytics/analytics_engine.c:308:19:  [4] (shell) popen:
+  This causes a new program to execute and is difficult to use safely
+  (CWE-78). try using a library call that implements the same functionality
+  if available.
+    FILE *df_fp = popen("df / | tail -1 | awk '{print $4}'", "r");
+src/c/autonomy-daemon/analytics/analytics_engine.c:515:19:  [4] (shell) popen:
+  This causes a new program to execute and is difficult to use safely
+  (CWE-78). try using a library call that implements the same functionality
+  if available.
+    FILE *df_fp = popen("df / | tail -1 | awk '{print $4}'", "r");
+src/c/autonomy-daemon/analytics/analytics_engine.c:648:19:  [4] (shell) popen:
+  This causes a new program to execute and is difficult to use safely
+  (CWE-78). try using a library call that implements the same functionality
+  if available.
+    FILE *df_fp = popen("df / | tail -1 | awk '{print $4}'", "r");
+src/c/autonomy-daemon/analytics/analytics_engine.c:278:9:  [2] (buffer) char:
+  Statically-sized arrays can be improperly restricted, leading to potential
+  overflows or other issues (CWE-119!/CWE-120). Perform bounds checking, use
+  functions that limit length, or ensure that the size is larger than the
+  maximum possible length.
+        char buffer[128];
+src/c/autonomy-daemon/analytics/analytics_engine.c:280:40:  [2] (integer) atoi:
+  Unless checked, the resulting number can exceed the expected range
+  (CWE-190). If source untrusted, check both minimum and maximum, even if the
+  input had no minus sign (large numbers can roll over into negative number;
+  consider saving to an unsigned value if that is intended).
+            overview->active_members = atoi(buffer);
+src/c/autonomy-daemon/analytics/analytics_engine.c:288:9:  [2] (buffer) char:
+  Statically-sized arrays can be improperly restricted, leading to potential
+  overflows or other issues (CWE-119!/CWE-120). Perform bounds checking, use
+  functions that limit length, or ensure that the size is larger than the
+  maximum possible length.
+        char buffer[128];
+src/c/autonomy-daemon/analytics/analytics_engine.c:290:39:  [2] (integer) atoi:
+  Unless checked, the resulting number can exceed the expected range
+  (CWE-190). If source untrusted, check both minimum and maximum, even if the
+  input had no minus sign (large numbers can roll over into negative number;
+  consider saving to an unsigned value if that is intended).
+            overview->total_members = atoi(buffer);
+src/c/autonomy-daemon/analytics/analytics_engine.c:310:9:  [2] (buffer) char:
+  Statically-sized arrays can be improperly restricted, leading to potential
+  overflows or other issues (CWE-119!/CWE-120). Perform bounds checking, use
+  functions that limit length, or ensure that the size is larger than the
+  maximum possible length.
+        char buffer[128];
+src/c/autonomy-daemon/analytics/analytics_engine.c:312:33:  [2] (integer) atol:
+  Unless checked, the resulting number can exceed the expected range
+  (CWE-190). If source untrusted, check both minimum and maximum, even if the
+  input had no minus sign (large numbers can roll over into negative number;
+  consider saving to an unsigned value if that is intended).
+            long available_kb = atol(buffer);
+src/c/autonomy-daemon/analytics/analytics_engine.c:518:9:  [2] (buffer) char:
+  Statically-sized arrays can be improperly restricted, leading to potential
+  overflows or other issues (CWE-119!/CWE-120). Perform bounds checking, use
+  functions that limit length, or ensure that the size is larger than the
+  maximum possible length.
+        char buffer[128];
+src/c/autonomy-daemon/analytics/analytics_engine.c:520:33:  [2] (integer) atol:
+  Unless checked, the resulting number can exceed the expected range
+  (CWE-190). If source untrusted, check both minimum and maximum, even if the
+  input had no minus sign (large numbers can roll over into negative number;
+  consider saving to an unsigned value if that is intended).
+            long available_kb = atol(buffer);
+src/c/autonomy-daemon/analytics/analytics_engine.c:651:9:  [2] (buffer) char:
+  Statically-sized arrays can be improperly restricted, leading to potential
+  overflows or other issues (CWE-119!/CWE-120). Perform bounds checking, use
+  functions that limit length, or ensure that the size is larger than the
+  maximum possible length.
+        char buffer[128];
+src/c/autonomy-daemon/analytics/analytics_engine.c:653:33:  [2] (integer) atol:
+  Unless checked, the resulting number can exceed the expected range
+  (CWE-190). If source untrusted, check both minimum and maximum, even if the
+  input had no minus sign (large numbers can roll over into negative number;
+  consider saving to an unsigned value if that is intended).
+            long available_kb = atol(buffer);
+src/c/autonomy-daemon/analytics/analytics_engine.c:386:9:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120).
+        strncpy(performance->member_names[i], analysis.member_names[i], 
+src/c/autonomy-daemon/analytics/analytics_engine.c:419:9:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120).
+        strncpy(health->member_names[i], analysis.member_names[i], 
+src/c/autonomy-daemon/analytics/analytics_engine.c:441:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].id, "critical_health", sizeof(alerts[alert_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:443:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].type, "health", sizeof(alerts[alert_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:445:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].severity, "critical", sizeof(alerts[alert_count].severity) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:447:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].title, "Critical System Health", sizeof(alerts[alert_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:458:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].id, "low_health", sizeof(alerts[alert_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:460:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].type, "health", sizeof(alerts[alert_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:462:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].severity, "warning", sizeof(alerts[alert_count].severity) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:464:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].title, "Low System Health", sizeof(alerts[alert_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:481:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(alerts[alert_count].id, "critical_memory", sizeof(alerts[alert_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:483:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(alerts[alert_count].type, "resource", sizeof(alerts[alert_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:485:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(alerts[alert_count].severity, "critical", sizeof(alerts[alert_count].severity) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:487:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(alerts[alert_count].title, "Critical Memory Usage", sizeof(alerts[alert_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:497:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(alerts[alert_count].id, "high_memory", sizeof(alerts[alert_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:499:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(alerts[alert_count].type, "resource", sizeof(alerts[alert_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:501:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(alerts[alert_count].severity, "warning", sizeof(alerts[alert_count].severity) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:503:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(alerts[alert_count].title, "High Memory Usage", sizeof(alerts[alert_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:527:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].id, "low_disk_space", sizeof(alerts[alert_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:529:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].type, "resource", sizeof(alerts[alert_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:531:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].severity, "warning", sizeof(alerts[alert_count].severity) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:533:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].title, "Low Disk Space", sizeof(alerts[alert_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:535:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].message, "Disk space is running low", sizeof(alerts[alert_count].message) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:546:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].id, "network_disconnected", sizeof(alerts[alert_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:548:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].type, "network", sizeof(alerts[alert_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:550:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].severity, "critical", sizeof(alerts[alert_count].severity) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:552:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].title, "Network Disconnected", sizeof(alerts[alert_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:554:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].message, "Network connectivity has been lost", sizeof(alerts[alert_count].message) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:567:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(alerts[alert_count].id, "high_load", sizeof(alerts[alert_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:569:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(alerts[alert_count].type, "performance", sizeof(alerts[alert_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:571:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(alerts[alert_count].severity, "warning", sizeof(alerts[alert_count].severity) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:573:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(alerts[alert_count].title, "High System Load", sizeof(alerts[alert_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:588:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].id, "recent_restart", sizeof(alerts[alert_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:590:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].type, "system", sizeof(alerts[alert_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:592:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].severity, "info", sizeof(alerts[alert_count].severity) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:594:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].title, "System Restarted", sizeof(alerts[alert_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:596:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(alerts[alert_count].message, "System was recently restarted", sizeof(alerts[alert_count].message) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:626:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].id, "memory_optimization", sizeof(recommendations[recommendation_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:628:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].type, "resource", sizeof(recommendations[recommendation_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:630:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].priority, "high", sizeof(recommendations[recommendation_count].priority) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:632:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].title, "Memory Optimization", sizeof(recommendations[recommendation_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:634:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].description, 
+src/c/autonomy-daemon/analytics/analytics_engine.c:637:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].impact, "high", sizeof(recommendations[recommendation_count].impact) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:639:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].effort, "medium", sizeof(recommendations[recommendation_count].effort) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:660:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].id, "disk_cleanup", sizeof(recommendations[recommendation_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:662:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].type, "maintenance", sizeof(recommendations[recommendation_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:664:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].priority, "high", sizeof(recommendations[recommendation_count].priority) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:666:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].title, "Disk Space Cleanup", sizeof(recommendations[recommendation_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:668:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].description, 
+src/c/autonomy-daemon/analytics/analytics_engine.c:671:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].impact, "high", sizeof(recommendations[recommendation_count].impact) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:673:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].effort, "low", sizeof(recommendations[recommendation_count].effort) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:685:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].id, "load_optimization", sizeof(recommendations[recommendation_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:687:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].type, "performance", sizeof(recommendations[recommendation_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:689:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].priority, "medium", sizeof(recommendations[recommendation_count].priority) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:691:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].title, "System Load Optimization", sizeof(recommendations[recommendation_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:693:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].description, 
+src/c/autonomy-daemon/analytics/analytics_engine.c:696:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].impact, "medium", sizeof(recommendations[recommendation_count].impact) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:698:17:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+                strncpy(recommendations[recommendation_count].effort, "high", sizeof(recommendations[recommendation_count].effort) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:709:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].id, "network_optimization", sizeof(recommendations[recommendation_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:711:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].type, "network", sizeof(recommendations[recommendation_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:713:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].priority, "medium", sizeof(recommendations[recommendation_count].priority) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:715:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].title, "Network Optimization", sizeof(recommendations[recommendation_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:717:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].description, 
+src/c/autonomy-daemon/analytics/analytics_engine.c:720:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].impact, "medium", sizeof(recommendations[recommendation_count].impact) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:722:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].effort, "medium", sizeof(recommendations[recommendation_count].effort) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:733:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].id, "security_update", sizeof(recommendations[recommendation_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:735:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].type, "security", sizeof(recommendations[recommendation_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:737:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].priority, "medium", sizeof(recommendations[recommendation_count].priority) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:739:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].title, "Security Updates", sizeof(recommendations[recommendation_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:741:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].description, 
+src/c/autonomy-daemon/analytics/analytics_engine.c:744:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].impact, "high", sizeof(recommendations[recommendation_count].impact) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:746:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].effort, "medium", sizeof(recommendations[recommendation_count].effort) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:756:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].id, "performance_monitoring", sizeof(recommendations[recommendation_count].id) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:758:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].type, "monitoring", sizeof(recommendations[recommendation_count].type) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:760:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].priority, "low", sizeof(recommendations[recommendation_count].priority) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:762:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].title, "Enhanced Monitoring", sizeof(recommendations[recommendation_count].title) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:764:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].description, 
+src/c/autonomy-daemon/analytics/analytics_engine.c:767:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].impact, "medium", sizeof(recommendations[recommendation_count].impact) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:769:13:  [1] (buffer) strncpy:
+  Easily used incorrectly; doesn't always \0-terminate or check for invalid
+  pointers [MS-banned] (CWE-120). Risk is low because the source is a
+  constant string.
+            strncpy(recommendations[recommendation_count].effort, "low", sizeof(recommendations[recommendation_count].effort) - 1);
+src/c/autonomy-daemon/analytics/analytics_engine.c:269:5:  [0] (format) snprintf:
+  If format strings can be influenced by an attacker, they can be exploited,
+  and note that sprintf variations do not always \0-terminate (CWE-134). Use
+  a constant for the format specification. Constant format string, so not
+  considered risky.
+    snprintf(overview->uptime, sizeof(overview->uptime), "%dh %dm", hours, minutes);
+src/c/autonomy-daemon/analytics/analytics_engine.c:449:13:  [0] (format) snprintf:
+  If format strings can be influenced by an attacker, they can be exploited,
+  and note that sprintf variations do not always \0-terminate (CWE-134). Use
+  a constant for the format specification. Constant format string, so not
+  considered risky.
+            snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
+src/c/autonomy-daemon/analytics/analytics_engine.c:466:13:  [0] (format) snprintf:
+  If format strings can be influenced by an attacker, they can be exploited,
+  and note that sprintf variations do not always \0-terminate (CWE-134). Use
+  a constant for the format specification. Constant format string, so not
+  considered risky.
+            snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
+src/c/autonomy-daemon/analytics/analytics_engine.c:489:17:  [0] (format) snprintf:
+  If format strings can be influenced by an attacker, they can be exploited,
+  and note that sprintf variations do not always \0-terminate (CWE-134). Use
+  a constant for the format specification. Constant format string, so not
+  considered risky.
+                snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
+src/c/autonomy-daemon/analytics/analytics_engine.c:505:17:  [0] (format) snprintf:
+  If format strings can be influenced by an attacker, they can be exploited,
+  and note that sprintf variations do not always \0-terminate (CWE-134). Use
+  a constant for the format specification. Constant format string, so not
+  considered risky.
+                snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
+src/c/autonomy-daemon/analytics/analytics_engine.c:575:17:  [0] (format) snprintf:
+  If format strings can be influenced by an attacker, they can be exploited,
+  and note that sprintf variations do not always \0-terminate (CWE-134). Use
+  a constant for the format specification. Constant format string, so not
+  considered risky.
+                snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
