@@ -1,4 +1,5 @@
 #include "../core/types.h"
+#include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -291,6 +292,7 @@ int check_services_health(void) {
     }
     
     // Check systemd service status
+    // flawfinder: ignore - constant string, no injection risk
     FILE *fp = popen("systemctl list-failed --no-legend 2>/dev/null | wc -l", "r");
     if (fp) {
         char buffer[16];
@@ -412,6 +414,7 @@ int check_time_health(void) {
         health = 0; // System time is invalid
     } else {
         // Check NTP synchronization status
+        // flawfinder: ignore - constant string, no injection risk
         FILE *fp = popen("ntpq -p 2>/dev/null | grep -E '^\\*|^\\+|^o' | wc -l", "r");
         if (fp) {
             char buffer[16];
@@ -426,6 +429,7 @@ int check_time_health(void) {
             pclose(fp);
         } else {
             // Try alternative NTP check
+            // flawfinder: ignore - constant string, no injection risk
             fp = popen("chrony sources 2>/dev/null | grep -E '^\\^|^\\*|^\\+' | wc -l", "r");
             if (fp) {
                 char buffer[16];
@@ -442,6 +446,7 @@ int check_time_health(void) {
         }
         
         // Check system clock drift
+        // flawfinder: ignore - constant string, no injection risk
         fp = popen("ntpq -c 'rv 0 offset' 2>/dev/null | awk '{print $3}'", "r");
         if (fp) {
             char buffer[32];
@@ -517,6 +522,7 @@ int check_logs_health(void) {
     }
     
     // Check logrotate configuration
+    // flawfinder: ignore - constant string, no injection risk
     FILE *fp = popen("logrotate -d /etc/logrotate.conf 2>&1 | grep -c 'error'", "r");
     if (fp) {
         char buffer[16];
@@ -530,6 +536,7 @@ int check_logs_health(void) {
     }
     
     // Check system log daemon status
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("pgrep -f 'syslogd|rsyslogd|logd' > /dev/null 2>&1; echo $?", "r");
     if (fp) {
         char buffer[16];
@@ -552,6 +559,7 @@ int check_logs_health(void) {
     }
     
     // Check for log file corruption
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("find /var/log -name '*.log' -size +0c -exec file {} \\; 2>/dev/null | grep -c 'data'", "r");
     if (fp) {
         char buffer[16];
@@ -641,6 +649,7 @@ int perform_network_health_check(void) {
     double health = 100.0;
     
     // Check network interfaces
+    // flawfinder: ignore - constant string, no injection risk
     FILE *fp = popen("ip link show | grep -c 'state UP'", "r");
     if (fp) {
         char buffer[16];
@@ -656,6 +665,7 @@ int perform_network_health_check(void) {
     }
     
     // Check default route
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("ip route show default | wc -l", "r");
     if (fp) {
         char buffer[16];
@@ -669,6 +679,7 @@ int perform_network_health_check(void) {
     }
     
     // Check DNS resolution
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("nslookup google.com > /dev/null 2>&1; echo $?", "r");
     if (fp) {
         char buffer[16];
@@ -682,6 +693,7 @@ int perform_network_health_check(void) {
     }
     
     // Check internet connectivity
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("ping -c 1 -W 5 8.8.8.8 > /dev/null 2>&1; echo $?", "r");
     if (fp) {
         char buffer[16];
@@ -695,6 +707,7 @@ int perform_network_health_check(void) {
     }
     
     // Check network load
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("cat /proc/net/dev | grep -v 'lo:' | awk '{sum+=$2+$10} END {print sum}'", "r");
     if (fp) {
         char buffer[32];
@@ -722,6 +735,7 @@ int perform_gps_health_check(void) {
     double health = 100.0;
     
     // Check GPS service status
+    // flawfinder: ignore - constant string, no injection risk
     FILE *fp = popen("pgrep -f 'gps-service|gpsd' > /dev/null 2>&1; echo $?", "r");
     if (fp) {
         char buffer[16];
@@ -755,6 +769,7 @@ int perform_gps_health_check(void) {
     }
     
     // Check GPS device accessibility
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("ls /dev/tty* | grep -E 'USB|ACM|AMA' | wc -l", "r");
     if (fp) {
         char buffer[16];
@@ -768,6 +783,7 @@ int perform_gps_health_check(void) {
     }
     
     // Check GPS data quality
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("grep -c 'GPGGA' /var/lib/autonomy/gps_data 2>/dev/null || echo 0", "r");
     if (fp) {
         char buffer[16];
@@ -783,6 +799,7 @@ int perform_gps_health_check(void) {
     }
     
     // Check GPS accuracy
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("grep 'GPGGA' /var/lib/autonomy/gps_data 2>/dev/null | tail -1 | cut -d',' -f7", "r");
     if (fp) {
         char buffer[16];
@@ -798,6 +815,7 @@ int perform_gps_health_check(void) {
     }
     
     // Check satellite count
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("grep 'GPGGA' /var/lib/autonomy/gps_data 2>/dev/null | tail -1 | cut -d',' -f8", "r");
     if (fp) {
         char buffer[16];

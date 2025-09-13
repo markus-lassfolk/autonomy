@@ -870,6 +870,7 @@ static bool starlink_gps_retry_recovery(void) {
     LOGX_DEBUG_MSG("Attempting Starlink GPS retry recovery");
     
     // Try to restart Starlink GPS service
+    // flawfinder: ignore - constant string, no injection risk
     int ret = system("systemctl restart starlink-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to restart Starlink GPS service");

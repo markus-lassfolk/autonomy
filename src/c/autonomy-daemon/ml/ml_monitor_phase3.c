@@ -719,46 +719,47 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
     }
     
     // CRITICAL: Use local copy to avoid corrupted global
-    // Force local predictor to be in data section by making it static and initialized
-    static sliding_predictor_t local_predictor = {
-        .window_size = 0,
-        .write_idx = 0,
-        .features = {0},
-        .window = {{0}}
-    };
+    // Force local predictor to be in data section using malloc
+    static sliding_predictor_t *local_predictor = NULL;
     static bool local_predictor_initialized = false;
     
     if (!local_predictor_initialized) {
-        fprintf(stderr, "DEBUG: Initializing local predictor as workaround for global corruption\n");
-        memset(&local_predictor, 0, sizeof(sliding_predictor_t));
-        local_predictor.window_size = 0;
-        local_predictor.write_idx = 0;
-        local_predictor.features.snr_trend = 128; // Stable
+        fprintf(stderr, "DEBUG: Allocating local predictor in heap (data section)\n");
+        local_predictor = malloc(sizeof(sliding_predictor_t));
+        if (!local_predictor) {
+            fprintf(stderr, "ERROR: Failed to allocate local predictor\n");
+            return ML_MONITOR_ERROR_MEMORY;
+        }
+        
+        memset(local_predictor, 0, sizeof(sliding_predictor_t));
+        local_predictor->window_size = 0;
+        local_predictor->write_idx = 0;
+        local_predictor->features.snr_trend = 128; // Stable
         
         // CRITICAL: Initialize the window array to prevent NULL access
         for (int i = 0; i < 60; i++) {
-            local_predictor.window[i].snr_x100 = 0;
-            local_predictor.window[i].latency_ms = 0;
-            local_predictor.window[i].packet_loss_pct = 0;
-            local_predictor.window[i].obstruction_pct = 0;
-            local_predictor.window[i].timestamp = 0;
+            local_predictor->window[i].snr_x100 = 0;
+            local_predictor->window[i].latency_ms = 0;
+            local_predictor->window[i].packet_loss_pct = 0;
+            local_predictor->window[i].obstruction_pct = 0;
+            local_predictor->window[i].timestamp = 0;
         }
         
         local_predictor_initialized = true;
-        fprintf(stderr, "DEBUG: Local predictor initialized with safe window array\n");
+        fprintf(stderr, "DEBUG: Local predictor allocated at %p (should be in data section)\n", local_predictor);
     }
     
     // Copy current state from global (if not corrupted) or use local
     if (g_phase3_predictor_magic == GLOBAL_PREDICTOR_MAGIC && 
         (uintptr_t)&g_phase3_sliding_predictor >= 0x40000000) {
         fprintf(stderr, "DEBUG: Using global predictor (not corrupted)\n");
-        local_predictor = g_phase3_sliding_predictor;
+        *local_predictor = g_phase3_sliding_predictor;
     } else {
         fprintf(stderr, "DEBUG: Using local predictor (global corrupted)\n");
     }
     
-    fprintf(stderr, "DEBUG: Local predictor address: %p (should be in data section)\n", &local_predictor);
-    int prediction_result = ml_monitor_sliding_window_predict(monitor, &local_predictor, observation);
+    fprintf(stderr, "DEBUG: Local predictor address: %p (should be in data section)\n", local_predictor);
+    int prediction_result = ml_monitor_sliding_window_predict(monitor, local_predictor, observation);
     fprintf(stderr, "DEBUG: ml_monitor_sliding_window_predict returned: %d\n", prediction_result);
     if (prediction_result != ML_MONITOR_SUCCESS) {
         LOGX_DEBUG_MSG("Sliding window prediction warning: %d", prediction_result);

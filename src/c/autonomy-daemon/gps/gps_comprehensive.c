@@ -333,6 +333,7 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
             gps_data_t rutos_data;
             
             // Try to get GPS data from RUTOS GPS daemon
+            // flawfinder: ignore - constant string, no injection risk
             FILE *gps_fp = popen("gpspipe -w -n 1 2>/dev/null", "r");
             if (gps_fp) {
                 char gps_line[512];
@@ -378,6 +379,7 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
             
             // If GPS parsing failed, try alternative method
             if (!rutos_data.valid) {
+                // flawfinder: ignore - constant string, no injection risk
                 FILE *alt_fp = popen("ubus call gps get_status 2>/dev/null", "r");
                 if (alt_fp) {
                     char ubus_line[512];
