@@ -5,7 +5,9 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <signal.h>
+#ifdef __GLIBC__
 #include <execinfo.h>
+#endif
 
 // Maximum number of monitored globals
 #define MAX_MONITORED_GLOBALS 32
@@ -217,8 +219,9 @@ bool detect_stack_overflow(void) {
         return false; // Can't detect without stack info
     }
     
-    void *current_sp;
-    asm volatile ("mov %0, sp" : "=r" (current_sp));
+    // Get current stack pointer using a safer method
+    volatile char stack_var;
+    void *current_sp = (void*)&stack_var;
     
     // Check if stack pointer is getting close to stack base
     if ((uintptr_t)current_sp < (uintptr_t)g_stack_base + 1024) { // 1KB safety margin
