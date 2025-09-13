@@ -1,0 +1,5 @@
+# Agent Never Break Rule
+
+NEVER cancel the terminal execution yourself by sending ctrl+c or any kinds of interrupts. You are only allowed to use kill if you need to stop a process.
+
+ALWAYS append a concurrent 10s sleep to the end of the command to give it time to run to completion.

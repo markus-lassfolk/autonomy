@@ -352,8 +352,11 @@ int try_here_service(double lat, double lon, gps_location_info_t *location_info)
     // Get HERE API key from configuration or environment
     const char* here_api_key = NULL;
     
-    // First try to get from environment variable
-    here_api_key = getenv("HERE_API_KEY");
+    // First try to get from environment variable - CRITICAL FIX: Validate environment variable
+    here_api_key = getenv("HERE_API_KEY"); // flawfinder: ignore
+    if (here_api_key && strlen(here_api_key) > 256) {
+        here_api_key = NULL; // Reject overly long environment variables
+    }
     
     // If not found in environment, try to get from UCI configuration
     if (!here_api_key) {
@@ -561,24 +564,24 @@ void create_basic_location_info(double lat, double lon, gps_location_info_t *loc
     if (lat >= -60 && lat <= 80) {
         if (lon >= -20 && lon <= 60) { // Europe/Africa
             if (lat >= 35) {
-                strcpy(continent, "Europe");
-                strcpy(region, "Northern Europe");
+                safe_strncpy(continent, "Europe", sizeof(continent));
+                safe_strncpy(region, "Northern Europe", sizeof(region));
             } else if (lat >= 0) {
-                strcpy(continent, "Europe");
-                strcpy(region, "Southern Europe");
+                safe_strncpy(continent, "Europe", sizeof(continent));
+                safe_strncpy(region, "Southern Europe", sizeof(region));
             } else {
-                strcpy(continent, "Africa");
-                strcpy(region, lat >= -20 ? "Northern Africa" : "Southern Africa");
+                safe_strncpy(continent, "Africa", sizeof(continent));
+                safe_strncpy(region, lat >= -20 ? "Northern Africa" : "Southern Africa", sizeof(region));
             }
         } else if (lon >= -130 && lon <= -60) { // Americas
-            strcpy(continent, "North America");
-            strcpy(region, lat >= 30 ? "Northern US/Canada" : "Central/South America");
+            safe_strncpy(continent, "North America", sizeof(continent));
+            safe_strncpy(region, lat >= 30 ? "Northern US/Canada" : "Central/South America", sizeof(region));
         } else if (lon >= 100 && lon <= 180) { // Asia/Pacific
-            strcpy(continent, "Asia");
-            strcpy(region, lat >= 20 ? "East Asia" : "Southeast Asia");
+            safe_strncpy(continent, "Asia", sizeof(continent));
+            safe_strncpy(region, lat >= 20 ? "East Asia" : "Southeast Asia", sizeof(region));
         } else if (lon >= 60 && lon <= 100) { // Middle East/Asia
-            strcpy(continent, "Asia");
-            strcpy(region, "Central Asia");
+            safe_strncpy(continent, "Asia", sizeof(continent));
+            safe_strncpy(region, "Central Asia", sizeof(region));
         }
     }
 

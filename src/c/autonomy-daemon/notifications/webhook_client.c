@@ -154,7 +154,7 @@ static char* create_json_payload(webhook_payload_t* payload) {
         json[buffer_size - 1] = '\0';
         free(json_string);
     } else {
-        strcpy(json, "{}");
+        safe_strncpy(json, "{}", sizeof(json));
     }
     
     // Clean up

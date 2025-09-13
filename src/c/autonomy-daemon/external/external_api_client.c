@@ -46,15 +46,15 @@ int external_api_client_init(const api_endpoint_config_t* config) {
         g_external_api_client.config = *config;
     } else {
         // Default configuration
-        strcpy(g_external_api_client.config.base_url, "https://api.example.com");
-        strcpy(g_external_api_client.config.api_key, "");
-        strcpy(g_external_api_client.config.username, "");
-        strcpy(g_external_api_client.config.password, "");
+        safe_strncpy(g_external_api_client.config.base_url, "https://api.example.com", sizeof(g_external_api_client.config.base_url));
+        safe_strncpy(g_external_api_client.config.api_key, "", sizeof(g_external_api_client.config.api_key));
+        safe_strncpy(g_external_api_client.config.username, "", sizeof(g_external_api_client.config.username));
+        safe_strncpy(g_external_api_client.config.password, "", sizeof(g_external_api_client.config.password));
         g_external_api_client.config.timeout_seconds = 30; // Use configurable timeout
         g_external_api_client.config.use_ssl = true; // Use configurable SSL setting
-        strcpy(g_external_api_client.config.ca_cert_path, "/etc/ssl/certs/ca-certificates.crt");
-        strcpy(g_external_api_client.config.client_cert_path, "");
-        strcpy(g_external_api_client.config.client_key_path, "");
+        safe_strncpy(g_external_api_client.config.ca_cert_path, "/etc/ssl/certs/ca-certificates.crt", sizeof(g_external_api_client.config.ca_cert_path));
+        safe_strncpy(g_external_api_client.config.client_cert_path, "", sizeof(g_external_api_client.config.client_cert_path));
+        safe_strncpy(g_external_api_client.config.client_key_path, "", sizeof(g_external_api_client.config.client_key_path));
     }
     
     // Initialize mutex
@@ -272,11 +272,11 @@ static int api_connect_to_endpoint(void) {
     // Extract host from base URL
     const char* url = g_external_api_client.config.base_url;
     if (strncmp(url, "http://", 7) == 0) {
-        strcpy(host, url + 7);
+        safe_strncpy(host, url + 7, sizeof(host));
     } else if (strncmp(url, "https://", 8) == 0) {
-        strcpy(host, url + 8);
+        safe_strncpy(host, url + 8, sizeof(host));
     } else {
-        strcpy(host, url);
+        safe_strncpy(host, url, sizeof(host));
     }
     
     // Remove path from host

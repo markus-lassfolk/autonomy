@@ -84,7 +84,7 @@ int wifi_management_init(void) {
     g_wifi_management.scheduler.check_interval_min = 10; // Use configurable check interval
     g_wifi_management.scheduler.skip_if_recent = true; // Use configurable skip recent setting
     g_wifi_management.scheduler.recent_threshold_h = 6; // Use configurable recent threshold
-    strcpy(g_wifi_management.scheduler.timezone, "Local");
+    safe_strncpy(g_wifi_management.scheduler.timezone, "Local", sizeof(g_wifi_management.scheduler.timezone));
     
     // Initialize GPS integration
     g_wifi_management.gps_integration.enabled = true; // Use configurable gps integration enabled
@@ -149,10 +149,10 @@ int wifi_management_discover_interfaces(void) {
                 
                 // Determine band based on interface name or frequency
                 if (strstr(interface->name, "5") || strstr(interface->name, "5ghz")) {
-                    strcpy(interface->band, "5");
+                    safe_strncpy(interface->band, "5", sizeof(interface->band));
                     interface->frequency = "5GHz";
                 } else {
-                    strcpy(interface->band, "2.4");
+                    safe_strncpy(interface->band, "2.4", sizeof(interface->band));
                     interface->frequency = "2.4GHz";
                 }
                 
@@ -468,7 +468,7 @@ int wifi_management_check_scheduled_optimization(void) {
             // Check if we haven't optimized recently
             if (now - g_wifi_management.last_optimized > (g_wifi_management.scheduler.recent_threshold_h * 3600)) {
                 should_optimize = true; // Use configurable setting
-                strcpy(trigger, "nightly");
+                safe_strncpy(trigger, "nightly", sizeof(trigger));
             }
         }
     }
@@ -486,7 +486,7 @@ int wifi_management_check_scheduled_optimization(void) {
                     // Check if we haven't optimized recently
                     if (now - g_wifi_management.last_optimized > (g_wifi_management.scheduler.recent_threshold_h * 3600)) {
                         should_optimize = true; // Use configurable setting
-                        strcpy(trigger, "weekly");
+                        safe_strncpy(trigger, "weekly", sizeof(trigger));
                     }
                     break;
                 }

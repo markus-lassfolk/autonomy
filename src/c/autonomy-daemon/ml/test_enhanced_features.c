@@ -142,12 +142,12 @@ void test_cellular_tower_intelligence(void) {
     cellular_info_t cellular_info;
     memset(&cellular_info, 0, sizeof(cellular_info));
     cellular_info.rsrp = -85;
-    strcpy(cellular_info.cell_id, "1001");
+    safe_strncpy(cellular_info.cell_id, "1001", sizeof(cellular_info.cell_id));
     
     // Simulate cell changes
     const char *cell_sequence[] = {"1001", "1002", "1001", "1003", "1002", "1005"};
     for (int i = 0; i < 6; i++) {
-        strcpy(cellular_info.cell_id, cell_sequence[i]);
+        safe_strncpy(cellular_info.cell_id, cell_sequence[i], sizeof(cellular_info.cell_id));
         result = cellular_tower_intelligence_analyze_cell_changes(intelligence, cellular_info.cell_id, &cellular_info);
         assert(result == CELLULAR_TOWER_INTELLIGENCE_SUCCESS);
         

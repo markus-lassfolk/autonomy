@@ -55,7 +55,7 @@ int gps_opencellid_init(const opencellid_config_t* config) {
     } else {
         // Default configuration
         g_opencellid.config.enabled = false; // Use configurable enabled setting
-        strcpy(g_opencellid.config.base_url, OPENCELLID_BASE_URL);
+        safe_strncpy(g_opencellid.config.base_url, OPENCELLID_BASE_URL, sizeof(g_opencellid.config.base_url));
         g_opencellid.config.timeout_seconds = 30; // Use configurable timeout
         g_opencellid.config.contribution.enabled = false; // Use configurable contribution setting
         g_opencellid.config.contribution.retry_attempts = 3; // Use configurable retry attempts
@@ -142,7 +142,7 @@ int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_resp
             response->lat = entry->lat;
             response->lon = entry->lon;
             response->range = entry->range;
-            strcpy(response->radio, gps_opencellid_radio_type_to_string(cell_key->radio));
+            safe_strncpy(response->radio, gps_opencellid_radio_type_to_string(cell_key->radio));
             
             g_opencellid.stats.cache_hits++;
             
@@ -193,7 +193,7 @@ int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_resp
         }
     } else {
         g_opencellid.stats.failed_requests++;
-        strcpy(response->error, "API request failed");
+        safe_strncpy(response->error, "API request failed", sizeof(response->error));
         LOGX_ERROR_MSG("OpenCellID API request failed");
         result = AUTONOMY_ERROR_NETWORK;
     }

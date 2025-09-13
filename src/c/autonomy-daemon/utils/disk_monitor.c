@@ -363,7 +363,7 @@ static int is_file_older_than(const char *path, int hours) {
 static void send_notification(const char *type, const char *message) {
     // Create notification event
     notification_event_t event = {0};
-    strcpy(event.title, "Disk Monitor Alert");
+    safe_strncpy(event.title, "Disk Monitor Alert", sizeof(event.title));
     safe_strncpy(event.message, message, sizeof(event.message));
     event.message[sizeof(event.message) - 1] = '\0';
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;

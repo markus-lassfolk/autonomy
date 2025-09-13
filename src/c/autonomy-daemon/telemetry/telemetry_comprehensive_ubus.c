@@ -477,14 +477,14 @@ int telemetry_comprehensive_ubus_execute_ml_algorithm(struct ubus_context *ctx, 
     FILE *ml_fp = popen(ml_command, "r");
     if (!ml_fp) {
         ml_success = false;
-        strcpy(ml_error, "Failed to execute ML algorithm");
+        safe_strncpy(ml_error, "Failed to execute ML algorithm", sizeof(ml_error));
     } else {
         char *result = fgets(ml_output, sizeof(ml_output), ml_fp);
         int exit_code = pclose(ml_fp);
         
         if (exit_code != 0 || !result) {
             ml_success = false;
-            strcpy(ml_error, "ML algorithm execution failed");
+            safe_strncpy(ml_error, "ML algorithm execution failed", sizeof(ml_error));
         } else {
             // Parse ML results from JSON output
             json_object *ml_results = json_tokener_parse(ml_output);
@@ -499,12 +499,12 @@ int telemetry_comprehensive_ubus_execute_ml_algorithm(struct ubus_context *ctx, 
                     ml_success = true;
                 } else {
                     ml_success = false;
-                    strcpy(ml_error, "Invalid ML results format");
+                    safe_strncpy(ml_error, "Invalid ML results format", sizeof(ml_error));
                 }
                 json_object_put(ml_results);
             } else {
                 ml_success = false;
-                strcpy(ml_error, "Failed to parse ML results");
+                safe_strncpy(ml_error, "Failed to parse ML results", sizeof(ml_error));
             }
         }
     }

@@ -49,10 +49,12 @@ endef
 
 define Package/autonomy-ui/install
 	$(INSTALL_DIR) $(1)/www/autonomy
-	$(CP) $(PKG_BUILD_DIR)/dist/* $(1)/www/autonomy/
+	$(CP) $(PKG_BUILD_DIR)/enhanced-autonomy-dashboard.html $(1)/www/autonomy/index.html
+	$(CP) $(PKG_BUILD_DIR)/ml-analytics-dashboard.html $(1)/www/autonomy/ml-analytics.html
+	$(CP) $(PKG_BUILD_DIR)/autonomy-dashboard.js $(1)/www/autonomy/autonomy-dashboard.js
 	
-	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
-	$(INSTALL_DATA) ./files/autonomy-ui.json $(1)/usr/share/rpcd/acl.d/
+	$(INSTALL_DIR) $(1)/usr/share/vuci/menu.d
+	$(CP) $(PKG_BUILD_DIR)/ui/data/usr/share/vuci/menu.d/autonomy.json $(1)/usr/share/vuci/menu.d/
 endef
 
 $(eval $(call BuildPackage,autonomy-ui))

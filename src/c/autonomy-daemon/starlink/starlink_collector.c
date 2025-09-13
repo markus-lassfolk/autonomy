@@ -142,13 +142,13 @@ int starlink_collect_data(starlink_collection_result_t *result) {
         result->health.last_check = result->collection_time;
         
         if (health_score >= 90) {
-            strcpy(result->health.status, "excellent");
+            safe_strncpy(result->health.status, "excellent", sizeof(result->health.status));
         } else if (health_score >= 80) {
-            strcpy(result->health.status, "good");
+            safe_strncpy(result->health.status, "good", sizeof(result->health.status));
         } else if (health_score >= 70) {
-            strcpy(result->health.status, "fair");
+            safe_strncpy(result->health.status, "fair", sizeof(result->health.status));
         } else {
-            strcpy(result->health.status, "poor");
+            safe_strncpy(result->health.status, "poor", sizeof(result->health.status));
         }
         
         // Update collector state
@@ -177,15 +177,15 @@ int starlink_collect_data(starlink_collection_result_t *result) {
         
     } else {
         result->success = false;
-        strcpy(result->error_message, "Failed to collect Starlink data");
+        safe_strncpy(result->error_message, "Failed to collect Starlink data", sizeof(result->error_message));
         g_collector_state.error_count++;
         
         // Set error health status
         result->health.overall_score = 0;
         result->health.is_healthy = false;
         result->health.last_check = result->collection_time;
-        strcpy(result->health.status, "error");
-        strcpy(result->health.error_message, "Data collection failed");
+        safe_strncpy(result->health.status, "error", sizeof(result->health.status));
+        safe_strncpy(result->health.error_message, "Data collection failed", sizeof(result->health.error_message));
     }
     
     return 0;

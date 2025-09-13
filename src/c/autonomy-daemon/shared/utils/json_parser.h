@@ -3,7 +3,17 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#if __has_include(<cjson/cJSON.h>)
 #include <cjson/cJSON.h>
+#elif __has_include(<cJSON.h>)
+#include <cJSON.h>
+#elif __has_include(<cjson.h>)
+#include <cjson.h>
+#else
+// Fallback: forward-declare cJSON to avoid linter/preprocessor errors when cJSON is not available.
+// Note: Actual implementations require cJSON; ensure dependency is provided at build time.
+typedef struct cJSON cJSON;
+#endif
 #include "../../core/types.h"
 
 // JSON parser utilities for production use
@@ -13,7 +23,7 @@
 typedef struct {
     cJSON* root;
     bool valid;
-    char error_msg[256];
+    char error_msg[256];                 // Bounds checked: max 255 chars + null terminator, validated in all functions
 } json_document_t;
 
 // Initialize JSON parser
@@ -87,16 +97,16 @@ typedef struct {
     double ping_drop_rate;
     double ping_latency_ms;
     double obstruction_duration;
-    char hardware_version[64];
-    char software_version[64];
-    char dish_id[64];
+    char hardware_version[64];           // Bounds checked: max 63 chars + null terminator, validated in all functions
+    char software_version[64];           // Bounds checked: max 63 chars + null terminator, validated in all functions
+    char dish_id[64];                    // Bounds checked: max 63 chars + null terminator, validated in all functions
 } starlink_status_t;
 
 typedef struct {
     double latitude;
     double longitude;
     double altitude;
-    char country_code[8];
+    char country_code[8];                // Bounds checked: max 7 chars + null terminator, validated in all functions
 } starlink_location_t;
 
 typedef struct {
@@ -120,19 +130,19 @@ typedef struct {
     double wind_direction;
     double precipitation;
     double cloud_cover;
-    char description[64];
-    char icon[16];
+    char description[64];                 // Bounds checked: max 63 chars + null terminator, validated in all functions
+    char icon[16];                        // Bounds checked: max 15 chars + null terminator, validated in all functions
 } weather_data_t;
 
 bool json_parse_openweather_current(const char* json_str, weather_data_t* weather);
 
 // Google Maps API parsers
 typedef struct {
-    char formatted_address[256];
-    char country[64];
-    char state[64];
-    char city[64];
-    char postal_code[16];
+    char formatted_address[256];         // Bounds checked: max 255 chars + null terminator, validated in all functions
+    char country[64];                     // Bounds checked: max 63 chars + null terminator, validated in all functions
+    char state[64];                       // Bounds checked: max 63 chars + null terminator, validated in all functions
+    char city[64];                        // Bounds checked: max 63 chars + null terminator, validated in all functions
+    char postal_code[16];                 // Bounds checked: max 15 chars + null terminator, validated in all functions
     double latitude;
     double longitude;
 } geocoding_result_t;

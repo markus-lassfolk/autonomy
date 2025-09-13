@@ -106,7 +106,7 @@ int gps_manager_init(void) {
         .clustering_radius_m = 100.0,
         .max_cluster_size = 50
     };
-    strcpy(comprehensive_config.source_priority, "rutos,starlink,opencellid,google");
+    safe_strncpy(comprehensive_config.source_priority, "rutos,starlink,opencellid,google", sizeof(comprehensive_config.source_priority));
     
     if (gps_comprehensive_init(&comprehensive_config) != AUTONOMY_SUCCESS) {
         LOGX_ERROR_MSG("Failed to initialize comprehensive GPS collector");

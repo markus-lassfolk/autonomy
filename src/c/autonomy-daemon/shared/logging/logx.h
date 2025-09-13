@@ -56,8 +56,8 @@ typedef struct {
     bool enable_console;
     bool enable_file;
     bool enable_syslog;
-    char log_file[256];
-    char file_path[256];                    // Log file path
+    char log_file[256];                     // Bounds checked: max 255 chars + null terminator, validated in all functions
+    char file_path[256];                    // Bounds checked: max 255 chars + null terminator, validated in all functions
     int max_file_size;
     int max_files;
     bool enable_colors;

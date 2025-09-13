@@ -156,7 +156,7 @@ void get_mwan3_interface_info(void *ctx, network_interface_t *interfaces, int co
             if (is_interface_in_mwan3(interfaces[i].name)) {
                 interfaces[i].mwan3_available = true;
                 interfaces[i].mwan3_tracking_enabled = true;
-                strcpy(interfaces[i].mwan3_name, interfaces[i].name);
+                safe_strncpy(interfaces[i].mwan3_name, interfaces[i].name, sizeof(interfaces[i].mwan3_name));
                 // Get MWAN3 status for this interface
                 get_mwan3_interface_status(ctx, &interfaces[i]);
             }
@@ -178,7 +178,7 @@ static bool is_interface_in_mwan3(const char *interface_name) {
 static void get_mwan3_interface_status(struct ubus_context *ctx, network_interface_t *iface) {
     // This would parse the MWAN3 status for the specific interface
     // For now, set default values
-    strcpy(iface->mwan3_status, "unknown");
+    safe_strncpy(iface->mwan3_status, "unknown", sizeof(iface->mwan3_status));
     iface->mwan3_metric = 0;
 }
 
@@ -264,9 +264,9 @@ static void get_cellular_interface_details(struct ubus_context *ctx, network_int
         if (ret == 0) {
             // Parse modem information
             // For now, set default values
-            strcpy(iface->modem_model, "Unknown");
-            strcpy(iface->modem_id, "2-1");
-            strcpy(iface->sim_id, "1");
+            safe_strncpy(iface->modem_model, "Unknown", sizeof(iface->modem_model));
+            safe_strncpy(iface->modem_id, "2-1", sizeof(iface->modem_id));
+            safe_strncpy(iface->sim_id, "1", sizeof(iface->sim_id));
         }
         blob_buf_free(&req);
     }
@@ -302,8 +302,8 @@ void get_wifi_information(void *ctx, network_interface_t *interfaces, int count)
 static void get_wifi_interface_details(struct ubus_context *ctx, network_interface_t *iface) {
     // This would parse WiFi details from network.wireless
     // For now, set default values
-    strcpy(iface->wifi_mode, "ap");
-    strcpy(iface->wifi_encryption, "psk2");
+    safe_strncpy(iface->wifi_mode, "ap", sizeof(iface->wifi_mode));
+    safe_strncpy(iface->wifi_encryption, "psk2", sizeof(iface->wifi_encryption));
 }
 
 // Detect Starlink connections
@@ -314,8 +314,8 @@ void detect_starlink_connections(network_interface_t *interfaces, int count) {
             is_starlink_ip_range(interfaces[i].ip_address)) {
             
             interfaces[i].is_starlink = true;
-            strcpy(interfaces[i].type, "starlink");
-            strcpy(interfaces[i].starlink_ip, interfaces[i].ip_address);
+            safe_strncpy(interfaces[i].type, "starlink", sizeof(interfaces[i].type));
+            safe_strncpy(interfaces[i].starlink_ip, interfaces[i].ip_address, sizeof(interfaces[i].starlink_ip));
             
             // Try to get Starlink dish information
             get_starlink_dish_info(&interfaces[i]);
@@ -353,16 +353,16 @@ void detect_vpn_connections(network_interface_t *interfaces, int count) {
         if (strstr(interfaces[i].name, "wg_") || 
             strstr(interfaces[i].type, "wireguard")) {
             interfaces[i].is_vpn = true;
-            strcpy(interfaces[i].vpn_type, "wireguard");
-            strcpy(interfaces[i].vpn_name, interfaces[i].name);
+            safe_strncpy(interfaces[i].vpn_type, "wireguard", sizeof(interfaces[i].vpn_type));
+            safe_strncpy(interfaces[i].vpn_name, interfaces[i].name, sizeof(interfaces[i].vpn_name));
         }
         
         // Check for OpenVPN interfaces
         if (strstr(interfaces[i].name, "tun") || 
             strstr(interfaces[i].name, "tap")) {
             interfaces[i].is_vpn = true;
-            strcpy(interfaces[i].vpn_type, "openvpn");
-            strcpy(interfaces[i].vpn_name, interfaces[i].name);
+            safe_strncpy(interfaces[i].vpn_type, "openvpn", sizeof(interfaces[i].vpn_type));
+            safe_strncpy(interfaces[i].vpn_name, interfaces[i].name, sizeof(interfaces[i].vpn_name));
         }
     }
 }
@@ -434,7 +434,7 @@ static void detect_cellular_device_path(network_interface_t *iface) {
     
     // If still not found, set a default
     if (strlen(iface->cellular_device_path) == 0) {
-        strcpy(iface->cellular_device_path, "/dev/ttyUSB2"); // Fallback default
+        safe_strncpy(iface->cellular_device_path, "/dev/ttyUSB2", sizeof(iface->cellular_device_path)); // Fallback default
         LOGX_WARN_MSG("No cellular device detected, using default: %s", iface->cellular_device_path);
     }
 }
@@ -625,9 +625,9 @@ static void get_enhanced_cellular_metrics(network_interface_t *interface) {
     
     // Determine network technology based on available metrics
     if (interface->enhanced_cellular_info.rsrp_dbm != 0) {
-        strcpy(interface->enhanced_cellular_info.network_technology, "4G");
+        safe_strncpy(interface->enhanced_cellular_info.network_technology, "4G", sizeof(interface->enhanced_cellular_info.network_technology));
     } else {
-        strcpy(interface->enhanced_cellular_info.network_technology, "3G");
+        safe_strncpy(interface->enhanced_cellular_info.network_technology, "3G", sizeof(interface->enhanced_cellular_info.network_technology));
     }
 }
 

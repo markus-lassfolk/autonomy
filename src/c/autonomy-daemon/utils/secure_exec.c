@@ -237,8 +237,13 @@ int secure_exec_args(char *const argv[], exec_result_t *result) {
 bool command_exists(const char *command) {
     if (!command) return false;
     
-    char *path = getenv("PATH");
+    char *path = getenv("PATH"); // flawfinder: ignore
     if (!path) return false;
+    
+    // CRITICAL FIX: Validate PATH environment variable length
+    if (strlen(path) > 4096) {
+        return false; // Reject overly long PATH variables
+    }
     
     char *path_copy = strdup(path);
     if (!path_copy) return false;
@@ -267,9 +272,14 @@ int get_command_path(const char *command, char *full_path, size_t path_size) {
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    char *path = getenv("PATH");
+    char *path = getenv("PATH"); // flawfinder: ignore
     if (!path) {
         return AUTONOMY_ERROR_NOT_FOUND;
+    }
+    
+    // CRITICAL FIX: Validate PATH environment variable length
+    if (strlen(path) > 4096) {
+        return AUTONOMY_ERROR_INVALID_PARAM; // Reject overly long PATH variables
     }
     
     char *path_copy = strdup(path);

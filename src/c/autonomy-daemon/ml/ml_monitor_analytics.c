@@ -129,7 +129,7 @@ int ml_monitor_analytics_record_prediction(const ml_prediction_result_t *result)
             !g_analytics_data->interface_summary[i].is_active) {
             
             if (!g_analytics_data->interface_summary[i].is_active) {
-                strncpy(g_analytics_data->interface_summary[i].interface_id, result->interface_id, 31);
+                safe_strncpy(g_analytics_data->interface_summary[i].interface_id, result->interface_id, sizeof(g_analytics_data->interface_summary[i].interface_id));
                 g_analytics_data->interface_summary[i].is_active = true;
                 g_analytics_data->interface_summary[i].predictions_made = 0;
                 g_analytics_data->interface_summary[i].predictions_correct = 0;
@@ -177,7 +177,7 @@ int ml_monitor_analytics_update_interface_score(const ml_interface_score_t *scor
             break;
         } else if (!g_analytics_data->interface_summary[i].is_active) {
             interface_slot = i;
-            strncpy(g_analytics_data->interface_summary[i].interface_id, score->interface_id, 31);
+            safe_strncpy(g_analytics_data->interface_summary[i].interface_id, score->interface_id, sizeof(g_analytics_data->interface_summary[i].interface_id));
             g_analytics_data->interface_summary[i].is_active = true;
             break;
         }

@@ -5,6 +5,11 @@ alwaysApply: true
 
 # User Development Preferences
 
+## Critical Info 
+- **All Commands**: NEVER cancel the execution yourself by sending ctrl+c or any kinds of interrupts. You are only allowed to use kill if you need to stop a process.
+- **Always**: Never Cancel actions yourself. 
+
+
 ## Communication Style
 - **Concise responses**: Avoid unnecessary repetition or filler language
 - **Action-oriented**: Focus on practical solutions and next steps

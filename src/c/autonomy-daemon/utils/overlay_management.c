@@ -520,7 +520,7 @@ static int is_file_older_than(const char *path, int days) {
 static void send_notification(const char *type, const char *message) {
     // Create notification event
     notification_event_t event = {0};
-    strcpy(event.title, "Overlay Management Alert");
+    safe_strncpy(event.title, "Overlay Management Alert", sizeof(event.title));
     safe_strncpy(event.message, message, sizeof(event.message));
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
     event.timestamp = time(NULL);

@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     starlink_grpc_daemon_config_t daemon_config = {0};
     
     // Set up client configuration
-    strcpy(daemon_config.client_config.host, "192.168.100.1");
+    safe_strncpy(daemon_config.client_config.host, "192.168.100.1", sizeof(daemon_config.client_config.host));
     daemon_config.client_config.port = 9200;
     daemon_config.client_config.timeout = 10;
     daemon_config.client_config.retries = 3;
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     daemon_config.retry_delay_ms = 1000;
     daemon_config.enable_monitoring = true;
     daemon_config.monitoring_interval_seconds = 30;
-    strcpy(daemon_config.log_prefix, "STARLINK-GRPC");
+    safe_strncpy(daemon_config.log_prefix, "STARLINK-GRPC", sizeof(daemon_config.log_prefix));
     
     // Initialize the daemon integration
     if (starlink_grpc_daemon_integration_init(&daemon_config) != 0) {

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 #include <pthread.h>
 #include <json-c/json.h>
 
@@ -31,7 +32,7 @@ int starlink_grpc_daemon_integration_init(const starlink_grpc_daemon_config_t *c
     
     // Copy configuration
     fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - copying config\n");
-    memcpy(&g_starlink_grpc_daemon_config, config, sizeof(starlink_grpc_daemon_config_t));
+    g_starlink_grpc_daemon_config = *config;
     fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - config copied\n");
     
     // Initialize the comprehensive client
@@ -97,7 +98,9 @@ int starlink_grpc_daemon_get_observation(starlink_observation_t *observation) {
                 retries++;
                 if (retries <= max_retries) {
                     LOGX_WARN_MSG("gRPC call %s failed, retrying (%d/%d)", api_calls[i], retries, max_retries);
-                    usleep(g_starlink_grpc_daemon_config.retry_delay_ms * 1000);
+                    struct timespec ts = { .tv_sec = g_starlink_grpc_daemon_config.retry_delay_ms / 1000,
+                                           .tv_nsec = (long)(g_starlink_grpc_daemon_config.retry_delay_ms % 1000) * 1000000L };
+                    nanosleep(&ts, NULL);
                 }
             }
             
@@ -189,7 +192,7 @@ int starlink_grpc_daemon_update_config(const starlink_grpc_daemon_config_t *conf
     }
     
     // Update configuration
-    memcpy(&g_starlink_grpc_daemon_config, config, sizeof(starlink_grpc_daemon_config_t));
+    g_starlink_grpc_daemon_config = *config;
     
     // Reinitialize the comprehensive client with new config
     starlink_grpc_comprehensive_client_cleanup();
@@ -212,18 +215,19 @@ void starlink_grpc_daemon_log_response(const char *method, const starlink_grpc_r
         return;
     }
     
-    char log_message[1024];
-    snprintf(log_message, sizeof(log_message), 
-             "%s: %s (HTTP %d, %zu bytes)", 
-             g_starlink_grpc_daemon_config.log_prefix,
-             method, 
-             response->http_status, 
-             response->response_size);
-    
     if (response->success) {
-        LOGX_INFO_MSG("%s", log_message);
+        LOGX_INFO_MSG("%s: %s (HTTP %d, %zu bytes)",
+                      g_starlink_grpc_daemon_config.log_prefix,
+                      method,
+                      response->http_status,
+                      response->response_size);
     } else {
-        LOGX_ERROR_MSG("%s - %s", log_message, response->error_message);
+        LOGX_ERROR_MSG("%s: %s (HTTP %d, %zu bytes) - %s",
+                       g_starlink_grpc_daemon_config.log_prefix,
+                       method,
+                       response->http_status,
+                       response->response_size,
+                       response->error_message);
     }
 }
 
@@ -503,11 +507,8 @@ int parse_json_to_observation(const char *json_data, starlink_observation_t *obs
         id_start += 6; // Skip "\"id\":\""
         const char *id_end = strchr(id_start, '"');
         if (id_end) {
-            size_t id_len = id_end - id_start;
-            if (id_len < sizeof(observation->software_version)) {
-                strncpy(observation->software_version, id_start, id_len);
-                observation->software_version[id_len] = '\0';
-            }
+            size_t id_len = (size_t)(id_end - id_start);
+            safe_snprintf(observation->software_version, sizeof(observation->software_version), "%.*s", (int)id_len, id_start);
         }
     }
     
@@ -517,11 +518,8 @@ int parse_json_to_observation(const char *json_data, starlink_observation_t *obs
         hw_start += 19; // Skip "\"hardwareVersion\":\""
         const char *hw_end = strchr(hw_start, '"');
         if (hw_end) {
-            size_t hw_len = hw_end - hw_start;
-            if (hw_len < sizeof(observation->hardware_version)) {
-                strncpy(observation->hardware_version, hw_start, hw_len);
-                observation->hardware_version[hw_len] = '\0';
-            }
+            size_t hw_len = (size_t)(hw_end - hw_start);
+            safe_snprintf(observation->hardware_version, sizeof(observation->hardware_version), "%.*s", (int)hw_len, hw_start);
         }
     }
     
@@ -531,11 +529,8 @@ int parse_json_to_observation(const char *json_data, starlink_observation_t *obs
         sw_start += 19; // Skip "\"softwareVersion\":\""
         const char *sw_end = strchr(sw_start, '"');
         if (sw_end) {
-            size_t sw_len = sw_end - sw_start;
-            if (sw_len < sizeof(observation->software_version)) {
-                strncpy(observation->software_version, sw_start, sw_len);
-                observation->software_version[sw_len] = '\0';
-            }
+            size_t sw_len = (size_t)(sw_end - sw_start);
+            safe_snprintf(observation->software_version, sizeof(observation->software_version), "%.*s", (int)sw_len, sw_start);
         }
     }
     
@@ -543,7 +538,7 @@ int parse_json_to_observation(const char *json_data, starlink_observation_t *obs
     const char *uptime_start = strstr(json_data, "\"uptimeS\":");
     if (uptime_start) {
         uptime_start += 10; // Skip "\"uptimeS\":"
-        observation->uptime_s = atof(uptime_start);
+        observation->uptime_s = strtod(uptime_start, NULL);
     }
     
     // Look for GPS data
@@ -558,7 +553,10 @@ int parse_json_to_observation(const char *json_data, starlink_observation_t *obs
     const char *gps_sats_start = strstr(json_data, "\"gpsSats\":");
     if (gps_sats_start) {
         gps_sats_start += 10; // Skip "\"gpsSats\":"
-        observation->gps_satellites = atoi(gps_sats_start);
+        long sats = strtol(gps_sats_start, NULL, 10);
+        if (sats < 0) sats = 0;
+        if (sats > 255) sats = 255;
+        observation->gps_satellites = (int)sats;
     }
     
     // Look for signal metrics
@@ -571,32 +569,32 @@ int parse_json_to_observation(const char *json_data, starlink_observation_t *obs
     const char *latency_start = strstr(json_data, "\"popPingLatencyMs\":");
     if (latency_start) {
         latency_start += 19; // Skip "\"popPingLatencyMs\":"
-        observation->pop_ping_latency_ms = atof(latency_start);
+        observation->pop_ping_latency_ms = strtod(latency_start, NULL);
     }
     
     const char *drop_rate_start = strstr(json_data, "\"popPingDropRate\":");
     if (drop_rate_start) {
         drop_rate_start += 17; // Skip "\"popPingDropRate\":"
-        observation->pop_ping_drop_rate = atof(drop_rate_start);
+        observation->pop_ping_drop_rate = strtod(drop_rate_start, NULL);
     }
     
     const char *dl_start = strstr(json_data, "\"downlinkThroughputBps\":");
     if (dl_start) {
         dl_start += 24; // Skip "\"downlinkThroughputBps\":"
-        observation->downlink_throughput_bps = atof(dl_start);
+        observation->downlink_throughput_bps = strtod(dl_start, NULL);
     }
     
     const char *ul_start = strstr(json_data, "\"uplinkThroughputBps\":");
     if (ul_start) {
         ul_start += 22; // Skip "\"uplinkThroughputBps\":"
-        observation->uplink_throughput_bps = atof(ul_start);
+        observation->uplink_throughput_bps = strtod(ul_start, NULL);
     }
     
     // Look for obstruction data
     const char *obstruct_start = strstr(json_data, "\"fractionObstructed\":");
     if (obstruct_start) {
         obstruct_start += 21; // Skip "\"fractionObstructed\":"
-        observation->fraction_obstructed = atof(obstruct_start);
+        observation->fraction_obstructed = strtod(obstruct_start, NULL);
     }
     
     // Look for boresight data
@@ -634,7 +632,8 @@ static void* monitoring_thread_worker(void* arg) {
         }
         
         // Sleep for monitoring interval
-        sleep(g_starlink_grpc_daemon_config.monitoring_interval_seconds);
+        struct timespec ts = { .tv_sec = g_starlink_grpc_daemon_config.monitoring_interval_seconds, .tv_nsec = 0 };
+        nanosleep(&ts, NULL);
     }
     
     LOGX_INFO_MSG("Starlink gRPC monitoring thread stopped");

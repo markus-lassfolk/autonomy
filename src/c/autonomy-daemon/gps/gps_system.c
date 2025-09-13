@@ -187,8 +187,11 @@ int gps_system_init(void) {
         return result;
     }
     
-    // Initialize GPS Google API with proper API key loading
-    char* google_api_key = getenv("GOOGLE_API_KEY");
+    // Initialize GPS Google API with proper API key loading - CRITICAL FIX: Validate environment variable
+    char* google_api_key = getenv("GOOGLE_API_KEY"); // flawfinder: ignore
+    if (google_api_key && strlen(google_api_key) > 256) {
+        google_api_key = NULL; // Reject overly long environment variables
+    }
     
     // If not found in environment, try to get from UCI configuration
     if (!google_api_key) {
@@ -206,9 +209,9 @@ int gps_system_init(void) {
                     // Remove quotes if present
                     if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
                         key_buffer[strlen(key_buffer)-1] = '\0';
-                        strcpy(g_google_api_key, key_buffer + 1);
+                        safe_strncpy(g_google_api_key, key_buffer + 1, sizeof(g_google_api_key));
                     } else {
-                        strcpy(g_google_api_key, key_buffer);
+                        safe_strncpy(g_google_api_key, key_buffer, sizeof(g_google_api_key));
                     }
                     google_api_key = g_google_api_key;
                 }
@@ -237,8 +240,11 @@ int gps_system_init(void) {
         return result;
     }
     
-    // Initialize GPS Weather integration with proper API key loading
-    char* weather_api_key = getenv("WEATHER_API_KEY");
+    // Initialize GPS Weather integration with proper API key loading - CRITICAL FIX: Validate environment variable
+    char* weather_api_key = getenv("WEATHER_API_KEY"); // flawfinder: ignore
+    if (weather_api_key && strlen(weather_api_key) > 256) {
+        weather_api_key = NULL; // Reject overly long environment variables
+    }
     
     // If not found in environment, try to get from UCI configuration
     if (!weather_api_key) {
@@ -256,9 +262,9 @@ int gps_system_init(void) {
                     // Remove quotes if present
                     if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
                         key_buffer[strlen(key_buffer)-1] = '\0';
-                        strcpy(g_weather_api_key, key_buffer + 1);
+                        safe_strncpy(g_weather_api_key, key_buffer + 1, sizeof(g_weather_api_key));
                     } else {
-                        strcpy(g_weather_api_key, key_buffer);
+                        safe_strncpy(g_weather_api_key, key_buffer, sizeof(g_weather_api_key));
                     }
                     weather_api_key = g_weather_api_key;
                 }

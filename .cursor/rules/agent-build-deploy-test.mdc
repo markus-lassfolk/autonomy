@@ -6,9 +6,11 @@ alwaysApply: false
 # Agent Rules: Build, Deploy, and Test Workflow
 
 ## When to Use This Rule
+
 Use this rule when asked to build, deploy, test, or when following the systematic development workflow.
 
 ## Complete Workflow Process
+
 1. **Update versions** (if code changes made)
 2. **Build with build script**
 3. **Check build status** (wait if in progress)
@@ -18,6 +20,7 @@ Use this rule when asked to build, deploy, test, or when following the systemati
 7. **Analyze results and fix issues**
 
 ## Build Process
+
 ```bash
 # Step 1: Build
 /mnt/wsl/SDK/build_autonomy_daemon.sh
@@ -30,6 +33,7 @@ ls -la /mnt/wsl/SDK/rutos-ipq40xx-rutx-sdk/bin/packages/arm_cortex-a7_neon-vfpv4
 ```
 
 ## Deployment Process
+
 ```bash
 # Deploy to RUTOS device
 /mnt/wsl/SDK/deploy_autonomy_daemon.sh
@@ -40,6 +44,7 @@ ssh -i ~/.ssh/rutos_key root@192.168.80.1 "cd /tmp && opkg install --force-depen
 ```
 
 ## Testing Process
+
 ```bash
 # Step 1: Quick version check
 ssh -i ~/.ssh/rutos_key root@192.168.80.1 "LD_LIBRARY_PATH=/usr/local/usr/lib:/usr/lib timeout 10 /usr/local/usr/bin/autonomy-daemon --version"
@@ -52,7 +57,9 @@ scp -i ~/.ssh/rutos_key root@192.168.80.1:/tmp/daemon_test_*.log ./
 ```
 
 ## Log Analysis
+
 Check for:
+
 - Segmentation faults
 - Error messages
 - Warning messages
@@ -66,12 +73,14 @@ Check for:
 - Loops
 
 ## Build Status Monitoring
+
 - **Wait 30 seconds** between status checks if build is in progress
 - **Maximum build time**: 10 minutes
 - **Check elapsed time** in status message
 - **Stop if build exceeds** maximum time
 
 ## Success Criteria
+
 - ✅ Build completes successfully
 - ✅ IPK package created
 - ✅ Deployment successful
@@ -82,7 +91,9 @@ Check for:
 - ✅ Starlink gRPC communication working
 
 ## Failure Resolution
+
 If any step fails:
+
 1. **Analyze the failure** from logs
 2. **Fix the root cause** (don't work around it)
 3. **Update version** if code changes made
@@ -91,6 +102,7 @@ If any step fails:
 6. **Document the issue** and resolution
 
 ## Documentation Updates
+
 - **After successful build**: Update PROJECT_STATUS.md with build success
 - **After successful deployment**: Update PROJECT_STATUS.md with deployment status
 - **After successful testing**: Update PROJECT_STATUS.md with test results

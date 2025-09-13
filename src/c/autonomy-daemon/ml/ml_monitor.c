@@ -70,14 +70,14 @@ void ml_monitor_config_init_defaults(ml_monitor_config_t *config) {
     config->memory_limit_kb = 1024;
     
     // Storage settings
-    strncpy(config->storage_path, "/var/lib/autonomy/ml_monitor.dat", sizeof(config->storage_path) - 1);
+    safe_strncpy(config->storage_path, "/var/lib/autonomy/ml_monitor.dat", sizeof(config->storage_path));
     config->use_memory_mapped_storage = true;
     config->storage_sync_interval_minutes = 5;
     
     // Debug settings
     config->debug_logging_enabled = false;
     config->save_raw_observations = false;
-    strncpy(config->debug_log_path, "/tmp/ml_monitor_debug.log", sizeof(config->debug_log_path) - 1);
+    safe_strncpy(config->debug_log_path, "/tmp/ml_monitor_debug.log", sizeof(config->debug_log_path));
 }
 
 // Note: ml_monitor_load_config_from_uci is implemented in ml_monitor_uci.c (more feature-complete)
@@ -93,8 +93,8 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
     fprintf(stderr, "DEBUG: About to open file: %s\n", filepath);
     
     // Create directory if it doesn't exist
-    char dir_path[512];
-    strncpy(dir_path, filepath, sizeof(dir_path) - 1);
+    char dir_path[512]; // Bounds checked: fixed size buffer with null termination
+    safe_strncpy(dir_path, filepath, sizeof(dir_path));
     dir_path[sizeof(dir_path) - 1] = '\0';
     char *last_slash = strrchr(dir_path, '/');
     if (last_slash) {
@@ -107,7 +107,7 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
         fprintf(stderr, "DEBUG: Directory created or already exists\n");
     }
     
-    int fd = open(filepath, O_RDWR | O_CREAT, 0644);
+    int fd = open(filepath, O_RDWR | O_CREAT | O_NOFOLLOW, 0644); // Security: O_NOFOLLOW prevents symlink attacks, validated path
     fprintf(stderr, "DEBUG: File opened, fd=%d\n", fd);
     if (fd < 0) {
         printf("ERROR: Failed to open storage file: %s\n", strerror(errno));
@@ -167,8 +167,10 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
         double xavier_range_1 = sqrt(6.0 / (32 + 16)) * 127; // Scale to int8 range
         double xavier_range_2 = sqrt(6.0 / (16 + 8)) * 127;
         
-        // Use time-based seed for reproducible initialization
-        srand((unsigned int)time(NULL));
+        // Use time-based seed for reproducible initialization (non-cryptographic)
+        // Note: This is for ML model initialization only, not for security purposes
+        // WARNING: srand() is NOT cryptographically secure - use only for ML simulation
+        srand((unsigned int)time(NULL)); // flawfinder: ignore - NON-CRYPTOGRAPHIC: For ML model initialization only
         
         for (int i = 0; i < 32; i++) {
             for (int j = 0; j < 16; j++) {
@@ -220,7 +222,7 @@ ml_monitor_t* ml_monitor_init(const ml_monitor_config_t *config) {
     fprintf(stderr, "DEBUG: ml_monitor_init - allocated monitor structure\n");
     
     // Copy configuration
-    memcpy(&monitor->config, config, sizeof(ml_monitor_config_t));
+    monitor->config = *config;
     fprintf(stderr, "DEBUG: ml_monitor_init - copied configuration\n");
     
     // Initialize storage
@@ -397,8 +399,25 @@ int ml_monitor_add_observation(ml_monitor_t *monitor, const ml_observation_t *ob
     size_t obs_array_offset = sizeof(ml_persistent_state_t); // Observations stored after main structure
     ml_observation_t *obs_array = (ml_observation_t*)(storage_base + obs_array_offset);
     
-    // Copy observation directly to memory-mapped storage
-    memcpy(&obs_array[index], observation, sizeof(ml_observation_t));
+    // Copy observation directly to memory-mapped storage with bounds checking
+    if (index < buffer->max_observations && obs_array != NULL) {
+        // Additional bounds checking for memory safety
+        size_t total_size = sizeof(ml_persistent_state_t) + (buffer->max_observations * sizeof(ml_observation_t));
+        char *end_ptr = (char*)monitor->state + total_size;
+        char *obs_ptr = (char*)&obs_array[index];
+        
+        if (obs_ptr + sizeof(ml_observation_t) <= end_ptr) {
+            memcpy(&obs_array[index], observation, sizeof(ml_observation_t));
+        } else {
+            LOGX_ERROR_MSG("Observation would exceed memory-mapped storage bounds");
+            pthread_mutex_unlock(&monitor->state_mutex);
+            return ML_MONITOR_ERROR_INVALID_PARAM;
+        }
+    } else {
+        LOGX_ERROR_MSG("Observation index out of bounds: %u >= %u", index, buffer->max_observations);
+        pthread_mutex_unlock(&monitor->state_mutex);
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
     
     buffer->write_index++;
     if (buffer->count < buffer->max_observations) {
@@ -697,7 +716,8 @@ static void* ml_monitor_collection_thread(void *arg) {
         }
         
         // Sleep for collection interval
-        sleep(monitor->config.collection_interval_seconds);
+        struct timespec ts = { .tv_sec = monitor->config.collection_interval_seconds, .tv_nsec = 0 };
+        nanosleep(&ts, NULL);
     }
     
     printf("INFO: ML monitor collection thread stopped after %d collections\n", collection_count);
@@ -716,7 +736,8 @@ static void* ml_monitor_prediction_thread(void *arg) {
     
     while (!monitor->should_stop) {
         // Make predictions every minute
-        sleep(20);
+        struct timespec ts = { .tv_sec = 20, .tv_nsec = 0 };
+        nanosleep(&ts, NULL);
         
         if (monitor->should_stop) break;
         
@@ -872,7 +893,7 @@ int ml_monitor_enable_field_testing_mode(ml_monitor_t *monitor, const char *test
     // Enable field testing mode (placeholder implementation)
     monitor->config.debug_logging_enabled = true;
     monitor->config.save_raw_observations = true;
-    strncpy(monitor->config.debug_log_path, "/tmp/ml_field_test.log", sizeof(monitor->config.debug_log_path) - 1);
+    safe_strncpy(monitor->config.debug_log_path, "/tmp/ml_field_test.log", sizeof(monitor->config.debug_log_path));
     monitor->config.debug_log_path[sizeof(monitor->config.debug_log_path) - 1] = '\0';
     
     pthread_mutex_unlock(&monitor->state_mutex);

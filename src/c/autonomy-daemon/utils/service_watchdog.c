@@ -49,10 +49,10 @@ int service_watchdog_init(void) {
     g_service_watchdog.config.restart_cooldown = 300; // Use configurable restart cooldown
     
     // Set default services to monitor
-    strcpy(g_service_watchdog.config.services_to_monitor[0], "nlbwmon");
-    strcpy(g_service_watchdog.config.services_to_monitor[1], "mdcollectd");
-    strcpy(g_service_watchdog.config.services_to_monitor[2], "connchecker");
-    strcpy(g_service_watchdog.config.services_to_monitor[3], "network");
+    safe_strncpy(g_service_watchdog.config.services_to_monitor[0], "nlbwmon", sizeof(g_service_watchdog.config.services_to_monitor[0]));
+    safe_strncpy(g_service_watchdog.config.services_to_monitor[1], "mdcollectd", sizeof(g_service_watchdog.config.services_to_monitor[1]));
+    safe_strncpy(g_service_watchdog.config.services_to_monitor[2], "connchecker", sizeof(g_service_watchdog.config.services_to_monitor[2]));
+    safe_strncpy(g_service_watchdog.config.services_to_monitor[3], "network", sizeof(g_service_watchdog.config.services_to_monitor[3]));
     g_service_watchdog.config.services_count = 4; // Use configurable services count
     
     // Initialize statistics
@@ -302,7 +302,7 @@ static int kill_service(const char *service) {
 static void send_notification(const char *type, const char *message) {
     // Create notification event
     notification_event_t event = {0};
-    strcpy(event.title, "Service Watchdog Alert");
+    safe_strncpy(event.title, "Service Watchdog Alert", sizeof(event.title));
     safe_strncpy(event.message, message, sizeof(event.message));
     event.message[sizeof(event.message) - 1] = '\0';
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;
@@ -343,7 +343,7 @@ int service_watchdog_get_status(service_watchdog_status_t *status) {
     
     // Copy services to monitor
     for (int i = 0; i < g_service_watchdog.config.services_count; i++) {
-        strcpy(status->services_to_monitor[i], g_service_watchdog.config.services_to_monitor[i]);
+        safe_strncpy(status->services_to_monitor[i], g_service_watchdog.config.services_to_monitor[i], sizeof(status->services_to_monitor[i]));
     }
     
     status->last_check_time = g_service_watchdog.stats.last_check_time;

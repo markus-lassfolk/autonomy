@@ -171,7 +171,7 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
     // Single source case
     if (valid_count == 1) {
         *result = valid_data[0];
-        strcpy(result->source, "single_source");
+        safe_strncpy(result->source, "single_source", sizeof(result->source));
         result->confidence *= 0.9; // Slight penalty for single source
         
         LOGX_DEBUG_MSG("Single source GPS fusion", "source", result->source);
@@ -215,7 +215,7 @@ int gps_fusion_engine_fuse_with_method(const standardized_gps_data_t* source_dat
         }
         
         if (fusion_ret == AUTONOMY_SUCCESS) {
-            strcpy(result->source, "fused");
+            safe_strncpy(result->source, "fused", sizeof(result->source));
             result->source_type = GPS_SOURCE_MAX; // Special value for fused data
             
             g_fusion_engine.stats.successful_fusions++;

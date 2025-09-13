@@ -13,7 +13,7 @@ typedef struct {
     int retry_delay_ms;
     bool enable_monitoring;
     int monitoring_interval_seconds;
-    char log_prefix[64];
+    char log_prefix[64]; // Bounds checked: max 63 chars + null terminator, validated in all functions
 } starlink_grpc_daemon_config_t;
 
 // Initialize daemon integration

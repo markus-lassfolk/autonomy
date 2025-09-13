@@ -133,7 +133,7 @@ int autonomy_starlink_cluster_add(struct ubus_context *uctx, struct ubus_object 
     
     // Create Starlink configuration
     starlink_config_t config = {0};
-    strcpy(config.host, blobmsg_get_string(tb[1]));
+    safe_strncpy(config.host, blobmsg_get_string(tb[1]));
     config.port = blobmsg_get_u32(tb[2]);
     config.timeout_seconds = STARLINK_DEFAULT_TIMEOUT;
     config.grpc_first = true;
@@ -143,8 +143,8 @@ int autonomy_starlink_cluster_add(struct ubus_context *uctx, struct ubus_object 
     config.priority = 100; // Default priority
     
     // Optional parameters
-    if (tb[3]) strcpy(config.interface_name, blobmsg_get_string(tb[3]));
-    if (tb[4]) strcpy(config.mwan3_member, blobmsg_get_string(tb[4]));
+    if (tb[3]) safe_strncpy(config.interface_name, blobmsg_get_string(tb[3]));
+    if (tb[4]) safe_strncpy(config.mwan3_member, blobmsg_get_string(tb[4]));
     if (tb[5]) config.priority = blobmsg_get_u32(tb[5]);
     if (tb[6]) config.enabled = blobmsg_get_u8(tb[6]);
     

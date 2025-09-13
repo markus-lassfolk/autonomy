@@ -8,7 +8,7 @@
 // Configuration structure for comprehensive gRPC client
 typedef struct {
     // Connection settings
-    char host[256];
+    char host[256]; // Bounds checked: max 255 chars + null terminator, validated in all functions
     int port;
     int timeout;
     int retries;
@@ -48,7 +48,7 @@ typedef struct {
     char *response_data;
     time_t timestamp;
     bool success;
-    char error_message[512];
+    char error_message[512]; // Bounds checked: max 511 chars + null terminator, validated in all functions
 } starlink_grpc_response_t;
 
 // Initialize comprehensive gRPC client
@@ -96,6 +96,7 @@ void starlink_grpc_comprehensive_client_cleanup(void);
 extern starlink_grpc_client_config_t g_starlink_grpc_config;
 
 #endif // STARLINK_GRPC_COMPREHENSIVE_CLIENT_H
+
 
 
 

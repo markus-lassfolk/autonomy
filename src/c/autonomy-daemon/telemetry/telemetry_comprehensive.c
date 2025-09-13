@@ -618,7 +618,7 @@ static int collect_current_telemetry(void) {
             sample.overall_score = starlink_status.overall_health_score * 100.0;
             sample.reliability_score = starlink_status.stability_score;
             sample.is_active_interface = true; // Would need to check actual active interface
-            strcpy(sample.collection_method, "comprehensive");
+            safe_strncpy(sample.collection_method, "comprehensive", sizeof(sample.collection_method));
             sample.collection_time_ms = starlink_status.collection_duration_ms;
             
             // Collect sample
@@ -660,7 +660,7 @@ static int collect_current_telemetry(void) {
             sample.signal_strength = cellular_info.signal_quality / 100.0;
             sample.overall_score = cellular_info.stability_score;
             sample.predictive_risk = cellular_info.predictive_risk;
-            strcpy(sample.collection_method, "cellular_collector");
+            safe_strncpy(sample.collection_method, "cellular_collector", sizeof(sample.collection_method));
             
             telemetry_comprehensive_collect_sample("cellular", "wwan0", &sample);
         }

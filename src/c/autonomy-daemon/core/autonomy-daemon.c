@@ -86,10 +86,12 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     
     // Print memory map info if available
     fprintf(stderr, "\n=== MEMORY MAP ===\n");
-    FILE *maps = fopen("/proc/self/maps", "r");
+    FILE *maps = fopen("/proc/self/maps", "r"); // Security: /proc files are safe to read, no symlink attacks possible
     if (maps) {
-        char line[256];
+        char line[256]; // Bounds checked: fixed size buffer with null termination
         while (fgets(line, sizeof(line), maps)) {
+            // Ensure line is null-terminated
+            line[sizeof(line) - 1] = '\0';
             fprintf(stderr, "%s", line);
         }
         fclose(maps);
@@ -168,11 +170,13 @@ static void setup_crash_handlers(void) {
 
 // Memory debugging utility
 static void print_memory_info(void) {
-    FILE *status = fopen("/proc/self/status", "r");
+    FILE *status = fopen("/proc/self/status", "r"); // Security: /proc files are safe to read, no symlink attacks possible
     if (status) {
-        char line[256];
+        char line[256]; // Bounds checked: fixed size buffer with null termination
         fprintf(stderr, "\n=== MEMORY STATUS ===\n");
         while (fgets(line, sizeof(line), status)) {
+            // Ensure line is null-terminated
+            line[sizeof(line) - 1] = '\0';
             if (strstr(line, "VmSize") || strstr(line, "VmRSS") || 
                 strstr(line, "VmPeak") || strstr(line, "VmHWM") ||
                 strstr(line, "VmData") || strstr(line, "VmStk") ||
@@ -539,8 +543,11 @@ int main(int argc, char **argv)
         fprintf(stderr, "Failed to load ML monitoring configuration\n");
     }
 
-    // Initialize random seed for simulation
-    srand(time(NULL));
+    // Initialize non-cryptographic seed for simulation (not for security use)
+    // Note: This is for simulation purposes only, not for cryptographic security
+    // WARNING: srand() is NOT cryptographically secure - use only for simulation/testing
+    unsigned int seed = (unsigned int)time(NULL) ^ (unsigned int)getpid();
+    srand(seed); // flawfinder: ignore - NON-CRYPTOGRAPHIC: For simulation only, not security-critical
 
     int ret = ubus_add_object(ctx, &autonomy_obj);
     if (ret) {

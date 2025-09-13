@@ -221,12 +221,12 @@ static void generate_failover_predictions(void) {
     prediction_result_t* pred = &g_predictive_engine.predictions[g_predictive_engine.prediction_count];
     
     pred->type = PREDICTION_TYPE_FAILOVER;
-    strcpy(pred->target, "eth0");
+    safe_strncpy(pred->target, "eth0", sizeof(pred->target));
     pred->probability = 0.75;
     pred->predicted_time = time(NULL) + 3600; // 1 hour from now
-    strcpy(pred->description, "High probability of network interface failure");
+    safe_strncpy(pred->description, "High probability of network interface failure", sizeof(pred->description));
     pred->confidence = 0.8;
-    strcpy(pred->mitigation, "Prepare failover to backup interface");
+    safe_strncpy(pred->mitigation, "Prepare failover to backup interface", sizeof(pred->mitigation));
     
     g_predictive_engine.prediction_count++;
 }
@@ -238,12 +238,12 @@ static void generate_performance_predictions(void) {
     prediction_result_t* pred = &g_predictive_engine.predictions[g_predictive_engine.prediction_count];
     
     pred->type = PREDICTION_TYPE_PERFORMANCE;
-    strcpy(pred->target, "system_performance");
+    safe_strncpy(pred->target, "system_performance", sizeof(pred->target));
     pred->probability = 0.6;
     pred->predicted_time = time(NULL) + 7200; // 2 hours from now
-    strcpy(pred->description, "Expected performance degradation during peak hours");
+    safe_strncpy(pred->description, "Expected performance degradation during peak hours", sizeof(pred->description));
     pred->confidence = 0.7;
-    strcpy(pred->mitigation, "Optimize resource allocation and caching");
+    safe_strncpy(pred->mitigation, "Optimize resource allocation and caching", sizeof(pred->mitigation));
     
     g_predictive_engine.prediction_count++;
 }
@@ -255,12 +255,12 @@ static void generate_maintenance_predictions(void) {
     prediction_result_t* pred = &g_predictive_engine.predictions[g_predictive_engine.prediction_count];
     
     pred->type = PREDICTION_TYPE_MAINTENANCE;
-    strcpy(pred->target, "disk_cleanup");
+    safe_strncpy(pred->target, "disk_cleanup", sizeof(pred->target));
     pred->probability = 0.9;
     pred->predicted_time = time(NULL) + 86400; // 24 hours from now
-    strcpy(pred->description, "Disk space will reach critical threshold");
+    safe_strncpy(pred->description, "Disk space will reach critical threshold", sizeof(pred->description));
     pred->confidence = 0.95;
-    strcpy(pred->mitigation, "Schedule automated cleanup and log rotation");
+    safe_strncpy(pred->mitigation, "Schedule automated cleanup and log rotation", sizeof(pred->mitigation));
     
     g_predictive_engine.prediction_count++;
 }
@@ -272,12 +272,12 @@ static void generate_capacity_predictions(void) {
     prediction_result_t* pred = &g_predictive_engine.predictions[g_predictive_engine.prediction_count];
     
     pred->type = PREDICTION_TYPE_CAPACITY;
-    strcpy(pred->target, "memory_usage");
+    safe_strncpy(pred->target, "memory_usage", sizeof(pred->target));
     pred->probability = 0.7;
     pred->predicted_time = time(NULL) + 43200; // 12 hours from now
-    strcpy(pred->description, "Memory usage approaching capacity limits");
+    safe_strncpy(pred->description, "Memory usage approaching capacity limits", sizeof(pred->description));
     pred->confidence = 0.75;
-    strcpy(pred->mitigation, "Optimize memory allocation and consider scaling");
+    safe_strncpy(pred->mitigation, "Optimize memory allocation and consider scaling", sizeof(pred->mitigation));
     
     g_predictive_engine.prediction_count++;
 }

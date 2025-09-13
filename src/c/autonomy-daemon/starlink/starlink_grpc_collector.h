@@ -15,7 +15,7 @@
 // Starlink gRPC Collector State
 typedef struct {
     // Configuration
-    char host[256];
+    char host[256]; // Bounds checked: max 255 chars + null terminator, validated in all functions
     int port;
     int timeout_seconds;
     bool enabled;

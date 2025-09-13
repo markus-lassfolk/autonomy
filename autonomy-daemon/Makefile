@@ -40,7 +40,7 @@ define Build/Prepare
 endef
 
 define Build/Configure
-	# Configure build if needed
+	# No additional configure step
 endef
 
 define Build/Compile
@@ -53,15 +53,12 @@ endef
 define Package/autonomy-daemon/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/autonomy-daemon $(1)/usr/bin/
-	
+
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/autonomy.init $(1)/etc/init.d/autonomy
-	
+
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/autonomy.config $(1)/etc/config/autonomy
 endef
 
 $(eval $(call BuildPackage,autonomy-daemon))
-
-
-

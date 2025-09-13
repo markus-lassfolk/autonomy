@@ -953,31 +953,31 @@ void update_security_events(const char* event_type, const char* description,
     
     // Generate unique event ID
     char* event_id = generate_event_id();
-    strcpy(event->event_id, event_id);
+    safe_strncpy(event->event_id, event_id, sizeof(event->event_id));
     free(event_id);
     
     // Set event details
     event->threat_level = level;
-    strcpy(event->event_type, event_type);
-    strcpy(event->description, description);
-    strcpy(event->source, source ? source : "unknown");
-    strcpy(event->target, target ? target : "unknown");
+    safe_strncpy(event->event_type, event_type, sizeof(event->event_type));
+    safe_strncpy(event->description, description, sizeof(event->description));
+    safe_strncpy(event->source, source ? source : "unknown", sizeof(event->source));
+    safe_strncpy(event->target, target ? target : "unknown", sizeof(event->target));
     event->timestamp = time(NULL);
     event->acknowledged = false;
     
     // Set mitigation based on threat level
     switch (level) {
         case THREAT_LEVEL_CRITICAL:
-            strcpy(event->mitigation, "Immediate action required - isolate system");
+            safe_strncpy(event->mitigation, "Immediate action required - isolate system", sizeof(event->mitigation));
             break;
         case THREAT_LEVEL_HIGH:
-            strcpy(event->mitigation, "Investigate and remediate within 1 hour");
+            safe_strncpy(event->mitigation, "Investigate and remediate within 1 hour", sizeof(event->mitigation));
             break;
         case THREAT_LEVEL_MEDIUM:
-            strcpy(event->mitigation, "Review and address within 24 hours");
+            safe_strncpy(event->mitigation, "Review and address within 24 hours", sizeof(event->mitigation));
             break;
         case THREAT_LEVEL_LOW:
-            strcpy(event->mitigation, "Monitor and address during next maintenance");
+            safe_strncpy(event->mitigation, "Monitor and address during next maintenance", sizeof(event->mitigation));
             break;
     }
     

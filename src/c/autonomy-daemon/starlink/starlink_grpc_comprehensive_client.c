@@ -352,7 +352,7 @@ int starlink_grpc_comprehensive_call(
     // Setup curl
     CURL *curl = curl_easy_init();
     if (!curl) {
-        strcpy(response->error_message, "Failed to initialize curl");
+        safe_strncpy(response->error_message, "Failed to initialize curl", sizeof(response->error_message));
         return -1;
     }
     

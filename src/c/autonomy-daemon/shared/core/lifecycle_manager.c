@@ -64,7 +64,7 @@ int lifecycle_manager_init(const lifecycle_manager_config_t* config) {
         g_lifecycle_manager.config.enable_status_monitoring = true;
         g_lifecycle_manager.config.status_check_interval_ms = 30000;
         g_lifecycle_manager.config.enable_performance_monitoring = true;
-        strcpy(g_lifecycle_manager.config.log_level, "INFO");
+        safe_strncpy(g_lifecycle_manager.config.log_level, "INFO", sizeof(g_lifecycle_manager.config.log_level));
     }
     
     // Initialize statistics

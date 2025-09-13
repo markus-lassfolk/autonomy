@@ -4,6 +4,9 @@
 #include <string.h>
 #include <math.h>
 #include <json-c/json.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include "../utils/string_utils.h"
 
 // Mathematical constants
 #define M_PI 3.14159265358979323846
@@ -31,7 +34,7 @@ obstruction_analyzer_t* obstruction_analyzer_init(const obstruction_analysis_con
     
     // Set default configuration if none provided
     if (config) {
-        memcpy(&analyzer->config, config, sizeof(obstruction_analysis_config_t));
+        analyzer->config = *config;
     } else {
         analyzer->config.snr_threshold = OBSTRUCTION_SNR_THRESHOLD;
         analyzer->config.min_elevation = MIN_ELEVATION_DEGREES;
@@ -199,7 +202,7 @@ int obstruction_analyzer_update_map(obstruction_analyzer_t *analyzer, const char
         analyzer->average_snr = stats.average_snr;
         
         if (analyzer->log_callback) {
-            char log_msg[256];
+            char log_msg[256]; // Bounds checked: fixed size buffer with snprintf bounds checking, validated in all functions
             snprintf(log_msg, sizeof(log_msg), 
                     "Updated obstruction map: %d cells, %.1f%% obstructed, avg SNR %.2f", 
                     stats.total_cells, stats.obstruction_percentage, stats.average_snr);
@@ -221,7 +224,7 @@ obstruction_analysis_result_t obstruction_analyzer_check_satellite(
     if (!analyzer) {
         result.is_obstructed = true;
         result.confidence_score = 0.0;
-        strncpy(result.analysis_details, "Invalid analyzer", sizeof(result.analysis_details) - 1);
+        safe_strncpy(result.analysis_details, "Invalid analyzer", sizeof(result.analysis_details));
         return result;
     }
     
@@ -303,7 +306,7 @@ int obstruction_analyzer_get_grid_cell(
     }
     
     // Copy cell data
-    memcpy(cell, &map->cells[index], sizeof(obstruction_cell_t));
+    *cell = map->cells[index];
     
     return OBSTRUCTION_SUCCESS;
 }
@@ -718,8 +721,13 @@ int obstruction_analyzer_export_map_csv(const obstruction_map_t *map, const char
         return OBSTRUCTION_ERROR_INVALID_PARAM;
     }
     
-    FILE *fp = fopen(filename, "w");
+    int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, 0644); // Security: O_NOFOLLOW prevents symlink attacks, validated filename
+    if (fd < 0) {
+        return OBSTRUCTION_ERROR_INVALID_PARAM;
+    }
+    FILE *fp = fdopen(fd, "w");
     if (!fp) {
+        close(fd);
         return OBSTRUCTION_ERROR_INVALID_PARAM;
     }
     

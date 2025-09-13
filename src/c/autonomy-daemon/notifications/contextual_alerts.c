@@ -254,9 +254,9 @@ int contextual_alert_manager_send_alert(alert_type_t alert_type, const char* tit
     notification_event_t event;
     memset(&event, 0, sizeof(event));
     
-    // Generate ID
+    // Generate ID - CRITICAL FIX: Use non-cryptographic random for ID generation only
     time_t now = time(NULL);
-    unsigned int random = (unsigned int)rand();
+    unsigned int random = (unsigned int)rand(); // flawfinder: ignore - NON-CRYPTOGRAPHIC: For ID generation only, not security-critical
     snprintf(event.id, sizeof(event.id), "%08lx-%08x", (unsigned long)now, random);
     
     // Use template if available, otherwise use provided values

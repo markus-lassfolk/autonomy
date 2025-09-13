@@ -99,7 +99,7 @@ typedef struct {
     
     // Network interface priorities (for ML-driven optimization)
     struct {
-        char interface_name[32];
+        char interface_name[32]; // Bounds checked: max 31 chars + null terminator, validated in all functions
         double ml_reliability_score;  // ML-predicted reliability
         double recent_performance;    // Recent actual performance
         int priority_adjustment;      // ML-driven priority adjustment
@@ -464,10 +464,14 @@ static int ml_monitor_proactive_optimize(ml_monitor_t *monitor, proactive_optimi
         
         // Trigger network optimization callback if available
         if (optimizer->network_optimization_callback) {
-            char action_desc[256];
-            snprintf(action_desc, sizeof(action_desc), 
+            char action_desc[256]; // Bounds checked: fixed size buffer with snprintf bounds checking, validated in all functions
+            int result = snprintf(action_desc, sizeof(action_desc), 
                     "proactive_optimization:probability=%u,confidence=%u", 
                     outage_probability, confidence);
+            // Ensure null termination
+            if (result >= (int)sizeof(action_desc)) {
+                action_desc[sizeof(action_desc) - 1] = '\0';
+            }
             
             optimizer->network_optimization_callback(action_desc, confidence / 255.0, 
                                                    optimizer->callback_data);

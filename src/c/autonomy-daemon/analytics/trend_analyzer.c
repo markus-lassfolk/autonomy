@@ -350,30 +350,30 @@ static void classify_trend(trend_result_t* result) {
     
     // Determine direction
     if (fabs(result->slope) < 0.01) {
-        strcpy(result->direction, "stable");
+        safe_strncpy(result->direction, "stable", sizeof(result->direction));
     } else if (result->slope > 0) {
-        strcpy(result->direction, "improving");
+        safe_strncpy(result->direction, "improving", sizeof(result->direction));
     } else {
-        strcpy(result->direction, "degrading");
+        safe_strncpy(result->direction, "degrading", sizeof(result->direction));
     }
     
     // Determine magnitude
     double abs_slope = fabs(result->slope);
     if (abs_slope < 0.1) {
-        strcpy(result->magnitude, "small");
+        safe_strncpy(result->magnitude, "small", sizeof(result->magnitude));
     } else if (abs_slope < 0.5) {
-        strcpy(result->magnitude, "medium");
+        safe_strncpy(result->magnitude, "medium", sizeof(result->magnitude));
     } else {
-        strcpy(result->magnitude, "large");
+        safe_strncpy(result->magnitude, "large", sizeof(result->magnitude));
     }
     
     // Determine duration based on data points
     if (result->data_points_used < 20) {
-        strcpy(result->duration, "short");
+        safe_strncpy(result->duration, "short", sizeof(result->duration));
     } else if (result->data_points_used < 50) {
-        strcpy(result->duration, "medium");
+        safe_strncpy(result->duration, "medium", sizeof(result->duration));
     } else {
-        strcpy(result->duration, "long");
+        safe_strncpy(result->duration, "long", sizeof(result->duration));
     }
     
     // Calculate confidence (simplified)

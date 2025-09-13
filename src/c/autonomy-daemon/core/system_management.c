@@ -588,13 +588,13 @@ int perform_system_health_check(void) {
     
     // Set overall status
     if (g_system_health.overall_score >= 90) {
-        strcpy(g_system_health.status, "excellent");
+        safe_strncpy(g_system_health.status, "excellent", sizeof(g_system_health.status));
     } else if (g_system_health.overall_score >= 80) {
-        strcpy(g_system_health.status, "good");
+        safe_strncpy(g_system_health.status, "good", sizeof(g_system_health.status));
     } else if (g_system_health.overall_score >= 70) {
-        strcpy(g_system_health.status, "fair");
+        safe_strncpy(g_system_health.status, "fair", sizeof(g_system_health.status));
     } else {
-        strcpy(g_system_health.status, "poor");
+        safe_strncpy(g_system_health.status, "poor", sizeof(g_system_health.status));
     }
     
     return 0;

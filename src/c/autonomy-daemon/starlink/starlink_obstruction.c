@@ -382,7 +382,7 @@ static void detect_weather_patterns(const starlink_obstruction_sample_t *sample)
         snprintf(weather_request.endpoint, sizeof(weather_request.endpoint), 
                  "https://api.openweathermap.org/data/2.5/weather?lat=%.6f&lon=%.6f&appid=%s",
                  current_location.latitude, current_location.longitude, "your_api_key");
-        strcpy(weather_request.method, "GET");
+        safe_strncpy(weather_request.method, "GET", sizeof(weather_request.method));
         
         external_api_response_t weather_response = {0};
         int ret = external_apis_make_request(&weather_request, &weather_response);
@@ -491,7 +491,7 @@ static void detect_location_patterns(const starlink_obstruction_sample_t *sample
         snprintf(location_request.endpoint, sizeof(location_request.endpoint), 
                  "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=%.6f,%.6f&radius=1000&key=%s",
                  current_location.latitude, current_location.longitude, "your_api_key");
-        strcpy(location_request.method, "GET");
+        safe_strncpy(location_request.method, "GET", sizeof(location_request.method));
         
         external_api_response_t location_response = {0};
         int ret = external_apis_make_request(&location_request, &location_response);

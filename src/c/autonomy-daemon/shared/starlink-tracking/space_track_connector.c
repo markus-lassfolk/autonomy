@@ -12,7 +12,7 @@ void space_track_config_init_defaults(space_track_config_t* config) {
     if (!config) return;
     
     memset(config, 0, sizeof(space_track_config_t));
-    strcpy(config->api_url, "https://www.space-track.org/api");
+    safe_strncpy(config->api_url, "https://www.space-track.org/api", sizeof(config->api_url));
     config->timeout_seconds = 30;
     config->rate_limit_requests_per_minute = 60;
     config->cache_duration_hours = 24;

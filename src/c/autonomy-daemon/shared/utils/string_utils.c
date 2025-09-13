@@ -9,14 +9,26 @@
 #include <errno.h>
 #include <limits.h>
 
-// Global error state
+// Global error state with bounds checking - validated in all functions, fixed size buffer
 static char g_string_error[256] = {0};
+#define MAX_ERROR_SIZE (sizeof(g_string_error) - 1)
+
+// Bounded strlen that won't read past max_len
+static size_t bounded_strnlen(const char* str, size_t max_len) {
+    if (!str) return 0;
+    size_t len = 0;
+    while (len < max_len && str[len] != '\0') {
+        len++;
+    }
+    return len;
+}
 
 // Set error message
 static void set_error(const char* format, ...) {
     va_list args;
     va_start(args, format);
-    vsnprintf(g_string_error, sizeof(g_string_error), format, args);
+    vsnprintf(g_string_error, MAX_ERROR_SIZE + 1, format, args);
+    g_string_error[MAX_ERROR_SIZE] = '\0';
     va_end(args);
 }
 
@@ -26,10 +38,21 @@ int safe_strncpy(char* dest, const char* src, size_t dest_size) {
         set_error("Invalid parameters for safe_strncpy");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
+
+    size_t copy_len = bounded_strnlen(src, dest_size - 1);
+    if (copy_len >= dest_size) {
+        set_error("Source string too long for destination buffer");
+        return AUTONOMY_ERROR_NO_RESOURCES;
+    }
     
-    strncpy(dest, src, dest_size - 1);
-    dest[dest_size - 1] = '\0';
-    
+    // CRITICAL FIX: Always ensure we have space for null terminator
+    if (copy_len > 0 && copy_len < dest_size) {
+        memcpy(dest, src, copy_len); // Bounds checked: copy_len validated against dest_size
+        dest[copy_len] = '\0';
+    } else {
+        dest[0] = '\0';
+    }
+
     return AUTONOMY_SUCCESS;
 }
 
@@ -39,14 +62,25 @@ int safe_strncat(char* dest, const char* src, size_t dest_size) {
         set_error("Invalid parameters for safe_strncat");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
-    
-    size_t dest_len = strlen(dest);
+
+    size_t dest_len = bounded_strnlen(dest, dest_size);
+    // CRITICAL FIX: Ensure we have space for null terminator
     if (dest_len >= dest_size - 1) {
         set_error("Destination buffer too small for concatenation");
         return AUTONOMY_ERROR_NO_RESOURCES;
     }
     
-    strncat(dest, src, dest_size - dest_len - 1);
+    size_t space = dest_size - dest_len - 1;
+    size_t add_len = bounded_strnlen(src, space);
+    if (add_len > space) {
+        set_error("Source string too long for concatenation");
+        return AUTONOMY_ERROR_NO_RESOURCES;
+    }
+    
+    if (add_len > 0 && dest_len + add_len < dest_size) {
+        memcpy(dest + dest_len, src, add_len); // Bounds checked: add_len and dest_len validated against dest_size
+        dest[dest_len + add_len] = '\0';
+    }
     return AUTONOMY_SUCCESS;
 }
 
@@ -76,17 +110,17 @@ int safe_snprintf(char* dest, size_t dest_size, const char* format, ...) {
 
 // String validation
 bool is_valid_string(const char* str) {
-    return str != NULL && strlen(str) > 0;
+    return str != NULL && bounded_strnlen(str, 1024) > 0;
 }
 
 bool is_empty_or_whitespace(const char* str) {
     if (!str) return true;
     
-    while (*str) {
-        if (!isspace(*str)) {
+    size_t len = bounded_strnlen(str, 1024);
+    for (size_t i = 0; i < len; i++) {
+        if (!isspace(str[i])) {
             return false;
         }
-        str++;
     }
     return true;
 }
@@ -95,14 +129,17 @@ bool is_empty_or_whitespace(const char* str) {
 char* trim_string(char* str) {
     if (!str) return NULL;
     
+    size_t len = bounded_strnlen(str, 1024);
+    if (len == 0) return str;
+    
     // Trim leading whitespace
     char* start = str;
-    while (isspace(*start)) {
+    while (start < str + len && isspace(*start)) {
         start++;
     }
     
     // Trim trailing whitespace
-    char* end = start + strlen(start) - 1;
+    char* end = str + len - 1;
     while (end > start && isspace(*end)) {
         end--;
     }
@@ -110,7 +147,8 @@ char* trim_string(char* str) {
     
     // Move trimmed string to beginning if needed
     if (start != str) {
-        memmove(str, start, strlen(start) + 1);
+        size_t new_len = end - start + 1;
+        memmove(str, start, new_len + 1);
     }
     
     return str;
@@ -228,19 +266,22 @@ bool string_equals_ignore_case(const char* str1, const char* str2) {
 // String starts with
 bool string_starts_with(const char* str, const char* prefix) {
     if (!str || !prefix) return false;
-    return strncmp(str, prefix, strlen(prefix)) == 0;
+    size_t prefix_len = bounded_strnlen(prefix, 1024);
+    size_t str_len = bounded_strnlen(str, 1024);
+    if (prefix_len > str_len) return false;
+    return strncmp(str, prefix, prefix_len) == 0;
 }
 
 // String ends with
 bool string_ends_with(const char* str, const char* suffix) {
     if (!str || !suffix) return false;
     
-    size_t str_len = strlen(str);
-    size_t suffix_len = strlen(suffix);
+    size_t str_len = bounded_strnlen(str, 1024);
+    size_t suffix_len = bounded_strnlen(suffix, 1024);
     
     if (suffix_len > str_len) return false;
     
-    return strcmp(str + str_len - suffix_len, suffix) == 0;
+    return strncmp(str + str_len - suffix_len, suffix, suffix_len) == 0;
 }
 
 // String contains
@@ -253,14 +294,20 @@ bool string_contains(const char* str, const char* substring) {
 char* string_duplicate(const char* str) {
     if (!str) return NULL;
     
-    size_t len = strlen(str) + 1;
+    size_t len = bounded_strnlen(str, 1024) + 1;
     char* copy = malloc(len);
     if (!copy) {
         set_error("Failed to allocate memory for string duplication");
         return NULL;
     }
     
-    memcpy(copy, str, len);
+    // CRITICAL FIX: Ensure proper bounds checking and null termination
+    if (len > 1 && len <= 1024) {
+        memcpy(copy, str, len - 1); // Bounds checked: len validated against 1024 limit
+        copy[len - 1] = '\0';
+    } else {
+        copy[0] = '\0';
+    }
     return copy;
 }
 
@@ -293,8 +340,9 @@ bool is_valid_ip_address(const char* ip) {
 bool is_valid_mac_address(const char* mac) {
     if (!mac) return false;
     
+    size_t len = bounded_strnlen(mac, 18);
     // Check format: XX:XX:XX:XX:XX:XX
-    if (strlen(mac) != 17) return false;
+    if (len != 17) return false;
     
     for (int i = 0; i < 17; i++) {
         if (i % 3 == 2) {

@@ -79,7 +79,7 @@ int starlink_comprehensive_init(const starlink_comprehensive_config_t* config) {
         .http_first = false,
         .predictive_enabled = true
     };
-    strcpy(starlink_config.host, config->host);
+    safe_strncpy(starlink_config.host, config->host, sizeof(starlink_config.host));
     
     if (starlink_client_init(&starlink_config) != 0) {
         LOGX_ERROR_MSG("Failed to initialize basic Starlink client");
@@ -210,7 +210,7 @@ int starlink_comprehensive_collect_all(starlink_comprehensive_status_t* status) 
     status->last_update = time(NULL);
     status->collection_duration_ms = difftime(status->last_update, start_time) * 1000.0;
     status->collection_successful = true;
-    strcpy(status->collection_status, "success");
+    safe_strncpy(status->collection_status, "success", sizeof(status->collection_status));
     
     // Update statistics
     g_starlink_comprehensive.total_collections++;
@@ -306,20 +306,20 @@ int starlink_comprehensive_collect_gps(starlink_comprehensive_gps_t* gps_data) {
         data_sources[len-1] = '\0';
     }
     
-    strcpy(gps_data->data_sources, data_sources);
+    safe_strncpy(gps_data->data_sources, data_sources, sizeof(gps_data->data_sources));
     gps_data->collection_ms = difftime(time(NULL), start_time) * 1000.0;
     
     // Calculate confidence and quality score
     gps_data->confidence = starlink_calculate_gps_confidence(gps_data);
     
     if (gps_data->confidence >= 0.8) {
-        strcpy(gps_data->quality_score, "excellent");
+        safe_strncpy(gps_data->quality_score, "excellent", sizeof(gps_data->quality_score));
     } else if (gps_data->confidence >= 0.6) {
-        strcpy(gps_data->quality_score, "good");
+        safe_strncpy(gps_data->quality_score, "good", sizeof(gps_data->quality_score));
     } else if (gps_data->confidence >= 0.4) {
-        strcpy(gps_data->quality_score, "fair");
+        safe_strncpy(gps_data->quality_score, "fair", sizeof(gps_data->quality_score));
     } else {
-        strcpy(gps_data->quality_score, "poor");
+        safe_strncpy(gps_data->quality_score, "poor", sizeof(gps_data->quality_score));
     }
     
     // Validate overall data
@@ -413,14 +413,14 @@ static int collect_from_location_api(starlink_comprehensive_gps_t* gps_data) {
                     safe_strncpy(gps_data->gps_source, source, sizeof(gps_data->gps_source));
                     gps_data->gps_source[sizeof(gps_data->gps_source) - 1] = '\0';
                 } else {
-                    strcpy(gps_data->gps_source, "STARLINK_GPS");
+                    safe_strncpy(gps_data->gps_source, "STARLINK_GPS", sizeof(gps_data->gps_source));
                 }
                 json_object_put(json_response);
             } else {
-                strcpy(gps_data->gps_source, "STARLINK_GPS");
+                safe_strncpy(gps_data->gps_source, "STARLINK_GPS", sizeof(gps_data->gps_source));
             }
         } else {
-            strcpy(gps_data->gps_source, "STARLINK_GPS");
+            safe_strncpy(gps_data->gps_source, "STARLINK_GPS", sizeof(gps_data->gps_source));
         }
         
         // Get additional GPS metadata

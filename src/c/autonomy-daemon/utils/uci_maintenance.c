@@ -521,7 +521,7 @@ int remove_unwanted_files(void) {
 static void send_notification(const char *type, const char *message) {
     // Create notification event
     notification_event_t event = {0};
-    strcpy(event.title, "UCI Maintenance Alert");
+    safe_strncpy(event.title, "UCI Maintenance Alert", sizeof(event.title));
     safe_strncpy(event.message, message, sizeof(event.message));
     event.message[sizeof(event.message) - 1] = '\0';
     event.type = NOTIFICATION_TYPE_SYSTEM_HEALTH;

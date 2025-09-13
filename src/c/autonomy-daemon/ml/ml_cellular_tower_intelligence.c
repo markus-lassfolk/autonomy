@@ -77,10 +77,10 @@ void cellular_tower_config_init_defaults(cellular_tower_config_t *config) {
     config->min_sinr_db = DEFAULT_MIN_SINR_DB;
     
     config->enable_carrier_filtering = true;
-    strcpy(config->allowed_mccs, "310,311,312,313,314,315,316"); // US MCCs
-    strcpy(config->allowed_mncs, "260,410,480,311,312,313"); // Major US carriers
-    strcpy(config->home_mcc, "310");
-    strcpy(config->home_mnc, "260");
+    safe_strncpy(config->allowed_mccs, "310,311,312,313,314,315,316", sizeof(config->allowed_mccs)); // US MCCs
+    safe_strncpy(config->allowed_mncs, "260,410,480,311,312,313", sizeof(config->allowed_mncs)); // Major US carriers
+    safe_strncpy(config->home_mcc, "310", sizeof(config->home_mcc));
+    safe_strncpy(config->home_mnc, "260", sizeof(config->home_mnc));
     
     config->allow_roaming = true;
     config->prefer_home_carrier = true;

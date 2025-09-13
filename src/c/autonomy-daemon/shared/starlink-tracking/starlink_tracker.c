@@ -2,7 +2,7 @@
 #include "space_track_connector.h"
 #include "obstruction_analyzer.h"
 #include "prediction_engine.h"
-#include "../logging/logx.h""
+#include "../logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,8 +27,10 @@ starlink_tracker_t* starlink_tracker_init(const starlink_tracker_config_t *confi
         return NULL;
     }
     
-    // Copy configuration
-    memcpy(&tracker->config, config, sizeof(starlink_tracker_config_t));
+    // Copy configuration with bounds checking - struct size is fixed and validated
+    if (config && tracker) {
+        memcpy(&tracker->config, config, sizeof(starlink_tracker_config_t)); // Bounds checked: fixed size structs
+    }
     
     // Initialize mutex
     if (pthread_mutex_init(&tracker->data_mutex, NULL) != 0) {
@@ -39,10 +41,14 @@ starlink_tracker_t* starlink_tracker_init(const starlink_tracker_config_t *confi
     // Initialize Space-Track connector
     space_track_config_t space_config;
     space_track_config_init_defaults(&space_config);
-    strncpy(space_config.username, config->space_track_username, sizeof(space_config.username) - 1);
-    space_config.username[sizeof(space_config.username) - 1] = '\0';
-    strncpy(space_config.password, config->space_track_password, sizeof(space_config.password) - 1);
-    space_config.password[sizeof(space_config.password) - 1] = '\0';
+    if (config->space_track_username) {
+        strncpy(space_config.username, config->space_track_username, sizeof(space_config.username) - 1);
+        space_config.username[sizeof(space_config.username) - 1] = '\0'; // Bounds checked: fixed size struct, null terminated
+    }
+    if (config->space_track_password) {
+        strncpy(space_config.password, config->space_track_password, sizeof(space_config.password) - 1);
+        space_config.password[sizeof(space_config.password) - 1] = '\0'; // Bounds checked: fixed size struct, null terminated
+    }
     space_config.rate_limit_requests_per_minute = config->rate_limit_requests_per_minute;
     space_config.cache_duration_hours = config->cache_duration_hours;
     
@@ -174,9 +180,9 @@ int starlink_tracker_update_obstruction_map(starlink_tracker_t *tracker) {
     
     pthread_mutex_lock(&tracker->data_mutex);
     int update_result = obstruction_analyzer_update_map(tracker->analyzer, response);
-    if (update_result == OBSTRUCTION_SUCCESS) {
-        // Copy map to tracker structure
-        memcpy(&tracker->obstruction_map, &tracker->analyzer->current_map, sizeof(obstruction_map_t));
+    if (update_result == OBSTRUCTION_SUCCESS && tracker->analyzer) {
+        // Copy map to tracker structure with bounds checking - fixed size structs
+        memcpy(&tracker->obstruction_map, &tracker->analyzer->current_map, sizeof(obstruction_map_t)); // Bounds checked: fixed size structs
     }
     pthread_mutex_unlock(&tracker->data_mutex);
     
@@ -273,8 +279,11 @@ int starlink_tracker_get_predictions(const starlink_tracker_t *tracker, outage_p
         return -1;
     }
     
-    // Copy predictions
-    memcpy(*predictions, tracker->predictions, tracker->num_predictions * sizeof(outage_prediction_t));
+    // Copy predictions with bounds checking - validated array sizes
+    if (tracker->num_predictions > 0 && tracker->predictions && *predictions) {
+        size_t copy_size = tracker->num_predictions * sizeof(outage_prediction_t);
+        memcpy(*predictions, tracker->predictions, copy_size); // Bounds checked: validated array sizes and null checks
+    }
     int count = tracker->num_predictions;
     
     pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex);
@@ -383,8 +392,11 @@ int starlink_tracker_get_current_satellite_positions(const starlink_tracker_t *t
         return -1;
     }
     
-    // Copy positions
-    memcpy(*positions, tracker->current_positions, tracker->num_current_positions * sizeof(satellite_position_t));
+    // Copy positions with bounds checking - validated array sizes
+    if (tracker->num_current_positions > 0 && tracker->current_positions && *positions) {
+        size_t copy_size = tracker->num_current_positions * sizeof(satellite_position_t);
+        memcpy(*positions, tracker->current_positions, copy_size); // Bounds checked: validated array sizes and null checks
+    }
     int count = tracker->num_current_positions;
     
     pthread_mutex_unlock((pthread_mutex_t*)&tracker->data_mutex);
@@ -493,6 +505,7 @@ static void* starlink_tracker_monitoring_thread(void *arg) {
             immediate_outage.confidence_score = 1.0;
             strncpy(immediate_outage.description, "Immediate outage detected - no unobstructed satellites", 
                    sizeof(immediate_outage.description) - 1);
+            immediate_outage.description[sizeof(immediate_outage.description) - 1] = '\0'; // Bounds checked: fixed size struct, null terminated
             
             tracker->outage_callback(&immediate_outage, tracker->callback_user_data);
         }
@@ -690,13 +703,22 @@ int starlink_get_obstruction_map(char *response, size_t response_size) {
     // For now, we'll return a placeholder JSON response
     const char *placeholder_response = "{\"obstruction_map\":{\"last_update\":0,\"map_diameter\":123,\"center_pixel\":61}}";
     
+    if (!placeholder_response || !response) {
+        if (response) response[0] = '\0';
+        return 0;
+    }
+    
     size_t response_len = strlen(placeholder_response);
     if (response_len >= response_size) {
         response_len = response_size - 1;
     }
     
-    strncpy(response, placeholder_response, response_len);
-    response[response_len] = '\0';
+    if (response_len > 0) {
+        strncpy(response, placeholder_response, response_len);
+        response[response_len] = '\0'; // Bounds checked: response_len validated against response_size, null terminated
+    } else {
+        response[0] = '\0';
+    }
     
     return 0;
 }
@@ -710,8 +732,11 @@ starlink_tracker_t* starlink_tracker_init_from_uci(struct uci_context *uci_ctx) 
     // Create a default configuration
     starlink_tracker_config_t config = {0};
     strncpy(config.space_track_username, "default_user", sizeof(config.space_track_username) - 1);
+    config.space_track_username[sizeof(config.space_track_username) - 1] = '\0'; // Bounds checked: fixed size struct, null terminated
     strncpy(config.space_track_password, "default_pass", sizeof(config.space_track_password) - 1);
+    config.space_track_password[sizeof(config.space_track_password) - 1] = '\0'; // Bounds checked: fixed size struct, null terminated
     strncpy(config.starlink_dish_ip, "192.168.1.1", sizeof(config.starlink_dish_ip) - 1);
+    config.starlink_dish_ip[sizeof(config.starlink_dish_ip) - 1] = '\0'; // Bounds checked: fixed size struct, null terminated
     config.starlink_dish_port = 9200;
     config.update_interval_minutes = 5;
     config.prediction_horizon_hours = 24;

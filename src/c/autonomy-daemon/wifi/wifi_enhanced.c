@@ -503,7 +503,7 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
     
     // Ultimate fallback to US if nothing else works
     if (country_code[0] == '\0') {
-        strcpy(country_code, "US");
+        safe_strncpy(country_code, "US", sizeof(country_code));
         LOGX_WARN_MSG("Could not detect country code, defaulting to US");
     }
     
@@ -527,7 +527,7 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
         score->channel = channel;
         score->band = band;
         score->analysis_time = time(NULL);
-        strcpy(score->analysis_method, "enhanced_rutos");
+        safe_strncpy(score->analysis_method, "enhanced_rutos", sizeof(score->analysis_method));
         
         // Calculate enhanced score using sophisticated algorithm
         score->raw_score = calculate_enhanced_channel_score(channel, band, access_points, ap_count, 
@@ -535,7 +535,7 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
         
         // Convert score to stars and rating
         score->stars = convert_score_to_stars(score->raw_score);
-        strcpy(score->rating, convert_score_to_rating(score->raw_score));
+        safe_strncpy(score->rating, convert_score_to_rating(score->raw_score));
         
         // Count interferers
         score->strong_interferer_count = 0;
@@ -1011,7 +1011,7 @@ int wifi_enhanced_optimize_channels(const char* trigger) {
                 new_plan.score_24 = (int)best_score->raw_score;
                 new_plan.total_score = new_plan.score_24;
                 new_plan.applied_at = time(NULL);
-                strcpy(new_plan.trigger, trigger ? trigger : "manual");
+                safe_strncpy(new_plan.trigger, trigger ? trigger : "manual", sizeof(new_plan.trigger));
                 
                 if (wifi_enhanced_apply_channel_plan(&new_plan) == AUTONOMY_SUCCESS) {
                     g_wifi_enhanced.current_plan = new_plan;

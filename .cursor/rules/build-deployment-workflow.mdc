@@ -1,6 +1,6 @@
 ---
 description: Build system and deployment workflow rules for autonomy daemon
-globs: ["**/Makefile", "**/*.mk", "**/build/**/*", "**/scripts/**/*"]
+globs: ["**/Makefile", "**/*.mk", "**/build/**/*", "**/scripts/**/*", "*build_autonomy_daemon*"]
 alwaysApply: false
 ---
 

@@ -68,7 +68,7 @@ int starlink_cluster_add(const char *id, const starlink_config_t *config) {
     if (g_starlink_cluster.active_index == -1) {
         g_starlink_cluster.active_index = index;
         instance->is_active = true;
-        strcpy(instance->failover_reason, "Initial active Starlink");
+        safe_strncpy(instance->failover_reason, "Initial active Starlink", sizeof(instance->failover_reason));
     }
     
     return index;
@@ -226,7 +226,7 @@ int starlink_cluster_check_failover(void) {
     // Check if Starlink is disabled
     if (!active->config.enabled) {
         needs_failover = true; // Use configurable setting
-        strcpy(failover_reason, "Starlink disabled");
+        safe_strncpy(failover_reason, "Starlink disabled", sizeof(failover_reason));
     }
     
     if (needs_failover) {

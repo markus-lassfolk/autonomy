@@ -36,7 +36,7 @@ void prediction_engine_config_init_defaults(prediction_engine_config_t* config) 
     config->enable_predictions = true;
     config->prediction_horizon_hours = 24;
     config->min_elevation_degrees = 10.0;
-    strcpy(config->tle_data_path, "/tmp/starlink_tle.txt");
+    safe_strncpy(config->tle_data_path, "/tmp/starlink_tle.txt", sizeof(config->tle_data_path));
 }
 
 int prediction_engine_set_dish_location(prediction_engine_t* engine, const dish_location_t* location) {

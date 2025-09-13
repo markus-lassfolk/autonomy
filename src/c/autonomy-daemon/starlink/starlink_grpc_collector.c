@@ -48,7 +48,7 @@ int starlink_grpc_collector_init(void) {
     starlink_grpc_daemon_config_t daemon_config = {0};
     
     // Set up client configuration
-    strcpy(daemon_config.client_config.host, "192.168.100.1");
+    safe_strncpy(daemon_config.client_config.host, "192.168.100.1", sizeof(daemon_config.client_config.host));
     daemon_config.client_config.port = 9200;
     daemon_config.client_config.timeout = 10;
     daemon_config.client_config.retries = 3;
@@ -61,7 +61,7 @@ int starlink_grpc_collector_init(void) {
     daemon_config.retry_delay_ms = 1000;
     daemon_config.enable_monitoring = false; // We'll handle monitoring separately
     daemon_config.monitoring_interval_seconds = 30;
-    strcpy(daemon_config.log_prefix, "STARLINK-GRPC");
+    safe_strncpy(daemon_config.log_prefix, "STARLINK-GRPC", sizeof(daemon_config.log_prefix));
     
     // Initialize the daemon integration
     fprintf(stderr, "DEBUG: starlink_grpc_collector_init - about to initialize daemon integration\n");
@@ -277,7 +277,7 @@ int starlink_grpc_detect_outage_events(void) {
         memcpy(outage.wedge_fraction_obstructed, current.wedge_fraction_obstructed, 
                sizeof(outage.wedge_fraction_obstructed));
         
-        strcpy(outage.severity, "warning");
+        safe_strncpy(outage.severity, "warning", sizeof(outage.severity));
         snprintf(outage.description, sizeof(outage.description), 
                 "Outage detected: obstruction=%.2f, snr=%.1f, drop_rate=%.2f",
                 current.fraction_obstructed, current.snr, current.pop_ping_drop_rate);

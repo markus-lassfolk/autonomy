@@ -46,10 +46,10 @@ int ubus_monitor_init(void) {
     g_ubus_monitor.config.min_services_expected = 20; // Use configurable min services expected
     
     // Set default critical services
-    strcpy(g_ubus_monitor.config.critical_services[0], "system");
-    strcpy(g_ubus_monitor.config.critical_services[1], "uci");
-    strcpy(g_ubus_monitor.config.critical_services[2], "network");
-    strcpy(g_ubus_monitor.config.critical_services[3], "service");
+    safe_strncpy(g_ubus_monitor.config.critical_services[0], "system", sizeof(g_ubus_monitor.config.critical_services[0]));
+    safe_strncpy(g_ubus_monitor.config.critical_services[1], "uci", sizeof(g_ubus_monitor.config.critical_services[1]));
+    safe_strncpy(g_ubus_monitor.config.critical_services[2], "network", sizeof(g_ubus_monitor.config.critical_services[2]));
+    safe_strncpy(g_ubus_monitor.config.critical_services[3], "service", sizeof(g_ubus_monitor.config.critical_services[3]));
     g_ubus_monitor.config.critical_services_count = 4;
     
     // Initialize state
@@ -107,10 +107,10 @@ int ubus_monitor_check_ubus_health(ubus_health_info_t *info) {
                 
                 send_notification("fix", "UBUS health restored by restarting rpcd");
             } else {
-                strcpy(info->last_error, "Failed to restart rpcd service");
+                safe_strncpy(info->last_error, "Failed to restart rpcd service", sizeof(info->last_error));
             }
         } else {
-            strcpy(info->last_error, "Maximum fix attempts reached");
+            safe_strncpy(info->last_error, "Maximum fix attempts reached", sizeof(info->last_error));
         }
     }
     
@@ -130,7 +130,7 @@ static int test_ubus_response(void) {
     struct sockaddr_un addr;
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
-    strcpy(addr.sun_path, "/var/run/ubus.sock");
+    safe_strncpy(addr.sun_path, "/var/run/ubus.sock", sizeof(addr.sun_path));
     
     // Set timeout
     struct timeval timeout;
@@ -256,7 +256,7 @@ int ubus_monitor_get_status(ubus_monitor_status_t *status) {
     
     // Copy critical services
     for (int i = 0; i < g_ubus_monitor.config.critical_services_count; i++) {
-        strcpy(status->critical_services[i], g_ubus_monitor.config.critical_services[i]);
+        safe_strncpy(status->critical_services[i], g_ubus_monitor.config.critical_services[i], sizeof(status->critical_services[i]));
     }
     
     status->fix_attempts = g_ubus_monitor.fix_attempts;

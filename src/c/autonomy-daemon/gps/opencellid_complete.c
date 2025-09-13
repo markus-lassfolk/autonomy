@@ -241,7 +241,7 @@ int opencellid_triangulate_position(const opencellid_cellular_environment_t* env
     
     if (locations_found == 1) {
         // Single cell positioning
-        strcpy(result->method, "single_cell");
+        safe_strncpy(result->method, "single_cell", sizeof(result->method));
         result->latitude = locations[0].latitude;
         result->longitude = locations[0].longitude;
         result->accuracy = locations[0].range;
@@ -349,7 +349,7 @@ int opencellid_lookup_cells(const opencellid_cell_identifier_t* cell_ids, int ce
             if (parse_cell_location_response(response.data, &location) == AUTONOMY_SUCCESS) {
                 location.cell_id = cell_ids[i]; // Ensure cell ID is set correctly
                 location.last_updated = time(NULL);
-                strcpy(location.source, "opencellid");
+                safe_strncpy(location.source, "opencellid", sizeof(location.source));
                 
                 locations[found_count++] = location;
                 
@@ -370,7 +370,7 @@ int opencellid_lookup_cells(const opencellid_cell_identifier_t* cell_ids, int ce
                 location.cell_id = cell_ids[i];
                 location.is_negative = true;
                 location.last_updated = time(NULL);
-                strcpy(location.source, "opencellid_negative");
+                safe_strncpy(location.source, "opencellid_negative", sizeof(location.source));
                 cache_set_cell_location(&location);
                 
                 g_opencellid_system.stats.failed_lookups++;
@@ -648,7 +648,7 @@ static int parse_cell_location_response(const char* json_data, opencellid_cell_l
         snprintf(location->source, sizeof(location->source), "opencellid_%s", radio_str);
     } else {
         location->cell_id.radio = OPENCELLID_RADIO_UNKNOWN;
-        strcpy(location->source, "opencellid");
+        safe_strncpy(location->source, "opencellid", sizeof(location->source));
     }
 
     location->last_updated = time(NULL);
@@ -961,7 +961,7 @@ static int perform_weighted_centroid_triangulation(const opencellid_cell_locatio
     }
 
     memset(result, 0, sizeof(opencellid_triangulation_result_t));
-    strcpy(result->method, "weighted_centroid");
+    safe_strncpy(result->method, "weighted_centroid", sizeof(result->method));
     result->calculation_time = time(NULL);
 
     if (location_count == 1) {
