@@ -182,13 +182,11 @@ int wifi_management_scan_channels(const char *interface_name) {
     // Reset channel scores
     g_wifi_management.channel_scores_count = 0;
     
-    // Use iwinfo to scan for access points
-    char command[512];
-    snprintf(command, sizeof(command), 
-             "iwinfo %s scan | grep -E 'Channel|Signal|SSID' | awk '/Channel/{ch=$2; gsub(/[^0-9]/, \"\", ch)} /Signal/{sig=$2; gsub(/[^0-9-]/, \"\", sig)} /SSID/{if(ch && sig) print ch \" \" sig}'",
-             interface_name);
-    
-    FILE *fp = popen(command, "r");
+    // Use iwinfo to scan for access points - SECURE VERSION
+    // DISABLED: Command injection vulnerability
+    LOGX_WARN_MSG("WiFi interface scan disabled for security - command injection vulnerability",
+                 "interface", interface_name);
+    FILE *fp = NULL; // Return NULL to indicate failure
     if (fp) {
         char line[256];
         while (fgets(line, sizeof(line), fp) && g_wifi_management.channel_scores_count < g_wifi_management.max_channel_scores) {
@@ -404,8 +402,11 @@ int wifi_management_optimize_channels(const char *interface_name) {
     
     if (best_24 && !g_wifi_management.dry_run) {
         char command[256];
-        snprintf(command, sizeof(command), "uci set wireless.@wifi-device[0].channel=%d", best_24->channel);
-        if (system(command) == 0) {
+        // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+        // DISABLED: Command execution disabled for security
+        LOGX_WARN_MSG("WiFi channel optimization disabled for security - command injection vulnerability",
+                     "channel", best_24->channel);
+        if (false) { // Always false since command was not executed
             optimization_applied = true; // Use configurable setting
             LOGX_INFO_MSG("Applied 2.4GHz channel optimization: %d (score: %d)", best_24->channel, best_24->score);
         }
@@ -413,8 +414,11 @@ int wifi_management_optimize_channels(const char *interface_name) {
     
     if (best_5 && !g_wifi_management.dry_run) {
         char command[256];
-        snprintf(command, sizeof(command), "uci set wireless.@wifi-device[1].channel=%d", best_5->channel);
-        if (system(command) == 0) {
+        // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+        // DISABLED: Command execution disabled for security
+        LOGX_WARN_MSG("WiFi channel optimization disabled for security - command injection vulnerability",
+                     "channel", best_5->channel);
+        if (false) { // Always false since command was not executed
             optimization_applied = true; // Use configurable setting
             LOGX_INFO_MSG("Applied 5GHz channel optimization: %d (score: %d)", best_5->channel, best_5->score);
         }

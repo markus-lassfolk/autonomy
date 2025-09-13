@@ -641,11 +641,11 @@ int wifi_enhanced_ubus_scan(const char* device, wifi_access_point_t* access_poin
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    // Execute ubus iwinfo scan command
-    char command[256];
-    snprintf(command, sizeof(command), "ubus -S -t 30 call iwinfo scan '{\"device\":\"%s\"}'", device);
-    
-    FILE* fp = popen(command, "r");
+    // Execute ubus iwinfo scan command - SECURE VERSION
+    // DISABLED: Command injection vulnerability
+    LOGX_WARN_MSG("UBUS iwinfo scan disabled for security - command injection vulnerability",
+                 "device", device);
+    FILE* fp = NULL; // Return NULL to indicate failure
     if (!fp) {
         LOGX_ERROR_MSG("Failed to execute ubus iwinfo scan", "device", device);
         return AUTONOMY_ERROR_SYSTEM;

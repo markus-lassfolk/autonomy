@@ -1,6 +1,7 @@
 #include "service_watchdog.h"
 #include "../core/types.h"
 #include "../shared/utils/string_utils.h"
+#include "../shared/logging/logx.h"
 #include "../notifications/notification_manager.h"
 #include "../notifications/notification_types.h"
 #include "../shared/utils/string_utils.h"
