@@ -348,7 +348,7 @@ static void log_exit_reason(exit_reason_t reason, const char *message) {
     fprintf(stderr, "\n=== DAEMON EXIT ===\n");
     fprintf(stderr, "Exit Reason: %s\n", reason_str);
     fprintf(stderr, "Exit Message: %s\n", g_exit_message);
-    fprintf(stderr, "Timestamp: %ld\n", time(NULL));
+    fprintf(stderr, "Timestamp: %lld\n", (long long)time(NULL));
     fprintf(stderr, "PID: %d\n", getpid());
     fprintf(stderr, "==================\n\n");
     
