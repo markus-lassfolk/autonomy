@@ -707,34 +707,30 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
     }
     
     // CRITICAL: Use local copy to avoid corrupted global
-    // Force local predictor to be in data section using malloc
-    static sliding_predictor_t *local_predictor = NULL;
+    // Use a different global variable that should be in data section
+    static sliding_predictor_t g_local_phase3_predictor = {0};
     static bool local_predictor_initialized = false;
     
     if (!local_predictor_initialized) {
-        LOGX_DEBUG_MSG("Allocating local predictor in heap (data section)");
-        local_predictor = malloc(sizeof(sliding_predictor_t));
-        if (!local_predictor) {
-            LOGX_ERROR_MSG("Failed to allocate local predictor");
-            return ML_MONITOR_ERROR_MEMORY_FAILED;
-        }
+        LOGX_DEBUG_MSG("Initializing local predictor in data section");
         
-        memset(local_predictor, 0, sizeof(sliding_predictor_t));
-        local_predictor->window_size = 0;
-        local_predictor->write_idx = 0;
-        local_predictor->features.snr_trend = 128; // Stable
+        // Initialize the local predictor
+        memset(&g_local_phase3_predictor, 0, sizeof(sliding_predictor_t));
+        g_local_phase3_predictor.window_size = 0;
+        g_local_phase3_predictor.write_idx = 0;
+        g_local_phase3_predictor.features.snr_trend = 128; // Stable
         
         // CRITICAL: Initialize the window array to prevent NULL access
         for (int i = 0; i < 60; i++) {
-            local_predictor->window[i].snr_x100 = 0;
-            local_predictor->window[i].latency_ms = 0;
-            local_predictor->window[i].packet_loss_pct = 0;
-            local_predictor->window[i].obstruction_pct = 0;
-            local_predictor->window[i].timestamp = 0;
+            g_local_phase3_predictor.window[i].snr_x100 = 0;
+            g_local_phase3_predictor.window[i].latency_ms = 0;
+            g_local_phase3_predictor.window[i].packet_loss_pct = 0;
+            g_local_phase3_predictor.window[i].obstruction_pct = 0;
+            g_local_phase3_predictor.window[i].timestamp = 0;
         }
         
         local_predictor_initialized = true;
-        LOGX_DEBUG_MSG("Local predictor allocated at %p (should be in data section)", local_predictor);
+        LOGX_DEBUG_MSG("Local predictor initialized at %p (should be in data section)", &g_local_phase3_predictor);
     }
     
     // CRITICAL: Never copy from corrupted global predictor
@@ -742,20 +738,29 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
     
     // CRITICAL: Update local predictor with new observation
     LOGX_DEBUG_MSG("Updating local predictor with new observation");
-    if (local_predictor->window_size < 60) {
-        local_predictor->window[local_predictor->write_idx] = *observation;
-        local_predictor->write_idx = (local_predictor->write_idx + 1) % 60;
-        local_predictor->window_size++;
+    if (g_local_phase3_predictor.window_size < 60) {
+        g_local_phase3_predictor.window[g_local_phase3_predictor.write_idx] = *observation;
+        g_local_phase3_predictor.write_idx = (g_local_phase3_predictor.write_idx + 1) % 60;
+        g_local_phase3_predictor.window_size++;
         LOGX_DEBUG_MSG("Local predictor updated, new size: %u, write_idx: %u", 
-                local_predictor->window_size, local_predictor->write_idx);
+                g_local_phase3_predictor.window_size, g_local_phase3_predictor.write_idx);
     } else {
-        local_predictor->window[local_predictor->write_idx] = *observation;
-        local_predictor->write_idx = (local_predictor->write_idx + 1) % 60;
-        LOGX_DEBUG_MSG("Local predictor updated, write_idx: %u", local_predictor->write_idx);
+        g_local_phase3_predictor.window[g_local_phase3_predictor.write_idx] = *observation;
+        g_local_phase3_predictor.write_idx = (g_local_phase3_predictor.write_idx + 1) % 60;
+        LOGX_DEBUG_MSG("Local predictor updated, write_idx: %u", g_local_phase3_predictor.write_idx);
     }
     
-    LOGX_DEBUG_MSG("Local predictor address: %p (should be in data section)", local_predictor);
-    int prediction_result = ml_monitor_sliding_window_predict(monitor, local_predictor, observation);
+    LOGX_DEBUG_MSG("Local predictor address: %p (should be in data section)", &g_local_phase3_predictor);
+    
+    // CRITICAL: Validate local predictor before calling sliding_window_predict
+    if ((uintptr_t)&g_local_phase3_predictor < 0x1000) {
+        LOGX_ERROR_MSG("CRITICAL: local_predictor %p is invalid (too low) before sliding_window_predict call!", &g_local_phase3_predictor);
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
+    
+    LOGX_DEBUG_MSG("CRITICAL: local_predictor validation passed: %p", &g_local_phase3_predictor);
+    
+    int prediction_result = ml_monitor_sliding_window_predict(monitor, &g_local_phase3_predictor, observation);
     LOGX_DEBUG_MSG("ml_monitor_sliding_window_predict returned: %d", prediction_result);
     if (prediction_result != ML_MONITOR_SUCCESS) {
         LOGX_DEBUG_MSG("Sliding window prediction warning: %d", prediction_result);
