@@ -725,13 +725,9 @@ int main(int argc, char **argv)
     // Initialize random seed for simulation
     srand(time(NULL));
 
-    // Check if autonomy object already exists and remove it
-    fprintf(stderr, "Checking for existing autonomy ubus object...\n");
-    struct ubus_object *existing_obj = NULL;
-    if (ubus_lookup_object(ctx, "autonomy", &existing_obj) == 0 && existing_obj) {
-        fprintf(stderr, "Found existing autonomy object, removing it first...\n");
-        ubus_remove_object(ctx, existing_obj);
-    }
+    // Note: ubus_lookup_object doesn't exist in this UBUS version
+    // We'll try to register directly and handle conflicts gracefully
+    fprintf(stderr, "Attempting to register autonomy ubus object...\n");
 
     fprintf(stderr, "Registering autonomy ubus object...\n");
     int ret = ubus_add_object(ctx, &autonomy_obj);
