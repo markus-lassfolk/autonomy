@@ -38,6 +38,7 @@
 #include "../shared/utils/memory_debug.h"
 #include "../shared/utils/memory_protection.h"
 #include "../shared/utils/memory_corruption_detector.h"
+#include "../shared/utils/hang_detector.h"
 #include "../utils/debug_trace.h"
 #include "../ml/ml_monitor.h"
 #include "../ml/ml_monitor_ubus.h"
@@ -378,6 +379,10 @@ static void daemon_exit(int exit_code) {
     fprintf(stderr, "Cleaning up UCI manager...\n");
     uci_manager_cleanup();
     
+    // Cleanup hang detector
+    fprintf(stderr, "Cleaning up hang detector...\n");
+    hang_detector_cleanup();
+    
     // Remove PID file
     fprintf(stderr, "Removing PID file...\n");
     remove_pid_file();
@@ -448,12 +453,31 @@ int main(int argc, char **argv)
     // Initialize memory debugging system
     // memory_debug_init(); // Disabled to prevent conflicts with memory protection system
     
+    // Initialize hang detection system
+    fprintf(stderr, "DEBUG: About to initialize hang detection system\n");
+    if (hang_detector_init() != 0) {
+        log_exit_reason(EXIT_REASON_INIT_FAILURE, "Failed to initialize hang detection system");
+        daemon_exit(1);
+    }
+    fprintf(stderr, "DEBUG: Hang detection system initialized successfully\n");
+    
+    // Start hang detection watchdog
+    fprintf(stderr, "DEBUG: Starting hang detection watchdog\n");
+    if (hang_detector_start_watchdog() != 0) {
+        log_exit_reason(EXIT_REASON_INIT_FAILURE, "Failed to start hang detection watchdog");
+        daemon_exit(1);
+    }
+    fprintf(stderr, "DEBUG: Hang detection watchdog started successfully\n");
+    
     // Initialize comprehensive memory protection system
     fprintf(stderr, "DEBUG: About to initialize memory protection system\n");
+    CRITICAL_OPERATION_START("memory_protection_init");
     if (memory_protection_init() != MEMORY_PROTECTION_SUCCESS) {
+        CRITICAL_OPERATION_END();
         log_exit_reason(EXIT_REASON_MEMORY_ERROR, "Failed to initialize memory protection system");
         daemon_exit(1);
     }
+    CRITICAL_OPERATION_END();
     fprintf(stderr, "DEBUG: Memory protection system initialized successfully\n");
     
     DEBUG_TRACE_ENTER();
@@ -495,11 +519,14 @@ int main(int argc, char **argv)
 
     // Initialize UCI manager and load configuration
     DEBUG_TRACE_STEP(4, "Initializing UCI manager");
+    CRITICAL_OPERATION_START("uci_manager_init");
     if (uci_manager_init() != AUTONOMY_SUCCESS) {
+        CRITICAL_OPERATION_END();
         DEBUG_TRACE_ERROR("Failed to initialize UCI manager");
         log_exit_reason(EXIT_REASON_CONFIG_ERROR, "Failed to initialize UCI manager");
         daemon_exit(1);
     }
+    CRITICAL_OPERATION_END();
     DEBUG_TRACE_INFO("UCI manager initialized successfully");
     
     DEBUG_TRACE_STEP(5, "Loading configuration from UCI");
@@ -555,11 +582,14 @@ int main(int argc, char **argv)
     // fprintf(stderr, "PID file created successfully\n");
 
     fprintf(stderr, "Attempting to connect to ubus...\n");
+    CRITICAL_OPERATION_START("ubus_connect");
     ctx = ubus_connect(NULL);
     if (!ctx) {
+        CRITICAL_OPERATION_END();
         log_exit_reason(EXIT_REASON_INIT_FAILURE, "Failed to connect to ubus");
         daemon_exit(1);
     }
+    CRITICAL_OPERATION_END();
     fprintf(stderr, "Connected to ubus successfully\n");
     fprintf(stderr, "UBUS context: %p\n", ctx);
     fprintf(stderr, "About to call ubus_add_uloop...\n");
@@ -633,7 +663,9 @@ int main(int argc, char **argv)
     ml_monitor_config_t ml_config;
     if (ml_monitor_load_config_from_uci(&ml_config) == ML_MONITOR_SUCCESS) {
         if (ml_config.enabled) {
+            CRITICAL_OPERATION_START("ml_monitor_init");
             ml_monitor_t *ml_monitor = ml_monitor_init(&ml_config);
+            CRITICAL_OPERATION_END();
             if (ml_monitor) {
                 fprintf(stderr, "ML monitoring module initialized successfully\n");
                 
