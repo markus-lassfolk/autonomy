@@ -385,8 +385,12 @@ int secure_cellular_at_command(const char *device_path, const char *at_command, 
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     
-    // Check if device exists and is accessible
-    if (access(device_path, R_OK | W_OK) != 0) {
+    // Check if device exists and is accessible (SECURE VERSION)
+    struct stat device_stat;
+    if (stat(device_path, &device_stat) != 0 || 
+        !S_ISCHR(device_stat.st_mode) || 
+        !(device_stat.st_mode & S_IRUSR) || 
+        !(device_stat.st_mode & S_IWUSR)) {
         snprintf(result->error, sizeof(result->error), "Device not accessible: %s", device_path);
         return AUTONOMY_ERROR_NOT_FOUND;
     }

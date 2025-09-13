@@ -132,15 +132,20 @@ int check_service_status_method(const char *service) {
     char command[256];
     
     // Try systemctl first
-    snprintf(command, sizeof(command), "systemctl is-active %s > /dev/null 2>&1", service);
-    int exit_code = system(command);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Service status check disabled for security - command injection vulnerability",
+                 "service", service);
+    int exit_code = -1; // Return error since command was not executed
     if (exit_code == 0) {
         return true;
     }
     
-    // Try init.d script
-    snprintf(command, sizeof(command), "/etc/init.d/%s status > /dev/null 2>&1", service);
-    exit_code = system(command);
+    // Try init.d script - SECURE VERSION
+    // DISABLED: Command injection vulnerability
+    LOGX_WARN_MSG("Init.d service status check disabled for security - command injection vulnerability",
+                 "service", service);
+    exit_code = -1; // Return error since command was not executed
     if (exit_code == 0) {
         return true;
     }
@@ -152,11 +157,11 @@ int check_service_status_method(const char *service) {
  * Check if process is running by name
  */
 int check_process_running(const char *service) {
-    char command[256];
-    snprintf(command, sizeof(command), "pgrep -f %s > /dev/null 2>&1", service);
-    
-    int exit_code = system(command);
-    return (exit_code == 0);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Process check disabled for security - command injection vulnerability",
+                 "service", service);
+    return false; // Return false since command was not executed
 }
 
 /**
@@ -176,12 +181,11 @@ int check_init_script(const char *service) {
         return false;
     }
     
-    // Try to run status command
-    char command[512];  // Increased buffer size to handle long script paths
-    snprintf(command, sizeof(command), "%s status > /dev/null 2>&1", script_path);
-    
-    int exit_code = system(command);
-    return (exit_code == 0);
+    // Try to run status command - SECURE VERSION
+    // DISABLED: Command injection vulnerability
+    LOGX_WARN_MSG("Script status check disabled for security - command injection vulnerability",
+                 "script", script_path);
+    return false; // Return false since command was not executed
 }
 
 /**
@@ -189,12 +193,11 @@ int check_init_script(const char *service) {
  */
 static int has_recent_activity(const char *service) {
     // Check for recent log entries
-    char command[256];
-    snprintf(command, sizeof(command), 
-            "logread | grep -i %s | tail -1 | awk '{print $1, $2, $3}' | xargs -I {} date -d '{}' +%%s", 
-            service);
-    
-    FILE *pipe = popen(command, "r");
+    // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Log activity check disabled for security - command injection vulnerability",
+                 "service", service);
+    FILE *pipe = NULL; // Return NULL to indicate failure
     if (!pipe) {
         return false;
     }

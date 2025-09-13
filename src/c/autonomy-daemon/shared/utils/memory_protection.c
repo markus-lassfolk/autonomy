@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "memory_protection.h"
 #include "../logging/logx.h"
 #include <sys/mman.h>
@@ -424,6 +425,12 @@ int protected_snprintf(char *buf, size_t size, const char *format, const char *f
     if (!validate_memory_access(buf, size)) {
         fprintf(stderr, "ERROR: snprintf buffer overflow at %s:%d in %s()\n", file, line, func);
         THROW(MEMORY_PROTECTION_ERROR_BUFFER_OVERFLOW);
+    }
+    
+    // Validate format string to prevent format string attacks
+    if (strpbrk(format, "%n") != NULL) {
+        fprintf(stderr, "ERROR: snprintf with dangerous format string at %s:%d in %s()\n", file, line, func);
+        return -1;
     }
     
     va_list args;

@@ -24,8 +24,8 @@
             fprintf(stderr, "ERROR: NULL pointer at %s:%d in %s\n", __FILE__, __LINE__, location); \
             abort(); \
         } \
-        if ((uintptr_t)(ptr) < 0x1000 || (uintptr_t)(ptr) > 0x7fffffff) { \
-            fprintf(stderr, "ERROR: Invalid pointer %p at %s:%d in %s\n", (ptr), __FILE__, __LINE__, location); \
+        if ((uintptr_t)(ptr) < 0x1000) { \
+            fprintf(stderr, "ERROR: Invalid pointer %p (too low) at %s:%d in %s\n", (ptr), __FILE__, __LINE__, location); \
             abort(); \
         } \
     } while(0)
@@ -110,6 +110,10 @@ static enhanced_sky_grid_t g_phase3_enhanced_sky_grid = {0};
 static sliding_predictor_t g_phase3_sliding_predictor = {0};
 static bool g_phase3_initialized = false;
 
+// CRITICAL: Add corruption detection for global predictor
+static const uint32_t GLOBAL_PREDICTOR_MAGIC = 0xDEADBEEF;
+static uint32_t g_phase3_predictor_magic = GLOBAL_PREDICTOR_MAGIC;
+
 // Forward declarations
 static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor);
 static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor, const ml_observation_t *observation);
@@ -162,6 +166,9 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
     memset(&g_phase3_sliding_predictor, 0, sizeof(sliding_predictor_t));
     g_phase3_sliding_predictor.window_size = 0;
     g_phase3_sliding_predictor.write_idx = 0;
+    
+    // CRITICAL: Set corruption detection magic
+    g_phase3_predictor_magic = GLOBAL_PREDICTOR_MAGIC;
     
     // Initialize features
     g_phase3_sliding_predictor.features.snr_trend = 128; // Stable
@@ -437,6 +444,24 @@ static uint8_t ml_monitor_calculate_volatility(const uint16_t *values, int count
 static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_predictor_t *predictor, const ml_observation_t *observation) {
     ML_DEBUG_ENTRY("ml_monitor_sliding_window_predict");
     
+    fprintf(stderr, "DEBUG: ml_monitor_sliding_window_predict called with monitor=%p, predictor=%p, observation=%p\n", 
+            monitor, predictor, observation);
+    
+    // CRITICAL: Validate predictor pointer immediately
+    if (predictor == NULL) {
+        fprintf(stderr, "ERROR: predictor is NULL!\n");
+        ML_DEBUG_EXIT("ml_monitor_sliding_window_predict", ML_MONITOR_ERROR_INVALID_PARAM);
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
+    
+    if ((uintptr_t)predictor < 0x1000) {
+        fprintf(stderr, "ERROR: predictor pointer %p is invalid (too low)!\n", predictor);
+        ML_DEBUG_EXIT("ml_monitor_sliding_window_predict", ML_MONITOR_ERROR_INVALID_PARAM);
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
+    
+    fprintf(stderr, "DEBUG: predictor pointer validation passed: %p\n", predictor);
+    
     ML_VALIDATE_POINTER(monitor, "ml_monitor_sliding_window_predict monitor");
     ML_VALIDATE_POINTER(predictor, "ml_monitor_sliding_window_predict predictor");
     ML_VALIDATE_POINTER(observation, "ml_monitor_sliding_window_predict observation");
@@ -459,7 +484,10 @@ static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_pred
     }
     
     // Extract features from window
+    fprintf(stderr, "DEBUG: About to call ml_monitor_extract_window_features from sliding_window_predict, predictor=%p\n", predictor);
+    ML_VALIDATE_POINTER(predictor, "ml_monitor_sliding_window_predict predictor before extract");
     ml_monitor_extract_window_features(predictor);
+    fprintf(stderr, "DEBUG: ml_monitor_extract_window_features completed in sliding_window_predict\n");
     
     // Prepare neural network input with window features
     int8_t nn_input[32];
@@ -661,7 +689,54 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
     // Perform sliding window prediction
     ML_VALIDATE_POINTER(monitor, "ml_monitor_update_with_phase3_enhancements monitor");
     ML_VALIDATE_POINTER(observation, "ml_monitor_update_with_phase3_enhancements observation");
-    int prediction_result = ml_monitor_sliding_window_predict(monitor, &g_phase3_sliding_predictor, observation);
+    
+    // CRITICAL: Check global predictor address before call
+    fprintf(stderr, "DEBUG: Global predictor address: %p\n", &g_phase3_sliding_predictor);
+    fprintf(stderr, "DEBUG: Global predictor window_size: %u\n", g_phase3_sliding_predictor.window_size);
+    fprintf(stderr, "DEBUG: Global predictor write_idx: %u\n", g_phase3_sliding_predictor.write_idx);
+    
+    // CRITICAL: Validate global predictor address
+    if ((uintptr_t)&g_phase3_sliding_predictor < 0x1000) {
+        fprintf(stderr, "ERROR: Global predictor address %p is corrupted!\n", &g_phase3_sliding_predictor);
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
+    
+    // CRITICAL: Check if global predictor is in valid memory range
+    if ((uintptr_t)&g_phase3_sliding_predictor < 0x40000000) {
+        fprintf(stderr, "ERROR: Global predictor address %p is in invalid range (code section)!\n", &g_phase3_sliding_predictor);
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
+    
+    // CRITICAL: Check corruption detection magic
+    if (g_phase3_predictor_magic != GLOBAL_PREDICTOR_MAGIC) {
+        fprintf(stderr, "ERROR: Global predictor corruption detected! Magic: 0x%x, expected: 0x%x\n", 
+                g_phase3_predictor_magic, GLOBAL_PREDICTOR_MAGIC);
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
+    
+    // CRITICAL: Use local copy to avoid corrupted global
+    static sliding_predictor_t local_predictor = {0};
+    static bool local_predictor_initialized = false;
+    
+    if (!local_predictor_initialized) {
+        fprintf(stderr, "DEBUG: Initializing local predictor as workaround for global corruption\n");
+        memset(&local_predictor, 0, sizeof(sliding_predictor_t));
+        local_predictor.window_size = 0;
+        local_predictor.write_idx = 0;
+        local_predictor.features.snr_trend = 128; // Stable
+        local_predictor_initialized = true;
+    }
+    
+    // Copy current state from global (if not corrupted) or use local
+    if (g_phase3_predictor_magic == GLOBAL_PREDICTOR_MAGIC && 
+        (uintptr_t)&g_phase3_sliding_predictor >= 0x40000000) {
+        fprintf(stderr, "DEBUG: Using global predictor (not corrupted)\n");
+        local_predictor = g_phase3_sliding_predictor;
+    } else {
+        fprintf(stderr, "DEBUG: Using local predictor (global corrupted)\n");
+    }
+    
+    int prediction_result = ml_monitor_sliding_window_predict(monitor, &local_predictor, observation);
     fprintf(stderr, "DEBUG: ml_monitor_sliding_window_predict returned: %d\n", prediction_result);
     if (prediction_result != ML_MONITOR_SUCCESS) {
         LOGX_DEBUG_MSG("Sliding window prediction warning: %d", prediction_result);

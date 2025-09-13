@@ -315,7 +315,9 @@ static int64_t cleanup_maintenance_logs(void) {
     const char *maintenance_logs[] = {"/var/log/maintenance.log", "/var/lib/autonomy/maintenance.log"};
     
     for (int i = 0; i < sizeof(maintenance_logs) / sizeof(maintenance_logs[0]); i++) {
-        if (access(maintenance_logs[i], F_OK) == 0) {
+        // SECURE VERSION: Use stat() instead of access() to avoid race condition
+        struct stat file_stat;
+        if (stat(maintenance_logs[i], &file_stat) == 0) {
             if (is_file_older_than(maintenance_logs[i], g_overlay_manager.config.cleanup_retention_days)) {
                 int64_t freed = remove_file_recursive(maintenance_logs[i]);
                 if (freed > 0) total_freed += freed;

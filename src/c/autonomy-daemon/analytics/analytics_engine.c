@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <unistd.h>
+#include <limits.h>
 
 // External reference to global configuration
 extern autonomy_config_t g_config;
@@ -277,7 +278,14 @@ int calculate_system_overview(system_overview_t* overview) {
     if (fp) {
         char buffer[128];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            overview->active_members = atoi(buffer);
+            // Validate input before conversion
+            char *endptr;
+            long result = strtol(buffer, &endptr, 10);
+            if (endptr != buffer && result >= 0 && result <= INT_MAX) {
+                overview->active_members = (int)result;
+            } else {
+                overview->active_members = 0; // Default safe value
+            }
         }
         pclose(fp);
     }
@@ -287,7 +295,14 @@ int calculate_system_overview(system_overview_t* overview) {
     if (fp) {
         char buffer[128];
         if (fgets(buffer, sizeof(buffer), fp)) {
-            overview->total_members = atoi(buffer);
+            // Validate input before conversion
+            char *endptr;
+            long result = strtol(buffer, &endptr, 10);
+            if (endptr != buffer && result >= 0 && result <= INT_MAX) {
+                overview->total_members = (int)result;
+            } else {
+                overview->total_members = 0; // Default safe value
+            }
         }
         pclose(fp);
     }
@@ -309,7 +324,12 @@ int calculate_system_overview(system_overview_t* overview) {
     if (df_fp) {
         char buffer[128];
         if (fgets(buffer, sizeof(buffer), df_fp)) {
-            long available_kb = atol(buffer);
+            // Validate input before conversion
+            char *endptr;
+            long available_kb = strtol(buffer, &endptr, 10);
+            if (endptr == buffer || available_kb < 0) {
+                available_kb = 0; // Default safe value
+            }
             if (available_kb > 100000) { // More than 100MB available
                 health_score += 100.0; // Disk space available
             } else {
@@ -517,7 +537,12 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     if (df_fp) {
         char buffer[128];
         if (fgets(buffer, sizeof(buffer), df_fp)) {
-            long available_kb = atol(buffer);
+            // Validate input before conversion
+            char *endptr;
+            long available_kb = strtol(buffer, &endptr, 10);
+            if (endptr == buffer || available_kb < 0) {
+                available_kb = 0; // Default safe value
+            }
             disk_space_low = (available_kb <= 100000); // Less than 100MB available
         }
         pclose(df_fp);
@@ -650,7 +675,12 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     if (df_fp) {
         char buffer[128];
         if (fgets(buffer, sizeof(buffer), df_fp)) {
-            long available_kb = atol(buffer);
+            // Validate input before conversion
+            char *endptr;
+            long available_kb = strtol(buffer, &endptr, 10);
+            if (endptr == buffer || available_kb < 0) {
+                available_kb = 0; // Default safe value
+            }
             disk_space_low = (available_kb <= 100000); // Less than 100MB available
         }
         pclose(df_fp);

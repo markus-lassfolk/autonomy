@@ -661,12 +661,10 @@ static void print_register_state(ucontext_t *context) {
             (unsigned long)context->uc_mcontext.arm_r5,
             (unsigned long)context->uc_mcontext.arm_r6,
             (unsigned long)context->uc_mcontext.arm_r7);
-    fprintf(stderr, "r8=0x%lx r9=0x%lx r10=0x%lx r11=0x%lx\n",
+    fprintf(stderr, "r8=0x%lx r9=0x%lx r10=0x%lx\n",
             (unsigned long)context->uc_mcontext.arm_r8,
             (unsigned long)context->uc_mcontext.arm_r9,
-            (unsigned long)context->uc_mcontext.arm_r10,
-            (unsigned long)context->uc_mcontext.arm_r11);
-    fprintf(stderr, "r12=0x%lx\n", (unsigned long)context->uc_mcontext.arm_r12);
+            (unsigned long)context->uc_mcontext.arm_r10);
 #elif defined(__aarch64__)
     fprintf(stderr, "Program counter: %p\n", (void*)context->uc_mcontext.pc);
     fprintf(stderr, "Stack pointer: %p\n", (void*)context->uc_mcontext.sp);

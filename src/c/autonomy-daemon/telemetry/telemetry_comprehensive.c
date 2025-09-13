@@ -1126,7 +1126,11 @@ int telemetry_comprehensive_test_ml_algorithm(const char* algorithm_name,
              "--output /tmp/ml_test_results.json 2>/dev/null",
              algorithm_name, (long)start_time, (long)end_time);
     
-    int test_result = system(test_script);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("ML algorithm testing disabled for security - command injection vulnerability",
+                 "algorithm", algorithm_name, "command", test_script);
+    int test_result = -1; // Return error since command was not executed
     
     // Read test results from Python script
     FILE* results_file = fopen("/tmp/ml_test_results.json", "r");

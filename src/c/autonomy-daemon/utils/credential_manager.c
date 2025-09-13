@@ -455,10 +455,11 @@ int credential_save_to_uci(const char* service_name) {
             safe_strncpy(truncated_value, cred->value, sizeof(truncated_value));
             truncated_value[sizeof(truncated_value) - 1] = '\0';
             
-            snprintf(cmd, sizeof(cmd), 
-                    "uci set autonomy.credentials.%s_%s='%s' && uci commit autonomy",
-                    truncated_service, truncated_key, truncated_value);
-            system(cmd);
+            // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+            // DISABLED: Command execution disabled for security
+            LOGX_WARN_MSG("UCI credential update disabled for security - command injection vulnerability",
+                         "service", truncated_service, "key", truncated_key);
+            // TODO: Implement secure UCI update using proper UCI API
         }
     }
 
@@ -472,10 +473,12 @@ int credential_load_from_uci(const char* service_name) {
     FILE* fp;
     char line[512];
 
-    snprintf(cmd, sizeof(cmd), "uci show autonomy.credentials 2>/dev/null | grep '^autonomy.credentials.%s_'", 
-             service_name);
-    
-    fp = popen(cmd, "r");
+    // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("UCI credential loading disabled for security - command injection vulnerability",
+                 "service", service_name);
+    // TODO: Implement secure UCI reading using proper UCI API
+    fp = NULL; // Return NULL to indicate failure
     if (!fp) return -1;
 
     while (fgets(line, sizeof(line), fp)) {

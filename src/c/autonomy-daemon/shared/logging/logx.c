@@ -160,11 +160,19 @@ static void format_message(char *buffer, size_t size, logx_level_t level,
     
     get_timestamp(timestamp, sizeof(timestamp));
     
-    // Format the actual message - create a copy of va_list to avoid reuse issues
-    va_list args_copy;
-    va_copy(args_copy, args);
-    vsnprintf(message, sizeof(message), format, args_copy);
-    va_end(args_copy);
+    // Format the actual message - SECURE VERSION
+    // Validate format string to prevent format string attacks
+    if (strpbrk(format, "%n") != NULL) {
+        // Reject format strings with %n (can be used for format string attacks)
+        strncpy(message, "LOGX: Invalid format string (contains %n)", sizeof(message) - 1);
+        message[sizeof(message) - 1] = '\0';
+    } else {
+        // Create a copy of va_list to avoid reuse issues
+        va_list args_copy;
+        va_copy(args_copy, args);
+        vsnprintf(message, sizeof(message), format, args_copy);
+        va_end(args_copy);
+    }
     
     // Bounds check for level to prevent buffer overflow
     const char* level_name = "UNKNOWN";

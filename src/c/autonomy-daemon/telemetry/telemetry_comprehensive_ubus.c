@@ -473,6 +473,16 @@ int telemetry_comprehensive_ubus_execute_ml_algorithm(struct ubus_context *ctx, 
             "python3 /usr/lib/autonomy/ml_executor.py --algorithm %s --model %s --start %ld --end %ld --samples %d 2>&1",
             algorithm_name, model_file, (long)start_time, (long)end_time, samples_analyzed);
     
+    // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("ML algorithm execution disabled for security - command injection vulnerability",
+                 "algorithm", algorithm_name, "command", ml_command);
+    ml_success = false;
+    strncpy(ml_error, "ML algorithm execution disabled for security", sizeof(ml_error) - 1);
+    ml_error[sizeof(ml_error) - 1] = '\0';
+    
+    // ORIGINAL VULNERABLE CODE:
+    /*
     char ml_output[4096] = {0}; // Declare ml_output at function scope
     FILE *ml_fp = popen(ml_command, "r");
     if (!ml_fp) {
@@ -611,6 +621,7 @@ int telemetry_comprehensive_ubus_execute_ml_algorithm(struct ubus_context *ctx, 
     ubus_send_reply(ctx, req, bb.head);
     blob_buf_free(&bb);
     return UBUS_STATUS_OK;
+    */
 }
 
 // Get telemetry samples by location

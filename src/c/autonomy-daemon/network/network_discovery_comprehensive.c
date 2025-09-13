@@ -11,11 +11,11 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <pthread.h>
 #include <time.h>
 #include <dirent.h>
 #include <uci.h>
-#include <sys/stat.h>
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
@@ -170,9 +170,11 @@ void get_mwan3_interface_info(void *ctx, network_interface_t *interfaces, int co
 static bool is_interface_in_mwan3(const char *interface_name) {
     // Execute mwan3 status command and check if interface is listed
     char command[256];
-    snprintf(command, sizeof(command), "mwan3 status 2>/dev/null | grep -q '\"%s\"'", interface_name);
-    int ret = system(command);
-    return (ret == 0);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // TODO: Implement secure MWAN3 status checking using proper API
+    LOGX_WARN_MSG("MWAN3 status check disabled for security - command injection vulnerability",
+                 "interface", interface_name);
+    return false; // Default to false for security
 }
 
 // Get MWAN3 interface status
@@ -451,8 +453,12 @@ static void detect_cellular_device_path(network_interface_t *iface) {
 static bool is_cellular_device_active(const char *device_path) {
     if (!device_path) return false;
     
-    // Check if device exists and is accessible
-    if (access(device_path, R_OK | W_OK) != 0) {
+    // Check if device exists and is accessible (SECURE VERSION)
+    struct stat device_stat;
+    if (stat(device_path, &device_stat) != 0 || 
+        !S_ISCHR(device_stat.st_mode) || 
+        !(device_stat.st_mode & S_IRUSR) || 
+        !(device_stat.st_mode & S_IWUSR)) {
         return false;
     }
     

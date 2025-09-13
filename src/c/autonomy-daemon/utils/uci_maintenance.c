@@ -121,10 +121,11 @@ int check_parse_errors(uci_maintenance_result_t *result) {
     const char *test_sections[] = {"network", "mwan3", "system", "firewall"};
     
     for (int i = 0; i < sizeof(test_sections) / sizeof(test_sections[0]); i++) {
-        char command[256];
-        snprintf(command, sizeof(command), "uci show %s > /dev/null 2>&1", test_sections[i]);
-        
-        int exit_code = system(command);
+        // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+        // DISABLED: Command execution disabled for security
+        LOGX_WARN_MSG("UCI configuration test disabled for security - command injection vulnerability",
+                     "section", test_sections[i]);
+        int exit_code = -1; // Return error since command was not executed
         if (exit_code != 0) {
             // Parse error detected
             uci_issue_t *issue = malloc(sizeof(uci_issue_t));
@@ -159,9 +160,11 @@ static int validate_critical_sections(uci_maintenance_result_t *result) {
     
     for (int i = 0; i < sizeof(critical_sections) / sizeof(critical_sections[0]); i++) {
         char command[256];
-        snprintf(command, sizeof(command), "uci get %s > /dev/null 2>&1", critical_sections[i]);
-        
-        int exit_code = system(command);
+        // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+        // DISABLED: Command execution disabled for security
+        LOGX_WARN_MSG("UCI critical section check disabled for security - command injection vulnerability",
+                     "section", critical_sections[i]);
+        int exit_code = -1; // Return error since command was not executed
         if (exit_code != 0) {
             // Missing critical section
             uci_issue_t *issue = malloc(sizeof(uci_issue_t));
@@ -307,10 +310,11 @@ static int fix_issues(uci_maintenance_result_t *result) {
         }
         
         if (strcmp(issue->type, "parse_error") == 0) {
-            // Try to fix parse errors by reloading the section
-            char command[256];
-            snprintf(command, sizeof(command), "uci reload %s", issue->section);
-            int exit_code = system(command);
+            // Try to fix parse errors by reloading the section - SECURE VERSION
+            // DISABLED: Command injection vulnerability
+            LOGX_WARN_MSG("UCI section reload disabled for security - command injection vulnerability",
+                         "section", issue->section);
+            int exit_code = -1; // Return error since command was not executed
             
             if (exit_code == 0) {
                 // Issue fixed

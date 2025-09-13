@@ -422,19 +422,24 @@ static void update_health_status(member_health_t* health)
     }
 
     if (health->score >= g_health_analyzer.thresholds.excellent) {
-        strcpy(health->status, "excellent");
+        strncpy(health->status, "excellent", sizeof(health->status) - 1);
+        health->status[sizeof(health->status) - 1] = '\0';
         health->is_healthy = true;
     } else if (health->score >= g_health_analyzer.thresholds.good) {
-        strcpy(health->status, "good");
+        strncpy(health->status, "good", sizeof(health->status) - 1);
+        health->status[sizeof(health->status) - 1] = '\0';
         health->is_healthy = true;
     } else if (health->score >= g_health_analyzer.thresholds.fair) {
-        strcpy(health->status, "fair");
+        strncpy(health->status, "fair", sizeof(health->status) - 1);
+        health->status[sizeof(health->status) - 1] = '\0';
         health->is_healthy = false;
     } else if (health->score >= g_health_analyzer.thresholds.poor) {
-        strcpy(health->status, "poor");
+        strncpy(health->status, "poor", sizeof(health->status) - 1);
+        health->status[sizeof(health->status) - 1] = '\0';
         health->is_healthy = false;
     } else {
-        strcpy(health->status, "critical");
+        strncpy(health->status, "critical", sizeof(health->status) - 1);
+        health->status[sizeof(health->status) - 1] = '\0';
         health->is_healthy = false;
     }
 }
@@ -484,8 +489,10 @@ static int detect_member_issues(const char* member_name, health_issue_t* issues,
     if (health.score < g_health_analyzer.thresholds.poor && issue_count < max_issues) {
         health_issue_t* issue = &issues[issue_count++];
         safe_strncpy(issue->member_name, member_name, sizeof(issue->member_name));
-        strcpy(issue->type, "connectivity");
-        strcpy(issue->severity, "critical");
+        strncpy(issue->type, "connectivity", sizeof(issue->type) - 1);
+        issue->type[sizeof(issue->type) - 1] = '\0';
+        strncpy(issue->severity, "critical", sizeof(issue->severity) - 1);
+        issue->severity[sizeof(issue->severity) - 1] = '\0';
         snprintf(issue->description, sizeof(issue->description),
                 "Possible connectivity issues detected for member %s", member_name);
         issue->detected_at = now;

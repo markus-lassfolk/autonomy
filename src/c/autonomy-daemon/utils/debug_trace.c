@@ -49,10 +49,17 @@ void debug_trace_print(const char *level, const char *file, int line, const char
     const char *filename = strrchr(file, '/');
     filename = filename ? filename + 1 : file;
     
-    // Format the message
-    va_start(args, fmt);
-    vsnprintf(message_buffer, sizeof(message_buffer), fmt, args);
-    va_end(args);
+    // Format the message - SECURE VERSION
+    // Validate format string to prevent format string attacks
+    if (!fmt || strpbrk(fmt, "%n") != NULL) {
+        // Reject format strings with %n (can be used for format string attacks)
+        strncpy(message_buffer, "Debug trace: Invalid format string", sizeof(message_buffer) - 1);
+        message_buffer[sizeof(message_buffer) - 1] = '\0';
+    } else {
+        va_start(args, fmt);
+        vsnprintf(message_buffer, sizeof(message_buffer), fmt, args);
+        va_end(args);
+    }
     
     // Print with timestamp, PID, level, file:line, function, and message
     fprintf(stderr, "[%s] [PID:%d] [%s] [%s:%d] [%s] %s\n", 

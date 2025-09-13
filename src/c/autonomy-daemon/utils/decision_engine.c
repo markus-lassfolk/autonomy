@@ -244,8 +244,11 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                 
                 // Try to get interface statistics
                 char speed_cmd[256];
-                snprintf(speed_cmd, sizeof(speed_cmd), "cat /sys/class/net/%s/speed 2>/dev/null", members[i].interface);
-                FILE *speed_fp = popen(speed_cmd, "r");
+                // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+                // DISABLED: Command execution disabled for security
+                LOGX_WARN_MSG("Network speed check disabled for security - command injection vulnerability",
+                             "interface", members[i].interface);
+                FILE *speed_fp = NULL; // Return NULL to indicate failure
                 if (speed_fp) {
                     int speed_mbps;
                     if (fscanf(speed_fp, "%d", &speed_mbps) == 1 && speed_mbps > 0) {
@@ -255,11 +258,11 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                     pclose(speed_fp);
                 }
                 
-                // Adjust based on interface utilization if available
-                char util_cmd[512];  // Increased buffer size
-                snprintf(util_cmd, sizeof(util_cmd), "cat /sys/class/net/%s/statistics/rx_bytes /sys/class/net/%s/statistics/tx_bytes 2>/dev/null", 
-                        members[i].interface, members[i].interface);
-                FILE *util_fp = popen(util_cmd, "r");
+                // Adjust based on interface utilization if available - SECURE VERSION
+                // DISABLED: Command injection vulnerability
+                LOGX_WARN_MSG("Network utilization check disabled for security - command injection vulnerability",
+                             "interface", members[i].interface);
+                FILE *util_fp = NULL; // Return NULL to indicate failure
                 if (util_fp) {
                     unsigned long rx_bytes, tx_bytes;
                     if (fscanf(util_fp, "%lu %lu", &rx_bytes, &tx_bytes) == 2) {

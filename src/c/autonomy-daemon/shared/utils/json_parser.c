@@ -9,8 +9,16 @@
 // Global error state
 static char g_json_error[256] = {0};
 
-// Set error message
+// Set error message - SECURE VERSION
 static void set_json_error(const char* format, ...) {
+    // Validate format string to prevent format string attacks
+    if (!format || strpbrk(format, "%n") != NULL) {
+        // Reject format strings with %n (can be used for format string attacks)
+        strncpy(g_json_error, "JSON error: Invalid format string", sizeof(g_json_error) - 1);
+        g_json_error[sizeof(g_json_error) - 1] = '\0';
+        return;
+    }
+    
     va_list args;
     va_start(args, format);
     vsnprintf(g_json_error, sizeof(g_json_error), format, args);
@@ -28,8 +36,16 @@ const char* json_get_last_error(void) {
     return g_json_error;
 }
 
-// Set error message
+// Set error message - SECURE VERSION
 static void json_set_error(const char* format, ...) {
+    // Validate format string to prevent format string attacks
+    if (!format || strpbrk(format, "%n") != NULL) {
+        // Reject format strings with %n (can be used for format string attacks)
+        strncpy(g_json_error, "JSON error: Invalid format string", sizeof(g_json_error) - 1);
+        g_json_error[sizeof(g_json_error) - 1] = '\0';
+        return;
+    }
+    
     va_list args;
     va_start(args, format);
     vsnprintf(g_json_error, sizeof(g_json_error), format, args);

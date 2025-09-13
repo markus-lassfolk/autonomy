@@ -21,8 +21,16 @@
 static char g_interface_error[256] = {0};
 static bool g_initialized = false;
 
-// Set error message
+// Set error message - SECURE VERSION
 static void set_error(const char* format, ...) {
+    // Validate format string to prevent format string attacks
+    if (!format || strpbrk(format, "%n") != NULL) {
+        // Reject format strings with %n (can be used for format string attacks)
+        strncpy(g_interface_error, "Interface error: Invalid format string", sizeof(g_interface_error) - 1);
+        g_interface_error[sizeof(g_interface_error) - 1] = '\0';
+        return;
+    }
+    
     va_list args;
     va_start(args, format);
     vsnprintf(g_interface_error, sizeof(g_interface_error), format, args);

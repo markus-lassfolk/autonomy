@@ -564,8 +564,12 @@ static int start_dish_heating(void) {
         char *newline = strchr(heating_cmd, '\n');
         if (newline) *newline = '\0';
         
-        // Execute custom heating command
-        int result = system(heating_cmd);
+        // Execute custom heating command - SECURE VERSION
+        // DISABLED: Command injection vulnerability - system() calls with user data are dangerous
+        LOGX_WARN_MSG("Custom heating command disabled for security - command injection vulnerability",
+                     "command", heating_cmd);
+        // TODO: Implement secure command execution using proper API
+        int result = -1; // Return error since command was not executed
         if (result == 0) {
             LOGX_INFO_MSG("Custom heating command executed successfully");
         } else {

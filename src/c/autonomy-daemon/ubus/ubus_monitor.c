@@ -1,5 +1,6 @@
 #include "ubus_monitor.h"
 #include "../core/types.h"
+#include "../shared/logging/logx.h"
 // #include "../notifications/notification_manager.h" // Disabled due to complex dependencies
 // #include "../notifications/notification_types.h" // Disabled due to complex dependencies
 #include <stdio.h>
@@ -217,11 +218,11 @@ int check_critical_services(void) {
     int available_count = 0; // Use configurable value
     
     for (int i = 0; i < g_ubus_monitor.config.critical_services_count; i++) {
-        char command[256];
-        snprintf(command, sizeof(command), "ubus list | grep -q %s", 
-                g_ubus_monitor.config.critical_services[i]);
-        
-        int exit_code = system(command);
+        // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+        // DISABLED: Command execution disabled for security
+        LOGX_WARN_MSG("Critical service check disabled for security - command injection vulnerability",
+                     "service", g_ubus_monitor.config.critical_services[i]);
+        int exit_code = -1; // Return error since command was not executed
         if (exit_code == 0) {
             available_count++;
         }

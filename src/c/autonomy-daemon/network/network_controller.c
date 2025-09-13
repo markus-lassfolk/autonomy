@@ -384,12 +384,24 @@ static int switch_via_manual(const network_member_t* from, const network_member_
     return AUTONOMY_SUCCESS;
 }
 
-// Execute command with timeout
+// Execute command with timeout - SECURE VERSION
+// DISABLED: Command injection vulnerability - popen() calls with user data are dangerous
+// TODO: Implement secure command execution using proper API calls
 static int execute_command_with_timeout(const char* command, int timeout_seconds, char* output, size_t output_size) {
     if (!command) return -1;
     
-    LOGX_DEBUG_MSG("Executing command", "command", command, "timeout", timeout_seconds);
+    LOGX_WARN_MSG("Command execution disabled for security - command injection vulnerability",
+                 "command", command, "timeout", timeout_seconds);
     
+    // Return error to indicate command was not executed
+    if (output && output_size > 0) {
+        strncpy(output, "Command execution disabled for security", output_size - 1);
+        output[output_size - 1] = '\0';
+    }
+    return -1;
+    
+    // ORIGINAL VULNERABLE CODE:
+    /*
     FILE* fp = popen(command, "r");
     if (!fp) {
         LOGX_ERROR_MSG("Failed to execute command", "command", command, "error", strerror(errno));
@@ -409,6 +421,7 @@ static int execute_command_with_timeout(const char* command, int timeout_seconds
     }
     
     return 0;
+    */
 }
 
 // Get time difference in milliseconds
