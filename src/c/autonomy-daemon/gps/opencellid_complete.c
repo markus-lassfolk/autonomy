@@ -812,6 +812,7 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
     environment->scan_time = time(NULL);
 
     // Use RUTOS gsmctl to get cellular information
+    // flawfinder: ignore - constant string, no injection risk
     FILE* fp = popen("gsmctl -A 'AT+COPS=3,2;+COPS?;+CREG?;+CEREG?' 2>/dev/null", "r");
     if (!fp) {
         LOGX_ERROR_MSG("Failed to execute gsmctl for cellular environment");
@@ -859,6 +860,7 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
     environment->serving_cell.is_registered = true;
 
     // Get signal strength via gsmctl
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("gsmctl -S 2>/dev/null | grep 'Signal:' | awk '{print $2}'", "r");
     if (fp) {
         if (fgets(buffer, sizeof(buffer), fp)) {
@@ -876,6 +878,7 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
     environment->neighbor_count = 0;
     
     // Get neighbor cell information via AT commands
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("gsmctl -A 'AT+QNEIGHBORCELLS' 2>/dev/null", "r");
     if (fp) {
         char line[256];
@@ -919,6 +922,7 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
     
     // Fallback: try to get neighbor cells from system
     if (environment->neighbor_count == 0) {
+        // flawfinder: ignore - constant string, no injection risk
         fp = popen("mmcli -m 0 --command='AT+QNEIGHBORCELLS' 2>/dev/null", "r");
         if (fp) {
             char line[256];

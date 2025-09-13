@@ -7,6 +7,7 @@ This document outlines the design for implementing automatic error reporting fro
 ## 🏗️ System Architecture
 
 ### High-Level Flow
+
 ```
 [Autonomy Daemon] → [Crash Detection] → [Webhook Client] → [GitHub Actions/Azure Function] → [GitHub Issues API] → [GitHub Issue Created]
 ```
@@ -36,18 +37,21 @@ This document outlines the design for implementing automatic error reporting fro
 ### Prerequisites
 
 #### 1. GitHub Repository Setup
+
 - **Repository**: Must have Issues enabled
 - **GitHub Token**: Personal Access Token with `repo` and `workflow` permissions
 - **Webhook Secret**: HMAC secret for secure communication
 - **GitHub Actions**: Enabled for workflow-based receiver
 
 #### 2. Daemon Configuration
+
 - **Webhook URL**: Configured in autonomy daemon config
 - **HMAC Secret**: Same secret used by both daemon and receiver
 - **Error Reporting**: Enabled in daemon settings
 - **Diagnostic Collection**: Enabled for bundle generation
 
 #### 3. Network Requirements
+
 - **Outbound HTTPS**: Daemon must reach GitHub API (api.github.com)
 - **Firewall**: Allow HTTPS traffic on port 443
 - **DNS Resolution**: Reliable DNS for GitHub domains
@@ -55,23 +59,27 @@ This document outlines the design for implementing automatic error reporting fro
 ### Technical Limitations
 
 #### 1. GitHub API Rate Limits
+
 - **Authenticated Requests**: 5,000 requests/hour
 - **Issue Creation**: ~1,667 issues/hour (3 requests per issue)
 - **File Uploads**: 1,000 requests/hour for diagnostic bundles
 - **Mitigation**: Implement exponential backoff and request queuing
 
 #### 2. Network Constraints
+
 - **Embedded Router**: Limited bandwidth and processing power
 - **Connection Timeouts**: Must handle network failures gracefully
 - **Retry Logic**: Implement retry with exponential backoff
 - **Offline Mode**: Queue reports for later transmission
 
 #### 3. Storage Limitations
+
 - **Diagnostic Bundles**: Size limits (GitHub: 100MB per file)
 - **Local Storage**: Limited space on router for crash dumps
 - **Cleanup**: Automatic cleanup of old diagnostic files
 
 #### 4. Privacy & Security
+
 - **Data Sensitivity**: Crash dumps may contain sensitive information
 - **User Consent**: Opt-in error reporting with clear disclosure
 - **Data Retention**: Automatic cleanup of old issues and attachments
@@ -82,6 +90,7 @@ This document outlines the design for implementing automatic error reporting fro
 ### Phase 1: Enhanced Crash Detection
 
 #### 1.1 Crash Handler Enhancement
+
 ```c
 // Enhanced crash handler with GitHub reporting
 static void enhanced_crash_handler(int sig, siginfo_t *info, void *context) {
@@ -101,6 +110,7 @@ static void enhanced_crash_handler(int sig, siginfo_t *info, void *context) {
 ```
 
 #### 1.2 Diagnostic Bundle Generation
+
 ```c
 typedef struct {
     char bundle_path[256];
@@ -131,6 +141,7 @@ diagnostic_bundle_t generate_diagnostic_bundle(int sig, siginfo_t *info, void *c
 ```
 
 #### 1.3 Webhook Payload Preparation
+
 ```c
 typedef struct {
     char device_id[64];
@@ -149,6 +160,7 @@ typedef struct {
 ### Phase 2: Webhook Receiver Implementation
 
 #### 2.1 GitHub Actions Workflow
+
 ```yaml
 # .github/workflows/error-reporting-receiver.yml
 name: Error Reporting Receiver
@@ -197,6 +209,7 @@ jobs:
 ```
 
 #### 2.2 Azure Function Alternative
+
 ```javascript
 // Azure Function: error-reporting-receiver
 module.exports = async function (context, req) {
@@ -220,6 +233,7 @@ module.exports = async function (context, req) {
 ### Phase 3: GitHub Integration
 
 #### 3.1 Issue Template
+
 ```markdown
 ## 🚨 Autonomy Daemon Crash Report
 
@@ -243,12 +257,16 @@ module.exports = async function (context, req) {
 
 ### 📋 Stack Trace
 ```
+
 {{stack_trace}}
+
 ```
 
 ### 🗺️ Memory Map
 ```
+
 {{memory_map}}
+
 ```
 
 ### 📦 Diagnostic Bundle
@@ -264,6 +282,7 @@ module.exports = async function (context, req) {
 ```
 
 #### 3.2 Label Strategy
+
 ```yaml
 # Automatic label assignment
 labels:
@@ -279,18 +298,21 @@ labels:
 ## 🔒 Security Considerations
 
 ### 1. Authentication & Authorization
+
 - **HMAC Signatures**: All webhook requests must include valid HMAC-SHA256 signature
 - **GitHub Token**: Stored as repository secret, minimal required permissions
 - **Rate Limiting**: Implement rate limiting to prevent abuse
 - **IP Whitelisting**: Optional IP whitelist for webhook endpoints
 
 ### 2. Data Privacy
+
 - **User Consent**: Clear opt-in mechanism with privacy disclosure
 - **Data Minimization**: Only collect necessary diagnostic information
 - **Sensitive Data**: Remove/hash passwords, keys, and personal information
 - **Retention Policy**: Automatic cleanup of old issues and attachments
 
 ### 3. Network Security
+
 - **HTTPS Only**: All communications over TLS 1.2+
 - **Certificate Validation**: Proper SSL certificate validation
 - **Timeout Handling**: Reasonable timeouts to prevent hanging connections
@@ -299,18 +321,21 @@ labels:
 ## 📊 Monitoring & Analytics
 
 ### 1. Success Metrics
+
 - **Issue Creation Rate**: % of valid crashes that create issues
 - **Response Time**: Time from crash to issue creation
 - **False Positive Rate**: % of issues that are configuration errors
 - **Resolution Rate**: % of issues resolved by Copilot
 
 ### 2. Failure Handling
+
 - **Network Failures**: Retry with exponential backoff
 - **API Rate Limits**: Queue requests and retry later
 - **Invalid Signatures**: Log and reject malicious requests
 - **Storage Full**: Cleanup old diagnostic bundles
 
 ### 3. Dashboard Metrics
+
 - **Daily Crash Count**: Track crash frequency
 - **Top Crash Types**: Most common crash patterns
 - **Device Distribution**: Crashes by device type/firmware
@@ -319,6 +344,7 @@ labels:
 ## 🚀 Deployment Strategy
 
 ### Phase 1: Foundation (Week 1-2)
+
 1. **Enhanced Crash Detection**
    - Implement diagnostic bundle generation
    - Add webhook payload preparation
@@ -330,6 +356,7 @@ labels:
    - Implement secure transmission
 
 ### Phase 2: Server-Side (Week 3-4)
+
 1. **GitHub Actions Workflow**
    - Create webhook receiver workflow
    - Implement HMAC validation
@@ -341,6 +368,7 @@ labels:
    - Test diagnostic bundle uploads
 
 ### Phase 3: Integration (Week 5-6)
+
 1. **GitHub Copilot Integration**
    - Add Copilot-specific labels
    - Create analysis templates
@@ -354,6 +382,7 @@ labels:
 ## 🔧 Configuration Options
 
 ### Daemon Configuration
+
 ```ini
 [error_reporting]
 enabled = true
@@ -369,6 +398,7 @@ anonymize_data = true
 ```
 
 ### GitHub Repository Settings
+
 ```yaml
 # Repository secrets
 WEBHOOK_SECRET: "your-hmac-secret"
@@ -383,18 +413,21 @@ MAX_ISSUES_PER_DAY: "100"
 ## 🧪 Testing Strategy
 
 ### 1. Unit Tests
+
 - **Crash Handler**: Test crash detection and bundle generation
 - **Webhook Client**: Test payload preparation and transmission
 - **HMAC Validation**: Test signature generation and validation
 - **Issue Creation**: Test GitHub API integration
 
 ### 2. Integration Tests
+
 - **End-to-End**: Full flow from crash to issue creation
 - **Network Failures**: Test retry logic and error handling
 - **Rate Limiting**: Test GitHub API rate limit handling
 - **Security**: Test HMAC validation and malicious requests
 
 ### 3. Load Testing
+
 - **High Crash Volume**: Test with multiple simultaneous crashes
 - **Large Bundles**: Test with maximum size diagnostic bundles
 - **API Limits**: Test GitHub API rate limit behavior
@@ -403,18 +436,21 @@ MAX_ISSUES_PER_DAY: "100"
 ## 📈 Success Criteria
 
 ### Functional Requirements
+
 - ✅ **Crash Detection**: 99% of crashes detected and reported
 - ✅ **Issue Creation**: 95% of valid crashes create GitHub issues
 - ✅ **Bundle Upload**: 90% of diagnostic bundles successfully uploaded
 - ✅ **Security**: 100% of requests properly authenticated
 
 ### Performance Requirements
+
 - ✅ **Response Time**: <30 seconds from crash to issue creation
 - ✅ **Bundle Size**: <50MB per diagnostic bundle
 - ✅ **Memory Usage**: <10MB additional memory for error reporting
 - ✅ **Network Usage**: <1MB per crash report
 
 ### Quality Requirements
+
 - ✅ **False Positive Rate**: <5% of issues are configuration errors
 - ✅ **Data Privacy**: 100% compliance with privacy requirements
 - ✅ **Uptime**: 99.9% availability of error reporting system
@@ -423,18 +459,21 @@ MAX_ISSUES_PER_DAY: "100"
 ## 🔄 Future Enhancements
 
 ### 1. Advanced Analytics
+
 - **Crash Pattern Analysis**: Identify common crash patterns
 - **Predictive Alerts**: Predict crashes before they happen
 - **Trend Analysis**: Track crash trends over time
 - **Device Health Scoring**: Overall device health metrics
 
 ### 2. Enhanced Automation
+
 - **Auto-Fix Integration**: Automatic fixes for common issues
 - **Configuration Validation**: Validate configurations before deployment
 - **Proactive Monitoring**: Monitor for crash precursors
 - **Smart Filtering**: ML-based filtering of irrelevant reports
 
 ### 3. Multi-Platform Support
+
 - **Other Routers**: Support for additional router platforms
 - **Cloud Integration**: Integration with cloud monitoring services
 - **Mobile Apps**: Mobile app for crash report management

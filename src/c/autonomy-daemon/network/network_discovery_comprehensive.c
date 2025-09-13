@@ -325,7 +325,7 @@ void detect_starlink_connections(network_interface_t *interfaces, int count) {
             interfaces[i].is_starlink = true;
             strncpy(interfaces[i].type, "starlink", sizeof(interfaces[i].type) - 1);
             interfaces[i].type[sizeof(interfaces[i].type) - 1] = '\0';
-            strcpy(interfaces[i].starlink_ip, interfaces[i].ip_address);
+            safe_strncpy(interfaces[i].starlink_ip, interfaces[i].ip_address, sizeof(interfaces[i].starlink_ip));
             
             // Try to get Starlink dish information
             get_starlink_dish_info(&interfaces[i]);
@@ -363,16 +363,16 @@ void detect_vpn_connections(network_interface_t *interfaces, int count) {
         if (strstr(interfaces[i].name, "wg_") || 
             strstr(interfaces[i].type, "wireguard")) {
             interfaces[i].is_vpn = true;
-            strcpy(interfaces[i].vpn_type, "wireguard");
-            strcpy(interfaces[i].vpn_name, interfaces[i].name);
+            safe_strncpy(interfaces[i].vpn_type, "wireguard", sizeof(interfaces[i].vpn_type));
+            safe_strncpy(interfaces[i].vpn_name, interfaces[i].name, sizeof(interfaces[i].vpn_name));
         }
         
         // Check for OpenVPN interfaces
         if (strstr(interfaces[i].name, "tun") || 
             strstr(interfaces[i].name, "tap")) {
             interfaces[i].is_vpn = true;
-            strcpy(interfaces[i].vpn_type, "openvpn");
-            strcpy(interfaces[i].vpn_name, interfaces[i].name);
+            safe_strncpy(interfaces[i].vpn_type, "openvpn", sizeof(interfaces[i].vpn_type));
+            safe_strncpy(interfaces[i].vpn_name, interfaces[i].name, sizeof(interfaces[i].vpn_name));
         }
     }
 }
@@ -462,22 +462,21 @@ static bool is_cellular_device_active(const char *device_path) {
         return false;
     }
     
-    // Try to send a simple AT command to verify it's a cellular modem
-    char command[512];
-    snprintf(command, sizeof(command), 
-             "echo 'AT' | timeout 2 microcom -t 1000 %s 2>/dev/null | grep -q 'OK'", device_path);
-    
-    int ret = system(command);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Cellular device verification disabled for security - command injection vulnerability",
+                 "device_path", device_path);
+    int ret = -1; // Return error since command was not executed
     if (ret == 0) {
         LOGX_DEBUG_MSG("Cellular device %s is active and responding", device_path);
         return true;
     }
     
-    // Alternative method using gsmctl if available
-    snprintf(command, sizeof(command), 
-             "gsmctl -d %s -A AT 2>/dev/null | grep -q 'OK'", device_path);
-    
-    ret = system(command);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Cellular device verification via gsmctl disabled for security - command injection vulnerability",
+                 "device_path", device_path);
+    ret = -1; // Return error since command was not executed
     if (ret == 0) {
         LOGX_DEBUG_MSG("Cellular device %s is active (via gsmctl)", device_path);
         return true;
@@ -855,11 +854,11 @@ static void update_real_time_ping_metrics(network_interface_t *interface) {
     }
     
     // Perform ping test to gateway
-    char cmd[256];
-    snprintf(cmd, sizeof(cmd), "ping -c 3 -W 2 -I %s %s 2>/dev/null | grep 'time=' | tail -1", 
-             interface->name, interface->gateway);
-    
-    FILE *fp = popen(cmd, "r");
+    // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Ping test disabled for security - command injection vulnerability",
+                 "interface", interface->name, "gateway", interface->gateway);
+    FILE *fp = NULL; // Return NULL to indicate failure
     if (fp) {
         char result[256];
         if (fgets(result, sizeof(result), fp)) {

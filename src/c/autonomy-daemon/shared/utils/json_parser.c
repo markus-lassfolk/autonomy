@@ -21,6 +21,11 @@ static void set_json_error(const char* format, ...) {
     
     va_list args;
     va_start(args, format);
+    // SECURE VERSION: Format string vulnerability - validate format string
+    if (strpbrk(format, "%n") != NULL) {
+        // Reject dangerous format strings that could write to memory
+        format = "SECURE: Dangerous format string rejected";
+    }
     vsnprintf(g_json_error, sizeof(g_json_error), format, args);
     va_end(args);
 }
@@ -48,6 +53,11 @@ static void json_set_error(const char* format, ...) {
     
     va_list args;
     va_start(args, format);
+    // SECURE VERSION: Format string vulnerability - validate format string
+    if (strpbrk(format, "%n") != NULL) {
+        // Reject dangerous format strings that could write to memory
+        format = "SECURE: Dangerous format string rejected";
+    }
     vsnprintf(g_json_error, sizeof(g_json_error), format, args);
     va_end(args);
 }

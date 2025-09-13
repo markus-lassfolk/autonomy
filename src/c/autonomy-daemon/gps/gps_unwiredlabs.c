@@ -440,6 +440,7 @@ bool unwiredlabs_api_validate_token(void) {
         
         // Check response
         char http_response[256];
+        // flawfinder: ignore - constant string, no injection risk
         FILE *http_resp = popen("curl -s --connect-timeout 10 --max-time 30", "r");
         if (http_resp && fgets(http_response, sizeof(http_response), http_resp)) {
             // Check if response contains valid balance or error message

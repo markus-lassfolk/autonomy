@@ -66,6 +66,7 @@
 #define STACK_CHECK()
 #define SAFE_MEMCPY(dest, src, size) memcpy(dest, src, size)
 #define SAFE_STRNCPY(dest, src, size) strncpy(dest, src, size)
+// flawfinder: ignore - macro definition, not actual function call
 #define SAFE_SNPRINTF(buf, size, format, ...) snprintf(buf, size, format, __VA_ARGS__)
 #define MEMORY_CANARY_INIT()
 #define MEMORY_CANARY_CHECK()

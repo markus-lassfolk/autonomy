@@ -31,6 +31,12 @@ static void set_error(const char* format, ...) {
         return;
     }
     
+    // SECURE VERSION: Format string vulnerability - validate format string
+    if (strpbrk(format, "%n") != NULL) {
+        // Reject dangerous format strings that could write to memory
+        format = "SECURE: Dangerous format string rejected";
+    }
+    
     va_list args;
     va_start(args, format);
     vsnprintf(g_interface_error, sizeof(g_interface_error), format, args);

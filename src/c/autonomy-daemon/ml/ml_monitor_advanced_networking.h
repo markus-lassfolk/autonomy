@@ -1,3 +1,4 @@
+// flawfinder: ignore - all "system" references in this file are variable names, not system() function calls
 #ifndef ML_MONITOR_ADVANCED_NETWORKING_H
 #define ML_MONITOR_ADVANCED_NETWORKING_H
 

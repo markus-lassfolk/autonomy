@@ -329,6 +329,7 @@ static int collect_via_ubus(cellular_info_t* info) {
                     sizeof(info->ip_address) - 1);
         } else {
             // Try to get real IP address from network interface
+            // flawfinder: ignore - constant string, no injection risk
             FILE *ip_fp = popen("ip addr show wwan0 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1", "r");
             if (ip_fp) {
                 if (fgets(info->ip_address, sizeof(info->ip_address), ip_fp)) {
@@ -350,6 +351,7 @@ static int collect_via_ubus(cellular_info_t* info) {
                     sizeof(info->gateway) - 1);
         } else {
             // Try to get real gateway from routing table
+            // flawfinder: ignore - constant string, no injection risk
             FILE *gw_fp = popen("ip route show dev wwan0 2>/dev/null | grep default | awk '{print $3}' | head -1", "r");
             if (gw_fp) {
                 if (fgets(info->gateway, sizeof(info->gateway), gw_fp)) {
@@ -411,6 +413,7 @@ static int collect_via_gsmctl(cellular_info_t* info) {
     char command[256];
     snprintf(command, sizeof(command), "gsmctl -A AT+CSQ 2>/dev/null");
     
+    // flawfinder: ignore - constant string, no injection risk
     FILE* fp = popen(command, "r");
     if (!fp) {
         LOGX_ERROR_MSG("Failed to execute gsmctl command");
@@ -766,6 +769,7 @@ static int parse_gsmctl_output(const char* output, cellular_info_t* info) {
         }
     } else {
         // Try to get network type from system
+        // flawfinder: ignore - constant string, no injection risk
         FILE *net_fp = popen("cat /sys/class/net/wwan0/operstate 2>/dev/null", "r");
         if (net_fp) {
             char state[16];
@@ -782,6 +786,7 @@ static int parse_gsmctl_output(const char* output, cellular_info_t* info) {
         }
         
         // Try to get network type from modem info
+        // flawfinder: ignore - constant string, no injection risk
         FILE *modem_fp = popen("mmcli -m 0 --command='AT+QNWINFO' 2>/dev/null | grep -E '(LTE|UMTS|GSM|5G)'", "r");
         if (modem_fp) {
             char net_info[64];

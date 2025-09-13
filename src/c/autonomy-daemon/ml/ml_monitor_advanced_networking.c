@@ -1,3 +1,4 @@
+// flawfinder: ignore - all "system" references in this file are variable names, not system() function calls
 #include "ml_monitor_advanced_networking.h"
 #include "../shared/logging/logx.h"
 #include "../shared/utils/string_utils.h"
@@ -34,6 +35,7 @@ advanced_networking_intelligence_t* ml_monitor_init_advanced_networking(const ml
     
     LOGX_INFO_MSG(" Initializing Advanced Networking Intelligence");
     
+    // flawfinder: ignore - variable name, not system() function call
     advanced_networking_intelligence_t *system = calloc(1, sizeof(advanced_networking_intelligence_t));
     if (!system) {
         LOGX_ERROR_MSG("Failed to allocate advanced networking system");

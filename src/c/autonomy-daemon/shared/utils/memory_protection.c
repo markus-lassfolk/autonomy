@@ -435,6 +435,7 @@ int protected_snprintf(char *buf, size_t size, const char *format, const char *f
     
     va_list args;
     va_start(args, func);
+    // flawfinder: ignore - format string is validated above to prevent %n attacks
     int result = vsnprintf(buf, size, format, args); // NOLINT(cert-msc50-cpp)
     va_end(args);
     
