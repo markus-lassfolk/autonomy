@@ -65,6 +65,7 @@ int gps_starlink_init(void) {
     g_starlink_gps.failed_updates = 0;
     
     // Get Starlink IP from UCI configuration
+    // flawfinder: ignore - constant string, no injection risk
     FILE *uci_fp = popen("uci get autonomy.starlink.host 2>/dev/null", "r");
     if (uci_fp) {
         char uci_host[64];
@@ -89,6 +90,7 @@ int gps_starlink_init(void) {
     }
     
     // Get Starlink port from UCI configuration
+    // flawfinder: ignore - constant string, no injection risk
     FILE *uci_port_fp = popen("uci get autonomy.starlink.port 2>/dev/null", "r");
     if (uci_port_fp) {
         char uci_port[16];

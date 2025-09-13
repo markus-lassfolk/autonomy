@@ -572,8 +572,21 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
         return ML_MONITOR_SUCCESS;
     }
     
-    // Initialize sliding window predictor
-    static sliding_predictor_t predictor = {0};
+    // Initialize sliding window predictor (use heap to avoid code section placement)
+    static sliding_predictor_t *predictor = NULL;
+    static bool predictor_initialized = false;
+    
+    if (!predictor_initialized) {
+        predictor = malloc(sizeof(sliding_predictor_t));
+        if (!predictor) {
+            LOGX_ERROR_MSG("Failed to allocate predictor for enhanced prediction");
+            memset(probabilities, 0, 60);
+            return ML_MONITOR_ERROR_MEMORY_FAILED;
+        }
+        memset(predictor, 0, sizeof(sliding_predictor_t));
+        predictor_initialized = true;
+        LOGX_DEBUG_MSG("Enhanced prediction predictor allocated at %p", predictor);
+    }
     
     // Get current observation
     ml_observation_t current_obs;
@@ -588,7 +601,7 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
     current_obs.timestamp = time(NULL);
     
     // Make sliding window prediction
-    int result = ml_monitor_sliding_window_predict(monitor, &predictor, &current_obs);
+    int result = ml_monitor_sliding_window_predict(monitor, predictor, &current_obs);
     if (result != ML_MONITOR_SUCCESS) {
         LOGX_ERROR_MSG("Sliding window prediction failed: %d", result);
         memset(probabilities, 0, 60);
@@ -600,17 +613,17 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
         double time_factor = (double)i / 60.0; // 0 to 1 over 15 minutes
         
         // Interpolate between 5-minute and 15-minute predictions
-        uint8_t base_prob = (uint8_t)((predictor.outage_probability_5min * (1.0 - time_factor)) + 
-                                     (predictor.outage_probability_15min * time_factor));
+        uint8_t base_prob = (uint8_t)((predictor->outage_probability_5min * (1.0 - time_factor)) + 
+                                     (predictor->outage_probability_15min * time_factor));
         
         // Add some randomness based on volatility
-        double volatility_factor = predictor.features.snr_volatility / 255.0;
+        double volatility_factor = predictor->features.snr_volatility / 255.0;
         double random_factor = (sin(i * 0.1) * volatility_factor * 20); // 20 based on volatility
         
         probabilities[i] = (uint8_t)fmax(0, fmin(255, base_prob + random_factor));
     }
     
-    *confidence = predictor.confidence;
+    *confidence = predictor->confidence;
     
     LOGX_DEBUG_MSG("Generated enhanced 15-minute predictions with %u%% confidence", *confidence);
     return ML_MONITOR_SUCCESS;
@@ -675,10 +688,8 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
     ML_VALIDATE_POINTER(monitor, "ml_monitor_update_with_phase3_enhancements monitor");
     ML_VALIDATE_POINTER(observation, "ml_monitor_update_with_phase3_enhancements observation");
     
-    // CRITICAL: Check global predictor address before call
-    fprintf(stderr, "DEBUG: Global predictor address: %p\n", &g_phase3_sliding_predictor);
-    fprintf(stderr, "DEBUG: Global predictor window_size: %u\n", g_phase3_sliding_predictor.window_size);
-    fprintf(stderr, "DEBUG: Global predictor write_idx: %u\n", g_phase3_sliding_predictor.write_idx);
+    // CRITICAL: Skip global predictor access - it's corrupted
+    fprintf(stderr, "DEBUG: Skipping global predictor access (corrupted)\n");
     
     // CRITICAL: Validate global predictor address
     if ((uintptr_t)&g_phase3_sliding_predictor < 0x1000) {
@@ -730,14 +741,8 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
         LOGX_DEBUG_MSG("Local predictor allocated at %p (should be in data section)", local_predictor);
     }
     
-    // Copy current state from global (if not corrupted) or use local
-    if (g_phase3_predictor_magic == GLOBAL_PREDICTOR_MAGIC && 
-        (uintptr_t)&g_phase3_sliding_predictor >= 0x40000000) {
-        LOGX_DEBUG_MSG("Using global predictor (not corrupted)");
-        *local_predictor = g_phase3_sliding_predictor;
-    } else {
-        LOGX_DEBUG_MSG("Using local predictor (global corrupted)");
-    }
+    // CRITICAL: Never copy from corrupted global predictor
+    LOGX_DEBUG_MSG("Using local predictor only (global is corrupted)");
     
     // CRITICAL: Update local predictor with new observation
     LOGX_DEBUG_MSG("Updating local predictor with new observation");
