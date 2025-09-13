@@ -229,8 +229,8 @@ bool detect_stack_overflow(void) {
     void *current_sp = (void*)&stack_var;
     
     // Check if stack pointer is getting close to stack base
-    // Use a more conservative threshold (64KB instead of 1KB)
-    if ((uintptr_t)current_sp < (uintptr_t)g_stack_base + 65536) { // 64KB safety margin
+    // Use a very conservative threshold (1MB instead of 64KB)
+    if ((uintptr_t)current_sp < (uintptr_t)g_stack_base + 1048576) { // 1MB safety margin
         g_corruption_stats.stack_overflows++;
         g_corruption_stats.corruption_detected++;
         return true;
