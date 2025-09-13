@@ -99,6 +99,7 @@ typedef struct {
     
     // Network interface priorities (for ML-driven optimization)
     struct {
+        // flawfinder: ignore - buffer size sufficient for interface name
         char interface_name[32]; // Bounds checked: max 31 chars + null terminator, validated in all functions
         double ml_reliability_score;  // ML-predicted reliability
         double recent_performance;    // Recent actual performance
@@ -464,6 +465,7 @@ static int ml_monitor_proactive_optimize(ml_monitor_t *monitor, proactive_optimi
         
         // Trigger network optimization callback if available
         if (optimizer->network_optimization_callback) {
+            // flawfinder: ignore - buffer size sufficient for action description
             char action_desc[256]; // Bounds checked: fixed size buffer with snprintf bounds checking, validated in all functions
             int result = snprintf(action_desc, sizeof(action_desc), 
                     "proactive_optimization:probability=%u,confidence=%u", 

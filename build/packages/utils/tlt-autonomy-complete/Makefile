@@ -42,7 +42,8 @@ define Build/Prepare
 	$(INSTALL_DIR) $(PKG_BUILD_DIR)
 	# Copy daemon source
 	$(CP) -r $(CURDIR)/../../../../src/c/autonomy-daemon/* $(PKG_BUILD_DIR)/
-	# Copy UI source
+	# Create UI directory and copy UI source
+	$(INSTALL_DIR) $(PKG_BUILD_DIR)/ui
 	$(CP) -r $(CURDIR)/../../../../src/web/autonomy-ui/* $(PKG_BUILD_DIR)/ui/
 endef
 
@@ -69,33 +70,49 @@ define Build/Compile
 	
 	# Create VUCI integration files
 	$(INSTALL_DIR) $(PKG_BUILD_DIR)/ui/processed/vuci
-	$(CP) $(PKG_BUILD_DIR)/ui/ui/data/usr/share/vuci/menu.d/autonomy.json $(PKG_BUILD_DIR)/ui/processed/vuci/
+	$(CP) $(PKG_BUILD_DIR)/ui/ui/data/usr/share/vuci/menu.d/autonomy.json $(PKG_BUILD_DIR)/ui/processed/vuci/ || ( \
+		printf '%s\n' '{' \
+		'  "services/autonomy": {' \
+		'    "title": "Autonomy",' \
+		'    "index": 50,' \
+		'    "view": "services/Autonomy",' \
+		'    "acls": ["services/autonomy"]' \
+		'  },' \
+		'  "services/autonomy/overview": {' \
+		'    "title": "Overview",' \
+		'    "index": 1,' \
+		'    "view": "services/AutonomyOverview",' \
+		'    "acls": ["services/autonomy"]' \
+		'  },' \
+		'  "services/autonomy/configuration": {' \
+		'    "title": "Configuration",' \
+		'    "index": 2,' \
+		'    "view": "services/AutonomyConfig",' \
+		'    "acls": ["services/autonomy"]' \
+		'  },' \
+		'  "services/autonomy/status": {' \
+		'    "title": "Status",' \
+		'    "index": 3,' \
+		'    "view": "services/AutonomyStatus",' \
+		'    "acls": ["services/autonomy"]' \
+		'  },' \
+		'  "services/autonomy/logs": {' \
+		'    "title": "Logs",' \
+		'    "index": 4,' \
+		'    "view": "services/AutonomyLogs",' \
+		'    "acls": ["services/autonomy"]' \
+		'  }' \
+		'}' \
+	) > $(PKG_BUILD_DIR)/ui/processed/vuci/autonomy.json
 	
 	# Create web server configuration
 	$(INSTALL_DIR) $(PKG_BUILD_DIR)/ui/processed/config
-	cat > $(PKG_BUILD_DIR)/ui/processed/config/autonomy-ui << 'EOF'
-#!/bin/sh
-# Autonomy UI Web Server Configuration
-
-# Enable UBUS support for API calls
-uci set uhttpd.main.ubus_prefix="/ubus"
-uci set uhttpd.main.ubus_timeout=30
-
-# Add Autonomy UI location
-uci add_list uhttpd.main.location="/autonomy"
-uci add_list uhttpd.main.location="/autonomy/"
-
-# Set document root for Autonomy UI
-uci set uhttpd.main.home="/www/autonomy"
-
-# Commit changes
-uci commit uhttpd
-
-# Restart uhttpd
-/etc/init.d/uhttpd restart
-EOF
-	
+	printf '#!/bin/sh\n# Autonomy UI Web Server Configuration\n\n# Enable UBUS support for API calls\nuci set uhttpd.main.ubus_prefix="/ubus"\nuci set uhttpd.main.ubus_timeout=30\n\n# Add Autonomy UI location\nuci add_list uhttpd.main.location="/autonomy"\nuci add_list uhttpd.main.location="/autonomy/"\n\n# Set document root for Autonomy UI\nuci set uhttpd.main.home="/www/autonomy"\n\n# Commit changes\nuci commit uhttpd\n\n# Restart uhttpd\n/etc/init.d/uhttpd restart\n' > $(PKG_BUILD_DIR)/ui/processed/config/autonomy-ui
 	chmod +x $(PKG_BUILD_DIR)/ui/processed/config/autonomy-ui
+endef
+
+define Build/Install
+	# Build/Install is handled by Package/install
 endef
 
 define Package/tlt-autonomy-complete/install
@@ -134,38 +151,7 @@ define Package/tlt-autonomy-complete/install
 	
 	# Create combined startup script
 	$(INSTALL_DIR) $(1)/usr/bin
-	cat > $(1)/usr/bin/autonomy-setup << 'EOF'
-#!/bin/sh
-# Autonomy Complete System Setup Script
-
-echo "Setting up Autonomy Complete System..."
-
-# Start the daemon
-/etc/init.d/autonomy start
-
-# Configure web interface
-/etc/init.d/autonomy-ui
-
-# Set proper permissions
-chmod 644 /www/autonomy/*.html
-chmod 644 /www/autonomy/*.js
-chmod 644 /usr/share/vuci/menu.d/autonomy.json
-
-# Get router IP
-ROUTER_IP=$(uci get network.lan.ipaddr 2>/dev/null || echo "192.168.1.1")
-
-echo "Autonomy Complete System setup complete!"
-echo ""
-echo "Access the dashboard at:"
-echo "  http://$ROUTER_IP/autonomy"
-echo "  http://$ROUTER_IP/autonomy.html"
-echo ""
-echo "Or through VUCI menu: Services > Autonomy"
-echo ""
-echo "Daemon status: /etc/init.d/autonomy status"
-echo "UI status: /etc/init.d/autonomy-ui status"
-EOF
-	
+	printf '#!/bin/sh\n# Autonomy Complete System Setup Script\n\necho "Setting up Autonomy Complete System..."\n\n# Start the daemon\n/etc/init.d/autonomy start\n\n# Configure web interface\n/etc/init.d/autonomy-ui\n\n# Set proper permissions\nchmod 644 /www/autonomy/*.html\nchmod 644 /www/autonomy/*.js\nchmod 644 /usr/share/vuci/menu.d/autonomy.json\n\n# Get router IP\nROUTER_IP=$(uci get network.lan.ipaddr 2>/dev/null || echo "192.168.1.1")\n\necho "Autonomy Complete System setup complete!"\necho ""\necho "Access the dashboard at:"\necho "  http://$ROUTER_IP/autonomy"\necho "  http://$ROUTER_IP/autonomy.html"\necho ""\necho "Or through VUCI menu: Services > Autonomy"\necho ""\necho "Daemon status: /etc/init.d/autonomy status"\necho "UI status: /etc/init.d/autonomy-ui status"\n' > $(1)/usr/bin/autonomy-setup
 	chmod +x $(1)/usr/bin/autonomy-setup
 endef
 

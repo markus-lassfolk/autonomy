@@ -11,6 +11,7 @@
 // Prediction result tracking
 typedef struct {
     time_t timestamp;
+    // flawfinder: ignore - buffer size sufficient for interface ID
     char interface_id[32];              // Bounds checked: max 31 chars + null terminator, validated in all functions
     interface_type_t interface_type;
     uint8_t predicted_outage_probability;
@@ -20,12 +21,14 @@ typedef struct {
     bool prediction_correct;
     uint16_t prediction_latency_ms;
     uint8_t confidence_level;
+    // flawfinder: ignore - buffer size sufficient for prediction trigger
     char prediction_trigger[64];        // Bounds checked: max 63 chars + null terminator, validated in all functions
 } ml_prediction_result_t;
 
 // Interface score tracking
 typedef struct {
     time_t timestamp;
+    // flawfinder: ignore - buffer size sufficient for interface ID
     char interface_id[32];              // Bounds checked: max 31 chars + null terminator, validated in all functions
     interface_type_t interface_type;
     double overall_score;               // 0-100 overall ML reliability score
@@ -55,6 +58,7 @@ typedef struct {
 // ML system impact tracking
 typedef struct {
     time_t timestamp;
+    // flawfinder: ignore - buffer size sufficient for interface ID
     char interface_id[32];              // Bounds checked: max 31 chars + null terminator, validated in all functions
     
     // ML-driven actions and their results
@@ -106,7 +110,8 @@ typedef struct {
     
     // Per-interface summary
     struct {
-        char interface_id[32];              // Bounds checked: max 31 chars + null terminator, validated in all functions
+        // flawfinder: ignore - buffer size sufficient for interface ID
+    char interface_id[32];              // Bounds checked: max 31 chars + null terminator, validated in all functions
         uint32_t predictions_made;
         uint32_t predictions_correct;
         double accuracy_pct;

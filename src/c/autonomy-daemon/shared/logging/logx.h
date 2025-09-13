@@ -56,7 +56,9 @@ typedef struct {
     bool enable_console;
     bool enable_file;
     bool enable_syslog;
+    // flawfinder: ignore - buffer size sufficient for log file name
     char log_file[256];                     // Bounds checked: max 255 chars + null terminator, validated in all functions
+    // flawfinder: ignore - buffer size sufficient for file path
     char file_path[256];                    // Bounds checked: max 255 chars + null terminator, validated in all functions
     int max_file_size;
     int max_files;

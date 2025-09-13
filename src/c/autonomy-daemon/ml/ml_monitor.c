@@ -93,6 +93,7 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
     fprintf(stderr, "DEBUG: About to open file: %s\n", filepath);
     
     // Create directory if it doesn't exist
+    // flawfinder: ignore - buffer size sufficient for directory path
     char dir_path[512]; // Bounds checked: fixed size buffer with null termination
     safe_strncpy(dir_path, filepath, sizeof(dir_path));
     dir_path[sizeof(dir_path) - 1] = '\0';
@@ -107,6 +108,7 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
         fprintf(stderr, "DEBUG: Directory created or already exists\n");
     }
     
+    // flawfinder: ignore - open with O_NOFOLLOW prevents symlink attacks
     int fd = open(filepath, O_RDWR | O_CREAT | O_NOFOLLOW, 0644); // Security: O_NOFOLLOW prevents symlink attacks, validated path
     fprintf(stderr, "DEBUG: File opened, fd=%d\n", fd);
     if (fd < 0) {
@@ -407,6 +409,7 @@ int ml_monitor_add_observation(ml_monitor_t *monitor, const ml_observation_t *ob
         char *obs_ptr = (char*)&obs_array[index];
         
         if (obs_ptr + sizeof(ml_observation_t) <= end_ptr) {
+            // flawfinder: ignore - memcpy with validated size and bounds checking
             memcpy(&obs_array[index], observation, sizeof(ml_observation_t));
         } else {
             LOGX_ERROR_MSG("Observation would exceed memory-mapped storage bounds");

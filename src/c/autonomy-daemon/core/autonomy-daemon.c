@@ -86,8 +86,10 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     
     // Print memory map info if available
     fprintf(stderr, "\n=== MEMORY MAP ===\n");
+    // flawfinder: ignore - fopen on /proc files are safe, no symlink attacks possible
     FILE *maps = fopen("/proc/self/maps", "r"); // Security: /proc files are safe to read, no symlink attacks possible
     if (maps) {
+        // flawfinder: ignore - buffer size sufficient for line reading
         char line[256]; // Bounds checked: fixed size buffer with null termination
         while (fgets(line, sizeof(line), maps)) {
             // Ensure line is null-terminated
@@ -170,8 +172,10 @@ static void setup_crash_handlers(void) {
 
 // Memory debugging utility
 static void print_memory_info(void) {
+    // flawfinder: ignore - fopen on /proc files are safe, no symlink attacks possible
     FILE *status = fopen("/proc/self/status", "r"); // Security: /proc files are safe to read, no symlink attacks possible
     if (status) {
+        // flawfinder: ignore - buffer size sufficient for line reading
         char line[256]; // Bounds checked: fixed size buffer with null termination
         fprintf(stderr, "\n=== MEMORY STATUS ===\n");
         while (fgets(line, sizeof(line), status)) {

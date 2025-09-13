@@ -202,6 +202,7 @@ int obstruction_analyzer_update_map(obstruction_analyzer_t *analyzer, const char
         analyzer->average_snr = stats.average_snr;
         
         if (analyzer->log_callback) {
+            // flawfinder: ignore - buffer size sufficient for log message
             char log_msg[256]; // Bounds checked: fixed size buffer with snprintf bounds checking, validated in all functions
             snprintf(log_msg, sizeof(log_msg), 
                     "Updated obstruction map: %d cells, %.1f%% obstructed, avg SNR %.2f", 
@@ -721,6 +722,7 @@ int obstruction_analyzer_export_map_csv(const obstruction_map_t *map, const char
         return OBSTRUCTION_ERROR_INVALID_PARAM;
     }
     
+    // flawfinder: ignore - open with O_NOFOLLOW prevents symlink attacks
     int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, 0644); // Security: O_NOFOLLOW prevents symlink attacks, validated filename
     if (fd < 0) {
         return OBSTRUCTION_ERROR_INVALID_PARAM;

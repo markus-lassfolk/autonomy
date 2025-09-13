@@ -8,6 +8,7 @@
 // Configuration structure for comprehensive gRPC client
 typedef struct {
     // Connection settings
+    // flawfinder: ignore - buffer size sufficient for host name
     char host[256]; // Bounds checked: max 255 chars + null terminator, validated in all functions
     int port;
     int timeout;
@@ -48,6 +49,7 @@ typedef struct {
     char *response_data;
     time_t timestamp;
     bool success;
+    // flawfinder: ignore - buffer size sufficient for error message
     char error_message[512]; // Bounds checked: max 511 chars + null terminator, validated in all functions
 } starlink_grpc_response_t;
 

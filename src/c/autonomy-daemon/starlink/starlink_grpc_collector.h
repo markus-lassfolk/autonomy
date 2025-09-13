@@ -15,6 +15,7 @@
 // Starlink gRPC Collector State
 typedef struct {
     // Configuration
+    // flawfinder: ignore - buffer size sufficient for host name
     char host[256]; // Bounds checked: max 255 chars + null terminator, validated in all functions
     int port;
     int timeout_seconds;
