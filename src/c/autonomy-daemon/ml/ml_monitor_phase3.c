@@ -728,7 +728,7 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
         local_predictor = malloc(sizeof(sliding_predictor_t));
         if (!local_predictor) {
             fprintf(stderr, "ERROR: Failed to allocate local predictor\n");
-            return ML_MONITOR_ERROR_MEMORY;
+            return ML_MONITOR_ERROR_MEMORY_FAILED;
         }
         
         memset(local_predictor, 0, sizeof(sliding_predictor_t));

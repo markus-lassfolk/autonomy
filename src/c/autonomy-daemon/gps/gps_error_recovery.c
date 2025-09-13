@@ -881,6 +881,7 @@ static bool starlink_gps_retry_recovery(void) {
     sleep(2);
     
     // Check if service is running
+    // flawfinder: ignore - constant string, no injection risk
     ret = system("systemctl is-active starlink-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("Starlink GPS service not active after restart");
@@ -922,15 +923,18 @@ static bool starlink_gps_fallback_recovery(void) {
     LOGX_DEBUG_MSG("Attempting Starlink GPS fallback recovery");
     
     // Try to reinitialize Starlink GPS system
+    // flawfinder: ignore - constant string, no injection risk
     int ret = system("systemctl stop starlink-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to stop Starlink GPS service");
     }
     
     // Clear any stale data
+    // flawfinder: ignore - constant string, no injection risk
     system("rm -f /var/lib/autonomy/starlink_gps_data 2>/dev/null");
     
     // Restart service
+    // flawfinder: ignore - constant string, no injection risk
     ret = system("systemctl start starlink-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to start Starlink GPS service");
@@ -941,6 +945,7 @@ static bool starlink_gps_fallback_recovery(void) {
     sleep(5);
     
     // Check service status
+    // flawfinder: ignore - constant string, no injection risk
     ret = system("systemctl is-active starlink-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("Starlink GPS service not active after fallback");
@@ -955,19 +960,27 @@ static bool starlink_gps_reset_recovery(void) {
     LOGX_DEBUG_MSG("Attempting Starlink GPS reset recovery");
     
     // Complete reset of Starlink GPS system
+    // flawfinder: ignore - constant string, no injection risk
     system("systemctl stop starlink-gps 2>/dev/null");
+    // flawfinder: ignore - constant string, no injection risk
     system("systemctl stop starlink-tracker 2>/dev/null");
     
     // Clear all Starlink GPS data
+    // flawfinder: ignore - constant string, no injection risk
     system("rm -f /var/lib/autonomy/starlink_gps_data 2>/dev/null");
+    // flawfinder: ignore - constant string, no injection risk
     system("rm -f /var/lib/autonomy/starlink_status 2>/dev/null");
     
     // Reset configuration
+    // flawfinder: ignore - constant string, no injection risk
     system("uci delete starlink.gps.enabled 2>/dev/null");
+    // flawfinder: ignore - constant string, no injection risk
     system("uci set starlink.gps.enabled=1 2>/dev/null");
+    // flawfinder: ignore - constant string, no injection risk
     system("uci commit starlink 2>/dev/null");
     
     // Restart services
+    // flawfinder: ignore - constant string, no injection risk
     int ret = system("systemctl start starlink-tracker 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to start Starlink tracker");
@@ -976,6 +989,7 @@ static bool starlink_gps_reset_recovery(void) {
     
     sleep(3);
     
+    // flawfinder: ignore - constant string, no injection risk
     ret = system("systemctl start starlink-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to start Starlink GPS service");
