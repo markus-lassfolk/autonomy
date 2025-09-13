@@ -55,7 +55,7 @@ void reset_memory_corruption_stats(void);
 // Defensive programming macros
 #define DEFENSIVE_POINTER_CHECK(ptr, name) \
     do { \
-        if (!validate_memory_region((ptr), sizeof(*(ptr)))) { \
+        if (!validate_memory_region((void*)(ptr), sizeof(*(ptr)))) { \
             LOGX_ERROR_MSG("DEFENSIVE: Invalid pointer %s at %p", name, ptr); \
             return -1; \
         } \
@@ -63,7 +63,7 @@ void reset_memory_corruption_stats(void);
 
 #define DEFENSIVE_ARRAY_CHECK(ptr, size, name) \
     do { \
-        if (!validate_memory_region((ptr), (size))) { \
+        if (!validate_memory_region((void*)(ptr), (size))) { \
             LOGX_ERROR_MSG("DEFENSIVE: Invalid array %s at %p, size %zu", name, ptr, size); \
             return -1; \
         } \

@@ -109,6 +109,7 @@ typedef struct {
 // Global Phase 3 system instance
 static enhanced_sky_grid_t g_phase3_enhanced_sky_grid = {0};
 static sliding_predictor_t g_phase3_sliding_predictor = {0};
+static sliding_predictor_t g_local_phase3_predictor = {0};
 static bool g_phase3_initialized = false;
 
 // CRITICAL: Add corruption detection for global predictor
@@ -741,7 +742,6 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
     
     // CRITICAL: Use local copy to avoid corrupted global
     // Use a different global variable that should be in data section
-    static sliding_predictor_t g_local_phase3_predictor = {0};
     static bool local_predictor_initialized = false;
     
     if (!local_predictor_initialized) {
