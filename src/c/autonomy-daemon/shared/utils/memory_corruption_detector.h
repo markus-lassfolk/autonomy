@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <time.h>
 
 // Memory corruption detection system
 #define MEMORY_CANARY_VALUE 0xDEADBEEF
@@ -77,11 +78,16 @@ void reset_memory_corruption_stats(void);
         } \
     } while(0)
 
-// Stack overflow detection
+// Stack overflow detection with rate limiting
 #define STACK_OVERFLOW_CHECK() \
     do { \
+        static time_t last_stack_error = 0; \
+        time_t now = time(NULL); \
         if (detect_stack_overflow()) { \
-            LOGX_ERROR_MSG("DEFENSIVE: Stack overflow detected!"); \
+            if (now - last_stack_error > 5) { /* Rate limit to once per 5 seconds */ \
+                LOGX_ERROR_MSG("DEFENSIVE: Stack overflow detected!"); \
+                last_stack_error = now; \
+            } \
             return -1; \
         } \
     } while(0)

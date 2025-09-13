@@ -56,6 +56,11 @@ int memory_corruption_detector_init(void) {
         fclose(maps);
     }
     
+    // If stack detection failed, disable stack overflow detection
+    if (!g_stack_base) {
+        LOGX_DEBUG_MSG("Stack detection failed, disabling stack overflow detection");
+    }
+    
     g_detector_initialized = true;
     LOGX_DEBUG_MSG("Memory corruption detector initialized successfully");
     return 0;
@@ -224,7 +229,8 @@ bool detect_stack_overflow(void) {
     void *current_sp = (void*)&stack_var;
     
     // Check if stack pointer is getting close to stack base
-    if ((uintptr_t)current_sp < (uintptr_t)g_stack_base + 1024) { // 1KB safety margin
+    // Use a more conservative threshold (64KB instead of 1KB)
+    if ((uintptr_t)current_sp < (uintptr_t)g_stack_base + 65536) { // 64KB safety margin
         g_corruption_stats.stack_overflows++;
         g_corruption_stats.corruption_detected++;
         return true;
