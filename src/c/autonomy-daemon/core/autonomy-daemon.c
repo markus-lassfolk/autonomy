@@ -729,13 +729,41 @@ int main(int argc, char **argv)
     // We'll try to register directly and handle conflicts gracefully
     fprintf(stderr, "Attempting to register autonomy ubus object...\n");
 
-    fprintf(stderr, "Registering autonomy ubus object...\n");
-    fprintf(stderr, "UBUS object details: name=%s, methods=%d, type=%p\n", 
-            autonomy_obj.name, autonomy_obj.n_methods, autonomy_obj.type);
-    int ret = ubus_add_object(ctx, &autonomy_obj);
+    fprintf(stderr, "Registering autonomy ubus objects step by step...\n");
+    
+    // Register basic methods first
+    static const struct ubus_method basic_methods[] = {
+        UBUS_METHOD_NOARG("status", autonomy_status),
+        UBUS_METHOD_NOARG("health", autonomy_health),
+        UBUS_METHOD_NOARG("config", autonomy_config),
+    };
+    
+    static struct ubus_object_type basic_obj_type = 
+        UBUS_OBJECT_TYPE("autonomy_basic", basic_methods);
+    
+    static struct ubus_object basic_obj = {
+        .name = "autonomy_basic",
+        .type = &basic_obj_type,
+        .methods = basic_methods,
+        .n_methods = ARRAY_SIZE(basic_methods),
+    };
+    
+    fprintf(stderr, "Registering basic UBUS object (3 methods)...\n");
+    int ret = ubus_add_object(ctx, &basic_obj);
     if (ret) {
         char error_msg[256];
-        snprintf(error_msg, sizeof(error_msg), "Failed to add ubus object: %s (error %d)", ubus_strerror(ret), ret);
+        snprintf(error_msg, sizeof(error_msg), "Failed to add basic ubus object: %s (error %d)", ubus_strerror(ret), ret);
+        log_exit_reason(EXIT_REASON_INIT_FAILURE, error_msg);
+        daemon_exit(1);
+    }
+    fprintf(stderr, "Basic UBUS object registered successfully\n");
+    
+    // Now try to register the full object
+    fprintf(stderr, "Registering full autonomy ubus object (%d methods)...\n", autonomy_obj.n_methods);
+    ret = ubus_add_object(ctx, &autonomy_obj);
+    if (ret) {
+        char error_msg[256];
+        snprintf(error_msg, sizeof(error_msg), "Failed to add full ubus object: %s (error %d)", ubus_strerror(ret), ret);
         log_exit_reason(EXIT_REASON_INIT_FAILURE, error_msg);
         daemon_exit(1);
     }
