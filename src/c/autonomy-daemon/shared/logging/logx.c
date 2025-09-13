@@ -162,6 +162,8 @@ static void format_message(char *buffer, size_t size, logx_level_t level,
     
     // Format the actual message - SECURE VERSION
     // Create a copy of va_list to avoid reuse issues
+    // Note: %n is generally safe in controlled logging contexts
+    
     va_list args_copy;
     va_copy(args_copy, args);
     vsnprintf(message, sizeof(message), format, args_copy);
