@@ -34,6 +34,7 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
 
 // Simple network connectivity check
 static int check_network_connectivity(void) {
+    // flawfinder: ignore - constant string, no injection risk
     return system("ping -c 1 -W 1 8.8.8.8 > /dev/null 2>&1") == 0 ? 1 : 0;
 }
 
@@ -274,6 +275,7 @@ int calculate_system_overview(system_overview_t* overview) {
     overview->active_members = 0;
     
     // Check network interfaces and count active connections
+    // flawfinder: ignore - constant string, no injection risk
     FILE *fp = popen("ip link show | grep -c 'state UP'", "r");
     if (fp) {
         char buffer[128];
@@ -291,6 +293,7 @@ int calculate_system_overview(system_overview_t* overview) {
     }
     
     // Get total network interfaces
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("ip link show | grep -c '^[0-9]'", "r");
     if (fp) {
         char buffer[128];
@@ -320,6 +323,7 @@ int calculate_system_overview(system_overview_t* overview) {
     }
     
     // Check disk usage - simple implementation
+    // flawfinder: ignore - constant string, no injection risk
     FILE *df_fp = popen("df / | tail -1 | awk '{print $4}'", "r");
     if (df_fp) {
         char buffer[128];
@@ -532,6 +536,7 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     }
     
     // Check disk space alerts - simple implementation
+    // flawfinder: ignore - constant string, no injection risk
     FILE *df_fp = popen("df / | tail -1 | awk '{print $4}'", "r");
     bool disk_space_low = false;
     if (df_fp) {
@@ -670,6 +675,7 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     }
     
     // Disk space recommendations - simple implementation
+    // flawfinder: ignore - constant string, no injection risk
     FILE *df_fp = popen("df / | tail -1 | awk '{print $4}'", "r");
     bool disk_space_low = false;
     if (df_fp) {

@@ -377,16 +377,6 @@ src/c/autonomy-daemon/analytics/performance_monitor.c:214:31:  [4] (shell) syste
   (CWE-78). try using a library call that implements the same functionality
   if available.
                &user, &nice, &system, &idle, &iowait, &irq, &softirq, &steal) == 8) {
-src/c/autonomy-daemon/analytics/predictive_engine.c:139:27:  [4] (shell) system:
-  This causes a new program to execute and is difficult to use safely
-  (CWE-78). try using a library call that implements the same functionality
-  if available.
-    int training_result = system(training_data_cmd);
-src/c/autonomy-daemon/analytics/predictive_engine.c:154:29:  [4] (shell) system:
-  This causes a new program to execute and is difficult to use safely
-  (CWE-78). try using a library call that implements the same functionality
-  if available.
-    int validation_result = system(validation_cmd);
 src/c/autonomy-daemon/core/system_management.c:136:16:  [4] (shell) popen:
   This causes a new program to execute and is difficult to use safely
   (CWE-78). try using a library call that implements the same functionality
@@ -1699,7 +1689,7 @@ src/c/autonomy-daemon/shared/utils/json_parser.c:51:5:  [4] (format) vsnprintf:
   and note that sprintf variations do not always \0-terminate (CWE-134). Use
   a constant for the format specification.
     vsnprintf(g_json_error, sizeof(g_json_error), format, args);
-src/c/autonomy-daemon/shared/utils/memory_protection.c:437:18:  [4] (format) vsnprintf:
+src/c/autonomy-daemon/shared/utils/memory_protection.c:438:18:  [4] (format) vsnprintf:
   If format strings can be influenced by an attacker, they can be exploited,
   and note that sprintf variations do not always \0-terminate (CWE-134). Use
   a constant for the format specification.
@@ -1894,17 +1884,17 @@ src/c/autonomy-daemon/utils/security_monitor.c:929:22:  [4] (shell) popen:
   (CWE-78). try using a library call that implements the same functionality
   if available.
     FILE* conn_cmd = popen("ss -tuln | grep ':22 ' | wc -l", "r");
-src/c/autonomy-daemon/utils/service_watchdog.c:254:21:  [4] (shell) system:
+src/c/autonomy-daemon/utils/service_watchdog.c:255:21:  [4] (shell) system:
   This causes a new program to execute and is difficult to use safely
   (CWE-78). try using a library call that implements the same functionality
   if available.
     int exit_code = system(command);
-src/c/autonomy-daemon/utils/service_watchdog.c:259:21:  [4] (shell) system:
+src/c/autonomy-daemon/utils/service_watchdog.c:260:21:  [4] (shell) system:
   This causes a new program to execute and is difficult to use safely
   (CWE-78). try using a library call that implements the same functionality
   if available.
         exit_code = system(command);
-src/c/autonomy-daemon/utils/service_watchdog.c:286:21:  [4] (shell) system:
+src/c/autonomy-daemon/utils/service_watchdog.c:287:21:  [4] (shell) system:
   This causes a new program to execute and is difficult to use safely
   (CWE-78). try using a library call that implements the same functionality
   if available.
@@ -1969,47 +1959,32 @@ src/c/autonomy-daemon/utils/system_ubus.c:363:17:  [4] (buffer) strcat:
   [MS-banned] (CWE-120). Consider using strcat_s, strncat, strlcat, or
   snprintf (warning: strncat is easily misused).
                 strcat(restart_log, service_log);
-src/c/autonomy-daemon/utils/uci_maintenance.c:127:25:  [4] (shell) system:
-  This causes a new program to execute and is difficult to use safely
-  (CWE-78). try using a library call that implements the same functionality
-  if available.
-        int exit_code = system(command);
-src/c/autonomy-daemon/utils/uci_maintenance.c:164:25:  [4] (shell) system:
-  This causes a new program to execute and is difficult to use safely
-  (CWE-78). try using a library call that implements the same functionality
-  if available.
-        int exit_code = system(command);
-src/c/autonomy-daemon/utils/uci_maintenance.c:313:29:  [4] (shell) system:
+src/c/autonomy-daemon/utils/uci_maintenance.c:386:29:  [4] (shell) system:
   This causes a new program to execute and is difficult to use safely
   (CWE-78). try using a library call that implements the same functionality
   if available.
             int exit_code = system(command);
-src/c/autonomy-daemon/utils/uci_maintenance.c:382:29:  [4] (shell) system:
-  This causes a new program to execute and is difficult to use safely
-  (CWE-78). try using a library call that implements the same functionality
-  if available.
-            int exit_code = system(command);
-src/c/autonomy-daemon/utils/uci_maintenance.c:422:18:  [4] (shell) system:
+src/c/autonomy-daemon/utils/uci_maintenance.c:426:18:  [4] (shell) system:
   This causes a new program to execute and is difficult to use safely
   (CWE-78). try using a library call that implements the same functionality
   if available.
     int result = system(uci_cmd);
-src/c/autonomy-daemon/utils/uci_maintenance.c:460:18:  [4] (shell) system:
+src/c/autonomy-daemon/utils/uci_maintenance.c:464:18:  [4] (shell) system:
   This causes a new program to execute and is difficult to use safely
   (CWE-78). try using a library call that implements the same functionality
   if available.
     int result = system(uci_cmd);
-src/c/autonomy-daemon/utils/uci_maintenance.c:463:9:  [4] (shell) system:
+src/c/autonomy-daemon/utils/uci_maintenance.c:467:9:  [4] (shell) system:
   This causes a new program to execute and is difficult to use safely
   (CWE-78). try using a library call that implements the same functionality
   if available.
         system("uci commit");
-src/c/autonomy-daemon/utils/uci_maintenance.c:473:13:  [4] (shell) system:
+src/c/autonomy-daemon/utils/uci_maintenance.c:477:13:  [4] (shell) system:
   This causes a new program to execute and is difficult to use safely
   (CWE-78). try using a library call that implements the same functionality
   if available.
             system(uci_cmd);
-src/c/autonomy-daemon/utils/uci_maintenance.c:474:13:  [4] (shell) system:
+src/c/autonomy-daemon/utils/uci_maintenance.c:478:13:  [4] (shell) system:
   This causes a new program to execute and is difficult to use safely
   (CWE-78). try using a library call that implements the same functionality
   if available.
@@ -2064,37 +2039,17 @@ src/c/autonomy-daemon/wifi/wifi_enhanced.c:1280:10:  [4] (shell) popen:
   (CWE-78). try using a library call that implements the same functionality
   if available.
     fp = popen(uci_cmd, "r");
-src/c/autonomy-daemon/wifi/wifi_enhanced_ubus.c:648:16:  [4] (shell) popen:
-  This causes a new program to execute and is difficult to use safely
-  (CWE-78). try using a library call that implements the same functionality
-  if available.
-    FILE* fp = popen(command, "r");
 src/c/autonomy-daemon/wifi/wifi_management.c:136:16:  [4] (shell) popen:
   This causes a new program to execute and is difficult to use safely
   (CWE-78). try using a library call that implements the same functionality
   if available.
     FILE *fp = popen("iwinfo | grep -E '^[a-zA-Z0-9]+' | awk '{print $1}'", "r");
-src/c/autonomy-daemon/wifi/wifi_management.c:191:16:  [4] (shell) popen:
-  This causes a new program to execute and is difficult to use safely
-  (CWE-78). try using a library call that implements the same functionality
-  if available.
-    FILE *fp = popen(command, "r");
-src/c/autonomy-daemon/wifi/wifi_management.c:408:13:  [4] (shell) system:
-  This causes a new program to execute and is difficult to use safely
-  (CWE-78). try using a library call that implements the same functionality
-  if available.
-        if (system(command) == 0) {
-src/c/autonomy-daemon/wifi/wifi_management.c:417:13:  [4] (shell) system:
-  This causes a new program to execute and is difficult to use safely
-  (CWE-78). try using a library call that implements the same functionality
-  if available.
-        if (system(command) == 0) {
-src/c/autonomy-daemon/wifi/wifi_management.c:425:9:  [4] (shell) system:
+src/c/autonomy-daemon/wifi/wifi_management.c:429:9:  [4] (shell) system:
   This causes a new program to execute and is difficult to use safely
   (CWE-78). try using a library call that implements the same functionality
   if available.
         system("uci commit wireless");
-src/c/autonomy-daemon/wifi/wifi_management.c:426:9:  [4] (shell) system:
+src/c/autonomy-daemon/wifi/wifi_management.c:430:9:  [4] (shell) system:
   This causes a new program to execute and is difficult to use safely
   (CWE-78). try using a library call that implements the same functionality
   if available.

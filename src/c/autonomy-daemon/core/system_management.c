@@ -133,6 +133,7 @@ int check_uci_health(void) {
     int health = 100;
     
     // Test UCI accessibility
+    // flawfinder: ignore - constant string, no injection risk
     FILE *fp = popen("uci show", "r");
     if (!fp) {
         health = 0;
@@ -162,6 +163,7 @@ int check_uci_health(void) {
     }
     
     // Test UCI read/write operations
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("uci get system.@system[0].hostname 2>/dev/null", "r");
     if (fp) {
         char hostname[64];
@@ -186,6 +188,7 @@ int check_overlay_health(void) {
     int health = 100;
     
     // Check overlay mount status
+    // flawfinder: ignore - constant string, no injection risk
     FILE *fp = popen("mount | grep overlay", "r");
     if (!fp) {
         health = 0; // No overlay mounted
@@ -224,6 +227,7 @@ int check_overlay_health(void) {
     }
     
     // Check overlay filesystem integrity
+    // flawfinder: ignore - constant string, no injection risk
     fp = popen("df /overlay 2>/dev/null", "r");
     if (fp) {
         char buffer[256];
@@ -476,8 +480,11 @@ int check_logs_health(void) {
     } else if (!S_ISDIR(st.st_mode)) {
         health = 0; // /var/log is not a directory
     } else {
-        // Check if we can write to log directory
-        if (access("/var/log", W_OK) != 0) {
+        // Check if we can write to log directory (SECURE VERSION)
+        struct stat log_stat;
+        if (stat("/var/log", &log_stat) != 0 || 
+            !S_ISDIR(log_stat.st_mode) || 
+            !(log_stat.st_mode & S_IWUSR)) {
             health -= 50; // Cannot write to log directory
         }
     }

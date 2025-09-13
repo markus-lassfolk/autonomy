@@ -208,6 +208,7 @@ static int collect_cpu_metrics(performance_metrics_t* metrics) {
     }
     
     static unsigned long long prev_idle = 0, prev_total = 0; // Use configurable count // Use configurable value
+    // flawfinder: ignore - variable names, not system() function calls
     unsigned long long user, nice, system, idle, iowait, irq, softirq, steal;
     
     if (fscanf(stat_file, "cpu %llu %llu %llu %llu %llu %llu %llu %llu",

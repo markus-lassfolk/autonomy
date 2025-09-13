@@ -322,9 +322,13 @@ static void ml_monitor_extract_window_features(sliding_predictor_t *predictor) {
     
     // Extract SNR trend
     uint16_t snr_values[60];
+    fprintf(stderr, "DEBUG: Extracting SNR trend, window_size=%u\n", predictor->window_size);
     for (int i = 0; i < predictor->window_size; i++) {
+        fprintf(stderr, "DEBUG: Processing SNR value %d, predictor=%p, window[%d]=%p\n", 
+                i, predictor, i, &predictor->window[i]);
         ML_VALIDATE_WINDOW_ACCESS(predictor, i, "SNR trend extraction");
         snr_values[i] = predictor->window[i].snr_x100;
+        fprintf(stderr, "DEBUG: SNR value %d extracted: %u\n", i, snr_values[i]);
     }
     
     double snr_trend = ml_monitor_calculate_trend(snr_values, predictor->window_size);
@@ -724,7 +728,18 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
         local_predictor.window_size = 0;
         local_predictor.write_idx = 0;
         local_predictor.features.snr_trend = 128; // Stable
+        
+        // CRITICAL: Initialize the window array to prevent NULL access
+        for (int i = 0; i < 60; i++) {
+            local_predictor.window[i].snr_x100 = 0;
+            local_predictor.window[i].latency_ms = 0;
+            local_predictor.window[i].packet_loss_pct = 0;
+            local_predictor.window[i].obstruction_pct = 0;
+            local_predictor.window[i].timestamp = 0;
+        }
+        
         local_predictor_initialized = true;
+        fprintf(stderr, "DEBUG: Local predictor initialized with safe window array\n");
     }
     
     // Copy current state from global (if not corrupted) or use local
