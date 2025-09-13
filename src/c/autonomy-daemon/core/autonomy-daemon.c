@@ -731,32 +731,85 @@ int main(int argc, char **argv)
 
     fprintf(stderr, "Registering autonomy ubus objects step by step...\n");
     
-    // Register basic methods first
-    static const struct ubus_method basic_methods[] = {
+    // Test each method individually to find the problematic one
+    fprintf(stderr, "Testing individual UBUS methods...\n");
+    
+    // Test 1: status method only
+    static const struct ubus_method status_methods[] = {
         UBUS_METHOD_NOARG("status", autonomy_status),
-        UBUS_METHOD_NOARG("health", autonomy_health),
-        UBUS_METHOD_NOARG("config", autonomy_config),
     };
     
-    static struct ubus_object_type basic_obj_type = 
-        UBUS_OBJECT_TYPE("autonomy_basic", basic_methods);
+    static struct ubus_object_type status_obj_type = 
+        UBUS_OBJECT_TYPE("autonomy_status", status_methods);
     
-    static struct ubus_object basic_obj = {
-        .name = "autonomy_basic",
-        .type = &basic_obj_type,
-        .methods = basic_methods,
-        .n_methods = ARRAY_SIZE(basic_methods),
+    static struct ubus_object status_obj = {
+        .name = "autonomy_status",
+        .type = &status_obj_type,
+        .methods = status_methods,
+        .n_methods = ARRAY_SIZE(status_methods),
     };
     
-    fprintf(stderr, "Registering basic UBUS object (3 methods)...\n");
-    int ret = ubus_add_object(ctx, &basic_obj);
+    fprintf(stderr, "Testing status method...\n");
+    int ret = ubus_add_object(ctx, &status_obj);
     if (ret) {
         char error_msg[256];
-        snprintf(error_msg, sizeof(error_msg), "Failed to add basic ubus object: %s (error %d)", ubus_strerror(ret), ret);
+        snprintf(error_msg, sizeof(error_msg), "Failed to add status method: %s (error %d)", ubus_strerror(ret), ret);
         log_exit_reason(EXIT_REASON_INIT_FAILURE, error_msg);
         daemon_exit(1);
     }
-    fprintf(stderr, "Basic UBUS object registered successfully\n");
+    fprintf(stderr, "Status method registered successfully\n");
+    
+    // Test 2: health method only
+    static const struct ubus_method health_methods[] = {
+        UBUS_METHOD_NOARG("health", autonomy_health),
+    };
+    
+    static struct ubus_object_type health_obj_type = 
+        UBUS_OBJECT_TYPE("autonomy_health", health_methods);
+    
+    static struct ubus_object health_obj = {
+        .name = "autonomy_health",
+        .type = &health_obj_type,
+        .methods = health_methods,
+        .n_methods = ARRAY_SIZE(health_methods),
+    };
+    
+    fprintf(stderr, "Testing health method...\n");
+    ret = ubus_add_object(ctx, &health_obj);
+    if (ret) {
+        char error_msg[256];
+        snprintf(error_msg, sizeof(error_msg), "Failed to add health method: %s (error %d)", ubus_strerror(ret), ret);
+        log_exit_reason(EXIT_REASON_INIT_FAILURE, error_msg);
+        daemon_exit(1);
+    }
+    fprintf(stderr, "Health method registered successfully\n");
+    
+    // Test 3: config method only
+    static const struct ubus_method config_methods[] = {
+        UBUS_METHOD_NOARG("config", autonomy_config),
+    };
+    
+    static struct ubus_object_type config_obj_type = 
+        UBUS_OBJECT_TYPE("autonomy_config", config_methods);
+    
+    static struct ubus_object config_obj = {
+        .name = "autonomy_config",
+        .type = &config_obj_type,
+        .methods = config_methods,
+        .n_methods = ARRAY_SIZE(config_methods),
+    };
+    
+    fprintf(stderr, "Testing config method...\n");
+    ret = ubus_add_object(ctx, &config_obj);
+    if (ret) {
+        char error_msg[256];
+        snprintf(error_msg, sizeof(error_msg), "Failed to add config method: %s (error %d)", ubus_strerror(ret), ret);
+        log_exit_reason(EXIT_REASON_INIT_FAILURE, error_msg);
+        daemon_exit(1);
+    }
+    fprintf(stderr, "Config method registered successfully\n");
+    
+    fprintf(stderr, "All individual methods registered successfully - testing combined object...\n");
     
     // Now try to register the full object
     fprintf(stderr, "Registering full autonomy ubus object (%d methods)...\n", autonomy_obj.n_methods);
