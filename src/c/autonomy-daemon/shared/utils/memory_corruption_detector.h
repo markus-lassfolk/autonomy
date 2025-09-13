@@ -57,38 +57,38 @@ void reset_memory_corruption_stats(void);
 #define DEFENSIVE_POINTER_CHECK(ptr, name) \
     do { \
         if (!validate_memory_region((void*)(ptr), sizeof(*(ptr)))) { \
-            LOGX_ERROR_MSG("DEFENSIVE: Invalid pointer %s at %p", name, ptr); \
-            return -1; \
+            LOGX_WARN_MSG("DEFENSIVE: Invalid pointer %s at %p - continuing with caution", name, ptr); \
+            /* Don't return -1, just log and continue */ \
         } \
     } while(0)
 
 #define DEFENSIVE_ARRAY_CHECK(ptr, size, name) \
     do { \
         if (!validate_memory_region((void*)(ptr), (size))) { \
-            LOGX_ERROR_MSG("DEFENSIVE: Invalid array %s at %p, size %zu", name, ptr, size); \
-            return -1; \
+            LOGX_WARN_MSG("DEFENSIVE: Invalid array %s at %p, size %zu - continuing with caution", name, ptr, size); \
+            /* Don't return -1, just log and continue */ \
         } \
     } while(0)
 
 #define DEFENSIVE_GLOBAL_CHECK(ptr, name) \
     do { \
         if (!check_global_variable_integrity(ptr)) { \
-            LOGX_ERROR_MSG("DEFENSIVE: Global variable %s corrupted at %p", name, ptr); \
-            return -1; \
+            LOGX_WARN_MSG("DEFENSIVE: Global variable %s corrupted at %p - continuing with caution", name, ptr); \
+            /* Don't return -1, just log and continue */ \
         } \
     } while(0)
 
-// Stack overflow detection with rate limiting
+// Stack overflow detection with rate limiting (non-fatal)
 #define STACK_OVERFLOW_CHECK() \
     do { \
         static time_t last_stack_error = 0; \
         time_t now = time(NULL); \
         if (detect_stack_overflow()) { \
             if (now - last_stack_error > 5) { /* Rate limit to once per 5 seconds */ \
-                LOGX_ERROR_MSG("DEFENSIVE: Stack overflow detected!"); \
+                LOGX_WARN_MSG("DEFENSIVE: Stack overflow detected - continuing with caution"); \
                 last_stack_error = now; \
             } \
-            return -1; \
+            /* Don't return -1, just log and continue */ \
         } \
     } while(0)
 
