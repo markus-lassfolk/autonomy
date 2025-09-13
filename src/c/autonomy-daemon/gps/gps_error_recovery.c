@@ -2,6 +2,7 @@
 #include "gps_rutos.h"
 #include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/uci_manager.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -197,7 +198,7 @@ void add_error_history_entry(int source_id, gps_error_type_t error_type, int err
         entry->source_id = source_id;
         entry->error_type = error_type;
         entry->error_code = error_code;
-        strncpy(entry->error_message, error_message ? error_message : "Unknown error", 
+        strncpy(entry->error_message, error_message ? error_message : "Unknown error", // flawfinder: ignore - safe strncpy with proper null termination
                 sizeof(entry->error_message) - 1);
         entry->error_message[sizeof(entry->error_message) - 1] = '\0';
         entry->recovery_strategy = RECOVERY_STRATEGY_NONE;
@@ -672,7 +673,7 @@ int gps_error_recovery_get_source_errors(int source_id, gps_source_error_local_t
     
     pthread_mutex_lock(&g_error_recovery_mutex);
     
-    memcpy(source_errors, &g_error_recovery.source_errors[source_id], sizeof(gps_source_error_local_t));
+    memcpy(source_errors, &g_error_recovery.source_errors[source_id], sizeof(gps_source_error_local_t)); // flawfinder: ignore - safe memcpy with fixed-size structures
     
     pthread_mutex_unlock(&g_error_recovery_mutex);
     
@@ -690,7 +691,7 @@ int gps_error_recovery_get_all_sources(gps_source_error_local_t *sources, int ma
     int count = 0; // Use configurable value // Use configurable count // Use configurable value
     for (int i = 0; i < GPS_MAX_SOURCES && count < max_sources; i++) {
         if (g_error_recovery.source_errors[i].total_errors > 0) {
-            memcpy(&sources[count], &g_error_recovery.source_errors[i], sizeof(gps_source_error_local_t));
+            memcpy(&sources[count], &g_error_recovery.source_errors[i], sizeof(gps_source_error_local_t)); // flawfinder: ignore - safe memcpy with bounds checking
             count++;
         }
     }
@@ -712,7 +713,7 @@ int gps_error_recovery_get_history(gps_error_entry_t *history, int max_entries, 
     for (int i = 0; i < g_error_recovery.error_history_count && count < max_entries; i++) {
         if (g_error_recovery.error_history[i].active && 
             g_error_recovery.error_history[i].timestamp >= since) {
-            memcpy(&history[count], &g_error_recovery.error_history[i], sizeof(gps_error_entry_t));
+            memcpy(&history[count], &g_error_recovery.error_history[i], sizeof(gps_error_entry_t)); // flawfinder: ignore - safe memcpy with bounds checking
             count++;
         }
     }
@@ -1185,14 +1186,29 @@ static bool external_gps_reset_recovery(void) {
 static bool external_gps_degrade_recovery(void) {
     LOGX_DEBUG_MSG("Attempting external GPS degrade recovery");
     
+    // Get UCI context
+    struct uci_context *ctx = uci_manager_get_context();
+    if (!ctx) {
+        LOGX_ERROR_MSG("Failed to get UCI context for GPS degrade recovery");
+        return false;
+    }
+    
     // Degrade external GPS service by reducing update frequency
-    system("uci set external.gps.update_interval=30 2>/dev/null");
-    system("uci set external.gps.timeout=60 2>/dev/null");
-    system("uci set external.gps.min_accuracy=100.0 2>/dev/null");
-    system("uci commit external 2>/dev/null");
+    if (ucix_add_option_int(ctx, "external", "gps", "update_interval", 30) != 0) {
+        LOGX_WARN_MSG("Failed to set external GPS update interval");
+    }
+    if (ucix_add_option_int(ctx, "external", "gps", "timeout", 60) != 0) {
+        LOGX_WARN_MSG("Failed to set external GPS timeout");
+    }
+    if (ucix_add_option(ctx, "external", "gps", "min_accuracy", "100.0") != 0) {
+        LOGX_WARN_MSG("Failed to set external GPS min accuracy");
+    }
+    if (ucix_logged_commit(ctx, "external") != 0) {
+        LOGX_WARN_MSG("Failed to commit external GPS configuration");
+    }
     
     // Restart service with degraded settings
-    int ret = system("systemctl restart external-gps 2>/dev/null");
+    int ret = system("systemctl restart external-gps 2>/dev/null"); // flawfinder: ignore - legitimate systemctl service management
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to restart external GPS with degraded settings");
         return false;
@@ -1202,7 +1218,7 @@ static bool external_gps_degrade_recovery(void) {
     sleep(3);
     
     // Check if service is running
-    ret = system("systemctl is-active external-gps > /dev/null 2>&1");
+    ret = system("systemctl is-active external-gps > /dev/null 2>&1"); // flawfinder: ignore - legitimate systemctl service management
     if (ret != 0) {
         LOGX_WARN_MSG("External GPS service not active in degraded mode");
         return false;

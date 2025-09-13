@@ -36,7 +36,12 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     printf("INFO: Integrating ML monitoring with comprehensive network discovery\n");
     
     // Get discovered interfaces from network discovery system
-    network_interface_t discovered_interfaces[MAX_INTERFACES];
+    // Use heap allocation to avoid stack overflow
+    network_interface_t *discovered_interfaces = malloc(MAX_INTERFACES * sizeof(network_interface_t));
+    if (!discovered_interfaces) {
+        printf("ERROR: Failed to allocate memory for discovered interfaces\n");
+        return ML_MONITOR_ERROR_MEMORY_FAILED;
+    }
     int interface_count = 0;
     
     // Add null pointer checks
@@ -257,6 +262,10 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     
     printf("DEBUG: All logging sections completed successfully\n");
     printf("DEBUG: About to return ML_MONITOR_SUCCESS from ml_monitor_init_from_network_discovery\n");
+    
+    // Free the allocated memory
+    free(discovered_interfaces);
+    
     return ML_MONITOR_SUCCESS;
 }
 

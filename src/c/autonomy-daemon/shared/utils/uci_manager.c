@@ -608,6 +608,14 @@ bool uci_manager_is_available(void) {
     return g_uci_initialized && g_uci_ctx != NULL;
 }
 
+// Get UCI context for external use
+struct uci_context* uci_manager_get_context(void) {
+    if (!g_uci_initialized || !g_uci_ctx) {
+        return NULL;
+    }
+    return g_uci_ctx;
+}
+
 // Convert autonomy config to snow detection config
 void uci_manager_convert_to_snow_config(const autonomy_config_t *autonomy_config, 
                                        starlink_snow_detection_config_t *snow_config) {
