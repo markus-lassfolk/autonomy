@@ -725,9 +725,20 @@ int main(int argc, char **argv)
     // Initialize random seed for simulation
     srand(time(NULL));
 
+    // Check if autonomy object already exists and remove it
+    fprintf(stderr, "Checking for existing autonomy ubus object...\n");
+    struct ubus_object *existing_obj = NULL;
+    if (ubus_lookup_object(ctx, "autonomy", &existing_obj) == 0 && existing_obj) {
+        fprintf(stderr, "Found existing autonomy object, removing it first...\n");
+        ubus_remove_object(ctx, existing_obj);
+    }
+
+    fprintf(stderr, "Registering autonomy ubus object...\n");
     int ret = ubus_add_object(ctx, &autonomy_obj);
     if (ret) {
-        log_exit_reason(EXIT_REASON_INIT_FAILURE, "Failed to add ubus object");
+        char error_msg[256];
+        snprintf(error_msg, sizeof(error_msg), "Failed to add ubus object: %s (error %d)", ubus_strerror(ret), ret);
+        log_exit_reason(EXIT_REASON_INIT_FAILURE, error_msg);
         daemon_exit(1);
     }
 
