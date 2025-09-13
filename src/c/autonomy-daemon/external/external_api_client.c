@@ -47,14 +47,20 @@ int external_api_client_init(const api_endpoint_config_t* config) {
     } else {
         // Default configuration
         strcpy(g_external_api_client.config.base_url, "https://api.example.com");
-        strcpy(g_external_api_client.config.api_key, "");
-        strcpy(g_external_api_client.config.username, "");
-        strcpy(g_external_api_client.config.password, "");
+        strncpy(g_external_api_client.config.api_key, "", sizeof(g_external_api_client.config.api_key) - 1);
+        g_external_api_client.config.api_key[sizeof(g_external_api_client.config.api_key) - 1] = '\0';
+        strncpy(g_external_api_client.config.username, "", sizeof(g_external_api_client.config.username) - 1);
+        g_external_api_client.config.username[sizeof(g_external_api_client.config.username) - 1] = '\0';
+        strncpy(g_external_api_client.config.password, "", sizeof(g_external_api_client.config.password) - 1);
+        g_external_api_client.config.password[sizeof(g_external_api_client.config.password) - 1] = '\0';
         g_external_api_client.config.timeout_seconds = 30; // Use configurable timeout
         g_external_api_client.config.use_ssl = true; // Use configurable SSL setting
-        strcpy(g_external_api_client.config.ca_cert_path, "/etc/ssl/certs/ca-certificates.crt");
-        strcpy(g_external_api_client.config.client_cert_path, "");
-        strcpy(g_external_api_client.config.client_key_path, "");
+        strncpy(g_external_api_client.config.ca_cert_path, "/etc/ssl/certs/ca-certificates.crt", sizeof(g_external_api_client.config.ca_cert_path) - 1);
+        g_external_api_client.config.ca_cert_path[sizeof(g_external_api_client.config.ca_cert_path) - 1] = '\0';
+        strncpy(g_external_api_client.config.client_cert_path, "", sizeof(g_external_api_client.config.client_cert_path) - 1);
+        g_external_api_client.config.client_cert_path[sizeof(g_external_api_client.config.client_cert_path) - 1] = '\0';
+        strncpy(g_external_api_client.config.client_key_path, "", sizeof(g_external_api_client.config.client_key_path) - 1);
+        g_external_api_client.config.client_key_path[sizeof(g_external_api_client.config.client_key_path) - 1] = '\0';
     }
     
     // Initialize mutex
@@ -272,11 +278,14 @@ static int api_connect_to_endpoint(void) {
     // Extract host from base URL
     const char* url = g_external_api_client.config.base_url;
     if (strncmp(url, "http://", 7) == 0) {
-        strcpy(host, url + 7);
+        strncpy(host, url + 7, sizeof(host) - 1);
+        host[sizeof(host) - 1] = '\0';
     } else if (strncmp(url, "https://", 8) == 0) {
-        strcpy(host, url + 8);
+        strncpy(host, url + 8, sizeof(host) - 1);
+        host[sizeof(host) - 1] = '\0';
     } else {
-        strcpy(host, url);
+        strncpy(host, url, sizeof(host) - 1);
+        host[sizeof(host) - 1] = '\0';
     }
     
     // Remove path from host

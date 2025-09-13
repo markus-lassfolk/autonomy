@@ -119,7 +119,8 @@ int decision_engine_make_decision(decision_result_t* result) {
     
     // Populate decision result
     memset(result, 0, sizeof(decision_result_t));
-    strcpy(result->selected_interface, scores[best_index].interface_name);
+    strncpy(result->selected_interface, scores[best_index].interface_name, sizeof(result->selected_interface) - 1);
+    result->selected_interface[sizeof(result->selected_interface) - 1] = '\0';
     result->confidence = best_score;
     result->requires_failover = needs_failover;
     result->decision_timestamp = time(NULL);
@@ -149,8 +150,10 @@ int decision_engine_make_decision(decision_result_t* result) {
         snprintf(telemetry_decision.decision_id, sizeof(telemetry_decision.decision_id),
                 "decision_%lld_%d", (long long)time(NULL), g_decision_engine.decision_count);
         
-        strcpy(telemetry_decision.decision_type, needs_failover ? "failover" : "evaluation");
-        strcpy(telemetry_decision.trigger, "periodic_evaluation");
+        strncpy(telemetry_decision.decision_type, needs_failover ? "failover" : "evaluation", sizeof(telemetry_decision.decision_type) - 1);
+        telemetry_decision.decision_type[sizeof(telemetry_decision.decision_type) - 1] = '\0';
+        strncpy(telemetry_decision.trigger, "periodic_evaluation", sizeof(telemetry_decision.trigger) - 1);
+        telemetry_decision.trigger[sizeof(telemetry_decision.trigger) - 1] = '\0';
         safe_strncpy(telemetry_decision.reasoning, result->reason, sizeof(telemetry_decision.reasoning));
         telemetry_decision.reasoning[sizeof(telemetry_decision.reasoning) - 1] = '\0';
         telemetry_decision.confidence = result->confidence;
@@ -229,7 +232,8 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
             // Get real metrics for this interface
             network_metrics_t metrics;
             if (network_collector_get_interface_metrics(members[i].interface, &metrics) == AUTONOMY_SUCCESS) {
-                strcpy(scores[score_count].interface_name, members[i].name);
+                strncpy(scores[score_count].interface_name, members[i].name, sizeof(scores[score_count].interface_name) - 1);
+                scores[score_count].interface_name[sizeof(scores[score_count].interface_name) - 1] = '\0';
                 
                 // Convert metrics to scores (0.0-1.0)
                 scores[score_count].latency_score = fmax(0.0, fmin(1.0, 1.0 - (metrics.ping_average_latency / 1000.0)));

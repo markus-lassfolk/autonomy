@@ -156,7 +156,8 @@ void get_mwan3_interface_info(void *ctx, network_interface_t *interfaces, int co
             if (is_interface_in_mwan3(interfaces[i].name)) {
                 interfaces[i].mwan3_available = true;
                 interfaces[i].mwan3_tracking_enabled = true;
-                strcpy(interfaces[i].mwan3_name, interfaces[i].name);
+                strncpy(interfaces[i].mwan3_name, interfaces[i].name, sizeof(interfaces[i].mwan3_name) - 1);
+                interfaces[i].mwan3_name[sizeof(interfaces[i].mwan3_name) - 1] = '\0';
                 // Get MWAN3 status for this interface
                 get_mwan3_interface_status(ctx, &interfaces[i]);
             }
@@ -178,7 +179,8 @@ static bool is_interface_in_mwan3(const char *interface_name) {
 static void get_mwan3_interface_status(struct ubus_context *ctx, network_interface_t *iface) {
     // This would parse the MWAN3 status for the specific interface
     // For now, set default values
-    strcpy(iface->mwan3_status, "unknown");
+    strncpy(iface->mwan3_status, "unknown", sizeof(iface->mwan3_status) - 1);
+    iface->mwan3_status[sizeof(iface->mwan3_status) - 1] = '\0';
     iface->mwan3_metric = 0;
 }
 
@@ -264,9 +266,12 @@ static void get_cellular_interface_details(struct ubus_context *ctx, network_int
         if (ret == 0) {
             // Parse modem information
             // For now, set default values
-            strcpy(iface->modem_model, "Unknown");
-            strcpy(iface->modem_id, "2-1");
-            strcpy(iface->sim_id, "1");
+            strncpy(iface->modem_model, "Unknown", sizeof(iface->modem_model) - 1);
+            iface->modem_model[sizeof(iface->modem_model) - 1] = '\0';
+            strncpy(iface->modem_id, "2-1", sizeof(iface->modem_id) - 1);
+            iface->modem_id[sizeof(iface->modem_id) - 1] = '\0';
+            strncpy(iface->sim_id, "1", sizeof(iface->sim_id) - 1);
+            iface->sim_id[sizeof(iface->sim_id) - 1] = '\0';
         }
         blob_buf_free(&req);
     }
@@ -302,8 +307,10 @@ void get_wifi_information(void *ctx, network_interface_t *interfaces, int count)
 static void get_wifi_interface_details(struct ubus_context *ctx, network_interface_t *iface) {
     // This would parse WiFi details from network.wireless
     // For now, set default values
-    strcpy(iface->wifi_mode, "ap");
-    strcpy(iface->wifi_encryption, "psk2");
+    strncpy(iface->wifi_mode, "ap", sizeof(iface->wifi_mode) - 1);
+    iface->wifi_mode[sizeof(iface->wifi_mode) - 1] = '\0';
+    strncpy(iface->wifi_encryption, "psk2", sizeof(iface->wifi_encryption) - 1);
+    iface->wifi_encryption[sizeof(iface->wifi_encryption) - 1] = '\0';
 }
 
 // Detect Starlink connections
@@ -314,7 +321,8 @@ void detect_starlink_connections(network_interface_t *interfaces, int count) {
             is_starlink_ip_range(interfaces[i].ip_address)) {
             
             interfaces[i].is_starlink = true;
-            strcpy(interfaces[i].type, "starlink");
+            strncpy(interfaces[i].type, "starlink", sizeof(interfaces[i].type) - 1);
+            interfaces[i].type[sizeof(interfaces[i].type) - 1] = '\0';
             strcpy(interfaces[i].starlink_ip, interfaces[i].ip_address);
             
             // Try to get Starlink dish information

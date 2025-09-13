@@ -92,8 +92,10 @@ int cellular_collector_init(const cellular_collector_config_t* config) {
     } else {
         // Default configuration using UCI config
         g_cellular_collector.config.enabled = true; // Use configurable cellular collection enabled
-        strcpy(g_cellular_collector.config.modem_device, "/dev/ttyUSB0");
-        strcpy(g_cellular_collector.config.interface_name, "mob1s1a1");
+        strncpy(g_cellular_collector.config.modem_device, "/dev/ttyUSB0", sizeof(g_cellular_collector.config.modem_device) - 1);
+        g_cellular_collector.config.modem_device[sizeof(g_cellular_collector.config.modem_device) - 1] = '\0';
+        strncpy(g_cellular_collector.config.interface_name, "mob1s1a1", sizeof(g_cellular_collector.config.interface_name) - 1);
+        g_cellular_collector.config.interface_name[sizeof(g_cellular_collector.config.interface_name) - 1] = '\0';
         g_cellular_collector.config.collection_interval = g_config.network_check_interval;
         g_cellular_collector.config.timeout_seconds = 10; // Use configurable cellular timeout
         g_cellular_collector.config.enable_stability_monitoring = true; // Use configurable stability monitoring
@@ -144,8 +146,10 @@ int cellular_collector_collect(cellular_info_t* info) {
     
     memset(info, 0, sizeof(cellular_info_t));
     info->timestamp = time(NULL);
-    strcpy(info->interface_name, g_cellular_collector.config.interface_name);
-    strcpy(info->modem_device, g_cellular_collector.config.modem_device);
+    strncpy(info->interface_name, g_cellular_collector.config.interface_name, sizeof(info->interface_name) - 1);
+    info->interface_name[sizeof(info->interface_name) - 1] = '\0';
+    strncpy(info->modem_device, g_cellular_collector.config.modem_device, sizeof(info->modem_device) - 1);
+    info->modem_device[sizeof(info->modem_device) - 1] = '\0';
     
     int result = AUTONOMY_ERROR_SYSTEM;
     
@@ -190,7 +194,8 @@ int cellular_collector_collect(cellular_info_t* info) {
         // Track cell changes
         if (strlen(info->cell_id) > 0 && 
             strcmp(info->cell_id, g_cellular_collector.last_cell_id) != 0) {
-            strcpy(g_cellular_collector.last_cell_id, info->cell_id);
+            strncpy(g_cellular_collector.last_cell_id, info->cell_id, sizeof(g_cellular_collector.last_cell_id) - 1);
+            g_cellular_collector.last_cell_id[sizeof(g_cellular_collector.last_cell_id) - 1] = '\0';
             g_cellular_collector.last_cell_change = time(NULL);
             g_cellular_collector.stats.cell_change_count++;
             info->cell_changes = g_cellular_collector.stats.cell_change_count;
@@ -299,21 +304,24 @@ static int collect_via_ubus(cellular_info_t* info) {
             strncpy(info->operator_name, blobmsg_get_string(tb[GSM_STATUS_OPERATOR]),
                     sizeof(info->operator_name) - 1);
         } else {
-            strcpy(info->operator_name, "Unknown");
+            strncpy(info->operator_name, "Unknown", sizeof(info->operator_name) - 1);
+            info->operator_name[sizeof(info->operator_name) - 1] = '\0';
         }
 
         if (tb[GSM_STATUS_BAND]) {
             strncpy(info->band, blobmsg_get_string(tb[GSM_STATUS_BAND]),
                     sizeof(info->band) - 1);
         } else {
-            strcpy(info->band, "Unknown");
+            strncpy(info->band, "Unknown", sizeof(info->band) - 1);
+            info->band[sizeof(info->band) - 1] = '\0';
         }
 
         if (tb[GSM_STATUS_CELL_ID]) {
             strncpy(info->cell_id, blobmsg_get_string(tb[GSM_STATUS_CELL_ID]),
                     sizeof(info->cell_id) - 1);
         } else {
-            strcpy(info->cell_id, "Unknown");
+            strncpy(info->cell_id, "Unknown", sizeof(info->cell_id) - 1);
+            info->cell_id[sizeof(info->cell_id) - 1] = '\0';
         }
 
         if (tb[GSM_STATUS_IP]) {
@@ -327,11 +335,13 @@ static int collect_via_ubus(cellular_info_t* info) {
                     // Remove newline
                     info->ip_address[strcspn(info->ip_address, "\n")] = '\0';
                 } else {
-                    strcpy(info->ip_address, "0.0.0.0");
+                    strncpy(info->ip_address, "0.0.0.0", sizeof(info->ip_address) - 1);
+                    info->ip_address[sizeof(info->ip_address) - 1] = '\0';
                 }
                 pclose(ip_fp);
             } else {
-                strcpy(info->ip_address, "0.0.0.0");
+                strncpy(info->ip_address, "0.0.0.0", sizeof(info->ip_address) - 1);
+                info->ip_address[sizeof(info->ip_address) - 1] = '\0';
             }
         }
 
@@ -346,11 +356,13 @@ static int collect_via_ubus(cellular_info_t* info) {
                     // Remove newline
                     info->gateway[strcspn(info->gateway, "\n")] = '\0';
                 } else {
-                    strcpy(info->gateway, "0.0.0.0");
+                    strncpy(info->gateway, "0.0.0.0", sizeof(info->gateway) - 1);
+                    info->gateway[sizeof(info->gateway) - 1] = '\0';
                 }
                 pclose(gw_fp);
             } else {
-                strcpy(info->gateway, "0.0.0.0");
+                strncpy(info->gateway, "0.0.0.0", sizeof(info->gateway) - 1);
+                info->gateway[sizeof(info->gateway) - 1] = '\0';
             }
         }
 

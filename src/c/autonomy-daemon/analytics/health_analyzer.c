@@ -469,8 +469,10 @@ static int detect_member_issues(const char* member_name, health_issue_t* issues,
     if (health.score < g_health_analyzer.thresholds.fair && issue_count < max_issues) {
         health_issue_t* issue = &issues[issue_count++];
         safe_strncpy(issue->member_name, member_name, sizeof(issue->member_name));
-        strcpy(issue->type, "performance");
-        strcpy(issue->severity, health.score < g_health_analyzer.thresholds.poor ? "critical" : "warning");
+        strncpy(issue->type, "performance", sizeof(issue->type) - 1);
+        issue->type[sizeof(issue->type) - 1] = '\0';
+        strncpy(issue->severity, health.score < g_health_analyzer.thresholds.poor ? "critical" : "warning", sizeof(issue->severity) - 1);
+        issue->severity[sizeof(issue->severity) - 1] = '\0';
         snprintf(issue->description, sizeof(issue->description),
                 "Low health score: %.1f%% for member %s", health.score, member_name);
         issue->detected_at = now;

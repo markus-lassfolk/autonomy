@@ -1,0 +1,19 @@
+#!/bin/sh
+# Autonomy UI Web Server Configuration
+
+# Enable UBUS support for API calls
+uci set uhttpd.main.ubus_prefix="/ubus"
+uci set uhttpd.main.ubus_timeout=30
+
+# Add Autonomy UI location
+uci add_list uhttpd.main.location="/autonomy"
+uci add_list uhttpd.main.location="/autonomy/"
+
+# Set document root for Autonomy UI
+uci set uhttpd.main.home="/www/autonomy"
+
+# Commit changes
+uci commit uhttpd
+
+# Restart uhttpd
+/etc/init.d/uhttpd restart

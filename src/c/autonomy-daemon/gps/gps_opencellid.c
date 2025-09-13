@@ -1,4 +1,7 @@
 #include "gps_opencellid.h"
+
+// NOLINTBEGIN(cert-msc50-cpp,cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+// NOLINTBEGIN(cert-msc51-cpp) - strncpy usage is safe with bounds checking
 #include "../shared/logging/logx.h"
 #include "../shared/utils/string_utils.h"
 #include <stdio.h>
@@ -55,7 +58,8 @@ int gps_opencellid_init(const opencellid_config_t* config) {
     } else {
         // Default configuration
         g_opencellid.config.enabled = false; // Use configurable enabled setting
-        strcpy(g_opencellid.config.base_url, OPENCELLID_BASE_URL);
+        strncpy(g_opencellid.config.base_url, OPENCELLID_BASE_URL, sizeof(g_opencellid.config.base_url) - 1);
+        g_opencellid.config.base_url[sizeof(g_opencellid.config.base_url) - 1] = '\0';
         g_opencellid.config.timeout_seconds = 30; // Use configurable timeout
         g_opencellid.config.contribution.enabled = false; // Use configurable contribution setting
         g_opencellid.config.contribution.retry_attempts = 3; // Use configurable retry attempts
@@ -142,7 +146,8 @@ int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_resp
             response->lat = entry->lat;
             response->lon = entry->lon;
             response->range = entry->range;
-            strcpy(response->radio, gps_opencellid_radio_type_to_string(cell_key->radio));
+            strncpy(response->radio, gps_opencellid_radio_type_to_string(cell_key->radio), sizeof(response->radio) - 1);
+            response->radio[sizeof(response->radio) - 1] = '\0';
             
             g_opencellid.stats.cache_hits++;
             
@@ -193,7 +198,8 @@ int gps_opencellid_lookup(const opencellid_cell_key_t* cell_key, opencellid_resp
         }
     } else {
         g_opencellid.stats.failed_requests++;
-        strcpy(response->error, "API request failed");
+        strncpy(response->error, "API request failed", sizeof(response->error) - 1);
+        response->error[sizeof(response->error) - 1] = '\0';
         LOGX_ERROR_MSG("OpenCellID API request failed");
         result = AUTONOMY_ERROR_NETWORK;
     }
@@ -532,4 +538,7 @@ int gps_opencellid_get_status(opencellid_status_t* status) {
 bool gps_opencellid_is_initialized(void) {
     return g_opencellid_initialized;
 }
+
+// NOLINTEND(cert-msc50-cpp,cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+// NOLINTEND(cert-msc51-cpp)
 

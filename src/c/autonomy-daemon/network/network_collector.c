@@ -535,7 +535,8 @@ int network_collector_remove_test_target(const char *target) {
         if (strcmp(g_collector.test_targets[i], target) == 0) {
             // Remove target by shifting remaining targets
             for (int j = i; j < g_collector.test_target_count - 1; j++) {
-                strcpy(g_collector.test_targets[j], g_collector.test_targets[j + 1]);
+                strncpy(g_collector.test_targets[j], g_collector.test_targets[j + 1], sizeof(g_collector.test_targets[j]) - 1);
+                g_collector.test_targets[j][sizeof(g_collector.test_targets[j]) - 1] = '\0';
             }
             g_collector.test_target_count--;
             

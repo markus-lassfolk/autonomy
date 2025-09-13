@@ -1,0 +1,29 @@
+#!/bin/sh
+# Autonomy Complete System Setup Script
+
+echo "Setting up Autonomy Complete System..."
+
+# Start the daemon
+/etc/init.d/autonomy start
+
+# Configure web interface
+/etc/init.d/autonomy-ui
+
+# Set proper permissions
+chmod 644 /www/autonomy/*.html
+chmod 644 /www/autonomy/*.js
+chmod 644 /usr/share/vuci/menu.d/autonomy.json
+
+# Get router IP
+ROUTER_IP=
+
+echo "Autonomy Complete System setup complete!"
+echo ""
+echo "Access the dashboard at:"
+echo "  http://OUTER_IP/autonomy"
+echo "  http://OUTER_IP/autonomy.html"
+echo ""
+echo "Or through VUCI menu: Services > Autonomy"
+echo ""
+echo "Daemon status: /etc/init.d/autonomy status"
+echo "UI status: /etc/init.d/autonomy-ui status"

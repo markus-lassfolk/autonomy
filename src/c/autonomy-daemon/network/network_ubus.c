@@ -98,7 +98,8 @@ int autonomy_network_failover(struct ubus_context *uctx, struct ubus_object *obj
     }
     
     if (best_interface >= 0) {
-        strcpy(g_state.active_interface, g_state.interfaces[best_interface].name);
+        strncpy(g_state.active_interface, g_state.interfaces[best_interface].name, sizeof(g_state.active_interface) - 1);
+        g_state.active_interface[sizeof(g_state.active_interface) - 1] = '\0';
         g_state.last_failover = time(NULL);
     }
     

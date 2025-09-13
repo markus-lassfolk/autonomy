@@ -256,7 +256,8 @@ int ubus_monitor_get_status(ubus_monitor_status_t *status) {
     
     // Copy critical services
     for (int i = 0; i < g_ubus_monitor.config.critical_services_count; i++) {
-        strcpy(status->critical_services[i], g_ubus_monitor.config.critical_services[i]);
+        strncpy(status->critical_services[i], g_ubus_monitor.config.critical_services[i], sizeof(status->critical_services[i]) - 1);
+        status->critical_services[i][sizeof(status->critical_services[i]) - 1] = '\0';
     }
     
     status->fix_attempts = g_ubus_monitor.fix_attempts;

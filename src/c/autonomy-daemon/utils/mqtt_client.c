@@ -71,19 +71,23 @@ int mqtt_client_init(const mqtt_config_t* config) {
                 char *newline = strchr(uci_host, '\n');
                 if (newline) *newline = '\0';
                 if (strlen(uci_host) > 0) {
-                    strcpy(g_mqtt_client.config.broker_host, uci_host);
+                    strncpy(g_mqtt_client.config.broker_host, uci_host, sizeof(g_mqtt_client.config.broker_host) - 1);
+                    g_mqtt_client.config.broker_host[sizeof(g_mqtt_client.config.broker_host) - 1] = '\0';
                     LOGX_DEBUG_MSG("Using UCI configured MQTT broker host", "host", uci_host);
                 } else {
-                    strcpy(g_mqtt_client.config.broker_host, "localhost");
+                    strncpy(g_mqtt_client.config.broker_host, "localhost", sizeof(g_mqtt_client.config.broker_host) - 1);
+                    g_mqtt_client.config.broker_host[sizeof(g_mqtt_client.config.broker_host) - 1] = '\0';
                     LOGX_DEBUG_MSG("Using fallback MQTT broker host", "host", "localhost");
                 }
             } else {
-                strcpy(g_mqtt_client.config.broker_host, "localhost");
+                strncpy(g_mqtt_client.config.broker_host, "localhost", sizeof(g_mqtt_client.config.broker_host) - 1);
+                g_mqtt_client.config.broker_host[sizeof(g_mqtt_client.config.broker_host) - 1] = '\0';
                 LOGX_DEBUG_MSG("Using fallback MQTT broker host", "host", "localhost");
             }
             pclose(uci_fp);
         } else {
-            strcpy(g_mqtt_client.config.broker_host, "localhost");
+            strncpy(g_mqtt_client.config.broker_host, "localhost", sizeof(g_mqtt_client.config.broker_host) - 1);
+            g_mqtt_client.config.broker_host[sizeof(g_mqtt_client.config.broker_host) - 1] = '\0';
             LOGX_DEBUG_MSG("Using fallback MQTT broker host", "host", "localhost");
         }
         
@@ -119,19 +123,23 @@ int mqtt_client_init(const mqtt_config_t* config) {
                 char *newline = strchr(uci_client_id, '\n');
                 if (newline) *newline = '\0';
                 if (strlen(uci_client_id) > 0) {
-                    strcpy(g_mqtt_client.config.client_id, uci_client_id);
+                    strncpy(g_mqtt_client.config.client_id, uci_client_id, sizeof(g_mqtt_client.config.client_id) - 1);
+                    g_mqtt_client.config.client_id[sizeof(g_mqtt_client.config.client_id) - 1] = '\0';
                     LOGX_DEBUG_MSG("Using UCI configured MQTT client ID", "client_id", uci_client_id);
                 } else {
-                    strcpy(g_mqtt_client.config.client_id, "autonomy_daemon");
+                    strncpy(g_mqtt_client.config.client_id, "autonomy_daemon", sizeof(g_mqtt_client.config.client_id) - 1);
+                    g_mqtt_client.config.client_id[sizeof(g_mqtt_client.config.client_id) - 1] = '\0';
                     LOGX_DEBUG_MSG("Using fallback MQTT client ID", "client_id", "autonomy_daemon");
                 }
             } else {
-                strcpy(g_mqtt_client.config.client_id, "autonomy_daemon");
+                strncpy(g_mqtt_client.config.client_id, "autonomy_daemon", sizeof(g_mqtt_client.config.client_id) - 1);
+                g_mqtt_client.config.client_id[sizeof(g_mqtt_client.config.client_id) - 1] = '\0';
                 LOGX_DEBUG_MSG("Using fallback MQTT client ID", "client_id", "autonomy_daemon");
             }
             pclose(uci_client_fp);
         } else {
-            strcpy(g_mqtt_client.config.client_id, "autonomy_daemon");
+            strncpy(g_mqtt_client.config.client_id, "autonomy_daemon", sizeof(g_mqtt_client.config.client_id) - 1);
+            g_mqtt_client.config.client_id[sizeof(g_mqtt_client.config.client_id) - 1] = '\0';
             LOGX_DEBUG_MSG("Using fallback MQTT client ID", "client_id", "autonomy_daemon");
         }
         

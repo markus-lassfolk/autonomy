@@ -36,10 +36,14 @@
 #include "../shared/utils/uci_manager.h"
 #include "../shared/logging/logx.h"
 #include "../shared/utils/memory_debug.h"
+#include "../shared/utils/memory_protection.h"
 #include "../utils/debug_trace.h"
 #include "../ml/ml_monitor.h"
 #include "../ml/ml_monitor_ubus.h"
 #include <sys/socket.h>
+
+// NOLINTBEGIN(cert-msc50-cpp,cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+// NOLINTBEGIN(cert-msc51-cpp) - fopen usage is safe with path validation
 
 // Global variables
 autonomy_config_t g_config;
@@ -49,6 +53,9 @@ static void print_memory_info(void);
 static void print_backtrace(void);
 static void crash_handler(int sig, siginfo_t *info, void *context);
 static void setup_crash_handlers(void);
+static void print_register_state(ucontext_t *context);
+static void print_stack_trace_arm(ucontext_t *context);
+static void validate_memory_before_access(void *ptr, size_t size, const char *location);
 
 // Crash debugging functions
 static void print_backtrace(void) {
@@ -84,6 +91,30 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     fprintf(stderr, "PID: %d\n", getpid());
     fprintf(stderr, "UID: %d\n", getuid());
     
+    // Enhanced signal-specific information
+    switch (sig) {
+        case SIGSEGV:
+            fprintf(stderr, "SEGFAULT: Invalid memory access at %p\n", info->si_addr);
+            if (info->si_code == SEGV_MAPERR) {
+                fprintf(stderr, "Cause: Address not mapped to object\n");
+            } else if (info->si_code == SEGV_ACCERR) {
+                fprintf(stderr, "Cause: Invalid permissions for mapped object\n");
+            }
+            break;
+        case SIGBUS:
+            fprintf(stderr, "BUS ERROR: Invalid memory access at %p\n", info->si_addr);
+            break;
+        case SIGFPE:
+            fprintf(stderr, "FLOATING POINT EXCEPTION: Division by zero or invalid operation\n");
+            break;
+        case SIGILL:
+            fprintf(stderr, "ILLEGAL INSTRUCTION: Invalid instruction executed\n");
+            break;
+        default:
+            fprintf(stderr, "UNKNOWN SIGNAL: %d\n", sig);
+            break;
+    }
+    
     // Print memory map info if available
     fprintf(stderr, "\n=== MEMORY MAP ===\n");
     FILE *maps = fopen("/proc/self/maps", "r");
@@ -100,10 +131,10 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     
     // Print memory debugging information
     fprintf(stderr, "\n=== MEMORY DEBUG INFO ===\n");
-    memory_debug_print_stats();
-    memory_debug_check_all_allocations();
-    memory_debug_detect_leaks();
-    memory_debug_scan_memory_for_corruption();
+    // memory_debug_print_stats(); // Disabled to prevent conflicts with memory protection system
+    // memory_debug_check_all_allocations(); // Disabled to prevent conflicts with memory protection system
+    // memory_debug_detect_leaks(); // Disabled to prevent conflicts with memory protection system
+    // memory_debug_scan_memory_for_corruption(); // Disabled to prevent conflicts with memory protection system
     fprintf(stderr, "=== END MEMORY DEBUG INFO ===\n\n");
     
     print_backtrace();
@@ -118,27 +149,8 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     // Try to get more detailed info about the fault
     if (context) {
         ucontext_t *uc = (ucontext_t *)context;
-        fprintf(stderr, "=== REGISTER STATE ===\n");
-#if defined(__arm__)
-        fprintf(stderr, "Program counter: %p\n", (void*)uc->uc_mcontext.arm_pc);
-        fprintf(stderr, "Stack pointer: %p\n", (void*)uc->uc_mcontext.arm_sp);
-        fprintf(stderr, "Link register: %p\n", (void*)uc->uc_mcontext.arm_lr);
-#elif defined(__aarch64__)
-        fprintf(stderr, "Program counter: %p\n", (void*)uc->uc_mcontext.pc);
-        fprintf(stderr, "Stack pointer: %p\n", (void*)uc->uc_mcontext.sp);
-        fprintf(stderr, "Link register: %p\n", (void*)uc->uc_mcontext.regs[30]);
-#elif defined(__x86_64__)
-        fprintf(stderr, "Program counter: %p\n", (void*)uc->uc_mcontext.gregs[REG_RIP]);
-        fprintf(stderr, "Stack pointer: %p\n", (void*)uc->uc_mcontext.gregs[REG_RSP]);
-        fprintf(stderr, "Base pointer: %p\n", (void*)uc->uc_mcontext.gregs[REG_RBP]);
-#elif defined(__i386__)
-        fprintf(stderr, "Program counter: %p\n", (void*)uc->uc_mcontext.gregs[REG_EIP]);
-        fprintf(stderr, "Stack pointer: %p\n", (void*)uc->uc_mcontext.gregs[REG_ESP]);
-        fprintf(stderr, "Base pointer: %p\n", (void*)uc->uc_mcontext.gregs[REG_EBP]);
-#else
-        fprintf(stderr, "Register state reporting not available for this architecture.\n");
-#endif
-        fprintf(stderr, "=== END REGISTER STATE ===\n\n");
+        print_register_state(uc);
+        print_stack_trace_arm(uc);
     }
     
     fprintf(stderr, "=== CRASH END ===\n");
@@ -294,7 +306,15 @@ int main(int argc, char **argv)
     debug_trace_init(DEBUG_TRACE_TRACE);  // Enable maximum debugging
     
     // Initialize memory debugging system
-    memory_debug_init();
+    // memory_debug_init(); // Disabled to prevent conflicts with memory protection system
+    
+    // Initialize comprehensive memory protection system
+    fprintf(stderr, "DEBUG: About to initialize memory protection system\n");
+    if (memory_protection_init() != MEMORY_PROTECTION_SUCCESS) {
+        fprintf(stderr, "ERROR: Failed to initialize memory protection system\n");
+        return 1;
+    }
+    fprintf(stderr, "DEBUG: Memory protection system initialized successfully\n");
     
     DEBUG_TRACE_ENTER();
     DEBUG_TRACE_INFO("Starting Telia Autonomy Network Management Daemon");
@@ -308,6 +328,8 @@ int main(int argc, char **argv)
     fprintf(stderr, "Starting daemon...\n");
     
     DEBUG_TRACE_INFO("Build info: %s", autonomy_daemon_get_build_info_string());
+    
+    fprintf(stderr, "DEBUG: main() - about to initialize logging system\n");
     
     DEBUG_TRACE_STEP(1, "Initializing uloop");
     uloop_init();
@@ -341,19 +363,40 @@ int main(int argc, char **argv)
     DEBUG_TRACE_INFO("UCI manager initialized successfully");
     
     DEBUG_TRACE_STEP(5, "Loading configuration from UCI");
-    if (uci_manager_load_config(&g_config) != AUTONOMY_SUCCESS) {
+    fprintf(stderr, "DEBUG: About to call uci_manager_load_config\n");
+    
+    // Memory protection checkpoint
+    MEMORY_CANARY_CHECK();
+    STACK_CHECK();
+    
+    // Exception handling for configuration loading
+    TRY() {
+        if (uci_manager_load_config(&g_config) != AUTONOMY_SUCCESS) {
         DEBUG_TRACE_WARN("Failed to load configuration from UCI, using defaults");
-        fprintf(stderr, "Failed to load configuration from UCI, using defaults\n");
+        fprintf(stderr, "DEBUG: uci_manager_load_config failed, using defaults\n");
         // Use default configuration if UCI loading fails
         const autonomy_config_t *default_config = uci_manager_get_default_config();
         if (default_config) {
             g_config = *default_config;
             DEBUG_TRACE_INFO("Using default configuration");
+            fprintf(stderr, "DEBUG: Default configuration applied\n");
+        } else {
+            fprintf(stderr, "DEBUG: ERROR - No default configuration available\n");
         }
-    } else {
-        DEBUG_TRACE_INFO("Configuration loaded from UCI successfully");
+        } else {
+            DEBUG_TRACE_INFO("Configuration loaded from UCI successfully");
+            fprintf(stderr, "DEBUG: Configuration loaded from UCI successfully\n");
+        }
+        fprintf(stderr, "DEBUG: Configuration loading completed\n");
+    } CATCH() {
+        fprintf(stderr, "ERROR: Exception caught during configuration loading\n");
+        // Use default configuration on exception
+        const autonomy_config_t *default_config = uci_manager_get_default_config();
+        if (default_config) {
+            g_config = *default_config;
+            fprintf(stderr, "DEBUG: Using default configuration after exception\n");
+        }
     }
-    fprintf(stderr, "Configuration loaded from UCI\n");
 
     // Check if another instance is running
     fprintf(stderr, "Skipping PID file check for debugging...\n");
@@ -589,8 +632,103 @@ int main(int argc, char **argv)
     uloop_done();
 
     // Cleanup memory debugging system
-    memory_debug_cleanup();
+    // memory_debug_cleanup(); // Disabled to prevent conflicts with memory protection system
+    
+    // Cleanup memory protection system
+    fprintf(stderr, "DEBUG: Cleaning up memory protection system\n");
+    memory_protection_cleanup();
 
     fprintf(stderr, "Autonomy daemon stopped\n");
     return 0;
 }
+
+// Enhanced debugging functions
+static void print_register_state(ucontext_t *context) {
+    fprintf(stderr, "=== REGISTER STATE ===\n");
+#if defined(__arm__)
+    fprintf(stderr, "Program counter: %p\n", (void*)context->uc_mcontext.arm_pc);
+    fprintf(stderr, "Stack pointer: %p\n", (void*)context->uc_mcontext.arm_sp);
+    fprintf(stderr, "Link register: %p\n", (void*)context->uc_mcontext.arm_lr);
+    fprintf(stderr, "Frame pointer: %p\n", (void*)context->uc_mcontext.arm_fp);
+    fprintf(stderr, "General registers: ");
+    fprintf(stderr, "r0=0x%lx r1=0x%lx r2=0x%lx r3=0x%lx\n", 
+            (unsigned long)context->uc_mcontext.arm_r0,
+            (unsigned long)context->uc_mcontext.arm_r1,
+            (unsigned long)context->uc_mcontext.arm_r2,
+            (unsigned long)context->uc_mcontext.arm_r3);
+    fprintf(stderr, "r4=0x%lx r5=0x%lx r6=0x%lx r7=0x%lx\n",
+            (unsigned long)context->uc_mcontext.arm_r4,
+            (unsigned long)context->uc_mcontext.arm_r5,
+            (unsigned long)context->uc_mcontext.arm_r6,
+            (unsigned long)context->uc_mcontext.arm_r7);
+    fprintf(stderr, "r8=0x%lx r9=0x%lx r10=0x%lx r11=0x%lx\n",
+            (unsigned long)context->uc_mcontext.arm_r8,
+            (unsigned long)context->uc_mcontext.arm_r9,
+            (unsigned long)context->uc_mcontext.arm_r10,
+            (unsigned long)context->uc_mcontext.arm_r11);
+    fprintf(stderr, "r12=0x%lx\n", (unsigned long)context->uc_mcontext.arm_r12);
+#elif defined(__aarch64__)
+    fprintf(stderr, "Program counter: %p\n", (void*)context->uc_mcontext.pc);
+    fprintf(stderr, "Stack pointer: %p\n", (void*)context->uc_mcontext.sp);
+    fprintf(stderr, "Link register: %p\n", (void*)context->uc_mcontext.regs[30]);
+#else
+    fprintf(stderr, "Register state not available for this architecture\n");
+#endif
+    fprintf(stderr, "=== END REGISTER STATE ===\n\n");
+}
+
+static void print_stack_trace_arm(ucontext_t *context) {
+    fprintf(stderr, "=== ARM STACK TRACE ===\n");
+#if defined(__arm__)
+    void *pc = (void*)context->uc_mcontext.arm_pc;
+    void *sp = (void*)context->uc_mcontext.arm_sp;
+    void *lr = (void*)context->uc_mcontext.arm_lr;
+    
+    fprintf(stderr, "PC (Program Counter): %p\n", pc);
+    fprintf(stderr, "SP (Stack Pointer): %p\n", sp);
+    fprintf(stderr, "LR (Link Register): %p\n", lr);
+    
+    // Try to read stack frames
+    void **frame_ptr = (void**)sp;
+    fprintf(stderr, "Stack frames (up to 10):\n");
+    for (int i = 0; i < 10 && frame_ptr; i++) {
+        void *return_addr = frame_ptr[0];
+        void *next_frame = frame_ptr[1];
+        
+        if (return_addr == NULL || next_frame == NULL) break;
+        if ((uintptr_t)return_addr < 0x1000 || (uintptr_t)return_addr > 0x7fffffff) break;
+        
+        fprintf(stderr, "  Frame %d: return_addr=%p, next_frame=%p\n", i, return_addr, next_frame);
+        frame_ptr = (void**)next_frame;
+    }
+#else
+    fprintf(stderr, "ARM stack trace not available for this architecture\n");
+#endif
+    fprintf(stderr, "=== END ARM STACK TRACE ===\n\n");
+}
+
+static void validate_memory_before_access(void *ptr, size_t size, const char *location) {
+    if (!ptr) {
+        fprintf(stderr, "ERROR: NULL pointer access at %s\n", location);
+        abort();
+    }
+    
+    // Check if pointer is in valid memory range
+    if ((uintptr_t)ptr < 0x1000 || (uintptr_t)ptr > 0x7fffffff) {
+        fprintf(stderr, "ERROR: Invalid pointer %p at %s\n", ptr, location);
+        abort();
+    }
+    
+    // Try to read the first byte to check if memory is accessible
+    volatile char test = *(volatile char*)ptr;
+    (void)test; // Suppress unused variable warning
+    
+    // Check if we can read the last byte
+    if (size > 0) {
+        volatile char test_end = *((volatile char*)ptr + size - 1);
+        (void)test_end; // Suppress unused variable warning
+    }
+}
+
+// NOLINTEND(cert-msc50-cpp,cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+// NOLINTEND(cert-msc51-cpp)

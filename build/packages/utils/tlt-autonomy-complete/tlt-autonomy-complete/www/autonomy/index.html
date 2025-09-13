@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomy Network Management Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.0/index.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 5px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .nav-tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-tab.active {
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .change {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .stat-card .change.positive {
+            color: #4CAF50;
+        }
+        
+        .stat-card .change.negative {
+            color: #f44336;
+        }
+        
+        .chart-container {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .chart-container h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.3rem;
+        }
+        
+        .interface-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .interface-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .interface-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .interface-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .interface-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .interface-status.online {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .interface-status.offline {
+            background: #f44336;
+            color: white;
+        }
+        
+        .interface-status.degraded {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .interface-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .metric {
+            text-align: center;
+        }
+        
+        .metric-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .metric-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .control-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .config-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .config-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .config-item label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .config-item input,
+        .config-item select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-indicator.online {
+            background: #4CAF50;
+        }
+        
+        .status-indicator.offline {
+            background: #f44336;
+        }
+        
+        .status-indicator.warning {
+            background: #ff9800;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+        }
+        
+        .error {
+            background: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .success {
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                padding: 10px;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .interface-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🤖 Autonomy Network Management</h1>
+            <div class="subtitle">Intelligent Multi-Interface Failover System</div>
+        </div>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('overview')">Overview</button>
+            <button class="nav-tab" onclick="showTab('interfaces')">Interfaces</button>
+            <button class="nav-tab" onclick="showTab('starlink')">Starlink</button>
+            <button class="nav-tab" onclick="showTab('ml')">ML Intelligence</button>
+            <button class="nav-tab" onclick="showTab('gps')">GPS</button>
+            <button class="nav-tab" onclick="showTab('system')">System</button>
+            <button class="nav-tab" onclick="showTab('config')">Configuration</button>
+            <button class="nav-tab" onclick="showTab('logs')">Logs</button>
+        </div>
+        
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Daemon Status</h3>
+                    <div class="value" id="daemon-status">Loading...</div>
+                    <div class="change" id="daemon-uptime">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Active Interfaces</h3>
+                    <div class="value" id="active-interfaces">-</div>
+                    <div class="change" id="interface-health">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>ML Predictions</h3>
+                    <div class="value" id="ml-predictions">-</div>
+                    <div class="change" id="ml-accuracy">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>System Health</h3>
+                    <div class="value" id="system-health">-</div>
+                    <div class="change" id="system-load">-</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Network Performance Trends</h3>
+                <canvas id="performanceChart" width="400" height="200"></canvas>
+            </div>
+            
+            <div class="control-panel">
+                <h3>Quick Controls</h3>
+                <div class="control-buttons">
+                    <button class="btn btn-primary" onclick="startDaemon()">Start Daemon</button>
+                    <button class="btn btn-warning" onclick="restartDaemon()">Restart Daemon</button>
+                    <button class="btn btn-success" onclick="refreshData()">Refresh Data</button>
+                    <button class="btn btn-danger" onclick="stopDaemon()">Stop Daemon</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Interfaces Tab -->
+        <div id="interfaces" class="tab-content">
+            <div class="interface-grid" id="interfaces-grid">
+                <div class="loading">Loading interface data...</div>
+            </div>
+        </div>
+        
+        <!-- Starlink Tab -->
+        <div id="starlink" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Starlink Status</h3>
+                    <div class="value" id="starlink-status">-</div>
+                    <div class="change" id="starlink-health">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Obstruction Level</h3>
+                    <div class="value" id="obstruction-level">-</div>
+                    <div class="change" id="obstruction-trend">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Satellite Count</h3>
+                    <div class="value" id="satellite-count">-</div>
+                    <div class="change" id="satellite-quality">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Data Usage</h3>
+                    <div class="value" id="data-usage">-</div>
+                    <div class="change" id="data-trend">-</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Starlink Performance</h3>
+                <canvas id="starlinkChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+        
+        <!-- ML Intelligence Tab -->
+        <div id="ml" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>ML Status</h3>
+                    <div class="value" id="ml-status">-</div>
+                    <div class="change" id="ml-phase">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Prediction Accuracy</h3>
+                    <div class="value" id="prediction-accuracy">-</div>
+                    <div class="change" id="accuracy-trend">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Observations</h3>
+                    <div class="value" id="observations-count">-</div>
+                    <div class="change" id="learning-rate">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Interface Scores</h3>
+                    <div class="value" id="interface-scores">-</div>
+                    <div class="change" id="score-trend">-</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>ML Analytics</h3>
+                <canvas id="mlChart" width="400" height="200"></canvas>
+            </div>
+            
+            <div class="control-panel">
+                <h3>ML Controls</h3>
+                <div class="control-buttons">
+                    <button class="btn btn-primary" onclick="startML()">Start ML</button>
+                    <button class="btn btn-warning" onclick="stopML()">Stop ML</button>
+                    <button class="btn btn-success" onclick="resetLearning()">Reset Learning</button>
+                    <button class="btn btn-primary" onclick="exportData()">Export Data</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- GPS Tab -->
+        <div id="gps" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>GPS Status</h3>
+                    <div class="value" id="gps-status">-</div>
+                    <div class="change" id="gps-accuracy">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Active Sources</h3>
+                    <div class="value" id="gps-sources">-</div>
+                    <div class="change" id="gps-quality">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Location</h3>
+                    <div class="value" id="gps-location">-</div>
+                    <div class="change" id="location-accuracy">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Movement</h3>
+                    <div class="value" id="gps-movement">-</div>
+                    <div class="change" id="movement-speed">-</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Tab -->
+        <div id="system" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>System Status</h3>
+                    <div class="value" id="system-status">-</div>
+                    <div class="change" id="system-uptime">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>CPU Usage</h3>
+                    <div class="value" id="cpu-usage">-</div>
+                    <div class="change" id="cpu-trend">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Memory Usage</h3>
+                    <div class="value" id="memory-usage">-</div>
+                    <div class="change" id="memory-trend">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Services</h3>
+                    <div class="value" id="services-status">-</div>
+                    <div class="change" id="services-health">-</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Configuration Tab -->
+        <div id="config" class="tab-content">
+            <div class="config-section">
+                <h3>General Configuration</h3>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label>Daemon Mode</label>
+                        <select id="daemon-mode">
+                            <option value="1">Enabled</option>
+                            <option value="0">Disabled</option>
+                        </select>
+                    </div>
+                    <div class="config-item">
+                        <label>Debug Mode</label>
+                        <select id="debug-mode">
+                            <option value="0">Disabled</option>
+                            <option value="1">Enabled</option>
+                        </select>
+                    </div>
+                    <div class="config-item">
+                        <label>Log Level</label>
+                        <select id="log-level">
+                            <option value="0">Error</option>
+                            <option value="1">Warning</option>
+                            <option value="2">Info</option>
+                            <option value="3">Debug</option>
+                        </select>
+                    </div>
+                    <div class="config-item">
+                        <label>Check Interval (seconds)</label>
+                        <input type="number" id="check-interval" min="1" max="3600" value="30">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="config-section">
+                <h3>Network Configuration</h3>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label>Auto Failover</label>
+                        <select id="auto-failover">
+                            <option value="1">Enabled</option>
+                            <option value="0">Disabled</option>
+                        </select>
+                    </div>
+                    <div class="config-item">
+                        <label>Failover Timeout (seconds)</label>
+                        <input type="number" id="failover-timeout" min="1" max="300" value="60">
+                    </div>
+                    <div class="config-item">
+                        <label>Min Interface Health (%)</label>
+                        <input type="number" id="min-health" min="0" max="100" value="50">
+                    </div>
+                    <div class="config-item">
+                        <label>MWAN3 Integration</label>
+                        <select id="mwan3-integration">
+                            <option value="1">Enabled</option>
+                            <option value="0">Disabled</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-panel">
+                <h3>Configuration Actions</h3>
+                <div class="control-buttons">
+                    <button class="btn btn-primary" onclick="loadConfig()">Load Current Config</button>
+                    <button class="btn btn-success" onclick="saveConfig()">Save Configuration</button>
+                    <button class="btn btn-warning" onclick="resetConfig()">Reset to Defaults</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Logs Tab -->
+        <div id="logs" class="tab-content">
+            <div class="config-section">
+                <h3>System Logs</h3>
+                <div class="control-buttons">
+                    <button class="btn btn-primary" onclick="refreshLogs()">Refresh Logs</button>
+                    <button class="btn btn-warning" onclick="clearLogs()">Clear Logs</button>
+                    <button class="btn btn-success" onclick="downloadLogs()">Download Logs</button>
+                </div>
+                <div id="logs-content" style="background: #1e1e1e; color: #fff; padding: 20px; border-radius: 8px; margin-top: 20px; font-family: monospace; max-height: 400px; overflow-y: auto;">
+                    Loading logs...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="autonomy-dashboard.js"></script>
+</body>
+</html>
+

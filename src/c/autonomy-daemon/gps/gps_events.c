@@ -341,16 +341,42 @@ static bool evaluate_custom_condition(const gps_event_condition_t *condition, co
         return false;
     }
     
-    // Prepare script arguments with GPS data
-    char script_args[1024];
-    snprintf(script_args, sizeof(script_args), 
-             "%s %.6f %.6f %.1f %d",
-             condition->custom_data,
-             gps_data->lat, gps_data->lon, gps_data->accuracy,
-             gps_data->satellites);
+    // Prepare script arguments with GPS data - SECURE VERSION
+    // Use execve to avoid command injection vulnerabilities
+    char lat_str[32], lon_str[32], accuracy_str[32], satellites_str[32];
+    snprintf(lat_str, sizeof(lat_str), "%.6f", gps_data->lat);
+    snprintf(lon_str, sizeof(lon_str), "%.6f", gps_data->lon);
+    snprintf(accuracy_str, sizeof(accuracy_str), "%.1f", gps_data->accuracy);
+    snprintf(satellites_str, sizeof(satellites_str), "%d", gps_data->satellites);
     
-    // Execute custom script
-    int result = system(script_args);
+    // Prepare arguments array for execve
+    char *args[] = {
+        condition->custom_data,  // Script path
+        lat_str,                 // Latitude
+        lon_str,                 // Longitude
+        accuracy_str,            // Accuracy
+        satellites_str,          // Satellite count
+        NULL
+    };
+    
+    // Execute custom script using fork/execve for security
+    pid_t pid = fork();
+    int result = -1;
+    
+    if (pid == 0) {
+        // Child process
+        execve(condition->custom_data, args, NULL);
+        exit(1); // If execve fails
+    } else if (pid > 0) {
+        // Parent process
+        int status;
+        waitpid(pid, &status, 0);
+        result = WEXITSTATUS(status);
+    } else {
+        // Fork failed
+        LOGX_ERROR_MSG("Failed to fork process for custom script execution");
+        result = -1;
+    }
     
     // Script should return 0 for true, non-zero for false
     bool condition_result = (result == 0);

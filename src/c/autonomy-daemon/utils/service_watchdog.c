@@ -343,7 +343,8 @@ int service_watchdog_get_status(service_watchdog_status_t *status) {
     
     // Copy services to monitor
     for (int i = 0; i < g_service_watchdog.config.services_count; i++) {
-        strcpy(status->services_to_monitor[i], g_service_watchdog.config.services_to_monitor[i]);
+        strncpy(status->services_to_monitor[i], g_service_watchdog.config.services_to_monitor[i], sizeof(status->services_to_monitor[i]) - 1);
+        status->services_to_monitor[i][sizeof(status->services_to_monitor[i]) - 1] = '\0';
     }
     
     status->last_check_time = g_service_watchdog.stats.last_check_time;

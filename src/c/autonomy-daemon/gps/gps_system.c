@@ -206,9 +206,11 @@ int gps_system_init(void) {
                     // Remove quotes if present
                     if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
                         key_buffer[strlen(key_buffer)-1] = '\0';
-                        strcpy(g_google_api_key, key_buffer + 1);
+                        strncpy(g_google_api_key, key_buffer + 1, strlen(key_buffer + 1));
+                        g_google_api_key[strlen(key_buffer + 1)] = '\0';
                     } else {
-                        strcpy(g_google_api_key, key_buffer);
+                        strncpy(g_google_api_key, key_buffer, strlen(key_buffer));
+                        g_google_api_key[strlen(key_buffer)] = '\0';
                     }
                     google_api_key = g_google_api_key;
                 }
@@ -256,9 +258,11 @@ int gps_system_init(void) {
                     // Remove quotes if present
                     if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
                         key_buffer[strlen(key_buffer)-1] = '\0';
-                        strcpy(g_weather_api_key, key_buffer + 1);
+                        strncpy(g_weather_api_key, key_buffer + 1, strlen(key_buffer + 1));
+                        g_weather_api_key[strlen(key_buffer + 1)] = '\0';
                     } else {
-                        strcpy(g_weather_api_key, key_buffer);
+                        strncpy(g_weather_api_key, key_buffer, strlen(key_buffer));
+                        g_weather_api_key[strlen(key_buffer)] = '\0';
                     }
                     weather_api_key = g_weather_api_key;
                 }

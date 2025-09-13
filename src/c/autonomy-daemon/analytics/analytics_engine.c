@@ -438,10 +438,14 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     // Check system health alerts
     if (g_analytics_engine.dashboard_metrics->health.overall_health < 30.0) {
         if (alert_count < max_alerts) {
-            strcpy(alerts[alert_count].id, "critical_health");
-            strcpy(alerts[alert_count].type, "health");
-            strcpy(alerts[alert_count].severity, "critical");
-            strcpy(alerts[alert_count].title, "Critical System Health");
+            strncpy(alerts[alert_count].id, "critical_health", sizeof(alerts[alert_count].id) - 1);
+            alerts[alert_count].id[sizeof(alerts[alert_count].id) - 1] = '\0';
+            strncpy(alerts[alert_count].type, "health", sizeof(alerts[alert_count].type) - 1);
+            alerts[alert_count].type[sizeof(alerts[alert_count].type) - 1] = '\0';
+            strncpy(alerts[alert_count].severity, "critical", sizeof(alerts[alert_count].severity) - 1);
+            alerts[alert_count].severity[sizeof(alerts[alert_count].severity) - 1] = '\0';
+            strncpy(alerts[alert_count].title, "Critical System Health", sizeof(alerts[alert_count].title) - 1);
+            alerts[alert_count].title[sizeof(alerts[alert_count].title) - 1] = '\0';
             snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
                     "System health is %.1f%% (critical level)", 
                     g_analytics_engine.dashboard_metrics->health.overall_health);
@@ -451,10 +455,14 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
         }
     } else if (g_analytics_engine.dashboard_metrics->health.overall_health < 50.0) {
         if (alert_count < max_alerts) {
-            strcpy(alerts[alert_count].id, "low_health");
-            strcpy(alerts[alert_count].type, "health");
-            strcpy(alerts[alert_count].severity, "warning");
-            strcpy(alerts[alert_count].title, "Low System Health");
+            strncpy(alerts[alert_count].id, "low_health", sizeof(alerts[alert_count].id) - 1);
+            alerts[alert_count].id[sizeof(alerts[alert_count].id) - 1] = '\0';
+            strncpy(alerts[alert_count].type, "health", sizeof(alerts[alert_count].type) - 1);
+            alerts[alert_count].type[sizeof(alerts[alert_count].type) - 1] = '\0';
+            strncpy(alerts[alert_count].severity, "warning", sizeof(alerts[alert_count].severity) - 1);
+            alerts[alert_count].severity[sizeof(alerts[alert_count].severity) - 1] = '\0';
+            strncpy(alerts[alert_count].title, "Low System Health", sizeof(alerts[alert_count].title) - 1);
+            alerts[alert_count].title[sizeof(alerts[alert_count].title) - 1] = '\0';
             snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
                     "System health is %.1f%% (below 50%%)", 
                     g_analytics_engine.dashboard_metrics->health.overall_health);
@@ -470,10 +478,14 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
         double memory_usage = (double)(total_mem - free_mem) / total_mem * 100.0;
         if (memory_usage > 90.0) {
             if (alert_count < max_alerts) {
-                strcpy(alerts[alert_count].id, "critical_memory");
-                strcpy(alerts[alert_count].type, "resource");
-                strcpy(alerts[alert_count].severity, "critical");
-                strcpy(alerts[alert_count].title, "Critical Memory Usage");
+                strncpy(alerts[alert_count].id, "critical_memory", sizeof(alerts[alert_count].id) - 1);
+                alerts[alert_count].id[sizeof(alerts[alert_count].id) - 1] = '\0';
+                strncpy(alerts[alert_count].type, "resource", sizeof(alerts[alert_count].type) - 1);
+                alerts[alert_count].type[sizeof(alerts[alert_count].type) - 1] = '\0';
+                strncpy(alerts[alert_count].severity, "critical", sizeof(alerts[alert_count].severity) - 1);
+                alerts[alert_count].severity[sizeof(alerts[alert_count].severity) - 1] = '\0';
+                strncpy(alerts[alert_count].title, "Critical Memory Usage", sizeof(alerts[alert_count].title) - 1);
+                alerts[alert_count].title[sizeof(alerts[alert_count].title) - 1] = '\0';
                 snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
                         "Memory usage is %.1f%% (critical level)", memory_usage);
                 alerts[alert_count].timestamp = time(NULL);
@@ -482,10 +494,14 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
             }
         } else if (memory_usage > 80.0) {
             if (alert_count < max_alerts) {
-                strcpy(alerts[alert_count].id, "high_memory");
-                strcpy(alerts[alert_count].type, "resource");
-                strcpy(alerts[alert_count].severity, "warning");
-                strcpy(alerts[alert_count].title, "High Memory Usage");
+                strncpy(alerts[alert_count].id, "high_memory", sizeof(alerts[alert_count].id) - 1);
+                alerts[alert_count].id[sizeof(alerts[alert_count].id) - 1] = '\0';
+                strncpy(alerts[alert_count].type, "resource", sizeof(alerts[alert_count].type) - 1);
+                alerts[alert_count].type[sizeof(alerts[alert_count].type) - 1] = '\0';
+                strncpy(alerts[alert_count].severity, "warning", sizeof(alerts[alert_count].severity) - 1);
+                alerts[alert_count].severity[sizeof(alerts[alert_count].severity) - 1] = '\0';
+                strncpy(alerts[alert_count].title, "High Memory Usage", sizeof(alerts[alert_count].title) - 1);
+                alerts[alert_count].title[sizeof(alerts[alert_count].title) - 1] = '\0';
                 snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
                         "Memory usage is %.1f%% (high level)", memory_usage);
                 alerts[alert_count].timestamp = time(NULL);
@@ -508,11 +524,16 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     }
     if (disk_space_low) {
         if (alert_count < max_alerts) {
-            strcpy(alerts[alert_count].id, "low_disk_space");
-            strcpy(alerts[alert_count].type, "resource");
-            strcpy(alerts[alert_count].severity, "warning");
-            strcpy(alerts[alert_count].title, "Low Disk Space");
-            strcpy(alerts[alert_count].message, "Disk space is running low");
+            strncpy(alerts[alert_count].id, "low_disk_space", sizeof(alerts[alert_count].id) - 1);
+            alerts[alert_count].id[sizeof(alerts[alert_count].id) - 1] = '\0';
+            strncpy(alerts[alert_count].type, "resource", sizeof(alerts[alert_count].type) - 1);
+            alerts[alert_count].type[sizeof(alerts[alert_count].type) - 1] = '\0';
+            strncpy(alerts[alert_count].severity, "warning", sizeof(alerts[alert_count].severity) - 1);
+            alerts[alert_count].severity[sizeof(alerts[alert_count].severity) - 1] = '\0';
+            strncpy(alerts[alert_count].title, "Low Disk Space", sizeof(alerts[alert_count].title) - 1);
+            alerts[alert_count].title[sizeof(alerts[alert_count].title) - 1] = '\0';
+            strncpy(alerts[alert_count].message, "Disk space is running low", sizeof(alerts[alert_count].message) - 1);
+            alerts[alert_count].message[sizeof(alerts[alert_count].message) - 1] = '\0';
             alerts[alert_count].timestamp = time(NULL);
             alerts[alert_count].acknowledged = false;
             alert_count++;
@@ -522,11 +543,16 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     // Check network connectivity alerts
     if (!check_network_connectivity()) {
         if (alert_count < max_alerts) {
-            strcpy(alerts[alert_count].id, "network_disconnected");
-            strcpy(alerts[alert_count].type, "network");
-            strcpy(alerts[alert_count].severity, "critical");
-            strcpy(alerts[alert_count].title, "Network Disconnected");
-            strcpy(alerts[alert_count].message, "Network connectivity has been lost");
+            strncpy(alerts[alert_count].id, "network_disconnected", sizeof(alerts[alert_count].id) - 1);
+            alerts[alert_count].id[sizeof(alerts[alert_count].id) - 1] = '\0';
+            strncpy(alerts[alert_count].type, "network", sizeof(alerts[alert_count].type) - 1);
+            alerts[alert_count].type[sizeof(alerts[alert_count].type) - 1] = '\0';
+            strncpy(alerts[alert_count].severity, "critical", sizeof(alerts[alert_count].severity) - 1);
+            alerts[alert_count].severity[sizeof(alerts[alert_count].severity) - 1] = '\0';
+            strncpy(alerts[alert_count].title, "Network Disconnected", sizeof(alerts[alert_count].title) - 1);
+            alerts[alert_count].title[sizeof(alerts[alert_count].title) - 1] = '\0';
+            strncpy(alerts[alert_count].message, "Network connectivity has been lost", sizeof(alerts[alert_count].message) - 1);
+            alerts[alert_count].message[sizeof(alerts[alert_count].message) - 1] = '\0';
             alerts[alert_count].timestamp = time(NULL);
             alerts[alert_count].acknowledged = false;
             alert_count++;
@@ -538,10 +564,14 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     if (get_system_load_average(&load1, &load5, &load15) == 0) {
         if (load1 > 3.0) { // High load on 4-core system
             if (alert_count < max_alerts) {
-                strcpy(alerts[alert_count].id, "high_load");
-                strcpy(alerts[alert_count].type, "performance");
-                strcpy(alerts[alert_count].severity, "warning");
-                strcpy(alerts[alert_count].title, "High System Load");
+                strncpy(alerts[alert_count].id, "high_load", sizeof(alerts[alert_count].id) - 1);
+                alerts[alert_count].id[sizeof(alerts[alert_count].id) - 1] = '\0';
+                strncpy(alerts[alert_count].type, "performance", sizeof(alerts[alert_count].type) - 1);
+                alerts[alert_count].type[sizeof(alerts[alert_count].type) - 1] = '\0';
+                strncpy(alerts[alert_count].severity, "warning", sizeof(alerts[alert_count].severity) - 1);
+                alerts[alert_count].severity[sizeof(alerts[alert_count].severity) - 1] = '\0';
+                strncpy(alerts[alert_count].title, "High System Load", sizeof(alerts[alert_count].title) - 1);
+                alerts[alert_count].title[sizeof(alerts[alert_count].title) - 1] = '\0';
                 snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
                         "System load is %.2f (high level)", load1);
                 alerts[alert_count].timestamp = time(NULL);
@@ -555,11 +585,16 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     time_t uptime = get_system_uptime();
     if (uptime < 300) { // Less than 5 minutes
         if (alert_count < max_alerts) {
-            strcpy(alerts[alert_count].id, "recent_restart");
-            strcpy(alerts[alert_count].type, "system");
-            strcpy(alerts[alert_count].severity, "info");
-            strcpy(alerts[alert_count].title, "System Restarted");
-            strcpy(alerts[alert_count].message, "System was recently restarted");
+            strncpy(alerts[alert_count].id, "recent_restart", sizeof(alerts[alert_count].id) - 1);
+            alerts[alert_count].id[sizeof(alerts[alert_count].id) - 1] = '\0';
+            strncpy(alerts[alert_count].type, "system", sizeof(alerts[alert_count].type) - 1);
+            alerts[alert_count].type[sizeof(alerts[alert_count].type) - 1] = '\0';
+            strncpy(alerts[alert_count].severity, "info", sizeof(alerts[alert_count].severity) - 1);
+            alerts[alert_count].severity[sizeof(alerts[alert_count].severity) - 1] = '\0';
+            strncpy(alerts[alert_count].title, "System Restarted", sizeof(alerts[alert_count].title) - 1);
+            alerts[alert_count].title[sizeof(alerts[alert_count].title) - 1] = '\0';
+            strncpy(alerts[alert_count].message, "System was recently restarted", sizeof(alerts[alert_count].message) - 1);
+            alerts[alert_count].message[sizeof(alerts[alert_count].message) - 1] = '\0';
             alerts[alert_count].timestamp = time(NULL);
             alerts[alert_count].acknowledged = false;
             alert_count++;
@@ -588,14 +623,21 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
         double memory_usage = (double)(total_mem - free_mem) / total_mem * 100.0;
         if (memory_usage > 70.0) {
             if (recommendation_count < max_recommendations) {
-                strcpy(recommendations[recommendation_count].id, "memory_optimization");
-                strcpy(recommendations[recommendation_count].type, "resource");
-                strcpy(recommendations[recommendation_count].priority, "high");
-                strcpy(recommendations[recommendation_count].title, "Memory Optimization");
-                strcpy(recommendations[recommendation_count].description, 
-                       "Memory usage is high. Consider restarting services or optimizing memory usage.");
-                strcpy(recommendations[recommendation_count].impact, "high");
-                strcpy(recommendations[recommendation_count].effort, "medium");
+                strncpy(recommendations[recommendation_count].id, "memory_optimization", sizeof(recommendations[recommendation_count].id) - 1);
+                recommendations[recommendation_count].id[sizeof(recommendations[recommendation_count].id) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].type, "resource", sizeof(recommendations[recommendation_count].type) - 1);
+                recommendations[recommendation_count].type[sizeof(recommendations[recommendation_count].type) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].priority, "high", sizeof(recommendations[recommendation_count].priority) - 1);
+                recommendations[recommendation_count].priority[sizeof(recommendations[recommendation_count].priority) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].title, "Memory Optimization", sizeof(recommendations[recommendation_count].title) - 1);
+                recommendations[recommendation_count].title[sizeof(recommendations[recommendation_count].title) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].description, 
+                       "Memory usage is high. Consider restarting services or optimizing memory usage.", sizeof(recommendations[recommendation_count].description) - 1);
+                recommendations[recommendation_count].description[sizeof(recommendations[recommendation_count].description) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].impact, "high", sizeof(recommendations[recommendation_count].impact) - 1);
+                recommendations[recommendation_count].impact[sizeof(recommendations[recommendation_count].impact) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].effort, "medium", sizeof(recommendations[recommendation_count].effort) - 1);
+                recommendations[recommendation_count].effort[sizeof(recommendations[recommendation_count].effort) - 1] = '\0';
                 recommendations[recommendation_count].timestamp = time(NULL);
                 recommendation_count++;
             }
@@ -615,14 +657,21 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     }
     if (disk_space_low) {
         if (recommendation_count < max_recommendations) {
-            strcpy(recommendations[recommendation_count].id, "disk_cleanup");
-            strcpy(recommendations[recommendation_count].type, "maintenance");
-            strcpy(recommendations[recommendation_count].priority, "high");
-            strcpy(recommendations[recommendation_count].title, "Disk Space Cleanup");
-            strcpy(recommendations[recommendation_count].description, 
-                   "Disk space is low. Clean up log files, temporary files, and unused packages.");
-                strcpy(recommendations[recommendation_count].impact, "high");
-                strcpy(recommendations[recommendation_count].effort, "low");
+            strncpy(recommendations[recommendation_count].id, "disk_cleanup", sizeof(recommendations[recommendation_count].id) - 1);
+            recommendations[recommendation_count].id[sizeof(recommendations[recommendation_count].id) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].type, "maintenance", sizeof(recommendations[recommendation_count].type) - 1);
+            recommendations[recommendation_count].type[sizeof(recommendations[recommendation_count].type) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].priority, "high", sizeof(recommendations[recommendation_count].priority) - 1);
+            recommendations[recommendation_count].priority[sizeof(recommendations[recommendation_count].priority) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].title, "Disk Space Cleanup", sizeof(recommendations[recommendation_count].title) - 1);
+            recommendations[recommendation_count].title[sizeof(recommendations[recommendation_count].title) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].description, 
+                   "Disk space is low. Clean up log files, temporary files, and unused packages.", sizeof(recommendations[recommendation_count].description) - 1);
+            recommendations[recommendation_count].description[sizeof(recommendations[recommendation_count].description) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].impact, "high", sizeof(recommendations[recommendation_count].impact) - 1);
+                recommendations[recommendation_count].impact[sizeof(recommendations[recommendation_count].impact) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].effort, "low", sizeof(recommendations[recommendation_count].effort) - 1);
+                recommendations[recommendation_count].effort[sizeof(recommendations[recommendation_count].effort) - 1] = '\0';
                 recommendations[recommendation_count].timestamp = time(NULL);
                 recommendation_count++;
         }
@@ -633,14 +682,21 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     if (get_system_load_average(&load1, &load5, &load15) == 0) {
         if (load1 > 2.0) {
             if (recommendation_count < max_recommendations) {
-                strcpy(recommendations[recommendation_count].id, "load_optimization");
-                strcpy(recommendations[recommendation_count].type, "performance");
-                strcpy(recommendations[recommendation_count].priority, "medium");
-                strcpy(recommendations[recommendation_count].title, "System Load Optimization");
-                strcpy(recommendations[recommendation_count].description, 
-                       "System load is high. Consider optimizing processes or upgrading hardware.");
-                strcpy(recommendations[recommendation_count].impact, "medium");
-                strcpy(recommendations[recommendation_count].effort, "high");
+                strncpy(recommendations[recommendation_count].id, "load_optimization", sizeof(recommendations[recommendation_count].id) - 1);
+                recommendations[recommendation_count].id[sizeof(recommendations[recommendation_count].id) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].type, "performance", sizeof(recommendations[recommendation_count].type) - 1);
+                recommendations[recommendation_count].type[sizeof(recommendations[recommendation_count].type) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].priority, "medium", sizeof(recommendations[recommendation_count].priority) - 1);
+                recommendations[recommendation_count].priority[sizeof(recommendations[recommendation_count].priority) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].title, "System Load Optimization", sizeof(recommendations[recommendation_count].title) - 1);
+                recommendations[recommendation_count].title[sizeof(recommendations[recommendation_count].title) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].description, 
+                       "System load is high. Consider optimizing processes or upgrading hardware.", sizeof(recommendations[recommendation_count].description) - 1);
+                recommendations[recommendation_count].description[sizeof(recommendations[recommendation_count].description) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].impact, "medium", sizeof(recommendations[recommendation_count].impact) - 1);
+                recommendations[recommendation_count].impact[sizeof(recommendations[recommendation_count].impact) - 1] = '\0';
+                strncpy(recommendations[recommendation_count].effort, "high", sizeof(recommendations[recommendation_count].effort) - 1);
+                recommendations[recommendation_count].effort[sizeof(recommendations[recommendation_count].effort) - 1] = '\0';
                 recommendations[recommendation_count].timestamp = time(NULL);
                 recommendation_count++;
             }
@@ -650,14 +706,21 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     // Network optimization recommendations
     if (g_analytics_engine.dashboard_metrics->health.overall_health < 60.0) {
         if (recommendation_count < max_recommendations) {
-            strcpy(recommendations[recommendation_count].id, "network_optimization");
-            strcpy(recommendations[recommendation_count].type, "network");
-            strcpy(recommendations[recommendation_count].priority, "medium");
-            strcpy(recommendations[recommendation_count].title, "Network Optimization");
-            strcpy(recommendations[recommendation_count].description, 
-                   "System health is below optimal. Check network configuration and connectivity.");
-            strcpy(recommendations[recommendation_count].impact, "medium");
-            strcpy(recommendations[recommendation_count].effort, "medium");
+            strncpy(recommendations[recommendation_count].id, "network_optimization", sizeof(recommendations[recommendation_count].id) - 1);
+            recommendations[recommendation_count].id[sizeof(recommendations[recommendation_count].id) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].type, "network", sizeof(recommendations[recommendation_count].type) - 1);
+            recommendations[recommendation_count].type[sizeof(recommendations[recommendation_count].type) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].priority, "medium", sizeof(recommendations[recommendation_count].priority) - 1);
+            recommendations[recommendation_count].priority[sizeof(recommendations[recommendation_count].priority) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].title, "Network Optimization", sizeof(recommendations[recommendation_count].title) - 1);
+            recommendations[recommendation_count].title[sizeof(recommendations[recommendation_count].title) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].description, 
+                   "System health is below optimal. Check network configuration and connectivity.", sizeof(recommendations[recommendation_count].description) - 1);
+            recommendations[recommendation_count].description[sizeof(recommendations[recommendation_count].description) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].impact, "medium", sizeof(recommendations[recommendation_count].impact) - 1);
+            recommendations[recommendation_count].impact[sizeof(recommendations[recommendation_count].impact) - 1] = '\0';
+            strncpy(recommendations[recommendation_count].effort, "medium", sizeof(recommendations[recommendation_count].effort) - 1);
+            recommendations[recommendation_count].effort[sizeof(recommendations[recommendation_count].effort) - 1] = '\0';
             recommendations[recommendation_count].timestamp = time(NULL);
             recommendation_count++;
         }

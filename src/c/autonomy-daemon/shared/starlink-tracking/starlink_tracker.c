@@ -2,7 +2,7 @@
 #include "space_track_connector.h"
 #include "obstruction_analyzer.h"
 #include "prediction_engine.h"
-#include "../logging/logx.h""
+#include "../logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

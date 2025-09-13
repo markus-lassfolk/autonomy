@@ -63,8 +63,10 @@ int metered_manager_init(const metered_manager_config_t* config) {
         g_metered_manager.config.thresholds.critical_percentage = 95.0;
         
         // Default interfaces
-        strcpy(g_metered_manager.config.interfaces[0], "eth0");
-        strcpy(g_metered_manager.config.interfaces[1], "wlan0");
+        strncpy(g_metered_manager.config.interfaces[0], "eth0", sizeof(g_metered_manager.config.interfaces[0]) - 1);
+        g_metered_manager.config.interfaces[0][sizeof(g_metered_manager.config.interfaces[0]) - 1] = '\0';
+        strncpy(g_metered_manager.config.interfaces[1], "wlan0", sizeof(g_metered_manager.config.interfaces[1]) - 1);
+        g_metered_manager.config.interfaces[1][sizeof(g_metered_manager.config.interfaces[1]) - 1] = '\0';
         g_metered_manager.config.interface_count = 2;
     }
     
@@ -79,7 +81,8 @@ int metered_manager_init(const metered_manager_config_t* config) {
     // Initialize monitored interfaces
     g_metered_manager.monitored_interface_count = 0;
     for (int i = 0; i < g_metered_manager.config.interface_count; i++) {
-        strcpy(g_metered_manager.monitored_interfaces[i], g_metered_manager.config.interfaces[i]);
+        strncpy(g_metered_manager.monitored_interfaces[i], g_metered_manager.config.interfaces[i], sizeof(g_metered_manager.monitored_interfaces[i]) - 1);
+        g_metered_manager.monitored_interfaces[i][sizeof(g_metered_manager.monitored_interfaces[i]) - 1] = '\0';
         g_metered_manager.monitored_interface_count++;
     }
     
@@ -250,9 +253,12 @@ static int detect_metered_connection(void) {
         if (strstr(g_metered_manager.monitored_interfaces[i], "wwan") || 
             strstr(g_metered_manager.monitored_interfaces[i], "cellular")) {
             is_metered = true; // Use configurable setting
-            strcpy(connection_type, "cellular");
-            strcpy(carrier, "mobile_carrier");
-            strcpy(plan_name, "mobile_data_plan");
+            strncpy(connection_type, "cellular", sizeof(connection_type) - 1);
+            connection_type[sizeof(connection_type) - 1] = '\0';
+            strncpy(carrier, "mobile_carrier", sizeof(carrier) - 1);
+            carrier[sizeof(carrier) - 1] = '\0';
+            strncpy(plan_name, "mobile_data_plan", sizeof(plan_name) - 1);
+            plan_name[sizeof(plan_name) - 1] = '\0';
             break;
         }
     }
@@ -264,9 +270,12 @@ static int detect_metered_connection(void) {
             if (strstr(g_metered_manager.monitored_interfaces[i], "starlink") ||
                 strstr(g_metered_manager.monitored_interfaces[i], "satellite")) {
                 is_metered = true; // Use configurable setting
-                strcpy(connection_type, "satellite");
-                strcpy(carrier, "starlink");
-                strcpy(plan_name, "satellite_data_plan");
+                strncpy(connection_type, "satellite", sizeof(connection_type) - 1);
+                connection_type[sizeof(connection_type) - 1] = '\0';
+                strncpy(carrier, "starlink", sizeof(carrier) - 1);
+                carrier[sizeof(carrier) - 1] = '\0';
+                strncpy(plan_name, "satellite_data_plan", sizeof(plan_name) - 1);
+                plan_name[sizeof(plan_name) - 1] = '\0';
                 break;
             }
         }
@@ -274,9 +283,12 @@ static int detect_metered_connection(void) {
     
     // Update connection status
     g_metered_manager.connection_status.is_metered = is_metered;
-    strcpy(g_metered_manager.connection_status.connection_type, connection_type);
-    strcpy(g_metered_manager.connection_status.carrier, carrier);
-    strcpy(g_metered_manager.connection_status.plan_name, plan_name);
+    strncpy(g_metered_manager.connection_status.connection_type, connection_type, sizeof(g_metered_manager.connection_status.connection_type) - 1);
+    g_metered_manager.connection_status.connection_type[sizeof(g_metered_manager.connection_status.connection_type) - 1] = '\0';
+    strncpy(g_metered_manager.connection_status.carrier, carrier, sizeof(g_metered_manager.connection_status.carrier) - 1);
+    g_metered_manager.connection_status.carrier[sizeof(g_metered_manager.connection_status.carrier) - 1] = '\0';
+    strncpy(g_metered_manager.connection_status.plan_name, plan_name, sizeof(g_metered_manager.connection_status.plan_name) - 1);
+    g_metered_manager.connection_status.plan_name[sizeof(g_metered_manager.connection_status.plan_name) - 1] = '\0';
     
     // Set plan limits based on connection type
     if (strcmp(connection_type, "cellular") == 0) {

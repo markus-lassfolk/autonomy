@@ -561,24 +561,36 @@ void create_basic_location_info(double lat, double lon, gps_location_info_t *loc
     if (lat >= -60 && lat <= 80) {
         if (lon >= -20 && lon <= 60) { // Europe/Africa
             if (lat >= 35) {
-                strcpy(continent, "Europe");
-                strcpy(region, "Northern Europe");
+                strncpy(continent, "Europe", sizeof(continent) - 1);
+                continent[sizeof(continent) - 1] = '\0';
+                strncpy(region, "Northern Europe", sizeof(region) - 1);
+                region[sizeof(region) - 1] = '\0';
             } else if (lat >= 0) {
-                strcpy(continent, "Europe");
-                strcpy(region, "Southern Europe");
+                strncpy(continent, "Europe", sizeof(continent) - 1);
+                continent[sizeof(continent) - 1] = '\0';
+                strncpy(region, "Southern Europe", sizeof(region) - 1);
+                region[sizeof(region) - 1] = '\0';
             } else {
-                strcpy(continent, "Africa");
-                strcpy(region, lat >= -20 ? "Northern Africa" : "Southern Africa");
+                strncpy(continent, "Africa", sizeof(continent) - 1);
+                continent[sizeof(continent) - 1] = '\0';
+                strncpy(region, lat >= -20 ? "Northern Africa" : "Southern Africa", sizeof(region) - 1);
+                region[sizeof(region) - 1] = '\0';
             }
         } else if (lon >= -130 && lon <= -60) { // Americas
-            strcpy(continent, "North America");
-            strcpy(region, lat >= 30 ? "Northern US/Canada" : "Central/South America");
+            strncpy(continent, "North America", sizeof(continent) - 1);
+            continent[sizeof(continent) - 1] = '\0';
+            strncpy(region, lat >= 30 ? "Northern US/Canada" : "Central/South America", sizeof(region) - 1);
+            region[sizeof(region) - 1] = '\0';
         } else if (lon >= 100 && lon <= 180) { // Asia/Pacific
-            strcpy(continent, "Asia");
-            strcpy(region, lat >= 20 ? "East Asia" : "Southeast Asia");
+            strncpy(continent, "Asia", sizeof(continent) - 1);
+            continent[sizeof(continent) - 1] = '\0';
+            strncpy(region, lat >= 20 ? "East Asia" : "Southeast Asia", sizeof(region) - 1);
+            region[sizeof(region) - 1] = '\0';
         } else if (lon >= 60 && lon <= 100) { // Middle East/Asia
-            strcpy(continent, "Asia");
-            strcpy(region, "Central Asia");
+            strncpy(continent, "Asia", sizeof(continent) - 1);
+            continent[sizeof(continent) - 1] = '\0';
+            strncpy(region, "Central Asia", sizeof(region) - 1);
+            region[sizeof(region) - 1] = '\0';
         }
     }
 

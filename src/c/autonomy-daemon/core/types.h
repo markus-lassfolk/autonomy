@@ -706,6 +706,7 @@ typedef struct {
 } system_state_t;
 
 // Function declarations
-void log_message(log_level_t level, const char *format, ...);
+// DISABLED due to format string security concerns
+// void log_message(log_level_t level, const char *format, ...);
 
 #endif // TYPES_H

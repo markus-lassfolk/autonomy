@@ -2,7 +2,7 @@
 # This Makefile is used during the build process to compile the autonomy-daemon
 
 CC ?= gcc
-CFLAGS ?= -Wall -Wextra -std=c99 -O2 -g -rdynamic
+CFLAGS ?= -Wall -Wextra -std=c99 -O2 -g -rdynamic -DMEMORY_PROTECTION_ENABLED=1
 LDFLAGS ?= -rdynamic
 LIBS = -lubus -lblobmsg_json -lubox -ljson-c -lcjson -luci -lcurl -lm -lpthread -lsqlite3 -lcrypto -lssl -ldl
 
