@@ -719,7 +719,13 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
     }
     
     // CRITICAL: Use local copy to avoid corrupted global
-    static sliding_predictor_t local_predictor = {0};
+    // Force local predictor to be in data section by making it static and initialized
+    static sliding_predictor_t local_predictor = {
+        .window_size = 0,
+        .write_idx = 0,
+        .features = {0},
+        .window = {{0}}
+    };
     static bool local_predictor_initialized = false;
     
     if (!local_predictor_initialized) {
@@ -751,6 +757,7 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
         fprintf(stderr, "DEBUG: Using local predictor (global corrupted)\n");
     }
     
+    fprintf(stderr, "DEBUG: Local predictor address: %p (should be in data section)\n", &local_predictor);
     int prediction_result = ml_monitor_sliding_window_predict(monitor, &local_predictor, observation);
     fprintf(stderr, "DEBUG: ml_monitor_sliding_window_predict returned: %d\n", prediction_result);
     if (prediction_result != ML_MONITOR_SUCCESS) {

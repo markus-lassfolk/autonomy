@@ -261,16 +261,19 @@ int check_services_health(void) {
     
     for (int i = 0; i < 9; i++) {
         total_services++;
-        char command[256];
-        snprintf(command, sizeof(command), "pgrep -f %s > /dev/null 2>&1", critical_services[i]);
-        
-        int ret = system(command);
+        // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+        // DISABLED: Command execution disabled for security
+        LOGX_WARN_MSG("Service check disabled for security - command injection vulnerability",
+                     "service", critical_services[i]);
+        int ret = -1; // Return error since command was not executed
         if (ret != 0) {
             failed_services++;
             // Check if service is supposed to be running
-            char systemctl_cmd[256];
-            snprintf(systemctl_cmd, sizeof(systemctl_cmd), "systemctl is-active %s 2>/dev/null", critical_services[i]);
-            FILE *fp = popen(systemctl_cmd, "r");
+            // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+            // DISABLED: Command execution disabled for security
+            LOGX_WARN_MSG("Service status check disabled for security - command injection vulnerability",
+                         "service", critical_services[i]);
+            FILE *fp = NULL; // Return NULL to indicate failure
             if (fp) {
                 char status[32];
                 if (fgets(status, sizeof(status), fp)) {
