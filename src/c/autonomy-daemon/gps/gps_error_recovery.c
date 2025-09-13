@@ -1000,6 +1000,7 @@ static bool starlink_gps_reset_recovery(void) {
     sleep(10);
     
     // Verify services are running
+    // flawfinder: ignore - constant string, no injection risk
     ret = system("systemctl is-active starlink-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("Starlink GPS service not active after reset");
@@ -1014,12 +1015,17 @@ static bool starlink_gps_degrade_recovery(void) {
     LOGX_DEBUG_MSG("Attempting Starlink GPS degrade recovery");
     
     // Degrade Starlink GPS service by reducing update frequency
+    // flawfinder: ignore - constant string, no injection risk
     system("uci set starlink.gps.update_interval=30 2>/dev/null");
+    // flawfinder: ignore - constant string, no injection risk
     system("uci set starlink.gps.timeout=60 2>/dev/null");
+    // flawfinder: ignore - constant string, no injection risk
     system("uci set starlink.gps.min_accuracy=100.0 2>/dev/null");
+    // flawfinder: ignore - constant string, no injection risk
     system("uci commit starlink 2>/dev/null");
     
     // Restart service with degraded settings
+    // flawfinder: ignore - constant string, no injection risk
     int ret = system("systemctl restart starlink-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to restart Starlink GPS with degraded settings");
@@ -1030,6 +1036,7 @@ static bool starlink_gps_degrade_recovery(void) {
     sleep(3);
     
     // Check if service is running
+    // flawfinder: ignore - constant string, no injection risk
     ret = system("systemctl is-active starlink-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("Starlink GPS service not active in degraded mode");
@@ -1045,6 +1052,7 @@ static bool external_gps_retry_recovery(void) {
     LOGX_DEBUG_MSG("Attempting external GPS retry recovery");
     
     // Try to restart external GPS service
+    // flawfinder: ignore - constant string, no injection risk
     int ret = system("systemctl restart external-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to restart external GPS service");
@@ -1055,6 +1063,7 @@ static bool external_gps_retry_recovery(void) {
     sleep(2);
     
     // Check if service is running
+    // flawfinder: ignore - constant string, no injection risk
     ret = system("systemctl is-active external-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("External GPS service not active after restart");
@@ -1096,15 +1105,18 @@ static bool external_gps_fallback_recovery(void) {
     LOGX_DEBUG_MSG("Attempting external GPS fallback recovery");
     
     // Try to reinitialize external GPS system
+    // flawfinder: ignore - constant string, no injection risk
     int ret = system("systemctl stop external-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to stop external GPS service");
     }
     
     // Clear any stale data
+    // flawfinder: ignore - constant string, no injection risk
     system("rm -f /var/lib/autonomy/external_gps_data 2>/dev/null");
     
     // Restart service
+    // flawfinder: ignore - constant string, no injection risk
     ret = system("systemctl start external-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to start external GPS service");
@@ -1115,6 +1127,7 @@ static bool external_gps_fallback_recovery(void) {
     sleep(5);
     
     // Check service status
+    // flawfinder: ignore - constant string, no injection risk
     ret = system("systemctl is-active external-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("External GPS service not active after fallback");
@@ -1129,14 +1142,19 @@ static bool external_gps_reset_recovery(void) {
     LOGX_DEBUG_MSG("Attempting external GPS reset recovery");
     
     // Complete reset of external GPS system
+    // flawfinder: ignore - constant string, no injection risk
     system("systemctl stop external-gps 2>/dev/null");
     
     // Clear all external GPS data
+    // flawfinder: ignore - constant string, no injection risk
     system("rm -f /var/lib/autonomy/external_gps_data 2>/dev/null");
+    // flawfinder: ignore - constant string, no injection risk
     system("rm -f /var/lib/autonomy/external_gps_status 2>/dev/null");
     
     // Reset configuration
+    // flawfinder: ignore - constant string, no injection risk
     system("uci delete external.gps.enabled 2>/dev/null");
+    // flawfinder: ignore - constant string, no injection risk
     system("uci set external.gps.enabled=1 2>/dev/null");
     system("uci commit external 2>/dev/null");
     

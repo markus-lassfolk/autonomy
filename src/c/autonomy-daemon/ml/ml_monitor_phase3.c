@@ -448,12 +448,12 @@ static uint8_t ml_monitor_calculate_volatility(const uint16_t *values, int count
 static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_predictor_t *predictor, const ml_observation_t *observation) {
     ML_DEBUG_ENTRY("ml_monitor_sliding_window_predict");
     
-    fprintf(stderr, "DEBUG: ml_monitor_sliding_window_predict called with monitor=%p, predictor=%p, observation=%p\n", 
+    LOGX_DEBUG_MSG("ml_monitor_sliding_window_predict called with monitor=%p, predictor=%p, observation=%p", 
             monitor, predictor, observation);
     
     // CRITICAL: Validate predictor pointer immediately
     if (predictor == NULL) {
-        fprintf(stderr, "ERROR: predictor is NULL!\n");
+        LOGX_ERROR_MSG("predictor is NULL!");
         ML_DEBUG_EXIT("ml_monitor_sliding_window_predict", ML_MONITOR_ERROR_INVALID_PARAM);
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
@@ -641,23 +641,23 @@ int ml_monitor_init_phase3_enhancements(ml_monitor_t *monitor) {
 
 // Update with Phase 3 enhanced learning
 int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_observation_t *observation) {
-    fprintf(stderr, "DEBUG: ml_monitor_update_with_phase3_enhancements called\n");
+    LOGX_DEBUG_MSG("ml_monitor_update_with_phase3_enhancements called");
     if (!monitor || !observation) {
-        fprintf(stderr, "DEBUG: Phase 3 update failed - invalid parameters\n");
+        LOGX_DEBUG_MSG("Phase 3 update failed - invalid parameters");
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
     // Check if Phase 3 system is initialized
-    fprintf(stderr, "DEBUG: Phase 3 initialized status: %s\n", g_phase3_initialized ? "true" : "false");
+    LOGX_DEBUG_MSG("Phase 3 initialized status: %s", g_phase3_initialized ? "true" : "false");
     if (!g_phase3_initialized) {
-        fprintf(stderr, "DEBUG: Phase 3 not initialized, returning error\n");
+        LOGX_DEBUG_MSG("Phase 3 not initialized, returning error");
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
     // Integrate with obstruction analyzer using global system
-    fprintf(stderr, "DEBUG: About to call ml_monitor_integrate_with_obstruction_analyzer\n");
+    LOGX_DEBUG_MSG("About to call ml_monitor_integrate_with_obstruction_analyzer");
     int integration_result = ml_monitor_integrate_with_obstruction_analyzer(monitor, observation);
-    fprintf(stderr, "DEBUG: ml_monitor_integrate_with_obstruction_analyzer returned: %d\n", integration_result);
+    LOGX_DEBUG_MSG("ml_monitor_integrate_with_obstruction_analyzer returned: %d", integration_result);
     if (integration_result != ML_MONITOR_SUCCESS) {
         LOGX_DEBUG_MSG("Obstruction analyzer integration warning: %d", integration_result);
         // Continue with ML-only updates
@@ -707,13 +707,13 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
     
     // CRITICAL: Check if global predictor is in valid memory range
     if ((uintptr_t)&g_phase3_sliding_predictor < 0x40000000) {
-        fprintf(stderr, "WARNING: Global predictor address %p is in invalid range (code section)! Using local workaround.\n", &g_phase3_sliding_predictor);
+        LOGX_WARN_MSG("Global predictor address %p is in invalid range (code section)! Using local workaround.", &g_phase3_sliding_predictor);
         // Continue with local predictor instead of returning error
     }
     
     // CRITICAL: Check corruption detection magic
     if (g_phase3_predictor_magic != GLOBAL_PREDICTOR_MAGIC) {
-        fprintf(stderr, "WARNING: Global predictor corruption detected! Magic: 0x%x, expected: 0x%x. Using local workaround.\n", 
+        LOGX_WARN_MSG("Global predictor corruption detected! Magic: 0x%x, expected: 0x%x. Using local workaround.", 
                 g_phase3_predictor_magic, GLOBAL_PREDICTOR_MAGIC);
         // Continue with local predictor instead of returning error
     }
@@ -724,10 +724,10 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
     static bool local_predictor_initialized = false;
     
     if (!local_predictor_initialized) {
-        fprintf(stderr, "DEBUG: Allocating local predictor in heap (data section)\n");
+        LOGX_DEBUG_MSG("Allocating local predictor in heap (data section)");
         local_predictor = malloc(sizeof(sliding_predictor_t));
         if (!local_predictor) {
-            fprintf(stderr, "ERROR: Failed to allocate local predictor\n");
+            LOGX_ERROR_MSG("Failed to allocate local predictor");
             return ML_MONITOR_ERROR_MEMORY_FAILED;
         }
         
@@ -746,25 +746,25 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
         }
         
         local_predictor_initialized = true;
-        fprintf(stderr, "DEBUG: Local predictor allocated at %p (should be in data section)\n", local_predictor);
+        LOGX_DEBUG_MSG("Local predictor allocated at %p (should be in data section)", local_predictor);
     }
     
     // Copy current state from global (if not corrupted) or use local
     if (g_phase3_predictor_magic == GLOBAL_PREDICTOR_MAGIC && 
         (uintptr_t)&g_phase3_sliding_predictor >= 0x40000000) {
-        fprintf(stderr, "DEBUG: Using global predictor (not corrupted)\n");
+        LOGX_DEBUG_MSG("Using global predictor (not corrupted)");
         *local_predictor = g_phase3_sliding_predictor;
     } else {
-        fprintf(stderr, "DEBUG: Using local predictor (global corrupted)\n");
+        LOGX_DEBUG_MSG("Using local predictor (global corrupted)");
     }
     
-    fprintf(stderr, "DEBUG: Local predictor address: %p (should be in data section)\n", local_predictor);
+    LOGX_DEBUG_MSG("Local predictor address: %p (should be in data section)", local_predictor);
     int prediction_result = ml_monitor_sliding_window_predict(monitor, local_predictor, observation);
-    fprintf(stderr, "DEBUG: ml_monitor_sliding_window_predict returned: %d\n", prediction_result);
+    LOGX_DEBUG_MSG("ml_monitor_sliding_window_predict returned: %d", prediction_result);
     if (prediction_result != ML_MONITOR_SUCCESS) {
         LOGX_DEBUG_MSG("Sliding window prediction warning: %d", prediction_result);
     }
     
-    fprintf(stderr, "DEBUG: ml_monitor_update_with_phase3_enhancements returning success\n");
+    LOGX_DEBUG_MSG("ml_monitor_update_with_phase3_enhancements returning success");
     return ML_MONITOR_SUCCESS;
 }
