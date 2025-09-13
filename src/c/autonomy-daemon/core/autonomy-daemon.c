@@ -730,6 +730,8 @@ int main(int argc, char **argv)
     fprintf(stderr, "Attempting to register autonomy ubus object...\n");
 
     fprintf(stderr, "Registering autonomy ubus object...\n");
+    fprintf(stderr, "UBUS object details: name=%s, methods=%d, type=%p\n", 
+            autonomy_obj.name, autonomy_obj.n_methods, autonomy_obj.type);
     int ret = ubus_add_object(ctx, &autonomy_obj);
     if (ret) {
         char error_msg[256];

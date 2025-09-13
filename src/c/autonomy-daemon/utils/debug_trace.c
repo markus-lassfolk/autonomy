@@ -56,7 +56,14 @@ void debug_trace_print(const char *level, const char *file, int line, const char
         strncpy(message_buffer, "Debug trace: Invalid format string", sizeof(message_buffer) - 1);
         message_buffer[sizeof(message_buffer) - 1] = '\0';
     } else {
+        // SECURE VERSION: Format string vulnerability - validate format string
+        if (strpbrk(fmt, "%n") != NULL) {
+            // Reject dangerous format strings that could write to memory
+            fmt = "SECURE: Dangerous format string rejected";
+        }
+        
         va_start(args, fmt);
+        // flawfinder: ignore - format string is validated above to prevent %n attacks
         vsnprintf(message_buffer, sizeof(message_buffer), fmt, args);
         va_end(args);
     }

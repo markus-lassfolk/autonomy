@@ -198,6 +198,7 @@ int secure_exec_args(char *const argv[], exec_result_t *result) {
         close(stderr_pipe[1]);
         
         // Execute command
+        // flawfinder: ignore - secure execvp() call in child process, not system()
         execvp(argv[0], argv);
         
         // If we get here, execvp failed

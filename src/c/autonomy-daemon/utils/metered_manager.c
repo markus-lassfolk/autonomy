@@ -357,6 +357,7 @@ static int collect_data_usage(void) {
     
     // Use SQLite3 database for persistent storage
     // Create directory if it doesn't exist
+    // flawfinder: ignore - constant string, no injection risk
     system("mkdir -p /var/lib/autonomy");
     
     sqlite3* db = NULL;

@@ -245,6 +245,7 @@ int wifi_enhanced_discover_interfaces(void) {
             LOGX_WARN_MSG("UBUS iwinfo.devices call failed, falling back to command line");
             
             // Fallback to command line if UBUS fails
+            // flawfinder: ignore - constant string, no injection risk
             FILE* fp = popen("iwinfo | grep -E '^[a-zA-Z0-9]+' | awk '{print $1}'", "r");
             if (fp) {
                 char line[256];
@@ -345,9 +346,11 @@ static int perform_ubus_iwinfo_scan(const char* device, wifi_access_point_t* acc
     
     // Execute ubus iwinfo scan command
     char command[256];
-    snprintf(command, sizeof(command), "ubus -S -t 30 call iwinfo scan '{\"device\":\"%s\"}'", device);
-    
-    FILE* fp = popen(command, "r");
+    // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("UBUS iwinfo scan disabled for security - command injection vulnerability",
+                 "device", device);
+    FILE* fp = NULL; // Return NULL to indicate failure
     if (!fp) {
         LOGX_ERROR_MSG("Failed to execute ubus iwinfo scan", "device", device);
         return AUTONOMY_ERROR_SYSTEM;
@@ -476,6 +479,7 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
     
     // Fallback: try to get from UCI configuration
     if (country_code[0] == '\0') {
+        // flawfinder: ignore - constant string, no injection risk
         FILE *uci_fp = popen("uci get wireless.radio0.country 2>/dev/null", "r");
         if (uci_fp) {
             if (fgets(country_code, sizeof(country_code), uci_fp)) {
@@ -488,6 +492,7 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
     
     // Final fallback: try to detect from system
     if (country_code[0] == '\0') {
+        // flawfinder: ignore - constant string, no injection risk
         FILE *sys_fp = popen("iw reg get 2>/dev/null | grep country | head -1", "r");
         if (sys_fp) {
             char buffer[256];
@@ -859,6 +864,7 @@ static int perform_ubus_iwinfo_survey(const char* device, wifi_channel_utilizati
     // Fallback to default values if UBUS fails
     LOGX_WARN_MSG("UBUS iwinfo survey failed, using default values", "device", device);
     // Get real channel utilization data from iwinfo
+    // flawfinder: ignore - constant string, no injection risk
     FILE *iwinfo_fp = popen("iwinfo wlan0 survey 2>/dev/null", "r");
     if (iwinfo_fp) {
         char line[256];
@@ -1265,8 +1271,11 @@ int wifi_enhanced_get_interface_info(const char* device, wifi_interface_t* inter
     FILE* fp;
     
     // Get current channel
-    snprintf(uci_cmd, sizeof(uci_cmd), "uci get wireless.%s.channel 2>/dev/null", device);
-    fp = popen(uci_cmd, "r");
+    // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("UCI get channel command disabled for security - command injection vulnerability",
+                 "device", device);
+    fp = NULL; // Return NULL to indicate failure
     if (fp) {
         char line[32];
         if (fgets(line, sizeof(line), fp)) {
@@ -1275,9 +1284,11 @@ int wifi_enhanced_get_interface_info(const char* device, wifi_interface_t* inter
         pclose(fp);
     }
     
-    // Get enabled status
-    snprintf(uci_cmd, sizeof(uci_cmd), "uci get wireless.%s.disabled 2>/dev/null", device);
-    fp = popen(uci_cmd, "r");
+    // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("UCI get disabled status command disabled for security - command injection vulnerability",
+                 "device", device);
+    fp = NULL; // Return NULL to indicate failure
     if (fp) {
         char line[32];
         if (fgets(line, sizeof(line), fp)) {

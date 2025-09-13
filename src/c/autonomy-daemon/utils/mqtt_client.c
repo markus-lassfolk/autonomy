@@ -64,6 +64,7 @@ int mqtt_client_init(const mqtt_config_t* config) {
         g_mqtt_client.config = *config;
     } else {
         // Get MQTT configuration from UCI
+        // flawfinder: ignore - constant string, no injection risk
         FILE *uci_fp = popen("uci get autonomy.mqtt.broker_host 2>/dev/null", "r");
         if (uci_fp) {
             char uci_host[128];
@@ -92,6 +93,7 @@ int mqtt_client_init(const mqtt_config_t* config) {
         }
         
         // Get MQTT port from UCI
+        // flawfinder: ignore - constant string, no injection risk
         FILE *uci_port_fp = popen("uci get autonomy.mqtt.broker_port 2>/dev/null", "r");
         if (uci_port_fp) {
             char uci_port[16];
@@ -116,6 +118,7 @@ int mqtt_client_init(const mqtt_config_t* config) {
         }
         
         // Get MQTT client ID from UCI
+        // flawfinder: ignore - constant string, no injection risk
         FILE *uci_client_fp = popen("uci get autonomy.mqtt.client_id 2>/dev/null", "r");
         if (uci_client_fp) {
             char uci_client_id[128];

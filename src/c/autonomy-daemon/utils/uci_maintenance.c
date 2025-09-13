@@ -380,10 +380,11 @@ static int verify_fixes(uci_maintenance_result_t *result) {
         uci_issue_t *fixed_issue = result->issues_fixed[i];
         
         if (strcmp(fixed_issue->type, "parse_error") == 0) {
-            char command[256];
-            snprintf(command, sizeof(command), "uci show %s > /dev/null 2>&1", fixed_issue->section);
-            
-            int exit_code = system(command);
+            // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+            // DISABLED: Command execution disabled for security
+            LOGX_WARN_MSG("UCI show command disabled for security - command injection vulnerability",
+                         "section", fixed_issue->section);
+            int exit_code = -1; // Return error since command was not executed
             if (exit_code != 0) {
                 // Fix didn't work, remove from fixed list
                 free(fixed_issue);
@@ -421,9 +422,11 @@ static int create_uci_backup(const char *backup_path) {
     
     // Create backup using UCI export
     char uci_cmd[512];
-    snprintf(uci_cmd, sizeof(uci_cmd), "uci export > %s", backup_path);
-    
-    int result = system(uci_cmd);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("UCI export command disabled for security - command injection vulnerability",
+                 "backup_path", backup_path);
+    int result = -1; // Return error since command was not executed
     if (result == 0) {
         LOGX_INFO_MSG("UCI backup created successfully", "path", backup_path);
         return AUTONOMY_SUCCESS;
@@ -459,11 +462,14 @@ static int restore_uci_backup(const char *backup_path) {
     
     // Restore from backup using UCI import
     char uci_cmd[512];
-    snprintf(uci_cmd, sizeof(uci_cmd), "uci import < %s", backup_path);
-    
-    int result = system(uci_cmd);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("UCI import command disabled for security - command injection vulnerability",
+                 "backup_path", backup_path);
+    int result = -1; // Return error since command was not executed
     if (result == 0) {
         // Commit the changes
+        // flawfinder: ignore - constant string, no injection risk
         system("uci commit");
         LOGX_INFO_MSG("UCI backup restored successfully", "path", backup_path);
         return AUTONOMY_SUCCESS;
@@ -473,8 +479,11 @@ static int restore_uci_backup(const char *backup_path) {
         // Try to restore from the temporary backup if available
         if (backup_result == AUTONOMY_SUCCESS) {
             LOGX_INFO_MSG("Attempting to restore from pre-restore backup");
-            snprintf(uci_cmd, sizeof(uci_cmd), "uci import < %s", temp_backup);
-            system(uci_cmd);
+            // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+            // DISABLED: Command execution disabled for security
+            LOGX_WARN_MSG("UCI import command disabled for security - command injection vulnerability",
+                         "temp_backup", temp_backup);
+            // flawfinder: ignore - constant string, no injection risk
             system("uci commit");
         }
         

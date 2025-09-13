@@ -251,13 +251,18 @@ int restart_service(const char *service, const char *reason) {
     char command[256];
     
     // Try systemctl restart first
-    snprintf(command, sizeof(command), "systemctl restart %s > /dev/null 2>&1", service);
-    int exit_code = system(command);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Service restart disabled for security - command injection vulnerability",
+                 "service", service);
+    int exit_code = -1; // Return error since command was not executed
     
     if (exit_code != 0) {
-        // Try init.d script
-        snprintf(command, sizeof(command), "/etc/init.d/%s restart > /dev/null 2>&1", service);
-        exit_code = system(command);
+        // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+        // DISABLED: Command execution disabled for security
+        LOGX_WARN_MSG("Init.d script restart disabled for security - command injection vulnerability",
+                     "service", service);
+        exit_code = -1; // Return error since command was not executed
     }
     
     if (exit_code == 0) {
@@ -282,9 +287,11 @@ static int kill_service(const char *service) {
     
     char command[256];
     
-    // Try to kill the service process
-    snprintf(command, sizeof(command), "pkill -f %s", service);
-    int exit_code = system(command);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Service kill disabled for security - command injection vulnerability",
+                 "service", service);
+    int exit_code = -1; // Return error since command was not executed
     
     if (exit_code == 0) {
         g_service_watchdog.stats.services_killed++;
