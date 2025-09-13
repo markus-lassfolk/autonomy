@@ -13,19 +13,19 @@
 
 // Enhanced debugging macros
 #define ML_DEBUG_ENTRY(func_name) \
-    fprintf(stderr, "DEBUG: %s ENTRY\n", func_name)
+    LOGX_DEBUG_MSG("%s ENTRY", func_name)
 
 #define ML_DEBUG_EXIT(func_name, result) \
-    fprintf(stderr, "DEBUG: %s EXIT with result: %d\n", func_name, result)
+    LOGX_DEBUG_MSG("%s EXIT with result: %d", func_name, result)
 
 #define ML_VALIDATE_POINTER(ptr, location) \
     do { \
         if (!(ptr)) { \
-            fprintf(stderr, "ERROR: NULL pointer at %s:%d in %s\n", __FILE__, __LINE__, location); \
+            LOGX_ERROR_MSG("NULL pointer at %s:%d in %s", __FILE__, __LINE__, location); \
             abort(); \
         } \
         if ((uintptr_t)(ptr) < 0x1000) { \
-            fprintf(stderr, "ERROR: Invalid pointer %p (too low) at %s:%d in %s\n", (ptr), __FILE__, __LINE__, location); \
+            LOGX_ERROR_MSG("Invalid pointer %p (too low) at %s:%d in %s", (ptr), __FILE__, __LINE__, location); \
             abort(); \
         } \
     } while(0)
@@ -33,7 +33,7 @@
 #define ML_VALIDATE_ARRAY_BOUNDS(array, index, size, location) \
     do { \
         if ((index) < 0 || (index) >= (size)) { \
-            fprintf(stderr, "ERROR: Array bounds violation: index=%d, size=%d at %s:%d in %s\n", \
+            LOGX_ERROR_MSG("Array bounds violation: index=%d, size=%d at %s:%d in %s", \
                     (index), (size), __FILE__, __LINE__, location); \
             abort(); \
         } \
@@ -130,8 +130,7 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
-    // Use simple fprintf to avoid LOGX crashes
-    fprintf(stderr, "Initializing enhanced sky grid with obstruction analyzer integration\n");
+    LOGX_DEBUG_MSG("Initializing enhanced sky grid with obstruction analyzer integration");
     
     // Initialize the global Phase 3 enhanced sky grid structure
     memset(&g_phase3_enhanced_sky_grid, 0, sizeof(enhanced_sky_grid_t));
@@ -189,8 +188,7 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
     // Mark as initialized
     g_phase3_initialized = true;
     
-    // Use simple fprintf for non-critical information to avoid LOGX crashes
-    fprintf(stderr, "Enhanced sky grid initialized (ML: 90x45, Obstruction: 123x123, weights: %.1f/%.1f, threshold: %.1f)\n", 
+    LOGX_DEBUG_MSG("Enhanced sky grid initialized (ML: 90x45, Obstruction: 123x123, weights: %.1f/%.1f, threshold: %.1f)", 
             g_phase3_enhanced_sky_grid.fusion.ml_weight, 
             g_phase3_enhanced_sky_grid.fusion.obstruction_weight, 
             g_phase3_enhanced_sky_grid.fusion.fusion_confidence_threshold);
@@ -200,54 +198,54 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
 
 // Integrate with obstruction analyzer for enhanced predictions
 static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor, const ml_observation_t *observation) {
-    fprintf(stderr, "DEBUG: ml_monitor_integrate_with_obstruction_analyzer called\n");
+    LOGX_DEBUG_MSG("ml_monitor_integrate_with_obstruction_analyzer called");
     if (!monitor || !monitor->state || !observation) {
-        fprintf(stderr, "DEBUG: Invalid parameters in integrate_with_obstruction_analyzer\n");
+        LOGX_DEBUG_MSG("Invalid parameters in integrate_with_obstruction_analyzer");
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
     // Check if Phase 3 system is initialized
     if (!g_phase3_initialized) {
-        fprintf(stderr, "DEBUG: Phase 3 not initialized in integrate_with_obstruction_analyzer\n");
+        LOGX_DEBUG_MSG("Phase 3 not initialized in integrate_with_obstruction_analyzer");
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
-    fprintf(stderr, "DEBUG: About to initialize obstruction_map_t\n");
+    LOGX_DEBUG_MSG("About to initialize obstruction_map_t");
     // Get current obstruction map from existing analyzer
     obstruction_map_t current_obstruction_map;
     memset(&current_obstruction_map, 0, sizeof(current_obstruction_map));
-    fprintf(stderr, "DEBUG: obstruction_map_t initialized successfully\n");
+    LOGX_DEBUG_MSG("obstruction_map_t initialized successfully");
     
     // Try to get obstruction map from Starlink tracking system
     // This would integrate with the existing obstruction analyzer
     // Integration with obstruction analyzer
     
-    fprintf(stderr, "DEBUG: About to get ml_grid pointer\n");
+    LOGX_DEBUG_MSG("About to get ml_grid pointer");
     compact_sky_grid_t *ml_grid = &g_phase3_enhanced_sky_grid.ml_grid;
-    fprintf(stderr, "DEBUG: ml_grid pointer obtained successfully\n");
+    LOGX_DEBUG_MSG("ml_grid pointer obtained successfully");
     
     // Update ML grid with current observation
-    fprintf(stderr, "DEBUG: About to call ml_monitor_sky_grid_update\n");
+    LOGX_DEBUG_MSG("About to call ml_monitor_sky_grid_update");
     int ml_result = ml_monitor_sky_grid_update(ml_grid, observation->azimuth_deg, observation->elevation_deg, 
                                               (observation->flags & ML_OBS_FLAG_OUTAGE) ? 1 : 0);
-    fprintf(stderr, "DEBUG: ml_monitor_sky_grid_update returned: %d\n", ml_result);
+    LOGX_DEBUG_MSG("ml_monitor_sky_grid_update returned: %d", ml_result);
     
     if (ml_result != ML_MONITOR_SUCCESS) {
         LOGX_WARN_MSG("Failed to update ML sky grid: %d", ml_result);
         return ml_result;
     }
     
-    fprintf(stderr, "DEBUG: About to calculate ML grid coordinates\n");
+    LOGX_DEBUG_MSG("About to calculate ML grid coordinates");
     // Convert ML grid coordinates to obstruction analyzer coordinates
     int ml_az_bin = observation->azimuth_deg / 4;  // 4 resolution
     int ml_el_bin = observation->elevation_deg / 4;
-    fprintf(stderr, "DEBUG: ML coordinates calculated: az_bin=%d, el_bin=%d\n", ml_az_bin, ml_el_bin);
+    LOGX_DEBUG_MSG("ML coordinates calculated: az_bin=%d, el_bin=%d", ml_az_bin, ml_el_bin);
     
-    fprintf(stderr, "DEBUG: About to check bounds and access obstruction_prob\n");
+    LOGX_DEBUG_MSG("About to check bounds and access obstruction_prob");
     if (ml_az_bin >= 0 && ml_az_bin < 90 && ml_el_bin >= 0 && ml_el_bin < 45) {
-        fprintf(stderr, "DEBUG: Bounds check passed, accessing obstruction_prob array\n");
+        LOGX_DEBUG_MSG("Bounds check passed, accessing obstruction_prob array");
         uint8_t ml_obstruction_prob = ml_grid->obstruction_prob[ml_az_bin][ml_el_bin];
-        fprintf(stderr, "DEBUG: obstruction_prob accessed successfully: %u\n", ml_obstruction_prob);
+        LOGX_DEBUG_MSG("obstruction_prob accessed successfully: %u", ml_obstruction_prob);
         
         // Cross-validate with obstruction analyzer if available
         // This would check against the 123x123 polar projection
@@ -256,10 +254,10 @@ static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor,
                   observation->azimuth_deg, observation->elevation_deg, 
                   ml_obstruction_prob, ml_az_bin, ml_el_bin);
     } else {
-        fprintf(stderr, "DEBUG: Bounds check failed for ml_az_bin=%d, ml_el_bin=%d\n", ml_az_bin, ml_el_bin);
+        LOGX_DEBUG_MSG("Bounds check failed for ml_az_bin=%d, ml_el_bin=%d", ml_az_bin, ml_el_bin);
     }
     
-    fprintf(stderr, "DEBUG: ml_monitor_integrate_with_obstruction_analyzer returning success\n");
+    LOGX_DEBUG_MSG("ml_monitor_integrate_with_obstruction_analyzer returning success");
     return ML_MONITOR_SUCCESS;
 }
 
@@ -322,13 +320,13 @@ static void ml_monitor_extract_window_features(sliding_predictor_t *predictor) {
     
     // Extract SNR trend
     uint16_t snr_values[60];
-    fprintf(stderr, "DEBUG: Extracting SNR trend, window_size=%u\n", predictor->window_size);
+    LOGX_DEBUG_MSG("Extracting SNR trend, window_size=%u", predictor->window_size);
     for (int i = 0; i < predictor->window_size; i++) {
-        fprintf(stderr, "DEBUG: Processing SNR value %d, predictor=%p, window[%d]=%p\n", 
+        LOGX_DEBUG_MSG("Processing SNR value %d, predictor=%p, window[%d]=%p", 
                 i, predictor, i, &predictor->window[i]);
         ML_VALIDATE_WINDOW_ACCESS(predictor, i, "SNR trend extraction");
         snr_values[i] = predictor->window[i].snr_x100;
-        fprintf(stderr, "DEBUG: SNR value %d extracted: %u\n", i, snr_values[i]);
+        LOGX_DEBUG_MSG("SNR value %d extracted: %u", i, snr_values[i]);
     }
     
     double snr_trend = ml_monitor_calculate_trend(snr_values, predictor->window_size);
@@ -459,12 +457,12 @@ static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_pred
     }
     
     if ((uintptr_t)predictor < 0x1000) {
-        fprintf(stderr, "ERROR: predictor pointer %p is invalid (too low)!\n", predictor);
+        LOGX_ERROR_MSG("predictor pointer %p is invalid (too low)!", predictor);
         ML_DEBUG_EXIT("ml_monitor_sliding_window_predict", ML_MONITOR_ERROR_INVALID_PARAM);
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
-    fprintf(stderr, "DEBUG: predictor pointer validation passed: %p\n", predictor);
+    LOGX_DEBUG_MSG("predictor pointer validation passed: %p", predictor);
     
     ML_VALIDATE_POINTER(monitor, "ml_monitor_sliding_window_predict monitor");
     ML_VALIDATE_POINTER(predictor, "ml_monitor_sliding_window_predict predictor");
@@ -488,10 +486,10 @@ static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_pred
     }
     
     // Extract features from window
-    fprintf(stderr, "DEBUG: About to call ml_monitor_extract_window_features from sliding_window_predict, predictor=%p\n", predictor);
+    LOGX_DEBUG_MSG("About to call ml_monitor_extract_window_features from sliding_window_predict, predictor=%p", predictor);
     ML_VALIDATE_POINTER(predictor, "ml_monitor_sliding_window_predict predictor before extract");
     ml_monitor_extract_window_features(predictor);
-    fprintf(stderr, "DEBUG: ml_monitor_extract_window_features completed in sliding_window_predict\n");
+    LOGX_DEBUG_MSG("ml_monitor_extract_window_features completed in sliding_window_predict");
     
     // Prepare neural network input with window features
     int8_t nn_input[32];
@@ -635,8 +633,7 @@ int ml_monitor_init_phase3_enhancements(ml_monitor_t *monitor) {
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
-    // Use simple fprintf to avoid LOGX crashes
-    fprintf(stderr, "Initializing Phase 3: Advanced Sky Grid & Sliding Window Predictions\n");
+    LOGX_DEBUG_MSG("Initializing Phase 3: Advanced Sky Grid & Sliding Window Predictions");
     
     // Initialize enhanced sky grid with obstruction analyzer integration
     int result = ml_monitor_init_enhanced_sky_grid(monitor);
@@ -646,8 +643,7 @@ int ml_monitor_init_phase3_enhancements(ml_monitor_t *monitor) {
         return result;
     }
     
-    // Use simple fprintf to avoid LOGX crashes
-    fprintf(stderr, "Phase 3 enhancements initialized successfully\n");
+    LOGX_DEBUG_MSG("Phase 3 enhancements initialized successfully");
     
     return ML_MONITOR_SUCCESS;
 }
@@ -677,24 +673,24 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
     }
     
     // CRITICAL: Skip global predictor updates - we'll use local predictor instead
-    fprintf(stderr, "DEBUG: Skipping global predictor updates (will use local predictor)\n");
+    LOGX_DEBUG_MSG("Skipping global predictor updates (will use local predictor)");
     
     // CRITICAL: Skip feature extraction on corrupted global predictor
     // We'll do this with the local predictor instead
-    fprintf(stderr, "DEBUG: Skipping global predictor feature extraction (will use local predictor)\n");
+    LOGX_DEBUG_MSG("Skipping global predictor feature extraction (will use local predictor)");
     
-    fprintf(stderr, "DEBUG: About to perform sliding window prediction\n");
+    LOGX_DEBUG_MSG("About to perform sliding window prediction");
     // Perform sliding window prediction
     ML_VALIDATE_POINTER(monitor, "ml_monitor_update_with_phase3_enhancements monitor");
     ML_VALIDATE_POINTER(observation, "ml_monitor_update_with_phase3_enhancements observation");
     
     // CRITICAL: Skip global predictor access - it's corrupted
-    fprintf(stderr, "DEBUG: Skipping global predictor access (corrupted)\n");
+    LOGX_DEBUG_MSG("Skipping global predictor access (corrupted)");
     
     // CRITICAL: Validate global predictor address
     if ((uintptr_t)&g_phase3_sliding_predictor < 0x1000) {
-        fprintf(stderr, "ERROR: Global predictor address %p is corrupted!\n", &g_phase3_sliding_predictor);
-        return ML_MONITOR_ERROR_INVALID_PARAM;
+        LOGX_ERROR_MSG("Global predictor address %p is corrupted!", &g_phase3_sliding_predictor);
+        // Continue with local predictor instead of returning error
     }
     
     // CRITICAL: Check if global predictor is in valid memory range
