@@ -49,10 +49,32 @@
 // Global variables
 autonomy_config_t g_config;
 
+// Exit reason tracking
+typedef enum {
+    EXIT_REASON_UNKNOWN = 0,
+    EXIT_REASON_SIGNAL_TERM,
+    EXIT_REASON_SIGNAL_INT,
+    EXIT_REASON_SIGNAL_SEGV,
+    EXIT_REASON_SIGNAL_BUS,
+    EXIT_REASON_SIGNAL_FPE,
+    EXIT_REASON_SIGNAL_ILL,
+    EXIT_REASON_SIGNAL_ABRT,
+    EXIT_REASON_INIT_FAILURE,
+    EXIT_REASON_CONFIG_ERROR,
+    EXIT_REASON_MEMORY_ERROR,
+    EXIT_REASON_ULOOP_ERROR,
+    EXIT_REASON_NORMAL_SHUTDOWN
+} exit_reason_t;
+
+static exit_reason_t g_exit_reason = EXIT_REASON_UNKNOWN;
+static char g_exit_message[512] = {0};
+
 // Forward declarations
 static void print_memory_info(void);
 static void print_backtrace(void);
 static void crash_handler(int sig, siginfo_t *info, void *context);
+static void log_exit_reason(exit_reason_t reason, const char *message);
+static void daemon_exit(int exit_code);
 static void setup_crash_handlers(void);
 static void print_register_state(ucontext_t *context);
 static void print_stack_trace_arm(ucontext_t *context);
@@ -163,6 +185,39 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     fprintf(stderr, "=== CRASH END ===\n");
     fflush(stderr);
     
+    // Log the crash reason before exiting
+    exit_reason_t reason = EXIT_REASON_UNKNOWN;
+    char message[256];
+    
+    switch (sig) {
+        case SIGSEGV:
+            reason = EXIT_REASON_SIGNAL_SEGV;
+            snprintf(message, sizeof(message), "Segmentation fault at %p (signal %d)", info->si_addr, sig);
+            break;
+        case SIGBUS:
+            reason = EXIT_REASON_SIGNAL_BUS;
+            snprintf(message, sizeof(message), "Bus error at %p (signal %d)", info->si_addr, sig);
+            break;
+        case SIGFPE:
+            reason = EXIT_REASON_SIGNAL_FPE;
+            snprintf(message, sizeof(message), "Floating point exception (signal %d)", sig);
+            break;
+        case SIGILL:
+            reason = EXIT_REASON_SIGNAL_ILL;
+            snprintf(message, sizeof(message), "Illegal instruction (signal %d)", sig);
+            break;
+        case SIGABRT:
+            reason = EXIT_REASON_SIGNAL_ABRT;
+            snprintf(message, sizeof(message), "Abort signal (signal %d)", sig);
+            break;
+        default:
+            reason = EXIT_REASON_SIGNAL_SEGV;
+            snprintf(message, sizeof(message), "Unknown crash signal %d", sig);
+            break;
+    }
+    
+    log_exit_reason(reason, message);
+    
     // Exit with the signal number
     _exit(sig);
 }
@@ -242,21 +297,99 @@ struct uci_context *uci_ctx;
 
 // Signal handler
 void handle_sig(int sig) {
-    fprintf(stderr, "Received signal %d, shutting down...\n", sig);
+    exit_reason_t reason = EXIT_REASON_UNKNOWN;
+    char message[256];
     
-    if (ctx) {
-        ubus_free(ctx);
+    switch (sig) {
+        case SIGTERM:
+            reason = EXIT_REASON_SIGNAL_TERM;
+            snprintf(message, sizeof(message), "Received SIGTERM (termination signal)");
+            break;
+        case SIGINT:
+            reason = EXIT_REASON_SIGNAL_INT;
+            snprintf(message, sizeof(message), "Received SIGINT (interrupt signal - Ctrl+C)");
+            break;
+        default:
+            reason = EXIT_REASON_SIGNAL_TERM;
+            snprintf(message, sizeof(message), "Received signal %d", sig);
+            break;
     }
+    
+    log_exit_reason(reason, message);
+    daemon_exit(0);
+}
+
+// Comprehensive exit logging function
+static void log_exit_reason(exit_reason_t reason, const char *message) {
+    g_exit_reason = reason;
+    if (message) {
+        strncpy(g_exit_message, message, sizeof(g_exit_message) - 1);
+        g_exit_message[sizeof(g_exit_message) - 1] = '\0';
+    }
+    
+    const char *reason_str = "UNKNOWN";
+    switch (reason) {
+        case EXIT_REASON_SIGNAL_TERM: reason_str = "SIGTERM"; break;
+        case EXIT_REASON_SIGNAL_INT: reason_str = "SIGINT"; break;
+        case EXIT_REASON_SIGNAL_SEGV: reason_str = "SIGSEGV"; break;
+        case EXIT_REASON_SIGNAL_BUS: reason_str = "SIGBUS"; break;
+        case EXIT_REASON_SIGNAL_FPE: reason_str = "SIGFPE"; break;
+        case EXIT_REASON_SIGNAL_ILL: reason_str = "SIGILL"; break;
+        case EXIT_REASON_SIGNAL_ABRT: reason_str = "SIGABRT"; break;
+        case EXIT_REASON_INIT_FAILURE: reason_str = "INIT_FAILURE"; break;
+        case EXIT_REASON_CONFIG_ERROR: reason_str = "CONFIG_ERROR"; break;
+        case EXIT_REASON_MEMORY_ERROR: reason_str = "MEMORY_ERROR"; break;
+        case EXIT_REASON_ULOOP_ERROR: reason_str = "ULOOP_ERROR"; break;
+        case EXIT_REASON_NORMAL_SHUTDOWN: reason_str = "NORMAL_SHUTDOWN"; break;
+        default: reason_str = "UNKNOWN"; break;
+    }
+    
+    // Log to stderr (always visible)
+    fprintf(stderr, "\n=== DAEMON EXIT ===\n");
+    fprintf(stderr, "Exit Reason: %s\n", reason_str);
+    fprintf(stderr, "Exit Message: %s\n", g_exit_message);
+    fprintf(stderr, "Timestamp: %ld\n", time(NULL));
+    fprintf(stderr, "PID: %d\n", getpid());
+    fprintf(stderr, "==================\n\n");
+    
+    // Also log via LOGX if available
+    LOGX_ERROR_MSG("DAEMON EXIT: Reason=%s, Message=%s, PID=%d", reason_str, g_exit_message, getpid());
+}
+
+// Comprehensive daemon exit function
+static void daemon_exit(int exit_code) {
+    fprintf(stderr, "Performing daemon cleanup before exit...\n");
+    
+    // Cleanup UBUS context
+    if (ctx) {
+        fprintf(stderr, "Cleaning up UBUS context...\n");
+        ubus_free(ctx);
+        ctx = NULL;
+    }
+    
+    // Cleanup UCI context
     if (uci_ctx) {
+        fprintf(stderr, "Cleaning up UCI context...\n");
         uci_free_context(uci_ctx);
+        uci_ctx = NULL;
     }
     
     // Cleanup UCI manager
+    fprintf(stderr, "Cleaning up UCI manager...\n");
     uci_manager_cleanup();
     
+    // Remove PID file
+    fprintf(stderr, "Removing PID file...\n");
     remove_pid_file();
+    
+    // Stop uloop
+    fprintf(stderr, "Stopping uloop...\n");
     uloop_done();
-    exit(0);
+    
+    // Final exit message
+    fprintf(stderr, "Daemon cleanup completed. Exiting with code %d.\n", exit_code);
+    
+    exit(exit_code);
 }
 
 // UBUS object type and methods
@@ -318,8 +451,8 @@ int main(int argc, char **argv)
     // Initialize comprehensive memory protection system
     fprintf(stderr, "DEBUG: About to initialize memory protection system\n");
     if (memory_protection_init() != MEMORY_PROTECTION_SUCCESS) {
-        fprintf(stderr, "ERROR: Failed to initialize memory protection system\n");
-        return 1;
+        log_exit_reason(EXIT_REASON_MEMORY_ERROR, "Failed to initialize memory protection system");
+        daemon_exit(1);
     }
     fprintf(stderr, "DEBUG: Memory protection system initialized successfully\n");
     
@@ -364,8 +497,8 @@ int main(int argc, char **argv)
     DEBUG_TRACE_STEP(4, "Initializing UCI manager");
     if (uci_manager_init() != AUTONOMY_SUCCESS) {
         DEBUG_TRACE_ERROR("Failed to initialize UCI manager");
-        fprintf(stderr, "Failed to initialize UCI manager\n");
-        return 1;
+        log_exit_reason(EXIT_REASON_CONFIG_ERROR, "Failed to initialize UCI manager");
+        daemon_exit(1);
     }
     DEBUG_TRACE_INFO("UCI manager initialized successfully");
     
@@ -424,8 +557,8 @@ int main(int argc, char **argv)
     fprintf(stderr, "Attempting to connect to ubus...\n");
     ctx = ubus_connect(NULL);
     if (!ctx) {
-        fprintf(stderr, "Failed to connect to ubus\n");
-        return 1;
+        log_exit_reason(EXIT_REASON_INIT_FAILURE, "Failed to connect to ubus");
+        daemon_exit(1);
     }
     fprintf(stderr, "Connected to ubus successfully\n");
     fprintf(stderr, "UBUS context: %p\n", ctx);
@@ -594,10 +727,8 @@ int main(int argc, char **argv)
 
     int ret = ubus_add_object(ctx, &autonomy_obj);
     if (ret) {
-        fprintf(stderr, "Failed to add ubus object: %s\n", ubus_strerror(ret));
-        ubus_free(ctx);
-        uloop_done();
-        return 1;
+        log_exit_reason(EXIT_REASON_INIT_FAILURE, "Failed to add ubus object");
+        daemon_exit(1);
     }
 
     fprintf(stderr, "Autonomy daemon started, registered 'autonomy' ubus object\n");
@@ -621,32 +752,11 @@ int main(int argc, char **argv)
     fprintf(stderr, "Daemon running, press Ctrl+C to stop\n");
     uloop_run();
 
-    // Cleanup
-    if (g_starlink_tracker) {
-        starlink_tracker_ubus_cleanup(ctx);
-        starlink_tracker_cleanup(g_starlink_tracker);
-        g_starlink_tracker = NULL;
-        fprintf(stderr, "Starlink tracking module cleaned up\n");
-    }
+    // uloop_run() completed - this is a normal shutdown
+    log_exit_reason(EXIT_REASON_NORMAL_SHUTDOWN, "uloop_run() completed - normal daemon shutdown");
+    daemon_exit(0);
     
-    if (ctx) {
-        ubus_free(ctx);
-    }
-    if (uci_ctx) {
-        uci_free_context(uci_ctx);
-    }
-    remove_pid_file();
-    uloop_done();
-
-    // Cleanup memory debugging system
-    // memory_debug_cleanup(); // Disabled to prevent conflicts with memory protection system
-    
-    // Cleanup memory protection system
-    fprintf(stderr, "DEBUG: Cleaning up memory protection system\n");
-    memory_protection_cleanup();
-
-    fprintf(stderr, "Autonomy daemon stopped\n");
-    return 0;
+    // Note: Code after daemon_exit() is unreachable - daemon_exit() handles all cleanup
 }
 
 // Enhanced debugging functions
