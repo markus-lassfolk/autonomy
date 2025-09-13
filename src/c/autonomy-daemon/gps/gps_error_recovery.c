@@ -1156,9 +1156,11 @@ static bool external_gps_reset_recovery(void) {
     system("uci delete external.gps.enabled 2>/dev/null");
     // flawfinder: ignore - constant string, no injection risk
     system("uci set external.gps.enabled=1 2>/dev/null");
+    // flawfinder: ignore - constant string, no injection risk
     system("uci commit external 2>/dev/null");
     
     // Restart service
+    // flawfinder: ignore - constant string, no injection risk
     int ret = system("systemctl start external-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to start external GPS service");
@@ -1169,6 +1171,7 @@ static bool external_gps_reset_recovery(void) {
     sleep(10);
     
     // Verify service is running
+    // flawfinder: ignore - constant string, no injection risk
     ret = system("systemctl is-active external-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("External GPS service not active after reset");

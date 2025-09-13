@@ -663,31 +663,12 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
         // Continue with ML-only updates
     }
     
-    fprintf(stderr, "DEBUG: About to update sliding window predictor\n");
-    fprintf(stderr, "DEBUG: Global predictor state: window_size=%u, write_idx=%u\n", 
-            g_phase3_sliding_predictor.window_size, g_phase3_sliding_predictor.write_idx);
-    // Update sliding window predictor with new observation
-    if (g_phase3_sliding_predictor.window_size < 60) {
-        fprintf(stderr, "DEBUG: Adding observation to sliding window (size < 60)\n");
-        ML_VALIDATE_WINDOW_ACCESS(&g_phase3_sliding_predictor, g_phase3_sliding_predictor.write_idx, "sliding window write (size < 60)");
-        g_phase3_sliding_predictor.window[g_phase3_sliding_predictor.write_idx] = *observation;
-        g_phase3_sliding_predictor.write_idx = (g_phase3_sliding_predictor.write_idx + 1) % 60;
-        g_phase3_sliding_predictor.window_size++;
-        fprintf(stderr, "DEBUG: Sliding window updated, new size: %u, write_idx: %u\n", 
-                g_phase3_sliding_predictor.window_size, g_phase3_sliding_predictor.write_idx);
-    } else {
-        fprintf(stderr, "DEBUG: Adding observation to sliding window (size >= 60)\n");
-        ML_VALIDATE_WINDOW_ACCESS(&g_phase3_sliding_predictor, g_phase3_sliding_predictor.write_idx, "sliding window write (size >= 60)");
-        g_phase3_sliding_predictor.window[g_phase3_sliding_predictor.write_idx] = *observation;
-        g_phase3_sliding_predictor.write_idx = (g_phase3_sliding_predictor.write_idx + 1) % 60;
-        fprintf(stderr, "DEBUG: Sliding window updated, write_idx: %u\n", g_phase3_sliding_predictor.write_idx);
-    }
+    // CRITICAL: Skip global predictor updates - we'll use local predictor instead
+    fprintf(stderr, "DEBUG: Skipping global predictor updates (will use local predictor)\n");
     
-    fprintf(stderr, "DEBUG: About to extract window features\n");
-    // Extract features from sliding window
-    ML_VALIDATE_POINTER(&g_phase3_sliding_predictor, "ml_monitor_extract_window_features call");
-    ml_monitor_extract_window_features(&g_phase3_sliding_predictor);
-    fprintf(stderr, "DEBUG: Window features extracted successfully\n");
+    // CRITICAL: Skip feature extraction on corrupted global predictor
+    // We'll do this with the local predictor instead
+    fprintf(stderr, "DEBUG: Skipping global predictor feature extraction (will use local predictor)\n");
     
     fprintf(stderr, "DEBUG: About to perform sliding window prediction\n");
     // Perform sliding window prediction
@@ -756,6 +737,20 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
         *local_predictor = g_phase3_sliding_predictor;
     } else {
         LOGX_DEBUG_MSG("Using local predictor (global corrupted)");
+    }
+    
+    // CRITICAL: Update local predictor with new observation
+    LOGX_DEBUG_MSG("Updating local predictor with new observation");
+    if (local_predictor->window_size < 60) {
+        local_predictor->window[local_predictor->write_idx] = *observation;
+        local_predictor->write_idx = (local_predictor->write_idx + 1) % 60;
+        local_predictor->window_size++;
+        LOGX_DEBUG_MSG("Local predictor updated, new size: %u, write_idx: %u", 
+                local_predictor->window_size, local_predictor->write_idx);
+    } else {
+        local_predictor->window[local_predictor->write_idx] = *observation;
+        local_predictor->write_idx = (local_predictor->write_idx + 1) % 60;
+        LOGX_DEBUG_MSG("Local predictor updated, write_idx: %u", local_predictor->write_idx);
     }
     
     LOGX_DEBUG_MSG("Local predictor address: %p (should be in data section)", local_predictor);
