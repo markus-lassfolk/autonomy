@@ -1,5 +1,6 @@
 #include "ml_monitor.h"
 #include "../shared/logging/logx.h"
+#include "../shared/utils/memory_corruption_detector.h"
 #include "../starlink/starlink_modules.h"
 #include "../shared/starlink-tracking/obstruction_analyzer.h"
 #include "../shared/starlink-tracking/starlink_tracker.h"
@@ -187,6 +188,23 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
     
     // Mark as initialized
     g_phase3_initialized = true;
+    
+    // CRITICAL: Initialize memory corruption detector
+    if (memory_corruption_detector_init() != 0) {
+        LOGX_WARN_MSG("Failed to initialize memory corruption detector");
+    }
+    
+    // CRITICAL: Monitor the global predictor for corruption
+    if (monitor_global_variable(&g_phase3_sliding_predictor, sizeof(g_phase3_sliding_predictor), 
+                               "g_phase3_sliding_predictor", GLOBAL_PREDICTOR_MAGIC) != 0) {
+        LOGX_WARN_MSG("Failed to monitor global predictor for corruption");
+    }
+    
+    // CRITICAL: Monitor the local predictor as well
+    if (monitor_global_variable(&g_local_phase3_predictor, sizeof(g_local_phase3_predictor), 
+                               "g_local_phase3_predictor", GLOBAL_PREDICTOR_MAGIC) != 0) {
+        LOGX_WARN_MSG("Failed to monitor local predictor for corruption");
+    }
     
     LOGX_DEBUG_MSG("Enhanced sky grid initialized (ML: 90x45, Obstruction: 123x123, weights: %.1f/%.1f, threshold: %.1f)", 
             g_phase3_enhanced_sky_grid.fusion.ml_weight, 
@@ -446,6 +464,12 @@ static uint8_t ml_monitor_calculate_volatility(const uint16_t *values, int count
 static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_predictor_t *predictor, const ml_observation_t *observation) {
     ML_DEBUG_ENTRY("ml_monitor_sliding_window_predict");
     
+    // CRITICAL: Defensive programming checks
+    DEFENSIVE_POINTER_CHECK(monitor, "monitor");
+    DEFENSIVE_POINTER_CHECK(predictor, "predictor");
+    DEFENSIVE_POINTER_CHECK(observation, "observation");
+    STACK_OVERFLOW_CHECK();
+    
     LOGX_DEBUG_MSG("ml_monitor_sliding_window_predict called with monitor=%p, predictor=%p, observation=%p", 
             monitor, predictor, observation);
     
@@ -651,6 +675,12 @@ int ml_monitor_init_phase3_enhancements(ml_monitor_t *monitor) {
 // Update with Phase 3 enhanced learning
 int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_observation_t *observation) {
     LOGX_DEBUG_MSG("ml_monitor_update_with_phase3_enhancements called");
+    
+    // CRITICAL: Defensive programming checks
+    DEFENSIVE_POINTER_CHECK(monitor, "monitor");
+    DEFENSIVE_POINTER_CHECK(observation, "observation");
+    STACK_OVERFLOW_CHECK();
+    
     if (!monitor || !observation) {
         LOGX_DEBUG_MSG("Phase 3 update failed - invalid parameters");
         return ML_MONITOR_ERROR_INVALID_PARAM;
@@ -662,6 +692,9 @@ int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_o
         LOGX_DEBUG_MSG("Phase 3 not initialized, returning error");
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
+    
+    // CRITICAL: Check for memory corruption before proceeding
+    check_all_monitored_globals();
     
     // Integrate with obstruction analyzer using global system
     LOGX_DEBUG_MSG("About to call ml_monitor_integrate_with_obstruction_analyzer");

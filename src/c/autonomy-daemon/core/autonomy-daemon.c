@@ -37,6 +37,7 @@
 #include "../shared/logging/logx.h"
 #include "../shared/utils/memory_debug.h"
 #include "../shared/utils/memory_protection.h"
+#include "../shared/utils/memory_corruption_detector.h"
 #include "../utils/debug_trace.h"
 #include "../ml/ml_monitor.h"
 #include "../ml/ml_monitor_ubus.h"
@@ -90,6 +91,12 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     fprintf(stderr, "Fault address: %p\n", info->si_addr);
     fprintf(stderr, "PID: %d\n", getpid());
     fprintf(stderr, "UID: %d\n", getuid());
+    
+    // CRITICAL: Check for memory corruption
+    fprintf(stderr, "\n=== MEMORY CORRUPTION ANALYSIS ===\n");
+    check_all_monitored_globals();
+    print_memory_corruption_report();
+    fprintf(stderr, "=== END MEMORY CORRUPTION ANALYSIS ===\n\n");
     
     // Enhanced signal-specific information
     switch (sig) {
