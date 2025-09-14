@@ -907,12 +907,46 @@ int main(int argc, char **argv)
     LOGX_INFO_MSG("Available methods: status, health, config, start, stop, restart, pid_status, log_status, config_status");
     LOGX_INFO_MSG("Network methods: network_status, network_interfaces, network_health_check, network_failover");
     LOGX_INFO_MSG("GPS methods: gps_status, gps_sources, gps_health_check");
+    
+    // AGGRESSIVE DEBUGGING - Force immediate output after GPS methods
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: GPS methods logged successfully ===\n");
+    fflush(stderr);
+    
     LOGX_INFO_MSG("System methods: system_status, system_health_check, system_health_details, system_maintenance, system_restart_services");
+    
+    // AGGRESSIVE DEBUGGING - Force immediate output after system methods
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: System methods logged successfully ===\n");
+    fflush(stderr);
+    
     LOGX_INFO_MSG("Starlink methods: starlink_status, starlink_health, starlink_location, starlink_collector_stats, starlink_force_collect");
+    
+    // AGGRESSIVE DEBUGGING - Force immediate output after Starlink methods
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Starlink methods logged successfully ===\n");
+    fflush(stderr);
     LOGX_INFO_MSG("Starlink cluster methods: starlink_cluster_status, starlink_cluster_check_failover");
+    
+    // AGGRESSIVE DEBUGGING - Force immediate output after Starlink cluster methods
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Starlink cluster methods logged successfully ===\n");
+    fflush(stderr);
+    
     LOGX_INFO_MSG("Starlink tracking methods: starlink_tracker.status, starlink_tracker.predictions, starlink_tracker.satellites");
+    
+    // AGGRESSIVE DEBUGGING - Force immediate output after Starlink tracking methods
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Starlink tracking methods logged successfully ===\n");
+    fflush(stderr);
+    
     LOGX_INFO_MSG("Starlink tracking control: starlink_tracker.start_monitoring, starlink_tracker.stop_monitoring, starlink_tracker.update_data");
+    
+    // AGGRESSIVE DEBUGGING - Force immediate output after Starlink tracking control
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Starlink tracking control logged successfully ===\n");
+    fflush(stderr);
+    
     LOGX_INFO_MSG("ML monitoring methods: ml_monitor.status, ml_monitor.start, ml_monitor.stop, ml_monitor.restart");
+    
+    // AGGRESSIVE DEBUGGING - Force immediate output after ML monitoring methods
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: ML monitoring methods logged successfully ===\n");
+    fflush(stderr);
+    
     LOGX_INFO_MSG("ML monitoring config: ml_monitor.get_config, ml_monitor.set_config");
     LOGX_INFO_MSG("ML monitoring data: ml_monitor.get_predictions, ml_monitor.get_statistics, ml_monitor.reset_learning, ml_monitor.export_data");
     LOGX_INFO_MSG("ML monitoring Phase 4: ml_monitor.get_ensemble_status, ml_monitor.get_validation_metrics, ml_monitor.trigger_optimization");
@@ -921,7 +955,16 @@ int main(int argc, char **argv)
     LOGX_INFO_MSG("ML monitoring Phase 7: ml_monitor.get_multi_interface_status, ml_monitor.predict_interface_outage, ml_monitor.update_mwan3_weights, ml_monitor.validate_failover_prediction");
     LOGX_INFO_MSG("ML Analytics & Visualization: ml_monitor.get_analytics_summary, ml_monitor.get_interface_score_history, ml_monitor.get_accuracy_trends, ml_monitor.get_impact_summary, ml_monitor.get_current_interface_scores");
     LOGX_INFO_MSG("Network Discovery Enhanced: autonomy.network.interfaces_detailed (includes ML recommendations, MWAN3 ping info, enhanced cellular metrics, performance trends)");
+    
+    // AGGRESSIVE DEBUGGING - Force immediate output after all ML methods
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: All ML methods logged successfully ===\n");
+    fflush(stderr);
+    
     LOGX_INFO_MSG("Daemon running, press Ctrl+C to stop");
+    
+    // AGGRESSIVE DEBUGGING - Force immediate output after final message
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Final daemon message logged successfully ===\n");
+    fflush(stderr);
     
     // Add debugging before uloop_run
     LOGX_DEBUG_MSG("About to call uloop_run()");
