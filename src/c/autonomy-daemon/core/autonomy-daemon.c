@@ -31,7 +31,7 @@
 #include "../gps/gps_manager.h"
 #include "../network/network_discovery_comprehensive.h"
 #include "../ml/ml_monitor.h"
-#include "../utils/system_monitor.h"
+#include "../utils/system_management.h"
 #include "version.h"
 #include "autonomy_modules.h"
 #include "../starlink/starlink_modules.h"
@@ -585,18 +585,14 @@ static void ml_timer_callback(struct uloop_timeout *t) {
 static void health_timer_callback(struct uloop_timeout *t) {
     LOGX_INFO_MSG("Health timer callback - performing system health check");
     
-    // Perform actual system health check
-    system_health_t health;
-    memset(&health, 0, sizeof(health));
-    
-    // Try to get system health data
-    int health_result = system_get_health_status(&health);
-    if (health_result == 0) {
+    // Get system health data
+    const system_health_t* health = get_system_health_status();
+    if (health != NULL) {
         LOGX_INFO_MSG("System health: cpu=%.1f%%, memory=%.1f%%, disk=%.1f%%, temp=%.1f°C, uptime=%d", 
-                     health.cpu_usage, health.memory_usage, health.disk_usage, 
-                     health.temperature, health.uptime_seconds);
+                     health->cpu_usage, health->memory_usage, health->disk_usage, 
+                     health->temperature, health->uptime_seconds);
     } else {
-        LOGX_INFO_MSG("System health check failed: error %d", health_result);
+        LOGX_INFO_MSG("System health check failed: get_system_health_status returned NULL");
     }
     
     // Reschedule timer for next check (60 seconds)
