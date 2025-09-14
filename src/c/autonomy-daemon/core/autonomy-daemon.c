@@ -925,30 +925,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "=== AGGRESSIVE DEBUG: UBUS context is valid: %p ===\n", ctx);
     fflush(stderr);
     
-    // Clean up existing conflicting UBUS objects
-    fprintf(stderr, "=== AGGRESSIVE DEBUG: Cleaning up existing UBUS objects ===\n");
-    fflush(stderr);
-    
-    const char* existing_objects[] = {
-        "autonomy_status",
-        "autonomy_health", 
-        "autonomy_config",
-        "tlt_autonomy_daemon"
-    };
-    
-    for (int i = 0; i < 4; i++) {
-        uint32_t existing_id;
-        int ret = ubus_lookup_id(ctx, existing_objects[i], &existing_id);
-        if (ret == 0) {
-            fprintf(stderr, "=== AGGRESSIVE DEBUG: Found existing object '%s', removing it ===\n", existing_objects[i]);
-            fflush(stderr);
-            // Note: ubus_remove_object doesn't exist in this UBUS version
-            // We'll try to register with a different name instead
-        } else {
-            fprintf(stderr, "=== AGGRESSIVE DEBUG: No existing object '%s' found ===\n", existing_objects[i]);
-            fflush(stderr);
-        }
-    }
+    // Note: Previous UBUS objects have been cleaned up by system restart
     
     // Test 1: status method only
     fprintf(stderr, "=== AGGRESSIVE DEBUG: Creating status method array ===\n");
@@ -968,7 +945,7 @@ int main(int argc, char **argv)
     fflush(stderr);
     
     static struct ubus_object status_obj = {
-        .name = "autonomy_daemon_v2",
+        .name = "autonomy_status",
         .type = &status_obj_type,
         .methods = status_methods,
         .n_methods = ARRAY_SIZE(status_methods),
