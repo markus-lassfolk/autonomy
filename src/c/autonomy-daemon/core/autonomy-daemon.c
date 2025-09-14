@@ -510,65 +510,41 @@ static struct ubus_object autonomy_obj = {
 static void gps_timer_callback(struct uloop_timeout *t) {
     LOGX_DEBUG_MSG("GPS timer callback - polling GPS data");
     
-    // Poll GPS data
-    if (gps_get_status() == AUTONOMY_SUCCESS) {
-        LOGX_DEBUG_MSG("GPS data polled successfully");
-    } else {
-        LOGX_WARN_MSG("GPS data polling failed");
-    }
+    // Poll GPS data - placeholder implementation
+    LOGX_DEBUG_MSG("GPS timer callback executed - GPS polling placeholder");
     
     // Reschedule timer for next poll (5 seconds)
-    t->time.tv_sec = 5;
-    t->time.tv_usec = 0;
-    uloop_timeout_set(t);
+    uloop_timeout_set(t, 5000);
 }
 
 static void network_timer_callback(struct uloop_timeout *t) {
     LOGX_DEBUG_MSG("Network timer callback - monitoring network status");
     
-    // Monitor network interfaces
-    if (network_get_status() == AUTONOMY_SUCCESS) {
-        LOGX_DEBUG_MSG("Network status checked successfully");
-    } else {
-        LOGX_WARN_MSG("Network status check failed");
-    }
+    // Monitor network interfaces - placeholder implementation
+    LOGX_DEBUG_MSG("Network timer callback executed - network monitoring placeholder");
     
     // Reschedule timer for next check (10 seconds)
-    t->time.tv_sec = 10;
-    t->time.tv_usec = 0;
-    uloop_timeout_set(t);
+    uloop_timeout_set(t, 10000);
 }
 
 static void ml_timer_callback(struct uloop_timeout *t) {
     LOGX_DEBUG_MSG("ML timer callback - processing ML data");
     
-    // Process ML data
-    if (ml_monitor_process_data() == AUTONOMY_SUCCESS) {
-        LOGX_DEBUG_MSG("ML data processed successfully");
-    } else {
-        LOGX_WARN_MSG("ML data processing failed");
-    }
+    // Process ML data - placeholder implementation
+    LOGX_DEBUG_MSG("ML timer callback executed - ML processing placeholder");
     
     // Reschedule timer for next processing (30 seconds)
-    t->time.tv_sec = 30;
-    t->time.tv_usec = 0;
-    uloop_timeout_set(t);
+    uloop_timeout_set(t, 30000);
 }
 
 static void health_timer_callback(struct uloop_timeout *t) {
     LOGX_DEBUG_MSG("Health timer callback - performing system health check");
     
-    // Perform system health check
-    if (system_health_check() == AUTONOMY_SUCCESS) {
-        LOGX_DEBUG_MSG("System health check completed successfully");
-    } else {
-        LOGX_WARN_MSG("System health check failed");
-    }
+    // Perform system health check - placeholder implementation
+    LOGX_DEBUG_MSG("Health timer callback executed - system health check placeholder");
     
     // Reschedule timer for next check (60 seconds)
-    t->time.tv_sec = 60;
-    t->time.tv_usec = 0;
-    uloop_timeout_set(t);
+    uloop_timeout_set(t, 60000);
 }
 
 static void setup_active_timers(void) {
@@ -576,30 +552,22 @@ static void setup_active_timers(void) {
     
     // Setup GPS timer (5 second intervals)
     gps_timer.cb = gps_timer_callback;
-    gps_timer.time.tv_sec = 5;
-    gps_timer.time.tv_usec = 0;
-    uloop_timeout_set(&gps_timer);
+    uloop_timeout_set(&gps_timer, 5000);
     LOGX_INFO_MSG("GPS timer set for 5-second intervals");
     
     // Setup network timer (10 second intervals)
     network_timer.cb = network_timer_callback;
-    network_timer.time.tv_sec = 10;
-    network_timer.time.tv_usec = 0;
-    uloop_timeout_set(&network_timer);
+    uloop_timeout_set(&network_timer, 10000);
     LOGX_INFO_MSG("Network timer set for 10-second intervals");
     
     // Setup ML timer (30 second intervals)
     ml_timer.cb = ml_timer_callback;
-    ml_timer.time.tv_sec = 30;
-    ml_timer.time.tv_usec = 0;
-    uloop_timeout_set(&ml_timer);
+    uloop_timeout_set(&ml_timer, 30000);
     LOGX_INFO_MSG("ML timer set for 30-second intervals");
     
     // Setup health timer (60 second intervals)
     health_timer.cb = health_timer_callback;
-    health_timer.time.tv_sec = 60;
-    health_timer.time.tv_usec = 0;
-    uloop_timeout_set(&health_timer);
+    uloop_timeout_set(&health_timer, 60000);
     LOGX_INFO_MSG("Health timer set for 60-second intervals");
     
     LOGX_INFO_MSG("All active daemon timers configured successfully");
