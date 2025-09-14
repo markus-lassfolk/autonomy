@@ -553,7 +553,7 @@ static void health_timer_callback(struct uloop_timeout *t) {
     LOGX_INFO_MSG("Health timer callback - performing system health check");
     
     // Placeholder system health monitoring - will be implemented when system module is ready
-    LOGX_INFO_MSG("System health: cpu=15.2%%, memory=45.8%%, disk=23.1%%, temp=42.5°C, uptime=3600");
+    LOGX_INFO_MSG("System health: cpu=15.2%%, memory=45.8%%, disk=23.1%%, temp=42.5C, uptime=3600");
     
     // Reschedule timer for next check (60 seconds)
     uloop_timeout_set(t, 60000);

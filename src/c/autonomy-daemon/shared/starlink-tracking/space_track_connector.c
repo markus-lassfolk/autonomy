@@ -1,4 +1,5 @@
 #include "space_track_connector.h"
+#include "../utils/string_utils.h"
 #include <stdlib.h>
 #include <string.h>
 
