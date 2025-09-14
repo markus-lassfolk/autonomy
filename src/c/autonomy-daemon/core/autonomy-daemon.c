@@ -951,6 +951,18 @@ int main(int argc, char **argv)
     
     LOGX_DEBUG_MSG("All individual methods registered successfully - testing combined object...");
     
+    // Check if UBUS object already exists and remove it
+    LOGX_DEBUG_MSG("Checking for existing UBUS object...");
+    uint32_t existing_id;
+    ret = ubus_lookup_id(ctx, "tlt_autonomy_daemon", &existing_id);
+    if (ret == 0) {
+        LOGX_DEBUG_MSG("Found existing UBUS object, removing it...");
+        ubus_remove_object(ctx, &autonomy_obj);
+        LOGX_DEBUG_MSG("Existing UBUS object removed");
+    } else {
+        LOGX_DEBUG_MSG("No existing UBUS object found (error %d)", ret);
+    }
+    
     // Now try to register the full object
     LOGX_DEBUG_MSG("Registering full autonomy ubus object (%d methods)...", autonomy_obj.n_methods);
     ret = ubus_add_object(ctx, &autonomy_obj);
