@@ -16,11 +16,25 @@ int autonomy_status(struct ubus_context *uctx, struct ubus_object *obj,
                     struct ubus_request_data *req, const char *method,
                     struct blob_attr *msg)
 {
+    // AGGRESSIVE DEBUGGING - Force immediate output
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: autonomy_status UBUS method called - entering ===\n");
+    fflush(stderr);
+    
     LOGX_DEBUG_MSG("autonomy_status UBUS method called - entering");
     
     // Add defensive programming for advanced debug
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: About to call ADVANCED_DEBUG_ENTER() ===\n");
+    fflush(stderr);
+    
     ADVANCED_DEBUG_ENTER();
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: About to call ADVANCED_DEBUG_UBUS_CALL() ===\n");
+    fflush(stderr);
+    
     ADVANCED_DEBUG_UBUS_CALL("autonomy_status");
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: autonomy_status UBUS method called - after advanced debug ===\n");
+    fflush(stderr);
     
     LOGX_DEBUG_MSG("autonomy_status UBUS method called - after advanced debug");
     

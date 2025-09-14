@@ -935,14 +935,20 @@ int main(int argc, char **argv)
         daemon_exit(1);
     }
     
-    LOGX_DEBUG_MSG("Calling uloop_run()...");
+    // AGGRESSIVE DEBUGGING - Force immediate output
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: About to call uloop_run() ===\n");
+    fflush(stderr);
     
-    // Add more detailed debugging before entering the main event loop
+    LOGX_DEBUG_MSG("Calling uloop_run()...");
     LOGX_DEBUG_MSG("Main event loop starting - all modules initialized");
     LOGX_DEBUG_MSG("UBUS context: %p", ctx);
     LOGX_DEBUG_MSG("UCI context: %p", uci_ctx);
     LOGX_DEBUG_MSG("Global state: %p", &g_state);
     LOGX_DEBUG_MSG("Global config: %p", &g_config);
+    
+    // Force log flush
+    fflush(stdout);
+    fflush(stderr);
     
     // Validate critical pointers one more time
     if (!ctx) {
@@ -951,8 +957,22 @@ int main(int argc, char **argv)
         daemon_exit(1);
     }
     
+    // AGGRESSIVE DEBUGGING - Force immediate output before uloop_run
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Entering uloop_run() - daemon will now handle events ===\n");
+    fflush(stderr);
+    
     LOGX_DEBUG_MSG("Entering uloop_run() - daemon will now handle events");
+    
+    // Force log flush before entering uloop
+    fflush(stdout);
+    fflush(stderr);
+    
     uloop_run();
+    
+    // AGGRESSIVE DEBUGGING - Force immediate output after uloop_run
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: uloop_run() returned - daemon shutting down normally ===\n");
+    fflush(stderr);
+    
     LOGX_DEBUG_MSG("uloop_run() returned - daemon shutting down normally");
 
     // uloop_run() completed - this is a normal shutdown

@@ -52,13 +52,26 @@ void advanced_debug_cleanup(void) {
 
 // Push function frame onto call stack
 void advanced_debug_push_frame(const char *function, const char *file, int line) {
+    // AGGRESSIVE DEBUGGING - Force immediate output
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: advanced_debug_push_frame called: %s:%s:%d ===\n", function, file, line);
+    fflush(stderr);
+    
     advanced_debug_lock();
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: advanced_debug_push_frame - lock acquired ===\n");
+    fflush(stderr);
     
     if (g_call_stack.depth < MAX_CALL_DEPTH) {
         call_frame_t *frame = &g_call_stack.frames[g_call_stack.depth];
         
+        fprintf(stderr, "=== AGGRESSIVE DEBUG: advanced_debug_push_frame - copying function name ===\n");
+        fflush(stderr);
+        
         strncpy(frame->function_name, function, sizeof(frame->function_name) - 1);
         frame->function_name[sizeof(frame->function_name) - 1] = '\0';
+        
+        fprintf(stderr, "=== AGGRESSIVE DEBUG: advanced_debug_push_frame - copying file name ===\n");
+        fflush(stderr);
         
         strncpy(frame->file_name, file, sizeof(frame->file_name) - 1);
         frame->file_name[sizeof(frame->file_name) - 1] = '\0';
@@ -78,7 +91,13 @@ void advanced_debug_push_frame(const char *function, const char *file, int line)
         }
     }
     
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: advanced_debug_push_frame - about to unlock ===\n");
+    fflush(stderr);
+    
     advanced_debug_unlock();
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: advanced_debug_push_frame completed ===\n");
+    fflush(stderr);
 }
 
 // Pop function frame from call stack
@@ -141,13 +160,26 @@ void advanced_debug_track_memory_access(void *ptr, size_t size, const char *oper
 // Track UBUS method call
 void advanced_debug_track_ubus_call(const char *method_name, const char *function, 
                                    const char *file, int line) {
+    // AGGRESSIVE DEBUGGING - Force immediate output
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: advanced_debug_track_ubus_call called: %s:%s:%s:%d ===\n", method_name, function, file, line);
+    fflush(stderr);
+    
     advanced_debug_lock();
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: advanced_debug_track_ubus_call - lock acquired ===\n");
+    fflush(stderr);
     
     if (g_ubus_call_count < MAX_UBUS_CALLS) {
         ubus_call_t *call = &g_ubus_calls[g_ubus_call_count];
         
+        fprintf(stderr, "=== AGGRESSIVE DEBUG: advanced_debug_track_ubus_call - copying method name ===\n");
+        fflush(stderr);
+        
         strncpy(call->method_name, method_name, sizeof(call->method_name) - 1);
         call->method_name[sizeof(call->method_name) - 1] = '\0';
+        
+        fprintf(stderr, "=== AGGRESSIVE DEBUG: advanced_debug_track_ubus_call - formatting caller info ===\n");
+        fflush(stderr);
         
         snprintf(call->caller_info, sizeof(call->caller_info), "%s:%s:%d", 
                 function, file, line);
@@ -161,7 +193,13 @@ void advanced_debug_track_ubus_call(const char *method_name, const char *functio
         g_ubus_call_count++;
     }
     
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: advanced_debug_track_ubus_call - about to unlock ===\n");
+    fflush(stderr);
+    
     advanced_debug_unlock();
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: advanced_debug_track_ubus_call completed ===\n");
+    fflush(stderr);
 }
 
 // Print memory accesses
