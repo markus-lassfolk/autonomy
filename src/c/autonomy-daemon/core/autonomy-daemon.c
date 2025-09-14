@@ -795,16 +795,35 @@ int main(int argc, char **argv)
         LOGX_WARN_MSG("Failed to load ML monitoring configuration");
     }
 
+    // AGGRESSIVE DEBUGGING - Force immediate output after ML monitor UCI loading
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: ML monitor UCI loading completed ===\n");
+    fflush(stderr);
+
     // Initialize random seed for simulation
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: About to call srand(time(NULL)) ===\n");
+    fflush(stderr);
+    
     srand(time(NULL));
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: srand(time(NULL)) completed ===\n");
+    fflush(stderr);
 
     // Note: ubus_lookup_object doesn't exist in this UBUS version
     // We'll try to register directly and handle conflicts gracefully
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: About to start UBUS registration ===\n");
+    fflush(stderr);
+    
     LOGX_DEBUG_MSG("Attempting to register autonomy ubus object...");
 
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: About to register autonomy ubus objects step by step ===\n");
+    fflush(stderr);
+    
     LOGX_DEBUG_MSG("Registering autonomy ubus objects step by step...");
     
     // Test each method individually to find the problematic one
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: About to test individual UBUS methods ===\n");
+    fflush(stderr);
+    
     LOGX_DEBUG_MSG("Testing individual UBUS methods...");
     
     // Test 1: status method only
