@@ -8,13 +8,7 @@
 #include <stdarg.h>
 #include <arpa/inet.h>
 
-// Simple logging macros for standalone use
-#ifndef LOGX_INFO_MSG
-#define LOGX_INFO_MSG(fmt, ...) printf("[INFO] " fmt "\n", ##__VA_ARGS__)
-#define LOGX_ERROR_MSG(fmt, ...) fprintf(stderr, "[ERROR] " fmt "\n", ##__VA_ARGS__)
-#define LOGX_WARN_MSG(fmt, ...) printf("[WARN] " fmt "\n", ##__VA_ARGS__)
-#define LOGX_DEBUG_MSG(fmt, ...) printf("[DEBUG] " fmt "\n", ##__VA_ARGS__)
-#endif
+// Use the real LOGX logging system from shared/logging/logx.h
 
 // Global configuration instance
 starlink_grpc_client_config_t g_starlink_grpc_config = {0};
