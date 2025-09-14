@@ -508,40 +508,40 @@ static struct ubus_object autonomy_obj = {
 
 // Active daemon timer callback implementations
 static void gps_timer_callback(struct uloop_timeout *t) {
-    LOGX_DEBUG_MSG("GPS timer callback - polling GPS data");
+    LOGX_INFO_MSG("GPS timer callback - polling GPS data");
     
     // Poll GPS data - placeholder implementation
-    LOGX_DEBUG_MSG("GPS timer callback executed - GPS polling placeholder");
+    LOGX_INFO_MSG("GPS timer callback executed - GPS polling placeholder");
     
     // Reschedule timer for next poll (5 seconds)
     uloop_timeout_set(t, 5000);
 }
 
 static void network_timer_callback(struct uloop_timeout *t) {
-    LOGX_DEBUG_MSG("Network timer callback - monitoring network status");
+    LOGX_INFO_MSG("Network timer callback - monitoring network status");
     
     // Monitor network interfaces - placeholder implementation
-    LOGX_DEBUG_MSG("Network timer callback executed - network monitoring placeholder");
+    LOGX_INFO_MSG("Network timer callback executed - network monitoring placeholder");
     
     // Reschedule timer for next check (10 seconds)
     uloop_timeout_set(t, 10000);
 }
 
 static void ml_timer_callback(struct uloop_timeout *t) {
-    LOGX_DEBUG_MSG("ML timer callback - processing ML data");
+    LOGX_INFO_MSG("ML timer callback - processing ML data");
     
     // Process ML data - placeholder implementation
-    LOGX_DEBUG_MSG("ML timer callback executed - ML processing placeholder");
+    LOGX_INFO_MSG("ML timer callback executed - ML processing placeholder");
     
     // Reschedule timer for next processing (30 seconds)
     uloop_timeout_set(t, 30000);
 }
 
 static void health_timer_callback(struct uloop_timeout *t) {
-    LOGX_DEBUG_MSG("Health timer callback - performing system health check");
+    LOGX_INFO_MSG("Health timer callback - performing system health check");
     
     // Perform system health check - placeholder implementation
-    LOGX_DEBUG_MSG("Health timer callback executed - system health check placeholder");
+    LOGX_INFO_MSG("Health timer callback executed - system health check placeholder");
     
     // Reschedule timer for next check (60 seconds)
     uloop_timeout_set(t, 60000);
