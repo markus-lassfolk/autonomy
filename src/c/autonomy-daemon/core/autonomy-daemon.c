@@ -494,11 +494,11 @@ int main(int argc, char **argv)
     LOGX_DEBUG_MSG("Memory protection system initialized successfully");
     
     DEBUG_TRACE_ENTER();
-    DEBUG_TRACE_INFO("Starting Telia Autonomy Network Management Daemon");
+    DEBUG_TRACE_INFO("Starting Autonomy Network Management Daemon");
     
     // Display version and build information
     LOGX_INFO_MSG("========================================");
-    LOGX_INFO_MSG("Telia Autonomy Network Management Daemon");
+    LOGX_INFO_MSG("Autonomy Network Management Daemon");
     LOGX_INFO_MSG("========================================");
     LOGX_INFO_MSG("%s", autonomy_daemon_get_build_info_string());
     LOGX_INFO_MSG("========================================");
