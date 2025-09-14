@@ -14,6 +14,7 @@ int autonomy_status(struct ubus_context *uctx, struct ubus_object *obj,
                     struct ubus_request_data *req, const char *method,
                     struct blob_attr *msg)
 {
+    LOGX_DEBUG_MSG("autonomy_status UBUS method called");
     struct blob_buf bb = {0};
 
     blob_buf_init(&bb, 0);
@@ -31,6 +32,7 @@ int autonomy_health(struct ubus_context *uctx, struct ubus_object *obj,
                     struct ubus_request_data *req, const char *method,
                     struct blob_attr *msg)
 {
+    LOGX_DEBUG_MSG("autonomy_health UBUS method called");
     struct blob_buf bb = {0};
 
     blob_buf_init(&bb, 0);
@@ -129,6 +131,7 @@ int autonomy_log_status(struct ubus_context *uctx, struct ubus_object *obj,
                         struct ubus_request_data *req, const char *method,
                         struct blob_attr *msg)
 {
+    LOGX_DEBUG_MSG("autonomy_log_status UBUS method called");
     struct blob_buf bb = {0};
     const char *log_level_str = "info";
     
@@ -156,6 +159,7 @@ int autonomy_config_status(struct ubus_context *uctx, struct ubus_object *obj,
                            struct ubus_request_data *req, const char *method,
                            struct blob_attr *msg)
 {
+    LOGX_DEBUG_MSG("autonomy_config_status UBUS method called");
     struct blob_buf bb = {0};
 
     blob_buf_init(&bb, 0);
