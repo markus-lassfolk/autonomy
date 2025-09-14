@@ -69,13 +69,13 @@ static int check_network_connectivity(void) {
 
 // Safe function to count active network interfaces
 static int count_active_interfaces(void) {
-    // flawfinder: ignore - /proc/net/dev is a safe system file, not user-controlled
+    // flawfinder  ignore - /proc/net/dev is a safe system file, not user-controlled
     FILE *fp = fopen("/proc/net/dev", "r");
     if (!fp) {
         return 0;
     }
     
-    // flawfinder: ignore - buffer size sufficient for /proc/net/dev lines
+    // flawfinder  ignore - buffer size sufficient for /proc/net/dev lines
     char line[256];
     int count = 0;
     
@@ -97,13 +97,13 @@ static int count_active_interfaces(void) {
 
 // Safe function to get total network interfaces
 static int count_total_interfaces(void) {
-    // flawfinder: ignore - /proc/net/dev is a safe system file, not user-controlled
+    // flawfinder  ignore - /proc/net/dev is a safe system file, not user-controlled
     FILE *fp = fopen("/proc/net/dev", "r");
     if (!fp) {
         return 0;
     }
     
-    // flawfinder: ignore - buffer size sufficient for /proc/net/dev lines
+    // flawfinder  ignore - buffer size sufficient for /proc/net/dev lines
     char line[256];
     int count = 0;
     
@@ -125,13 +125,13 @@ static int count_total_interfaces(void) {
 
 // Safe function to get available disk space in KB
 static long get_available_disk_space_kb(void) {
-    // flawfinder: ignore - /proc/mounts is a safe system file, not user-controlled
+    // flawfinder  ignore - /proc/mounts is a safe system file, not user-controlled
     FILE *fp = fopen("/proc/mounts", "r");
     if (!fp) {
         return 0;
     }
     
-    // flawfinder: ignore - buffer size sufficient for /proc/mounts lines
+    // flawfinder  ignore - buffer size sufficient for /proc/mounts lines
     char line[512];
     long available_kb = 0;
     
@@ -139,12 +139,12 @@ static long get_available_disk_space_kb(void) {
     while (fgets(line, sizeof(line), fp)) {
         if (strstr(line, " / ") != NULL) {
             // Parse mount info to get device
-            // flawfinder: ignore - buffer sizes sufficient for mount info parsing
-            char device[256];  // flawfinder: ignore - buffer size sufficient for device name
-            char mountpoint[256];  // flawfinder: ignore - buffer size sufficient for mount point
-            char fstype[64];  // flawfinder: ignore - buffer size sufficient for filesystem type
+            // flawfinder  ignore - buffer sizes sufficient for mount info parsing
+            char device[256];  // flawfinder  ignore - buffer size sufficient for device name
+            char mountpoint[256];  // flawfinder  ignore - buffer size sufficient for mount point
+            char fstype[64];  // flawfinder  ignore - buffer size sufficient for filesystem type
             
-            // flawfinder: ignore - format string is safe with proper size limits
+            // flawfinder  ignore - format string is safe with proper size limits
             if (sscanf(line, "%255s %255s %63s", device, mountpoint, fstype) == 3) {
                 // Use statvfs to get disk space info
                 struct statvfs vfs;
