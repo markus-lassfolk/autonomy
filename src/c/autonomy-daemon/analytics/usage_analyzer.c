@@ -308,8 +308,8 @@ void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_coun
             safe_strncpy(patterns[pattern_count].pattern, "consistent_low_usage", sizeof(patterns[pattern_count].pattern));
             patterns[pattern_count].confidence = confidence;
             safe_strncpy(patterns[pattern_count].description, 
-                         "Consistently low bandwidth usage throughout the day", 
-                         sizeof(patterns[pattern_count].description));
+                             "Consistently low bandwidth usage throughout the day", 
+                             sizeof(patterns[pattern_count].description));
             pattern_count++;
         }
     }
