@@ -49,9 +49,16 @@ static int ml_monitor_collect_data_sources(ml_monitor_t *monitor, ml_observation
 
 // Initialize default configuration
 void ml_monitor_config_init_defaults(ml_monitor_config_t *config) {
-    if (!config) return;
+    if (!config) {
+        LOGX_ERROR_MSG("ml_monitor_config_init_defaults: config parameter is NULL");
+        return;
+    }
+    
+    LOGX_DEBUG_MSG("ml_monitor_config_init_defaults: config pointer: %p", config);
+    LOGX_DEBUG_MSG("ml_monitor_config_init_defaults: sizeof(ml_monitor_config_t): %zu", sizeof(ml_monitor_config_t));
     
     memset(config, 0, sizeof(ml_monitor_config_t));
+    LOGX_DEBUG_MSG("ml_monitor_config_init_defaults: memset completed");
     
     // Core ML settings
     config->enabled = true;
@@ -81,6 +88,7 @@ void ml_monitor_config_init_defaults(ml_monitor_config_t *config) {
     config->memory_limit_kb = 1024;
     
     // Storage settings
+    LOGX_DEBUG_MSG("ml_monitor_config_init_defaults: setting storage_path");
     safe_strncpy(config->storage_path, "/var/lib/autonomy/ml_monitor.dat", sizeof(config->storage_path));
     config->use_memory_mapped_storage = true;
     config->storage_sync_interval_minutes = 5;
@@ -88,7 +96,9 @@ void ml_monitor_config_init_defaults(ml_monitor_config_t *config) {
     // Debug settings
     config->debug_logging_enabled = false;
     config->save_raw_observations = false;
+    LOGX_DEBUG_MSG("ml_monitor_config_init_defaults: setting debug_log_path");
     safe_strncpy(config->debug_log_path, "/tmp/ml_monitor_debug.log", sizeof(config->debug_log_path));
+    LOGX_DEBUG_MSG("ml_monitor_config_init_defaults: completed successfully");
 }
 
 // Note: ml_monitor_load_config_from_uci is implemented in ml_monitor_uci.c (more feature-complete)

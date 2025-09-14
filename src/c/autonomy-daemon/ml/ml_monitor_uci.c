@@ -83,12 +83,18 @@ static bool uci_get_bool_option(struct uci_context *ctx, struct uci_section *s, 
 
 // Load ML monitor configuration from UCI
 int ml_monitor_load_config_from_uci(ml_monitor_config_t *config) {
-    if (!config) return ML_MONITOR_ERROR_INVALID_PARAM;
+    if (!config) {
+        LOGX_ERROR_MSG("ml_monitor_load_config_from_uci: config parameter is NULL");
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
     
     LOGX_INFO_MSG("Loading ML monitor configuration from UCI");
+    LOGX_DEBUG_MSG("ml_monitor_load_config_from_uci: config pointer: %p", config);
     
     // Initialize with defaults first
+    LOGX_DEBUG_MSG("ml_monitor_load_config_from_uci: calling ml_monitor_config_init_defaults");
     ml_monitor_config_init_defaults(config);
+    LOGX_DEBUG_MSG("ml_monitor_load_config_from_uci: ml_monitor_config_init_defaults completed");
     
     struct uci_context *ctx = uci_alloc_context();
     if (!ctx) {
