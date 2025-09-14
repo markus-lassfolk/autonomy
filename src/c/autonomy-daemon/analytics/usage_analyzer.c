@@ -286,8 +286,8 @@ void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_coun
                 safe_strncpy(patterns[pattern_count].pattern, "business_hours_peak", sizeof(patterns[pattern_count].pattern));
                 patterns[pattern_count].confidence = confidence;
                 safe_strncpy(patterns[pattern_count].description, 
-                       "High bandwidth usage during business hours (9 AM - 5 PM)", 
-                       sizeof(patterns[pattern_count].description));
+                             "High bandwidth usage during business hours (9 AM - 5 PM)", 
+                             sizeof(patterns[pattern_count].description));
                 pattern_count++;
             }
         }
@@ -308,8 +308,8 @@ void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_coun
             safe_strncpy(patterns[pattern_count].pattern, "consistent_low_usage", sizeof(patterns[pattern_count].pattern));
             patterns[pattern_count].confidence = confidence;
             safe_strncpy(patterns[pattern_count].description, 
-                   "Consistently low bandwidth usage throughout the day", 
-                   sizeof(patterns[pattern_count].description));
+                         "Consistently low bandwidth usage throughout the day", 
+                         sizeof(patterns[pattern_count].description));
             pattern_count++;
         }
     }
@@ -335,8 +335,8 @@ void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_coun
                 safe_strncpy(patterns[pattern_count].pattern, "evening_surge", sizeof(patterns[pattern_count].pattern));
                 patterns[pattern_count].confidence = confidence;
                 safe_strncpy(patterns[pattern_count].description, 
-                       "Bandwidth usage surge during evening hours (6 PM - 10 PM)", 
-                       sizeof(patterns[pattern_count].description));
+                             "Bandwidth usage surge during evening hours (6 PM - 10 PM)", 
+                             sizeof(patterns[pattern_count].description));
                 pattern_count++;
             }
         }
@@ -369,8 +369,8 @@ void calculate_usage_patterns(const telemetry_sample_t* samples, int sample_coun
                 safe_strncpy(patterns[pattern_count].pattern, "weekday_weekend_diff", sizeof(patterns[pattern_count].pattern));
                 patterns[pattern_count].confidence = fmin(1.0, difference / 100.0);
                 safe_strncpy(patterns[pattern_count].description, 
-                       "Significant difference between weekday and weekend usage patterns", 
-                       sizeof(patterns[pattern_count].description));
+                             "Significant difference between weekday and weekend usage patterns", 
+                             sizeof(patterns[pattern_count].description));
                 pattern_count++;
             }
         }
