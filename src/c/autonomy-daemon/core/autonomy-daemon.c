@@ -69,6 +69,7 @@ autonomy_config_t g_config = {
     .min_gps_accuracy = 10.0,
     .starlink_check_interval = 60,
     .starlink_health_monitoring = true,
+    .starlink_enabled = false,  // Disabled by default - enable when Starlink device is available
     .starlink_host = "192.168.100.1",
     .starlink_port = 9200,
     .starlink_timeout = 10,
@@ -556,8 +557,22 @@ static void health_timer_callback(struct uloop_timeout *t) {
 static void starlink_timer_callback(struct uloop_timeout *t) {
     LOGX_INFO_MSG("Starlink timer callback - checking Starlink status");
     
-    // Placeholder Starlink monitoring - will be implemented when Starlink module is ready
-    LOGX_INFO_MSG("Starlink stats: enabled=true, running=true, requests=5, errors=3, last_success=1757847123");
+    if (g_config.starlink_enabled) {
+        // Try to get real Starlink data
+        starlink_grpc_collector_stats_t stats;
+        if (starlink_grpc_collector_get_stats(&stats) == AUTONOMY_SUCCESS) {
+            LOGX_INFO_MSG("Starlink real data: enabled=true, running=%s, requests=%d, errors=%d, last_success=%ld", 
+                         stats.thread_running ? "true" : "false",
+                         stats.total_requests, stats.total_errors, stats.last_successful_collection);
+        } else {
+            LOGX_WARN_MSG("Starlink data collection failed - showing placeholder data");
+            LOGX_INFO_MSG("Starlink placeholder: enabled=true, running=false, requests=0, errors=0, last_success=0");
+        }
+    } else {
+        // Show placeholder data when Starlink is disabled
+        LOGX_INFO_MSG("Starlink disabled: enabled=false, running=false, requests=0, errors=0, last_success=0");
+        LOGX_INFO_MSG("To enable Starlink monitoring, set starlink_enabled=true in configuration");
+    }
     
     // Reschedule timer for next check (30 seconds)
     uloop_timeout_set(t, 30000);
@@ -798,24 +813,31 @@ int main(int argc, char **argv)
         LOGX_WARN_MSG("Starlink tracking module initialization failed (check credentials)");
     }
 
-    // Initialize Starlink gRPC collector
-    if (starlink_grpc_collector_init() == AUTONOMY_SUCCESS) {
-        LOGX_INFO_MSG("Starlink gRPC collector initialized successfully");
+    // Initialize Starlink gRPC collector (only if enabled)
+    if (g_config.starlink_enabled) {
+        LOGX_INFO_MSG("Starlink monitoring is enabled, initializing gRPC collector...");
         
-        // Enable Starlink gRPC collector thread with comprehensive error handling and logging
-        LOGX_INFO_MSG("Attempting to start Starlink gRPC collector thread...");
-        LOGX_DEBUG_MSG("Starlink gRPC collector configuration: host=%s, port=%d, timeout=%d", 
-                      g_starlink_grpc_daemon_config.host ? g_starlink_grpc_daemon_config.host : "NULL",
-                      g_starlink_grpc_daemon_config.port,
-                      g_starlink_grpc_daemon_config.timeout);
-        
-        if (starlink_grpc_collector_start() == AUTONOMY_SUCCESS) {
-            LOGX_INFO_MSG("Starlink gRPC collector thread started successfully");
+        if (starlink_grpc_collector_init() == AUTONOMY_SUCCESS) {
+            LOGX_INFO_MSG("Starlink gRPC collector initialized successfully");
+            
+            // Enable Starlink gRPC collector thread with comprehensive error handling and logging
+            LOGX_INFO_MSG("Attempting to start Starlink gRPC collector thread...");
+            LOGX_DEBUG_MSG("Starlink gRPC collector configuration: host=%s, port=%d, timeout=%d", 
+                          g_starlink_grpc_daemon_config.host ? g_starlink_grpc_daemon_config.host : "NULL",
+                          g_starlink_grpc_daemon_config.port,
+                          g_starlink_grpc_daemon_config.timeout);
+            
+            if (starlink_grpc_collector_start() == AUTONOMY_SUCCESS) {
+                LOGX_INFO_MSG("Starlink gRPC collector thread started successfully");
+            } else {
+                LOGX_ERROR_MSG("Failed to start Starlink gRPC collector thread - will continue without Starlink monitoring");
+            }
         } else {
-            LOGX_ERROR_MSG("Failed to start Starlink gRPC collector thread - will continue without Starlink monitoring");
+            LOGX_WARN_MSG("Starlink gRPC collector initialization failed");
         }
     } else {
-        LOGX_WARN_MSG("Starlink gRPC collector initialization failed");
+        LOGX_INFO_MSG("Starlink monitoring is disabled - skipping Starlink gRPC collector initialization");
+        LOGX_INFO_MSG("To enable Starlink monitoring, set starlink_enabled=true in configuration");
     }
 
     // Initialize ML monitoring module - TEMPORARILY DISABLED FOR DEBUGGING

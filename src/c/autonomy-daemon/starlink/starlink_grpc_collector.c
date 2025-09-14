@@ -172,6 +172,22 @@ int starlink_grpc_collector_stop(void) {
 void starlink_grpc_collector_thread(void* arg) {
     LOGX_INFO_MSG("Starlink gRPC collector thread started");
     
+    // Test connection to Starlink device before starting main loop
+    LOGX_INFO_MSG("Testing connection to Starlink device at %s:%d...", 
+                  g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
+    
+    starlink_observation_t test_observation = {0};
+    int connection_test = starlink_grpc_daemon_get_observation(&test_observation);
+    
+    if (connection_test != 0) {
+        LOGX_WARN_MSG("Starlink device connection test failed - device may be offline or unreachable");
+        LOGX_WARN_MSG("Starlink collector will continue running but may not collect data successfully");
+        LOGX_WARN_MSG("To fix: ensure Starlink device is online and accessible at %s:%d", 
+                      g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
+    } else {
+        LOGX_INFO_MSG("Starlink device connection test successful - ready to collect data");
+    }
+    
     int iteration_count = 0;
     
     while (g_starlink_grpc_collector.thread_running) {

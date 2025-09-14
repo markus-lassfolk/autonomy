@@ -411,13 +411,52 @@ int starlink_grpc_comprehensive_call(
     curl_easy_cleanup(curl);
     
     if (res != CURLE_OK) {
-        LOGX_ERROR_MSG("Curl request failed: %s (error code %d)", curl_easy_strerror(res), res);
-        snprintf(response->error_message, sizeof(response->error_message), 
-                "curl error: %s", curl_easy_strerror(res));
+        LOGX_WARN_MSG("Starlink gRPC request failed: %s (error code %d)", curl_easy_strerror(res), res);
+        
+        // Handle specific curl errors gracefully
+        if (res == CURLE_COULDNT_CONNECT || res == CURLE_COULDNT_RESOLVE_HOST) {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Cannot connect to Starlink device at %s:%d - device may be offline or unreachable", 
+                    g_starlink_grpc_config.host, g_starlink_grpc_config.port);
+            LOGX_WARN_MSG("Starlink device unreachable: %s", response->error_message);
+        } else if (res == CURLE_OPERATION_TIMEDOUT) {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Starlink device timeout after %d seconds", g_starlink_grpc_config.timeout);
+            LOGX_WARN_MSG("Starlink device timeout: %s", response->error_message);
+        } else {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Starlink gRPC error: %s", curl_easy_strerror(res));
+            LOGX_ERROR_MSG("Starlink gRPC error: %s", response->error_message);
+        }
+        
+        response->success = false;
         return -1;
     }
     
     LOGX_DEBUG_MSG("Curl request successful, HTTP status: %d", response->http_status);
+    
+    // Handle HTTP error responses gracefully
+    if (response->http_status >= 400) {
+        LOGX_WARN_MSG("Starlink gRPC HTTP error: %d", response->http_status);
+        
+        if (response->http_status == 404) {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Starlink device not found at %s:%d - check if device is online and accessible", 
+                    g_starlink_grpc_config.host, g_starlink_grpc_config.port);
+        } else if (response->http_status == 403) {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Access denied by Starlink device - authentication may be required");
+        } else if (response->http_status >= 500) {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Starlink device server error: HTTP %d", response->http_status);
+        } else {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Starlink gRPC HTTP error: %d", response->http_status);
+        }
+        
+        response->success = false;
+        return -1;
+    }
     
     // Print header with new utility function
     char status_line[64];
