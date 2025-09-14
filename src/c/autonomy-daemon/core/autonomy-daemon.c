@@ -484,10 +484,10 @@ static const struct ubus_method autonomy_methods[] = {
 };
 
 static struct ubus_object_type autonomy_obj_type = 
-    UBUS_OBJECT_TYPE("autonomy", autonomy_methods);
+    UBUS_OBJECT_TYPE("autonomy_daemon", autonomy_methods);
 
 static struct ubus_object autonomy_obj = {
-    .name = "autonomy",
+    .name = "autonomy_daemon",
     .type = &autonomy_obj_type,
     .methods = autonomy_methods,
     .n_methods = ARRAY_SIZE(autonomy_methods),
