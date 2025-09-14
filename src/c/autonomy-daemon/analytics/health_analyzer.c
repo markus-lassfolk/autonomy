@@ -438,19 +438,24 @@ static void update_health_status(member_health_t* health)
     }
 
     if (health->score >= g_health_analyzer.thresholds.excellent) {
-        safe_strncpy(health->status, "excellent", sizeof(health->status));
+        strncpy(health->status, "excellent", sizeof(health->status) - 1);
+        health->status[sizeof(health->status) - 1] = '\0';
         health->is_healthy = true;
     } else if (health->score >= g_health_analyzer.thresholds.good) {
-        safe_strncpy(health->status, "good", sizeof(health->status));
+        strncpy(health->status, "good", sizeof(health->status) - 1);
+        health->status[sizeof(health->status) - 1] = '\0';
         health->is_healthy = true;
     } else if (health->score >= g_health_analyzer.thresholds.fair) {
-        safe_strncpy(health->status, "fair", sizeof(health->status));
+        strncpy(health->status, "fair", sizeof(health->status) - 1);
+        health->status[sizeof(health->status) - 1] = '\0';
         health->is_healthy = false;
     } else if (health->score >= g_health_analyzer.thresholds.poor) {
-        safe_strncpy(health->status, "poor", sizeof(health->status));
+        strncpy(health->status, "poor", sizeof(health->status) - 1);
+        health->status[sizeof(health->status) - 1] = '\0';
         health->is_healthy = false;
     } else {
-        safe_strncpy(health->status, "critical", sizeof(health->status));
+        strncpy(health->status, "critical", sizeof(health->status) - 1);
+        health->status[sizeof(health->status) - 1] = '\0';
         health->is_healthy = false;
     }
 }
@@ -485,8 +490,10 @@ static int detect_member_issues(const char* member_name, health_issue_t* issues,
     if (health.score < g_health_analyzer.thresholds.fair && issue_count < max_issues) {
         health_issue_t* issue = &issues[issue_count++];
         safe_strncpy(issue->member_name, member_name, sizeof(issue->member_name));
-        safe_strncpy(issue->type, "performance", sizeof(issue->type));
-        safe_strncpy(issue->severity, health.score < g_health_analyzer.thresholds.poor ? "critical" : "warning", sizeof(issue->severity));
+        strncpy(issue->type, "performance", sizeof(issue->type) - 1);
+        issue->type[sizeof(issue->type) - 1] = '\0';
+        strncpy(issue->severity, health.score < g_health_analyzer.thresholds.poor ? "critical" : "warning", sizeof(issue->severity) - 1);
+        issue->severity[sizeof(issue->severity) - 1] = '\0';
         snprintf(issue->description, sizeof(issue->description),
                 "Low health score: %.1f%% for member %s", health.score, member_name);
         issue->detected_at = now;
@@ -498,8 +505,10 @@ static int detect_member_issues(const char* member_name, health_issue_t* issues,
     if (health.score < g_health_analyzer.thresholds.poor && issue_count < max_issues) {
         health_issue_t* issue = &issues[issue_count++];
         safe_strncpy(issue->member_name, member_name, sizeof(issue->member_name));
-        safe_strncpy(issue->type, "connectivity", sizeof(issue->type));
-        safe_strncpy(issue->severity, "critical", sizeof(issue->severity));
+        strncpy(issue->type, "connectivity", sizeof(issue->type) - 1);
+        issue->type[sizeof(issue->type) - 1] = '\0';
+        strncpy(issue->severity, "critical", sizeof(issue->severity) - 1);
+        issue->severity[sizeof(issue->severity) - 1] = '\0';
         snprintf(issue->description, sizeof(issue->description),
                 "Possible connectivity issues detected for member %s", member_name);
         issue->detected_at = now;

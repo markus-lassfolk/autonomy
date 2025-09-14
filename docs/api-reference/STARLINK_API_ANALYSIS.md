@@ -12,9 +12,11 @@
 Based on the official Starlink gRPC API documentation, the following methods are available:
 
 ### 1. `get_status` - Real-time Status Information
-**Most Important for Failover Monitoring**
+
+#### Most Important for Failover Monitoring
 
 **Available Data:**
+
 ```json
 {
   "dishGetStatus": {
@@ -63,9 +65,11 @@ Based on the official Starlink gRPC API documentation, the following methods are
 ```
 
 ### 2. `get_history` - Historical Performance Data
-**Useful for Trend Analysis & Predictive Failover**
+
+#### Useful for Trend Analysis & Predictive Failover
 
 **Available Data:**
+
 ```json
 {
   "dishGetHistory": {
@@ -82,9 +86,11 @@ Based on the official Starlink gRPC API documentation, the following methods are
 ```
 
 ### 3. `get_device_info` - Static Device Information
-**Device Identification & Capabilities**
+
+#### Device Identification & Capabilities
 
 **Available Data:**
+
 ```json
 {
   "deviceInfo": {
@@ -102,9 +108,11 @@ Based on the official Starlink gRPC API documentation, the following methods are
 ```
 
 ### 4. `get_location` - GPS Position Data
-**Location Services & Geofencing**
+
+#### Location Services & Geofencing
 
 **Available Data:**
+
 ```json
 {
   "getLocation": {
@@ -124,9 +132,11 @@ Based on the official Starlink gRPC API documentation, the following methods are
 ```
 
 ### 5. `get_diagnostics` - Hardware Health & Alerts
-**Critical for Predictive Failover**
+
+#### Critical for Predictive Failover
 
 **Available Data:**
+
 ```json
 {
   "dishGetDiagnostics": {
@@ -153,14 +163,16 @@ Based on the official Starlink gRPC API documentation, the following methods are
 
 ## 🔥 Key Metrics for Failover Decision Engine
 
-### Primary Failover Triggers:
+### Primary Failover Triggers
+
 1. **`popPingLatencyMs`** - Network latency (threshold: >150ms)
 2. **`popPingDropRate`** - Packet loss (threshold: >5%)
 3. **`snr`** - Signal quality (threshold: <8dB)
 4. **`isSnrAboveNoiseFloor`** - Signal health (false = critical)
 5. **`fractionObstructed`** - Sky view blockage (threshold: >10%)
 
-### Predictive Failover Indicators:
+### Predictive Failover Indicators
+
 1. **`isSnrPersistentlyLow`** - Degrading signal trend
 2. **`thermalThrottle`** - Performance limiting due to heat
 3. **`thermalShutdown`** - Imminent shutdown due to overheating
@@ -168,7 +180,8 @@ Based on the official Starlink gRPC API documentation, the following methods are
 5. **`softwareUpdateReboot`** - Update reboot pending
 6. **Historical trends** from `get_history` arrays
 
-### Health Monitoring:
+### Health Monitoring
+
 1. **`uptimeS`** - Service availability
 2. **`gpsValid`** - Position lock status
 3. **`currentlyObstructed`** - Real-time blockage
@@ -177,17 +190,20 @@ Based on the official Starlink gRPC API documentation, the following methods are
 
 ## 🚧 Implementation Challenges
 
-### ✅ What Works:
+### ✅ What Works
+
 - TCP connection to `192.168.100.1:9200`
 - gRPC server is responding
 - API structure is well-documented
 
-### ❌ Current Issues:
+### ❌ Current Issues
+
 - **Protobuf Encoding Required**: Cannot send JSON to gRPC service
 - **No Generated Code**: Need proper `.proto` files and code generation
 - **Message Structure**: Must construct proper protobuf messages
 
-### 🔧 Solutions:
+### 🔧 Solutions
+
 1. **Install grpcurl**: Use external tool for testing
 2. **Generate Protobuf Code**: Create proper Go structs from `.proto` files
 3. **Use grpc-gateway**: If available, use HTTP/JSON proxy
@@ -195,7 +211,8 @@ Based on the official Starlink gRPC API documentation, the following methods are
 
 ## 📊 Data Collection Strategy
 
-### For Production Failover System:
+### For Production Failover System
+
 ```go
 // Priority 1: Critical metrics (every 10-30 seconds)
 - popPingLatencyMs
@@ -229,9 +246,13 @@ Based on the official Starlink gRPC API documentation, the following methods are
 ## 💡 Alternative Approaches
 
 If gRPC proves too complex:
+
 1. **Use grpcurl subprocess** calls from Go
 2. **Implement grpc-web proxy** for HTTP access
 3. **Use reflection API** to discover message structure
 4. **Monitor via dish mobile app API** (if available)
 
-The Starlink API provides extremely rich data for intelligent failover decisions, including both real-time metrics and predictive indicators. Once the gRPC implementation is working, this will be one of the most sophisticated failover triggers available.
+The Starlink API provides extremely rich data for intelligent failover decisions,
+including both real-time metrics and predictive indicators. Once the gRPC
+implementation is working, this will be one of the most sophisticated failover
+triggers available.

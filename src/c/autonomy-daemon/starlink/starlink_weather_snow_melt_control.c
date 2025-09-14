@@ -59,11 +59,11 @@ int starlink_weather_snow_melt_control_init(void) {
         return AUTONOMY_SUCCESS;
     }
     
-    printf("INFO: Initializing weather-based snow melt control system\n");
+    LOGX_INFO_MSG("Initializing weather-based snow melt control system");
     
     // Initialize mutex
     if (pthread_mutex_init(&g_snow_melt_control.mutex, NULL) != 0) {
-        printf("ERROR: Failed to initialize snow melt control mutex\n");
+        LOGX_ERROR_MSG("Failed to initialize snow melt control mutex");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
@@ -83,7 +83,7 @@ int starlink_weather_snow_melt_control_init(void) {
     // Load configuration from UCI
     int config_result = starlink_weather_snow_melt_control_load_uci_config();
     if (config_result != AUTONOMY_SUCCESS) {
-        printf("WARN: Failed to load UCI configuration, using defaults\n");
+        LOGX_WARN_MSG("Failed to load UCI configuration, using defaults");
     }
     
     // Initialize external APIs if not already done
@@ -111,7 +111,7 @@ int starlink_weather_snow_melt_control_init(void) {
     g_snow_melt_control.initialized = true;
     g_snow_melt_control.weather_cache_valid_minutes = 10; // Cache weather data for 10 minutes
     
-    printf("INFO: Weather-based snow melt control system initialized successfully\n");
+    LOGX_INFO_MSG("Weather-based snow melt control system initialized successfully");
     printf("INFO: Temperature threshold: %.1fC, Check interval: %d minutes\n",
            g_snow_melt_control.config.temperature_threshold_celsius,
            g_snow_melt_control.config.weather_check_interval_minutes);
@@ -125,7 +125,7 @@ void starlink_weather_snow_melt_control_cleanup(void) {
         return;
     }
     
-    printf("INFO: Cleaning up weather-based snow melt control system\n");
+    LOGX_INFO_MSG("Cleaning up weather-based snow melt control system");
     
     // Stop control thread if running
     if (g_snow_melt_control.thread_running) {
@@ -140,7 +140,7 @@ void starlink_weather_snow_melt_control_cleanup(void) {
     
     g_snow_melt_control.initialized = false;
     
-    printf("INFO: Weather-based snow melt control system cleaned up\n");
+    LOGX_INFO_MSG("Weather-based snow melt control system cleaned up");
 }
 
 // Get current snow melt control status
@@ -182,7 +182,7 @@ int starlink_weather_snow_melt_control_set_config(const starlink_weather_snow_me
     // Save to UCI
     starlink_weather_snow_melt_control_save_uci_config();
     
-    printf("INFO: Snow melt control configuration updated\n");
+    LOGX_INFO_MSG("Snow melt control configuration updated");
     
     return AUTONOMY_SUCCESS;
 }
@@ -266,7 +266,7 @@ int starlink_weather_snow_melt_control_force_update(void) {
         return AUTONOMY_SUCCESS; // System disabled, nothing to do
     }
     
-    printf("INFO: Forcing weather check and snow melt mode update\n");
+    LOGX_INFO_MSG("Forcing weather check and snow melt mode update");
     
     // Get current GPS location
     gps_data_t gps_data;
@@ -360,7 +360,7 @@ int starlink_weather_snow_melt_control_reset_statistics(void) {
     memset(&g_snow_melt_control.stats, 0, sizeof(starlink_weather_snow_melt_stats_t));
     pthread_mutex_unlock(&g_snow_melt_control.mutex);
     
-    printf("INFO: Snow melt control statistics reset\n");
+    LOGX_INFO_MSG("Snow melt control statistics reset");
     
     return AUTONOMY_SUCCESS;
 }
@@ -646,7 +646,7 @@ int starlink_weather_snow_melt_control_load_uci_config(void) {
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    printf("INFO: Loading snow melt control configuration from UCI\n");
+    LOGX_INFO_MSG("Loading snow melt control configuration from UCI");
     
     // Load configuration values
     char value[256];
@@ -705,7 +705,7 @@ int starlink_weather_snow_melt_control_load_uci_config(void) {
         g_snow_melt_control.config.debug_mode = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
     }
     
-    printf("INFO: Snow melt control configuration loaded from UCI\n");
+    LOGX_INFO_MSG("Snow melt control configuration loaded from UCI");
     
     return AUTONOMY_SUCCESS;
 }
@@ -717,11 +717,11 @@ int starlink_weather_snow_melt_control_save_uci_config(void) {
     }
     
     if (!uci_ctx) {
-        printf("ERROR: UCI context not available\n");
+        LOGX_ERROR_MSG("UCI context not available");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
-    printf("INFO: Saving snow melt control configuration to UCI\n");
+    LOGX_INFO_MSG("Saving snow melt control configuration to UCI");
     
     int ret = AUTONOMY_SUCCESS;
     char value_buf[64];
@@ -780,14 +780,14 @@ int starlink_weather_snow_melt_control_save_uci_config(void) {
     // Commit changes if all sets succeeded
     if (ret == AUTONOMY_SUCCESS) {
         if (ucix_logged_commit(uci_ctx, "autonomy") == 0) {
-            printf("INFO: Snow melt control configuration saved to UCI\n");
+            LOGX_INFO_MSG("Snow melt control configuration saved to UCI");
             return AUTONOMY_SUCCESS;
         } else {
-            printf("ERROR: Failed to commit snow melt control configuration to UCI\n");
+            LOGX_ERROR_MSG("Failed to commit snow melt control configuration to UCI");
             return AUTONOMY_ERROR_SYSTEM;
         }
     } else {
-        printf("ERROR: Failed to set one or more snow melt control configuration values in UCI\n");
+        LOGX_ERROR_MSG("Failed to set one or more snow melt control configuration values in UCI");
         return ret;
     }
 }

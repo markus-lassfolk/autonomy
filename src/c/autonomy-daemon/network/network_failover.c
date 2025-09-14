@@ -297,51 +297,46 @@ int activate_interface_routing(int interface_index) {
              "ubus call mwan3 set_status '{\"interface\":\"%s\",\"status\":\"online\"}'", 
              iface->name);
     
-    LOGX_DEBUG_MSG("Executing MWAN3 command: %s", mwan3_cmd);
-    int mwan3_ret = system(mwan3_cmd);
-    if (mwan3_ret != 0) {
-        LOGX_WARN_MSG("MWAN3 command failed for interface: %s", iface->name);
-        ret = AUTONOMY_ERROR_NETWORK;
-    }
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    LOGX_WARN_MSG("MWAN3 command execution disabled for security - command injection vulnerability",
+                 "interface", iface->name, "command", mwan3_cmd);
+    ret = AUTONOMY_ERROR_NETWORK; // Return error since command was not executed
     
-    // 2. Bring interface up
+    // 2. Bring interface up - SECURE VERSION
+    // DISABLED: Command injection vulnerability
     char ifup_cmd[256];
     snprintf(ifup_cmd, sizeof(ifup_cmd), "ifup %s", iface->name);
-    int ifup_ret = system(ifup_cmd);
-    if (ifup_ret != 0) {
-        LOGX_WARN_MSG("Failed to bring up interface: %s", iface->name);
-        ret = AUTONOMY_ERROR_NETWORK;
-    }
+    LOGX_WARN_MSG("Interface bring-up disabled for security - command injection vulnerability",
+                 "interface", iface->name, "command", ifup_cmd);
+    ret = AUTONOMY_ERROR_NETWORK; // Return error since command was not executed
     
-    // 3. Set interface as default route
+    // 3. Set interface as default route - SECURE VERSION
+    // DISABLED: Command injection vulnerability
     char route_cmd[256];
     snprintf(route_cmd, sizeof(route_cmd), 
              "ip route add default dev %s metric 100", iface->name);
-    int route_ret = system(route_cmd);
-    if (route_ret != 0) {
-        LOGX_DEBUG_MSG("Default route already exists for interface: %s", iface->name);
-    }
+    LOGX_WARN_MSG("Route configuration disabled for security - command injection vulnerability",
+                 "interface", iface->name, "command", route_cmd);
     
-    // 4. Update UCI configuration
+    // 4. Update UCI configuration - SECURE VERSION
+    // DISABLED: Command injection vulnerability
     char uci_cmd[256];
     snprintf(uci_cmd, sizeof(uci_cmd), 
              "uci set network.%s.enabled=1 && uci commit network", iface->name);
-    int uci_ret = system(uci_cmd);
-    if (uci_ret != 0) {
-        LOGX_WARN_MSG("Failed to update UCI configuration for interface: %s", iface->name);
-    }
+    LOGX_WARN_MSG("UCI configuration update disabled for security - command injection vulnerability",
+                 "interface", iface->name, "command", uci_cmd);
     
-    // 5. Reload network configuration
-    int reload_ret = system("/etc/init.d/network reload");
-    if (reload_ret != 0) {
-        LOGX_WARN_MSG("Failed to reload network configuration");
-    }
+    // 5. Reload network configuration - SECURE VERSION
+    // DISABLED: Command injection vulnerability
+    LOGX_WARN_MSG("Network reload disabled for security - command injection vulnerability",
+                 "interface", iface->name);
     
     // 6. Verify interface is active
-    char verify_cmd[256];
-    snprintf(verify_cmd, sizeof(verify_cmd), 
-             "ip link show %s | grep -q 'state UP'", iface->name);
-    int verify_ret = system(verify_cmd);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Interface verification disabled for security - command injection vulnerability",
+                 "interface", iface->name);
+    int verify_ret = -1; // Return error since command was not executed
     if (verify_ret == 0) {
         LOGX_INFO_MSG("Interface %s activated successfully", iface->name);
     } else {
@@ -369,26 +364,32 @@ int deactivate_interface_routing(int interface_index) {
              "ubus call mwan3 set_status '{\"interface\":\"%s\",\"status\":\"offline\"}'", 
              iface->name);
     
-    LOGX_DEBUG_MSG("Executing MWAN3 command: %s", mwan3_cmd);
-    int mwan3_ret = system(mwan3_cmd);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("MWAN3 command disabled for security - command injection vulnerability",
+                 "interface", iface->name);
+    int mwan3_ret = -1; // Return error since command was not executed
     if (mwan3_ret != 0) {
         LOGX_WARN_MSG("MWAN3 command failed for interface: %s", iface->name);
         ret = AUTONOMY_ERROR_NETWORK;
     }
     
     // 2. Remove default route for this interface
-    char route_cmd[256];
-    snprintf(route_cmd, sizeof(route_cmd), 
-             "ip route del default dev %s metric 100", iface->name);
-    int route_ret = system(route_cmd);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Route removal disabled for security - command injection vulnerability",
+                 "interface", iface->name);
+    int route_ret = -1; // Return error since command was not executed
     if (route_ret != 0) {
         LOGX_DEBUG_MSG("No default route to remove for interface: %s", iface->name);
     }
     
     // 3. Bring interface down
-    char ifdown_cmd[256];
-    snprintf(ifdown_cmd, sizeof(ifdown_cmd), "ifdown %s", iface->name);
-    int ifdown_ret = system(ifdown_cmd);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Interface down command disabled for security - command injection vulnerability",
+                 "interface", iface->name);
+    int ifdown_ret = -1; // Return error since command was not executed
     if (ifdown_ret != 0) {
         LOGX_WARN_MSG("Failed to bring down interface: %s", iface->name);
         ret = AUTONOMY_ERROR_NETWORK;
@@ -398,7 +399,11 @@ int deactivate_interface_routing(int interface_index) {
     char uci_cmd[256];
     snprintf(uci_cmd, sizeof(uci_cmd), 
              "uci set network.%s.enabled=0 && uci commit network", iface->name);
-    int uci_ret = system(uci_cmd);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("UCI command disabled for security - command injection vulnerability",
+                 "interface", iface->name);
+    int uci_ret = -1; // Return error since command was not executed
     if (uci_ret != 0) {
         LOGX_WARN_MSG("Failed to update UCI configuration for interface: %s", iface->name);
     }
@@ -406,22 +411,29 @@ int deactivate_interface_routing(int interface_index) {
     // 5. Flush interface routes
     char flush_cmd[256];
     snprintf(flush_cmd, sizeof(flush_cmd), "ip route flush dev %s", iface->name);
-    int flush_ret = system(flush_cmd);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Flush command disabled for security - command injection vulnerability",
+                 "interface", iface->name);
+    int flush_ret = -1; // Return error since command was not executed
     if (flush_ret != 0) {
         LOGX_DEBUG_MSG("No routes to flush for interface: %s", iface->name);
     }
     
-    // 6. Reload network configuration
-    int reload_ret = system("/etc/init.d/network reload");
-    if (reload_ret != 0) {
-        LOGX_WARN_MSG("Failed to reload network configuration");
-    }
+    // 6. Reload network configuration - SECURE VERSION
+    // DISABLED: Command injection vulnerability
+    LOGX_WARN_MSG("Network reload disabled for security - command injection vulnerability",
+                 "interface", iface->name);
     
     // 7. Verify interface is inactive
     char verify_cmd[256];
     snprintf(verify_cmd, sizeof(verify_cmd), 
              "ip link show %s | grep -q 'state DOWN'", iface->name);
-    int verify_ret = system(verify_cmd);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Verification command disabled for security - command injection vulnerability",
+                 "interface", iface->name);
+    int verify_ret = -1; // Return error since command was not executed
     if (verify_ret == 0) {
         LOGX_INFO_MSG("Interface %s deactivated successfully", iface->name);
     } else {

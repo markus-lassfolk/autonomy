@@ -5,13 +5,15 @@
 The initial Native OpenWrt setup was failing because it was trying to import **disk images** (`.img` files) directly into WSL, but WSL requires **rootfs tarballs** (`.tar.gz` files).
 
 ### Error Messages
-```
+
+```text
 bsdtar: Error opening archive: Unrecognized archive format
 Importing the distribution failed.
 Error code: Wsl/Service/RegisterDistro/WSL_E_IMPORT_FAILED
 ```
 
 ### Root Cause
+
 - **Disk images** (`.img` files) are for flashing to hardware
 - **WSL import** requires rootfs archives (`.tar.gz` files)
 - The script was downloading and trying to import the wrong file format
@@ -19,7 +21,9 @@ Error code: Wsl/Service/RegisterDistro/WSL_E_IMPORT_FAILED
 ## Solution Implemented
 
 ### 1. Updated Available Images
+
 **Before:**
+
 ```powershell
 $AvailableImages = @{
     "generic-ext4-combined-efi" = "Full system with ext4 filesystem and EFI support"
@@ -29,6 +33,7 @@ $AvailableImages = @{
 ```
 
 **After:**
+
 ```powershell
 $AvailableImages = @{
     "rootfs.tar.gz" = "Root filesystem as tar.gz archive (WSL Compatible - RECOMMENDED)"
@@ -36,51 +41,62 @@ $AvailableImages = @{
 ```
 
 ### 2. Updated Download Process
+
 **Before:**
+
 ```powershell
 # Downloaded .img.gz files and tried to extract them
 $ImageUrl = "https://downloads.openwrt.org/releases/$OpenWrtVersion/targets/x86/64/openwrt-$OpenWrtVersion-x86-64-$ImageType.img.gz"
 ```
 
 **After:**
+
 ```powershell
 # Downloads .tar.gz files directly
 $ImageUrl = "https://downloads.openwrt.org/releases/$OpenWrtVersion/targets/x86/64/openwrt-$OpenWrtVersion-x86-64-$ImageType"
 ```
 
 ### 3. Simplified Import Process
+
 **Before:**
+
 - Download `.img.gz` file
 - Extract to `.img` file
 - Try to import (fails)
 
 **After:**
+
 - Download `.tar.gz` file directly
 - Import directly into WSL (works)
 
 ## OpenWrt File Types Explained
 
 ### For Hardware (Not WSL Compatible)
+
 - **`generic-squashfs-combined-efi.img.gz`** - Disk image for EFI systems
 - **`generic-ext4-combined.img.gz`** - Disk image for legacy BIOS
 - **`generic-kernel.bin`** - Kernel binary for hardware
 
 ### For WSL (Compatible)
+
 - **`rootfs.tar.gz`** - Root filesystem archive for containers/WSL
 
 ## Updated Script Features
 
 ### 1. Correct File Format
+
 - Only uses WSL-compatible `rootfs.tar.gz` files
 - No more extraction needed
 - Direct import into WSL
 
 ### 2. Better Error Messages
+
 - Clear explanations about file format requirements
 - Helpful notes about WSL compatibility
 - Guidance on correct usage
 
 ### 3. Educational Information
+
 - Explains difference between disk images and rootfs
 - Shows why certain formats work with WSL
 - Provides context for users
@@ -88,13 +104,15 @@ $ImageUrl = "https://downloads.openwrt.org/releases/$OpenWrtVersion/targets/x86/
 ## Testing Results
 
 ### Before Fix
-```
+
+```text
 Error code: Wsl/Service/RegisterDistro/WSL_E_IMPORT_FAILED
 There is no distribution with the supplied name.
 ```
 
 ### After Fix
-```
+
+```text
 [SUCCESS] OpenWrt rootfs downloaded successfully!
 [SUCCESS] OpenWrt imported into WSL successfully!
 [SUCCESS] Native OpenWrt environment openwrt-native created successfully!

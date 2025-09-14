@@ -20,11 +20,13 @@ OpenCellID is a community-driven database of cell tower locations. Users contrib
 ### 1. Mobile App Contribution
 
 #### Android
+
 - **OpenCellID App**: Available on Google Play Store
 - **Features**: Automatic background collection, manual submissions
 - **Settings**: Configure collection frequency and data usage
 
 #### iOS
+
 - **OpenCellID App**: Available on App Store
 - **Features**: Location sharing, cell tower data collection
 - **Privacy**: Respects iOS location permissions
@@ -32,6 +34,7 @@ OpenCellID is a community-driven database of cell tower locations. Users contrib
 ### 2. Web-Based Contribution
 
 Visit [OpenCellID.org](https://opencellid.org) to:
+
 - Submit individual cell tower locations
 - View coverage maps
 - Download data for offline use
@@ -60,6 +63,7 @@ curl -X POST "https://opencellid.org/cell/add" \
 ## Data Quality Guidelines
 
 ### Required Fields
+
 - **MCC**: Mobile Country Code (3 digits)
 - **MNC**: Mobile Network Code (2-3 digits)
 - **LAC**: Location Area Code
@@ -68,6 +72,7 @@ curl -X POST "https://opencellid.org/cell/add" \
 - **Accuracy**: Location accuracy in meters
 
 ### Best Practices
+
 - **Accuracy**: Submit locations with accuracy < 100m when possible
 - **Verification**: Use multiple GPS readings for validation
 - **Coverage**: Focus on areas with poor existing coverage
@@ -78,12 +83,14 @@ curl -X POST "https://opencellid.org/cell/add" \
 The Autonomy system uses OpenCellID as part of its multi-source location strategy:
 
 ### Location Hierarchy
+
 1. **GPS**: Primary location source (most accurate)
 2. **Starlink**: Secondary source (when GPS unavailable)
 3. **OpenCellID**: Tertiary source (cell tower fallback)
 4. **Google/Other APIs**: Quaternary source (paid services)
 
 ### Configuration
+
 ```yaml
 # Example Autonomy configuration
 location:
@@ -101,11 +108,13 @@ location:
 ## Privacy and Ethics
 
 ### Data Privacy
+
 - **Anonymization**: Cell tower data doesn't identify individuals
 - **Consent**: Always obtain user consent for data collection
 - **Transparency**: Clearly explain what data is collected and why
 
 ### Ethical Guidelines
+
 - **Respect**: Don't submit false or malicious data
 - **Accuracy**: Ensure data quality and validity
 - **Community**: Contribute positively to the ecosystem
@@ -115,21 +124,25 @@ location:
 ### Common Issues
 
 #### API Rate Limits
+
 - **Problem**: Too many requests to OpenCellID API
 - **Solution**: Implement exponential backoff and caching
 - **Code**: Use Autonomy's built-in rate limiting
 
 #### Poor Coverage
+
 - **Problem**: Limited cell tower data in your area
 - **Solution**: Focus on contributing to underserved areas
 - **Strategy**: Use mobile apps for background collection
 
 #### Data Accuracy
+
 - **Problem**: Inaccurate location data
 - **Solution**: Use high-accuracy GPS and multiple readings
 - **Validation**: Cross-reference with other location sources
 
 ### Support Resources
+
 - **Documentation**: [OpenCellID Wiki](https://wiki.opencellid.org)
 - **Community**: [OpenCellID Forum](https://forum.opencellid.org)
 - **API Docs**: [OpenCellID API Reference](https://opencellid.org/api)
@@ -137,12 +150,15 @@ location:
 ## Monitoring and Metrics
 
 ### Contribution Tracking
+
 Track your contributions through:
+
 - **OpenCellID Dashboard**: View your submission history
 - **Autonomy Logs**: Monitor API usage and success rates
 - **Coverage Maps**: Visualize your impact on global coverage
 
 ### Performance Metrics
+
 - **API Response Time**: Monitor OpenCellID API performance
 - **Cache Hit Rate**: Track local cache effectiveness
 - **Fallback Usage**: Measure reliance on OpenCellID vs other sources
@@ -150,12 +166,14 @@ Track your contributions through:
 ## Future Enhancements
 
 ### Planned Features
+
 - **Automatic Contribution**: Background data collection
 - **Quality Scoring**: AI-powered data validation
 - **Coverage Analysis**: Identify areas needing contributions
 - **Community Challenges**: Gamified contribution incentives
 
 ### Integration Improvements
+
 - **Real-time Updates**: Live data synchronization
 - **Offline Support**: Local database caching
 - **Multi-source Fusion**: Combine with other location databases

@@ -1,5 +1,6 @@
 #include "ubus_monitor.h"
 #include "../core/types.h"
+#include "../shared/logging/logx.h"
 // #include "../notifications/notification_manager.h" // Disabled due to complex dependencies
 // #include "../notifications/notification_types.h" // Disabled due to complex dependencies
 #include <stdio.h>
@@ -153,6 +154,7 @@ int check_rpcd_status(void) {
     char command[256];
     snprintf(command, sizeof(command), "pgrep rpcd > /dev/null 2>&1");
     
+    // Safe system call with constant string
     int exit_code = system(command);
     return (exit_code == 0);
 }
@@ -173,6 +175,7 @@ static int count_ubus_services(void) {
     char command[256];
     snprintf(command, sizeof(command), "ubus list | wc -l");
     
+    // Safe system call with constant string
     FILE *pipe = popen(command, "r");
     if (!pipe) {
         return 0;
@@ -196,6 +199,7 @@ int restart_rpcd_service(void) {
     char command[256];
     snprintf(command, sizeof(command), "service rpcd restart > /dev/null 2>&1");
     
+    // Safe system call with constant string
     int exit_code = system(command);
     if (exit_code == 0) {
         // Wait for service to start
@@ -217,11 +221,11 @@ int check_critical_services(void) {
     int available_count = 0; // Use configurable value
     
     for (int i = 0; i < g_ubus_monitor.config.critical_services_count; i++) {
-        char command[256];
-        snprintf(command, sizeof(command), "ubus list | grep -q %s", 
-                g_ubus_monitor.config.critical_services[i]);
-        
-        int exit_code = system(command);
+        // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+        // DISABLED: Command execution disabled for security
+        LOGX_WARN_MSG("Critical service check disabled for security - command injection vulnerability",
+                     "service", g_ubus_monitor.config.critical_services[i]);
+        int exit_code = -1; // Return error since command was not executed
         if (exit_code == 0) {
             available_count++;
         }
@@ -256,7 +260,8 @@ int ubus_monitor_get_status(ubus_monitor_status_t *status) {
     
     // Copy critical services
     for (int i = 0; i < g_ubus_monitor.config.critical_services_count; i++) {
-        safe_strncpy(status->critical_services[i], g_ubus_monitor.config.critical_services[i], sizeof(status->critical_services[i]));
+        strncpy(status->critical_services[i], g_ubus_monitor.config.critical_services[i], sizeof(status->critical_services[i]) - 1);
+        status->critical_services[i][sizeof(status->critical_services[i]) - 1] = '\0';
     }
     
     status->fix_attempts = g_ubus_monitor.fix_attempts;

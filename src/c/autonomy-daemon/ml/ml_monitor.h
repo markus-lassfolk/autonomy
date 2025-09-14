@@ -40,14 +40,14 @@ typedef struct {
     int memory_limit_kb;                    // Memory limit in KB (1024 default)
     
     // Storage settings
-    char storage_path[256];                 // Path to ML data storage (/tmp/ml_monitor.dat default)
+    char storage_path[256];                 // Path to ML data storage (/tmp/ml_monitor.dat default) - bounded by struct // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
     bool use_memory_mapped_storage;         // Use memory-mapped files (true default)
     int storage_sync_interval_minutes;      // Storage sync interval (5 default)
     
     // Debug settings
     bool debug_logging_enabled;             // Enable debug logging
     bool save_raw_observations;             // Save raw observations for debugging
-    char debug_log_path[256];               // Debug log path
+    char debug_log_path[256];               // Debug log path - bounded by struct // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
     
 } ml_monitor_config_t;
 

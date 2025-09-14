@@ -88,7 +88,8 @@ int gps_comprehensive_init(const gps_comprehensive_config_t* config) {
     // Initialize source health tracking
     for (int i = 0; i < GPS_SOURCE_MAX; i++) {
         g_gps_collector.source_health[i].source_type = (gps_source_type_t)i;
-        safe_strncpy(g_gps_collector.source_health[i].source_name, gps_source_type_to_string((gps_source_type_t)i), sizeof(g_gps_collector.source_health[i].source_name));
+        strncpy(g_gps_collector.source_health[i].source_name, gps_source_type_to_string((gps_source_type_t)i), sizeof(g_gps_collector.source_health[i].source_name) - 1);
+        g_gps_collector.source_health[i].source_name[sizeof(g_gps_collector.source_health[i].source_name) - 1] = '\0';
         g_gps_collector.source_health[i].first_seen = time(NULL);
         g_gps_collector.source_health[i].health_score = 1.0; // Start with full health
         g_gps_collector.source_health[i].best_accuracy = 999999.0; // Initialize to very high value
@@ -330,7 +331,8 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
     
     memset(data, 0, sizeof(standardized_gps_data_t));
     data->source_type = source_type;
-    safe_strncpy(data->source, gps_source_type_to_string(source_type), sizeof(data->source));
+    strncpy(data->source, gps_source_type_to_string(source_type), sizeof(data->source) - 1);
+    data->source[sizeof(data->source) - 1] = '\0';
     data->collection_time = time(NULL);
     
     time_t start_time = time(NULL);
@@ -342,7 +344,7 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
             gps_data_t rutos_data;
             
             // Try to get GPS data from RUTOS GPS daemon
-            // flawfinder: ignore - popen for system GPS data query
+            // Safe system call with constant string
             FILE *gps_fp = popen("gpspipe -w -n 1 2>/dev/null", "r");
             if (gps_fp) {
                 // flawfinder: ignore - buffer size sufficient for GPS line handling
@@ -389,7 +391,7 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
             
             // If GPS parsing failed, try alternative method
             if (!rutos_data.valid) {
-                // flawfinder: ignore - popen for system UBUS GPS query
+                // Safe system call with constant string
                 FILE *alt_fp = popen("ubus call gps get_status 2>/dev/null", "r");
                 if (alt_fp) {
                     // flawfinder: ignore - buffer size sufficient for UBUS line handling
@@ -439,7 +441,8 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                 data->timestamp = rutos_data.timestamp;
                 data->valid = true;
                 data->source_priority = 1; // Highest priority
-                safe_strncpy(data->raw_nmea, "RUTOS NMEA data", sizeof(data->raw_nmea));
+                strncpy(data->raw_nmea, "RUTOS NMEA data", sizeof(data->raw_nmea) - 1);
+                data->raw_nmea[sizeof(data->raw_nmea) - 1] = '\0';
                 
                 ret = AUTONOMY_SUCCESS;
             }
@@ -498,7 +501,8 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                 data->timestamp = starlink_data.timestamp;
                 data->valid = true;
                 data->source_priority = 2; // Second priority
-                safe_strncpy(data->raw_json, "Starlink GPS JSON", sizeof(data->raw_json));
+                strncpy(data->raw_json, "Starlink GPS JSON", sizeof(data->raw_json) - 1);
+                data->raw_json[sizeof(data->raw_json) - 1] = '\0';
                 
                 ret = AUTONOMY_SUCCESS;
             }
@@ -520,7 +524,8 @@ static int collect_from_source(gps_source_type_t source_type, standardized_gps_d
                     data->timestamp = triangulation.calculation_time;
                     data->valid = true;
                     data->source_priority = 3; // Third priority
-                    safe_strncpy(data->raw_json, triangulation.method, sizeof(data->raw_json));
+                    strncpy(data->raw_json, triangulation.method, sizeof(data->raw_json) - 1);
+                    data->raw_json[sizeof(data->raw_json) - 1] = '\0';
                     
                     ret = AUTONOMY_SUCCESS;
                 }
@@ -579,7 +584,8 @@ static int perform_multi_source_fusion(gps_fusion_result_t* result) {
     double weighted_accuracy = 0.0;
     double total_confidence = 0.0;
     
-    safe_strncpy(result->fusion_method, "weighted_fusion", sizeof(result->fusion_method));
+    strncpy(result->fusion_method, "weighted_fusion", sizeof(result->fusion_method) - 1);
+    result->fusion_method[sizeof(result->fusion_method) - 1] = '\0';
     
     // Collect data from all available sources
     for (int i = 0; i < GPS_SOURCE_MAX; i++) {
@@ -623,15 +629,18 @@ static int perform_multi_source_fusion(gps_fusion_result_t* result) {
     }
     
     if (sources_collected == 0) {
-        safe_strncpy(result->fusion_reasoning, "no_sources_available", sizeof(result->fusion_reasoning));
+        strncpy(result->fusion_reasoning, "no_sources_available", sizeof(result->fusion_reasoning) - 1);
+        result->fusion_reasoning[sizeof(result->fusion_reasoning) - 1] = '\0';
         return AUTONOMY_ERROR_NOT_FOUND;
     }
     
     if (sources_collected == 1) {
         // Single source, no fusion needed
         result->fused_data = result->source_data[0];
-        safe_strncpy(result->fusion_method, "single_source", sizeof(result->fusion_method));
-        safe_strncpy(result->fusion_reasoning, "only_one_source_available", sizeof(result->fusion_reasoning));
+        strncpy(result->fusion_method, "single_source", sizeof(result->fusion_method) - 1);
+        result->fusion_method[sizeof(result->fusion_method) - 1] = '\0';
+        strncpy(result->fusion_reasoning, "only_one_source_available", sizeof(result->fusion_reasoning) - 1);
+        result->fusion_reasoning[sizeof(result->fusion_reasoning) - 1] = '\0';
     } else {
         // Multi-source fusion
         if (total_weight > 0) {
@@ -656,13 +665,15 @@ static int perform_multi_source_fusion(gps_fusion_result_t* result) {
             result->fused_data.accuracy /= sources_collected;
             result->fused_data.confidence = total_confidence / sources_collected;
             
-            safe_strncpy(result->fusion_method, "simple_average", sizeof(result->fusion_method));
+            strncpy(result->fusion_method, "simple_average", sizeof(result->fusion_method) - 1);
+            result->fusion_method[sizeof(result->fusion_method) - 1] = '\0';
         }
         
         // Set fusion metadata
         result->fused_data.timestamp = time(NULL);
         result->fused_data.valid = true;
-        safe_strncpy(result->fused_data.source, "fused", sizeof(result->fused_data.source));
+        strncpy(result->fused_data.source, "fused", sizeof(result->fused_data.source) - 1);
+        result->fused_data.source[sizeof(result->fused_data.source) - 1] = '\0';
         result->fused_data.source_type = GPS_SOURCE_MAX; // Special value for fused data
         
         snprintf(result->fusion_reasoning, sizeof(result->fusion_reasoning),

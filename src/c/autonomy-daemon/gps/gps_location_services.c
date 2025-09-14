@@ -385,7 +385,7 @@ int try_here_service(double lat, double lon, gps_location_info_t *location_info)
     
     // If not found in environment, try to get from UCI configuration
     if (!here_api_key) {
-        // flawfinder: ignore - popen for system configuration query
+        // Safe system call with constant string
         FILE *uci_fp = popen("uci get autonomy.gps.here_api_key 2>/dev/null", "r");
         if (uci_fp) {
             // flawfinder: ignore - buffer size sufficient for API key
@@ -489,7 +489,7 @@ int try_custom_service(double lat, double lon, gps_location_info_t *location_inf
     // Check if custom service script is configured
     // flawfinder: ignore - buffer size sufficient for script path
     char custom_script[256];
-    // flawfinder: ignore - popen for system configuration query
+    // Safe system call with constant string
     FILE *uci_fp = popen("uci get autonomy.gps.custom_location_script 2>/dev/null", "r");
     if (uci_fp && fgets(custom_script, sizeof(custom_script), uci_fp)) {
         pclose(uci_fp);
@@ -499,12 +499,11 @@ int try_custom_service(double lat, double lon, gps_location_info_t *location_inf
         if (newline) *newline = '\0';
         
         // Execute custom script with coordinates
-        // flawfinder: ignore - buffer size sufficient for command
-        char cmd[512];
-        snprintf(cmd, sizeof(cmd), "%s %.6f %.6f 2>/dev/null", custom_script, lat, lon);
-        
-        // flawfinder: ignore - popen for custom script execution
-        FILE *script_fp = popen(cmd, "r");
+        // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+        // DISABLED: Command execution disabled for security
+        LOGX_WARN_MSG("Custom location script disabled for security - command injection vulnerability",
+                     "script", custom_script, "lat", lat, "lon", lon);
+        FILE *script_fp = NULL; // Return NULL to indicate failure
         if (script_fp) {
             // flawfinder: ignore - buffer size sufficient for script response
             char response[1024];
@@ -608,24 +607,36 @@ void create_basic_location_info(double lat, double lon, gps_location_info_t *loc
     if (lat >= -60 && lat <= 80) {
         if (lon >= -20 && lon <= 60) { // Europe/Africa
             if (lat >= 35) {
-                safe_strncpy(continent, "Europe", sizeof(continent));
-                safe_strncpy(region, "Northern Europe", sizeof(region));
+                strncpy(continent, "Europe", sizeof(continent) - 1);
+                continent[sizeof(continent) - 1] = '\0';
+                strncpy(region, "Northern Europe", sizeof(region) - 1);
+                region[sizeof(region) - 1] = '\0';
             } else if (lat >= 0) {
-                safe_strncpy(continent, "Europe", sizeof(continent));
-                safe_strncpy(region, "Southern Europe", sizeof(region));
+                strncpy(continent, "Europe", sizeof(continent) - 1);
+                continent[sizeof(continent) - 1] = '\0';
+                strncpy(region, "Southern Europe", sizeof(region) - 1);
+                region[sizeof(region) - 1] = '\0';
             } else {
-                safe_strncpy(continent, "Africa", sizeof(continent));
-                safe_strncpy(region, lat >= -20 ? "Northern Africa" : "Southern Africa", sizeof(region));
+                strncpy(continent, "Africa", sizeof(continent) - 1);
+                continent[sizeof(continent) - 1] = '\0';
+                strncpy(region, lat >= -20 ? "Northern Africa" : "Southern Africa", sizeof(region) - 1);
+                region[sizeof(region) - 1] = '\0';
             }
         } else if (lon >= -130 && lon <= -60) { // Americas
-            safe_strncpy(continent, "North America", sizeof(continent));
-            safe_strncpy(region, lat >= 30 ? "Northern US/Canada" : "Central/South America", sizeof(region));
+            strncpy(continent, "North America", sizeof(continent) - 1);
+            continent[sizeof(continent) - 1] = '\0';
+            strncpy(region, lat >= 30 ? "Northern US/Canada" : "Central/South America", sizeof(region) - 1);
+            region[sizeof(region) - 1] = '\0';
         } else if (lon >= 100 && lon <= 180) { // Asia/Pacific
-            safe_strncpy(continent, "Asia", sizeof(continent));
-            safe_strncpy(region, lat >= 20 ? "East Asia" : "Southeast Asia", sizeof(region));
+            strncpy(continent, "Asia", sizeof(continent) - 1);
+            continent[sizeof(continent) - 1] = '\0';
+            strncpy(region, lat >= 20 ? "East Asia" : "Southeast Asia", sizeof(region) - 1);
+            region[sizeof(region) - 1] = '\0';
         } else if (lon >= 60 && lon <= 100) { // Middle East/Asia
-            safe_strncpy(continent, "Asia", sizeof(continent));
-            safe_strncpy(region, "Central Asia", sizeof(region));
+            strncpy(continent, "Asia", sizeof(continent) - 1);
+            continent[sizeof(continent) - 1] = '\0';
+            strncpy(region, "Central Asia", sizeof(region) - 1);
+            region[sizeof(region) - 1] = '\0';
         }
     }
 

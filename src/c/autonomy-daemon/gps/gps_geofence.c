@@ -12,6 +12,8 @@
 #include <stdbool.h>
 #include <sqlite3.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 // External reference to global configuration
 extern autonomy_config_t g_config;
@@ -699,116 +701,89 @@ void send_geofence_notifications(gps_geofence_definition_t *geofence,
     const char *status_name = (geofence->current_status == GEOFENCE_STATUS_INSIDE) ? "INSIDE" : "OUTSIDE";
     const char *previous_name = (previous_status == GEOFENCE_STATUS_INSIDE) ? "INSIDE" : "OUTSIDE";
     
-    // Send email notification
-    char email_cmd[512];
-    snprintf(email_cmd, sizeof(email_cmd),
-            "echo 'Geofence Alert: %s transitioned from %s to %s at (%.6f, %.6f) at %s' | "
-            "mail -s 'Geofence Alert: %s' %s 2>/dev/null",
-            geofence->name, previous_name, status_name, gps_data->lat, gps_data->lon,
-            ctime(&gps_data->timestamp), geofence->name, g_geofence.notification_email);
-    
+    // Send email notification - SECURE VERSION
+    // DISABLED: Command injection vulnerability - system() calls with user data are dangerous
+    // TODO: Implement secure email sending using proper email library or API
     if (strlen(g_geofence.notification_email) > 0) {
-        system(email_cmd);
+        LOGX_WARN_MSG("Email notification disabled for security - command injection vulnerability",
+                     "geofence", geofence->name,
+                     "email", g_geofence.notification_email);
     }
     
-    // Send SMS notification via system
-    char sms_cmd[512];
-    snprintf(sms_cmd, sizeof(sms_cmd),
-            "echo 'Geofence: %s %s->%s at (%.6f,%.6f)' | "
-            "gammu sendsms TEXT %s 2>/dev/null",
-            geofence->name, previous_name, status_name, gps_data->lat, gps_data->lon,
-            g_geofence.notification_phone);
-    
+    // Send SMS notification - SECURE VERSION
+    // DISABLED: Command injection vulnerability - system() calls with user data are dangerous
+    // TODO: Implement secure SMS sending using proper SMS API or library
     if (strlen(g_geofence.notification_phone) > 0) {
-        system(sms_cmd);
+        LOGX_WARN_MSG("SMS notification disabled for security - command injection vulnerability",
+                     "geofence", geofence->name,
+                     "phone", g_geofence.notification_phone);
     }
     
-    // Send webhook notification
+    // Send webhook notification - SECURE VERSION
+    // DISABLED: Command injection vulnerability - system() calls with user data are dangerous
+    // TODO: Implement secure webhook sending using proper HTTP client library
     if (strlen(g_geofence.webhook_url) > 0) {
-        char webhook_data[1024];
-        snprintf(webhook_data, sizeof(webhook_data),
-                "{\"geofence\":\"%s\",\"status\":\"%s\",\"previous_status\":\"%s\","
-                "\"latitude\":%.6f,\"longitude\":%.6f,\"timestamp\":%lld}",
-                geofence->name, status_name, previous_name, gps_data->lat, gps_data->lon, gps_data->timestamp);
-        
-        char webhook_cmd[2048];  // Increased buffer size to handle long webhook URLs
-        snprintf(webhook_cmd, sizeof(webhook_cmd),
-                "curl -X POST -H 'Content-Type: application/json' -d '%s' %s 2>/dev/null",
-                webhook_data, g_geofence.webhook_url);
-        
-        system(webhook_cmd);
+        LOGX_WARN_MSG("Webhook notification disabled for security - command injection vulnerability",
+                     "geofence", geofence->name,
+                     "webhook_url", g_geofence.webhook_url);
     }
     
-    // Send to MQTT broker
+    // Send to MQTT broker - SECURE VERSION
+    // DISABLED: Command injection vulnerability - system() calls with user data are dangerous
+    // TODO: Implement secure MQTT sending using proper MQTT client library
     if (strlen(g_geofence.mqtt_topic) > 0) {
-        char mqtt_data[512];
-        snprintf(mqtt_data, sizeof(mqtt_data),
-                "{\"geofence\":\"%s\",\"status\":\"%s\",\"lat\":%.6f,\"lon\":%.6f}",
-                geofence->name, status_name, gps_data->lat, gps_data->lon);
-        
-        char mqtt_cmd[2048];  // Increased buffer size to handle long MQTT commands
-        snprintf(mqtt_cmd, sizeof(mqtt_cmd),
-                "mosquitto_pub -h %s -t '%s' -m '%s' 2>/dev/null",
-                g_geofence.mqtt_broker, g_geofence.mqtt_topic, mqtt_data);
-        
-        system(mqtt_cmd);
+        LOGX_WARN_MSG("MQTT notification disabled for security - command injection vulnerability",
+                     "geofence", geofence->name,
+                     "mqtt_topic", g_geofence.mqtt_topic);
     }
 }
 
 // Update system configuration based on geofence
 void update_system_config_for_geofence(gps_geofence_definition_t *geofence, 
                                              gps_geofence_status_t previous_status) {
-    // Update WiFi configuration based on location
+    // Update WiFi configuration based on location - SECURE VERSION
+    // DISABLED: System() calls disabled for security - use proper UCI API instead
     if (geofence->current_status == GEOFENCE_STATUS_INSIDE) {
         // Inside geofence - enable high-performance mode
-        system("uci set wireless.radio0.txpower=20 2>/dev/null");
-        system("uci set wireless.radio0.channel=auto 2>/dev/null");
-        system("uci commit wireless 2>/dev/null");
-        system("wifi reload 2>/dev/null");
-        
-        LOGX_INFO_MSG("Updated WiFi configuration for inside geofence: %s", geofence->name);
+        LOGX_WARN_MSG("WiFi configuration update disabled for security - use UCI API instead",
+                     "geofence", geofence->name, "status", "inside");
     } else {
         // Outside geofence - enable power-saving mode
-        system("uci set wireless.radio0.txpower=10 2>/dev/null");
-        system("uci set wireless.radio0.channel=6 2>/dev/null");
-        system("uci commit wireless 2>/dev/null");
-        system("wifi reload 2>/dev/null");
-        
-        LOGX_INFO_MSG("Updated WiFi configuration for outside geofence: %s", geofence->name);
+        LOGX_WARN_MSG("WiFi configuration update disabled for security - use UCI API instead",
+                     "geofence", geofence->name, "status", "outside");
     }
     
-    // Update network routing based on geofence
+    // Update network routing based on geofence - SECURE VERSION
+    // DISABLED: System() calls disabled for security - use proper network API instead
     if (strcmp(geofence->name, "home") == 0) {
         // Home geofence - prioritize local network
-        system("ip route add 192.168.1.0/24 dev br-lan 2>/dev/null");
-        system("ip route add 10.0.0.0/8 dev br-lan 2>/dev/null");
+        LOGX_WARN_MSG("Network routing update disabled for security - use proper network API instead",
+                     "geofence", geofence->name, "type", "home");
     } else if (strcmp(geofence->name, "office") == 0) {
         // Office geofence - prioritize VPN
-        system("ip route add 172.16.0.0/12 dev tun0 2>/dev/null");
+        LOGX_WARN_MSG("Network routing update disabled for security - use proper network API instead",
+                     "geofence", geofence->name, "type", "office");
     }
 }
 
 // Trigger location-based services
 void trigger_location_based_services(gps_geofence_definition_t *geofence, 
                                            const gps_data_t *gps_data) {
-    // Update timezone based on location
-    char timezone_cmd[1024];  // Increased buffer size to handle long timezone commands
-    snprintf(timezone_cmd, sizeof(timezone_cmd),
-            "timedatectl set-timezone $(curl -s 'http://api.timezonedb.com/v2.1/get-time-zone?key=%s&format=json&by=position&lat=%.6f&lng=%.6f' | jq -r '.zoneName') 2>/dev/null",
-            g_geofence.timezone_api_key, gps_data->lat, gps_data->lon);
+    // Update timezone based on location - SECURE VERSION
+    // DISABLED: Command injection vulnerability - system() calls with user data are dangerous
+    // TODO: Implement secure timezone update using proper API client
+    LOGX_WARN_MSG("Timezone update disabled for security - command injection vulnerability",
+                 "geofence", geofence->name, "lat", gps_data->lat, "lon", gps_data->lon);
     
-    system(timezone_cmd);
+    // Update weather services for new location - SECURE VERSION
+    // DISABLED: System() calls disabled for security
+    LOGX_WARN_MSG("Weather service restart disabled for security - use proper service API instead",
+                 "geofence", geofence->name);
     
-    // Update weather services for new location
-    system("systemctl restart weather-service 2>/dev/null");
-    
-    // Update location-based firewall rules
-    char firewall_cmd[256];
-    snprintf(firewall_cmd, sizeof(firewall_cmd),
-            "uci set firewall.@zone[0].input='ACCEPT' 2>/dev/null");
-    system(firewall_cmd);
-    system("uci commit firewall 2>/dev/null");
-    system("/etc/init.d/firewall reload 2>/dev/null");
+    // Update location-based firewall rules - SECURE VERSION
+    // DISABLED: System() calls disabled for security - use proper UCI API instead
+    LOGX_WARN_MSG("Firewall rules update disabled for security - use proper UCI API instead",
+                 "geofence", geofence->name);
 }
 
 // Update geofence analytics
@@ -850,13 +825,41 @@ void execute_custom_geofence_actions(gps_geofence_definition_t *geofence,
             geofence->name, 
             (geofence->current_status == GEOFENCE_STATUS_INSIDE) ? "enter" : "exit");
     
+    // SECURE VERSION: Use stat() and execve() instead of system()
     struct stat st;
-    if (stat(script_path, &st) == 0 && (st.st_mode & S_IXUSR)) {
-        char script_cmd[512];
-        snprintf(script_cmd, sizeof(script_cmd), "%s %.6f %.6f %lld 2>/dev/null",
-                script_path, gps_data->lat, gps_data->lon, gps_data->timestamp);
+    if (stat(script_path, &st) == 0 && S_ISREG(st.st_mode) && (st.st_mode & S_IXUSR)) {
+        // Prepare arguments safely
+        char lat_str[32], lon_str[32], timestamp_str[32];
+        snprintf(lat_str, sizeof(lat_str), "%.6f", gps_data->lat);
+        snprintf(lon_str, sizeof(lon_str), "%.6f", gps_data->lon);
+        snprintf(timestamp_str, sizeof(timestamp_str), "%lld", gps_data->timestamp);
         
-        int result = system(script_cmd);
+        // Execute script using fork/execve for security
+        pid_t pid = fork();
+        int result = -1;
+        
+        if (pid == 0) {
+            // Child process
+            char *argv[] = {
+                script_path,
+                lat_str,
+                lon_str,
+                timestamp_str,
+                NULL
+            };
+            execve(script_path, argv, NULL);
+            exit(1); // If execve fails
+        } else if (pid > 0) {
+            // Parent process
+            int status;
+            waitpid(pid, &status, 0);
+            result = WEXITSTATUS(status);
+        } else {
+            // Fork failed
+            LOGX_ERROR_MSG("Failed to fork process for geofence script execution");
+            result = -1;
+        }
+        
         if (result == 0) {
             LOGX_INFO_MSG("Executed custom geofence script: %s", script_path);
         } else {

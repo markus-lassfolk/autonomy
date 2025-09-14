@@ -29,12 +29,14 @@ This project and its participants are governed by our Code of Conduct. By partic
 ### Development Setup
 
 1. **Fork the repository**
+
    ```bash
    git clone https://github.com/your-username/autonomy.git
    cd autonomy
    ```
 
 2. **Set up the development environment**
+
    ```bash
    # Install dependencies
    go mod download
@@ -44,6 +46,7 @@ This project and its participants are governed by our Code of Conduct. By partic
    ```
 
 3. **Create a feature branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -170,7 +173,7 @@ For feature requests, include:
 
 Use conventional commit format:
 
-```
+```text
 type(scope): description
 
 [optional body]
@@ -179,6 +182,7 @@ type(scope): description
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes

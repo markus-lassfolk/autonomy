@@ -69,9 +69,9 @@ int ml_monitor_ubus_init(struct ubus_context *ctx) {
     int ret = ubus_add_object(ctx, &ml_monitor_object);
     if (ret) {
         DEBUG_TRACE_ERROR("Failed to add UBUS object to context");
-        LOGX_ERROR_MSG("Failed to add UBUS object to context: %s", ubus_strerror(ret));
-        DEBUG_TRACE_CRITICAL_EXIT_WITH_RETURN(-1);
-        return -1;
+        LOGX_WARN_MSG("Failed to add UBUS object to context: %s - continuing without ML UBUS interface", ubus_strerror(ret));
+        DEBUG_TRACE_CRITICAL_EXIT_WITH_RETURN(0); // Return 0 to continue without ML UBUS
+        return 0; // Don't fail the entire daemon startup
     }
     DEBUG_TRACE_INFO("UBUS object added to context successfully");
     

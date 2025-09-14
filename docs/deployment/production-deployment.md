@@ -158,7 +158,7 @@ The deployment script performs the following steps:
 
 The `scripts/monitoring-setup.sh` script configures comprehensive monitoring for autonomy.
 
-#### Basic Usage
+#### Monitoring Setup - Basic Usage
 
 ```bash
 # Setup complete monitoring
@@ -265,7 +265,7 @@ The `scripts/backup-recovery.sh` script provides comprehensive backup and disast
    - System architecture information
    - For binary updates
 
-#### Basic Usage
+#### Backup Recovery - Basic Usage
 
 ```bash
 # Create full backup
@@ -323,6 +323,7 @@ The script can set up automated daily backups:
 ### Recommended Deployment Process
 
 1. **Pre-Deployment Planning**
+
    ```bash
    # Review target system
    ./scripts/deploy-production.sh --host 192.168.1.1 --key ~/.ssh/id_rsa --dry-run
@@ -332,6 +333,7 @@ The script can set up automated daily backups:
    ```
 
 2. **Initial Deployment**
+
    ```bash
    # Deploy with full monitoring
    ./scripts/deploy-production.sh --host 192.168.1.1 --key ~/.ssh/id_rsa
@@ -341,6 +343,7 @@ The script can set up automated daily backups:
    ```
 
 3. **Configuration Setup**
+
    ```bash
    # Configure autonomy
    ssh -i ~/.ssh/id_rsa root@192.168.1.1 "autonomyctl config set interfaces.starlink.enabled true"
@@ -350,6 +353,7 @@ The script can set up automated daily backups:
    ```
 
 4. **Monitoring Verification**
+
    ```bash
    # Check monitoring setup
    ssh -i ~/.ssh/id_rsa root@192.168.1.1 "crontab -l | grep autonomy"
@@ -359,6 +363,7 @@ The script can set up automated daily backups:
    ```
 
 5. **Backup Verification**
+
    ```bash
    # Create initial backup
    ./scripts/backup-recovery.sh backup --host 192.168.1.1 --key ~/.ssh/id_rsa --type full
@@ -399,6 +404,7 @@ If deployment fails or issues arise:
 ### Common Deployment Issues
 
 1. **SSH Connection Failed**
+
    ```bash
    # Test SSH connectivity
    ssh -i ~/.ssh/id_rsa -o ConnectTimeout=10 root@192.168.1.1 "echo 'SSH OK'"
@@ -408,6 +414,7 @@ If deployment fails or issues arise:
    ```
 
 2. **Build Failed**
+
    ```bash
    # Check Go installation
    go version
@@ -417,6 +424,7 @@ If deployment fails or issues arise:
    ```
 
 3. **Service Won't Start**
+
    ```bash
    # Check service logs
    ssh -i ~/.ssh/id_rsa root@192.168.1.1 "logread | grep autonomy"
@@ -426,6 +434,7 @@ If deployment fails or issues arise:
    ```
 
 4. **ubus Interface Not Available**
+
    ```bash
    # Check ubus availability
    ssh -i ~/.ssh/id_rsa root@192.168.1.1 "ubus list | grep autonomy"
@@ -437,6 +446,7 @@ If deployment fails or issues arise:
 ### Monitoring Issues
 
 1. **Health Check Failing**
+
    ```bash
    # Run health check manually
    ssh -i ~/.ssh/id_rsa root@192.168.1.1 "/usr/local/bin/autonomy-health-check"
@@ -446,6 +456,7 @@ If deployment fails or issues arise:
    ```
 
 2. **Alerts Not Working**
+
    ```bash
    # Check alert configuration
    ssh -i ~/.ssh/id_rsa root@192.168.1.1 "cat /etc/autonomy/alerts.conf"
@@ -457,6 +468,7 @@ If deployment fails or issues arise:
 ### Recovery Issues
 
 1. **Backup Verification Failed**
+
    ```bash
    # Check backup file integrity
    ./scripts/backup-recovery.sh verify-backup /path/to/backup.tar.gz --host 192.168.1.1 --key ~/.ssh/id_rsa
@@ -466,6 +478,7 @@ If deployment fails or issues arise:
    ```
 
 2. **Recovery Failed**
+
    ```bash
    # Check recovery logs
    ssh -i ~/.ssh/id_rsa root@192.168.1.1 "tail -f /var/log/autonomy/recovery.log"
@@ -481,6 +494,7 @@ If deployment fails or issues arise:
 ### Regular Maintenance
 
 1. **Daily Checks**
+
    ```bash
    # Check service status
    ssh -i ~/.ssh/id_rsa root@192.168.1.1 "autonomyctl status"
@@ -490,6 +504,7 @@ If deployment fails or issues arise:
    ```
 
 2. **Weekly Maintenance**
+
    ```bash
    # Review backup status
    ./scripts/backup-recovery.sh list-backups --host 192.168.1.1 --key ~/.ssh/id_rsa
@@ -499,6 +514,7 @@ If deployment fails or issues arise:
    ```
 
 3. **Monthly Maintenance**
+
    ```bash
    # Test recovery procedure
    ./scripts/backup-recovery.sh test-recovery --host 192.168.1.1 --key ~/.ssh/id_rsa
@@ -510,6 +526,7 @@ If deployment fails or issues arise:
 ### Performance Tuning
 
 1. **Resource Optimization**
+
    ```bash
    # Check resource usage
    ssh -i ~/.ssh/id_rsa root@192.168.1.1 "top -bn1 | head -20"
@@ -519,6 +536,7 @@ If deployment fails or issues arise:
    ```
 
 2. **Monitoring Tuning**
+
    ```bash
    # Adjust health check frequency
    ssh -i ~/.ssh/id_rsa root@192.168.1.1 "crontab -l | grep autonomy"
@@ -549,9 +567,12 @@ If deployment fails or issues arise:
 
 ## Conclusion
 
-This deployment guide provides comprehensive procedures for deploying autonomy in production environments. The automated scripts ensure consistent, reliable deployments with built-in safety features and disaster recovery capabilities.
+This deployment guide provides comprehensive procedures for deploying autonomy in
+production environments. The automated scripts ensure consistent, reliable deployments
+with built-in safety features and disaster recovery capabilities.
 
 For additional support, refer to:
+
 - [User Guide](USER_GUIDE.md) - Complete user documentation
 - [API Reference](API_REFERENCE.md) - Programmatic interfaces
 - [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues and solutions

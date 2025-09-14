@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../shared/logging/logx.h"
 
 // UBUS context will be passed as parameter to init/cleanup functions
 
@@ -73,10 +74,10 @@ static struct ubus_object starlink_weather_snow_melt_ubus_object = {
 
 // Initialize UBUS interface for weather-based snow melt control
 int starlink_weather_snow_melt_ubus_init(struct ubus_context *ctx) {
-    printf("INFO: Initializing UBUS interface for weather-based snow melt control\n");
+    LOGX_INFO_MSG("Initializing UBUS interface for weather-based snow melt control");
     
     if (!ctx) {
-        printf("ERROR: UBUS context not available\n");
+        LOGX_ERROR_MSG("UBUS context not available");
         return AUTONOMY_ERROR_NOT_INITIALIZED;
     }
     
@@ -87,20 +88,20 @@ int starlink_weather_snow_melt_ubus_init(struct ubus_context *ctx) {
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    printf("INFO: UBUS interface for weather-based snow melt control initialized successfully\n");
+    LOGX_INFO_MSG("UBUS interface for weather-based snow melt control initialized successfully");
     
     return AUTONOMY_SUCCESS;
 }
 
 // Cleanup UBUS interface for weather-based snow melt control
 void starlink_weather_snow_melt_ubus_cleanup(struct ubus_context *ctx) {
-    printf("INFO: Cleaning up UBUS interface for weather-based snow melt control\n");
+    LOGX_INFO_MSG("Cleaning up UBUS interface for weather-based snow melt control");
     
     if (ctx) {
         ubus_remove_object(ctx, &starlink_weather_snow_melt_ubus_object);
     }
     
-    printf("INFO: UBUS interface for weather-based snow melt control cleaned up\n");
+    LOGX_INFO_MSG("UBUS interface for weather-based snow melt control cleaned up");
 }
 
 // Helper function to convert snow melt mode string to enum

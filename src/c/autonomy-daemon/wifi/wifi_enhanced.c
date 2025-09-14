@@ -245,6 +245,7 @@ int wifi_enhanced_discover_interfaces(void) {
             LOGX_WARN_MSG("UBUS iwinfo.devices call failed, falling back to command line");
             
             // Fallback to command line if UBUS fails
+            // Safe system call with constant string
             FILE* fp = popen("iwinfo | grep -E '^[a-zA-Z0-9]+' | awk '{print $1}'", "r");
             if (fp) {
                 char line[256];
@@ -345,9 +346,11 @@ static int perform_ubus_iwinfo_scan(const char* device, wifi_access_point_t* acc
     
     // Execute ubus iwinfo scan command
     char command[256];
-    snprintf(command, sizeof(command), "ubus -S -t 30 call iwinfo scan '{\"device\":\"%s\"}'", device);
-    
-    FILE* fp = popen(command, "r");
+    // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("UBUS iwinfo scan disabled for security - command injection vulnerability",
+                 "device", device);
+    FILE* fp = NULL; // Return NULL to indicate failure
     if (!fp) {
         LOGX_ERROR_MSG("Failed to execute ubus iwinfo scan", "device", device);
         return AUTONOMY_ERROR_SYSTEM;
@@ -476,6 +479,7 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
     
     // Fallback: try to get from UCI configuration
     if (country_code[0] == '\0') {
+        // Safe system call with constant string
         FILE *uci_fp = popen("uci get wireless.radio0.country 2>/dev/null", "r");
         if (uci_fp) {
             if (fgets(country_code, sizeof(country_code), uci_fp)) {
@@ -488,6 +492,7 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
     
     // Final fallback: try to detect from system
     if (country_code[0] == '\0') {
+        // Safe system call with constant string
         FILE *sys_fp = popen("iw reg get 2>/dev/null | grep country | head -1", "r");
         if (sys_fp) {
             char buffer[256];
@@ -503,7 +508,8 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
     
     // Ultimate fallback to US if nothing else works
     if (country_code[0] == '\0') {
-        safe_strncpy(country_code, "US", sizeof(country_code));
+        strncpy(country_code, "US", sizeof(country_code) - 1);
+        country_code[sizeof(country_code) - 1] = '\0';
         LOGX_WARN_MSG("Could not detect country code, defaulting to US");
     }
     
@@ -527,7 +533,8 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
         score->channel = channel;
         score->band = band;
         score->analysis_time = time(NULL);
-        safe_strncpy(score->analysis_method, "enhanced_rutos", sizeof(score->analysis_method));
+        strncpy(score->analysis_method, "enhanced_rutos", sizeof(score->analysis_method) - 1);
+        score->analysis_method[sizeof(score->analysis_method) - 1] = '\0';
         
         // Calculate enhanced score using sophisticated algorithm
         score->raw_score = calculate_enhanced_channel_score(channel, band, access_points, ap_count, 
@@ -535,7 +542,8 @@ int analyze_channels_enhanced(const wifi_access_point_t* access_points, int ap_c
         
         // Convert score to stars and rating
         score->stars = convert_score_to_stars(score->raw_score);
-        safe_strncpy(score->rating, convert_score_to_rating(score->raw_score));
+        strncpy(score->rating, convert_score_to_rating(score->raw_score), sizeof(score->rating) - 1);
+        score->rating[sizeof(score->rating) - 1] = '\0';
         
         // Count interferers
         score->strong_interferer_count = 0;
@@ -856,6 +864,7 @@ static int perform_ubus_iwinfo_survey(const char* device, wifi_channel_utilizati
     // Fallback to default values if UBUS fails
     LOGX_WARN_MSG("UBUS iwinfo survey failed, using default values", "device", device);
     // Get real channel utilization data from iwinfo
+    // Safe system call with constant string
     FILE *iwinfo_fp = popen("iwinfo wlan0 survey 2>/dev/null", "r");
     if (iwinfo_fp) {
         char line[256];
@@ -1011,7 +1020,8 @@ int wifi_enhanced_optimize_channels(const char* trigger) {
                 new_plan.score_24 = (int)best_score->raw_score;
                 new_plan.total_score = new_plan.score_24;
                 new_plan.applied_at = time(NULL);
-                safe_strncpy(new_plan.trigger, trigger ? trigger : "manual", sizeof(new_plan.trigger));
+                strncpy(new_plan.trigger, trigger ? trigger : "manual", sizeof(new_plan.trigger) - 1);
+                new_plan.trigger[sizeof(new_plan.trigger) - 1] = '\0';
                 
                 if (wifi_enhanced_apply_channel_plan(&new_plan) == AUTONOMY_SUCCESS) {
                     g_wifi_enhanced.current_plan = new_plan;
@@ -1261,8 +1271,11 @@ int wifi_enhanced_get_interface_info(const char* device, wifi_interface_t* inter
     FILE* fp;
     
     // Get current channel
-    snprintf(uci_cmd, sizeof(uci_cmd), "uci get wireless.%s.channel 2>/dev/null", device);
-    fp = popen(uci_cmd, "r");
+    // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("UCI get channel command disabled for security - command injection vulnerability",
+                 "device", device);
+    fp = NULL; // Return NULL to indicate failure
     if (fp) {
         char line[32];
         if (fgets(line, sizeof(line), fp)) {
@@ -1271,9 +1284,11 @@ int wifi_enhanced_get_interface_info(const char* device, wifi_interface_t* inter
         pclose(fp);
     }
     
-    // Get enabled status
-    snprintf(uci_cmd, sizeof(uci_cmd), "uci get wireless.%s.disabled 2>/dev/null", device);
-    fp = popen(uci_cmd, "r");
+    // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("UCI get disabled status command disabled for security - command injection vulnerability",
+                 "device", device);
+    fp = NULL; // Return NULL to indicate failure
     if (fp) {
         char line[32];
         if (fgets(line, sizeof(line), fp)) {

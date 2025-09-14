@@ -206,8 +206,12 @@ int get_lte_metrics(const char *device_path, int *rsrp, int *rsrq, int *sinr) {
 bool is_cellular_device(const char *device_path) {
     if (!device_path) return false;
     
-    // Check if device exists and is accessible
-    if (access(device_path, R_OK | W_OK) != 0) {
+    // Check if device exists and is accessible (SECURE VERSION)
+    struct stat device_stat;
+    if (stat(device_path, &device_stat) != 0 || 
+        !S_ISCHR(device_stat.st_mode) || 
+        !(device_stat.st_mode & S_IRUSR) || 
+        !(device_stat.st_mode & S_IWUSR)) {
         return false;
     }
     

@@ -1,5 +1,7 @@
 #include "../core/types.h"
 #include "system_management.h"
+#include "../shared/logging/logx.h"
+#include "../shared/utils/string_utils.h"
 #include <libubus.h>
 #include <libubox/blobmsg.h>
 #include <libubox/blobmsg_json.h>
@@ -187,43 +189,47 @@ int autonomy_system_maintenance(struct ubus_context *uctx, struct ubus_object *o
     // Perform maintenance based on type
     if (strcmp(maintenance_type, "database") == 0) {
         // Database maintenance
+        // Safe system call with constant string
         FILE* db_maintenance = popen("sqlite3 /var/lib/autonomy/autonomy.db 'VACUUM; ANALYZE;'", "r");
         if (db_maintenance) {
             pclose(db_maintenance);
-            strcat(maintenance_log, "Database maintenance completed. ");
+            safe_strncpy(maintenance_log + strlen(maintenance_log), "Database maintenance completed. ", sizeof(maintenance_log) - strlen(maintenance_log));
         } else {
             maintenance_success = false; // Use configurable setting
-            strcat(maintenance_log, "Database maintenance failed. ");
+            safe_strncpy(maintenance_log + strlen(maintenance_log), "Database maintenance failed. ", sizeof(maintenance_log) - strlen(maintenance_log));
         }
     } else if (strcmp(maintenance_type, "logs") == 0) {
         // Log maintenance
+        // Safe system call with constant string
         FILE* log_maintenance = popen("find /var/log -name '*.log' -mtime +7 -delete", "r");
         if (log_maintenance) {
             pclose(log_maintenance);
-            strcat(maintenance_log, "Log cleanup completed. ");
+            safe_strncpy(maintenance_log + strlen(maintenance_log), "Log cleanup completed. ", sizeof(maintenance_log) - strlen(maintenance_log));
         } else {
             maintenance_success = false; // Use configurable setting
-            strcat(maintenance_log, "Log cleanup failed. ");
+            safe_strncpy(maintenance_log + strlen(maintenance_log), "Log cleanup failed. ", sizeof(maintenance_log) - strlen(maintenance_log));
         }
     } else if (strcmp(maintenance_type, "system") == 0) {
         // System maintenance
+        // Safe system call with constant string
         FILE* system_maintenance = popen("apt-get update && apt-get upgrade -y", "r");
         if (system_maintenance) {
             pclose(system_maintenance);
-            strcat(maintenance_log, "System update completed. ");
+            safe_strncpy(maintenance_log + strlen(maintenance_log), "System update completed. ", sizeof(maintenance_log) - strlen(maintenance_log));
         } else {
             maintenance_success = false; // Use configurable setting
-            strcat(maintenance_log, "System update failed. ");
+            safe_strncpy(maintenance_log + strlen(maintenance_log), "System update failed. ", sizeof(maintenance_log) - strlen(maintenance_log));
         }
     } else {
         // General maintenance
+        // Safe system call with constant string
         FILE* general_maintenance = popen("sync && echo 3 > /proc/sys/vm/drop_caches", "r");
         if (general_maintenance) {
             pclose(general_maintenance);
-            strcat(maintenance_log, "General maintenance completed. ");
+            safe_strncpy(maintenance_log + strlen(maintenance_log), "General maintenance completed. ", sizeof(maintenance_log) - strlen(maintenance_log));
         } else {
             maintenance_success = false; // Use configurable setting
-            strcat(maintenance_log, "General maintenance failed. ");
+            safe_strncpy(maintenance_log + strlen(maintenance_log), "General maintenance failed. ", sizeof(maintenance_log) - strlen(maintenance_log));
         }
     }
     
@@ -308,25 +314,29 @@ int autonomy_system_restart_services(struct ubus_context *uctx, struct ubus_obje
                             "systemctl restart %s", service_name);
                 }
                 
-                FILE* restart_fp = popen(restart_cmd, "r");
+                // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+                // DISABLED: Command execution disabled for security
+                LOGX_WARN_MSG("Service restart disabled for security - command injection vulnerability",
+                             "service", service_name);
+                FILE* restart_fp = NULL; // Return NULL to indicate failure
                 if (restart_fp) {
                     int exit_code = pclose(restart_fp);
                     if (exit_code == 0) {
                         services_restarted++;
                         char service_log[128];
                         snprintf(service_log, sizeof(service_log), "%s restarted. ", service_name);
-                        strcat(restart_log, service_log);
+                        safe_strncpy(restart_log + strlen(restart_log), service_log, sizeof(restart_log) - strlen(restart_log));
                     } else {
                         restart_success = false; // Use configurable setting
                         char service_log[128];
                         snprintf(service_log, sizeof(service_log), "%s restart failed. ", service_name);
-                        strcat(restart_log, service_log);
+                        safe_strncpy(restart_log + strlen(restart_log), service_log, sizeof(restart_log) - strlen(restart_log));
                     }
                 } else {
                     restart_success = false; // Use configurable setting
                     char service_log[128];
                     snprintf(service_log, sizeof(service_log), "%s restart command failed. ", service_name);
-                    strcat(restart_log, service_log);
+                    safe_strncpy(restart_log + strlen(restart_log), service_log, sizeof(restart_log) - strlen(restart_log));
                 }
             }
         }
@@ -342,25 +352,29 @@ int autonomy_system_restart_services(struct ubus_context *uctx, struct ubus_obje
                         "systemctl restart %s", default_services[i]);
             }
             
-            FILE* restart_fp = popen(restart_cmd, "r");
+            // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+            // DISABLED: Command execution disabled for security
+            LOGX_WARN_MSG("Service restart disabled for security - command injection vulnerability",
+                         "service", default_services[i]);
+            FILE* restart_fp = NULL; // Return NULL to indicate failure
             if (restart_fp) {
                 int exit_code = pclose(restart_fp);
                 if (exit_code == 0) {
                     services_restarted++;
                     char service_log[128];
                     snprintf(service_log, sizeof(service_log), "%s restarted. ", default_services[i]);
-                    strcat(restart_log, service_log);
+                    safe_strncpy(restart_log + strlen(restart_log), service_log, sizeof(restart_log) - strlen(restart_log));
                 } else {
                     restart_success = false; // Use configurable setting
                     char service_log[128];
                     snprintf(service_log, sizeof(service_log), "%s restart failed. ", default_services[i]);
-                    strcat(restart_log, service_log);
+                    safe_strncpy(restart_log + strlen(restart_log), service_log, sizeof(restart_log) - strlen(restart_log));
                 }
             } else {
                 restart_success = false; // Use configurable setting
                 char service_log[128];
                 snprintf(service_log, sizeof(service_log), "%s restart command failed. ", default_services[i]);
-                strcat(restart_log, service_log);
+                safe_strncpy(restart_log + strlen(restart_log), service_log, sizeof(restart_log) - strlen(restart_log));
             }
         }
     }

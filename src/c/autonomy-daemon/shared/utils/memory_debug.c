@@ -1,4 +1,5 @@
 #include "memory_debug.h"
+#include "../logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,20 +10,19 @@
 #ifdef __GLIBC__
 #include <execinfo.h>
 #endif
-#include <dlfcn.h>
 #include <inttypes.h>
 
 // Global variables
 memory_debug_stats_t g_memory_debug_stats = {0};
-static memory_block_t *g_memory_blocks = NULL;
+static memory_debug_block_t *g_memory_blocks = NULL;
 static pthread_mutex_t g_memory_mutex = PTHREAD_MUTEX_INITIALIZER;
 static stack_protection_t g_stack_protection = {0};
 static bool g_memory_debug_initialized = false;
 
 // Internal functions
-static void memory_debug_add_block(memory_block_t *block);
-static void memory_debug_remove_block(memory_block_t *block);
-static memory_block_t* memory_debug_find_block(void *ptr);
+static void memory_debug_add_block(memory_debug_block_t *block);
+static void memory_debug_remove_block(memory_debug_block_t *block);
+static memory_debug_block_t* memory_debug_find_block(void *ptr);
 static void memory_debug_print_backtrace(void);
 static void memory_debug_corruption_handler(const char *message);
 
@@ -68,7 +68,7 @@ void memory_debug_cleanup(void) {
 }
 
 void memory_debug_print_stats(void) {
-    fprintf(stderr, "\n=== MEMORY DEBUG STATISTICS ===\n");
+    LOGX_FATAL_MSG("\n=== MEMORY DEBUG STATISTICS ===");
     fprintf(stderr, "Total allocations: %" PRIu64 "\n", g_memory_debug_stats.total_allocations);
     fprintf(stderr, "Total deallocations: %" PRIu64 "\n", g_memory_debug_stats.total_deallocations);
     fprintf(stderr, "Current allocations: %" PRIu64 "\n", g_memory_debug_stats.current_allocations);
@@ -109,7 +109,7 @@ void* memory_debug_malloc(size_t size, const char *file, int line, const char *f
     void *user_ptr = (char*)ptr + sizeof(uint32_t);
     
     // Create tracking block
-    memory_block_t *block = (memory_block_t*)malloc(sizeof(memory_block_t));
+    memory_debug_block_t *block = (memory_debug_block_t*)malloc(sizeof(memory_debug_block_t));
     if (!block) {
         free(ptr);
         return NULL;
@@ -177,7 +177,7 @@ void* memory_debug_realloc(void *ptr, size_t size, const char *file, int line, c
     
     // Find the original block
     pthread_mutex_lock(&g_memory_mutex);
-    memory_block_t *block = memory_debug_find_block(ptr);
+    memory_debug_block_t *block = memory_debug_find_block(ptr);
     pthread_mutex_unlock(&g_memory_mutex);
     
     if (!block) {
@@ -244,7 +244,7 @@ void memory_debug_free(void *ptr, const char *file, int line, const char *functi
     
     pthread_mutex_lock(&g_memory_mutex);
     
-    memory_block_t *block = memory_debug_find_block(ptr);
+    memory_debug_block_t *block = memory_debug_find_block(ptr);
     if (!block) {
         pthread_mutex_unlock(&g_memory_mutex);
         fprintf(stderr, "MEMORY_DEBUG: free called on untracked pointer %p in %s:%d (%s)\n", 
@@ -302,7 +302,7 @@ bool memory_debug_validate_pointer(void *ptr, const char *file, int line, const 
     }
     
     pthread_mutex_lock(&g_memory_mutex);
-    memory_block_t *block = memory_debug_find_block(ptr);
+    memory_debug_block_t *block = memory_debug_find_block(ptr);
     pthread_mutex_unlock(&g_memory_mutex);
     
     if (!block) {
@@ -321,7 +321,7 @@ bool memory_debug_validate_pointer(void *ptr, const char *file, int line, const 
     return true;
 }
 
-bool memory_debug_validate_memory_block(memory_block_t *block) {
+bool memory_debug_validate_memory_block(memory_debug_block_t *block) {
     if (!block) {
         return false;
     }
@@ -350,7 +350,7 @@ bool memory_debug_validate_memory_block(memory_block_t *block) {
 void memory_debug_check_all_allocations(void) {
     pthread_mutex_lock(&g_memory_mutex);
     
-    memory_block_t *block = g_memory_blocks;
+    memory_debug_block_t *block = g_memory_blocks;
     while (block) {
         if (!memory_debug_validate_memory_block(block)) {
             fprintf(stderr, "MEMORY_DEBUG: corruption in block %p allocated in %s:%d (%s) [ID: %" PRIu64 "]\n", 
@@ -365,7 +365,7 @@ void memory_debug_check_all_allocations(void) {
 void memory_debug_detect_leaks(void) {
     pthread_mutex_lock(&g_memory_mutex);
     
-    memory_block_t *block = g_memory_blocks;
+    memory_debug_block_t *block = g_memory_blocks;
     while (block) {
         if (!block->is_freed) {
             g_memory_debug_stats.memory_leaks_detected++;
@@ -446,7 +446,7 @@ bool memory_debug_validate_pointer_access(void *ptr, size_t size, const char *fi
     }
     
     pthread_mutex_lock(&g_memory_mutex);
-    memory_block_t *block = memory_debug_find_block(ptr);
+    memory_debug_block_t *block = memory_debug_find_block(ptr);
     pthread_mutex_unlock(&g_memory_mutex);
     
     if (block) {
@@ -480,7 +480,7 @@ bool memory_debug_detect_corruption(void *ptr, size_t size) {
 void memory_debug_scan_memory_for_corruption(void) {
     pthread_mutex_lock(&g_memory_mutex);
     
-    memory_block_t *block = g_memory_blocks;
+    memory_debug_block_t *block = g_memory_blocks;
     while (block) {
         if (memory_debug_detect_corruption(block->ptr, block->size)) {
             fprintf(stderr, "MEMORY_DEBUG: corruption detected in block %p [ID: %" PRIu64 "]\n", 
@@ -508,7 +508,7 @@ void memory_debug_print_memory_map(void) {
 void memory_debug_print_allocation_trace(void *ptr) {
     pthread_mutex_lock(&g_memory_mutex);
     
-    memory_block_t *block = memory_debug_find_block(ptr);
+    memory_debug_block_t *block = memory_debug_find_block(ptr);
     if (block) {
         fprintf(stderr, "MEMORY_DEBUG: Allocation trace for %p [ID: %" PRIu64 "]:\n", ptr, block->allocation_id);
         fprintf(stderr, "  Allocated in: %s:%d (%s)\n", block->file, block->line, block->function);
@@ -524,10 +524,10 @@ void memory_debug_print_allocation_trace(void *ptr) {
 void memory_debug_force_garbage_collection(void) {
     pthread_mutex_lock(&g_memory_mutex);
     
-    memory_block_t *block = g_memory_blocks;
+    memory_debug_block_t *block = g_memory_blocks;
     while (block) {
         if (block->is_freed) {
-            memory_block_t *next = block->next;
+            memory_debug_block_t *next = block->next;
             memory_debug_remove_block(block);
             free(block);
             block = next;
@@ -540,7 +540,7 @@ void memory_debug_force_garbage_collection(void) {
 }
 
 // Internal helper functions
-static void memory_debug_add_block(memory_block_t *block) {
+static void memory_debug_add_block(memory_debug_block_t *block) {
     block->next = g_memory_blocks;
     block->prev = NULL;
     
@@ -551,7 +551,7 @@ static void memory_debug_add_block(memory_block_t *block) {
     g_memory_blocks = block;
 }
 
-static void memory_debug_remove_block(memory_block_t *block) {
+static void memory_debug_remove_block(memory_debug_block_t *block) {
     if (block->prev) {
         block->prev->next = block->next;
     } else {
@@ -563,8 +563,8 @@ static void memory_debug_remove_block(memory_block_t *block) {
     }
 }
 
-static memory_block_t* memory_debug_find_block(void *ptr) {
-    memory_block_t *block = g_memory_blocks;
+static memory_debug_block_t* memory_debug_find_block(void *ptr) {
+    memory_debug_block_t *block = g_memory_blocks;
     while (block) {
         if (block->ptr == ptr) {
             return block;

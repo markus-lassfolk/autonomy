@@ -182,7 +182,7 @@ if (result != AUTONOMY_SUCCESS) {
 
 ### Key Log Messages
 
-```
+```text
 INFO: Snow detection system initialized successfully
 INFO: Rapid snow accumulation detected (obstruction_rate=0.08, consecutive_samples=4)
 INFO: Snow forecast detected, starting pre-warming (temperature=-2.1°C, humidity=85%)
@@ -212,6 +212,7 @@ ERROR: Failed to start heating system
 ### Common Issues
 
 1. **UBUS Service Not Available**
+
    ```bash
    # Check if service is running
    ubus list | grep starlink.snow_detection
@@ -221,6 +222,7 @@ ERROR: Failed to start heating system
    ```
 
 2. **Configuration Not Loading**
+
    ```bash
    # Check UCI configuration
    uci show autonomy.snow_detection
@@ -231,6 +233,7 @@ ERROR: Failed to start heating system
    ```
 
 3. **Heating Not Working**
+
    ```bash
    # Test manual heating
    ubus call starlink.snow_detection start_heating
@@ -336,6 +339,7 @@ This software is part of the Autonomy project and follows the same licensing ter
 ## Support
 
 For support and questions:
+
 - Check the troubleshooting section above
 - Review system logs for error messages
 - Use the UBUS interface for status monitoring

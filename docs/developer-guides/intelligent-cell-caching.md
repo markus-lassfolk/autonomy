@@ -18,6 +18,7 @@ All triggers are debounced by 10 seconds to prevent excessive queries during rap
 ## Configuration
 
 Default settings:
+
 - **Max Cache Age**: 1 hour (fallback)
 - **Debounce Delay**: 10 seconds
 - **Tower Change Threshold**: 35%
@@ -28,7 +29,8 @@ These can be customized via `SetCacheConfiguration()`.
 ## Architecture Overview
 
 ### Multi-Level Cache Hierarchy
-```
+
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    Client Request                           │
 └─────────────────────┬───────────────────────────────────────┘
@@ -65,6 +67,7 @@ These can be customized via `SetCacheConfiguration()`.
 ## Core Components
 
 ### Cache Manager
+
 ```go
 type CacheManager struct {
     memory    *MemoryCache
@@ -86,6 +89,7 @@ type CacheConfig struct {
 ```
 
 ### Cache Entry Structure
+
 ```go
 type CacheEntry struct {
     Key         string    `json:"key"`
@@ -310,6 +314,7 @@ func (cm *CacheManager) calculateEvictionCost(entry *CacheEntry) float64 {
 ## Performance Monitoring
 
 ### Cache Metrics
+
 ```go
 type CacheMetrics struct {
     HitRate        float64 `json:"hit_rate"`
@@ -333,6 +338,7 @@ func (cm *CacheManager) UpdateMetrics() {
 ```
 
 ### Real-Time Monitoring
+
 ```bash
 # View cache performance
 autonomy-cli cache metrics
@@ -350,6 +356,7 @@ autonomy-cli cache status --detailed
 ## Configuration Examples
 
 ### Basic Configuration
+
 ```yaml
 cache:
   enabled: true
@@ -366,6 +373,7 @@ cache:
 ```
 
 ### Advanced Configuration
+
 ```yaml
 cache:
   adaptive_ttl:
@@ -398,6 +406,7 @@ cache:
 ## Integration with Location Services
 
 ### Seamless Integration
+
 ```go
 func (ls *LocationService) GetLocation(cell CellInfo) (*Location, error) {
     // Try cache first
@@ -425,6 +434,7 @@ func (ls *LocationService) GetLocation(cell CellInfo) (*Location, error) {
 ```
 
 ### Background Preloading
+
 ```go
 func (pl *PredictiveLoader) StartBackgroundPreloading() {
     go func() {
@@ -460,21 +470,25 @@ func (pl *PredictiveLoader) preloadPredictedCells() {
 ### Common Issues
 
 #### Low Cache Hit Rate
+
 - **Symptoms**: High API calls, slow response times
 - **Causes**: Poor prediction, incorrect TTL, small cache size
 - **Solutions**: Adjust TTL, increase cache size, improve predictions
 
 #### High Memory Usage
+
 - **Symptoms**: Out of memory errors, slow performance
 - **Causes**: Large cache entries, memory leaks, aggressive caching
 - **Solutions**: Implement compression, adjust eviction policy, monitor memory
 
 #### Poor Prediction Accuracy
+
 - **Symptoms**: Unnecessary preloading, wasted resources
 - **Causes**: Insufficient training data, poor algorithms
 - **Solutions**: Collect more data, tune algorithms, adjust thresholds
 
 ### Debugging Tools
+
 ```bash
 # Analyze cache performance
 autonomy-cli cache analyze --period 24h
@@ -492,18 +506,21 @@ autonomy-cli cache monitor --real-time
 ## Best Practices
 
 ### Cache Design
+
 1. **Multi-level caching**: Use memory, disk, and database caches
 2. **Adaptive TTL**: Adjust cache duration based on data characteristics
 3. **Predictive loading**: Pre-load likely-to-be-needed data
 4. **Cost-aware eviction**: Consider API costs when evicting entries
 
 ### Performance Optimization
+
 1. **Compression**: Compress cache entries to save space
 2. **Deduplication**: Avoid storing duplicate data
 3. **Background processing**: Use background threads for maintenance
 4. **Monitoring**: Track cache performance and adjust accordingly
 
 ### Resource Management
+
 1. **Memory limits**: Set appropriate memory limits
 2. **Disk quotas**: Monitor disk usage
 3. **Cleanup policies**: Implement regular cleanup routines
@@ -512,12 +529,14 @@ autonomy-cli cache monitor --real-time
 ## Future Enhancements
 
 ### Planned Features
+
 - **Machine Learning**: AI-powered prediction algorithms
 - **Distributed Caching**: Multi-node cache sharing
 - **Edge Computing**: Local cache processing
 - **Blockchain Integration**: Decentralized cache validation
 
 ### Research Areas
+
 - **Quantum Caching**: Quantum computing for cache optimization
 - **Neural Networks**: Deep learning for access pattern prediction
 - **Federated Learning**: Privacy-preserving cache optimization

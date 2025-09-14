@@ -1,5 +1,6 @@
 #include "ml_monitor.h"
 #include "../shared/logging/logx.h"
+#include "../shared/utils/memory_corruption_detector.h"
 #include "../starlink/starlink_modules.h"
 #include "../shared/starlink-tracking/obstruction_analyzer.h"
 #include "../shared/starlink-tracking/starlink_tracker.h"
@@ -9,6 +10,41 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <assert.h>
+
+// Enhanced debugging macros
+#define ML_DEBUG_ENTRY(func_name) \
+    LOGX_DEBUG_MSG("%s ENTRY", func_name)
+
+#define ML_DEBUG_EXIT(func_name, result) \
+    LOGX_DEBUG_MSG("%s EXIT with result: %d", func_name, result)
+
+#define ML_VALIDATE_POINTER(ptr, location) \
+    do { \
+        if (!(ptr)) { \
+            LOGX_ERROR_MSG("NULL pointer at %s:%d in %s", __FILE__, __LINE__, location); \
+            abort(); \
+        } \
+        if ((uintptr_t)(ptr) < 0x1000) { \
+            LOGX_ERROR_MSG("Invalid pointer %p (too low) at %s:%d in %s", (ptr), __FILE__, __LINE__, location); \
+            abort(); \
+        } \
+    } while(0)
+
+#define ML_VALIDATE_ARRAY_BOUNDS(array, index, size, location) \
+    do { \
+        if ((index) < 0 || (index) >= (size)) { \
+            LOGX_ERROR_MSG("Array bounds violation: index=%d, size=%d at %s:%d in %s", \
+                    (index), (size), __FILE__, __LINE__, location); \
+            abort(); \
+        } \
+    } while(0)
+
+#define ML_VALIDATE_WINDOW_ACCESS(predictor, index, location) \
+    do { \
+        ML_VALIDATE_POINTER(predictor, location); \
+        ML_VALIDATE_ARRAY_BOUNDS((predictor)->window, (index), 60, location); \
+    } while(0)
 
 // Phase 3: Advanced Sky Grid Integration and Sliding Window Predictions
 
@@ -73,7 +109,12 @@ typedef struct {
 // Global Phase 3 system instance
 static enhanced_sky_grid_t g_phase3_enhanced_sky_grid = {0};
 static sliding_predictor_t g_phase3_sliding_predictor = {0};
+static sliding_predictor_t g_local_phase3_predictor = {0};
 static bool g_phase3_initialized = false;
+
+// CRITICAL: Add corruption detection for global predictor
+static const uint32_t GLOBAL_PREDICTOR_MAGIC = 0xDEADBEEF;
+static uint32_t g_phase3_predictor_magic = GLOBAL_PREDICTOR_MAGIC;
 
 // Forward declarations
 static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor);
@@ -91,8 +132,7 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
-    // Use simple fprintf to avoid LOGX crashes
-    fprintf(stderr, "Initializing enhanced sky grid with obstruction analyzer integration\n");
+    LOGX_DEBUG_MSG("Initializing enhanced sky grid with obstruction analyzer integration");
     
     // Initialize the global Phase 3 enhanced sky grid structure
     memset(&g_phase3_enhanced_sky_grid, 0, sizeof(enhanced_sky_grid_t));
@@ -128,6 +168,9 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
     g_phase3_sliding_predictor.window_size = 0;
     g_phase3_sliding_predictor.write_idx = 0;
     
+    // CRITICAL: Set corruption detection magic
+    g_phase3_predictor_magic = GLOBAL_PREDICTOR_MAGIC;
+    
     // Initialize features
     g_phase3_sliding_predictor.features.snr_trend = 128; // Stable
     g_phase3_sliding_predictor.features.snr_volatility = 0;
@@ -147,8 +190,24 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
     // Mark as initialized
     g_phase3_initialized = true;
     
-    // Use simple fprintf for non-critical information to avoid LOGX crashes
-    fprintf(stderr, "Enhanced sky grid initialized (ML: 90x45, Obstruction: 123x123, weights: %.1f/%.1f, threshold: %.1f)\n", 
+    // CRITICAL: Initialize memory corruption detector
+    if (memory_corruption_detector_init() != 0) {
+        LOGX_WARN_MSG("Failed to initialize memory corruption detector");
+    }
+    
+    // CRITICAL: Monitor the global predictor for corruption
+    if (monitor_global_variable(&g_phase3_sliding_predictor, sizeof(g_phase3_sliding_predictor), 
+                               "g_phase3_sliding_predictor", GLOBAL_PREDICTOR_MAGIC) != 0) {
+        LOGX_WARN_MSG("Failed to monitor global predictor for corruption");
+    }
+    
+    // CRITICAL: Monitor the local predictor as well
+    if (monitor_global_variable(&g_local_phase3_predictor, sizeof(g_local_phase3_predictor), 
+                               "g_local_phase3_predictor", GLOBAL_PREDICTOR_MAGIC) != 0) {
+        LOGX_WARN_MSG("Failed to monitor local predictor for corruption");
+    }
+    
+    LOGX_DEBUG_MSG("Enhanced sky grid initialized (ML: 90x45, Obstruction: 123x123, weights: %.1f/%.1f, threshold: %.1f)", 
             g_phase3_enhanced_sky_grid.fusion.ml_weight, 
             g_phase3_enhanced_sky_grid.fusion.obstruction_weight, 
             g_phase3_enhanced_sky_grid.fusion.fusion_confidence_threshold);
@@ -158,38 +217,54 @@ static int ml_monitor_init_enhanced_sky_grid(ml_monitor_t *monitor) {
 
 // Integrate with obstruction analyzer for enhanced predictions
 static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor, const ml_observation_t *observation) {
-    if (!monitor || !monitor->state || !observation) return ML_MONITOR_ERROR_INVALID_PARAM;
+    LOGX_DEBUG_MSG("ml_monitor_integrate_with_obstruction_analyzer called");
+    if (!monitor || !monitor->state || !observation) {
+        LOGX_DEBUG_MSG("Invalid parameters in integrate_with_obstruction_analyzer");
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
     
     // Check if Phase 3 system is initialized
     if (!g_phase3_initialized) {
+        LOGX_DEBUG_MSG("Phase 3 not initialized in integrate_with_obstruction_analyzer");
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
+    LOGX_DEBUG_MSG("About to initialize obstruction_map_t");
     // Get current obstruction map from existing analyzer
     obstruction_map_t current_obstruction_map;
     memset(&current_obstruction_map, 0, sizeof(current_obstruction_map));
+    LOGX_DEBUG_MSG("obstruction_map_t initialized successfully");
     
     // Try to get obstruction map from Starlink tracking system
     // This would integrate with the existing obstruction analyzer
     // Integration with obstruction analyzer
     
+    LOGX_DEBUG_MSG("About to get ml_grid pointer");
     compact_sky_grid_t *ml_grid = &g_phase3_enhanced_sky_grid.ml_grid;
+    LOGX_DEBUG_MSG("ml_grid pointer obtained successfully");
     
     // Update ML grid with current observation
+    LOGX_DEBUG_MSG("About to call ml_monitor_sky_grid_update");
     int ml_result = ml_monitor_sky_grid_update(ml_grid, observation->azimuth_deg, observation->elevation_deg, 
                                               (observation->flags & ML_OBS_FLAG_OUTAGE) ? 1 : 0);
+    LOGX_DEBUG_MSG("ml_monitor_sky_grid_update returned: %d", ml_result);
     
     if (ml_result != ML_MONITOR_SUCCESS) {
         LOGX_WARN_MSG("Failed to update ML sky grid: %d", ml_result);
         return ml_result;
     }
     
+    LOGX_DEBUG_MSG("About to calculate ML grid coordinates");
     // Convert ML grid coordinates to obstruction analyzer coordinates
     int ml_az_bin = observation->azimuth_deg / 4;  // 4 resolution
     int ml_el_bin = observation->elevation_deg / 4;
+    LOGX_DEBUG_MSG("ML coordinates calculated: az_bin=%d, el_bin=%d", ml_az_bin, ml_el_bin);
     
+    LOGX_DEBUG_MSG("About to check bounds and access obstruction_prob");
     if (ml_az_bin >= 0 && ml_az_bin < 90 && ml_el_bin >= 0 && ml_el_bin < 45) {
+        LOGX_DEBUG_MSG("Bounds check passed, accessing obstruction_prob array");
         uint8_t ml_obstruction_prob = ml_grid->obstruction_prob[ml_az_bin][ml_el_bin];
+        LOGX_DEBUG_MSG("obstruction_prob accessed successfully: %u", ml_obstruction_prob);
         
         // Cross-validate with obstruction analyzer if available
         // This would check against the 123x123 polar projection
@@ -197,8 +272,11 @@ static int ml_monitor_integrate_with_obstruction_analyzer(ml_monitor_t *monitor,
         LOGX_DEBUG_MSG("ML sky grid updated: az=%d, el=%d, prob=%u%% (bin [%d,%d])",
                   observation->azimuth_deg, observation->elevation_deg, 
                   ml_obstruction_prob, ml_az_bin, ml_el_bin);
+    } else {
+        LOGX_DEBUG_MSG("Bounds check failed for ml_az_bin=%d, ml_el_bin=%d", ml_az_bin, ml_el_bin);
     }
     
+    LOGX_DEBUG_MSG("ml_monitor_integrate_with_obstruction_analyzer returning success");
     return ML_MONITOR_SUCCESS;
 }
 
@@ -250,12 +328,24 @@ static int ml_monitor_fuse_obstruction_data(enhanced_sky_grid_t *enhanced_grid, 
 
 // Extract features from sliding window
 static void ml_monitor_extract_window_features(sliding_predictor_t *predictor) {
-    if (!predictor || predictor->window_size < 2) return;
+    ML_DEBUG_ENTRY("ml_monitor_extract_window_features");
+    
+    ML_VALIDATE_POINTER(predictor, "ml_monitor_extract_window_features");
+    
+    if (predictor->window_size < 2) {
+        ML_DEBUG_EXIT("ml_monitor_extract_window_features", 0);
+        return;
+    }
     
     // Extract SNR trend
     uint16_t snr_values[60];
+    LOGX_DEBUG_MSG("Extracting SNR trend, window_size=%u", predictor->window_size);
     for (int i = 0; i < predictor->window_size; i++) {
+        LOGX_DEBUG_MSG("Processing SNR value %d, predictor=%p, window[%d]=%p", 
+                i, predictor, i, &predictor->window[i]);
+        ML_VALIDATE_WINDOW_ACCESS(predictor, i, "SNR trend extraction");
         snr_values[i] = predictor->window[i].snr_x100;
+        LOGX_DEBUG_MSG("SNR value %d extracted: %u", i, snr_values[i]);
     }
     
     double snr_trend = ml_monitor_calculate_trend(snr_values, predictor->window_size);
@@ -267,6 +357,7 @@ static void ml_monitor_extract_window_features(sliding_predictor_t *predictor) {
     // Extract latency trend
     uint16_t latency_values[60];
     for (int i = 0; i < predictor->window_size; i++) {
+        ML_VALIDATE_WINDOW_ACCESS(predictor, i, "latency trend extraction");
         latency_values[i] = predictor->window[i].latency_ms;
     }
     
@@ -276,6 +367,7 @@ static void ml_monitor_extract_window_features(sliding_predictor_t *predictor) {
     // Extract packet loss trend
     uint16_t loss_values[60];
     for (int i = 0; i < predictor->window_size; i++) {
+        ML_VALIDATE_WINDOW_ACCESS(predictor, i, "packet loss trend extraction");
         loss_values[i] = predictor->window[i].packet_loss_pct;
     }
     
@@ -285,6 +377,7 @@ static void ml_monitor_extract_window_features(sliding_predictor_t *predictor) {
     // Extract obstruction trend
     uint16_t obstruction_values[60];
     for (int i = 0; i < predictor->window_size; i++) {
+        ML_VALIDATE_WINDOW_ACCESS(predictor, i, "obstruction trend extraction");
         obstruction_values[i] = predictor->window[i].obstruction_pct;
     }
     
@@ -292,12 +385,17 @@ static void ml_monitor_extract_window_features(sliding_predictor_t *predictor) {
     predictor->features.obstruction_trend = (uint8_t)((obstruction_trend + 1.0) * 127.5);
     
     // Calculate weather severity
-    ml_observation_t *latest = &predictor->window[(predictor->write_idx - 1 + 60) % 60];
-    predictor->features.weather_severity = 0;
-    if (latest->precipitation_mm > 0) predictor->features.weather_severity += 50;
-    if (latest->wind_speed_ms > 10) predictor->features.weather_severity += 30;
-    if (latest->cloud_cover_pct > 80) predictor->features.weather_severity += 20;
-    if (predictor->features.weather_severity > 255) predictor->features.weather_severity = 255;
+    if (predictor->window_size > 0) {
+        int latest_idx = (predictor->write_idx - 1 + 60) % 60;
+        if (latest_idx >= 0 && latest_idx < 60) {
+            ml_observation_t *latest = &predictor->window[latest_idx];
+            predictor->features.weather_severity = 0;
+            if (latest->precipitation_mm > 0) predictor->features.weather_severity += 50;
+            if (latest->wind_speed_ms > 10) predictor->features.weather_severity += 30;
+            if (latest->cloud_cover_pct > 80) predictor->features.weather_severity += 20;
+            if (predictor->features.weather_severity > 255) predictor->features.weather_severity = 255;
+        }
+    }
     
     // Time of day feature
     time_t now = time(NULL);
@@ -306,10 +404,13 @@ static void ml_monitor_extract_window_features(sliding_predictor_t *predictor) {
     
     // Pattern signature (simplified hash of recent patterns)
     uint32_t pattern_hash = 0;
-    for (int i = 0; i < predictor->window_size; i++) {
+    for (int i = 0; i < predictor->window_size && i < 60; i++) {
+        ML_VALIDATE_WINDOW_ACCESS(predictor, i, "pattern hash calculation");
         pattern_hash ^= predictor->window[i].snr_x100 + (predictor->window[i].latency_ms << 8);
     }
     predictor->features.pattern_signature = (uint8_t)(pattern_hash % 256);
+    
+    ML_DEBUG_EXIT("ml_monitor_extract_window_features", 0);
 }
 
 // Calculate trend from values (-1 = falling, 0 = stable, 1 = rising)
@@ -326,7 +427,10 @@ static double ml_monitor_calculate_trend(const uint16_t *values, int count) {
         sum_x2 += i * i;
     }
     
-    double slope = (count * sum_xy - sum_x * sum_y) / (count * sum_x2 - sum_x * sum_x);
+    double denominator = count * sum_x2 - sum_x * sum_x;
+    if (denominator == 0.0) return 0.0; // Avoid division by zero
+    
+    double slope = (count * sum_xy - sum_x * sum_y) / denominator;
     
     // Normalize slope to -1..1 range
     return fmax(-1.0, fmin(1.0, slope / 100.0)); // Assuming values are in reasonable range
@@ -359,9 +463,43 @@ static uint8_t ml_monitor_calculate_volatility(const uint16_t *values, int count
 
 // Sliding window prediction with enhanced features
 static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_predictor_t *predictor, const ml_observation_t *observation) {
-    if (!monitor || !predictor || !observation) return ML_MONITOR_ERROR_INVALID_PARAM;
+    ML_DEBUG_ENTRY("ml_monitor_sliding_window_predict");
+    
+    // CRITICAL: Defensive programming checks
+    DEFENSIVE_POINTER_CHECK(monitor, "monitor");
+    DEFENSIVE_POINTER_CHECK(predictor, "predictor");
+    DEFENSIVE_POINTER_CHECK(observation, "observation");
+    STACK_OVERFLOW_CHECK();
+    
+    LOGX_DEBUG_MSG("ml_monitor_sliding_window_predict called with monitor=%p, predictor=%p, observation=%p", 
+            monitor, predictor, observation);
+    
+    // CRITICAL: Validate predictor pointer immediately
+    if (predictor == NULL) {
+        LOGX_ERROR_MSG("predictor is NULL!");
+        ML_DEBUG_EXIT("ml_monitor_sliding_window_predict", ML_MONITOR_ERROR_INVALID_PARAM);
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
+    
+    if ((uintptr_t)predictor < 0x1000) {
+        LOGX_ERROR_MSG("predictor pointer %p is invalid (too low)!", predictor);
+        ML_DEBUG_EXIT("ml_monitor_sliding_window_predict", ML_MONITOR_ERROR_INVALID_PARAM);
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
+    
+    LOGX_DEBUG_MSG("predictor pointer validation passed: %p", predictor);
+    
+    ML_VALIDATE_POINTER(monitor, "ml_monitor_sliding_window_predict monitor");
+    ML_VALIDATE_POINTER(predictor, "ml_monitor_sliding_window_predict predictor");
+    ML_VALIDATE_POINTER(observation, "ml_monitor_sliding_window_predict observation");
+    
+    if (!monitor || !predictor || !observation) {
+        ML_DEBUG_EXIT("ml_monitor_sliding_window_predict", ML_MONITOR_ERROR_INVALID_PARAM);
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
     
     // Add observation to sliding window
+    ML_VALIDATE_WINDOW_ACCESS(predictor, predictor->write_idx, "sliding window write");
     predictor->window[predictor->write_idx] = *observation;
     predictor->write_idx = (predictor->write_idx + 1) % 60;
     if (predictor->window_size < 60) predictor->window_size++;
@@ -373,7 +511,10 @@ static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_pred
     }
     
     // Extract features from window
+    LOGX_DEBUG_MSG("About to call ml_monitor_extract_window_features from sliding_window_predict, predictor=%p", predictor);
+    ML_VALIDATE_POINTER(predictor, "ml_monitor_sliding_window_predict predictor before extract");
     ml_monitor_extract_window_features(predictor);
+    LOGX_DEBUG_MSG("ml_monitor_extract_window_features completed in sliding_window_predict");
     
     // Prepare neural network input with window features
     int8_t nn_input[32];
@@ -435,6 +576,7 @@ static int ml_monitor_sliding_window_predict(ml_monitor_t *monitor, sliding_pred
               predictor->outage_probability_5min, predictor->outage_probability_15min, 
               predictor->confidence, predictor->likely_cause);
     
+    ML_DEBUG_EXIT("ml_monitor_sliding_window_predict", ML_MONITOR_SUCCESS);
     return ML_MONITOR_SUCCESS;
 }
 
@@ -453,8 +595,21 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
         return ML_MONITOR_SUCCESS;
     }
     
-    // Initialize sliding window predictor
-    static sliding_predictor_t predictor = {0};
+    // Initialize sliding window predictor (use heap to avoid code section placement)
+    static sliding_predictor_t *predictor = NULL;
+    static bool predictor_initialized = false;
+    
+    if (!predictor_initialized) {
+        predictor = malloc(sizeof(sliding_predictor_t));
+        if (!predictor) {
+            LOGX_ERROR_MSG("Failed to allocate predictor for enhanced prediction");
+            memset(probabilities, 0, 60);
+            return ML_MONITOR_ERROR_MEMORY_FAILED;
+        }
+        memset(predictor, 0, sizeof(sliding_predictor_t));
+        predictor_initialized = true;
+        LOGX_DEBUG_MSG("Enhanced prediction predictor allocated at %p", predictor);
+    }
     
     // Get current observation
     ml_observation_t current_obs;
@@ -469,7 +624,7 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
     current_obs.timestamp = time(NULL);
     
     // Make sliding window prediction
-    int result = ml_monitor_sliding_window_predict(monitor, &predictor, &current_obs);
+    int result = ml_monitor_sliding_window_predict(monitor, predictor, &current_obs);
     if (result != ML_MONITOR_SUCCESS) {
         LOGX_ERROR_MSG("Sliding window prediction failed: %d", result);
         memset(probabilities, 0, 60);
@@ -481,17 +636,17 @@ int ml_monitor_predict_next_15_minutes_enhanced(ml_monitor_t *monitor, uint8_t p
         double time_factor = (double)i / 60.0; // 0 to 1 over 15 minutes
         
         // Interpolate between 5-minute and 15-minute predictions
-        uint8_t base_prob = (uint8_t)((predictor.outage_probability_5min * (1.0 - time_factor)) + 
-                                     (predictor.outage_probability_15min * time_factor));
+        uint8_t base_prob = (uint8_t)((predictor->outage_probability_5min * (1.0 - time_factor)) + 
+                                     (predictor->outage_probability_15min * time_factor));
         
         // Add some randomness based on volatility
-        double volatility_factor = predictor.features.snr_volatility / 255.0;
+        double volatility_factor = predictor->features.snr_volatility / 255.0;
         double random_factor = (sin(i * 0.1) * volatility_factor * 20); // 20 based on volatility
         
         probabilities[i] = (uint8_t)fmax(0, fmin(255, base_prob + random_factor));
     }
     
-    *confidence = predictor.confidence;
+    *confidence = predictor->confidence;
     
     LOGX_DEBUG_MSG("Generated enhanced 15-minute predictions with %u%% confidence", *confidence);
     return ML_MONITOR_SUCCESS;
@@ -503,8 +658,7 @@ int ml_monitor_init_phase3_enhancements(ml_monitor_t *monitor) {
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
-    // Use simple fprintf to avoid LOGX crashes
-    fprintf(stderr, "Initializing Phase 3: Advanced Sky Grid & Sliding Window Predictions\n");
+    LOGX_DEBUG_MSG("Initializing Phase 3: Advanced Sky Grid & Sliding Window Predictions");
     
     // Initialize enhanced sky grid with obstruction analyzer integration
     int result = ml_monitor_init_enhanced_sky_grid(monitor);
@@ -514,46 +668,137 @@ int ml_monitor_init_phase3_enhancements(ml_monitor_t *monitor) {
         return result;
     }
     
-    // Use simple fprintf to avoid LOGX crashes
-    fprintf(stderr, "Phase 3 enhancements initialized successfully\n");
+    LOGX_DEBUG_MSG("Phase 3 enhancements initialized successfully");
     
     return ML_MONITOR_SUCCESS;
 }
 
 // Update with Phase 3 enhanced learning
 int ml_monitor_update_with_phase3_enhancements(ml_monitor_t *monitor, const ml_observation_t *observation) {
-    if (!monitor || !observation) return ML_MONITOR_ERROR_INVALID_PARAM;
+    LOGX_DEBUG_MSG("ml_monitor_update_with_phase3_enhancements called");
+    
+    // CRITICAL: Defensive programming checks
+    DEFENSIVE_POINTER_CHECK(monitor, "monitor");
+    DEFENSIVE_POINTER_CHECK(observation, "observation");
+    STACK_OVERFLOW_CHECK();
+    
+    if (!monitor || !observation) {
+        LOGX_DEBUG_MSG("Phase 3 update failed - invalid parameters");
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
     
     // Check if Phase 3 system is initialized
+    LOGX_DEBUG_MSG("Phase 3 initialized status: %s", g_phase3_initialized ? "true" : "false");
     if (!g_phase3_initialized) {
+        LOGX_DEBUG_MSG("Phase 3 not initialized, returning error");
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
+    // CRITICAL: Check for memory corruption before proceeding
+    check_all_monitored_globals();
+    
     // Integrate with obstruction analyzer using global system
+    LOGX_DEBUG_MSG("About to call ml_monitor_integrate_with_obstruction_analyzer");
     int integration_result = ml_monitor_integrate_with_obstruction_analyzer(monitor, observation);
+    LOGX_DEBUG_MSG("ml_monitor_integrate_with_obstruction_analyzer returned: %d", integration_result);
     if (integration_result != ML_MONITOR_SUCCESS) {
         LOGX_DEBUG_MSG("Obstruction analyzer integration warning: %d", integration_result);
         // Continue with ML-only updates
     }
     
-    // Update sliding window predictor with new observation
-    if (g_phase3_sliding_predictor.window_size < 60) {
-        g_phase3_sliding_predictor.window[g_phase3_sliding_predictor.write_idx] = *observation;
-        g_phase3_sliding_predictor.write_idx = (g_phase3_sliding_predictor.write_idx + 1) % 60;
-        g_phase3_sliding_predictor.window_size++;
-    } else {
-        g_phase3_sliding_predictor.window[g_phase3_sliding_predictor.write_idx] = *observation;
-        g_phase3_sliding_predictor.write_idx = (g_phase3_sliding_predictor.write_idx + 1) % 60;
+    // CRITICAL: Skip global predictor updates - we'll use local predictor instead
+    LOGX_DEBUG_MSG("Skipping global predictor updates (will use local predictor)");
+    
+    // CRITICAL: Skip feature extraction on corrupted global predictor
+    // We'll do this with the local predictor instead
+    LOGX_DEBUG_MSG("Skipping global predictor feature extraction (will use local predictor)");
+    
+    LOGX_DEBUG_MSG("About to perform sliding window prediction");
+    // Perform sliding window prediction
+    ML_VALIDATE_POINTER(monitor, "ml_monitor_update_with_phase3_enhancements monitor");
+    ML_VALIDATE_POINTER(observation, "ml_monitor_update_with_phase3_enhancements observation");
+    
+    // CRITICAL: Skip global predictor access - it's corrupted
+    LOGX_DEBUG_MSG("Skipping global predictor access (corrupted)");
+    
+    // CRITICAL: Validate global predictor address
+    if ((uintptr_t)&g_phase3_sliding_predictor < 0x1000) {
+        LOGX_ERROR_MSG("Global predictor address %p is corrupted!", &g_phase3_sliding_predictor);
+        // Continue with local predictor instead of returning error
     }
     
-    // Extract features from sliding window
-    ml_monitor_extract_window_features(&g_phase3_sliding_predictor);
+    // CRITICAL: Check if global predictor is in valid memory range
+    if ((uintptr_t)&g_phase3_sliding_predictor < 0x40000000) {
+        LOGX_WARN_MSG("Global predictor address %p is in invalid range (code section)! Using local workaround.", &g_phase3_sliding_predictor);
+        // Continue with local predictor instead of returning error
+    }
     
-    // Perform sliding window prediction
-    int prediction_result = ml_monitor_sliding_window_predict(monitor, &g_phase3_sliding_predictor, observation);
+    // CRITICAL: Check corruption detection magic
+    if (g_phase3_predictor_magic != GLOBAL_PREDICTOR_MAGIC) {
+        LOGX_WARN_MSG("Global predictor corruption detected! Magic: 0x%x, expected: 0x%x. Using local workaround.", 
+                g_phase3_predictor_magic, GLOBAL_PREDICTOR_MAGIC);
+        // Continue with local predictor instead of returning error
+    }
+    
+    // CRITICAL: Use local copy to avoid corrupted global
+    // Use a different global variable that should be in data section
+    static bool local_predictor_initialized = false;
+    
+    if (!local_predictor_initialized) {
+        LOGX_DEBUG_MSG("Initializing local predictor in data section");
+        
+        // Initialize the local predictor
+        memset(&g_local_phase3_predictor, 0, sizeof(sliding_predictor_t));
+        g_local_phase3_predictor.window_size = 0;
+        g_local_phase3_predictor.write_idx = 0;
+        g_local_phase3_predictor.features.snr_trend = 128; // Stable
+        
+        // CRITICAL: Initialize the window array to prevent NULL access
+        for (int i = 0; i < 60; i++) {
+            g_local_phase3_predictor.window[i].snr_x100 = 0;
+            g_local_phase3_predictor.window[i].latency_ms = 0;
+            g_local_phase3_predictor.window[i].packet_loss_pct = 0;
+            g_local_phase3_predictor.window[i].obstruction_pct = 0;
+            g_local_phase3_predictor.window[i].timestamp = 0;
+        }
+        
+        local_predictor_initialized = true;
+        LOGX_DEBUG_MSG("Local predictor initialized at %p (should be in data section)", &g_local_phase3_predictor);
+    }
+    
+    // CRITICAL: Never copy from corrupted global predictor
+    LOGX_DEBUG_MSG("Using local predictor only (global is corrupted)");
+    
+    // CRITICAL: Update local predictor with new observation
+    LOGX_DEBUG_MSG("Updating local predictor with new observation");
+    if (g_local_phase3_predictor.window_size < 60) {
+        g_local_phase3_predictor.window[g_local_phase3_predictor.write_idx] = *observation;
+        g_local_phase3_predictor.write_idx = (g_local_phase3_predictor.write_idx + 1) % 60;
+        g_local_phase3_predictor.window_size++;
+        LOGX_DEBUG_MSG("Local predictor updated, new size: %u, write_idx: %u", 
+                g_local_phase3_predictor.window_size, g_local_phase3_predictor.write_idx);
+    } else {
+        g_local_phase3_predictor.window[g_local_phase3_predictor.write_idx] = *observation;
+        g_local_phase3_predictor.write_idx = (g_local_phase3_predictor.write_idx + 1) % 60;
+        LOGX_DEBUG_MSG("Local predictor updated, write_idx: %u", g_local_phase3_predictor.write_idx);
+    }
+    
+    LOGX_DEBUG_MSG("Local predictor address: %p (should be in data section)", &g_local_phase3_predictor);
+    
+    // CRITICAL: Validate local predictor before calling sliding_window_predict
+    if ((uintptr_t)&g_local_phase3_predictor < 0x1000) {
+        LOGX_ERROR_MSG("CRITICAL: local_predictor %p is invalid (too low) before sliding_window_predict call!", &g_local_phase3_predictor);
+        return ML_MONITOR_ERROR_INVALID_PARAM;
+    }
+    
+    LOGX_DEBUG_MSG("CRITICAL: local_predictor validation passed: %p", &g_local_phase3_predictor);
+    
+    int prediction_result = ml_monitor_sliding_window_predict(monitor, &g_local_phase3_predictor, observation);
+    LOGX_DEBUG_MSG("ml_monitor_sliding_window_predict returned: %d", prediction_result);
     if (prediction_result != ML_MONITOR_SUCCESS) {
         LOGX_DEBUG_MSG("Sliding window prediction warning: %d", prediction_result);
     }
     
+    LOGX_DEBUG_MSG("ml_monitor_update_with_phase3_enhancements returning success");
     return ML_MONITOR_SUCCESS;
 }

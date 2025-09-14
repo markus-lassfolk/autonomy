@@ -113,12 +113,14 @@ All log messages are in structured JSON format for easy parsing:
 ### Core System Messages
 
 #### Startup and Shutdown
+
 ```json
 {"msg": "startup", "version": "1.0.0", "config_path": "/etc/config/autonomy"}
 {"msg": "shutdown", "reason": "SIGTERM", "uptime": "2h30m15s"}
 ```
 
 #### Configuration
+
 ```json
 {"msg": "configuration", "action": "loaded", "config_path": "/etc/config/autonomy", "valid": true}
 {"msg": "configuration", "action": "reloaded", "source": "SIGHUP", "changes": 3}
@@ -126,13 +128,15 @@ All log messages are in structured JSON format for easy parsing:
 
 ### Member Discovery
 
-#### Member Discovery
+#### Logging - Member Discovery
+
 ```json
 {"msg": "discovery", "member": "wan_starlink", "class": "starlink", "iface": "wan_starlink"}
 {"msg": "discovery", "member": "wan_cell", "class": "cellular", "iface": "wwan0"}
 ```
 
 #### Member State Changes
+
 ```json
 {"msg": "state_change", "component": "member", "from_state": "unknown", "to_state": "eligible", "reason": "discovered"}
 ```
@@ -140,12 +144,14 @@ All log messages are in structured JSON format for easy parsing:
 ### Metrics Collection
 
 #### Sample Collection
+
 ```json
 {"msg": "sample", "member": "wan_starlink", "lat_ms": 53.2, "loss_pct": 0.1, "obstruction_pct": 2.1}
 {"msg": "sample", "member": "wan_cell", "lat_ms": 89.5, "loss_pct": 1.2, "rsrp": -95, "rsrq": -9}
 ```
 
 #### Provider Selection
+
 ```json
 {"msg": "provider", "member": "wan_cell", "provider": "rutos.mobiled", "status": "connected"}
 ```
@@ -153,11 +159,13 @@ All log messages are in structured JSON format for easy parsing:
 ### Decision Making
 
 #### Decision Evaluation
+
 ```json
 {"msg": "decision", "decision_type": "evaluation", "from": "wan_starlink", "to": "wan_cell", "reason": "predictive", "delta": 12.4}
 ```
 
 #### Failover Events
+
 ```json
 {"msg": "switch", "from": "wan_starlink", "to": "wan_cell", "reason": "predictive", "delta": 12.4, "fail_window_s": 11}
 ```
@@ -165,12 +173,14 @@ All log messages are in structured JSON format for easy parsing:
 ### Performance Monitoring
 
 #### Timing Information
+
 ```json
 {"msg": "timing", "operation": "member_discovery", "duration_ms": 45, "member_count": 4}
 {"msg": "timing", "operation": "decision_engine_tick", "duration_ms": 12}
 ```
 
 #### Resource Usage
+
 ```json
 {"msg": "resource_usage", "resource_type": "memory", "usage": 25.4, "limit": 100.0, "unit": "MB", "usage_pct": 25.4}
 {"msg": "resource_usage", "resource_type": "goroutines", "usage": 45, "limit": 500, "unit": "count", "usage_pct": 9.0}
@@ -179,6 +189,7 @@ All log messages are in structured JSON format for easy parsing:
 ### System Calls
 
 #### External Commands
+
 ```json
 {"msg": "system_call", "command": "ubus", "args": ["call", "network.device", "status"], "exit_code": 0, "duration_ms": 15}
 {"msg": "system_call", "command": "ping", "args": ["-c", "1", "8.8.8.8"], "exit_code": 0, "duration_ms": 120}
@@ -187,11 +198,13 @@ All log messages are in structured JSON format for easy parsing:
 ### API Calls
 
 #### Starlink API
+
 ```json
 {"msg": "api_call", "method": "GET", "url": "http://192.168.100.1/api/v1/diagnostics", "status_code": 200, "response_time_ms": 45}
 ```
 
 #### UCI Commands
+
 ```json
 {"msg": "api_call", "method": "UCI", "url": "get", "status_code": 0, "response_time_ms": 5}
 ```
@@ -201,29 +214,34 @@ All log messages are in structured JSON format for easy parsing:
 ### Key Log Patterns to Watch
 
 1. **Member Discovery**
-   ```
+
+   ```json
    {"msg": "discovery", "member": "..."}
    ```
 
 2. **Metrics Collection**
-   ```
+
+   ```json
    {"msg": "sample", "member": "..."}
    ```
 
 3. **Decision Making**
-   ```
+
+   ```json
    {"msg": "decision", "decision_type": "..."}
    {"msg": "switch", "from": "...", "to": "..."}
    ```
 
 4. **Performance Issues**
-   ```
+
+   ```json
    {"msg": "timing", "duration_ms": >100}
    {"msg": "resource_usage", "usage_pct": >80}
    ```
 
 5. **Errors and Failures**
-   ```
+
+   ```json
    {"level": "error", ...}
    {"level": "warn", ...}
    ```
@@ -253,9 +271,10 @@ ubus call autonomy members
 ubus call autonomy events
 ```
 
-### Performance Monitoring
+### Logging - Performance Monitoring
 
 #### Memory Usage
+
 ```bash
 # Watch memory usage
 tail -f /var/log/messages | grep '"msg":"resource_usage"'
@@ -265,6 +284,7 @@ tail -f /var/log/messages | grep '"usage_pct":>80'
 ```
 
 #### Timing Analysis
+
 ```bash
 # Watch for slow operations
 tail -f /var/log/messages | grep '"duration_ms":>100'
@@ -278,30 +298,35 @@ tail -f /var/log/messages | grep '"operation":"decision_engine_tick"'
 ### Common Issues and Log Patterns
 
 #### 1. Member Not Discovered
-```
+
+```json
 {"level": "warn", "msg": "discovery", "error": "interface not found"}
 ```
 
 #### 2. API Connection Issues
-```
+
+```json
 {"level": "error", "msg": "api_call", "status_code": 500}
 {"level": "error", "msg": "api_call", "error": "connection refused"}
 ```
 
 #### 3. High Latency
-```
+
+```json
 {"msg": "sample", "lat_ms": >1000}
 {"msg": "timing", "duration_ms": >500}
 ```
 
 #### 4. Memory Issues
-```
+
+```json
 {"level": "warn", "msg": "resource_usage", "usage_pct": >90}
 {"msg": "memory", "action": "force_gc"}
 ```
 
 #### 5. Decision Engine Problems
-```
+
+```json
 {"level": "error", "msg": "decision", "error": "..."}
 {"msg": "throttle", "what": "predictive", "cooldown_s": 20}
 ```
@@ -309,6 +334,7 @@ tail -f /var/log/messages | grep '"operation":"decision_engine_tick"'
 ### Debugging Workflow
 
 1. **Start with monitoring mode**
+
    ```bash
    ./scripts/monitor.sh
    ```
@@ -316,21 +342,25 @@ tail -f /var/log/messages | grep '"operation":"decision_engine_tick"'
 2. **Reproduce the issue** while monitoring
 
 3. **Look for error patterns**
+
    ```bash
    tail -f /var/log/messages | grep '"level":"error"'
    ```
 
 4. **Check timing information**
+
    ```bash
    tail -f /var/log/messages | grep '"msg":"timing"'
    ```
 
 5. **Verify member discovery**
+
    ```bash
    tail -f /var/log/messages | grep '"msg":"discovery"'
    ```
 
 6. **Check decision logic**
+
    ```bash
    tail -f /var/log/messages | grep '"msg":"decision"'
    ```

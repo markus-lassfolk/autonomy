@@ -19,7 +19,7 @@ This feature integrates Space-Track satellite ephemeris data with local Starlink
 
 ### Data Flow
 
-```
+```text
 Space-Track API → Satellite Ephemeris → Propagation Engine → Obstruction Analysis → Prediction Output
      ↓
 Starlink Dish → Obstruction Map → Local Data Processing → Validation & Tuning
@@ -30,6 +30,7 @@ Starlink Dish → Obstruction Map → Local Data Processing → Validation & Tun
 ### Phase 1: Core Infrastructure (Current Focus)
 
 #### 1.1 StarlinkTracker Module Structure
+
 - `starlink_tracker.h` - Main header with public API
 - `starlink_tracker.c` - Core tracking logic
 - `space_track_connector.h/c` - Space-Track API integration
@@ -38,6 +39,7 @@ Starlink Dish → Obstruction Map → Local Data Processing → Validation & Tun
 - `prediction_engine.h/c` - Outage forecasting
 
 #### 1.2 Key Data Structures
+
 ```c
 typedef struct {
     double latitude;
@@ -73,6 +75,7 @@ typedef struct {
 ```
 
 #### 1.3 Configuration
+
 ```c
 typedef struct {
     char space_track_username[64];
@@ -89,16 +92,19 @@ typedef struct {
 ### Phase 2: Enhanced Features
 
 #### 2.1 TLE Caching and Management
+
 - Daily TLE refresh from Space-Track
 - Local cache with expiration handling
 - Rate limiting compliance (<20 req/min)
 
 #### 2.2 Advanced Prediction
+
 - Multi-satellite availability analysis
 - Weather impact consideration
 - Historical accuracy tracking
 
 #### 2.3 Integration Points
+
 - Prometheus metrics export
 - Node-RED event streaming
 - Grafana dashboard integration
@@ -108,18 +114,21 @@ typedef struct {
 ### Space-Track API
 
 #### Authentication
+
 - Username/password required
 - Rate limit: <20 requests per minute
 - Data usage compliance with ODR requirements
 
 #### Endpoints Used
-```
+
+```text
 GET /basicspacedata/query/class/tle_latest/ORDINAL/1/DECAYED/0/format/tle
 GET /basicspacedata/query/class/gp_latest/ORDINAL/1/DECAYED/0/format/gp
 ```
 
 #### TLE Data Format
-```
+
+```text
 STARLINK-1234
 1 44713U 19074A   24001.50000000  .00000000  00000+0  00000+0    0    0
 2 44713  52.9980 180.0000 0001001   0.0000   0.0000 15.05432421    01
@@ -128,6 +137,7 @@ STARLINK-1234
 ### Starlink Dish gRPC API
 
 #### Required Commands
+
 ```bash
 # Get dish location
 grpcurl -plaintext -d '{"getLocation":{}}' 192.168.100.1:9200 SpaceX.API.Device.Device/Handle
@@ -143,6 +153,7 @@ grpcurl -plaintext -d '{"getStatus":{}}' 192.168.100.1:9200 SpaceX.API.Device.De
 ```
 
 #### Response Fields
+
 - `DishGetObstructionMapResponse.obstructionMap` - Angular quality grid
 - `DishGetDiagnosticsResponse.alignmentStats.boresightAzimuthDeg` - Boresight azimuth
 - `DishGetDiagnosticsResponse.alignmentStats.boresightElevationDeg` - Boresight elevation
@@ -151,6 +162,7 @@ grpcurl -plaintext -d '{"getStatus":{}}' 192.168.100.1:9200 SpaceX.API.Device.De
 ## Implementation Phases
 
 ### Phase 1: Core POC (Current)
+
 - [x] Documentation and planning
 - [ ] Basic StarlinkTracker module structure
 - [ ] Space-Track connector implementation
@@ -159,6 +171,7 @@ grpcurl -plaintext -d '{"getStatus":{}}' 192.168.100.1:9200 SpaceX.API.Device.De
 - [ ] Simple prediction engine
 
 ### Phase 2: Production Ready
+
 - [ ] TLE caching and management
 - [ ] Rate limiting and error handling
 - [ ] Configuration management
@@ -166,6 +179,7 @@ grpcurl -plaintext -d '{"getStatus":{}}' 192.168.100.1:9200 SpaceX.API.Device.De
 - [ ] Unit tests
 
 ### Phase 3: Advanced Features
+
 - [ ] Historical accuracy tracking
 - [ ] Machine learning threshold tuning
 - [ ] Weather integration
@@ -175,6 +189,7 @@ grpcurl -plaintext -d '{"getStatus":{}}' 192.168.100.1:9200 SpaceX.API.Device.De
 ## Usage Examples
 
 ### Basic Initialization
+
 ```c
 #include "starlink_tracker.h"
 
@@ -196,6 +211,7 @@ if (!tracker) {
 ```
 
 ### Running Predictions
+
 ```c
 // Get predictions for next 24 hours
 outage_prediction_t *predictions;
@@ -213,6 +229,7 @@ starlink_tracker_free_predictions(predictions, num_predictions);
 ```
 
 ### Real-time Monitoring
+
 ```c
 // Start continuous monitoring
 starlink_tracker_start_monitoring(tracker);
@@ -227,6 +244,7 @@ starlink_tracker_stop_monitoring(tracker);
 ## Configuration
 
 ### Environment Variables
+
 ```bash
 SPACE_TRACK_USERNAME=your_username
 SPACE_TRACK_PASSWORD=your_password
@@ -235,6 +253,7 @@ STARLINK_DISH_PORT=9200
 ```
 
 ### Configuration File
+
 ```json
 {
     "space_track": {
@@ -259,12 +278,14 @@ STARLINK_DISH_PORT=9200
 ## Dependencies
 
 ### Required Libraries
+
 - `libcurl` - HTTP client for Space-Track API
 - `libjson-c` - JSON parsing and generation
 - `libssl` - HTTPS support for Space-Track
 - `libm` - Math functions for orbital calculations
 
 ### Build Dependencies
+
 ```bash
 # Ubuntu/Debian
 sudo apt-get install libcurl4-openssl-dev libjson-c-dev libssl-dev
@@ -276,17 +297,20 @@ opkg install libcurl libjson-c openssl-utils
 ## Testing
 
 ### Unit Tests
+
 - Mock Space-Track API responses
 - Simulated obstruction maps
 - Prediction accuracy validation
 - Error handling scenarios
 
 ### Integration Tests
+
 - Live Space-Track API testing
 - Local Starlink dish communication
 - End-to-end prediction workflow
 
 ### Performance Tests
+
 - Memory usage profiling
 - CPU utilization monitoring
 - Network bandwidth analysis
@@ -296,21 +320,25 @@ opkg install libcurl libjson-c openssl-utils
 ### Common Issues
 
 #### Space-Track API Errors
+
 - **401 Unauthorized**: Check username/password
 - **429 Too Many Requests**: Reduce update frequency
 - **503 Service Unavailable**: Wait and retry
 
 #### Starlink Dish Communication
+
 - **Connection Refused**: Verify IP and port
 - **gRPC Timeout**: Check network connectivity
 - **Authentication Failed**: Verify dish is accessible
 
 #### Prediction Accuracy
+
 - **False Positives**: Adjust obstruction threshold
 - **Missed Outages**: Reduce min elevation angle
 - **Poor Performance**: Check TLE data freshness
 
 ### Debug Logging
+
 ```c
 // Enable debug logging
 starlink_tracker_set_log_level(tracker, LOG_LEVEL_DEBUG);
@@ -322,16 +350,19 @@ starlink_tracker_set_log_callback(tracker, custom_log_handler);
 ## Performance Considerations
 
 ### Memory Management
+
 - TLE data caching with LRU eviction
 - Obstruction map memory pooling
 - Prediction result buffer management
 
 ### CPU Optimization
+
 - SGP4 propagation batching
 - Obstruction grid lookup optimization
 - Parallel satellite position calculations
 
 ### Network Efficiency
+
 - TLE data compression
 - Incremental updates
 - Connection pooling
@@ -339,16 +370,19 @@ starlink_tracker_set_log_callback(tracker, custom_log_handler);
 ## Security Considerations
 
 ### API Credentials
+
 - Secure credential storage
 - Environment variable usage
 - Credential rotation support
 
 ### Data Privacy
+
 - Local data processing only
 - No external data transmission
 - Compliance with Space-Track terms
 
 ### Network Security
+
 - HTTPS for all external API calls
 - Local network isolation
 - Firewall rule recommendations
@@ -356,16 +390,19 @@ starlink_tracker_set_log_callback(tracker, custom_log_handler);
 ## Future Enhancements
 
 ### Machine Learning Integration
+
 - Historical accuracy pattern recognition
 - Dynamic threshold adjustment
 - Weather impact prediction
 
 ### Advanced Visualization
+
 - 3D satellite trajectory mapping
 - Real-time obstruction overlay
 - Interactive prediction dashboard
 
 ### Multi-Dish Support
+
 - Fleet-wide connectivity monitoring
 - Coordinated outage prediction
 - Load balancing recommendations
@@ -373,12 +410,14 @@ starlink_tracker_set_log_callback(tracker, custom_log_handler);
 ## Contributing
 
 ### Development Guidelines
+
 - Follow existing code style
 - Add comprehensive unit tests
 - Update documentation for new features
 - Use proper error handling
 
 ### Testing Requirements
+
 - All new features must have tests
 - Integration tests for API changes
 - Performance benchmarks for optimizations
@@ -386,11 +425,13 @@ starlink_tracker_set_log_callback(tracker, custom_log_handler);
 ## License and Compliance
 
 ### Space-Track Usage
+
 - Compliant with Space-Track terms of service
 - Respect rate limiting guidelines
 - Proper attribution for data sources
 
 ### Open Source
+
 - GPL v2 compatible
 - Proper license headers
 - Third-party license compliance
@@ -398,16 +439,19 @@ starlink_tracker_set_log_callback(tracker, custom_log_handler);
 ## Support and Maintenance
 
 ### Monitoring
+
 - Health check endpoints
 - Performance metrics
 - Error rate tracking
 
 ### Updates
+
 - TLE data refresh scheduling
 - Configuration hot-reload
 - Graceful degradation handling
 
 ### Documentation
+
 - API reference updates
 - Troubleshooting guides
 - User manual maintenance
@@ -415,6 +459,7 @@ starlink_tracker_set_log_callback(tracker, custom_log_handler);
 ## Integration with Existing Autonomy Daemon
 
 ### Existing Components to Leverage
+
 - **Starlink Client** (`src/autonomy/pkg/starlink/client.go`) - Already has gRPC integration
 - **GPS System** - Can provide location data if dish location unavailable
 - **Health Monitoring** - Can integrate prediction accuracy validation
@@ -422,12 +467,14 @@ starlink_tracker_set_log_callback(tracker, custom_log_handler);
 - **Logging System** - Enhanced structured logging for debugging
 
 ### Integration Points
+
 - **UBUS Methods** - Expose prediction API via existing UBUS infrastructure
 - **HTTP API** - Add REST endpoints for prediction queries
 - **Metrics Collection** - Integrate with existing telemetry system
 - **Event Notifications** - Use existing notification channels for alerts
 
 ### Configuration Integration
+
 ```json
 {
     "starlink_tracking": {
@@ -452,21 +499,25 @@ starlink_tracker_set_log_callback(tracker, custom_log_handler);
 ## C Implementation Notes
 
 ### Memory Management Strategy
+
 - Use consistent allocation patterns with existing daemon
 - Implement proper cleanup for all dynamically allocated structures
 - Use memory pools for frequently allocated/deallocated objects
 
 ### Error Handling
+
 - Follow existing error handling patterns in autonomy daemon
 - Proper logging at all error points
 - Graceful degradation when external APIs fail
 
 ### Threading Model
+
 - Background thread for TLE updates and cache management
 - Separate thread for continuous prediction calculations
 - Main thread integration via message queues or callbacks
 
 ### Performance Targets
+
 - TLE update: < 30 seconds for full Starlink constellation
 - Prediction calculation: < 5 seconds for 24-hour forecast
 - Memory usage: < 50MB for full operation including TLE cache

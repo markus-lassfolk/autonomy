@@ -136,7 +136,11 @@ int predictive_engine_train_models(void) {
     snprintf(training_data_cmd, sizeof(training_data_cmd),
             "python3 /usr/lib/autonomy/ml/train_models.py --data-dir /var/lib/autonomy/telemetry --output-dir /var/lib/autonomy/ml/models --algorithm random_forest 2>/dev/null");
     
-    int training_result = system(training_data_cmd);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("ML training script disabled for security - command injection vulnerability",
+                 "command", training_data_cmd);
+    int training_result = -1; // Return error since command was not executed
     if (training_result != 0) {
         LOGX_WARN_MSG("ML training script failed, using fallback training");
         
@@ -151,7 +155,11 @@ int predictive_engine_train_models(void) {
     snprintf(validation_cmd, sizeof(validation_cmd),
             "python3 /usr/lib/autonomy/ml/validate_models.py --model-dir /var/lib/autonomy/ml/models --data-dir /var/lib/autonomy/telemetry --use-real-data 2>/dev/null");
     
-    int validation_result = system(validation_cmd);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("ML validation script disabled for security - command injection vulnerability",
+                 "command", validation_cmd);
+    int validation_result = -1; // Return error since command was not executed
     if (validation_result == 0) {
         // Parse validation results
         FILE *validation_file = fopen("/var/lib/autonomy/ml/models/validation_results.json", "r");
@@ -221,12 +229,15 @@ static void generate_failover_predictions(void) {
     prediction_result_t* pred = &g_predictive_engine.predictions[g_predictive_engine.prediction_count];
     
     pred->type = PREDICTION_TYPE_FAILOVER;
-    safe_strncpy(pred->target, "eth0", sizeof(pred->target));
+    strncpy(pred->target, "eth0", sizeof(pred->target) - 1);
+    pred->target[sizeof(pred->target) - 1] = '\0';
     pred->probability = 0.75;
     pred->predicted_time = time(NULL) + 3600; // 1 hour from now
-    safe_strncpy(pred->description, "High probability of network interface failure", sizeof(pred->description));
+    strncpy(pred->description, "High probability of network interface failure", sizeof(pred->description) - 1);
+    pred->description[sizeof(pred->description) - 1] = '\0';
     pred->confidence = 0.8;
-    safe_strncpy(pred->mitigation, "Prepare failover to backup interface", sizeof(pred->mitigation));
+    strncpy(pred->mitigation, "Prepare failover to backup interface", sizeof(pred->mitigation) - 1);
+    pred->mitigation[sizeof(pred->mitigation) - 1] = '\0';
     
     g_predictive_engine.prediction_count++;
 }
@@ -238,12 +249,15 @@ static void generate_performance_predictions(void) {
     prediction_result_t* pred = &g_predictive_engine.predictions[g_predictive_engine.prediction_count];
     
     pred->type = PREDICTION_TYPE_PERFORMANCE;
-    safe_strncpy(pred->target, "system_performance", sizeof(pred->target));
+    strncpy(pred->target, "system_performance", sizeof(pred->target) - 1);
+    pred->target[sizeof(pred->target) - 1] = '\0';
     pred->probability = 0.6;
     pred->predicted_time = time(NULL) + 7200; // 2 hours from now
-    safe_strncpy(pred->description, "Expected performance degradation during peak hours", sizeof(pred->description));
+    strncpy(pred->description, "Expected performance degradation during peak hours", sizeof(pred->description) - 1);
+    pred->description[sizeof(pred->description) - 1] = '\0';
     pred->confidence = 0.7;
-    safe_strncpy(pred->mitigation, "Optimize resource allocation and caching", sizeof(pred->mitigation));
+    strncpy(pred->mitigation, "Optimize resource allocation and caching", sizeof(pred->mitigation) - 1);
+    pred->mitigation[sizeof(pred->mitigation) - 1] = '\0';
     
     g_predictive_engine.prediction_count++;
 }

@@ -245,6 +245,7 @@ The Enhanced autonomy Notification System includes a powerful generic webhook cl
 ## 🎨 Template Syntax Guide
 
 ### Available Variables
+
 - `{{.Type}}` - Notification type (failover, critical_error, etc.)
 - `{{.Title}}` - Alert title
 - `{{.Message}}` - Alert message
@@ -255,14 +256,16 @@ The Enhanced autonomy Notification System includes a powerful generic webhook cl
 - `{{.Version}}` - Daemon version
 
 ### Template Functions
+
 - `{{.Timestamp.Format "2006-01-02T15:04:05Z"}}` - Format timestamp
 - `{{.Timestamp.Unix}}` - Unix timestamp
 - `{{.Context | toJson}}` - Convert context to JSON
 - `{{if eq .Priority 2}}critical{{else}}normal{{end}}` - Conditional logic
 
 ### Content Type Support
+
 - **JSON**: `application/json` (default)
-- **XML**: `application/xml` 
+- **XML**: `application/xml`
 - **Form Data**: `application/x-www-form-urlencoded`
 - **Plain Text**: `text/plain`
 - **Custom**: Use template for full control
@@ -270,6 +273,7 @@ The Enhanced autonomy Notification System includes a powerful generic webhook cl
 ## 🔐 Authentication Methods
 
 ### Bearer Token
+
 ```json
 {
   "auth_type": "bearer",
@@ -278,6 +282,7 @@ The Enhanced autonomy Notification System includes a powerful generic webhook cl
 ```
 
 ### Basic Authentication
+
 ```json
 {
   "auth_type": "basic",
@@ -287,6 +292,7 @@ The Enhanced autonomy Notification System includes a powerful generic webhook cl
 ```
 
 ### API Key Header
+
 ```json
 {
   "auth_type": "api_key",
@@ -296,6 +302,7 @@ The Enhanced autonomy Notification System includes a powerful generic webhook cl
 ```
 
 ### Custom Headers
+
 ```json
 {
   "auth_type": "custom",
@@ -309,6 +316,7 @@ The Enhanced autonomy Notification System includes a powerful generic webhook cl
 ## 🎛️ Filtering & Transformation
 
 ### Priority Filtering
+
 ```json
 {
   "priority_filter": [1, 2]  // Only high and emergency
@@ -316,6 +324,7 @@ The Enhanced autonomy Notification System includes a powerful generic webhook cl
 ```
 
 ### Type Filtering
+
 ```json
 {
   "type_filter": ["failover", "critical_error", "member_down"]
@@ -323,6 +332,7 @@ The Enhanced autonomy Notification System includes a powerful generic webhook cl
 ```
 
 ### Field Mapping
+
 ```json
 {
   "field_mapping": {
@@ -334,6 +344,7 @@ The Enhanced autonomy Notification System includes a powerful generic webhook cl
 ```
 
 ### Field Exclusion
+
 ```json
 {
   "exclude_fields": ["source", "version", "hostname"]
@@ -343,6 +354,7 @@ The Enhanced autonomy Notification System includes a powerful generic webhook cl
 ## 🔄 Retry & Reliability
 
 ### Retry Configuration
+
 ```json
 {
   "retry_attempts": 3,     // Number of retry attempts
@@ -352,6 +364,7 @@ The Enhanced autonomy Notification System includes a powerful generic webhook cl
 ```
 
 ### SSL & Redirects
+
 ```json
 {
   "verify_ssl": true,      // Verify SSL certificates
@@ -380,24 +393,28 @@ ubus call autonomy send_test_notification '{
 ## 📝 Best Practices
 
 ### 1. **Security**
+
 - Use HTTPS URLs whenever possible
 - Store sensitive tokens in environment variables
 - Implement proper authentication
 - Verify SSL certificates in production
 
 ### 2. **Reliability**
+
 - Configure appropriate retry settings
 - Set reasonable timeouts
 - Use filtering to avoid spam
 - Monitor webhook endpoint health
 
 ### 3. **Performance**
+
 - Use efficient templates
 - Filter unnecessary notifications
 - Exclude unused fields
 - Consider rate limiting on receiving end
 
 ### 4. **Monitoring**
+
 - Log webhook responses
 - Monitor success/failure rates
 - Set up alerts for webhook failures
@@ -406,6 +423,7 @@ ubus call autonomy send_test_notification '{
 ## 🚀 Advanced Use Cases
 
 ### Multi-Environment Setup
+
 ```json
 {
   "webhook": {
@@ -419,6 +437,7 @@ ubus call autonomy send_test_notification '{
 ```
 
 ### Dynamic Routing
+
 ```json
 {
   "webhook": {

@@ -5,11 +5,13 @@
 ### Service Won't Start
 
 **Symptoms:**
+
 - Service fails to start with error messages
 - `autonomy` process not running
 - No ubus API available
 
 **Diagnosis:**
+
 ```bash
 # Check service status
 /etc/init.d/autonomy status
@@ -24,6 +26,7 @@ uci show autonomy
 **Solutions:**
 
 1. **Configuration Error:**
+
    ```bash
    # Reset configuration
    uci delete autonomy
@@ -32,6 +35,7 @@ uci show autonomy
    ```
 
 2. **Missing Dependencies:**
+
    ```bash
    # Install required packages
    opkg update
@@ -39,6 +43,7 @@ uci show autonomy
    ```
 
 3. **Permission Issues:**
+
    ```bash
    # Fix permissions
    chmod +x /usr/sbin/autonomyd
@@ -48,11 +53,13 @@ uci show autonomy
 ### Starlink Integration Issues
 
 **Symptoms:**
+
 - Starlink not detected
 - API connection failures
 - No obstruction data
 
 **Diagnosis:**
+
 ```bash
 # Check Starlink API connectivity
 ubus call autonomy interfaces
@@ -64,6 +71,7 @@ curl -s http://192.168.100.1:9200/status
 **Solutions:**
 
 1. **API Endpoint Unreachable:**
+
    ```bash
    # Verify Starlink IP
    ping 192.168.100.1
@@ -74,6 +82,7 @@ curl -s http://192.168.100.1:9200/status
    ```
 
 2. **Authentication Issues:**
+
    ```bash
    # Check Starlink authentication
    uci set autonomy.starlink.auth_enabled=0
@@ -81,6 +90,7 @@ curl -s http://192.168.100.1:9200/status
    ```
 
 3. **Network Connectivity:**
+
    ```bash
    # Ensure proper network setup
    ip route add 192.168.100.0/24 dev starlink
@@ -89,11 +99,13 @@ curl -s http://192.168.100.1:9200/status
 ### Cellular Failover Issues
 
 **Symptoms:**
+
 - Cellular interface not detected
 - Failover not working
 - Poor signal quality
 
 **Diagnosis:**
+
 ```bash
 # Check cellular interface
 ip link show wwan0
@@ -108,6 +120,7 @@ uci show autonomy.cellular
 **Solutions:**
 
 1. **Interface Not Found:**
+
    ```bash
    # Update interface name
    uci set autonomy.cellular.interface="wwan1"
@@ -115,6 +128,7 @@ uci show autonomy.cellular
    ```
 
 2. **APN Configuration:**
+
    ```bash
    # Set correct APN
    uci set autonomy.cellular.apn="internet"
@@ -124,6 +138,7 @@ uci show autonomy.cellular
    ```
 
 3. **Signal Quality:**
+
    ```bash
    # Adjust thresholds
    uci set autonomy.cellular.signal_threshold=-90
@@ -133,11 +148,13 @@ uci show autonomy.cellular
 ### GPS Issues
 
 **Symptoms:**
+
 - No GPS data
 - Inaccurate location
 - GPS source not working
 
 **Diagnosis:**
+
 ```bash
 # Check GPS status
 ubus call autonomy gps location
@@ -149,6 +166,7 @@ uci show autonomy.gps
 **Solutions:**
 
 1. **GPS Source Configuration:**
+
    ```bash
    # Set GPS source
    uci set autonomy.gps.source="starlink"
@@ -156,6 +174,7 @@ uci show autonomy.gps
    ```
 
 2. **External GPS Device:**
+
    ```bash
    # Configure external GPS
    uci set autonomy.gps.source="external"
@@ -165,6 +184,7 @@ uci show autonomy.gps
    ```
 
 3. **Cellular Fallback:**
+
    ```bash
    # Enable cellular fallback
    uci set autonomy.gps.fallback_to_cellular=1
@@ -174,11 +194,13 @@ uci show autonomy.gps
 ### Performance Issues
 
 **Symptoms:**
+
 - High CPU usage
 - High memory usage
 - Slow response times
 
 **Diagnosis:**
+
 ```bash
 # Check performance metrics
 ubus call autonomy metrics
@@ -191,6 +213,7 @@ free -m
 **Solutions:**
 
 1. **Reduce Polling Frequency:**
+
    ```bash
    # Increase polling intervals
    uci set autonomy.config.poll_interval_ms=3000
@@ -199,6 +222,7 @@ free -m
    ```
 
 2. **Memory Optimization:**
+
    ```bash
    # Reduce memory usage
    uci set autonomy.config.max_memory_mb=32
@@ -207,6 +231,7 @@ free -m
    ```
 
 3. **Disable Unused Features:**
+
    ```bash
    # Disable unused monitoring
    uci set autonomy.wifi.enabled=0
@@ -217,11 +242,13 @@ free -m
 ### Notification Issues
 
 **Symptoms:**
+
 - Notifications not sent
 - Webhook failures
 - Rate limiting issues
 
 **Diagnosis:**
+
 ```bash
 # Check notification status
 ubus call autonomy notifications status
@@ -233,6 +260,7 @@ curl -X POST https://your-webhook.com/autonomy
 **Solutions:**
 
 1. **Webhook Configuration:**
+
    ```bash
    # Update webhook URL
    uci set autonomy.notifications.webhook_url="https://your-webhook.com/autonomy"
@@ -241,6 +269,7 @@ curl -X POST https://your-webhook.com/autonomy
    ```
 
 2. **Rate Limiting:**
+
    ```bash
    # Adjust rate limits
    uci set autonomy.notifications.rate_limit_minutes=10
@@ -249,6 +278,7 @@ curl -X POST https://your-webhook.com/autonomy
    ```
 
 3. **Authentication:**
+
    ```bash
    # Add webhook authentication
    uci set autonomy.notifications.webhook_auth="Bearer your-token"
@@ -258,11 +288,13 @@ curl -X POST https://your-webhook.com/autonomy
 ### Network Interface Issues
 
 **Symptoms:**
+
 - Interface not detected
 - Wrong interface type
 - Interface metrics not updating
 
 **Diagnosis:**
+
 ```bash
 # List all interfaces
 ip link show
@@ -277,6 +309,7 @@ ubus call mwan3 status
 **Solutions:**
 
 1. **Interface Detection:**
+
    ```bash
    # Restart interface detection
    /etc/init.d/autonomy restart
@@ -286,6 +319,7 @@ ubus call mwan3 status
    ```
 
 2. **mwan3 Integration:**
+
    ```bash
    # Ensure mwan3 is running
    /etc/init.d/mwan3 restart
@@ -295,6 +329,7 @@ ubus call mwan3 status
    ```
 
 3. **Interface Metrics:**
+
    ```bash
    # Force metrics update
    ubus call autonomy control refresh

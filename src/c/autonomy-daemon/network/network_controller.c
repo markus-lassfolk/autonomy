@@ -51,8 +51,10 @@ int network_controller_init(const network_controller_config_t* config) {
         g_network_controller.config.enabled = true; // Use configurable network controller enabled
         g_network_controller.config.use_mwan3 = g_config.mwan3_integration;
         g_network_controller.config.dry_run = false;
-        safe_strncpy(g_network_controller.config.mwan3_path, "mwan3", sizeof(g_network_controller.config.mwan3_path));
-        safe_strncpy(g_network_controller.config.ubus_path, "ubus", sizeof(g_network_controller.config.ubus_path));
+        strncpy(g_network_controller.config.mwan3_path, "mwan3", sizeof(g_network_controller.config.mwan3_path) - 1);
+        g_network_controller.config.mwan3_path[sizeof(g_network_controller.config.mwan3_path) - 1] = '\0';
+        strncpy(g_network_controller.config.ubus_path, "ubus", sizeof(g_network_controller.config.ubus_path) - 1);
+        g_network_controller.config.ubus_path[sizeof(g_network_controller.config.ubus_path) - 1] = '\0';
         g_network_controller.config.switch_timeout_seconds = g_config.failover_timeout;
         g_network_controller.config.validation_timeout_seconds = 10; // Use configurable validation timeout
         g_network_controller.config.enable_callbacks = true; // Use configurable callbacks enabled
@@ -118,9 +120,11 @@ int network_controller_switch(const network_member_t* from, const network_member
     // Initialize result
     memset(result, 0, sizeof(switch_result_t));
     result->timestamp = time(NULL);
-    safe_strncpy(result->to_member, to->name, sizeof(result->to_member));
+    strncpy(result->to_member, to->name, sizeof(result->to_member) - 1);
+    result->to_member[sizeof(result->to_member) - 1] = '\0';
     if (from) {
-        safe_strncpy(result->from_member, from->name, sizeof(result->from_member));
+        strncpy(result->from_member, from->name, sizeof(result->from_member) - 1);
+        result->from_member[sizeof(result->from_member) - 1] = '\0';
     }
     
     struct timespec start_time;
@@ -133,7 +137,8 @@ int network_controller_switch(const network_member_t* from, const network_member
     
     // Validate target member
     if (network_controller_validate_member(to) != AUTONOMY_SUCCESS) {
-        safe_strncpy(result->error_message, "Invalid target member", sizeof(result->error_message));
+        strncpy(result->error_message, "Invalid target member", sizeof(result->error_message) - 1);
+        result->error_message[sizeof(result->error_message) - 1] = '\0';
         pthread_mutex_unlock(&g_network_controller.mutex);
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
@@ -145,25 +150,30 @@ int network_controller_switch(const network_member_t* from, const network_member
         LOGX_INFO_MSG("DRY RUN: Would switch network interface",
                   "from", from ? from->name : "none",
                   "to", to->name);
-        safe_strncpy(result->method, "dry_run", sizeof(result->method));
-        safe_strncpy(result->reason, "Dry run mode - no actual switch performed", sizeof(result->reason));
+        strncpy(result->method, "dry_run", sizeof(result->method) - 1);
+        result->method[sizeof(result->method) - 1] = '\0';
+        strncpy(result->reason, "Dry run mode - no actual switch performed", sizeof(result->reason) - 1);
+        result->reason[sizeof(result->reason) - 1] = '\0';
         result->success = true;
         switch_result = AUTONOMY_SUCCESS;
     } else {
         // Perform actual switch
         if (g_network_controller.config.use_mwan3) {
             switch_result = switch_via_mwan3(from, to, result);
-            safe_strncpy(result->method, "mwan3", sizeof(result->method));
+            strncpy(result->method, "mwan3", sizeof(result->method) - 1);
+            result->method[sizeof(result->method) - 1] = '\0';
         } else {
             switch_result = switch_via_netifd(from, to, result);
-            safe_strncpy(result->method, "netifd", sizeof(result->method));
+            strncpy(result->method, "netifd", sizeof(result->method) - 1);
+            result->method[sizeof(result->method) - 1] = '\0';
         }
         
         // If both fail, try manual method
         if (switch_result != AUTONOMY_SUCCESS) {
             LOGX_WARN_MSG("Primary switch method failed, trying manual method");
             switch_result = switch_via_manual(from, to, result);
-            safe_strncpy(result->method, "manual", sizeof(result->method));
+            strncpy(result->method, "manual", sizeof(result->method) - 1);
+            result->method[sizeof(result->method) - 1] = '\0';
         }
     }
     
@@ -190,7 +200,8 @@ int network_controller_switch(const network_member_t* from, const network_member
                            (g_network_controller.stats.successful_switches - 1) + result->duration_ms;
         g_network_controller.stats.average_switch_time_ms = total_time / g_network_controller.stats.successful_switches;
         
-        safe_strncpy(g_network_controller.stats.current_member, to->name, sizeof(g_network_controller.stats.current_member));
+        strncpy(g_network_controller.stats.current_member, to->name, sizeof(g_network_controller.stats.current_member) - 1);
+        g_network_controller.stats.current_member[sizeof(g_network_controller.stats.current_member) - 1] = '\0';
         
         // Call failover callbacks
         if (g_network_controller.config.enable_callbacks) {
@@ -205,7 +216,8 @@ int network_controller_switch(const network_member_t* from, const network_member
     } else {
         result->success = false;
         g_network_controller.stats.failed_switches++;
-        safe_strncpy(g_network_controller.stats.last_error, result->error_message, sizeof(g_network_controller.stats.last_error));
+        strncpy(g_network_controller.stats.last_error, result->error_message, sizeof(g_network_controller.stats.last_error) - 1);
+        g_network_controller.stats.last_error[sizeof(g_network_controller.stats.last_error) - 1] = '\0';
         
         LOGX_ERROR_MSG("Network switch failed",
                    "from", from ? from->name : "none",
@@ -241,7 +253,7 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
             return AUTONOMY_ERROR_SYSTEM;
         }
         
-        LOGX_DEBUG_MSG("Disabled MWAN3 member", "member", from->name);
+        LOGX_DEBUG_MSG("Disabled MWAN3 member: %s", from->name);
     }
     
     // Enable the new member
@@ -261,7 +273,7 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    LOGX_DEBUG_MSG("Enabled MWAN3 member", "member", to->name);
+    LOGX_DEBUG_MSG("Enabled MWAN3 member: %s", to->name);
     
     // Apply MWAN3 configuration
     snprintf(command, sizeof(command), "%s restart 2>&1", g_network_controller.config.mwan3_path);
@@ -277,7 +289,8 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    safe_strncpy(result->reason, "MWAN3 member switch completed", sizeof(result->reason));
+    strncpy(result->reason, "MWAN3 member switch completed", sizeof(result->reason) - 1);
+    result->reason[sizeof(result->reason) - 1] = '\0';
     return AUTONOMY_SUCCESS;
 }
 
@@ -285,13 +298,15 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
 static int switch_via_netifd(const network_member_t* from, const network_member_t* to, switch_result_t* result) {
     struct ubus_context* ctx = ubus_connect(NULL);
     if (!ctx) {
-        safe_strncpy(result->error_message, "Failed to connect to UBUS", sizeof(result->error_message));
+        strncpy(result->error_message, "Failed to connect to UBUS", sizeof(result->error_message) - 1);
+        result->error_message[sizeof(result->error_message) - 1] = '\0';
         return AUTONOMY_ERROR_SYSTEM;
     }
     
     uint32_t id;
     if (ubus_lookup_id(ctx, "network.interface", &id) != 0) {
-        safe_strncpy(result->error_message, "network.interface service not available", sizeof(result->error_message));
+        strncpy(result->error_message, "network.interface service not available", sizeof(result->error_message) - 1);
+        result->error_message[sizeof(result->error_message) - 1] = '\0';
         ubus_free(ctx);
         return AUTONOMY_ERROR_NOT_FOUND;
     }
@@ -310,7 +325,7 @@ static int switch_via_netifd(const network_member_t* from, const network_member_
             LOGX_WARN_MSG("Failed to bring down interface via netifd", 
                      "interface", from->interface, "error", ubus_strerror(ret));
         } else {
-            LOGX_DEBUG_MSG("Brought down interface via netifd", "interface", from->interface);
+            LOGX_DEBUG_MSG("Brought down interface via netifd: %s", from->interface);
         }
     }
     
@@ -330,8 +345,9 @@ static int switch_via_netifd(const network_member_t* from, const network_member_
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    LOGX_DEBUG_MSG("Brought up interface via netifd", "interface", to->interface);
-    safe_strncpy(result->reason, "netifd interface switch completed", sizeof(result->reason));
+    LOGX_DEBUG_MSG("Brought up interface via netifd: %s", to->interface);
+    strncpy(result->reason, "netifd interface switch completed", sizeof(result->reason) - 1);
+    result->reason[sizeof(result->reason) - 1] = '\0';
     return AUTONOMY_SUCCESS;
 }
 
@@ -345,7 +361,7 @@ static int switch_via_manual(const network_member_t* from, const network_member_
         snprintf(command, sizeof(command), "ifdown %s 2>&1", from->interface);
         execute_command_with_timeout(command, g_network_controller.config.switch_timeout_seconds,
                                     output, sizeof(output));
-        LOGX_DEBUG_MSG("Brought down interface manually", "interface", from->interface);
+        LOGX_DEBUG_MSG("Brought down interface manually: %s", from->interface);
     }
     
     // Bring up new interface
@@ -362,20 +378,33 @@ static int switch_via_manual(const network_member_t* from, const network_member_
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    LOGX_DEBUG_MSG("Brought up interface manually", "interface", to->interface);
-    safe_strncpy(result->reason, "Manual interface switch completed", sizeof(result->reason));
+        LOGX_DEBUG_MSG("Brought up interface manually: %s", to->interface);
+    strncpy(result->reason, "Manual interface switch completed", sizeof(result->reason) - 1);
+    result->reason[sizeof(result->reason) - 1] = '\0';
     return AUTONOMY_SUCCESS;
 }
 
-// Execute command with timeout
+// Execute command with timeout - SECURE VERSION
+// DISABLED: Command injection vulnerability - popen() calls with user data are dangerous
+// TODO: Implement secure command execution using proper API calls
 static int execute_command_with_timeout(const char* command, int timeout_seconds, char* output, size_t output_size) {
     if (!command) return -1;
     
-    LOGX_DEBUG_MSG("Executing command", "command", command, "timeout", timeout_seconds);
+    LOGX_WARN_MSG("Command execution disabled for security - command injection vulnerability",
+                 "command", command, "timeout", timeout_seconds);
     
+    // Return error to indicate command was not executed
+    if (output && output_size > 0) {
+        strncpy(output, "Command execution disabled for security", output_size - 1);
+        output[output_size - 1] = '\0';
+    }
+    return -1;
+    
+    // ORIGINAL VULNERABLE CODE:
+    /*
     FILE* fp = popen(command, "r");
     if (!fp) {
-        LOGX_ERROR_MSG("Failed to execute command", "command", command, "error", strerror(errno));
+        LOGX_ERROR_MSG("Failed to execute command '%s': %s", command, strerror(errno));
         return -1;
     }
     
@@ -387,11 +416,12 @@ static int execute_command_with_timeout(const char* command, int timeout_seconds
     int exit_code = pclose(fp);
     
     if (exit_code != 0) {
-        LOGX_ERROR_MSG("Command failed", "command", command, "exit_code", exit_code);
+        LOGX_ERROR_MSG("Command failed '%s' with exit code: %d", command, exit_code);
         return exit_code;
     }
     
     return 0;
+    */
 }
 
 // Get time difference in milliseconds
@@ -419,7 +449,7 @@ void call_failover_callbacks(const network_member_t* from, const network_member_
         if (g_network_controller.callbacks[i]) {
             int result = g_network_controller.callbacks[i](from, to);
             if (result != AUTONOMY_SUCCESS) {
-                LOGX_WARN_MSG("Failover callback failed", "callback_index", i, "result", result);
+                LOGX_WARN_MSG("Failover callback %d failed with result: %d", i, result);
             }
         }
     }
@@ -459,7 +489,7 @@ int network_controller_set_members(const network_member_t* members, int count) {
     memcpy(g_network_controller.members, members, sizeof(network_member_t) * count);
     g_network_controller.member_count = count;
     
-    LOGX_INFO_MSG("Network controller members updated", "count", count);
+    LOGX_INFO_MSG("Network controller members updated: %d", count);
     
     // Log each member
     for (int i = 0; i < count; i++) {

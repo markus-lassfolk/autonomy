@@ -15,6 +15,7 @@ Welcome to Autonomy, the intelligent multi-interface failover system for RutOS a
 ## Installation
 
 ### Option 1: Package Installation (Recommended)
+
 ```bash
 # Update package lists
 opkg update
@@ -28,6 +29,7 @@ opkg install autonomy
 ```
 
 ### Option 2: Manual Installation
+
 ```bash
 # Download latest release
 wget https://github.com/your-repo/autonomy/releases/latest/autonomy.ipk
@@ -44,6 +46,7 @@ uci commit autonomy
 ## Basic Configuration
 
 ### 1. Network Interfaces
+
 Autonomy automatically discovers your network interfaces. To verify:
 
 ```bash
@@ -55,6 +58,7 @@ ubus call autonomy status
 ```
 
 ### 2. Starlink Integration (Optional)
+
 If you have a Starlink dish:
 
 ```bash
@@ -68,6 +72,7 @@ uci commit autonomy
 ```
 
 ### 3. GPS Configuration (Optional)
+
 For location-based features:
 
 ```bash
@@ -80,6 +85,7 @@ uci commit autonomy
 ## First Test
 
 ### Check System Status
+
 ```bash
 # Overall system health
 ubus call autonomy status
@@ -92,6 +98,7 @@ ubus call gps location
 ```
 
 ### Test Manual Failover
+
 ```bash
 # Switch to cellular
 ubus call autonomy switch '{"interface": "cellular"}'
@@ -101,6 +108,7 @@ ubus call autonomy switch '{"interface": "starlink"}'
 ```
 
 ### Monitor Logs
+
 ```bash
 # View system logs
 logread | grep autonomy
@@ -114,6 +122,7 @@ logread -f | grep autonomy
 Access the web interface at: `https://your-router-ip/cgi-bin/luci/admin/autonomy`
 
 The web interface provides:
+
 - Real-time network status
 - Interface health monitoring
 - Starlink satellite visualization
@@ -123,15 +132,18 @@ The web interface provides:
 ## Next Steps
 
 ### Basic Usage
+
 - [User Guide](USER_GUIDE.md) - Complete user manual
 - [Configuration Guide](../developer-guides/configuration.md) - Advanced configuration
 
 ### Advanced Features
+
 - [Starlink Tracking](../user-guides/starlink-tracking-overview.md) - Satellite prediction
 - [GPS Integration](starlink-gps-integration.md) - Multi-source GPS
 - [Predictive Failover](../developer-guides/predictive-failover.md) - ML-based predictions
 
 ### Development
+
 - [SDK Master Guide](sdk-master-guide.md) - Development environment
 - [VUCI Development](../developer-guides/vuci-development.md) - Web UI development
 

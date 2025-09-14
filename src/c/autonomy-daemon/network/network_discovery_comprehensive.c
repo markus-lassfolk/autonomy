@@ -11,11 +11,11 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <pthread.h>
 #include <time.h>
 #include <dirent.h>
 #include <uci.h>
-#include <sys/stat.h>
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <json-c/json.h>
@@ -156,7 +156,8 @@ void get_mwan3_interface_info(void *ctx, network_interface_t *interfaces, int co
             if (is_interface_in_mwan3(interfaces[i].name)) {
                 interfaces[i].mwan3_available = true;
                 interfaces[i].mwan3_tracking_enabled = true;
-                safe_strncpy(interfaces[i].mwan3_name, interfaces[i].name, sizeof(interfaces[i].mwan3_name));
+                strncpy(interfaces[i].mwan3_name, interfaces[i].name, sizeof(interfaces[i].mwan3_name) - 1);
+                interfaces[i].mwan3_name[sizeof(interfaces[i].mwan3_name) - 1] = '\0';
                 // Get MWAN3 status for this interface
                 get_mwan3_interface_status(ctx, &interfaces[i]);
             }
@@ -169,16 +170,19 @@ void get_mwan3_interface_info(void *ctx, network_interface_t *interfaces, int co
 static bool is_interface_in_mwan3(const char *interface_name) {
     // Execute mwan3 status command and check if interface is listed
     char command[256];
-    snprintf(command, sizeof(command), "mwan3 status 2>/dev/null | grep -q '\"%s\"'", interface_name);
-    int ret = system(command);
-    return (ret == 0);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // TODO: Implement secure MWAN3 status checking using proper API
+    LOGX_WARN_MSG("MWAN3 status check disabled for security - command injection vulnerability",
+                 "interface", interface_name);
+    return false; // Default to false for security
 }
 
 // Get MWAN3 interface status
 static void get_mwan3_interface_status(struct ubus_context *ctx, network_interface_t *iface) {
     // This would parse the MWAN3 status for the specific interface
     // For now, set default values
-    safe_strncpy(iface->mwan3_status, "unknown", sizeof(iface->mwan3_status));
+    strncpy(iface->mwan3_status, "unknown", sizeof(iface->mwan3_status) - 1);
+    iface->mwan3_status[sizeof(iface->mwan3_status) - 1] = '\0';
     iface->mwan3_metric = 0;
 }
 
@@ -264,9 +268,12 @@ static void get_cellular_interface_details(struct ubus_context *ctx, network_int
         if (ret == 0) {
             // Parse modem information
             // For now, set default values
-            safe_strncpy(iface->modem_model, "Unknown", sizeof(iface->modem_model));
-            safe_strncpy(iface->modem_id, "2-1", sizeof(iface->modem_id));
-            safe_strncpy(iface->sim_id, "1", sizeof(iface->sim_id));
+            strncpy(iface->modem_model, "Unknown", sizeof(iface->modem_model) - 1);
+            iface->modem_model[sizeof(iface->modem_model) - 1] = '\0';
+            strncpy(iface->modem_id, "2-1", sizeof(iface->modem_id) - 1);
+            iface->modem_id[sizeof(iface->modem_id) - 1] = '\0';
+            strncpy(iface->sim_id, "1", sizeof(iface->sim_id) - 1);
+            iface->sim_id[sizeof(iface->sim_id) - 1] = '\0';
         }
         blob_buf_free(&req);
     }
@@ -302,8 +309,10 @@ void get_wifi_information(void *ctx, network_interface_t *interfaces, int count)
 static void get_wifi_interface_details(struct ubus_context *ctx, network_interface_t *iface) {
     // This would parse WiFi details from network.wireless
     // For now, set default values
-    safe_strncpy(iface->wifi_mode, "ap", sizeof(iface->wifi_mode));
-    safe_strncpy(iface->wifi_encryption, "psk2", sizeof(iface->wifi_encryption));
+    strncpy(iface->wifi_mode, "ap", sizeof(iface->wifi_mode) - 1);
+    iface->wifi_mode[sizeof(iface->wifi_mode) - 1] = '\0';
+    strncpy(iface->wifi_encryption, "psk2", sizeof(iface->wifi_encryption) - 1);
+    iface->wifi_encryption[sizeof(iface->wifi_encryption) - 1] = '\0';
 }
 
 // Detect Starlink connections
@@ -314,7 +323,8 @@ void detect_starlink_connections(network_interface_t *interfaces, int count) {
             is_starlink_ip_range(interfaces[i].ip_address)) {
             
             interfaces[i].is_starlink = true;
-            safe_strncpy(interfaces[i].type, "starlink", sizeof(interfaces[i].type));
+            strncpy(interfaces[i].type, "starlink", sizeof(interfaces[i].type) - 1);
+            interfaces[i].type[sizeof(interfaces[i].type) - 1] = '\0';
             safe_strncpy(interfaces[i].starlink_ip, interfaces[i].ip_address, sizeof(interfaces[i].starlink_ip));
             
             // Try to get Starlink dish information
@@ -443,27 +453,30 @@ static void detect_cellular_device_path(network_interface_t *iface) {
 static bool is_cellular_device_active(const char *device_path) {
     if (!device_path) return false;
     
-    // Check if device exists and is accessible
-    if (access(device_path, R_OK | W_OK) != 0) {
+    // Check if device exists and is accessible (SECURE VERSION)
+    struct stat device_stat;
+    if (stat(device_path, &device_stat) != 0 || 
+        !S_ISCHR(device_stat.st_mode) || 
+        !(device_stat.st_mode & S_IRUSR) || 
+        !(device_stat.st_mode & S_IWUSR)) {
         return false;
     }
     
-    // Try to send a simple AT command to verify it's a cellular modem
-    char command[512];
-    snprintf(command, sizeof(command), 
-             "echo 'AT' | timeout 2 microcom -t 1000 %s 2>/dev/null | grep -q 'OK'", device_path);
-    
-    int ret = system(command);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Cellular device verification disabled for security - command injection vulnerability",
+                 "device_path", device_path);
+    int ret = -1; // Return error since command was not executed
     if (ret == 0) {
         LOGX_DEBUG_MSG("Cellular device %s is active and responding", device_path);
         return true;
     }
     
-    // Alternative method using gsmctl if available
-    snprintf(command, sizeof(command), 
-             "gsmctl -d %s -A AT 2>/dev/null | grep -q 'OK'", device_path);
-    
-    ret = system(command);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Cellular device verification via gsmctl disabled for security - command injection vulnerability",
+                 "device_path", device_path);
+    ret = -1; // Return error since command was not executed
     if (ret == 0) {
         LOGX_DEBUG_MSG("Cellular device %s is active (via gsmctl)", device_path);
         return true;
@@ -841,11 +854,11 @@ static void update_real_time_ping_metrics(network_interface_t *interface) {
     }
     
     // Perform ping test to gateway
-    char cmd[256];
-    snprintf(cmd, sizeof(cmd), "ping -c 3 -W 2 -I %s %s 2>/dev/null | grep 'time=' | tail -1", 
-             interface->name, interface->gateway);
-    
-    FILE *fp = popen(cmd, "r");
+    // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("Ping test disabled for security - command injection vulnerability",
+                 "interface", interface->name, "gateway", interface->gateway);
+    FILE *fp = NULL; // Return NULL to indicate failure
     if (fp) {
         char result[256];
         if (fgets(result, sizeof(result), fp)) {

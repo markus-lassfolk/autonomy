@@ -12,9 +12,11 @@
 Based on the official Starlink gRPC API documentation, the following methods are available:
 
 ### 1. `get_status` - Real-time Status Information
-**Most Important for Failover Monitoring**
+
+#### Most Important for Failover Monitoring
 
 **Available Data:**
+
 ```json
 {
   "dishGetStatus": {
@@ -56,9 +58,11 @@ Based on the official Starlink gRPC API documentation, the following methods are
 ```
 
 ### 2. `get_location` - GPS Location Data
-**Primary GPS Source**
+
+#### Primary GPS Source
 
 **Available Data:**
+
 ```json
 {
   "dishGetLocation": {
@@ -74,9 +78,11 @@ Based on the official Starlink gRPC API documentation, the following methods are
 ```
 
 ### 3. `get_diagnostics` - Enhanced Diagnostics
-**Additional GPS and System Data**
+
+#### Additional GPS and System Data
 
 **Available Data:**
+
 ```json
 {
   "dishGetDiagnostics": {
@@ -97,9 +103,11 @@ Based on the official Starlink gRPC API documentation, the following methods are
 ```
 
 ### 4. `get_history` - Historical Performance Data
-**For Trend Analysis**
+
+#### For Trend Analysis
 
 **Available Data:**
+
 ```json
 {
   "dishGetHistory": {
@@ -116,9 +124,11 @@ Based on the official Starlink gRPC API documentation, the following methods are
 ```
 
 ### 5. `get_device_info` - Device Information
-**Static Device Data**
+
+#### Static Device Data
 
 **Available Data:**
+
 ```json
 {
   "dishGetDeviceInfo": {
@@ -137,6 +147,7 @@ Based on the official Starlink gRPC API documentation, the following methods are
 ## 🔥 **Key Fields for Autonomy Failover**
 
 ### **Primary Failover Triggers:**
+
 1. **`popPingLatencyMs`** - Latency to PoP (should be <100ms)
 2. **`popPingDropRate`** - Packet loss rate (should be <1%)
 3. **`snr`** - Signal-to-noise ratio (higher is better)
@@ -144,6 +155,7 @@ Based on the official Starlink gRPC API documentation, the following methods are
 5. **`currentlyObstructed`** - Currently blocked (should be false)
 
 ### **GPS Data for Location Services:**
+
 1. **`latitude/longitude`** - Primary coordinates
 2. **`sigmaM/uncertaintyMeters`** - Accuracy measurements
 3. **`gpsValid`** - GPS fix status
@@ -151,6 +163,7 @@ Based on the official Starlink gRPC API documentation, the following methods are
 5. **`gpsTimeS`** - GPS timestamp
 
 ### **Performance Monitoring:**
+
 1. **`downlinkThroughputBps`** - Download speed
 2. **`uplinkThroughputBps`** - Upload speed
 3. **`secondsToFirstNonemptySlot`** - Connection time
@@ -158,6 +171,7 @@ Based on the official Starlink gRPC API documentation, the following methods are
 ## 🚀 **Implementation Strategy**
 
 ### **1. Real-time Monitoring (get_status)**
+
 ```go
 func (s *StarlinkMonitor) CheckFailoverConditions() bool {
     status, err := s.getStatus()
@@ -187,6 +201,7 @@ func (s *StarlinkMonitor) CheckFailoverConditions() bool {
 ```
 
 ### **2. GPS Location Collection (get_location + get_diagnostics)**
+
 ```go
 func (s *StarlinkGPS) GetLocation() (*Location, error) {
     // Try get_location first
@@ -216,6 +231,7 @@ func (s *StarlinkGPS) GetLocation() (*Location, error) {
 ```
 
 ### **3. Historical Analysis (get_history)**
+
 ```go
 func (s *StarlinkAnalyzer) AnalyzeTrends() *TrendAnalysis {
     history, err := s.getHistory()
@@ -236,12 +252,14 @@ func (s *StarlinkAnalyzer) AnalyzeTrends() *TrendAnalysis {
 ## 📊 **Data Quality Assessment**
 
 ### **GPS Data Quality:**
+
 - **Excellent**: `gpsValid=true`, `gpsSats>=8`, `sigmaM<5`
 - **Good**: `gpsValid=true`, `gpsSats>=4`, `sigmaM<20`
 - **Fair**: `gpsValid=true`, `gpsSats>=2`, `sigmaM<100`
 - **Poor**: `gpsValid=false` or `sigmaM>100`
 
 ### **Network Quality:**
+
 - **Excellent**: `latency<50ms`, `packetLoss<0.1%`, `snr>10`
 - **Good**: `latency<100ms`, `packetLoss<1%`, `snr>5`
 - **Fair**: `latency<200ms`, `packetLoss<5%`, `snr>2`
@@ -250,6 +268,7 @@ func (s *StarlinkAnalyzer) AnalyzeTrends() *TrendAnalysis {
 ## 🎯 **Integration with Autonomy**
 
 ### **Failover Decision Matrix:**
+
 ```go
 func (a *Autonomy) ShouldFailoverFromStarlink() bool {
     status := a.getStarlinkStatus()
@@ -273,6 +292,7 @@ func (a *Autonomy) ShouldFailoverFromStarlink() bool {
 ```
 
 ### **Location Service Integration:**
+
 ```go
 func (l *LocationService) GetStarlinkLocation() (*Location, error) {
     // Collect from multiple APIs for best accuracy

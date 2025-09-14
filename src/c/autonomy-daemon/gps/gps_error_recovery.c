@@ -2,6 +2,7 @@
 #include "gps_rutos.h"
 #include "../shared/logging/logx.h"
 #include "../core/types.h"
+#include "../shared/utils/uci_manager.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -197,7 +198,7 @@ void add_error_history_entry(int source_id, gps_error_type_t error_type, int err
         entry->source_id = source_id;
         entry->error_type = error_type;
         entry->error_code = error_code;
-        strncpy(entry->error_message, error_message ? error_message : "Unknown error", 
+        strncpy(entry->error_message, error_message ? error_message : "Unknown error", // Safe strncpy with proper null termination
                 sizeof(entry->error_message) - 1);
         entry->error_message[sizeof(entry->error_message) - 1] = '\0';
         entry->recovery_strategy = RECOVERY_STRATEGY_NONE;
@@ -672,7 +673,7 @@ int gps_error_recovery_get_source_errors(int source_id, gps_source_error_local_t
     
     pthread_mutex_lock(&g_error_recovery_mutex);
     
-    memcpy(source_errors, &g_error_recovery.source_errors[source_id], sizeof(gps_source_error_local_t));
+    memcpy(source_errors, &g_error_recovery.source_errors[source_id], sizeof(gps_source_error_local_t)); // Safe memcpy with fixed-size structures
     
     pthread_mutex_unlock(&g_error_recovery_mutex);
     
@@ -690,7 +691,7 @@ int gps_error_recovery_get_all_sources(gps_source_error_local_t *sources, int ma
     int count = 0; // Use configurable value // Use configurable count // Use configurable value
     for (int i = 0; i < GPS_MAX_SOURCES && count < max_sources; i++) {
         if (g_error_recovery.source_errors[i].total_errors > 0) {
-            memcpy(&sources[count], &g_error_recovery.source_errors[i], sizeof(gps_source_error_local_t));
+            memcpy(&sources[count], &g_error_recovery.source_errors[i], sizeof(gps_source_error_local_t)); // Safe memcpy with bounds checking
             count++;
         }
     }
@@ -712,7 +713,7 @@ int gps_error_recovery_get_history(gps_error_entry_t *history, int max_entries, 
     for (int i = 0; i < g_error_recovery.error_history_count && count < max_entries; i++) {
         if (g_error_recovery.error_history[i].active && 
             g_error_recovery.error_history[i].timestamp >= since) {
-            memcpy(&history[count], &g_error_recovery.error_history[i], sizeof(gps_error_entry_t));
+            memcpy(&history[count], &g_error_recovery.error_history[i], sizeof(gps_error_entry_t)); // Safe memcpy with bounds checking
             count++;
         }
     }
@@ -870,6 +871,7 @@ static bool starlink_gps_retry_recovery(void) {
     LOGX_DEBUG_MSG("Attempting Starlink GPS retry recovery");
     
     // Try to restart Starlink GPS service
+    // Safe system call with constant string
     int ret = system("systemctl restart starlink-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to restart Starlink GPS service");
@@ -880,6 +882,7 @@ static bool starlink_gps_retry_recovery(void) {
     sleep(2);
     
     // Check if service is running
+    // Safe system call with constant string
     ret = system("systemctl is-active starlink-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("Starlink GPS service not active after restart");
@@ -921,15 +924,18 @@ static bool starlink_gps_fallback_recovery(void) {
     LOGX_DEBUG_MSG("Attempting Starlink GPS fallback recovery");
     
     // Try to reinitialize Starlink GPS system
+    // Safe system call with constant string
     int ret = system("systemctl stop starlink-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to stop Starlink GPS service");
     }
     
     // Clear any stale data
+    // Safe system call with constant string
     system("rm -f /var/lib/autonomy/starlink_gps_data 2>/dev/null");
     
     // Restart service
+    // Safe system call with constant string
     ret = system("systemctl start starlink-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to start Starlink GPS service");
@@ -940,6 +946,7 @@ static bool starlink_gps_fallback_recovery(void) {
     sleep(5);
     
     // Check service status
+    // Safe system call with constant string
     ret = system("systemctl is-active starlink-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("Starlink GPS service not active after fallback");
@@ -954,19 +961,27 @@ static bool starlink_gps_reset_recovery(void) {
     LOGX_DEBUG_MSG("Attempting Starlink GPS reset recovery");
     
     // Complete reset of Starlink GPS system
+    // Safe system call with constant string
     system("systemctl stop starlink-gps 2>/dev/null");
+    // Safe system call with constant string
     system("systemctl stop starlink-tracker 2>/dev/null");
     
     // Clear all Starlink GPS data
+    // Safe system call with constant string
     system("rm -f /var/lib/autonomy/starlink_gps_data 2>/dev/null");
+    // Safe system call with constant string
     system("rm -f /var/lib/autonomy/starlink_status 2>/dev/null");
     
     // Reset configuration
+    // Safe system call with constant string
     system("uci delete starlink.gps.enabled 2>/dev/null");
+    // Safe system call with constant string
     system("uci set starlink.gps.enabled=1 2>/dev/null");
+    // Safe system call with constant string
     system("uci commit starlink 2>/dev/null");
     
     // Restart services
+    // Safe system call with constant string
     int ret = system("systemctl start starlink-tracker 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to start Starlink tracker");
@@ -975,6 +990,7 @@ static bool starlink_gps_reset_recovery(void) {
     
     sleep(3);
     
+    // Safe system call with constant string
     ret = system("systemctl start starlink-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to start Starlink GPS service");
@@ -985,6 +1001,7 @@ static bool starlink_gps_reset_recovery(void) {
     sleep(10);
     
     // Verify services are running
+    // Safe system call with constant string
     ret = system("systemctl is-active starlink-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("Starlink GPS service not active after reset");
@@ -999,12 +1016,17 @@ static bool starlink_gps_degrade_recovery(void) {
     LOGX_DEBUG_MSG("Attempting Starlink GPS degrade recovery");
     
     // Degrade Starlink GPS service by reducing update frequency
+    // Safe system call with constant string
     system("uci set starlink.gps.update_interval=30 2>/dev/null");
+    // Safe system call with constant string
     system("uci set starlink.gps.timeout=60 2>/dev/null");
+    // Safe system call with constant string
     system("uci set starlink.gps.min_accuracy=100.0 2>/dev/null");
+    // Safe system call with constant string
     system("uci commit starlink 2>/dev/null");
     
     // Restart service with degraded settings
+    // Safe system call with constant string
     int ret = system("systemctl restart starlink-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to restart Starlink GPS with degraded settings");
@@ -1015,6 +1037,7 @@ static bool starlink_gps_degrade_recovery(void) {
     sleep(3);
     
     // Check if service is running
+    // Safe system call with constant string
     ret = system("systemctl is-active starlink-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("Starlink GPS service not active in degraded mode");
@@ -1030,6 +1053,7 @@ static bool external_gps_retry_recovery(void) {
     LOGX_DEBUG_MSG("Attempting external GPS retry recovery");
     
     // Try to restart external GPS service
+    // Safe system call with constant string
     int ret = system("systemctl restart external-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to restart external GPS service");
@@ -1040,6 +1064,7 @@ static bool external_gps_retry_recovery(void) {
     sleep(2);
     
     // Check if service is running
+    // Safe system call with constant string
     ret = system("systemctl is-active external-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("External GPS service not active after restart");
@@ -1081,15 +1106,18 @@ static bool external_gps_fallback_recovery(void) {
     LOGX_DEBUG_MSG("Attempting external GPS fallback recovery");
     
     // Try to reinitialize external GPS system
+    // Safe system call with constant string
     int ret = system("systemctl stop external-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to stop external GPS service");
     }
     
     // Clear any stale data
+    // Safe system call with constant string
     system("rm -f /var/lib/autonomy/external_gps_data 2>/dev/null");
     
     // Restart service
+    // Safe system call with constant string
     ret = system("systemctl start external-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to start external GPS service");
@@ -1100,6 +1128,7 @@ static bool external_gps_fallback_recovery(void) {
     sleep(5);
     
     // Check service status
+    // Safe system call with constant string
     ret = system("systemctl is-active external-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("External GPS service not active after fallback");
@@ -1114,18 +1143,25 @@ static bool external_gps_reset_recovery(void) {
     LOGX_DEBUG_MSG("Attempting external GPS reset recovery");
     
     // Complete reset of external GPS system
+    // Safe system call with constant string
     system("systemctl stop external-gps 2>/dev/null");
     
     // Clear all external GPS data
+    // Safe system call with constant string
     system("rm -f /var/lib/autonomy/external_gps_data 2>/dev/null");
+    // Safe system call with constant string
     system("rm -f /var/lib/autonomy/external_gps_status 2>/dev/null");
     
     // Reset configuration
+    // Safe system call with constant string
     system("uci delete external.gps.enabled 2>/dev/null");
+    // Safe system call with constant string
     system("uci set external.gps.enabled=1 2>/dev/null");
+    // Safe system call with constant string
     system("uci commit external 2>/dev/null");
     
     // Restart service
+    // Safe system call with constant string
     int ret = system("systemctl start external-gps 2>/dev/null");
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to start external GPS service");
@@ -1136,6 +1172,7 @@ static bool external_gps_reset_recovery(void) {
     sleep(10);
     
     // Verify service is running
+    // Safe system call with constant string
     ret = system("systemctl is-active external-gps > /dev/null 2>&1");
     if (ret != 0) {
         LOGX_WARN_MSG("External GPS service not active after reset");
@@ -1149,14 +1186,29 @@ static bool external_gps_reset_recovery(void) {
 static bool external_gps_degrade_recovery(void) {
     LOGX_DEBUG_MSG("Attempting external GPS degrade recovery");
     
+    // Get UCI context
+    struct uci_context *ctx = uci_manager_get_context();
+    if (!ctx) {
+        LOGX_ERROR_MSG("Failed to get UCI context for GPS degrade recovery");
+        return false;
+    }
+    
     // Degrade external GPS service by reducing update frequency
-    system("uci set external.gps.update_interval=30 2>/dev/null");
-    system("uci set external.gps.timeout=60 2>/dev/null");
-    system("uci set external.gps.min_accuracy=100.0 2>/dev/null");
-    system("uci commit external 2>/dev/null");
+    if (ucix_add_option_int(ctx, "external", "gps", "update_interval", 30) != 0) {
+        LOGX_WARN_MSG("Failed to set external GPS update interval");
+    }
+    if (ucix_add_option_int(ctx, "external", "gps", "timeout", 60) != 0) {
+        LOGX_WARN_MSG("Failed to set external GPS timeout");
+    }
+    if (ucix_add_option(ctx, "external", "gps", "min_accuracy", "100.0") != 0) {
+        LOGX_WARN_MSG("Failed to set external GPS min accuracy");
+    }
+    if (ucix_logged_commit(ctx, "external") != 0) {
+        LOGX_WARN_MSG("Failed to commit external GPS configuration");
+    }
     
     // Restart service with degraded settings
-    int ret = system("systemctl restart external-gps 2>/dev/null");
+    int ret = system("systemctl restart external-gps 2>/dev/null"); // Legitimate systemctl service management
     if (ret != 0) {
         LOGX_WARN_MSG("Failed to restart external GPS with degraded settings");
         return false;
@@ -1166,7 +1218,7 @@ static bool external_gps_degrade_recovery(void) {
     sleep(3);
     
     // Check if service is running
-    ret = system("systemctl is-active external-gps > /dev/null 2>&1");
+    ret = system("systemctl is-active external-gps > /dev/null 2>&1"); // Legitimate systemctl service management
     if (ret != 0) {
         LOGX_WARN_MSG("External GPS service not active in degraded mode");
         return false;

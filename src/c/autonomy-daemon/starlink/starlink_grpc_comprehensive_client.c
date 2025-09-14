@@ -1,5 +1,6 @@
 #include "starlink_grpc_comprehensive_client.h"
 #include <stdio.h>
+#include "../shared/logging/logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -7,37 +8,31 @@
 #include <stdarg.h>
 #include <arpa/inet.h>
 
-// Simple logging macros for standalone use
-#ifndef LOGX_INFO_MSG
-#define LOGX_INFO_MSG(fmt, ...) printf("[INFO] " fmt "\n", ##__VA_ARGS__)
-#define LOGX_ERROR_MSG(fmt, ...) fprintf(stderr, "[ERROR] " fmt "\n", ##__VA_ARGS__)
-#define LOGX_WARN_MSG(fmt, ...) printf("[WARN] " fmt "\n", ##__VA_ARGS__)
-#define LOGX_DEBUG_MSG(fmt, ...) printf("[DEBUG] " fmt "\n", ##__VA_ARGS__)
-#endif
+// Use the real LOGX logging system from shared/logging/logx.h
 
 // Global configuration instance
 starlink_grpc_client_config_t g_starlink_grpc_config = {0};
 
 // Initialize comprehensive gRPC client
 int starlink_grpc_comprehensive_client_init(starlink_grpc_client_config_t *config) {
-    fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init called\n");
+    LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init called");
     if (!config) {
-        fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init failed - NULL config\n");
+        LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init failed - NULL config");
         return -1;
     }
     
     // Copy configuration
-    fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init - copying config\n");
+    LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init - copying config");
     memcpy(&g_starlink_grpc_config, config, sizeof(starlink_grpc_client_config_t));
-    fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init - config copied\n");
+    LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init - config copied");
     
     // Initialize curl
-    fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init - about to initialize curl\n");
+    LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init - about to initialize curl");
     curl_global_init(CURL_GLOBAL_DEFAULT);
-    fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init - curl initialized\n");
+    LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init - curl initialized");
     
     LOGX_INFO_MSG("Starlink gRPC comprehensive client initialized");
-    fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init completed successfully\n");
+    LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init completed successfully");
     return 0;
 }
 
@@ -99,10 +94,14 @@ void starlink_grpc_print_timestamp(void) {
 }
 
 void starlink_grpc_print_header(const char *status, size_t bytes) {
-    if (!g_starlink_grpc_config.no_header && !g_starlink_grpc_config.silent_mode) {
-        starlink_grpc_print_timestamp();
-        printf("%s, bytes %zu\n", status, bytes);
+    // Only log HTTP status in debug mode or when there are errors
+    if (g_starlink_grpc_config.debug_mode) {
+        LOGX_DEBUG_MSG("Starlink gRPC: %s, bytes %zu", status, bytes);
+    } else if (strstr(status, "4") || strstr(status, "5")) {
+        // Only log 4xx and 5xx errors in normal mode
+        LOGX_WARN_MSG("Starlink gRPC error: %s, bytes %zu", status, bytes);
     }
+    // Don't log successful HTTP 200 responses in normal mode to reduce noise
 }
 
 void starlink_grpc_print_debug_info(
@@ -254,8 +253,7 @@ void starlink_grpc_handle_access_denied(const char *method, const unsigned char 
         strstr((const char*)response, "access denied") || 
         strstr((const char*)response, "403")) {
         if (!g_starlink_grpc_config.silent_mode) {
-            starlink_grpc_print_timestamp();
-            printf("  Access Denied for method '%s' - This endpoint may be restricted\n", method);
+            LOGX_WARN_MSG("Starlink gRPC: Access Denied for method '%s' - This endpoint may be restricted", method);
         }
     }
 }
@@ -280,7 +278,7 @@ void starlink_grpc_print_formatted_output(
     
     // Add newline for better formatting (except in raw mode where we want exact binary output)
     if (!config->raw_mode && !config->silent_mode) {
-        printf("\n");
+        // Don't print extra newlines to stdout - let LOGX handle formatting
     }
 }
 
@@ -324,10 +322,20 @@ int starlink_grpc_comprehensive_call(
     memset(response, 0, sizeof(starlink_grpc_response_t));
     response->timestamp = time(NULL);
     
-    // Build URL
+    // Build URL with validation
     char url[512];
+    if (!g_starlink_grpc_config.host) {
+        LOGX_ERROR_MSG("Starlink gRPC config host is NULL, cannot make request");
+        strcpy(response->error_message, "Host not configured");
+        return -1;
+    }
+    
     snprintf(url, sizeof(url), "http://%s:%d/SpaceX.API.Device.Device/Handle", 
              g_starlink_grpc_config.host, g_starlink_grpc_config.port);
+    
+    LOGX_DEBUG_MSG("Starlink gRPC request URL: %s", url);
+    LOGX_DEBUG_MSG("Starlink gRPC request method: %s", method);
+    LOGX_DEBUG_MSG("Starlink gRPC request size: %zu bytes", request_size);
     
     // Create gRPC frame (simplified - in real implementation you'd use proper gRPC framing)
     unsigned char frame[1024];
@@ -349,12 +357,15 @@ int starlink_grpc_comprehensive_call(
     
     // Debug information will be printed after response
     
-    // Setup curl
+    // Setup curl with error handling
+    LOGX_DEBUG_MSG("Initializing curl for Starlink gRPC request...");
     CURL *curl = curl_easy_init();
     if (!curl) {
-        safe_strncpy(response->error_message, "Failed to initialize curl", sizeof(response->error_message));
+        LOGX_ERROR_MSG("Failed to initialize curl for Starlink gRPC request");
+        strcpy(response->error_message, "Failed to initialize curl");
         return -1;
     }
+    LOGX_DEBUG_MSG("Curl initialized successfully");
     
     struct curl_slist *headers = NULL;
     headers = curl_slist_append(headers, "Content-Type: application/grpc");
@@ -386,20 +397,64 @@ int starlink_grpc_comprehensive_call(
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     }
     
-    // Perform request
+    // Perform request with error handling
+    LOGX_DEBUG_MSG("Performing curl request to %s...", url);
     CURLcode res = curl_easy_perform(curl);
     long http_code = 0;
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     
     response->http_status = (int)http_code;
+    LOGX_DEBUG_MSG("Curl request completed: result=%d, http_code=%ld", res, http_code);
     
     // Cleanup curl
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
     
     if (res != CURLE_OK) {
-        snprintf(response->error_message, sizeof(response->error_message), 
-                "curl error: %s", curl_easy_strerror(res));
+        LOGX_WARN_MSG("Starlink gRPC request failed: %s (error code %d)", curl_easy_strerror(res), res);
+        
+        // Handle specific curl errors gracefully
+        if (res == CURLE_COULDNT_CONNECT || res == CURLE_COULDNT_RESOLVE_HOST) {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Cannot connect to Starlink device at %s:%d - device may be offline or unreachable", 
+                    g_starlink_grpc_config.host, g_starlink_grpc_config.port);
+            LOGX_WARN_MSG("Starlink device unreachable: %s", response->error_message);
+        } else if (res == CURLE_OPERATION_TIMEDOUT) {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Starlink device timeout after %d seconds", g_starlink_grpc_config.timeout);
+            LOGX_WARN_MSG("Starlink device timeout: %s", response->error_message);
+        } else {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Starlink gRPC error: %s", curl_easy_strerror(res));
+            LOGX_ERROR_MSG("Starlink gRPC error: %s", response->error_message);
+        }
+        
+        response->success = false;
+        return -1;
+    }
+    
+    LOGX_DEBUG_MSG("Curl request successful, HTTP status: %d", response->http_status);
+    
+    // Handle HTTP error responses gracefully
+    if (response->http_status >= 400) {
+        LOGX_WARN_MSG("Starlink gRPC HTTP error: %d", response->http_status);
+        
+        if (response->http_status == 404) {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Starlink device not found at %s:%d - check if device is online and accessible", 
+                    g_starlink_grpc_config.host, g_starlink_grpc_config.port);
+        } else if (response->http_status == 403) {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Access denied by Starlink device - authentication may be required");
+        } else if (response->http_status >= 500) {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Starlink device server error: HTTP %d", response->http_status);
+        } else {
+            snprintf(response->error_message, sizeof(response->error_message), 
+                    "Starlink gRPC HTTP error: %d", response->http_status);
+        }
+        
+        response->success = false;
         return -1;
     }
     

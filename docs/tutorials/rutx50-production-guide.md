@@ -333,6 +333,7 @@ autonomyctl metrics decision
 ## 📞 Support
 
 For issues and support:
+
 - Check logs: `journalctl -u autonomy`
 - System status: `autonomyctl status`
 - Configuration: `uci show autonomy`

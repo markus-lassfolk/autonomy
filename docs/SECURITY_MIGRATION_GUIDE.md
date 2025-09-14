@@ -6,14 +6,16 @@ This document provides guidance for migrating from insecure `system()` calls to 
 
 ## Security Issues with system() Calls
 
-### Problems:
+### Problems
+
 1. **Command Injection**: Vulnerable to shell injection attacks
 2. **Path Traversal**: Can execute arbitrary commands
 3. **Environment Pollution**: Inherits all environment variables
 4. **No Input Validation**: No validation of command arguments
 5. **Shell Interpretation**: Commands are interpreted by shell
 
-### Example Vulnerable Code:
+### Example Vulnerable Code
+
 ```c
 // VULNERABLE: Command injection possible
 char user_input[256];
@@ -34,7 +36,8 @@ system(command); // Dangerous!
 
 ### 1. Using secure_exec Utility
 
-#### Before (Insecure):
+#### Before (Insecure)
+
 ```c
 // OLD: Insecure system() call
 int ret = system("uci show mwan3 > /dev/null 2>&1");
@@ -43,7 +46,8 @@ if (ret == 0) {
 }
 ```
 
-#### After (Secure):
+#### After (Secure)
+
 ```c
 // NEW: Secure execution
 #include "utils/secure_exec.h"
@@ -58,7 +62,8 @@ if (ret == AUTONOMY_SUCCESS && result.success) {
 
 ### 2. Using Shared Constants
 
-#### Before (Hardcoded):
+#### Before (Hardcoded)
+
 ```c
 // OLD: Hardcoded duration windows
 const char* duration_windows[] = {
@@ -67,7 +72,8 @@ const char* duration_windows[] = {
 };
 ```
 
-#### After (Shared Constants):
+#### After (Shared Constants)
+
 ```c
 // NEW: Using shared constants
 #include "core/constants.h"
@@ -87,7 +93,8 @@ printf("45 seconds falls in: %s\n", window);
 
 ### 1. UCI Commands
 
-#### Before:
+#### Before
+
 ```c
 char uci_cmd[256];
 snprintf(uci_cmd, sizeof(uci_cmd), "uci set network.wan.proto=dhcp");
@@ -97,7 +104,8 @@ if (ret == 0) {
 }
 ```
 
-#### After:
+#### After
+
 ```c
 #include "utils/secure_exec.h"
 
@@ -110,14 +118,16 @@ if (ret == AUTONOMY_SUCCESS && result.success) {
 
 ### 2. Systemctl Commands
 
-#### Before:
+#### Before (Systemctl)
+
 ```c
 char cmd[256];
 snprintf(cmd, sizeof(cmd), "systemctl restart %s", service_name);
 int ret = system(cmd);
 ```
 
-#### After:
+#### After (Systemctl)
+
 ```c
 #include "utils/secure_exec.h"
 
@@ -130,14 +140,16 @@ if (ret == AUTONOMY_SUCCESS && result.success) {
 
 ### 3. File Operations
 
-#### Before:
+#### Before (File Operations)
+
 ```c
 char cmd[256];
 snprintf(cmd, sizeof(cmd), "rm -f %s", filename);
 system(cmd);
 ```
 
-#### After:
+#### After (File Operations)
+
 ```c
 #include "utils/secure_exec.h"
 
@@ -150,7 +162,8 @@ if (ret == AUTONOMY_SUCCESS && result.success) {
 
 ### 4. Complex Commands
 
-#### Before:
+#### Before (Complex Commands)
+
 ```c
 char command[512];
 snprintf(command, sizeof(command), 
@@ -159,7 +172,8 @@ snprintf(command, sizeof(command),
 int ret = system(command);
 ```
 
-#### After:
+#### After (Complex Commands)
+
 ```c
 #include "utils/secure_exec.h"
 
@@ -180,7 +194,9 @@ int ret = get_signal_strength_dynamic(&rssi, &ber);
 ## Security Features
 
 ### 1. Command Whitelist
+
 Only pre-approved commands are allowed:
+
 - `uci`, `systemctl`, `ubus`, `gsmctl`, `microcom`
 - `grep`, `awk`, `sed`, `cut`, `head`, `tail`
 - `find`, `ls`, `cat`, `echo`, `printf`
@@ -188,17 +204,20 @@ Only pre-approved commands are allowed:
 - `sqlite3`, `opkg`, `fsck`, `ntpdate`
 
 ### 2. Operation Validation
+
 - UCI operations: `show`, `get`, `set`, `delete`, `add`, `commit`
 - systemctl operations: `start`, `stop`, `restart`, `reload`, `status`
 - File operations: `remove`, `create` (with path validation)
 
 ### 3. Input Sanitization
+
 - Command length limits
 - Path traversal protection
 - Argument validation
 - Environment isolation
 
 ### 4. Error Handling
+
 - Comprehensive error reporting
 - Security violation logging
 - Graceful failure handling
@@ -206,6 +225,7 @@ Only pre-approved commands are allowed:
 ## Best Practices
 
 ### 1. Always Use Secure Alternatives
+
 ```c
 // GOOD: Use secure_exec
 exec_result_t result;
@@ -216,6 +236,7 @@ int ret = system("any_command");
 ```
 
 ### 2. Validate Inputs
+
 ```c
 // GOOD: Validate inputs before use
 if (!is_command_allowed(command)) {
@@ -228,6 +249,7 @@ system(user_input);
 ```
 
 ### 3. Use Shared Constants
+
 ```c
 // GOOD: Use shared constants
 const char* window = get_duration_window_label(seconds);
@@ -237,6 +259,7 @@ const char* window = "<2sec"; // Hardcoded
 ```
 
 ### 4. Handle Errors Properly
+
 ```c
 // GOOD: Check all return values
 exec_result_t result;
@@ -263,6 +286,7 @@ system(command); // No error checking
 ## Testing
 
 ### Unit Tests
+
 ```c
 #include "utils/secure_exec.h"
 
@@ -283,6 +307,7 @@ void test_secure_exec() {
 ```
 
 ### Integration Tests
+
 - Test all migrated system() calls
 - Verify security restrictions work
 - Test error handling paths
@@ -290,13 +315,15 @@ void test_secure_exec() {
 
 ## Performance Considerations
 
-### Advantages:
+### Advantages
+
 - Better error handling
 - More secure execution
 - Consistent behavior
 - Easier debugging
 
-### Considerations:
+### Considerations
+
 - Slightly more overhead due to fork/exec
 - More memory usage for result structures
 - Additional validation overhead

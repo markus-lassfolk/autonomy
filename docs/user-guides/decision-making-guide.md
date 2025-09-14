@@ -7,6 +7,7 @@ The Autonomy networking system implements a sophisticated hybrid weight system t
 ## Core Decision Factors
 
 ### 1. **Network Performance Metrics** 📊
+
 - **Latency**: Round-trip time to key destinations
 - **Bandwidth**: Available throughput and utilization
 - **Packet Loss**: Percentage of lost packets
@@ -14,24 +15,28 @@ The Autonomy networking system implements a sophisticated hybrid weight system t
 - **Signal Strength**: RSSI, RSRP, RSRQ, SINR
 
 ### 2. **Location-Based Factors** 📍
+
 - **Geographic Coverage**: Network availability by location
 - **Regional Performance**: Historical performance in current area
 - **Roaming Status**: Whether device is in home or roaming network
 - **Regulatory Compliance**: Local network restrictions and requirements
 
 ### 3. **Cost and Resource Factors** 💰
+
 - **Data Usage**: Current and projected data consumption
 - **Cost per MB**: Financial cost of data usage
 - **Battery Impact**: Power consumption of different networks
 - **API Costs**: Cost of location and monitoring services
 
 ### 4. **Reliability and Stability** 🛡️
+
 - **Uptime History**: Historical availability of each network
 - **Failover Frequency**: How often networks have failed
 - **Recovery Time**: Time to restore service after failures
 - **Error Rates**: Various error metrics and their trends
 
 ### 5. **Predictive Factors** 🔮
+
 - **Trend Analysis**: Performance trends over time
 - **Weather Impact**: Expected weather effects on networks
 - **Time-Based Patterns**: Performance variations by time of day
@@ -40,6 +45,7 @@ The Autonomy networking system implements a sophisticated hybrid weight system t
 ## Weight Calculation Algorithm
 
 ### Base Weight Structure
+
 ```go
 type NetworkWeight struct {
     NetworkID       string    `json:"network_id"`
@@ -61,6 +67,7 @@ type WeightFactors struct {
 ```
 
 ### Dynamic Weight Calculation
+
 ```go
 func calculateNetworkWeight(network *Network, factors *WeightFactors) float64 {
     // Base calculation with configurable weights
@@ -133,6 +140,7 @@ func getPredictiveMultiplier(network *Network) float64 {
 ## Machine Learning Integration
 
 ### Feature Engineering
+
 ```go
 type NetworkFeatures struct {
     // Performance features
@@ -193,6 +201,7 @@ func extractFeatures(network *Network) *NetworkFeatures {
 ```
 
 ### Model Training and Prediction
+
 ```go
 type MLPredictor struct {
     model     *tensorflow.Model
@@ -230,6 +239,7 @@ func (mlp *MLPredictor) TrainModel(trainingData []*TrainingExample) error {
 ## Adaptive Weight Adjustment
 
 ### Real-Time Learning
+
 ```go
 type AdaptiveWeightSystem struct {
     baseWeights    *WeightFactors
@@ -276,6 +286,7 @@ func (aws *AdaptiveWeightSystem) adjustBaseWeights(decision *NetworkDecision, ou
 ## Configuration Examples
 
 ### Basic Configuration
+
 ```yaml
 weight_system:
   enabled: true
@@ -294,6 +305,7 @@ weight_system:
 ```
 
 ### Advanced Configuration
+
 ```yaml
 weight_system:
   adaptive:
@@ -326,6 +338,7 @@ weight_system:
 ## Decision Making Process
 
 ### Multi-Stage Decision Pipeline
+
 ```go
 type DecisionPipeline struct {
     preprocessor  *DataPreprocessor
@@ -376,6 +389,7 @@ func (dp *DecisionPipeline) combineWeights(base, ml []*NetworkWeight) []*Network
 ## Monitoring and Analytics
 
 ### Decision Analytics
+
 ```go
 type DecisionAnalytics struct {
     TotalDecisions    int64   `json:"total_decisions"`
@@ -399,6 +413,7 @@ func (da *DecisionAnalytics) UpdateAnalytics(decision *NetworkDecision, outcome 
 ```
 
 ### Real-Time Monitoring
+
 ```bash
 # View decision analytics
 autonomy-cli decisions analytics
@@ -418,21 +433,25 @@ autonomy-cli decisions accuracy --period 24h
 ### Common Issues
 
 #### Poor Decision Accuracy
+
 - **Symptoms**: Frequent incorrect network selections
 - **Causes**: Insufficient training data, poor feature engineering
 - **Solutions**: Collect more data, improve features, retrain model
 
 #### Slow Decision Making
+
 - **Symptoms**: High decision latency, slow failover
 - **Causes**: Complex ML models, inefficient algorithms
 - **Solutions**: Optimize algorithms, use simpler models, cache results
 
 #### Weight Oscillation
+
 - **Symptoms**: Frequent weight changes, unstable decisions
 - **Causes**: Overly aggressive learning, noisy data
 - **Solutions**: Reduce learning rate, add smoothing, filter noise
 
 ### Debugging Tools
+
 ```bash
 # Analyze decision patterns
 autonomy-cli decisions analyze --pattern
@@ -450,18 +469,21 @@ autonomy-cli decisions pipeline --monitor
 ## Best Practices
 
 ### Weight System Design
+
 1. **Balanced factors**: Ensure all factors have appropriate weights
 2. **Adaptive learning**: Allow system to learn from outcomes
 3. **Stability**: Avoid excessive weight changes
 4. **Transparency**: Make decision process explainable
 
 ### Performance Optimization
+
 1. **Efficient algorithms**: Use optimized calculation methods
 2. **Caching**: Cache frequently used calculations
 3. **Parallel processing**: Use concurrent weight calculations
 4. **Resource management**: Monitor CPU and memory usage
 
 ### Data Quality
+
 1. **Feature validation**: Ensure features are accurate and relevant
 2. **Data cleaning**: Remove outliers and noise
 3. **Regular retraining**: Update models with new data
@@ -470,12 +492,14 @@ autonomy-cli decisions pipeline --monitor
 ## Future Enhancements
 
 ### Planned Features
+
 - **Deep Learning**: Neural networks for complex patterns
 - **Federated Learning**: Privacy-preserving model training
 - **Edge AI**: Local decision making with cloud training
 - **Quantum Computing**: Quantum algorithms for optimization
 
 ### Research Areas
+
 - **Multi-Objective Optimization**: Balancing multiple conflicting goals
 - **Reinforcement Learning**: Learning optimal policies through interaction
 - **Causal Inference**: Understanding cause-effect relationships

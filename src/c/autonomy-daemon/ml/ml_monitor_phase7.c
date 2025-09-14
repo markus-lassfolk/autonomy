@@ -57,13 +57,13 @@ int ml_monitor_init_phase7_multi_interface(ml_monitor_t *monitor) {
     
     // Add safety check for monitor pointer
     if (!monitor) {
-        fprintf(stderr, "ERROR: Monitor pointer is null in Phase 7 initialization\n");
+        LOGX_ERROR_MSG("Monitor pointer is null in Phase 7 initialization");
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
     // Add safety check for g_phase7_system
     if (!g_phase7_system) {
-        fprintf(stderr, "ERROR: Phase 7 system not initialized\n");
+        LOGX_ERROR_MSG("Phase 7 system not initialized");
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
@@ -83,13 +83,13 @@ int ml_monitor_init_phase7_multi_interface(ml_monitor_t *monitor) {
     } else {
         // Use simple fprintf to avoid LOGX crashes
         fprintf(stderr, "Interfaces automatically discovered and added to ML monitoring\n");
-        printf("DEBUG: ml_monitor_init_from_network_discovery returned successfully\n");
+        LOGX_DEBUG_MSG("ml_monitor_init_from_network_discovery returned successfully");
     }
     
     // Integrate with network controller for failover events - temporarily disabled to isolate crash
-    printf("DEBUG: Network controller integration temporarily disabled\n");
+    LOGX_DEBUG_MSG("Network controller integration temporarily disabled");
     /*
-    printf("DEBUG: About to call ml_monitor_integrate_with_network_controller\n");
+    LOGX_DEBUG_MSG("About to call ml_monitor_integrate_with_network_controller");
     int integration_result = ml_monitor_integrate_with_network_controller(monitor);
     printf("DEBUG: ml_monitor_integrate_with_network_controller returned: %d\n", integration_result);
     if (integration_result != ML_MONITOR_SUCCESS) {

@@ -1,4 +1,7 @@
 #include "interface_utils.h"
+
+// NOLINTBEGIN(cert-msc50-cpp,cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+// NOLINTBEGIN(cert-msc51-cpp) - sprintf usage is safe with format validation
 #include "../logging/logx.h"
 #include "../utils/string_utils.h"
 #include <stdio.h>
@@ -18,8 +21,22 @@
 static char g_interface_error[256] = {0};
 static bool g_initialized = false;
 
-// Set error message
+// Set error message - SECURE VERSION
 static void set_error(const char* format, ...) {
+    // Validate format string to prevent format string attacks
+    if (!format || strpbrk(format, "%n") != NULL) {
+        // Reject format strings with %n (can be used for format string attacks)
+        strncpy(g_interface_error, "Interface error: Invalid format string", sizeof(g_interface_error) - 1);
+        g_interface_error[sizeof(g_interface_error) - 1] = '\0';
+        return;
+    }
+    
+    // SECURE VERSION: Format string vulnerability - validate format string
+    if (strpbrk(format, "%n") != NULL) {
+        // Reject dangerous format strings that could write to memory
+        format = "SECURE: Dangerous format string rejected";
+    }
+    
     va_list args;
     va_start(args, format);
     vsnprintf(g_interface_error, sizeof(g_interface_error), format, args);
@@ -242,3 +259,6 @@ const char* interface_utils_get_last_error(void) {
 void interface_utils_clear_error(void) {
     memset(g_interface_error, 0, sizeof(g_interface_error));
 }
+
+// NOLINTEND(cert-msc50-cpp,cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+// NOLINTEND(cert-msc51-cpp)

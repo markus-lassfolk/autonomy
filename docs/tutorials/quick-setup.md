@@ -3,12 +3,14 @@
 ## 🚀 5-Minute Setup
 
 ### 1. Basic Installation
+
 ```bash
 opkg update && opkg install autonomy
 /etc/init.d/autonomy enable && /etc/init.d/autonomy start
 ```
 
 ### 2. Essential Configuration
+
 ```bash
 # Enable basic features
 uci set autonomy.main.enabled='1'
@@ -18,6 +20,7 @@ uci commit autonomy && /etc/init.d/autonomy restart
 ```
 
 ### 3. Verify Setup
+
 ```bash
 ubus call autonomy status
 ```
@@ -25,6 +28,7 @@ ubus call autonomy status
 ## 📋 Configuration Cheat Sheet
 
 ### Quick Commands
+
 | Task | Command |
 |------|---------|
 | **Enable service** | `uci set autonomy.main.enabled='1'` |
@@ -37,6 +41,7 @@ ubus call autonomy status
 | **Check status** | `ubus call autonomy status` |
 
 ### Essential APIs Setup
+
 ```bash
 # Space-Track (for Starlink tracking)
 uci set autonomy.external_apis.space_track_username='your_username'
@@ -55,6 +60,7 @@ uci commit autonomy
 ## 🎯 Common Scenarios
 
 ### Scenario 1: Starlink + Cellular Backup
+
 ```bash
 uci set autonomy.main.enabled='1'
 uci set autonomy.starlink.enabled='1'
@@ -65,6 +71,7 @@ uci commit autonomy
 ```
 
 ### Scenario 2: Full Feature Setup
+
 ```bash
 uci set autonomy.main.enabled='1'
 uci set autonomy.starlink.enabled='1'
@@ -77,6 +84,7 @@ uci commit autonomy
 ```
 
 ### Scenario 3: Minimal Setup (No External APIs)
+
 ```bash
 uci set autonomy.main.enabled='1'
 uci set autonomy.starlink.enabled='1'
@@ -90,6 +98,7 @@ uci commit autonomy
 ## 🔍 Quick Troubleshooting
 
 ### Check Service Status
+
 ```bash
 /etc/init.d/autonomy status      # Service status
 ubus call autonomy status        # System health
@@ -97,6 +106,7 @@ logread | grep autonomy | tail   # Recent logs
 ```
 
 ### Common Fixes
+
 ```bash
 # Restart service
 /etc/init.d/autonomy restart
@@ -112,6 +122,7 @@ autonomy-cli config validate
 ```
 
 ### API Testing
+
 ```bash
 # Test Starlink connection
 grpcurl -plaintext 192.168.100.1:9200 list
@@ -126,11 +137,13 @@ gpsctl -i
 ## 📱 Mobile App Setup
 
 ### Pushover Mobile App
+
 1. **Download**: Install Pushover from App Store/Play Store
 2. **Login**: Use your Pushover account
 3. **Test**: Send test notification from web interface
 
 ### Configuration Check
+
 ```bash
 # Test Pushover
 curl -X POST https://api.pushover.net/1/messages.json \

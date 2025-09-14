@@ -36,4 +36,14 @@ void uci_manager_convert_to_snow_config(const autonomy_config_t *autonomy_config
 void uci_manager_convert_from_snow_config(const starlink_snow_detection_config_t *snow_config,
                                          autonomy_config_t *autonomy_config);
 
+// Get UCI context for external use
+struct uci_context* uci_manager_get_context(void);
+
+// UCI wrapper functions for safe UCI operations
+const char* ucix_get_option(struct uci_context *ctx, const char *package, const char *section, const char *option);
+int ucix_get_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int default_value);
+int ucix_add_option(struct uci_context *ctx, const char *package, const char *section, const char *option, const char *value);
+int ucix_add_option_int(struct uci_context *ctx, const char *package, const char *section, const char *option, int value);
+int ucix_logged_commit(struct uci_context *ctx, const char *package);
+
 #endif // UCI_MANAGER_H

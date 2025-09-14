@@ -6,7 +6,7 @@ This guide covers development setup, building, testing, and contributing to the 
 
 ### Prerequisites
 
-- Go 1.22+ 
+- Go 1.22+
 - Git
 - Make (optional, for build scripts)
 - Docker (optional, for containerized builds)
@@ -237,7 +237,7 @@ go run docs/generate.go
 
 ### Commit Message Format
 
-```
+```text
 type(scope): description
 
 [optional body]

@@ -646,6 +646,7 @@ typedef struct {
     // Starlink settings
     int starlink_check_interval;             // Starlink check interval
     bool starlink_health_monitoring;         // Starlink health monitoring
+    bool starlink_enabled;                   // Enable/disable Starlink monitoring
     char starlink_host[256];                 // Starlink host
     int starlink_port;                       // Starlink port
     int starlink_timeout;                    // Starlink timeout
@@ -706,6 +707,7 @@ typedef struct {
 } system_state_t;
 
 // Function declarations
-void log_message(log_level_t level, const char *format, ...);
+// DISABLED due to format string security concerns
+// void log_message(log_level_t level, const char *format, ...);
 
 #endif // TYPES_H

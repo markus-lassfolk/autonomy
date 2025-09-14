@@ -92,8 +92,10 @@ int cellular_collector_init(const cellular_collector_config_t* config) {
     } else {
         // Default configuration using UCI config
         g_cellular_collector.config.enabled = true; // Use configurable cellular collection enabled
-        safe_strncpy(g_cellular_collector.config.modem_device, "/dev/ttyUSB0", sizeof(g_cellular_collector.config.modem_device));
-        safe_strncpy(g_cellular_collector.config.interface_name, "mob1s1a1", sizeof(g_cellular_collector.config.interface_name));
+        strncpy(g_cellular_collector.config.modem_device, "/dev/ttyUSB0", sizeof(g_cellular_collector.config.modem_device) - 1);
+        g_cellular_collector.config.modem_device[sizeof(g_cellular_collector.config.modem_device) - 1] = '\0';
+        strncpy(g_cellular_collector.config.interface_name, "mob1s1a1", sizeof(g_cellular_collector.config.interface_name) - 1);
+        g_cellular_collector.config.interface_name[sizeof(g_cellular_collector.config.interface_name) - 1] = '\0';
         g_cellular_collector.config.collection_interval = g_config.network_check_interval;
         g_cellular_collector.config.timeout_seconds = 10; // Use configurable cellular timeout
         g_cellular_collector.config.enable_stability_monitoring = true; // Use configurable stability monitoring
@@ -144,8 +146,10 @@ int cellular_collector_collect(cellular_info_t* info) {
     
     memset(info, 0, sizeof(cellular_info_t));
     info->timestamp = time(NULL);
-    safe_strncpy(info->interface_name, g_cellular_collector.config.interface_name, sizeof(info->interface_name));
-    safe_strncpy(info->modem_device, g_cellular_collector.config.modem_device, sizeof(info->modem_device));
+    strncpy(info->interface_name, g_cellular_collector.config.interface_name, sizeof(info->interface_name) - 1);
+    info->interface_name[sizeof(info->interface_name) - 1] = '\0';
+    strncpy(info->modem_device, g_cellular_collector.config.modem_device, sizeof(info->modem_device) - 1);
+    info->modem_device[sizeof(info->modem_device) - 1] = '\0';
     
     int result = AUTONOMY_ERROR_SYSTEM;
     
@@ -190,7 +194,8 @@ int cellular_collector_collect(cellular_info_t* info) {
         // Track cell changes
         if (strlen(info->cell_id) > 0 && 
             strcmp(info->cell_id, g_cellular_collector.last_cell_id) != 0) {
-            safe_strncpy(g_cellular_collector.last_cell_id, info->cell_id, sizeof(g_cellular_collector.last_cell_id));
+            strncpy(g_cellular_collector.last_cell_id, info->cell_id, sizeof(g_cellular_collector.last_cell_id) - 1);
+            g_cellular_collector.last_cell_id[sizeof(g_cellular_collector.last_cell_id) - 1] = '\0';
             g_cellular_collector.last_cell_change = time(NULL);
             g_cellular_collector.stats.cell_change_count++;
             info->cell_changes = g_cellular_collector.stats.cell_change_count;
@@ -299,21 +304,24 @@ static int collect_via_ubus(cellular_info_t* info) {
             strncpy(info->operator_name, blobmsg_get_string(tb[GSM_STATUS_OPERATOR]),
                     sizeof(info->operator_name) - 1);
         } else {
-            safe_strncpy(info->operator_name, "Unknown", sizeof(info->operator_name));
+            strncpy(info->operator_name, "Unknown", sizeof(info->operator_name) - 1);
+            info->operator_name[sizeof(info->operator_name) - 1] = '\0';
         }
 
         if (tb[GSM_STATUS_BAND]) {
             strncpy(info->band, blobmsg_get_string(tb[GSM_STATUS_BAND]),
                     sizeof(info->band) - 1);
         } else {
-            safe_strncpy(info->band, "Unknown", sizeof(info->band));
+            strncpy(info->band, "Unknown", sizeof(info->band) - 1);
+            info->band[sizeof(info->band) - 1] = '\0';
         }
 
         if (tb[GSM_STATUS_CELL_ID]) {
             strncpy(info->cell_id, blobmsg_get_string(tb[GSM_STATUS_CELL_ID]),
                     sizeof(info->cell_id) - 1);
         } else {
-            safe_strncpy(info->cell_id, "Unknown", sizeof(info->cell_id));
+            strncpy(info->cell_id, "Unknown", sizeof(info->cell_id) - 1);
+            info->cell_id[sizeof(info->cell_id) - 1] = '\0';
         }
 
         if (tb[GSM_STATUS_IP]) {
@@ -321,17 +329,20 @@ static int collect_via_ubus(cellular_info_t* info) {
                     sizeof(info->ip_address) - 1);
         } else {
             // Try to get real IP address from network interface
+            // Safe system call with constant string
             FILE *ip_fp = popen("ip addr show wwan0 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1", "r");
             if (ip_fp) {
                 if (fgets(info->ip_address, sizeof(info->ip_address), ip_fp)) {
                     // Remove newline
                     info->ip_address[strcspn(info->ip_address, "\n")] = '\0';
                 } else {
-                    safe_strncpy(info->ip_address, "0.0.0.0", sizeof(info->ip_address));
+                    strncpy(info->ip_address, "0.0.0.0", sizeof(info->ip_address) - 1);
+                    info->ip_address[sizeof(info->ip_address) - 1] = '\0';
                 }
                 pclose(ip_fp);
             } else {
-                safe_strncpy(info->ip_address, "0.0.0.0", sizeof(info->ip_address));
+                strncpy(info->ip_address, "0.0.0.0", sizeof(info->ip_address) - 1);
+                info->ip_address[sizeof(info->ip_address) - 1] = '\0';
             }
         }
 
@@ -340,17 +351,20 @@ static int collect_via_ubus(cellular_info_t* info) {
                     sizeof(info->gateway) - 1);
         } else {
             // Try to get real gateway from routing table
+            // Safe system call with constant string
             FILE *gw_fp = popen("ip route show dev wwan0 2>/dev/null | grep default | awk '{print $3}' | head -1", "r");
             if (gw_fp) {
                 if (fgets(info->gateway, sizeof(info->gateway), gw_fp)) {
                     // Remove newline
                     info->gateway[strcspn(info->gateway, "\n")] = '\0';
                 } else {
-                    safe_strncpy(info->gateway, "0.0.0.0", sizeof(info->gateway));
+                    strncpy(info->gateway, "0.0.0.0", sizeof(info->gateway) - 1);
+                    info->gateway[sizeof(info->gateway) - 1] = '\0';
                 }
                 pclose(gw_fp);
             } else {
-                safe_strncpy(info->gateway, "0.0.0.0", sizeof(info->gateway));
+                strncpy(info->gateway, "0.0.0.0", sizeof(info->gateway) - 1);
+                info->gateway[sizeof(info->gateway) - 1] = '\0';
             }
         }
 
@@ -399,6 +413,7 @@ static int collect_via_gsmctl(cellular_info_t* info) {
     char command[256];
     snprintf(command, sizeof(command), "gsmctl -A AT+CSQ 2>/dev/null");
     
+    // Safe system call with constant string
     FILE* fp = popen(command, "r");
     if (!fp) {
         LOGX_ERROR_MSG("Failed to execute gsmctl command");
@@ -754,6 +769,7 @@ static int parse_gsmctl_output(const char* output, cellular_info_t* info) {
         }
     } else {
         // Try to get network type from system
+        // Safe system call with constant string
         FILE *net_fp = popen("cat /sys/class/net/wwan0/operstate 2>/dev/null", "r");
         if (net_fp) {
             char state[16];
@@ -770,6 +786,7 @@ static int parse_gsmctl_output(const char* output, cellular_info_t* info) {
         }
         
         // Try to get network type from modem info
+        // Safe system call with constant string
         FILE *modem_fp = popen("mmcli -m 0 --command='AT+QNWINFO' 2>/dev/null | grep -E '(LTE|UMTS|GSM|5G)'", "r");
         if (modem_fp) {
             char net_info[64];

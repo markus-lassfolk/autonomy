@@ -7,6 +7,7 @@ The Autonomy networking system integrates with Starlink's GPS capabilities to pr
 ## Starlink GPS Capabilities
 
 ### Core Features
+
 - **Global Coverage**: 24/7 positioning anywhere with Starlink service
 - **High Accuracy**: 5-10 meter precision in optimal conditions
 - **Redundancy**: Backup GPS source when local GPS unavailable
@@ -14,6 +15,7 @@ The Autonomy networking system integrates with Starlink's GPS capabilities to pr
 - **Real-time Updates**: Continuous position updates via gRPC API
 
 ### Technical Specifications
+
 - **Update Rate**: 1-10 Hz (configurable)
 - **Accuracy**: 5-10 meters (outdoor), 10-20 meters (indoor)
 - **Latency**: 1-3 seconds for position updates
@@ -23,7 +25,8 @@ The Autonomy networking system integrates with Starlink's GPS capabilities to pr
 ## Integration Architecture
 
 ### System Components
-```
+
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    Autonomy System                          │
 └─────────────────────┬───────────────────────────────────────┘
@@ -51,6 +54,7 @@ The Autonomy networking system integrates with Starlink's GPS capabilities to pr
 ```
 
 ### Data Flow
+
 ```go
 type StarlinkGPSManager struct {
     client     *StarlinkClient
@@ -76,6 +80,7 @@ type StarlinkGPSData struct {
 ## API Integration
 
 ### gRPC Client Implementation
+
 ```go
 type StarlinkClient struct {
     conn       *grpc.ClientConn
@@ -119,6 +124,7 @@ func (sc *StarlinkClient) parseGPSResponse(response *pb.GPSResponse) *StarlinkGP
 ```
 
 ### Authentication Management
+
 ```go
 type StarlinkAuth struct {
     clientID     string
@@ -152,6 +158,7 @@ func (sa *StarlinkAuth) refreshAccessToken() error {
 ## Data Processing and Validation
 
 ### GPS Data Validation
+
 ```go
 func validateGPSData(data *StarlinkGPSData) error {
     // Validate latitude range
@@ -184,6 +191,7 @@ func validateGPSData(data *StarlinkGPSData) error {
 ```
 
 ### Quality Assessment
+
 ```go
 func assessGPSQuality(data *StarlinkGPSData) float64 {
     quality := 1.0
@@ -240,6 +248,7 @@ func assessGPSQuality(data *StarlinkGPSData) float64 {
 ## Caching and Performance
 
 ### Multi-Level Caching
+
 ```go
 type StarlinkGPSCache struct {
     memory    *sync.Map
@@ -281,6 +290,7 @@ func (sgc *StarlinkGPSCache) Set(key string, data *StarlinkGPSData) {
 ```
 
 ### Performance Optimization
+
 ```go
 type StarlinkGPSOptimizer struct {
     updateRate    time.Duration
@@ -304,6 +314,7 @@ func (sgo *StarlinkGPSOptimizer) OptimizeUpdateRate(currentRate time.Duration, q
 ## Configuration Examples
 
 ### Basic Configuration
+
 ```yaml
 starlink_gps:
   enabled: true
@@ -327,6 +338,7 @@ starlink_gps:
 ```
 
 ### Advanced Configuration
+
 ```yaml
 starlink_gps:
   optimization:
@@ -355,6 +367,7 @@ starlink_gps:
 ## Integration with Location Services
 
 ### Location Hierarchy Integration
+
 ```go
 func (ls *LocationService) GetLocation() (*Location, error) {
     // Try local GPS first
@@ -379,6 +392,7 @@ func (ls *LocationService) GetLocation() (*Location, error) {
 ```
 
 ### Obstruction Detection
+
 ```go
 type ObstructionDetector struct {
     gpsData     []*StarlinkGPSData
@@ -415,6 +429,7 @@ func (od *ObstructionDetector) DetectObstruction() bool {
 ## Monitoring and Metrics
 
 ### Performance Metrics
+
 ```go
 type StarlinkGPSMetrics struct {
     RequestCount      int64         `json:"request_count"`
@@ -429,6 +444,7 @@ type StarlinkGPSMetrics struct {
 ```
 
 ### Real-Time Monitoring
+
 ```bash
 # Check Starlink GPS status
 autonomy-cli starlink-gps status
@@ -448,21 +464,25 @@ autonomy-cli starlink-gps test --accuracy
 ### Common Issues
 
 #### Authentication Failures
+
 - **Symptoms**: 401 errors, token refresh failures
 - **Causes**: Expired tokens, invalid credentials
 - **Solutions**: Check API credentials, verify token refresh logic
 
 #### High Latency
+
 - **Symptoms**: Slow GPS updates, timeout errors
 - **Causes**: Network issues, API rate limits
 - **Solutions**: Check network connectivity, implement caching
 
 #### Poor Accuracy
+
 - **Symptoms**: Large accuracy values, inconsistent positions
 - **Causes**: Obstructions, poor satellite visibility
 - **Solutions**: Check for obstructions, verify antenna positioning
 
 ### Debugging Tools
+
 ```bash
 # Test API connectivity
 autonomy-cli starlink-gps test --connectivity
@@ -480,18 +500,21 @@ autonomy-cli starlink-gps monitor --api-calls
 ## Best Practices
 
 ### API Usage
+
 1. **Rate limiting**: Respect API rate limits
 2. **Caching**: Cache GPS data to reduce API calls
 3. **Error handling**: Implement proper error handling and retries
 4. **Authentication**: Secure token management
 
-### Performance Optimization
+### Starlink GPS - Performance Optimization
+
 1. **Adaptive updates**: Adjust update rate based on quality
 2. **Parallel processing**: Use concurrent API calls when possible
 3. **Compression**: Compress data for storage and transmission
 4. **Monitoring**: Track performance metrics continuously
 
 ### Reliability
+
 1. **Fallback strategies**: Always have backup location sources
 2. **Data validation**: Validate all GPS data before use
 3. **Quality assessment**: Assess data quality before using
@@ -500,12 +523,14 @@ autonomy-cli starlink-gps monitor --api-calls
 ## Future Enhancements
 
 ### Planned Features
+
 - **Real-time obstruction prediction**: AI-powered obstruction forecasting
 - **Multi-satellite fusion**: Combine data from multiple satellite systems
 - **Weather integration**: Weather-aware GPS optimization
 - **Edge processing**: Local GPS data processing
 
 ### Research Areas
+
 - **Quantum GPS**: Future quantum positioning integration
 - **Neural networks**: AI-powered GPS accuracy improvement
 - **Blockchain integration**: Decentralized GPS validation

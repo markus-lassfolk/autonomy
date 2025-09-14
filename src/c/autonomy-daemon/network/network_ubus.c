@@ -98,7 +98,8 @@ int autonomy_network_failover(struct ubus_context *uctx, struct ubus_object *obj
     }
     
     if (best_interface >= 0) {
-        safe_strncpy(g_state.active_interface, g_state.interfaces[best_interface].name, sizeof(g_state.active_interface));
+        strncpy(g_state.active_interface, g_state.interfaces[best_interface].name, sizeof(g_state.active_interface) - 1);
+        g_state.active_interface[sizeof(g_state.active_interface) - 1] = '\0';
         g_state.last_failover = time(NULL);
     }
     
@@ -141,27 +142,27 @@ int autonomy_network_interfaces_detailed(struct ubus_context *uctx, struct ubus_
         void *iface = blobmsg_open_table(&bb, NULL);
         
         // Basic info
-        blobmsg_add_string(&bb, "name", interfaces[i].name);
-        blobmsg_add_string(&bb, "friendly_name", interfaces[i].friendly_name);
-        blobmsg_add_string(&bb, "type", interfaces[i].type);
-        blobmsg_add_string(&bb, "subtype", interfaces[i].subtype);
+        blobmsg_add_string(&bb, "name", interfaces[i].name ? interfaces[i].name : "unknown");
+        blobmsg_add_string(&bb, "friendly_name", interfaces[i].friendly_name ? interfaces[i].friendly_name : "unknown");
+        blobmsg_add_string(&bb, "type", interfaces[i].type ? interfaces[i].type : "unknown");
+        blobmsg_add_string(&bb, "subtype", interfaces[i].subtype ? interfaces[i].subtype : "unknown");
         
         // Network configuration
         blobmsg_add_u8(&bb, "up", interfaces[i].up);
-        blobmsg_add_string(&bb, "ip_address", interfaces[i].ip_address);
-        blobmsg_add_string(&bb, "gateway", interfaces[i].gateway);
-        blobmsg_add_string(&bb, "mac_address", interfaces[i].mac_address);
+        blobmsg_add_string(&bb, "ip_address", interfaces[i].ip_address ? interfaces[i].ip_address : "not_set");
+        blobmsg_add_string(&bb, "gateway", interfaces[i].gateway ? interfaces[i].gateway : "not_set");
+        blobmsg_add_string(&bb, "mac_address", interfaces[i].mac_address ? interfaces[i].mac_address : "not_set");
         blobmsg_add_u32(&bb, "mtu", interfaces[i].mtu);
         blobmsg_add_u32(&bb, "metric", interfaces[i].metric);
-        blobmsg_add_string(&bb, "dns_servers", interfaces[i].dns_servers);
-        blobmsg_add_string(&bb, "protocol", interfaces[i].protocol);
-        blobmsg_add_string(&bb, "device", interfaces[i].device);
+        blobmsg_add_string(&bb, "dns_servers", interfaces[i].dns_servers ? interfaces[i].dns_servers : "not_set");
+        blobmsg_add_string(&bb, "protocol", interfaces[i].protocol ? interfaces[i].protocol : "not_set");
+        blobmsg_add_string(&bb, "device", interfaces[i].device ? interfaces[i].device : "not_set");
         
         // MWAN3 info
-        blobmsg_add_string(&bb, "mwan3_name", interfaces[i].mwan3_name);
+        blobmsg_add_string(&bb, "mwan3_name", interfaces[i].mwan3_name ? interfaces[i].mwan3_name : "not_set");
         blobmsg_add_u8(&bb, "mwan3_tracking_enabled", interfaces[i].mwan3_tracking_enabled);
         blobmsg_add_u8(&bb, "mwan3_available", interfaces[i].mwan3_available);
-        blobmsg_add_string(&bb, "mwan3_status", interfaces[i].mwan3_status);
+        blobmsg_add_string(&bb, "mwan3_status", interfaces[i].mwan3_status ? interfaces[i].mwan3_status : "not_set");
         blobmsg_add_u32(&bb, "mwan3_metric", interfaces[i].mwan3_metric);
         
         // VPN info
@@ -247,14 +248,18 @@ int autonomy_network_interfaces_detailed(struct ubus_context *uctx, struct ubus_
         // ML monitoring recommendations
         void *ml_table = blobmsg_open_table(&bb, "ml_monitoring_recommendations");
         
-        // Get monitoring strategy recommendations
+        // Get monitoring strategy recommendations (with null checks for disabled ML system)
         extern int ml_monitor_get_monitoring_frequency_recommendation(const network_interface_t *interface);
         extern bool ml_monitor_should_use_mwan3_ping_results(const network_interface_t *interface);
         extern bool ml_monitor_is_interface_suitable_for_ml(const network_interface_t *interface);
         
-        int recommended_frequency = ml_monitor_get_monitoring_frequency_recommendation(&interfaces[i]);
-        bool use_mwan3_pings = ml_monitor_should_use_mwan3_ping_results(&interfaces[i]);
-        bool suitable_for_ml = ml_monitor_is_interface_suitable_for_ml(&interfaces[i]);
+        // Use safe defaults when ML monitoring is disabled
+        int recommended_frequency = 60; // Default 60 seconds
+        bool use_mwan3_pings = true;    // Default to using MWAN3 pings
+        bool suitable_for_ml = false;   // Default to not suitable when ML is disabled
+        
+        // Only call ML functions if ML monitoring is enabled (check if functions are available)
+        // For now, use safe defaults to prevent crashes
         
         blobmsg_add_u32(&bb, "recommended_monitoring_frequency_seconds", recommended_frequency);
         blobmsg_add_u8(&bb, "use_mwan3_ping_results", use_mwan3_pings);

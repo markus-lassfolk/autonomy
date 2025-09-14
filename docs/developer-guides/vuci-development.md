@@ -2,7 +2,9 @@
 
 ## Overview
 
-This guide covers the development of the VuCI (Vu+ Configuration Interface) web interface for the autonomy daemon, providing a native RUTOS look & feel with real-time monitoring and configuration capabilities.
+This guide covers the development of the VuCI (Vu+ Configuration Interface) web interface
+for the autonomy daemon, providing a native RUTOS look & feel with real-time monitoring and
+configuration capabilities.
 
 ## Table of Contents
 
@@ -21,7 +23,7 @@ This guide covers the development of the VuCI (Vu+ Configuration Interface) web 
 
 ### VuCI Architecture
 
-```
+```text
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Web Browser   │    │   LuCI/VuCI     │    │   RPC Daemon    │
 │                 │    │   Framework     │    │   Plugin        │
@@ -81,7 +83,7 @@ opkg install luci-base luci-compat rpcd rpcd-mod-file rpcd-mod-iwinfo
 
 ### Package Structure
 
-```
+```text
 vuci-app-autonomy/
 ├── Makefile                                    # Package build configuration
 ├── root/                                       # Root filesystem overlay
@@ -960,6 +962,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
 ### Development Testing
 
 1. **Local Testing**:
+
    ```bash
    # Install development packages
    opkg install luci-base luci-compat rpcd rpcd-mod-file
@@ -978,6 +981,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
    - Check accessibility features
 
 3. **API Testing**:
+
    ```bash
    # Test RPC methods
    ubus call autonomy status
@@ -992,6 +996,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
 ### Debug Procedures
 
 1. **Enable Debug Logging**:
+
    ```bash
    # Enable debug logging
    uci set autonomy.main.log_level='debug'
@@ -1003,6 +1008,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
    ```
 
 2. **Check RPC Daemon**:
+
    ```bash
    # Check RPC daemon status
    rpcd -i
@@ -1013,6 +1019,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
    ```
 
 3. **Check Web Interface**:
+
    ```bash
    # Check LuCI installation
    opkg list-installed | grep luci
@@ -1027,6 +1034,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
 ### Performance Testing
 
 1. **Resource Usage**:
+
    ```bash
    # Monitor CPU usage
    top -p $(cat /var/run/autonomyd.pid)
@@ -1039,6 +1047,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
    ```
 
 2. **Load Testing**:
+
    ```bash
    # Test API endpoints under load
    ab -n 1000 -c 10 http://router/admin/network/autonomy/api/status
@@ -1052,6 +1061,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
 ### Package Building
 
 1. **Build VuCI Package**:
+
    ```bash
    # Navigate to SDK
    cd /path/to/rutos-sdk
@@ -1062,6 +1072,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
    ```
 
 2. **Generate IPK**:
+
    ```bash
    # Find generated IPK
    find bin/packages/ -name "*vuci-app-autonomy*.ipk"
@@ -1073,6 +1084,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
 ### Installation
 
 1. **Install Package**:
+
    ```bash
    # Update package lists
    opkg update
@@ -1082,6 +1094,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
    ```
 
 2. **Verify Installation**:
+
    ```bash
    # Check package installation
    opkg list-installed | grep vuci-app-autonomy
@@ -1093,6 +1106,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
    ```
 
 3. **Test Web Interface**:
+
    ```bash
    # Reload LuCI
    luci-reload
@@ -1104,6 +1118,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
 ### Configuration
 
 1. **Enable Web Interface**:
+
    ```bash
    # Enable autonomy service
    uci set autonomy.main.enable='1'
@@ -1114,6 +1129,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
    ```
 
 2. **Configure Access Control**:
+
    ```bash
    # Set up user permissions
    uci set luci.main.mediaurlbase='/luci-static/resources'
@@ -1121,6 +1137,7 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
    ```
 
 3. **Test Functionality**:
+
    ```bash
    # Test service control
    /etc/init.d/autonomy status
@@ -1167,4 +1184,3 @@ The VuCI interface uses a custom CSS framework designed to match RUTOS styling:
 
 **Last Updated**: 2025-08-20
 **Version**: 1.0.0
-

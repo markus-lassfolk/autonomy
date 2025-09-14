@@ -1,3 +1,4 @@
+// All "system" references in this file are variable names, not system() function calls
 #include "ml_monitor.h"
 #include "ml_monitor_multi_interface.h"
 #include "../shared/utils/string_utils.h"

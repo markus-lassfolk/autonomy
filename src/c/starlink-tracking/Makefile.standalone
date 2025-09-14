@@ -1,0 +1,47 @@
+# Makefile for starlink-standalone client
+# This Makefile builds only the standalone client components
+
+CC ?= gcc
+CFLAGS ?= -Wall -Wextra -std=c99 -O2 -g -rdynamic
+LDFLAGS ?= -rdynamic
+LIBS = -lcurl -ljson-c -lubox -lubus -luci -lm -lpthread -lsqlite3
+
+# Standalone-specific source files
+STANDALONE_SOURCES = core/starlink_tracker_standalone.c \
+                    starlink_client.c \
+                    space_track_connector.c \
+                    obstruction_analyzer.c \
+                    prediction_engine.c \
+                    astro_coordinates.c \
+                    dynamic_satellite_tracker.c \
+                    parallel_propagator.c \
+                    validation_module.c
+
+# Object files
+STANDALONE_OBJECTS = $(STANDALONE_SOURCES:.c=.o)
+
+# Target executable
+TARGET = starlink-standalone
+
+# Default target
+all: $(TARGET)
+
+# Build the standalone executable
+$(TARGET): $(STANDALONE_OBJECTS)
+	$(CC) $(STANDALONE_OBJECTS) -o $(TARGET) $(LDFLAGS) $(LIBS)
+
+# Compile source files to object files
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Clean build artifacts
+clean:
+	rm -f $(STANDALONE_OBJECTS) $(TARGET)
+
+# Install the executable
+install: $(TARGET)
+	install -d $(DESTDIR)/usr/bin
+	install -m 755 $(TARGET) $(DESTDIR)/usr/bin/
+
+# Phony targets
+.PHONY: all clean install

@@ -16,6 +16,7 @@
 #include <libubox/blobmsg.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 
 // External reference to global configuration
 extern autonomy_config_t g_config;
@@ -334,23 +335,52 @@ static bool evaluate_custom_condition(const gps_event_condition_t *condition, co
         return false;
     }
     
-    // Check if custom script exists and is executable
-    if (access(condition->custom_data, F_OK | X_OK) != 0) {
+    // Check if custom script exists and is executable (SECURE VERSION)
+    struct stat script_stat;
+    if (stat(condition->custom_data, &script_stat) != 0 || 
+        !S_ISREG(script_stat.st_mode) || 
+        !(script_stat.st_mode & S_IXUSR)) {
         LOGX_WARN_MSG("Custom condition script not found or not executable",
                      "script_path", condition->custom_data);
         return false;
     }
     
-    // Prepare script arguments with GPS data
-    char script_args[1024];
-    snprintf(script_args, sizeof(script_args), 
-             "%s %.6f %.6f %.1f %d",
-             condition->custom_data,
-             gps_data->lat, gps_data->lon, gps_data->accuracy,
-             gps_data->satellites);
+    // Prepare script arguments with GPS data - SECURE VERSION
+    // Use execve to avoid command injection vulnerabilities
+    char lat_str[32], lon_str[32], accuracy_str[32], satellites_str[32];
+    snprintf(lat_str, sizeof(lat_str), "%.6f", gps_data->lat);
+    snprintf(lon_str, sizeof(lon_str), "%.6f", gps_data->lon);
+    snprintf(accuracy_str, sizeof(accuracy_str), "%.1f", gps_data->accuracy);
+    snprintf(satellites_str, sizeof(satellites_str), "%d", gps_data->satellites);
     
-    // Execute custom script
-    int result = system(script_args);
+    // Prepare arguments array for execve
+    char *args[] = {
+        (char*)condition->custom_data,  // Script path
+        lat_str,                        // Latitude
+        lon_str,                        // Longitude
+        accuracy_str,                   // Accuracy
+        satellites_str,                 // Satellite count
+        NULL
+    };
+    
+    // Execute custom script using fork/execve for security
+    pid_t pid = fork();
+    int result = -1;
+    
+    if (pid == 0) {
+        // Child process
+        execve(condition->custom_data, args, NULL);
+        exit(1); // If execve fails
+    } else if (pid > 0) {
+        // Parent process
+        int status;
+        waitpid(pid, &status, 0);
+        result = WEXITSTATUS(status);
+    } else {
+        // Fork failed
+        LOGX_ERROR_MSG("Failed to fork process for custom script execution");
+        result = -1;
+    }
     
     // Script should return 0 for true, non-zero for false
     bool condition_result = (result == 0);
@@ -468,43 +498,126 @@ void execute_command_action(const gps_event_definition_t *event, const gps_data_
         return;
     }
     
-    // Prepare command with GPS data substitution
-    char command[1024];
-    char* cmd_ptr = command;
-    const char* action_ptr = action->action_data;
+    // SECURE VERSION: Parse command and arguments safely
+    // For security, we'll only support simple commands without shell metacharacters
+    char command_template[1024];
+    strncpy(command_template, action->action_data, sizeof(command_template) - 1);
+    command_template[sizeof(command_template) - 1] = '\0';
     
-    // Substitute GPS data placeholders in command
-    while (*action_ptr && (cmd_ptr - command) < (sizeof(command) - 1)) {
-        if (strncmp(action_ptr, "${LAT}", 6) == 0) {
-            cmd_ptr += snprintf(cmd_ptr, sizeof(command) - (cmd_ptr - command), "%.6f", gps_data->lat);
-            action_ptr += 6;
-        } else if (strncmp(action_ptr, "${LON}", 6) == 0) {
-            cmd_ptr += snprintf(cmd_ptr, sizeof(command) - (cmd_ptr - command), "%.6f", gps_data->lon);
-            action_ptr += 6;
-        } else if (strncmp(action_ptr, "${ACCURACY}", 10) == 0) {
-            cmd_ptr += snprintf(cmd_ptr, sizeof(command) - (cmd_ptr - command), "%.1f", gps_data->accuracy);
-            action_ptr += 10;
-        } else if (strncmp(action_ptr, "${SATELLITES}", 12) == 0) {
-            cmd_ptr += snprintf(cmd_ptr, sizeof(command) - (cmd_ptr - command), "%d", gps_data->satellites);
-            action_ptr += 12;
+    // Check for dangerous characters that could lead to command injection
+    if (strpbrk(command_template, ";&|`$(){}[]<>\"'\\") != NULL) {
+        LOGX_ERROR_MSG("GPS event command contains dangerous characters, refusing to execute",
+                      "event", event->name, "command", command_template);
+        return;
+    }
+    
+    // Parse command into executable and arguments
+    char executable[256];
+    char args[768];
+    char lat_str[32], lon_str[32], accuracy_str[32], satellites_str[32];
+    
+    // Convert GPS data to strings
+    snprintf(lat_str, sizeof(lat_str), "%.6f", gps_data->lat);
+    snprintf(lon_str, sizeof(lon_str), "%.6f", gps_data->lon);
+    snprintf(accuracy_str, sizeof(accuracy_str), "%.1f", gps_data->accuracy);
+    snprintf(satellites_str, sizeof(satellites_str), "%d", gps_data->satellites);
+    
+    // Simple template substitution (only for basic commands)
+    char substituted_command[1024];
+    char *src = command_template;
+    char *dst = substituted_command;
+    size_t remaining = sizeof(substituted_command) - 1;
+    
+    while (*src && remaining > 0) {
+        if (strncmp(src, "${LAT}", 6) == 0) {
+            size_t len = strnlen(lat_str, remaining);
+            strncpy(dst, lat_str, len);
+            dst += len;
+            remaining -= len;
+            src += 6;
+        } else if (strncmp(src, "${LON}", 6) == 0) {
+            size_t len = strnlen(lon_str, remaining);
+            strncpy(dst, lon_str, len);
+            dst += len;
+            remaining -= len;
+            src += 6;
+        } else if (strncmp(src, "${ACCURACY}", 10) == 0) {
+            size_t len = strnlen(accuracy_str, remaining);
+            strncpy(dst, accuracy_str, len);
+            dst += len;
+            remaining -= len;
+            src += 10;
+        } else if (strncmp(src, "${SATELLITES}", 12) == 0) {
+            size_t len = strnlen(satellites_str, remaining);
+            strncpy(dst, satellites_str, len);
+            dst += len;
+            remaining -= len;
+            src += 12;
         } else {
-            *cmd_ptr++ = *action_ptr++;
+            *dst++ = *src++;
+            remaining--;
         }
     }
-    *cmd_ptr = '\0';
+    *dst = '\0';
     
-    // Execute command
-    LOGX_INFO_MSG("Executing GPS event command", "event", event->name, "command", command);
+    // Parse executable and arguments
+    char *space = strchr(substituted_command, ' ');
+    if (space) {
+        size_t exec_len = space - substituted_command;
+        if (exec_len >= sizeof(executable)) exec_len = sizeof(executable) - 1;
+        strncpy(executable, substituted_command, exec_len);
+        executable[exec_len] = '\0';
+        
+        strncpy(args, space + 1, sizeof(args) - 1);
+        args[sizeof(args) - 1] = '\0';
+    } else {
+        strncpy(executable, substituted_command, sizeof(executable) - 1);
+        executable[sizeof(executable) - 1] = '\0';
+        args[0] = '\0';
+    }
     
-    int result = system(command);
+    // Execute command using fork/execve for security
+    LOGX_INFO_MSG("Executing GPS event command", "event", event->name, "executable", executable, "args", args);
+    
+    pid_t pid = fork();
+    int result = -1;
+    
+    if (pid == 0) {
+        // Child process
+        if (strlen(args) > 0) {
+            // Simple argument parsing (split by spaces)
+            char *argv[32];
+            int argc = 0;
+            char *token = strtok(args, " ");
+            while (token && argc < 31) {
+                argv[argc++] = token;
+                token = strtok(NULL, " ");
+            }
+            argv[argc] = NULL;
+            execve(executable, argv, NULL);
+        } else {
+            char *argv[] = {executable, NULL};
+            execve(executable, argv, NULL);
+        }
+        exit(1); // If execve fails
+    } else if (pid > 0) {
+        // Parent process
+        int status;
+        waitpid(pid, &status, 0);
+        result = WEXITSTATUS(status);
+    } else {
+        // Fork failed
+        LOGX_ERROR_MSG("Failed to fork process for GPS event command execution");
+        result = -1;
+    }
     if (result == 0) {
         LOGX_INFO_MSG("GPS event command executed successfully",
                      "event", event->name,
-                     "command", command);
+                     "executable", executable);
     } else {
         LOGX_ERROR_MSG("GPS event command execution failed",
                       "event", event->name,
-                      "command", command,
+                      "executable", executable,
                       "exit_code", result);
     }
 }
@@ -651,17 +764,49 @@ void execute_custom_action(const gps_event_definition_t *event, const gps_data_t
             return;
         }
         
-        if (access(script_path, F_OK | X_OK) == 0) {
-            char script_cmd[1024];  // Increased buffer size for command
-            int cmd_len = snprintf(script_cmd, sizeof(script_cmd), "%s %.6f %.6f %.1f %d \"%s\"",
-                     script_path, gps_data->lat, gps_data->lon, gps_data->accuracy, 
-                     gps_data->satellites, event->name);
-            if (cmd_len >= sizeof(script_cmd)) {
-                LOGX_ERROR_MSG("Script command too long", "script", script_path);
-                return;
+        // SECURE VERSION: Use stat() instead of access() to avoid race condition
+        struct stat script_stat;
+        if (stat(script_path, &script_stat) == 0 && 
+            S_ISREG(script_stat.st_mode) && 
+            (script_stat.st_mode & S_IXUSR)) {
+            
+            // Prepare arguments safely
+            char lat_str[32], lon_str[32], accuracy_str[32], satellites_str[32], event_name[256];
+            snprintf(lat_str, sizeof(lat_str), "%.6f", gps_data->lat);
+            snprintf(lon_str, sizeof(lon_str), "%.6f", gps_data->lon);
+            snprintf(accuracy_str, sizeof(accuracy_str), "%.1f", gps_data->accuracy);
+            snprintf(satellites_str, sizeof(satellites_str), "%d", gps_data->satellites);
+            strncpy(event_name, event->name, sizeof(event_name) - 1);
+            event_name[sizeof(event_name) - 1] = '\0';
+            
+            // Execute script using fork/execve for security
+            pid_t pid = fork();
+            int result = -1;
+            
+            if (pid == 0) {
+                // Child process
+                char *argv[] = {
+                    script_path,
+                    lat_str,
+                    lon_str,
+                    accuracy_str,
+                    satellites_str,
+                    event_name,
+                    NULL
+                };
+                execve(script_path, argv, NULL);
+                exit(1); // If execve fails
+            } else if (pid > 0) {
+                // Parent process
+                int status;
+                waitpid(pid, &status, 0);
+                result = WEXITSTATUS(status);
+            } else {
+                // Fork failed
+                LOGX_ERROR_MSG("Failed to fork process for GPS event script execution");
+                result = -1;
             }
             
-            int result = system(script_cmd);
             if (result == 0) {
                 LOGX_INFO_MSG("GPS event custom script executed successfully",
                              "event", event->name,

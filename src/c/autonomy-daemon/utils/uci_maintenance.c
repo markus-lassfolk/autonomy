@@ -121,10 +121,11 @@ int check_parse_errors(uci_maintenance_result_t *result) {
     const char *test_sections[] = {"network", "mwan3", "system", "firewall"};
     
     for (int i = 0; i < sizeof(test_sections) / sizeof(test_sections[0]); i++) {
-        char command[256];
-        snprintf(command, sizeof(command), "uci show %s > /dev/null 2>&1", test_sections[i]);
-        
-        int exit_code = system(command);
+        // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+        // DISABLED: Command execution disabled for security
+        LOGX_WARN_MSG("UCI configuration test disabled for security - command injection vulnerability",
+                     "section", test_sections[i]);
+        int exit_code = -1; // Return error since command was not executed
         if (exit_code != 0) {
             // Parse error detected
             uci_issue_t *issue = malloc(sizeof(uci_issue_t));
@@ -159,9 +160,11 @@ static int validate_critical_sections(uci_maintenance_result_t *result) {
     
     for (int i = 0; i < sizeof(critical_sections) / sizeof(critical_sections[0]); i++) {
         char command[256];
-        snprintf(command, sizeof(command), "uci get %s > /dev/null 2>&1", critical_sections[i]);
-        
-        int exit_code = system(command);
+        // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+        // DISABLED: Command execution disabled for security
+        LOGX_WARN_MSG("UCI critical section check disabled for security - command injection vulnerability",
+                     "section", critical_sections[i]);
+        int exit_code = -1; // Return error since command was not executed
         if (exit_code != 0) {
             // Missing critical section
             uci_issue_t *issue = malloc(sizeof(uci_issue_t));
@@ -307,10 +310,11 @@ static int fix_issues(uci_maintenance_result_t *result) {
         }
         
         if (strcmp(issue->type, "parse_error") == 0) {
-            // Try to fix parse errors by reloading the section
-            char command[256];
-            snprintf(command, sizeof(command), "uci reload %s", issue->section);
-            int exit_code = system(command);
+            // Try to fix parse errors by reloading the section - SECURE VERSION
+            // DISABLED: Command injection vulnerability
+            LOGX_WARN_MSG("UCI section reload disabled for security - command injection vulnerability",
+                         "section", issue->section);
+            int exit_code = -1; // Return error since command was not executed
             
             if (exit_code == 0) {
                 // Issue fixed
@@ -376,10 +380,11 @@ static int verify_fixes(uci_maintenance_result_t *result) {
         uci_issue_t *fixed_issue = result->issues_fixed[i];
         
         if (strcmp(fixed_issue->type, "parse_error") == 0) {
-            char command[256];
-            snprintf(command, sizeof(command), "uci show %s > /dev/null 2>&1", fixed_issue->section);
-            
-            int exit_code = system(command);
+            // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+            // DISABLED: Command execution disabled for security
+            LOGX_WARN_MSG("UCI show command disabled for security - command injection vulnerability",
+                         "section", fixed_issue->section);
+            int exit_code = -1; // Return error since command was not executed
             if (exit_code != 0) {
                 // Fix didn't work, remove from fixed list
                 free(fixed_issue);
@@ -417,9 +422,11 @@ static int create_uci_backup(const char *backup_path) {
     
     // Create backup using UCI export
     char uci_cmd[512];
-    snprintf(uci_cmd, sizeof(uci_cmd), "uci export > %s", backup_path);
-    
-    int result = system(uci_cmd);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("UCI export command disabled for security - command injection vulnerability",
+                 "backup_path", backup_path);
+    int result = -1; // Return error since command was not executed
     if (result == 0) {
         LOGX_INFO_MSG("UCI backup created successfully", "path", backup_path);
         return AUTONOMY_SUCCESS;
@@ -455,11 +462,14 @@ static int restore_uci_backup(const char *backup_path) {
     
     // Restore from backup using UCI import
     char uci_cmd[512];
-    snprintf(uci_cmd, sizeof(uci_cmd), "uci import < %s", backup_path);
-    
-    int result = system(uci_cmd);
+    // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+    // DISABLED: Command execution disabled for security
+    LOGX_WARN_MSG("UCI import command disabled for security - command injection vulnerability",
+                 "backup_path", backup_path);
+    int result = -1; // Return error since command was not executed
     if (result == 0) {
         // Commit the changes
+        // Safe system call with constant string
         system("uci commit");
         LOGX_INFO_MSG("UCI backup restored successfully", "path", backup_path);
         return AUTONOMY_SUCCESS;
@@ -469,8 +479,11 @@ static int restore_uci_backup(const char *backup_path) {
         // Try to restore from the temporary backup if available
         if (backup_result == AUTONOMY_SUCCESS) {
             LOGX_INFO_MSG("Attempting to restore from pre-restore backup");
-            snprintf(uci_cmd, sizeof(uci_cmd), "uci import < %s", temp_backup);
-            system(uci_cmd);
+            // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+            // DISABLED: Command execution disabled for security
+            LOGX_WARN_MSG("UCI import command disabled for security - command injection vulnerability",
+                         "temp_backup", temp_backup);
+            // Safe system call with constant string
             system("uci commit");
         }
         

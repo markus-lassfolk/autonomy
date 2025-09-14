@@ -207,7 +207,7 @@ int gps_system_init(void) {
     
     // If not found in environment, try to get from UCI configuration
     if (!google_api_key) {
-        // flawfinder: ignore - popen for system configuration query
+        // Safe system call with constant string
         FILE *uci_fp = popen("uci get autonomy.gps.google_api_key 2>/dev/null", "r");
         if (uci_fp) {
             // flawfinder: ignore - buffer size sufficient for key handling
@@ -226,11 +226,11 @@ int gps_system_init(void) {
                     if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
                         // flawfinder: ignore - strlen on validated buffer from fgets
                         key_buffer[strlen(key_buffer)-1] = '\0';
-                        // flawfinder: ignore - safe_strncpy with validated bounds
-                    safe_strncpy(g_google_api_key, key_buffer + 1, sizeof(g_google_api_key));
+                        strncpy(g_google_api_key, key_buffer + 1, strlen(key_buffer + 1));
+                        g_google_api_key[strlen(key_buffer + 1)] = '\0';
                     } else {
-                        // flawfinder: ignore - safe_strncpy with validated bounds
-                        safe_strncpy(g_google_api_key, key_buffer, sizeof(g_google_api_key));
+                        strncpy(g_google_api_key, key_buffer, strlen(key_buffer));
+                        g_google_api_key[strlen(key_buffer)] = '\0';
                     }
                     google_api_key = g_google_api_key;
                 }
@@ -269,7 +269,7 @@ int gps_system_init(void) {
     
     // If not found in environment, try to get from UCI configuration
     if (!weather_api_key) {
-        // flawfinder: ignore - popen for system configuration query
+        // Safe system call with constant string
         FILE *uci_fp = popen("uci get autonomy.gps.weather_api_key 2>/dev/null", "r");
         if (uci_fp) {
             // flawfinder: ignore - buffer size sufficient for key handling
@@ -288,11 +288,11 @@ int gps_system_init(void) {
                     if (key_buffer[0] == '\'' && key_buffer[strlen(key_buffer)-1] == '\'') {
                         // flawfinder: ignore - strlen on validated buffer from fgets
                         key_buffer[strlen(key_buffer)-1] = '\0';
-                        // flawfinder: ignore - safe_strncpy with validated bounds
-                        safe_strncpy(g_weather_api_key, key_buffer + 1, sizeof(g_weather_api_key));
+                        strncpy(g_weather_api_key, key_buffer + 1, strlen(key_buffer + 1));
+                        g_weather_api_key[strlen(key_buffer + 1)] = '\0';
                     } else {
-                            // flawfinder: ignore - safe_strncpy with validated bounds
-                            safe_strncpy(g_weather_api_key, key_buffer, sizeof(g_weather_api_key));
+                        strncpy(g_weather_api_key, key_buffer, strlen(key_buffer));
+                        g_weather_api_key[strlen(key_buffer)] = '\0';
                     }
                     weather_api_key = g_weather_api_key;
                 }

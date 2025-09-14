@@ -5,6 +5,7 @@
 ### 1. Prerequisites
 
 #### Required Dependencies
+
 ```bash
 # Ubuntu/Debian
 sudo apt-get install libcurl4-openssl-dev libjson-c-dev libssl-dev
@@ -14,11 +15,13 @@ opkg install libcurl libjson-c openssl-utils
 ```
 
 #### Space-Track Account
+
 1. Register at [https://www.space-track.org](https://www.space-track.org)
 2. Accept the user agreement and terms of service
 3. Note your username and password for configuration
 
 #### Starlink Dish Access
+
 - Ensure your Starlink dish is accessible on the local network
 - Default IP: `192.168.100.1`, Port: `9200`
 - Verify gRPC access with: `grpcurl -plaintext -d '{"getStatus":{}}' 192.168.100.1:9200 SpaceX.API.Device.Device/Handle`
@@ -26,6 +29,7 @@ opkg install libcurl libjson-c openssl-utils
 ### 2. Configuration
 
 #### Environment Variables
+
 ```bash
 export SPACE_TRACK_USERNAME=your_username
 export SPACE_TRACK_PASSWORD=your_password
@@ -34,6 +38,7 @@ export STARLINK_DISH_PORT=9200          # Optional, defaults to 9200
 ```
 
 #### UCI Configuration (for autonomy daemon integration)
+
 ```bash
 uci set autonomy.starlink_tracking=section
 uci set autonomy.starlink_tracking.enabled=1
@@ -49,6 +54,7 @@ uci commit autonomy
 ### 3. Testing the Implementation
 
 #### Standalone Test
+
 ```bash
 # Compile the test program
 ./compile_tracking_test.sh
@@ -58,6 +64,7 @@ uci commit autonomy
 ```
 
 #### Integration with Autonomy Daemon
+
 ```bash
 # Build the enhanced autonomy daemon
 cd package/utils/tlt-autonomy-daemon
@@ -78,11 +85,13 @@ ubus call starlink_tracker start_monitoring
 ### UBUS Interface
 
 #### Get Tracker Status
+
 ```bash
 ubus call starlink_tracker status
 ```
 
 **Response:**
+
 ```json
 {
     "status": "monitoring",
@@ -111,11 +120,13 @@ ubus call starlink_tracker status
 ```
 
 #### Get Outage Predictions
+
 ```bash
 ubus call starlink_tracker predictions
 ```
 
 **Response:**
+
 ```json
 {
     "count": 2,
@@ -143,11 +154,13 @@ ubus call starlink_tracker predictions
 ```
 
 #### Get Current Satellite Positions
+
 ```bash
 ubus call starlink_tracker satellites
 ```
 
 **Response:**
+
 ```json
 {
     "count": 15,
@@ -168,6 +181,7 @@ ubus call starlink_tracker satellites
 ```
 
 #### Control Monitoring
+
 ```bash
 # Start monitoring
 ubus call starlink_tracker start_monitoring
@@ -182,6 +196,7 @@ ubus call starlink_tracker update_data
 ### C API Usage
 
 #### Basic Usage
+
 ```c
 #include "starlink_tracker.h"
 
@@ -230,6 +245,7 @@ starlink_tracker_cleanup(tracker);
 ```
 
 #### Advanced Usage with Validation
+
 ```c
 // Enable validation and monitoring
 starlink_tracker_config_t config = {
@@ -275,6 +291,7 @@ printf("Final Accuracy: %.1f%% (%d/%d correct)\n",
 ## Configuration Options
 
 ### Tracker Configuration
+
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `space_track_username` | - | Space-Track.org username (required) |
@@ -292,16 +309,19 @@ printf("Final Accuracy: %.1f%% (%d/%d correct)\n",
 ### Tuning Parameters
 
 #### Elevation Threshold
+
 - **Lower values (5-10°)**: More satellites considered, but lower quality
 - **Higher values (15-20°)**: Fewer satellites, but better signal quality
 - **Recommended**: Start with 10° and adjust based on your location
 
 #### Obstruction Threshold
+
 - **Lower values (0.5-0.6)**: More conservative, may predict false outages
 - **Higher values (0.8-0.9)**: More aggressive, may miss real outages
 - **Recommended**: Start with 0.7 and let validation auto-tune
 
 #### Update Intervals
+
 - **Faster updates (15-30 min)**: More current data, higher API usage
 - **Slower updates (60-120 min)**: Less API usage, slightly stale data
 - **Recommended**: 60 minutes for most use cases
@@ -311,6 +331,7 @@ printf("Final Accuracy: %.1f%% (%d/%d correct)\n",
 ### Common Issues
 
 #### "Authentication Failed"
+
 ```bash
 # Check credentials
 echo $SPACE_TRACK_USERNAME
@@ -323,6 +344,7 @@ curl -c cookies.txt -b cookies.txt \
 ```
 
 #### "Connection Refused" to Starlink Dish
+
 ```bash
 # Check dish IP and port
 ping 192.168.100.1
@@ -335,11 +357,13 @@ grpcurl -plaintext -d '{"getStatus":{}}' 192.168.100.1:9200 SpaceX.API.Device.De
 ```
 
 #### "No Satellites Found"
+
 - Check Space-Track credentials and network connectivity
 - Verify TLE data is being fetched successfully
 - Check cache directory permissions: `/tmp/starlink_tracker_cache`
 
 #### "Poor Prediction Accuracy"
+
 - Enable validation: `validation_enabled = true`
 - Let the system auto-tune thresholds over 24-48 hours
 - Manually adjust `obstruction_threshold` based on false positive/negative rates
@@ -347,6 +371,7 @@ grpcurl -plaintext -d '{"getStatus":{}}' 192.168.100.1:9200 SpaceX.API.Device.De
 ### Debug Logging
 
 #### Enable Debug Mode
+
 ```c
 // In code
 starlink_tracker_set_log_level(tracker, TRACKER_LOG_DEBUG);
@@ -356,6 +381,7 @@ export STARLINK_TRACKER_LOG_LEVEL=debug
 ```
 
 #### Log Files
+
 - Daemon logs: `/var/log/autonomy.log`
 - Tracking logs: `/tmp/starlink_tracker.log`
 - Cache directory: `/tmp/starlink_tracker_cache/`
@@ -363,6 +389,7 @@ export STARLINK_TRACKER_LOG_LEVEL=debug
 ### Performance Monitoring
 
 #### Memory Usage
+
 ```bash
 # Check daemon memory usage
 ps aux | grep autonomy-daemon
@@ -371,7 +398,8 @@ ps aux | grep autonomy-daemon
 du -h /tmp/starlink_tracker_cache/
 ```
 
-#### API Usage
+#### Starlink Installation - API Usage
+
 ```bash
 # Monitor Space-Track API calls
 tail -f /var/log/autonomy.log | grep "Space-Track"
@@ -383,6 +411,7 @@ ubus call starlink_tracker status | grep -E "(total_requests|rate_limited)"
 ## Integration Examples
 
 ### Node-RED Integration
+
 ```javascript
 // Get predictions via UBUS
 const predictions = await ubus.call('starlink_tracker', 'predictions');
@@ -404,6 +433,7 @@ predictions.predictions.forEach(prediction => {
 ```
 
 ### Prometheus Metrics
+
 ```bash
 # Export metrics (example implementation)
 curl http://localhost:8080/metrics | grep starlink_
@@ -416,6 +446,7 @@ curl http://localhost:8080/metrics | grep starlink_
 ```
 
 ### Shell Script Integration
+
 ```bash
 #!/bin/bash
 
@@ -491,16 +522,19 @@ for (int i = 0; i < 4; i++) {
 ## Performance Optimization
 
 ### Memory Management
+
 - TLE cache is limited to 24 hours by default
 - Prediction cache uses ring buffers to limit memory usage
 - Satellite position calculations are done on-demand
 
 ### CPU Optimization
+
 - Orbital propagation is batched for efficiency
 - Obstruction analysis uses interpolation to reduce calculations
 - Background threads handle data updates
 
 ### Network Efficiency
+
 - TLE data is cached locally to minimize Space-Track API calls
 - Rate limiting prevents API quota exhaustion
 - gRPC calls to dish are minimized and cached
@@ -508,6 +542,7 @@ for (int i = 0; i < 4; i++) {
 ## Monitoring and Alerts
 
 ### Real-time Monitoring
+
 ```c
 // Set up outage callback
 void handle_outage(const outage_prediction_t *prediction, void *user_data) {
@@ -524,6 +559,7 @@ starlink_tracker_set_outage_callback(tracker, handle_outage, NULL);
 ```
 
 ### Accuracy Monitoring
+
 ```c
 // Monitor prediction accuracy
 const tracking_stats_t *stats = starlink_tracker_get_stats(tracker);
@@ -542,26 +578,31 @@ if (stats->accuracy_percentage < 70.0) {
 ## Best Practices
 
 ### 1. Gradual Deployment
+
 - Start with monitoring only (no automated actions)
 - Validate predictions manually for 1-2 weeks
 - Gradually enable automated responses
 
 ### 2. Threshold Tuning
+
 - Begin with default thresholds
 - Enable validation and auto-tuning
 - Monitor accuracy for at least 100 predictions before manual adjustments
 
 ### 3. Error Handling
+
 - Always check return codes from API functions
 - Implement graceful degradation when Space-Track is unavailable
 - Have fallback logic when dish communication fails
 
 ### 4. Security
+
 - Store Space-Track credentials securely (environment variables or encrypted config)
 - Limit network access to Space-Track API
 - Regularly rotate API credentials
 
 ### 5. Compliance
+
 - Respect Space-Track rate limits (<20 requests/minute)
 - Cache TLE data appropriately (24-hour cache recommended)
 - Follow Space-Track terms of service for data usage
@@ -569,6 +610,7 @@ if (stats->accuracy_percentage < 70.0) {
 ## Support and Maintenance
 
 ### Regular Maintenance
+
 ```bash
 # Check tracker health daily
 ubus call starlink_tracker status
@@ -581,6 +623,7 @@ ubus call starlink_tracker status | jsonfilter -e '@.accuracy_percentage'
 ```
 
 ### Log Monitoring
+
 ```bash
 # Monitor for errors
 tail -f /var/log/autonomy.log | grep -E "(ERROR|WARN)" | grep starlink
@@ -589,7 +632,8 @@ tail -f /var/log/autonomy.log | grep -E "(ERROR|WARN)" | grep starlink
 grep "Space-Track" /var/log/autonomy.log | tail -20
 ```
 
-### Performance Monitoring
+### Starlink Installation - Performance Monitoring
+
 ```bash
 # Check memory usage
 cat /proc/$(pgrep autonomy-daemon)/status | grep VmRSS

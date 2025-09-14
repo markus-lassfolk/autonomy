@@ -493,14 +493,13 @@ int http_request_add_header_kv(http_request_t* request, const char* name, const 
         return -1;
     }
     
-    // flawfinder: ignore - strlen with validated string parameters
     size_t header_size = strlen(name) + strlen(value) + 4; // name + ": " + value + null
     char* header = malloc(header_size);
     if (!header) {
         return -1;
     }
     
-    snprintf(header, header_size, "%s: %s", name, value); // CRITICAL FIX: Use snprintf to prevent buffer overflow
+    snprintf(header, header_size, "%s: %s", name, value);
     request->headers[request->header_count++] = header;
     
     return 0;

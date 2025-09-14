@@ -5,12 +5,14 @@ This directory contains a comprehensive Starlink gRPC client implementation that
 ## Features
 
 ### 🚀 **Comprehensive Flag Support**
+
 - **Output & Formatting**: `--raw`, `--pretty`, `--compact`, `--no-header`, `--silent`, `--hex`, `--summary`
 - **Network & Connection**: `--timeout`, `--retries`, `--user-agent`, `--insecure`
 - **Logging & Monitoring**: `--debug`, `--verbose`, `--log`, `--timestamp`, `--watch`
 - **Advanced Features**: `--batch`, `--compare`, `--diff`, `--export`
 
 ### 📡 **80+ API Endpoints**
+
 - Basic Status & Info: `get_status`, `get_device_info`, `get_location`, etc.
 - Dish Control & Config: `dish_get_config`, `dish_set_config`, `dish_stow`, etc.
 - WiFi Management: `wifi_get_clients`, `wifi_get_config`, `wifi_set_config`, etc.
@@ -18,18 +20,21 @@ This directory contains a comprehensive Starlink gRPC client implementation that
 - And many more!
 
 ### 🔧 **Flexible Endpoint Format**
+
 - Traditional: `192.168.100.1 9200 get_status`
 - Modern: `192.168.100.1:9200 get_status`
 
 ## Files
 
 ### Standalone Client
+
 - `starlink_grpc_standalone.c` - Original standalone client (legacy)
 - `starlink_grpc_standalone_v2.c` - New comprehensive standalone client
 - `Makefile` - Build system for original client
 - `Makefile.v2` - Build system for new client
 
 ### Daemon Integration
+
 - `../../src/c/autonomy-daemon/starlink/starlink_grpc_comprehensive_client.h` - Core client library
 - `../../src/c/autonomy-daemon/starlink/starlink_grpc_comprehensive_client.c` - Core client implementation
 - `../../src/c/autonomy-daemon/starlink/starlink_grpc_daemon_integration.h` - Daemon integration API
@@ -39,12 +44,14 @@ This directory contains a comprehensive Starlink gRPC client implementation that
 ## Building
 
 ### Standalone Client (v2)
+
 ```bash
 cd tools/starlink-standalone
 make -f Makefile.v2
 ```
 
 ### Daemon Integration
+
 ```bash
 cd src/c/autonomy-daemon
 make  # This will build the daemon with comprehensive client support
@@ -55,6 +62,7 @@ make  # This will build the daemon with comprehensive client support
 ### Standalone Client
 
 #### Basic Usage
+
 ```bash
 # Get device info
 ./starlink-grpc-client-v2 192.168.100.1:9200 get_device_info
@@ -67,6 +75,7 @@ make  # This will build the daemon with comprehensive client support
 ```
 
 #### Advanced Usage
+
 ```bash
 # Raw hex output
 ./starlink-grpc-client-v2 --raw 192.168.100.1:9200 get_status
@@ -88,6 +97,7 @@ make  # This will build the daemon with comprehensive client support
 ```
 
 #### Monitoring
+
 ```bash
 # Watch mode (poll every 10 seconds)
 ./starlink-grpc-client-v2 --watch 10 192.168.100.1:9200 get_status
@@ -96,6 +106,7 @@ make  # This will build the daemon with comprehensive client support
 ### Daemon Integration
 
 #### Basic Usage
+
 ```c
 #include "starlink_grpc_daemon_integration.h"
 
@@ -146,6 +157,7 @@ starlink_grpc_daemon_integration_cleanup();
 ```
 
 #### Advanced Usage
+
 ```c
 // Update configuration dynamically
 daemon_config.client_config.debug_mode = true;
@@ -165,6 +177,7 @@ printf("Host: %s:%d\n", config->client_config.host, config->client_config.port);
 ## Configuration Options
 
 ### Client Configuration
+
 ```c
 typedef struct {
     // Connection settings
@@ -199,6 +212,7 @@ typedef struct {
 ```
 
 ### Daemon Configuration
+
 ```c
 typedef struct {
     starlink_grpc_client_config_t client_config;  // Client configuration
@@ -234,26 +248,31 @@ The client supports multiple logging options:
 ## Examples
 
 ### Example 1: Basic Status Check
+
 ```bash
 ./starlink-grpc-client-v2 192.168.100.1:9200 get_status
 ```
 
 ### Example 2: Pretty-Printed Location
+
 ```bash
 ./starlink-grpc-client-v2 --pretty 192.168.100.1:9200 get_location
 ```
 
 ### Example 3: Debug Mode
+
 ```bash
 ./starlink-grpc-client-v2 --debug 192.168.100.1:9200 get_device_info
 ```
 
 ### Example 4: Monitoring
+
 ```bash
 ./starlink-grpc-client-v2 --watch 30 --timestamp 192.168.100.1:9200 get_status
 ```
 
 ### Example 5: Raw Data Analysis
+
 ```bash
 ./starlink-grpc-client-v2 --raw 192.168.100.1:9200 get_status | hexdump -C
 ```
@@ -280,6 +299,7 @@ The comprehensive client is designed to integrate seamlessly with the Autonomy d
 ### Debug Mode
 
 Use `--debug` flag to see detailed request/response information:
+
 ```bash
 ./starlink-grpc-client-v2 --debug 192.168.100.1:9200 get_status
 ```
@@ -287,6 +307,7 @@ Use `--debug` flag to see detailed request/response information:
 ### Log Files
 
 Check log files for persistent error information:
+
 ```bash
 ./starlink-grpc-client-v2 --log /tmp/starlink.log 192.168.100.1:9200 get_status
 tail -f /tmp/starlink.log
@@ -305,11 +326,3 @@ When adding new features:
 ## License
 
 This code is part of the Autonomy project and follows the same licensing terms.
-
-
-
-
-
-
-
-

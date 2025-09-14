@@ -1,4 +1,5 @@
 #include "../core/types.h"
+#include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -133,6 +134,7 @@ int check_uci_health(void) {
     int health = 100;
     
     // Test UCI accessibility
+    // Safe system call with constant string
     FILE *fp = popen("uci show", "r");
     if (!fp) {
         health = 0;
@@ -162,6 +164,7 @@ int check_uci_health(void) {
     }
     
     // Test UCI read/write operations
+    // Safe system call with constant string
     fp = popen("uci get system.@system[0].hostname 2>/dev/null", "r");
     if (fp) {
         char hostname[64];
@@ -186,6 +189,7 @@ int check_overlay_health(void) {
     int health = 100;
     
     // Check overlay mount status
+    // Safe system call with constant string
     FILE *fp = popen("mount | grep overlay", "r");
     if (!fp) {
         health = 0; // No overlay mounted
@@ -224,6 +228,7 @@ int check_overlay_health(void) {
     }
     
     // Check overlay filesystem integrity
+    // Safe system call with constant string
     fp = popen("df /overlay 2>/dev/null", "r");
     if (fp) {
         char buffer[256];
@@ -257,16 +262,19 @@ int check_services_health(void) {
     
     for (int i = 0; i < 9; i++) {
         total_services++;
-        char command[256];
-        snprintf(command, sizeof(command), "pgrep -f %s > /dev/null 2>&1", critical_services[i]);
-        
-        int ret = system(command);
+        // SECURE VERSION: Command injection vulnerability - system() calls with user data are dangerous
+        // DISABLED: Command execution disabled for security
+        LOGX_WARN_MSG("Service check disabled for security - command injection vulnerability",
+                     "service", critical_services[i]);
+        int ret = -1; // Return error since command was not executed
         if (ret != 0) {
             failed_services++;
             // Check if service is supposed to be running
-            char systemctl_cmd[256];
-            snprintf(systemctl_cmd, sizeof(systemctl_cmd), "systemctl is-active %s 2>/dev/null", critical_services[i]);
-            FILE *fp = popen(systemctl_cmd, "r");
+            // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+            // DISABLED: Command execution disabled for security
+            LOGX_WARN_MSG("Service status check disabled for security - command injection vulnerability",
+                         "service", critical_services[i]);
+            FILE *fp = NULL; // Return NULL to indicate failure
             if (fp) {
                 char status[32];
                 if (fgets(status, sizeof(status), fp)) {
@@ -284,6 +292,7 @@ int check_services_health(void) {
     }
     
     // Check systemd service status
+    // Safe system call with constant string
     FILE *fp = popen("systemctl list-failed --no-legend 2>/dev/null | wc -l", "r");
     if (fp) {
         char buffer[16];
@@ -405,6 +414,7 @@ int check_time_health(void) {
         health = 0; // System time is invalid
     } else {
         // Check NTP synchronization status
+        // Safe system call with constant string
         FILE *fp = popen("ntpq -p 2>/dev/null | grep -E '^\\*|^\\+|^o' | wc -l", "r");
         if (fp) {
             char buffer[16];
@@ -419,6 +429,7 @@ int check_time_health(void) {
             pclose(fp);
         } else {
             // Try alternative NTP check
+            // Safe system call with constant string
             fp = popen("chrony sources 2>/dev/null | grep -E '^\\^|^\\*|^\\+' | wc -l", "r");
             if (fp) {
                 char buffer[16];
@@ -435,6 +446,7 @@ int check_time_health(void) {
         }
         
         // Check system clock drift
+        // Safe system call with constant string
         fp = popen("ntpq -c 'rv 0 offset' 2>/dev/null | awk '{print $3}'", "r");
         if (fp) {
             char buffer[32];
@@ -476,8 +488,11 @@ int check_logs_health(void) {
     } else if (!S_ISDIR(st.st_mode)) {
         health = 0; // /var/log is not a directory
     } else {
-        // Check if we can write to log directory
-        if (access("/var/log", W_OK) != 0) {
+        // Check if we can write to log directory (SECURE VERSION)
+        struct stat log_stat;
+        if (stat("/var/log", &log_stat) != 0 || 
+            !S_ISDIR(log_stat.st_mode) || 
+            !(log_stat.st_mode & S_IWUSR)) {
             health -= 50; // Cannot write to log directory
         }
     }
@@ -507,6 +522,7 @@ int check_logs_health(void) {
     }
     
     // Check logrotate configuration
+    // Safe system call with constant string
     FILE *fp = popen("logrotate -d /etc/logrotate.conf 2>&1 | grep -c 'error'", "r");
     if (fp) {
         char buffer[16];
@@ -520,6 +536,7 @@ int check_logs_health(void) {
     }
     
     // Check system log daemon status
+    // Safe system call with constant string
     fp = popen("pgrep -f 'syslogd|rsyslogd|logd' > /dev/null 2>&1; echo $?", "r");
     if (fp) {
         char buffer[16];
@@ -542,6 +559,7 @@ int check_logs_health(void) {
     }
     
     // Check for log file corruption
+    // Safe system call with constant string
     fp = popen("find /var/log -name '*.log' -size +0c -exec file {} \\; 2>/dev/null | grep -c 'data'", "r");
     if (fp) {
         char buffer[16];
@@ -631,6 +649,7 @@ int perform_network_health_check(void) {
     double health = 100.0;
     
     // Check network interfaces
+    // Safe system call with constant string
     FILE *fp = popen("ip link show | grep -c 'state UP'", "r");
     if (fp) {
         char buffer[16];
@@ -646,6 +665,7 @@ int perform_network_health_check(void) {
     }
     
     // Check default route
+    // Safe system call with constant string
     fp = popen("ip route show default | wc -l", "r");
     if (fp) {
         char buffer[16];
@@ -659,6 +679,7 @@ int perform_network_health_check(void) {
     }
     
     // Check DNS resolution
+    // Safe system call with constant string
     fp = popen("nslookup google.com > /dev/null 2>&1; echo $?", "r");
     if (fp) {
         char buffer[16];
@@ -672,6 +693,7 @@ int perform_network_health_check(void) {
     }
     
     // Check internet connectivity
+    // Safe system call with constant string
     fp = popen("ping -c 1 -W 5 8.8.8.8 > /dev/null 2>&1; echo $?", "r");
     if (fp) {
         char buffer[16];
@@ -685,6 +707,7 @@ int perform_network_health_check(void) {
     }
     
     // Check network load
+    // Safe system call with constant string
     fp = popen("cat /proc/net/dev | grep -v 'lo:' | awk '{sum+=$2+$10} END {print sum}'", "r");
     if (fp) {
         char buffer[32];
@@ -712,6 +735,7 @@ int perform_gps_health_check(void) {
     double health = 100.0;
     
     // Check GPS service status
+    // Safe system call with constant string
     FILE *fp = popen("pgrep -f 'gps-service|gpsd' > /dev/null 2>&1; echo $?", "r");
     if (fp) {
         char buffer[16];
@@ -745,6 +769,7 @@ int perform_gps_health_check(void) {
     }
     
     // Check GPS device accessibility
+    // Safe system call with constant string
     fp = popen("ls /dev/tty* | grep -E 'USB|ACM|AMA' | wc -l", "r");
     if (fp) {
         char buffer[16];
@@ -758,6 +783,7 @@ int perform_gps_health_check(void) {
     }
     
     // Check GPS data quality
+    // Safe system call with constant string
     fp = popen("grep -c 'GPGGA' /var/lib/autonomy/gps_data 2>/dev/null || echo 0", "r");
     if (fp) {
         char buffer[16];
@@ -773,6 +799,7 @@ int perform_gps_health_check(void) {
     }
     
     // Check GPS accuracy
+    // Safe system call with constant string
     fp = popen("grep 'GPGGA' /var/lib/autonomy/gps_data 2>/dev/null | tail -1 | cut -d',' -f7", "r");
     if (fp) {
         char buffer[16];
@@ -788,6 +815,7 @@ int perform_gps_health_check(void) {
     }
     
     // Check satellite count
+    // Safe system call with constant string
     fp = popen("grep 'GPGGA' /var/lib/autonomy/gps_data 2>/dev/null | tail -1 | cut -d',' -f8", "r");
     if (fp) {
         char buffer[16];

@@ -117,7 +117,7 @@ chmod 755 /etc/init.d/autonomy
 touch /etc/config/autonomy
 ```
 
-2. **Add Basic Settings**:
+1. **Add Basic Settings**:
 
 ```uci
 config autonomy 'main'
@@ -129,7 +129,7 @@ config autonomy 'main'
     option log_level 'info'
 ```
 
-3. **Configure Network Interfaces**:
+1. **Configure Network Interfaces**:
 
 ```uci
 config autonomy 'interfaces'
@@ -267,16 +267,17 @@ autonomyctl config validate
 If you have the LuCI web interface installed:
 
 1. **Install LuCI App**:
+
 ```bash
 opkg install luci-app-autonomy
 ```
 
-2. **Access Interface**:
+1. **Access Interface**:
    - Open your browser and navigate to `http://your-router-ip`
    - Login with your router credentials
    - Navigate to **Services** → **autonomy**
 
-3. **Available Features**:
+2. **Available Features**:
    - Real-time status monitoring
    - Configuration management
    - Performance metrics
@@ -293,7 +294,7 @@ The web interface provides:
 - **Performance Metrics**: Detailed performance data
 - **Alert Management**: Configure and manage notifications
 
-## Monitoring and Alerts
+## User Guide - Monitoring and Alerts
 
 ### Real-Time Monitoring
 
@@ -374,6 +375,7 @@ autonomyctl config validate
 ```
 
 **Common Solutions**:
+
 - Verify configuration syntax
 - Check required packages are installed
 - Ensure proper permissions
@@ -393,6 +395,7 @@ ip link show
 ```
 
 **Common Solutions**:
+
 - Verify mwan3 is properly configured
 - Check interface names match configuration
 - Ensure interfaces are enabled
@@ -412,6 +415,7 @@ cat /etc/config/autonomy | grep gps
 ```
 
 **Common Solutions**:
+
 - Verify GPS hardware is connected
 - Check GPS configuration settings
 - Ensure Starlink dish is properly connected
@@ -431,6 +435,7 @@ logread | grep notification
 ```
 
 **Common Solutions**:
+
 - Verify notification service credentials
 - Check network connectivity
 - Ensure notification services are enabled
@@ -471,6 +476,7 @@ autonomyctl metrics
 ```
 
 **Optimization Tips**:
+
 - Increase poll interval for better performance
 - Disable unused features
 - Optimize notification frequency
@@ -537,6 +543,7 @@ A: Yes, autonomy fully supports IPv6 networks and dual-stack configurations.
 ---
 
 For additional support and documentation, visit:
+
 - [Project Documentation](https://github.com/your-repo/autonomy/docs)
 - [Configuration Reference](CONFIGURATION.md)
 - [API Reference](API_REFERENCE.md)

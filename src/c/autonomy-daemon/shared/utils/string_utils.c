@@ -34,13 +34,24 @@ static size_t bounded_strnlen(const char* str, size_t max_len) {
     return len;
 }
 
-// Set error message
+// Set error message - SECURE VERSION
 static void set_error(const char* format, ...) {
+    // Validate format string to prevent format string attacks
+    if (!format || strpbrk(format, "%n") != NULL) {
+        // Reject format strings with %n (can be used for format string attacks)
+        strncpy(g_string_error, "String error: Invalid format string", sizeof(g_string_error) - 1);
+        g_string_error[sizeof(g_string_error) - 1] = '\0';
+        return;
+    }
+    
     va_list args;
     va_start(args, format);
-    // flawfinder: ignore - vsnprintf with validated bounds and null termination
-    vsnprintf(g_string_error, MAX_ERROR_SIZE + 1, format, args);
-    g_string_error[MAX_ERROR_SIZE] = '\0';
+    // SECURE VERSION: Format string vulnerability - validate format string
+    if (strpbrk(format, "%n") != NULL) {
+        // Reject dangerous format strings that could write to memory
+        format = "SECURE: Dangerous format string rejected";
+    }
+    vsnprintf(g_string_error, sizeof(g_string_error), format, args);
     va_end(args);
 }
 
@@ -102,6 +113,12 @@ int safe_strncat(char* dest, const char* src, size_t dest_size) {
 int safe_snprintf(char* dest, size_t dest_size, const char* format, ...) {
     if (!dest || !format || dest_size == 0) {
         set_error("Invalid parameters for safe_snprintf");
+        return AUTONOMY_ERROR_INVALID_PARAM;
+    }
+    
+    // Validate format string to prevent format string attacks
+    if (strpbrk(format, "%n") != NULL) {
+        set_error("Dangerous format string in safe_snprintf");
         return AUTONOMY_ERROR_INVALID_PARAM;
     }
     

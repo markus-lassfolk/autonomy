@@ -13,6 +13,7 @@ This document outlines security best practices for the autonomy project and how 
 - Use placeholder values in examples and documentation
 
 **Example:**
+
 ```bash
 # ❌ WRONG - Hardcoded API key
 option google_api_key 'your-actual-api-key-here'
@@ -32,6 +33,7 @@ option google_api_key 'your-api-key-here'
 - Use placeholder paths in scripts
 
 **Example:**
+
 ```bash
 # ❌ WRONG - Hardcoded SSH key path
 $SSH_KEY = "C:\path\to\your\private\key"
@@ -49,6 +51,7 @@ $SSH_KEY = $env:SSH_KEY_PATH ?? "C:\path\to\your\ssh\key"
 - Use placeholder values in examples
 
 **Example:**
+
 ```bash
 # ❌ WRONG - Hardcoded password
 EMAIL_PASSWORD="your-actual-password"
@@ -68,6 +71,7 @@ EMAIL_PASSWORD="your-app-password"
 - Use configuration variables for network settings
 
 **Example:**
+
 ```bash
 # ❌ WRONG - Hardcoded internal IP
 RUTOS_HOST = "your-router-ip"

@@ -578,13 +578,13 @@ static int make_api_request(const char* url, const char* post_data, http_respons
     }
 
     if (response_code != 200) {
-        LOGX_ERROR_MSG("OpenCellID API returned error", "http_code", response_code, "url", url);
+        LOGX_ERROR_MSG("OpenCellID API returned error http_code=%ld, url=%s", response_code, url);
         free(response->data);
         response->data = NULL;
         return AUTONOMY_ERROR_EXTERNAL_API;
     }
 
-    LOGX_DEBUG_MSG("OpenCellID API request successful", "url", url, "response_size", response->size);
+    LOGX_DEBUG_MSG("OpenCellID API request successful url=%s, response_size=%zu", url, response->size);
     return AUTONOMY_SUCCESS;
 }
 
@@ -812,6 +812,7 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
     environment->scan_time = time(NULL);
 
     // Use RUTOS gsmctl to get cellular information
+    // Safe system call with constant string
     FILE* fp = popen("gsmctl -A 'AT+COPS=3,2;+COPS?;+CREG?;+CEREG?' 2>/dev/null", "r");
     if (!fp) {
         LOGX_ERROR_MSG("Failed to execute gsmctl for cellular environment");
@@ -859,6 +860,7 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
     environment->serving_cell.is_registered = true;
 
     // Get signal strength via gsmctl
+    // Safe system call with constant string
     fp = popen("gsmctl -S 2>/dev/null | grep 'Signal:' | awk '{print $2}'", "r");
     if (fp) {
         if (fgets(buffer, sizeof(buffer), fp)) {
@@ -876,6 +878,7 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
     environment->neighbor_count = 0;
     
     // Get neighbor cell information via AT commands
+    // Safe system call with constant string
     fp = popen("gsmctl -A 'AT+QNEIGHBORCELLS' 2>/dev/null", "r");
     if (fp) {
         char line[256];
@@ -919,6 +922,7 @@ static int collect_cellular_environment_from_system(opencellid_cellular_environm
     
     // Fallback: try to get neighbor cells from system
     if (environment->neighbor_count == 0) {
+        // Safe system call with constant string
         fp = popen("mmcli -m 0 --command='AT+QNEIGHBORCELLS' 2>/dev/null", "r");
         if (fp) {
             char line[256];

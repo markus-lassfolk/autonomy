@@ -109,7 +109,8 @@ uci commit autonomy
 ### 1. Access VuCI Interface
 
 Open your web browser and navigate to:
-```
+
+```text
 http://your-router/admin/network/autonomy/
 ```
 
@@ -125,7 +126,8 @@ http://your-router/admin/network/autonomy/
 ### 3. Mobile Access
 
 The web interface is fully responsive and works on mobile devices:
-```
+
+```text
 http://your-router/admin/network/autonomy/status
 ```
 
@@ -152,6 +154,7 @@ uci commit autonomy
 ### 2. Advanced Configuration
 
 Edit the configuration file directly:
+
 ```bash
 vi /etc/config/autonomy
 ```
@@ -380,6 +383,7 @@ opkg-make-index . > Packages
 ### 3. Configure Package Feed
 
 On the RUTOS device:
+
 ```bash
 # Add custom feed
 echo "src/gz autonomy-feed http://your-server/autonomy-feed" >> /etc/opkg/customfeeds.conf

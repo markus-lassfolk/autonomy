@@ -1,17 +1,29 @@
 # MASTER GUIDE — Building RutOS (Teltonika) Packages & VuCI Apps (RUTX 7.17.1)
 
-This guide consolidates our internal notes, quick sheets, and integration write-ups into a single, end-to-end reference for **building RutOS-compliant packages**, registering **UBUS/RPCD** APIs, and shipping **VuCI** web apps that appear and function correctly in the **Package Manager** and **WebUI**.
+This guide consolidates our internal notes, quick sheets, and integration write-ups into a
+single, end-to-end reference for **building RutOS-compliant packages**, registering
+**UBUS/RPCD** APIs, and shipping **VuCI** web apps that appear and function correctly in the
+**Package Manager** and **WebUI**.
 
-> Scope: RUTX family on RutOS **00.07.17.1**; adapt variables for other device lines (RUT9/TRBx) and versions.  
+> Scope: RUTX family on RutOS **00.07.17.1**; adapt variables for other device lines
+> (RUT9/TRBx) and versions.  
 > Audience: developers building packages and VuCI apps for production.
 
 ---
 
 ## 0) What's different on RutOS vs "vanilla" OpenWrt
 
-- **IPK format is strict**: A valid IPK is an **ar** archive with `debian-binary`, `control.tar.gz`, `data.tar.gz` — and **must be gzip-compressed** for `opkg` to accept it (when crafting manually).  
-- **Install prefix reality**: Third-party/user packages end up under the **`/usr/local` overlay** at runtime (e.g., menus → `/usr/local/usr/share/vuci/menu.d`, APIs → `/usr/local/usr/lib/lua/api/services`). The SDK/Makefile installs to `/usr/...` paths, which get remapped via overlay. Plan your paths accordingly.  
-- **WebUI technology**: RutOS uses **VuCI** (Vue-based, LuCI-like). UI is shipped as **compiled, gzipped JS bundles** under `/www/assets/` with the naming `app.<name>.app-<version|hash>.js.gz`. Views must match menu `view` paths exactly (case-sensitive).  
+- **IPK format is strict**: A valid IPK is an **ar** archive with `debian-binary`,
+  `control.tar.gz`, `data.tar.gz` — and **must be gzip-compressed** for `opkg` to accept it
+  (when crafting manually).  
+- **Install prefix reality**: Third-party/user packages end up under the **`/usr/local` overlay**
+  at runtime (e.g., menus → `/usr/local/usr/share/vuci/menu.d`, APIs →
+  `/usr/local/usr/lib/lua/api/services`). The SDK/Makefile installs to `/usr/...` paths, which
+  get remapped via overlay. Plan your paths accordingly.  
+- **WebUI technology**: RutOS uses **VuCI** (Vue-based, LuCI-like). UI is shipped as
+  **compiled, gzipped JS bundles** under `/www/assets/` with the naming
+  `app.<name>.app-<version|hash>.js.gz`. Views must match menu `view` paths exactly
+  (case-sensitive).  
 
 ---
 
@@ -20,6 +32,7 @@ This guide consolidates our internal notes, quick sheets, and integration write-
 The SDK flow below mirrors our **Developer QuickSheet**; use WSL or native Linux.  
 
 ### 1.1 Host prerequisites (Ubuntu/WSL) — **[Host]**
+
 ```bash
 sudo apt-get update -y
 sudo apt-get install -y \
@@ -63,7 +76,7 @@ echo "Toolchain: $TARGET_CC"
 
 ### 2.1 Directory layout — **[Host]**
 
-```
+```text
 package/feeds/autonomy/
 ├── autonomy/                    # Main package
 │   ├── Makefile
@@ -175,7 +188,7 @@ $(eval $(call BuildPackage,autonomy))
 
 ### 3.2 View structure — **[Host]**
 
-```
+```text
 src/web/autonomy-ui/
 ├── views/
 │   ├── overview.html
@@ -444,6 +457,7 @@ ls -la /usr/local/usr/share/vuci/menu.d/
 ## 9) Quick Reference
 
 ### Build Commands
+
 ```bash
 # Build all autonomy packages
 make package/feeds/autonomy/autonomy/compile V=s
@@ -456,6 +470,7 @@ make package/feeds/autonomy/autonomy/clean
 ```
 
 ### Installation Commands
+
 ```bash
 # Install package
 opkg install autonomy_1.0.0-1_arm_cortex-a7_neon-vfpv4.ipk
@@ -468,6 +483,7 @@ opkg list-installed | grep autonomy
 ```
 
 ### Service Commands
+
 ```bash
 # Start service
 /etc/init.d/autonomy start
@@ -483,6 +499,7 @@ opkg list-installed | grep autonomy
 ```
 
 ### UBUS Commands
+
 ```bash
 # List methods
 ubus list | grep autonomy

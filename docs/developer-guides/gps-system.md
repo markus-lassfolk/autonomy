@@ -2,9 +2,13 @@
 
 ## 📖 **Overview**
 
-The autonomy daemon features a comprehensive GPS system that provides robust location services for failover decision-making, WiFi optimization, and location-aware features. The system integrates multiple GPS sources with intelligent fallback, cellular geolocation via OpenCellID, and movement detection for enhanced performance.
+The autonomy daemon features a comprehensive GPS system that provides robust location
+services for failover decision-making, WiFi optimization, and location-aware features. The
+system integrates multiple GPS sources with intelligent fallback, cellular geolocation via
+OpenCellID, and movement detection for enhanced performance.
 
-**Status**: ✅ **PRODUCTION READY** - Comprehensive multi-source GPS with OpenCellID cellular geolocation integration
+**Status**: ✅ **PRODUCTION READY** - Comprehensive multi-source GPS with OpenCellID
+cellular geolocation integration
 
 ---
 
@@ -35,22 +39,23 @@ The system uses a **Comprehensive GPS Collector** that intelligently manages mul
    - Requires API key configuration
    - Additional fallback for urban areas
 
-
 ---
 
 ## 🔧 **OpenCellID Advanced Features**
 
-### **Production-Grade Rate Limiting**
+### **OpenCellID Production-Grade Rate Limiting**
 
 Our OpenCellID integration implements **industry-leading rate limiting** that exceeds standard implementations:
 
 #### **Hybrid Rate Limiting Strategy**
+
 - **Ratio-based limiting**: Configurable 8:1 lookup-to-submission ratio (safety margin vs 10:1 limit)
 - **Hard ceilings**: Prevents burst violations with hourly/daily limits
 - **Minimum trickle**: Ensures continuous contribution flow when moving
 - **Persistent state**: Survives device reboots and maintains compliance
 
 #### **Rate Limiting Configuration**
+
 ```go
 // Enhanced rate limiter with ratio + hard ceilings
 type EnhancedRateLimiter struct {
@@ -63,6 +68,7 @@ type EnhancedRateLimiter struct {
 ```
 
 #### **Advanced Features**
+
 - **Jittered negative cache**: 10-14 hour TTL range prevents synchronized queries
 - **Submission deduplication**: 75m grid quantization with 1-hour time windows
 - **Stationary caps**: Prevents over-contribution from single locations
@@ -71,6 +77,7 @@ type EnhancedRateLimiter struct {
 - **Bias-free neighbor selection**: Top-N + random selection for better coverage
 
 #### **Comprehensive Metrics**
+
 ```go
 type OpenCellIDMetricsCollector struct {
     // Rate limiting compliance
@@ -124,7 +131,7 @@ Our implementation provides **100% OpenCellID policy compliance**:
 
 ### **Intelligent Source Prioritization**
 
-```
+```text
 Priority Order:
 1. RUTOS GPS (if accuracy ≤ 50m and age < 30s)
 2. Starlink GPS (if accuracy ≤ 100m and age < 60s)
@@ -140,6 +147,7 @@ Priority Order:
 ### **🚀 Quick Start**
 
 Enable GPS with default settings:
+
 ```bash
 uci set autonomy.gps.enabled='1'
 uci set autonomy.gps.source_priority='rutos,starlink,opencellid,google'
@@ -161,7 +169,7 @@ uci commit autonomy
 | `gps_retry_attempts` | `3` | Number of retry attempts for GPS collection |
 | `gps_retry_delay_s` | `5` | Delay between retry attempts |
 
-#### **Movement Detection**
+#### **Movement Detection Configuration**
 
 | Option | Default | Description |
 |--------|---------|-------------|
@@ -219,6 +227,7 @@ uci commit autonomy
 ### **🎛️ Environment-Specific Presets**
 
 #### **Mobile/RV Configuration**
+
 ```bash
 # Optimized for mobile environments
 uci set autonomy.gps.gps_movement_threshold_m='200.0'
@@ -229,6 +238,7 @@ uci set autonomy.gps.opencellid_movement_threshold_m='150'
 ```
 
 #### **Fixed/Stationary Configuration**
+
 ```bash
 # Optimized for fixed installations
 uci set autonomy.gps.gps_movement_threshold_m='1000.0'
@@ -237,6 +247,7 @@ uci set autonomy.gps.opencellid_contribute_data='0'
 ```
 
 #### **Urban/Dense Environment**
+
 ```bash
 # Enhanced for urban areas with cellular fallback
 uci set autonomy.gps.gps_google_api_enabled='1'
@@ -253,18 +264,21 @@ uci set autonomy.gps.gps_source_priority='rutos,opencellid,google,starlink'
 OpenCellID provides cellular geolocation services and requires an API key for access.
 
 #### **1. Create OpenCellID Account**
-1. Visit: https://opencellid.org/
+
+1. Visit: <https://opencellid.org/>
 2. Click "Register" to create a free account
 3. Verify your email address
 4. Log in to your account
 
 #### **2. Generate API Key**
+
 1. Go to your account dashboard
 2. Navigate to "API" section
 3. Click "Generate New API Key"
 4. Copy the generated key (format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
 
 #### **3. Configure API Key**
+
 ```bash
 # Store API key securely
 echo "your-opencellid-api-key-here" > /etc/autonomy/opencellid.key
@@ -276,6 +290,7 @@ uci commit autonomy
 ```
 
 #### **4. API Usage Guidelines**
+
 - **Free Tier**: 1,000 lookups/day
 - **Contribution Requirement**: Must maintain 10:1 lookup:submission ratio
 - **Rate Limits**: Respect API quotas to avoid blocking
@@ -286,17 +301,20 @@ uci commit autonomy
 Google Location API provides WiFi and cellular-based location services.
 
 #### **1. Create Google Cloud Project**
-1. Visit: https://console.cloud.google.com/
+
+1. Visit: <https://console.cloud.google.com/>
 2. Create a new project or select existing
 3. Enable billing for the project
 
 #### **2. Enable APIs**
+
 1. Navigate to "APIs & Services" > "Library"
 2. Search for and enable:
    - **Geolocation API**
    - **Maps JavaScript API** (if using web features)
 
 #### **3. Create API Key**
+
 1. Go to "APIs & Services" > "Credentials"
 2. Click "Create Credentials" > "API Key"
 3. Copy the generated key
@@ -305,6 +323,7 @@ Google Location API provides WiFi and cellular-based location services.
    - API restrictions: Geolocation API only
 
 #### **4. Configure API Key**
+
 ```bash
 # Store API key securely
 echo "your-google-api-key-here" > /etc/autonomy/google.key
@@ -318,6 +337,7 @@ uci commit autonomy
 ```
 
 #### **5. Pricing Information**
+
 - **Free Tier**: $200 credit/month (≈28,000 requests)
 - **Cost**: $5 per 1,000 requests after free tier
 - **Optimization**: Use as fallback only to minimize costs
@@ -336,16 +356,18 @@ The OpenCellID system provides cellular tower-based geolocation when satellite G
 4. **Location Fusion**: Triangulates position using weighted centroid algorithm
 5. **Data Contribution**: Submits high-quality measurements back to OpenCellID
 
-### **Advanced Features**
+### **OpenCellID Advanced Features**
 
 #### **Intelligent Caching**
+
 - **25MB local cache** with LRU eviction
 - **Negative caching** (12h TTL) for unknown cells
 - **Compression** for efficient storage
 - **Persistence** across reboots
 
 #### **Location Fusion Algorithm**
-```
+
+```text
 Weighted Centroid Calculation:
 w_i = (RSRP_linear_i) / distance_i²
 
@@ -355,13 +377,16 @@ Accuracy Estimate = max(2 × min(distance), spread_sigma)
 ```
 
 #### **Smart Contribution System**
+
 Automatically contributes data when:
+
 - **New cell observed** (not in local cache)
 - **Moved ≥250m** from last submission for same cell  
 - **RSRP changed >6dB** (significant RF environment change)
 - **GPS accuracy ≤20m** (high-quality measurement)
 
-#### **Production-Grade Rate Limiting**
+#### **General Production-Grade Rate Limiting**
+
 - **Hybrid strategy**: Ratio + hard ceilings + trickle submissions
 - **8:1 safety margin** vs OpenCellID's 10:1 requirement
 - **Persistent state** across reboots
@@ -473,23 +498,26 @@ logread | grep "opencellid.*cache" | tail -10
 
 ---
 
-## 🚀 **Advanced Features**
+## 🚀 **GPS System Advanced Features**
 
-### **Movement Detection**
+### **Advanced Movement Detection Features**
 
 The GPS system provides sophisticated movement detection for various features:
 
 #### **Failover Integration**
+
 - **Obstruction Reset**: Movement >500m resets Starlink obstruction maps
 - **Location Clustering**: Identifies problematic areas for failover decisions
 - **Threshold Adjustments**: Dynamic failover thresholds based on location
 
 #### **WiFi Optimization**
+
 - **Channel Optimization**: Movement >100m triggers WiFi channel analysis
 - **Location Logging**: GPS coordinates logged with WiFi optimizations
 - **Stationary Detection**: 30-minute stationary time before optimization
 
 #### **Movement Callbacks**
+
 ```go
 // Example: Register movement callback
 gpsCollector.RegisterMovementCallback(func(oldLoc, newLoc *Location, distance float64) {
@@ -546,7 +574,7 @@ type LocationConfidence struct {
 
 ### **System Architecture**
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                Comprehensive GPS Collector              │
 ├─────────────────────────────────────────────────────────┤
@@ -568,7 +596,7 @@ type LocationConfidence struct {
 
 ### **File Structure**
 
-```
+```text
 pkg/gps/
 ├── comprehensive_collector.go      # Main GPS collector
 ├── rutos_source.go                # RUTOS GPS integration
@@ -588,7 +616,7 @@ pkg/gps/
 ### **Configuration Files**
 
 - **Main Config**: `/etc/config/autonomy` (UCI format)
-- **API Keys**: 
+- **API Keys**:
   - `/etc/autonomy/opencellid.key` (OpenCellID API key)
   - `/etc/autonomy/google.key` (Google API key)
 - **Cache Storage**: `/overlay/autonomy/opencellid_cache.db` (bbolt database)
@@ -645,6 +673,7 @@ ubus call autonomy gps_status | jq '.sources.opencellid'
 ### **Common Issues**
 
 #### **GPS Not Working**
+
 ```bash
 # Check GPS status
 ubus call autonomy gps_status
@@ -657,6 +686,7 @@ logread | grep -i gps | tail -20
 ```
 
 #### **OpenCellID Issues**
+
 ```bash
 # Verify API key
 test -f /etc/autonomy/opencellid.key && echo "API key file exists"
@@ -669,6 +699,7 @@ logread | grep cellular | tail -10
 ```
 
 #### **Poor Location Accuracy**
+
 ```bash
 # Check source priorities
 uci get autonomy.gps.gps_source_priority
@@ -683,6 +714,7 @@ logread | grep "GPS.*source" | tail -10
 ### **Performance Optimization**
 
 #### **Reduce API Usage**
+
 ```bash
 # Increase cache size
 uci set autonomy.gps.opencellid_cache_size_mb='50'
@@ -695,6 +727,7 @@ uci set autonomy.gps.opencellid_contribution_interval_minutes='15'
 ```
 
 #### **Improve Accuracy**
+
 ```bash
 # Tighten accuracy requirements
 uci set autonomy.gps.gps_accuracy_threshold_m='25.0'
@@ -738,9 +771,9 @@ logread | grep gps | tail -20
 
 ### **Important URLs**
 
-- **OpenCellID**: https://opencellid.org/
-- **Google Cloud Console**: https://console.cloud.google.com/
-- **Geolocation API Docs**: https://developers.google.com/maps/documentation/geolocation
+- **OpenCellID**: <https://opencellid.org/>
+- **Google Cloud Console**: <https://console.cloud.google.com/>
+- **Geolocation API Docs**: <https://developers.google.com/maps/documentation/geolocation>
 
 ---
 

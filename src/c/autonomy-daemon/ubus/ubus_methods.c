@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include "../core/types.h"
+#include "../shared/logging/logx.h"
+#include "../shared/utils/advanced_debug.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <time.h>
@@ -9,21 +11,55 @@
 extern autonomy_state_t g_state;
 extern autonomy_config_t g_config;
 
+// Forward declarations for RUTOS UBUS integration
+static int call_rutos_ubus_method(const char *service, const char *method, struct blob_attr *msg, struct ubus_context *uctx, struct ubus_request_data *req);
+
 // Core method handlers - these are the main autonomy daemon control methods
 int autonomy_status(struct ubus_context *uctx, struct ubus_object *obj,
                     struct ubus_request_data *req, const char *method,
                     struct blob_attr *msg)
 {
+    // AGGRESSIVE DEBUGGING - Force immediate output
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: autonomy_status UBUS method called - entering ===\n");
+    fflush(stderr);
+    
+    LOGX_DEBUG_MSG("autonomy_status UBUS method called - entering");
+    
+    // Add defensive programming for advanced debug
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: About to call ADVANCED_DEBUG_ENTER() ===\n");
+    fflush(stderr);
+    
+    ADVANCED_DEBUG_ENTER();
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: About to call ADVANCED_DEBUG_UBUS_CALL() ===\n");
+    fflush(stderr);
+    
+    ADVANCED_DEBUG_UBUS_CALL("autonomy_status");
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: autonomy_status UBUS method called - after advanced debug ===\n");
+    fflush(stderr);
+    
+    LOGX_DEBUG_MSG("autonomy_status UBUS method called - after advanced debug");
+    
+    // Validate parameters
+    if (!uctx || !obj || !req) {
+        LOGX_ERROR_MSG("autonomy_status: Invalid parameters (uctx=%p, obj=%p, req=%p)", uctx, obj, req);
+        ADVANCED_DEBUG_EXIT();
+        return -1;
+    }
+    
     struct blob_buf bb = {0};
 
     blob_buf_init(&bb, 0);
     blobmsg_add_string(&bb, "state", "running");
     blobmsg_add_u32(&bb, "uptime", (uint32_t)time(NULL));
-    blobmsg_add_string(&bb, "version", "5.8.4-252");
+    blobmsg_add_string(&bb, "version", "5.8.4-311");
     blobmsg_add_string(&bb, "note", "autonomy daemon is running");
     
     ubus_send_reply(uctx, req, bb.head);
     blob_buf_free(&bb);
+    
+    ADVANCED_DEBUG_EXIT();
     return 0;
 }
 
@@ -31,12 +67,19 @@ int autonomy_health(struct ubus_context *uctx, struct ubus_object *obj,
                     struct ubus_request_data *req, const char *method,
                     struct blob_attr *msg)
 {
+    LOGX_DEBUG_MSG("autonomy_health UBUS method called - entering");
+    
+    // Add defensive programming for advanced debug
+    ADVANCED_DEBUG_ENTER();
+    ADVANCED_DEBUG_UBUS_CALL("autonomy_health");
+    
+    LOGX_DEBUG_MSG("autonomy_health UBUS method called - after advanced debug");
     struct blob_buf bb = {0};
 
     blob_buf_init(&bb, 0);
     blobmsg_add_string(&bb, "status", "healthy");
     blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
-    blobmsg_add_string(&bb, "version", "5.8.4-252");
+    blobmsg_add_string(&bb, "version", "5.8.4-311");
     
     ubus_send_reply(uctx, req, bb.head);
     blob_buf_free(&bb);
@@ -129,6 +172,7 @@ int autonomy_log_status(struct ubus_context *uctx, struct ubus_object *obj,
                         struct ubus_request_data *req, const char *method,
                         struct blob_attr *msg)
 {
+    LOGX_DEBUG_MSG("autonomy_log_status UBUS method called");
     struct blob_buf bb = {0};
     const char *log_level_str = "info";
     
@@ -144,7 +188,7 @@ int autonomy_log_status(struct ubus_context *uctx, struct ubus_object *obj,
     blob_buf_init(&bb, 0);
     blobmsg_add_string(&bb, "log_level", log_level_str);
     blobmsg_add_string(&bb, "log_destination", "syslog");
-    blobmsg_add_string(&bb, "log_file", g_config.log_file);
+    blobmsg_add_string(&bb, "log_file", g_config.log_file ? g_config.log_file : "not_set");
     blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
     
     ubus_send_reply(uctx, req, bb.head);
@@ -156,14 +200,15 @@ int autonomy_config_status(struct ubus_context *uctx, struct ubus_object *obj,
                            struct ubus_request_data *req, const char *method,
                            struct blob_attr *msg)
 {
+    LOGX_DEBUG_MSG("autonomy_config_status UBUS method called");
     struct blob_buf bb = {0};
 
     blob_buf_init(&bb, 0);
-    blobmsg_add_string(&bb, "config_file", g_config.config_file);
+    blobmsg_add_string(&bb, "config_file", g_config.config_file ? g_config.config_file : "not_set");
     blobmsg_add_u8(&bb, "daemon_mode", g_config.daemon_mode);
     blobmsg_add_u8(&bb, "debug_mode", g_config.debug_mode);
     blobmsg_add_u32(&bb, "log_level", g_config.log_level);
-    blobmsg_add_string(&bb, "log_file", g_config.log_file);
+    blobmsg_add_string(&bb, "log_file", g_config.log_file ? g_config.log_file : "not_set");
     blobmsg_add_u32(&bb, "pid_file_timeout", g_config.pid_file_timeout);
     
     // Network settings
@@ -183,7 +228,7 @@ int autonomy_config_status(struct ubus_context *uctx, struct ubus_object *obj,
     // Starlink settings
     blobmsg_add_u32(&bb, "starlink_check_interval", g_config.starlink_check_interval);
     blobmsg_add_u8(&bb, "starlink_health_monitoring", g_config.starlink_health_monitoring);
-    blobmsg_add_string(&bb, "starlink_host", g_config.starlink_host);
+    blobmsg_add_string(&bb, "starlink_host", g_config.starlink_host ? g_config.starlink_host : "not_set");
     blobmsg_add_u32(&bb, "starlink_port", g_config.starlink_port);
     blobmsg_add_u32(&bb, "starlink_timeout", g_config.starlink_timeout);
     
@@ -195,10 +240,10 @@ int autonomy_config_status(struct ubus_context *uctx, struct ubus_object *obj,
     
     // Notifications
     blobmsg_add_u8(&bb, "notifications_enabled", g_config.notifications_enabled);
-    blobmsg_add_string(&bb, "email_from", g_config.email_from);
-    blobmsg_add_string(&bb, "email_to", g_config.email_to);
-    blobmsg_add_string(&bb, "email_smtp", g_config.email_smtp);
-    blobmsg_add_string(&bb, "webhook_url", g_config.webhook_url);
+    blobmsg_add_string(&bb, "email_from", g_config.email_from ? g_config.email_from : "not_set");
+    blobmsg_add_string(&bb, "email_to", g_config.email_to ? g_config.email_to : "not_set");
+    blobmsg_add_string(&bb, "email_smtp", g_config.email_smtp ? g_config.email_smtp : "not_set");
+    blobmsg_add_string(&bb, "webhook_url", g_config.webhook_url ? g_config.webhook_url : "not_set");
     
     // Snow detection
     blobmsg_add_u8(&bb, "snow_detection_enabled", g_config.snow_detection_enabled);
@@ -208,7 +253,7 @@ int autonomy_config_status(struct ubus_context *uctx, struct ubus_object *obj,
     blobmsg_add_double(&bb, "snow_temperature_threshold", g_config.snow_temperature_threshold);
     blobmsg_add_u32(&bb, "snow_verification_time", g_config.snow_verification_time);
     blobmsg_add_u32(&bb, "snow_melt_timeout", g_config.snow_melt_timeout);
-    blobmsg_add_string(&bb, "snow_weather_api_key", g_config.snow_weather_api_key);
+    blobmsg_add_string(&bb, "snow_weather_api_key", g_config.snow_weather_api_key ? g_config.snow_weather_api_key : "not_set");
     
     blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
     
@@ -216,3 +261,34 @@ int autonomy_config_status(struct ubus_context *uctx, struct ubus_object *obj,
     blob_buf_free(&bb);
     return 0;
 }
+
+// Helper function to call RUTOS UBUS methods
+static int call_rutos_ubus_method(const char *service, const char *method, struct blob_attr *msg, struct ubus_context *uctx, struct ubus_request_data *req) {
+    struct ubus_request_data req_data;
+    uint32_t id;
+    int ret;
+    
+    ret = ubus_lookup_id(uctx, service, &id);
+    if (ret) {
+        LOGX_ERROR_MSG("Failed to lookup service '%s': %s", service, ubus_strerror(ret));
+        return ret;
+    }
+    
+    ret = ubus_invoke(uctx, id, method, msg, NULL, &req_data, 1000);
+    if (ret) {
+        LOGX_ERROR_MSG("Failed to invoke '%s.%s': %s", service, method, ubus_strerror(ret));
+        return ret;
+    }
+    
+    return 0;
+}
+
+// Additional UBUS method implementations that delegate to RUTOS services
+
+// Network methods are implemented in network/network_ubus.c - no duplicates needed
+
+// GPS methods are implemented in gps/gps_ubus.c - no duplicates needed
+
+// System methods are implemented in utils/system_ubus.c - no duplicates needed
+
+// Starlink methods are implemented in starlink/starlink_ubus.c and starlink/starlink_cluster_ubus.c - no duplicates needed

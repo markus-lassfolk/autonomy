@@ -203,7 +203,7 @@ static int get_real_elevation(double lat, double lon, double* elevation) {
         return AUTONOMY_SUCCESS;
     }
     
-    LOGX_ERROR_MSG("All elevation data sources failed for coordinates", "lat", lat, "lon", lon);
+    LOGX_ERROR_MSG("All elevation data sources failed for coordinates lat=%.6f, lon=%.6f", lat, lon);
     return AUTONOMY_ERROR_NOT_FOUND;
 }
 
@@ -574,7 +574,7 @@ void analyze_vegetation_and_soil(double lat, double lon, gps_terrain_info_t *ter
     terrain_info->soil_type = 0;
     terrain_info->water_bodies = 0;
     
-    LOGX_DEBUG_MSG("Starting real vegetation and soil analysis", "lat", lat, "lon", lon);
+    LOGX_DEBUG_MSG("Starting real vegetation and soil analysis for lat=%.6f, lon=%.6f", lat, lon);
     
     // Set default values for vegetation and soil analysis
     terrain_info->vegetation_density = 0.5; // Default moderate vegetation

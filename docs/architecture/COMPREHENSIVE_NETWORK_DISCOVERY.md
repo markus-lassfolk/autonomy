@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document describes the comprehensive network discovery system implemented for the autonomy daemon. The system provides detailed interface identification, MWAN3 integration, and enhanced failover capabilities.
+This document describes the comprehensive network discovery system implemented for the
+autonomy daemon. The system provides detailed interface identification, MWAN3
+integration, and enhanced failover capabilities.
 
 ## Features
 
@@ -29,18 +31,21 @@ The system now properly integrates with MWAN3 for failover management:
 Each interface now provides detailed information:
 
 #### Basic Information
+
 - Device name (eth0, wlan0-1, etc.)
 - Friendly name as seen in RUTOS UI
 - Interface type (ethernet, wifi, cellular, starlink, vpn)
 - Subtype (sim, wireguard, etc.)
 
 #### Network Configuration
+
 - IP address, gateway, DNS servers
 - Protocol (static, dhcp, wwan, etc.)
 - Physical device information
 - Route metrics
 
 #### MWAN3 Information
+
 - MWAN3 interface name
 - Tracking status (enabled/disabled)
 - Availability in MWAN3
@@ -48,6 +53,7 @@ Each interface now provides detailed information:
 - MWAN3 metric values
 
 #### Specialized Information
+
 - **Cellular**: Modem model, SIM ID, operator, signal strength
 - **WiFi**: SSID, band (2.4G/5G), mode (ap/sta), encryption
 - **Starlink**: Dish ID, dish name, Starlink IP
@@ -125,6 +131,7 @@ The enhanced failover logic now includes:
 ### Failover Criteria
 
 An interface is included in failover if:
+
 - It's enabled for failover
 - It's tracked by MWAN3 (`mwan3_tracking_enabled: true`)
 - It's available in MWAN3 (`mwan3_available: true`)

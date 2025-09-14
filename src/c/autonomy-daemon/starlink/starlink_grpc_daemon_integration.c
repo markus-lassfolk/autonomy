@@ -23,29 +23,29 @@ static int parse_json_to_observation_partial(const char *json_data, const char *
 
 // Initialize daemon integration
 int starlink_grpc_daemon_integration_init(const starlink_grpc_daemon_config_t *config) {
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init called\n");
+    LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init called");
     if (!config) {
         LOGX_ERROR_MSG("Invalid configuration provided to daemon integration");
-        fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init failed - NULL config\n");
+        LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init failed - NULL config");
         return -1;
     }
     
     // Copy configuration
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - copying config\n");
-    g_starlink_grpc_daemon_config = *config;
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - config copied\n");
+    LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init - copying config");
+    memcpy(&g_starlink_grpc_daemon_config, config, sizeof(starlink_grpc_daemon_config_t));
+    LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init - config copied");
     
     // Initialize the comprehensive client
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - about to initialize comprehensive client\n");
+    LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init - about to initialize comprehensive client");
     if (starlink_grpc_comprehensive_client_init(&g_starlink_grpc_daemon_config.client_config) != 0) {
         LOGX_ERROR_MSG("Failed to initialize comprehensive gRPC client");
-        fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init failed - comprehensive client init failed\n");
+        LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init failed - comprehensive client init failed");
         return -1;
     }
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - comprehensive client initialized\n");
+    LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init - comprehensive client initialized");
     
     LOGX_INFO_MSG("Starlink gRPC daemon integration initialized");
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init completed successfully\n");
+    LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init completed successfully");
     return 0;
 }
 
@@ -74,16 +74,27 @@ int starlink_grpc_daemon_get_observation(starlink_observation_t *observation) {
     const int num_calls = sizeof(api_calls) / sizeof(api_calls[0]);
     
     for (int i = 0; i < num_calls; i++) {
+        LOGX_DEBUG_MSG("Processing Starlink API call %d/%d: %s", i+1, num_calls, api_calls[i]);
+        
         starlink_grpc_response_t response;
+        memset(&response, 0, sizeof(response)); // Initialize response structure
+        
         int retries = 0;
         int max_retries = g_starlink_grpc_daemon_config.max_retries;
         bool call_success = false;
         
+        LOGX_DEBUG_MSG("Starting retry loop for %s (max_retries=%d)", api_calls[i], max_retries);
+        
         while (retries <= max_retries && !call_success) {
             total_calls++;
+            LOGX_DEBUG_MSG("Attempt %d/%d for API call %s", retries+1, max_retries+1, api_calls[i]);
             
-            // Make the gRPC call
-            if (starlink_grpc_comprehensive_call(api_calls[i], NULL, 0, &response) == 0) {
+            // Make the gRPC call with error handling
+            LOGX_DEBUG_MSG("Calling starlink_grpc_comprehensive_call for %s...", api_calls[i]);
+            int call_result = starlink_grpc_comprehensive_call(api_calls[i], NULL, 0, &response);
+            LOGX_DEBUG_MSG("starlink_grpc_comprehensive_call returned %d for %s", call_result, api_calls[i]);
+            
+            if (call_result == 0) {
                 if (response.success && response.response_data) {
                     // Parse response and merge into observation
                     if (parse_json_to_observation_partial(response.response_data, api_calls[i], observation) == 0) {
@@ -96,12 +107,20 @@ int starlink_grpc_daemon_get_observation(starlink_observation_t *observation) {
             
             if (!call_success) {
                 retries++;
+                LOGX_WARN_MSG("gRPC call %s failed (call_result=%d, success=%s, response_data=%s), retrying (%d/%d)", 
+                             api_calls[i], call_result, 
+                             response.success ? "true" : "false",
+                             response.response_data ? "present" : "NULL",
+                             retries, max_retries);
+                
                 if (retries <= max_retries) {
-                    LOGX_WARN_MSG("gRPC call %s failed, retrying (%d/%d)", api_calls[i], retries, max_retries);
-                    struct timespec ts = { .tv_sec = g_starlink_grpc_daemon_config.retry_delay_ms / 1000,
-                                           .tv_nsec = (long)(g_starlink_grpc_daemon_config.retry_delay_ms % 1000) * 1000000L };
-                    nanosleep(&ts, NULL);
+                    LOGX_DEBUG_MSG("Sleeping %d ms before retry...", g_starlink_grpc_daemon_config.retry_delay_ms);
+                    usleep(g_starlink_grpc_daemon_config.retry_delay_ms * 1000);
+                } else {
+                    LOGX_ERROR_MSG("gRPC call %s failed after %d retries, giving up", api_calls[i], max_retries);
                 }
+            } else {
+                LOGX_DEBUG_MSG("gRPC call %s succeeded on attempt %d", api_calls[i], retries+1);
             }
             
             if (response.response_data) {

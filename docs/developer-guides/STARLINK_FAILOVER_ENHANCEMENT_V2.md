@@ -7,6 +7,7 @@ This document outlines the enhanced Starlink failover strategy for version 2.0, 
 ## Current State Analysis
 
 Based on comprehensive API testing, we have access to extensive telemetry data including:
+
 - Real-time performance metrics (latency, packet loss)
 - Historical performance arrays (3000+ data points)
 - Obstruction statistics and patterns
@@ -20,38 +21,47 @@ Based on comprehensive API testing, we have access to extensive telemetry data i
 ### 🎯 **Primary Failover Indicators**
 
 #### 1. **Pop Ping Latency Trends** (`popPingLatencyMs`)
+
 ```json
 "popPingLatencyMs": [47.44629, 47.789112, 49.226753, 50.768856, ...]
 ```
+
 **Implementation Strategy:**
+
 - **Trend Analysis:** Calculate moving averages and detect increasing latency patterns
 - **Threshold Adaptation:** Dynamic thresholds based on historical performance
 - **Predictive Trigger:** Failover when latency trend indicates degradation before it becomes critical
 
 **Failover Logic:**
-```
+
+```text
 IF (current_latency > historical_avg * 2.5) OR 
    (latency_trend_slope > degradation_threshold)
 THEN trigger_predictive_failover()
 ```
 
 #### 2. **Pop Ping Drop Rate** (`popPingDropRate`)
+
 ```json
 "popPingDropRate": [0, 0, 0, 0.05, 0.5, 0.5, 0, 0, ...]
 ```
+
 **Implementation Strategy:**
+
 - **Pattern Recognition:** Identify packet loss bursts and sustained loss periods
 - **Quality Scoring:** Weighted scoring based on loss frequency and duration
 - **Early Warning:** Trigger failover on sustained loss patterns, not just instantaneous spikes
 
 **Failover Logic:**
-```
+
+```text
 IF (sustained_loss_rate > 5%) OR 
    (loss_burst_frequency > acceptable_threshold)
 THEN trigger_quality_based_failover()
 ```
 
 #### 3. **Obstruction Statistics** (`obstructionStats`)
+
 ```json
 "obstructionStats": {
   "fractionObstructed": 0.0038656357,
@@ -61,13 +71,16 @@ THEN trigger_quality_based_failover()
   "patchesValid": 7502
 }
 ```
+
 **Implementation Strategy:**
+
 - **Movement Detection:** Correlate obstruction changes with GPS movement
 - **Predictive Obstruction:** Use obstruction trends to predict service degradation
 - **Location-Based Learning:** Build obstruction maps for different locations
 
 **Failover Logic:**
-```
+
+```text
 IF (fractionObstructed > location_threshold) OR 
    (obstruction_trend_increasing AND movement_detected)
 THEN trigger_obstruction_failover()
@@ -76,6 +89,7 @@ THEN trigger_obstruction_failover()
 ### 🔍 **Secondary Intelligence Indicators**
 
 #### 4. **Outage Pattern Analysis** (`outages`)
+
 ```json
 "outages": [
   {
@@ -86,17 +100,21 @@ THEN trigger_obstruction_failover()
   }
 ]
 ```
+
 **Backend Issue Detection:**
+
 - **Outage Clustering:** Detect patterns indicating Starlink backend issues
 - **Cause Analysis:** Different failover strategies based on outage cause
 - **Recovery Prediction:** Estimate recovery time based on historical outage patterns
 
 **Implementation Value:**
+
 - Distinguish between local issues (dish problems) vs. backend issues (Starlink network)
 - Avoid unnecessary failovers during known backend maintenance
 - Optimize failback timing based on outage resolution patterns
 
 #### 5. **Event Log Analysis** (`eventLog`)
+
 ```json
 "eventLog": {
   "events": [
@@ -109,7 +127,9 @@ THEN trigger_obstruction_failover()
   ]
 }
 ```
+
 **Proactive Issue Detection:**
+
 - **Severity Escalation:** Monitor event severity progression
 - **Pattern Recognition:** Identify recurring issues before they cause outages
 - **Maintenance Prediction:** Detect patterns indicating need for maintenance
@@ -117,6 +137,7 @@ THEN trigger_obstruction_failover()
 ### 🚨 **Alert-Based Monitoring & Notifications**
 
 #### 6. **Critical Hardware Alerts** (`alerts`)
+
 ```json
 "alerts": {
   "motorsStuck": false,
@@ -139,18 +160,21 @@ THEN trigger_obstruction_failover()
 **Pushover Notification Strategy:**
 
 **🔴 CRITICAL (Immediate Failover + Emergency Notification):**
+
 - `thermalShutdown` - **"Starlink Thermal Shutdown Imminent!"**
 - `motorsStuck` - **"Starlink Motors Stuck - Dish Positioning Failed!"**
 - `dishWaterDetected` - **"Water Detected in Starlink Dish!"**
 - `routerWaterDetected` - **"Water Detected in Starlink Router!"**
 
 **🟠 HIGH PRIORITY (Proactive Failover + Alert):**
+
 - `thermalThrottle` - **"Starlink Thermal Throttling Active"**
 - `powerSupplyThermalThrottle` - **"Starlink Power Supply Overheating"**
 - `mastNotNearVertical` - **"Starlink Dish Alignment Issue"**
 - `unexpectedLocation` - **"Starlink Dish Moved to Unexpected Location"**
 
 **🟡 MEDIUM PRIORITY (Monitor + Notify):**
+
 - `slowEthernetSpeeds` / `slowEthernetSpeeds100` - **"Starlink Ethernet Speed Degraded"**
 - `lowMotorCurrent` - **"Starlink Motor Current Low - Potential Issue"**
 - `lowerSignalThanPredicted` - **"Starlink Signal Below Expected Levels"**
@@ -158,15 +182,19 @@ THEN trigger_obstruction_failover()
 - `dbfTelemStale` - **"Starlink Telemetry Data Stale"** *(Digital Beamforming telemetry)*
 
 **🔵 INFO (Log + Optional Notify):**
+
 - `isSnrPersistentlyLow` - **"Starlink SNR Persistently Low"**
 
 #### 7. **Boot Count Monitoring** (`bootCount`)
+
 ```json
 "deviceInfo": {
   "bootcount": 2567
 }
 ```
+
 **Reboot Loop Detection:**
+
 - **Threshold:** More than 5 reboots in 24 hours
 - **Alert:** **"Starlink Excessive Reboots Detected - Potential Hardware Issue"**
 - **Action:** Trigger failover and schedule maintenance check
@@ -174,6 +202,7 @@ THEN trigger_obstruction_failover()
 ### 🔄 **Intelligent Failback Indicators**
 
 #### 8. **Signal Quality Recovery** (`SNR Metrics`)
+
 ```json
 "isSnrAboveNoiseFloor": true,
 "isSnrPersistentlyLow": false,
@@ -181,6 +210,7 @@ THEN trigger_obstruction_failover()
 ```
 
 **Failback Readiness Score:**
+
 ```python
 def calculate_failback_readiness():
     readiness_score = 0
@@ -203,6 +233,7 @@ def calculate_failback_readiness():
 ```
 
 **Failback Conditions:**
+
 - **Immediate Failback:** `readiness_score >= 100` AND no critical alerts
 - **Cautious Failback:** `readiness_score >= 80` AND stable for 2+ minutes
 - **Hold Failback:** `readiness_score < 60` OR any critical alerts active
@@ -210,6 +241,7 @@ def calculate_failback_readiness():
 ### 📅 **Maintenance Window Planning**
 
 #### 9. **Software Update Coordination** (`softwareUpdateStats`)
+
 ```json
 "softwareUpdateStats": {
   "softwareUpdateState": "IDLE",
@@ -223,6 +255,7 @@ def calculate_failback_readiness():
 ```
 
 **Planned Maintenance Integration:**
+
 - **Pre-emptive Failover:** Switch to backup 15 minutes before `swupdateRebootHour`
 - **Update Monitoring:** Track `softwareUpdateState` transitions
 - **Reboot Coordination:** Delay failback until after scheduled maintenance window
@@ -233,6 +266,7 @@ def calculate_failback_readiness():
 ### 🔋 **Power & Energy Intelligence**
 
 #### 10. **Power Consumption Optimization** (`powerIn` + `plcStats`)
+
 ```json
 "powerIn": [31.113583, 34.48341, 39.983574, 26.431213, ...],
 "plcStats": {
@@ -244,6 +278,7 @@ def calculate_failback_readiness():
 ```
 
 **Smart Energy Management:**
+
 - **Power Spike Detection:** Sudden increases in `powerIn` may indicate hardware stress
 - **Battery Integration:** Use `stateOfCharge` and `averageTimeToEmpty` for solar/battery setups
 - **Energy-Aware Failover:** Switch to cellular when power consumption is high and battery low
@@ -251,6 +286,7 @@ def calculate_failback_readiness():
 - **Alert:** **"High Power Consumption Detected - Battery at 15%, Switching to Cellular"**
 
 #### 11. **Mobile/RV Movement Intelligence** (`mobilityClass` + `isMovingFastPersisted`)
+
 ```json
 "mobilityClass": "MOBILE",
 "isMovingFastPersisted": false,
@@ -258,6 +294,7 @@ def calculate_failback_readiness():
 ```
 
 **Movement-Aware Optimization:**
+
 - **Speed-Based Decisions:** Different thresholds for stationary vs. moving scenarios
 - **Tilt Monitoring:** Excessive `tiltAngleDeg` changes indicate rough terrain/movement
 - **Mobile Optimization:** Adjust obstruction sensitivity when `mobilityClass` = "MOBILE"
@@ -267,6 +304,7 @@ def calculate_failback_readiness():
 ### 🛰️ **Satellite & RF Intelligence**
 
 #### 12. **GPS Satellite Health Monitoring** (`gpsStats`)
+
 ```json
 "gpsStats": {
   "gpsValid": true,
@@ -277,12 +315,14 @@ def calculate_failback_readiness():
 ```
 
 **GPS-Based Intelligence:**
+
 - **Satellite Count Trending:** Declining `gpsSats` may indicate location/weather issues
 - **GPS Failure Detection:** `noSatsAfterTtff` = true indicates GPS acquisition problems
 - **Location Accuracy:** Low satellite count affects location-based decisions
 - **Alert:** **"GPS Satellite Count Dropped to 4 - Location Accuracy Compromised"**
 
 #### 13. **RF Subsystem Health** (`readyStates`)
+
 ```json
 "readyStates": {
   "cady": false,
@@ -295,6 +335,7 @@ def calculate_failback_readiness():
 ```
 
 **RF Component Monitoring:**
+
 - **Subsystem Failure Detection:** Any `false` state indicates component issues
 - **Performance Correlation:** Link RF state changes to performance degradation
 - **Predictive Maintenance:** Pattern recognition for component failure prediction
@@ -303,6 +344,7 @@ def calculate_failback_readiness():
 ### 🏗️ **Infrastructure & Network Intelligence**
 
 #### 14. **Ethernet & Network Performance** (`ethSpeedMbps` + Ethernet Alerts)
+
 ```json
 "ethSpeedMbps": 1000,
 "slowEthernetSpeeds": false,
@@ -310,12 +352,14 @@ def calculate_failback_readiness():
 ```
 
 **Network Infrastructure Monitoring:**
+
 - **Speed Degradation Tracking:** Monitor `ethSpeedMbps` trends over time
 - **Cable/Connection Issues:** Correlate speed drops with physical problems
 - **Network Bottleneck Detection:** Identify when Ethernet becomes the limiting factor
 - **Alert:** **"Ethernet Speed Degraded from 1000 to 100 Mbps - Check Cables"**
 
 #### 15. **Dish Alignment & Pointing Intelligence** (`alignmentStats`)
+
 ```json
 "alignmentStats": {
   "attitudeEstimationState": "FILTER_CONVERGED",
@@ -326,6 +370,7 @@ def calculate_failback_readiness():
 ```
 
 **Advanced Pointing Optimization:**
+
 - **Alignment Drift Detection:** Monitor changes in boresight vs. desired angles
 - **Attitude Uncertainty Monitoring:** High `attitudeUncertaintyDeg` indicates instability
 - **Auto-Realignment Triggers:** Attempt realignment before failover
@@ -335,6 +380,7 @@ def calculate_failback_readiness():
 ### 🔧 **Initialization & Startup Intelligence**
 
 #### 16. **Startup Performance Analysis** (`initializationDurationSeconds`)
+
 ```json
 "initializationDurationSeconds": {
   "attitudeInitialization": 36,
@@ -349,6 +395,7 @@ def calculate_failback_readiness():
 ```
 
 **Startup Health Monitoring:**
+
 - **Slow Startup Detection:** Increasing initialization times indicate hardware issues
 - **Component Performance Tracking:** Identify which subsystems are degrading
 - **Predictive Maintenance:** Startup time trends predict hardware failures
@@ -358,6 +405,7 @@ def calculate_failback_readiness():
 ### 🌐 **Service Quality & Classification**
 
 #### 17. **Service Class Optimization** (`classOfService` + `disablementCode`)
+
 ```json
 "classOfService": "UNKNOWN_USER_CLASS_OF_SERVICE",
 "disablementCode": "OKAY",
@@ -366,6 +414,7 @@ def calculate_failback_readiness():
 ```
 
 **Service Level Intelligence:**
+
 - **Bandwidth Restriction Monitoring:** Track changes in restriction reasons
 - **Service Degradation Detection:** Monitor `disablementCode` changes
 - **QoS-Aware Failover:** Different strategies based on service class
@@ -374,6 +423,7 @@ def calculate_failback_readiness():
 ### 🔄 **Reboot & Recovery Intelligence**
 
 #### 18. **Reboot Reason Analysis** (`rebootReason` + Boot Patterns)
+
 ```json
 "rebootReason": "REBOOT_REASON_NONE",
 "bootcount": 2567,
@@ -381,6 +431,7 @@ def calculate_failback_readiness():
 ```
 
 **Advanced Reboot Intelligence:**
+
 - **Reboot Cause Tracking:** Different responses based on reboot reasons
 - **Stability Scoring:** Factor reboot frequency into health scores
 - **Predictive Reboots:** Detect patterns leading to unexpected reboots
@@ -390,14 +441,18 @@ def calculate_failback_readiness():
 ### 🎯 **Composite Intelligence Scenarios**
 
 #### 19. **Weather Pattern Correlation**
+
 **Combine Multiple Metrics:**
+
 - Power consumption + obstruction + alignment changes + GPS satellite count
 - **Weather Detection:** Identify weather patterns without external data
 - **Storm Prediction:** Rapid changes in multiple metrics indicate severe weather
 - **Alert:** **"Weather Pattern Detected - Preparing for Service Degradation"**
 
 #### 20. **Predictive Maintenance Scoring**
+
 **Hardware Health Composite Score:**
+
 ```python
 def calculate_hardware_health():
     startup_score = analyze_initialization_trends()
@@ -409,14 +464,18 @@ def calculate_hardware_health():
 ```
 
 #### 21. **Location-Based Service Optimization**
+
 **Geographic Intelligence:**
+
 - **Coverage Maps:** Build real-time coverage quality maps
 - **Seasonal Patterns:** Track performance changes by season/location
 - **Route Optimization:** For mobile users, suggest optimal routes
 - **Alert:** **"Entering Known Poor Coverage Area - Switching to Cellular"**
 
 #### 22. **Predictive Network Switching**
+
 **Multi-Factor Prediction:**
+
 - Combine trending metrics to predict optimal switch timing
 - **Pre-emptive Switching:** Switch before problems become user-visible
 - **Smart Failback:** Use multiple recovery indicators for optimal timing
@@ -427,7 +486,9 @@ def calculate_hardware_health():
 ### **Predictive Models**
 
 #### 1. **Performance Degradation Prediction**
+
 **Input Features:**
+
 - Latency trend (last 100 samples)
 - Packet loss pattern (last 50 samples)
 - Obstruction fraction changes
@@ -437,7 +498,9 @@ def calculate_hardware_health():
 **Output:** Probability of service degradation in next 5-15 minutes
 
 #### 2. **Optimal Failback Timing**
+
 **Input Features:**
+
 - Historical recovery patterns
 - Current performance metrics
 - Outage cause and duration
@@ -446,7 +509,9 @@ def calculate_hardware_health():
 **Output:** Optimal time to attempt failback
 
 #### 3. **Location-Based Performance Prediction**
+
 **Input Features:**
+
 - GPS coordinates
 - Historical performance at location
 - Weather data (if available)
@@ -457,6 +522,7 @@ def calculate_hardware_health():
 ### **Learning Datasets**
 
 Build comprehensive datasets from:
+
 - **Performance Time Series:** 3000+ samples per collection
 - **Outage Patterns:** Cause, duration, resolution patterns
 - **Location Correlation:** GPS + performance mapping
@@ -488,12 +554,14 @@ def calculate_starlink_health_score():
 ### **Intelligent Failover Triggers**
 
 #### **Predictive Failover Conditions:**
+
 1. **Performance Trend Degradation:** Health score declining rapidly
 2. **Obstruction Pattern Recognition:** Movement into known problem areas
 3. **Backend Issue Detection:** Outage patterns indicating Starlink network issues
 4. **Thermal/Hardware Warnings:** Proactive failover before hardware issues
 
 #### **Failback Intelligence:**
+
 1. **Performance Recovery Confirmation:** Sustained improvement in metrics
 2. **Outage Resolution Detection:** Backend issues resolved
 3. **Location-Based Optimization:** Moved to better coverage area
@@ -502,6 +570,7 @@ def calculate_starlink_health_score():
 ## Implementation Roadmap
 
 ### **Phase 1: Enhanced Data Collection & Alerting**
+
 - [ ] Implement comprehensive Starlink API data collection
 - [ ] Create time-series database for historical analysis
 - [ ] Build GPS movement detection and location tracking
@@ -510,6 +579,7 @@ def calculate_starlink_health_score():
 - [ ] **Create alert priority classification and routing**
 
 ### **Phase 2: Intelligent Analysis Engine**
+
 - [ ] Develop trend analysis algorithms for latency and packet loss
 - [ ] Implement obstruction pattern recognition
 - [ ] Create outage pattern analysis and backend issue detection
@@ -518,6 +588,7 @@ def calculate_starlink_health_score():
 - [ ] **Create boot count tracking and reboot loop detection**
 
 ### **Phase 3: Smart Failback & Maintenance Coordination**
+
 - [ ] **Develop intelligent failback readiness scoring**
 - [ ] **Implement SNR-based recovery detection**
 - [ ] **Create maintenance window coordination system**
@@ -526,6 +597,7 @@ def calculate_starlink_health_score():
 - [ ] Create optimal failback timing algorithms
 
 ### **Phase 4: Machine Learning & Advanced Features**
+
 - [ ] Implement location-based performance prediction
 - [ ] Build adaptive threshold adjustment system
 - [ ] Seasonal and weather correlation analysis
@@ -536,11 +608,13 @@ def calculate_starlink_health_score():
 ## Technical Architecture
 
 ### **Data Pipeline**
-```
+
+```text
 Starlink API → Data Collector → Time Series DB → Analysis Engine → ML Models → Decision Engine → Failover Controller
 ```
 
 ### **Key Components**
+
 1. **Enhanced Starlink Collector:** Comprehensive API data gathering
 2. **Time Series Analytics:** Historical trend analysis
 3. **ML Prediction Engine:** Performance and timing predictions
@@ -550,12 +624,14 @@ Starlink API → Data Collector → Time Series DB → Analysis Engine → ML Mo
 ## Expected Benefits
 
 ### **Performance Improvements**
+
 - **Reduced Outage Time:** Predictive failover before service degradation
 - **Optimized Failback:** Intelligent timing reduces unnecessary switching
 - **Location Awareness:** Automatic optimization based on geographic performance
 - **Backend Issue Handling:** Smarter response to Starlink network issues
 
 ### **User Experience**
+
 - **Seamless Transitions:** Proactive failover prevents user-visible outages
 - **Reduced False Positives:** Intelligent analysis reduces unnecessary failovers
 - **Adaptive Behavior:** System learns and improves over time

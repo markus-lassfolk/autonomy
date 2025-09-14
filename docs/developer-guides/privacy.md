@@ -18,12 +18,14 @@ autonomy includes an opt-in, privacy-safe error reporting system that helps impr
 ### Data Anonymization
 
 #### Device Identification
+
 - **Raw Device IDs**: Never sent in their original form
 - **Hashed Identifiers**: Device IDs are hashed with a secret salt
 - **Truncated Output**: Only first 12 characters of hash are used
 - **Reversible**: Same device always produces same hash (for deduplication)
 
 #### Personal Information Sanitization
+
 The system automatically sanitizes sensitive information from error reports:
 
 - **IP Addresses**: Replaced with `[ip]`
@@ -37,11 +39,13 @@ The system automatically sanitizes sensitive information from error reports:
 ### Privacy Levels
 
 #### Standard Privacy
+
 - Masks IP addresses, MAC addresses, and credentials
 - Preserves file paths and usernames for debugging
 - Suitable for most users
 
 #### Strict Privacy
+
 - Additional masking of file paths and usernames
 - Maximum privacy protection
 - May reduce debugging effectiveness
@@ -51,12 +55,14 @@ The system automatically sanitizes sensitive information from error reports:
 ### What We Collect (When Enabled)
 
 #### Error Reports
+
 - **System Metrics**: Memory usage, disk usage, load average
 - **Error Details**: Error type, severity, actions taken
 - **Firmware Version**: For issue correlation
 - **Anonymized Device ID**: For deduplication only
 
 #### Auto-Update Notifications
+
 - **Update Status**: Success/failure of updates
 - **Version Information**: Previous and new versions
 - **System Health**: Basic metrics during update
@@ -73,18 +79,21 @@ The system automatically sanitizes sensitive information from error reports:
 ## Security Measures
 
 ### Authentication
+
 - **HMAC Signing**: All webhook payloads are cryptographically signed
 - **Secret Keys**: Each device uses a unique secret for signing
 - **Timestamp Validation**: Prevents replay attacks
 - **GitHub App**: Server-side uses GitHub App for least privilege access
 
 ### Data Transmission
+
 - **HTTPS Only**: All communication uses encrypted HTTPS
 - **Certificate Validation**: Validates server certificates
 - **Timeout Protection**: Prevents hanging connections
 - **Rate Limiting**: Prevents abuse and spam
 
 ### Server-Side Security
+
 - **Input Validation**: All inputs are validated and sanitized
 - **Deduplication**: Prevents duplicate issue spam
 - **Generic Labels**: Uses non-identifying issue labels
@@ -127,11 +136,13 @@ The LuCI web interface provides easy toggles for all privacy settings:
 ## Data Retention
 
 ### Client-Side
+
 - **Error Reports**: Not stored locally
 - **Update Logs**: Stored in `/var/log/autonomy-update.log`
 - **Configuration**: Stored in `/etc/autonomy/watch.conf`
 
 ### Server-Side
+
 - **GitHub Issues**: Follow GitHub's data retention policies
 - **Webhook Logs**: Not retained beyond processing
 - **Analytics**: No analytics or tracking data collected
@@ -139,11 +150,13 @@ The LuCI web interface provides easy toggles for all privacy settings:
 ## Third-Party Services
 
 ### GitHub
+
 - **Issue Creation**: Error reports create GitHub issues
 - **Data Processing**: GitHub processes issue data according to their privacy policy
 - **Access Control**: Only issue creation/commenting permissions
 
 ### No Other Services
+
 - **No Analytics**: No Google Analytics, Mixpanel, etc.
 - **No Tracking**: No user behavior tracking
 - **No Advertising**: No ad networks or tracking pixels
@@ -151,12 +164,14 @@ The LuCI web interface provides easy toggles for all privacy settings:
 ## Compliance
 
 ### GDPR
+
 - **Data Minimization**: Only collects necessary data
 - **User Consent**: Explicit opt-in required
 - **Right to Deletion**: Users can disable reporting at any time
 - **Data Portability**: All data is in standard formats
 
 ### CCPA
+
 - **Opt-out Rights**: Users can opt-out at any time
 - **Data Disclosure**: Clear documentation of data collection
 - **No Sale**: Data is never sold to third parties
@@ -164,11 +179,13 @@ The LuCI web interface provides easy toggles for all privacy settings:
 ## Transparency
 
 ### Open Source
+
 - **Full Source Code**: All code is open source and auditable
 - **No Hidden Features**: No undisclosed data collection
 - **Community Review**: Code is reviewed by the community
 
 ### Documentation
+
 - **Clear Policies**: This document explains all data practices
 - **Configuration Guide**: Step-by-step configuration instructions
 - **FAQ**: Common privacy questions and answers
@@ -176,6 +193,7 @@ The LuCI web interface provides easy toggles for all privacy settings:
 ## Reporting Issues
 
 ### Privacy Concerns
+
 If you have privacy concerns:
 
 1. **Disable Reporting**: Set `REPORTING_ENABLED=0` in configuration
@@ -183,6 +201,7 @@ If you have privacy concerns:
 3. **Review Code**: All code is open source for review
 
 ### Security Issues
+
 For security issues:
 
 1. **Private Report**: Use GitHub's private security reporting
@@ -207,4 +226,4 @@ For privacy questions or concerns:
 
 ---
 
-*Last updated: 2025-08-20*
+## Last updated: 2025-08-20

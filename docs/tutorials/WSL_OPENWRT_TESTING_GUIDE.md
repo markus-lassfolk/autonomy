@@ -7,6 +7,7 @@ This guide provides a comprehensive approach to testing OpenWrt packages using W
 ## 🎯 **Why WSL is Better Than Docker for OpenWrt Testing**
 
 ### **Advantages of WSL:**
+
 - ✅ **Native Linux environment** - No container networking issues
 - ✅ **Easy file access** - Direct access to Windows files via `/mnt/c/`
 - ✅ **Persistent environment** - Your setup stays between sessions
@@ -16,6 +17,7 @@ This guide provides a comprehensive approach to testing OpenWrt packages using W
 - ✅ **Package management** - Use standard Linux package managers
 
 ### **Compared to Docker:**
+
 - ❌ Docker networking can be complex
 - ❌ File mounting and permissions issues
 - ❌ Container isolation makes debugging harder
@@ -33,13 +35,15 @@ powershell -ExecutionPolicy Bypass -File test/wsl-openwrt-setup.ps1 -Action "che
 
 ### **2. Create WSL Instance**
 
-**Option A: Alpine Linux (Lightweight - Recommended)**
+#### Option A: Alpine Linux (Lightweight - Recommended)
+
 ```powershell
 # Create lightweight Alpine Linux instance
 powershell -ExecutionPolicy Bypass -File test/wsl-openwrt-setup.ps1 -Action "1"
 ```
 
-**Option B: Ubuntu (Full-featured)**
+#### Option B: Ubuntu (Full-featured)
+
 ```powershell
 # Create full Ubuntu instance
 powershell -ExecutionPolicy Bypass -File test/wsl-openwrt-setup.ps1 -Action "2"
@@ -352,16 +356,19 @@ cd /mnt/c/Users/YourUsername/Documents
 ## 🎯 **Best Practices**
 
 ### **1. Use Dedicated WSL Instance**
+
 - Keep your OpenWrt testing separate from other WSL instances
 - Use descriptive names like `openwrt-test` or `autonomy-dev`
 
 ### **2. Regular Backups**
+
 ```powershell
 # Create regular backups
 wsl --export openwrt-test openwrt-test-$(Get-Date -Format "yyyyMMdd").tar
 ```
 
 ### **3. Version Control**
+
 ```bash
 # Keep your project in version control
 cd /workspace
@@ -370,6 +377,7 @@ git commit -m "Test results and configuration"
 ```
 
 ### **4. Clean Testing**
+
 ```bash
 # Reset environment for clean testing
 /etc/init.d/autonomy stop
@@ -381,14 +389,16 @@ rm -rf /var/log/autonomy/*
 
 ### **Common Issues**
 
-**1. WSL Not Starting**
+#### 1. WSL Not Starting
+
 ```powershell
 # Restart WSL service
 wsl --shutdown
 wsl --start
 ```
 
-**2. Package Installation Fails**
+#### 2. Package Installation Fails
+
 ```bash
 # Check dependencies
 opkg list-installed | grep -E "(luci|mwan3|ubus|uci)"
@@ -398,7 +408,8 @@ sudo apt-get update
 sudo apt-get install package-name
 ```
 
-**3. Network Issues**
+#### 3. Network Issues
+
 ```bash
 # Check WSL network
 ip addr show
@@ -408,7 +419,8 @@ ping 8.8.8.8
 sudo service networking restart
 ```
 
-**4. Permission Issues**
+#### 4. Permission Issues
+
 ```bash
 # Fix file permissions
 sudo chown -R $USER:$USER /workspace

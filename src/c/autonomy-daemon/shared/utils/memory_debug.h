@@ -35,7 +35,7 @@ typedef struct {
 } memory_debug_stats_t;
 
 // Memory allocation tracking
-typedef struct memory_block {
+typedef struct memory_debug_block {
     void *ptr;
     size_t size;
     const char *file;
@@ -43,11 +43,11 @@ typedef struct memory_block {
     const char *function;
     uint32_t guard_before;
     uint32_t guard_after;
-    struct memory_block *next;
-    struct memory_block *prev;
+    struct memory_debug_block *next;
+    struct memory_debug_block *prev;
     uint64_t allocation_id;
     bool is_freed;
-} memory_block_t;
+} memory_debug_block_t;
 
 // Stack protection
 typedef struct {
@@ -71,7 +71,7 @@ void memory_debug_free(void *ptr, const char *file, int line, const char *functi
 
 // Memory validation
 bool memory_debug_validate_pointer(void *ptr, const char *file, int line, const char *function);
-bool memory_debug_validate_memory_block(memory_block_t *block);
+bool memory_debug_validate_memory_block(memory_debug_block_t *block);
 void memory_debug_check_all_allocations(void);
 void memory_debug_detect_leaks(void);
 

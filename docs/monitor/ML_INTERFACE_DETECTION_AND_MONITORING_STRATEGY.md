@@ -31,6 +31,7 @@ interface_type_t ml_monitor_map_interface_type(const network_interface_t *interf
 ### Detection Methods by Interface Type
 
 #### 1. **Starlink Detection**
+
 ```bash
 # Network Discovery Logic:
 - IP Range Detection: 100.64.0.0/10 (CGNAT range used by Starlink)
@@ -42,6 +43,7 @@ interface_type_t ml_monitor_map_interface_type(const network_interface_t *interf
 ```
 
 #### 2. **Cellular Detection**
+
 ```bash
 # Network Discovery Logic:
 - Protocol Detection: proto="wwan" in network.interface
@@ -56,6 +58,7 @@ interface_type_t ml_monitor_map_interface_type(const network_interface_t *interf
 ```
 
 #### 3. **WiFi Detection**
+
 ```bash
 # Network Discovery Logic:
 - Device Type: external=true in network.device
@@ -70,6 +73,7 @@ interface_type_t ml_monitor_map_interface_type(const network_interface_t *interf
 ```
 
 #### 4. **LAN/Ethernet Detection**
+
 ```bash
 # Network Discovery Logic:
 - Device Type: devtype="ethernet" in network.device
@@ -131,6 +135,7 @@ static void get_mwan3_ping_info(network_interface_t *interface) {
 ### Intelligent Monitoring Strategies
 
 #### Strategy 1: **MWAN3-Based Monitoring** (Cellular Cost-Conscious)
+
 ```c
 // For cellular interfaces with frequent MWAN3 pings
 if (interface->type == "cellular" && 
@@ -144,6 +149,7 @@ if (interface->type == "cellular" &&
 ```
 
 #### Strategy 2: **Full ML Monitoring** (No-Cost Interfaces)
+
 ```c
 // For Starlink, WiFi, LAN with no data costs
 if (interface->type == "starlink" || interface->type == "wifi" || interface->type == "ethernet") {
@@ -154,6 +160,7 @@ if (interface->type == "starlink" || interface->type == "wifi" || interface->typ
 ```
 
 #### Strategy 3: **Hybrid Monitoring** (Complementary)
+
 ```c
 // When MWAN3 pings very frequently, complement with ML analysis
 if (interface->real_time_metrics.mwan3_ping_interval <= 5) {
@@ -164,6 +171,7 @@ if (interface->real_time_metrics.mwan3_ping_interval <= 5) {
 ```
 
 #### Strategy 4: **Minimal Monitoring** (Cost-Sensitive)
+
 ```c
 // For cellular without frequent MWAN3 pings
 if (interface->type == "cellular" && 
@@ -269,21 +277,25 @@ ubus call autonomy.network interfaces_detailed
 ## 🧠 ML Integration Benefits
 
 ### 1. **Cost-Aware Monitoring**
+
 - **Cellular**: Leverages MWAN3 pings to avoid data costs
 - **No-Cost**: Full 1-second monitoring for streaming protection
 - **Hybrid**: Intelligent combination based on MWAN3 frequency
 
 ### 2. **Enhanced Accuracy**
+
 - **Real-time Metrics**: Uses actual ping results from MWAN3
 - **Trend Analysis**: 60-minute performance history with linear regression
 - **Multi-source Data**: Combines MWAN3, AT commands, system metrics
 
 ### 3. **Automatic Adaptation**
+
 - **Interface Changes**: Detects new SIM cards, WiFi networks automatically
 - **Configuration Updates**: Adapts to MWAN3 configuration changes
 - **Performance Shifts**: Adjusts monitoring based on performance trends
 
 ### 4. **Resource Efficiency**
+
 - **Selective Monitoring**: Only monitors MWAN3-relevant interfaces
 - **Frequency Optimization**: Adapts monitoring frequency to MWAN3 settings
 - **Data Conservation**: Minimizes cellular data usage while maintaining accuracy
@@ -291,7 +303,8 @@ ubus call autonomy.network interfaces_detailed
 ## 🎯 Real-World Examples
 
 ### Example 1: Cellular Interface with MWAN3
-```
+
+```text
 Interface: qmimux0 (Cellular)
 MWAN3: Pings every 5 seconds to 8.8.8.8
 Strategy: Use MWAN3 ping results + modem metrics
@@ -300,7 +313,8 @@ Data Cost: Zero (uses existing MWAN3 pings)
 ```
 
 ### Example 2: Starlink Interface
-```
+
+```text
 Interface: eth1 (Starlink)
 MWAN3: Pings every 10 seconds
 Strategy: Full ML monitoring for streaming protection
@@ -309,7 +323,8 @@ Data Cost: Zero (unlimited Starlink)
 ```
 
 ### Example 3: WiFi Backup
-```
+
+```text
 Interface: wlan0 (WiFi)
 MWAN3: Not actively pinging (standby)
 Strategy: Full monitoring when active

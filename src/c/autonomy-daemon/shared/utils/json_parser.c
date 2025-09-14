@@ -9,8 +9,16 @@
 // Global error state
 static char g_json_error[256] = {0};
 
-// Set error message
+// Set error message - SECURE VERSION
 static void set_json_error(const char* format, ...) {
+    // Validate format string to prevent format string attacks
+    if (!format || strpbrk(format, "%n") != NULL) {
+        // Reject format strings with %n (can be used for format string attacks)
+        strncpy(g_json_error, "JSON error: Invalid format string", sizeof(g_json_error) - 1);
+        g_json_error[sizeof(g_json_error) - 1] = '\0';
+        return;
+    }
+    
     va_list args;
     va_start(args, format);
     vsnprintf(g_json_error, sizeof(g_json_error), format, args);
@@ -28,13 +36,6 @@ const char* json_get_last_error(void) {
     return g_json_error;
 }
 
-// Set error message
-static void json_set_error(const char* format, ...) {
-    va_list args;
-    va_start(args, format);
-    vsnprintf(g_json_error, sizeof(g_json_error), format, args);
-    va_end(args);
-}
 
 // Initialize JSON parser
 int json_parser_init(void) {
@@ -64,13 +65,13 @@ void json_parser_cleanup(void) {
 // Parse JSON string
 json_document_t* json_parse_string(const char* json_string) {
     if (!json_string) {
-        json_set_error("JSON string is NULL");
+        set_json_error("JSON string is NULL");
         return NULL;
     }
 
     json_document_t* doc = malloc(sizeof(json_document_t));
     if (!doc) {
-        json_set_error("Failed to allocate memory for JSON document");
+        set_json_error("Failed to allocate memory for JSON document");
         return NULL;
     }
 
@@ -81,10 +82,10 @@ json_document_t* json_parse_string(const char* json_string) {
         const char* error_ptr = cJSON_GetErrorPtr();
         if (error_ptr) {
             snprintf(doc->error_msg, sizeof(doc->error_msg), "JSON parse error: %.200s", error_ptr);
-            json_set_error("JSON parse error: %.200s", error_ptr);
+            set_json_error("JSON parse error: %.200s", error_ptr);
         } else {
             strncpy(doc->error_msg, "Unknown JSON parse error", sizeof(doc->error_msg) - 1);
-            json_set_error("Unknown JSON parse error");
+            set_json_error("Unknown JSON parse error");
         }
         doc->valid = false;
         return doc;
@@ -97,13 +98,13 @@ json_document_t* json_parse_string(const char* json_string) {
 // Parse JSON file
 json_document_t* json_parse_file(const char* filename) {
     if (!filename) {
-        json_set_error("Filename is NULL");
+        set_json_error("Filename is NULL");
         return NULL;
     }
 
     FILE* file = fopen(filename, "r");
     if (!file) {
-        json_set_error("Failed to open file: %s", strerror(errno));
+        set_json_error("Failed to open file: %s", strerror(errno));
         return NULL;
     }
 
@@ -114,14 +115,14 @@ json_document_t* json_parse_file(const char* filename) {
 
     if (file_size <= 0) {
         fclose(file);
-        json_set_error("File is empty or invalid size");
+        set_json_error("File is empty or invalid size");
         return NULL;
     }
 
     char* json_string = malloc(file_size + 1);
     if (!json_string) {
         fclose(file);
-        json_set_error("Failed to allocate memory for file content");
+        set_json_error("Failed to allocate memory for file content");
         return NULL;
     }
 
@@ -130,7 +131,7 @@ json_document_t* json_parse_file(const char* filename) {
 
     if (bytes_read != (size_t)file_size) {
         free(json_string);
-        json_set_error("Failed to read complete file");
+        set_json_error("Failed to read complete file");
         return NULL;
     }
 
@@ -500,7 +501,7 @@ bool json_validate_required_fields(json_document_t* doc, const char** required_f
 
     for (int i = 0; i < field_count; i++) {
         if (!json_path_exists(doc->root, required_fields[i])) {
-            json_set_error("Required field missing: %s", required_fields[i]);
+            set_json_error("Required field missing: %s", required_fields[i]);
             return false;
         }
     }

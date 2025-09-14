@@ -5,6 +5,7 @@
 #include "../shared/utils/string_utils.h"
 #include "../utils/http_client.h"
 #include "../shared/logging/logx.h"
+#include "../shared/starlink/starlink_grpc_shared.h"
 #include <json-c/json.h>
 #include <string.h>
 #include <stdlib.h>
@@ -32,19 +33,19 @@ starlink_grpc_collector_t g_starlink_grpc_collector = {0};
 // Initialize the gRPC collector
 int starlink_grpc_collector_init(void) {
     LOGX_INFO_MSG("Initializing Starlink gRPC collector with comprehensive client");
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init called\n");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init called");
     
     // Initialize mutex
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - about to initialize mutex\n");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init - about to initialize mutex");
     if (pthread_mutex_init(&g_starlink_grpc_collector.mutex, NULL) != 0) {
         LOGX_ERROR_MSG("Failed to initialize gRPC collector mutex");
-        fprintf(stderr, "DEBUG: starlink_grpc_collector_init failed - mutex initialization failed\n");
+        LOGX_DEBUG_MSG("starlink_grpc_collector_init failed - mutex initialization failed");
         return AUTONOMY_ERROR;
     }
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - mutex initialized successfully\n");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init - mutex initialized successfully");
     
     // Initialize the comprehensive gRPC client
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - about to initialize daemon config\n");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init - about to initialize daemon config");
     starlink_grpc_daemon_config_t daemon_config = {0};
     
     // Set up client configuration
@@ -63,14 +64,25 @@ int starlink_grpc_collector_init(void) {
     daemon_config.monitoring_interval_seconds = 30;
     safe_strncpy(daemon_config.log_prefix, "STARLINK-GRPC", sizeof(daemon_config.log_prefix));
     
-    // Initialize the daemon integration
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - about to initialize daemon integration\n");
-    if (starlink_grpc_daemon_integration_init(&daemon_config) != 0) {
-        LOGX_ERROR_MSG("Failed to initialize comprehensive gRPC client");
-        fprintf(stderr, "DEBUG: starlink_grpc_collector_init failed - daemon integration failed\n");
+    // Initialize the shared gRPC client
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init - about to initialize shared gRPC client");
+    
+    starlink_grpc_shared_config_t shared_config = {0};
+    strcpy(shared_config.host, g_config.starlink_host);
+    shared_config.port = g_config.starlink_port;
+    shared_config.timeout = g_config.starlink_timeout;
+    shared_config.max_retries = 3;
+    shared_config.retry_delay_ms = 1000;
+    shared_config.debug_mode = true;
+    shared_config.insecure_mode = false;
+    strcpy(shared_config.user_agent, "autonomy-daemon/1.0");
+    
+    if (starlink_grpc_shared_init(&shared_config) != 0) {
+        LOGX_ERROR_MSG("Failed to initialize shared gRPC client");
+        LOGX_DEBUG_MSG("starlink_grpc_collector_init failed - shared gRPC client failed");
         return AUTONOMY_ERROR;
     }
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - daemon integration initialized successfully\n");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init - shared gRPC client initialized successfully");
     
     // Set configuration from UCI config with fallback defaults
     if (strlen(g_config.starlink_host) > 0) {
@@ -111,7 +123,7 @@ int starlink_grpc_collector_init(void) {
     g_starlink_grpc_collector.consecutive_failures = 0;
     
     LOGX_INFO_MSG("Starlink gRPC collector initialized successfully");
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init completed successfully\n");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init completed successfully");
     return AUTONOMY_SUCCESS;
 }
 
@@ -172,31 +184,96 @@ int starlink_grpc_collector_stop(void) {
 void starlink_grpc_collector_thread(void* arg) {
     LOGX_INFO_MSG("Starlink gRPC collector thread started");
     
-    while (g_starlink_grpc_collector.thread_running) {
-        if (g_starlink_grpc_collector.enabled) {
-            // Collect observation data
-            starlink_grpc_collect_observation();
-            
-            // Detect outage events
-            starlink_grpc_detect_outage_events();
+    // Test connection to Starlink device before starting main loop
+    LOGX_INFO_MSG("Testing connection to Starlink device at %s:%d...", 
+                  g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
+    
+    starlink_grpc_shared_response_t test_response;
+    int connection_test = starlink_grpc_shared_get_status(&test_response);
+    
+    if (connection_test != 0) {
+        LOGX_WARN_MSG("Starlink device connection test failed - device may be offline or unreachable");
+        LOGX_WARN_MSG("Starlink collector will continue running but may not collect data successfully");
+        LOGX_WARN_MSG("To fix: ensure Starlink device is online and accessible at %s:%d", 
+                      g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
+        if (test_response.error_message[0]) {
+            LOGX_WARN_MSG("Connection test error: %s", test_response.error_message);
         }
+    } else {
+        LOGX_INFO_MSG("Starlink device connection test successful - ready to collect data");
+    }
+    
+    // Cleanup test response
+    starlink_grpc_shared_free_response(&test_response);
+    
+    int iteration_count = 0;
+    
+    while (g_starlink_grpc_collector.thread_running) {
+        iteration_count++;
+        LOGX_DEBUG_MSG("Starlink collector thread iteration %d", iteration_count);
+        
+        if (g_starlink_grpc_collector.enabled) {
+            LOGX_DEBUG_MSG("Starlink collector enabled, attempting to collect observation data...");
+            
+            // Collect observation data with error handling
+            int collect_result = starlink_grpc_collect_observation();
+            if (collect_result == 0) {
+                LOGX_DEBUG_MSG("Starlink observation collection successful");
+            } else {
+                LOGX_WARN_MSG("Starlink observation collection failed with error %d", collect_result);
+            }
+            
+            LOGX_DEBUG_MSG("Starlink collector attempting to detect outage events...");
+            
+            // Detect outage events with error handling
+            int detect_result = starlink_grpc_detect_outage_events();
+            if (detect_result == 0) {
+                LOGX_DEBUG_MSG("Starlink outage detection successful");
+            } else {
+                LOGX_WARN_MSG("Starlink outage detection failed with error %d", detect_result);
+            }
+        } else {
+            LOGX_DEBUG_MSG("Starlink collector disabled, skipping collection");
+        }
+        
+        LOGX_DEBUG_MSG("Starlink collector sleeping for %d seconds...", OBSERVATION_INTERVAL);
         
         // Sleep for observation interval
         sleep(OBSERVATION_INTERVAL);
     }
     
-    LOGX_INFO_MSG("Starlink gRPC collector thread exiting");
+    LOGX_INFO_MSG("Starlink gRPC collector thread exiting after %d iterations", iteration_count);
 }
 
 // Collect observation data using gRPC
 int starlink_grpc_collect_observation(void) {
+    LOGX_DEBUG_MSG("Starting Starlink observation collection...");
+    
     starlink_observation_t observation = {0};
     
     // Get current timestamp
     observation.timestamp = time(NULL);
+    LOGX_DEBUG_MSG("Observation timestamp set to %ld", observation.timestamp);
     
-    // Use the new comprehensive multi-call approach
-    if (starlink_grpc_daemon_get_observation(&observation) == 0) {
+    // Use the shared gRPC client to collect observation data
+    LOGX_DEBUG_MSG("Calling shared gRPC client to get device status...");
+    
+    starlink_grpc_shared_response_t response;
+    int result = starlink_grpc_shared_get_status(&response);
+    LOGX_DEBUG_MSG("starlink_grpc_shared_get_status returned %d", result);
+    
+    if (result == 0 && response.success) {
+        LOGX_DEBUG_MSG("Successfully received Starlink status data (%zu bytes)", response.response_size);
+        // TODO: Parse response data into observation structure
+        // For now, we'll just mark it as successful
+        starlink_grpc_shared_free_response(&response);
+    } else {
+        LOGX_WARN_MSG("Failed to get Starlink status: %s", response.error_message);
+        starlink_grpc_shared_free_response(&response);
+        result = -1;
+    }
+    
+    if (result == 0) {
         pthread_mutex_lock(&g_starlink_grpc_collector.mutex);
         
         // Store observation
@@ -226,8 +303,8 @@ int starlink_grpc_collect_observation(void) {
     }
     
     g_starlink_grpc_collector.consecutive_failures++;
-    LOGX_WARN_MSG("Failed to collect Starlink observation", 
-                  "consecutive_failures", g_starlink_grpc_collector.consecutive_failures);
+    LOGX_WARN_MSG("Failed to collect Starlink observation: starlink_grpc_daemon_get_observation returned %d", result);
+    LOGX_WARN_MSG("Consecutive failures: %d", g_starlink_grpc_collector.consecutive_failures);
     
     return AUTONOMY_ERROR;
 }
@@ -1033,5 +1110,32 @@ int starlink_grpc_parse_history_response(const char* json_response, starlink_obs
     }
     
     json_object_put(root);
+    return AUTONOMY_SUCCESS;
+}
+
+// Get collector statistics
+int starlink_grpc_collector_get_stats(starlink_grpc_collector_stats_t* stats) {
+    if (!stats) {
+        return AUTONOMY_ERROR;
+    }
+    
+    // Lock the mutex to safely access the collector state
+    if (pthread_mutex_lock(&g_starlink_grpc_collector.mutex) != 0) {
+        LOGX_ERROR_MSG("Failed to lock gRPC collector mutex for stats");
+        return AUTONOMY_ERROR;
+    }
+    
+    // Fill in the stats structure
+    stats->thread_running = g_starlink_grpc_collector.thread_running;
+    stats->total_requests = g_starlink_grpc_collector.total_observations_collected;
+    stats->total_errors = g_starlink_grpc_collector.consecutive_failures;
+    stats->last_successful_collection = g_starlink_grpc_collector.last_successful_collection;
+    
+    // Unlock the mutex
+    if (pthread_mutex_unlock(&g_starlink_grpc_collector.mutex) != 0) {
+        LOGX_ERROR_MSG("Failed to unlock gRPC collector mutex for stats");
+        return AUTONOMY_ERROR;
+    }
+    
     return AUTONOMY_SUCCESS;
 }

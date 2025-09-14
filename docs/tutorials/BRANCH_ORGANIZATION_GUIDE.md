@@ -7,9 +7,10 @@ This guide explains the branch organization strategy for the autonomy project, w
 ## 📋 Branch Structure
 
 ### **Main Branch** (Infrastructure & Documentation)
+
 Contains all infrastructure, CI/CD, and documentation files:
 
-```
+```text
 main/
 ├── .github/workflows/     # All GitHub Actions workflows
 ├── scripts/              # Build and deployment scripts
@@ -33,9 +34,10 @@ main/
 ```
 
 ### **Main-Dev Branch** (Project Code)
+
 Contains all project source code and development files:
 
-```
+```text
 main-dev/
 ├── pkg/                 # Go packages
 ├── cmd/                 # Application commands
@@ -67,6 +69,7 @@ main-dev/
 ### **File Organization Rules**
 
 #### **Main Branch Files** (Infrastructure)
+
 - `.github/workflows/` - All GitHub Actions workflows
 - `scripts/` - Build, deployment, and utility scripts
 - `docs/` - All documentation files
@@ -88,6 +91,7 @@ main-dev/
 - `.cursorrules` - Cursor IDE rules
 
 #### **Main-Dev Branch Files** (Project Code)
+
 - `pkg/` - Go packages and libraries
 - `cmd/` - Application entry points
 - `test/` - Test files and test infrastructure
@@ -172,18 +176,21 @@ gh workflow run sync-branches.yml --field sync_direction=auto
 ## 📊 Benefits
 
 ### **For Infrastructure Management**
+
 - ✅ Clean separation of concerns
 - ✅ Infrastructure changes don't affect development
 - ✅ Easier to manage CI/CD and documentation
 - ✅ Better version control for infrastructure
 
 ### **For Development**
+
 - ✅ Focused development environment
 - ✅ Cleaner git history for code changes
 - ✅ Easier to manage dependencies
 - ✅ Better isolation of project changes
 
 ### **For Collaboration**
+
 - ✅ Clear ownership of different file types
 - ✅ Easier code reviews
 - ✅ Better project organization
@@ -194,6 +201,7 @@ gh workflow run sync-branches.yml --field sync_direction=auto
 ### **Making Infrastructure Changes**
 
 1. **Switch to main branch**:
+
    ```bash
    git checkout main
    ```
@@ -204,6 +212,7 @@ gh workflow run sync-branches.yml --field sync_direction=auto
    - Update scripts in `scripts/`
 
 3. **Commit and push**:
+
    ```bash
    git add .
    git commit -m "🏗️ Update infrastructure: [description]"
@@ -215,6 +224,7 @@ gh workflow run sync-branches.yml --field sync_direction=auto
 ### **Making Project Code Changes**
 
 1. **Switch to main-dev branch**:
+
    ```bash
    git checkout main-dev
    ```
@@ -225,6 +235,7 @@ gh workflow run sync-branches.yml --field sync_direction=auto
    - Update dependencies in `go.mod`
 
 3. **Commit and push**:
+
    ```bash
    git add .
    git commit -m "🚀 Update project code: [description]"
@@ -251,16 +262,19 @@ gh run view --log [run-id]
 ### **Troubleshooting**
 
 #### **Sync PR Not Created**
+
 - Check if files changed in the correct categories
 - Verify workflow permissions
 - Check workflow logs for errors
 
 #### **Sync PR Not Auto-Merging**
+
 - Check branch protection rules
 - Verify PR has required labels
 - Check for merge conflicts
 
 #### **Files in Wrong Branch**
+
 - Use the organization script to move files
 - Manually create PRs to move files
 - Update the file lists in the workflow
@@ -268,18 +282,21 @@ gh run view --log [run-id]
 ## 📋 Best Practices
 
 ### **File Organization**
+
 - ✅ Keep infrastructure and project files separate
 - ✅ Use clear naming conventions
 - ✅ Document file organization rules
 - ✅ Regular cleanup and organization
 
 ### **Workflow Management**
+
 - ✅ Test workflows before pushing
 - ✅ Monitor sync process regularly
 - ✅ Review auto-generated PRs
 - ✅ Maintain workflow documentation
 
 ### **Collaboration**
+
 - ✅ Communicate branch organization to team
 - ✅ Use appropriate commit messages
 - ✅ Review changes in both branches
@@ -288,18 +305,21 @@ gh run view --log [run-id]
 ## 🎯 Success Metrics
 
 ### **Organization Metrics**
+
 - [ ] All files properly organized by branch
 - [ ] No orphaned files in wrong branches
 - [ ] Clear separation of concerns
 - [ ] Easy navigation between branches
 
 ### **Workflow Metrics**
+
 - [ ] Sync PRs created automatically
 - [ ] Auto-merge working correctly
 - [ ] No sync conflicts
 - [ ] Fast sync process
 
 ### **Development Metrics**
+
 - [ ] Faster development cycles
 - [ ] Cleaner git history
 - [ ] Easier code reviews

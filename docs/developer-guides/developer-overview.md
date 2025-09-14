@@ -11,6 +11,7 @@ autonomy is a Go-based daemon that provides intelligent multi-interface failover
 ## 🚀 Key Features
 
 ### Core Functionality
+
 - **Intelligent Auto-Discovery** of mwan3 members and underlying netifd interfaces
 - **Multi-Class Support**: Starlink, Cellular (multi-SIM), Wi-Fi, LAN with specialized metrics
 - **Predictive Failover** based on health scoring, trend analysis, and pattern recognition
@@ -18,6 +19,7 @@ autonomy is a Go-based daemon that provides intelligent multi-interface failover
 - **Resource-Efficient**: minimal CPU wakeups, RAM caps, low traffic on metered links
 
 ### Advanced Monitoring & Analytics
+
 - **Starlink API Integration**: Native gRPC client for real-time Starlink metrics
 - **Cellular Intelligence**: RSRP, RSRQ, SINR monitoring with production-grade OpenCellID geolocation
 - **Wi-Fi Optimization**: Channel analysis, RSSI-weighted scoring, 5-star rating system
@@ -25,12 +27,14 @@ autonomy is a Go-based daemon that provides intelligent multi-interface failover
 - **Obstruction Monitoring**: Predictive obstruction detection and management
 
 ### System Reliability
+
 - **Watchdog & Failsafe System**: Independent process for daemon health monitoring
 - **Self-Healing**: Automatic recovery from failures and performance degradation
 - **Performance Profiling**: CPU/memory usage calculation and GC tuning
 - **Security Auditing**: Threat detection (brute force, port scanning, DoS/DDoS)
 
 ### Observability & Notifications
+
 - **Structured Logging**: JSON-formatted logs with comprehensive observability
 - **Multi-Channel Alerts**: Pushover, Email, Slack, Discord, Telegram, Webhook, SMS
 - **Telemetry Store**: RAM-based ring buffers for short-term metric storage
@@ -51,28 +55,33 @@ Get up and running in minutes with our comprehensive [Quick Start Guide](docs/QU
 ## 📚 Documentation
 
 ### Getting Started
+
 - **[User Guide](docs/USER_GUIDE.md)** - Complete installation, configuration, and usage guide
 - **[Quick Start Guide](docs/QUICK_START.md)** - Fast installation and basic setup
 - **[Configuration Reference](docs/CONFIGURATION.md)** - Complete configuration options
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions
 
 ### User Documentation
+
 - **[User Guide](docs/USER_GUIDE.md)** - Comprehensive user documentation with FAQ
 - **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and diagnostic procedures
 - **[Operations Guide](docs/OPERATIONS_GUIDE.md)** - System administration and maintenance
 
 ### Development & API
+
 - **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation with CLI interface
 - **[Development Guide](docs/DEVELOPMENT.md)** - Building, testing, and contributing
 - **[Architecture Guide](ARCHITECTURE.md)** - System design and components
 
 ### Project Management
+
 - **[Project Status](STATUS.md)** - Current implementation status and progress
 - **[Development Roadmap](ROADMAP.md)** - Future plans and development phases
 - **[Current Tasks](TODO.md)** - Immediate priorities and bug fixes
 - **[Engineering Specification](PROJECT_INSTRUCTION.md)** - Detailed technical requirements
 
 ### Advanced Topics
+
 - **[GPS Integration](docs/GPS_SYSTEM_COMPLETE.md)** - Multi-source GPS with enhanced OpenCellID geolocation
 - **[Notifications](docs/NOTIFICATION_CONFIGURATION.md)** - Alert system setup
 - **[Starlink API](docs/STARLINK_API_REFERENCE.md)** - Starlink-specific features

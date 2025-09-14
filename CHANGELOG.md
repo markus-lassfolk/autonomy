@@ -5,10 +5,11 @@ All notable changes to the Autonomy Daemon project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.8.4-262] - 2025-09-13
+## [5.8.4-260] - 2025-09-13
 
-### echo "Security" | ./scripts/update_project_docs.sh changelog
-- printf "Security\nReplaced system() and popen() calls with safe library functions in analytics_engine.c to resolve CWE-78 security warnings\n" | ./scripts/update_project_docs.sh changelog
+### /mnt/wsl/SDK/build_autonomy_daemon.sh
+- /mnt/wsl/SDK/build_autonomy_daemon.sh
+
 
   - Removed duplicate typedef from network_collector.h to use single definition from core/types.h
   - Resolved compilation error: "conflicting types for 'network_metrics_t'"

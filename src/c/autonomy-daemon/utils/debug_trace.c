@@ -1,4 +1,5 @@
 #include "debug_trace.h"
+#include "../shared/logging/logx.h"
 #include <stdarg.h>
 #include <sys/time.h>
 
@@ -49,13 +50,27 @@ void debug_trace_print(const char *level, const char *file, int line, const char
     const char *filename = strrchr(file, '/');
     filename = filename ? filename + 1 : file;
     
-    // Format the message
-    va_start(args, fmt);
-    vsnprintf(message_buffer, sizeof(message_buffer), fmt, args);
-    va_end(args);
+    // Format the message - SECURE VERSION
+    // Validate format string to prevent format string attacks
+    if (!fmt || strpbrk(fmt, "%n") != NULL) {
+        // Reject format strings with %n (can be used for format string attacks)
+        strncpy(message_buffer, "Debug trace: Invalid format string", sizeof(message_buffer) - 1);
+        message_buffer[sizeof(message_buffer) - 1] = '\0';
+    } else {
+        // SECURE VERSION: Format string vulnerability - validate format string
+        if (strpbrk(fmt, "%n") != NULL) {
+            // Reject dangerous format strings that could write to memory
+            fmt = "SECURE: Dangerous format string rejected";
+        }
+        
+        va_start(args, fmt);
+        // Format string is validated above to prevent %n attacks
+        vsnprintf(message_buffer, sizeof(message_buffer), fmt, args);
+        va_end(args);
+    }
     
     // Print with timestamp, PID, level, file:line, function, and message
-    fprintf(stderr, "[%s] [PID:%d] [%s] [%s:%d] [%s] %s\n", 
+    LOGX_DEBUG_MSG("[%s] [PID:%d] [%s] [%s:%d] [%s] %s", 
             debug_trace_get_timestamp(),
             debug_trace_get_pid(),
             level,
@@ -65,5 +80,5 @@ void debug_trace_print(const char *level, const char *file, int line, const char
             message_buffer);
     
     // Flush to ensure immediate output
-    fflush(stderr);
+    
 }

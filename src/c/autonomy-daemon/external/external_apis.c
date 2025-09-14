@@ -111,14 +111,16 @@ int external_apis_init(void) {
         
         config->api_type = (external_api_type_t)i;
         config->enabled = false; // Disabled by default (requires configuration)
-        safe_strncpy(config->name, external_api_type_to_string((external_api_type_t)i), sizeof(config->name));
+        strncpy(config->name, external_api_type_to_string((external_api_type_t)i), sizeof(config->name) - 1);
+        config->name[sizeof(config->name) - 1] = '\0';
         config->timeout_seconds = 30; // Use configurable timeout
         config->max_requests_per_hour = 100; // Use configurable rate limit
         config->max_requests_per_day = 1000; // Use configurable daily limit
         config->retry_attempts = 3; // Use configurable retry attempts
         config->retry_delay_seconds = 5; // Use configurable retry delay
         config->use_ssl = true;
-        safe_strncpy(config->user_agent, "Autonomy-Daemon/6.1.0", sizeof(config->user_agent));
+        strncpy(config->user_agent, "Autonomy-Daemon/6.1.0", sizeof(config->user_agent) - 1);
+        config->user_agent[sizeof(config->user_agent) - 1] = '\0';
         config->enable_health_monitoring = true; // Use configurable health monitoring
         config->health_check_interval_minutes = 60; // Use configurable health check interval
         config->min_success_rate = 0.8; // Use configurable success rate threshold

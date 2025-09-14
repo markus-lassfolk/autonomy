@@ -5,6 +5,7 @@ This document provides comprehensive solutions for deploying a server-side webho
 ## 🎯 Overview
 
 The webhook receiver will:
+
 - Receive HMAC-signed alerts from `starwatch`
 - Filter out irrelevant issues (old versions, configuration errors)
 - Create GitHub issues with proper labels and assignments
@@ -14,16 +15,19 @@ The webhook receiver will:
 ## 🚀 Solution Options
 
 ### Option 1: GitHub Actions Webhook Receiver (Recommended)
+
 **Pros**: Free, native GitHub integration, easy deployment
 **Cons**: Limited to GitHub ecosystem
 
 ### Option 2: Azure Function Webhook Receiver
+
 **Pros**: Scalable, cost-effective, cloud-native
 **Cons**: Requires Azure account (free credits available)
 
 ## 📋 Requirements
 
 ### Webhook Payload Structure
+
 The receiver expects the following JSON payload from `starwatch`:
 
 ```json
@@ -43,6 +47,7 @@ The receiver expects the following JSON payload from `starwatch`:
 ```
 
 ### Filtering Criteria
+
 1. **Version Filtering**: Only process issues from supported firmware versions
 2. **Configuration vs Code Issues**: Filter out user configuration errors
 3. **Duplicate Detection**: Prevent spam from repeated alerts
@@ -65,6 +70,7 @@ The receiver expects the following JSON payload from `starwatch`:
 5. **Configure Copilot integration** (see Copilot Setup section)
 
 ### Features
+
 - ✅ HMAC signature validation
 - ✅ Version filtering (configurable supported versions)
 - ✅ Intelligent issue deduplication
@@ -75,13 +81,14 @@ The receiver expects the following JSON payload from `starwatch`:
 
 ## ☁️ Azure Function Solution
 
-### Quick Deploy (One-Click)
+### Azure Quick Deploy (One-Click)
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmarkus-lassfolk%2Fautonomy%2Fmain%2Fazure%2Fwebhook-function%2Fazuredeploy.json)
 
-### Manual Setup
+### Azure Manual Setup
 
 1. **Create Azure Function App**:
+
    ```bash
    az group create --name autonomy-webhook --location eastus
    az functionapp create --name autonomy-webhook --storage-account autonomywebhook --consumption-plan-location eastus --resource-group autonomy-webhook --runtime node --functions-version 4
@@ -90,11 +97,13 @@ The receiver expects the following JSON payload from `starwatch`:
 2. **Deploy the function code** (see `/azure/webhook-function/`)
 
 3. **Configure application settings**:
+
    ```bash
    az functionapp config appsettings set --name autonomy-webhook --resource-group autonomy-webhook --settings WEBHOOK_SECRET="your-secret" GITHUB_TOKEN="your-token" SUPPORTED_VERSIONS="RUTX_R_00.07.17,RUTX_R_00.07.18"
    ```
 
-### Features
+### Azure Features
+
 - ✅ Serverless scalability
 - ✅ Built-in monitoring and logging
 - ✅ Cost-effective (free tier available)
@@ -105,6 +114,7 @@ The receiver expects the following JSON payload from `starwatch`:
 ### Automatic Issue Assignment
 
 Configure GitHub Copilot to automatically:
+
 1. **Analyze issues** and suggest fixes
 2. **Create pull requests** for identified problems
 3. **Test solutions** before merging
@@ -144,6 +154,7 @@ rules:
 ## 🔍 Intelligent Filtering
 
 ### Version Filtering
+
 ```javascript
 const SUPPORTED_VERSIONS = [
   'RUTX_R_00.07.17',
@@ -157,6 +168,7 @@ function isSupportedVersion(fw) {
 ```
 
 ### Configuration vs Code Issues
+
 ```javascript
 const CONFIG_ERRORS = [
   'configuration_error',
@@ -177,6 +189,7 @@ function isCodeIssue(scenario, note) {
 ```
 
 ### Duplicate Detection
+
 ```javascript
 function generateIssueKey(payload) {
   return `${payload.device_id}-${payload.scenario}-${payload.severity}`;
@@ -196,12 +209,14 @@ function isDuplicate(issueKey, existingIssues) {
 ## 📊 Monitoring and Analytics
 
 ### GitHub Actions Metrics
+
 - Issue creation rate
 - Filtering effectiveness
 - Copilot resolution rate
 - Response time metrics
 
 ### Azure Function Metrics
+
 - Function execution count
 - Error rates
 - Response times
@@ -241,6 +256,7 @@ WATCH_SECRET=your-secret-key
    - Go to Settings → Pages
    - Set source to "GitHub Actions"
 4. **Test the webhook**:
+
    ```bash
    curl -X POST https://your-username.github.io/your-repo/webhook \
      -H "Content-Type: application/json" \
@@ -274,6 +290,7 @@ WATCH_SECRET=your-secret-key
 ## 📞 Support
 
 For issues with the webhook receiver:
+
 1. Check the GitHub Actions logs or Azure Function logs
 2. Verify webhook configuration in `starwatch`
 3. Test with the provided test scripts

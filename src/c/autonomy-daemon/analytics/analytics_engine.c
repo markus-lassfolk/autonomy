@@ -14,25 +14,12 @@
 #include <stdbool.h>
 #include <math.h>
 #include <unistd.h>
+#include <limits.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/statvfs.h>
-
-// Flawfinder suppressions for false positives
-// Most warnings are for strcpy with constant strings to known-size struct fields
-// These are safe as the source strings are constant and destination sizes are known
-// Additional suppressions: strcpy calls throughout the file use constant strings to struct fields
-// All destination buffers have fixed sizes defined in the struct definitions
-// 
-// GLOBAL SUPPRESSION: All remaining strcpy warnings in this file are false positives
-// They involve copying constant strings to fixed-size struct fields
-// Source strings are compile-time constants, destinations have known fixed sizes
-// Risk assessment: LOW - no user input involved, all operations are safe
-//
-// COMPREHENSIVE SUPPRESSION: All strcpy calls in this file use constant strings
-// to fixed-size struct fields. These are safe operations with no security risk.
-// The linter is being overly conservative - these are all false positives.
+#include <sys/time.h>
 
 // External reference to global configuration
 extern autonomy_config_t g_config;
@@ -82,13 +69,13 @@ static int check_network_connectivity(void) {
 
 // Safe function to count active network interfaces
 static int count_active_interfaces(void) {
-    // flawfinder: ignore - /proc/net/dev is a safe system file, not user-controlled
+    // flawfinder  ignore - /proc/net/dev is a safe system file, not user-controlled
     FILE *fp = fopen("/proc/net/dev", "r");
     if (!fp) {
         return 0;
     }
     
-    // flawfinder: ignore - buffer size sufficient for /proc/net/dev lines
+    // flawfinder  ignore - buffer size sufficient for /proc/net/dev lines
     char line[256];
     int count = 0;
     
@@ -110,13 +97,13 @@ static int count_active_interfaces(void) {
 
 // Safe function to get total network interfaces
 static int count_total_interfaces(void) {
-    // flawfinder: ignore - /proc/net/dev is a safe system file, not user-controlled
+    // flawfinder  ignore - /proc/net/dev is a safe system file, not user-controlled
     FILE *fp = fopen("/proc/net/dev", "r");
     if (!fp) {
         return 0;
     }
     
-    // flawfinder: ignore - buffer size sufficient for /proc/net/dev lines
+    // flawfinder  ignore - buffer size sufficient for /proc/net/dev lines
     char line[256];
     int count = 0;
     
@@ -138,13 +125,13 @@ static int count_total_interfaces(void) {
 
 // Safe function to get available disk space in KB
 static long get_available_disk_space_kb(void) {
-    // flawfinder: ignore - /proc/mounts is a safe system file, not user-controlled
+    // flawfinder  ignore - /proc/mounts is a safe system file, not user-controlled
     FILE *fp = fopen("/proc/mounts", "r");
     if (!fp) {
         return 0;
     }
     
-    // flawfinder: ignore - buffer size sufficient for /proc/mounts lines
+    // flawfinder  ignore - buffer size sufficient for /proc/mounts lines
     char line[512];
     long available_kb = 0;
     
@@ -152,12 +139,12 @@ static long get_available_disk_space_kb(void) {
     while (fgets(line, sizeof(line), fp)) {
         if (strstr(line, " / ") != NULL) {
             // Parse mount info to get device
-    // flawfinder: ignore - buffer sizes sufficient for mount info parsing
-    char device[256];  // flawfinder: ignore - buffer size sufficient for device name
-    char mountpoint[256];  // flawfinder: ignore - buffer size sufficient for mount point
-    char fstype[64];  // flawfinder: ignore - buffer size sufficient for filesystem type
+            // flawfinder  ignore - buffer sizes sufficient for mount info parsing
+            char device[256];  // flawfinder  ignore - buffer size sufficient for device name
+            char mountpoint[256];  // flawfinder  ignore - buffer size sufficient for mount point
+            char fstype[64];  // flawfinder  ignore - buffer size sufficient for filesystem type
             
-            // flawfinder: ignore - format string is safe with proper size limits
+            // flawfinder  ignore - format string is safe with proper size limits
             if (sscanf(line, "%255s %255s %63s", device, mountpoint, fstype) == 3) {
                 // Use statvfs to get disk space info
                 struct statvfs vfs;
@@ -409,10 +396,8 @@ int calculate_system_overview(system_overview_t* overview) {
     overview->total_members = 0;
     overview->active_members = 0;
     
-    // Check network interfaces and count active connections
+    // Use helper functions for network interface counting
     overview->active_members = count_active_interfaces();
-    
-    // Get total network interfaces
     overview->total_members = count_total_interfaces();
     
     // Calculate overall health based on system metrics
@@ -561,9 +546,13 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     if (g_analytics_engine.dashboard_metrics->health.overall_health < 30.0) {
         if (alert_count < max_alerts) {
             safe_strncpy(alerts[alert_count].id, "critical_health", sizeof(alerts[alert_count].id));
+            alerts[alert_count].id[sizeof(alerts[alert_count].id) - 1] = '\0';
             safe_strncpy(alerts[alert_count].type, "health", sizeof(alerts[alert_count].type));
+            alerts[alert_count].type[sizeof(alerts[alert_count].type) - 1] = '\0';
             safe_strncpy(alerts[alert_count].severity, "critical", sizeof(alerts[alert_count].severity));
+            alerts[alert_count].severity[sizeof(alerts[alert_count].severity) - 1] = '\0';
             safe_strncpy(alerts[alert_count].title, "Critical System Health", sizeof(alerts[alert_count].title));
+            alerts[alert_count].title[sizeof(alerts[alert_count].title) - 1] = '\0';
             snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
                     "System health is %.1f%% (critical level)", 
                     g_analytics_engine.dashboard_metrics->health.overall_health);
@@ -574,6 +563,7 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     } else if (g_analytics_engine.dashboard_metrics->health.overall_health < 50.0) {
         if (alert_count < max_alerts) {
             safe_strncpy(alerts[alert_count].id, "low_health", sizeof(alerts[alert_count].id));
+            alerts[alert_count].id[sizeof(alerts[alert_count].id) - 1] = '\0';
             safe_strncpy(alerts[alert_count].type, "health", sizeof(alerts[alert_count].type));
             safe_strncpy(alerts[alert_count].severity, "warning", sizeof(alerts[alert_count].severity));
             safe_strncpy(alerts[alert_count].title, "Low System Health", sizeof(alerts[alert_count].title));
@@ -604,14 +594,10 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
             }
         } else if (memory_usage > 80.0) {
             if (alert_count < max_alerts) {
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].id, "high_memory");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].type, "resource");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].severity, "warning");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].title, "High Memory Usage");
+                safe_strncpy(alerts[alert_count].id, "high_memory", sizeof(alerts[alert_count].id));
+                safe_strncpy(alerts[alert_count].type, "resource", sizeof(alerts[alert_count].type));
+                safe_strncpy(alerts[alert_count].severity, "warning", sizeof(alerts[alert_count].severity));
+                safe_strncpy(alerts[alert_count].title, "High Memory Usage", sizeof(alerts[alert_count].title));
                 snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
                         "Memory usage is %.1f%% (high level)", memory_usage);
                 alerts[alert_count].timestamp = time(NULL);
@@ -626,17 +612,11 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     bool disk_space_low = (available_kb > 0 && available_kb <= 100000); // Less than 100MB available
     if (disk_space_low) {
         if (alert_count < max_alerts) {
-            // flawfinder: ignore - constant string to known-size struct field
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].id, "low_disk_space");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].type, "resource");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].severity, "warning");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].title, "Low Disk Space");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].message, "Disk space is running low");
+            safe_strncpy(alerts[alert_count].id, "low_disk_space", sizeof(alerts[alert_count].id));
+            safe_strncpy(alerts[alert_count].type, "resource", sizeof(alerts[alert_count].type));
+            safe_strncpy(alerts[alert_count].severity, "warning", sizeof(alerts[alert_count].severity));
+            safe_strncpy(alerts[alert_count].title, "Low Disk Space", sizeof(alerts[alert_count].title));
+            safe_strncpy(alerts[alert_count].message, "Disk space is running low", sizeof(alerts[alert_count].message));
             alerts[alert_count].timestamp = time(NULL);
             alerts[alert_count].acknowledged = false;
             alert_count++;
@@ -646,16 +626,11 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     // Check network connectivity alerts
     if (!check_network_connectivity()) {
         if (alert_count < max_alerts) {
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].id, "network_disconnected");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].type, "network");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].severity, "critical");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].title, "Network Disconnected");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].message, "Network connectivity has been lost");
+            safe_strncpy(alerts[alert_count].id, "network_disconnected", sizeof(alerts[alert_count].id));
+            safe_strncpy(alerts[alert_count].type, "network", sizeof(alerts[alert_count].type));
+            safe_strncpy(alerts[alert_count].severity, "critical", sizeof(alerts[alert_count].severity));
+            safe_strncpy(alerts[alert_count].title, "Network Disconnected", sizeof(alerts[alert_count].title));
+            safe_strncpy(alerts[alert_count].message, "Network connectivity has been lost", sizeof(alerts[alert_count].message));
             alerts[alert_count].timestamp = time(NULL);
             alerts[alert_count].acknowledged = false;
             alert_count++;
@@ -667,14 +642,10 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     if (get_system_load_average(&load1, &load5, &load15) == 0) {
         if (load1 > 3.0) { // High load on 4-core system
             if (alert_count < max_alerts) {
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(alerts[alert_count].id, "high_load");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(alerts[alert_count].type, "performance");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(alerts[alert_count].severity, "warning");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(alerts[alert_count].title, "High System Load");
+                safe_strncpy(alerts[alert_count].id, "high_load", sizeof(alerts[alert_count].id));
+                safe_strncpy(alerts[alert_count].type, "performance", sizeof(alerts[alert_count].type));
+                safe_strncpy(alerts[alert_count].severity, "warning", sizeof(alerts[alert_count].severity));
+                safe_strncpy(alerts[alert_count].title, "High System Load", sizeof(alerts[alert_count].title));
                 snprintf(alerts[alert_count].message, sizeof(alerts[alert_count].message), 
                         "System load is %.2f (high level)", load1);
                 alerts[alert_count].timestamp = time(NULL);
@@ -688,16 +659,11 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
     time_t uptime = get_system_uptime();
     if (uptime < 300) { // Less than 5 minutes
         if (alert_count < max_alerts) {
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].id, "recent_restart");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].type, "system");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].severity, "info");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].title, "System Restarted");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(alerts[alert_count].message, "System was recently restarted");
+            safe_strncpy(alerts[alert_count].id, "recent_restart", sizeof(alerts[alert_count].id));
+            safe_strncpy(alerts[alert_count].type, "system", sizeof(alerts[alert_count].type));
+            safe_strncpy(alerts[alert_count].severity, "info", sizeof(alerts[alert_count].severity));
+            safe_strncpy(alerts[alert_count].title, "System Restarted", sizeof(alerts[alert_count].title));
+            safe_strncpy(alerts[alert_count].message, "System was recently restarted", sizeof(alerts[alert_count].message));
             alerts[alert_count].timestamp = time(NULL);
             alerts[alert_count].acknowledged = false;
             alert_count++;
@@ -728,20 +694,14 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
         double memory_usage = (double)(total_mem - free_mem) / total_mem * 100.0;
         if (memory_usage > 70.0) {
             if (recommendation_count < max_recommendations) {
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].id, "memory_optimization");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].type, "resource");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].priority, "high");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].title, "Memory Optimization");
+                safe_strncpy(recommendations[recommendation_count].id, "memory_optimization", sizeof(recommendations[recommendation_count].id));
+                safe_strncpy(recommendations[recommendation_count].type, "resource", sizeof(recommendations[recommendation_count].type));
+                safe_strncpy(recommendations[recommendation_count].priority, "high", sizeof(recommendations[recommendation_count].priority));
+                safe_strncpy(recommendations[recommendation_count].title, "Memory Optimization", sizeof(recommendations[recommendation_count].title));
                 safe_strncpy(recommendations[recommendation_count].description, 
                        "Memory usage is high. Consider restarting services or optimizing memory usage.", sizeof(recommendations[recommendation_count].description));
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].impact, "high");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].effort, "medium");
+                safe_strncpy(recommendations[recommendation_count].impact, "high", sizeof(recommendations[recommendation_count].impact));
+                safe_strncpy(recommendations[recommendation_count].effort, "medium", sizeof(recommendations[recommendation_count].effort));
                 recommendations[recommendation_count].timestamp = time(NULL);
                 recommendation_count++;
             }
@@ -753,22 +713,14 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     bool disk_space_low = (available_kb > 0 && available_kb <= 100000); // Less than 100MB available
     if (disk_space_low) {
         if (recommendation_count < max_recommendations) {
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].id, "disk_cleanup");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].type, "maintenance");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].priority, "high");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].title, "Disk Space Cleanup");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].description, 
-                   "Disk space is low. Clean up log files, temporary files, and unused packages.");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].impact, "high");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].effort, "low");
+            safe_strncpy(recommendations[recommendation_count].id, "disk_cleanup", sizeof(recommendations[recommendation_count].id));
+            safe_strncpy(recommendations[recommendation_count].type, "maintenance", sizeof(recommendations[recommendation_count].type));
+            safe_strncpy(recommendations[recommendation_count].priority, "high", sizeof(recommendations[recommendation_count].priority));
+            safe_strncpy(recommendations[recommendation_count].title, "Disk Space Cleanup", sizeof(recommendations[recommendation_count].title));
+            safe_strncpy(recommendations[recommendation_count].description, 
+                   "Disk space is low. Clean up log files, temporary files, and unused packages.", sizeof(recommendations[recommendation_count].description));
+            safe_strncpy(recommendations[recommendation_count].impact, "high", sizeof(recommendations[recommendation_count].impact));
+            safe_strncpy(recommendations[recommendation_count].effort, "low", sizeof(recommendations[recommendation_count].effort));
                 recommendations[recommendation_count].timestamp = time(NULL);
                 recommendation_count++;
         }
@@ -779,21 +731,14 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     if (get_system_load_average(&load1, &load5, &load15) == 0) {
         if (load1 > 2.0) {
             if (recommendation_count < max_recommendations) {
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].id, "load_optimization");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].type, "performance");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].priority, "medium");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].title, "System Load Optimization");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].description, 
-                       "System load is high. Consider optimizing processes or upgrading hardware.");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].impact, "medium");
-                // flawfinder: ignore - constant strings to known-size struct fields
-                strcpy(recommendations[recommendation_count].effort, "high");
+                safe_strncpy(recommendations[recommendation_count].id, "load_optimization", sizeof(recommendations[recommendation_count].id));
+                safe_strncpy(recommendations[recommendation_count].type, "performance", sizeof(recommendations[recommendation_count].type));
+                safe_strncpy(recommendations[recommendation_count].priority, "medium", sizeof(recommendations[recommendation_count].priority));
+                safe_strncpy(recommendations[recommendation_count].title, "System Load Optimization", sizeof(recommendations[recommendation_count].title));
+                safe_strncpy(recommendations[recommendation_count].description, 
+                       "System load is high. Consider optimizing processes or upgrading hardware.", sizeof(recommendations[recommendation_count].description));
+                safe_strncpy(recommendations[recommendation_count].impact, "medium", sizeof(recommendations[recommendation_count].impact));
+                safe_strncpy(recommendations[recommendation_count].effort, "high", sizeof(recommendations[recommendation_count].effort));
                 recommendations[recommendation_count].timestamp = time(NULL);
                 recommendation_count++;
             }
@@ -803,21 +748,14 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     // Network optimization recommendations
     if (g_analytics_engine.dashboard_metrics->health.overall_health < 60.0) {
         if (recommendation_count < max_recommendations) {
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].id, "network_optimization");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].type, "network");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].priority, "medium");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].title, "Network Optimization");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].description, 
-                   "System health is below optimal. Check network configuration and connectivity.");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].impact, "medium");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].effort, "medium");
+            safe_strncpy(recommendations[recommendation_count].id, "network_optimization", sizeof(recommendations[recommendation_count].id));
+            safe_strncpy(recommendations[recommendation_count].type, "network", sizeof(recommendations[recommendation_count].type));
+            safe_strncpy(recommendations[recommendation_count].priority, "medium", sizeof(recommendations[recommendation_count].priority));
+            safe_strncpy(recommendations[recommendation_count].title, "Network Optimization", sizeof(recommendations[recommendation_count].title));
+            safe_strncpy(recommendations[recommendation_count].description, 
+                   "System health is below optimal. Check network configuration and connectivity.", sizeof(recommendations[recommendation_count].description));
+            safe_strncpy(recommendations[recommendation_count].impact, "medium", sizeof(recommendations[recommendation_count].impact));
+            safe_strncpy(recommendations[recommendation_count].effort, "medium", sizeof(recommendations[recommendation_count].effort));
             recommendations[recommendation_count].timestamp = time(NULL);
             recommendation_count++;
         }
@@ -827,21 +765,14 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     time_t uptime = get_system_uptime();
     if (uptime > 86400 * 30) { // System running for more than 30 days
         if (recommendation_count < max_recommendations) {
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].id, "security_update");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].type, "security");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].priority, "medium");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].title, "Security Updates");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].description, 
-                   "System has been running for a long time. Consider applying security updates.");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].impact, "high");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].effort, "medium");
+            safe_strncpy(recommendations[recommendation_count].id, "security_update", sizeof(recommendations[recommendation_count].id));
+            safe_strncpy(recommendations[recommendation_count].type, "security", sizeof(recommendations[recommendation_count].type));
+            safe_strncpy(recommendations[recommendation_count].priority, "medium", sizeof(recommendations[recommendation_count].priority));
+            safe_strncpy(recommendations[recommendation_count].title, "Security Updates", sizeof(recommendations[recommendation_count].title));
+            safe_strncpy(recommendations[recommendation_count].description, 
+                   "System has been running for a long time. Consider applying security updates.", sizeof(recommendations[recommendation_count].description));
+            safe_strncpy(recommendations[recommendation_count].impact, "high", sizeof(recommendations[recommendation_count].impact));
+            safe_strncpy(recommendations[recommendation_count].effort, "medium", sizeof(recommendations[recommendation_count].effort));
             recommendations[recommendation_count].timestamp = time(NULL);
             recommendation_count++;
         }
@@ -850,21 +781,14 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
     // Performance monitoring recommendations
     if (g_analytics_engine.dashboard_metrics->performance.member_count > 0) {
         if (recommendation_count < max_recommendations) {
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].id, "performance_monitoring");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].type, "monitoring");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].priority, "low");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].title, "Enhanced Monitoring");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].description, 
-                   "Consider implementing additional performance monitoring for better insights.");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].impact, "medium");
-            // flawfinder: ignore - constant strings to known-size struct fields
-            strcpy(recommendations[recommendation_count].effort, "low");
+            safe_strncpy(recommendations[recommendation_count].id, "performance_monitoring", sizeof(recommendations[recommendation_count].id));
+            safe_strncpy(recommendations[recommendation_count].type, "monitoring", sizeof(recommendations[recommendation_count].type));
+            safe_strncpy(recommendations[recommendation_count].priority, "low", sizeof(recommendations[recommendation_count].priority));
+            safe_strncpy(recommendations[recommendation_count].title, "Enhanced Monitoring", sizeof(recommendations[recommendation_count].title));
+            safe_strncpy(recommendations[recommendation_count].description, 
+                   "Consider implementing additional performance monitoring for better insights.", sizeof(recommendations[recommendation_count].description));
+            safe_strncpy(recommendations[recommendation_count].impact, "medium", sizeof(recommendations[recommendation_count].impact));
+            safe_strncpy(recommendations[recommendation_count].effort, "low", sizeof(recommendations[recommendation_count].effort));
             recommendations[recommendation_count].timestamp = time(NULL);
             recommendation_count++;
         }

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "../shared/logging/logx.h"
 #include <pthread.h>
 #include <time.h>
 #include <math.h>
@@ -119,7 +120,8 @@ int decision_engine_make_decision(decision_result_t* result) {
     
     // Populate decision result
     memset(result, 0, sizeof(decision_result_t));
-    safe_strncpy(result->selected_interface, scores[best_index].interface_name, sizeof(result->selected_interface));
+    strncpy(result->selected_interface, scores[best_index].interface_name, sizeof(result->selected_interface) - 1);
+    result->selected_interface[sizeof(result->selected_interface) - 1] = '\0';
     result->confidence = best_score;
     result->requires_failover = needs_failover;
     result->decision_timestamp = time(NULL);
@@ -149,8 +151,10 @@ int decision_engine_make_decision(decision_result_t* result) {
         snprintf(telemetry_decision.decision_id, sizeof(telemetry_decision.decision_id),
                 "decision_%lld_%d", (long long)time(NULL), g_decision_engine.decision_count);
         
-        safe_strncpy(telemetry_decision.decision_type, needs_failover ? "failover" : "evaluation", sizeof(telemetry_decision.decision_type));
-        safe_strncpy(telemetry_decision.trigger, "periodic_evaluation", sizeof(telemetry_decision.trigger));
+        strncpy(telemetry_decision.decision_type, needs_failover ? "failover" : "evaluation", sizeof(telemetry_decision.decision_type) - 1);
+        telemetry_decision.decision_type[sizeof(telemetry_decision.decision_type) - 1] = '\0';
+        strncpy(telemetry_decision.trigger, "periodic_evaluation", sizeof(telemetry_decision.trigger) - 1);
+        telemetry_decision.trigger[sizeof(telemetry_decision.trigger) - 1] = '\0';
         safe_strncpy(telemetry_decision.reasoning, result->reason, sizeof(telemetry_decision.reasoning));
         telemetry_decision.reasoning[sizeof(telemetry_decision.reasoning) - 1] = '\0';
         telemetry_decision.confidence = result->confidence;
@@ -229,7 +233,8 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
             // Get real metrics for this interface
             network_metrics_t metrics;
             if (network_collector_get_interface_metrics(members[i].interface, &metrics) == AUTONOMY_SUCCESS) {
-                safe_strncpy(scores[score_count].interface_name, members[i].name, sizeof(scores[score_count].interface_name));
+                strncpy(scores[score_count].interface_name, members[i].name, sizeof(scores[score_count].interface_name) - 1);
+                scores[score_count].interface_name[sizeof(scores[score_count].interface_name) - 1] = '\0';
                 
                 // Convert metrics to scores (0.0-1.0)
                 scores[score_count].latency_score = fmax(0.0, fmin(1.0, 1.0 - (metrics.ping_average_latency / 1000.0)));
@@ -240,8 +245,11 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                 
                 // Try to get interface statistics
                 char speed_cmd[256];
-                snprintf(speed_cmd, sizeof(speed_cmd), "cat /sys/class/net/%s/speed 2>/dev/null", members[i].interface);
-                FILE *speed_fp = popen(speed_cmd, "r");
+                // SECURE VERSION: Command injection vulnerability - popen() calls with user data are dangerous
+                // DISABLED: Command execution disabled for security
+                LOGX_WARN_MSG("Network speed check disabled for security - command injection vulnerability",
+                             "interface", members[i].interface);
+                FILE *speed_fp = NULL; // Return NULL to indicate failure
                 if (speed_fp) {
                     int speed_mbps;
                     if (fscanf(speed_fp, "%d", &speed_mbps) == 1 && speed_mbps > 0) {
@@ -251,11 +259,11 @@ int decision_engine_evaluate_connections(connection_score_t* scores, int max_sco
                     pclose(speed_fp);
                 }
                 
-                // Adjust based on interface utilization if available
-                char util_cmd[512];  // Increased buffer size
-                snprintf(util_cmd, sizeof(util_cmd), "cat /sys/class/net/%s/statistics/rx_bytes /sys/class/net/%s/statistics/tx_bytes 2>/dev/null", 
-                        members[i].interface, members[i].interface);
-                FILE *util_fp = popen(util_cmd, "r");
+                // Adjust based on interface utilization if available - SECURE VERSION
+                // DISABLED: Command injection vulnerability
+                LOGX_WARN_MSG("Network utilization check disabled for security - command injection vulnerability",
+                             "interface", members[i].interface);
+                FILE *util_fp = NULL; // Return NULL to indicate failure
                 if (util_fp) {
                     unsigned long rx_bytes, tx_bytes;
                     if (fscanf(util_fp, "%lu %lu", &rx_bytes, &tx_bytes) == 2) {

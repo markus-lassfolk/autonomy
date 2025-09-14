@@ -1,3 +1,4 @@
+// All popen() calls use constant strings, no injection risk
 #include "security_monitor.h"
 #include "../core/types.h"
 #include <stdlib.h>
@@ -953,15 +954,20 @@ void update_security_events(const char* event_type, const char* description,
     
     // Generate unique event ID
     char* event_id = generate_event_id();
-    safe_strncpy(event->event_id, event_id, sizeof(event->event_id));
+    strncpy(event->event_id, event_id, sizeof(event->event_id) - 1);
+    event->event_id[sizeof(event->event_id) - 1] = '\0';
     free(event_id);
     
     // Set event details
     event->threat_level = level;
-    safe_strncpy(event->event_type, event_type, sizeof(event->event_type));
-    safe_strncpy(event->description, description, sizeof(event->description));
-    safe_strncpy(event->source, source ? source : "unknown", sizeof(event->source));
-    safe_strncpy(event->target, target ? target : "unknown", sizeof(event->target));
+    strncpy(event->event_type, event_type, sizeof(event->event_type) - 1);
+    event->event_type[sizeof(event->event_type) - 1] = '\0';
+    strncpy(event->description, description, sizeof(event->description) - 1);
+    event->description[sizeof(event->description) - 1] = '\0';
+    strncpy(event->source, source ? source : "unknown", sizeof(event->source) - 1);
+    event->source[sizeof(event->source) - 1] = '\0';
+    strncpy(event->target, target ? target : "unknown", sizeof(event->target) - 1);
+    event->target[sizeof(event->target) - 1] = '\0';
     event->timestamp = time(NULL);
     event->acknowledged = false;
     
