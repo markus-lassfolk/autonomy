@@ -89,69 +89,75 @@ static void print_backtrace(void) {
     char **strings;
     size_t i;
 
-    LOGX_ERROR_MSG("\n=== BACKTRACE ===");
+    fprintf(stderr, "\n=== BACKTRACE ===\n");
     size = backtrace(array, 20);
     strings = backtrace_symbols(array, size);
 
     if (strings != NULL) {
         for (i = 0; i < size; i++) {
-            LOGX_ERROR_MSG("[%zu] %s", i, strings[i]);
+            fprintf(stderr, "[%zu] %s\n", i, strings[i]);
         }
         free(strings);
     }
-    LOGX_ERROR_MSG("=== END BACKTRACE ===");
+    fprintf(stderr, "=== END BACKTRACE ===\n");
 #else
-    LOGX_ERROR_MSG("\n=== BACKTRACE ===");
-    LOGX_ERROR_MSG("Backtrace not available (not using GNU libc)");
-    LOGX_ERROR_MSG("=== END BACKTRACE ===");
+    fprintf(stderr, "\n=== BACKTRACE ===\n");
+    fprintf(stderr, "Backtrace not available (not using GNU libc)\n");
+    fprintf(stderr, "=== END BACKTRACE ===\n");
 #endif
 }
 
 static void crash_handler(int sig, siginfo_t *info, void *context) {
-    LOGX_FATAL_MSG("\n=== CRASH DETECTED ===");
-    LOGX_FATAL_MSG("Signal: %d (%s)", sig, strsignal(sig));
-    LOGX_FATAL_MSG("Signal code: %d", info->si_code);
-    LOGX_FATAL_MSG("Fault address: %p", info->si_addr);
-    LOGX_FATAL_MSG("PID: %d", getpid());
-    LOGX_FATAL_MSG("UID: %d", getuid());
+    fprintf(stderr, "\n=== CRASH DETECTED ===\n");
+    fprintf(stderr, "Signal: %d (%s)\n", sig, strsignal(sig));
+    fprintf(stderr, "Signal code: %d\n", info->si_code);
+    fprintf(stderr, "Fault address: %p\n", info->si_addr);
+    fprintf(stderr, "PID: %d\n", getpid());
+    fprintf(stderr, "UID: %d\n", getuid());
     
     // CRITICAL: Skip memory corruption analysis to prevent recursive crashes
-    LOGX_FATAL_MSG("\n=== MEMORY CORRUPTION ANALYSIS ===");
-    LOGX_FATAL_MSG("Memory corruption analysis disabled to prevent recursive crashes");
-    LOGX_FATAL_MSG("=== END MEMORY CORRUPTION ANALYSIS ===");
+    fprintf(stderr, "\n=== MEMORY CORRUPTION ANALYSIS ===\n");
+    fprintf(stderr, "Memory corruption analysis disabled to prevent recursive crashes\n");
+    fprintf(stderr, "=== END MEMORY CORRUPTION ANALYSIS ===\n");
     
     // Enhanced signal-specific information
     switch (sig) {
         case SIGSEGV:
-            LOGX_FATAL_MSG("SEGFAULT: Invalid memory access at %p", info->si_addr);
+            fprintf(stderr, "SEGFAULT: Invalid memory access at %p\n", info->si_addr);
             if (info->si_code == SEGV_MAPERR) {
-                LOGX_FATAL_MSG("Cause: Address not mapped to object");
+                fprintf(stderr, "Cause: Address not mapped to object\n");
             } else if (info->si_code == SEGV_ACCERR) {
-                LOGX_FATAL_MSG("Cause: Invalid permissions for mapped object");
+                fprintf(stderr, "Cause: Invalid permissions for mapped object\n");
             }
             break;
         case SIGBUS:
-            LOGX_FATAL_MSG("BUS ERROR: Invalid memory access at %p", info->si_addr);
+            fprintf(stderr, "BUS ERROR: Invalid memory access at %p\n", info->si_addr);
             break;
         case SIGFPE:
-            LOGX_FATAL_MSG("FLOATING POINT EXCEPTION: Division by zero or invalid operation");
+            fprintf(stderr, "FLOATING POINT EXCEPTION: Division by zero or invalid operation\n");
             break;
         case SIGILL:
-            LOGX_FATAL_MSG("ILLEGAL INSTRUCTION: Invalid instruction executed");
+            fprintf(stderr, "ILLEGAL INSTRUCTION: Invalid instruction executed\n");
             break;
         default:
-            LOGX_FATAL_MSG("UNKNOWN SIGNAL: %d", sig);
+            fprintf(stderr, "UNKNOWN SIGNAL: %d\n", sig);
             break;
     }
     
-    // Simplified crash info to prevent recursive crashes
-    LOGX_FATAL_MSG("\n=== SIMPLIFIED CRASH INFO ===");
-    LOGX_FATAL_MSG("Current function: crash_handler");
-    LOGX_FATAL_MSG("Signal: %d (%s)", sig, strsignal(sig));
-    LOGX_FATAL_MSG("Fault address: %p", info->si_addr);
-    LOGX_FATAL_MSG("=== END SIMPLIFIED CRASH INFO ===");
+    // Print backtrace for debugging
+    print_backtrace();
     
-    LOGX_FATAL_MSG("=== CRASH END ===");
+    // Print memory info
+    print_memory_info();
+    
+    // Simplified crash info to prevent recursive crashes
+    fprintf(stderr, "\n=== SIMPLIFIED CRASH INFO ===\n");
+    fprintf(stderr, "Current function: crash_handler\n");
+    fprintf(stderr, "Signal: %d (%s)\n", sig, strsignal(sig));
+    fprintf(stderr, "Fault address: %p\n", info->si_addr);
+    fprintf(stderr, "=== END SIMPLIFIED CRASH INFO ===\n");
+    
+    fprintf(stderr, "=== CRASH END ===\n");
     
     
     // Log the crash reason before exiting
@@ -214,17 +220,17 @@ static void print_memory_info(void) {
     FILE *status = fopen("/proc/self/status", "r");
     if (status) {
         char line[256];
-        LOGX_FATAL_MSG("\n=== MEMORY STATUS ===");
+        fprintf(stderr, "\n=== MEMORY STATUS ===\n");
         while (fgets(line, sizeof(line), status)) {
             if (strstr(line, "VmSize") || strstr(line, "VmRSS") || 
                 strstr(line, "VmPeak") || strstr(line, "VmHWM") ||
                 strstr(line, "VmData") || strstr(line, "VmStk") ||
                 strstr(line, "VmExe") || strstr(line, "VmLib")) {
-                LOGX_FATAL_MSG("%s", line);
+                fprintf(stderr, "%s", line);
             }
         }
         fclose(status);
-        LOGX_FATAL_MSG("=== END MEMORY STATUS ===");
+        fprintf(stderr, "=== END MEMORY STATUS ===\n");
     }
 }
 
@@ -313,13 +319,13 @@ static void log_exit_reason(exit_reason_t reason, const char *message) {
         default: reason_str = "UNKNOWN"; break;
     }
     
-    // Log to stderr (always visible)
-    LOGX_ERROR_MSG("\n=== DAEMON EXIT ===");
-    LOGX_ERROR_MSG("Exit Reason: %s", reason_str);
-    LOGX_ERROR_MSG("Exit Message: %s", g_exit_message);
-    LOGX_ERROR_MSG("Timestamp: %lld", (long long)time(NULL));
-    LOGX_ERROR_MSG("PID: %d", getpid());
-    LOGX_ERROR_MSG("==================");
+    // Log to stderr (always visible) - use fprintf for critical errors
+    fprintf(stderr, "\n=== DAEMON EXIT ===\n");
+    fprintf(stderr, "Exit Reason: %s\n", reason_str);
+    fprintf(stderr, "Exit Message: %s\n", g_exit_message);
+    fprintf(stderr, "Timestamp: %lld\n", (long long)time(NULL));
+    fprintf(stderr, "PID: %d\n", getpid());
+    fprintf(stderr, "==================\n");
     
     // Also log via LOGX if available
     LOGX_ERROR_MSG("DAEMON EXIT: Reason=%s, Message=%s, PID=%d", reason_str, g_exit_message, getpid());
@@ -870,51 +876,51 @@ int main(int argc, char **argv)
 
 // Enhanced debugging functions
 static void print_register_state(ucontext_t *context) {
-    LOGX_FATAL_MSG("=== REGISTER STATE ===");
+    fprintf(stderr, "=== REGISTER STATE ===\n");
 #if defined(__arm__)
-    LOGX_FATAL_MSG("Program counter: %p", (void*)context->uc_mcontext.arm_pc);
-    LOGX_FATAL_MSG("Stack pointer: %p", (void*)context->uc_mcontext.arm_sp);
-    LOGX_FATAL_MSG("Link register: %p", (void*)context->uc_mcontext.arm_lr);
-    LOGX_FATAL_MSG("Frame pointer: %p", (void*)context->uc_mcontext.arm_fp);
-    LOGX_FATAL_MSG("General registers: ");
-    LOGX_FATAL_MSG("r0=0x%lx r1=0x%lx r2=0x%lx r3=0x%lx", 
+    fprintf(stderr, "Program counter: %p\n", (void*)context->uc_mcontext.arm_pc);
+    fprintf(stderr, "Stack pointer: %p\n", (void*)context->uc_mcontext.arm_sp);
+    fprintf(stderr, "Link register: %p\n", (void*)context->uc_mcontext.arm_lr);
+    fprintf(stderr, "Frame pointer: %p\n", (void*)context->uc_mcontext.arm_fp);
+    fprintf(stderr, "General registers:\n");
+    fprintf(stderr, "r0=0x%lx r1=0x%lx r2=0x%lx r3=0x%lx\n", 
             (unsigned long)context->uc_mcontext.arm_r0,
             (unsigned long)context->uc_mcontext.arm_r1,
             (unsigned long)context->uc_mcontext.arm_r2,
             (unsigned long)context->uc_mcontext.arm_r3);
-    LOGX_FATAL_MSG("r4=0x%lx r5=0x%lx r6=0x%lx r7=0x%lx",
+    fprintf(stderr, "r4=0x%lx r5=0x%lx r6=0x%lx r7=0x%lx\n",
             (unsigned long)context->uc_mcontext.arm_r4,
             (unsigned long)context->uc_mcontext.arm_r5,
             (unsigned long)context->uc_mcontext.arm_r6,
             (unsigned long)context->uc_mcontext.arm_r7);
-    LOGX_FATAL_MSG("r8=0x%lx r9=0x%lx r10=0x%lx",
+    fprintf(stderr, "r8=0x%lx r9=0x%lx r10=0x%lx\n",
             (unsigned long)context->uc_mcontext.arm_r8,
             (unsigned long)context->uc_mcontext.arm_r9,
             (unsigned long)context->uc_mcontext.arm_r10);
 #elif defined(__aarch64__)
-    LOGX_FATAL_MSG("Program counter: %p", (void*)context->uc_mcontext.pc);
-    LOGX_FATAL_MSG("Stack pointer: %p", (void*)context->uc_mcontext.sp);
-    LOGX_FATAL_MSG("Link register: %p", (void*)context->uc_mcontext.regs[30]);
+    fprintf(stderr, "Program counter: %p\n", (void*)context->uc_mcontext.pc);
+    fprintf(stderr, "Stack pointer: %p\n", (void*)context->uc_mcontext.sp);
+    fprintf(stderr, "Link register: %p\n", (void*)context->uc_mcontext.regs[30]);
 #else
-    LOGX_FATAL_MSG("Register state not available for this architecture");
+    fprintf(stderr, "Register state not available for this architecture\n");
 #endif
-    LOGX_FATAL_MSG("=== END REGISTER STATE ===");
+    fprintf(stderr, "=== END REGISTER STATE ===\n");
 }
 
 static void print_stack_trace_arm(ucontext_t *context) {
-    LOGX_FATAL_MSG("=== ARM STACK TRACE ===");
+    fprintf(stderr, "=== ARM STACK TRACE ===\n");
 #if defined(__arm__)
     void *pc = (void*)context->uc_mcontext.arm_pc;
     void *sp = (void*)context->uc_mcontext.arm_sp;
     void *lr = (void*)context->uc_mcontext.arm_lr;
     
-    LOGX_FATAL_MSG("PC (Program Counter): %p", pc);
-    LOGX_FATAL_MSG("SP (Stack Pointer): %p", sp);
-    LOGX_FATAL_MSG("LR (Link Register): %p", lr);
+    fprintf(stderr, "PC (Program Counter): %p\n", pc);
+    fprintf(stderr, "SP (Stack Pointer): %p\n", sp);
+    fprintf(stderr, "LR (Link Register): %p\n", lr);
     
     // Try to read stack frames
     void **frame_ptr = (void**)sp;
-    LOGX_FATAL_MSG("Stack frames (up to 10):");
+    fprintf(stderr, "Stack frames (up to 10):\n");
     for (int i = 0; i < 10 && frame_ptr; i++) {
         void *return_addr = frame_ptr[0];
         void *next_frame = frame_ptr[1];
@@ -922,24 +928,24 @@ static void print_stack_trace_arm(ucontext_t *context) {
         if (return_addr == NULL || next_frame == NULL) break;
         if ((uintptr_t)return_addr < 0x1000 || (uintptr_t)return_addr > 0x7fffffff) break;
         
-        LOGX_FATAL_MSG("  Frame %d: return_addr=%p, next_frame=%p", i, return_addr, next_frame);
+        fprintf(stderr, "  Frame %d: return_addr=%p, next_frame=%p\n", i, return_addr, next_frame);
         frame_ptr = (void**)next_frame;
     }
 #else
-    LOGX_FATAL_MSG("ARM stack trace not available for this architecture");
+    fprintf(stderr, "ARM stack trace not available for this architecture\n");
 #endif
-    LOGX_FATAL_MSG("=== END ARM STACK TRACE ===");
+    fprintf(stderr, "=== END ARM STACK TRACE ===\n");
 }
 
 static void validate_memory_before_access(void *ptr, size_t size, const char *location) {
     if (!ptr) {
-        LOGX_FATAL_MSG("ERROR: NULL pointer access at %s", location);
+        fprintf(stderr, "ERROR: NULL pointer access at %s\n", location);
         abort();
     }
     
     // Check if pointer is in valid memory range
     if ((uintptr_t)ptr < 0x1000 || (uintptr_t)ptr > 0x7fffffff) {
-        LOGX_FATAL_MSG("ERROR: Invalid pointer %p at %s", ptr, location);
+        fprintf(stderr, "ERROR: Invalid pointer %p at %s\n", ptr, location);
         abort();
     }
     
