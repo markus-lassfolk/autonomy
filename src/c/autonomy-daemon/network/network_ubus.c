@@ -142,27 +142,27 @@ int autonomy_network_interfaces_detailed(struct ubus_context *uctx, struct ubus_
         void *iface = blobmsg_open_table(&bb, NULL);
         
         // Basic info
-        blobmsg_add_string(&bb, "name", interfaces[i].name);
-        blobmsg_add_string(&bb, "friendly_name", interfaces[i].friendly_name);
-        blobmsg_add_string(&bb, "type", interfaces[i].type);
-        blobmsg_add_string(&bb, "subtype", interfaces[i].subtype);
+        blobmsg_add_string(&bb, "name", interfaces[i].name ? interfaces[i].name : "unknown");
+        blobmsg_add_string(&bb, "friendly_name", interfaces[i].friendly_name ? interfaces[i].friendly_name : "unknown");
+        blobmsg_add_string(&bb, "type", interfaces[i].type ? interfaces[i].type : "unknown");
+        blobmsg_add_string(&bb, "subtype", interfaces[i].subtype ? interfaces[i].subtype : "unknown");
         
         // Network configuration
         blobmsg_add_u8(&bb, "up", interfaces[i].up);
-        blobmsg_add_string(&bb, "ip_address", interfaces[i].ip_address);
-        blobmsg_add_string(&bb, "gateway", interfaces[i].gateway);
-        blobmsg_add_string(&bb, "mac_address", interfaces[i].mac_address);
+        blobmsg_add_string(&bb, "ip_address", interfaces[i].ip_address ? interfaces[i].ip_address : "not_set");
+        blobmsg_add_string(&bb, "gateway", interfaces[i].gateway ? interfaces[i].gateway : "not_set");
+        blobmsg_add_string(&bb, "mac_address", interfaces[i].mac_address ? interfaces[i].mac_address : "not_set");
         blobmsg_add_u32(&bb, "mtu", interfaces[i].mtu);
         blobmsg_add_u32(&bb, "metric", interfaces[i].metric);
-        blobmsg_add_string(&bb, "dns_servers", interfaces[i].dns_servers);
-        blobmsg_add_string(&bb, "protocol", interfaces[i].protocol);
-        blobmsg_add_string(&bb, "device", interfaces[i].device);
+        blobmsg_add_string(&bb, "dns_servers", interfaces[i].dns_servers ? interfaces[i].dns_servers : "not_set");
+        blobmsg_add_string(&bb, "protocol", interfaces[i].protocol ? interfaces[i].protocol : "not_set");
+        blobmsg_add_string(&bb, "device", interfaces[i].device ? interfaces[i].device : "not_set");
         
         // MWAN3 info
-        blobmsg_add_string(&bb, "mwan3_name", interfaces[i].mwan3_name);
+        blobmsg_add_string(&bb, "mwan3_name", interfaces[i].mwan3_name ? interfaces[i].mwan3_name : "not_set");
         blobmsg_add_u8(&bb, "mwan3_tracking_enabled", interfaces[i].mwan3_tracking_enabled);
         blobmsg_add_u8(&bb, "mwan3_available", interfaces[i].mwan3_available);
-        blobmsg_add_string(&bb, "mwan3_status", interfaces[i].mwan3_status);
+        blobmsg_add_string(&bb, "mwan3_status", interfaces[i].mwan3_status ? interfaces[i].mwan3_status : "not_set");
         blobmsg_add_u32(&bb, "mwan3_metric", interfaces[i].mwan3_metric);
         
         // VPN info

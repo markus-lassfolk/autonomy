@@ -144,7 +144,7 @@ int autonomy_log_status(struct ubus_context *uctx, struct ubus_object *obj,
     blob_buf_init(&bb, 0);
     blobmsg_add_string(&bb, "log_level", log_level_str);
     blobmsg_add_string(&bb, "log_destination", "syslog");
-    blobmsg_add_string(&bb, "log_file", g_config.log_file);
+    blobmsg_add_string(&bb, "log_file", g_config.log_file ? g_config.log_file : "not_set");
     blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
     
     ubus_send_reply(uctx, req, bb.head);
@@ -159,11 +159,11 @@ int autonomy_config_status(struct ubus_context *uctx, struct ubus_object *obj,
     struct blob_buf bb = {0};
 
     blob_buf_init(&bb, 0);
-    blobmsg_add_string(&bb, "config_file", g_config.config_file);
+    blobmsg_add_string(&bb, "config_file", g_config.config_file ? g_config.config_file : "not_set");
     blobmsg_add_u8(&bb, "daemon_mode", g_config.daemon_mode);
     blobmsg_add_u8(&bb, "debug_mode", g_config.debug_mode);
     blobmsg_add_u32(&bb, "log_level", g_config.log_level);
-    blobmsg_add_string(&bb, "log_file", g_config.log_file);
+    blobmsg_add_string(&bb, "log_file", g_config.log_file ? g_config.log_file : "not_set");
     blobmsg_add_u32(&bb, "pid_file_timeout", g_config.pid_file_timeout);
     
     // Network settings
@@ -183,7 +183,7 @@ int autonomy_config_status(struct ubus_context *uctx, struct ubus_object *obj,
     // Starlink settings
     blobmsg_add_u32(&bb, "starlink_check_interval", g_config.starlink_check_interval);
     blobmsg_add_u8(&bb, "starlink_health_monitoring", g_config.starlink_health_monitoring);
-    blobmsg_add_string(&bb, "starlink_host", g_config.starlink_host);
+    blobmsg_add_string(&bb, "starlink_host", g_config.starlink_host ? g_config.starlink_host : "not_set");
     blobmsg_add_u32(&bb, "starlink_port", g_config.starlink_port);
     blobmsg_add_u32(&bb, "starlink_timeout", g_config.starlink_timeout);
     
@@ -195,10 +195,10 @@ int autonomy_config_status(struct ubus_context *uctx, struct ubus_object *obj,
     
     // Notifications
     blobmsg_add_u8(&bb, "notifications_enabled", g_config.notifications_enabled);
-    blobmsg_add_string(&bb, "email_from", g_config.email_from);
-    blobmsg_add_string(&bb, "email_to", g_config.email_to);
-    blobmsg_add_string(&bb, "email_smtp", g_config.email_smtp);
-    blobmsg_add_string(&bb, "webhook_url", g_config.webhook_url);
+    blobmsg_add_string(&bb, "email_from", g_config.email_from ? g_config.email_from : "not_set");
+    blobmsg_add_string(&bb, "email_to", g_config.email_to ? g_config.email_to : "not_set");
+    blobmsg_add_string(&bb, "email_smtp", g_config.email_smtp ? g_config.email_smtp : "not_set");
+    blobmsg_add_string(&bb, "webhook_url", g_config.webhook_url ? g_config.webhook_url : "not_set");
     
     // Snow detection
     blobmsg_add_u8(&bb, "snow_detection_enabled", g_config.snow_detection_enabled);
@@ -208,7 +208,7 @@ int autonomy_config_status(struct ubus_context *uctx, struct ubus_object *obj,
     blobmsg_add_double(&bb, "snow_temperature_threshold", g_config.snow_temperature_threshold);
     blobmsg_add_u32(&bb, "snow_verification_time", g_config.snow_verification_time);
     blobmsg_add_u32(&bb, "snow_melt_timeout", g_config.snow_melt_timeout);
-    blobmsg_add_string(&bb, "snow_weather_api_key", g_config.snow_weather_api_key);
+    blobmsg_add_string(&bb, "snow_weather_api_key", g_config.snow_weather_api_key ? g_config.snow_weather_api_key : "not_set");
     
     blobmsg_add_u32(&bb, "timestamp", (uint32_t)time(NULL));
     
