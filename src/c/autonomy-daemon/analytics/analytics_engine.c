@@ -396,39 +396,9 @@ int calculate_system_overview(system_overview_t* overview) {
     overview->total_members = 0;
     overview->active_members = 0;
     
-    // Check network interfaces and count active connections
-    FILE *fp = popen("ip link show | grep -c 'state UP'", "r");
-    if (fp) {
-        char buffer[128];
-        if (fgets(buffer, sizeof(buffer), fp)) {
-            // Validate input before conversion
-            char *endptr;
-            long result = strtol(buffer, &endptr, 10);
-            if (endptr != buffer && result >= 0 && result <= INT_MAX) {
-                overview->active_members = (int)result;
-            } else {
-                overview->active_members = 0; // Default safe value
-            }
-        }
-        pclose(fp);
-    }
-    
-    // Get total network interfaces
-    fp = popen("ip link show | grep -c '^[0-9]'", "r");
-    if (fp) {
-        char buffer[128];
-        if (fgets(buffer, sizeof(buffer), fp)) {
-            // Validate input before conversion
-            char *endptr;
-            long result = strtol(buffer, &endptr, 10);
-            if (endptr != buffer && result >= 0 && result <= INT_MAX) {
-                overview->total_members = (int)result;
-            } else {
-                overview->total_members = 0; // Default safe value
-            }
-        }
-        pclose(fp);
-    }
+    // Use helper functions for network interface counting
+    overview->active_members = count_active_interfaces();
+    overview->total_members = count_total_interfaces();
     
     // Calculate overall health based on system metrics
     double health_score = 0.0;
@@ -442,25 +412,15 @@ int calculate_system_overview(system_overview_t* overview) {
         health_factors++;
     }
     
-    // Check disk usage - simple implementation
-    FILE *df_fp = popen("df / | tail -1 | awk '{print $4}'", "r");
-    if (df_fp) {
-        char buffer[128];
-        if (fgets(buffer, sizeof(buffer), df_fp)) {
-            // Validate input before conversion
-            char *endptr;
-            long available_kb = strtol(buffer, &endptr, 10);
-            if (endptr == buffer || available_kb < 0) {
-                available_kb = 0; // Default safe value
-            }
-            if (available_kb > 100000) { // More than 100MB available
-                health_score += 100.0; // Disk space available
-            } else {
-                health_score += 50.0; // Disk space low
-            }
-            health_factors++;
+    // Check disk usage - safe implementation
+    long available_kb = get_available_disk_space_kb();
+    if (available_kb > 0) {
+        if (available_kb > 100000) { // More than 100MB available
+            health_score += 100.0; // Disk space available
+        } else {
+            health_score += 50.0; // Disk space low
         }
-        pclose(df_fp);
+        health_factors++;
     }
     
     // Check network connectivity
@@ -643,22 +603,9 @@ static int generate_analytics_alerts(analytics_alert_t* alerts, int max_alerts) 
         }
     }
     
-    // Check disk space alerts - simple implementation
-    FILE *df_fp = popen("df / | tail -1 | awk '{print $4}'", "r");
-    bool disk_space_low = false;
-    if (df_fp) {
-        char buffer[128];
-        if (fgets(buffer, sizeof(buffer), df_fp)) {
-            // Validate input before conversion
-            char *endptr;
-            long available_kb = strtol(buffer, &endptr, 10);
-            if (endptr == buffer || available_kb < 0) {
-                available_kb = 0; // Default safe value
-            }
-            disk_space_low = (available_kb <= 100000); // Less than 100MB available
-        }
-        pclose(df_fp);
-    }
+    // Check disk space alerts - safe implementation
+    long available_kb = get_available_disk_space_kb();
+    bool disk_space_low = (available_kb > 0 && available_kb <= 100000); // Less than 100MB available
     if (disk_space_low) {
         if (alert_count < max_alerts) {
             safe_strncpy(alerts[alert_count].id, "low_disk_space", sizeof(alerts[alert_count].id));
@@ -755,22 +702,9 @@ static int generate_analytics_recommendations(analytics_recommendation_t* recomm
         }
     }
     
-    // Disk space recommendations - simple implementation
-    FILE *df_fp = popen("df / | tail -1 | awk '{print $4}'", "r");
-    bool disk_space_low = false;
-    if (df_fp) {
-        char buffer[128];
-        if (fgets(buffer, sizeof(buffer), df_fp)) {
-            // Validate input before conversion
-            char *endptr;
-            long available_kb = strtol(buffer, &endptr, 10);
-            if (endptr == buffer || available_kb < 0) {
-                available_kb = 0; // Default safe value
-            }
-            disk_space_low = (available_kb <= 100000); // Less than 100MB available
-        }
-        pclose(df_fp);
-    }
+    // Disk space recommendations - safe implementation
+    long available_kb = get_available_disk_space_kb();
+    bool disk_space_low = (available_kb > 0 && available_kb <= 100000); // Less than 100MB available
     if (disk_space_low) {
         if (recommendation_count < max_recommendations) {
             safe_strncpy(recommendations[recommendation_count].id, "disk_cleanup", sizeof(recommendations[recommendation_count].id));
