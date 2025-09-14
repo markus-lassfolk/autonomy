@@ -111,8 +111,14 @@ static exit_reason_t g_exit_reason = EXIT_REASON_UNKNOWN;
 static char g_exit_message[512] = {0};
 static pthread_mutex_t g_exit_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// TEMPORARY FIX: Disable threading to isolate crash
-static bool g_threading_disabled = true;
+// Enable threading now that crash issues are resolved
+static bool g_threading_disabled = false;
+
+// Active daemon timers for periodic tasks
+static struct uloop_timeout gps_timer;
+static struct uloop_timeout network_timer;
+static struct uloop_timeout ml_timer;
+static struct uloop_timeout health_timer;
 
 // Forward declarations
 static void print_memory_info(void);
@@ -120,6 +126,13 @@ static void print_backtrace(void);
 static void crash_handler(int sig, siginfo_t *info, void *context);
 static void log_exit_reason(exit_reason_t reason, const char *message);
 static void daemon_exit(int exit_code);
+
+// Active daemon timer callbacks
+static void gps_timer_callback(struct uloop_timeout *t);
+static void network_timer_callback(struct uloop_timeout *t);
+static void ml_timer_callback(struct uloop_timeout *t);
+static void health_timer_callback(struct uloop_timeout *t);
+static void setup_active_timers(void);
 static void setup_crash_handlers(void);
 static void print_register_state(ucontext_t *context);
 static void print_stack_trace_arm(ucontext_t *context);
@@ -492,6 +505,105 @@ static struct ubus_object autonomy_obj = {
     .methods = autonomy_methods,
     .n_methods = ARRAY_SIZE(autonomy_methods),
 };
+
+// Active daemon timer callback implementations
+static void gps_timer_callback(struct uloop_timeout *t) {
+    LOGX_DEBUG_MSG("GPS timer callback - polling GPS data");
+    
+    // Poll GPS data
+    if (gps_get_status() == AUTONOMY_SUCCESS) {
+        LOGX_DEBUG_MSG("GPS data polled successfully");
+    } else {
+        LOGX_WARN_MSG("GPS data polling failed");
+    }
+    
+    // Reschedule timer for next poll (5 seconds)
+    t->time.tv_sec = 5;
+    t->time.tv_usec = 0;
+    uloop_timeout_set(t);
+}
+
+static void network_timer_callback(struct uloop_timeout *t) {
+    LOGX_DEBUG_MSG("Network timer callback - monitoring network status");
+    
+    // Monitor network interfaces
+    if (network_get_status() == AUTONOMY_SUCCESS) {
+        LOGX_DEBUG_MSG("Network status checked successfully");
+    } else {
+        LOGX_WARN_MSG("Network status check failed");
+    }
+    
+    // Reschedule timer for next check (10 seconds)
+    t->time.tv_sec = 10;
+    t->time.tv_usec = 0;
+    uloop_timeout_set(t);
+}
+
+static void ml_timer_callback(struct uloop_timeout *t) {
+    LOGX_DEBUG_MSG("ML timer callback - processing ML data");
+    
+    // Process ML data
+    if (ml_monitor_process_data() == AUTONOMY_SUCCESS) {
+        LOGX_DEBUG_MSG("ML data processed successfully");
+    } else {
+        LOGX_WARN_MSG("ML data processing failed");
+    }
+    
+    // Reschedule timer for next processing (30 seconds)
+    t->time.tv_sec = 30;
+    t->time.tv_usec = 0;
+    uloop_timeout_set(t);
+}
+
+static void health_timer_callback(struct uloop_timeout *t) {
+    LOGX_DEBUG_MSG("Health timer callback - performing system health check");
+    
+    // Perform system health check
+    if (system_health_check() == AUTONOMY_SUCCESS) {
+        LOGX_DEBUG_MSG("System health check completed successfully");
+    } else {
+        LOGX_WARN_MSG("System health check failed");
+    }
+    
+    // Reschedule timer for next check (60 seconds)
+    t->time.tv_sec = 60;
+    t->time.tv_usec = 0;
+    uloop_timeout_set(t);
+}
+
+static void setup_active_timers(void) {
+    LOGX_INFO_MSG("Setting up active daemon timers...");
+    
+    // Setup GPS timer (5 second intervals)
+    gps_timer.cb = gps_timer_callback;
+    gps_timer.time.tv_sec = 5;
+    gps_timer.time.tv_usec = 0;
+    uloop_timeout_set(&gps_timer);
+    LOGX_INFO_MSG("GPS timer set for 5-second intervals");
+    
+    // Setup network timer (10 second intervals)
+    network_timer.cb = network_timer_callback;
+    network_timer.time.tv_sec = 10;
+    network_timer.time.tv_usec = 0;
+    uloop_timeout_set(&network_timer);
+    LOGX_INFO_MSG("Network timer set for 10-second intervals");
+    
+    // Setup ML timer (30 second intervals)
+    ml_timer.cb = ml_timer_callback;
+    ml_timer.time.tv_sec = 30;
+    ml_timer.time.tv_usec = 0;
+    uloop_timeout_set(&ml_timer);
+    LOGX_INFO_MSG("ML timer set for 30-second intervals");
+    
+    // Setup health timer (60 second intervals)
+    health_timer.cb = health_timer_callback;
+    health_timer.time.tv_sec = 60;
+    health_timer.time.tv_usec = 0;
+    uloop_timeout_set(&health_timer);
+    LOGX_INFO_MSG("Health timer set for 60-second intervals");
+    
+    LOGX_INFO_MSG("All active daemon timers configured successfully");
+}
 
 int main(int argc, char **argv)
 {
@@ -1100,6 +1212,9 @@ int main(int argc, char **argv)
     fflush(stderr);
     
     LOGX_DEBUG_MSG("Entering uloop_run() - daemon will now handle events");
+    
+    // Setup active timers for periodic tasks
+    setup_active_timers();
     
     // Force log flush before entering uloop
     fflush(stdout);
