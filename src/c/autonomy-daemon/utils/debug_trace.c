@@ -79,5 +79,5 @@ void debug_trace_print(const char *level, const char *file, int line, const char
             message_buffer);
     
     // Flush to ensure immediate output
-    fflush(stderr);
+    
 }

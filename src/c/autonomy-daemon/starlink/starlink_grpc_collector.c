@@ -32,19 +32,19 @@ starlink_grpc_collector_t g_starlink_grpc_collector = {0};
 // Initialize the gRPC collector
 int starlink_grpc_collector_init(void) {
     LOGX_INFO_MSG("Initializing Starlink gRPC collector with comprehensive client");
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init called\n");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init called");
     
     // Initialize mutex
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - about to initialize mutex\n");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init - about to initialize mutex");
     if (pthread_mutex_init(&g_starlink_grpc_collector.mutex, NULL) != 0) {
         LOGX_ERROR_MSG("Failed to initialize gRPC collector mutex");
-        fprintf(stderr, "DEBUG: starlink_grpc_collector_init failed - mutex initialization failed\n");
+        LOGX_DEBUG_MSG("starlink_grpc_collector_init failed - mutex initialization failed");
         return AUTONOMY_ERROR;
     }
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - mutex initialized successfully\n");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init - mutex initialized successfully");
     
     // Initialize the comprehensive gRPC client
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - about to initialize daemon config\n");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init - about to initialize daemon config");
     starlink_grpc_daemon_config_t daemon_config = {0};
     
     // Set up client configuration
@@ -64,13 +64,13 @@ int starlink_grpc_collector_init(void) {
     strcpy(daemon_config.log_prefix, "STARLINK-GRPC");
     
     // Initialize the daemon integration
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - about to initialize daemon integration\n");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init - about to initialize daemon integration");
     if (starlink_grpc_daemon_integration_init(&daemon_config) != 0) {
         LOGX_ERROR_MSG("Failed to initialize comprehensive gRPC client");
-        fprintf(stderr, "DEBUG: starlink_grpc_collector_init failed - daemon integration failed\n");
+        LOGX_DEBUG_MSG("starlink_grpc_collector_init failed - daemon integration failed");
         return AUTONOMY_ERROR;
     }
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init - daemon integration initialized successfully\n");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init - daemon integration initialized successfully");
     
     // Set configuration from UCI config with fallback defaults
     if (strlen(g_config.starlink_host) > 0) {
@@ -111,7 +111,7 @@ int starlink_grpc_collector_init(void) {
     g_starlink_grpc_collector.consecutive_failures = 0;
     
     LOGX_INFO_MSG("Starlink gRPC collector initialized successfully");
-    fprintf(stderr, "DEBUG: starlink_grpc_collector_init completed successfully\n");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init completed successfully");
     return AUTONOMY_SUCCESS;
 }
 

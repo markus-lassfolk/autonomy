@@ -184,7 +184,7 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     }
     
     LOGX_FATAL_MSG("=== CRASH END ===");
-    fflush(stderr);
+    
     
     // Log the crash reason before exiting
     exit_reason_t reason = EXIT_REASON_UNKNOWN;

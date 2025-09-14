@@ -33,20 +33,20 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     if (!monitor) return ML_MONITOR_ERROR_INVALID_PARAM;
     
     // Use printf as fallback to avoid LOGX crashes
-    printf("INFO: Integrating ML monitoring with comprehensive network discovery\n");
+    LOGX_INFO_MSG("Integrating ML monitoring with comprehensive network discovery");
     
     // Get discovered interfaces from network discovery system
     // Use heap allocation to avoid stack overflow
     network_interface_t *discovered_interfaces = malloc(MAX_INTERFACES * sizeof(network_interface_t));
     if (!discovered_interfaces) {
-        printf("ERROR: Failed to allocate memory for discovered interfaces\n");
+        LOGX_ERROR_MSG("Failed to allocate memory for discovered interfaces");
         return ML_MONITOR_ERROR_MEMORY_FAILED;
     }
     int interface_count = 0;
     
     // Add null pointer checks
     if (!discovered_interfaces) {
-        printf("ERROR: Invalid parameters for network discovery\n");
+        LOGX_ERROR_MSG("Invalid parameters for network discovery");
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     
@@ -60,17 +60,17 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     extern int get_enhanced_comprehensive_interface_info(network_interface_t *interfaces, int *count);
     
     // Add a try-catch-like mechanism using signal handling
-    printf("INFO: Attempting to get enhanced comprehensive interface info\n");
+    LOGX_INFO_MSG("Attempting to get enhanced comprehensive interface info");
     
     // For now, skip the enhanced discovery and go straight to fallback
     // This prevents the crash while we investigate the root cause
-    printf("WARN: Skipping enhanced discovery to prevent crash, using fallback\n");
+    LOGX_WARN_MSG("Skipping enhanced discovery to prevent crash, using fallback");
     discovery_result = AUTONOMY_ERROR_NOT_INITIALIZED;
     if (discovery_result != AUTONOMY_SUCCESS) {
         printf("WARN: Failed to get enhanced comprehensive interface info: %d, using fallback\n", discovery_result);
         
         // Fallback: Use basic interface detection without network discovery
-        printf("INFO: Using fallback interface detection\n");
+        LOGX_INFO_MSG("Using fallback interface detection");
         interface_count = 0;
         
            // Add common interfaces manually as fallback
@@ -143,7 +143,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     if (!multi_system) {
         multi_system = ml_monitor_init_multi_interface_system(&monitor->config);
         if (!multi_system) {
-            printf("ERROR: Failed to initialize multi-interface ML system\n");
+            LOGX_ERROR_MSG("Failed to initialize multi-interface ML system");
             return ML_MONITOR_ERROR_NOT_INITIALIZED;
         }
     }
@@ -216,23 +216,23 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
         }
     }
     
-    printf("DEBUG: Interface addition loop completed successfully\n");
+    LOGX_DEBUG_MSG("Interface addition loop completed successfully");
     printf("DEBUG: ml_interfaces_added = %d, interface_count = %d\n", ml_interfaces_added, interface_count);
     
     // Interface count summary logging temporarily disabled to isolate crash
-    printf("DEBUG: Interface count summary logging temporarily disabled\n");
+    LOGX_DEBUG_MSG("Interface count summary logging temporarily disabled");
     /*
-    printf("DEBUG: About to log interface count summary\n");
+    LOGX_DEBUG_MSG("About to log interface count summary");
     printf("DEBUG: ml_interfaces_added = %d, interface_count = %d\n", ml_interfaces_added, interface_count);
     printf("INFO: ML monitoring initialized for %d interfaces (from %d discovered)\n", 
              ml_interfaces_added, interface_count);
-    printf("DEBUG: Interface count summary logged successfully\n");
+    LOGX_DEBUG_MSG("Interface count summary logged successfully");
     */
     
     // Log interface summary - temporarily disabled to prevent crash
-    printf("DEBUG: Interface summary logging temporarily disabled\n");
+    LOGX_DEBUG_MSG("Interface summary logging temporarily disabled");
     /*
-    printf("INFO: ML Interface Summary:\n");
+    LOGX_INFO_MSG("ML Interface Summary:");
     for (int i = 0; i < interface_count && i < MAX_INTERFACES; i++) {
         network_interface_t *interface = &discovered_interfaces[i];
         if (!interface) {
@@ -260,8 +260,8 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     }
     */
     
-    printf("DEBUG: All logging sections completed successfully\n");
-    printf("DEBUG: About to return ML_MONITOR_SUCCESS from ml_monitor_init_from_network_discovery\n");
+    LOGX_DEBUG_MSG("All logging sections completed successfully");
+    LOGX_DEBUG_MSG("About to return ML_MONITOR_SUCCESS from ml_monitor_init_from_network_discovery");
     
     // Free the allocated memory
     free(discovered_interfaces);
@@ -285,7 +285,7 @@ int ml_monitor_sync_with_network_discovery(ml_monitor_t *monitor) {
     
     multi_interface_ml_system_t *multi_system = ml_monitor_get_multi_interface_system();
     if (!multi_system) {
-        printf("WARN: Multi-interface system not initialized\n");
+        LOGX_WARN_MSG("Multi-interface system not initialized");
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     
@@ -489,11 +489,11 @@ int ml_monitor_periodic_network_discovery_sync(ml_monitor_t *monitor) {
         return ML_MONITOR_SUCCESS;
     }
     
-    printf("DEBUG: Performing periodic sync with network discovery\n");
+    LOGX_DEBUG_MSG("Performing periodic sync with network discovery");
     
     int sync_result = ml_monitor_sync_with_network_discovery(monitor);
     if (sync_result == ML_MONITOR_SUCCESS) {
-        printf("DEBUG: Network discovery sync completed successfully\n");
+        LOGX_DEBUG_MSG("Network discovery sync completed successfully");
     } else {
         printf("WARN: Network discovery sync failed: %d\n", sync_result);
     }

@@ -34,7 +34,7 @@ int example_init_snow_melt_control(void) {
         return result;
     }
     
-    printf("INFO: Snow melt control system initialized successfully\n");
+    LOGX_INFO_MSG("Snow melt control system initialized successfully");
     
     // Initialize UBUS interface (pass NULL context for example)
     result = starlink_weather_snow_melt_ubus_init(NULL);
@@ -42,7 +42,7 @@ int example_init_snow_melt_control(void) {
         printf("WARN: Failed to initialize UBUS interface: %d\n", result);
         // Continue without UBUS - system will still work
     } else {
-        printf("INFO: UBUS interface initialized successfully\n");
+        LOGX_INFO_MSG("UBUS interface initialized successfully");
     }
     
     return AUTONOMY_SUCCESS;
@@ -50,7 +50,7 @@ int example_init_snow_melt_control(void) {
 
 // Example: Configure snow melt control system
 int example_configure_snow_melt_control(void) {
-    printf("INFO: Configuring snow melt control system...\n");
+    LOGX_INFO_MSG("Configuring snow melt control system...");
     
     // Get current configuration
     starlink_weather_snow_melt_config_t config;
@@ -86,7 +86,7 @@ int example_configure_snow_melt_control(void) {
         return result;
     }
     
-    printf("INFO: Snow melt control system configured successfully\n");
+    LOGX_INFO_MSG("Snow melt control system configured successfully");
     printf("INFO: Temperature threshold: %.1fC\n", config.temperature_threshold_celsius);
     printf("INFO: Weather check interval: %d minutes\n", config.weather_check_interval_minutes);
     printf("INFO: Preheat duration: %d minutes\n", config.preheat_duration_minutes);
@@ -98,7 +98,7 @@ int example_configure_snow_melt_control(void) {
 
 // Example: Monitor snow melt control system
 int example_monitor_snow_melt_control(void) {
-    printf("INFO: Starting snow melt control monitoring...\n");
+    LOGX_INFO_MSG("Starting snow melt control monitoring...");
     
     int check_count = 0;
     const int max_checks = 20; // Run for 20 checks (5 hours with 15-minute intervals)
@@ -129,18 +129,18 @@ int example_monitor_snow_melt_control(void) {
         }
         
         // Force a weather check and mode update
-        printf("INFO: Forcing weather check and mode update...\n");
+        LOGX_INFO_MSG("Forcing weather check and mode update...");
         result = starlink_weather_snow_melt_control_force_update();
         if (result != AUTONOMY_SUCCESS) {
             printf("WARN: Weather check failed: %d\n", result);
         } else {
-            printf("INFO: Weather check completed successfully\n");
+            LOGX_INFO_MSG("Weather check completed successfully");
         }
         
         check_count++;
         
         if (g_running && check_count < max_checks) {
-            printf("INFO: Waiting 15 minutes until next check...\n");
+            LOGX_INFO_MSG("Waiting 15 minutes until next check...");
             sleep(900); // Wait 15 minutes
         }
     }
@@ -151,7 +151,7 @@ int example_monitor_snow_melt_control(void) {
 
 // Example: Get and display statistics
 int example_show_statistics(void) {
-    printf("INFO: Getting snow melt control statistics...\n");
+    LOGX_INFO_MSG("Getting snow melt control statistics...");
     
     starlink_weather_snow_melt_stats_t stats;
     int result = starlink_weather_snow_melt_control_get_statistics(&stats);
@@ -185,7 +185,7 @@ int example_show_statistics(void) {
 
 // Example: Manual mode control
 int example_manual_mode_control(void) {
-    printf("INFO: Testing manual mode control...\n");
+    LOGX_INFO_MSG("Testing manual mode control...");
     
     // Test setting different modes
     snow_melt_mode_t test_modes[] = {
@@ -216,12 +216,12 @@ int example_manual_mode_control(void) {
     }
     
     // Set back to automatic mode
-    printf("INFO: Setting mode back to AUTOMATIC...\n");
+    LOGX_INFO_MSG("Setting mode back to AUTOMATIC...");
     int result = starlink_weather_snow_melt_control_set_mode(SNOW_MELT_AUTOMATIC);
     if (result != AUTONOMY_SUCCESS) {
         printf("ERROR: Failed to set mode back to AUTOMATIC: %d\n", result);
     } else {
-        printf("INFO: Successfully set mode back to AUTOMATIC\n");
+        LOGX_INFO_MSG("Successfully set mode back to AUTOMATIC");
     }
     
     return AUTONOMY_SUCCESS;
@@ -229,7 +229,7 @@ int example_manual_mode_control(void) {
 
 // Example: Cleanup
 void example_cleanup(void) {
-    printf("INFO: Cleaning up snow melt control system...\n");
+    LOGX_INFO_MSG("Cleaning up snow melt control system...");
     
     // Cleanup UBUS interface
     starlink_weather_snow_melt_ubus_cleanup(NULL);
@@ -237,7 +237,7 @@ void example_cleanup(void) {
     // Cleanup snow melt control system
     starlink_weather_snow_melt_control_cleanup();
     
-    printf("INFO: Cleanup completed\n");
+    LOGX_INFO_MSG("Cleanup completed");
 }
 
 // Main example function
@@ -282,7 +282,7 @@ int starlink_weather_snow_melt_example_main(int argc, char *argv[]) {
     // Cleanup
     example_cleanup();
     
-    printf("INFO: Example completed successfully\n");
+    LOGX_INFO_MSG("Example completed successfully");
     return 0;
 }
 

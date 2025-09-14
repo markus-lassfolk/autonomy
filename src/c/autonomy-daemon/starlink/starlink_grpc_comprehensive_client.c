@@ -20,24 +20,24 @@ starlink_grpc_client_config_t g_starlink_grpc_config = {0};
 
 // Initialize comprehensive gRPC client
 int starlink_grpc_comprehensive_client_init(starlink_grpc_client_config_t *config) {
-    fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init called\n");
+    LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init called");
     if (!config) {
-        fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init failed - NULL config\n");
+        LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init failed - NULL config");
         return -1;
     }
     
     // Copy configuration
-    fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init - copying config\n");
+    LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init - copying config");
     memcpy(&g_starlink_grpc_config, config, sizeof(starlink_grpc_client_config_t));
-    fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init - config copied\n");
+    LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init - config copied");
     
     // Initialize curl
-    fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init - about to initialize curl\n");
+    LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init - about to initialize curl");
     curl_global_init(CURL_GLOBAL_DEFAULT);
-    fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init - curl initialized\n");
+    LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init - curl initialized");
     
     LOGX_INFO_MSG("Starlink gRPC comprehensive client initialized");
-    fprintf(stderr, "DEBUG: starlink_grpc_comprehensive_client_init completed successfully\n");
+    LOGX_DEBUG_MSG("starlink_grpc_comprehensive_client_init completed successfully");
     return 0;
 }
 

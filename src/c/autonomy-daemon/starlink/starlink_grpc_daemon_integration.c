@@ -22,29 +22,29 @@ static int parse_json_to_observation_partial(const char *json_data, const char *
 
 // Initialize daemon integration
 int starlink_grpc_daemon_integration_init(const starlink_grpc_daemon_config_t *config) {
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init called\n");
+    LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init called");
     if (!config) {
         LOGX_ERROR_MSG("Invalid configuration provided to daemon integration");
-        fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init failed - NULL config\n");
+        LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init failed - NULL config");
         return -1;
     }
     
     // Copy configuration
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - copying config\n");
+    LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init - copying config");
     memcpy(&g_starlink_grpc_daemon_config, config, sizeof(starlink_grpc_daemon_config_t));
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - config copied\n");
+    LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init - config copied");
     
     // Initialize the comprehensive client
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - about to initialize comprehensive client\n");
+    LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init - about to initialize comprehensive client");
     if (starlink_grpc_comprehensive_client_init(&g_starlink_grpc_daemon_config.client_config) != 0) {
         LOGX_ERROR_MSG("Failed to initialize comprehensive gRPC client");
-        fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init failed - comprehensive client init failed\n");
+        LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init failed - comprehensive client init failed");
         return -1;
     }
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init - comprehensive client initialized\n");
+    LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init - comprehensive client initialized");
     
     LOGX_INFO_MSG("Starlink gRPC daemon integration initialized");
-    fprintf(stderr, "DEBUG: starlink_grpc_daemon_integration_init completed successfully\n");
+    LOGX_DEBUG_MSG("starlink_grpc_daemon_integration_init completed successfully");
     return 0;
 }
 

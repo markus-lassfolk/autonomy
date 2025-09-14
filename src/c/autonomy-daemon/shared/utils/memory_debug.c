@@ -67,7 +67,7 @@ void memory_debug_cleanup(void) {
 }
 
 void memory_debug_print_stats(void) {
-    fprintf(stderr, "\n=== MEMORY DEBUG STATISTICS ===\n");
+    LOGX_FATAL_MSG("\n=== MEMORY DEBUG STATISTICS ===");
     fprintf(stderr, "Total allocations: %" PRIu64 "\n", g_memory_debug_stats.total_allocations);
     fprintf(stderr, "Total deallocations: %" PRIu64 "\n", g_memory_debug_stats.total_deallocations);
     fprintf(stderr, "Current allocations: %" PRIu64 "\n", g_memory_debug_stats.current_allocations);
