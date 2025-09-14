@@ -47,8 +47,47 @@
 // NOLINTBEGIN(cert-msc50-cpp,cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
 // NOLINTBEGIN(cert-msc51-cpp) - fopen usage is safe with path validation
 
-// Global variables
-autonomy_config_t g_config;
+// Global variables - initialize with safe defaults
+autonomy_config_t g_config = {
+    .daemon_mode = true,
+    .debug_mode = false,
+    .log_level = 2, // INFO level
+    .log_file = "/var/log/autonomy-daemon.log",
+    .config_file = "/etc/config/autonomy",
+    .pid_file_timeout = 30,
+    .network_check_interval = 30,
+    .failover_timeout = 10,
+    .auto_failover = true,
+    .min_interface_health = 50,
+    .mwan3_integration = true,
+    .gps_update_interval = 60,
+    .gps_timeout = 30,
+    .gps_fusion = true,
+    .gps_cache_timeout = 300,
+    .min_gps_accuracy = 10.0,
+    .starlink_check_interval = 60,
+    .starlink_health_monitoring = true,
+    .starlink_host = "192.168.100.1",
+    .starlink_port = 9200,
+    .starlink_timeout = 10,
+    .system_check_interval = 60,
+    .resource_monitoring = true,
+    .service_monitoring = true,
+    .alert_threshold = 80,
+    .notifications_enabled = false,
+    .email_from = "",
+    .email_to = "",
+    .email_smtp = "",
+    .webhook_url = "",
+    .snow_detection_enabled = false,
+    .snow_detection_samples = 10,
+    .snow_obstruction_threshold = 0.1,
+    .snow_snr_degradation_threshold = 3.0,
+    .snow_temperature_threshold = -5.0,
+    .snow_verification_time = 300,
+    .snow_melt_timeout = 1800,
+    .snow_weather_api_key = ""
+};
 
 // Exit reason tracking
 typedef enum {
@@ -566,14 +605,15 @@ int main(int argc, char **argv)
     CRITICAL_OPERATION_END();
     LOGX_DEBUG_MSG("Connected to ubus successfully");
     LOGX_DEBUG_MSG("UBUS context: %p", ctx);
-    LOGX_DEBUG_MSG("About to call ubus_add_uloop...");
-    ubus_add_uloop(ctx);
-    LOGX_DEBUG_MSG("Added uloop to ubus context");
-
-    // Load UCI configuration
+    // Load UCI configuration BEFORE setting up UBUS event handling
+    // This ensures g_config is initialized before any UBUS methods can be called
     if (load_uci_config() == -1) {
         LOGX_WARN_MSG("Failed to load UCI configuration, using defaults.");
     }
+    
+    LOGX_DEBUG_MSG("About to call ubus_add_uloop...");
+    ubus_add_uloop(ctx);
+    LOGX_DEBUG_MSG("Added uloop to ubus context");
 
     // Initialize network health monitoring
     if (perform_network_health_check() != 0) {
