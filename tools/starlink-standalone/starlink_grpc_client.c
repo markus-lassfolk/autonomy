@@ -6,8 +6,9 @@
 #include <sys/time.h>
 #include <curl/curl.h>
 
-// Minimal includes from daemon
-#include "protobuf_wire.h"
+// Use shared libraries from daemon
+#include "../../src/c/autonomy-daemon/shared/protobuf/protobuf_wire.h"
+#include "../../src/c/autonomy-daemon/shared/starlink/starlink_grpc_shared.h"
 
 // Version information (matches daemon version)
 #define CLIENT_VERSION_MAJOR 5

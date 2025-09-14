@@ -47,6 +47,14 @@ typedef struct {
 // Global collector instance
 extern starlink_grpc_collector_t g_starlink_grpc_collector;
 
+// Statistics structure for external access
+typedef struct {
+    bool thread_running;
+    int total_requests;
+    int total_errors;
+    time_t last_successful_collection;
+} starlink_grpc_collector_stats_t;
+
 // Function declarations
 int starlink_grpc_collector_init(void);
 int starlink_grpc_collector_cleanup(void);
@@ -83,5 +91,8 @@ int starlink_grpc_parse_diagnostics_response(const char* json_response, starlink
 void starlink_grpc_collector_thread(void* arg);
 int starlink_grpc_analyze_outage_causes(const starlink_observation_t* pre, const starlink_observation_t* post, starlink_outage_event_t* event);
 void starlink_grpc_log_outage_event(const starlink_outage_event_t* event);
+
+// Statistics function
+int starlink_grpc_collector_get_stats(starlink_grpc_collector_stats_t* stats);
 
 #endif // STARLINK_GRPC_COLLECTOR_H

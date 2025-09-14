@@ -1112,3 +1112,30 @@ int starlink_grpc_parse_history_response(const char* json_response, starlink_obs
     json_object_put(root);
     return AUTONOMY_SUCCESS;
 }
+
+// Get collector statistics
+int starlink_grpc_collector_get_stats(starlink_grpc_collector_stats_t* stats) {
+    if (!stats) {
+        return AUTONOMY_ERROR;
+    }
+    
+    // Lock the mutex to safely access the collector state
+    if (pthread_mutex_lock(&g_starlink_grpc_collector.mutex) != 0) {
+        LOGX_ERROR_MSG("Failed to lock gRPC collector mutex for stats");
+        return AUTONOMY_ERROR;
+    }
+    
+    // Fill in the stats structure
+    stats->thread_running = g_starlink_grpc_collector.thread_running;
+    stats->total_requests = g_starlink_grpc_collector.total_observations_collected;
+    stats->total_errors = g_starlink_grpc_collector.consecutive_failures;
+    stats->last_successful_collection = g_starlink_grpc_collector.last_successful_collection;
+    
+    // Unlock the mutex
+    if (pthread_mutex_unlock(&g_starlink_grpc_collector.mutex) != 0) {
+        LOGX_ERROR_MSG("Failed to unlock gRPC collector mutex for stats");
+        return AUTONOMY_ERROR;
+    }
+    
+    return AUTONOMY_SUCCESS;
+}

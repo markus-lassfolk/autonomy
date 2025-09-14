@@ -34,6 +34,7 @@
 #include "../starlink/starlink_modules.h"
 #include "../starlink/starlink_tracker.h"
 #include "../starlink/starlink_grpc_collector.h"
+#include "../starlink/starlink_grpc_daemon_integration.h"
 #include "../shared/utils/uci_manager.h"
 #include "../shared/logging/logx.h"
 #include "../shared/utils/memory_debug.h"
@@ -823,9 +824,9 @@ int main(int argc, char **argv)
             // Enable Starlink gRPC collector thread with comprehensive error handling and logging
             LOGX_INFO_MSG("Attempting to start Starlink gRPC collector thread...");
             LOGX_DEBUG_MSG("Starlink gRPC collector configuration: host=%s, port=%d, timeout=%d", 
-                          g_starlink_grpc_daemon_config.host ? g_starlink_grpc_daemon_config.host : "NULL",
-                          g_starlink_grpc_daemon_config.port,
-                          g_starlink_grpc_daemon_config.timeout);
+                          g_starlink_grpc_daemon_config.client_config.host[0] ? g_starlink_grpc_daemon_config.client_config.host : "NULL",
+                          g_starlink_grpc_daemon_config.client_config.port,
+                          g_starlink_grpc_daemon_config.client_config.timeout);
             
             if (starlink_grpc_collector_start() == AUTONOMY_SUCCESS) {
                 LOGX_INFO_MSG("Starlink gRPC collector thread started successfully");
