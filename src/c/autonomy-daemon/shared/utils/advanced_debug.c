@@ -7,11 +7,8 @@
 #ifdef __GLIBC__
 #include <pthread.h>
 #else
-// Simple mutex implementation for systems without pthread
-typedef int pthread_mutex_t;
-#define PTHREAD_MUTEX_INITIALIZER 0
-static inline int pthread_mutex_lock(pthread_mutex_t *mutex) { (void)mutex; return 0; }
-static inline int pthread_mutex_unlock(pthread_mutex_t *mutex) { (void)mutex; return 0; }
+// RUTOS has pthread support, so include it
+#include <pthread.h>
 #endif
 
 // Global variables
@@ -216,7 +213,7 @@ void advanced_debug_save_crash_info(const char *crash_reason) {
     
     fprintf(crash_file, "=== AUTONOMY DAEMON CRASH DEBUG INFO ===\n");
     fprintf(crash_file, "Crash reason: %s\n", crash_reason);
-    fprintf(crash_file, "Timestamp: %ld\n", time(NULL));
+    fprintf(crash_file, "Timestamp: %lld\n", (long long)time(NULL));
     fprintf(crash_file, "PID: %d\n", getpid());
     
     advanced_debug_print_stack(crash_file);
