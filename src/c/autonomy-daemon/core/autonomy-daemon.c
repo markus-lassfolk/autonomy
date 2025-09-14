@@ -89,92 +89,92 @@ static void print_backtrace(void) {
     char **strings;
     size_t i;
 
-    fprintf(stderr, "\n=== BACKTRACE ===\n");
+    LOGX_ERROR_MSG("\n=== BACKTRACE ===");
     size = backtrace(array, 20);
     strings = backtrace_symbols(array, size);
 
     if (strings != NULL) {
         for (i = 0; i < size; i++) {
-            fprintf(stderr, "[%zu] %s\n", i, strings[i]);
+            LOGX_ERROR_MSG("[%zu] %s", i, strings[i]);
         }
         free(strings);
     }
-    fprintf(stderr, "=== END BACKTRACE ===\n\n");
+    LOGX_ERROR_MSG("=== END BACKTRACE ===");
 #else
-    fprintf(stderr, "\n=== BACKTRACE ===\n");
-    fprintf(stderr, "Backtrace not available (not using GNU libc)\n");
-    fprintf(stderr, "=== END BACKTRACE ===\n\n");
+    LOGX_ERROR_MSG("\n=== BACKTRACE ===");
+    LOGX_ERROR_MSG("Backtrace not available (not using GNU libc)");
+    LOGX_ERROR_MSG("=== END BACKTRACE ===");
 #endif
 }
 
 static void crash_handler(int sig, siginfo_t *info, void *context) {
-    fprintf(stderr, "\n=== CRASH DETECTED ===\n");
-    fprintf(stderr, "Signal: %d (%s)\n", sig, strsignal(sig));
-    fprintf(stderr, "Signal code: %d\n", info->si_code);
-    fprintf(stderr, "Fault address: %p\n", info->si_addr);
-    fprintf(stderr, "PID: %d\n", getpid());
-    fprintf(stderr, "UID: %d\n", getuid());
+    LOGX_FATAL_MSG("\n=== CRASH DETECTED ===");
+    LOGX_FATAL_MSG("Signal: %d (%s)", sig, strsignal(sig));
+    LOGX_FATAL_MSG("Signal code: %d", info->si_code);
+    LOGX_FATAL_MSG("Fault address: %p", info->si_addr);
+    LOGX_FATAL_MSG("PID: %d", getpid());
+    LOGX_FATAL_MSG("UID: %d", getuid());
     
     // CRITICAL: Check for memory corruption
-    fprintf(stderr, "\n=== MEMORY CORRUPTION ANALYSIS ===\n");
+    LOGX_FATAL_MSG("\n=== MEMORY CORRUPTION ANALYSIS ===");
     check_all_monitored_globals();
     print_memory_corruption_report();
-    fprintf(stderr, "=== END MEMORY CORRUPTION ANALYSIS ===\n\n");
+    LOGX_FATAL_MSG("=== END MEMORY CORRUPTION ANALYSIS ===");
     
     // Enhanced signal-specific information
     switch (sig) {
         case SIGSEGV:
-            fprintf(stderr, "SEGFAULT: Invalid memory access at %p\n", info->si_addr);
+            LOGX_FATAL_MSG("SEGFAULT: Invalid memory access at %p", info->si_addr);
             if (info->si_code == SEGV_MAPERR) {
-                fprintf(stderr, "Cause: Address not mapped to object\n");
+                LOGX_FATAL_MSG("Cause: Address not mapped to object");
             } else if (info->si_code == SEGV_ACCERR) {
-                fprintf(stderr, "Cause: Invalid permissions for mapped object\n");
+                LOGX_FATAL_MSG("Cause: Invalid permissions for mapped object");
             }
             break;
         case SIGBUS:
-            fprintf(stderr, "BUS ERROR: Invalid memory access at %p\n", info->si_addr);
+            LOGX_FATAL_MSG("BUS ERROR: Invalid memory access at %p", info->si_addr);
             break;
         case SIGFPE:
-            fprintf(stderr, "FLOATING POINT EXCEPTION: Division by zero or invalid operation\n");
+            LOGX_FATAL_MSG("FLOATING POINT EXCEPTION: Division by zero or invalid operation");
             break;
         case SIGILL:
-            fprintf(stderr, "ILLEGAL INSTRUCTION: Invalid instruction executed\n");
+            LOGX_FATAL_MSG("ILLEGAL INSTRUCTION: Invalid instruction executed");
             break;
         default:
-            fprintf(stderr, "UNKNOWN SIGNAL: %d\n", sig);
+            LOGX_FATAL_MSG("UNKNOWN SIGNAL: %d", sig);
             break;
     }
     
     // Print memory map info if available
-    fprintf(stderr, "\n=== MEMORY MAP ===\n");
+    LOGX_FATAL_MSG("\n=== MEMORY MAP ===");
     FILE *maps = fopen("/proc/self/maps", "r");
     if (maps) {
         char line[256];
         while (fgets(line, sizeof(line), maps)) {
-            fprintf(stderr, "%s", line);
+            LOGX_FATAL_MSG("%s", line);
         }
         fclose(maps);
     }
-    fprintf(stderr, "=== END MEMORY MAP ===\n\n");
+    LOGX_FATAL_MSG("=== END MEMORY MAP ===");
     
     print_memory_info();
     
     // Print memory debugging information
-    fprintf(stderr, "\n=== MEMORY DEBUG INFO ===\n");
+    LOGX_FATAL_MSG("\n=== MEMORY DEBUG INFO ===");
     // memory_debug_print_stats(); // Disabled to prevent conflicts with memory protection system
     // memory_debug_check_all_allocations(); // Disabled to prevent conflicts with memory protection system
     // memory_debug_detect_leaks(); // Disabled to prevent conflicts with memory protection system
     // memory_debug_scan_memory_for_corruption(); // Disabled to prevent conflicts with memory protection system
-    fprintf(stderr, "=== END MEMORY DEBUG INFO ===\n\n");
+    LOGX_FATAL_MSG("=== END MEMORY DEBUG INFO ===");
     
     print_backtrace();
     
     // Additional debugging info for systems without backtrace
-    fprintf(stderr, "=== STACK INFO ===\n");
-    fprintf(stderr, "Current function: crash_handler\n");
-    fprintf(stderr, "Signal: %d (%s)\n", sig, strsignal(sig));
-    fprintf(stderr, "Fault address: %p\n", info->si_addr);
-    fprintf(stderr, "=== END STACK INFO ===\n\n");
+    LOGX_FATAL_MSG("=== STACK INFO ===");
+    LOGX_FATAL_MSG("Current function: crash_handler");
+    LOGX_FATAL_MSG("Signal: %d (%s)", sig, strsignal(sig));
+    LOGX_FATAL_MSG("Fault address: %p", info->si_addr);
+    LOGX_FATAL_MSG("=== END STACK INFO ===");
     
     // Try to get more detailed info about the fault
     if (context) {
@@ -183,7 +183,7 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
         print_stack_trace_arm(uc);
     }
     
-    fprintf(stderr, "=== CRASH END ===\n");
+    LOGX_FATAL_MSG("=== CRASH END ===");
     fflush(stderr);
     
     // Log the crash reason before exiting
@@ -238,7 +238,7 @@ static void setup_crash_handlers(void) {
     sigaction(SIGILL, &sa, NULL);   // Illegal instruction
     sigaction(SIGABRT, &sa, NULL);  // Abort signal
     
-    fprintf(stderr, "DEBUG: Crash handlers installed\n");
+    LOGX_DEBUG_MSG("Crash handlers installed");
 }
 
 // Memory debugging utility
@@ -246,17 +246,17 @@ static void print_memory_info(void) {
     FILE *status = fopen("/proc/self/status", "r");
     if (status) {
         char line[256];
-        fprintf(stderr, "\n=== MEMORY STATUS ===\n");
+        LOGX_FATAL_MSG("\n=== MEMORY STATUS ===");
         while (fgets(line, sizeof(line), status)) {
             if (strstr(line, "VmSize") || strstr(line, "VmRSS") || 
                 strstr(line, "VmPeak") || strstr(line, "VmHWM") ||
                 strstr(line, "VmData") || strstr(line, "VmStk") ||
                 strstr(line, "VmExe") || strstr(line, "VmLib")) {
-                fprintf(stderr, "%s", line);
+                LOGX_FATAL_MSG("%s", line);
             }
         }
         fclose(status);
-        fprintf(stderr, "=== END MEMORY STATUS ===\n\n");
+        LOGX_FATAL_MSG("=== END MEMORY STATUS ===");
     }
 }
 
@@ -346,12 +346,12 @@ static void log_exit_reason(exit_reason_t reason, const char *message) {
     }
     
     // Log to stderr (always visible)
-    fprintf(stderr, "\n=== DAEMON EXIT ===\n");
-    fprintf(stderr, "Exit Reason: %s\n", reason_str);
-    fprintf(stderr, "Exit Message: %s\n", g_exit_message);
-    fprintf(stderr, "Timestamp: %lld\n", (long long)time(NULL));
-    fprintf(stderr, "PID: %d\n", getpid());
-    fprintf(stderr, "==================\n\n");
+    LOGX_ERROR_MSG("\n=== DAEMON EXIT ===");
+    LOGX_ERROR_MSG("Exit Reason: %s", reason_str);
+    LOGX_ERROR_MSG("Exit Message: %s", g_exit_message);
+    LOGX_ERROR_MSG("Timestamp: %lld", (long long)time(NULL));
+    LOGX_ERROR_MSG("PID: %d", getpid());
+    LOGX_ERROR_MSG("==================");
     
     // Also log via LOGX if available
     LOGX_ERROR_MSG("DAEMON EXIT: Reason=%s, Message=%s, PID=%d", reason_str, g_exit_message, getpid());
@@ -359,40 +359,40 @@ static void log_exit_reason(exit_reason_t reason, const char *message) {
 
 // Comprehensive daemon exit function
 static void daemon_exit(int exit_code) {
-    fprintf(stderr, "Performing daemon cleanup before exit...\n");
+    LOGX_INFO_MSG("Performing daemon cleanup before exit...");
     
     // Cleanup UBUS context
     if (ctx) {
-        fprintf(stderr, "Cleaning up UBUS context...\n");
+        LOGX_INFO_MSG("Cleaning up UBUS context...");
         ubus_free(ctx);
         ctx = NULL;
     }
     
     // Cleanup UCI context
     if (uci_ctx) {
-        fprintf(stderr, "Cleaning up UCI context...\n");
+        LOGX_INFO_MSG("Cleaning up UCI context...");
         uci_free_context(uci_ctx);
         uci_ctx = NULL;
     }
     
     // Cleanup UCI manager
-    fprintf(stderr, "Cleaning up UCI manager...\n");
+    LOGX_INFO_MSG("Cleaning up UCI manager...");
     uci_manager_cleanup();
     
     // Cleanup hang detector
-    fprintf(stderr, "Cleaning up hang detector...\n");
+    LOGX_INFO_MSG("Cleaning up hang detector...");
     hang_detector_cleanup();
     
     // Remove PID file
-    fprintf(stderr, "Removing PID file...\n");
+    LOGX_INFO_MSG("Removing PID file...");
     remove_pid_file();
     
     // Stop uloop
-    fprintf(stderr, "Stopping uloop...\n");
+    LOGX_INFO_MSG("Stopping uloop...");
     uloop_done();
     
     // Final exit message
-    fprintf(stderr, "Daemon cleanup completed. Exiting with code %d.\n", exit_code);
+    LOGX_INFO_MSG("Daemon cleanup completed. Exiting with code %d.", exit_code);
     
     exit(exit_code);
 }
@@ -454,23 +454,23 @@ int main(int argc, char **argv)
     // memory_debug_init(); // Disabled to prevent conflicts with memory protection system
     
     // Initialize hang detection system
-    fprintf(stderr, "DEBUG: About to initialize hang detection system\n");
+    LOGX_DEBUG_MSG("About to initialize hang detection system");
     if (hang_detector_init() != 0) {
         log_exit_reason(EXIT_REASON_INIT_FAILURE, "Failed to initialize hang detection system");
         daemon_exit(1);
     }
-    fprintf(stderr, "DEBUG: Hang detection system initialized successfully\n");
+    LOGX_DEBUG_MSG("Hang detection system initialized successfully");
     
     // Start hang detection watchdog
-    fprintf(stderr, "DEBUG: Starting hang detection watchdog\n");
+    LOGX_DEBUG_MSG("Starting hang detection watchdog");
     if (hang_detector_start_watchdog() != 0) {
         log_exit_reason(EXIT_REASON_INIT_FAILURE, "Failed to start hang detection watchdog");
         daemon_exit(1);
     }
-    fprintf(stderr, "DEBUG: Hang detection watchdog started successfully\n");
+    LOGX_DEBUG_MSG("Hang detection watchdog started successfully");
     
     // Initialize comprehensive memory protection system
-    fprintf(stderr, "DEBUG: About to initialize memory protection system\n");
+    LOGX_DEBUG_MSG("About to initialize memory protection system");
     CRITICAL_OPERATION_START("memory_protection_init");
     if (memory_protection_init() != MEMORY_PROTECTION_SUCCESS) {
         CRITICAL_OPERATION_END();
@@ -478,32 +478,32 @@ int main(int argc, char **argv)
         daemon_exit(1);
     }
     CRITICAL_OPERATION_END();
-    fprintf(stderr, "DEBUG: Memory protection system initialized successfully\n");
+    LOGX_DEBUG_MSG("Memory protection system initialized successfully");
     
     DEBUG_TRACE_ENTER();
     DEBUG_TRACE_INFO("Starting Telia Autonomy Network Management Daemon");
     
     // Display version and build information
-    fprintf(stderr, "========================================\n");
-    fprintf(stderr, "Telia Autonomy Network Management Daemon\n");
-    fprintf(stderr, "========================================\n");
-    fprintf(stderr, "%s\n", autonomy_daemon_get_build_info_string());
-    fprintf(stderr, "========================================\n");
-    fprintf(stderr, "Starting daemon...\n");
+    LOGX_INFO_MSG("========================================");
+    LOGX_INFO_MSG("Telia Autonomy Network Management Daemon");
+    LOGX_INFO_MSG("========================================");
+    LOGX_INFO_MSG("%s", autonomy_daemon_get_build_info_string());
+    LOGX_INFO_MSG("========================================");
+    LOGX_INFO_MSG("Starting daemon...");
     
     DEBUG_TRACE_INFO("Build info: %s", autonomy_daemon_get_build_info_string());
     
-    fprintf(stderr, "DEBUG: main() - about to initialize logging system\n");
+    LOGX_DEBUG_MSG("main() - about to initialize logging system");
     
     DEBUG_TRACE_STEP(1, "Initializing uloop");
     uloop_init();
-    fprintf(stderr, "uloop initialized\n");
+    LOGX_DEBUG_MSG("uloop initialized");
     DEBUG_TRACE_INFO("uloop initialized successfully");
     
     // Initialize logging system
     DEBUG_TRACE_STEP(2, "Initializing logging system");
     logx_init(NULL);
-    fprintf(stderr, "Logging system initialized\n");
+    LOGX_DEBUG_MSG("Logging system initialized");
     DEBUG_TRACE_INFO("Logging system initialized successfully");
     
     DEBUG_TRACE_STEP(3, "Setting up signal handlers");
@@ -514,7 +514,7 @@ int main(int argc, char **argv)
     // Set up crash debugging handlers
     setup_crash_handlers();
     
-    fprintf(stderr, "Signal handlers set\n");
+    LOGX_DEBUG_MSG("Signal handlers set");
     DEBUG_TRACE_INFO("Signal handlers set successfully");
 
     // Initialize UCI manager and load configuration
@@ -530,7 +530,7 @@ int main(int argc, char **argv)
     DEBUG_TRACE_INFO("UCI manager initialized successfully");
     
     DEBUG_TRACE_STEP(5, "Loading configuration from UCI");
-    fprintf(stderr, "DEBUG: About to call uci_manager_load_config\n");
+    LOGX_DEBUG_MSG("About to call uci_manager_load_config");
     
     // Memory protection checkpoint
     MEMORY_CANARY_CHECK();
@@ -540,33 +540,33 @@ int main(int argc, char **argv)
     TRY() {
         if (uci_manager_load_config(&g_config) != AUTONOMY_SUCCESS) {
         DEBUG_TRACE_WARN("Failed to load configuration from UCI, using defaults");
-        fprintf(stderr, "DEBUG: uci_manager_load_config failed, using defaults\n");
+        LOGX_DEBUG_MSG("uci_manager_load_config failed, using defaults");
         // Use default configuration if UCI loading fails
         const autonomy_config_t *default_config = uci_manager_get_default_config();
         if (default_config) {
             g_config = *default_config;
             DEBUG_TRACE_INFO("Using default configuration");
-            fprintf(stderr, "DEBUG: Default configuration applied\n");
+            LOGX_DEBUG_MSG("Default configuration applied");
         } else {
-            fprintf(stderr, "DEBUG: ERROR - No default configuration available\n");
+            LOGX_ERROR_MSG("ERROR - No default configuration available");
         }
         } else {
             DEBUG_TRACE_INFO("Configuration loaded from UCI successfully");
-            fprintf(stderr, "DEBUG: Configuration loaded from UCI successfully\n");
+            LOGX_DEBUG_MSG("Configuration loaded from UCI successfully");
         }
-        fprintf(stderr, "DEBUG: Configuration loading completed\n");
+        LOGX_DEBUG_MSG("Configuration loading completed");
     } CATCH() {
-        fprintf(stderr, "ERROR: Exception caught during configuration loading\n");
+        LOGX_ERROR_MSG("Exception caught during configuration loading");
         // Use default configuration on exception
         const autonomy_config_t *default_config = uci_manager_get_default_config();
         if (default_config) {
             g_config = *default_config;
-            fprintf(stderr, "DEBUG: Using default configuration after exception\n");
+            LOGX_DEBUG_MSG("Using default configuration after exception");
         }
     }
 
     // Check if another instance is running
-    fprintf(stderr, "Skipping PID file check for debugging...\n");
+    LOGX_DEBUG_MSG("Skipping PID file check for debugging...");
     // if (check_pid_file() == -1) {
     //     fprintf(stderr, "PID file check failed\n");
     //     return 1;
@@ -581,7 +581,7 @@ int main(int argc, char **argv)
     // }
     // fprintf(stderr, "PID file created successfully\n");
 
-    fprintf(stderr, "Attempting to connect to ubus...\n");
+    LOGX_DEBUG_MSG("Attempting to connect to ubus...");
     CRITICAL_OPERATION_START("ubus_connect");
     ctx = ubus_connect(NULL);
     if (!ctx) {
@@ -590,73 +590,73 @@ int main(int argc, char **argv)
         daemon_exit(1);
     }
     CRITICAL_OPERATION_END();
-    fprintf(stderr, "Connected to ubus successfully\n");
-    fprintf(stderr, "UBUS context: %p\n", ctx);
-    fprintf(stderr, "About to call ubus_add_uloop...\n");
+    LOGX_DEBUG_MSG("Connected to ubus successfully");
+    LOGX_DEBUG_MSG("UBUS context: %p", ctx);
+    LOGX_DEBUG_MSG("About to call ubus_add_uloop...");
     ubus_add_uloop(ctx);
-    fprintf(stderr, "Added uloop to ubus context\n");
+    LOGX_DEBUG_MSG("Added uloop to ubus context");
 
     // Load UCI configuration
     if (load_uci_config() == -1) {
-        fprintf(stderr, "Failed to load UCI configuration, using defaults.\n");
+        LOGX_WARN_MSG("Failed to load UCI configuration, using defaults.");
     }
 
     // Initialize network health monitoring
     if (perform_network_health_check() != 0) {
-        fprintf(stderr, "Failed to initialize network health monitoring.\n");
+        LOGX_WARN_MSG("Failed to initialize network health monitoring.");
     }
     
     // Initialize comprehensive network discovery system
     extern int network_discovery_comprehensive_init(void);
     if (network_discovery_comprehensive_init() != AUTONOMY_SUCCESS) {
-        fprintf(stderr, "Failed to initialize comprehensive network discovery.\n");
+        LOGX_WARN_MSG("Failed to initialize comprehensive network discovery.");
     } else {
-        fprintf(stderr, "Comprehensive network discovery initialized successfully.\n");
+        LOGX_INFO_MSG("Comprehensive network discovery initialized successfully.");
     }
     
     // Initialize network controller
     extern int network_controller_init(const void* config);
     if (network_controller_init(NULL) != AUTONOMY_SUCCESS) {
-        fprintf(stderr, "Failed to initialize network controller.\n");
+        LOGX_WARN_MSG("Failed to initialize network controller.");
     } else {
-        fprintf(stderr, "Network controller initialized successfully.\n");
+        LOGX_INFO_MSG("Network controller initialized successfully.");
     }
 
     // Initialize GPS health monitoring
     if (perform_gps_health_check() != 0) {
-        fprintf(stderr, "Failed to initialize GPS health monitoring.\n");
+        LOGX_WARN_MSG("Failed to initialize GPS health monitoring.");
     }
 
     // Initialize Starlink tracking module
     g_starlink_tracker = starlink_tracker_init_from_uci(uci_ctx);
     if (g_starlink_tracker) {
-        fprintf(stderr, "Starlink tracking module initialized successfully\n");
+        LOGX_INFO_MSG("Starlink tracking module initialized successfully");
         
         // Initialize tracking UBUS interface
-        fprintf(stderr, "DEBUG: About to call starlink_tracker_ubus_init\n");
+        LOGX_DEBUG_MSG("About to call starlink_tracker_ubus_init");
         int result = starlink_tracker_ubus_init(ctx, g_starlink_tracker);
-        fprintf(stderr, "DEBUG: starlink_tracker_ubus_init returned: %d\n", result);
+        LOGX_DEBUG_MSG("starlink_tracker_ubus_init returned: %d", result);
         if (result == 0) {
-            fprintf(stderr, "Starlink tracking UBUS interface registered\n");
+            LOGX_INFO_MSG("Starlink tracking UBUS interface registered");
         } else {
-            fprintf(stderr, "Failed to register Starlink tracking UBUS interface\n");
+            LOGX_WARN_MSG("Failed to register Starlink tracking UBUS interface");
         }
     } else {
-        fprintf(stderr, "Starlink tracking module initialization failed (check credentials)\n");
+        LOGX_WARN_MSG("Starlink tracking module initialization failed (check credentials)");
     }
 
     // Initialize Starlink gRPC collector
     if (starlink_grpc_collector_init() == AUTONOMY_SUCCESS) {
-        fprintf(stderr, "Starlink gRPC collector initialized successfully\n");
+        LOGX_INFO_MSG("Starlink gRPC collector initialized successfully");
         
         // Start gRPC collector thread
         if (starlink_grpc_collector_start() == AUTONOMY_SUCCESS) {
-            fprintf(stderr, "Starlink gRPC collector thread started\n");
+            LOGX_INFO_MSG("Starlink gRPC collector thread started");
         } else {
-            fprintf(stderr, "Failed to start Starlink gRPC collector thread\n");
+            LOGX_WARN_MSG("Failed to start Starlink gRPC collector thread");
         }
     } else {
-        fprintf(stderr, "Starlink gRPC collector initialization failed\n");
+        LOGX_WARN_MSG("Starlink gRPC collector initialization failed");
     }
 
     // Initialize ML monitoring module - TEMPORARILY DISABLED FOR DEBUGGING
@@ -667,86 +667,86 @@ int main(int argc, char **argv)
             ml_monitor_t *ml_monitor = ml_monitor_init(&ml_config);
             CRITICAL_OPERATION_END();
             if (ml_monitor) {
-                fprintf(stderr, "ML monitoring module initialized successfully\n");
+                LOGX_INFO_MSG("ML monitoring module initialized successfully");
                 
                 // ML monitoring UBUS interface will be initialized after main UBUS object registration
                 
                 // Initialize Phase 3 enhancements
-                fprintf(stderr, "DEBUG: About to call ml_monitor_init_phase3_enhancements\n");
-                fprintf(stderr, "DEBUG: ml_monitor pointer: %p\n", (void*)ml_monitor);
+                LOGX_DEBUG_MSG("About to call ml_monitor_init_phase3_enhancements");
+                LOGX_DEBUG_MSG("ml_monitor pointer: %p", (void*)ml_monitor);
                 
                 int phase3_result = ml_monitor_init_phase3_enhancements(ml_monitor);
                 
-                fprintf(stderr, "DEBUG: ml_monitor_init_phase3_enhancements returned: %d\n", phase3_result);
-                fprintf(stderr, "DEBUG: ml_monitor pointer after Phase 3: %p\n", (void*)ml_monitor);
+                LOGX_DEBUG_MSG("ml_monitor_init_phase3_enhancements returned: %d", phase3_result);
+                LOGX_DEBUG_MSG("ml_monitor pointer after Phase 3: %p", (void*)ml_monitor);
                 if (ml_monitor == NULL) {
-                    fprintf(stderr, "ERROR: ml_monitor pointer is NULL after Phase 3!\n");
+                    LOGX_ERROR_MSG("ERROR: ml_monitor pointer is NULL after Phase 3!");
                     return -1;
                 }
                 if (phase3_result == ML_MONITOR_SUCCESS) {
-                    fprintf(stderr, "ML monitoring Phase 3 enhancements initialized\n");
-                    fprintf(stderr, "DEBUG: ml_monitor_init_phase3_enhancements completed successfully\n");
+                    LOGX_INFO_MSG("ML monitoring Phase 3 enhancements initialized");
+                    LOGX_DEBUG_MSG("ml_monitor_init_phase3_enhancements completed successfully");
                     
-                    fprintf(stderr, "DEBUG: About to print Phase 3 success message\n");
-                    fprintf(stderr, "DEBUG: Phase 3 success message printed\n");
+                    LOGX_DEBUG_MSG("About to print Phase 3 success message");
+                    LOGX_DEBUG_MSG("Phase 3 success message printed");
                     
-                    fprintf(stderr, "DEBUG: About to start Phase 4 initialization\n");
+                    LOGX_DEBUG_MSG("About to start Phase 4 initialization");
                     // Initialize Phase 4 enhancements
-                    fprintf(stderr, "DEBUG: About to call ml_monitor_init_phase4_enhancements\n");
+                    LOGX_DEBUG_MSG("About to call ml_monitor_init_phase4_enhancements");
                     if (ml_monitor_init_phase4_enhancements(ml_monitor) == ML_MONITOR_SUCCESS) {
-                        fprintf(stderr, "ML monitoring Phase 4 enhancements initialized\n");
-                        fprintf(stderr, "DEBUG: ml_monitor_init_phase4_enhancements completed successfully\n");
+                        LOGX_INFO_MSG("ML monitoring Phase 4 enhancements initialized");
+                        LOGX_DEBUG_MSG("ml_monitor_init_phase4_enhancements completed successfully");
                         
                         // Initialize Phase 5 mobile optimization
-                        fprintf(stderr, "DEBUG: About to call ml_monitor_init_phase5_mobile_system\n");
+                        LOGX_DEBUG_MSG("About to call ml_monitor_init_phase5_mobile_system");
                         if (ml_monitor_init_phase5_mobile_system(ml_monitor) == ML_MONITOR_SUCCESS) {
-                            fprintf(stderr, "ML monitoring Phase 5 mobile optimization initialized\n");
-                            fprintf(stderr, "DEBUG: ml_monitor_init_phase5_mobile_system completed successfully\n");
+                            LOGX_INFO_MSG("ML monitoring Phase 5 mobile optimization initialized");
+                            LOGX_DEBUG_MSG("ml_monitor_init_phase5_mobile_system completed successfully");
                             
                             // Initialize Phase 6 self-optimization
-                            fprintf(stderr, "DEBUG: About to call ml_monitor_init_phase6_self_optimization\n");
+                            LOGX_DEBUG_MSG("About to call ml_monitor_init_phase6_self_optimization");
                             if (ml_monitor_init_phase6_self_optimization(ml_monitor) == ML_MONITOR_SUCCESS) {
-                                fprintf(stderr, "ML monitoring Phase 6 self-optimization initialized\n");
-                                fprintf(stderr, "DEBUG: ml_monitor_init_phase6_self_optimization completed successfully\n");
+                                LOGX_INFO_MSG("ML monitoring Phase 6 self-optimization initialized");
+                                LOGX_DEBUG_MSG("ml_monitor_init_phase6_self_optimization completed successfully");
                                 
                                 // Initialize Phase 7 multi-interface intelligence
-                                fprintf(stderr, "DEBUG: About to call ml_monitor_init_phase7_multi_interface\n");
+                                LOGX_DEBUG_MSG("About to call ml_monitor_init_phase7_multi_interface");
                                 if (ml_monitor_init_phase7_multi_interface(ml_monitor) == ML_MONITOR_SUCCESS) {
-                                    fprintf(stderr, "ML monitoring Phase 7 multi-interface intelligence initialized\n");
-                                    fprintf(stderr, "DEBUG: ml_monitor_init_phase7_multi_interface completed successfully\n");
+                                    LOGX_INFO_MSG("ML monitoring Phase 7 multi-interface intelligence initialized");
+                                    LOGX_DEBUG_MSG("ml_monitor_init_phase7_multi_interface completed successfully");
                                 } else {
-                                    fprintf(stderr, "ML monitoring Phase 7 initialization failed, using Phase 6 features\n");
+                                    LOGX_WARN_MSG("ML monitoring Phase 7 initialization failed, using Phase 6 features");
                                 }
                             } else {
-                                fprintf(stderr, "ML monitoring Phase 6 initialization failed, using Phase 5 features\n");
+                                LOGX_WARN_MSG("ML monitoring Phase 6 initialization failed, using Phase 5 features");
                             }
                         } else {
-                            fprintf(stderr, "ML monitoring Phase 5 initialization failed, using Phase 4 features\n");
+                            LOGX_WARN_MSG("ML monitoring Phase 5 initialization failed, using Phase 4 features");
                         }
                     } else {
-                        fprintf(stderr, "ML monitoring Phase 4 initialization failed, using Phase 3 features\n");
+                        LOGX_WARN_MSG("ML monitoring Phase 4 initialization failed, using Phase 3 features");
                     }
                 } else {
-                    fprintf(stderr, "ML monitoring Phase 3 initialization failed, using Phase 2 features\n");
+                    LOGX_WARN_MSG("ML monitoring Phase 3 initialization failed, using Phase 2 features");
                 }
                 
                 // Auto-start ML monitoring if configured
-                fprintf(stderr, "DEBUG: About to call ml_monitor_start\n");
+                LOGX_DEBUG_MSG("About to call ml_monitor_start");
                 if (ml_monitor_start(ml_monitor) == ML_MONITOR_SUCCESS) {
-                    fprintf(stderr, "ML monitoring started automatically with Phase 7 multi-interface intelligence\n");
-                    fprintf(stderr, "DEBUG: ml_monitor_start completed successfully\n");
+                    LOGX_INFO_MSG("ML monitoring started automatically with Phase 7 multi-interface intelligence");
+                    LOGX_DEBUG_MSG("ml_monitor_start completed successfully");
                 } else {
-                    fprintf(stderr, "ML monitoring initialized but not started (manual start required)\n");
-                    fprintf(stderr, "DEBUG: ml_monitor_start failed\n");
+                    LOGX_WARN_MSG("ML monitoring initialized but not started (manual start required)");
+                    LOGX_DEBUG_MSG("ml_monitor_start failed");
                 }
             } else {
-                fprintf(stderr, "ML monitoring module initialization failed\n");
+                LOGX_ERROR_MSG("ML monitoring module initialization failed");
             }
         } else {
-            fprintf(stderr, "ML monitoring module disabled in configuration\n");
+            LOGX_INFO_MSG("ML monitoring module disabled in configuration");
         }
     } else {
-        fprintf(stderr, "Failed to load ML monitoring configuration\n");
+        LOGX_WARN_MSG("Failed to load ML monitoring configuration");
     }
 
     // Initialize random seed for simulation
@@ -754,12 +754,12 @@ int main(int argc, char **argv)
 
     // Note: ubus_lookup_object doesn't exist in this UBUS version
     // We'll try to register directly and handle conflicts gracefully
-    fprintf(stderr, "Attempting to register autonomy ubus object...\n");
+    LOGX_DEBUG_MSG("Attempting to register autonomy ubus object...");
 
-    fprintf(stderr, "Registering autonomy ubus objects step by step...\n");
+    LOGX_DEBUG_MSG("Registering autonomy ubus objects step by step...");
     
     // Test each method individually to find the problematic one
-    fprintf(stderr, "Testing individual UBUS methods...\n");
+    LOGX_DEBUG_MSG("Testing individual UBUS methods...");
     
     // Test 1: status method only
     static const struct ubus_method status_methods[] = {
@@ -776,7 +776,7 @@ int main(int argc, char **argv)
         .n_methods = ARRAY_SIZE(status_methods),
     };
     
-    fprintf(stderr, "Testing status method...\n");
+    LOGX_DEBUG_MSG("Testing status method...");
     int ret = ubus_add_object(ctx, &status_obj);
     if (ret) {
         char error_msg[256];
@@ -784,7 +784,7 @@ int main(int argc, char **argv)
         log_exit_reason(EXIT_REASON_INIT_FAILURE, error_msg);
         daemon_exit(1);
     }
-    fprintf(stderr, "Status method registered successfully\n");
+    LOGX_DEBUG_MSG("Status method registered successfully");
     
     // Test 2: health method only
     static const struct ubus_method health_methods[] = {
@@ -801,7 +801,7 @@ int main(int argc, char **argv)
         .n_methods = ARRAY_SIZE(health_methods),
     };
     
-    fprintf(stderr, "Testing health method...\n");
+    LOGX_DEBUG_MSG("Testing health method...");
     ret = ubus_add_object(ctx, &health_obj);
     if (ret) {
         char error_msg[256];
@@ -809,7 +809,7 @@ int main(int argc, char **argv)
         log_exit_reason(EXIT_REASON_INIT_FAILURE, error_msg);
         daemon_exit(1);
     }
-    fprintf(stderr, "Health method registered successfully\n");
+    LOGX_DEBUG_MSG("Health method registered successfully");
     
     // Test 3: config method only
     static const struct ubus_method config_methods[] = {
@@ -826,7 +826,7 @@ int main(int argc, char **argv)
         .n_methods = ARRAY_SIZE(config_methods),
     };
     
-    fprintf(stderr, "Testing config method...\n");
+    LOGX_DEBUG_MSG("Testing config method...");
     ret = ubus_add_object(ctx, &config_obj);
     if (ret) {
         char error_msg[256];
@@ -834,12 +834,12 @@ int main(int argc, char **argv)
         log_exit_reason(EXIT_REASON_INIT_FAILURE, error_msg);
         daemon_exit(1);
     }
-    fprintf(stderr, "Config method registered successfully\n");
+    LOGX_DEBUG_MSG("Config method registered successfully");
     
-    fprintf(stderr, "All individual methods registered successfully - testing combined object...\n");
+    LOGX_DEBUG_MSG("All individual methods registered successfully - testing combined object...");
     
     // Now try to register the full object
-    fprintf(stderr, "Registering full autonomy ubus object (%d methods)...\n", autonomy_obj.n_methods);
+    LOGX_DEBUG_MSG("Registering full autonomy ubus object (%d methods)...", autonomy_obj.n_methods);
     ret = ubus_add_object(ctx, &autonomy_obj);
     if (ret) {
         char error_msg[256];
@@ -848,34 +848,34 @@ int main(int argc, char **argv)
         daemon_exit(1);
     }
 
-    fprintf(stderr, "Autonomy daemon started, registered 'autonomy' ubus object\n");
+    LOGX_INFO_MSG("Autonomy daemon started, registered 'autonomy' ubus object");
     
     // Initialize ML monitoring UBUS interface after main UBUS object is registered - TEMPORARILY DISABLED
     // if (ml_monitor_ubus_init(ctx) == ML_MONITOR_SUCCESS) {
-    //     fprintf(stderr, "ML monitoring UBUS interface registered\n");
+    //     LOGX_INFO_MSG("ML monitoring UBUS interface registered");
     // } else {
-    //     fprintf(stderr, "Failed to initialize ML monitoring UBUS interface\n");
+    //     LOGX_WARN_MSG("Failed to initialize ML monitoring UBUS interface");
     // }
-    fprintf(stderr, "ML monitoring UBUS interface temporarily disabled for debugging\n");
+    LOGX_INFO_MSG("ML monitoring UBUS interface temporarily disabled for debugging");
     
-    fprintf(stderr, "Available methods: status, health, config, start, stop, restart, pid_status, log_status, config_status\n");
-    fprintf(stderr, "Network methods: network_status, network_interfaces, network_health_check, network_failover\n");
-    fprintf(stderr, "GPS methods: gps_status, gps_sources, gps_health_check\n");
-    fprintf(stderr, "System methods: system_status, system_health_check, system_health_details, system_maintenance, system_restart_services\n");
-    fprintf(stderr, "Starlink methods: starlink_status, starlink_health, starlink_location, starlink_collector_stats, starlink_force_collect\n");
-    fprintf(stderr, "Starlink cluster methods: starlink_cluster_status, starlink_cluster_check_failover\n");
-    fprintf(stderr, "Starlink tracking methods: starlink_tracker.status, starlink_tracker.predictions, starlink_tracker.satellites\n");
-    fprintf(stderr, "Starlink tracking control: starlink_tracker.start_monitoring, starlink_tracker.stop_monitoring, starlink_tracker.update_data\n");
-    fprintf(stderr, "ML monitoring methods: ml_monitor.status, ml_monitor.start, ml_monitor.stop, ml_monitor.restart\n");
-    fprintf(stderr, "ML monitoring config: ml_monitor.get_config, ml_monitor.set_config\n");
-    fprintf(stderr, "ML monitoring data: ml_monitor.get_predictions, ml_monitor.get_statistics, ml_monitor.reset_learning, ml_monitor.export_data\n");
-    fprintf(stderr, "ML monitoring Phase 4: ml_monitor.get_ensemble_status, ml_monitor.get_validation_metrics, ml_monitor.trigger_optimization\n");
-    fprintf(stderr, "ML monitoring Phase 5: ml_monitor.get_mobile_status, ml_monitor.export_field_data, ml_monitor.enable_field_test\n");
-    fprintf(stderr, "ML monitoring Phase 6: ml_monitor.get_system_status, ml_monitor.run_production_validation, ml_monitor.enable_autonomous_mode\n");
-    fprintf(stderr, "ML monitoring Phase 7: ml_monitor.get_multi_interface_status, ml_monitor.predict_interface_outage, ml_monitor.update_mwan3_weights, ml_monitor.validate_failover_prediction\n");
-    fprintf(stderr, "ML Analytics & Visualization: ml_monitor.get_analytics_summary, ml_monitor.get_interface_score_history, ml_monitor.get_accuracy_trends, ml_monitor.get_impact_summary, ml_monitor.get_current_interface_scores\n");
-    fprintf(stderr, "Network Discovery Enhanced: autonomy.network.interfaces_detailed (includes ML recommendations, MWAN3 ping info, enhanced cellular metrics, performance trends)\n");
-    fprintf(stderr, "Daemon running, press Ctrl+C to stop\n");
+    LOGX_INFO_MSG("Available methods: status, health, config, start, stop, restart, pid_status, log_status, config_status");
+    LOGX_INFO_MSG("Network methods: network_status, network_interfaces, network_health_check, network_failover");
+    LOGX_INFO_MSG("GPS methods: gps_status, gps_sources, gps_health_check");
+    LOGX_INFO_MSG("System methods: system_status, system_health_check, system_health_details, system_maintenance, system_restart_services");
+    LOGX_INFO_MSG("Starlink methods: starlink_status, starlink_health, starlink_location, starlink_collector_stats, starlink_force_collect");
+    LOGX_INFO_MSG("Starlink cluster methods: starlink_cluster_status, starlink_cluster_check_failover");
+    LOGX_INFO_MSG("Starlink tracking methods: starlink_tracker.status, starlink_tracker.predictions, starlink_tracker.satellites");
+    LOGX_INFO_MSG("Starlink tracking control: starlink_tracker.start_monitoring, starlink_tracker.stop_monitoring, starlink_tracker.update_data");
+    LOGX_INFO_MSG("ML monitoring methods: ml_monitor.status, ml_monitor.start, ml_monitor.stop, ml_monitor.restart");
+    LOGX_INFO_MSG("ML monitoring config: ml_monitor.get_config, ml_monitor.set_config");
+    LOGX_INFO_MSG("ML monitoring data: ml_monitor.get_predictions, ml_monitor.get_statistics, ml_monitor.reset_learning, ml_monitor.export_data");
+    LOGX_INFO_MSG("ML monitoring Phase 4: ml_monitor.get_ensemble_status, ml_monitor.get_validation_metrics, ml_monitor.trigger_optimization");
+    LOGX_INFO_MSG("ML monitoring Phase 5: ml_monitor.get_mobile_status, ml_monitor.export_field_data, ml_monitor.enable_field_test");
+    LOGX_INFO_MSG("ML monitoring Phase 6: ml_monitor.get_system_status, ml_monitor.run_production_validation, ml_monitor.enable_autonomous_mode");
+    LOGX_INFO_MSG("ML monitoring Phase 7: ml_monitor.get_multi_interface_status, ml_monitor.predict_interface_outage, ml_monitor.update_mwan3_weights, ml_monitor.validate_failover_prediction");
+    LOGX_INFO_MSG("ML Analytics & Visualization: ml_monitor.get_analytics_summary, ml_monitor.get_interface_score_history, ml_monitor.get_accuracy_trends, ml_monitor.get_impact_summary, ml_monitor.get_current_interface_scores");
+    LOGX_INFO_MSG("Network Discovery Enhanced: autonomy.network.interfaces_detailed (includes ML recommendations, MWAN3 ping info, enhanced cellular metrics, performance trends)");
+    LOGX_INFO_MSG("Daemon running, press Ctrl+C to stop");
     uloop_run();
 
     // uloop_run() completed - this is a normal shutdown
@@ -887,51 +887,51 @@ int main(int argc, char **argv)
 
 // Enhanced debugging functions
 static void print_register_state(ucontext_t *context) {
-    fprintf(stderr, "=== REGISTER STATE ===\n");
+    LOGX_FATAL_MSG("=== REGISTER STATE ===");
 #if defined(__arm__)
-    fprintf(stderr, "Program counter: %p\n", (void*)context->uc_mcontext.arm_pc);
-    fprintf(stderr, "Stack pointer: %p\n", (void*)context->uc_mcontext.arm_sp);
-    fprintf(stderr, "Link register: %p\n", (void*)context->uc_mcontext.arm_lr);
-    fprintf(stderr, "Frame pointer: %p\n", (void*)context->uc_mcontext.arm_fp);
-    fprintf(stderr, "General registers: ");
-    fprintf(stderr, "r0=0x%lx r1=0x%lx r2=0x%lx r3=0x%lx\n", 
+    LOGX_FATAL_MSG("Program counter: %p", (void*)context->uc_mcontext.arm_pc);
+    LOGX_FATAL_MSG("Stack pointer: %p", (void*)context->uc_mcontext.arm_sp);
+    LOGX_FATAL_MSG("Link register: %p", (void*)context->uc_mcontext.arm_lr);
+    LOGX_FATAL_MSG("Frame pointer: %p", (void*)context->uc_mcontext.arm_fp);
+    LOGX_FATAL_MSG("General registers: ");
+    LOGX_FATAL_MSG("r0=0x%lx r1=0x%lx r2=0x%lx r3=0x%lx", 
             (unsigned long)context->uc_mcontext.arm_r0,
             (unsigned long)context->uc_mcontext.arm_r1,
             (unsigned long)context->uc_mcontext.arm_r2,
             (unsigned long)context->uc_mcontext.arm_r3);
-    fprintf(stderr, "r4=0x%lx r5=0x%lx r6=0x%lx r7=0x%lx\n",
+    LOGX_FATAL_MSG("r4=0x%lx r5=0x%lx r6=0x%lx r7=0x%lx",
             (unsigned long)context->uc_mcontext.arm_r4,
             (unsigned long)context->uc_mcontext.arm_r5,
             (unsigned long)context->uc_mcontext.arm_r6,
             (unsigned long)context->uc_mcontext.arm_r7);
-    fprintf(stderr, "r8=0x%lx r9=0x%lx r10=0x%lx\n",
+    LOGX_FATAL_MSG("r8=0x%lx r9=0x%lx r10=0x%lx",
             (unsigned long)context->uc_mcontext.arm_r8,
             (unsigned long)context->uc_mcontext.arm_r9,
             (unsigned long)context->uc_mcontext.arm_r10);
 #elif defined(__aarch64__)
-    fprintf(stderr, "Program counter: %p\n", (void*)context->uc_mcontext.pc);
-    fprintf(stderr, "Stack pointer: %p\n", (void*)context->uc_mcontext.sp);
-    fprintf(stderr, "Link register: %p\n", (void*)context->uc_mcontext.regs[30]);
+    LOGX_FATAL_MSG("Program counter: %p", (void*)context->uc_mcontext.pc);
+    LOGX_FATAL_MSG("Stack pointer: %p", (void*)context->uc_mcontext.sp);
+    LOGX_FATAL_MSG("Link register: %p", (void*)context->uc_mcontext.regs[30]);
 #else
-    fprintf(stderr, "Register state not available for this architecture\n");
+    LOGX_FATAL_MSG("Register state not available for this architecture");
 #endif
-    fprintf(stderr, "=== END REGISTER STATE ===\n\n");
+    LOGX_FATAL_MSG("=== END REGISTER STATE ===");
 }
 
 static void print_stack_trace_arm(ucontext_t *context) {
-    fprintf(stderr, "=== ARM STACK TRACE ===\n");
+    LOGX_FATAL_MSG("=== ARM STACK TRACE ===");
 #if defined(__arm__)
     void *pc = (void*)context->uc_mcontext.arm_pc;
     void *sp = (void*)context->uc_mcontext.arm_sp;
     void *lr = (void*)context->uc_mcontext.arm_lr;
     
-    fprintf(stderr, "PC (Program Counter): %p\n", pc);
-    fprintf(stderr, "SP (Stack Pointer): %p\n", sp);
-    fprintf(stderr, "LR (Link Register): %p\n", lr);
+    LOGX_FATAL_MSG("PC (Program Counter): %p", pc);
+    LOGX_FATAL_MSG("SP (Stack Pointer): %p", sp);
+    LOGX_FATAL_MSG("LR (Link Register): %p", lr);
     
     // Try to read stack frames
     void **frame_ptr = (void**)sp;
-    fprintf(stderr, "Stack frames (up to 10):\n");
+    LOGX_FATAL_MSG("Stack frames (up to 10):");
     for (int i = 0; i < 10 && frame_ptr; i++) {
         void *return_addr = frame_ptr[0];
         void *next_frame = frame_ptr[1];
@@ -939,24 +939,24 @@ static void print_stack_trace_arm(ucontext_t *context) {
         if (return_addr == NULL || next_frame == NULL) break;
         if ((uintptr_t)return_addr < 0x1000 || (uintptr_t)return_addr > 0x7fffffff) break;
         
-        fprintf(stderr, "  Frame %d: return_addr=%p, next_frame=%p\n", i, return_addr, next_frame);
+        LOGX_FATAL_MSG("  Frame %d: return_addr=%p, next_frame=%p", i, return_addr, next_frame);
         frame_ptr = (void**)next_frame;
     }
 #else
-    fprintf(stderr, "ARM stack trace not available for this architecture\n");
+    LOGX_FATAL_MSG("ARM stack trace not available for this architecture");
 #endif
-    fprintf(stderr, "=== END ARM STACK TRACE ===\n\n");
+    LOGX_FATAL_MSG("=== END ARM STACK TRACE ===");
 }
 
 static void validate_memory_before_access(void *ptr, size_t size, const char *location) {
     if (!ptr) {
-        fprintf(stderr, "ERROR: NULL pointer access at %s\n", location);
+        LOGX_FATAL_MSG("ERROR: NULL pointer access at %s", location);
         abort();
     }
     
     // Check if pointer is in valid memory range
     if ((uintptr_t)ptr < 0x1000 || (uintptr_t)ptr > 0x7fffffff) {
-        fprintf(stderr, "ERROR: Invalid pointer %p at %s\n", ptr, location);
+        LOGX_FATAL_MSG("ERROR: Invalid pointer %p at %s", ptr, location);
         abort();
     }
     

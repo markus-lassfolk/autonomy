@@ -97,11 +97,11 @@ void ml_monitor_config_init_defaults(ml_monitor_config_t *config) {
 
 // Initialize memory-mapped storage
 ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *storage_size) {
-    fprintf(stderr, "DEBUG: ml_monitor_init_storage called with filepath: %s\n", filepath ? filepath : "NULL");
+    LOGX_DEBUG_MSG("ml_monitor_init_storage called with filepath: %s", filepath ? filepath : "NULL");
     if (!filepath || !storage_size) return NULL;
     
     LOGX_INFO_MSG("Initializing ML monitor storage: %s", filepath);
-    fprintf(stderr, "DEBUG: About to open file: %s\n", filepath);
+    LOGX_DEBUG_MSG("About to open file: %s", filepath);
     
     // Create directory if it doesn't exist
     // Static array is bounded and validated
@@ -111,12 +111,12 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
     char *last_slash = strrchr(dir_path, '/');
     if (last_slash) {
         *last_slash = '\0';
-        fprintf(stderr, "DEBUG: Creating directory: %s\n", dir_path);
+        LOGX_DEBUG_MSG("Creating directory: %s", dir_path);
         if (mkdir(dir_path, 0755) < 0 && errno != EEXIST) {
             LOGX_ERROR_MSG("Failed to create storage directory: %s", strerror(errno));
             return NULL;
         }
-        fprintf(stderr, "DEBUG: Directory created or already exists\n");
+        LOGX_DEBUG_MSG("Directory created or already exists");
     }
     
     // Validate file path to prevent symlink attacks
@@ -128,7 +128,7 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
     // File path validated - safe to open
     // NOLINTNEXTLINE(cert-msc50-cpp) - Path validated, no symlink attacks
     int fd = open(filepath, O_RDWR | O_CREAT, 0644);
-    fprintf(stderr, "DEBUG: File opened, fd=%d\n", fd);
+    LOGX_DEBUG_MSG("File opened, fd=%d", fd);
     if (fd < 0) {
         LOGX_ERROR_MSG("Failed to open storage file: %s", strerror(errno));
         return NULL;
@@ -141,37 +141,37 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
     size_t hourly_obs_size = 168 * sizeof(ml_observation_t);    // hourly buffer  
     size_t daily_obs_size = 30 * sizeof(ml_observation_t);      // daily buffer
     *storage_size = main_size + recent_obs_size + hourly_obs_size + daily_obs_size;
-    fprintf(stderr, "DEBUG: Storage size calculated: %zu (main: %zu, recent: %zu, hourly: %zu, daily: %zu)\n", 
+    LOGX_DEBUG_MSG("Storage size calculated: %zu (main: %zu, recent: %zu, hourly: %zu, daily: %zu)", 
             *storage_size, main_size, recent_obs_size, hourly_obs_size, daily_obs_size);
     
     // Ensure file size
-    fprintf(stderr, "DEBUG: About to ftruncate file\n");
+    LOGX_DEBUG_MSG("About to ftruncate file");
     if (ftruncate(fd, *storage_size) < 0) {
         LOGX_ERROR_MSG("Failed to resize storage file: %s", strerror(errno));
         close(fd);
         return NULL;
     }
-    fprintf(stderr, "DEBUG: File truncated successfully\n");
+    LOGX_DEBUG_MSG("File truncated successfully");
     
     // Memory map the file
-    fprintf(stderr, "DEBUG: About to mmap file\n");
+    LOGX_DEBUG_MSG("About to mmap file");
     ml_persistent_state_t* state = mmap(NULL, *storage_size, 
                                        PROT_READ | PROT_WRITE, 
                                        MAP_SHARED, fd, 0);
-    fprintf(stderr, "DEBUG: mmap result: %p\n", state);
+    LOGX_DEBUG_MSG("mmap result: %p", state);
     close(fd);
     
     if (state == MAP_FAILED) {
         LOGX_ERROR_MSG("Failed to memory map storage file: %s", strerror(errno));
         return NULL;
     }
-    fprintf(stderr, "DEBUG: Memory mapping successful\n");
+    LOGX_DEBUG_MSG("Memory mapping successful");
     
     // Initialize if new file
-    fprintf(stderr, "DEBUG: Checking magic number: 0x%08X\n", state->magic);
+    LOGX_DEBUG_MSG("Checking magic number: 0x%08X", state->magic);
     if (state->magic != 0x4D4C5354) { // "MLST"
         LOGX_INFO_MSG("Initializing new ML storage file");
-        fprintf(stderr, "DEBUG: Initializing new storage file\n");
+        LOGX_DEBUG_MSG("Initializing new storage file");
         memset(state, 0, *storage_size);
         state->magic = 0x4D4C5354;
         state->version = 1;
@@ -225,35 +225,35 @@ ml_persistent_state_t* ml_monitor_init_storage(const char *filepath, size_t *sto
         state->daily.observations = (ml_observation_t*)((char*)state + main_size + recent_obs_size + hourly_obs_size);
     }
     
-    fprintf(stderr, "DEBUG: ml_monitor_init_storage completed successfully\n");
+    LOGX_DEBUG_MSG("ml_monitor_init_storage completed successfully");
     return state;
 }
 
 // Initialize ML monitor
 ml_monitor_t* ml_monitor_init(const ml_monitor_config_t *config) {
-    fprintf(stderr, "DEBUG: ml_monitor_init called\n");
+    LOGX_DEBUG_MSG("ml_monitor_init called");
     if (!config) {
         LOGX_ERROR_MSG("Invalid configuration provided to ML monitor");
-        fprintf(stderr, "DEBUG: ml_monitor_init failed - NULL config\n");
+        LOGX_DEBUG_MSG("ml_monitor_init failed - NULL config");
         return NULL;
     }
     
     if (g_ml_monitor) {
         LOGX_WARN_MSG("ML monitor already initialized");
-        fprintf(stderr, "DEBUG: ml_monitor_init - already initialized\n");
+        LOGX_DEBUG_MSG("ml_monitor_init - already initialized");
         return g_ml_monitor;
     }
     
     LOGX_INFO_MSG("Initializing ML monitor");
-    fprintf(stderr, "DEBUG: ml_monitor_init - starting initialization\n");
+    LOGX_DEBUG_MSG("ml_monitor_init - starting initialization");
     
     ml_monitor_t *monitor = SAFE_CALLOC(1, sizeof(ml_monitor_t));
     if (!monitor) {
         LOGX_ERROR_MSG("Failed to allocate ML monitor structure");
-        fprintf(stderr, "DEBUG: ml_monitor_init failed - calloc failed\n");
+        LOGX_DEBUG_MSG("ml_monitor_init failed - calloc failed");
         return NULL;
     }
-    fprintf(stderr, "DEBUG: ml_monitor_init - allocated monitor structure\n");
+    LOGX_DEBUG_MSG("ml_monitor_init - allocated monitor structure");
     
     // Copy configuration
     if (config) {
@@ -265,48 +265,48 @@ ml_monitor_t* ml_monitor_init(const ml_monitor_config_t *config) {
         free(monitor);
         return NULL;
     }
-    fprintf(stderr, "DEBUG: ml_monitor_init - copied configuration\n");
+    LOGX_DEBUG_MSG("ml_monitor_init - copied configuration");
     
     // Initialize storage
-    fprintf(stderr, "DEBUG: ml_monitor_init - about to initialize storage\n");
+    LOGX_DEBUG_MSG("ml_monitor_init - about to initialize storage");
     monitor->state = ml_monitor_init_storage(config->storage_path, &monitor->storage_size);
     if (!monitor->state) {
         LOGX_ERROR_MSG("Failed to initialize ML storage");
-        fprintf(stderr, "DEBUG: ml_monitor_init failed - storage initialization failed\n");
+        LOGX_DEBUG_MSG("ml_monitor_init failed - storage initialization failed");
         free(monitor);
         return NULL;
     }
-    fprintf(stderr, "DEBUG: ml_monitor_init - storage initialized successfully\n");
+    LOGX_DEBUG_MSG("ml_monitor_init - storage initialized successfully");
     
     // Initialize analytics system
-    fprintf(stderr, "DEBUG: ml_monitor_init - about to initialize analytics\n");
+    LOGX_DEBUG_MSG("ml_monitor_init - about to initialize analytics");
     int analytics_result = ml_monitor_analytics_init();
     if (analytics_result != ML_MONITOR_SUCCESS) {
         LOGX_ERROR_MSG("Failed to initialize ML analytics: %d", analytics_result);
-        fprintf(stderr, "DEBUG: ml_monitor_init - analytics initialization failed: %d\n", analytics_result);
+        LOGX_DEBUG_MSG("ml_monitor_init - analytics initialization failed: %d", analytics_result);
         // Continue without analytics - not critical
     } else {
         LOGX_INFO_MSG(" ML Analytics system initialized");
-        fprintf(stderr, "DEBUG: ml_monitor_init - analytics initialized successfully\n");
+        LOGX_DEBUG_MSG("ml_monitor_init - analytics initialized successfully");
     }
     
     // Initialize mutex
-    fprintf(stderr, "DEBUG: ml_monitor_init - about to initialize mutex\n");
+    LOGX_DEBUG_MSG("ml_monitor_init - about to initialize mutex");
     if (pthread_mutex_init(&monitor->state_mutex, NULL) != 0) {
         LOGX_ERROR_MSG("Failed to initialize ML monitor mutex");
-        fprintf(stderr, "DEBUG: ml_monitor_init failed - mutex initialization failed\n");
+        LOGX_DEBUG_MSG("ml_monitor_init failed - mutex initialization failed");
         munmap(monitor->state, monitor->storage_size);
         free(monitor);
         return NULL;
     }
-    fprintf(stderr, "DEBUG: ml_monitor_init - mutex initialized successfully\n");
+    LOGX_DEBUG_MSG("ml_monitor_init - mutex initialized successfully");
     
     monitor->initialized = true;
     g_ml_monitor = monitor;
     
     LOGX_INFO_MSG("ML monitor initialized successfully (memory usage: %zu KB)", 
                   monitor->storage_size / 1024);
-    fprintf(stderr, "DEBUG: ml_monitor_init completed successfully\n");
+    LOGX_DEBUG_MSG("ml_monitor_init completed successfully");
     
     return monitor;
 }
@@ -819,48 +819,48 @@ static void* ml_monitor_prediction_thread(void *arg) {
 
 // Start ML monitor
 int ml_monitor_start(ml_monitor_t *monitor) {
-    fprintf(stderr, "DEBUG: ml_monitor_start called\n");
+    LOGX_DEBUG_MSG("ml_monitor_start called");
     if (!monitor) {
-        fprintf(stderr, "DEBUG: ml_monitor_start failed - NULL monitor\n");
+        LOGX_DEBUG_MSG("ml_monitor_start failed - NULL monitor");
         return ML_MONITOR_ERROR_INVALID_PARAM;
     }
     if (!monitor->initialized) {
-        fprintf(stderr, "DEBUG: ml_monitor_start failed - not initialized\n");
+        LOGX_DEBUG_MSG("ml_monitor_start failed - not initialized");
         return ML_MONITOR_ERROR_NOT_INITIALIZED;
     }
     if (monitor->running) {
-        fprintf(stderr, "DEBUG: ml_monitor_start failed - already running\n");
+        LOGX_DEBUG_MSG("ml_monitor_start failed - already running");
         return ML_MONITOR_ERROR_ALREADY_RUNNING;
     }
     
     LOGX_INFO_MSG("Starting ML monitor");
-    fprintf(stderr, "DEBUG: ml_monitor_start - starting initialization\n");
+    LOGX_DEBUG_MSG("ml_monitor_start - starting initialization");
     
     monitor->should_stop = false;
     
     // Start collection thread
-    fprintf(stderr, "DEBUG: ml_monitor_start - about to create collection thread\n");
+    LOGX_DEBUG_MSG("ml_monitor_start - about to create collection thread");
     if (pthread_create(&monitor->collection_thread, NULL, ml_monitor_collection_thread, monitor) != 0) {
         LOGX_ERROR_MSG("Failed to create ML collection thread");
-        fprintf(stderr, "DEBUG: ml_monitor_start failed - collection thread creation failed\n");
+        LOGX_DEBUG_MSG("ml_monitor_start failed - collection thread creation failed");
         return ML_MONITOR_ERROR_THREAD_FAILED;
     }
-    fprintf(stderr, "DEBUG: ml_monitor_start - collection thread created successfully\n");
+    LOGX_DEBUG_MSG("ml_monitor_start - collection thread created successfully");
     
     // Start prediction thread
-    fprintf(stderr, "DEBUG: ml_monitor_start - about to create prediction thread\n");
+    LOGX_DEBUG_MSG("ml_monitor_start - about to create prediction thread");
     if (pthread_create(&monitor->prediction_thread, NULL, ml_monitor_prediction_thread, monitor) != 0) {
         LOGX_ERROR_MSG("Failed to create ML prediction thread");
-        fprintf(stderr, "DEBUG: ml_monitor_start failed - prediction thread creation failed\n");
+        LOGX_DEBUG_MSG("ml_monitor_start failed - prediction thread creation failed");
         monitor->should_stop = true;
         pthread_join(monitor->collection_thread, NULL);
         return ML_MONITOR_ERROR_THREAD_FAILED;
     }
-    fprintf(stderr, "DEBUG: ml_monitor_start - prediction thread created successfully\n");
+    LOGX_DEBUG_MSG("ml_monitor_start - prediction thread created successfully");
     
     monitor->running = true;
     LOGX_INFO_MSG("ML monitor started successfully");
-    fprintf(stderr, "DEBUG: ml_monitor_start completed successfully\n");
+    LOGX_DEBUG_MSG("ml_monitor_start completed successfully");
     
     return ML_MONITOR_SUCCESS;
 }

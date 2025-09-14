@@ -27,7 +27,7 @@ int memory_protection_init(void) {
         return MEMORY_PROTECTION_SUCCESS;
     }
     
-    fprintf(stderr, "DEBUG: Initializing memory protection system\n");
+    LOGX_DEBUG_MSG("Initializing memory protection system");
     
     // Initialize canaries
     memory_canary_init();
@@ -42,7 +42,7 @@ int memory_protection_init(void) {
     
     memory_protection_initialized = true;
     
-    fprintf(stderr, "DEBUG: Memory protection system initialized successfully\n");
+    LOGX_DEBUG_MSG("Memory protection system initialized successfully");
     return MEMORY_PROTECTION_SUCCESS;
 }
 
@@ -52,7 +52,7 @@ void memory_protection_cleanup(void) {
         return;
     }
     
-    fprintf(stderr, "DEBUG: Cleaning up memory protection system\n");
+    LOGX_DEBUG_MSG("Cleaning up memory protection system");
     
     // Print statistics
     memory_protection_print_stats();
@@ -74,14 +74,14 @@ void memory_protection_cleanup(void) {
 
 // Print memory protection statistics
 void memory_protection_print_stats(void) {
-    fprintf(stderr, "\n=== MEMORY PROTECTION STATISTICS ===\n");
-    fprintf(stderr, "Total allocations: %zu\n", total_allocations);
-    fprintf(stderr, "Total deallocations: %zu\n", total_deallocations);
-    fprintf(stderr, "Total bytes allocated: %zu\n", total_bytes_allocated);
-    fprintf(stderr, "Total bytes freed: %zu\n", total_bytes_freed);
-    fprintf(stderr, "Peak memory usage: %zu bytes\n", peak_memory_usage);
-    fprintf(stderr, "Active allocations: %zu\n", total_allocations - total_deallocations);
-    fprintf(stderr, "=====================================\n\n");
+    LOGX_INFO_MSG("\n=== MEMORY PROTECTION STATISTICS ===");
+    LOGX_INFO_MSG("Total allocations: %zu", total_allocations);
+    LOGX_INFO_MSG("Total deallocations: %zu", total_deallocations);
+    LOGX_INFO_MSG("Total bytes allocated: %zu", total_bytes_allocated);
+    LOGX_INFO_MSG("Total bytes freed: %zu", total_bytes_freed);
+    LOGX_INFO_MSG("Peak memory usage: %zu bytes", peak_memory_usage);
+    LOGX_INFO_MSG("Active allocations: %zu", total_allocations - total_deallocations);
+    LOGX_INFO_MSG("=====================================");
 }
 
 // Detect memory leaks
@@ -89,22 +89,22 @@ void memory_protection_detect_leaks(void) {
     memory_block_t *current = allocated_blocks;
     size_t leak_count = 0;
     
-    fprintf(stderr, "\n=== MEMORY LEAK DETECTION ===\n");
+    LOGX_INFO_MSG("\n=== MEMORY LEAK DETECTION ===");
     
     while (current) {
         leak_count++;
-        fprintf(stderr, "LEAK: %p (%zu bytes) allocated at %s:%d in %s()\n",
+        LOGX_WARN_MSG("LEAK: %p (%zu bytes) allocated at %s:%d in %s()",
                 current->ptr, current->size, current->file, current->line, current->function);
         current = current->next;
     }
     
     if (leak_count == 0) {
-        fprintf(stderr, "No memory leaks detected!\n");
+        LOGX_INFO_MSG("No memory leaks detected!");
     } else {
-        fprintf(stderr, "Total leaks: %zu\n", leak_count);
+        LOGX_WARN_MSG("Total leaks: %zu", leak_count);
     }
     
-    fprintf(stderr, "==============================\n\n");
+    LOGX_INFO_MSG("==============================");
 }
 
 // Initialize memory canaries
@@ -117,20 +117,20 @@ void memory_canary_init(void) {
         fclose(urandom);
     }
     
-    fprintf(stderr, "DEBUG: Memory canaries initialized\n");
+    LOGX_DEBUG_MSG("Memory canaries initialized");
 }
 
 // Check memory canaries
 bool memory_canary_check(const char *file, int line, const char *func) {
     // Check heap corruption
     if (detect_heap_corruption()) {
-        fprintf(stderr, "ERROR: Heap corruption detected at %s:%d in %s()\n", file, line, func);
+        LOGX_FATAL_MSG("ERROR: Heap corruption detected at %s:%d in %s()", file, line, func);
         return false;
     }
     
     // Check stack overflow
     if (detect_stack_overflow()) {
-        fprintf(stderr, "ERROR: Stack overflow detected at %s:%d in %s()\n", file, line, func);
+        LOGX_FATAL_MSG("ERROR: Stack overflow detected at %s:%d in %s()", file, line, func);
         return false;
     }
     
@@ -150,7 +150,7 @@ void* safe_malloc(size_t size, const char *file, int line, const char *func) {
     void *ptr = malloc(total_size);
     
     if (!ptr) {
-        fprintf(stderr, "ERROR: malloc failed for %zu bytes at %s:%d in %s()\n", 
+        LOGX_FATAL_MSG("ERROR: malloc failed for %zu bytes at %s:%d in %s()", 
                 size, file, line, func);
         pthread_mutex_unlock(&memory_protection_mutex);
         return NULL;
@@ -195,7 +195,7 @@ void* safe_malloc(size_t size, const char *file, int line, const char *func) {
     
     pthread_mutex_unlock(&memory_protection_mutex);
     
-    fprintf(stderr, "DEBUG: malloc(%zu) = %p at %s:%d in %s()\n", 
+    LOGX_DEBUG_MSG("malloc(%zu) = %p at %s:%d in %s()", 
             size, user_ptr, file, line, func);
     
     return user_ptr;
@@ -240,7 +240,7 @@ void* safe_realloc(void *ptr, size_t size, const char *file, int line, const cha
     }
     
     if (!block) {
-        fprintf(stderr, "ERROR: realloc on untracked pointer %p at %s:%d in %s()\n", 
+        LOGX_ERROR_MSG("realloc on untracked pointer %p at %s:%d in %s()", 
                 ptr, file, line, func);
         pthread_mutex_unlock(&memory_protection_mutex);
         return NULL;
@@ -262,7 +262,7 @@ void* safe_realloc(void *ptr, size_t size, const char *file, int line, const cha
     // Reallocate
     void *new_actual_ptr = realloc(actual_ptr, new_total_size);
     if (!new_actual_ptr) {
-        fprintf(stderr, "ERROR: realloc failed for %zu bytes at %s:%d in %s()\n", 
+        LOGX_ERROR_MSG("realloc failed for %zu bytes at %s:%d in %s()", 
                 size, file, line, func);
         pthread_mutex_unlock(&memory_protection_mutex);
         return NULL;
@@ -298,7 +298,7 @@ void* safe_realloc(void *ptr, size_t size, const char *file, int line, const cha
     
     pthread_mutex_unlock(&memory_protection_mutex);
     
-    fprintf(stderr, "DEBUG: realloc(%p, %zu) = %p at %s:%d in %s()\n", 
+    LOGX_DEBUG_MSG("realloc(%p, %zu) = %p at %s:%d in %s()", 
             ptr, size, new_user_ptr, file, line, func);
     
     return new_user_ptr;
@@ -327,7 +327,7 @@ void safe_free(void *ptr, const char *file, int line, const char *func) {
     }
     
     if (!block) {
-        fprintf(stderr, "ERROR: free on untracked pointer %p at %s:%d in %s()\n", 
+        LOGX_ERROR_MSG("free on untracked pointer %p at %s:%d in %s()", 
                 ptr, file, line, func);
         pthread_mutex_unlock(&memory_protection_mutex);
         return;
@@ -359,7 +359,7 @@ void safe_free(void *ptr, const char *file, int line, const char *func) {
     total_deallocations++;
     total_bytes_freed += block->size;
     
-    fprintf(stderr, "DEBUG: free(%p) at %s:%d in %s()\n", ptr, file, line, func);
+    LOGX_DEBUG_MSG("free(%p) at %s:%d in %s()", ptr, file, line, func);
     
     // Free the tracking block
     free(block);
@@ -371,13 +371,13 @@ void safe_free(void *ptr, const char *file, int line, const char *func) {
 void stack_protect(const char *file, int line, const char *func) {
     // This is a placeholder for stack protection
     // In a real implementation, you might set up stack canaries
-    fprintf(stderr, "DEBUG: Stack protection enabled at %s:%d in %s()\n", file, line, func);
+    LOGX_DEBUG_MSG("Stack protection enabled at %s:%d in %s()", file, line, func);
 }
 
 // Stack check
 void stack_check(const char *file, int line, const char *func) {
     if (detect_stack_overflow()) {
-        fprintf(stderr, "ERROR: Stack overflow detected at %s:%d in %s()\n", file, line, func);
+        LOGX_ERROR_MSG("Stack overflow detected at %s:%d in %s()", file, line, func);
         THROW(MEMORY_PROTECTION_ERROR_STACK_OVERFLOW);
     }
 }
@@ -385,12 +385,12 @@ void stack_check(const char *file, int line, const char *func) {
 // Safe memcpy with bounds checking
 void* protected_memcpy(void *dest, const void *src, size_t size, const char *file, int line, const char *func) {
     if (!dest || !src) {
-        fprintf(stderr, "ERROR: memcpy with NULL pointer at %s:%d in %s()\n", file, line, func);
+        LOGX_ERROR_MSG("memcpy with NULL pointer at %s:%d in %s()", file, line, func);
         return dest;
     }
     
     if (!validate_memory_access(dest, size) || !validate_memory_access(src, size)) {
-        fprintf(stderr, "ERROR: memcpy buffer overflow at %s:%d in %s()\n", file, line, func);
+        LOGX_ERROR_MSG("memcpy buffer overflow at %s:%d in %s()", file, line, func);
         THROW(MEMORY_PROTECTION_ERROR_BUFFER_OVERFLOW);
     }
     
@@ -400,12 +400,12 @@ void* protected_memcpy(void *dest, const void *src, size_t size, const char *fil
 // Safe strncpy with bounds checking
 char* protected_strncpy(char *dest, const char *src, size_t size, const char *file, int line, const char *func) {
     if (!dest || !src) {
-        fprintf(stderr, "ERROR: strncpy with NULL pointer at %s:%d in %s()\n", file, line, func);
+        LOGX_ERROR_MSG("strncpy with NULL pointer at %s:%d in %s()", file, line, func);
         return dest;
     }
     
     if (!validate_memory_access(dest, size)) {
-        fprintf(stderr, "ERROR: strncpy buffer overflow at %s:%d in %s()\n", file, line, func);
+        LOGX_ERROR_MSG("strncpy buffer overflow at %s:%d in %s()", file, line, func);
         THROW(MEMORY_PROTECTION_ERROR_BUFFER_OVERFLOW);
     }
     
@@ -418,18 +418,18 @@ char* protected_strncpy(char *dest, const char *src, size_t size, const char *fi
 // Safe snprintf with bounds checking
 int protected_snprintf(char *buf, size_t size, const char *format, const char *file, int line, const char *func, ...) {
     if (!buf || !format) {
-        fprintf(stderr, "ERROR: snprintf with NULL pointer at %s:%d in %s()\n", file, line, func);
+        LOGX_ERROR_MSG("snprintf with NULL pointer at %s:%d in %s()", file, line, func);
         return -1;
     }
     
     if (!validate_memory_access(buf, size)) {
-        fprintf(stderr, "ERROR: snprintf buffer overflow at %s:%d in %s()\n", file, line, func);
+        LOGX_ERROR_MSG("snprintf buffer overflow at %s:%d in %s()", file, line, func);
         THROW(MEMORY_PROTECTION_ERROR_BUFFER_OVERFLOW);
     }
     
     // Validate format string to prevent format string attacks
     if (strpbrk(format, "%n") != NULL) {
-        fprintf(stderr, "ERROR: snprintf with dangerous format string at %s:%d in %s()\n", file, line, func);
+        LOGX_ERROR_MSG("snprintf with dangerous format string at %s:%d in %s()", file, line, func);
         return -1;
     }
     
@@ -440,7 +440,7 @@ int protected_snprintf(char *buf, size_t size, const char *format, const char *f
     va_end(args);
     
     if (result >= size) {
-        fprintf(stderr, "WARNING: snprintf truncated at %s:%d in %s()\n", file, line, func);
+        LOGX_WARN_MSG("snprintf truncated at %s:%d in %s()", file, line, func);
     }
     
     return result;
@@ -481,7 +481,7 @@ bool validate_pointer_alignment(const void *ptr, size_t alignment) {
 // Verify heap integrity
 void verify_heap_integrity(void) {
     if (detect_heap_corruption()) {
-        fprintf(stderr, "ERROR: Heap corruption detected!\n");
+        LOGX_FATAL_MSG("Heap corruption detected!");
         THROW(MEMORY_PROTECTION_ERROR_HEAP_CORRUPTION);
     }
 }
@@ -503,13 +503,13 @@ size_t get_stack_usage(void) {
 
 // Memory protection signal handler
 void memory_protection_signal_handler(int sig, siginfo_t *info, void *context) {
-    fprintf(stderr, "\n=== MEMORY PROTECTION SIGNAL CAUGHT ===\n");
-    fprintf(stderr, "Signal: %d (%s)\n", sig, 
+    LOGX_FATAL_MSG("\n=== MEMORY PROTECTION SIGNAL CAUGHT ===");
+    LOGX_FATAL_MSG("Signal: %d (%s)", sig, 
             sig == SIGSEGV ? "SIGSEGV" : 
             sig == SIGBUS ? "SIGBUS" : 
             sig == SIGABRT ? "SIGABRT" : "UNKNOWN");
-    fprintf(stderr, "Fault address: %p\n", info->si_addr);
-    fprintf(stderr, "Fault reason: %s\n",
+    LOGX_FATAL_MSG("Fault address: %p", info->si_addr);
+    LOGX_FATAL_MSG("Fault reason: %s",
             info->si_code == SEGV_MAPERR ? "Address not mapped" :
             info->si_code == SEGV_ACCERR ? "Invalid permissions" :
             info->si_code == BUS_ADRALN ? "Invalid alignment" :
@@ -520,7 +520,7 @@ void memory_protection_signal_handler(int sig, siginfo_t *info, void *context) {
     print_memory_map();
     memory_protection_print_stats();
     
-    fprintf(stderr, "========================================\n");
+    LOGX_FATAL_MSG("========================================");
     
     // Don't exit immediately - let the program handle the exception
 }
@@ -536,7 +536,7 @@ void install_memory_protection_handlers(void) {
     sigaction(SIGBUS, &sa, NULL);
     sigaction(SIGABRT, &sa, NULL);
     
-    fprintf(stderr, "DEBUG: Memory protection signal handlers installed\n");
+    LOGX_DEBUG_MSG("Memory protection signal handlers installed");
 }
 
 // Print backtrace with symbols
@@ -549,37 +549,37 @@ void print_backtrace_with_symbols(void) {
     size = backtrace(array, MAX_BACKTRACE_DEPTH);
     strings = backtrace_symbols(array, size);
     
-    fprintf(stderr, "\n=== BACKTRACE ===\n");
+    LOGX_FATAL_MSG("\n=== BACKTRACE ===");
     for (size_t i = 0; i < size; i++) {
-        fprintf(stderr, "%zu: %s\n", i, strings[i]);
+        LOGX_FATAL_MSG("%zu: %s", i, strings[i]);
     }
-    fprintf(stderr, "=================\n");
+    LOGX_FATAL_MSG("=================");
     
     free(strings);
 #else
-    fprintf(stderr, "\n=== BACKTRACE ===\n");
-    fprintf(stderr, "Backtrace not available on this platform\n");
-    fprintf(stderr, "=================\n");
+    LOGX_FATAL_MSG("\n=== BACKTRACE ===");
+    LOGX_FATAL_MSG("Backtrace not available on this platform");
+    LOGX_FATAL_MSG("=================");
 #endif
 }
 
 // Print memory map
 void print_memory_map(void) {
-    fprintf(stderr, "\n=== MEMORY MAP ===\n");
+    LOGX_FATAL_MSG("\n=== MEMORY MAP ===");
     FILE *maps = fopen("/proc/self/maps", "r");
     if (maps) {
         char line[512]; // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
         while (fgets(line, sizeof(line), maps)) {
-            fprintf(stderr, "%s", line);
+            LOGX_FATAL_MSG("%s", line);
         }
         fclose(maps);
     }
-    fprintf(stderr, "==================\n");
+    LOGX_FATAL_MSG("==================");
 }
 
 // Print heap info
 void print_heap_info(void) {
-    fprintf(stderr, "\n=== HEAP INFO ===\n");
+    LOGX_FATAL_MSG("\n=== HEAP INFO ===");
     
     // Get heap info from /proc/self/status
     FILE *status = fopen("/proc/self/status", "r");
@@ -590,11 +590,11 @@ void print_heap_info(void) {
                 strncmp(line, "VmRSS:", 6) == 0 ||
                 strncmp(line, "VmData:", 7) == 0 ||
                 strncmp(line, "VmStk:", 6) == 0) {
-                fprintf(stderr, "%s", line);
+                LOGX_FATAL_MSG("%s", line);
             }
         }
         fclose(status);
     }
     
-    fprintf(stderr, "=================\n");
+    LOGX_FATAL_MSG("=================");
 }

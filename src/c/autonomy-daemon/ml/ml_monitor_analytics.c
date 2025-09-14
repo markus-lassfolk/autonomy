@@ -15,73 +15,71 @@ static bool g_analytics_initialized = false;
 
 // Initialize ML analytics system
 int ml_monitor_analytics_init(void) {
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init called\n");
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - checking if already initialized\n");
-    fprintf(stderr, "DEBUG: g_analytics_initialized = %d\n", g_analytics_initialized);
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init called");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - checking if already initialized");
+    LOGX_DEBUG_MSG("g_analytics_initialized = %d", g_analytics_initialized);
     
     if (g_analytics_initialized && g_analytics_data) {
-        fprintf(stderr, "DEBUG: ml_monitor_analytics_init - already initialized\n");
+        LOGX_DEBUG_MSG("ml_monitor_analytics_init - already initialized");
         return ML_MONITOR_SUCCESS;
     }
     
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to lock mutex\n");
-    fprintf(stderr, "DEBUG: g_analytics_mutex address: %p\n", (void*)&g_analytics_mutex);
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - about to lock mutex");
+    LOGX_DEBUG_MSG("g_analytics_mutex address: %p", (void*)&g_analytics_mutex);
     pthread_mutex_lock(&g_analytics_mutex);
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - mutex locked\n");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - mutex locked");
     
     // Allocate analytics data dynamically - optimized for memory efficiency
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to allocate analytics data\n");
-    fprintf(stderr, "DEBUG: sizeof(ml_analytics_data_t): %zu bytes (%.2f MB)\n", 
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - about to allocate analytics data");
+    LOGX_DEBUG_MSG("sizeof(ml_analytics_data_t): %zu bytes (%.2f MB)", 
             sizeof(ml_analytics_data_t), sizeof(ml_analytics_data_t) / (1024.0 * 1024.0));
-    fflush(stderr);
     
     g_analytics_data = calloc(1, sizeof(ml_analytics_data_t));
     if (!g_analytics_data) {
-        fprintf(stderr, "ERROR: Failed to allocate %zu bytes for analytics data\n", sizeof(ml_analytics_data_t));
+        LOGX_ERROR_MSG("Failed to allocate %zu bytes for analytics data", sizeof(ml_analytics_data_t));
         pthread_mutex_unlock(&g_analytics_mutex);
         return ML_MONITOR_ERROR_MEMORY_FAILED;
     }
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - allocated analytics data at %p\n", (void*)g_analytics_data);
-    fflush(stderr);
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - allocated analytics data at %p", (void*)g_analytics_data);
     
     // Initialize fields individually
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing prediction results (max 100)\n");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - initializing prediction results (max 100)");
     g_analytics_data->prediction_results_count = 0;
     g_analytics_data->prediction_results_index = 0;
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - prediction results initialized\n");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - prediction results initialized");
     
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing interface scores (max 360 per interface)\n");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - initializing interface scores (max 360 per interface)");
     for (int i = 0; i < MAX_INTERFACES; i++) {
         g_analytics_data->interface_scores_count[i] = 0;
         g_analytics_data->interface_scores_index[i] = 0;
     }
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - interface scores initialized\n");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - interface scores initialized");
     
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - initializing impact events (max 100)\n");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - initializing impact events (max 100)");
     g_analytics_data->impact_events_count = 0;
     g_analytics_data->impact_events_index = 0;
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - impact events initialized\n");
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to set start time\n");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - impact events initialized");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - about to set start time");
     g_analytics_data->summary_stats.stats_start_time = time(NULL);
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - start time set\n");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - start time set");
     
     // Initialize interface summaries
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to initialize interface summaries\n");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - about to initialize interface summaries");
     for (int i = 0; i < MAX_INTERFACES; i++) {
         g_analytics_data->interface_summary[i].is_active = false;
         g_analytics_data->interface_summary[i].current_score = 50.0; // Start neutral
         g_analytics_data->interface_summary[i].best_score = 0.0;
         g_analytics_data->interface_summary[i].worst_score = 100.0;
     }
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - interface summaries initialized\n");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - interface summaries initialized");
     
     g_analytics_initialized = true;
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - about to unlock mutex\n");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - about to unlock mutex");
     pthread_mutex_unlock(&g_analytics_mutex);
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init - mutex unlocked\n");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init - mutex unlocked");
     
-    LOGX_INFO_MSG(" ML Analytics system initialized");
-    fprintf(stderr, "DEBUG: ml_monitor_analytics_init completed successfully\n");
+    LOGX_INFO_MSG("ML Analytics system initialized");
+    LOGX_DEBUG_MSG("ml_monitor_analytics_init completed successfully");
     return ML_MONITOR_SUCCESS;
 }
 

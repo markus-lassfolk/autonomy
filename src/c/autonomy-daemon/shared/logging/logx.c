@@ -180,8 +180,8 @@ static void format_message(char *buffer, size_t size, logx_level_t level,
     if (!func) func = "unknown";
     if (!format) format = "no message";
     
-    if (g_logx_config.format == LOGX_FORMAT_STRUCTURED) {
-        // Structured format: {"timestamp":"...","level":"...","file":"...","line":...,"func":"...","message":"..."}
+    if (g_logx_config.format == LOGX_FORMAT_STRUCTURED || g_logx_config.format == LOGX_FORMAT_JSON) {
+        // Structured/JSON format: {"timestamp":"...","level":"...","file":"...","line":...,"func":"...","message":"..."}
         snprintf(buffer, size, 
                 "{\"timestamp\":\"%s\",\"level\":\"%s\",\"file\":\"%s\",\"line\":%d,\"func\":\"%s\",\"message\":\"%s\"}",
                 timestamp, level_name, file, line, func, message);
@@ -223,12 +223,25 @@ void logx_log(logx_level_t level, const char *file, int line, const char *func, 
             // Colored output for terminal - with bounds checking
             const char* color = (level >= 0 && level < (sizeof(LOGX_LEVEL_COLORS) / sizeof(LOGX_LEVEL_COLORS[0]))) 
                                ? LOGX_LEVEL_COLORS[level] : "";
-            fprintf(stderr, "%s%s%s\n", 
-                    color, 
-                    formatted_message, 
-                    LOGX_RESET_COLOR);
+            // For JSON format, don't add newline as it should be a single line
+            if (g_logx_config.format == LOGX_FORMAT_JSON) {
+                fprintf(stderr, "%s%s%s", 
+                        color, 
+                        formatted_message, 
+                        LOGX_RESET_COLOR);
+            } else {
+                fprintf(stderr, "%s%s%s\n", 
+                        color, 
+                        formatted_message, 
+                        LOGX_RESET_COLOR);
+            }
         } else {
-            fprintf(stderr, "%s\n", formatted_message);
+            // For JSON format, don't add newline as it should be a single line
+            if (g_logx_config.format == LOGX_FORMAT_JSON) {
+                fprintf(stderr, "%s", formatted_message);
+            } else {
+                fprintf(stderr, "%s\n", formatted_message);
+            }
         }
     }
     

@@ -69,7 +69,7 @@ void debug_trace_print(const char *level, const char *file, int line, const char
     }
     
     // Print with timestamp, PID, level, file:line, function, and message
-    fprintf(stderr, "[%s] [PID:%d] [%s] [%s:%d] [%s] %s\n", 
+    LOGX_DEBUG_MSG("[%s] [PID:%d] [%s] [%s:%d] [%s] %s", 
             debug_trace_get_timestamp(),
             debug_trace_get_pid(),
             level,

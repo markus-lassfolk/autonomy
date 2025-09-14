@@ -5,6 +5,7 @@
 #include <time.h>
 #include <string.h>
 #include <unistd.h>
+#include "../shared/logging/logx.h"
 
 // Debug trace levels
 typedef enum {
@@ -83,13 +84,13 @@ void debug_trace_set_level(debug_trace_level_t level);
 
 // Critical function tracing (always enabled)
 #define DEBUG_TRACE_CRITICAL_ENTER() \
-    fprintf(stderr, "[CRITICAL] >>> ENTERING %s\n", __func__); fflush(stderr)
+    LOGX_ERROR_MSG("[CRITICAL] >>> ENTERING %s", __func__)
 
 #define DEBUG_TRACE_CRITICAL_EXIT() \
-    fprintf(stderr, "[CRITICAL] <<< EXITING %s\n", __func__); fflush(stderr)
+    LOGX_ERROR_MSG("[CRITICAL] <<< EXITING %s", __func__)
 
 #define DEBUG_TRACE_CRITICAL_EXIT_WITH_RETURN(ret) \
-    fprintf(stderr, "[CRITICAL] <<< EXITING %s with return: %d\n", __func__, ret); fflush(stderr)
+    LOGX_ERROR_MSG("[CRITICAL] <<< EXITING %s with return: %d", __func__, ret)
 
 // Function call tracing
 #define DEBUG_TRACE_CALLING(target_func) \
