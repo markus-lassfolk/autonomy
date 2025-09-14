@@ -936,8 +936,24 @@ int main(int argc, char **argv)
     }
     
     LOGX_DEBUG_MSG("Calling uloop_run()...");
+    
+    // Add more detailed debugging before entering the main event loop
+    LOGX_DEBUG_MSG("Main event loop starting - all modules initialized");
+    LOGX_DEBUG_MSG("UBUS context: %p", ctx);
+    LOGX_DEBUG_MSG("UCI context: %p", uci_ctx);
+    LOGX_DEBUG_MSG("Global state: %p", &g_state);
+    LOGX_DEBUG_MSG("Global config: %p", &g_config);
+    
+    // Validate critical pointers one more time
+    if (!ctx) {
+        LOGX_FATAL_MSG("CRITICAL: UBUS context is NULL before uloop_run()");
+        log_exit_reason(EXIT_REASON_INIT_FAILURE, "UBUS context is NULL");
+        daemon_exit(1);
+    }
+    
+    LOGX_DEBUG_MSG("Entering uloop_run() - daemon will now handle events");
     uloop_run();
-    LOGX_DEBUG_MSG("uloop_run() returned");
+    LOGX_DEBUG_MSG("uloop_run() returned - daemon shutting down normally");
 
     // uloop_run() completed - this is a normal shutdown
     log_exit_reason(EXIT_REASON_NORMAL_SHUTDOWN, "uloop_run() completed - normal daemon shutdown");

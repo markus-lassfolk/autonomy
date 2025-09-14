@@ -16,9 +16,13 @@ int autonomy_status(struct ubus_context *uctx, struct ubus_object *obj,
                     struct ubus_request_data *req, const char *method,
                     struct blob_attr *msg)
 {
+    LOGX_DEBUG_MSG("autonomy_status UBUS method called - entering");
+    
+    // Add defensive programming for advanced debug
     ADVANCED_DEBUG_ENTER();
     ADVANCED_DEBUG_UBUS_CALL("autonomy_status");
-    LOGX_DEBUG_MSG("autonomy_status UBUS method called");
+    
+    LOGX_DEBUG_MSG("autonomy_status UBUS method called - after advanced debug");
     
     // Validate parameters
     if (!uctx || !obj || !req) {
@@ -46,7 +50,13 @@ int autonomy_health(struct ubus_context *uctx, struct ubus_object *obj,
                     struct ubus_request_data *req, const char *method,
                     struct blob_attr *msg)
 {
-    LOGX_DEBUG_MSG("autonomy_health UBUS method called");
+    LOGX_DEBUG_MSG("autonomy_health UBUS method called - entering");
+    
+    // Add defensive programming for advanced debug
+    ADVANCED_DEBUG_ENTER();
+    ADVANCED_DEBUG_UBUS_CALL("autonomy_health");
+    
+    LOGX_DEBUG_MSG("autonomy_health UBUS method called - after advanced debug");
     struct blob_buf bb = {0};
 
     blob_buf_init(&bb, 0);
