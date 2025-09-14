@@ -826,13 +826,37 @@ int main(int argc, char **argv)
     
     LOGX_DEBUG_MSG("Testing individual UBUS methods...");
     
+    // AGGRESSIVE DEBUGGING - Validate UBUS context before registration
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Validating UBUS context before registration ===\n");
+    fflush(stderr);
+    
+    if (!ctx) {
+        fprintf(stderr, "=== AGGRESSIVE DEBUG: CRITICAL ERROR - UBUS context is NULL! ===\n");
+        fflush(stderr);
+        LOGX_FATAL_MSG("CRITICAL: UBUS context is NULL before registration");
+        log_exit_reason(EXIT_REASON_INIT_FAILURE, "UBUS context is NULL");
+        daemon_exit(1);
+    }
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: UBUS context is valid: %p ===\n", ctx);
+    fflush(stderr);
+    
     // Test 1: status method only
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Creating status method array ===\n");
+    fflush(stderr);
+    
     static const struct ubus_method status_methods[] = {
         UBUS_METHOD_NOARG("status", autonomy_status),
     };
     
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Creating status object type ===\n");
+    fflush(stderr);
+    
     static struct ubus_object_type status_obj_type = 
         UBUS_OBJECT_TYPE("autonomy_status", status_methods);
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Creating status object ===\n");
+    fflush(stderr);
     
     static struct ubus_object status_obj = {
         .name = "autonomy_status",
@@ -841,14 +865,27 @@ int main(int argc, char **argv)
         .n_methods = ARRAY_SIZE(status_methods),
     };
     
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: About to call ubus_add_object ===\n");
+    fflush(stderr);
+    
     LOGX_DEBUG_MSG("Testing status method...");
     int ret = ubus_add_object(ctx, &status_obj);
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: ubus_add_object returned: %d ===\n", ret);
+    fflush(stderr);
+    
     if (ret) {
+        fprintf(stderr, "=== AGGRESSIVE DEBUG: ubus_add_object failed with error %d ===\n", ret);
+        fflush(stderr);
         char error_msg[256];
         snprintf(error_msg, sizeof(error_msg), "Failed to add status method: %s (error %d)", ubus_strerror(ret), ret);
         log_exit_reason(EXIT_REASON_INIT_FAILURE, error_msg);
         daemon_exit(1);
     }
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Status method registered successfully ===\n");
+    fflush(stderr);
+    
     LOGX_DEBUG_MSG("Status method registered successfully");
     
     // Test 2: health method only
