@@ -28,6 +28,10 @@
 
 // Include our modular headers
 #include "../core/types.h"
+#include "../gps/gps_manager.h"
+#include "../network/network_discovery_comprehensive.h"
+#include "../ml/ml_monitor.h"
+#include "../utils/system_monitor.h"
 #include "version.h"
 #include "autonomy_modules.h"
 #include "../starlink/starlink_modules.h"
@@ -510,8 +514,19 @@ static struct ubus_object autonomy_obj = {
 static void gps_timer_callback(struct uloop_timeout *t) {
     LOGX_INFO_MSG("GPS timer callback - polling GPS data");
     
-    // Poll GPS data - placeholder implementation
-    LOGX_INFO_MSG("GPS timer callback executed - GPS polling placeholder");
+    // Poll actual GPS data
+    gps_data_t gps_data;
+    memset(&gps_data, 0, sizeof(gps_data));
+    
+    // Try to get GPS data from the system
+    int gps_result = gps_get_current_data(&gps_data);
+    if (gps_result == 0) {
+        LOGX_INFO_MSG("GPS data: lat=%.6f, lon=%.6f, alt=%.2f, accuracy=%.2f, valid=%s, sources=%d", 
+                     gps_data.latitude, gps_data.longitude, gps_data.altitude, 
+                     gps_data.accuracy, gps_data.valid ? "true" : "false", gps_data.sources);
+    } else {
+        LOGX_INFO_MSG("GPS polling failed: error %d", gps_result);
+    }
     
     // Reschedule timer for next poll (5 seconds)
     uloop_timeout_set(t, 5000);
@@ -520,8 +535,23 @@ static void gps_timer_callback(struct uloop_timeout *t) {
 static void network_timer_callback(struct uloop_timeout *t) {
     LOGX_INFO_MSG("Network timer callback - monitoring network status");
     
-    // Monitor network interfaces - placeholder implementation
-    LOGX_INFO_MSG("Network timer callback executed - network monitoring placeholder");
+    // Monitor actual network interfaces
+    network_interface_t interfaces[MAX_INTERFACES];
+    int interface_count = 0;
+    
+    // Try to get network interface data
+    int network_result = network_discovery_get_interfaces(interfaces, MAX_INTERFACES, &interface_count);
+    if (network_result == 0) {
+        LOGX_INFO_MSG("Network interfaces found: %d", interface_count);
+        for (int i = 0; i < interface_count && i < 3; i++) { // Show first 3 interfaces
+            LOGX_INFO_MSG("Interface %d: %s, status=%s, ip=%s", 
+                         i, interfaces[i].name, 
+                         interfaces[i].status == NETWORK_STATUS_UP ? "UP" : "DOWN",
+                         interfaces[i].ip_address);
+        }
+    } else {
+        LOGX_INFO_MSG("Network monitoring failed: error %d", network_result);
+    }
     
     // Reschedule timer for next check (10 seconds)
     uloop_timeout_set(t, 10000);
@@ -530,8 +560,21 @@ static void network_timer_callback(struct uloop_timeout *t) {
 static void ml_timer_callback(struct uloop_timeout *t) {
     LOGX_INFO_MSG("ML timer callback - processing ML data");
     
-    // Process ML data - placeholder implementation
-    LOGX_INFO_MSG("ML timer callback executed - ML processing placeholder");
+    // Process actual ML data
+    ml_monitor_status_t ml_status;
+    memset(&ml_status, 0, sizeof(ml_status));
+    
+    // Try to get ML monitor status
+    int ml_result = ml_monitor_get_status(&ml_status);
+    if (ml_result == 0) {
+        LOGX_INFO_MSG("ML status: enabled=%s, running=%s, predictions=%d, accuracy=%.2f", 
+                     ml_status.enabled ? "true" : "false",
+                     ml_status.running ? "true" : "false", 
+                     ml_status.total_predictions,
+                     ml_status.accuracy);
+    } else {
+        LOGX_INFO_MSG("ML monitoring failed: error %d", ml_result);
+    }
     
     // Reschedule timer for next processing (30 seconds)
     uloop_timeout_set(t, 30000);
@@ -540,8 +583,19 @@ static void ml_timer_callback(struct uloop_timeout *t) {
 static void health_timer_callback(struct uloop_timeout *t) {
     LOGX_INFO_MSG("Health timer callback - performing system health check");
     
-    // Perform system health check - placeholder implementation
-    LOGX_INFO_MSG("Health timer callback executed - system health check placeholder");
+    // Perform actual system health check
+    system_health_t health;
+    memset(&health, 0, sizeof(health));
+    
+    // Try to get system health data
+    int health_result = system_get_health_status(&health);
+    if (health_result == 0) {
+        LOGX_INFO_MSG("System health: cpu=%.1f%%, memory=%.1f%%, disk=%.1f%%, temp=%.1f°C, uptime=%d", 
+                     health.cpu_usage, health.memory_usage, health.disk_usage, 
+                     health.temperature, health.uptime_seconds);
+    } else {
+        LOGX_INFO_MSG("System health check failed: error %d", health_result);
+    }
     
     // Reschedule timer for next check (60 seconds)
     uloop_timeout_set(t, 60000);
