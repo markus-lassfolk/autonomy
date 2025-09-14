@@ -6,11 +6,15 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
-#include <execinfo.h>
-#include <dlfcn.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+// Conditional includes for systems that support them
+#ifdef __GLIBC__
+#include <execinfo.h>
+#include <dlfcn.h>
+#endif
 
 // Advanced debugging utilities for crash analysis
 

@@ -1,8 +1,18 @@
 #include "advanced_debug.h"
 #include "../logging/logx.h"
-#include <pthread.h>
 #include <time.h>
 #include <sys/time.h>
+
+// Conditional includes for systems that support them
+#ifdef __GLIBC__
+#include <pthread.h>
+#else
+// Simple mutex implementation for systems without pthread
+typedef int pthread_mutex_t;
+#define PTHREAD_MUTEX_INITIALIZER 0
+static inline int pthread_mutex_lock(pthread_mutex_t *mutex) { (void)mutex; return 0; }
+static inline int pthread_mutex_unlock(pthread_mutex_t *mutex) { (void)mutex; return 0; }
+#endif
 
 // Global variables
 call_stack_t g_call_stack = {0};
@@ -57,8 +67,13 @@ void advanced_debug_push_frame(const char *function, const char *file, int line)
         frame->file_name[sizeof(frame->file_name) - 1] = '\0';
         
         frame->line_number = line;
+#ifdef __GNUC__
         frame->return_address = __builtin_return_address(0);
         frame->frame_pointer = __builtin_frame_address(0);
+#else
+        frame->return_address = NULL;
+        frame->frame_pointer = NULL;
+#endif
         
         g_call_stack.depth++;
         if (g_call_stack.depth > g_call_stack.max_depth) {
@@ -141,7 +156,11 @@ void advanced_debug_track_ubus_call(const char *method_name, const char *functio
                 function, file, line);
         
         call->timestamp = time(NULL);
+#ifdef __GNUC__
         call->context = __builtin_frame_address(0);
+#else
+        call->context = NULL;
+#endif
         g_ubus_call_count++;
     }
     
