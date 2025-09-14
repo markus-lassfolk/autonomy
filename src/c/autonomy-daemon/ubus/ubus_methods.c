@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "../core/types.h"
 #include "../shared/logging/logx.h"
+#include "../shared/utils/advanced_debug.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <time.h>
@@ -15,7 +16,17 @@ int autonomy_status(struct ubus_context *uctx, struct ubus_object *obj,
                     struct ubus_request_data *req, const char *method,
                     struct blob_attr *msg)
 {
+    ADVANCED_DEBUG_ENTER();
+    ADVANCED_DEBUG_UBUS_CALL("autonomy_status");
     LOGX_DEBUG_MSG("autonomy_status UBUS method called");
+    
+    // Validate parameters
+    if (!uctx || !obj || !req) {
+        LOGX_ERROR_MSG("autonomy_status: Invalid parameters (uctx=%p, obj=%p, req=%p)", uctx, obj, req);
+        ADVANCED_DEBUG_EXIT();
+        return -1;
+    }
+    
     struct blob_buf bb = {0};
 
     blob_buf_init(&bb, 0);
@@ -26,6 +37,8 @@ int autonomy_status(struct ubus_context *uctx, struct ubus_object *obj,
     
     ubus_send_reply(uctx, req, bb.head);
     blob_buf_free(&bb);
+    
+    ADVANCED_DEBUG_EXIT();
     return 0;
 }
 

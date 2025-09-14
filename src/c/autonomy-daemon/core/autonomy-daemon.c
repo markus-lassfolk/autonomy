@@ -39,6 +39,7 @@
 #include "../shared/utils/memory_protection.h"
 #include "../shared/utils/memory_corruption_detector.h"
 #include "../shared/utils/hang_detector.h"
+#include "../shared/utils/advanced_debug.h"
 #include "../utils/debug_trace.h"
 #include "../ml/ml_monitor.h"
 #include "../ml/ml_monitor_ubus.h"
@@ -495,6 +496,9 @@ int main(int argc, char **argv)
     
     DEBUG_TRACE_ENTER();
     DEBUG_TRACE_INFO("Starting Autonomy Network Management Daemon");
+    
+    // Initialize advanced debugging system
+    advanced_debug_init();
     
     // Display version and build information
     LOGX_INFO_MSG("========================================");
