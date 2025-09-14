@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "memory_protection.h"
 #include "memory_corruption_detector.h"
 #include "../logging/logx.h"

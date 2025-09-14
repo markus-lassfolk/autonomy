@@ -313,7 +313,7 @@ static void format_message(char *buffer, size_t size, logx_level_t level,
         return;
     }
     
-    get_timestamp(timestamp, timestamp_size);
+    get_timestamp(timestamp, sizeof(timestamp));
     
     // Format the actual message - SECURE VERSION
     // Create a copy of va_list to avoid reuse issues
@@ -352,9 +352,7 @@ static void format_message(char *buffer, size_t size, logx_level_t level,
         snprintf(buffer, size, "[%s] %s %s:%d:%s %s", timestamp, level_name, file, line, func, message);
     }
     
-    // Clean up allocated memory
-    free(timestamp);
-    free(message);
+    // No cleanup needed - timestamp and message are stack arrays
 }
 
 // Core logging function

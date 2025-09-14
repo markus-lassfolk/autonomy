@@ -257,6 +257,7 @@ int ml_monitor_init_from_network_discovery(ml_monitor_t *monitor) {
     
     LOGX_DEBUG_MSG("All logging sections completed successfully");
     LOGX_DEBUG_MSG("About to return ML_MONITOR_SUCCESS from ml_monitor_init_from_network_discovery");
+    */
     
     // Free the allocated memory
     free(discovered_interfaces);

@@ -1,6 +1,7 @@
 #include "starlink_types.h"
 #include "starlink_modules.h"
 #include "starlink_obstruction.h"
+#include "../shared/utils/string_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
