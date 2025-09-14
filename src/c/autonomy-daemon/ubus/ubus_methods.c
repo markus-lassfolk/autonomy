@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "../core/types.h"
+#include "../shared/logging/logx.h"
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <time.h>
