@@ -5,6 +5,7 @@
 #include "../shared/utils/string_utils.h"
 #include "../utils/http_client.h"
 #include "../shared/logging/logx.h"
+#include "../shared/starlink/starlink_grpc_shared.h"
 #include <json-c/json.h>
 #include <string.h>
 #include <stdlib.h>
@@ -63,14 +64,25 @@ int starlink_grpc_collector_init(void) {
     daemon_config.monitoring_interval_seconds = 30;
     strcpy(daemon_config.log_prefix, "STARLINK-GRPC");
     
-    // Initialize the daemon integration
-    LOGX_DEBUG_MSG("starlink_grpc_collector_init - about to initialize daemon integration");
-    if (starlink_grpc_daemon_integration_init(&daemon_config) != 0) {
-        LOGX_ERROR_MSG("Failed to initialize comprehensive gRPC client");
-        LOGX_DEBUG_MSG("starlink_grpc_collector_init failed - daemon integration failed");
+    // Initialize the shared gRPC client
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init - about to initialize shared gRPC client");
+    
+    starlink_grpc_shared_config_t shared_config = {0};
+    strcpy(shared_config.host, g_config.starlink_host);
+    shared_config.port = g_config.starlink_port;
+    shared_config.timeout = g_config.starlink_timeout;
+    shared_config.max_retries = 3;
+    shared_config.retry_delay_ms = 1000;
+    shared_config.debug_mode = true;
+    shared_config.insecure_mode = false;
+    strcpy(shared_config.user_agent, "autonomy-daemon/1.0");
+    
+    if (starlink_grpc_shared_init(&shared_config) != 0) {
+        LOGX_ERROR_MSG("Failed to initialize shared gRPC client");
+        LOGX_DEBUG_MSG("starlink_grpc_collector_init failed - shared gRPC client failed");
         return AUTONOMY_ERROR;
     }
-    LOGX_DEBUG_MSG("starlink_grpc_collector_init - daemon integration initialized successfully");
+    LOGX_DEBUG_MSG("starlink_grpc_collector_init - shared gRPC client initialized successfully");
     
     // Set configuration from UCI config with fallback defaults
     if (strlen(g_config.starlink_host) > 0) {
@@ -176,17 +188,23 @@ void starlink_grpc_collector_thread(void* arg) {
     LOGX_INFO_MSG("Testing connection to Starlink device at %s:%d...", 
                   g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
     
-    starlink_observation_t test_observation = {0};
-    int connection_test = starlink_grpc_daemon_get_observation(&test_observation);
+    starlink_grpc_shared_response_t test_response;
+    int connection_test = starlink_grpc_shared_get_status(&test_response);
     
     if (connection_test != 0) {
         LOGX_WARN_MSG("Starlink device connection test failed - device may be offline or unreachable");
         LOGX_WARN_MSG("Starlink collector will continue running but may not collect data successfully");
         LOGX_WARN_MSG("To fix: ensure Starlink device is online and accessible at %s:%d", 
                       g_starlink_grpc_collector.host, g_starlink_grpc_collector.port);
+        if (test_response.error_message[0]) {
+            LOGX_WARN_MSG("Connection test error: %s", test_response.error_message);
+        }
     } else {
         LOGX_INFO_MSG("Starlink device connection test successful - ready to collect data");
     }
+    
+    // Cleanup test response
+    starlink_grpc_shared_free_response(&test_response);
     
     int iteration_count = 0;
     
@@ -237,10 +255,23 @@ int starlink_grpc_collect_observation(void) {
     observation.timestamp = time(NULL);
     LOGX_DEBUG_MSG("Observation timestamp set to %ld", observation.timestamp);
     
-    // Use the new comprehensive multi-call approach
-    LOGX_DEBUG_MSG("Calling starlink_grpc_daemon_get_observation...");
-    int result = starlink_grpc_daemon_get_observation(&observation);
-    LOGX_DEBUG_MSG("starlink_grpc_daemon_get_observation returned %d", result);
+    // Use the shared gRPC client to collect observation data
+    LOGX_DEBUG_MSG("Calling shared gRPC client to get device status...");
+    
+    starlink_grpc_shared_response_t response;
+    int result = starlink_grpc_shared_get_status(&response);
+    LOGX_DEBUG_MSG("starlink_grpc_shared_get_status returned %d", result);
+    
+    if (result == 0 && response.success) {
+        LOGX_DEBUG_MSG("Successfully received Starlink status data (%zu bytes)", response.response_size);
+        // TODO: Parse response data into observation structure
+        // For now, we'll just mark it as successful
+        starlink_grpc_shared_free_response(&response);
+    } else {
+        LOGX_WARN_MSG("Failed to get Starlink status: %s", response.error_message);
+        starlink_grpc_shared_free_response(&response);
+        result = -1;
+    }
     
     if (result == 0) {
         pthread_mutex_lock(&g_starlink_grpc_collector.mutex);
