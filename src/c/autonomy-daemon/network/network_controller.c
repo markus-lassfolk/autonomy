@@ -253,7 +253,7 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
             return AUTONOMY_ERROR_SYSTEM;
         }
         
-        LOGX_DEBUG_MSG("Disabled MWAN3 member", "member", from->name);
+        LOGX_DEBUG_MSG("Disabled MWAN3 member: %s", from->name);
     }
     
     // Enable the new member
@@ -273,7 +273,7 @@ static int switch_via_mwan3(const network_member_t* from, const network_member_t
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    LOGX_DEBUG_MSG("Enabled MWAN3 member", "member", to->name);
+    LOGX_DEBUG_MSG("Enabled MWAN3 member: %s", to->name);
     
     // Apply MWAN3 configuration
     snprintf(command, sizeof(command), "%s restart 2>&1", g_network_controller.config.mwan3_path);
@@ -325,7 +325,7 @@ static int switch_via_netifd(const network_member_t* from, const network_member_
             LOGX_WARN_MSG("Failed to bring down interface via netifd", 
                      "interface", from->interface, "error", ubus_strerror(ret));
         } else {
-            LOGX_DEBUG_MSG("Brought down interface via netifd", "interface", from->interface);
+            LOGX_DEBUG_MSG("Brought down interface via netifd: %s", from->interface);
         }
     }
     
@@ -345,7 +345,7 @@ static int switch_via_netifd(const network_member_t* from, const network_member_
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    LOGX_DEBUG_MSG("Brought up interface via netifd", "interface", to->interface);
+    LOGX_DEBUG_MSG("Brought up interface via netifd: %s", to->interface);
     strncpy(result->reason, "netifd interface switch completed", sizeof(result->reason) - 1);
     result->reason[sizeof(result->reason) - 1] = '\0';
     return AUTONOMY_SUCCESS;
@@ -361,7 +361,7 @@ static int switch_via_manual(const network_member_t* from, const network_member_
         snprintf(command, sizeof(command), "ifdown %s 2>&1", from->interface);
         execute_command_with_timeout(command, g_network_controller.config.switch_timeout_seconds,
                                     output, sizeof(output));
-        LOGX_DEBUG_MSG("Brought down interface manually", "interface", from->interface);
+        LOGX_DEBUG_MSG("Brought down interface manually: %s", from->interface);
     }
     
     // Bring up new interface
@@ -378,7 +378,7 @@ static int switch_via_manual(const network_member_t* from, const network_member_
         return AUTONOMY_ERROR_SYSTEM;
     }
     
-    LOGX_DEBUG_MSG("Brought up interface manually", "interface", to->interface);
+        LOGX_DEBUG_MSG("Brought up interface manually: %s", to->interface);
     strncpy(result->reason, "Manual interface switch completed", sizeof(result->reason) - 1);
     result->reason[sizeof(result->reason) - 1] = '\0';
     return AUTONOMY_SUCCESS;
@@ -404,7 +404,7 @@ static int execute_command_with_timeout(const char* command, int timeout_seconds
     /*
     FILE* fp = popen(command, "r");
     if (!fp) {
-        LOGX_ERROR_MSG("Failed to execute command", "command", command, "error", strerror(errno));
+        LOGX_ERROR_MSG("Failed to execute command '%s': %s", command, strerror(errno));
         return -1;
     }
     
@@ -416,7 +416,7 @@ static int execute_command_with_timeout(const char* command, int timeout_seconds
     int exit_code = pclose(fp);
     
     if (exit_code != 0) {
-        LOGX_ERROR_MSG("Command failed", "command", command, "exit_code", exit_code);
+        LOGX_ERROR_MSG("Command failed '%s' with exit code: %d", command, exit_code);
         return exit_code;
     }
     
@@ -449,7 +449,7 @@ void call_failover_callbacks(const network_member_t* from, const network_member_
         if (g_network_controller.callbacks[i]) {
             int result = g_network_controller.callbacks[i](from, to);
             if (result != AUTONOMY_SUCCESS) {
-                LOGX_WARN_MSG("Failover callback failed", "callback_index", i, "result", result);
+                LOGX_WARN_MSG("Failover callback %d failed with result: %d", i, result);
             }
         }
     }
@@ -489,7 +489,7 @@ int network_controller_set_members(const network_member_t* members, int count) {
     memcpy(g_network_controller.members, members, sizeof(network_member_t) * count);
     g_network_controller.member_count = count;
     
-    LOGX_INFO_MSG("Network controller members updated", "count", count);
+    LOGX_INFO_MSG("Network controller members updated: %d", count);
     
     // Log each member
     for (int i = 0; i < count; i++) {

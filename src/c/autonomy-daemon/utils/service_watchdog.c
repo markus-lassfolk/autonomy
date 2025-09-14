@@ -223,14 +223,12 @@ int check_service_status_method(const char *service) {
     char init_script_path[128];
     snprintf(init_script_path, sizeof(init_script_path), "/etc/init.d/%s", service);
     
-    // Check if init script exists
-    if (access(init_script_path, F_OK) == 0) {
-        const char* init_args[] = {init_script_path, "status", NULL};
-        exit_code = execute_secure_command(init_args);
-        if (exit_code == 0) {
-            LOGX_DEBUG_MSG("Service %s is active via init.d", service);
-            return true;
-        }
+    // Try init script directly - if it doesn't exist, execute_secure_command will handle the error
+    const char* init_args[] = {init_script_path, "status", NULL};
+    exit_code = execute_secure_command(init_args);
+    if (exit_code == 0) {
+        LOGX_DEBUG_MSG("Service %s is active via init.d", service);
+        return true;
     }
     
     LOGX_DEBUG_MSG("Service %s is not active", service);
@@ -366,11 +364,10 @@ int restart_service(const char *service, const char *reason) {
         char init_script_path[128];
         snprintf(init_script_path, sizeof(init_script_path), "/etc/init.d/%s", service);
         
-        // Check if init script exists
-        if (access(init_script_path, F_OK) == 0) {
-            const char* init_args[] = {init_script_path, "restart", NULL};
-            exit_code = execute_secure_command(init_args);
-        } else {
+        // Try init script directly - if it doesn't exist, execute_secure_command will handle the error
+        const char* init_args[] = {init_script_path, "restart", NULL};
+        exit_code = execute_secure_command(init_args);
+        if (exit_code != 0) {
             LOGX_ERROR_MSG("No restart method available for service %s", service);
             return AUTONOMY_ERROR_NOT_FOUND;
         }
@@ -410,10 +407,9 @@ static int kill_service(const char *service) {
         char init_script_path[128];
         snprintf(init_script_path, sizeof(init_script_path), "/etc/init.d/%s", service);
         
-        if (access(init_script_path, F_OK) == 0) {
-            const char* init_args[] = {init_script_path, "stop", NULL};
-            exit_code = execute_secure_command(init_args);
-        }
+        // Try init script directly - if it doesn't exist, execute_secure_command will handle the error
+        const char* init_args[] = {init_script_path, "stop", NULL};
+        exit_code = execute_secure_command(init_args);
     }
     
     if (exit_code == 0) {

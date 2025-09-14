@@ -578,13 +578,13 @@ static int make_api_request(const char* url, const char* post_data, http_respons
     }
 
     if (response_code != 200) {
-        LOGX_ERROR_MSG("OpenCellID API returned error", "http_code", response_code, "url", url);
+        LOGX_ERROR_MSG("OpenCellID API returned error http_code=%ld, url=%s", response_code, url);
         free(response->data);
         response->data = NULL;
         return AUTONOMY_ERROR_EXTERNAL_API;
     }
 
-    LOGX_DEBUG_MSG("OpenCellID API request successful", "url", url, "response_size", response->size);
+    LOGX_DEBUG_MSG("OpenCellID API request successful url=%s, response_size=%zu", url, response->size);
     return AUTONOMY_SUCCESS;
 }
 

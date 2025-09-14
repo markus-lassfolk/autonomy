@@ -449,7 +449,7 @@ static int add_cache_entry(const opencellid_cell_key_t* cell_key, double lat, do
         entry->timestamp = time(NULL);
         entry->ttl = entry->timestamp + (g_opencellid.config.cache.ttl_hours * 3600);
         
-        LOGX_DEBUG_MSG("Added OpenCellID cache entry", "index", index, "cell_id", cell_key->cell_id);
+        LOGX_DEBUG_MSG("Added OpenCellID cache entry index=%d, cell_id=%d", index, cell_key->cell_id);
     }
     
     return index;
