@@ -278,8 +278,7 @@ int check_init_script(const char *service) {
     
     // Try to run status command - SECURE VERSION
     // DISABLED: Command injection vulnerability
-    LOGX_WARN_MSG("Script status check disabled for security - command injection vulnerability",
-                 "script", script_path);
+    LOGX_WARN_MSG("Script status check disabled for security - command injection vulnerability for script: %s", script_path);
     return false; // Return false since command was not executed
 }
 
