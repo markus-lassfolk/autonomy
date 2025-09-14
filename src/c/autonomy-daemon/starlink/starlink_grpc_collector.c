@@ -172,31 +172,61 @@ int starlink_grpc_collector_stop(void) {
 void starlink_grpc_collector_thread(void* arg) {
     LOGX_INFO_MSG("Starlink gRPC collector thread started");
     
+    int iteration_count = 0;
+    
     while (g_starlink_grpc_collector.thread_running) {
+        iteration_count++;
+        LOGX_DEBUG_MSG("Starlink collector thread iteration %d", iteration_count);
+        
         if (g_starlink_grpc_collector.enabled) {
-            // Collect observation data
-            starlink_grpc_collect_observation();
+            LOGX_DEBUG_MSG("Starlink collector enabled, attempting to collect observation data...");
             
-            // Detect outage events
-            starlink_grpc_detect_outage_events();
+            // Collect observation data with error handling
+            int collect_result = starlink_grpc_collect_observation();
+            if (collect_result == 0) {
+                LOGX_DEBUG_MSG("Starlink observation collection successful");
+            } else {
+                LOGX_WARN_MSG("Starlink observation collection failed with error %d", collect_result);
+            }
+            
+            LOGX_DEBUG_MSG("Starlink collector attempting to detect outage events...");
+            
+            // Detect outage events with error handling
+            int detect_result = starlink_grpc_detect_outage_events();
+            if (detect_result == 0) {
+                LOGX_DEBUG_MSG("Starlink outage detection successful");
+            } else {
+                LOGX_WARN_MSG("Starlink outage detection failed with error %d", detect_result);
+            }
+        } else {
+            LOGX_DEBUG_MSG("Starlink collector disabled, skipping collection");
         }
+        
+        LOGX_DEBUG_MSG("Starlink collector sleeping for %d seconds...", OBSERVATION_INTERVAL);
         
         // Sleep for observation interval
         sleep(OBSERVATION_INTERVAL);
     }
     
-    LOGX_INFO_MSG("Starlink gRPC collector thread exiting");
+    LOGX_INFO_MSG("Starlink gRPC collector thread exiting after %d iterations", iteration_count);
 }
 
 // Collect observation data using gRPC
 int starlink_grpc_collect_observation(void) {
+    LOGX_DEBUG_MSG("Starting Starlink observation collection...");
+    
     starlink_observation_t observation = {0};
     
     // Get current timestamp
     observation.timestamp = time(NULL);
+    LOGX_DEBUG_MSG("Observation timestamp set to %ld", observation.timestamp);
     
     // Use the new comprehensive multi-call approach
-    if (starlink_grpc_daemon_get_observation(&observation) == 0) {
+    LOGX_DEBUG_MSG("Calling starlink_grpc_daemon_get_observation...");
+    int result = starlink_grpc_daemon_get_observation(&observation);
+    LOGX_DEBUG_MSG("starlink_grpc_daemon_get_observation returned %d", result);
+    
+    if (result == 0) {
         pthread_mutex_lock(&g_starlink_grpc_collector.mutex);
         
         // Store observation
@@ -226,8 +256,8 @@ int starlink_grpc_collect_observation(void) {
     }
     
     g_starlink_grpc_collector.consecutive_failures++;
-    LOGX_WARN_MSG("Failed to collect Starlink observation", 
-                  "consecutive_failures", g_starlink_grpc_collector.consecutive_failures);
+    LOGX_WARN_MSG("Failed to collect Starlink observation: starlink_grpc_daemon_get_observation returned %d", result);
+    LOGX_WARN_MSG("Consecutive failures: %d", g_starlink_grpc_collector.consecutive_failures);
     
     return AUTONOMY_ERROR;
 }

@@ -322,10 +322,20 @@ int starlink_grpc_comprehensive_call(
     memset(response, 0, sizeof(starlink_grpc_response_t));
     response->timestamp = time(NULL);
     
-    // Build URL
+    // Build URL with validation
     char url[512];
+    if (!g_starlink_grpc_config.host) {
+        LOGX_ERROR_MSG("Starlink gRPC config host is NULL, cannot make request");
+        strcpy(response->error_message, "Host not configured");
+        return -1;
+    }
+    
     snprintf(url, sizeof(url), "http://%s:%d/SpaceX.API.Device.Device/Handle", 
              g_starlink_grpc_config.host, g_starlink_grpc_config.port);
+    
+    LOGX_DEBUG_MSG("Starlink gRPC request URL: %s", url);
+    LOGX_DEBUG_MSG("Starlink gRPC request method: %s", method);
+    LOGX_DEBUG_MSG("Starlink gRPC request size: %zu bytes", request_size);
     
     // Create gRPC frame (simplified - in real implementation you'd use proper gRPC framing)
     unsigned char frame[1024];
@@ -347,12 +357,15 @@ int starlink_grpc_comprehensive_call(
     
     // Debug information will be printed after response
     
-    // Setup curl
+    // Setup curl with error handling
+    LOGX_DEBUG_MSG("Initializing curl for Starlink gRPC request...");
     CURL *curl = curl_easy_init();
     if (!curl) {
+        LOGX_ERROR_MSG("Failed to initialize curl for Starlink gRPC request");
         strcpy(response->error_message, "Failed to initialize curl");
         return -1;
     }
+    LOGX_DEBUG_MSG("Curl initialized successfully");
     
     struct curl_slist *headers = NULL;
     headers = curl_slist_append(headers, "Content-Type: application/grpc");
@@ -384,22 +397,27 @@ int starlink_grpc_comprehensive_call(
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     }
     
-    // Perform request
+    // Perform request with error handling
+    LOGX_DEBUG_MSG("Performing curl request to %s...", url);
     CURLcode res = curl_easy_perform(curl);
     long http_code = 0;
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     
     response->http_status = (int)http_code;
+    LOGX_DEBUG_MSG("Curl request completed: result=%d, http_code=%ld", res, http_code);
     
     // Cleanup curl
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
     
     if (res != CURLE_OK) {
+        LOGX_ERROR_MSG("Curl request failed: %s (error code %d)", curl_easy_strerror(res), res);
         snprintf(response->error_message, sizeof(response->error_message), 
                 "curl error: %s", curl_easy_strerror(res));
         return -1;
     }
+    
+    LOGX_DEBUG_MSG("Curl request successful, HTTP status: %d", response->http_status);
     
     // Print header with new utility function
     char status_line[64];

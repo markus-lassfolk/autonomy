@@ -73,16 +73,27 @@ int starlink_grpc_daemon_get_observation(starlink_observation_t *observation) {
     const int num_calls = sizeof(api_calls) / sizeof(api_calls[0]);
     
     for (int i = 0; i < num_calls; i++) {
+        LOGX_DEBUG_MSG("Processing Starlink API call %d/%d: %s", i+1, num_calls, api_calls[i]);
+        
         starlink_grpc_response_t response;
+        memset(&response, 0, sizeof(response)); // Initialize response structure
+        
         int retries = 0;
         int max_retries = g_starlink_grpc_daemon_config.max_retries;
         bool call_success = false;
         
+        LOGX_DEBUG_MSG("Starting retry loop for %s (max_retries=%d)", api_calls[i], max_retries);
+        
         while (retries <= max_retries && !call_success) {
             total_calls++;
+            LOGX_DEBUG_MSG("Attempt %d/%d for API call %s", retries+1, max_retries+1, api_calls[i]);
             
-            // Make the gRPC call
-            if (starlink_grpc_comprehensive_call(api_calls[i], NULL, 0, &response) == 0) {
+            // Make the gRPC call with error handling
+            LOGX_DEBUG_MSG("Calling starlink_grpc_comprehensive_call for %s...", api_calls[i]);
+            int call_result = starlink_grpc_comprehensive_call(api_calls[i], NULL, 0, &response);
+            LOGX_DEBUG_MSG("starlink_grpc_comprehensive_call returned %d for %s", call_result, api_calls[i]);
+            
+            if (call_result == 0) {
                 if (response.success && response.response_data) {
                     // Parse response and merge into observation
                     if (parse_json_to_observation_partial(response.response_data, api_calls[i], observation) == 0) {
@@ -95,10 +106,20 @@ int starlink_grpc_daemon_get_observation(starlink_observation_t *observation) {
             
             if (!call_success) {
                 retries++;
+                LOGX_WARN_MSG("gRPC call %s failed (call_result=%d, success=%s, response_data=%s), retrying (%d/%d)", 
+                             api_calls[i], call_result, 
+                             response.success ? "true" : "false",
+                             response.response_data ? "present" : "NULL",
+                             retries, max_retries);
+                
                 if (retries <= max_retries) {
-                    LOGX_WARN_MSG("gRPC call %s failed, retrying (%d/%d)", api_calls[i], retries, max_retries);
+                    LOGX_DEBUG_MSG("Sleeping %d ms before retry...", g_starlink_grpc_daemon_config.retry_delay_ms);
                     usleep(g_starlink_grpc_daemon_config.retry_delay_ms * 1000);
+                } else {
+                    LOGX_ERROR_MSG("gRPC call %s failed after %d retries, giving up", api_calls[i], max_retries);
                 }
+            } else {
+                LOGX_DEBUG_MSG("gRPC call %s succeeded on attempt %d", api_calls[i], retries+1);
             }
             
             if (response.response_data) {
