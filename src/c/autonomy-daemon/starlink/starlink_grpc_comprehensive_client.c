@@ -100,10 +100,14 @@ void starlink_grpc_print_timestamp(void) {
 }
 
 void starlink_grpc_print_header(const char *status, size_t bytes) {
-    if (!g_starlink_grpc_config.no_header && !g_starlink_grpc_config.silent_mode) {
-        starlink_grpc_print_timestamp();
-        printf("%s, bytes %zu\n", status, bytes);
+    // Only log HTTP status in debug mode or when there are errors
+    if (g_starlink_grpc_config.debug_mode) {
+        LOGX_DEBUG_MSG("Starlink gRPC: %s, bytes %zu", status, bytes);
+    } else if (strstr(status, "4") || strstr(status, "5")) {
+        // Only log 4xx and 5xx errors in normal mode
+        LOGX_WARN_MSG("Starlink gRPC error: %s, bytes %zu", status, bytes);
     }
+    // Don't log successful HTTP 200 responses in normal mode to reduce noise
 }
 
 void starlink_grpc_print_debug_info(
@@ -255,8 +259,7 @@ void starlink_grpc_handle_access_denied(const char *method, const unsigned char 
         strstr((const char*)response, "access denied") || 
         strstr((const char*)response, "403")) {
         if (!g_starlink_grpc_config.silent_mode) {
-            starlink_grpc_print_timestamp();
-            printf("  Access Denied for method '%s' - This endpoint may be restricted\n", method);
+            LOGX_WARN_MSG("Starlink gRPC: Access Denied for method '%s' - This endpoint may be restricted", method);
         }
     }
 }
@@ -281,7 +284,7 @@ void starlink_grpc_print_formatted_output(
     
     // Add newline for better formatting (except in raw mode where we want exact binary output)
     if (!config->raw_mode && !config->silent_mode) {
-        printf("\n");
+        // Don't print extra newlines to stdout - let LOGX handle formatting
     }
 }
 
