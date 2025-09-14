@@ -968,6 +968,22 @@ int main(int argc, char **argv)
     fprintf(stderr, "=== AGGRESSIVE DEBUG: GPS methods logged successfully ===\n");
     fflush(stderr);
     
+    // AGGRESSIVE DEBUGGING - Test LOGX system before System methods
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: About to call LOGX_INFO_MSG for System methods ===\n");
+    fflush(stderr);
+    
+    // Test with a simple string first
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Testing simple LOGX call ===\n");
+    fflush(stderr);
+    LOGX_INFO_MSG("Test message");
+    
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Simple LOGX call completed ===\n");
+    fflush(stderr);
+    
+    // Now try the problematic System methods message
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: About to call LOGX_INFO_MSG for System methods (long message) ===\n");
+    fflush(stderr);
+    
     LOGX_INFO_MSG("System methods: system_status, system_health_check, system_health_details, system_maintenance, system_restart_services");
     
     // AGGRESSIVE DEBUGGING - Force immediate output after system methods
