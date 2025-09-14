@@ -927,6 +927,11 @@ int main(int argc, char **argv)
     
     // Note: Previous UBUS objects have been cleaned up by system restart
     
+    // Add delay to ensure UBUS system is fully ready
+    fprintf(stderr, "=== AGGRESSIVE DEBUG: Waiting for UBUS system to be ready ===\n");
+    fflush(stderr);
+    sleep(2); // Give UBUS system time to fully initialize
+    
     // Test 1: status method only
     fprintf(stderr, "=== AGGRESSIVE DEBUG: Creating status method array ===\n");
     fflush(stderr);
@@ -955,16 +960,39 @@ int main(int argc, char **argv)
     fflush(stderr);
     
     LOGX_DEBUG_MSG("Testing status method...");
-    int ret = ubus_add_object(ctx, &status_obj);
     
-    fprintf(stderr, "=== AGGRESSIVE DEBUG: ubus_add_object returned: %d ===\n", ret);
-    fflush(stderr);
+    // Retry UBUS registration with backoff
+    int retry_count = 0;
+    int max_retries = 3;
+    int ret = -1;
+    
+    do {
+        ret = ubus_add_object(ctx, &status_obj);
+        
+        fprintf(stderr, "=== AGGRESSIVE DEBUG: ubus_add_object attempt %d returned: %d ===\n", retry_count + 1, ret);
+        fflush(stderr);
+        
+        if (ret == 0) {
+            break; // Success
+        }
+        
+        retry_count++;
+        fprintf(stderr, "=== AGGRESSIVE DEBUG: ubus_add_object failed with error %d: %s ===\n", ret, ubus_strerror(ret));
+        fflush(stderr);
+        
+        if (retry_count < max_retries) {
+            fprintf(stderr, "=== AGGRESSIVE DEBUG: Retrying in 1 second... ===\n");
+            fflush(stderr);
+            sleep(1);
+        }
+    } while (retry_count < max_retries);
     
     if (ret) {
-        fprintf(stderr, "=== AGGRESSIVE DEBUG: ubus_add_object failed with error %d ===\n", ret);
+        fprintf(stderr, "=== AGGRESSIVE DEBUG: ubus_add_object failed after %d retries ===\n", max_retries);
         fflush(stderr);
         char error_msg[256];
-        snprintf(error_msg, sizeof(error_msg), "Failed to add status method: %s (error %d)", ubus_strerror(ret), ret);
+        snprintf(error_msg, sizeof(error_msg), "Failed to add status method after %d retries: %s (error %d)", 
+                max_retries, ubus_strerror(ret), ret);
         log_exit_reason(EXIT_REASON_INIT_FAILURE, error_msg);
         daemon_exit(1);
     }
