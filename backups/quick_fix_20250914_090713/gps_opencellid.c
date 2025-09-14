@@ -270,7 +270,7 @@ int gps_opencellid_contribute(const opencellid_contribution_t* contribution) {
         LOGX_INFO_MSG("OpenCellID contribution successful",
                   "mcc", contribution->cell_id.mcc,
                   "mnc", contribution->cell_id.mnc,
-                 "cell_id", contribution->cell_id);
+                 "cell_id", contribution->cell_id.cell_id);
     } else {
         LOGX_ERROR_MSG("OpenCellID contribution failed");
     }
