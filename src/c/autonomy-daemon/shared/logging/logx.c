@@ -154,9 +154,9 @@ void rotate_log_files(void) {
 static void format_message(char *buffer, size_t size, logx_level_t level, 
                           const char *file, int line, const char *func, 
                           const char *format, va_list args) {
-    // Use smaller stack buffers to reduce stack pressure
+    // Use larger buffers to prevent overflow with long messages
     char timestamp[64];
-    char message[512];  // Reduced from 1024 to 512
+    char message[1024];  // Increased to 1024 to handle long messages safely
     
     get_timestamp(timestamp, sizeof(timestamp));
     
@@ -166,8 +166,14 @@ static void format_message(char *buffer, size_t size, logx_level_t level,
     
     va_list args_copy;
     va_copy(args_copy, args);
-    vsnprintf(message, sizeof(message), format, args_copy);
+    int result = vsnprintf(message, sizeof(message), format, args_copy);
     va_end(args_copy);
+    
+    // Check if message was truncated
+    if (result >= (int)sizeof(message)) {
+        // Message was truncated, add truncation indicator
+        strcpy(message + sizeof(message) - 20, "... [TRUNCATED]");
+    }
     
     // Bounds check for level to prevent buffer overflow
     const char* level_name = "UNKNOWN";
@@ -204,8 +210,8 @@ void logx_log(logx_level_t level, const char *file, int line, const char *func, 
         return;
     }
     
-    // Use dynamic allocation to avoid stack overflow
-    char *formatted_message = malloc(2048);
+    // Use dynamic allocation to avoid stack overflow - increased size for long messages
+    char *formatted_message = malloc(4096);
     if (!formatted_message) {
         // Fallback to simple output if allocation fails
         fprintf(stderr, "LOGX: Memory allocation failed for log message\n");
@@ -214,7 +220,7 @@ void logx_log(logx_level_t level, const char *file, int line, const char *func, 
     
     va_list args;
     va_start(args, format);
-    format_message(formatted_message, 2048, level, file, line, func, format, args);
+    format_message(formatted_message, 4096, level, file, line, func, format, args);
     va_end(args);
     
     // Output to stderr if enabled
