@@ -9,6 +9,7 @@
 #include "starlink_weather_snow_melt_control_ubus.h"
 #include "../core/types.h"
 #include "../shared/utils/string_utils.h"
+#include "../shared/logging/logx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

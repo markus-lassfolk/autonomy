@@ -155,7 +155,7 @@ void debug_save_state_to_file(const char *filename) {
     }
     
     fprintf(file, "=== DEBUG STATE DUMP ===\n");
-    fprintf(file, "Timestamp: %ld\n", time(NULL));
+    fprintf(file, "Timestamp: %lld\n", (long long)time(NULL));
     fprintf(file, "PID: %d\n", getpid());
     fprintf(file, "Debug Level: %d\n", (int)g_debug_level);
     fprintf(file, "Stack Depth: %d\n", g_debug_stack_depth);
@@ -261,8 +261,8 @@ void debug_emergency_dump(const char *reason) {
     
     // Save to emergency file
     char emergency_file[128];
-    snprintf(emergency_file, sizeof(emergency_file), "/tmp/autonomy_emergency_%d_%ld.log", 
-             getpid(), time(NULL));
+    snprintf(emergency_file, sizeof(emergency_file), "/tmp/autonomy_emergency_%d_%lld.log",
+              getpid(), (long long)time(NULL));
     debug_save_state_to_file(emergency_file);
     
     LOGX_FATAL_MSG("=== END EMERGENCY DUMP ===");

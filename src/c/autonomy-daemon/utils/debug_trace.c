@@ -1,4 +1,5 @@
 #include "debug_trace.h"
+#include "../shared/logging/logx.h"
 #include <stdarg.h>
 #include <sys/time.h>
 

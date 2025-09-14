@@ -1,5 +1,6 @@
 #include "starlink_grpc_comprehensive_client.h"
 #include <stdio.h>
+#include "../shared/logging/logx.h"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>

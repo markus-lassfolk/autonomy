@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <time.h>
+#include "../logging/logx.h"
 
 // Memory corruption detection system
 #define MEMORY_CANARY_VALUE 0xDEADBEEF

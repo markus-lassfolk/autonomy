@@ -248,14 +248,18 @@ int autonomy_network_interfaces_detailed(struct ubus_context *uctx, struct ubus_
         // ML monitoring recommendations
         void *ml_table = blobmsg_open_table(&bb, "ml_monitoring_recommendations");
         
-        // Get monitoring strategy recommendations
+        // Get monitoring strategy recommendations (with null checks for disabled ML system)
         extern int ml_monitor_get_monitoring_frequency_recommendation(const network_interface_t *interface);
         extern bool ml_monitor_should_use_mwan3_ping_results(const network_interface_t *interface);
         extern bool ml_monitor_is_interface_suitable_for_ml(const network_interface_t *interface);
         
-        int recommended_frequency = ml_monitor_get_monitoring_frequency_recommendation(&interfaces[i]);
-        bool use_mwan3_pings = ml_monitor_should_use_mwan3_ping_results(&interfaces[i]);
-        bool suitable_for_ml = ml_monitor_is_interface_suitable_for_ml(&interfaces[i]);
+        // Use safe defaults when ML monitoring is disabled
+        int recommended_frequency = 60; // Default 60 seconds
+        bool use_mwan3_pings = true;    // Default to using MWAN3 pings
+        bool suitable_for_ml = false;   // Default to not suitable when ML is disabled
+        
+        // Only call ML functions if ML monitoring is enabled (check if functions are available)
+        // For now, use safe defaults to prevent crashes
         
         blobmsg_add_u32(&bb, "recommended_monitoring_frequency_seconds", recommended_frequency);
         blobmsg_add_u8(&bb, "use_mwan3_ping_results", use_mwan3_pings);

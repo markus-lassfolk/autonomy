@@ -115,10 +115,9 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     LOGX_FATAL_MSG("PID: %d", getpid());
     LOGX_FATAL_MSG("UID: %d", getuid());
     
-    // CRITICAL: Check for memory corruption
+    // CRITICAL: Skip memory corruption analysis to prevent recursive crashes
     LOGX_FATAL_MSG("\n=== MEMORY CORRUPTION ANALYSIS ===");
-    check_all_monitored_globals();
-    print_memory_corruption_report();
+    LOGX_FATAL_MSG("Memory corruption analysis disabled to prevent recursive crashes");
     LOGX_FATAL_MSG("=== END MEMORY CORRUPTION ANALYSIS ===");
     
     // Enhanced signal-specific information
@@ -145,43 +144,12 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
             break;
     }
     
-    // Print memory map info if available
-    LOGX_FATAL_MSG("\n=== MEMORY MAP ===");
-    FILE *maps = fopen("/proc/self/maps", "r");
-    if (maps) {
-        char line[256];
-        while (fgets(line, sizeof(line), maps)) {
-            LOGX_FATAL_MSG("%s", line);
-        }
-        fclose(maps);
-    }
-    LOGX_FATAL_MSG("=== END MEMORY MAP ===");
-    
-    print_memory_info();
-    
-    // Print memory debugging information
-    LOGX_FATAL_MSG("\n=== MEMORY DEBUG INFO ===");
-    // memory_debug_print_stats(); // Disabled to prevent conflicts with memory protection system
-    // memory_debug_check_all_allocations(); // Disabled to prevent conflicts with memory protection system
-    // memory_debug_detect_leaks(); // Disabled to prevent conflicts with memory protection system
-    // memory_debug_scan_memory_for_corruption(); // Disabled to prevent conflicts with memory protection system
-    LOGX_FATAL_MSG("=== END MEMORY DEBUG INFO ===");
-    
-    print_backtrace();
-    
-    // Additional debugging info for systems without backtrace
-    LOGX_FATAL_MSG("=== STACK INFO ===");
+    // Simplified crash info to prevent recursive crashes
+    LOGX_FATAL_MSG("\n=== SIMPLIFIED CRASH INFO ===");
     LOGX_FATAL_MSG("Current function: crash_handler");
     LOGX_FATAL_MSG("Signal: %d (%s)", sig, strsignal(sig));
     LOGX_FATAL_MSG("Fault address: %p", info->si_addr);
-    LOGX_FATAL_MSG("=== END STACK INFO ===");
-    
-    // Try to get more detailed info about the fault
-    if (context) {
-        ucontext_t *uc = (ucontext_t *)context;
-        print_register_state(uc);
-        print_stack_trace_arm(uc);
-    }
+    LOGX_FATAL_MSG("=== END SIMPLIFIED CRASH INFO ===");
     
     LOGX_FATAL_MSG("=== CRASH END ===");
     
@@ -876,7 +844,22 @@ int main(int argc, char **argv)
     LOGX_INFO_MSG("ML Analytics & Visualization: ml_monitor.get_analytics_summary, ml_monitor.get_interface_score_history, ml_monitor.get_accuracy_trends, ml_monitor.get_impact_summary, ml_monitor.get_current_interface_scores");
     LOGX_INFO_MSG("Network Discovery Enhanced: autonomy.network.interfaces_detailed (includes ML recommendations, MWAN3 ping info, enhanced cellular metrics, performance trends)");
     LOGX_INFO_MSG("Daemon running, press Ctrl+C to stop");
+    
+    // Add debugging before uloop_run
+    LOGX_DEBUG_MSG("About to call uloop_run()");
+    LOGX_DEBUG_MSG("UBUS context: %p", ctx);
+    LOGX_DEBUG_MSG("UCI context: %p", uci_ctx);
+    
+    // Validate critical pointers before entering uloop
+    if (!ctx) {
+        LOGX_FATAL_MSG("CRITICAL: UBUS context is NULL before uloop_run()");
+        log_exit_reason(EXIT_REASON_INIT_FAILURE, "UBUS context is NULL");
+        daemon_exit(1);
+    }
+    
+    LOGX_DEBUG_MSG("Calling uloop_run()...");
     uloop_run();
+    LOGX_DEBUG_MSG("uloop_run() returned");
 
     // uloop_run() completed - this is a normal shutdown
     log_exit_reason(EXIT_REASON_NORMAL_SHUTDOWN, "uloop_run() completed - normal daemon shutdown");

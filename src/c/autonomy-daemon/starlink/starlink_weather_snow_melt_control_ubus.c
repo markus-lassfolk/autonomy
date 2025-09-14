@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../shared/logging/logx.h"
 
 // UBUS context will be passed as parameter to init/cleanup functions
 
