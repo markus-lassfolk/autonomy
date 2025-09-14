@@ -802,12 +802,10 @@ int main(int argc, char **argv)
     if (starlink_grpc_collector_init() == AUTONOMY_SUCCESS) {
         LOGX_INFO_MSG("Starlink gRPC collector initialized successfully");
         
-        // Re-enable Starlink gRPC collector thread with better error handling
-        if (starlink_grpc_collector_start() == AUTONOMY_SUCCESS) {
-            LOGX_INFO_MSG("Starlink gRPC collector thread started");
-        } else {
-            LOGX_WARN_MSG("Failed to start Starlink gRPC collector thread");
-        }
+        // TEMPORARY FIX: Disable Starlink gRPC collector thread to prevent crashes
+        // The thread makes HTTP requests to non-existent Starlink devices causing segfaults
+        LOGX_WARN_MSG("Starlink gRPC collector thread DISABLED - no Starlink device available");
+        // TODO: Re-enable when Starlink device is available or make more robust
     } else {
         LOGX_WARN_MSG("Starlink gRPC collector initialization failed");
     }
