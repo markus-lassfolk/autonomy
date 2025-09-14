@@ -13,7 +13,7 @@ This is a **standalone version** of the Starlink tracking and obstruction predic
 
 - ✅ **Complete independence** - No UBUS/UCI dependencies
 - ✅ **Simple configuration** - File-based or command-line config
-- ✅ **Web interface** - Beautiful visualization at <http://localhost:8080>
+- ✅ **Web interface** - Beautiful visualization at [http://localhost:8080](http://localhost:8080)
 - ✅ **HTTP API** - RESTful API for integration
 - ✅ **Real-time tracking** - Live satellite monitoring
 - ✅ **Outage prediction** - 12-24 hour forecasting
