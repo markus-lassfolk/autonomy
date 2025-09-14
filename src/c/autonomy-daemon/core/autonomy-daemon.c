@@ -484,10 +484,10 @@ static const struct ubus_method autonomy_methods[] = {
 };
 
 static struct ubus_object_type autonomy_obj_type = 
-    UBUS_OBJECT_TYPE("autonomy_daemon", autonomy_methods);
+    UBUS_OBJECT_TYPE("tlt_autonomy_daemon", autonomy_methods);
 
 static struct ubus_object autonomy_obj = {
-    .name = "autonomy_daemon",
+    .name = "tlt_autonomy_daemon",
     .type = &autonomy_obj_type,
     .methods = autonomy_methods,
     .n_methods = ARRAY_SIZE(autonomy_methods),
@@ -961,7 +961,7 @@ int main(int argc, char **argv)
         daemon_exit(1);
     }
 
-    LOGX_INFO_MSG("Autonomy daemon started, registered 'autonomy' ubus object");
+        LOGX_INFO_MSG("Autonomy daemon started, registered 'tlt_autonomy_daemon' ubus object");
     
     // Initialize ML monitoring UBUS interface after main UBUS object is registered - TEMPORARILY DISABLED
     // if (ml_monitor_ubus_init(ctx) == ML_MONITOR_SUCCESS) {
