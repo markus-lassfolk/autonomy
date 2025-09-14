@@ -150,8 +150,16 @@ static void print_backtrace(void) {
 static void crash_handler(int sig, siginfo_t *info, void *context) {
     fprintf(stderr, "\n=== CRASH DETECTED ===\n");
     fprintf(stderr, "Signal: %d (%s)\n", sig, strsignal(sig));
-    fprintf(stderr, "Signal code: %d\n", info->si_code);
-    fprintf(stderr, "Fault address: %p\n", info->si_addr);
+    
+    // Defensive programming - check if info is valid
+    if (info) {
+        fprintf(stderr, "Signal code: %d\n", info->si_code);
+        fprintf(stderr, "Fault address: %p\n", info->si_addr);
+    } else {
+        fprintf(stderr, "Signal code: <info is NULL>\n");
+        fprintf(stderr, "Fault address: <info is NULL>\n");
+    }
+    
     fprintf(stderr, "PID: %d\n", getpid());
     fprintf(stderr, "UID: %d\n", getuid());
     
@@ -163,15 +171,23 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     // Enhanced signal-specific information
     switch (sig) {
         case SIGSEGV:
-            fprintf(stderr, "SEGFAULT: Invalid memory access at %p\n", info->si_addr);
-            if (info->si_code == SEGV_MAPERR) {
-                fprintf(stderr, "Cause: Address not mapped to object\n");
-            } else if (info->si_code == SEGV_ACCERR) {
-                fprintf(stderr, "Cause: Invalid permissions for mapped object\n");
+            if (info) {
+                fprintf(stderr, "SEGFAULT: Invalid memory access at %p\n", info->si_addr);
+                if (info->si_code == SEGV_MAPERR) {
+                    fprintf(stderr, "Cause: Address not mapped to object\n");
+                } else if (info->si_code == SEGV_ACCERR) {
+                    fprintf(stderr, "Cause: Invalid permissions for mapped object\n");
+                }
+            } else {
+                fprintf(stderr, "SEGFAULT: Invalid memory access (info is NULL)\n");
             }
             break;
         case SIGBUS:
-            fprintf(stderr, "BUS ERROR: Invalid memory access at %p\n", info->si_addr);
+            if (info) {
+                fprintf(stderr, "BUS ERROR: Invalid memory access at %p\n", info->si_addr);
+            } else {
+                fprintf(stderr, "BUS ERROR: Invalid memory access (info is NULL)\n");
+            }
             break;
         case SIGFPE:
             fprintf(stderr, "FLOATING POINT EXCEPTION: Division by zero or invalid operation\n");
@@ -194,7 +210,11 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     fprintf(stderr, "\n=== SIMPLIFIED CRASH INFO ===\n");
     fprintf(stderr, "Current function: crash_handler\n");
     fprintf(stderr, "Signal: %d (%s)\n", sig, strsignal(sig));
-    fprintf(stderr, "Fault address: %p\n", info->si_addr);
+    if (info) {
+        fprintf(stderr, "Fault address: %p\n", info->si_addr);
+    } else {
+        fprintf(stderr, "Fault address: <info is NULL>\n");
+    }
     fprintf(stderr, "=== END SIMPLIFIED CRASH INFO ===\n");
     
     fprintf(stderr, "=== CRASH END ===\n");
@@ -207,11 +227,19 @@ static void crash_handler(int sig, siginfo_t *info, void *context) {
     switch (sig) {
         case SIGSEGV:
             reason = EXIT_REASON_SIGNAL_SEGV;
-            snprintf(message, sizeof(message), "Segmentation fault at %p (signal %d)", info->si_addr, sig);
+            if (info) {
+                snprintf(message, sizeof(message), "Segmentation fault at %p (signal %d)", info->si_addr, sig);
+            } else {
+                snprintf(message, sizeof(message), "Segmentation fault (info is NULL) (signal %d)", sig);
+            }
             break;
         case SIGBUS:
             reason = EXIT_REASON_SIGNAL_BUS;
-            snprintf(message, sizeof(message), "Bus error at %p (signal %d)", info->si_addr, sig);
+            if (info) {
+                snprintf(message, sizeof(message), "Bus error at %p (signal %d)", info->si_addr, sig);
+            } else {
+                snprintf(message, sizeof(message), "Bus error (info is NULL) (signal %d)", sig);
+            }
             break;
         case SIGFPE:
             reason = EXIT_REASON_SIGNAL_FPE;
