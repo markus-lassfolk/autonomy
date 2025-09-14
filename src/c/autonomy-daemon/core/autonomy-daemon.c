@@ -123,6 +123,7 @@ static struct uloop_timeout gps_timer;
 static struct uloop_timeout network_timer;
 static struct uloop_timeout ml_timer;
 static struct uloop_timeout health_timer;
+static struct uloop_timeout starlink_timer;
 
 // Forward declarations
 static void print_memory_info(void);
@@ -136,6 +137,7 @@ static void gps_timer_callback(struct uloop_timeout *t);
 static void network_timer_callback(struct uloop_timeout *t);
 static void ml_timer_callback(struct uloop_timeout *t);
 static void health_timer_callback(struct uloop_timeout *t);
+static void starlink_timer_callback(struct uloop_timeout *t);
 static void setup_active_timers(void);
 static void setup_crash_handlers(void);
 static void print_register_state(ucontext_t *context);
@@ -601,6 +603,30 @@ static void health_timer_callback(struct uloop_timeout *t) {
     uloop_timeout_set(t, 60000);
 }
 
+static void starlink_timer_callback(struct uloop_timeout *t) {
+    LOGX_INFO_MSG("Starlink timer callback - checking Starlink status");
+    
+    // Check Starlink gRPC collector status
+    starlink_grpc_collector_stats_t stats;
+    memset(&stats, 0, sizeof(stats));
+    
+    // Try to get Starlink collector statistics
+    int starlink_result = starlink_grpc_collector_get_stats(&stats);
+    if (starlink_result == 0) {
+        LOGX_INFO_MSG("Starlink stats: enabled=%s, running=%s, requests=%d, errors=%d, last_success=%d", 
+                     stats.enabled ? "true" : "false",
+                     stats.thread_running ? "true" : "false",
+                     stats.total_requests,
+                     stats.total_errors,
+                     stats.last_successful_request);
+    } else {
+        LOGX_INFO_MSG("Starlink status check failed: error %d", starlink_result);
+    }
+    
+    // Reschedule timer for next check (30 seconds)
+    uloop_timeout_set(t, 30000);
+}
+
 static void setup_active_timers(void) {
     LOGX_INFO_MSG("Setting up active daemon timers...");
     
@@ -623,6 +649,11 @@ static void setup_active_timers(void) {
     health_timer.cb = health_timer_callback;
     uloop_timeout_set(&health_timer, 60000);
     LOGX_INFO_MSG("Health timer set for 60-second intervals");
+    
+    // Setup Starlink timer (30 second intervals)
+    starlink_timer.cb = starlink_timer_callback;
+    uloop_timeout_set(&starlink_timer, 30000);
+    LOGX_INFO_MSG("Starlink timer set for 30-second intervals");
     
     LOGX_INFO_MSG("All active daemon timers configured successfully");
 }
@@ -835,10 +866,12 @@ int main(int argc, char **argv)
     if (starlink_grpc_collector_init() == AUTONOMY_SUCCESS) {
         LOGX_INFO_MSG("Starlink gRPC collector initialized successfully");
         
-        // TEMPORARY FIX: Disable Starlink gRPC collector thread to prevent crashes
-        // The thread makes HTTP requests to non-existent Starlink devices
-        LOGX_WARN_MSG("Starlink gRPC collector thread DISABLED - no Starlink device available");
-        // TODO: Re-enable when Starlink device is available or make more robust
+        // Re-enable Starlink gRPC collector thread with better error handling
+        if (starlink_grpc_collector_start() == AUTONOMY_SUCCESS) {
+            LOGX_INFO_MSG("Starlink gRPC collector thread started");
+        } else {
+            LOGX_WARN_MSG("Failed to start Starlink gRPC collector thread");
+        }
     } else {
         LOGX_WARN_MSG("Starlink gRPC collector initialization failed");
     }
