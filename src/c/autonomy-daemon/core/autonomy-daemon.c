@@ -109,6 +109,10 @@ typedef enum {
 
 static exit_reason_t g_exit_reason = EXIT_REASON_UNKNOWN;
 static char g_exit_message[512] = {0};
+static pthread_mutex_t g_exit_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// TEMPORARY FIX: Disable threading to isolate crash
+static bool g_threading_disabled = true;
 
 // Forward declarations
 static void print_memory_info(void);
@@ -364,11 +368,13 @@ void handle_sig(int sig) {
 
 // Comprehensive exit logging function
 static void log_exit_reason(exit_reason_t reason, const char *message) {
+    pthread_mutex_lock(&g_exit_mutex);
     g_exit_reason = reason;
     if (message) {
         strncpy(g_exit_message, message, sizeof(g_exit_message) - 1);
         g_exit_message[sizeof(g_exit_message) - 1] = '\0';
     }
+    pthread_mutex_unlock(&g_exit_mutex);
     
     const char *reason_str = "UNKNOWN";
     switch (reason) {
@@ -695,11 +701,16 @@ int main(int argc, char **argv)
     if (starlink_grpc_collector_init() == AUTONOMY_SUCCESS) {
         LOGX_INFO_MSG("Starlink gRPC collector initialized successfully");
         
-        // Start gRPC collector thread
-        if (starlink_grpc_collector_start() == AUTONOMY_SUCCESS) {
-            LOGX_INFO_MSG("Starlink gRPC collector thread started");
+        // TEMPORARY FIX: Disable threading to isolate crash
+        if (!g_threading_disabled) {
+            // Start gRPC collector thread
+            if (starlink_grpc_collector_start() == AUTONOMY_SUCCESS) {
+                LOGX_INFO_MSG("Starlink gRPC collector thread started");
+            } else {
+                LOGX_WARN_MSG("Failed to start Starlink gRPC collector thread");
+            }
         } else {
-            LOGX_WARN_MSG("Failed to start Starlink gRPC collector thread");
+            LOGX_WARN_MSG("Starlink gRPC collector thread DISABLED for crash debugging");
         }
     } else {
         LOGX_WARN_MSG("Starlink gRPC collector initialization failed");
